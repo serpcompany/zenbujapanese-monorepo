@@ -92,7 +92,8 @@ wait for what stays: a finished sentence card, the prompt, or the controls. A pa
 heard again from its start on resuming, so the mid-sentence pause test waits for each paused
 line to be heard to its end before it pauses again. The harness's silence prompt counts down for
 two minutes, longer than the tests' 90-second patience, so tapping **Keep Listening** never races
-it.
+it, and the test of nobody answering doesn't wait those two minutes: it posts the notice that moves
+the harness's clock past the countdown, then waits for the pause.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what

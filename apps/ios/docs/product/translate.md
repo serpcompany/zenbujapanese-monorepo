@@ -7,13 +7,13 @@ Japanese word on the tab opens the same dictionary sheet the Player uses. It wor
 iPad and a Mac, which use their own microphone and speakers ([iPad and
 Mac](index.md#ipad-and-mac)).
 
-Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system
-voice. Nothing anyone says is sent to a server, and nothing costs money. The one thing that leaves
-the iPhone is a sentence the learner bookmarks, once they sign in to a Zenbu account (bookmarks
-made before signing in go then too): that sentence and its translation sync to their other devices
-([Translations](#translations)), and nothing else of the conversation does. The first conversation downloads
-Apple's Japanese and English speech recognition and translation once, with progress shown under
-the Spoken section; after that, Translate works without a connection. There is no Online
+Everything runs on the iPhone: Apple's speech recognition, Apple Translation, and the system voice.
+Nothing anyone says is sent to a server, and nothing costs money. The one thing that leaves the
+iPhone is a sentence the learner bookmarks, once they sign in to a Zenbu account (bookmarks made
+before signing in go then too): that sentence and its translation sync to their other devices
+([Translations](#translations)), and nothing else of the conversation does. The first conversation
+downloads Apple's Japanese and English speech recognition and translation once, with progress shown
+under the Spoken section; after that, Translate works without a connection. There is no Online
 engine yet, so there is no Online/Offline switch and no cost or model details.
 
 ## How Translate is checked
@@ -65,19 +65,21 @@ The typing screen is one large card reading **Translate anything**. Translate de
 text with any kana or kanji (𠮷 and halfwidth katakana too) is Japanese and is translated into
 English, and text with only Latin letters A to Z is English and is translated into Japanese. There
 is no swap button. The translation appears in the same card under a divider, with a label such as
-**English → Japanese** and buttons to copy and speak it; Japanese in it is underlined and tappable.
-An ✕ clears the text. If Apple's Japanese language isn't downloaded, the card offers **Download
-Japanese**, which shows Apple's prompt. The typing screen's **•••** menu holds **Furigana**.
+**English → Japanese** and buttons to copy and speak it; Japanese in it is underlined, and tapping a
+word closes the keyboard and opens its Word Detail. An ✕ clears the text. If Apple's Japanese
+language isn't downloaded, the card offers **Download Japanese**, which shows Apple's prompt. The
+typing screen's **•••** menu holds **Furigana**.
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (the direction, Copy, Speak,
-a tappable word, and ✕); package `WrittenLanguageTests` (which text is Japanese).
+a word's sheet at half height with the keyboard closed, and ✕); package `WrittenLanguageTests`
+(which text is Japanese).
 
 ## Starting a live mode
 
-The first time, tapping **Conversation** or **Listen** brings up iOS's request for the
-microphone. If access was turned off, it shows **Allow the microphone** with **Open Settings** and **Cancel**. A missing
-translation download shows **Download Japanese**, and a missing speech download explains that it
-needs a connection once. Nothing stays on the home screen afterward.
+The first time, tapping **Conversation** or **Listen** brings up iOS's request for the microphone.
+If access was turned off, it shows **Allow the microphone** with **Open Settings** and **Cancel**. A
+missing translation download shows **Download Japanese**, and a missing speech download explains
+that it needs a connection once. Nothing stays on the home screen afterward.
 
 Check: package `LiveConversationTests` (a recognizer that can't start); the microphone prompt and
 the downloads are by hand on a device.
@@ -88,8 +90,9 @@ The conversation replaces the tab's home and fills the screen: the tab bar is hi
 open. The top bar has only Back and a **•••** menu with the layout (**Cards** or **Two Panes**)
 and **Furigana**; there's no title. To change mode, leave and pick another option on the home.
 
-Check: UI `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (no tab bar
-on iPhone) and `ConversationUITests.testTwoPanesHoldEachLanguage`; package `TranslateChromeLayoutTests`.
+Check: UI `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (no tab bar on
+iPhone) and `ConversationUITests.testTwoPanesHoldEachLanguage`; package
+`TranslateChromeLayoutTests`.
 
 Along the bottom are the conversation's controls:
 
@@ -178,56 +181,61 @@ hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-
 - **Interruptions.** A call or another app taking the microphone stops listening; an alert says what
   happened, with **Try Again**.
 
-Check: package `LiveConversationTests` (pausing, Save and Exit, the silence prompt, the background,
-and a recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere`,
-`testLeavingTheAppPausesTheConversation`, and
+Check: package `LiveConversationTests` (pausing, leaving, the silence prompt, the background, and a
+recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere`,
+`testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness skips its countdown),
+`testLeavingTheAppPausesTheConversation`, `testExitWithoutSavingLeavesNothingInTranslations`, and
 `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (Save and Exit). A call
 taking the microphone is by hand.
 
 ## Translations
 
-The **Translations** button opens every saved conversation, newest first, in one list: each row shows its
-first sentence and a line such as **Today, 09:12 · 6 turns · 82% known**. The percentage is the
-share of the Japanese that was spoken, particles aside, made of words marked known, counted the
-way the Player counts captions; it updates as words are marked known, and a conversation with no
+The **Translations** button opens every saved conversation, newest first, in one list: each row
+shows its first sentence and a line such as **Today, 09:12 · 6 turns · 82% known**. The percentage
+is the share of the Japanese that was spoken, particles aside, made of words marked known, counted
+the way the Player counts captions; it updates as words are marked known, and a conversation with no
 Japanese spoken shows none. The transcript's header shows it too. **All** and **Bookmarked** at the
-top switch to the bookmarked sentences, newest bookmark first, each with its translation. Search, in the toolbar, matches the
-Japanese or the English. Long-pressing a row offers **Copy**, **Share**, and **Delete**; the
-**•••** menu offers **Delete All…**. Deleting a conversation, or all of them, asks first, and
-there's no swipe to delete. Conversations are kept until they're deleted. **Translations** in
-Account opens the same screen, inside Account, and a deletion in either shows in both. The
-conversation in progress isn't listed until it ends, and while one is live, transcripts have no
-speaker button, so a replay can't talk over it. A conversation
-opens as its transcript, with its length, turns, and mode above it. Each turn is a group of
-cards like the conversation's, and every Japanese word is tappable. Each sentence has a speaker
-button that plays its translation again, at the conversation's speech speed, and a bookmark. Its
-**•••** menu offers **Furigana**, **Copy Transcript**, **Share**, and **Delete Conversation**.
+top switch to the bookmarked sentences, newest bookmark first, each with its translation. Search, in
+the toolbar, matches the Japanese or the English. Long-pressing a row offers **Copy**, **Share**,
+and **Delete**; the **•••** menu offers **Delete All…**. Deleting a conversation, or all of them,
+asks first, and there's no swipe to delete. Conversations are kept until they're deleted.
+**Translations** in Account opens the same screen, inside Account, and a deletion in either shows in
+both. The conversation in progress isn't listed until it ends, and while one is live, transcripts
+have no speaker button, so a replay can't talk over it. A conversation opens as its transcript, with
+its length, turns, and mode above it. Each turn is a group of cards like the conversation's, and
+every Japanese word is tappable. Each sentence has a speaker button that plays its translation
+again, at the conversation's speech speed, and a bookmark. Its **•••** menu offers **Furigana**,
+**Copy Transcript**, **Share**, and **Delete Conversation**.
 
 Check: package `ConversationHistoryTests` and `ConversationWordsTests`; UI
-`ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked`,
-`ConversationUITests.testADeletedConversationLeavesTranslations` (long-press, or right-click on the
-Mac, then Delete, which asks first), `TranslateUITests.testTranslationsStartsEmpty`, and
-`AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
+`ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked` (a speaker and a bookmark on
+each sentence), `testADeletedConversationLeavesTranslations` (long-press, or right-click on the Mac,
+then Delete, which asks first), Account's count and deletion in
+`testDeletingInAccountsTranslationsLowersItsCountAndLeavesTranslateWithout`, and
+`testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers`; and
+`TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (the row's line),
+`testTranslationsStartsEmpty`, and `AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
 
 A conversation is saved after every translated sentence, so closing the app loses nothing; **Exit
 Without Saving** deletes it. Conversations are stored only on the device, one file each, and never
 sync.
 
 Check: package `LiveConversationTests` (each translated sentence is saved; Exit Without Saving
-deletes it) and `ConversationHistoryTests`.
+deletes it) and `ConversationHistoryTests`; UI
+`ConversationUITests.testExitWithoutSavingLeavesNothingInTranslations` (nothing listed, even after
+the app starts again).
 
-**Bookmarks on every device.** Signed in to a Zenbu account, the learner's bookmarked sentences
-are the same on every device running this app ([Zenbu account and
+**Bookmarks on every device.** Signed in to a Zenbu account, the learner's bookmarked sentences are
+the same on every device running this app ([Zenbu account and
 sync](index.md#zenbu-account-and-sync)). Only a bookmarked sentence syncs: its text, its
 translation, which language it was said in, and when it was bookmarked; never the conversation
 around it, or any sentence that isn't bookmarked. A sentence bookmarked on another device is listed
-under **Bookmarked** here even though its conversation isn't on this iPhone: it shows on its own, the
-sentence and its translation, with the same speaker and bookmark buttons, and there's no
+under **Bookmarked** here even though its conversation isn't on this iPhone: it shows on its own,
+the sentence and its translation, with the same speaker and bookmark buttons, and there's no
 conversation to open. Un-bookmarking a sentence, here or anywhere, un-bookmarks it everywhere, and
 deleting a conversation un-bookmarks its sentences everywhere too. Bookmarks synced from other
 devices are kept in a small file of their own beside the conversations, and nothing else from those
-devices is.
-Browsing Translations never turns on the microphone.
+devices is. Browsing Translations never turns on the microphone.
 
 Check: package `AccountSyncBookmarkTests` and `ConversationHistoryTests`.
 
@@ -295,11 +303,11 @@ Check: UI `ImageSearchUITests.testTheViewsShowTheRecognizedText` and
 `testClosingImageSearchReturnsToTranslatesHome`; package `ImageTextRecognitionTests` (columns,
 lines, and paragraphs) and `ImageTextContextNotesTests`.
 
-Translation uses Apple Translation, preparing Apple's language resources first when needed.
-Where Apple Translation isn't available, Apple Intelligence's on-device model translates
-instead, and the Translate view says so. Both and Text show line and paragraph translations under their
-cards, following the Translations reading-aid preference, as soon as translation is ready
-without a download; choosing Translate starts a download when one is needed.
+Translation uses Apple Translation, preparing Apple's language resources first when needed. Where
+Apple Translation isn't available, Apple Intelligence's on-device model translates instead, and the
+Translate view says so. Both and Text show line and paragraph translations under their cards,
+following the Translations reading-aid preference, as soon as translation is ready without a
+download; choosing Translate starts a download when one is needed.
 
 Check: package `ImageTextTranslationTests`; Apple Translation itself is by hand on a device.
 
@@ -312,13 +320,13 @@ because on its own it misreads idioms word by word.
 Check: package `ImageTextContextNotesTests` and `ImageTextExplanationTests` (a stubbed model;
 the real one with `TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` and Apple Intelligence on).
 
-Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
-full height, as in the Player. The view behind stays usable, so tapping another word switches
-the sheet, and nothing behind it moves when a word opens. A word with several possible entries opens a
+Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to full
+height, as in the Player. The view behind stays usable, so tapping another word switches the sheet,
+and nothing behind it moves when a word opens. A word with several possible entries opens a
 **Choose** list that uses Search's result rows, and one with none shows a no-entry state. The
 sheet's top bar has a close button and **Open Full Entry**, which continues to the normal
-full-screen dictionary route in the Translate tab. Words use the same
-Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
+full-screen dictionary route in the Translate tab. Words use the same Kuromoji parser family as the
+Zenbu browser extension and other linked Japanese in the app.
 
 Check: UI `ImageSearchUITests.testAnImageOpensImageSearchOnTranslateAndAWordOpensItsEntry`
 (the sheet's place on each device, Open Full Entry), `testAWordSheetsKanjiOpensItsPageOnTranslate`,

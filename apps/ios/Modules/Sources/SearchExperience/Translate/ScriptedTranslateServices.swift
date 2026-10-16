@@ -1,6 +1,11 @@
 import Foundation
 import TranslatorCore
 
+#if DEBUG
+  import notify
+  import Synchronization
+#endif
+
 extension TranslateServices {
   static var forThisLaunch: TranslateServices {
     #if DEBUG
@@ -116,12 +121,33 @@ extension TranslateServices {
     }
   }
 
+  final class ScriptedClock: Sendable {
+    static let skipCountdownNotice = "com.zenbujapanese.dictionary.uitests.skip-translate-countdown"
+
+    private let skipped = Mutex<TimeInterval>(0)
+
+    var now: Date { Date.now.addingTimeInterval(skipped.withLock { $0 }) }
+
+    func skipAhead(_ seconds: TimeInterval) {
+      skipped.withLock { $0 += seconds }
+    }
+
+    func skipsAheadOnNotice(by seconds: TimeInterval) {
+      var registration: Int32 = 0
+      notify_register_dispatch(Self.skipCountdownNotice, &registration, .global()) { _ in
+        self.skipAhead(seconds)
+      }
+    }
+  }
+
   extension TranslateServices {
     static func scripted(_ script: TranslateScript) -> TranslateServices {
       let transcriber = ScriptedTranscriber()
+      let clock = ScriptedClock()
       var timing = ConversationTiming.standard
       timing.silenceBeforePrompt = 20
       timing.promptCountdown = 120
+      clock.skipsAheadOnNotice(by: timing.promptCountdown)
       return TranslateServices(
         clients: TranslatorClients(
           transcription: TranscriptionClient(
@@ -144,7 +170,8 @@ extension TranslateServices {
         translationAvailability: { .installed },
         speechNeedsDownload: { _ in false },
         installSpeech: { _, _ in },
-        timing: timing
+        timing: timing,
+        now: { clock.now }
       )
     }
   }

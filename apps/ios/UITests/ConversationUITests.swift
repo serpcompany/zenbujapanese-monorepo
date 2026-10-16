@@ -1,6 +1,10 @@
 import XCTest
+import notify
 
 final class ConversationUITests: ZenbuUITestCase {
+  private static let skipCountdownNotice =
+    "com.zenbujapanese.dictionary.uitests.skip-translate-countdown"
+
   func testTheControlsMutePauseAndResume() {
     let app = startConversation()
     let mute = waitFor(find("translate.session.mute", in: app))
@@ -95,13 +99,22 @@ final class ConversationUITests: ZenbuUITestCase {
     pause(app)
     tap(find("translate.conversation.options", in: app))
     tap(menuChoice("Two Panes", in: app))
-    assertOnScreen(find("translate.pane.ja", in: app), in: app)
+    let japanese = find("translate.pane.ja", in: app)
+    assertOnScreen(japanese, in: app)
     assertOnScreen(find("translate.pane.en", in: app), in: app)
+    tap(find("translate.conversation.options", in: app))
+    tap(menuChoice("Cards", in: app))
+    waitUntilGone(japanese)
+    assertOnScreen(firstElement(identifiedBy: "translate.sentence.", in: app), in: app)
   }
 
   func testListeningRunsTheAnnouncementsAndMutesThem() {
     let app = startConversation(option: "listening")
-    waitFor(word(containing: "関東", identifiedBy: "translate.sentence.", in: app))
+    let heard = waitFor(word(containing: "関東", identifiedBy: "translate.sentence.", in: app))
+    let card = heard.identifier.components(separatedBy: ".source.").first ?? heard.identifier
+    let translation = waitFor(find("\(card).translation", in: app))
+    XCTAssertLessThan(
+      translation.frame.minY, heard.frame.minY, "Listening leads each card with its translation")
     let mute = waitFor(find("translate.session.mute", in: app))
     XCTAssertEqual(mute.label, "Mute Translations")
     mute.tap()
@@ -110,18 +123,18 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testABookmarkedSentenceIsListedUnderBookmarked() {
     let app = startConversation()
-    tap(find("translate.conversation.back", in: app))
-    tap(app.buttons["Save and Exit"].firstMatch)
+    saveAndExit(app)
     tap(find("translate.history", in: app))
     tap(find("translate.history.row", in: app))
     waitFor(find("translate.detail", in: app))
-    let bookmark = app.descendants(matching: .any)
-      .matching(NSPredicate(format: "identifier ENDSWITH '.bookmark'")).firstMatch
+    let bookmark = waitFor(sentenceButtons(".bookmark", in: app).firstMatch)
+    XCTAssertEqual(
+      sentenceButtons(".replay", in: app).count, sentenceButtons(".bookmark", in: app).count,
+      "each sentence of a saved transcript has a speaker")
     tap(bookmark)
     goBack(in: app)
     choose("Bookmarked", in: find("translate.history.filter", in: app))
-    waitFor(app.descendants(matching: .any)
-      .matching(NSPredicate(format: "identifier ENDSWITH '.bookmark'")).firstMatch)
+    waitFor(sentenceButtons(".bookmark", in: app).firstMatch)
   }
 
   func testSilenceAsksWhetherAnyoneIsStillThere() {
@@ -129,6 +142,35 @@ final class ConversationUITests: ZenbuUITestCase {
     let prompt = waitFor(find("translate.still-there", in: app))
     tap(app.buttons["Keep Listening"].firstMatch)
     waitUntilGone(prompt)
+  }
+
+  func testNobodyAnsweringTheSilencePromptPausesTheConversation() {
+    let app = startConversation()
+    let stillThere = waitFor(find("translate.still-there", in: app))
+    notify_post(Self.skipCountdownNotice)
+    let paused = waitFor(prompt(in: app))
+    waitFor(
+      paused.staticTexts.matching(
+        NSPredicate(format: "label BEGINSWITH %@ OR value BEGINSWITH %@", "Paused after", "Paused after")
+      ).firstMatch)
+    waitUntilGone(stillThere)
+    let toggle = find("translate.session.toggle", in: app)
+    XCTAssertEqual(toggle.label, "Resume", "the conversation paused")
+    tap(paused.buttons.matching(showing("Resume")).firstMatch)
+    waitUntil(toggle, "label == 'Pause'")
+  }
+
+  func testExitWithoutSavingLeavesNothingInTranslations() {
+    let app = startConversation()
+    waitFor(word(containing: ".translation", identifiedBy: "translate.sentence.", in: app))
+    tap(find("translate.conversation.back", in: app))
+    tap(app.buttons["Exit Without Saving"].firstMatch)
+    tap(find("translate.history", in: app))
+    waitFor(labeled("No Conversations Yet", in: app))
+    let relaunched = launch(["ZENBU_UI_TEST_FRESH": "0"])
+    open(.translate, in: relaunched)
+    tap(find("translate.history", in: relaunched))
+    waitFor(labeled("No Conversations Yet", in: relaunched))
   }
 
   func testLeavingTheAppPausesTheConversation() {
@@ -143,13 +185,45 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testAWordsFullEntryShowsTheSessionBarThatReturns() {
     let app = startConversation()
-    let spoken = waitFor(word(containing: ".source.", identifiedBy: "translate.sentence.", in: app))
-    pause(app)
-    tap(spoken)
-    tap(find("recognized-word-sheet.open-full-entry", in: app))
-    waitFor(find("word-detail.screen", in: app))
-    tap(find("translate.session.status", in: app))
+    openAWordsFullEntry(in: app)
+    let status = waitFor(find("translate.session.status", in: app))
+    open(.search, in: app)
+    waitUntil("the session bar saying the conversation is paused") {
+      self.text(of: status) == "Conversation paused · Return"
+    }
+    tap(status)
     assertOnScreen(find("translate.conversation.back", in: app), in: app)
+  }
+
+  func testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers() {
+    let app = startConversation()
+    saveAndExit(app)
+    tap(find("translate.start.conversation", in: app))
+    openAWordsFullEntry(in: app)
+    open(.account, in: app)
+    let translations = reveal(find("account.translations", in: app), in: app)
+    waitUntil(translations, counts: 1)
+    tap(translations)
+    tap(find("translate.history.row", in: app))
+    waitFor(sentenceButtons(".bookmark", in: app).firstMatch)
+    XCTAssertFalse(
+      sentenceButtons(".replay", in: app).firstMatch.exists,
+      "a transcript has no speaker while a conversation is live")
+  }
+
+  func testDeletingInAccountsTranslationsLowersItsCountAndLeavesTranslateWithout() {
+    let app = startConversation()
+    saveAndExit(app)
+    open(.account, in: app)
+    let translations = reveal(find("account.translations", in: app), in: app)
+    waitUntil(translations, counts: 1)
+    tap(translations)
+    deleteTheConversation(in: app)
+    goBack(in: app)
+    waitUntil(translations, counts: 0)
+    open(.translate, in: app)
+    tap(find("translate.history", in: app))
+    waitFor(labeled("No Conversations Yet", in: app))
   }
 
   func testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate() {
@@ -188,13 +262,37 @@ final class ConversationUITests: ZenbuUITestCase {
 
   func testADeletedConversationLeavesTranslations() {
     let app = startConversation()
+    saveAndExit(app)
+    tap(find("translate.history", in: app))
+    deleteTheConversation(in: app)
+  }
+
+  private func saveAndExit(_ app: XCUIApplication) {
     tap(find("translate.conversation.back", in: app))
     tap(app.buttons["Save and Exit"].firstMatch)
-    tap(find("translate.history", in: app))
+  }
+
+  private func deleteTheConversation(in app: XCUIApplication) {
     openContextMenu(on: find("translate.history.row", in: app))
     tap(menuChoice("Delete", in: app))
     tap(app.buttons["Delete Conversation"].firstMatch)
     waitFor(labeled("No Conversations Yet", in: app))
+  }
+
+  private func openAWordsFullEntry(in app: XCUIApplication) {
+    let spoken = waitFor(word(containing: ".source.", identifiedBy: "translate.sentence.", in: app))
+    pause(app)
+    tap(spoken)
+    tap(find("recognized-word-sheet.open-full-entry", in: app))
+    waitFor(find("word-detail.screen", in: app))
+  }
+
+  private func sentenceButtons(_ suffix: String, in app: XCUIApplication) -> XCUIElementQuery {
+    app.descendants(matching: .any).matching(NSPredicate(format: "identifier ENDSWITH %@", suffix))
+  }
+
+  private func waitUntil(_ row: XCUIElement, counts count: Int) {
+    waitUntil(row, "label ENDSWITH %@ OR value == %@", ", \(count)", "\(count)")
   }
 
   private func pause(_ app: XCUIApplication) {

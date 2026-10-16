@@ -40,7 +40,8 @@ final class TranslateUITests: ZenbuUITestCase {
     waitFor(app.buttons["Copy"])
     waitFor(app.buttons["Speak"])
     tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
-    waitForSheet("recognized-word-sheet", in: app)
+    assertSheetPlacement(waitForSheet("recognized-word-sheet", in: app), in: app)
+    waitUntilGone(app.keyboards.firstMatch)
     for control in ["recognized-word-sheet.open-full-entry", "word-detail.share", "word-detail.more-menu"] {
       assertOnScreen(find(control, in: app), in: app)
     }
@@ -85,7 +86,10 @@ final class TranslateUITests: ZenbuUITestCase {
     tap(find("translate.conversation.back", in: app))
     tap(app.buttons["Save and Exit"].firstMatch)
     tap(find("translate.history", in: app))
-    assertOnScreen(find("translate.history.row", in: app), in: app)
+    let row = find("translate.history.row", in: app)
+    assertOnScreen(row, in: app)
+    waitUntil(row, mentions: "Today, ")
+    XCTAssertTrue(text(of: row).contains(" turn"), "the row gives its turns: \(text(of: row))")
   }
 
   private func typeASentenceToTranslate() -> XCUIApplication {
