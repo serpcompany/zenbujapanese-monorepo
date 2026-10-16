@@ -28,7 +28,9 @@ one hop, with a page's trailing slash and a file's none.
 
 - Source: SERP localization standard, URLs.
 - Check: `src/lib/i18n/routing.test.ts`, "/en/ is never a public URL: it redirects to the bare
-  path in one hop"; URLs spec, "/en/ is never a public URL: …"; smoke `308 /en/about/ -> /about/`.
+  path in one hop"; `src/lib/moved-pages.test.ts`, "sends https://zenbujapanese.com/en/about to …
+  in one 308"; URLs spec, "/en/about/ redirects to /about/ in one hop" and the other `/en` cases;
+  smoke `308 /en/about/ -> /about/`.
 
 **Files have no language.** `robots.txt`, the sitemaps, and the JSON a page loads keep one URL,
 with no prefix: `/ja/robots.txt` and `/ja/dictionary/examples/<n>.json` are 404.
