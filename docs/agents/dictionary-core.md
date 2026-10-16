@@ -22,7 +22,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
-| `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and a linked word's gloss. Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, what a link names (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
+| `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and a linked word's gloss. Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
@@ -142,8 +142,8 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, whether the radical panel picked the query) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A radical panel's one-character query lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
-  | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
-  | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text, the reading to save; a one-kanji candidate's first meaning |
+  | `wordPage` | An entry the host read | `EmbeddedWordPage`: sections, furigana, part of speech, conjugations, pitch, senses, frequency, forms, kanji, related words, labels, share text and link |
+  | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text and link, the reading to save; a one-kanji candidate's first meaning |
   | `wordPageWithoutContent`, `kanjiPageWithoutContent` | A reading; — | The sections, and the labels, a page draws before or without its answer |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
@@ -396,8 +396,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
   seventeen characters and an ellipsis: what the app shows under a linked word.
-- `wordSlug` is shared so the service and the website build the same word URL (ADR 0007). The
-  app builds none: its Share sends text, and it only reads a link (`websitePage`).
+- `wordSlug` and the website's other URL rules are in `detail/links.ts` (ADR 0007), so the
+  service, the website, and the app's Share (`wordURL`, `kanjiSearchURL`) build the same URLs.
 
 ## Examples
 

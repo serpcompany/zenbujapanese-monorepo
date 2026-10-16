@@ -177,6 +177,30 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(find("word-detail.screen", in: app))
   }
 
+  func testShareOffersTheWordsWebLink() {
+    let app = openJapan()
+    assertShareOffersAWebLink(titled: "日本", from: find("word-detail.share", in: app), in: app)
+  }
+
+  func testShareOffersTheKanjisWebLink() {
+    let app = openJapan()
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
+    waitFor(find("kanji-detail.strokes", in: app))
+    assertShareOffersAWebLink(titled: "日", from: find("kanji-detail.share", in: app), in: app)
+  }
+
+  private func assertShareOffersAWebLink(
+    titled title: String, from share: XCUIElement, in app: XCUIApplication
+  ) {
+    tap(share)
+    if device == .mac {
+      waitFor(menuChoice("Add to Reading List", in: app))
+      return
+    }
+    waitFor(app.cells["Add to Reading List"])
+    waitUntil(app.otherElements["LP.CaptionBar.TopCaption"], mentions: title)
+  }
+
   private func openJapan(_ environment: [String: String] = [:]) -> XCUIApplication {
     let app = launch(environment)
     search("japan", in: app)

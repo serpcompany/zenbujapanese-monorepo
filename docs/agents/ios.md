@@ -355,42 +355,9 @@ installed; install it again to renew it.
 
 ## Links from the website
 
-The app opens zenbujapanese.com's search and word URLs, and the kanji URLs the website removed,
-as universal links (#568; what each opens is in the [product docs](../../apps/ios/docs/product/dictionary.md#links-from-zenbujapanesecom)).
-`apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
-link in the app only once it has fetched the site's association file, through Apple's CDN, and
-found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
-only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.dictionary` in
-the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
-team, `847HR8U8D9`.
-
-SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
-which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
-hands the link's host and path to the core (`websiteRoute`,
-[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
-decoded one path segment at a time, with the parser the website uses, and finds a word URL's
-entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
-the host `zenbujapanese.com` routes the same way.
-
-Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
-association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlements and with a URL scheme that is never committed, added
-to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
-under that scheme:
-
-```sh
-cp apps/ios/App/Info.plist /tmp/link-check.plist
-plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
-xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
-  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
-xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
-```
-
-Once the file is live, check it on a device: tapping
-`https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
-Detail, and the same link opens the website on a device without the app.
+The app opens zenbujapanese.com's links as universal links, and its **Share** sends them:
+[`ios-website-links.md`](ios-website-links.md) has how, the entitlement and association file
+they need, and their checks.
 
 ## Interactive parsing comparison harness
 
