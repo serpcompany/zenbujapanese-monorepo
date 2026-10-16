@@ -4,13 +4,12 @@ import TranslatorCore
 
 struct AccountTabRoot: View {
   let store: EncounterMediaStore
-  let notes: WordNoteStore
   let translate: TranslateExperience
   let words: TranslateWordLinks
   let openItem: (String, String, String) -> Void
 
   var body: some View {
-    AccountRootView(translationHistory: translate.history, notes: notes)
+    AccountRootView(translationHistory: translate.history)
       .navigationDestination(for: AccountRoute.self) { route in
         switch route {
         case .profile:
@@ -22,7 +21,7 @@ struct AccountTabRoot: View {
         case .mediaLibrary:
           MediaLibraryView(store: store)
         case .notesWithoutAWord:
-          NotesWithoutAWordView(store: notes)
+          NotesWithoutAWordView()
         case .knownWords:
           KnownWordsView { openItem($0.entryID, $0.headword, $0.reading) }
         case .wordLists:
@@ -43,9 +42,8 @@ struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
   @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
-  @State private var notesWithoutAWord = 0
+  @Environment(NotesWithoutAWord.self) private var notesWithoutAWord
   let translationHistory: ConversationHistory
-  let notes: WordNoteStore
 
   var body: some View {
     List {
@@ -86,11 +84,11 @@ struct AccountRootView: View {
         }
         .accessibilityIdentifier("account.translations")
 
-        if notesWithoutAWord > 0 {
+        if !notesWithoutAWord.notes.isEmpty {
           NavigationLink(value: AccountRoute.notesWithoutAWord) {
             AccountCountRowLabel(
               "Notes Without a Word", systemImage: "note.text", tint: .yellow,
-              count: notesWithoutAWord)
+              count: notesWithoutAWord.notes.count)
           }
           .accessibilityIdentifier("account.notes-without-a-word")
         }
@@ -135,7 +133,6 @@ struct AccountRootView: View {
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
     .inlineNavigationTitle()
-    .task { notesWithoutAWord = await notes.withoutAWord().count }
   }
 }
 

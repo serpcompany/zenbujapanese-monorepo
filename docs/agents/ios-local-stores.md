@@ -83,10 +83,19 @@ shows. `WordNoteStorage` first merges `lookup.word-notes.v4` into v5, where a no
 keeps v5's text, moves the notes, and removes v4 once v5 is written; a v4 that can't be read in
 full is kept aside as any store is. A hash the dictionary doesn't have stays as its key, in v5 or
 in the index, and is looked up again at each launch: its notes are `withoutAWord`, which Account's
-**Notes Without a Word** lists, and its photos stay in the Media Library with their headword. When
-the dictionary can't be read, nothing moves until a launch that can read it. Every one of the
-218,382 entries in 1.0.1's database, which 1.0.0 shares, has the `note_identity` it has in the
-one 2.0.0 shipped and the app still bundles, so every App Store version's notes move (#474).
-The importer has to keep writing `note_identity`, with the retired part-of-speech labels in its
-signature, while an installed app may still hold notes under it; `EarlierWordKeysTests` reads
-the bundled database and fails without the column.
+**Notes Without a Word** lists (`NotesWithoutAWord`, loaded once at launch into the app's
+environment, so Account draws the row at once, and changed by the screen's deletions, so the row
+goes on the Mac too, where a covered screen's `.task` doesn't run again). Its photos stay in the
+Media Library with their headword. When the dictionary can't be read, `NoteIdentityLookup`
+answers nothing: nothing moves, `withoutAWord` lists nothing, and the next launch that can read
+it moves them.
+
+The mapping holds only while each entry keeps the `note_identity` the version that saved a note
+gave it, and a learner can update from 1.0.0 straight to any later version. In the bundled
+database every entry has the value it had in 1.0.1's, which 1.0.0 shares, and in 2.0.0's: the
+#474 check compared all 218,382 entries' IDs and hashes against 1.0.1's database from Git LFS.
+`import_jmdict.py` still computes the hash from each entry, so a JMdict refresh that edits a word
+would give it a new one; `test_note_identity_contract.py` pins every entry's ID and hash, and fails
+such a rebuild until the importer writes each existing entry's value from the previous database
+([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), Refresh a source snapshot).
+`EarlierWordKeysTests` reads the bundled database, so it fails without the column.

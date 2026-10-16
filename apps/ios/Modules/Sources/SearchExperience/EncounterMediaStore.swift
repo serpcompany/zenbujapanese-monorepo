@@ -264,8 +264,8 @@ actor EncounterMediaStorage {
 
   private func placeEarlierWords() async {
     guard var current = index() else { return }
-    let placed = await placing.wordIDs(for: current.encounters.map(\.word.id))
-    guard !placed.isEmpty else { return }
+    let answer = await placing.wordIDs(for: current.encounters.map(\.word.id))
+    guard let placed = answer, !placed.isEmpty else { return }
     var kept = Set<[String]>()
     current.encounters = current.encounters.compactMap { encounter in
       let word = placed[encounter.word.id].map {

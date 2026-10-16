@@ -12,19 +12,23 @@ struct EarlierWordKeysTests {
     "a word's notes and photos are keyed by its Language Reference ID, so an edit to its meanings keeps them"
   )
   func keyedByLanguageReferenceID() async throws {
+    defer { fixture.remove() }
     let id = LanguageReferenceID(rawValue: SavedWords.taberu.rawValue)
     let taberu = try #require(try await LookupClient.live.entry(id))
     let item = SavedItem.word(taberu)
+    let edited = SavedItem.word(
+      DictionaryEntry.fixture(id: id.rawValue, headword: taberu.headword, reading: taberu.reading))
     #expect(item.id == SavedWords.taberu)
     #expect(item.encounterReference.id == SavedWords.taberu)
 
     let temporary = try TemporaryDefaults()
-    let storage = try storage(in: temporary, placing: .live)
-    await storage.save(LearnerWordNote(text: "毎日食べる"), for: item.id)
-    let edited = DictionaryEntry.fixture(
-      id: id.rawValue, headword: taberu.headword, reading: taberu.reading)
-    #expect(edited.meanings != taberu.meanings)
-    #expect(await storage.load(SavedItem.word(edited).id).map(\.text) == ["毎日食べる"])
+    let notes = try storage(in: temporary, placing: .live)
+    await notes.save(LearnerWordNote(text: "毎日食べる"), for: item.id)
+    let photos = fixture.launch(placing: .live)
+    await photos.save(fixture.photo, for: item.encounterReference)
+
+    #expect(await notes.load(edited.id).map(\.text) == ["毎日食べる"])
+    #expect(await photos.encounters(for: edited.encounterReference).map(\.id) == [fixture.photo.sha256])
   }
 
   @Test(
@@ -33,12 +37,12 @@ struct EarlierWordKeysTests {
   func movesEarlierNotes() async throws {
     let temporary = try TemporaryDefaults()
     let shoku = SavedItem.kanji(try #require(KanjiCharacter("食")), reading: "ショク").id
-    temporary.defaults.set(
-      try SavedWords.earlierNotes([
+    try keep(
+      [
         SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "1", text: "毎日食べる")],
         SavedWords.miruNoteIdentity: [LearnerWordNote(id: "2", text: "よく見る")],
         shoku.rawValue: [LearnerWordNote(id: "3", text: "食べ物の食")],
-      ]), forKey: earlierKey)
+      ], in: temporary)
     let storage = try storage(in: temporary, placing: .live)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
@@ -53,11 +57,11 @@ struct EarlierWordKeysTests {
   func keepsTheNotesOfBothEntries() async throws {
     let temporary = try TemporaryDefaults()
     let identities = SavedWords.enmaNoteIdentities
-    temporary.defaults.set(
-      try SavedWords.earlierNotes([
+    try keep(
+      [
         identities[1]: [LearnerWordNote(id: "2", text: "二つ目の閻魔")],
         identities[0]: [LearnerWordNote(id: "1", text: "一つ目の閻魔")],
-      ]), forKey: earlierKey)
+      ], in: temporary)
     let storage = try storage(in: temporary, placing: .live)
 
     #expect(await storage.load(SavedWords.enma).map(\.text) == ["一つ目の閻魔", "二つ目の閻魔"])
@@ -69,14 +73,13 @@ struct EarlierWordKeysTests {
   )
   func keepsANoteWithoutAWord() async throws {
     let temporary = try TemporaryDefaults()
-    let gone = SavedItemID(rawValue: SavedWords.goneNoteIdentity)
-    let note = LearnerWordNote(id: "1", text: "その言葉は辞書にない")
-    temporary.defaults.set(try SavedWords.earlierNotes([gone.rawValue: [note]]), forKey: earlierKey)
+    let (gone, note) = (SavedWords.goneNote.key, SavedWords.goneNote.note)
+    try keep([gone.rawValue: [note]], in: temporary)
 
     let launched = try storage(in: temporary, placing: .live)
     let withoutAWord = await launched.withoutAWord()
 
-    #expect(withoutAWord == [NoteWithoutAWord(key: gone, note: note)])
+    #expect(withoutAWord == [SavedWords.goneNote])
     #expect(temporary.defaults.object(forKey: earlierKey) == nil)
     let relaunched = try storage(in: temporary, placing: .live)
     #expect(await relaunched.withoutAWord() == withoutAWord)
@@ -85,17 +88,20 @@ struct EarlierWordKeysTests {
     #expect(try storedKeys(in: temporary).isEmpty)
   }
 
-  @Test("notes not placed while the dictionary couldn't be read move at the next launch that can")
+  @Test(
+    "notes not placed while the dictionary couldn't be read aren't listed as without a word, and move at the next launch that can"
+  )
   func placesNotesOnceTheDictionaryReads() async throws {
     let temporary = try TemporaryDefaults()
-    temporary.defaults.set(
-      try SavedWords.earlierNotes([
+    try keep(
+      [
         SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "1", text: "毎日食べる")]
-      ]), forKey: earlierKey)
+      ], in: temporary)
 
     let first = try storage(in: temporary, placing: SavedWords.unreadable)
 
     #expect(await first.load(SavedWords.taberu).isEmpty)
+    #expect(await first.withoutAWord().isEmpty)
     #expect(temporary.defaults.object(forKey: earlierKey) == nil)
     let relaunched = try storage(in: temporary, placing: SavedWords.lookup)
     #expect(await relaunched.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
@@ -104,8 +110,8 @@ struct EarlierWordKeysTests {
   @Test("a note in both stores keeps its newer text, and the earlier store's other notes join it")
   func keepsTheNewerText() async throws {
     let temporary = try TemporaryDefaults()
-    temporary.defaults.set(
-      try SavedWords.earlierNotes([
+    try keep(
+      [
         SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]
       ]), forKey: WordNoteStorage.storageKey)
     temporary.defaults.set(
@@ -113,7 +119,7 @@ struct EarlierWordKeysTests {
         SavedWords.taberuNoteIdentity: [
           LearnerWordNote(id: "1", text: "毎日食べる"), LearnerWordNote(id: "2", text: "朝ごはん"),
         ]
-      ]), forKey: earlierKey)
+      ], in: temporary)
     let storage = try storage(in: temporary, placing: SavedWords.lookup)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["よく食べる", "朝ごはん"])
@@ -139,28 +145,94 @@ struct EarlierWordKeysTests {
   )
   func movesEarlierPhotos() async throws {
     defer { fixture.remove() }
-    let (photo, other) = (fixture.photo.sha256, fixture.otherPhoto.sha256)
     let identities = SavedWords.enmaNoteIdentities
     let gone = SavedWords.goneNoteIdentity
-    _ = try fixture.writeIndex(
-      #"""
-      {"media":{"\#(photo)":{"name":"ramen.jpg","savedAt":2},"\#(other)":{"name":"sushi.jpg","savedAt":1}},
-      "encounters":[
-      {"word":{"id":{"rawValue":"\#(identities[0])"},"headword":"閻魔","reading":"えんま"},"mediaID":"\#(photo)","savedAt":2},
-      {"word":{"id":{"rawValue":"\#(identities[1])"},"headword":"閻魔","reading":"えんま"},"mediaID":"\#(photo)","savedAt":2},
-      {"word":{"id":{"rawValue":"\#(gone)"},"headword":"消えた","reading":"きえた"},"mediaID":"\#(other)","savedAt":1}]}
-      """#)
-    for attachment in [fixture.photo, fixture.otherPhoto] {
-      try attachment.data.write(to: fixture.imageURL(of: attachment))
-    }
+    try writeEarlierIndex([
+      (identities[0], "閻魔", "えんま", fixture.photo, 2),
+      (identities[1], "閻魔", "えんま", fixture.photo, 2),
+      (gone, "消えた", "きえた", fixture.otherPhoto, 1),
+    ])
     let storage = fixture.launch(placing: .live)
 
     let enma = EncounterWordReference(id: SavedWords.enma, headword: "閻魔", reading: "えんま")
-    #expect(await storage.encounters(for: enma).map(\.id) == [photo])
+    #expect(await storage.encounters(for: enma).map(\.id) == [fixture.photo.sha256])
     let library = await storage.library()
-    #expect(library.map(\.id) == [photo, other])
+    #expect(library.map(\.id) == [fixture.photo.sha256, fixture.otherPhoto.sha256])
     #expect(library.map { $0.words.map(\.id.rawValue) } == [[SavedWords.enma.rawValue], [gone]])
     #expect(library.last?.words.map(\.headword) == ["消えた"])
+  }
+
+  @Test("photos not placed while the dictionary couldn't be read stay listed, and move at the next launch that can")
+  func placesPhotosOnceTheDictionaryReads() async throws {
+    defer { fixture.remove() }
+    try writeEarlierIndex([(SavedWords.taberuNoteIdentity, "食べる", "たべる", fixture.photo, 1)])
+
+    let first = fixture.launch(placing: SavedWords.unreadable)
+
+    #expect(await first.encounters(for: fixture.word).isEmpty)
+    #expect(await first.library().flatMap(\.words).map(\.headword) == ["食べる"])
+    let relaunched = fixture.launch(placing: SavedWords.lookup)
+    #expect(await relaunched.encounters(for: fixture.word).map(\.id) == [fixture.photo.sha256])
+  }
+
+  @Test("an earlier store that isn't data is kept aside, and notes save as before")
+  func keepsAnEarlierStoreThatIsntDataAside() async throws {
+    let temporary = try TemporaryDefaults()
+    temporary.defaults.set("not data", forKey: earlierKey)
+    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+
+    await storage.save(LearnerWordNote(text: "新しいメモ"), for: SavedWords.taberu)
+
+    #expect(await storage.load(SavedWords.taberu).map(\.text) == ["新しいメモ"])
+    #expect(temporary.defaults.keptValues(of: earlierKey).compactMap { $0 as? String } == ["not data"])
+    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
+  }
+
+  @Test("Notes Without a Word lists each note whose word is gone until it's deleted")
+  @MainActor
+  func listsNotesWithoutAWordUntilDeleted() async throws {
+    let temporary = try TemporaryDefaults()
+    try keep(
+      [
+        SavedWords.goneNoteIdentity: [SavedWords.goneNote.note],
+        SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "2", text: "毎日食べる")],
+      ], in: temporary)
+    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+    let saved = NotesWithoutAWord(
+      store: WordNoteStore(
+        load: { await storage.load($0) }, save: { await storage.save($0, for: $1) },
+        withoutAWord: { await storage.withoutAWord() }))
+
+    await saved.reload()
+    #expect(saved.notes == [SavedWords.goneNote])
+    await saved.delete(try #require(saved.notes.first))
+    #expect(saved.notes.isEmpty)
+    #expect(await storage.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
+  }
+
+  private func writeEarlierIndex(
+    _ encounters: [
+      (identity: String, headword: String, reading: String, photo: EncounterMediaAttachment, savedAt: Int)
+    ]
+  ) throws {
+    var media: [String] = []
+    var records: [String] = []
+    for encounter in encounters {
+      let id = encounter.photo.sha256
+      let record = #""\#(id)":{"name":"\#(encounter.photo.name)","savedAt":\#(encounter.savedAt)}"#
+      if !media.contains(record) { media.append(record) }
+      let word = #"{"id":{"rawValue":"\#(encounter.identity)"},"headword":"\#(encounter.headword)","reading":"\#(encounter.reading)"}"#
+      records.append(#"{"word":\#(word),"mediaID":"\#(id)","savedAt":\#(encounter.savedAt)}"#)
+    }
+    _ = try fixture.writeIndex(
+      #"{"media":{\#(media.joined(separator: ",")),"encounters":[\#(records.joined(separator: ","))]}"#)
+    for attachment in [fixture.photo, fixture.otherPhoto] {
+      try attachment.data.write(to: fixture.imageURL(of: attachment))
+    }
+  }
+
+  private func keep(_ notes: [String: [LearnerWordNote]], in temporary: TemporaryDefaults) throws {
+    temporary.defaults.set(try SavedWords.earlierNotes(notes), forKey: earlierKey)
   }
 
   private func storage(in temporary: TemporaryDefaults, placing: NoteIdentityLookup) throws

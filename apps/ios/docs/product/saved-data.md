@@ -25,30 +25,33 @@ its Language Reference ID, which an edit to its meanings doesn't change).
 Earlier versions saved a word's notes and photos under a hash of its headword, forms, and meanings
 (its note identity). The first time the app reads them, it moves each to the Language Reference ID
 of the word that hash names in its dictionary, so they show on the same word as before, and a word
-JMdict lists twice keeps the notes saved under either entry. Every App Store version's dictionary
-gives each word the hash this one does, so every note those versions saved moves to its word. A
-note whose hash names no word, such as one a test build saved on a word since edited, is kept as
-it was and listed under Account's [Notes Without a Word](#notes-without-a-word), where the
+JMdict lists twice keeps the notes saved under either entry. The app's dictionary gives every
+word the hash 1.0.0, 1.0.1, and 2.0.0 gave it, so every note those versions saved moves to its
+word. A note whose hash names no word, such as one a test build saved on a word since edited, is
+kept as it was and listed under Account's [Notes Without a Word](#notes-without-a-word), where the
 learner can copy or delete it; a photo whose word is gone stays in the
-[Media Library](#media-library), with the headword it was saved with.
+[Media Library](#media-library), with the headword it was saved with. While the dictionary can't
+be read, nothing moves and nothing is listed as without a word; the next launch that can read it
+moves them.
 
 Check: UI `WordDetailUITests.testANoteAnEarlierVersionSavedIsOnItsWord` and
 `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted`; package
 `EarlierWordKeysTests` (notes and photos moved from their hash to the word's ID, both entries of a
 word JMdict lists twice, a kanji's notes left on the kanji, a note whose word is gone kept, listed,
-and deleted, notes moved at a later launch when the dictionary couldn't be read, the newer text of
-a note kept, and earlier notes that can't all be read kept aside).
+and deleted, notes and photos moved at a later launch when the dictionary couldn't be read, the
+newer text of a note kept, and earlier notes that can't all be read, or aren't data, kept aside);
+contract `test_note_identity_contract.py` (every entry's hash pinned as those versions had it).
 
 ## Notes Without a Word
 
 Account shows a **Notes Without a Word** row, with how many, only while some note an earlier
-version saved names no word in the app's dictionary. It opens a list of those notes' text, which
-the learner can select and copy, under a line saying why they aren't on a word; a swipe
-(right-click on the Mac) deletes one. Once none are left, the list says so, and the row is gone
-when Account shows again.
+version saved names no word in the app's dictionary. It opens a list of those notes' text, with a
+line below them saying why they aren't on a word. A swipe (right-click on the Mac) offers
+**Delete** and **Copy**, which copies the note's text. Once none are left, the list says so, and
+the row is gone from Account.
 
 Check: UI `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted`; package
-`EarlierWordKeysTests`.
+`EarlierWordKeysTests.listsNotesWithoutAWordUntilDeleted`.
 
 ## Media Library
 

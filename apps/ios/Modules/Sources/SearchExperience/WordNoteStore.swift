@@ -53,6 +53,7 @@ actor WordNoteStorage {
   private let defaults: UserDefaults
   private let placing: NoteIdentityLookup
   private var earlierNotesPlaced: Task<Void, Never>?
+  private var dictionaryAnswered = true
 
   init(defaults: UserDefaults = .standard, placing: NoteIdentityLookup) {
     self.defaults = defaults
@@ -75,6 +76,7 @@ actor WordNoteStorage {
 
   func withoutAWord() async -> [NoteWithoutAWord] {
     await placeEarlierNotes()
+    guard dictionaryAnswered else { return [] }
     return notes(under: Self.storageKey)
       .map { (key: SavedItemID(rawValue: $0.key), notes: $0.value) }
       .filter { $0.key.isNoteIdentity }
@@ -97,7 +99,9 @@ actor WordNoteStorage {
         stored[key, default: []].keep(earlier)
       }
     }
-    let placed = await placing.wordIDs(for: stored.keys.map(SavedItemID.init(rawValue:)))
+    let answer = await placing.wordIDs(for: stored.keys.map(SavedItemID.init(rawValue:)))
+    dictionaryAnswered = answer != nil
+    let placed = answer ?? [:]
     for (earlier, word) in placed.sorted(by: { $0.key < $1.key }) {
       guard let moving = stored.removeValue(forKey: earlier.rawValue) else { continue }
       stored[word.rawValue, default: []].keep(moving)

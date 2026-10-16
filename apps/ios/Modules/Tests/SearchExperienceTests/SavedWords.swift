@@ -15,6 +15,9 @@ enum SavedWords {
     "wn1:344c94836ac9a80e679ce27db9fbadc7e3802cb38eebf7bb3b345962075e789d:2",
   ]
   static let goneNoteIdentity = "wn1:" + String(repeating: "0", count: 64)
+  static let goneNote = NoteWithoutAWord(
+    key: SavedItemID(rawValue: goneNoteIdentity),
+    note: LearnerWordNote(id: "1", text: "その言葉は辞書にない"))
 
   static let lookup = NoteIdentityLookup { identities in
     let named = [taberuNoteIdentity: taberu, miruNoteIdentity: miru]

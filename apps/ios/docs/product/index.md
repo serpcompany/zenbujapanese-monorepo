@@ -229,15 +229,16 @@ a small **Account** title in the bar rather than a large one. It provides:
   lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
-iPad), `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a
-Word), `testReadingAidsAndFrequencyDictionariesOpen`,
+iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
-first credit, Jiten's notice, and a license text); contract `test_account_service_settings.py`
-(production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits, and
-none it can't read), and the recorded `RomajiConformanceTests` with core `detail/romaji.test.ts`
-(how a reading and a sentence are written in romaji).
+first credit, Jiten's notice, and a license text), and
+`SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a Word); contract
+`test_account_service_settings.py` (production in TestFlight and App Store builds, staging in
+Debug); package `PlayerReadingAidTests` and `WordMeaningTests` (the Reading Aids preferences),
+`SourceCreditsTests` (the core's credits, and none it can't read), and the recorded
+`RomajiConformanceTests` with core `detail/romaji.test.ts` (how a reading and a sentence are written
+in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -370,8 +371,8 @@ stand-in account service; UI `AccountUITests` (offline, the app signed out).
 
 What doesn't sync, and why:
 
-- **Word notes**, which the account service doesn't hold yet: it answers a note `unknown_entity`.
-  They're keyed by Language Reference ID, as known words and lists are, so they're ready to.
+- **Word notes**, which the account service doesn't hold yet (it answers a note `unknown_entity`),
+  keyed by Language Reference ID but for those under Notes Without a Word, which keep their hash.
 - **Media Library photos**, which need file storage the account service doesn't have.
 - **Translate conversations**, which hold other people's words: only the sentences the learner
   bookmarks sync, each on its own.

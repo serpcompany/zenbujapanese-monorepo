@@ -37,11 +37,6 @@ updates. Word notes and encounter media still use `WordNoteID`, which hashes a w
 and so changes when JMdict edits them. They move to Language Reference IDs before any learner
 data syncs.
 
-Amended (issue 474): word notes and encounter media are keyed by Language Reference ID too. The
-app moves what an earlier version saved under a word's note identity to that word's ID through
-the artifact's `note_identity` column, which stays while an installed app may still hold notes
-under it.
-
 ## Precompute first, and hold clients to one conformance suite
 
 Logic moves into the artifact as precomputed rows wherever it can, such as example links,

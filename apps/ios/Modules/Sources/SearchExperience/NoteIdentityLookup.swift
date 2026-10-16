@@ -10,15 +10,15 @@ struct NoteIdentityLookup: Sendable {
     subsystem: Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary",
     category: "NoteIdentityLookup")
 
-  func wordIDs(for keys: some Sequence<SavedItemID>) async -> [SavedItemID: SavedItemID] {
+  func wordIDs(for keys: some Sequence<SavedItemID>) async -> [SavedItemID: SavedItemID]? {
     let identities = Set(keys.filter(\.isNoteIdentity).map(\.rawValue))
     guard !identities.isEmpty else { return [:] }
     let found: [String: LanguageReferenceID]
     do {
       found = try await words(identities.sorted())
     } catch {
-      Self.logger.error("Couldn't read the words note identities name: \(error, privacy: .public)")
-      return [:]
+      Self.logger.error("Couldn't look up the words of earlier notes: \(error, privacy: .public)")
+      return nil
     }
     var placed: [SavedItemID: SavedItemID] = [:]
     for (identity, word) in found {

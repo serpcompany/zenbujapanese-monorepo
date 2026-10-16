@@ -64,7 +64,12 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
 3. Name the new records in `apps/ios/LanguageData/Sources/README.md` and, for EDRDG's files,
    `EDRDG-ATTRIBUTION.md`, which ships in the language-data release. For a new JMdict, also update
    the evidence counts in `jmdict_entries.py` to the new export's.
-4. Rebuild everything, re-record the suites, and list in the pull request what changed for
+4. For a new JMdict, keep every existing entry's `note_identity`: the app moves the notes earlier
+   versions saved under it to their word (`docs/agents/ios-local-stores.md`), and
+   `test_note_identity_contract.py` fails on any changed value. The importer computes it from the
+   entry today, so it first has to write each entry the previous database has with that
+   database's value; pin the test again once every earlier entry's value is unchanged.
+5. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
 ## Provenance
