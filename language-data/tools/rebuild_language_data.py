@@ -14,10 +14,11 @@ from pathlib import Path
 from language_data_tools import file_sha256
 
 TOOLS = Path(__file__).resolve().parent
-IOS = TOOLS.parent
-REPOSITORY = IOS.parent.parent
-SOURCES = IOS / "LanguageData/Sources"
-GENERATED = IOS / "LanguageData/Generated"
+LANGUAGE_DATA = TOOLS.parent
+REPOSITORY = LANGUAGE_DATA.parent
+IOS = REPOSITORY / "apps/ios"
+SOURCES = LANGUAGE_DATA / "sources"
+GENERATED = LANGUAGE_DATA / "generated"
 RESOURCES = IOS / "Modules/Sources/SearchExperience/Resources"
 CATALOG = RESOURCES / "FrequencyPackCatalog.json"
 ANIME_FIXTURE = IOS / "Modules/Tests/SearchExperienceTests/Fixtures/jiten-anime.json.zip"
@@ -240,7 +241,7 @@ def same_source(manifest: dict, pack_report: dict) -> None:
     if pack_report["sourceSHA256"] != manifest["sourceSHA256"]:
         raise SystemExit(
             f"{manifest['packID']} has a new source: update its manifest's source fields "
-            "(apps/ios/Tools/README.md, Rebuild everything), publish a downloadable pack's source, then rebuild"
+            "(language-data/tools/README.md, Rebuild everything), publish a downloadable pack's source, then rebuild"
         )
 
 
@@ -341,7 +342,7 @@ def build_ranked_lists(wikipedia_artifact: Path, archives: Path) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Rebuild every artifact the iOS data tools write, in dependency order, and update the catalog."
+        description="Rebuild every artifact the language-data tools write, in dependency order, and update the catalog."
     )
     parser.add_argument("--download", action="store_true", help="fetch missing versioned upstream sources")
     parser.add_argument("--jiten-sources", type=Path, help="keep the Jiten source ZIPs here, for publishing")

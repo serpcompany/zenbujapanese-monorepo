@@ -3,10 +3,3 @@ Modules/.build/
 Modules/.swiftpm/
 xcuserdata/
 Tools/**/__pycache__/
-
-LanguageData/Sources/*.gz
-!LanguageData/Sources/JMdict_e-*.gz
-LanguageData/Sources/*.bz2
-LanguageData/Sources/*.zip
-LanguageData/Sources/*.sqlite
-LanguageData/Sources/*.part

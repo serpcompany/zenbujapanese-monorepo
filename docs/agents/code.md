@@ -75,9 +75,10 @@ or test helper named for what it does, and call it from both. jscpd finds them
 There are no exceptions without a reason that makes sharing the code unsafe now, and none today. An
 exception goes in `knownDuplicates` in
 [`tools/checks/src/known-duplicates.ts`](../../tools/checks/src/known-duplicates.ts), as the pair of
-files, how many blocks they repeat, and why, and may only shrink, as size exceptions do. The iOS
-data importers record their own SHA-256 in the language data they build, so sharing code there
-means rebuilding that data in the same pull request ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)).
+files, how many blocks they repeat, and why, and may only shrink, as size exceptions do. The
+language-data importers record their own SHA-256 in the data they build, so sharing code there
+means rebuilding that data in the same pull request
+([`language-data/tools/README.md`](../../language-data/tools/README.md)).
 
 ## Dead code
 

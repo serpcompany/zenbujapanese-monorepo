@@ -5,13 +5,21 @@ Every Zenbu app will read one versioned language-data release from R2
 [issue 463](https://github.com/serpcompany/zenbujapanese-monorepo/issues/463)). This folder
 holds the pipeline that packages a release and publishes it to the `zenbujapanese-language-data`
 R2 bucket. No app reads the bucket yet. Step 4 of the plan on #463 had the website's D1 import
-read it; ADR 0009's dictionary service replaced that import and reads the app's bundled files. The source data, tools, and conformance suites still live under `apps/ios` until #469
-moves them.
+read it; ADR 0009's dictionary service replaced that import and reads the app's bundled files.
+It also holds what every client's data is built from and checked against: the pinned sources, the
+tools that build the app's bundled files from them, and the conformance suites (#469 moved them
+here from `apps/ios`). The built files stay in the app's bundle,
+`apps/ios/Modules/Sources/SearchExperience/Resources/`.
 
 | File | What it is |
 | --- | --- |
+| [`sources/`](sources/) | The pinned source records, the snapshots committed in Git LFS, and their notices ([its README](sources/README.md)). |
+| [`tools/`](tools/) | The importers and builders that write the app's bundled data and the import reports, and their contract tests in `tools/tests/` ([their README](tools/README.md): rebuilding everything, refreshing a snapshot, and provenance). |
+| [`generated/`](generated/) | The import reports, which tie each built file to its inputs and tools by SHA-256, and the frequency analyses. |
+| [`candidates/`](candidates/), [`FREQUENCY_SOURCE_DECISIONS.md`](FREQUENCY_SOURCE_DECISIONS.md) | The frequency lists considered, and how the current packs were chosen. |
+| [`conformance/`](conformance/) | The conformance suites every client is held to (ADR 0006), recorded from the app; the app's, the service's, and the website's tests replay them. |
 | [`release.json`](release.json) | The release to publish (`YYYY.MM.N`). The release it follows comes from the bucket's `releases.json` when it's published. |
-| [`release-inputs.json`](release-inputs.json) | What goes in the release, by repository path. Paths start with a root name from `roots`, so a move (#469) changes only `roots`. Names and paths are checked when it loads: plain relative paths only, with no `..`. |
+| [`release-inputs.json`](release-inputs.json) | What goes in the release, by repository path. Paths start with a root name from `roots`, so a move changes only `roots`, as #469's did. Names and paths are checked when it loads: plain relative paths only, with no `..`. |
 | [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
 | [`word-cards.md`](word-cards.md) | The word-card format (`zenbu.word-cards.v1`) an app without the language data ships and fetches, and the command that exports cards. |
 | [`schemas/language-data-manifest.v1.schema.json`](schemas/language-data-manifest.v1.schema.json) | The manifest's JSON Schema, `zenbu.language-data-manifest.v1`. |
@@ -194,7 +202,7 @@ alone, reached at `https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com` thr
   exists, the new manifest must match it in everything but `git_commit` and `workflow_run`.
   - If it matches, the run is a no-op and the published manifest stays as it is. So rerunning,
     or merging a change that leaves the release's content alone, publishes nothing.
-  - If the content differs, including a changed input under `apps/ios`, the publish fails before
+  - If the content differs, including a changed input file, the publish fails before
     uploading anything. Bump `release.json` to publish it.
 - **`releases.json` is only appended to,** under `If-Match` on the ETag read at the start.
   - **Changed before the manifest is written:** releases.json is read again just before the

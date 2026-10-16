@@ -11,7 +11,6 @@ on:
       - '.github/workflows/language-data-build.yml'
       - '.github/actions/package-language-data/**'
       - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
-      - 'apps/ios/LanguageData/**'
 
 concurrency:
   group: language-data-build-${{ github.ref }}
@@ -34,7 +33,7 @@ jobs:
           paths: >-
             language-data .python-version .github/workflows/language-data-release.yml
             .github/actions/package-language-data
-            apps/ios/Modules/Sources/SearchExperience/Resources apps/ios/LanguageData
+            apps/ios/Modules/Sources/SearchExperience/Resources
             .github/workflows/language-data-build.yml .github/actions/changed-paths
 
   build:

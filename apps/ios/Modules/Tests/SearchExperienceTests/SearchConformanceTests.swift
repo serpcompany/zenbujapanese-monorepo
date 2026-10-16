@@ -6,7 +6,7 @@ import Testing
 struct SearchConformanceTests {
   @Test("Search returns the suite's Language Reference IDs in the suite's order")
   func searchMatchesSuite() async throws {
-    let url = Self.suiteURL
+    let url = DetailConformance.suiteURL("search-retrieval.json")
     var suite = try JSONDecoder().decode(ConformanceSuite.self, from: Data(contentsOf: url))
     let databaseSHA256 = try DictionaryRankingArtifactContract.bundled().databaseSHA256
 
@@ -39,15 +39,6 @@ struct SearchConformanceTests {
         observed.readingRefinement == expected.readingRefinement,
         "「\(expected.query)」 reading refinement")
     }
-  }
-
-  private static var suiteURL: URL {
-    URL(fileURLWithPath: #filePath)
-      .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .appending(path: "LanguageData/Conformance/search-retrieval.json")
   }
 
   private static func observe(_ query: String, limit: Int) async throws -> ConformanceCase {
