@@ -130,10 +130,31 @@ final class NotesInSearchUITests: ZenbuUITestCase {
     tap(reveal(find("word-detail.note", in: app), in: app))
     let editor = waitFor(find("word-note.editor", in: app))
     let written = editor.value as? String ?? ""
-    focus(editor)
-    if device != .mac { editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap() }
-    editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
+    if device == .mac {
+      clickUntilFocused(editor, in: app)
+      editor.typeKey("a", modifierFlags: .command)
+      editor.typeText(XCUIKeyboardKey.delete.rawValue + replacement)
+    } else {
+      focus(editor)
+      editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+      editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
+    }
     tap(find("word-note.done", in: app))
     if !replacement.isEmpty { waitFor(labeled(replacement, in: app)) }
+  }
+
+  private func clickUntilFocused(_ editor: XCUIElement, in app: XCUIApplication) {
+    let focused = NSPredicate(format: "hasKeyboardFocus == true")
+    let editing = app.descendants(matching: .any)
+      .matching(NSPredicate(format: "identifier == 'word-note.editor' AND hasKeyboardFocus == true"))
+    let hasFocus = {
+      editing.firstMatch.exists || editor.descendants(matching: .any).matching(focused).firstMatch.exists
+    }
+    for _ in 0..<3 {
+      if hasFocus() { return }
+      tap(editor)
+      if comesTrue("the note's editor to take the keyboard", within: Self.patience / 3, hasFocus) { return }
+    }
+    waitUntil("the note's editor to take the keyboard", hasFocus)
   }
 }
