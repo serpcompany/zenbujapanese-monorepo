@@ -11,8 +11,6 @@ export const locales: readonly Locale[] = languages.map(language => language.cod
 
 export const defaultLocale: Locale = languages[0].code
 
-export const otherLocales: readonly Locale[] = locales.filter(locale => locale !== defaultLocale)
-
 export function isLocale(value: string): value is Locale {
   return (locales as readonly string[]).includes(value)
 }

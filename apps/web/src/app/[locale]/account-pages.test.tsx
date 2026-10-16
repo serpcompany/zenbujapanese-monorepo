@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
 import AccountPage from './account/page'
 import ForgotPasswordPage from './forgot-password/page'
 import LoginPage from './login/page'
@@ -17,17 +18,25 @@ afterEach(() => {
 
 const searchParams = Promise.resolve({})
 
-const pages = {
-  '/login/': () => LoginPage({ searchParams } as PageProps<'/login'>),
-  '/register/': () => RegisterPage({ searchParams } as PageProps<'/register'>),
-  '/forgot-password/': () => ForgotPasswordPage(),
-  '/account/': () => AccountPage({ searchParams } as PageProps<'/account'>)
+const pagesIn = (locale: Locale) => {
+  const params = Promise.resolve({ locale })
+  return {
+    '/login/': () => LoginPage({ params, searchParams } as PageProps<'/[locale]/login'>),
+    '/register/': () => RegisterPage({ params, searchParams } as PageProps<'/[locale]/register'>),
+    '/forgot-password/': () =>
+      ForgotPasswordPage({ params, searchParams } as PageProps<'/[locale]/forgot-password'>),
+    '/account/': () => AccountPage({ params, searchParams } as PageProps<'/[locale]/account'>)
+  }
 }
 
+const pages = pagesIn('en')
+
 const accountLinks = (html: string) =>
-  [...html.matchAll(/href="(\/(?:login|register|forgot-password|account)\/)"/g)].map(
+  [...html.matchAll(/href="((?:\/ja)?\/(?:login|register|forgot-password|account)\/)"/g)].map(
     ([, href]) => href
   )
+
+const emailOnly = { apiUrl: 'https://api.example.com', appleServicesId: null, google: false }
 
 describe('the account pages', () => {
   test.each(
@@ -42,7 +51,7 @@ describe('the account pages', () => {
   })
 
   test('offer signing in, and lead to each other, with an account service', async () => {
-    settings.current = { apiUrl: 'https://api.example.com', appleServicesId: null, google: false }
+    settings.current = emailOnly
     const login = renderToStaticMarkup(await pages['/login/']())
     expect(login).toContain('Email me a code')
     expect(accountLinks(login)).toEqual(['/register/', '/forgot-password/'])
@@ -71,5 +80,27 @@ describe('the account pages', () => {
       expect(offered).toBe(line)
       expect(accountLinks(html)).toEqual(line ? ['/login/'] : [])
     }
+  })
+
+  test('are in Japanese under /ja/, leading to the Japanese account pages and policy', async () => {
+    const japanese = pagesIn('ja')
+    expect(renderToStaticMarkup(await japanese['/login/']())).toContain(
+      'このサイトでは、Zenbuアカウントへのログインにまだ対応していません。'
+    )
+    settings.current = { ...emailOnly, appleServicesId: 'com.zenbujapanese.website', google: true }
+    const login = renderToStaticMarkup(await japanese['/login/']())
+    expect(login).toContain('<h1 class="text-2xl font-semibold">ログイン</h1>')
+    expect(login).toContain('Appleでサインイン')
+    expect(login).toContain('コードをメールで受け取る')
+    expect(accountLinks(login)).toEqual(['/ja/register/', '/ja/forgot-password/'])
+    const register = renderToStaticMarkup(await japanese['/register/']())
+    expect(accountLinks(register)).toEqual(['/ja/login/', '/ja/forgot-password/'])
+    expect(register).toContain('href="/ja/legal/privacy/">プライバシーポリシー</a>')
+    const forgot = renderToStaticMarkup(await japanese['/forgot-password/']())
+    expect(forgot).toContain('AppleまたはGoogleでアカウントを作成した場合は、')
+    expect(accountLinks(forgot)).toEqual(['/ja/login/'])
+    expect(renderToStaticMarkup(await japanese['/account/']())).toContain(
+      'アカウントを読み込んでいます…'
+    )
   })
 })

@@ -5,6 +5,8 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { pageExample } from '@/lib/dictionary/page-example'
+import { conjugationsIn, conjugationsText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { ConjugationsLink, ConjugationsSection } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
@@ -93,7 +95,11 @@ describe('the Frequency section', () => {
       { pack: 'jlpt', level: 5 },
       { pack: 'tubelex', rank: 949 }
     ])
-    act(() => root.render(<FrequencySection rows={rows} />))
+    act(() =>
+      root.render(
+        <FrequencySection rows={frequencyRowsIn(rows, 'en')} text={getDictionary('en').frequency} />
+      )
+    )
     expect(document.body.textContent).not.toContain('Frequency Details')
     const youtube = container.querySelector<HTMLButtonElement>('[data-frequency-row="YouTube"]')
     await act(async () => youtube?.click())
@@ -117,8 +123,15 @@ describe('the Conjugations section', () => {
     act(() =>
       root.render(
         <>
-          <ConjugationsLink label="Ichidan verb (transitive)" />
-          <ConjugationsSection title="Conjugations" conjugations={miru} />
+          <ConjugationsLink
+            label="Ichidan verb (transitive)"
+            opens={getDictionary('en').conjugations.showsConjugations}
+          />
+          <ConjugationsSection
+            conjugations={conjugationsIn(miru, 'en')}
+            locale="en"
+            text={conjugationsText('en')}
+          />
         </>
       )
     )

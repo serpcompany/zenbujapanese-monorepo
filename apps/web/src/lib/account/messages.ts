@@ -1,51 +1,46 @@
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { countOf, fill } from '@/lib/i18n/format'
 import type { Failure } from './client'
 
-const somethingWentWrong = 'Something went wrong on our side. Try again in a few minutes.'
-const confirmFirst = 'For your security, confirm it’s you first.'
-const anotherAccount = 'That account already signs in to another Zenbu account.'
-const linkedElsewhere =
-  'An account already uses that email. Sign in the way you made it, then add this way on your account page.'
-const notLinked =
-  'This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.'
-const unverified =
-  'That Apple or Google account’s email isn’t verified, so it can’t make an account.'
+export type AccountText = Dictionary['account']
+export type AccountMessages = AccountText['messages']
 
-const refusals: Record<string, string> = {
-  invalid_otp: 'That code isn’t right. Check it and try again, or send a new one.',
-  otp_expired: 'That code has expired. Send a new one.',
-  too_many_attempts: 'Too many wrong codes. Send a new one.',
-  account_not_linked: notLinked,
-  oauth_link_error: linkedElsewhere,
-  email_not_verified: unverified,
-  email_unavailable: 'Signing in with an email code isn’t available right now. Try again later.',
-  invalid_nonce: 'That took too long. Try again.',
-  social_account_already_linked: anotherAccount,
-  session_not_fresh: confirmFirst,
-  sign_in_again: confirmFirst,
-  failed_to_unlink_last_account: 'That’s your only way to sign in, so it stays.',
-  username_taken: 'That username is taken. Try another.',
-  version_conflict:
-    'Your profile changed in another app. Here it is now; make your change again if you still want it.',
-  apple_authorization_needed:
-    'Your account signs in with Apple, so continue with Apple to delete it.',
-  apple_authorization_invalid: 'Apple didn’t accept that. Continue with Apple again.',
-  apple_account_mismatch:
-    'That Apple ID is a different one from the one your account uses. Continue with the Apple ID your account uses.',
-  apple_unavailable:
-    'Apple didn’t answer, so nothing was deleted. Continue with Apple again in a few minutes.'
-}
+type Refusal = keyof AccountMessages['refusals']
 
-const returnedErrors: Record<string, string> = {
-  account_not_linked: linkedElsewhere,
-  email_not_verified: unverified,
-  account_already_linked_to_different_user: anotherAccount,
-  access_denied: 'Signing in with Google was cancelled.'
-}
+const refusals = new Map<string, Refusal>([
+  ['invalid_otp', 'wrongCode'],
+  ['otp_expired', 'codeExpired'],
+  ['too_many_attempts', 'tooManyWrongCodes'],
+  ['oauth_link_error', 'linkedElsewhere'],
+  ['email_not_verified', 'unverified'],
+  ['email_unavailable', 'emailUnavailable'],
+  ['invalid_nonce', 'tookTooLong'],
+  ['social_account_already_linked', 'anotherAccount'],
+  ['session_not_fresh', 'confirmFirst'],
+  ['sign_in_again', 'confirmFirst'],
+  ['failed_to_unlink_last_account', 'onlyWay'],
+  ['username_taken', 'usernameTaken'],
+  ['version_conflict', 'versionConflict'],
+  ['apple_authorization_needed', 'appleAuthorizationNeeded'],
+  ['apple_authorization_invalid', 'appleAuthorizationInvalid'],
+  ['apple_account_mismatch', 'appleAccountMismatch'],
+  ['apple_unavailable', 'appleUnavailable']
+])
 
-function waitFor(seconds: number): string {
-  if (seconds < 60) return `${seconds} second${seconds === 1 ? '' : 's'}`
-  const minutes = Math.ceil(seconds / 60)
-  return `${minutes} minute${minutes === 1 ? '' : 's'}`
+const returnedErrors = new Map<string, Refusal>([
+  ['account_not_linked', 'linkedElsewhere'],
+  ['email_not_verified', 'unverified'],
+  ['account_already_linked_to_different_user', 'anotherAccount'],
+  ['access_denied', 'googleCancelled']
+])
+
+const secondsInAMinute = 60
+
+function tryAgainIn(seconds: number, messages: AccountMessages, locale: Locale): string {
+  const { tooManyTries } = messages
+  if (seconds < secondsInAMinute) return countOf(tooManyTries.seconds, seconds, locale)
+  return countOf(tooManyTries.minutes, Math.ceil(seconds / secondsInAMinute), locale)
 }
 
 export interface ProvidersHere {
@@ -55,33 +50,38 @@ export interface ProvidersHere {
 
 const everyProvider: ProvidersHere = { apple: true, google: true }
 
-function signsInWithAProvider(here: ProvidersHere): string {
-  if (here.apple && here.google) return notLinked
-  if (!here.apple && !here.google) {
-    return 'This email’s account signs in with Apple or Google, which this site doesn’t offer yet, so you can’t sign in to it here for now.'
-  }
+function signsInWithAProvider(here: ProvidersHere, messages: AccountMessages): string {
+  const says = messages.signsInWithAProvider
+  if (here.apple && here.google) return says.offered
+  if (!here.apple && !here.google) return says.neither
   const [offered, missing] = here.apple ? ['Apple', 'Google'] : ['Google', 'Apple']
-  return `This email’s account signs in with Apple or Google. If it’s ${offered}, sign in with ${offered}, then add your email on your account page. This site doesn’t offer ${missing} yet.`
+  return fill(says.oneOf, { offered, missing })
 }
 
-export function failureMessage(failure: Failure, here: ProvidersHere = everyProvider): string {
-  if (failure.kind === 'offline') {
-    return 'We couldn’t reach your Zenbu account. Check your connection and try again.'
-  }
-  if (failure.kind === 'unexpected') return somethingWentWrong
+export function failureMessage(
+  failure: Failure,
+  messages: AccountMessages,
+  locale: Locale,
+  here: ProvidersHere = everyProvider
+): string {
+  if (failure.kind === 'offline') return messages.offline
+  if (failure.kind === 'unexpected') return messages.somethingWentWrong
   if (failure.status === 429) {
     return failure.retryAfter
-      ? `Too many tries. Try again in ${waitFor(failure.retryAfter)}.`
-      : 'Too many tries. Wait a few minutes, then try again.'
+      ? tryAgainIn(failure.retryAfter, messages, locale)
+      : messages.tooManyTries.wait
   }
-  if (failure.code === 'account_not_linked') return signsInWithAProvider(here)
-  const known = refusals[failure.code]
-  if (known) return known
-  return failure.status >= 500 || failure.message === '' ? somethingWentWrong : failure.message
+  if (failure.code === 'account_not_linked') return signsInWithAProvider(here, messages)
+  const known = refusals.get(failure.code)
+  if (known) return messages.refusals[known]
+  if (failure.status >= 500 || failure.message === '') return messages.somethingWentWrong
+  return fill(messages.asTheServiceSays, { message: failure.message })
 }
 
-export const returnedErrorMessage = (code: string) =>
-  returnedErrors[code.toLowerCase()] ?? 'Signing in with Google didn’t work. Try again.'
+export function returnedErrorMessage(code: string, messages: AccountMessages): string {
+  const known = returnedErrors.get(code.toLowerCase())
+  return known ? messages.refusals[known] : messages.googleFailed
+}
 
 export const needsFreshSignIn = (failure: Failure) =>
   failure.kind === 'refused' &&

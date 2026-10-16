@@ -4,19 +4,24 @@ import { HeadwordRuby } from '@/components/dictionary/headword-ruby'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
 import { Badge } from '@/components/ui/badge'
-import { frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
+import { appScreenText, frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
+import type { Locale } from '@/lib/i18n/config'
+import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
-export function ListPreview() {
+export function ListPreview({ locale }: { locale: Locale }) {
   return (
     <div
       aria-hidden="true"
       data-drawing
+      lang={locale === 'en' ? undefined : 'en'}
       className={cn(previewPanel, raisedPreview, 'w-full max-w-68 overflow-hidden')}
     >
       <div className="flex items-baseline justify-between px-3.5 pt-3 pb-2">
         <span className="text-lg font-semibold tracking-tight">{listPreview.name}</span>
-        <span className="text-xs text-muted-foreground">{listPreview.words.length} words</span>
+        <span className="text-xs text-muted-foreground">
+          {fill(appScreenText.words, { count: listPreview.words.length })}
+        </span>
       </div>
       <ul>
         {listPreview.words.map(word => (
@@ -28,7 +33,7 @@ export function ListPreview() {
             {word.known ? (
               <Badge className="bg-green-500/15 text-green-800 dark:text-green-400">
                 <CheckIcon data-icon="inline-start" className="stroke-3" />
-                Known
+                {appScreenText.known}
               </Badge>
             ) : null}
           </li>
@@ -38,12 +43,17 @@ export function ListPreview() {
   )
 }
 
-export function FrequencyPreview() {
+export function FrequencyPreview({ locale }: { locale: Locale }) {
   const { enabled, available, word } = frequencyPreview
   return (
-    <div aria-hidden="true" data-drawing className="flex w-full max-w-68 flex-col gap-3">
+    <div
+      aria-hidden="true"
+      data-drawing
+      lang={locale === 'en' ? undefined : 'en'}
+      className="flex w-full max-w-68 flex-col gap-3"
+    >
       <div className={cn(previewPanel, 'overflow-hidden text-sm')}>
-        <p className={cn(previewLabel, 'px-3 pt-2 pb-1')}>Enabled</p>
+        <p className={cn(previewLabel, 'px-3 pt-2 pb-1')}>{appScreenText.enabled}</p>
         {enabled.map((name, index) => (
           <p key={name} className="flex items-center gap-2.5 border-t px-3 py-2 font-medium">
             <span className="grid size-5 place-items-center rounded-full bg-muted text-[0.6875rem] tabular-nums">
@@ -54,7 +64,7 @@ export function FrequencyPreview() {
           </p>
         ))}
         <p className="border-t px-3 py-2 text-xs text-muted-foreground">
-          Available: {available.join(', ')}
+          {fill(appScreenText.available, { names: available.join(', ') })}
         </p>
       </div>
       <div
@@ -63,14 +73,14 @@ export function FrequencyPreview() {
         <RubyText segments={word.ruby} className="text-[1.0625rem]" />
         <span className="text-[0.8125rem] text-muted-foreground">{word.meaning}</span>
         <div className="basis-full">
-          <FrequencyBadges frequency={word.chips} />
+          <FrequencyBadges frequency={word.chips} locale="en" />
         </div>
       </div>
     </div>
   )
 }
 
-export function FuriganaPreview() {
+export function FuriganaPreview({ tapKanji }: { tapKanji: string }) {
   return (
     <div className="flex flex-col items-center gap-3">
       <HeadwordRuby
@@ -80,7 +90,7 @@ export function FuriganaPreview() {
       />
       <p className="inline-flex items-center gap-1.5 text-[0.8125rem] text-muted-foreground">
         <PointerIcon aria-hidden="true" className="size-3.5" />
-        Tap a kanji to try it
+        {tapKanji}
       </p>
     </div>
   )

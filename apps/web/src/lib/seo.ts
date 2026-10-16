@@ -2,7 +2,7 @@ import { defaultLocale, type Locale, languageOf, locales } from './i18n/config'
 import { localizedPath } from './i18n/paths'
 import { absoluteUrl, site, siteOrigin } from './site'
 
-export const xDefault = 'x-default'
+const xDefault = 'x-default'
 
 export function pageLocales(): readonly Locale[] {
   return locales
@@ -38,7 +38,7 @@ export function homeHeadLinks(locale: Locale, origin = siteOrigin()): HeadLink[]
   ]
 }
 
-export function sitemapAlternates(path: string, origin: string) {
+function sitemapAlternates(path: string, origin: string) {
   return Object.entries(hreflangPaths(path)).map(([hreflang, alternate]) => ({
     hreflang,
     url: absoluteUrl(alternate, origin)

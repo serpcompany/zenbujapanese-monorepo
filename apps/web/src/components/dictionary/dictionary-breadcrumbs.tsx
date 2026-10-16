@@ -8,6 +8,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
 import { absoluteUrl } from '@/lib/site'
 
 export interface Crumb {
@@ -17,26 +20,27 @@ export interface Crumb {
   lang?: 'ja'
 }
 
-const home: Crumb = { label: 'Home', path: '/' }
 const shortTrail = 3
-const dictionary: Crumb = { label: 'Dictionary', path: '/dictionary/' }
 
 function jsonThatCannotCloseItsScript(value: unknown): string {
   return JSON.stringify(value).replace(/</g, '\\u003c')
 }
 
 export function DictionaryBreadcrumbs({
+  locale,
   page,
   parent,
   pages
 }: {
+  locale: Locale
   page?: Crumb
   parent?: Crumb
   pages?: Crumb[]
 }) {
-  const trail = [
-    home,
-    dictionary,
+  const t = getDictionary(locale).breadcrumbs
+  const trail: Crumb[] = [
+    { label: t.home, path: '/' },
+    { label: t.dictionary, path: '/dictionary/' },
     ...(pages ?? [...(parent ? [parent] : []), ...(page ? [page] : [])])
   ]
   const structuredData = {
@@ -46,11 +50,11 @@ export function DictionaryBreadcrumbs({
       '@type': 'ListItem',
       position: index + 1,
       name: crumb.label,
-      item: absoluteUrl(crumb.path)
+      item: absoluteUrl(localizedPath(crumb.path, locale))
     }))
   }
   return (
-    <Breadcrumb>
+    <Breadcrumb aria-label={t.label}>
       <BreadcrumbList className={trail.length > shortTrail ? undefined : 'flex-nowrap'}>
         {trail.map((crumb, index) => (
           <Fragment key={crumb.path}>
@@ -61,7 +65,10 @@ export function DictionaryBreadcrumbs({
                   {crumb.label}
                 </BreadcrumbPage>
               ) : (
-                <BreadcrumbLink render={<Link href={crumb.href ?? crumb.path} />} lang={crumb.lang}>
+                <BreadcrumbLink
+                  render={<Link href={localizedPath(crumb.href ?? crumb.path, locale)} />}
+                  lang={crumb.lang}
+                >
                   {crumb.label}
                 </BreadcrumbLink>
               )}

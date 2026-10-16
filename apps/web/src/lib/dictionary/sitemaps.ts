@@ -22,7 +22,7 @@ type ServiceSitemap = { number: number; firstEntSeq: number; urlCount: number }
 
 type WordSitemapFile = { number: number; sitemap: ServiceSitemap; skip: number; count: number }
 
-export function wordSitemapFiles(sitemaps: readonly ServiceSitemap[]): WordSitemapFile[] {
+function wordSitemapFiles(sitemaps: readonly ServiceSitemap[]): WordSitemapFile[] {
   const files: WordSitemapFile[] = []
   for (const sitemap of sitemaps) {
     for (let skip = 0; skip < sitemap.urlCount; skip += wordsPerSitemap) {

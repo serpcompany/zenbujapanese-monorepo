@@ -4,6 +4,6 @@ const route = categoryIndexRoute('subject')
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = route.metadata
+export const generateMetadata = route.generateMetadata
 
 export default route.Page

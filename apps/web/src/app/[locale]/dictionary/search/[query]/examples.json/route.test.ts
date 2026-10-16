@@ -14,9 +14,10 @@ const found: SearchExamplesData = {
   examplesPath: '/dictionary/search/%E9%A3%9F%E3%81%B9%E3%82%8B/examples.json?build=b1'
 }
 
-function get(segment: string, query = '') {
+function get(segment: string, query = '', locale = 'en', path = '/dictionary') {
   return GET(
-    new NextRequest(`https://zenbujapanese.com/dictionary/search/${segment}/examples.json${query}`)
+    new NextRequest(`https://zenbujapanese.com${path}/search/${segment}/examples.json${query}`),
+    { params: Promise.resolve({ locale, query: segment }) }
   )
 }
 
@@ -40,6 +41,18 @@ describe('GET /dictionary/search/<query>/examples.json', () => {
     await get('3%2E14', '?build=b1&from=25')
     await get('a%2Fb', '?build=b1&from=25')
     expect(vi.mocked(getSearchExamples).mock.calls.map(([query]) => query)).toEqual(['3.14', 'a/b'])
+  })
+
+  test('reads the query from the path the rewrite to the English pages gives it', async () => {
+    vi.mocked(getSearchExamples).mockResolvedValue(found)
+    await get('eat', '?build=b1&from=25', 'en', '/en/dictionary')
+    expect(getSearchExamples).toHaveBeenCalledWith('eat', 25, 'b1')
+  })
+
+  test('is not found under another language, since files are never prefixed', async () => {
+    const response = await get('eat', '?build=b1&from=25', 'ja', '/ja/dictionary')
+    expect(response.status).toBe(404)
+    expect(getSearchExamples).not.toHaveBeenCalled()
   })
 
   test.each([

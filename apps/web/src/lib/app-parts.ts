@@ -1,4 +1,6 @@
-import { type AppScreenshot, appScreenshots } from '@/lib/app-screenshots'
+import { type AppScreenshot, appScreenshotsIn } from '@/lib/app-screenshots'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 
 export interface AppPart {
   name: string
@@ -6,33 +8,19 @@ export interface AppPart {
   screenshot: AppScreenshot
 }
 
-export const pageEnd = {
-  title: 'Everything you need to read Japanese, in one app.',
-  line: 'Dictionary, Image Search, Translate, and Player on your iPhone.'
+export function collageColumnsIn(locale: Locale): AppPart[][] {
+  const text = getDictionary(locale).home.closing.parts
+  const shots = appScreenshotsIn(locale)
+  const appParts: readonly AppPart[] = [
+    { ...text.dictionary, screenshot: shots.searchResults },
+    { ...text.imageSearch, screenshot: shots.imageSearch },
+    { ...text.translate, screenshot: shots.translate },
+    { ...text.conjugations, screenshot: shots.conjugations },
+    { ...text.kanji, screenshot: shots.kanjiDetail },
+    { ...text.pitchAccent, screenshot: shots.wordDetail }
+  ]
+  return [0, 1].map(column => {
+    const parts = appParts.filter((_, index) => index % 2 === column)
+    return [...parts, parts[0]].filter((part): part is AppPart => part !== undefined)
+  })
 }
-
-const appParts: readonly AppPart[] = [
-  {
-    name: 'Dictionary',
-    line: 'Every word, fully explained',
-    screenshot: appScreenshots.searchResults
-  },
-  {
-    name: 'Image Search',
-    line: 'Point at Japanese, tap a word',
-    screenshot: appScreenshots.imageSearch
-  },
-  { name: 'Translate', line: 'Talk it through, live', screenshot: appScreenshots.translate },
-  {
-    name: 'Conjugations',
-    line: 'Every form, and what it means',
-    screenshot: appScreenshots.conjugations
-  },
-  { name: 'Kanji', line: 'Readings and stroke order', screenshot: appScreenshots.kanjiDetail },
-  { name: 'Pitch accent', line: 'Hear how a word is said', screenshot: appScreenshots.wordDetail }
-]
-
-export const collageColumns = [0, 1].map(column => {
-  const parts = appParts.filter((_, index) => index % 2 === column)
-  return [...parts, parts[0]].filter((part): part is AppPart => part !== undefined)
-})

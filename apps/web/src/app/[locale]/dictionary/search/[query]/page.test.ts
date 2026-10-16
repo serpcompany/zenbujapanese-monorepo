@@ -1,42 +1,23 @@
 import { describe, expect, test, vi } from 'vitest'
 import { searchDictionary } from '@/lib/dictionary/data'
 import { searchPath } from '@/lib/dictionary/urls'
+import { pageProps } from '@/test/page-props'
+import { redirectOf } from '@/test/redirect'
 import SearchIndexPage from '../page'
 import SearchResultsPage, { generateMetadata } from './page'
 
-const { Redirect } = vi.hoisted(() => ({
-  Redirect: class extends Error {
-    constructor(readonly path: string) {
-      super(`redirects to ${path}`)
-    }
-  }
-}))
-
+vi.mock('next/navigation', async original =>
+  (await import('@/test/redirect')).redirectingNavigation(original)
+)
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))
-vi.mock('next/navigation', () => ({
-  permanentRedirect: (path: string) => {
-    throw new Redirect(path)
-  }
-}))
 
-const redirectOf = (opened: Promise<unknown>) =>
-  opened.then(
-    () => null,
-    (error: unknown) => {
-      if (error instanceof Redirect) return error.path
-      throw error
-    }
-  )
+const decodedSegment = (query: string, locale = 'en') => pageProps({ locale, query })
 
-const decodedSegment = (query: string) => ({
-  params: Promise.resolve({ query }),
-  searchParams: Promise.resolve({})
-})
+const encodedSegment = (query: string, locale = 'en') =>
+  decodedSegment(encodeURIComponent(query), locale)
 
-const encodedSegment = (query: string) => decodedSegment(encodeURIComponent(query))
-
-const searchBox = (q: string) => ({
-  params: Promise.resolve({}),
+const searchBox = (q: string, locale = 'en') => ({
+  params: Promise.resolve({ locale }),
   searchParams: Promise.resolve({ q })
 })
 
@@ -82,6 +63,28 @@ describe('a search lives at the query the core searches', () => {
     expect(await redirectOf(generateMetadata(decodedSegment(typed)))).toBe(typedUrlRedirectsTo)
     expect(await redirectOf(SearchResultsPage(encodedSegment(searched)))).toBeNull()
     expect((await generateMetadata(decodedSegment(searched))).alternates?.canonical).toBe(url)
+  })
+
+  test('a Japanese search keeps its language through every redirect', async () => {
+    const url = `/ja${searchPath('to persevere')}`
+    expect(await redirectOf(SearchIndexPage(searchBox('To Persevere', 'ja')))).toBe(url)
+    expect(await redirectOf(SearchResultsPage(encodedSegment('To Persevere', 'ja')))).toBe(url)
+    expect(await redirectOf(generateMetadata(decodedSegment('To Persevere', 'ja')))).toBe(url)
+    expect(await redirectOf(SearchResultsPage(encodedSegment('\u{FEFF} ', 'ja')))).toBe(
+      '/ja/dictionary/search/'
+    )
+  })
+
+  test('a Japanese search page is titled for the English or the Japanese of its query', async () => {
+    const english = await generateMetadata(decodedSegment('eat', 'ja'))
+    expect(english.title).toBe('eatの日本語・意味')
+    expect(english.alternates?.canonical).toBe(`/ja${searchPath('eat')}`)
+    const japanese = await generateMetadata(decodedSegment('いる', 'ja'))
+    expect(japanese.title).toBe('いるの英語・意味')
+    expect(japanese.description).toBe(
+      '「いる」の英語の意味を、一致する6語の読み方と一緒に紹介します。'
+    )
+    expect((await generateMetadata(decodedSegment('いる'))).title).toBe('いる in Japanese')
   })
 
   test('a query of nothing but separators is no search', async () => {

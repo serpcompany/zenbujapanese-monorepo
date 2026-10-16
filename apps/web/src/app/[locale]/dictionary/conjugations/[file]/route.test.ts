@@ -7,8 +7,10 @@ vi.mock('@/lib/dictionary/data', () => ({ getConjugationExamples: vi.fn() }))
 
 const example = { position: 0, text: '食べた。', tokens: [] } as unknown as PageExample
 
-const get = (file: string) =>
-  GET(new NextRequest(`https://zenbujapanese.com/dictionary/conjugations/${file}`))
+const get = (file: string, locale = 'en', path = '/dictionary') =>
+  GET(new NextRequest(`https://zenbujapanese.com${path}/conjugations/${file}`), {
+    params: Promise.resolve({ locale, file })
+  })
 
 describe('GET /dictionary/conjugations/<form>.json', () => {
   afterEach(() => {
@@ -36,6 +38,18 @@ describe('GET /dictionary/conjugations/<form>.json', () => {
     vi.mocked(getConjugationExamples).mockResolvedValue([])
     await get(`${encodeURIComponent('Ｈした')}.json`)
     expect(getConjugationExamples).toHaveBeenCalledWith('Ｈした')
+  })
+
+  test('reads the form from the path the rewrite to the English pages gives it', async () => {
+    vi.mocked(getConjugationExamples).mockResolvedValue([])
+    await get(`${encodeURIComponent('食べた')}.json`, 'en', '/en/dictionary')
+    expect(getConjugationExamples).toHaveBeenCalledWith('食べた')
+  })
+
+  test('is not found under another language, since files are never prefixed', async () => {
+    const response = await get(`${encodeURIComponent('食べた')}.json`, 'ja', '/ja/dictionary')
+    expect(response.status).toBe(404)
+    expect(getConjugationExamples).not.toHaveBeenCalled()
   })
 
   test.each([

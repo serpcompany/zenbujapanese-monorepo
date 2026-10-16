@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { productSymbols } from '@/components/products/product-symbols'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
-import { type Product, type ProductMark, productTypeLabel } from '@/lib/products/catalog'
+import type { ProductMark } from '@/lib/products/catalog'
+import type { CatalogProduct } from '@/lib/products/localized-catalog'
 import { cn } from '@/lib/utils'
 
 function ProductMarkTile({ mark }: { mark: ProductMark }) {
@@ -28,15 +29,13 @@ function ProductMarkTile({ mark }: { mark: ProductMark }) {
   )
 }
 
-function ProductCardBody({ product }: { product: Product }) {
+function ProductCardBody({ product }: { product: CatalogProduct }) {
   return (
     <>
       <div className="flex items-center gap-2.5">
         <ProductMarkTile mark={product.mark} />
         <h3 className="min-w-0 flex-1 text-[15px] font-semibold">{product.title}</h3>
-        <Badge variant={product.href ? 'outline' : 'secondary'}>
-          {product.href ? 'Free' : 'Coming soon'}
-        </Badge>
+        <Badge variant={product.href ? 'outline' : 'secondary'}>{product.badge}</Badge>
       </div>
       <p className="text-muted-foreground">{product.description}</p>
       <ul className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs text-muted-foreground">
@@ -51,14 +50,14 @@ function ProductCardBody({ product }: { product: Product }) {
         })}
         <li className="inline-flex items-center gap-1.5">
           <TagIcon aria-hidden="true" className="size-3.25" />
-          {productTypeLabel(product.type)}
+          {product.typeLabel}
         </li>
       </ul>
     </>
   )
 }
 
-export function ProductCard({ product, hidden }: { product: Product; hidden?: boolean }) {
+export function ProductCard({ product, hidden }: { product: CatalogProduct; hidden?: boolean }) {
   const className = 'gap-2.5 px-4.5 py-4'
   if (!product.href) {
     return (

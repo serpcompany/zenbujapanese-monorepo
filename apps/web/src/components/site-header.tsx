@@ -21,7 +21,13 @@ export function SiteHeader({ locale }: { locale: Locale }) {
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <LanguageMenu {...switcher} className="max-lg:hidden" />
           <GetAppButton locale={locale} label={t.getTheApp} size="lg" className="max-lg:hidden" />
-          <AccountMenu locale={locale} text={t.account} theme={t.theme} className="max-lg:hidden" />
+          <AccountMenu
+            locale={locale}
+            text={t.account}
+            theme={t.theme}
+            messages={getDictionary(locale).account.messages}
+            className="max-lg:hidden"
+          />
           <SiteMenu locale={locale} menus={menus} text={t} switcher={switcher} />
         </div>
       </div>

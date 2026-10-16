@@ -1,50 +1,63 @@
-import Link from 'next/link'
+import type { Metadata } from 'next'
 import {
-  AccountPageShell,
-  AccountUnavailable,
+  AccountPageLink,
+  LinkedLine,
   OtherAccountPages
 } from '@/components/account/account-page-shell'
-import { SignInForm } from '@/components/account/sign-in-form'
-import { accountMetadata, accountPages } from '@/lib/account/pages'
+import { AccountSignInPage } from '@/components/account/account-sign-in-page'
+import { accountMetadata } from '@/lib/account/metadata'
 import { type AccountSettings, accountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localeOf } from '@/lib/i18n/params'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = accountMetadata('forgotPassword')
+export async function generateMetadata({
+  params
+}: PageProps<'/[locale]/forgot-password'>): Promise<Metadata> {
+  return accountMetadata('forgotPassword', await localeOf(params))
+}
 
-function otherWaysIn(settings: AccountSettings | null): string | null {
+function otherWaysIn(settings: AccountSettings | null, locale: Locale): string | null {
   const ways = [
     settings?.appleServicesId ? 'Apple' : null,
     settings?.google ? 'Google' : null
   ].filter(way => way !== null)
-  return ways.length > 0 ? ways.join(' or ') : null
+  if (ways.length === 0) return null
+  return new Intl.ListFormat(locale, { type: 'disjunction' }).format(ways)
 }
 
-export default async function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({
+  params
+}: PageProps<'/[locale]/forgot-password'>) {
+  const locale = await localeOf(params)
+  const text = getDictionary(locale).account
   const settings = await accountSettings()
-  const otherWays = otherWaysIn(settings)
+  const otherWays = otherWaysIn(settings, locale)
   return (
-    <AccountPageShell
-      title={accountPages.forgotPassword.title}
-      intro={
-        settings
-          ? 'Zenbu accounts have no password, so there’s nothing to reset. Enter your email and we’ll send you a code that signs you in.'
-          : null
-      }
+    <AccountSignInPage
+      page="forgotPassword"
+      purpose="email-only"
+      locale={locale}
+      settings={settings}
+      returnedError={null}
     >
-      {settings ? (
-        <SignInForm settings={settings} purpose="email-only" returnedError={null} />
-      ) : (
-        <AccountUnavailable />
-      )}
       {otherWays ? (
         <OtherAccountPages>
-          <p>
-            Made your account with {otherWays}?{' '}
-            <Link href={accountPages.signIn.path}>Sign in that way</Link>.
-          </p>
+          <LinkedLine
+            template={text.otherPages.madeWith}
+            values={{
+              ways: otherWays,
+              link: (
+                <AccountPageLink page="signIn" locale={locale}>
+                  {text.otherPages.signInThatWay}
+                </AccountPageLink>
+              )
+            }}
+          />
         </OtherAccountPages>
       ) : null}
-    </AccountPageShell>
+    </AccountSignInPage>
   )
 }

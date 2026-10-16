@@ -1,3 +1,6 @@
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+
 export interface AppScreenshot {
   src: string
   alt: string
@@ -12,41 +15,17 @@ const appStoreScreenshot = (file: string, alt: string): AppScreenshot => ({
   height: 1305
 })
 
-export const appScreenshots = {
-  searchResults: appStoreScreenshot(
-    '01-search-results',
-    'Search results for taberu in the app: 食べる, to eat, then 食べるラー油'
-  ),
-  wordDetail: appStoreScreenshot(
-    '08-word-detail-pitch',
-    'The app’s word page for 大丈夫, with its pitch accent, meanings, and frequency'
-  ),
-  imageSearchPhoto: appStoreScreenshot(
-    '06-image-search-photo',
-    'Image Search in the app reading a shop’s note to its customers, with every word underlined'
-  ),
-  imageSearch: appStoreScreenshot(
-    '05-image-search-word',
-    'Image Search reading a ramen menu in the app, with 醤油, soy sauce, open'
-  ),
-  imageSearchTranslate: appStoreScreenshot(
-    '07-image-search-translate',
-    'The shop’s note translated in the app paragraph by paragraph, with the idiom 急がば回れ explained'
-  ),
-  handwriting: appStoreScreenshot(
-    '09-handwriting',
-    'The kanji 峠 drawn by hand in the app, with the kanji it could be above it'
-  ),
-  kanjiDetail: appStoreScreenshot(
-    '11-kanji-detail',
-    'The app’s kanji details for 峠, mountain pass, with its strokes, school grade, and JLPT level'
-  ),
-  conjugations: appStoreScreenshot(
-    '14-conjugations',
-    'The app’s conjugation table for 頑張る, to persevere, with each ending highlighted'
-  ),
-  translate: appStoreScreenshot(
-    '17-translate-conversation',
-    'A conversation in the app’s Translate tab, asking the way to Tokyo Station in English and Japanese'
-  )
-} as const satisfies Record<string, AppScreenshot>
+export function appScreenshotsIn(locale: Locale) {
+  const alt = getDictionary(locale).screenshots
+  return {
+    searchResults: appStoreScreenshot('01-search-results', alt.searchResults),
+    wordDetail: appStoreScreenshot('08-word-detail-pitch', alt.wordDetail),
+    imageSearchPhoto: appStoreScreenshot('06-image-search-photo', alt.imageSearchPhoto),
+    imageSearch: appStoreScreenshot('05-image-search-word', alt.imageSearch),
+    imageSearchTranslate: appStoreScreenshot('07-image-search-translate', alt.imageSearchTranslate),
+    handwriting: appStoreScreenshot('09-handwriting', alt.handwriting),
+    kanjiDetail: appStoreScreenshot('11-kanji-detail', alt.kanjiDetail),
+    conjugations: appStoreScreenshot('14-conjugations', alt.conjugations),
+    translate: appStoreScreenshot('17-translate-conversation', alt.translate)
+  } as const satisfies Record<keyof typeof alt, AppScreenshot>
+}

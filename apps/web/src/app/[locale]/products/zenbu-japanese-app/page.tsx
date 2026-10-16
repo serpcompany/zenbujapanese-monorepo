@@ -12,54 +12,71 @@ import { ProductVideos } from '@/components/products/product-videos'
 import { ScreenshotCarousel } from '@/components/products/screenshot-carousel'
 import { SectionTitle } from '@/components/products/section-title'
 import { appStoreRelease } from '@/lib/app-store'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localeOf } from '@/lib/i18n/params'
 import { pageMetadata } from '@/lib/metadata'
-import { iphoneAppPage } from '@/lib/products/zenbu-japanese-for-iphone'
+import { iphoneAppPageIn, iphoneAppPath } from '@/lib/products/zenbu-japanese-for-iphone'
 import { appVideos } from '@/lib/videos'
 
 export const dynamic = 'force-dynamic'
 
-const title = `${iphoneAppPage.title}: Japanese Dictionary & Translator`
-const page = pageMetadata(iphoneAppPage.path)
+type Props = PageProps<'/[locale]/products/zenbu-japanese-app'>
 
-export const metadata: Metadata = {
-  ...page,
-  title: { absolute: title },
-  openGraph: { ...page.openGraph, title }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const locale = await localeOf(params)
+  const t = getDictionary(locale)
+  const title = fill(t.productPage.title, { name: t.menus.iphoneApp })
+  const page = pageMetadata(iphoneAppPath, locale)
+  return {
+    ...page,
+    title: { absolute: title },
+    openGraph: { ...page.openGraph, title }
+  }
 }
 
 const block = 'mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 md:px-5'
 
-async function FactsFromAppStore() {
-  return <ProductFacts {...iphoneAppPage.facts} release={await appStoreRelease()} />
+async function FactsFromAppStore({ platform, locale }: { platform: string; locale: Locale }) {
+  return <ProductFacts platform={platform} locale={locale} release={await appStoreRelease()} />
 }
 
-export default function ZenbuJapaneseForIphonePage() {
+export default async function ZenbuJapaneseForIphonePage({ params }: Props) {
+  const locale = await localeOf(params)
+  const t = getDictionary(locale).productPage
+  const product = iphoneAppPageIn(locale)
   return (
     <main className="flex w-full flex-col pb-16">
       <ProductHero
-        product={iphoneAppPage}
+        product={product}
+        locale={locale}
         hasVideos={appVideos.length > 0}
         facts={
-          <Suspense fallback={<ProductFacts {...iphoneAppPage.facts} release={null} />}>
-            <FactsFromAppStore />
+          <Suspense fallback={<ProductFacts {...product.facts} locale={locale} release={null} />}>
+            <FactsFromAppStore {...product.facts} locale={locale} />
           </Suspense>
         }
       />
       <ProductBand>
         <div className={block}>
-          <ScreenshotCarousel title="See it in action." screenshots={iphoneAppPage.screenshots} />
+          <ScreenshotCarousel
+            text={t.screenshots}
+            carousel={t.carousel}
+            screenshots={product.screenshots}
+          />
         </div>
       </ProductBand>
       <section className={`${block} py-12 md:py-16`}>
-        <SectionTitle title="What’s inside." aside="Four tabs, one dictionary." />
-        <ProductPoints points={iphoneAppPage.features} />
+        <SectionTitle title={t.inside.heading} aside={t.inside.aside} />
+        <ProductPoints points={product.features} />
       </section>
-      <ProductVideos videos={appVideos} />
+      <ProductVideos videos={appVideos} locale={locale} text={t.videos} carousel={t.carousel} />
       <section className={`${block} py-12 md:py-16`}>
-        <ProductQuestions questions={iphoneAppPage.questions} />
+        <ProductQuestions questions={product.questions} locale={locale} />
       </section>
       <section className={block}>
-        <MoreProducts products={iphoneAppPage.related} />
+        <MoreProducts products={product.related} locale={locale} />
       </section>
     </main>
   )

@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PageExample } from '@/lib/dictionary/page-example'
+import { exampleListText } from '@/lib/dictionary/screen-text'
 import { ExampleList } from './example-list'
 
 declare global {
@@ -60,7 +61,17 @@ describe('a paged list', () => {
     )
     vi.stubGlobal('fetch', fetcher)
     const initial = Array.from({ length: 25 }, (_, index) => example(index))
-    act(() => root.render(<ExampleList initial={initial} listed={30} path="/e.json?build=b" />))
+    act(() =>
+      root.render(
+        <ExampleList
+          initial={initial}
+          listed={30}
+          path="/e.json?build=b"
+          locale="en"
+          text={exampleListText('en')}
+        />
+      )
+    )
     const button = [...container.querySelectorAll('button')].find(
       candidate => candidate.textContent === 'Load more examples'
     )

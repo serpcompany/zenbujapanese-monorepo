@@ -1,17 +1,20 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { getWordPage } from '@/lib/dictionary/data'
+import { pageProps } from '@/test/page-props'
+import { Redirect } from '@/test/redirect'
 import { visibleText } from '@/test/rendered'
-import WordPage from './page'
+import WordPage, { generateMetadata } from './page'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))
+vi.mock('next/navigation', async original =>
+  (await import('@/test/redirect')).redirectingNavigation(original)
+)
 
-async function renderWord(word: string) {
-  const page = await WordPage({
-    params: Promise.resolve({ word }),
-    searchParams: Promise.resolve({})
-  })
-  return renderToStaticMarkup(page)
+const props = (word: string, locale = 'en') => pageProps({ locale, word })
+
+async function renderWord(word: string, locale = 'en') {
+  return renderToStaticMarkup(await WordPage(props(word, locale)))
 }
 
 const credited = (html: string) =>
@@ -96,6 +99,48 @@ describe('the word page, read from the fixtures', () => {
       'Examples'
     ])
     expect(titles.slice(0, sections.length)).toEqual(sections)
+  })
+
+  test('a Japanese word page reads in Japanese, links within /ja/, and keeps JMdict in English', async () => {
+    const html = await renderWord('要る-1546640', 'ja')
+    const titles = [
+      ...html.matchAll(/data-slot="card-title"[^>]*>([^<]+)<|<h2[^>]*><button[^>]*>([^<]+)</g)
+    ].map(([, card, disclosure]) => card ?? disclosure)
+    expect(titles.slice(0, 7)).toEqual([
+      '英語の意味',
+      '使用頻度',
+      '活用',
+      '漢字',
+      'リスト',
+      'メモ',
+      '例文'
+    ])
+    expect(html).toContain('<span>五段動詞（自動詞）</span>')
+    expect(html).toContain('lang="en">to be needed, to be necessary')
+    expect(html).toContain('通常はかな書き')
+    expect(html).toMatch(/<summary[^>]*>出典<svg/)
+    expect(html).toContain('href="/ja/dictionary/"')
+    expect(html).not.toMatch(/href="\/dictionary\/(?!examples\/|conjugations\/)/)
+  })
+
+  test('a Japanese word page is titled for its English, its meaning, and its examples', async () => {
+    const metadata = await generateMetadata(props('要る-1546640', 'ja'))
+    expect(metadata.title).toBe('要る（いる）の英語・意味・例文')
+    expect(metadata.description).toBe(
+      '「要る（いる）」は英語で「to be needed, to be necessary, to be required, to be wanted, to need, to want」という意味です。品詞は五段動詞（自動詞）。'
+    )
+    expect(metadata.alternates?.canonical).toBe(`/ja${encodeURI('/dictionary/要る-1546640/')}`)
+    expect((await generateMetadata(props('要る-1546640'))).title).toBe('要る (いる) meaning')
+  })
+
+  test('a word under an old slug redirects to its current one in the same language', async () => {
+    const redirect = (locale: string) =>
+      WordPage(props('old-1546640', locale)).then(
+        () => null,
+        (error: unknown) => (error instanceof Redirect ? error.path : null)
+      )
+    expect(await redirect('en')).toBe(encodeURI('/dictionary/要る-1546640/'))
+    expect(await redirect('ja')).toBe(encodeURI('/ja/dictionary/要る-1546640/'))
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {

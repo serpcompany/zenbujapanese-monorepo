@@ -6,6 +6,7 @@ import {
   browseSitemapResponse,
   dictionarySitemapPaths,
   wordSitemapResponse,
+  wordsPerSitemap,
   wordUrl
 } from './sitemaps'
 
@@ -105,14 +106,15 @@ const browseGroupFiles = [
 ]
 
 const site = `${local}/dictionary/browse`
+const inEitherLanguage = `${local}(?:/ja)?/dictionary/browse`
 
 const browsePagesByGroup: Record<BrowseSitemapGroup, RegExp> = {
-  kana: new RegExp(`^${site}/(kana|hiragana|katakana)/([^/]+/)?(\\d+/)?$`),
+  kana: new RegExp(`^${inEitherLanguage}/(kana|hiragana|katakana)/([^/]+/)?(\\d+/)?$`),
   categories: new RegExp(
-    `^${site}/(?!kana/|hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
+    `^${inEitherLanguage}/(?!kana/|hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
   ),
-  'frequency-lists': new RegExp(`^${site}/frequency-dictionaries/(.+/)?$`),
-  'kanji-lists': new RegExp(`^${site}/kanji/([^/]+/)?$`)
+  'frequency-lists': new RegExp(`^${inEitherLanguage}/frequency-dictionaries/(.+/)?$`),
+  'kanji-lists': new RegExp(`^${inEitherLanguage}/kanji/([^/]+/)?$`)
 }
 
 async function browseUrls(group: string) {
@@ -157,7 +159,9 @@ describe('with a dictionary service', () => {
     )
     expect(locs((await kanji?.text()) ?? '')).toEqual([
       `${listed}/dictionary/browse/kanji/`,
-      `${listed}/dictionary/browse/kanji/grade-1/`
+      `${listed}/ja/dictionary/browse/kanji/`,
+      `${listed}/dictionary/browse/kanji/grade-1/`,
+      `${listed}/ja/dictionary/browse/kanji/grade-1/`
     ])
   })
 
@@ -175,7 +179,7 @@ describe('with a dictionary service', () => {
     expect(await browseSitemapResponse(request('/sitemap-browse.xml'), 'browse')).toBeNull()
   })
 
-  test('the browse sitemaps list every browse page with 10 words or more, each once', async () => {
+  test('the browse sitemaps list every browse page with 10 words or more, each once in each language', async () => {
     vi.mocked(dictionaryService).mockResolvedValue(fakeService(5, 2) as never)
     const urls = (await Promise.all(browseSitemapGroups.map(browseUrls))).flat()
     expect(urls).toEqual(
@@ -201,7 +205,12 @@ describe('with a dictionary service', () => {
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(urls).toHaveLength(26)
+    expect(urls).toHaveLength(52)
+    expect(urls.filter(url => url.startsWith(`${local}/ja/`))).toEqual(
+      urls
+        .filter(url => !url.startsWith(`${local}/ja/`))
+        .map(url => url.replace(local, `${local}/ja`))
+    )
     expect(new Set(urls).size).toBe(urls.length)
     for (const thin of [
       'kana-order',
@@ -218,25 +227,53 @@ describe('with a dictionary service', () => {
     }
   })
 
-  test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs', async () => {
+  test('a word sitemap streams its range of canonical, percent-encoded, escaped URLs, each word in English and Japanese', async () => {
     const service = fakeService(25_000, 20_000)
     vi.mocked(dictionaryService).mockResolvedValue(service as never)
     const response = await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)
     expect(response?.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
     const xml = (await response?.text()) ?? ''
-    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?><urlset')).toBe(true)
+    expect(
+      xml.startsWith(
+        '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+      )
+    ).toBe(true)
     expect(xml.endsWith('</urlset>')).toBe(true)
     const urls = locs(xml)
-    expect(urls).toHaveLength(20_000)
-    expect(urls[0]).toBe(`${local}/dictionary/%E8%A6%8B%E3%82%8B-1/`)
-    expect(urls[1]).toBe(`${local}/dictionary/w&amp;2-2/`)
-    expect(urls.at(-1)).toBe(`${local}/dictionary/w&amp;20000-20000/`)
-    expect(service.sitemapWords).toHaveBeenCalledTimes(3)
+    expect(urls).toHaveLength(40_000)
+    expect(urls.slice(0, 3)).toEqual([
+      `${local}/dictionary/%E8%A6%8B%E3%82%8B-1/`,
+      `${local}/ja/dictionary/%E8%A6%8B%E3%82%8B-1/`,
+      `${local}/dictionary/w&amp;2-2/`
+    ])
+    expect(urls.at(-1)).toBe(`${local}/ja/dictionary/w&amp;20000-20000/`)
+    expect(xml).toContain(
+      `<url><loc>${local}/dictionary/%E8%A6%8B%E3%82%8B-1/</loc><xhtml:link rel="alternate" hreflang="en" href="${local}/dictionary/%E8%A6%8B%E3%82%8B-1/"/><xhtml:link rel="alternate" hreflang="ja" href="${local}/ja/dictionary/%E8%A6%8B%E3%82%8B-1/"/><xhtml:link rel="alternate" hreflang="x-default" href="${local}/dictionary/%E8%A6%8B%E3%82%8B-1/"/></url>`
+    )
+    expect(service.sitemapWords).toHaveBeenCalledTimes(2)
     expect(service.sitemapWords).toHaveBeenNthCalledWith(2, 1, 10_000, 10_000)
 
     const second = await wordSitemapResponse(request('/sitemaps/dictionary/2.xml'), 2)
-    expect(locs((await second?.text()) ?? '')).toHaveLength(5_000)
+    expect(locs((await second?.text()) ?? '')).toHaveLength(10_000)
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/3.xml'), 3)).toBeNull()
+  })
+
+  test('a service sitemap of more than 25,000 words takes two files, so none lists over 50,000 URLs', async () => {
+    const service = fakeService(30_000, 30_000)
+    vi.mocked(dictionaryService).mockResolvedValue(service as never)
+    expect(wordsPerSitemap).toBe(25_000)
+    expect(await dictionarySitemapPaths()).toEqual([
+      '/sitemap-words.xml',
+      '/sitemap-words-2.xml',
+      ...browseGroupFiles
+    ])
+    const first = locs((await (await wordSitemapResponse(request('/x'), 1))?.text()) ?? '')
+    const second = locs((await (await wordSitemapResponse(request('/x'), 2))?.text()) ?? '')
+    expect(first).toHaveLength(50_000)
+    expect(first.at(-1)).toBe(`${local}/ja/dictionary/w&amp;25000-25000/`)
+    expect(second).toHaveLength(10_000)
+    expect(second[0]).toBe(`${local}/dictionary/w&amp;25001-25001/`)
+    expect(await wordSitemapResponse(request('/x'), 3)).toBeNull()
   })
 })
 

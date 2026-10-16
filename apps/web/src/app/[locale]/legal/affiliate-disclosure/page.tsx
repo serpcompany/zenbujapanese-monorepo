@@ -1,22 +1,29 @@
 import { PageShell } from '@/components/page-shell'
+import { defaultLocale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localeOf } from '@/lib/i18n/params'
 import { pageMetadata } from '@/lib/metadata'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/legal/affiliate-disclosure/')
+const path = '/legal/affiliate-disclosure/'
 
-export default function AffiliateDisclosurePage() {
+export async function generateMetadata({
+  params
+}: PageProps<'/[locale]/legal/affiliate-disclosure'>) {
+  return pageMetadata(path, await localeOf(params))
+}
+
+export default async function AffiliateDisclosurePage({
+  params
+}: PageProps<'/[locale]/legal/affiliate-disclosure'>) {
+  const locale = await localeOf(params)
+  const t = getDictionary(locale).affiliate
   return (
-    <PageShell title="Affiliate Disclosure" updated="September 28, 2026">
-      <p>
-        Some links on zenbujapanese.com may be affiliate links. If you buy through one, {site.name}{' '}
-        may earn a commission at no extra cost to you. We disclose this under the U.S. Federal Trade
-        Commission's Guides Concerning the Use of Endorsements and Testimonials in Advertising (16
-        CFR Part 255).
-      </p>
-      <p>
-        Commissions never change how {site.name} ranks dictionary results. We recommend products and
-        resources only when we think they help Japanese learners, and our opinions are our own.
-      </p>
+    <PageShell path={path} locale={locale} updated="2026-09-28" englishPrevails>
+      <p>{fill(t.links, { name: site.name })}</p>
+      {locale === defaultLocale ? null : <p>{t.japaneseLaw}</p>}
+      <p>{fill(t.independence, { name: site.name })}</p>
     </PageShell>
   )
 }

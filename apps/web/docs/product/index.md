@@ -39,6 +39,10 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 are `noindex` and in no sitemap, and where they're closed, in a build whose environment names no
 account service, nothing links to them.
 
+Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
+in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
+each language shows, the search-engine tags, and the switcher.
+
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.
@@ -71,8 +75,8 @@ its app source and planned check, and is then built with its check in the same P
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md), [Account pages](account.md), and
-[Privacy Policy](privacy.md) names its automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
+Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
+[Languages](languages.md), and [Privacy Policy](privacy.md) names its automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
 five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the

@@ -14,9 +14,9 @@ export const kanjiListsPath = `${browsePath}kanji/`
 export const frequencyDictionariesPath = `${browsePath}frequency-dictionaries/`
 
 export const categoryIndexes = {
-  partOfSpeech: { path: `${browsePath}parts-of-speech/`, name: 'Parts of speech' },
-  usage: { path: `${browsePath}usage/`, name: 'Usage labels' },
-  subject: { path: `${browsePath}subjects/`, name: 'Subjects' }
+  partOfSpeech: { path: `${browsePath}parts-of-speech/` },
+  usage: { path: `${browsePath}usage/` },
+  subject: { path: `${browsePath}subjects/` }
 } as const
 
 export type CategoryIndex = keyof typeof categoryIndexes

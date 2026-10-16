@@ -1,85 +1,78 @@
 import Link from 'next/link'
+import { Fill } from '@/components/fill'
 import { PageShell } from '@/components/page-shell'
+import { company } from '@/lib/company'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localeOf } from '@/lib/i18n/params'
+import { localizedPath } from '@/lib/i18n/paths'
 import { pageMetadata } from '@/lib/metadata'
+import { pageFor } from '@/lib/pages'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/legal/terms/')
+const forbiddenUses = ['interfere', 'scrape', 'infringe'] as const
 
-export default function TermsPage() {
+const sectionsAfterUse = [
+  'thirdParty',
+  'ourContent',
+  'app',
+  'disclaimer',
+  'liability',
+  'changes',
+  'law'
+] as const
+
+export async function generateMetadata({ params }: PageProps<'/[locale]/legal/terms'>) {
+  return pageMetadata('/legal/terms/', await localeOf(params))
+}
+
+export default async function TermsPage({ params }: PageProps<'/[locale]/legal/terms'>) {
+  const locale = await localeOf(params)
+  const t = getDictionary(locale).terms
   return (
-    <PageShell title="Terms of Use" updated="September 28, 2026">
+    <PageShell path="/legal/terms/" locale={locale} updated="2026-09-28" englishPrevails>
       <p>
-        These terms apply to the {site.name} iPhone app and zenbujapanese.com (the "Service"),
-        provided by TSMC LLC, doing business as {site.name} ("we"). By using the Service you agree
-        to them. If you do not agree, do not use the Service.
+        <Fill template={t.intro} values={{ name: site.name, company: company.name }} />
       </p>
 
-      <h2>1. The Service</h2>
-      <p>
-        {site.name} is a Japanese learning reference: a dictionary, text reader, and translator.
-        Definitions, readings, frequency information, and translations may be incomplete or wrong.
-        Do not rely on them where accuracy matters, such as legal, medical, or safety decisions.
-      </p>
+      <TermsSection {...t.service} />
 
-      <h2>2. Using the Service</h2>
-      <p>Use the Service only for lawful purposes. Do not:</p>
+      <h2>{t.use.heading}</h2>
+      <p>{t.use.intro}</p>
       <ul>
-        <li>interfere with or disrupt the Service, or try to gain unauthorized access to it;</li>
-        <li>
-          scrape or copy the website in bulk with automated tools beyond what robots.txt allows;
-        </li>
-        <li>use the Service to infringe anyone's intellectual property or other rights.</li>
+        {forbiddenUses.map(use => (
+          <li key={use}>{t.use[use]}</li>
+        ))}
       </ul>
 
-      <h2>3. Third-party content and data</h2>
-      <p>
-        The Service includes data from third parties under their own licenses, such as the JMdict
-        dictionary (Creative Commons Attribution-ShareAlike). Those licenses govern that data. Video
-        features use YouTube, whose terms apply to that content.
-      </p>
+      {sectionsAfterUse.map(section => (
+        <TermsSection key={section} {...t[section]} />
+      ))}
 
-      <h2>4. Our content</h2>
+      <h2>{t.contact.heading}</h2>
       <p>
-        Apart from third-party data under its own license, the Service's software, design, and text
-        belong to {site.name} and may not be copied or redistributed without permission.
-      </p>
-
-      <h2>5. The iPhone app</h2>
-      <p>
-        The app is licensed, not sold, under Apple's standard Licensed Application End User License
-        Agreement, alongside these terms. Apple is not responsible for the app or its support.
-      </p>
-
-      <h2>6. Disclaimer</h2>
-      <p>
-        THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS
-        OR IMPLIED. WE DO NOT WARRANT THAT IT WILL BE UNINTERRUPTED, ERROR-FREE, OR ACCURATE.
-      </p>
-
-      <h2>7. Limitation of liability</h2>
-      <p>
-        TO THE EXTENT THE LAW ALLOWS, ZENBU JAPANESE AND ITS OFFICERS, EMPLOYEES, AND AGENTS ARE NOT
-        LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING
-        FROM YOUR USE OF THE SERVICE.
-      </p>
-
-      <h2>8. Changes and termination</h2>
-      <p>
-        We may change, suspend, or discontinue the Service, and may update these terms by posting a
-        new version here with a new date. We may suspend access for anyone who breaks these terms.
-      </p>
-
-      <h2>9. Governing law</h2>
-      <p>
-        These terms are governed by the laws of the State of Wyoming, United States, without regard
-        to conflict-of-law principles.
-      </p>
-
-      <h2>10. Contact</h2>
-      <p>
-        Questions go to <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>. See also
-        the <Link href="/legal/privacy/">Privacy Policy</Link>.
+        <Fill
+          template={t.contact.body}
+          values={{
+            email: <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>,
+            privacy: (
+              <Link href={localizedPath('/legal/privacy/', locale)}>
+                {pageFor('/legal/privacy/', locale).title}
+              </Link>
+            )
+          }}
+        />
       </p>
     </PageShell>
+  )
+}
+
+function TermsSection({ heading, body }: { heading: string; body: string }) {
+  return (
+    <>
+      <h2>{heading}</h2>
+      <p>
+        <Fill template={body} values={{ name: site.name }} />
+      </p>
+    </>
   )
 }

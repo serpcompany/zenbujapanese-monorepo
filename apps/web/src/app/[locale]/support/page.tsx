@@ -1,24 +1,54 @@
 import Link from 'next/link'
+import { Fill } from '@/components/fill'
 import { PageShell } from '@/components/page-shell'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localeOf } from '@/lib/i18n/params'
+import { localizedPath } from '@/lib/i18n/paths'
 import { pageMetadata } from '@/lib/metadata'
+import { pageFor } from '@/lib/pages'
 import { site } from '@/lib/site'
 
-export const metadata = pageMetadata('/support/')
+export async function generateMetadata({ params }: PageProps<'/[locale]/support'>) {
+  return pageMetadata('/support/', await localeOf(params))
+}
 
-export default function SupportPage() {
+export default async function SupportPage({ params }: PageProps<'/[locale]/support'>) {
+  const locale = await localeOf(params)
+  const t = getDictionary(locale).support
   return (
-    <PageShell title="Support">
+    <PageShell path="/support/" locale={locale}>
       <p>
-        For help with {site.name}, email{' '}
-        <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>. Include your iPhone model,
-        iOS version, and what you were doing when the problem happened.
+        <Fill
+          template={t.app}
+          values={{
+            name: site.name,
+            email: <a href={`mailto:${site.supportEmail}`}>{site.supportEmail}</a>
+          }}
+        />
       </p>
       <p>
-        For help with Tomodachi, email the same address. Read{' '}
-        <Link href="/legal/privacy/#tomodachi">how Tomodachi handles your information</Link>.
+        <Fill
+          template={t.tomodachi}
+          values={{
+            link: (
+              <Link href={localizedPath('/legal/privacy/#tomodachi', locale)}>
+                {t.tomodachiLink}
+              </Link>
+            )
+          }}
+        />
       </p>
       <p>
-        Read how we handle information in the <Link href="/legal/privacy/">Privacy Policy</Link>.
+        <Fill
+          template={t.privacy}
+          values={{
+            link: (
+              <Link href={localizedPath('/legal/privacy/', locale)}>
+                {pageFor('/legal/privacy/', locale).title}
+              </Link>
+            )
+          }}
+        />
       </p>
     </PageShell>
   )

@@ -1,16 +1,15 @@
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { permanentRedirect } from 'next/navigation'
-import { decodeSegment } from '@/lib/dictionary/urls'
+import { decodeSegment, searchPath } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
+import { localizedPath } from '@/lib/i18n/paths'
 
-export async function searchQuery(
-  params: Promise<{ query: string }>,
-  decoded: boolean,
-  pathFor: (query: string) => string
-): Promise<string> {
-  const segment = (await params).query
+export function searchQuery(segment: string, decoded: boolean, locale: Locale): string {
   const raw = decoded ? segment : decodeSegment(segment)
   const query = normalizeQuery(raw)
-  if (!query) permanentRedirect('/dictionary/search/')
-  if (query !== raw || (!decoded && segment.includes('.'))) permanentRedirect(pathFor(query))
+  if (!query) permanentRedirect(localizedPath('/dictionary/search/', locale))
+  if (query !== raw || (!decoded && segment.includes('.'))) {
+    permanentRedirect(localizedPath(searchPath(query), locale))
+  }
   return query
 }

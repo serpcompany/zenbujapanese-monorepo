@@ -22,7 +22,7 @@ import {
 import { useSignedInInitials } from '@/hooks/use-seems-signed-in'
 import { builtAccountService } from '@/lib/account/availability'
 import { signOutFromTheAccountMenu } from '@/lib/account/flows'
-import { failureMessage } from '@/lib/account/messages'
+import { type AccountMessages, failureMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
@@ -35,9 +35,9 @@ function useSignedInHere(): string | null {
   return builtAccountService() ? initials : null
 }
 
-async function signOut() {
+async function signOut(messages: AccountMessages, locale: Locale) {
   const problem = await signOutFromTheAccountMenu()
-  if (problem) toast.error(failureMessage(problem))
+  if (problem) toast.error(failureMessage(problem, messages, locale))
 }
 
 type AccountText = Dictionary['chrome']['account']
@@ -77,11 +77,13 @@ export function AccountMenu({
   locale,
   text,
   theme,
+  messages,
   className
 }: {
   locale: Locale
   text: AccountText
   theme: ThemeText
+  messages: AccountMessages
   className?: string
 }) {
   const initials = useSignedInHere()
@@ -120,7 +122,7 @@ export function AccountMenu({
         {signedIn ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void signOut()}>
+            <DropdownMenuItem onClick={() => void signOut(messages, locale)}>
               <LogOutIcon aria-hidden="true" />
               {text.signOut}
             </DropdownMenuItem>

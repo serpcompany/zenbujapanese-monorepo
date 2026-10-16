@@ -3,7 +3,7 @@ import { defaultLocale, isLocale, type Locale } from './config'
 const neverPrefixed = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 const file = /\/[^/]+\.\w+$/
 
-export function isPagePath(pathname: string): boolean {
+function isPagePath(pathname: string): boolean {
   return (
     pathname.startsWith('/') &&
     !pathname.startsWith('//') &&

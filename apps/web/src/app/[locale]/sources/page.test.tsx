@@ -1,10 +1,16 @@
 import { creditsShownBy, type SourceCredit } from '@zenbu/dictionary-core/sources/credits'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { coreText } from '@/lib/i18n/core-text'
 import { visibleText } from '@/test/rendered'
 import SourcesPage from './page'
 
-const html = renderToStaticMarkup(<SourcesPage />)
+const rendered = async (locale: string) =>
+  renderToStaticMarkup(
+    await SourcesPage({ params: Promise.resolve({ locale }), searchParams: Promise.resolve({}) })
+  )
+
+const html = await rendered('en')
 const text = visibleText(html)
 const { conversionNotice, credits } = creditsShownBy('website')
 
@@ -39,5 +45,17 @@ describe('the Sources page', () => {
       '<a href="https://www.edrdg.org/edrdg/licence.html">EDRDG licence, CC BY-SA 4.0</a>'
     )
     expect(html).toContain('Apache-2.0 · IPADIC.')
+  })
+
+  test('in Japanese, thanks the sources in Japanese and still links every project', async () => {
+    const japanese = await rendered('ja')
+    const japaneseText = visibleText(japanese)
+    expect(japaneseText).toContain('データの出典とライセンス')
+    expect(japaneseText).toContain('Zenbu Japaneseの辞書は、オープンデータをもとに作られています。')
+    expect(japaneseText).toContain(coreText(conversionNotice, 'ja'))
+    expect(japaneseText).not.toContain(conversionNotice)
+    for (const { url, name } of credits) {
+      expect(japanese, name).toContain(`<a href="${url}">${coreText(name, 'ja')}</a>`)
+    }
   })
 })

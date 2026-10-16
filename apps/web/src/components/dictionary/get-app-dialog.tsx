@@ -18,29 +18,38 @@ import {
   DrawerTitle
 } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { DialogCloseButton } from './dialog-close-button'
 
-const description =
-  'Save words to lists, mark them known, and add notes and photos in the Zenbu app. Saving lists and known words on this website comes later.'
+export type AppAction = keyof Dictionary['learner']['inApp']
 
 export function GetAppDialog({
   action,
+  locale,
+  text,
   onOpenChange
 }: {
-  action: string | null
+  action: AppAction | null
+  locale: Locale
+  text: Dictionary['learner']
   onOpenChange: (open: boolean) => void
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
-  const title = `${action ?? ''} works in the app`
-  const getApp = <GetAppButton onClick={() => onOpenChange(false)} />
+  const title = action ? text.inApp[action] : ''
+  const getApp = (
+    <GetAppButton locale={locale} label={text.getTheApp} onClick={() => onOpenChange(false)} />
+  )
   if (wide) {
     return (
       <Dialog open={action !== null} onOpenChange={onOpenChange}>
-        <DialogContent>
+        <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
+            <DialogDescription>{text.appDescription}</DialogDescription>
           </DialogHeader>
           <DialogFooter>{getApp}</DialogFooter>
+          <DialogCloseButton label={text.close} />
         </DialogContent>
       </Dialog>
     )
@@ -50,7 +59,7 @@ export function GetAppDialog({
       <DrawerContent>
         <DrawerHeader>
           <DrawerTitle>{title}</DrawerTitle>
-          <DrawerDescription>{description}</DrawerDescription>
+          <DrawerDescription>{text.appDescription}</DrawerDescription>
         </DrawerHeader>
         <DrawerFooter>{getApp}</DrawerFooter>
       </DrawerContent>

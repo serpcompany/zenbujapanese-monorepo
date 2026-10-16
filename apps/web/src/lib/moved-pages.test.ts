@@ -9,7 +9,12 @@ describe('movedPageResponse', () => {
     [
       'https://staging.zenbujapanese.com/privacy?from=app',
       'https://staging.zenbujapanese.com/legal/privacy/?from=app'
-    ]
+    ],
+    ['https://zenbujapanese.com/en', 'https://zenbujapanese.com/'],
+    ['https://zenbujapanese.com/en/', 'https://zenbujapanese.com/'],
+    ['https://zenbujapanese.com/en/about', 'https://zenbujapanese.com/about/'],
+    ['https://zenbujapanese.com/en/about/?from=app', 'https://zenbujapanese.com/about/?from=app'],
+    ['https://zenbujapanese.com/en/privacy', 'https://zenbujapanese.com/legal/privacy/']
   ])('sends %s to %s in one 308', (from, to) => {
     const response = movedPageResponse(new URL(from))
     expect(response?.status).toBe(308)
@@ -20,7 +25,10 @@ describe('movedPageResponse', () => {
     'https://zenbujapanese.com/',
     'https://zenbujapanese.com/legal/privacy/',
     'https://zenbujapanese.com/privacy-policy/',
-    'https://zenbujapanese.com/support'
+    'https://zenbujapanese.com/support',
+    'https://zenbujapanese.com/ja/',
+    'https://zenbujapanese.com/ja/about/',
+    'https://zenbujapanese.com/english/'
   ])('leaves %s to the site', url => {
     expect(movedPageResponse(new URL(url))).toBeNull()
   })

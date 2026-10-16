@@ -5,27 +5,32 @@ import { HomeHero } from '@/components/home/home-hero'
 import { HomeWebTools } from '@/components/home/home-web-tools'
 import { TryDictionary } from '@/components/home/try-dictionary'
 import { OriginCanonical } from '@/components/origin-canonical'
-import { homeTitle } from '@/lib/home'
-import { siteOpenGraph } from '@/lib/metadata'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localeOf } from '@/lib/i18n/params'
 import { pageFor } from '@/lib/pages'
+import { siteOpenGraph } from '@/lib/seo'
 
-const { description } = pageFor('/')
-
-export const metadata: Metadata = {
-  title: { absolute: homeTitle },
-  description,
-  openGraph: { ...siteOpenGraph, title: homeTitle, description }
+export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
+  const locale = await localeOf(params)
+  const title = getDictionary(locale).home.title
+  const { description } = pageFor('/', locale)
+  return {
+    title: { absolute: title },
+    description,
+    openGraph: { ...siteOpenGraph(locale), title, description }
+  }
 }
 
-export default function HomePage() {
+export default async function HomePage({ params }: PageProps<'/[locale]'>) {
+  const locale = await localeOf(params)
   return (
     <main className="flex flex-col">
-      <OriginCanonical />
-      <HomeHero />
-      <TryDictionary />
-      <HomeAreas />
-      <HomeWebTools />
-      <HomeClosing />
+      <OriginCanonical locale={locale} />
+      <HomeHero locale={locale} />
+      <TryDictionary locale={locale} />
+      <HomeAreas locale={locale} />
+      <HomeWebTools locale={locale} />
+      <HomeClosing locale={locale} />
     </main>
   )
 }

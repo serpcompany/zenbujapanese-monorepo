@@ -1,13 +1,19 @@
 import type { BrowseSummaryResponse } from '@zenbu/dictionary-core/artifact/browse'
 import { commonWords } from '@zenbu/dictionary-core/browse/categories'
-import { gradeLists, jinmeiyo, secondarySchool } from '@zenbu/dictionary-core/browse/lists'
+import {
+  gradeLists,
+  jinmeiyo,
+  type KanjiList,
+  secondarySchool
+} from '@zenbu/dictionary-core/browse/lists'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Panel } from '@/components/dictionary/browse/browse-ui'
 import { CategoryLinkLists } from '@/components/dictionary/browse/category-links'
 import { KanaCharts } from '@/components/dictionary/browse/hub-pages'
 import { KanjiTiles } from '@/components/dictionary/browse/kanji-tiles'
-import { formatCount, plural } from '@/lib/dictionary/browse/copy'
+import { Fill } from '@/components/fill'
+import { browseText, counted, kanjiListHeading, kanjiListName } from '@/lib/dictionary/browse/copy'
 import {
   categoryPath,
   kanjiListPath,
@@ -15,6 +21,9 @@ import {
   scriptPath
 } from '@/lib/dictionary/browse/paths'
 import type { Linked } from '@/lib/dictionary/page-example'
+import type { Locale } from '@/lib/i18n/config'
+import { fill, formatNumber } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 
 type Summary = Omit<BrowseSummaryResponse, 'commonWords'> & {
   commonWords: Linked<BrowseSummaryResponse['commonWords'][number]>[]
@@ -42,84 +51,97 @@ function Section({
 
 const underlined = 'underline underline-offset-4 hover:text-foreground'
 
-export function DictionaryHomeSections({
-  summary,
-  hiragana
-}: {
-  summary: Summary
-  hiragana: ReadonlySet<string>
-}) {
-  const kanjiCards = [
-    ...gradeLists.map(list => ({ list, name: list.name })),
-    { list: secondarySchool, name: secondarySchool.name },
-    { list: jinmeiyo, name: `${jinmeiyo.name} (names)` }
+function KanjiByGrade({ summary, locale }: { summary: Summary; locale: Locale }) {
+  const t = browseText(locale)
+  const [firstGrade] = gradeLists
+  const cards: { list: KanjiList; name: string }[] = [
+    ...[...gradeLists, secondarySchool].map(list => ({ list, name: kanjiListName(list, locale) })),
+    { list: jinmeiyo, name: fill(t.home.namesCard, { name: kanjiListName(jinmeiyo, locale) }) }
   ]
   const countOf = (slug: string) =>
     slug === jinmeiyo.slug
       ? summary.kanji.jinmeiyo
       : (summary.kanji.grades.find(grade => grade.slug === slug)?.count ?? 0)
+  const kanji = (count: number) => counted(t.counts.kanji, count, locale)
+  return (
+    <Section
+      title={t.home.byGrade}
+      aside={
+        <Link href={localizedPath(kanjiListsPath, locale)} className={underlined}>
+          {fill(t.home.allJoyo, { count: formatNumber(summary.kanji.joyo, locale) })}
+        </Link>
+      }
+    >
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {cards.map(({ list, name }) => (
+          <li key={list.slug}>
+            <Link
+              href={localizedPath(kanjiListPath(list.slug), locale)}
+              className="flex flex-col gap-0.5 rounded-lg border px-4 py-3.5 hover:bg-muted"
+            >
+              <span className="font-semibold">{name}</span>
+              <span className="text-sm text-muted-foreground">{kanji(countOf(list.slug))}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <Panel label={kanjiListHeading(firstGrade, locale)}>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
+          <h3 className="font-semibold">
+            {fill(t.home.firstGrade, {
+              name: kanjiListName(firstGrade, locale),
+              count: kanji(summary.firstGrade.length)
+            })}
+          </h3>
+          <span className="text-sm text-muted-foreground">{t.home.opensSearch}</span>
+        </div>
+        <KanjiTiles
+          characters={summary.firstGrade}
+          label={kanjiListHeading(firstGrade, locale)}
+          locale={locale}
+        />
+      </Panel>
+    </Section>
+  )
+}
+
+export function DictionaryHomeSections({
+  summary,
+  hiragana,
+  locale
+}: {
+  summary: Summary
+  hiragana: ReadonlySet<string>
+  locale: Locale
+}) {
+  const t = browseText(locale)
+  const scriptLink = (script: 'hiragana' | 'katakana') => (
+    <Link href={localizedPath(scriptPath(script), locale)} className={underlined}>
+      {t.names[script]}
+    </Link>
+  )
   return (
     <div className="flex w-full flex-col gap-14 border-t pt-12">
       <Section
-        title="Browse by kana"
+        title={t.home.byKana}
         aside={
-          <>
-            Every word, by the kana it starts with ·{' '}
-            <Link href={scriptPath('hiragana')} className={underlined}>
-              Hiragana
-            </Link>{' '}
-            ·{' '}
-            <Link href={scriptPath('katakana')} className={underlined}>
-              Katakana
-            </Link>
-          </>
+          <Fill
+            template={t.home.byKanaAside}
+            values={{ hiragana: scriptLink('hiragana'), katakana: scriptLink('katakana') }}
+          />
         }
       >
-        <KanaCharts script="hiragana" initials={hiragana} />
+        <KanaCharts script="hiragana" initials={hiragana} locale={locale} />
+      </Section>
+      <KanjiByGrade summary={summary} locale={locale} />
+      <Section title={t.home.byCategory}>
+        <CategoryLinkLists locale={locale} />
       </Section>
       <Section
-        title="Kanji by school grade"
+        title={t.names.commonWords}
         aside={
-          <Link href={kanjiListsPath} className={underlined}>
-            All {formatCount(summary.kanji.joyo)} jōyō kanji
-          </Link>
-        }
-      >
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {kanjiCards.map(({ list, name }) => (
-            <li key={list.slug}>
-              <Link
-                href={kanjiListPath(list.slug)}
-                className="flex flex-col gap-0.5 rounded-lg border px-4 py-3.5 hover:bg-muted"
-              >
-                <span className="font-semibold">{name}</span>
-                <span className="text-sm text-muted-foreground">
-                  {plural(countOf(list.slug), 'kanji', 'kanji')}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Panel label="Grade 1 kanji">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-            <h3 className="font-semibold">
-              Grade 1 · {plural(summary.firstGrade.length, 'kanji', 'kanji')}
-            </h3>
-            <span className="text-sm text-muted-foreground">
-              Each opens that kanji’s search page
-            </span>
-          </div>
-          <KanjiTiles characters={summary.firstGrade} label="Grade 1 kanji" />
-        </Panel>
-      </Section>
-      <Section title="Browse by category">
-        <CategoryLinkLists />
-      </Section>
-      <Section
-        title="Common words"
-        aside={
-          <Link href={categoryPath(commonWords.slug)} className={underlined}>
-            All {plural(summary.common, 'common word')}
+          <Link href={localizedPath(categoryPath(commonWords.slug), locale)} className={underlined}>
+            {counted(t.home.allCommon, summary.common, locale)}
           </Link>
         }
       >
@@ -128,7 +150,7 @@ export function DictionaryHomeSections({
             <li key={word.entSeq}>
               {word.path ? (
                 <Link
-                  href={word.path}
+                  href={localizedPath(word.path, locale)}
                   className="inline-flex min-h-11 items-center rounded-lg border px-3.5 text-base hover:bg-muted"
                 >
                   {word.headword}

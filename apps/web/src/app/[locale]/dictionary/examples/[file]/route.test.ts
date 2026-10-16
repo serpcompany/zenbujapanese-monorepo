@@ -7,10 +7,12 @@ vi.mock('@/lib/dictionary/data', () => ({ getWordExamples: vi.fn() }))
 
 const example = { position: 25, text: '見る。', tokens: [] } as unknown as PageExample
 
-function get(file: string, query = '') {
-  return GET(new NextRequest(`https://zenbujapanese.com/dictionary/examples/${file}${query}`), {
-    params: Promise.resolve({ file })
-  })
+function get(file: string, query = '', locale = 'en') {
+  const prefix = locale === 'en' ? '' : `/${locale}`
+  return GET(
+    new NextRequest(`https://zenbujapanese.com${prefix}/dictionary/examples/${file}${query}`),
+    { params: Promise.resolve({ locale, file }) }
+  )
 }
 
 describe('GET /dictionary/examples/<ent_seq>.json', () => {
@@ -37,6 +39,12 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
   ])('is not found for %s', async (_, file, query) => {
     const response = await get(file, query)
     expect(response.status).toBe(404)
+    expect(getWordExamples).not.toHaveBeenCalled()
+  })
+
+  test('is not found under another language, since files are never prefixed', async () => {
+    vi.mocked(getWordExamples).mockResolvedValue([example])
+    expect((await get('1.json', '?build=b1&from=25', 'ja')).status).toBe(404)
     expect(getWordExamples).not.toHaveBeenCalled()
   })
 

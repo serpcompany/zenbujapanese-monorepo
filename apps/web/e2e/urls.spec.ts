@@ -13,7 +13,7 @@ test.describe('URLs', () => {
   const slashedFileRedirectNote =
     'next dev strips a file URL’s slash first, in a redirect of its own, which OpenNext skips'
 
-  for (const [from, to, productionBuildOnly] of [
+  for (const [from, to, onlyOnTheProductionBuild] of [
     ['/dictionary/1546640/', needed.path],
     [encodeURI('/dictionary/要らない-1546640/'), needed.path],
     ['/dictionary/search/IRU/', '/dictionary/search/iru/'],
@@ -29,19 +29,60 @@ test.describe('URLs', () => {
     ['/sitemaps/dictionary/2.xml', '/sitemap-words-2.xml'],
     ['/sitemap-pages.xml/', '/sitemap-pages.xml'],
     ['/sitemap.xml', '/sitemap-index.xml'],
-    ['/sitemaps/pages.xml/', '/sitemap-pages.xml', true],
-    ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml', true]
+    ['/sitemaps/pages.xml/', '/sitemap-pages.xml', slashedFileRedirectNote],
+    ['/sitemaps/dictionary/2.xml/', '/sitemap-words-2.xml', slashedFileRedirectNote],
+    ['/en/', '/'],
+    ['/en/about/', '/about/'],
+    [`/en${needed.path}`, needed.path],
+    ['/en/dictionary/search/iru/', '/dictionary/search/iru/'],
+    ['/en/robots.txt', '/robots.txt'],
+    ['/en', '/', answeredByWorker],
+    ['/en/about', '/about/', answeredByWorker]
   ] as const) {
     test(`${decodeURI(from)} redirects to ${decodeURI(to)} in one hop`, async ({
       request,
       baseURL
     }) => {
-      test.skip(Boolean(productionBuildOnly) && !onProductionBuild, slashedFileRedirectNote)
+      test.skip(
+        onlyOnTheProductionBuild !== undefined && !onProductionBuild,
+        onlyOnTheProductionBuild
+      )
       const response = await request.get(from, { maxRedirects: 0 })
       expect(response.status()).toBe(308)
       expect(new URL(response.headers().location, baseURL).pathname).toBe(to)
     })
   }
+
+  for (const [path, lang] of [
+    ['/', 'en'],
+    ['/ja/', 'ja'],
+    ['/about/', 'en'],
+    ['/ja/about/', 'ja'],
+    [needed.path, 'en'],
+    [`/ja${needed.path}`, 'ja']
+  ] as const) {
+    test(`${decodeURI(path)} answers 200 in ${lang}`, async ({ request }) => {
+      const response = await request.get(path, { maxRedirects: 0 })
+      expect(response.status()).toBe(200)
+      expect(await response.text()).toMatch(new RegExp(`^<!DOCTYPE html><html lang="${lang}"`))
+    })
+  }
+
+  test('adding Japanese changed no file: they keep their one URL, with no language prefix', async ({
+    request
+  }) => {
+    for (const path of ['/robots.txt', '/sitemap-index.xml', '/dictionary/service.json']) {
+      expect((await request.get(path, { maxRedirects: 0 })).status(), path).not.toBe(308)
+    }
+    for (const path of [
+      '/ja/robots.txt',
+      '/ja/sitemap-index.xml',
+      '/ja/dictionary/examples/1546640.json?build=fixtures&from=5',
+      '/ja/dictionary/search/eat/examples.json?build=fixtures&from=0'
+    ]) {
+      expect((await request.get(path, { maxRedirects: 0 })).status(), path).toBe(404)
+    }
+  })
 
   test('/privacy, which the shipped app links to, reaches the privacy policy', async ({ page }) => {
     await page.goto('/privacy')
@@ -66,6 +107,8 @@ test.describe('URLs', () => {
     for (const [from, to] of [
       ['/about', '/about/'],
       ['/about/', '/about/'],
+      ['/en/about', '/about/'],
+      ['/ja/about', '/ja/about/'],
       ['/privacy', '/legal/privacy/'],
       ['/robots.txt', '/robots.txt'],
       ['/.well-known/change-password', '/.well-known/change-password']

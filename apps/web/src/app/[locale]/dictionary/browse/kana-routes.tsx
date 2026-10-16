@@ -4,7 +4,7 @@ import { katakana } from '@zenbu/dictionary-core/detail/text'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { KanaInitial, KanaWords, ScriptIndex } from '@/components/dictionary/browse/kana-pages'
-import { plural } from '@/lib/dictionary/browse/copy'
+import { counted, pagedTitle } from '@/lib/dictionary/browse/copy'
 import {
   getKanaIndex,
   getKanaInitial,
@@ -15,36 +15,46 @@ import {
 import { kanaPath, pageNumber, scriptPath } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { decodeSegment } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localeOf } from '@/lib/i18n/params'
+import { localizedPath } from '@/lib/i18n/paths'
 
-type PrefixParams = { params: Promise<{ prefix: string }> }
-type PagedParams = { params: Promise<{ prefix: string; page: string }> }
+type LocaleParams = { params: Promise<{ locale: string }> }
+type PrefixParams = { params: Promise<{ locale: string; prefix: string }> }
+type PagedParams = { params: Promise<{ locale: string; prefix: string; page: string }> }
 
-const scriptHeadings: Record<KanaScript, { title: string; heading: string }> = {
-  hiragana: {
-    title: 'Japanese words by hiragana',
-    heading: 'Japanese words by hiragana, from あ to ん'
-  },
-  katakana: { title: 'Japanese katakana words', heading: 'Japanese katakana words, from ア to ン' }
-}
+const kanaText = (locale: Locale) => getDictionary(locale).browse.kana
 
 export function scriptIndexRoute(script: KanaScript) {
   return {
-    async generateMetadata(): Promise<Metadata> {
+    async generateMetadata({ params }: LocaleParams): Promise<Metadata> {
+      const locale = await localeOf(params)
       const { total } = await getKanaIndex(script)
+      const t = kanaText(locale)
       return dictionaryMetadata(
         scriptPath(script),
-        scriptHeadings[script].title,
-        `${plural(total, 'Japanese word')}, by the first kana of their reading.`
+        locale,
+        t.scripts[script].title,
+        counted(t.scriptDescription, total, locale)
       )
     },
-    async Page() {
+    async Page({ params }: LocaleParams) {
+      const locale = await localeOf(params)
       const index = await getKanaIndex(script)
-      return <ScriptIndex index={index} heading={scriptHeadings[script].heading} />
+      return (
+        <ScriptIndex
+          index={index}
+          heading={kanaText(locale).scripts[script].heading}
+          locale={locale}
+        />
+      )
     }
   }
 }
 
-const startingWith = (kana: string) => `Japanese words starting with ${kana}`
+const startingWith = (kana: string, locale: Locale) => fill(kanaText(locale).startingWith, { kana })
 
 async function initialFor(script: KanaScript, initial: string): Promise<KanaInitialPage> {
   const found = await getKanaInitial(script, initial)
@@ -78,12 +88,18 @@ async function katakanaCounterpart(script: KanaScript, kana: string): Promise<st
   return (await getKanaInitials('katakana')).has(other) ? kanaPath('katakana', other) : null
 }
 
-function prefixMetadata(script: KanaScript, prefix: string, total: number, page: number) {
-  const paged = page > 1 ? `, page ${page}` : ''
+function prefixMetadata(
+  script: KanaScript,
+  prefix: string,
+  total: number,
+  page: number,
+  locale: Locale
+) {
   return dictionaryMetadata(
     kanaPath(script, prefix, page),
-    `${startingWith(prefix)}${paged}`,
-    `${plural(total, 'Japanese word')} whose reading starts with ${prefix}, with their meanings.`,
+    locale,
+    pagedTitle(startingWith(prefix, locale), page, locale),
+    counted(kanaText(locale).prefixDescription, total, locale, { kana: prefix }),
     { index: total >= minimumIndexedWords }
   )
 }
@@ -91,27 +107,32 @@ function prefixMetadata(script: KanaScript, prefix: string, total: number, page:
 function KanaPrefix({
   script,
   found,
-  page
+  page,
+  locale
 }: {
   script: KanaScript
   found: Awaited<ReturnType<typeof prefixPage>>
   page: number
+  locale: Locale
 }) {
+  const heading = startingWith(found.prefix, locale)
   return found.words ? (
     <KanaWords
       script={script}
       prefix={found.prefix}
       initial={found.initial}
       words={found.words}
-      heading={startingWith(found.prefix)}
+      heading={heading}
       page={page}
+      locale={locale}
     />
   ) : (
     <KanaInitial
       script={script}
       initial={found.initial}
-      heading={startingWith(found.prefix)}
+      heading={heading}
       katakanaPath={found.katakanaPath}
+      locale={locale}
     />
   )
 }
@@ -119,17 +140,26 @@ function KanaPrefix({
 export function kanaRoute(script: KanaScript) {
   return {
     async generateMetadata({ params }: PrefixParams): Promise<Metadata> {
+      const locale = await localeOf(params)
       const found = await prefixPage(script, (await params).prefix, 1)
-      return prefixMetadata(script, found.prefix, found.words?.total ?? found.initial.total, 1)
+      return prefixMetadata(
+        script,
+        found.prefix,
+        found.words?.total ?? found.initial.total,
+        1,
+        locale
+      )
     },
     async Page({ params }: PrefixParams) {
+      const locale = await localeOf(params)
       const found = await prefixPage(script, (await params).prefix, 1)
-      return <KanaPrefix script={script} found={found} page={1} />
+      return <KanaPrefix script={script} found={found} page={1} locale={locale} />
     }
   }
 }
 
 async function pagedPrefix(script: KanaScript, params: PagedParams['params']) {
+  const locale = await localeOf(params)
   const { prefix, page: segment } = await params
   const number = pageNumber(segment)
   const kana = decodeSegment(prefix)
@@ -137,22 +167,22 @@ async function pagedPrefix(script: KanaScript, params: PagedParams['params']) {
   if ('redirect' in number) {
     const group = await getKanaInitial(script, Array.from(kana)[0])
     if (!group?.prefixes.some(each => each.kana === kana)) notFound()
-    permanentRedirect(kanaPath(script, kana))
+    permanentRedirect(localizedPath(kanaPath(script, kana), locale))
   }
   const found = await prefixPage(script, prefix, number.page)
   if (!found.words) notFound()
-  return { found, page: number.page }
+  return { found, page: number.page, locale }
 }
 
 export function kanaPagedRoute(script: KanaScript) {
   return {
     async generateMetadata({ params }: PagedParams): Promise<Metadata> {
-      const { found, page } = await pagedPrefix(script, params)
-      return prefixMetadata(script, found.prefix, found.words?.total ?? 0, page)
+      const { found, page, locale } = await pagedPrefix(script, params)
+      return prefixMetadata(script, found.prefix, found.words?.total ?? 0, page, locale)
     },
     async Page({ params }: PagedParams) {
-      const { found, page } = await pagedPrefix(script, params)
-      return <KanaPrefix script={script} found={found} page={page} />
+      const { found, page, locale } = await pagedPrefix(script, params)
+      return <KanaPrefix script={script} found={found} page={page} locale={locale} />
     }
   }
 }

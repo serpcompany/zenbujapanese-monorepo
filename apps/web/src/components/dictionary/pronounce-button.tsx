@@ -4,9 +4,9 @@ import { Volume2Icon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
-export function speakJapanese(text: string) {
+export function speakJapanese(text: string, unsupported: string) {
   if (!('speechSynthesis' in window)) {
-    toast.error("This browser can't pronounce Japanese.")
+    toast.error(unsupported)
     return
   }
   const utterance = new SpeechSynthesisUtterance(text)
@@ -15,9 +15,22 @@ export function speakJapanese(text: string) {
   window.speechSynthesis.speak(utterance)
 }
 
-export function PronounceButton({ text, label = 'Pronounce' }: { text: string; label?: string }) {
+export function PronounceButton({
+  text,
+  label,
+  unsupported
+}: {
+  text: string
+  label: string
+  unsupported: string
+}) {
   return (
-    <Button variant="ghost" size="icon-sm" aria-label={label} onClick={() => speakJapanese(text)}>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      onClick={() => speakJapanese(text, unsupported)}
+    >
       <Volume2Icon />
     </Button>
   )

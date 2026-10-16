@@ -1,6 +1,6 @@
 import { absoluteUrl } from './site'
 
-export type SitemapAlternate = { hreflang: string; url: string }
+type SitemapAlternate = { hreflang: string; url: string }
 
 export type SitemapEntry = {
   url: string

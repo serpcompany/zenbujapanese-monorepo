@@ -5,9 +5,16 @@ import {
   rankedLists,
   schoolLists
 } from '@zenbu/dictionary-core/browse/lists'
-import { legalPages, pageFor, type SitePath } from '../../pages'
+import type { Locale } from '../../i18n/config'
+import { coreText } from '../../i18n/core-text'
+import { getDictionary } from '../../i18n/dictionary'
+import { fill } from '../../i18n/format'
+import { legalPaths, pageFor, type SitePath } from '../../pages'
+import { categoryName } from './category-names'
+import { kanjiListHeading, kanjiListName } from './copy'
 import {
   browsePath,
+  type CategoryIndex,
   categoryIndexes,
   categoryPath,
   frequencyDictionariesPath,
@@ -26,58 +33,72 @@ export interface TreeNode {
   children?: TreeNode[]
 }
 
-const page = (path: SitePath): TreeNode => ({ title: pageFor(path).title, path })
-
-export const homeTree: TreeNode = {
-  ...page('/'),
-  children: [
-    { ...page('/products/'), children: [page('/products/zenbu-japanese-app/')] },
-    page('/about/'),
-    page('/support/'),
-    page('/contact/'),
-    page('/sources/'),
-    { ...page('/legal/'), children: legalPages.map(legal => page(legal.path)) },
-    page('/sitemap/')
-  ]
+export function homeTreeIn(locale: Locale): TreeNode {
+  const page = (path: SitePath): TreeNode => ({ title: pageFor(path, locale).title, path })
+  return {
+    ...page('/'),
+    children: [
+      { ...page('/products/'), children: [page('/products/zenbu-japanese-app/')] },
+      page('/about/'),
+      page('/support/'),
+      page('/contact/'),
+      page('/sources/'),
+      { ...page('/legal/'), children: legalPaths.map(page) },
+      page('/sitemap/')
+    ]
+  }
 }
 
-export const dictionaryTree: TreeNode = {
-  title: 'Japanese dictionary',
-  path: '/dictionary/',
-  children: [
-    {
-      title: 'Browse',
-      path: browsePath,
-      children: [
-        { title: 'Kana charts', path: kanaChartsPath },
-        { title: 'Hiragana', path: scriptPath('hiragana') },
-        { title: 'Katakana', path: scriptPath('katakana') },
-        {
-          title: 'Kanji lists',
-          path: kanjiListsPath,
-          children: [
-            ...schoolLists.map(list => ({ title: list.name, path: kanjiListPath(list.slug) })),
-            ...jlptKanjiLists.map(list => ({
-              title: `${list.name} kanji`,
-              path: kanjiListPath(list.slug)
-            })),
-            { title: 'By stroke count', path: strokeCountsPath }
-          ]
-        },
-        {
-          title: 'Frequency dictionaries',
-          path: frequencyDictionariesPath,
-          children: [
-            ...jlptLists.map(list => ({
-              title: `${list.name} vocabulary`,
-              path: jlptVocabularyPath(list.level)
-            })),
-            ...rankedLists.map(list => ({ title: list.name, path: rankedListPath(list.slug) }))
-          ]
-        },
-        ...Object.values(categoryIndexes).map(index => ({ title: index.name, path: index.path })),
-        { title: commonWords.name, path: categoryPath(commonWords.slug) }
-      ]
-    }
-  ]
+export function dictionaryTreeIn(locale: Locale): TreeNode {
+  const t = getDictionary(locale).browse
+  const indexes = Object.keys(categoryIndexes) as CategoryIndex[]
+  return {
+    title: pageFor('/dictionary/', locale).title,
+    path: '/dictionary/',
+    children: [
+      {
+        title: t.names.browse,
+        path: browsePath,
+        children: [
+          { title: t.names.kanaCharts, path: kanaChartsPath },
+          { title: t.names.hiragana, path: scriptPath('hiragana') },
+          { title: t.names.katakana, path: scriptPath('katakana') },
+          {
+            title: t.names.kanjiLists,
+            path: kanjiListsPath,
+            children: [
+              ...schoolLists.map(list => ({
+                title: kanjiListName(list, locale),
+                path: kanjiListPath(list.slug)
+              })),
+              ...jlptKanjiLists.map(list => ({
+                title: kanjiListHeading(list, locale),
+                path: kanjiListPath(list.slug)
+              })),
+              { title: t.names.byStrokeCount, path: strokeCountsPath }
+            ]
+          },
+          {
+            title: t.names.frequency,
+            path: frequencyDictionariesPath,
+            children: [
+              ...jlptLists.map(list => ({
+                title: fill(t.frequency.jlptHeading, { name: list.name }),
+                path: jlptVocabularyPath(list.level)
+              })),
+              ...rankedLists.map(list => ({
+                title: coreText(list.name, locale),
+                path: rankedListPath(list.slug)
+              }))
+            ]
+          },
+          ...indexes.map(index => ({
+            title: t.categoryIndexes[index].name,
+            path: categoryIndexes[index].path
+          })),
+          { title: categoryName(commonWords, locale), path: categoryPath(commonWords.slug) }
+        ]
+      }
+    ]
+  }
 }

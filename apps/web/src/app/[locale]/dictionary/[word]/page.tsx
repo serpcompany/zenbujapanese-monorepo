@@ -1,9 +1,10 @@
 import { exampleCountText, noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
-import type { Section as WordSection } from '@zenbu/dictionary-core/detail/sections'
+import { glossSeparator, type Section as WordSection } from '@zenbu/dictionary-core/detail/sections'
 import type { WordSectionKind } from '@zenbu/dictionary-core/detail/word'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
+import { Fragment } from 'react'
 import { ConjugationsSection } from '@/components/dictionary/conjugations'
 import { Disclosure } from '@/components/dictionary/disclosure'
 import { ExampleList } from '@/components/dictionary/example-list'
@@ -14,6 +15,7 @@ import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
+import { SourceText } from '@/components/dictionary/source-text'
 import { WordHeader } from '@/components/dictionary/word-header'
 import {
   getWordPage,
@@ -23,35 +25,73 @@ import {
 } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { wordExamplesAnchor } from '@/lib/dictionary/results/links'
+import {
+  conjugationsIn,
+  conjugationsText,
+  exampleListText,
+  frequencyRowsIn
+} from '@/lib/dictionary/screen-text'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
+import { coreText, sourceLang } from '@/lib/i18n/core-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localeOf } from '@/lib/i18n/params'
+import { localizedPath } from '@/lib/i18n/paths'
 
-type Props = PageProps<'/dictionary/[word]'>
+type Props = PageProps<'/[locale]/dictionary/[word]'>
 
 async function load(params: Props['params']) {
+  const locale = await localeOf(params)
   const segment = (await params).word
   const parsed = parseWordSegment(segment)
   if (!parsed) notFound()
   const word = await getWordPage(parsed.entSeq)
   if (!word) notFound()
   if (decodeSegment(segment) !== `${word.slug}-${word.entSeq}`) {
-    permanentRedirect(encodeURI(word.path))
+    permanentRedirect(encodeURI(localizedPath(word.path, locale)))
   }
-  return word
+  return { locale, word }
 }
 
+const hasExamples = (word: WordPageWithKanji) =>
+  word.exampleCount !== null && word.exampleCount.listed > 0 && word.examples.length > 0
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const word = await load(params)
-  const reading = word.reading === word.headword ? '' : ` (${word.reading})`
-  const partOfSpeech = word.partOfSpeech ? ` ${word.partOfSpeech}.` : ''
+  const { locale, word } = await load(params)
+  const t = getDictionary(locale).word.metadata
+  const name =
+    word.reading === word.headword
+      ? word.headword
+      : fill(t.word, { headword: word.headword, reading: word.reading })
+  const partOfSpeech = coreText(word.partOfSpeech, locale)
   return dictionaryMetadata(
     encodeURI(word.path),
-    `${word.headword}${reading} meaning`,
-    `${word.headword}${reading}: ${word.summary}.${partOfSpeech}`
+    locale,
+    fill(hasExamples(word) ? t.titleWithExamples : t.title, { word: name }),
+    fill(partOfSpeech ? t.descriptionWithPartOfSpeech : t.description, {
+      word: name,
+      meaning: word.summary,
+      partOfSpeech
+    })
   )
 }
 
-function KanjiItems({ kanji }: { kanji: WordPageKanji[] }) {
+function Notes({ notes, locale }: { notes: string[]; locale: Locale }) {
+  return notes.map((note, index) => {
+    const shown = coreText(note, locale)
+    return (
+      <Fragment key={note}>
+        {index > 0 ? glossSeparator : null}
+        {shown === note ? <SourceText text={note} locale={locale} /> : shown}
+      </Fragment>
+    )
+  })
+}
+
+function KanjiItems({ kanji, locale }: { kanji: WordPageKanji[]; locale: Locale }) {
+  const t = getDictionary(locale).word
   return (
     <ul className="-mx-2 flex flex-col">
       {kanji.map(item => {
@@ -60,7 +100,9 @@ function KanjiItems({ kanji }: { kanji: WordPageKanji[] }) {
             <span lang="ja" className="text-2xl font-semibold">
               {item.character}
             </span>
-            <span className="text-muted-foreground">{item.meaning}</span>
+            <span className="text-muted-foreground" lang={sourceLang(locale)}>
+              {item.meaning}
+            </span>
           </>
         )
         return (
@@ -68,12 +110,15 @@ function KanjiItems({ kanji }: { kanji: WordPageKanji[] }) {
             {item.details ? (
               <Disclosure
                 data-kanji-row={item.character}
-                label={`${item.character}, ${item.meaning}, shows kanji details`}
+                label={fill(t.kanjiRowLabel, {
+                  character: item.character,
+                  meaning: String(item.meaning)
+                })}
                 buttonClassName="px-2 py-2"
                 summary={summary}
               >
                 <div className="px-2 pt-2 pb-4">
-                  <KanjiDetails kanji={item.details} />
+                  <KanjiDetails kanji={item.details} locale={locale} />
                 </div>
               </Disclosure>
             ) : (
@@ -88,27 +133,43 @@ function KanjiItems({ kanji }: { kanji: WordPageKanji[] }) {
   )
 }
 
-function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
+function AlternativeForms({
+  forms,
+  locale
+}: {
+  forms: WordPageData['alternatives']
+  locale: Locale
+}) {
   if (forms.length === 0) return null
+  const t = getDictionary(locale).word
   return (
     <p lang="ja" className="text-lg">
       {forms.map((form, index) => {
+        const labels =
+          form.labels.length > 0
+            ? fill(t.formLabels, {
+                labels: form.labels.map(label => coreText(label, locale)).join(t.labelSeparator)
+              })
+            : null
         const label = (
-          <span className={form.labelText ? 'text-muted-foreground' : undefined}>
+          <span className={labels ? 'text-muted-foreground' : undefined}>
             {form.value}
-            {form.labelText ? (
-              <span lang="en" className="text-sm">
+            {labels ? (
+              <span lang={locale === 'ja' ? undefined : locale} className="text-sm">
                 {' '}
-                {form.labelText}
+                {labels}
               </span>
             ) : null}
           </span>
         )
         return (
           <span key={form.value}>
-            {index > 0 ? ', ' : null}
+            {index > 0 ? t.formSeparator : null}
             {form.path ? (
-              <Link href={form.path} className="underline-offset-4 hover:underline">
+              <Link
+                href={localizedPath(form.path, locale)}
+                className="underline-offset-4 hover:underline"
+              >
                 {label}
               </Link>
             ) : (
@@ -123,23 +184,31 @@ function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
 
 function WordPageSection({
   section,
-  word
+  word,
+  locale
 }: {
   section: WordSection<WordSectionKind>
   word: WordPageWithKanji
+  locale: Locale
 }) {
+  const t = getDictionary(locale)
+  const title = coreText(section.title, locale)
   switch (section.kind) {
     case 'meaning':
       return (
-        <Section title={section.title}>
+        <Section title={title}>
           <ol className="flex flex-col gap-3">
             {word.senses.map(sense => (
               <li key={sense.number} className="flex gap-2">
                 <span className="font-medium tabular-nums">{sense.number}.</span>
                 <div>
-                  <p className="font-medium">{sense.meaning}</p>
+                  <p className="font-medium" lang={sourceLang(locale)}>
+                    {sense.meaning}
+                  </p>
                   {sense.noteText ? (
-                    <p className="text-muted-foreground">{sense.noteText}</p>
+                    <p className="text-muted-foreground">
+                      <Notes notes={sense.notes} locale={locale} />
+                    </p>
                   ) : null}
                 </div>
               </li>
@@ -149,38 +218,48 @@ function WordPageSection({
       )
     case 'frequency':
       return (
-        <Section title={section.title}>
-          <FrequencySection rows={word.frequencyRows} />
+        <Section title={title}>
+          <FrequencySection rows={frequencyRowsIn(word.frequencyRows, locale)} text={t.frequency} />
         </Section>
       )
     case 'conjugations':
       return word.conjugations ? (
-        <ConjugationsSection title={section.title} conjugations={word.conjugations} />
+        <ConjugationsSection
+          conjugations={conjugationsIn(word.conjugations, locale)}
+          locale={locale}
+          text={conjugationsText(locale)}
+        />
       ) : null
     case 'alternatives':
       return (
-        <Section title={section.title}>
+        <Section title={title}>
           <div className="flex flex-col gap-2">
-            <AlternativeForms forms={word.alternatives.filter(form => form.kind === 'written')} />
-            <AlternativeForms forms={word.alternatives.filter(form => form.kind === 'reading')} />
+            <AlternativeForms
+              forms={word.alternatives.filter(form => form.kind === 'written')}
+              locale={locale}
+            />
+            <AlternativeForms
+              forms={word.alternatives.filter(form => form.kind === 'reading')}
+              locale={locale}
+            />
           </div>
         </Section>
       )
     case 'kanji':
       return (
-        <Section title={section.title}>
-          <KanjiItems kanji={word.kanji} />
+        <Section title={title}>
+          <KanjiItems kanji={word.kanji} locale={locale} />
         </Section>
       )
     case 'alternativeKanji':
       return (
-        <Section title={section.title}>
-          <KanjiItems kanji={word.alternativeKanji} />
+        <Section title={title}>
+          <KanjiItems kanji={word.alternativeKanji} locale={locale} />
         </Section>
       )
     case 'related':
       return (
-        <Section title={section.title}>
+        <Section title={title}>
           <ul className="flex flex-col divide-y">
             {word.related.map(related => (
               <li
@@ -188,13 +267,20 @@ function WordPageSection({
                 className="py-2 first:pt-0 last:pb-0"
               >
                 {related.path ? (
-                  <Link href={related.path} className="underline-offset-4 hover:underline">
+                  <Link
+                    href={localizedPath(related.path, locale)}
+                    className="underline-offset-4 hover:underline"
+                  >
                     <RubyText segments={related.ruby} className="text-lg font-medium" />
                   </Link>
                 ) : (
                   <RubyText segments={related.ruby} className="text-lg font-medium" />
                 )}
-                <p className="text-sm text-muted-foreground">{related.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {coreText(related.relation, locale)}
+                  {glossSeparator}
+                  <SourceText text={related.summary} locale={locale} />
+                </p>
               </li>
             ))}
           </ul>
@@ -203,37 +289,44 @@ function WordPageSection({
     case 'lists':
     case 'notes':
       return (
-        <Section title={section.title}>
-          <LearnerPrompt kind={section.kind} />
+        <Section title={title}>
+          <LearnerPrompt kind={section.kind} locale={locale} text={t.learner} />
         </Section>
       )
-    case 'examples':
+    case 'examples': {
+      const count = exampleCountText(word.exampleCount)
       return (
-        <Section title={section.title} id={wordExamplesAnchor}>
+        <Section title={title} id={wordExamplesAnchor}>
           {word.exampleCount && word.examples.length > 0 ? (
             <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground">{exampleCountText(word.exampleCount)}</p>
+              <p className="text-sm text-muted-foreground">
+                {count === null ? null : coreText(count, locale)}
+              </p>
               <ExampleList
                 initial={word.examples}
                 listed={word.exampleCount.listed}
                 path={word.examplesPath}
+                locale={locale}
+                text={exampleListText(locale)}
               />
             </div>
           ) : (
-            <p className="text-muted-foreground">{noExamplesMessage}</p>
+            <p className="text-muted-foreground">{coreText(noExamplesMessage, locale)}</p>
           )}
         </Section>
       )
+    }
   }
 }
 
 export default async function WordPage({ params }: Props) {
-  const word = await load(params)
+  const { locale, word } = await load(params)
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
       <PageToolbar
         page={{ label: word.headword, path: word.path, lang: 'ja' }}
         shareText={word.shareText}
+        locale={locale}
       />
 
       <WordHeader
@@ -244,13 +337,15 @@ export default async function WordPage({ params }: Props) {
         pitch={word.pitch}
         partOfSpeechRow={word.partOfSpeechRow}
         conjugations={word.conjugations}
+        locale={locale}
       />
 
       {word.sections.map(section => (
-        <WordPageSection key={section.kind} section={section} word={word} />
+        <WordPageSection key={section.kind} section={section} word={word} locale={locale} />
       ))}
 
       <SourceCredits
+        locale={locale}
         sources={withShownData(pageSources.word, {
           kanji: [...word.kanji, ...word.alternativeKanji].flatMap(item =>
             item.details ? [item.details] : []

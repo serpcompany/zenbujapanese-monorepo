@@ -11,13 +11,17 @@ import {
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { linkSearchScreen } from '@/lib/dictionary/results/links'
 import { searchPath } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
 import { readRenderedPage, visibleText } from '@/test/rendered'
 import { SearchResults } from './search-results'
 
-const render = (data: SearchData, examples: SearchExamplesData | null = null) =>
-  renderToStaticMarkup(<SearchResults data={data} examples={examples} />)
+const render = (
+  data: SearchData,
+  examples: SearchExamplesData | null = null,
+  locale: Locale = 'en'
+) => renderToStaticMarkup(<SearchResults data={data} examples={examples} locale={locale} />)
 
 function meaningClamp(): { fallback: number; lines: (rootPx: number) => number } {
   const css = readFileSync(new URL('../../app/globals.css', import.meta.url), 'utf8')
@@ -62,6 +66,49 @@ function word(
 
 const kanameRows = fixtureKanji('要')
 
+const iru: SearchData = {
+  state: 'results',
+  query: 'iru',
+  sections: ['examples', 'readingRefinement', 'results'],
+  examples: {
+    title: 'View 3 Example Sentences',
+    count: 3,
+    primaryEntry: '1546640',
+    target: { kind: 'word', path: '/dictionary/要る-1546640/#examples' }
+  },
+  readingRefinement: {
+    query: 'いる',
+    title: 'Search for「いる」',
+    path: '/dictionary/search/いる/'
+  },
+  kanji: null,
+  rows: [
+    word(1546640, '要る', 'いる', 'to be needed', [
+      ['JLPT', 'N5'],
+      ['YouTube', '949']
+    ]),
+    word(1577980, 'いる', 'いる', 'to be (of animate objects)', [['JLPT', 'N5']])
+  ],
+  resultCount: 2
+}
+
+const kaname: SearchData = {
+  state: 'results',
+  query: '要',
+  sections: ['results'],
+  examples: null,
+  readingRefinement: null,
+  kanji: {
+    character: '要',
+    label: 'KANJI',
+    summary: 'pivot',
+    entryId: 'x',
+    details: unlinkedKanjiDetails(kanameRows)
+  },
+  rows: [],
+  resultCount: 1
+}
+
 const noExamplesYet = (query: string): SearchExamplesData => ({
   query,
   examples: [],
@@ -70,33 +117,40 @@ const noExamplesYet = (query: string): SearchExamplesData => ({
   examplesPath: `${searchPath(query)}examples.json?build=b`
 })
 
+describe('the search results page on a Japanese page', () => {
+  test('reads in Japanese, links within /ja/, and marks the English meanings as English', () => {
+    const html = render(iru, null, 'ja')
+    const page = readRenderedPage(html)
+    expect(visibleText(html)).toContain('「iru」の検索結果：2語')
+    expect(page.examples).toEqual({
+      text: '例文を見る（3件）',
+      href: '/ja/dictionary/要る-1546640/#examples'
+    })
+    expect(page.refinement).toBe('「いる」で検索')
+    expect(html).toContain('aria-label="読み「いる」で検索"')
+    expect(html).toContain('href="/ja/dictionary/search/いる/"')
+    expect(html).toContain('<p class="meaning-clamp text-sm" lang="en">to be needed</p>')
+    expect(html).toContain('href="/ja/dictionary/要る-1546640/"')
+  })
+
+  test('the KANJI row and its details read in Japanese', () => {
+    const html = render(kaname, null, 'ja')
+    expect(readRenderedPage(html).kanji).toEqual({ character: '要', text: '漢字 pivot' })
+    expect(html).toContain('aria-label="要、漢字、pivot、漢字の詳細を表示"')
+    expect(visibleText(html)).toContain('読み方 音読みヨウ')
+    expect(html).toContain('aria-label="要の書き順を見る"')
+  })
+
+  test('says in Japanese when nothing matches', () => {
+    expect(
+      readRenderedPage(render({ state: 'noResults', query: 'qzxvkj' }, null, 'ja')).noResults
+    ).toBe('一致する言葉は見つかりませんでした 別の日本語か英語で検索してみてください。')
+  })
+})
+
 describe('the search results page', () => {
   test('shows the Example Sentences row, the reading refinement, then the rows in order with their chips', () => {
-    const html = render({
-      state: 'results',
-      query: 'iru',
-      sections: ['examples', 'readingRefinement', 'results'],
-      examples: {
-        title: 'View 3 Example Sentences',
-        count: 3,
-        primaryEntry: '1546640',
-        target: { kind: 'word', path: '/dictionary/要る-1546640/#examples' }
-      },
-      readingRefinement: {
-        query: 'いる',
-        title: 'Search for「いる」',
-        path: '/dictionary/search/いる/'
-      },
-      kanji: null,
-      rows: [
-        word(1546640, '要る', 'いる', 'to be needed', [
-          ['JLPT', 'N5'],
-          ['YouTube', '949']
-        ]),
-        word(1577980, 'いる', 'いる', 'to be (of animate objects)', [['JLPT', 'N5']])
-      ],
-      resultCount: 2
-    })
+    const html = render(iru)
     const page = readRenderedPage(html)
     expect(page.sections).toEqual(['examples', 'readingRefinement', 'results'])
     expect(page.examples).toEqual({
@@ -148,22 +202,7 @@ describe('the search results page', () => {
   })
 
   test('the KANJI row opens to the kanji’s details when the dictionary has them', () => {
-    const html = render({
-      state: 'results',
-      query: '要',
-      sections: ['results'],
-      examples: null,
-      readingRefinement: null,
-      kanji: {
-        character: '要',
-        label: 'KANJI',
-        summary: 'pivot',
-        entryId: 'x',
-        details: unlinkedKanjiDetails(kanameRows)
-      },
-      rows: [],
-      resultCount: 1
-    })
+    const html = render(kaname)
     expect(readRenderedPage(html).kanji).toEqual({ character: '要', text: 'KANJI pivot' })
     const button = html.match(/<button([^>]*)><span lang="ja" class="text-4xl/)?.[1] ?? ''
     expect(button).toContain('aria-expanded="false"')

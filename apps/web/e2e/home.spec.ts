@@ -1,10 +1,16 @@
 import type { Page } from '@playwright/test'
-import { pageEnd } from '../src/lib/app-parts'
-import { exampleSearches, homeTitle, webTools } from '../src/lib/home'
+import { exampleSearchesIn, webToolsIn } from '../src/lib/home'
+import { getDictionary } from '../src/lib/i18n/dictionary'
 import { productionOrigin } from '../src/lib/origins'
 import { pageFor } from '../src/lib/pages'
 import { linkTo, site } from '../src/lib/site'
 import { expect, onPhone, sourcesToggle, test } from './test'
+
+const { title: homeTitle, closing: pageEnd } = getDictionary('en').home
+
+const exampleSearches = exampleSearchesIn('en')
+
+const webTools = webToolsIn('en')
 
 const main = (page: Page) => page.getByRole('main')
 
@@ -16,7 +22,7 @@ test.describe('homepage', () => {
     await expect(page).toHaveTitle(homeTitle)
     await expect(page.locator('meta[name="description"]')).toHaveAttribute(
       'content',
-      pageFor('/').description
+      pageFor('/', 'en').description
     )
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1)
     await expect(page.locator('head link[rel="canonical"]')).toHaveAttribute(

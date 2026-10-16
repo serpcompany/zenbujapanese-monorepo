@@ -1,21 +1,22 @@
 import { KanaChartsPage } from '@/components/dictionary/browse/hub-pages'
-import { getBrowseSummary, getKanaInitials } from '@/lib/dictionary/browse/data'
+import { getBrowseHub } from '@/lib/dictionary/browse/data'
 import { kanaChartsPath } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localeOf } from '@/lib/i18n/params'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata = dictionaryMetadata(
-  kanaChartsPath,
-  'Hiragana and katakana charts',
-  'The hiragana and katakana charts with romaji, each kana opening every Japanese word that starts with it.'
-)
+export async function generateMetadata({ params }: PageProps<'/[locale]/dictionary/browse/kana'>) {
+  const locale = await localeOf(params)
+  const { chartsTitle, chartsDescription } = getDictionary(locale).browse.kana
+  return dictionaryMetadata(kanaChartsPath, locale, chartsTitle, chartsDescription)
+}
 
-export default async function KanaChartsRoute() {
-  const [summary, hiragana, katakana] = await Promise.all([
-    getBrowseSummary(),
-    getKanaInitials('hiragana'),
-    getKanaInitials('katakana')
-  ])
-  return <KanaChartsPage summary={summary} initials={{ hiragana, katakana }} />
+export default async function KanaChartsRoute({
+  params
+}: PageProps<'/[locale]/dictionary/browse/kana'>) {
+  const locale = await localeOf(params)
+  const { summary, initials } = await getBrowseHub()
+  return <KanaChartsPage summary={summary} initials={initials} locale={locale} />
 }

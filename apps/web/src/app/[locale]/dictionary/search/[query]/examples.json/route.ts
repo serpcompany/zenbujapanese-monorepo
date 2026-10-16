@@ -4,10 +4,15 @@ import {
   examplesNotFound,
   examplesResponse,
   morePosition,
-  pathText
+  pathText,
+  servesFilesIn
 } from '@/lib/dictionary/example-routes'
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  context: RouteContext<'/[locale]/dictionary/search/[query]/examples.json'>
+) {
+  if (!servesFilesIn((await context.params).locale)) return examplesNotFound()
   const query = pathText(
     request.nextUrl.pathname,
     /^\/dictionary\/search\/([^/]+)\/examples\.json$/

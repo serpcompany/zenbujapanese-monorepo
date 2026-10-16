@@ -6,29 +6,53 @@ import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
+import type { ExampleListText } from '@/lib/dictionary/screen-text'
+import type { Locale } from '@/lib/i18n/config'
+import { fill, formatNumber } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 import { cn } from '@/lib/utils'
 
 const linkClass = 'underline-offset-4 hover:text-muted-foreground'
 
-function Token({ token }: { token: PageExampleToken }) {
+function Token({
+  token,
+  locale,
+  text
+}: {
+  token: PageExampleToken
+  locale: Locale
+  text: ExampleListText
+}) {
   const className = cn(
     'whitespace-nowrap',
     token.isPageWord
       ? 'mr-0.5 border-b-2 border-foreground font-medium'
       : token.link && 'mr-0.5 border-b border-border'
   )
-  const text = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
-  if (!token.path || !token.link) return text
+  const shown = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
+  if (!token.path || !token.link) return shown
   const title =
-    'entSeqs' in token.link ? `${token.link.entSeqs.length} possible entries` : undefined
+    'entSeqs' in token.link
+      ? fill(text.examples.possibleEntries, {
+          count: formatNumber(token.link.entSeqs.length, locale)
+        })
+      : undefined
   return (
-    <Link href={token.path} className={linkClass} title={title}>
-      {text}
+    <Link href={localizedPath(token.path, locale)} className={linkClass} title={title}>
+      {shown}
     </Link>
   )
 }
 
-function ExampleItem({ example }: { example: PageExample }) {
+function ExampleItem({
+  example,
+  locale,
+  text
+}: {
+  example: PageExample
+  locale: Locale
+  text: ExampleListText
+}) {
   let offset = 0
   return (
     <li
@@ -43,35 +67,38 @@ function ExampleItem({ example }: { example: PageExample }) {
             offset += token.text.length
             return (
               <Fragment key={key}>
-                <Token token={token} />
+                <Token token={token} locale={locale} text={text} />
               </Fragment>
             )
           })}
         </p>
-        <p className="text-muted-foreground">{example.translation}</p>
+        <p className="text-muted-foreground" lang={locale === 'en' ? undefined : 'en'}>
+          {example.translation}
+        </p>
       </div>
-      <PronounceButton text={example.text} label="Pronounce sentence" />
+      <PronounceButton
+        text={example.text}
+        label={text.examples.pronounce}
+        unsupported={text.pronounce.unsupported}
+      />
     </li>
   )
 }
 
 const readExamples = (response: unknown) => (response as { examples: PageExample[] }).examples
 
-const exampleLabels = {
-  more: 'Load more examples',
-  loading: 'Loading examples…',
-  stale: 'These examples have been updated since the page loaded.',
-  reload: 'Reload for more examples'
-}
-
 export function ExampleList({
   initial,
   listed,
-  path
+  path,
+  locale,
+  text
 }: {
   initial: PageExample[]
   listed: number
   path: string | null
+  locale: Locale
+  text: ExampleListText
 }) {
   const list = useLoadMore({
     initial,
@@ -83,10 +110,10 @@ export function ExampleList({
     <div className="flex flex-col gap-3">
       <ul className="flex flex-col divide-y">
         {list.items.map(example => (
-          <ExampleItem key={example.position} example={example} />
+          <ExampleItem key={example.position} example={example} locale={locale} text={text} />
         ))}
       </ul>
-      <LoadMoreFooter state={list} labels={exampleLabels} />
+      <LoadMoreFooter state={list} labels={text.examples} />
     </div>
   )
 }

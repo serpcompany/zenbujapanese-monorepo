@@ -1,24 +1,8 @@
 export const accountPages = {
-  signIn: {
-    path: '/login/',
-    title: 'Sign in',
-    description: 'Sign in to your Zenbu account. There is no password.'
-  },
-  register: {
-    path: '/register/',
-    title: 'Create your account',
-    description: 'Make a Zenbu account. There is no password.'
-  },
-  forgotPassword: {
-    path: '/forgot-password/',
-    title: 'No password needed',
-    description: 'Zenbu accounts have no password. Sign in with a code we email you.'
-  },
-  account: {
-    path: '/account/',
-    title: 'Your account',
-    description: 'Your Zenbu account: your profile, how you sign in, and deleting the account.'
-  }
+  signIn: { path: '/login/' },
+  register: { path: '/register/' },
+  forgotPassword: { path: '/forgot-password/' },
+  account: { path: '/account/' }
 } as const
 
 export type AccountPage = keyof typeof accountPages

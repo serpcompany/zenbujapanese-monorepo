@@ -38,9 +38,9 @@ no other account page, and asks the account service nothing. Every environment n
   service answered, and opened then (#688;
   [`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
-  page), "no sitemap lists them"; `src/app/account-pages.test.tsx`, "/login/ says signing in isn't
-  available, and links no account page, without an account service" (and each other page) and
-  "offer signing in, and lead to each other, with an account service";
+  page), "no sitemap lists them"; `src/app/[locale]/account-pages.test.tsx`, "/login/ says signing
+  in isn't available, and links no account page, without an account service" (and each other page)
+  and "offer signing in, and lead to each other, with an account service";
   `src/lib/account/pages.test.ts` (the descriptions included); `src/app/routes.test.ts`.
 
 **Log in, the account menu, and the footer.** Where the account pages are open, Log in and
@@ -104,9 +104,9 @@ account." above the ways.
   account.
 - Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page" and
   "tells a browser that already signed in where its account is";
-  `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
-  service" (the links, "Can't sign in?" and the Privacy Policy included); Account spec, "Sign
-  in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
+  `src/app/[locale]/account-pages.test.tsx`, "offer signing in, and lead to each other, with an
+  account service" (the links, "Can't sign in?" and the Privacy Policy included); Account spec,
+  "Sign in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
   registers from `/register/`.
 
 **The email code.** The learner enters their email, then the 6-digit code ("It works for 10
@@ -136,8 +136,8 @@ Apple?"); where it offers neither, it has no such line.
 
 - Source: #468 (the #402 sitemap sheet lists `/forgot-password/`); accounts have no password
   (ADR 0013).
-- Check: `src/app/account-pages.test.tsx`, "/forgot-password/ points to Sign in only for the
-  ways the site offers, naming them" (neither, Apple, Google, and both); Account service spec,
+- Check: `src/app/[locale]/account-pages.test.tsx`, "/forgot-password/ points to Sign in only for
+  the ways the site offers, naming them" (neither, Apple, Google, and both); Account service spec,
   which signs in again from `/forgot-password/`.
 
 **Sign in with Apple.** Offered where the Worker names a Services ID (`ACCOUNT_APPLE_SERVICES_ID`).
@@ -185,8 +185,8 @@ account. When the service can't answer, it says so, with Try again.
   /v1/me with an access token only", "shows signed out, and forgets it was signed in, when there is
   no session", "says it could not reach the account service, and tries again when asked"; Account
   spec, "the account page says it can't reach it, and offers to try again";
-  `src/app/account-pages.test.tsx`, "offer signing in, and lead to each other, with an account
-  service" (the intro).
+  `src/app/[locale]/account-pages.test.tsx`, "offer signing in, and lead to each other, with an
+  account service" (the intro).
 
 **Access tokens.** The page keeps its 15-minute access token in memory only, renews it a minute
 before it expires, and on a `401` gets one new token and asks again. It takes a token only for the

@@ -31,14 +31,17 @@ test.describe('sitemaps', () => {
     })
   }
 
-  test('the pages sitemap writes the homepage as the origin and every other page with its slash', async ({
+  test('the pages sitemap writes the homepage as the origin and every other page with its slash, each in English and then Japanese', async ({
     request,
     baseURL
   }) => {
     const origin = new URL(baseURL ?? '').origin
     const listed = locs(await (await request.get('/sitemap-pages.xml')).text())
     expect(listed).toEqual(
-      pagesSitemapPaths.map(path => (path === '/' ? origin : `${origin}${path}`))
+      pagesSitemapPaths.flatMap(path => [
+        path === '/' ? origin : `${origin}${path}`,
+        `${origin}/ja${path}`
+      ])
     )
   })
 })

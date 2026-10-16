@@ -34,7 +34,7 @@ export type MenuLink = LinkTo & {
   mark: { glyph: string; solid?: true } | { symbol: MenuSymbol } | { image: string }
 }
 
-export type MenuId = 'dictionary' | 'tools' | 'products' | 'company'
+type MenuId = 'dictionary' | 'tools' | 'products' | 'company'
 
 export type MegaMenu = {
   kind: 'mega'

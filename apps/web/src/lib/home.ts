@@ -1,26 +1,30 @@
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { searchPath } from '@/lib/dictionary/urls'
-import { drawerLinks, type MegaMenu, type SiteMenu, siteMenus } from '@/lib/site-menus'
+import type { Locale } from '@/lib/i18n/config'
+import { localizedPath } from '@/lib/i18n/paths'
+import { drawerLinks, type MegaMenu, type SiteMenu, siteMenusIn } from '@/lib/site-menus'
 
-export const homeTitle = 'Zenbu Japanese: Japanese Dictionary and Translator for iPhone'
+const exampleQueries = [
+  { query: '大丈夫', lang: 'ja' },
+  { query: 'taberu', lang: 'ja-Latn' },
+  { query: '峠', lang: 'ja' },
+  { query: 'to persevere', lang: 'en' }
+] as const
 
-const exampleSearch = (query: string, lang?: 'ja' | 'ja-Latn') => ({
-  query,
-  lang,
-  path: searchPath(normalizeQuery(query))
-})
-
-export const exampleSearches = [
-  exampleSearch('大丈夫', 'ja'),
-  exampleSearch('taberu', 'ja-Latn'),
-  exampleSearch('峠', 'ja'),
-  exampleSearch('to persevere')
-]
+export function exampleSearchesIn(locale: Locale) {
+  return exampleQueries.map(({ query, lang }) => ({
+    query,
+    lang: lang === locale ? undefined : lang,
+    path: localizedPath(searchPath(normalizeQuery(query)), locale)
+  }))
+}
 
 const isToolsMenu = (menu: SiteMenu): menu is MegaMenu =>
-  menu.kind === 'mega' && menu.label === 'Tools'
+  menu.kind === 'mega' && menu.id === 'tools'
 
-export const webTools = siteMenus
-  .filter(isToolsMenu)
-  .flatMap(menu => drawerLinks(menu))
-  .filter(link => link.target === undefined)
+export function webToolsIn(locale: Locale) {
+  return siteMenusIn(locale)
+    .filter(isToolsMenu)
+    .flatMap(menu => drawerLinks(menu))
+    .filter(link => link.target === undefined)
+}

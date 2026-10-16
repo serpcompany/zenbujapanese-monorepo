@@ -8,6 +8,7 @@ export interface LoadMoreLabels {
   loading: string
   stale: string
   reload: string
+  retry: string
 }
 
 export type NextPage<T> =
@@ -108,7 +109,7 @@ export function LoadMoreFooter({
   return (
     <div ref={state.end} className="flex justify-center">
       <Button variant="outline" onClick={() => void state.loadMore()} disabled={state.loading}>
-        {state.loading ? labels.loading : state.failed ? 'Try again' : labels.more}
+        {state.loading ? labels.loading : state.failed ? labels.retry : labels.more}
       </Button>
     </div>
   )

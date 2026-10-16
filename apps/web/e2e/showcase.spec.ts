@@ -1,6 +1,8 @@
 import type { Locator, Page } from '@playwright/test'
-import { appAreas } from '../src/lib/app-areas'
+import { appAreasIn } from '../src/lib/app-areas'
 import { expect, sidewaysOverflow, test } from './test'
+
+const appAreas = appAreasIn('en')
 
 const showcase = (page: Page) =>
   page

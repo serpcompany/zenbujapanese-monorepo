@@ -9,7 +9,9 @@ import {
   WifiIcon
 } from 'lucide-react'
 import { RubyText } from '@/components/dictionary/ruby-text'
-import { playerPreview } from '@/lib/home-previews'
+import { appScreenText, playerPreview } from '@/lib/home-previews'
+import type { Locale } from '@/lib/i18n/config'
+import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
 const { time, known, previous, caption, open } = playerPreview
@@ -107,7 +109,7 @@ function WordSheet() {
           <span className="pb-[0.5em] text-[0.8em] text-muted-foreground">{open.partOfSpeech}</span>
         </div>
         <p className="text-[0.68em] font-semibold tracking-wider text-muted-foreground uppercase">
-          Meaning
+          {appScreenText.meaning}
         </p>
         <ol className="flex list-decimal flex-col gap-[0.1em] pl-[1.3em] text-[0.9em]">
           {open.meanings.map(meaning => (
@@ -119,17 +121,18 @@ function WordSheet() {
   )
 }
 
-export function PlayerPreview() {
+export function PlayerPreview({ locale }: { locale: Locale }) {
   return (
     <div
       aria-hidden="true"
       data-drawing
+      lang={locale === 'en' ? undefined : 'en'}
       className="@container relative aspect-[1206/2622] w-full overflow-hidden rounded-[13.7%/6.3%] bg-background shadow-[0_2px_4px_rgb(0_0_0/0.06),0_24px_48px_-18px_rgb(0_0_0/0.3)] ring-1 ring-foreground/10"
     >
       <div className="absolute inset-0 flex flex-col text-[4cqi] leading-[1.35]">
         <StatusBar />
         <div className="relative flex h-[3em] shrink-0 items-center justify-center font-semibold">
-          Player
+          {appScreenText.player}
           <span className="absolute right-[1em] grid size-[2.3em] place-items-center rounded-full bg-muted">
             <EllipsisIcon className="size-[1.1em]" />
           </span>
@@ -144,7 +147,7 @@ export function PlayerPreview() {
           <span className="mr-[0.3em] font-semibold text-yellow-600 dark:text-yellow-400">
             {Math.round((known.words / known.of) * 100)}%
           </span>
-          {known.words} of {known.of} words known
+          {fill(appScreenText.wordsKnown, { known: known.words, total: known.of })}
         </p>
         <Captions />
         <WordSheet />

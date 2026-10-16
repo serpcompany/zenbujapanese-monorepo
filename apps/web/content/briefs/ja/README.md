@@ -6,10 +6,16 @@ guide asks: the primary keyword, the secondary keywords, and the title, H1, and 
 the page targets. Slugs stay the same in every language, so these fields carry the keyword. The
 terms they use are in [`../../terms/ja.md`](../../terms/ja.md).
 
-The keywords were chosen from how Japanese searches are phrased, without a keyword database: no
-volumes are measured yet. Before a page's Japanese is reviewed, measure its keywords in a Japan
-database (Ahrefs or Semrush, or Google Keyword Planner set to Japan and Japanese), check the
-results pages with `gl=jp&hl=ja`, and change the brief and the page together.
+No Japanese keyword tool was available when these were written, so no brief gives a volume, and
+none is invented. The keywords come from what could be sourced: the guide's own rules (the
+market's phrasing, not translated English keywords; the title, H1, and description carry the
+keyword), the titles competitors use (Weblio's 「〇〇とは？意味・使い方」 and 「〇〇を英語で訳す」
+pages, 英辞郎 on the WEB's 「英語辞書・英和辞典」, the App Store's 「英和辞典・和英辞典」 apps), and
+common Japanese search phrasing (「〇〇 英語」「〇〇から始まる言葉」「〇〇 一覧」). The search tool
+here reads results from the United States, not Japan's results pages. Before a page's Japanese is
+reviewed, measure its keywords in a Japan database (Ahrefs or Semrush, or Google Keyword Planner
+set to Japan and Japanese), check the results pages with `gl=jp&hl=ja`, and change the brief and
+the page together.
 
 | Pages | Brief |
 | --- | --- |

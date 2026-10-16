@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
-import { sitePages } from '../src/lib/pages'
+import { sitePaths } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
 import {
   accountButton,
@@ -13,10 +13,12 @@ import {
 } from './test'
 
 const pagesToCheck = [
-  ...sitePages.map(page => page.path),
+  ...sitePaths,
   '/dictionary/search/iru/',
   needed.path,
-  '/dictionary/browse/'
+  '/dictionary/browse/',
+  '/ja/',
+  '/ja/products/'
 ]
 
 const listedNames = new Map(placeholderLinks.map(link => [link.id, link.name]))

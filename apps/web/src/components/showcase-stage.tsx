@@ -9,6 +9,8 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '@/components/ui/carousel'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
 export interface ShowcaseMedia {
@@ -17,6 +19,8 @@ export interface ShowcaseMedia {
   shape: 'phone' | 'card'
   content: ReactNode
 }
+
+export type StageText = Pick<Dictionary['home']['areas'], 'previous' | 'next' | 'slide'>
 
 interface StageView {
   canScrollPrev: boolean
@@ -97,11 +101,13 @@ function StageDots({
 export function ShowcaseStage({
   name,
   media,
-  shown
+  shown,
+  text
 }: {
   name: string
   media: readonly ShowcaseMedia[]
   shown: boolean
+  text: StageText
 }) {
   const [api, setApi] = useState<CarouselApi>()
   const view = useStageView(api)
@@ -131,7 +137,11 @@ export function ShowcaseStage({
           {media.map((item, index) => (
             <CarouselItem
               key={item.key}
-              aria-label={`${item.label}, ${index + 1} of ${media.length}`}
+              aria-label={fill(text.slide, {
+                label: item.label,
+                position: index + 1,
+                count: media.length
+              })}
               className={cn(
                 'flex basis-auto md:pl-6',
                 item.shape === 'phone' &&
@@ -148,12 +158,12 @@ export function ShowcaseStage({
       </div>
       <CarouselPrevious
         size="icon-lg"
-        aria-label="Previous screens"
+        aria-label={text.previous}
         className="left-3 bg-background shadow-md group-data-[paged=false]/stage:hidden"
       />
       <CarouselNext
         size="icon-lg"
-        aria-label="Next screens"
+        aria-label={text.next}
         className="right-3 bg-background shadow-md group-data-[paged=false]/stage:hidden"
       />
       <StageDots media={media} inView={inView} onPick={pick} />

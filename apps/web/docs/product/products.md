@@ -180,9 +180,9 @@ its description.
 iPhone app's page "Zenbu Japanese for iPhone: Japanese Dictionary & Translator", each with its
 description from `src/lib/pages.ts` and its own canonical URL. Their Open Graph tags carry the
 same title and description, with the site's name, type, and locale (`siteOpenGraph` in
-`src/lib/metadata.ts`, which `pageMetadata` adds to every page it describes). Both are in `src/lib/pages.ts`, so
+`src/lib/seo.ts`, which `pageMetadata` adds to every page it describes). Both are in `src/lib/pages.ts`, so
 `/sitemap-pages.xml` lists them, and the HTML sitemap lists them under Home
-(`homeTree` in `src/lib/dictionary/browse/site-tree.ts`).
+(`homeTreeIn` in `src/lib/dictionary/browse/site-tree.ts`).
 
 - Source: #652.
 - Check: Product page spec, "… has its title, description, and canonical URL" for each page;
@@ -192,7 +192,7 @@ same title and description, with the site's name, type, and locale (`siteOpenGra
 no platform, so an Android version can share the page, and `-app` keeps it apart from the brand,
 the web dictionary, and the extension. The header, footer, catalog, and every Get the app link to
 it through the `iphone-app` entry in `linkTargets` (`src/lib/site.ts`), and the HTML sitemap
-through `homeTree` (`src/lib/dictionary/browse/site-tree.ts`), whose paths must be pages in
+through `homeTreeIn` (`src/lib/dictionary/browse/site-tree.ts`), whose paths must be pages in
 `src/lib/pages.ts`. Its earlier address, `/products/zenbu-japanese-for-iphone/`, was only ever on
 staging, so it has no redirect: it is 404, and no page names it.
 
