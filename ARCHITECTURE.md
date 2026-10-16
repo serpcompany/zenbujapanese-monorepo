@@ -103,16 +103,10 @@ saying where the code belongs:
 - **Across parts**: the app finds and ranks nothing itself: it asks the core, through the bundle
   it runs, what each dictionary screen lists, in what order, and with what labels
   ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side), apart
-  from the rows of the table below; the app's bundle of the core is rebuilt with the core, which
+  from a few labels it still writes, such as the kanji element page's Source rows; the app's
+  bundle of the core is rebuilt with the core, which
   the core's tests check; the website and the service share their row shapes through the core;
   no app imports another, and apps reach a shared package by its name.
-
-These parts of a dictionary screen are decided in more than one place, not once in the core's
-answers:
-
-| What a screen shows | Where it is decided |
-| --- | --- |
-| The section titles of the word and kanji pages, and what a screen says when it has nothing to list | The titles, and Search's message when nothing matches, are typed in each client: in the app's views (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/KanjiDetailSections.swift`, `apps/ios/Modules/Sources/SearchExperience/SearchView.swift`) and in the website's (`apps/web/src/app/dictionary/[word]/page.tsx`, `apps/web/src/components/dictionary/kanji-details.tsx`, `apps/web/src/components/dictionary/search-results.tsx`). The two messages for a word or a form with no examples are in the core (`packages/dictionary-core/src/detail/examples.ts`), which the website shows, and typed again in the app (`apps/ios/Modules/Sources/SearchExperience/WordDetailView.swift`, `apps/ios/Modules/Sources/SearchExperience/ConjugationsView.swift`). |
 
 The website logs through its own `log()`, the Node services through `packages/node-service`'s, and
 the core not at all.

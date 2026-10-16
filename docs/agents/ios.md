@@ -490,9 +490,9 @@ Frequency Details it opens), the conjugation table its part of speech opens (eac
 words `ConjugationsView` shows, the forms that share its spelling, and the examples its screen
 lists: every pair ID, in order, and the first 3 with their linked tokens and which of them the
 screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
-metrics, meanings, readings with their words, elements, 24 words, and whether it has stroke data.
-The views and the suite read the same models, so the suite records what the views draw. Each file
-pins the SHA-256 of every bundled artifact it was recorded against. After an intended change to
+metrics, meanings, readings with words and labels, elements, 24 words, and whether it has stroke
+data. The views and the suite read the same models, so the suite records what the views draw. Each
+file pins the SHA-256 of every bundled artifact it was recorded against. After an intended change to
 either screen or its data, record them again with the same `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1`
 prefix and `-only-testing:SearchExperienceTests/WordDetailConformanceTests` or
 `-only-testing:SearchExperienceTests/KanjiDetailConformanceTests`, and review the diff. Recording
@@ -573,8 +573,8 @@ What the dictionary finds, lists, orders, labels, and says is the shared TypeScr
 (`packages/dictionary-core`, [`dictionary-core.md`](dictionary-core.md)): search, the results
 screen with Sort By and Filter, example sentences, linked words, and the word, kanji, and kanji
 element pages. The app runs it in JavaScriptCore, offline, and has no Swift of its own for
-finding or ranking; the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md) lists
-what Swift still decides. The Swift keeps the screens, reads the files, and decodes the core's
+finding or ranking; it still writes a few labels, such as the kanji element page's Source rows.
+The Swift keeps the screens, reads the files, and decodes the core's
 answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which type asks for what.
 
 - **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,

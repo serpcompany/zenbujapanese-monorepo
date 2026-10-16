@@ -41,11 +41,11 @@ describe('the embedded presentation engine', () => {
     expect(page.ruby).toEqual([{ text: '食', reading: 'た' }, { text: 'べる' }])
     expect(page.partOfSpeech).toBe('Ichidan verb (transitive)')
     expect(page.senses).toEqual([
-      { number: 1, meaning: 'to eat', notes: [] },
-      { number: 2, meaning: 'to live on', notes: ['e.g. a salary'] }
+      { number: 1, meaning: 'to eat', notes: [], noteText: null },
+      { number: 2, meaning: 'to live on', notes: ['e.g. a salary'], noteText: 'e.g. a salary' }
     ])
     expect(page.alternatives).toEqual([
-      { value: '喰べる', kind: 'written', labels: ['rare'], kanji: '喰' }
+      { value: '喰べる', kind: 'written', labels: ['rare'], labelText: '(rare)', kanji: '喰' }
     ])
     expect(page.kanji).toEqual(['食'])
     expect(page.alternativeKanji).toEqual(['喰'])
@@ -56,9 +56,23 @@ describe('the embedded presentation engine', () => {
         ruby: [{ text: '学校', reading: 'がっこう' }],
         relation: 'See also',
         summary: 'school',
+        description: 'See also · school',
         entSeq: null
       }
     ])
+    expect(page.sections.map(section => section.title)).toEqual([
+      'Meaning',
+      'Alternatives',
+      'Kanji',
+      'Alternative kanji',
+      'Related words',
+      'Lists',
+      'Notes',
+      'Examples'
+    ])
+    expect(page.pronounce).toBe('Pronounce たべる')
+    expect(page.partOfSpeechRow).toBe('Ichidan verb (transitive)')
+    expect(page.noExamples).toBe('No source-matched examples')
     expect(page.shareText).toBe('食べる【たべる】\n1. to eat\n2. to live on')
     expect(page.pitch).toMatchObject({
       downstep: 2,
@@ -69,7 +83,8 @@ describe('the embedded presentation engine', () => {
         { mora: 'タ', high: false },
         { mora: 'ベ', high: true },
         { mora: 'ル', high: false }
-      ]
+      ],
+      spoken: 'Pitch accent, downstep 2, 3 mora'
     })
   })
 
@@ -102,7 +117,33 @@ describe('the embedded presentation engine', () => {
     expect(plain.find(row => row.kind === 'potential')?.note).toBe(
       'Same spelling as Passive. Context tells them apart.'
     )
-    expect(conjugations?.rows.Polite[0].surface).toBe('食べます')
+    expect(conjugations?.rows.Polite[0]).toMatchObject({
+      surface: '食べます',
+      pronounce: 'Pronounce たべます'
+    })
+    expect(conjugations?.examples).toEqual({
+      title: 'Examples',
+      empty: 'No example sentences use this form yet.'
+    })
+  })
+
+  test('names the sections a word or kanji page shows before, or without, its answer', async () => {
+    expect(await ask(host, 'wordPageWithoutContent', 'たべる')).toEqual({
+      sections: [
+        { kind: 'meaning', title: 'Meaning' },
+        { kind: 'lists', title: 'Lists' },
+        { kind: 'notes', title: 'Notes' },
+        { kind: 'examples', title: 'Examples' }
+      ],
+      pronounce: 'Pronounce たべる',
+      noExamples: 'No source-matched examples'
+    })
+    expect(await ask(host, 'kanjiPageWithoutContent', '')).toEqual({
+      sections: [
+        { kind: 'lists', title: 'Lists' },
+        { kind: 'notes', title: 'Notes' }
+      ]
+    })
   })
 
   test('gives a word that does not conjugate no table, and one without pitch no contour', async () => {
@@ -204,6 +245,22 @@ describe('the embedded presentation engine', () => {
     expect(page.elements).toEqual([])
   })
 
+  test('shows Readings, empty, for a kanji it has a reference for without readings, as the app did', async () => {
+    const page = (await ask(
+      host,
+      'kanjiPage',
+      JSON.stringify({ character: '乁', words: [], leadingWord: null })
+    )) as EmbeddedKanjiPage
+    expect(page).toMatchObject({ hasReference: true, readings: [], components: [] })
+    expect(page.sections.map(section => section.kind)).toEqual(['readings', 'lists', 'notes'])
+    const unreferenced = (await ask(
+      host,
+      'kanjiPage',
+      JSON.stringify({ character: '㐂', words: [], leadingWord: null })
+    )) as EmbeddedKanjiPage
+    expect(unreferenced.sections.map(section => section.kind)).toEqual(['lists', 'notes'])
+  })
+
   test('still lists the words of a kanji it has no reference for', async () => {
     const page = (await ask(
       host,
@@ -230,6 +287,12 @@ describe('the embedded presentation engine', () => {
 
   test('builds an element page from the element, the kanji in its family, and those containing it', async () => {
     expect(await ask(host, 'kanjiElementPage', '交')).toEqual({
+      sections: [
+        { kind: 'alternatives', title: 'Alternative forms' },
+        { kind: 'soundPatterns', title: 'Sound patterns' },
+        { kind: 'standalone', title: 'As a standalone kanji' },
+        { kind: 'source', title: 'Source' }
+      ],
       glyph: '交',
       meanings: [],
       explanation: null,

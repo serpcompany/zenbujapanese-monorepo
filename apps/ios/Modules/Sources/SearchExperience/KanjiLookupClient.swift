@@ -21,6 +21,20 @@ struct KanjiElementID: Codable, Hashable, Sendable {
 }
 
 struct KanjiPage: Hashable, Sendable {
+  struct Section: Decodable, Hashable, Sendable {
+    enum Kind: String, Decodable, Hashable, Sendable {
+      case readings
+      case components
+      case elements
+      case lists
+      case notes
+      case words
+    }
+
+    let kind: Kind
+    let title: String
+  }
+
   struct Stat: Decodable, Hashable, Sendable {
     let kind: String
     let label: String
@@ -33,6 +47,8 @@ struct KanjiPage: Hashable, Sendable {
     let label: String
     let value: String
     let words: [DictionaryEntry]
+    let wordsText: String
+    let spoken: String?
   }
 
   struct Element: Decodable, Hashable, Identifiable, Sendable {
@@ -66,6 +82,7 @@ struct KanjiPage: Hashable, Sendable {
     }
   }
 
+  let sections: [Section]
   let hasReference: Bool
   let stats: [Stat]
   let meanings: [String]
@@ -78,6 +95,14 @@ struct KanjiPage: Hashable, Sendable {
 }
 
 extension KanjiPage {
+  private struct WithoutContent: Decodable {
+    let sections: [Section]
+  }
+
+  static let sectionsWithoutContent: [Section] =
+    (try? PresentationCore.shared.answer("kanjiPageWithoutContent", "") as WithoutContent)?
+    .sections ?? []
+
   private struct Request: Encodable {
     struct Word: Encodable {
       let id: String
@@ -101,8 +126,11 @@ extension KanjiPage {
       let label: String
       let value: String
       let words: [Word]
+      let wordsText: String
+      let spoken: String?
     }
 
+    let sections: [Section]
     let hasReference: Bool
     let stats: [Stat]
     let meanings: [String]
@@ -128,13 +156,15 @@ extension KanjiPage {
         leadingWord: openedFrom?.rawValue))
     let entries = Dictionary(words.map { ($0.id.rawValue, $0) }) { first, _ in first }
     self.init(
+      sections: answer.sections,
       hasReference: answer.hasReference,
       stats: answer.stats,
       meanings: answer.meanings,
       readings: answer.readings.map { reading in
         Reading(
           kind: reading.kind, label: reading.label, value: reading.value,
-          words: reading.words.compactMap { entries[$0.id] })
+          words: reading.words.compactMap { entries[$0.id] }, wordsText: reading.wordsText,
+          spoken: reading.spoken)
       },
       components: answer.components,
       elements: answer.elements,
@@ -146,6 +176,20 @@ extension KanjiPage {
 }
 
 struct KanjiElementPage: Decodable, Hashable, Sendable {
+  struct Section: Decodable, Hashable, Sendable {
+    enum Kind: String, Decodable, Hashable, Sendable {
+      case alternatives
+      case explanation
+      case soundPatterns
+      case standalone
+      case containing
+      case source
+    }
+
+    let kind: Kind
+    let title: String
+  }
+
   struct Kanji: Decodable, Hashable, Identifiable, Sendable {
     let character: KanjiCharacter
     let meanings: [String]
@@ -170,6 +214,7 @@ struct KanjiElementPage: Decodable, Hashable, Sendable {
     }
   }
 
+  let sections: [Section]
   let meanings: [String]
   let explanation: String?
   let soundPatterns: String?

@@ -256,8 +256,8 @@ Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTe
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
-Check: the recorded `WordDetailConformanceTests`; UI `WordDetailUITests` (Kanji, Lists, and Notes
-on the page).
+Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
 
 A related word opens the entry it names. One that names none is searched for, and opens the
 result written and read the same, or the first result when none is.
@@ -361,12 +361,12 @@ Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
 `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
 `WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
-A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji; after a spinner, all but the stroke order appear together, once. Component
-and element links can be followed without losing the learner's place in the preceding detail.
+A kanji detail presents readings, meanings, stroke order, components, elements, and words that
+contain the kanji, in the core's order: an empty one is left out, but not Lists, Notes, or a listed
+kanji's Readings. After a spinner, all but stroke order appear at once; links keep the place.
 
-Check: the recorded `KanjiDetailConformanceTests`; package `KanjiScrollMemoryTests`; UI
-`WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and
+Check: the recorded `KanjiDetailConformanceTests`; core `embedded/presentation.test.ts`; package
+`KanjiScrollMemoryTests`; UI `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and
 `testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords`.
 
 An element's page shows the element, its meanings and what it contributes, the on-readings it links,

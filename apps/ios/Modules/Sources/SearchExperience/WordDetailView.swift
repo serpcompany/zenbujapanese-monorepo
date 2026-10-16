@@ -59,95 +59,28 @@ struct WordDetailView: View {
 
   var body: some View {
     let page = WordPage(entry)
+    let frame = WordPage.frame(for: entry, page: page)
     ScrollViewReader { proxy in
       List {
         Section {
           WordHeroView(
             entry: entry,
             page: page,
+            pronounceLabel: frame?.pronounce ?? "",
             encounterMedia: photos.displayable,
             removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
           PartOfSpeechRow(
-            title: page?.partOfSpeech ?? "", entryID: entry.id, conjugations: page?.conjugations,
-            openConjugations: openConjugations)
+            title: page?.partOfSpeechRow ?? "", entryID: entry.id,
+            conjugations: page?.conjugations, openConjugations: openConjugations)
         }
 
-        Section("MEANING") {
-          MeaningSection(senses: page?.senses ?? [])
-        }
-
-        if let frequency = page?.frequency, !frequency.isEmpty {
-          Section("FREQUENCY") {
-            ForEach(frequency.enumerated(), id: \.offset) { _, row in
-              FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
-            }
+        if let frame {
+          ForEach(frame.sections, id: \.kind) { section in
+            pageSection(section, of: page, in: frame)
           }
         }
-
-        if let page {
-          if !page.alternatives.isEmpty {
-            Section("ALTERNATIVES") {
-              AlternativeFormsSection(forms: page.alternatives, openKanji: openKanji)
-            }
-          }
-
-          if !page.kanji.isEmpty {
-            Section("KANJI") {
-              PrimaryKanjiSection(characters: page.kanji, entry: entry, openKanji: openKanji)
-            }
-          }
-
-          if !page.alternativeKanji.isEmpty {
-            Section("ALTERNATIVE KANJI") {
-              AlternativeKanjiSection(characters: page.alternativeKanji, openKanji: openKanji)
-            }
-          }
-
-          if !page.related.isEmpty {
-            Section("RELATED WORDS") {
-              RelationshipsSection(
-                related: page.related, relationships: entry.relationships,
-                openRelated: openRelated)
-            }
-          }
-        }
-
-        Section("LISTS") {
-          SavedItemListsSection(
-            item: item, identifierPrefix: "word-detail", openList: openList
-          ) { showsListPicker = true }
-        }
-
-        Section("NOTES") {
-          SavedItemNotesSection(
-            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
-          .id("word-note.section")
-        }
-
-        if analysisAvailability == .reduced {
-          Section {
-            Label(
-              "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
-              systemImage: "info.circle"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .accessibilityIdentifier("word-detail.reduced-analysis")
-          }
-        }
-        ExampleSentenceSections(
-          title: "EXAMPLES",
-          examples: examples,
-          source: entry.id.rawValue,
-          emptyMessage: "No source-matched examples",
-          presentation: { .wordDetail(index: $0) },
-          speechSynthesisClient: speechSynthesisClient,
-          read: readExamples,
-          readAgain: { await loadExamples() },
-          openWord: openWord
-        )
       }
       .groupedList()
       .scrollDismissesKeyboard(.immediately)
@@ -194,6 +127,82 @@ struct WordDetailView: View {
 
   private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
     await exampleSentenceClient.shownExamples(entry, batch)
+  }
+}
+
+extension WordDetailView {
+  @ViewBuilder
+  fileprivate func pageSection(
+    _ section: WordPage.Section, of page: WordPage?, in frame: WordPage.Frame
+  ) -> some View {
+    let title = section.title.uppercased()
+    switch section.kind {
+    case .meaning:
+      Section(title) {
+        MeaningSection(senses: page?.senses ?? [])
+      }
+    case .frequency:
+      Section(title) {
+        ForEach((page?.frequency ?? []).enumerated(), id: \.offset) { _, row in
+          FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
+        }
+      }
+    case .conjugations:
+      EmptyView()
+    case .alternatives:
+      Section(title) {
+        AlternativeFormsSection(forms: page?.alternatives ?? [], openKanji: openKanji)
+      }
+    case .kanji:
+      Section(title) {
+        PrimaryKanjiSection(characters: page?.kanji ?? [], entry: entry, openKanji: openKanji)
+      }
+    case .alternativeKanji:
+      Section(title) {
+        AlternativeKanjiSection(characters: page?.alternativeKanji ?? [], openKanji: openKanji)
+      }
+    case .related:
+      Section(title) {
+        RelationshipsSection(
+          related: page?.related ?? [], relationships: entry.relationships,
+          openRelated: openRelated)
+      }
+    case .lists:
+      Section(title) {
+        SavedItemListsSection(
+          item: item, identifierPrefix: "word-detail", openList: openList
+        ) { showsListPicker = true }
+      }
+    case .notes:
+      Section(title) {
+        SavedItemNotesSection(
+          notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
+        .id("word-note.section")
+      }
+    case .examples:
+      if analysisAvailability == .reduced {
+        Section {
+          Label(
+            "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("word-detail.reduced-analysis")
+        }
+      }
+      ExampleSentenceSections(
+        title: title,
+        examples: examples,
+        source: entry.id.rawValue,
+        emptyMessage: frame.noExamples,
+        presentation: { .wordDetail(index: $0) },
+        speechSynthesisClient: speechSynthesisClient,
+        read: readExamples,
+        readAgain: { await loadExamples() },
+        openWord: openWord
+      )
+    }
   }
 }
 
@@ -258,6 +267,7 @@ private struct WordDetailKanjiLink: View {
 private struct WordHeroView: View {
   let entry: DictionaryEntry
   let page: WordPage?
+  let pronounceLabel: String
   let encounterMedia: [EncounterMedia]
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
@@ -278,6 +288,7 @@ private struct WordHeroView: View {
     WordHeadline(
       ruby: JapaneseRuby(headwordOf: entry, on: page),
       pitch: page?.pitch,
+      pronounceLabel: pronounceLabel,
       identifierPrefix: "word-detail",
       pronounce: pronounce
     ) {

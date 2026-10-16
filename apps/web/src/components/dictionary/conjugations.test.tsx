@@ -148,7 +148,10 @@ describe('the conjugation table', () => {
     }
     const links = serviceLinks({ 1259290: '見る' }, [])
     const html = renderToStaticMarkup(
-      <FormExampleList examples={[pageExample(formExample({ sentence, example }), links)]} />
+      <FormExampleList
+        examples={[pageExample(formExample({ sentence, example }), links)]}
+        labels={miru.examples}
+      />
     )
     expect(readExamples(html)).toEqual([
       {
@@ -161,7 +164,7 @@ describe('the conjugation table', () => {
       }
     ])
     expect(html).not.toContain('Load more examples')
-    const none = renderToStaticMarkup(<FormExampleList examples={[]} />)
+    const none = renderToStaticMarkup(<FormExampleList examples={[]} labels={miru.examples} />)
     expect(none).toContain(noFormExamplesMessage)
     expect(noFormExamplesMessage).toBe('No example sentences use this form yet.')
   })
@@ -181,7 +184,9 @@ describe('the conjugation table', () => {
 
 describe('the Conjugations section', () => {
   test('starts closed, at #conjugations, with the table inside', () => {
-    const html = renderToStaticMarkup(<ConjugationsSection conjugations={miru} />)
+    const html = renderToStaticMarkup(
+      <ConjugationsSection title="Conjugations" conjugations={miru} />
+    )
     expect(html).toMatch(/^<div[^>]* id="conjugations"/)
     expect(html).toMatch(/<h2[^>]*><button type="button" aria-expanded="false"[^>]*>Conjugations/)
     const panel = html.match(/aria-controls="([^"]+)"/)?.[1]
@@ -196,8 +201,9 @@ describe('the Conjugations section', () => {
           headword="見る"
           ruby={rubySegments('見る', 'みる')}
           reading="みる"
+          pronounce="Pronounce みる"
           pitch={null}
-          partOfSpeech="Ichidan verb (transitive)"
+          partOfSpeechRow="Ichidan verb (transitive)"
           conjugations={data}
         />
       )
@@ -233,8 +239,9 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
         headword={detail.headword}
         ruby={detail.ruby}
         reading={detail.reading}
+        pronounce={detail.pronounce}
         pitch={detail.pitch}
-        partOfSpeech={detail.partOfSpeech}
+        partOfSpeechRow={detail.partOfSpeechRow}
         conjugations={detail.conjugations}
       />
     )
@@ -283,6 +290,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
         const html = renderToStaticMarkup(
           <FormExampleList
             examples={found.rows.map(rows => pageExample(formExample(rows), links))}
+            labels={data.examples}
           />
         )
         const examples = readExamples(html)

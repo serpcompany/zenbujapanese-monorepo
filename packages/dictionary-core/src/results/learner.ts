@@ -27,7 +27,15 @@ import {
   sortSummary,
   storedSort
 } from './ordering'
-import { type ListedItem, type ListedResults, type ResultsSection, resultsLayout } from './results'
+import {
+  discoveredWordsHeading,
+  type ListedItem,
+  type ListedResults,
+  noMatches,
+  type ResultsSection,
+  readingRefinementSpoken,
+  resultsLayout
+} from './results'
 
 export type ReadFrequency = (ids: readonly string[]) => FrequencyEvidence | null
 
@@ -87,7 +95,7 @@ interface ResultsMenu {
 }
 
 export type LearnerResultsScreen =
-  | { state: 'noResults'; query: string }
+  | { state: 'noResults'; query: string; title: string; message: string }
   | {
       state: 'results'
       query: string
@@ -179,7 +187,7 @@ export function learnerResultsScreen(
   frequency: ReadFrequency
 ): LearnerResultsScreen {
   const layout = resultsLayout(rawQuery, results, exampleCount, learner.fromRadicals)
-  if (layout.isEmpty) return { state: 'noResults', query: layout.query }
+  if (layout.isEmpty) return { state: 'noResults', query: layout.query, ...noMatches }
   const known = new Set(learner.known)
   const isKnown = (id: string) => known.has(id)
   const frequencyEntries = [...new Set(layout.presented.map(item => item.id))]
@@ -229,9 +237,9 @@ export function learnerResultsScreen(
     },
     readingRefinement: layout.readingRefinement && {
       ...layout.readingRefinement,
-      spoken: `Search for Japanese reading ${layout.readingRefinement.query}`
+      spoken: readingRefinementSpoken(layout.readingRefinement.query)
     },
-    heading: layout.isDiscovered ? 'Discovered Words' : null,
+    heading: layout.isDiscovered ? discoveredWordsHeading : null,
     kanji: layout.kanji && {
       character: layout.kanji.character,
       label: layout.kanji.label,

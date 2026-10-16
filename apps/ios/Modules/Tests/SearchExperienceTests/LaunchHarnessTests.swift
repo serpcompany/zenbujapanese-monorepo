@@ -58,12 +58,16 @@ struct LaunchHarnessTests {
   func drawnKanjiPage() {
     let word = DictionaryEntry.fixture(id: "a", headword: "日本")
     let page = KanjiPage(
+      sections: [],
       hasReference: true,
       stats: [KanjiPage.Stat(kind: "strokes", label: "Strokes", value: "4", spoken: "4 Strokes")],
       meanings: ["day"],
       readings: [
-        KanjiPage.Reading(kind: "on", label: "On", value: "ニチ", words: [word]),
-        KanjiPage.Reading(kind: "kun", label: "Kun", value: "ひ", words: []),
+        KanjiPage.Reading(
+          kind: "on", label: "On", value: "ニチ", words: [word], wordsText: "日本 · Japan",
+          spoken: "On reading ニチ, 日本, Japan"),
+        KanjiPage.Reading(
+          kind: "kun", label: "Kun", value: "ひ", words: [], wordsText: "", spoken: nil),
       ],
       components: [], elements: [], words: [word, word], shareText: "日", savedReading: "ニチ")
     #expect(

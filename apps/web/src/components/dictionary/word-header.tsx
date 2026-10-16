@@ -12,15 +12,17 @@ export function WordHeader({
   headword,
   ruby,
   reading,
+  pronounce,
   pitch,
-  partOfSpeech,
+  partOfSpeechRow,
   conjugations
 }: {
   headword: string
   ruby: RubySegment[]
   reading: string
+  pronounce: string
   pitch: PitchAccentData | null
-  partOfSpeech: string
+  partOfSpeechRow: string
   conjugations: Conjugations | null
 }) {
   return (
@@ -35,20 +37,20 @@ export function WordHeader({
             />
           </h1>
           {pitch ? (
-            <PitchAccent pitch={pitch} reading={reading} />
+            <PitchAccent pitch={pitch} reading={reading} pronounce={pronounce} />
           ) : (
-            <PronounceButton text={reading} label={`Pronounce ${reading}`} />
+            <PronounceButton text={reading} label={pronounce} />
           )}
         </div>
         {conjugations ? (
           <>
             <Separator />
-            <ConjugationsLink partOfSpeech={partOfSpeech} />
+            <ConjugationsLink label={partOfSpeechRow} />
           </>
-        ) : partOfSpeech ? (
+        ) : partOfSpeechRow ? (
           <>
             <Separator />
-            <p className="text-sm">{partOfSpeech}</p>
+            <p className="text-sm">{partOfSpeechRow}</p>
           </>
         ) : null}
       </CardContent>

@@ -6,6 +6,7 @@ struct WordHeadline<Accessory: View>: View {
   let ruby: JapaneseRuby
   var highlightedEnding = ""
   var pitch: WordPage.Pitch?
+  let pronounceLabel: String
   let identifierPrefix: String
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
@@ -92,7 +93,7 @@ struct WordHeadline<Accessory: View>: View {
   private var controls: some View {
     HStack(spacing: 8) {
       if let pitch {
-        PitchAccentBadge(reading: reading, pitch: pitch, pronounce: pronounce)
+        PitchAccentBadge(pronounceLabel: pronounceLabel, pitch: pitch, pronounce: pronounce)
           .accessibilityIdentifier("\(identifierPrefix).pronounce")
       } else {
         Button(action: pronounce) {
@@ -102,7 +103,7 @@ struct WordHeadline<Accessory: View>: View {
             .contentShape(.rect)
         }
         .buttonStyle(.borderless)
-        .accessibilityLabel("Pronounce \(reading)")
+        .accessibilityLabel(pronounceLabel)
         .accessibilityIdentifier("\(identifierPrefix).pronounce")
       }
       accessory()
@@ -115,6 +116,7 @@ extension WordHeadline where Accessory == EmptyView {
     ruby: JapaneseRuby,
     highlightedEnding: String = "",
     pitch: WordPage.Pitch? = nil,
+    pronounceLabel: String,
     identifierPrefix: String,
     pronounce: @escaping () -> Void
   ) {
@@ -122,6 +124,7 @@ extension WordHeadline where Accessory == EmptyView {
       ruby: ruby,
       highlightedEnding: highlightedEnding,
       pitch: pitch,
+      pronounceLabel: pronounceLabel,
       identifierPrefix: identifierPrefix,
       pronounce: pronounce,
       accessory: { EmptyView() }

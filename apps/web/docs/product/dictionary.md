@@ -352,9 +352,8 @@ is split across two lines (#682).
   (each word linked by the slugs the service names); `apps/web/e2e/word.spec.ts`, "on a phone, an
   example sentence breaks only between its words".
 
-**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, as a
-word page's examples do. No sentence is credited on its own: the page's Sources list credits
-Tatoeba.
+**Translation, speaker, and credits.** Each sentence shows its translation and a speaker, as a word
+page's examples do. No sentence is credited on its own: the page's Sources list credits Tatoeba.
 
 - Source: `ExampleSentencesView.swift`; #560 (per-sentence credits removed, as the app has none).
 - Check: ES `shown[].english`; `search-examples.test.tsx` (the translation), and "credits no single
@@ -510,7 +509,8 @@ Frequency, Lists, Notes, and Examples.
 
 - Source: App docs, Dictionary and kanji details; ADR 0010 (the Conjugations section, which the
   app opens from the part-of-speech row instead).
-- Check: No automated check yet (#511).
+- Check: `packages/dictionary-core/src/detail/word.test.ts`, whose sections the page draws:
+  `src/app/dictionary/[word]/page.test.tsx`, "its sections follow the core".
 
 **Meaning.** Senses are numbered, each with its notes.
 

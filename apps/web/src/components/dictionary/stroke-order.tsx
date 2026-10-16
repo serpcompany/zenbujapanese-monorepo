@@ -1,6 +1,10 @@
 'use client'
 
-import type { StrokeOrder as StrokeOrderData } from '@zenbu/dictionary-core/detail/strokes'
+import {
+  type StrokeOrder as StrokeOrderData,
+  type StrokeOrderLabels,
+  strokeOrderLabels
+} from '@zenbu/dictionary-core/detail/strokes'
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -29,11 +33,12 @@ export function StrokeOrder({ character, order }: { character: string; order: St
   const [open, setOpen] = useState(false)
   const [opening, setOpening] = useState(0)
   const wide = useMediaQuery('(min-width: 768px)')
+  const labels = strokeOrderLabels(character, order.strokes.length)
   const trigger = (
     <Button
       variant="outline"
       size="icon-sm"
-      aria-label={`Show stroke order for ${character}`}
+      aria-label={labels.show}
       onClick={() => {
         setOpening(value => value + 1)
         setOpen(true)
@@ -42,7 +47,7 @@ export function StrokeOrder({ character, order }: { character: string; order: St
       <PencilLineIcon />
     </Button>
   )
-  const content = <StrokeOrderPlayer key={opening} character={character} order={order} />
+  const content = <StrokeOrderPlayer key={opening} order={order} labels={labels} />
   if (wide) {
     return (
       <>
@@ -50,7 +55,7 @@ export function StrokeOrder({ character, order }: { character: string; order: St
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Stroke Order</DialogTitle>
+              <DialogTitle>{labels.title}</DialogTitle>
             </DialogHeader>
             {content}
           </DialogContent>
@@ -64,7 +69,7 @@ export function StrokeOrder({ character, order }: { character: string; order: St
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Stroke Order</DrawerTitle>
+            <DrawerTitle>{labels.title}</DrawerTitle>
           </DrawerHeader>
           <div className="px-4 pb-4">{content}</div>
         </DrawerContent>
@@ -73,7 +78,13 @@ export function StrokeOrder({ character, order }: { character: string; order: St
   )
 }
 
-function StrokeOrderPlayer({ character, order }: { character: string; order: StrokeOrderData }) {
+function StrokeOrderPlayer({
+  order,
+  labels
+}: {
+  order: StrokeOrderData
+  labels: StrokeOrderLabels
+}) {
   const count = order.strokes.length
   const [progress, setProgress] = useState<Progress>({ completed: 0, active: 0 })
   const [mode, setMode] = useState<keyof typeof strokeDurationMs | null>(null)
@@ -138,13 +149,11 @@ function StrokeOrderPlayer({ character, order }: { character: string; order: Str
   }
 
   const status =
-    progress.active > 0
-      ? `${progress.completed} strokes complete, drawing stroke ${progress.completed + 1}`
-      : `${progress.completed} strokes complete`
+    progress.active > 0 ? labels.drawing[progress.completed] : labels.complete[progress.completed]
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <StrokeGrid character={character} order={order} progress={progress} />
+      <StrokeGrid label={labels.grid} order={order} progress={progress} />
       <span className="sr-only" aria-live="polite">
         {status}
       </span>
@@ -152,7 +161,7 @@ function StrokeOrderPlayer({ character, order }: { character: string; order: Str
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label="Previous stroke"
+          aria-label={labels.previous}
           disabled={progress.completed === 0 && progress.active === 0}
           onClick={previous}
         >
@@ -161,7 +170,7 @@ function StrokeOrderPlayer({ character, order }: { character: string; order: Str
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label={playing ? 'Pause stroke order' : 'Play stroke order'}
+          aria-label={playing ? labels.pause : labels.play}
           onClick={playOrPause}
         >
           {playing ? <PauseIcon /> : <PlayIcon />}
@@ -169,7 +178,7 @@ function StrokeOrderPlayer({ character, order }: { character: string; order: Str
         <Button
           variant="ghost"
           size="icon-lg"
-          aria-label="Next stroke"
+          aria-label={labels.next}
           disabled={progress.completed === count}
           onClick={next}
         >
@@ -177,18 +186,18 @@ function StrokeOrderPlayer({ character, order }: { character: string; order: Str
         </Button>
       </div>
       <p className="text-xs text-muted-foreground tabular-nums">
-        Stroke {Math.min(progress.completed + 1, count)} of {count}
+        {labels.position[progress.completed]}
       </p>
     </div>
   )
 }
 
 function StrokeGrid({
-  character,
+  label,
   order,
   progress
 }: {
-  character: string
+  label: string
   order: StrokeOrderData
   progress: Progress
 }) {
@@ -203,7 +212,7 @@ function StrokeGrid({
     <svg
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label={`Stroke drawing grid for ${character}`}
+      aria-label={label}
       className="aspect-square w-full max-w-72 bg-background"
     >
       <g className="stroke-muted-foreground" strokeWidth={1} strokeDasharray="5 4" fill="none">

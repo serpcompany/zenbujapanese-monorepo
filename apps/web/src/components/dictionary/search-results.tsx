@@ -1,4 +1,9 @@
 import { exampleCountText } from '@zenbu/dictionary-core/detail/examples'
+import {
+  discoveredWordsHeading,
+  noMatches,
+  readingRefinementSpoken
+} from '@zenbu/dictionary-core/results/results'
 import { SearchIcon } from 'lucide-react'
 import { Fragment } from 'react'
 import { Disclosure } from '@/components/dictionary/disclosure'
@@ -19,8 +24,8 @@ function NoResults() {
         <EmptyMedia variant="icon">
           <SearchIcon />
         </EmptyMedia>
-        <EmptyTitle>No Dictionary Matches</EmptyTitle>
-        <EmptyDescription>Try another Japanese or English Search query.</EmptyDescription>
+        <EmptyTitle>{noMatches.title}</EmptyTitle>
+        <EmptyDescription>{noMatches.message}</EmptyDescription>
       </EmptyHeader>
     </Empty>
   )
@@ -107,7 +112,7 @@ export function SearchResults({
         <Card className="py-0" data-section="readingRefinement">
           <Row
             path={readingRefinement.path}
-            label={`Search for Japanese reading ${readingRefinement.query}`}
+            label={readingRefinementSpoken(readingRefinement.query)}
           >
             <ItemContent>
               <p className="font-semibold">
@@ -120,7 +125,9 @@ export function SearchResults({
       {listed ? (
         <Card className="py-2" data-section={discovered ? 'discoveredWords' : 'results'}>
           <ItemGroup className="gap-0">
-            {discovered ? <h2 className="px-4 py-2 font-semibold">Discovered Words</h2> : null}
+            {discovered ? (
+              <h2 className="px-4 py-2 font-semibold">{discoveredWordsHeading}</h2>
+            ) : null}
             {kanji ? <KanjiRow kanji={kanji} /> : null}
             {rows.map((word, position) => (
               <Fragment key={word.id}>

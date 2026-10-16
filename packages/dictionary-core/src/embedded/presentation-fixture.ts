@@ -41,7 +41,8 @@ const reference: KanjiReferenceFile = {
       ['ショク', 'on'],
       ['た.べる', 'kun'],
       ['く.う', 'kun']
-    ])
+    ]),
+    kanji('乁', [], { components: [] })
   ]
 }
 

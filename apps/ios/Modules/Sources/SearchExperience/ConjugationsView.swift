@@ -43,7 +43,9 @@ struct ConjugationsView: View {
 
       Section {
         ForEach(conjugations.rows[mode] ?? []) { form in
-          NavigationLink(value: SearchExperienceRoute.conjugatedForm(entry, form)) {
+          NavigationLink(
+            value: SearchExperienceRoute.conjugatedForm(entry, form, conjugations.examples)
+          ) {
             ConjugationRow(form: form)
           }
         }
@@ -52,7 +54,7 @@ struct ConjugationsView: View {
     .groupedList()
     .compactSectionSpacing()
     .accessibilityIdentifier("conjugations.screen")
-    .navigationTitle("Conjugations")
+    .navigationTitle(conjugations.title)
     .inlineNavigationTitle()
   }
 }
@@ -68,6 +70,7 @@ private struct ConjugationHeader: View {
       WordHeadline(
         ruby: JapaneseRuby(headwordOf: entry, on: page),
         pitch: page?.pitch,
+        pronounceLabel: WordPage.frame(for: entry, page: page)?.pronounce ?? "",
         identifierPrefix: "conjugations.header",
         pronounce: pronounce
       )
@@ -116,6 +119,7 @@ struct ConjugatedFormView: View {
   @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
 
   let form: Conjugations.Row
+  let labels: Conjugations.Examples
   let exampleSentenceClient: ExampleSentenceClient
   let speechSynthesisClient: SpeechSynthesisClient
   let openWord: (DictionaryEntry) -> Void
@@ -142,16 +146,17 @@ struct ConjugatedFormView: View {
         WordHeadline(
           ruby: form.shown,
           highlightedEnding: form.ending,
+          pronounceLabel: form.pronounce,
           identifierPrefix: "conjugations.form",
           pronounce: { speechSynthesisClient.speak(form.reading) }
         )
       }
 
       ExampleSentenceSections(
-        title: "Examples",
+        title: labels.title,
         examples: examples,
         source: form.surface,
-        emptyMessage: "No example sentences use this form yet.",
+        emptyMessage: labels.empty,
         presentation: { .conjugatedForm(form.kind, index: $0) },
         speechSynthesisClient: speechSynthesisClient,
         read: readExamples,

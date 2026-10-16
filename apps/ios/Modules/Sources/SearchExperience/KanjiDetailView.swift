@@ -102,34 +102,8 @@ struct KanjiDetailView: View {
           }
         }
 
-        if let page, page.hasReference {
-          KanjiReadingsSection(readings: page.readings)
-          if !page.components.isEmpty {
-            Section("COMPONENTS") {
-              Text(page.components.joined(separator: " · "))
-                .font(.title3)
-                .accessibilityIdentifier("kanji-detail.elements")
-            }
-          }
-        }
-
-        if !elements.isEmpty {
-          KanjiElementsSection(elements: elements)
-        }
-
-        Section("LISTS") {
-          SavedItemListsSection(
-            item: item, identifierPrefix: "kanji-detail", openList: openList
-          ) { showsListPicker = true }
-        }
-
-        Section("NOTES") {
-          SavedItemNotesSection(
-            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "kanji-detail")
-        }
-
-        if !words.isEmpty {
-          KanjiWordsSection(entries: words)
+        ForEach(page?.sections ?? KanjiPage.sectionsWithoutContent, id: \.kind) { section in
+          pageSection(section, of: page)
         }
       }
       .groupedList()
@@ -175,6 +149,36 @@ struct KanjiDetailView: View {
     }
     .task(id: KanjiDetailLoadRequest(character: character, retryID: retryID)) {
       await loadDetail()
+    }
+  }
+
+  @ViewBuilder
+  private func pageSection(_ section: KanjiPage.Section, of page: KanjiPage?) -> some View {
+    let title = section.title.uppercased()
+    switch section.kind {
+    case .readings:
+      KanjiReadingsSection(title: title, readings: page?.readings ?? [])
+    case .components:
+      Section(title) {
+        Text((page?.components ?? []).joined(separator: " · "))
+          .font(.title3)
+          .accessibilityIdentifier("kanji-detail.elements")
+      }
+    case .elements:
+      KanjiElementsSection(title: title, elements: elements)
+    case .lists:
+      Section(title) {
+        SavedItemListsSection(
+          item: item, identifierPrefix: "kanji-detail", openList: openList
+        ) { showsListPicker = true }
+      }
+    case .notes:
+      Section(title) {
+        SavedItemNotesSection(
+          notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "kanji-detail")
+      }
+    case .words:
+      KanjiWordsSection(title: title, entries: words)
     }
   }
 

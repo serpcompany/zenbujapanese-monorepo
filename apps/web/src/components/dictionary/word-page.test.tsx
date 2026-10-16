@@ -1,6 +1,7 @@
 import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
 import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
+import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
 import {
   type SuiteFrequencyDetails,
   type SuiteFurigana,
@@ -25,9 +26,18 @@ const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
 type HeaderProps = Parameters<typeof WordHeader>[0]
 
-function header(props: Omit<HeaderProps, 'conjugations' | 'headword'> & Partial<HeaderProps>) {
+function header(
+  props: Omit<HeaderProps, 'conjugations' | 'headword' | 'pronounce'> & Partial<HeaderProps>
+) {
   const headword = props.ruby.map(segment => segment.text).join('')
-  return renderToStaticMarkup(<WordHeader headword={headword} conjugations={null} {...props} />)
+  return renderToStaticMarkup(
+    <WordHeader
+      headword={headword}
+      conjugations={null}
+      pronounce={pronounceLabel(props.reading)}
+      {...props}
+    />
+  )
 }
 
 describe('the word header', () => {
@@ -37,7 +47,7 @@ describe('the word header', () => {
       ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],
       reading: 'がっこう',
       pitch: null,
-      partOfSpeech: 'Noun'
+      partOfSpeechRow: 'Noun'
     })
     const headings = [...html.matchAll(/<h1([^>]*)>([\s\S]*?)<\/h1>/g)]
     expect(headings).toHaveLength(1)
@@ -56,7 +66,7 @@ describe('the word header', () => {
       ruby: [{ text: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }],
       reading: 'がっこう',
       pitch: null,
-      partOfSpeech: 'Noun'
+      partOfSpeechRow: 'Noun'
     })
     expect(readFurigana(html)).toEqual([
       { base: '学校', reading: 'がっこう', kanjiReadings: ['がっ', 'こう'] }
@@ -73,7 +83,7 @@ describe('the word header', () => {
           ruby: rubySegments('要る', 'いる'),
           reading: 'いる',
           pitch: null,
-          partOfSpeech: ''
+          partOfSpeechRow: ''
         })
       )
     ).toEqual([{ base: '要', reading: 'い' }, { base: 'る' }])
@@ -81,7 +91,7 @@ describe('the word header', () => {
       ruby: rubySegments('大人', 'おとな'),
       reading: 'おとな',
       pitch: null,
-      partOfSpeech: ''
+      partOfSpeechRow: ''
     })
     expect(readFurigana(whole)).toEqual([{ base: '大人', reading: 'おとな' }])
     expect(whole).not.toContain('<button aria-pressed')
@@ -92,7 +102,7 @@ describe('the word header', () => {
       ruby: rubySegments('今日', 'きょう'),
       reading: 'きょう',
       pitch: pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: unidic }),
-      partOfSpeech: 'Noun'
+      partOfSpeechRow: 'Noun'
     })
     expect(readPitchGraph(html)).toEqual({
       morae: ['キョ', 'ウ'],
@@ -108,7 +118,7 @@ describe('the word header', () => {
       ruby: rubySegments('今日', 'きょう'),
       reading: 'きょう',
       pitch: pitchAccent('きょう', { downstep: 1, moraCount: 3, sourceIdentity: unidic }),
-      partOfSpeech: 'Noun'
+      partOfSpeechRow: 'Noun'
     })
     expect(counted).toContain('downstep 1, 3 mora')
     expect(readPitchGraph(counted)?.morae).toEqual(['キョ', 'ウ'])
@@ -119,7 +129,7 @@ describe('the word header', () => {
       ruby: [{ text: 'いる' }],
       reading: 'いる',
       pitch: null,
-      partOfSpeech: ''
+      partOfSpeechRow: ''
     })
     expect(readPitchGraph(html)).toBeNull()
     expect(html).toContain('aria-label="Pronounce いる"')
@@ -178,7 +188,7 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
       ruby: detail.ruby,
       reading: detail.reading,
       pitch: detail.pitch,
-      partOfSpeech: detail.partOfSpeech
+      partOfSpeechRow: detail.partOfSpeechRow
     })
     expect(readFurigana(html)).toEqual(expected.furigana)
     expect(readPitchGraph(html)).toEqual(expected.pitch?.graph ?? null)

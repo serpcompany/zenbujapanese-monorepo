@@ -3,9 +3,15 @@ import { ask } from './fake-host'
 
 describe('what the embedded core decodes from a file its host reads', () => {
   test('decodes a kanji’s strokes into the points to draw, and refuses a broken diagram', async () => {
-    const row = { viewportSize: 109, strokeCount: 1, strokes: [[0, 1, 2, 1, 3, 4, 5, 6, 7, 8]] }
-    expect(await ask({}, 'kanjiStrokes', JSON.stringify(row))).toEqual({
+    const row = {
+      character: '一',
       viewportSize: 109,
+      strokeCount: 1,
+      strokes: [[0, 1, 2, 1, 3, 4, 5, 6, 7, 8]]
+    }
+    expect(await ask({}, 'kanjiStrokes', JSON.stringify(row))).toMatchObject({
+      viewportSize: 109,
+      labels: { show: 'Show stroke order for 一', position: ['Stroke 1 of 1', 'Stroke 1 of 1'] },
       strokes: [
         [
           { end: { x: 1, y: 2 }, controls: null },

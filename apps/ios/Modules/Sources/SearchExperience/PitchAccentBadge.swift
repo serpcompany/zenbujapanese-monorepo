@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PitchAccentBadge: View {
-  let reading: String
+  let pronounceLabel: String
   let pitch: WordPage.Pitch
   let pronounce: () -> Void
   @ScaledMetric(relativeTo: .body) private var moraWidth: CGFloat = 20
@@ -23,8 +23,8 @@ struct PitchAccentBadge: View {
       .contentShape(Capsule())
     }
     .buttonStyle(.plain)
-    .accessibilityLabel("Pronounce \(reading)")
-    .accessibilityValue("Pitch accent, downstep \(pitch.downstep), \(pitch.moraCount) mora")
+    .accessibilityLabel(pronounceLabel)
+    .accessibilityValue(pitch.spoken)
   }
 
   private var contour: some View {

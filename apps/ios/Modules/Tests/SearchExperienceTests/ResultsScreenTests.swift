@@ -169,9 +169,14 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(try leading.list.kanji?.spoken == "Result 1 of \(leading.list.rows.count + 1), Kanji primary")
   }
 
-  @Test("a query nothing matches has no results screen")
+  @Test("a query nothing matches has no results screen, and says so in the core's words")
   func noResults() async throws {
-    #expect(try await SearchedScreen.search("qzxvkj").screen == .noResults)
+    #expect(
+      try await SearchedScreen.search("qzxvkj").screen
+        == .noResults(
+          NoMatches(
+            title: "No Dictionary Matches",
+            message: "Try another Japanese or English Search query.")))
   }
 
   @Test("at the largest text sizes a row shows its first chip and counts the rest")

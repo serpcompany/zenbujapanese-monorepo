@@ -49,7 +49,8 @@ describe('pitchAccent', () => {
         ],
         particle: { x: 2.3, high: true },
         width: 2.6
-      }
+      },
+      spoken: 'Pitch accent, downstep 0, 2 mora'
     })
     expect(
       pitchAccent('ようりょう', { downstep: 3, moraCount: 4, sourceIdentity: unidic }).morae

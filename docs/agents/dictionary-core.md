@@ -43,7 +43,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   its own way; Biome refuses `console` in `src` (tests aside).
 - **A rule lives here, once.** What a screen lists, the order, a title, a label, and what
   VoiceOver says are answers the core gives every client, so a client decides none itself, apart
-  from the rows of the table under Layers in [`ARCHITECTURE.md`](../../ARCHITECTURE.md). Add a
+  from a few labels a client still writes, such as the app's kanji element Source rows. Add a
   field to the answer, and have the client show it. What the app keeps native, and why, is in
   [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
@@ -139,13 +139,14 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and whether the query was picked in the radical panel) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, and what VoiceOver reads. A one-character query from the radical panel lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, whether the radical panel picked the query) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A radical panel's one-character query lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
-  | `wordPage` | An entry as the host read it | `EmbeddedWordPage`: furigana, part of speech, conjugations with each row's note, pitch with its graph, senses, frequency rows with their details, alternatives, kanji, related words, and share text |
-  | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: stats, meanings, readings and words, elements, components, share text, and the reading to save; a one-kanji candidate's first meaning |
+  | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
+  | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text, the reading to save; a one-kanji candidate's first meaning |
+  | `wordPageWithoutContent`, `kanjiPageWithoutContent` | A reading; — | The sections, and the labels, a page draws before or without its answer |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
-  | `kanjiStrokes` | A stroke diagram's row as the host read it (viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with their two control points; an error for a diagram that is broken |
+  | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel` | The radicals picked, in order | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading |
   | `gloss`, `phraseNote` | A meaning; a phrase with its entry's meanings and parts of speech | The gloss under a linked word, or null; a set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
@@ -497,8 +498,7 @@ ready and a page's first request prepares nothing:
   is `source_record_id`, the JMdict entry number in word page URLs (ADR 0007).
 - A sense's `restrictions` (JMdict's stagk and stagr) are for Search; the app doesn't show them.
 - A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
-  is UniDic's; `compoundPitch` is CompoundPitch's estimate, which shows when UniDic has none
-  (`shownPitch`). The app reads both, and its word page chooses.
+  is UniDic's; `compoundPitch`, CompoundPitch's estimate, shows when UniDic has none (`shownPitch`).
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.
 - An example token's `reading` is the tokenizer's, in hiragana, when the token has kanji, and its
   `dictionaryForm` is set when it differs from the surface: what an ambiguous word searches for.

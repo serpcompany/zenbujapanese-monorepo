@@ -43,9 +43,24 @@ struct KanjiStroke: Decodable, Hashable, Sendable {
 }
 
 struct KanjiStrokeDiagram: Identifiable, Hashable, Sendable {
+  struct Labels: Decodable, Hashable, Sendable {
+    let title: String
+    let show: String
+    let grid: String
+    let previous: String
+    let play: String
+    let pause: String
+    let next: String
+    let position: [String]
+    let complete: [String]
+    let completeOf: [String]
+    let drawing: [String]
+  }
+
   let character: KanjiCharacter
   let viewportSize: Double
   let strokes: [KanjiStroke]
+  let labels: Labels
 
   var id: KanjiCharacter { character }
 }
@@ -81,21 +96,25 @@ private actor KanjiStrokeData {
     guard let text = sqlite3_column_text(statement, 2) else {
       throw KanjiStrokeDataError.invalidArtifact("missing stroke geometry")
     }
+    let named = try DictionaryCore.argument(character.rawValue)
     let row =
-      "{\"viewportSize\":\(sqlite3_column_double(statement, 0)),"
+      "{\"character\":\(named),"
+      + "\"viewportSize\":\(sqlite3_column_double(statement, 0)),"
       + "\"strokeCount\":\(sqlite3_column_int(statement, 1)),"
       + "\"strokes\":\(String(cString: text))}"
     let drawn: Drawn = try PresentationCore.shared.answer("kanjiStrokes", row)
     return KanjiStrokeDiagram(
       character: character,
       viewportSize: drawn.viewportSize,
-      strokes: drawn.strokes
+      strokes: drawn.strokes,
+      labels: drawn.labels
     )
   }
 
   private struct Drawn: Decodable {
     let viewportSize: Double
     let strokes: [KanjiStroke]
+    let labels: KanjiStrokeDiagram.Labels
   }
 
   private func openDatabase() throws -> OpaquePointer {

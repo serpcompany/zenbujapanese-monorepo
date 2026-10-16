@@ -1,16 +1,29 @@
 import { LruCache } from '../artifact/cache'
 import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
 import { sharedSpellingNote } from '../detail/conjugation'
+import { noExamplesMessage } from '../detail/examples'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
-import { type KanjiDetail, kanjiDetail, savedKanjiReading } from '../detail/kanji'
+import {
+  type KanjiDetail,
+  kanjiDetail,
+  kanjiSections,
+  kanjiSectionsWithoutContent,
+  savedKanjiReading
+} from '../detail/kanji'
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
 import { type PitchAccent, shownPitch } from '../detail/pitch'
 import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
+import { pronounceLabel } from '../detail/sections'
 import { type StrokeDiagram, strokeDiagram } from '../detail/strokes'
 import { isKanjiCharacter } from '../detail/text'
-import { type WordDetail, wordDetail } from '../detail/word'
+import {
+  type WordDetail,
+  wordDetail,
+  wordSections,
+  wordSectionsWithoutContent
+} from '../detail/word'
 import {
   evidenceLookups,
   type LearnerResultsScreen,
@@ -44,8 +57,17 @@ type ConjugationRows = Conjugations['rows']
 export interface EmbeddedWordPage
   extends Pick<
     WordDetail,
-    'ruby' | 'partOfSpeech' | 'senses' | 'alternatives' | 'related' | 'shareText'
+    | 'sections'
+    | 'ruby'
+    | 'partOfSpeech'
+    | 'partOfSpeechRow'
+    | 'pronounce'
+    | 'senses'
+    | 'alternatives'
+    | 'related'
+    | 'shareText'
   > {
+  noExamples: string
   pitch: (PitchAccent & { source: string }) | null
   conjugations:
     | (Omit<Conjugations, 'rows'> & {
@@ -175,14 +197,20 @@ export class EmbeddedPresentation {
       examples: [],
       exampleCount: null
     })
+    const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
+      frequencyLookupRow
+    )
     const noted = (rows: Conjugations['rows']['Plain']) =>
       rows.map(row => ({
         ...row,
         note: row.sharedSpellings.length > 0 ? sharedSpellingNote(row.sharedSpellings) : null
       }))
     return {
+      sections: wordSections(detail, { frequency: frequency.length > 0, conjugations: false }),
       ruby: detail.ruby,
       partOfSpeech: detail.partOfSpeech,
+      partOfSpeechRow: detail.partOfSpeechRow,
+      pronounce: detail.pronounce,
       conjugations: detail.conjugations && {
         ...detail.conjugations,
         rows: {
@@ -195,12 +223,25 @@ export class EmbeddedPresentation {
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
       alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
-      frequency: (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
-        frequencyLookupRow
-      ),
+      frequency,
       related: detail.related,
+      noExamples: noExamplesMessage,
       shareText: detail.shareText
     }
+  }
+
+  wordPageWithoutContent(
+    reading: string
+  ): Pick<EmbeddedWordPage, 'sections' | 'pronounce' | 'noExamples'> {
+    return {
+      sections: wordSectionsWithoutContent,
+      pronounce: pronounceLabel(reading),
+      noExamples: noExamplesMessage
+    }
+  }
+
+  kanjiPageWithoutContent(): Pick<EmbeddedKanjiPage, 'sections'> {
+    return { sections: kanjiSectionsWithoutContent }
   }
 
   kanjiPage(request: {
@@ -231,6 +272,7 @@ export class EmbeddedPresentation {
     const leading = detail.words.filter(word => word.id === request.leadingWord)
     return {
       ...detail,
+      sections: kanjiSections(detail, { readingsWhenNone: kanji !== null }),
       hasReference: kanji !== null,
       savedReading: savedKanjiReading(detail),
       stats: kanji ? detail.stats : [],
@@ -251,7 +293,7 @@ export class EmbeddedPresentation {
     return rows && kanjiElementDetail(rows)
   }
 
-  kanjiStrokes(row: KanjiStrokesRow): StrokeDiagram {
+  kanjiStrokes(row: KanjiStrokesRow & { character: string }): StrokeDiagram {
     return strokeDiagram(row)
   }
 

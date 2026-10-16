@@ -25,6 +25,11 @@ const twin = String.fromCodePoint(0xfa5b)
 describe('kanjiElementDetail', () => {
   test('says what an element contributes and which on-readings it links', () => {
     expect(kanjiElementDetail(rows())).toEqual({
+      sections: [
+        { kind: 'explanation', title: 'Meaning / structure' },
+        { kind: 'soundPatterns', title: 'Sound patterns' },
+        { kind: 'source', title: 'Source' }
+      ],
       glyph: '者',
       meanings: ['someone', 'person'],
       explanation: 'This element contributes forms associated with someone, person.',
