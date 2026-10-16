@@ -55,7 +55,7 @@ struct LaunchHarnessTests {
   }
 
   @Test("each kanji page drawn is recorded with its own facts and how many of its words it has")
-  func drawnKanjiPage() {
+  func drawnKanjiPage() throws {
     let word = DictionaryEntry.fixture(id: "a", headword: "日本")
     let page = KanjiPage(
       sections: [],
@@ -69,7 +69,9 @@ struct LaunchHarnessTests {
         KanjiPage.Reading(
           kind: "kun", label: "Kun", value: "ひ", words: [], wordsText: "", spoken: nil),
       ],
-      components: [], elements: [], words: [word, word], shareText: "日", savedReading: "ニチ")
+      components: [], elements: [], words: [word, word], shareText: "日",
+      shareURL: try #require(URL(string: "https://zenbujapanese.com/dictionary/search/%E6%97%A5/")),
+      savedReading: "ニチ")
     #expect(
       KanjiPage.drawnSummary(page) == "1 stats, 2 readings, 0 elements, 1 reading words, 2 words")
     #expect(

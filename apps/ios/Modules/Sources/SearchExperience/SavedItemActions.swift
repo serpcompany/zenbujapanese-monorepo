@@ -186,7 +186,7 @@ extension View {
   func savedItemActions(
     for item: SavedItem,
     identifierPrefix: String,
-    shareText: String,
+    share: SharedPage,
     notes: SavedItemNotes,
     photos: SavedItemPhotos,
     showsListPicker: Binding<Bool>
@@ -197,10 +197,8 @@ extension View {
           .font(.body.weight(.semibold))
           .accessibilityIdentifier("word-note.done")
       } else {
-        ShareLink(item: shareText) {
-          Label("Share", systemImage: "square.and.arrow.up")
-        }
-        .accessibilityIdentifier("\(identifierPrefix).share")
+        ShareButton(page: share)
+          .accessibilityIdentifier("\(identifierPrefix).share")
         SavedItemMenu(
           item: item,
           identifierPrefix: identifierPrefix,
@@ -214,6 +212,39 @@ extension View {
     .sheet(isPresented: showsListPicker) {
       WordListPickerView(item: item)
     }
+  }
+}
+
+struct SharedPage: Hashable, Sendable {
+  let title: String
+  let text: String
+  let url: URL?
+}
+
+extension SharedPage {
+  init(word entry: DictionaryEntry, page: WordPage?) {
+    self.init(title: entry.headword, text: page?.shareText ?? entry.headword, url: page?.shareURL)
+  }
+
+  init(kanji character: KanjiCharacter, page: KanjiPage?) {
+    self.init(
+      title: character.rawValue, text: page?.shareText ?? character.rawValue, url: page?.shareURL)
+  }
+}
+
+private struct ShareButton: View {
+  let page: SharedPage
+
+  var body: some View {
+    if let url = page.url {
+      ShareLink(item: url, message: Text(page.text), preview: SharePreview(page.title)) { label }
+    } else {
+      ShareLink(item: page.text) { label }
+    }
+  }
+
+  private var label: some View {
+    Label("Share", systemImage: "square.and.arrow.up")
   }
 }
 

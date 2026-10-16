@@ -50,8 +50,6 @@ struct KanjiDetailView: View {
     .kanji(character, reading: page?.savedReading ?? "")
   }
 
-  private var shareText: String { page?.shareText ?? character.rawValue }
-
   var body: some View {
     ScrollViewReader { proxy in
       List {
@@ -128,7 +126,8 @@ struct KanjiDetailView: View {
     .navigationTitle(character.rawValue)
     .inlineNavigationTitle()
     .savedItemActions(
-      for: item, identifierPrefix: "kanji-detail", shareText: shareText, notes: notes,
+      for: item, identifierPrefix: "kanji-detail", share: SharedPage(kanji: character, page: page),
+      notes: notes,
       photos: photos, showsListPicker: $showsListPicker)
     .onChange(of: notes.editingNoteID) { _, noteID in
       noteEditorFocused = noteID != nil
