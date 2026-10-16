@@ -1,4 +1,4 @@
-import type { Language } from '../domain/language'
+import type { Language } from '../language'
 import { type Letter, signed } from './letter'
 import type { Message } from './mailbox'
 

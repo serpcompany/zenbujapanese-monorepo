@@ -1,9 +1,9 @@
 import { z } from '@hono/zod-openapi'
 import { bookmarkLimits } from '../domain/bookmarks'
-import { languageHeader } from '../domain/language'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
 import { watchLimits } from '../domain/watch-history'
+import { languageHeader } from '../language'
 import { errorObject } from './refusals'
 import {
   entityIdsText,

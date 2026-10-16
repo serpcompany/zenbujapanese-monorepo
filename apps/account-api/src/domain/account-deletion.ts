@@ -1,5 +1,5 @@
+import { emailLanguage, type Language } from '../language'
 import type { Principal } from './clients'
-import { emailLanguage, type Language } from './language'
 import type { AccountStore } from './store'
 
 const freshSignInMinutes = 10

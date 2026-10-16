@@ -1,6 +1,6 @@
 import type { BetterAuthPlugin } from 'better-auth'
 import { addOAuthServerContext, createAuthMiddleware, getOAuthState } from 'better-auth/api'
-import { emailLanguage, type Language, languageHeader, languageOf } from '../domain/language'
+import { emailLanguage, type Language, languageHeader, languageOf } from '../language'
 import { route } from './routes'
 
 interface Sent {

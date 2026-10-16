@@ -35,7 +35,7 @@ Each email is in English or Japanese (#666). SERP's
 [localization standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/web-stack/localization.md)
 (Strings) says emails use the recipient's language, stored on the user record from the page they
 signed up on, because `/api` requests carry no language prefix.
-`apps/account-api/src/domain/language.ts` picks it:
+`apps/account-api/src/language.ts` picks it:
 
 1. **The language the request names**, in `Content-Language`: exactly `en` or `ja`. Anything else
    (`fr`, `ja-JP`, `JA`, `ja, en`) names none. `Accept-Language` is never read: browsers and the
@@ -78,7 +78,7 @@ for it. No native speaker has reviewed it yet ([`tech-debt.md`](../tech-debt.md)
 
 `pnpm check` in `apps/account-api` runs these with the rest of the service's tests:
 
-- `apps/account-api/src/domain/language.test.ts`: no language, `en`, `ja`, unknown ones, and
+- `apps/account-api/src/language.test.ts`: no language, `en`, `ja`, unknown ones, and
   malformed ones, each with and without an account's.
 - `apps/account-api/src/email/letters.test.ts`: the English emails word for word as they were
   before Japanese, and the Japanese ones' facts, names, and です・ます, sentence by sentence, with no

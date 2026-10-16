@@ -36,7 +36,7 @@ async function linkGoogle(session: string, email: string, headers: Record<string
 
 describe('the language of a sign-in code', () => {
   test('is English without a language, and with one the service does not know', async () => {
-    const asks = [
+    const asks: Record<string, string>[] = [
       {},
       { 'content-language': 'fr' },
       { 'content-language': 'ja-JP' },

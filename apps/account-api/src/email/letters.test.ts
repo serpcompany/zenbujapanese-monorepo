@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import type { Language } from '../domain/language'
+import type { Language } from '../language'
 import { accountDeletedMessage, signInAddedMessage, signInRemovedMessage } from './account-notices'
 import type { Message } from './mailbox'
 import { codeMinutes, signInCodeMessage } from './sign-in-code'

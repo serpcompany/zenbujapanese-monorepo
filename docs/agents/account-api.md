@@ -365,18 +365,18 @@ belongs; tests may import anything.
   tokens carry (`clients.ts`), the language a request names (`languages.ts`), and the access-token
   check the other routes use (`access-tokens.ts`). It imports nothing of the HTTP layer.
 - **`src/email`** writes and sends a message, and imports neither sign-in, the database, nor HTTP.
-- **`src/domain`** holds the account's rules: the apps and their scopes (`clients.ts`), an email's
-  language (`language.ts`), a profile's fields, each synced entity's rule, versions and conflicts,
-  the cursor, and the results kept by mutation ID. It works through the store it's handed
+- **`src/domain`** holds the account's rules: the apps and their scopes (`clients.ts`), a
+  profile's fields, each synced entity's rule, versions and conflicts, the cursor, and the results
+  kept by mutation ID. It works through the store it's handed
   (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
 
-`src/config.ts` reads the environment, and `src/server.ts` wires the layers together and is
-imported by nothing. Logging, the request log, and stopping cleanly on SIGTERM come from
-`packages/node-service`, as in the dictionary service ([`dictionary-api.md`](dictionary-api.md),
-Code layout). Nothing calls `console`, and nothing logs a learner's email, a code, a token, or a
-link: only what happened, as SERP's
+`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
+`src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
+stopping cleanly on SIGTERM come from `packages/node-service`, as in the dictionary service
+([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and nothing logs a
+learner's email, a code, a token, or a link: only what happened, as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says for email.
 
