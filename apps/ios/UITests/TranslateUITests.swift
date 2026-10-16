@@ -39,9 +39,11 @@ final class TranslateUITests: ZenbuUITestCase {
     XCTAssertTrue(text(of: direction).contains("English → Japanese"), text(of: direction))
     waitFor(app.buttons["Copy"])
     waitFor(app.buttons["Speak"])
+    let keyboard = app.keyboards.firstMatch
+    let keyboardWasUp = keyboard.exists
     tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
     assertSheetPlacement(waitForSheet("recognized-word-sheet", in: app), in: app)
-    waitUntilGone(app.keyboards.firstMatch)
+    if keyboardWasUp { waitUntilGone(keyboard) }
     for control in ["recognized-word-sheet.open-full-entry", "word-detail.share", "word-detail.more-menu"] {
       assertOnScreen(find(control, in: app), in: app)
     }
@@ -83,13 +85,12 @@ final class TranslateUITests: ZenbuUITestCase {
     if device == .phone {
       XCTAssertFalse(isReachable(app.tabBars.firstMatch, in: app), "the conversation hides the tab bar")
     }
-    tap(find("translate.conversation.back", in: app))
-    tap(app.buttons["Save and Exit"].firstMatch)
+    saveAndExit(app)
     tap(find("translate.history", in: app))
     let row = find("translate.history.row", in: app)
     assertOnScreen(row, in: app)
-    waitUntil(row, mentions: "Today, ")
-    XCTAssertTrue(text(of: row).contains(" turn"), "the row gives its turns: \(text(of: row))")
+    waitUntil(row, mentions: " turn")
+    XCTAssertTrue(text(of: row).contains(" · "), "the row gives its day and time: \(text(of: row))")
   }
 
   private func typeASentenceToTranslate() -> XCUIApplication {

@@ -114,10 +114,10 @@ at larger text sizes, so they stay on screen on every iPhone; pressing and holdi
 larger, as a tab bar does.
 
 Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`,
-`testListeningRunsTheAnnouncementsAndMutesThem` (Listen's speaker button), and
-`testScrollingBackOffersJumpToLatest` (every control on screen at the largest text size); package
-`LiveConversationTests` (pausing and the timer), `ConversationMutingTests` (muting in both modes),
-and `SystemSpeechPlayerTests` (the speed).
+`testListeningRunsTheAnnouncementsAndMutesThem` (Listen's controls, translation first, and muted),
+`testScrollingBackOffersJumpToLatest` (every control on screen at the largest text size), and
+`HeldConversationUITests` (what's happening); package `LiveConversationTests` (pausing and the
+timer), `ConversationMutingTests` (muting in both modes), and `SystemSpeechPlayerTests` (the speed).
 
 Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
 conversations, transcripts, and typed or document translations, and each of those screens has it
@@ -159,10 +159,10 @@ Check: package `LiveConversationTests`, `BilingualTranscriptMergerTests`, and
 `ConversationPlaybackTests` (cards, provisional translations, long speech, and playback),
 `TranslateChromeLayoutTests` (the session bar), and `ConversationScrollPositionTests` (following
 the newest line until the learner scrolls up; a row taken away leaves a placeholder); UI
-`ConversationUITests.testTwoPanesHoldEachLanguage`, `testAPauseMidSentenceKeepsTheAppOpen`,
-`testAWordsFullEntryShowsTheSessionBarThatReturns`, and `testScrollingBackOffersJumpToLatest`
-(with the largest text, or the Mac's smallest window, so the conversation is taller than the
-screen).
+`ConversationUITests.testTwoPanesHoldEachLanguage`,
+`testAWordsFullEntryShowsTheSessionBarThatReturns`, `testScrollingBackOffersJumpToLatest` (the
+largest text, or the Mac's smallest window), and `HeldConversationUITests` (a pause mid-sentence;
+a turn's audio waiting, then playing, while another tab's bar says it's still listening).
 
 ## Pausing and leaving
 
@@ -183,7 +183,8 @@ hands-free conversation isn't paused by Auto-Lock; once it pauses or ends, Auto-
 
 Check: package `LiveConversationTests` (pausing, leaving, the silence prompt, the background, and a
 recognizer that stops); UI `ConversationUITests.testSilenceAsksWhetherAnyoneIsStillThere`,
-`testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness skips its countdown),
+`testNobodyAnsweringTheSilencePromptPausesTheConversation` (the harness skips its countdown; the
+prompt's **Pause**),
 `testLeavingTheAppPausesTheConversation`, `testExitWithoutSavingLeavesNothingInTranslations`, and
 `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (Save and Exit). A call
 taking the microphone is by hand.
@@ -210,9 +211,10 @@ again, at the conversation's speech speed, and a bookmark. Its **•••** men
 Check: package `ConversationHistoryTests` and `ConversationWordsTests`; UI
 `ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked` (a speaker and a bookmark on
 each sentence), `testADeletedConversationLeavesTranslations` (long-press, or right-click on the Mac,
-then Delete, which asks first), Account's count and deletion in
+then Delete, which asks first), Account's count and **Delete All…** in
 `testDeletingInAccountsTranslationsLowersItsCountAndLeavesTranslateWithout`, and
-`testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers`; and
+`testAccountsTranslationsLeavesOutTheLiveConversationAndItsSpeakers` (a word there at half height,
+inside Account); and
 `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (the row's line),
 `testTranslationsStartsEmpty`, and `AccountUITests.testTranslationsAndCreditsOpenFromAccount`.
 
@@ -221,9 +223,7 @@ Without Saving** deletes it. Conversations are stored only on the device, one fi
 sync.
 
 Check: package `LiveConversationTests` (each translated sentence is saved; Exit Without Saving
-deletes it) and `ConversationHistoryTests`; UI
-`ConversationUITests.testExitWithoutSavingLeavesNothingInTranslations` (nothing listed, even after
-the app starts again).
+deletes it), `ConversationHistoryTests`, and UI `testExitWithoutSavingLeavesNothingInTranslations`.
 
 **Bookmarks on every device.** Signed in to a Zenbu account, the learner's bookmarked sentences are
 the same on every device running this app ([Zenbu account and

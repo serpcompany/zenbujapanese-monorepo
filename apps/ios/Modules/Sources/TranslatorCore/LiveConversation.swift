@@ -140,6 +140,10 @@ public final class LiveConversation {
 
   public var elapsedSoFar: TimeInterval { elapsed(at: now()) }
 
+  public var timeBeforeSilencePause: TimeInterval? {
+    silencePromptDeadline.map { max(0, $0.timeIntervalSince(now())) }
+  }
+
   public func start() {
     guard status != .live, !hasLeft else { return }
     let now = now()

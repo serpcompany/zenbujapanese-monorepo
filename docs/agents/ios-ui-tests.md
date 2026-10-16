@@ -88,12 +88,13 @@ what it waited for and for how long.
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
 heard is on screen as the live card (`translate.live`) for only a second or so, so the tests
-wait for what stays: a finished sentence card, the prompt, or the controls. A paused line is
-heard again from its start on resuming, so the mid-sentence pause test waits for each paused
-line to be heard to its end before it pauses again. The harness's silence prompt counts down for
-two minutes, longer than the tests' 90-second patience, so tapping **Keep Listening** never races
-it, and the test of nobody answering doesn't wait those two minutes: it posts the notice that moves
-the harness's clock past the countdown, then waits for the pause.
+wait for what stays: a finished sentence card, the prompt, or the controls. A test that needs a
+passing state, a line half heard, a turn's audio waiting, or a translation playing, holds the
+script (`HeldConversationUITests`): the state stays until the test posts the notice to go on, so
+nothing depends on how fast the Mac is. The harness's silence prompt counts down for two minutes,
+longer than the tests' 90-second patience, so tapping **Keep Listening** never races it, and the
+test of nobody answering doesn't wait those two minutes: it posts the notice that moves the
+harness's clock past the countdown, then waits for the pause.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what

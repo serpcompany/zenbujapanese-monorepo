@@ -25,9 +25,9 @@ struct TranslateSessionChrome: ViewModifier {
   func body(content: Content) -> some View {
     withAccessory(content)
       .overlay {
-        if let session = experience.session, let deadline = session.silencePromptDeadline {
+        if let session = experience.session, session.silencePromptDeadline != nil {
           StillThereCard(
-            deadline: deadline,
+            timeLeft: { session.timeBeforeSilencePause ?? 0 },
             timing: session.timing,
             keepListening: { session.keepListening() },
             pause: { session.pause() }
@@ -111,7 +111,7 @@ private struct TranslationDownloadTask: View {
 }
 
 private struct StillThereCard: View {
-  let deadline: Date
+  let timeLeft: () -> TimeInterval
   let timing: ConversationTiming
   let keepListening: () -> Void
   let pause: () -> Void
@@ -121,8 +121,8 @@ private struct StillThereCard: View {
       Color.black.opacity(0.25)
         .ignoresSafeArea()
         .accessibilityHidden(true)
-      TimelineView(.periodic(from: .now, by: 0.25)) { context in
-        let remaining = max(0, deadline.timeIntervalSince(context.date))
+      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        let remaining = timeLeft()
         let seconds = Int(remaining.rounded(.up))
         VStack(spacing: 14) {
           Gauge(value: remaining, in: 0...timing.promptCountdown) {
