@@ -109,3 +109,19 @@ would give it a new one; `test_note_identity_contract.py` pins every entry's ID 
 such a rebuild until the importer writes each existing entry's value from the previous database
 ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), Refresh a source snapshot).
 `EarlierWordKeysTests` reads the bundled database, so it fails without the column.
+
+## Notes in Search
+
+Search lists the notes whose words the dictionary has
+([product docs](../../apps/ios/docs/product/saved-data.md#notes-in-search)). `LearnerNotes`
+(`LearnerNotes.swift`), in the app's environment, holds them as `WordNoteStorage.onTheirWords`
+reads them: after the move above, every note under a Language Reference ID or a kanji, and none
+under a note identity or a key `withoutAWord`. It reads them once at launch, and again after each
+save through `WordNoteStore` (`kept(in:searchedBy:)`, which `live` is), once the note is written,
+so a Search screen already showing the group, in any window, draws the change. `SearchView` waits
+for the first read before it shows a search's results, so the group arrives with them and never
+after. Which notes match, their order, and the part shown are the core's (`notesInSearch`,
+[`dictionary-core.md`](dictionary-core.md)); `LearnerNotes` hands it the query and every note, and
+keeps its last answer until either changes. Notes never sync: nothing here reaches the account
+([Account and sync](ios.md#account-and-sync)). `LearnerNotesTests` saves, changes, and deletes a
+note through a page's `SavedItemNotes` and reads Search's answer after each save.

@@ -98,11 +98,11 @@ and only candidates written in Japanese are offered), and `RadicalLookupTests` (
 pick lists and the radicals still offered, on the bundled radical file); core
 `search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
 
-Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
-among equally good matches, the enabled frequency dictionaries decide the order, in the
-learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a
-result the query did not match or lifts an incidental match above a direct one. English rows
-show the meaning that matched.
+Japanese, English, and romaji searches show one **Results** list. Stronger matches come first; among
+equally good matches, the enabled frequency dictionaries decide the order, in the learner's priority
+order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a result the query did
+not match or lifts an incidental match above a direct one. English rows show the meaning that
+matched. Matching notes follow ([Notes in Search](saved-data.md#notes-in-search)).
 
 Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
 `SearchResultOrderingTests`.

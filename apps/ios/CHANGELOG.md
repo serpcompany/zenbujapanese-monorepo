@@ -26,6 +26,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
   first 100 of more than 100 examples".
+- Search finds your notes too: a word or kanji whose note has what you searched for is listed
+  under **In your notes**, after the dictionary's matches, with the part of the note that matched.
+  Your notes stay on your device.
 
 ### Changed
 
