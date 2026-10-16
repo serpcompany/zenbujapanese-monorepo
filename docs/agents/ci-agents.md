@@ -111,7 +111,7 @@ ignores: a Markdown file at the repository root would fail the docs check the re
   the debt files, or else one file near the size limit, split by
   responsibility. It passes over an item that needs a deploy, a language-data release or anything
   in R2, a change under `apps/ios` or in Swift (the runner can't build or test it), a change to a
-  tool in `language-data/tools/` (each records its own SHA-256 in the data it built), a product
+  tool in `language-data/tools/` (the importers record their own SHA-256 in what they built), a product
   doc's behavior or wording, an ADR-level decision, or another decision a person makes. It deletes
   the row it fixed, writes no code comments, runs `pnpm check`, and opens a pull request from
   `chore/code-gardening-<date>`, or says "Nothing to garden". It installs every package, since

@@ -342,23 +342,23 @@ def build_ranked_lists(wikipedia_artifact: Path, archives: Path) -> None:
     )
 
 
-def tools_built_in_paths() -> list[Path]:
-    return [
-        import_frequency_pack.RESOURCES,
-        build_jiten_frequency_packs.RESOURCES,
-        build_jiten_frequency_packs.SOURCE_RECORD,
-        build_jiten_frequency_packs.ANALYSIS.parent,
-    ]
+def tools_built_in_paths() -> dict[str, Path]:
+    return {
+        "import_frequency_pack.RESOURCES": import_frequency_pack.RESOURCES,
+        "build_jiten_frequency_packs.RESOURCES": build_jiten_frequency_packs.RESOURCES,
+        "build_jiten_frequency_packs.SOURCE_RECORD": build_jiten_frequency_packs.SOURCE_RECORD,
+        "build_jiten_frequency_packs.ANALYSIS's folder": build_jiten_frequency_packs.ANALYSIS.parent,
+    }
 
 
 def refuse_missing_tool_paths() -> None:
-    missing = [path for path in tools_built_in_paths() if not path.exists()]
+    missing = [f"{name} ({path})" for name, path in tools_built_in_paths().items() if not path.exists()]
     if missing:
         raise SystemExit(
-            "a tool reads a path it derives from its own folder, and it doesn't exist: "
-            + ", ".join(str(path) for path in missing)
-            + ". Point the tool at the language data's folders first "
-            "(language-data/tools/README.md, Rebuild everything)"
+            "these paths the tools derive from their own folder don't exist: "
+            + ", ".join(missing)
+            + ". Point each at the app's Resources or at language-data/sources and generated "
+            "first (language-data/tools/README.md, Rebuild everything)"
         )
 
 

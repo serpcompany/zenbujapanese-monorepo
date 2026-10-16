@@ -22,7 +22,8 @@ for every file it reads and writes. Neither takes those paths on the command lin
 `rebuild_language_data.py` refuses to start, naming each missing path, until the next rebuild's
 pull request points them at `apps/ios/Modules/Sources/SearchExperience/Resources/`,
 `language-data/sources/`, and `language-data/generated/`. Each records its own SHA-256, so the edit
-belongs to that rebuild, which records the new ones
+belongs to that rebuild, which records the new ones and updates `tools_built_in_paths` in
+`rebuild_language_data.py` to match, or drops it once the tools take the paths as arguments
 ([`tech-debt.md`](../../docs/tech-debt.md), Language data).
 
 A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
