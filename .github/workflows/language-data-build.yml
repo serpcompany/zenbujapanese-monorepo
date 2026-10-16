@@ -12,6 +12,7 @@ on:
       - '.github/actions/package-language-data/**'
       - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
       - 'apps/ios/LanguageData/**'
+      - 'apps/dictionary-api/Dockerfile'
 
 concurrency:
   group: language-data-build-${{ github.ref }}
@@ -35,10 +36,32 @@ jobs:
             language-data .python-version .github/workflows/language-data-release.yml
             .github/actions/package-language-data
             apps/ios/Modules/Sources/SearchExperience/Resources apps/ios/LanguageData
+            apps/dictionary-api/Dockerfile
             .github/workflows/language-data-build.yml .github/actions/changed-paths
 
-  build:
+  pins:
     needs: changes
+    if: needs.changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+      - name: Check the committed files against the pinned manifest
+        env:
+          BASE: ${{ github.event.merge_group.base_sha || github.event.pull_request.base.sha }}
+        run: |
+          if [ -z "$BASE" ]; then
+            python language-data/pipeline/package.py check-pin
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$BASE"
+          python language-data/pipeline/package.py check-pin --base "$BASE"
+
+  build:
+    needs: [changes, pins]
     if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -65,7 +88,7 @@ jobs:
 
   language-data-build:
     if: always()
-    needs: [changes, build]
+    needs: [changes, pins, build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

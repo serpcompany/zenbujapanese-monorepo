@@ -17,9 +17,45 @@ export interface VerifiedFiles {
   release: string
 }
 
+interface PinnedManifest {
+  files: { name: string; sha256: string }[]
+}
+
+async function readPinnedManifest(releases: string, release: string): Promise<PinnedManifest> {
+  const path = join(releases, release, 'manifest.json')
+  const text = await readFile(path, 'utf8').catch((error: unknown) => {
+    throw new Error(`Language-data release ${release} has no pinned manifest at ${path}`, {
+      cause: error
+    })
+  })
+  return JSON.parse(text) as PinnedManifest
+}
+
+async function requirePinnedRelease(
+  releases: string,
+  release: string,
+  files: Record<string, string>
+): Promise<void> {
+  const pinned = new Map(
+    (await readPinnedManifest(releases, release)).files.map(file => [file.name, file.sha256])
+  )
+  const differing = Object.entries(files).flatMap(([name, sha256]) => {
+    const expected = pinned.get(name)
+    if (expected === sha256) return []
+    return [`${name} is ${sha256}, ${expected ? `the release has ${expected}` : 'not in it'}`]
+  })
+  if (differing.length > 0) {
+    throw new Error(
+      `These aren't language-data release ${release}'s files: ${differing.join('; ')}. ` +
+        'Restore them (git lfs pull), or pin a new release (language-data/README.md)'
+    )
+  }
+}
+
 export async function verifyFiles(options: {
   resources: string
   languageDataRelease: string
+  languageDataReleases: string
   sudachiDictionary: string | null
   release: string
 }): Promise<VerifiedFiles> {
@@ -35,6 +71,7 @@ export async function verifyFiles(options: {
     options.sudachiDictionary ? fileSha256(options.sudachiDictionary) : Promise.resolve(null)
   ])
   const languageDataFiles: Record<string, string> = Object.fromEntries(inputs)
+  await requirePinnedRelease(options.languageDataReleases, languageDataRelease, languageDataFiles)
   const artifactSha256 = languageDataFiles[artifactFile]
   if (options.sudachiDictionary && sudachiSha256 !== null) {
     const contract = sudachiContract(options.resources)

@@ -116,6 +116,19 @@ def pack_database(language_sha: str, mapping_sha: str) -> bytes:
     )
 
 
+DOCKERFILE = """FROM node AS build
+COPY service/Dockerfile ./
+FROM node
+COPY --from=build /out /service
+COPY data/res/Language.sqlite3 \\
+  data/res/Pack.sqlite3 \\
+  data/res/Elements.json \\
+  /service/resources/
+COPY --chown=node data/res/Model /service/resources/Model
+COPY language-data/release.json /service/language-data/
+"""
+
+
 class Scratch:
     ENT_SEQS = [1000220, 1000000, 2830705]
 
@@ -185,6 +198,10 @@ class Scratch:
                     "artifact": {"name": "Language.sqlite3", "sha256": self.language_sha},
                 }
             ).encode(),
+            "data/res/Model/weights.bin": b"not language data\n",
+            "data/src/README.md": b"sources\n",
+            "service/Dockerfile": DOCKERFILE.encode(),
+            "language-data/release.json": b'{"release": "2026.10.1"}\n',
         }
         self.set_contract()
         self.set_catalog()
@@ -216,6 +233,9 @@ class Scratch:
             "frequency_pack_catalog": "res/Catalog.json",
             "source_archives": {"zenbu.wiki": "src/Wiki.tsv.xz"},
             "conformance": ["conf/one.json", "conf/two.json"],
+            "app_bundles": ["res"],
+            "images": ["service/Dockerfile"],
+            "not_released": [{"path": "res/Model", "why": "a model, not language data"}],
         }
         self.release = {"release": "2026.10.1"}
         self.root.mkdir(parents=True)
@@ -255,8 +275,10 @@ class Scratch:
     def drop(self, name: str) -> None:
         self.inputs["files"] = [f for f in self.inputs["files"] if f["name"] != name]
 
-    def git(self, *args: str) -> None:
-        subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True)
+    def git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(self.root), *args], check=True, capture_output=True, text=True
+        ).stdout.strip()
 
     def write(self, path: str, data: bytes) -> None:
         target = self.root / path
@@ -278,9 +300,15 @@ class Scratch:
         path.write_text(json.dumps(self.inputs))
         return path
 
+    def loaded_inputs(self) -> release_inputs.Inputs:
+        return release_inputs.load_inputs(self.inputs_path())
+
     def build(self, out: Path) -> dict:
-        inputs = release_inputs.load_inputs(self.inputs_path())
-        return release_build.build(self.root, inputs, self.release, out, log=quiet)
+        return release_build.build(self.root, self.loaded_inputs(), self.release, out, log=quiet)
+
+    @property
+    def releases(self) -> Path:
+        return self.root / "language-data" / "releases"
 
 
 class ScratchBuildTestCase(unittest.TestCase):
