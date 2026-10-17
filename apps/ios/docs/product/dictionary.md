@@ -39,7 +39,7 @@ button while it has text.
   Searches** while recent searches are listed. The recent searches are listed without a heading.
 - **Input buttons.** Three round buttons, a pencil for **Handwriting**, a grid for **Radicals**,
   and a cap for **Grade**, sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
-  above the keyboard while typing. Either opens its panel in one tap.
+  above the keyboard while typing. Each opens its panel in one tap.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
   the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
@@ -120,7 +120,8 @@ through the shared core, offline.
   and counts them, as **1 of 80**, and the rest are hidden. Clearing it restores every grade, open
   or closed as before.
 - **Known kanji.** A kanji marked known from its kanji detail's **•••** menu has a green outline,
-  the ✓ Known capsule's green, and each grade's header counts its known kanji beside its total.
+  the ✓ Known capsule's green, and each grade's header counts the known kanji it shows beside its
+  total.
 
 Check: UI `GradeInputUITests`: `testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a
 kanji from the next one searched, and its kanji detail opened),
@@ -130,6 +131,8 @@ kanji from the next one searched, and its kanji detail opened),
 `SchoolKanjiTests` (each list against the bundled KANJIDIC2 grades, the filter, known counts,
 remembered sections, and Kanji Meanings on by default); core `browse/school-kanji.test.ts` (the
 lists as the website's `kanjiListResponse` answers them).
+
+### Results
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -159,7 +162,7 @@ Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; t
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
-dictionary that ranks it. While Search is sorted by a dictionary (below), that dictionary takes the
+dictionary that ranks it. While Search is sorted by a dictionary ([Sorting results](results.md#sorting-results)), that dictionary takes the
 first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
 first dictionary's chip shows, followed by a count of the rest.
 

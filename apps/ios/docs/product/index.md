@@ -139,7 +139,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Search on iPad and the Mac.** On iPad the tabs and the title bar stay above the search field
   while you type and beside the results, where the iPhone slides its title away, and there's no
   **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
-  empties it and returns to Recent. On the Mac, Handwriting and Radicals open as a sheet of a
+  empties it and returns to Recent. On the Mac, the input panels open as a sheet of a
   fixed size with a **Done** button, which Escape presses too, since a Mac can't drag a sheet
   away.
   Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and

@@ -49,11 +49,8 @@ struct RadicalInputView: View {
   @ViewBuilder
   private var radicalSections: some View {
     if loadFailed {
-      ContentUnavailableView {
-        Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
-          .foregroundStyle(.red)
-      }
-      .accessibilityIdentifier("radical.load-failure")
+      PanelDataUnavailable(title: "Radical data unavailable")
+        .accessibilityIdentifier("radical.load-failure")
     } else {
       SectionedTiles(
         sections: (panel?.groups ?? []).map { group in

@@ -51,6 +51,15 @@ const spokenReadings = (entry: KanjiReferenceEntry | undefined) =>
     .filter(({ kind }) => kind !== 'name')
     .map(({ value }) => hiragana(value).replace(okuriganaMarks, ''))
 
+const letter = /\p{L}/u
+
+function startsAWord(meaning: string, query: string): boolean {
+  for (let at = meaning.indexOf(query); at !== -1; at = meaning.indexOf(query, at + 1)) {
+    if (at === 0 || !letter.test(meaning.charAt(at - 1))) return true
+  }
+  return false
+}
+
 function matcher(filter: string): ((kanji: FilteredKanji) => boolean) | null {
   const query = normalizeQuery(filter)
   if (query === '') return null
@@ -60,8 +69,7 @@ function matcher(filter: string): ((kanji: FilteredKanji) => boolean) | null {
     const reading = hiragana(query)
     return ({ readings }) => readings.some(value => value.startsWith(reading))
   }
-  return ({ meanings }) =>
-    meanings.some(meaning => meaning.startsWith(query) || meaning.includes(` ${query}`))
+  return ({ meanings }) => meanings.some(meaning => startsAWord(meaning, query))
 }
 
 export class SchoolKanji {

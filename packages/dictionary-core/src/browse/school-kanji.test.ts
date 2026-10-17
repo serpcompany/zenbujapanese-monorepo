@@ -34,11 +34,11 @@ const file: KanjiReferenceFile = {
   metadataSourceIdentity: 'edrdg.kanjidic2',
   componentSourceIdentity: 'edrdg.kradfile',
   entries: [
-    kanji('木', 1, 317, 'tree,wood', 'ボク き こ-'),
+    kanji('木', 1, 317, 'tree,wood,counter for (long) things', 'ボク き こ-'),
     kanji('水', 1, 223, 'water', 'スイ みず'),
     kanji('日', 1, 1, 'day,sun,Japan', 'ニチ ジツ ひ -び'),
     kanji('学', 1, 63, 'study,learning', 'ガク まな.ぶ', 'たかし'),
-    kanji('海', 2, 200, 'sea,ocean', 'カイ うみ'),
+    kanji('海', 2, 200, 'sea,ocean,sea-going', 'カイ うみ'),
     kanji('亜', 8, 1509, 'Asia,rank next', 'ア'),
     kanji('丑', 9, null, 'sign of the ox', 'うし'),
     kanji('㐂', null, null, 'joy')
@@ -75,6 +75,8 @@ describe('the school kanji the app’s Grade panel lists', () => {
     expect(shown('ocean')).toEqual([['grade-2', '1 of 1', '海']])
     expect(shown('next')).toEqual([['secondary-school', '1 of 1', '亜']])
     expect(shown('ater')).toEqual([])
+    expect(shown('long')).toEqual([['grade-1', '1 of 4', '木']])
+    expect(shown('going')).toEqual([['grade-2', '1 of 1', '海']])
   })
 
   test('narrows by a reading in either kana, without names or okurigana marks', () => {

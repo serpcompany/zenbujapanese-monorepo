@@ -113,8 +113,9 @@ struct SearchCandidateGrid<Placeholder: View>: View {
           spacing: 8
         ) {
           ForEach(Array(candidates.enumerated()), id: \.offset) { index, candidate in
-            SearchCandidateTile(
-              candidate: candidate, meaning: meanings[candidate], height: tileHeight
+            PanelTile(
+              glyph: candidate, caption: meanings[candidate], glyphFont: .title,
+              minHeight: tileHeight
             ) {
               select(candidate)
             }
@@ -172,33 +173,5 @@ struct SearchCandidateStrip<Placeholder: View>: View {
     .fixedSize(horizontal: false, vertical: true)
     .background(SystemColor.panelContent, in: .rect(cornerRadius: 16))
     .accessibilityIdentifier("\(identifierPrefix).candidate-strip")
-  }
-}
-
-private struct SearchCandidateTile: View {
-  let candidate: String
-  let meaning: String?
-  let height: CGFloat
-  let select: () -> Void
-
-  var body: some View {
-    Button(action: select) {
-      VStack(spacing: 2) {
-        Text(candidate)
-          .font(.title)
-        if let meaning {
-          Text(meaning)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-        }
-      }
-      .padding(.horizontal, 4)
-      .frame(maxWidth: .infinity, minHeight: height)
-      .background(SystemColor.secondaryFill, in: .rect(cornerRadius: 8))
-      .contentShape(.rect(cornerRadius: 8))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel(meaning.map { "\(candidate), \($0)" } ?? candidate)
   }
 }

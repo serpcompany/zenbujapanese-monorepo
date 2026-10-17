@@ -2914,7 +2914,7 @@
     const code = character.codePointAt(0) ?? 0;
     return code >= 13312 && code <= 40959;
   };
-  function checkKanjiSources(sources) {
+  function checkReferenceSources(sources) {
     for (const [key, value] of Object.entries(referenceSources)) {
       const recorded = sources[key];
       if (recorded !== value) {
@@ -2923,6 +2923,21 @@
         );
       }
     }
+  }
+  var isRank = (value) => value === null || Number.isInteger(value);
+  var isReferenceEntry = (entry) => typeof entry?.character === "string" && isRank(entry.grade) && isRank(entry.frequencyRank) && Array.isArray(entry.meanings) && Array.isArray(entry.readings);
+  function checkedKanjiReference(read) {
+    const file = read ?? {};
+    checkReferenceSources(file);
+    if (!Array.isArray(file.entries) || !file.entries.every(isReferenceEntry)) {
+      throw new Error(
+        "Refusing the language data: KanjiReferenceData.json does not list kanji as the core reads them"
+      );
+    }
+    return file;
+  }
+  function checkKanjiSources(sources) {
+    checkReferenceSources(sources);
     if (sources.schema !== elementsSchema) {
       throw new Error(
         `Refusing the language data: KanjiElementReferenceData.json is ${sources.schema}; the core reads ${elementsSchema}`
@@ -3021,6 +3036,13 @@
   var kana = /[ぁ-ゖァ-ヺー]/u;
   var okuriganaMarks = /[.-]/gu;
   var spokenReadings = (entry) => (entry?.readings ?? []).filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
+  var letter = /\p{L}/u;
+  function startsAWord(meaning, query) {
+    for (let at = meaning.indexOf(query); at !== -1; at = meaning.indexOf(query, at + 1)) {
+      if (at === 0 || !letter.test(meaning.charAt(at - 1))) return true;
+    }
+    return false;
+  }
   function matcher(filter) {
     const query = normalizeQuery(filter);
     if (query === "") return null;
@@ -3030,7 +3052,7 @@
       const reading = hiragana(query);
       return ({ readings }) => readings.some((value) => value.startsWith(reading));
     }
-    return ({ meanings }) => meanings.some((meaning) => meaning.startsWith(query) || meaning.includes(` ${query}`));
+    return ({ meanings }) => meanings.some((meaning) => startsAWord(meaning, query));
   }
   var SchoolKanji = class {
     lists;
@@ -4311,7 +4333,7 @@
       if (!this.school) {
         const file = this.host.kanjiReference?.();
         if (!file) throw new Error("The host has no kanji reference file to read");
-        this.school = new SchoolKanji(kanjiEntries(file));
+        this.school = new SchoolKanji(kanjiEntries(checkedKanjiReference(file)));
       }
       return this.school.panel(request);
     }

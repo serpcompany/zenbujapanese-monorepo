@@ -11,11 +11,12 @@ struct GradeInputView: View {
   @State private var closedWhileFiltering: Set<String> = []
   @State private var filter = ""
   @State private var panel: SchoolKanjiPanel?
+  @State private var shownFilter = ""
   @State private var loadFailed = false
 
   var body: some View {
     SearchInputPanel(mode: $mode) {
-      SectionedTilePanel(accessibilityIdentifier: "grade.grid") {
+      SectionedTilePanel(accessibilityIdentifier: "grade.grid", returnsToTopOn: shownFilter) {
         filterField
       } content: {
         gradeSections
@@ -23,14 +24,22 @@ struct GradeInputView: View {
     } actions: {
       EmptyView()
     }
-    .task(id: request) {
-      do {
-        panel = try schoolKanjiClient.panel(request)
-      } catch {
-        loadFailed = true
-      }
-    }
+    .task(id: request) { await load(request) }
     .onChange(of: filter) { closedWhileFiltering = [] }
+  }
+
+  private func load(_ request: SchoolKanjiRequest) async {
+    let client = schoolKanjiClient
+    do {
+      let answered = try await Task.detached(priority: .userInitiated) {
+        try client.panel(request)
+      }.value
+      guard !Task.isCancelled else { return }
+      panel = answered
+      shownFilter = request.filter
+    } catch {
+      loadFailed = true
+    }
   }
 
   private var request: SchoolKanjiRequest {
@@ -65,11 +74,8 @@ struct GradeInputView: View {
   @ViewBuilder
   private var gradeSections: some View {
     if loadFailed {
-      ContentUnavailableView {
-        Label("Kanji lists unavailable", systemImage: "exclamationmark.triangle")
-          .foregroundStyle(.red)
-      }
-      .accessibilityIdentifier("grade.load-failure")
+      PanelDataUnavailable(title: "Kanji lists unavailable")
+        .accessibilityIdentifier("grade.load-failure")
     } else if let panel, panel.sections.isEmpty {
       ContentUnavailableView.search(text: filter)
         .accessibilityIdentifier("grade.no-matches")

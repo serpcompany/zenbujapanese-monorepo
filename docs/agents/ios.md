@@ -1209,11 +1209,11 @@ When changing Search's top bar or the shared field in `SearchField.swift`, also 
   the field; and
 - Player's field looks and behaves the same.
 
-When changing the Handwriting or Radicals panels (`SearchInputPanel.swift`,
-`HandwritingInputView.swift`, `RadicalInputView.swift`), also check, in light and dark and at an
-accessibility text size:
+When changing the input panels (`SearchInputPanel.swift`, `SectionedTilePanel.swift`,
+`HandwritingInputView.swift`, `RadicalInputView.swift`, `GradeInputView.swift`), also check, in
+light and dark and at an accessibility text size:
 
-- the pencil and grid buttons show at the bottom left on Recent, on results, and above the
+- the pencil, grid, and cap buttons show at the bottom left on Recent, on results, and above the
   keyboard, and each opens its panel over the field and the tab bar, with the same buttons at
   its bottom left (the current one highlighted) and a grabber at the top;
 - drawing 十 shows candidate tiles with meanings, three rows deep, **Undo** leaves 一's
@@ -1222,8 +1222,8 @@ accessibility text size:
   selecting 子 then **Undo** leaves only 女 selected, and picking 好 closes the panel and shows its
   results;
 - handwriting 十, handwriting 一, then radicals 女 → 好 builds 十一好 in the field; and
-- dragging the grabber down closes the panel, and a downward stroke on the pad draws instead of
-  dragging.
+- dragging the grabber down closes the panel, a downward stroke on the pad draws, and in Grade a
+  known kanji's green outline shows in dark mode, with each meaning on one line at every size.
 
 ## Image Search manual checks
 

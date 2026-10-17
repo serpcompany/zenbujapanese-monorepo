@@ -24,8 +24,20 @@ struct ClosedTileSections: RawRepresentable {
 
 struct SectionedTilePanel<Strip: View, Content: View>: View {
   let accessibilityIdentifier: String
-  @ViewBuilder let strip: Strip
-  @ViewBuilder let content: Content
+  let returnsToTopOn: AnyHashable
+  let strip: Strip
+  let content: Content
+  @State private var position = ScrollPosition(edge: .top)
+
+  init(
+    accessibilityIdentifier: String, returnsToTopOn: AnyHashable = 0,
+    @ViewBuilder strip: () -> Strip, @ViewBuilder content: () -> Content
+  ) {
+    self.accessibilityIdentifier = accessibilityIdentifier
+    self.returnsToTopOn = returnsToTopOn
+    self.strip = strip()
+    self.content = content()
+  }
 
   var body: some View {
     VStack(spacing: 12) {
@@ -33,8 +45,21 @@ struct SectionedTilePanel<Strip: View, Content: View>: View {
       ScrollView {
         content
       }
+      .scrollPosition($position)
       .scrollIndicators(.hidden)
       .accessibilityIdentifier(accessibilityIdentifier)
+    }
+    .onChange(of: returnsToTopOn) { position.scrollTo(edge: .top) }
+  }
+}
+
+struct PanelDataUnavailable: View {
+  let title: LocalizedStringKey
+
+  var body: some View {
+    ContentUnavailableView {
+      Label(title, systemImage: "exclamationmark.triangle")
+        .foregroundStyle(.red)
     }
   }
 }
@@ -121,13 +146,15 @@ struct PanelTile: View {
   var spoken: String?
   var isSelected = false
   var isKnown = false
+  var glyphFont = Font.title3
+  var minHeight: CGFloat = 44
   let select: () -> Void
 
   var body: some View {
     Button(action: select) {
       VStack(spacing: 0) {
         Text(glyph)
-          .font(.title3)
+          .font(glyphFont)
         if let caption {
           Text(caption)
             .font(.caption2)
@@ -136,9 +163,9 @@ struct PanelTile: View {
             .minimumScaleFactor(0.7)
         }
       }
-      .padding(.horizontal, 2)
+      .padding(.horizontal, 4)
       .padding(.vertical, 4)
-      .frame(maxWidth: .infinity, minHeight: 44)
+      .frame(maxWidth: .infinity, minHeight: minHeight)
       .foregroundStyle(isSelected ? Color.white : Color.primary)
       .background(
         isSelected ? ZenbuTheme.radicalSelection : SystemColor.secondaryFill,

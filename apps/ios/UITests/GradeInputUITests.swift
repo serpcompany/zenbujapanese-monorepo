@@ -23,15 +23,15 @@ final class GradeInputUITests: ZenbuUITestCase {
     let header = find("grade.section.grade-1", in: app)
     waitUntil(header, "label == %@", "Grade 1, 80 kanji")
     tap(find("grade.kanji.日", in: app))
-    mark("known", kanji: "日", in: app)
+    mark("Mark as Known", kanji: "日", in: app)
     openGrades(in: app)
-    waitUntil(find("grade.kanji.日", in: app), "value == 'Known'")
     waitUntil(header, "label == %@", "Grade 1, 80 kanji, 1 known")
+    assertTile("日", "value == 'Known'", in: app)
     closeInputPanel(in: app)
-    mark("unknown", kanji: "日", in: app)
+    mark("Mark as Unknown", kanji: "日", in: app)
     openGrades(in: app)
     waitUntil(header, "label == %@", "Grade 1, 80 kanji")
-    waitUntil(find("grade.kanji.日", in: app), "NOT (value == 'Known')")
+    assertTile("日", "NOT (value == 'Known')", in: app)
   }
 
   func testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade() {
@@ -43,7 +43,7 @@ final class GradeInputUITests: ZenbuUITestCase {
     closeInputPanel(in: app)
     waitUntilGone(find("grade.grid", in: app))
     openGrades(in: app)
-    waitUntil(find("grade.section.grade-1", in: app), "value == 'Collapsed'")
+    assertCollapsed("grade.section.grade-1", in: app)
     XCTAssertFalse(find("grade.kanji.日", in: app).exists, "Grade 1 reopens closed")
     type("water", into: find("grade.filter", in: app))
     let water = waitFor(find("grade.kanji.水", in: app))
@@ -51,14 +51,14 @@ final class GradeInputUITests: ZenbuUITestCase {
     waitUntilGone(find("grade.section.grade-2", in: app))
     tap(find("grade.filter.clear", in: app))
     waitUntilGone(water)
-    waitFor(find("grade.section.grade-2", in: app))
+    assertOnScreen(find("grade.section.grade-2", in: app), in: app)
     switchInputPanel(to: "radicals", showing: "radical.grid", in: app)
     tap(find("radical.stroke.1", in: app))
     waitUntilGone(find("radical.one", in: app))
     closeInputPanel(in: app)
     waitUntilGone(find("radical.grid", in: app))
     tap(find("search.input.radicals", in: app))
-    waitUntil(find("radical.stroke.1", in: app), "value == 'Collapsed'")
+    assertCollapsed("radical.stroke.1", in: app)
     XCTAssertFalse(find("radical.one", in: app).exists, "1 Stroke reopens closed")
   }
 
@@ -83,11 +83,21 @@ final class GradeInputUITests: ZenbuUITestCase {
     waitFor(find("grade.grid", in: app))
   }
 
-  private func mark(_ status: String, kanji: String, in app: XCUIApplication) {
+  private func assertTile(_ kanji: String, _ state: String, in app: XCUIApplication) {
+    let tile = waitFor(find("grade.kanji.\(kanji)", in: app))
+    if device != .mac { waitUntil(tile, state) }
+  }
+
+  private func assertCollapsed(_ header: String, in app: XCUIApplication) {
+    let header = waitFor(find(header, in: app))
+    if device != .mac { waitUntil(header, "value == 'Collapsed'") }
+  }
+
+  private func mark(_ choice: String, kanji: String, in app: XCUIApplication) {
     let menu = find("kanji-detail.more-menu", in: app)
     tap(find("result.kanji-primary.\(kanji)", in: app), toShow: menu)
     tap(menu)
-    tap(find("kanji-detail.mark-\(status)", in: app))
+    tap(menuChoice(choice, in: app))
     goBack(in: app)
     waitFor(find("search.results", in: app))
   }

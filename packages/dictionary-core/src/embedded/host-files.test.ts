@@ -88,5 +88,13 @@ describe('what the embedded core decodes from a file its host reads', () => {
     await expect(ask({}, 'schoolKanjiPanel', request)).rejects.toThrow(
       'The host has no kanji reference file to read'
     )
+    const other = () => ({ ...kanjiReference(), metadataSourceIdentity: 'other' })
+    await expect(ask({ kanjiReference: other }, 'schoolKanjiPanel', request)).rejects.toThrow(
+      "KanjiReferenceData.json's metadataSourceIdentity is other"
+    )
+    const unread = () => ({ ...kanjiReference(), entries: [{ character: '一' }] })
+    await expect(ask({ kanjiReference: unread }, 'schoolKanjiPanel', request)).rejects.toThrow(
+      'does not list kanji as the core reads them'
+    )
   })
 })
