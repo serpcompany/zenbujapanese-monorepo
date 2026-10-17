@@ -39,8 +39,8 @@ change to it are in [`ci-review.md`](ci-review.md).
   rule the owners decide.
 - **An agent's pull request is reviewed.** Agents open pull requests and push as
   `serp-agent[bot]` (Outside CI, below), so the job names the bots it skips rather than skip every
-  bot, and the action's `allowed_bots` lets `serp-agent[bot]` start Claude as well as
-  `claude[bot]`, whose `@claude` fixes push to the pull request
+  bot, and the action's `allowed_bots` lets `serp-agent[bot]` and GitHub's Copilot coding agent
+  (`Copilot`) start Claude as well as `claude[bot]`, whose `@claude` fixes push to the pull request
   (`tools/checks/src/workflows.test.ts`, `code-review.test.ts`).
 
 It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job

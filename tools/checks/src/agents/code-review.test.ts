@@ -67,8 +67,8 @@ describe('the Code review workflow', () => {
     expect(skillTools.filter(tool => !allowed.includes(tool))).toEqual([])
   })
 
-  test("lets claude[bot]'s @claude fixes and serp-agent[bot]'s pushes start a review", () => {
-    expect(review.with?.allowed_bots).toBe('claude[bot],serp-agent[bot]')
+  test("lets claude[bot]'s @claude fixes and the agents' pushes start a review", () => {
+    expect(review.with?.allowed_bots).toBe('claude[bot],serp-agent[bot],Copilot')
   })
 
   test('lets Claude post only inline findings, and write its summary to a file', () => {
