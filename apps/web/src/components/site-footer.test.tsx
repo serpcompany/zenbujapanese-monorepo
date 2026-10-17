@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { placeholderHref, site, socialLinks } from '@/lib/site'
+import { site, socialLinks } from '@/lib/site'
 import { SiteFooter } from './site-footer'
 
 const footer = () => renderToStaticMarkup(<SiteFooter />)
@@ -40,7 +40,7 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
         ['Kana charts', '/dictionary/browse/kana/'],
         ['Kanji lists', '/dictionary/browse/kanji/'],
         ['Frequency lists', '/dictionary/browse/frequency-dictionaries/'],
-        ['All tools', placeholderHref, 'tools']
+        ['All tools', '/tools/', 'tools']
       ]
     ],
     [

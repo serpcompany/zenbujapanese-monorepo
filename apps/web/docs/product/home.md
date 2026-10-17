@@ -89,9 +89,10 @@ homepage's are in `src/lib/app-areas.ts`.
 **Free on the web.** A line: no download, and every word has its own page. Then the web tools
 that exist today, each opening its page: the Tools menu's links that aren't placeholders, with
 the menu's descriptions and marks (`src/lib/site-menus.ts`), so a converter joins the list when
-its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists, and
-Frequency lists (under `/dictionary/browse/`). Then All free tools, the tools index's
-placeholder. Beside them is a browser drawn around the search page for taberu, with 食べる's word
+its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists,
+Frequency lists (under `/dictionary/browse/`), and the Hiragana to Katakana and Romaji to Kana
+converters (under `/tools/`, [Tools pages](tools.md)). Then All free tools, which opens the tools
+index. Beside them is a browser drawn around the search page for taberu, with 食べる's word
 card in front of it.
 
 - Source: #651; #648 mockups and their notes (only pages that exist today); #668 (the line
@@ -119,9 +120,9 @@ with its offline, no-account, and open-data promises and its credits, is gone.
   footer" (Get the app inside the card at 768 and 1,280 pixels, its height from 768, the collage's
   place at both widths, no Sources disclosure, and Get the app's page).
 
-**Placeholders.** All free tools links to `#` through `linkTargets`, like the header's
-([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app links to
-its page through the same entries.
+**Placeholders.** All free tools and Get the app link to their pages through `linkTargets`, like
+the header's ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links), so no
+link on the homepage is a placeholder of its own.
 
 - Source: the owner's decision on #650 (show planned items as placeholders); #652 (the products
   pages).

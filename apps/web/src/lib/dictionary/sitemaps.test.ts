@@ -93,7 +93,10 @@ describe('without a dictionary service (local fixtures)', () => {
     expect(await wordSitemapResponse(request('/sitemaps/dictionary/1.xml'), 1)).toBeNull()
     expect(await browseSitemapResponse(request('/sitemap-kana.xml'), 'kana')).toBeNull()
     const index = await sitemapIndexResponse(request('/sitemap-index.xml'))
-    expect(locs(await index.text())).toEqual([`${local}/sitemap-pages.xml`])
+    expect(locs(await index.text())).toEqual([
+      `${local}/sitemap-pages.xml`,
+      `${local}/sitemap-tools.xml`
+    ])
   })
 })
 
@@ -145,6 +148,7 @@ describe('with a dictionary service', () => {
     const index = await sitemapIndexResponse(request('/sitemap-index.xml', origin))
     expect(locs(await index.text())).toEqual([
       `${listed}/sitemap-pages.xml`,
+      `${listed}/sitemap-tools.xml`,
       `${listed}/sitemap-words.xml`,
       `${listed}/sitemap-words-2.xml`,
       ...browseGroupFiles.map(path => `${listed}${path}`)

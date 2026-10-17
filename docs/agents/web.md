@@ -14,11 +14,11 @@ The website follows these SERP engineering standards:
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
-  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
-  Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
-  `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
-  OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
-  slash (`https://zenbujapanese.com`): see Sitemaps.
+  other form redirects (308) to it. `src/lib/pages.ts` lists the static pages but the tools pages
+  ([`web-tools.md`](web-tools.md)). Next.js redirects `/robots.txt/` to `/robots.txt` itself, but
+  OpenNext skips it, so `next.config.ts` repeats that redirect, with a rule of its own for a
+  top-level file, since OpenNext can't fill an empty path parameter. The homepage is written as the
+  origin, without a slash (`https://zenbujapanese.com`): see Sitemaps.
 - [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md):
   `/sitemap-index.xml` lists `sitemap-<group>.xml` files at the site's root (see Sitemaps).
 
@@ -53,14 +53,14 @@ lists every child sitemap and each child sitemap lists the new URLs.
 
 ### Phone layout
 
-`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
-search, a word, kanji details, every browse family, and a missing page) with what to open on each,
-and the views to check beyond it: each homepage area, and on About the phone menu and each of its
-groups. `openPageType` stands in for the account service (signed out), and waits until the account
-page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
-type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a test
-for every page type and the missing page. Add a page type there when one ships,
-and these cover it (#682):
+`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages, the
+tools pages, search, a word, kanji details, every browse family, and a missing page) with what to
+open on each, and the views to check beyond it: each homepage area, and on About the phone menu and
+each of its groups. `openPageType` stands in for the account service (signed out), and waits until
+the account page and a word's examples have loaded and animations have ended; `checkEachView` opens
+a page type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a
+test for every page type and the missing page. Add a page type there when one ships, and these cover
+it (#682):
 
 - **The phone checks**, `apps/web/e2e/phone-layout.spec.ts`, run with the other browser tests, in
   the `phone` project at 360 pixels, on every page type and view, and fail on: text under 12
@@ -178,8 +178,9 @@ drawing's furigana keeps its drawn size.
   says the screens overflow, and before it loads, when an area has more than three. A video is the
   product page's `VideoCard`; a hidden area's screens mount again, so a playing video stops.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
-  `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
-  JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
+  `apps/web/src/components/json-ld.tsx`, which writes structured data (the dictionary breadcrumbs'
+  `BreadcrumbList` and the converter pages' `FAQPage`) and escapes `<` so the JSON can't close its
+  script tag (the Next.js JSON-LD guide).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
@@ -692,14 +693,13 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 - `/sitemap-index.xml` is the index. `/sitemap.xml`, where crawlers and site audits look by
   default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
   each child sitemap, never another index.
-- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
-  the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
-  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
-  in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
+- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`,
+  `/sitemap-tools.xml`, then the dictionary's. A child holds at most 50,000 URLs; a group that
+  outgrows one file adds `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap
+  to `childSitemaps` in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
   `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
-  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
-  Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
-  `/sitemap`.
+  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are. Static pages are
+  listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at `/sitemap`.
 - Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the environment's
   canonical host on staging and production (so staging's sitemaps list
   `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address the
