@@ -49,6 +49,7 @@ extension ZenbuUITestCase {
     XCTAssertEqual(toggle.label, label, what)
   }
 
+  @discardableResult
   func spokenWord(_ text: String, in app: XCUIApplication) -> XCUIElement {
     waitFor(word(containing: text, identifiedBy: "translate.sentence.", in: app))
   }
