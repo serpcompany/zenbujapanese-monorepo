@@ -186,11 +186,11 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_SIGN_IN_STAND_IN=1` stands in for Apple's sign-in sheet and Google's web sign-in, and
   offers Apple in a `.uitests` build; the nonce, the account client, and the session after them
   run as they would.
-- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app
-  (`StandInAccountService`, on the account's own `URLSession`): sign-in, tokens, sync, signing
-  out, and deleting, so the signed-in screens run without a service. The session token goes to
-  the real Keychain, so these tests are skipped on the Mac, where a build signed to run locally
-  has no keychain access group; a build signed with the team keeps it.
+- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app (`StandInAccountService`,
+  on the account's own `URLSession`): sign-in, tokens, the profile (Kana Fan), sync, signing out,
+  and deleting, so the signed-in screens run without a service. The session token goes to the real
+  Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
+  keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
@@ -808,16 +808,16 @@ nothing (Account and sync, below).
 
 ## Account and sync
 
-The app signs in to the account service and syncs known words, lists, watch history, and Translate's
-bookmarked sentences as the client guide says ([`account-clients.md`](account-clients.md)), as
-`zenbu-ios`. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out,
-deleting), `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift`
-(the routes and their answers), `AccountTokens.swift`, `AccountSync.swift` and
-`AccountSyncState.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift`
-and `AccountBackgroundSync.swift` (when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views
+The app signs in to the account service as `zenbu-ios` and syncs known words, lists, watch history,
+Translate's bookmarked sentences, and the profile, as [`account-clients.md`](account-clients.md)
+says. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
+`AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes
+and their answers), `AccountTokens.swift`, `AccountSync.swift`, `AccountSyncState.swift`, and
+`ProfileSync.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift` and
+`AccountBackgroundSync.swift` (when), `AppleSignIn.swift`, `GoogleSignIn.swift`, and the views
 `AccountSignInControls.swift`, `AccountSignInView.swift`, `ZenbuAccountView.swift`, and
-`DeleteAccountView.swift`. `apps/account-api/src/test/sync-client.ts` models the same client in
-TypeScript, and the service's tests prove that model against the real service.
+`DeleteAccountView.swift`. `apps/account-api/src/test/sync-client.ts` models the same client, all
+but the profile, in TypeScript, and the service's tests prove that model against the real service.
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
   `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
@@ -950,22 +950,23 @@ TypeScript, and the service's tests prove that model against the real service.
   code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
 
 `AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
-`AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, and `AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
+`AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, `AccountSyncProfileTests`, and
+`AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
-service's sync rules, so two installs can share one account: changes made while signed out going
-to the same account, another account starting over, and two phones ending with one Favorites.
+service's sync rules, so two installs can share one account: changes made while signed out going to
+the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
-pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a
-rejected watch, a phone catching up on watch history, a service that doesn't know watch history
-yet, old videos' dates, the kept versions' bound, bad pulled IDs, and two phones through
+pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a rejected
+watch, a phone catching up on watch history, a service that doesn't know watch history yet, old
+videos' dates, the kept versions' bound, bad pulled IDs, and two phones through
 `FakeAccountService`. `AccountSyncBookmarkTests` covers the first upload sending each bookmarked
 sentence and nothing else said, the queue, a bookmark from another device listed on its own and
-removed, an un-bookmark that lost to a newer bookmark, a rejected bookmark, deleting a
-conversation, an unreadable synced bookmarks file pausing sync, a pulled ID that isn't its
-change's, a service that doesn't know bookmarks yet, catching up, and two phones.
+removed, an un-bookmark that lost to a newer bookmark, a rejected bookmark, deleting a conversation,
+an unreadable synced bookmarks file pausing sync, a pulled ID that isn't its change's, a service
+that doesn't know bookmarks yet, catching up, and two phones.
 
 ### Sign-in in the App Store build
 
