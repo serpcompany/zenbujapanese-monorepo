@@ -150,7 +150,7 @@ describe('whose pull requests the rules and the review check', () => {
       ...more
     })
 
-  test.each(checked)('checks and reviews a pull request %s opened', author => {
+  test.each(checked)('checks a pull request %s opened, and starts its review', author => {
     expect(opened(rules, author)).toEqual({
       title: 'success',
       'issue-link': 'success',
