@@ -38,7 +38,7 @@ jobs:
             docs/api/dictionary-api.md apps/web/src/lib/dictionary
             apps/web/src/components/dictionary apps/web/src/test apps/web/vitest.config.ts
             apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
-            package.json pnpm-lock.yaml pnpm-workspace.yaml apps/ios/LanguageData/Conformance
+            package.json pnpm-lock.yaml pnpm-workspace.yaml language-data/conformance
             apps/ios/Modules/Sources/SearchExperience/Resources language-data/release.json
             deploy/deployer.sh .github/workflows/dictionary-api.yml
             .github/actions/changed-paths

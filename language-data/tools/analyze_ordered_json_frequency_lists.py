@@ -21,7 +21,7 @@ from import_frequency_pack import (
 )
 from import_frequency_pack import normalized_form as normalized
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 MAPPING_SQL = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV1.sql"
 
 

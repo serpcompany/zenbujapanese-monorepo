@@ -25,7 +25,7 @@ interface KanjiCase {
 
 const suite: { cases: KanjiCase[] } = JSON.parse(
   readFileSync(
-    new URL('../../../../ios/LanguageData/Conformance/kanji-detail.json', import.meta.url),
+    new URL('../../../../../language-data/conformance/kanji-detail.json', import.meta.url),
     'utf8'
   )
 )
