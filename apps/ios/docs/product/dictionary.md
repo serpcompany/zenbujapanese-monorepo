@@ -73,16 +73,17 @@ screen, with the current one highlighted, so another mode is one tap away. The p
 background, flat candidate tiles in the same fill as the radical squares, and glass buttons
 (white in light mode).
 
-- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a
-  row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**, at the bottom
-  right, removes the last stroke and recognizes the rest again. Before there are candidates, text
-  shows under the pad only while recognizing, when nothing matches, or when recognition fails.
-- **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
-  or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
-  headers, six to a row, and radicals that can't combine with the selection are hidden. A header
-  opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, the same
-  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
-  until one is.
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a row
+  (three at the largest text sizes), each with the kanji's first meaning. Three rows show and more
+  scroll. **Undo**, at the bottom right, removes the last stroke and recognizes the rest again.
+  Before there are candidates, text shows under the pad only while recognizing, when nothing
+  matches, or when recognition fails.
+- **Radicals.** A white strip at the top lists the kanji that contain every selected radical, or
+  says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
+  headers, in the same tiles five to a row, and radicals that can't combine with the selection are
+  hidden. A header opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, the same
+  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed until
+  one is.
 
 A candidate from any panel is added to the end of the query, so picking one character after
 another, in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
@@ -108,10 +109,10 @@ website's kanji list for it, most frequent first
 ([Kanji lists](../../../web/docs/product/browse.md#kanji-lists)), read from the bundled kanji data
 through the shared core, offline.
 
-- **Sections.** Grade and Radicals are one sectioned panel: a strip at the top, then sections
-  whose headers open and close them with a tap, six tiles to a row (four at the largest text
-  sizes). Every section starts open, and each panel remembers on the device which the learner
-  closed.
+- **Sections.** Grade and Radicals are one sectioned panel: a strip at the top, then sections whose
+  headers open and close them with a tap, in Handwriting's tiles, five to a row (three at the
+  largest text sizes). Every section starts open, and each panel remembers on the device which the
+  learner closed.
 - **Tiles.** A tile shows the kanji with a short meaning under it, unless **Show Kanji Meanings**
   in Account → Reading Aids is off (it's on until then). Tapping a tile adds its kanji to the end
   of the query, as a radical candidate does, and the panel closes. Grade has no **Undo**.

@@ -97,7 +97,7 @@ struct SearchCandidateGrid<Placeholder: View>: View {
   let select: (String) -> Void
   @ViewBuilder let placeholder: Placeholder
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @ScaledMetric(relativeTo: .title) private var tileHeight: CGFloat = 60
+  @ScaledMetric(relativeTo: .title) private var tileHeight = PanelTile.height
   @State private var meanings: [String: String] = [:]
 
   var body: some View {
@@ -106,17 +106,9 @@ struct SearchCandidateGrid<Placeholder: View>: View {
         placeholder
           .frame(maxWidth: .infinity, minHeight: visibleHeight)
       } else {
-        LazyVGrid(
-          columns: Array(
-            repeating: GridItem(.flexible(), spacing: 8),
-            count: dynamicTypeSize.isAccessibilitySize ? 3 : 5),
-          spacing: 8
-        ) {
+        LazyVGrid(columns: PanelTile.columns(dynamicTypeSize), spacing: PanelTile.spacing) {
           ForEach(Array(candidates.enumerated()), id: \.offset) { index, candidate in
-            PanelTile(
-              glyph: candidate, caption: meanings[candidate], glyphFont: .title,
-              minHeight: tileHeight
-            ) {
+            PanelTile(glyph: candidate, caption: meanings[candidate]) {
               select(candidate)
             }
             .accessibilityValue("Candidate rank \(index + 1)")

@@ -78,7 +78,7 @@ struct SectionedTiles<Item, ItemID: Hashable, Summary: View, Tile: View>: View {
         let isOpen = !closed.contains(section.id)
         Section {
           if isOpen {
-            LazyVGrid(columns: columns, spacing: 6) {
+            LazyVGrid(columns: PanelTile.columns(dynamicTypeSize), spacing: PanelTile.spacing) {
               ForEach(section.items, id: itemID) { tile($0) }
             }
             .padding(.bottom, 8)
@@ -94,12 +94,6 @@ struct SectionedTiles<Item, ItemID: Hashable, Summary: View, Tile: View>: View {
         }
       }
     }
-  }
-
-  private var columns: [GridItem] {
-    Array(
-      repeating: GridItem(.flexible(), spacing: 6),
-      count: dynamicTypeSize >= .xxLarge ? 4 : 6)
   }
 
   private func toggle(_ id: String) {
@@ -146,15 +140,23 @@ struct PanelTile: View {
   var spoken: String?
   var isSelected = false
   var isKnown = false
-  var glyphFont = Font.title3
-  var minHeight: CGFloat = 44
   let select: () -> Void
+  @ScaledMetric(relativeTo: .title) private var minHeight = PanelTile.height
+
+  static let height: CGFloat = 60
+  static let spacing: CGFloat = 8
+
+  static func columns(_ dynamicTypeSize: DynamicTypeSize) -> [GridItem] {
+    Array(
+      repeating: GridItem(.flexible(), spacing: spacing),
+      count: dynamicTypeSize.isAccessibilitySize ? 3 : 5)
+  }
 
   var body: some View {
     Button(action: select) {
       VStack(spacing: 0) {
         Text(glyph)
-          .font(glyphFont)
+          .font(.title)
         if let caption {
           Text(caption)
             .font(.caption2)
@@ -163,7 +165,7 @@ struct PanelTile: View {
             .minimumScaleFactor(0.7)
         }
       }
-      .padding(.horizontal, 2)
+      .padding(.horizontal, 4)
       .padding(.vertical, 4)
       .frame(maxWidth: .infinity, minHeight: minHeight)
       .foregroundStyle(isSelected ? Color.white : Color.primary)
