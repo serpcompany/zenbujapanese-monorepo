@@ -45,7 +45,8 @@ image copies it, and the release packages it. The website reads no data of its o
 service, which runs the same core the website renders with. The app answers its dictionary
 screens with that core too, from a bundle of it checked in beside the data, so it shows what the
 website shows with no network ([`docs/agents/ios.md`](docs/agents/ios.md), The dictionary core in the app). A new build of the data is a new
-service image, deployed without touching the site. An app that doesn't bundle the data ships word
+service image; the site redeploys after it only to write the dictionary's sitemaps from it, on the
+CI runner (ADR 0016). An app that doesn't bundle the data ships word
 cards the core exports, and, signed in, fetches more cards and segmentation from the service's
 `/v1/apps` routes with its account's access token ([`language-data/word-cards.md`](language-data/word-cards.md)).
 
@@ -89,8 +90,9 @@ saying where the code belongs:
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
-  `worker.ts` runs before Next.js; the browse pages' data and the sitemaps ask the client
-  `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
+  `worker.ts` runs before Next.js, and the deploy's sitemap writer, `scripts/write-sitemaps.ts`;
+  the browse pages' data asks the client `data.ts` hands it
+  ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: only `SearchExperience/Platform/` may use `#if os(...)`, UIKit, AppKit, or an API
   that iPhone, iPad, or the Mac lacks; everything else in the package, its tests, and the app
   target calls its

@@ -317,8 +317,8 @@ URL.
 Each hub leads its kind's sitemap: the kana charts and both scripts lead the kana sitemap, the
 three category indexes the categories sitemap, the frequency dictionaries the frequency lists
 sitemap, and the kanji lists the kanji lists sitemap. The browse home is in `/sitemap-pages.xml`,
-beside `/dictionary/`. The sitemap index lists the four wherever the site has a dictionary
-service.
+beside `/dictionary/`. The sitemap index lists the four wherever a deploy wrote them: staging
+and production.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
   `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the

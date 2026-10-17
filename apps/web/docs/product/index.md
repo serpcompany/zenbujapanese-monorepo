@@ -52,7 +52,8 @@ support page says about Tomodachi.
 Production is `zenbujapanese.com` and staging is `staging.zenbujapanese.com`. Another host that
 serves the site, `www.zenbujapanese.com` or a Worker's workers.dev address, redirects (308) to the
 same page on its environment's host in one hop: with the page's trailing slash whether or not the
-request had it, and at a moved page's new address.
+request had it, and at a moved page's new address. Static files, the dictionary's sitemaps among
+them, answer on every host, since they never reach the Worker; their URLs name the canonical host.
 
 - Source: SERP's
   [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md)

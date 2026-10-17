@@ -1202,23 +1202,24 @@ production's.
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml`, in every environment, and
-`/sitemap.xml` redirects (308) to it. The index lists files at the site's root, each named for
-its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
+`/sitemap.xml` redirects (308) to it. The index lists files at the site's root, each named for its
+group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
 sitemaps, `/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical
 URL; and the four browse sitemaps, `/sitemap-kana.xml`, `/sitemap-categories.xml`,
-`/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)). Every URL
-in them is on the environment's own host, so staging's name `https://staging.zenbujapanese.com`,
-and the homepage is the origin with no slash. The old `/sitemaps/pages.xml` and
-`/sitemaps/dictionary/<n>.xml` redirect (308) to them; the one browse sitemap, `/sitemaps/browse.xml`
-(later `/sitemap-browse.xml`), is gone (404), since only the index ever listed it. Those are the
+`/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)).
+Each deploy writes the word and browse sitemaps from its environment's dictionary build, so they
+answer even when the service can't (ADR 0016). Every URL is on the environment's own host, so
+staging's name `https://staging.zenbujapanese.com`, and the homepage is the origin with no slash.
+The old `/sitemaps/pages.xml` and `/sitemaps/dictionary/<n>.xml` redirect (308) to them; the one
+browse sitemap, `/sitemaps/browse.xml` (later `/sitemap-browse.xml`), is gone (404). Those are the
 only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in any sitemap yet.
 
-- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard).
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and each
-  browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
+- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard); #805, ADR 0016.
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "are every word sitemap, then each browse sitemap,
+  and nothing else" and "with SITE_ENV=… a request to … lists the written sitemaps on …";
   `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
   `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
-  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, word, and browse sitemaps on …, and no other" and `308 /sitemap.xml -> /sitemap-index.xml`, "word sitemap lists 1 to
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, tools, word, and browse sitemaps on …, and no other" and `308 /sitemap.xml -> /sitemap-index.xml`, "word sitemap lists 1 to
   50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
