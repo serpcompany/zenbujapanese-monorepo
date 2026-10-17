@@ -45,6 +45,11 @@ struct AllowedFinding {
     .parentChild: ([.mac], Why.swiftUIOnTheMac),
   ]
 
+  static let notRun: [AuditKind: (devices: Set<TestDevice.Kind>, reason: String)] = [
+    .dynamicType: ([.pad], Why.floatingTabBar),
+    .textClipped: ([.pad], Why.floatingTabBar),
+  ]
+
   static let list =
     systemControls + linkedWords + textThatScales + playerControls + clocks + previews + design
 }
@@ -71,8 +76,8 @@ private enum Why {
     "The Image alert is the system's alert: the system draws its title, message, and three buttons, caps their size, and lets the alert scroll"
   static let searchField =
     "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Search"
-  static let tabBar =
-    "The iPad's tab bar is the system's: its four titles keep one size and show in the Large Content Viewer on a long press. The audit can't name them"
+  static let floatingTabBar =
+    "On the iPad these audits step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding; a sample of the app shows only the system's code. The iPhone runs both on the same views, and the iPad's other audits still run at the largest size"
   static let behindSheet =
     "Text behind an open sheet, which VoiceOver rightly skips while the sheet is up. The audit can't name it"
   static let inlineWord =
@@ -110,15 +115,6 @@ private let systemControls = [
   allow(.elementDetection, .unnamed(3), on: ["Image's sources"], [.pad], because: Why.alert),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(.textClipped, .label("Search YouTube or paste a link"), on: ["Player"], because: Why.searchField),
-  allow(
-    .dynamicType, .unnamed(4),
-    on: [
-      "Search", "Recent searches", "Word Detail", "Translate", "Translate, its written rows", "Translations, empty",
-      "Translations", "A typed translation", "A saved conversation", "Image Search", "Image Search's text",
-      "Media Library", "Player", "Player's Recent", "Player's search results", "A video",
-      "A video without Japanese captions", "A video its owner won't share", "Account", "Account, its rows",
-      "Reading Aids",
-    ], [.pad], because: Why.tabBar),
   allow(
     .elementDetection, .unnamed(8),
     on: ["A frequency rank's details"], [.pad], because: Why.behindSheet),
@@ -167,10 +163,6 @@ private let textThatScales = [
     .dynamicType,
     .label("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPhone."),
     on: ["Zenbu Account"], [.phone], because: Why.scales),
-  allow(
-    .dynamicType,
-    .label("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPad."),
-    on: ["Zenbu Account"], [.pad], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),

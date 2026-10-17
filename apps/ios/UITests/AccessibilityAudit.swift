@@ -85,7 +85,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     let continues = continueAfterFailure
     continueAfterFailure = true
     defer { continueAfterFailure = continues }
-    for audit in TestDevice.audits {
+    for audit in audits {
       do {
         try app.performAccessibilityAudit(for: audit.type) { issue in
           let finding = Self.finding(issue, on: screen)
@@ -108,6 +108,10 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     guard pass.size == .largest else { return }
     reveal(element, in: app)
     audit(screen, in: app)
+  }
+
+  private var audits: [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
+    TestDevice.audits.filter { AllowedFinding.notRun[$0.kind]?.devices.contains(device) != true }
   }
 
   private func sort(_ finding: AuditFinding) -> Bool {
@@ -133,7 +137,8 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     AllowedFinding.list.enumerated().flatMap { index, allowed in
       Set(audited).sorted().compactMap { screen in
         let count = matched["\(index) \(screen)", default: 0]
-        guard allowed.applies(to: screen, on: device, in: pass), count < allowed.element.limit ?? 1
+        guard allowed.applies(to: screen, on: device, in: pass), count < allowed.element.limit ?? 1,
+          audits.contains(where: { $0.kind == allowed.kind })
         else { return nil }
         return "\(screen): the allowed [\(allowed.kind.rawValue)] \(allowed.element) matched \(count)"
       }
@@ -179,8 +184,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   private static func finding(_ issue: XCUIAccessibilityAuditIssue, on screen: String) -> AuditFinding {
     let kind = TestDevice.audits.first { issue.auditType.contains($0.type) }?.kind ?? .elementDetection
     let element = try? issue.element?.snapshot()
-    let unresolved =
-      element == nil ? " (element \(issue.element.map { "\($0)" } ?? "none"))" : ""
+    let unresolved = element != nil ? "" : issue.element == nil ? " (no element)" : " (element gone)"
     return AuditFinding(
       screen: screen, kind: kind, identifier: element?.identifier ?? "",
       label: element?.label ?? "", elementType: element?.elementType, frame: element?.frame ?? .zero,

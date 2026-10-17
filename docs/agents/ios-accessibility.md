@@ -36,16 +36,17 @@ them with `xcrun xcresulttool export attachments`.
 | Audit | Where | Decision |
 | --- | --- | --- |
 | Hit region | Everywhere | Fails. A control is at least 44 by 44 points (`HitTarget.minimum`); `OutsetHitTarget` grows a small icon's target around it without moving anything laid out beside it |
-| Text clipped | iPhone and iPad | Fails |
-| Dynamic Type | iPhone and iPad | Fails |
+| Text clipped | iPhone | Fails |
+| Dynamic Type | iPhone | Fails |
 | Element detection | Everywhere | Fails |
 | Element description | iPhone and iPad | Fails |
 | Trait | iPhone and iPad | Fails |
 | Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
 | Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
+| Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows only the system's code. The iPhone runs both on the same views |
 
-`AllowedFinding.reportedOnly` holds the reported audits and why; their counts are in
-[`harness-debt.md`](../harness-debt.md). The Dynamic Type and text-clipped audits sweep the app
+`AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
+ones a device skips; the reported counts are in [`harness-debt.md`](../harness-debt.md). The Dynamic Type and text-clipped audits sweep the app
 through every text size and report text they lose track of, so text that SwiftUI lays out again
 (a List's rows and headers, a Form's labels) or redraws (a clock) can be reported though it grows
 and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
