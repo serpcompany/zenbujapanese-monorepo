@@ -78,6 +78,8 @@ private enum Why {
     "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Search"
   static let floatingTabBar =
     "On the iPad these audits step the text size while the system's floating tab bar lays itself out, and it loops in its own layout until the app stops responding: a sample of the hung app shows its main thread in _UIFloatingTabBar's layoutSubviews, under the audit's _axAuditCheckDynamicTextSupport, with none of the app's code. The iPhone runs both on the same views, and the iPad's other audits still run at the largest size"
+  static let clearButton =
+    "The search field's clear button is the system's: on the iPad the field sits in the toolbar, where the system draws its clear button 20 points wide"
   static let behindSheet =
     "Text behind an open sheet, which VoiceOver rightly skips while the sheet is up. The audit can't name it"
   static let inlineWord =
@@ -112,15 +114,30 @@ private let systemControls = [
   allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
   allow(.dynamicType, .labels(["Image", "Then tap any word to look it up."]), on: ["Image's sources"], because: Why.alert),
   allow(.dynamicType, .unnamed(3), on: ["Image's sources"], because: Why.alert),
-  allow(.elementDetection, .unnamed(3), on: ["Image's sources"], [.pad], because: Why.alert),
+  allow(.elementDetection, .unnamed(3), on: ["Image's sources"], [.pad], [.standard], because: Why.alert),
+  allow(.elementDetection, .unnamed(8), on: ["Image's sources"], [.pad], [.largest], because: Why.alert),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(.textClipped, .label("Search YouTube or paste a link"), on: ["Player"], because: Why.searchField),
+  allow(
+    .hitRegion, .label("Clear text"),
+    on: ["Search's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
+    because: Why.clearButton),
   allow(
     .elementDetection, .unnamed(8),
     on: ["A frequency rank's details"], [.pad], because: Why.behindSheet),
   allow(.elementDetection, .unnamed(5), on: ["Add to List"], [.pad], because: Why.behindSheet),
   allow(.elementDetection, .unnamed(4), on: ["A word's photo"], [.pad], because: Why.behindSheet),
   allow(.elementDetection, .unnamed(3), on: ["Handwriting", "Radicals"], [.pad], because: Why.behindSheet),
+  allow(
+    .elementDetection, .unnamed(9), on: ["A frequency dictionary's details"], [.pad], [.standard],
+    because: Why.behindSheet),
+  allow(
+    .elementDetection, .unnamed(4), on: ["A frequency dictionary's details"], [.pad], [.largest],
+    because: Why.behindSheet),
+  allow(.elementDetection, .unnamed(7), on: ["Stroke Order"], [.pad], [.standard], because: Why.behindSheet),
+  allow(.elementDetection, .unnamed(2), on: ["Stroke Order"], [.pad], [.largest], because: Why.behindSheet),
+  allow(.elementDetection, .unnamed(8), on: ["Sign In"], [.pad], [.standard], because: Why.behindSheet),
+  allow(.elementDetection, .unnamed(7), on: ["Delete Account"], [.pad], [.standard], because: Why.behindSheet),
 ]
 
 private let linkedWords = [
@@ -139,7 +156,9 @@ private let linkedWords = [
   allow(
     .hitRegion, .identifiedBy(prefix: "conjugations.example-token."), on: ["A conjugated form"],
     because: Why.inlineWord),
-  allow(.hitRegion, .identifiedBy(prefix: "word-detail.example-token."), on: ["A word's note"], because: Why.inlineWord),
+  allow(
+    .hitRegion, .identifiedBy(prefix: "word-detail.example-token."), on: ["Word Detail", "A word's note"],
+    because: Why.inlineWord),
   allow(.hitRegion, .identifiedBy(prefix: "image-text.region."), on: ["Image Search"], because: Why.photoWord),
 ]
 

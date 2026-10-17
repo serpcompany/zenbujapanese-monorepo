@@ -62,6 +62,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   private var excused: [AuditFinding] = []
   private var reported: [AuditFinding] = []
   private var audited: [String] = []
+  private var unfinished: [String] = []
   private var matched: [String: Int] = [:]
 
   func launch(_ pass: AuditPass, _ environment: [String: String] = [:]) -> XCUIApplication {
@@ -92,7 +93,8 @@ class AccessibilityAuditCase: ZenbuUITestCase {
           return self.sort(finding) || finding.elementType != nil
         }
       } catch {
-        XCTFail("the \(audit.kind.rawValue) audit of \(screen) couldn't run: \(error)")
+        let failure = "the \(audit.kind.rawValue) audit of \(screen) couldn't run: \(error)"
+        if isReportedOnly(audit.kind) { unfinished.append(failure) } else { XCTFail(failure) }
       }
     }
     audited.append(screen)
@@ -132,8 +134,12 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     TestDevice.audits.filter { AllowedFinding.notRun[$0.kind]?.devices.contains(device) != true }
   }
 
+  private func isReportedOnly(_ kind: AuditKind) -> Bool {
+    AllowedFinding.reportedOnly[kind]?.devices.contains(device) == true
+  }
+
   private func sort(_ finding: AuditFinding) -> Bool {
-    if AllowedFinding.reportedOnly[finding.kind]?.devices.contains(device) == true {
+    if isReportedOnly(finding.kind) {
       reported.append(finding)
       return true
     }
@@ -174,6 +180,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       excused = []
       reported = []
       audited = []
+      unfinished = []
       matched = [:]
     }
     let report = XCTAttachment(string: report(unneeded: unneeded))
@@ -191,7 +198,8 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       (unexcused + excused + reported).map { "[\($0.kind.rawValue)] \($0.detail): \($0.explanation)" })
     let sections = [
       ("Not allowed", unexcused.map(\.description)), ("Allowed", excused.map(\.description)),
-      ("Reported, not failed", reported.map(\.description)), ("Allowed but unneeded", unneeded),
+      ("Reported, not failed", reported.map(\.description)),
+      ("Reported audits that didn't finish", unfinished), ("Allowed but unneeded", unneeded),
       ("What each finding means", meanings.sorted()),
     ]
     let body = sections.map { "\($0.0) (\($0.1.count)):\n" + $0.1.joined(separator: "\n") }

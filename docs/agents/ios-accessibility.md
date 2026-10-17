@@ -46,7 +46,9 @@ them with `xcrun xcresulttool export attachments`.
 | Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
 
 `AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
-ones a device skips; the reported counts are in [`harness-debt.md`](../harness-debt.md). The Dynamic Type and text-clipped audits sweep the app
+ones a device skips; the reported counts are in [`harness-debt.md`](../harness-debt.md). A
+reported audit that doesn't finish in XCTest's time, as contrast sometimes doesn't on a busy iPad,
+is listed in the report and doesn't fail the test; any other audit that doesn't finish fails it. The Dynamic Type and text-clipped audits sweep the app
 through every text size and report text they lose track of, so text that SwiftUI lays out again
 (a List's rows and headers, a Form's labels) or redraws (a clock) can be reported though it grows
 and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
