@@ -259,8 +259,8 @@ suite that pins nothing. It is replayed through the core's `romaji` and `sentenc
 through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
 app did. The results suite compares a row's first entry number only: the service keeps its
 Language Reference ID's, the first of the entries the app merged into the row. Where the app's
-example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
-Detail lists no examples, and neither does the page. Without the files the suites skip;
+example retrieval answers an error, the suite records it, and the page lists no examples either;
+none recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
 the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
 it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`

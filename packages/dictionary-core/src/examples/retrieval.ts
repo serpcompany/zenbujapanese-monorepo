@@ -44,6 +44,25 @@ export function graphemePosition(term: string, text: string): number | null {
   return graphemeCount(text.slice(0, index))
 }
 
+export function spellingsOf(form: string, written: readonly string[]): string[] {
+  const spellings = [form]
+  for (const spelling of written) {
+    if (!spellings.includes(spelling) && normalizedEntryEvidence(spelling) === form) {
+      spellings.push(spelling)
+    }
+  }
+  return spellings
+}
+
+export function earliestPosition(spellings: readonly string[], text: string): number | null {
+  let earliest: number | null = null
+  for (const spelling of spellings) {
+    const position = graphemePosition(spelling, text)
+    if (position !== null && (earliest === null || position < earliest)) earliest = position
+  }
+  return earliest
+}
+
 interface Ranked {
   relation: number
   position: number

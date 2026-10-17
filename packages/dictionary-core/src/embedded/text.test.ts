@@ -24,7 +24,9 @@ function listing(japanese: string | readonly string[], matching: number) {
         ]
       }
     }
-    if (sql.includes('count(DISTINCT lower(hex(e.id)))')) return { rows: [{ count: 1 }] }
+    if (sql.includes('e.written_forms_json AS writtenForms')) {
+      return { rows: [{ id: 'v1', writtenForms: JSON.stringify([{ value: '見る' }]) }] }
+    }
     if (!sql.includes('FROM example_sentences e')) {
       return dictionary.all?.(sql, parametersJSON) ?? null
     }
