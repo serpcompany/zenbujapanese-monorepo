@@ -75,8 +75,9 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     waitForSheet("word-list-picker.screen", in: app)
     audit("Add to List", in: app)
     tap(find("word-list-picker.done", in: app))
-    addNote("the country, not the language", in: app)
-    audit("A word's note", in: app)
+    let note = "the country, not the language"
+    addNote(note, in: app)
+    audit("A word's note", placing: labeled(note, in: app), in: app)
   }
 
   private func auditAKanji(_ pass: AuditPass) {

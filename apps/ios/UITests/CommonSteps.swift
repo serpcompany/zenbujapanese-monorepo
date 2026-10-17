@@ -190,7 +190,7 @@ extension ZenbuUITestCase {
       return longList != nil && longList == lastLongList
     }
     var isAbove = false
-    for _ in 0..<12 {
+    for _ in 0..<24 {
       if isReachable(element, in: app, within: container) { break }
       if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
       scroll(scrolled, back: isAbove)

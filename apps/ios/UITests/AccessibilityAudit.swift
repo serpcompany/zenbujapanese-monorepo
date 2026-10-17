@@ -104,11 +104,29 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     }
   }
 
-  func auditAtTheLargestSize(_ screen: String, showing element: XCUIElement, in app: XCUIApplication) {
-    guard pass.size == .largest else { return }
-    reveal(element, in: app)
+  func audit(_ screen: String, placing element: XCUIElement, in app: XCUIApplication) {
+    place(reveal(element, in: app), in: app)
     audit(screen, in: app)
   }
+
+  func auditAtTheLargestSize(_ screen: String, showing element: XCUIElement, in app: XCUIApplication) {
+    guard pass.size == .largest else { return }
+    audit(screen, placing: element, in: app)
+  }
+
+  private func place(_ element: XCUIElement, in app: XCUIApplication) {
+    let window = app.windows.firstMatch
+    guard device != .mac, let top = laidOutFrame(of: element)?.minY else { return }
+    let height = window.frame.height
+    let grip = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: Self.gripAt))
+    let spot = window.frame.minY + height * Self.placedAt
+    grip.press(
+      forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
+      thenHoldForDuration: 0.5)
+  }
+
+  private static let gripAt = 0.7
+  private static let placedAt = 0.3
 
   private var audits: [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
     TestDevice.audits.filter { AllowedFinding.notRun[$0.kind]?.devices.contains(device) != true }
