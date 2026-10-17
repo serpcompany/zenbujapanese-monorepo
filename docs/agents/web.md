@@ -201,9 +201,10 @@ may import anything.
 
 Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
-fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
-Next.js. The browse pages' data (`src/lib/dictionary/browse/data.ts`) and the sitemaps
-(`src/lib/dictionary/sitemaps.ts`) ask the client `data.ts`'s `dictionaryService()` returns. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+fixtures; the other callers are `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
+Next.js, and `scripts/write-sitemaps.ts`, which writes the sitemaps at deploy. The browse pages'
+data (`src/lib/dictionary/browse/data.ts`) asks the client `dictionaryService()` returns. The
+rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
 
 `pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
 import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
@@ -542,8 +543,9 @@ database, or `delete from rate_limits` in it.
 | Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) |
 
 Deploys run only through the `Web deploy` GitHub Actions workflow, never from an agent's machine.
-Each merge to `main` that changes `apps/web/**` or the core points staging at its dictionary
-service, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
+Each merge to `main` that changes `apps/web/**`, the core, or the service's image points staging at
+its dictionary service, writes the sitemaps from that service's image (Sitemaps), deploys staging,
+and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
 production job then runs automatically once staging passes: it does the same for production with
 the same commit. Staging's smoke tests are the gate: the `production` GitHub environment has no
 required reviewer, by the owner's decision. Add one (Settings → Environments → production) to
@@ -585,9 +587,9 @@ when the Worker can't reach it (such as `TypeError` or `TimeoutError`), never it
 can name internal detail; it answers 404 where the site reads no service. Bot Fight Mode challenges
 the Worker's request too when a CI runner sets it off, whatever headers the runner sends, and
 `/dictionary/service.json` then reports the challenge: the smoke test skips its dictionary checks
-with a warning, `/sitemap-index.xml` among them since it lists the service's sitemaps, and runs
-them in full from a machine Cloudflare doesn't challenge, such as your own. Visitors Cloudflare
-scores as bots get a 500 on dictionary pages and the sitemap index for the same reason.
+with a warning, but not the sitemaps, which are files (Sitemaps, below), and runs them in full
+from a machine Cloudflare doesn't challenge, such as your own. Dictionary pages can answer 500 for
+the same reason: the Worker asks from Cloudflare's Workers address, `2a06:98c0:3600::103` (#805).
 
 The site reads whatever service its environment names, so a new service deploys before a site
 change that needs it. The `Dictionary API deploy` workflow deploys the service itself
@@ -686,7 +688,8 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 ## Sitemaps
 
 Sitemaps follow the SERP [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md)
-standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, rendered per request:
+standard. The index and the pages and tools sitemaps are route handlers built on
+`src/lib/sitemap.ts`, rendered per request; the dictionary's are files each deploy writes (below):
 
 - `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
   staging, which disallows crawling but to `AhrefsSiteAudit`: site audits find sitemaps through it.
@@ -696,8 +699,8 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 - Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`,
   `/sitemap-tools.xml`, then the dictionary's. A child holds at most 50,000 URLs; a group that
   outgrows one file adds `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap
-  to `childSitemaps` in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
-  `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
+  to `childSitemaps` in `src/lib/sitemap.ts`, or, for a group built from the dictionary service,
+  to `dictionarySitemaps` in `src/lib/dictionary/sitemaps.ts` with its file name in
   `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are. Static pages are
   listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at `/sitemap`.
 - Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the environment's
@@ -711,49 +714,45 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 - The sitemaps that moved to the root in #663 redirect (308) in one hop from where they were,
   with or without a slash (`movedSitemaps` in `src/lib/sitemap.ts` and `movedDictionarySitemaps`
   in `src/lib/dictionary/sitemap-files.ts`, which `next.config.ts` lists before its file rules):
-  `/sitemaps/pages.xml` and `/sitemaps/dictionary/<n>.xml`. `src/lib/sitemap-index.ts` puts the
-  index together.
+  `/sitemaps/pages.xml`, `/sitemaps/dictionary/<n>.xml`, and `/sitemaps/browse/<group>.xml`.
+  `src/lib/sitemap-index.ts` puts the index together.
 - Each child sitemap holds one kind of page, as the standard asks, so Search Console reports each
   kind's indexing on its own. A new kind of page gets its own `sitemap-<group>.xml` rather than
   joining another's. The browse pages' sitemaps hold this with a test per file
   (`src/lib/dictionary/sitemaps.test.ts`, "the … sitemap lists only its own kind of browse
   page").
 
-The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
-has a dictionary service, staging and production, not local fixtures, so the index renders per
-request (`force-dynamic`): a build can't reach the service, so
-prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
-and the browse sections below it, is listed in `src/lib/pages.ts`, and the pages sitemap also
-lists the browse home beside it (`src/lib/pages-sitemap.ts`), a section landing page as
-`/dictionary/` is:
+The dictionary's sitemaps (ADR 0007) are static files, written at each deploy from the build the
+environment's service runs (ADR 0016), so no crawler request reaches the service, which Bot Fight
+Mode can keep the Worker from. `/dictionary/`, the search box and the browse sections below it,
+is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse home beside it
+(`src/lib/pages-sitemap.ts`), a section landing page as `/dictionary/` is. The files:
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
   its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
-  A route can't have a parameter inside its file name, so `next.config.ts` rewrites these
-  (`dictionarySitemapFiles` in `src/lib/dictionary/sitemap-files.ts`, which imports no `@/`
-  path) to the route `src/app/sitemaps/dictionary/[file]`,
-  whose own URLs redirect back to them. The service works out each file's `ent_seq` range once,
-  and the site streams a file's words from it 10,000 at a time (`urlSetStream`), so a file never
-  sits whole in memory; a failure mid-stream errors the response rather than ending it early.
+  The service works out each file's `ent_seq` range, and the writer streams its words to the file
+  10,000 at a time, so a file never sits whole in memory.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
   lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs in all:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
   (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
   `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both
-  scripts, the category indexes, the frequency dictionaries, the kanji lists), so a hub is listed
-  only when the service answers, as its page needs. Each is far under 50,000, so none has a
-  second file.
-  `next.config.ts` rewrites them to the route `src/app/sitemaps/browse/[file]`, as the word
-  sitemaps are, and the four read one cached answer from the service.
+  scripts, the category indexes, the frequency dictionaries, the kanji lists). Each is far under
+  50,000, so none has a second file.
 
 Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
 sitemaps went with their pages.
 
-They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
-names, so they change with the build, within the 10 minutes its answers stay cached. The key
-names the dictionary build, not the site's, so a site deploy that changes what a sitemap lists
-shows within the hour its answer is kept (`xmlResponse`'s `max-age`). Cloudflare
-doesn't cache a Worker's responses on its own, and `pnpm dev` has no such cache.
+`pnpm sitemaps` (`scripts/write-sitemaps.ts`) writes them into `public/`, which git ignores, on the
+host `SITE_ENV` names, from the service at `DICTIONARY_API_URL` with `DICTIONARY_API_TOKEN`. It
+writes to a scratch folder first and fails, leaving `public/` as it was, when the service lacks a
+file or a word file has fewer words than listed. Each deploy job runs it through
+`scripts/write-dictionary-sitemaps.sh`, which starts the environment's service image on the runner
+and asks it at `127.0.0.1` ([`ci-deploys.md`](ci-deploys.md), Web deploy). The build copies them
+into the assets, which Cloudflare serves without running the Worker, and `next.config.ts` hands the
+index the files it found (`writtenDictionarySitemaps`), listed after the pages and tools sitemaps;
+a local build has none. To see them locally, start the service (`verify-service`), run
+`pnpm sitemaps` with the three variables, then `pnpm preview`, and delete them afterwards.
 
 ## Retired word URLs
 

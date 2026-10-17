@@ -40,8 +40,8 @@ Each is served with `X-Robots-Tag: noindex, nofollow`, added after the page is b
   of it or an app that claims staging later.
 
 The site has no webhooks. The static files Cloudflare serves from the build's assets
-(`/_next/static/`, and `apps/web/public/`, such as the favicon and `site.webmanifest`) never reach
-the Worker, so they need no password and carry no `noindex`. They're files, not pages, and a
+(`/_next/static/`, and `apps/web/public/`, such as the favicon, `site.webmanifest`, and the
+dictionary's sitemaps) never reach the Worker, so they need no password and carry no `noindex`. They're files, not pages, and a
 browser fetches the manifest without credentials, so gating them would break it.
 
 ## Where this differs from the standard

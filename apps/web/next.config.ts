@@ -1,9 +1,12 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 import type { NextConfig } from 'next'
 import { accountServiceIn } from './src/lib/account/availability'
-import { dictionarySitemapFiles, movedDictionarySitemaps } from './src/lib/dictionary/sitemap-files'
+import {
+  movedDictionarySitemaps,
+  writtenDictionarySitemaps
+} from './src/lib/dictionary/sitemap-files'
 import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
 import { isDeployedSite } from './src/lib/site'
 import { movedSitemaps } from './src/lib/sitemap'
@@ -14,10 +17,13 @@ const accountService = accountServiceIn(
   process.env.SITE_ENV
 )
 
+const dictionarySitemaps = writtenDictionarySitemaps(readdirSync(join(process.cwd(), 'public')))
+
 const nextConfig: NextConfig = {
   env: {
     ZENBU_ACCOUNT_PAGES: accountService ? 'open' : 'closed',
-    ZENBU_ACCOUNT_SERVICE: accountService ?? ''
+    ZENBU_ACCOUNT_SERVICE: accountService ?? '',
+    ZENBU_DICTIONARY_SITEMAPS: dictionarySitemaps.join(' ')
   },
   trailingSlash: true,
   transpilePackages: ['@zenbu/dictionary-core'],
@@ -42,9 +48,6 @@ const nextConfig: NextConfig = {
       })),
       ...removedDictionaryPages.map(rule => ({ ...rule, permanent: true }))
     ]
-  },
-  async rewrites() {
-    return [...dictionarySitemapFiles]
   },
   async headers() {
     if (isDeployedSite()) return []

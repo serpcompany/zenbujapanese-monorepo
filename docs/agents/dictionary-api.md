@@ -354,8 +354,8 @@ names this workflow and the branch it ran from. The `staging` environment only a
 an image a branch pushed never runs. A rollback signs its image again only after checking that
 main signed it before.
 
-- **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
-  as `sha-0123456789ab`: it moves the tags to that image without building.
+- **Roll back** by running the workflow by hand with `tag` set to the version, such as
+  `sha-0123456789ab` (it moves the tags without building), then `Web deploy` (ADR 0016).
 - **See what runs and retry a failed image** as [`api-servers.md`](api-servers.md) says, with
   `zenbujapanese.dictionary-api.slot`, `journalctl -t zenbujapanese-dictionary-api`, and
   `/var/lib/zenbujapanese-dictionary-api/`.

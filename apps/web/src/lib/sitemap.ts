@@ -49,29 +49,10 @@ export function urlSetXml(entries: readonly SitemapEntry[]) {
   return `${urlSetOpen}${urlItems(entries)}${urlSetClose}`
 }
 
-export function urlSetStream(pages: AsyncIterable<readonly SitemapEntry[]>) {
-  const encoder = new TextEncoder()
-  const iterator = pages[Symbol.asyncIterator]()
-  let opened = false
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      if (!opened) {
-        opened = true
-        controller.enqueue(encoder.encode(urlSetOpen))
-        return
-      }
-      const { done, value } = await iterator.next()
-      if (done) {
-        controller.enqueue(encoder.encode(urlSetClose))
-        controller.close()
-        return
-      }
-      controller.enqueue(encoder.encode(urlItems(value)))
-    },
-    async cancel() {
-      await iterator.return?.()
-    }
-  })
+export async function* urlSetChunks(pages: AsyncIterable<readonly SitemapEntry[]>) {
+  yield urlSetOpen
+  for await (const entries of pages) yield urlItems(entries)
+  yield urlSetClose
 }
 
 export function xmlResponse(body: BodyInit) {

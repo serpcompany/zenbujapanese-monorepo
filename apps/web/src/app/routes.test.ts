@@ -73,9 +73,7 @@ const decidedRoutes = [
   'data /robots.txt',
   'data /sitemap-index.xml',
   'data /sitemap-pages.xml',
-  'data /sitemap-tools.xml',
-  'data /sitemaps/dictionary/[file]',
-  'data /sitemaps/browse/[file]'
+  'data /sitemap-tools.xml'
 ]
 
 test('the site serves only the pages and data routes that have been decided', () => {
