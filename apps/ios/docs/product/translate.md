@@ -68,7 +68,7 @@ is no swap button. The translation appears in the same card under a divider, wit
 **English → Japanese** and buttons to copy and speak it; Japanese in it is underlined, and tapping a
 word closes the keyboard and opens its Word Detail. An ✕ clears the text. If Apple's Japanese
 language isn't downloaded, the card offers **Download Japanese**, which shows Apple's prompt. The
-typing screen's **•••** menu holds **Furigana**.
+typing screen's **•••** menu holds the **Show** toggles (below).
 
 Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection` (the direction, Copy, Speak,
 a word's sheet at half height, closing the keyboard when one is up, and ✕); package
@@ -88,7 +88,7 @@ the downloads are by hand on a device.
 
 The conversation replaces the tab's home and fills the screen: the tab bar is hidden while it's
 open. The top bar has only Back and a **•••** menu with the layout (**Cards** or **Two Panes**)
-and **Furigana**; there's no title. To change mode, leave and pick another option on the home.
+and **Show**; there's no title. To change mode, leave and pick another option on the home.
 
 Check: UI `TranslateUITests.testAConversationRunsFullScreenAndIsSavedToTranslations` (no tab bar on
 iPhone) and `ConversationUITests.testTwoPanesHoldEachLanguage`; package
@@ -120,13 +120,12 @@ Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`,
 `LiveConversationTests` (pausing and the timer), `ConversationMutingTests`, and
 `SystemSpeechPlayerTests` (the speed).
 
-Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
-conversations, transcripts, and typed or document translations, and each of those screens has it
-in its **•••** menu. Translate keeps its own
-reading aids: the rest of the app's Reading Aids (furigana, romaji, word meanings) don't apply on
-the tab. Conversation text is one Dynamic Type size larger than the rest of the app.
+Translate follows the app's Reading Aids, as Player does. A conversation, a transcript, and the
+typing screen each have Player's **Show** toggles (**Furigana**, **Furigana on Known Words**, **Word
+Meanings**) in their **•••** menu. Conversation text is one Dynamic Type size larger.
 
-Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting, off at first).
+Check: UI `ConversationUITests.testASavedConversationsMenuTurnsOnTheAppsWordMeanings`; package
+`PlayerReadingAidTests` (the settings persist).
 
 - **Cards.** Each sentence is a card with small corners, its source above a hairline and its
   translation below. Cards in one speaker's turn sit close together, and a new turn starts after a
@@ -206,8 +205,8 @@ both. The conversation in progress isn't listed until it ends, and while one is 
 have no speaker button, so a replay can't talk over it. A conversation opens as its transcript, with
 its length, turns, and mode above it. Each turn is a group of cards like the conversation's, and
 every Japanese word is tappable. Each sentence has a speaker button that plays its translation
-again, at the conversation's speech speed, and a bookmark. Its **•••** menu offers **Furigana**,
-**Copy Transcript**, **Share**, and **Delete Conversation**.
+again, at the conversation's speech speed, and a bookmark. Its **•••** menu offers the **Show**
+toggles, **Copy Transcript**, **Share**, and **Delete Conversation**.
 
 Check: package `ConversationHistoryTests`, `ConversationWordsTests`, `ConversationDateLabelTests`;
 UI `ConversationUITests.testABookmarkedSentenceIsListedUnderBookmarked` (a speaker and a bookmark

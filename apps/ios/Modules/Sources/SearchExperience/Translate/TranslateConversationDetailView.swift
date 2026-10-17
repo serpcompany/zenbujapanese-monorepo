@@ -3,7 +3,6 @@ import TranslatorCore
 
 struct TranscriptActions {
   let words: TranslateWordLinks
-  let readingAids: ReadingAidPreferences
   let conversationWords: ConversationWords
   let speak: ((String, SpokenLanguage) -> Void)?
 
@@ -43,7 +42,6 @@ struct TranscriptSentence: View {
         set: { history.setBookmarked($0, sentence: sentence.id, in: conversationID) })
     )
     .modifier(OneSizeLargerText())
-    .environment(actions.readingAids)
   }
 }
 
@@ -93,8 +91,7 @@ struct TranslateConversationDetailView: View {
     .toolbar {
       ToolbarItem(placement: .barTrailing) {
         Menu("More", systemImage: "ellipsis") {
-          FuriganaToggle(readingAids: actions.readingAids)
-          Divider()
+          Section("Show") { ReadingAidToggles() }
           Button("Copy Transcript", systemImage: "doc.on.doc") {
             Pasteboard.copy(conversation.transcript)
           }

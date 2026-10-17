@@ -50,7 +50,7 @@ struct TranslateDestinations: ViewModifier {
 
   private var transcriptActions: TranscriptActions {
     TranscriptActions(
-      words: words, readingAids: experience.readingAids,
+      words: words,
       conversationWords: experience.conversationWords,
       speak: experience.session == nil
         ? { text, language in

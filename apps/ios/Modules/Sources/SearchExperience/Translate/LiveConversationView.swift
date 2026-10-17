@@ -22,7 +22,6 @@ struct LiveConversationView: View {
         }
       }
       .modifier(OneSizeLargerText())
-      .environment(experience.readingAids)
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
         .dynamicTypeSize(...DynamicTypeSize.large)
@@ -155,7 +154,7 @@ struct LiveConversationView: View {
         Label("Two Panes", systemImage: "rectangle.split.1x2").tag(ConversationLayout.twoPanes)
       }
       .pickerStyle(.inline)
-      FuriganaToggle(readingAids: experience.readingAids)
+      Section("Show") { ReadingAidToggles() }
     }
     .accessibilityIdentifier("translate.conversation.options")
   }

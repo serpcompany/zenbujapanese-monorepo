@@ -75,6 +75,21 @@ final class ConversationUITests: ZenbuUITestCase {
     return nil
   }
 
+  func testASavedConversationsMenuTurnsOnTheAppsWordMeanings() {
+    let app = startConversation()
+    saveAndExit(app)
+    tap(find("translate.history", in: app))
+    tap(find("translate.history.row", in: app))
+    tap(find("translate.detail.more", in: app))
+    waitFor(menuChoice("Furigana on Known Words", in: app))
+    tap(menuChoice("Word Meanings", in: app))
+    open(.account, in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    XCTAssertTrue(
+      isOn(waitFor(find("reading-aids.show-word-meanings", in: app))),
+      "Translate's Word Meanings is the app's Reading Aids setting")
+  }
+
   func testABookmarkedSentenceIsListedUnderBookmarked() {
     let app = startConversation()
     saveAndExit(app)

@@ -42,20 +42,6 @@ extension ConversationTiming {
   }
 }
 
-struct FuriganaToggle: View {
-  let readingAids: ReadingAidPreferences
-
-  var body: some View {
-    Toggle(isOn: showsFurigana) {
-      Label("Furigana", systemImage: "textformat.size.smaller")
-    }
-  }
-
-  private var showsFurigana: Binding<Bool> {
-    Binding(get: { readingAids.showsFurigana }, set: { readingAids.showsFurigana = $0 })
-  }
-}
-
 extension ConversationActivity {
   @MainActor func statusLine(in session: LiveConversation) -> String {
     switch self {

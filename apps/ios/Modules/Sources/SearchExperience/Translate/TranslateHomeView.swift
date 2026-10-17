@@ -142,7 +142,6 @@ struct TypedTranslationScreen: View {
 
   var body: some View {
     TypedTranslationCard(text: $text, experience: experience, words: words)
-      .environment(experience.readingAids)
       .padding(.horizontal)
       .padding(.bottom, 12)
       .background(SystemColor.background)
@@ -151,7 +150,7 @@ struct TypedTranslationScreen: View {
       .toolbar {
         ToolbarItem(placement: .barTrailing) {
           Menu("Options", systemImage: "ellipsis") {
-            FuriganaToggle(readingAids: experience.readingAids)
+            Section("Show") { ReadingAidToggles() }
           }
           .accessibilityIdentifier("translate.text.options")
         }

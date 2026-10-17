@@ -8,13 +8,7 @@ struct PlayerMoreMenu: View {
     @Bindable var preferences = readingAidPreferences
     Menu("More", systemImage: "ellipsis") {
       Section("Show") {
-        Toggle("Furigana", isOn: $preferences.showsFurigana)
-        Toggle("Furigana on Known Words", isOn: Binding(
-          get: { !preferences.hidesFuriganaOnKnownWords },
-          set: { preferences.hidesFuriganaOnKnownWords = !$0 }
-        ))
-        .disabled(!preferences.showsFurigana)
-        Toggle("Word Meanings", isOn: $preferences.showsWordMeanings)
+        ReadingAidToggles()
         Toggle("Translations", isOn: $preferences.showsTranslations)
       }
       Section {

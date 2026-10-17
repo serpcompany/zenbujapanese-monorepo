@@ -42,7 +42,6 @@ final class TranslateExperience {
       services.setSpeechSpeed(speechSpeed)
     }
   }
-  @ObservationIgnored let readingAids: ReadingAidPreferences
   @ObservationIgnored let conversationWords = ConversationWords()
 
   @ObservationIgnored let services: TranslateServices
@@ -62,8 +61,6 @@ final class TranslateExperience {
       defaults.string(forKey: Self.layoutKey).flatMap(ConversationLayout.init(rawValue:)) ?? .cards
     let speed = defaults.object(forKey: Self.speechSpeedKey) as? Double ?? 1
     speechSpeed = speed
-    readingAids = ReadingAidPreferences(
-      defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     services.setSpeechSpeed(speed)
   }
 

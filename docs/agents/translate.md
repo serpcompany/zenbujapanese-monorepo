@@ -96,9 +96,9 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,
-  timer and pause) along the bottom; `TwoPaneConversationView` is its second layout. The layout,
-  the speech speed, and Translate's own `ReadingAidPreferences` (furigana off by default, stored
-  under `translate.reading-aids.v1`) live on `TranslateExperience`. Bookmarks are a field on
+  timer and pause) along the bottom; `TwoPaneConversationView` is its second layout. The layout
+  and the speech speed live on `TranslateExperience`; its text reads the app's
+  `ReadingAidPreferences`, and its menus use Player's `ReadingAidToggles`. Bookmarks are a field on
   `TranslatedSentence`, with when it was bookmarked, and `ConversationHistory.bookmarks` lists
 them with the synced ones, newest first; a synced one has no conversation, so its card has nothing
 to open.
@@ -304,9 +304,9 @@ checked by eye:
   its translation plays, has a tinted fill and an accent outline, and a new turn starts after a
   wider gap. The timer is red while listening and gray while paused, and its button a red pause or
   a blue play; muting dims the speed. **Two Panes**' panes are dark and light. The session bar
-  spans the width above the tab bar. **•••** → **Furigana** puts readings over the Japanese in the
-  conversation, its transcript, and Text. The tests read what the screen says, not its colors or
-  sizes, and furigana isn't an accessibility element.
+  spans the width above the tab bar. **•••** → **Furigana** and **Word Meanings** add readings and
+  meanings to the Japanese in a conversation, a transcript, and Text. The tests read what the
+  screen says, not its colors or sizes; furigana and meanings aren't accessibility elements.
 - **Auto-Lock.** While listening, the screen doesn't lock (Settings → Display & Brightness →
   Auto-Lock at 30 seconds); after a pause it locks as usual. XCUITest can't read the idle timer.
 
