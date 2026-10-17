@@ -9,13 +9,13 @@ export interface SchoolKanjiRequest {
   known: string[]
 }
 
-export interface SchoolKanjiTile {
+interface SchoolKanjiTile {
   character: string
   meaning: string
   known: boolean
 }
 
-export interface SchoolKanjiSection {
+interface SchoolKanjiSection {
   id: string
   title: string
   count: string
