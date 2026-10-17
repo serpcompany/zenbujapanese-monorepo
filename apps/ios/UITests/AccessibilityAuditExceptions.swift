@@ -88,7 +88,7 @@ private enum Why {
   static let scrolls =
     "Text that runs past the edge of a view that scrolls, so the rest of it is a scroll away"
   static let underTheBar =
-    "Text scrolled under the navigation bar's glass, which still shows through it; the audit can't name it, and it is whole once scrolled back"
+    "Text scrolled under the navigation bar's or the tab bar's glass, which still shows through it; the audit can't name it, and it is whole once scrolled into view"
   static let cappedControls =
     "Player's control bar stays at the largest standard size at the accessibility sizes, so it keeps to one line, and pressing and holding a button shows it larger (product docs, Player)"
   static let headword =
@@ -158,11 +158,19 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(.dynamicType, .labels(["Translations", "0"]), on: ["Account", "Account, at its end"], because: Why.scales),
   allow(
     .textClipped,
     .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
-    on: ["Account", "Account, its rows"], because: Why.scales),
+    on: ["Account", "Account, at its end", "Account, its rows"], because: Why.scales),
+  allow(
+    .dynamicType,
+    .label("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPhone."),
+    on: ["Zenbu Account"], [.phone], because: Why.scales),
+  allow(
+    .dynamicType,
+    .label("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPad."),
+    on: ["Zenbu Account"], [.pad], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
@@ -200,15 +208,17 @@ private let textThatScales = [
     on: ["A video its owner won't share"], because: Why.scales),
   allow(.textClipped, .unnamed(2), on: ["A video its owner won't share", "Word Detail, its kanji"], because: Why.underTheBar),
   allow(.dynamicType, .unnamed(3), on: ["Word Detail, its kanji"], because: Why.underTheBar),
+  allow(.dynamicType, .unnamed(1), on: ["A word's note"], because: Why.underTheBar),
 ]
 
-private let playerControls = ["watch.previous", "watch.play-pause", "watch.next", "watch.repeat", "watch.speed"]
-  .map { control in
-    allow(
-      .dynamicType, .identifier(control),
-      on: ["A video", "A caption's word", "A video without Japanese captions", "A video its owner won't share"],
-      because: Why.cappedControls)
-  }
+private let videoScreens = [
+  "A video", "A caption's word", "A video without Japanese captions", "A video its owner won't share",
+]
+
+private let playerControls =
+  ["watch.previous", "watch.play-pause", "watch.next", "watch.repeat", "watch.speed"].map { control in
+    allow(.dynamicType, .identifier(control), on: videoScreens, because: Why.cappedControls)
+  } + [allow(.dynamicType, .label("1×"), on: videoScreens, because: Why.cappedControls)]
 
 private let clocks = [
   allow(

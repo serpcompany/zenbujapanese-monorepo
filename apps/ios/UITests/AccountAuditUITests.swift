@@ -45,7 +45,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
       showing: firstElement(identifiedBy: "frequency-pack.download.", in: app), in: app)
     goBack(in: app)
     tap(reveal(find("account.credits", in: app), in: app))
-    waitFor(find("credits.source.jmdict", in: app))
+    waitFor(find("credits.list", in: app))
     audit("Credits & Attributions", in: app)
     tap(reveal(find("credits.licenses", in: app), in: app, scrolling: find("credits.list", in: app)))
     waitFor(find("licenses.text.KANJIVG-CC-BY-SA-3.0.txt", in: app))
@@ -89,9 +89,9 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     tap(reveal(find("account.profile", in: app), in: app))
     type("Ada Lovelace", into: waitFor(find("profile.name", in: app)))
-    type("ada.l", into: waitFor(find("profile.username", in: app)))
-    tap(find("profile.name", in: app))
+    type("ada.l\n", into: waitFor(find("profile.username", in: app)))
     waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
+    waitUntilGone(app.keyboards.firstMatch)
     audit("Profile", in: app)
   }
 

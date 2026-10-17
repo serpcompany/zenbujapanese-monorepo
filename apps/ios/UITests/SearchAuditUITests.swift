@@ -84,13 +84,13 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     auditAtTheLargestSize("Word Detail, its kanji", showing: find("word-detail.kanji.日", in: app), in: app)
     tap(reveal(find("word-detail.kanji.日", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
     audit("Kanji Detail", in: app)
-    auditAtTheLargestSize(
-      "Kanji Detail, its readings", showing: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
-      in: app)
-    tap(reveal(find("kanji-detail.stroke-order", in: app), in: app))
+    tap(find("kanji-detail.stroke-order", in: app))
     waitForSheet("stroke-order.screen", in: app)
     audit("Stroke Order", in: app)
     tap(find("stroke-order.close", in: app))
+    auditAtTheLargestSize(
+      "Kanji Detail, its readings", showing: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
+      in: app)
     goBack(in: app)
     tap(reveal(find("word-detail.kanji.本", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
     let element = reveal(find("kanji-detail.element.木", in: app), in: app)
