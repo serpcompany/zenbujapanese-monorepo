@@ -134,6 +134,36 @@ test.describe('word page', () => {
     )
   })
 
+  test('Lists and Notes each open the get-the-app prompt', async ({ page }) => {
+    for (const action of ['Add to List', 'Add Note']) {
+      await page.getByRole('main').getByRole('button', { name: action, exact: true }).click()
+      const prompt = page.getByRole('dialog', { name: `${action} works in the app` })
+      await expect(prompt.getByRole('button', { name: 'Get the app' })).toBeVisible()
+      await page.keyboard.press('Escape')
+      await expect(prompt).toHaveCount(0)
+    }
+  })
+
+  test("an example underlines the page's word more thickly than its other words", async ({
+    page
+  }) => {
+    await expect(examples(page)).toHaveCount(25)
+    const underlines = await examples(page)
+      .locator('p[lang="ja"] [lang="ja"]')
+      .evaluateAll(words =>
+        words
+          .map(word => ({
+            pageWord: word.hasAttribute('data-page-word'),
+            width: Number.parseFloat(getComputedStyle(word).borderBottomWidth)
+          }))
+          .filter(word => word.width > 0)
+      )
+    const widths = (pageWord: boolean) =>
+      new Set(underlines.filter(word => word.pageWord === pageWord).map(word => word.width))
+    expect([...widths(true)]).toEqual([2])
+    expect([...widths(false)]).toEqual([1])
+  })
+
   test('opens and closes a kanji in the Kanji section', async ({ page }) => {
     const kanji = page.getByRole('button', { name: '要, need, main point, shows kanji details' })
     const strokeOrder = page.getByRole('button', { name: 'Show stroke order for 要' })
