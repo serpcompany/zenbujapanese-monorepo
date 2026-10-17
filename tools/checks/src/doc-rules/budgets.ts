@@ -5,7 +5,7 @@ const mapBudget = 120
 const leafBudget = 300
 
 export const knownLongDocs: Readonly<Record<string, number>> = {
-  'apps/ios/docs/product/dictionary.md': 415,
+  'apps/ios/docs/product/dictionary.md': 414,
   'apps/ios/docs/product/index.md': 581,
   'apps/ios/docs/product/translate.md': 357,
   'apps/web/docs/product/account.md': 345,

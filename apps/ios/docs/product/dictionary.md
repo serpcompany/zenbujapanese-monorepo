@@ -335,10 +335,9 @@ Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked wo
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
 website gives it (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The
-share sheet gets the link as a web link and the text as its message, titled with the headword.
-Where Zenbu is installed the link opens the word in it ([Links from
-zenbujapanese.com](#links-from-zenbujapanesecom)), and elsewhere the website. Beside Share is a
-**•••** menu. The menu starts with **Mark as Known** (or **Mark as
+link goes as a web link, beside the text, on every device. Where Zenbu is installed it opens the
+word in Zenbu ([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), and elsewhere the
+website. Beside Share is a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
 Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
 shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner
 marks it, and known words persist on the device, keyed by the dictionary entry's stable identifier.
@@ -346,8 +345,8 @@ marks it, and known words persist on the device, keyed by the dictionary entry's
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
 without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what
 **Share** sends: the text, and the link, which opens the same word again); UI
-`WordDetailUITests.testShareOffersTheWordsWebLink` (the share sheet offers a web link, titled with
-the word on iPhone and iPad).
+`WordDetailUITests.testShareOffersTheWordsWebLink` (iPhone and iPad: a web link, titled with the
+word).
 
 **Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,

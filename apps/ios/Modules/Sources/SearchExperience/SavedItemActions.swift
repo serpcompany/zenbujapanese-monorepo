@@ -230,21 +230,9 @@ extension SharedPage {
     self.init(
       title: character.rawValue, text: page?.shareText ?? character.rawValue, url: page?.shareURL)
   }
-}
 
-private struct ShareButton: View {
-  let page: SharedPage
-
-  var body: some View {
-    if let url = page.url {
-      ShareLink(item: url, message: Text(page.text), preview: SharePreview(page.title)) { label }
-    } else {
-      ShareLink(item: page.text) { label }
-    }
-  }
-
-  private var label: some View {
-    Label("Share", systemImage: "square.and.arrow.up")
+  var sharedItems: [Any] {
+    [text] + (url.map { [$0] } ?? [])
   }
 }
 

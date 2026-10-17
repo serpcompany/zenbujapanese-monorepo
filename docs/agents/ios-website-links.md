@@ -27,14 +27,18 @@ lists twice, the one whose Language Reference ID stands for both, as the website
 and the core's `wordPage` answers `shareURL`, the word page's canonical URL, from `wordSlug` and
 the entry number, while `kanjiPage` answers the kanji's search ([`dictionary-core.md`](dictionary-core.md),
 Detail). `SharedPage` in `SavedItemActions.swift` holds a page's title, text, and link, and
-`ShareButton` gives them to SwiftUI's `ShareLink` as the item, a `URL`, with the text as its
-message and a preview titled with the page, so UIKit's share sheet and AppKit's sharing picker
-take a web link plus text; a page without a link, such as a kanji whose page hasn't loaded, shares
-its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
-back through `websiteRoute`, and `WordDetailUITests.testShareOffersTheWordsWebLink` and
-`testShareOffersTheKanjisWebLink` open the share sheet and find **Add to Reading List**, which iOS
-and macOS offer only for a web link, titled with the page on iPhone and iPad (the title is
-LinkPresentation's caption, `LP.CaptionBar.TopCaption`, which an iOS release could rename). On
+`ShareButton` (`Platform/ShareButton.swift`) shares them. On iPhone and iPad it gives SwiftUI's
+`ShareLink` the `URL` as the item, the text as its message, and a preview titled with the page.
+On the Mac, `ShareLink` with a `URL` item opened no picker at all (checked on macOS 26 with the UI
+test build, where a text item did), so the Mac shows AppKit's `NSSharingServicePicker` with
+`SharedPage.sharedItems`, the text and then the URL, from the button. A page without a link, such
+as a kanji whose page hasn't loaded, shares its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
+back through `websiteRoute`, `sharingPickerItems` checks the Mac's two items, and
+`WordDetailUITests.testShareOffersTheWordsWebLink` and `testShareOffersTheKanjisWebLink` open
+the share sheet on iPhone and iPad and find **Add to Reading List**, which iOS offers only for a
+web link, under a preview titled with the page (LinkPresentation's caption,
+`LP.CaptionBar.TopCaption`, which an iOS release could rename). They skip the Mac, whose sharing
+picker draws outside the app, where XCUITest can't see it. On
 the Simulator, **Copy** puts both on the pasteboard, a `public.url` and the text, but no test can
 read what other destinations get, so on a device share a word to Messages, Notes, Mail, AirDrop,
 and a messaging app such as LINE, check that the text and the link arrive together, and tap the

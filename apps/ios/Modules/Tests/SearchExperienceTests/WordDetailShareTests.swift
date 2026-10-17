@@ -52,6 +52,16 @@ struct WordDetailShareTests {
     #expect(opened == entry)
   }
 
+  @Test("the Mac's sharing picker gets the text, then the link, as two items")
+  func sharingPickerItems() throws {
+    let url = try #require(URL(string: "https://zenbujapanese.com/dictionary/search/%E6%97%A5/"))
+    let items = SharedPage(title: "日", text: "日【ニチ】", url: url).sharedItems
+    #expect(items.count == 2)
+    #expect(items.first as? String == "日【ニチ】")
+    #expect(items.last as? URL == url)
+    #expect(SharedPage(title: "日", text: "日", url: nil).sharedItems.map { $0 as? String } == ["日"])
+  }
+
   @Test("a word the website has no page for sends its text alone")
   func wordWithoutLink() {
     let entry = DictionaryEntry.fixture(id: "sore", headword: "それ")

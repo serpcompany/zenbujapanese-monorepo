@@ -27,7 +27,9 @@ until the website has Zenbu's Apple team ID, links open the website.
 The links Zenbu's own **Share** sends are these URLs: a word's page and a kanji's search
 ([Dictionary and kanji details](dictionary.md#dictionary-and-kanji-details)). The shared core
 builds them with the website's URL rules, so a link shared from Zenbu opens the same word or
-search in Zenbu where it's installed, and the website's page for it elsewhere.
+search in Zenbu where it's installed, and the website's page for it elsewhere. On iPhone and iPad
+the share sheet gets the link as a web link and the text as its message, under a preview titled
+with the word or kanji; on the Mac, the sharing picker gets the text and the link as two items.
 
 - Source: #568, part of #563; Share's links, #467.
 - Check: package `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
