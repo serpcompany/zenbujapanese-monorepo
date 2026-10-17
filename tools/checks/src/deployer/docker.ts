@@ -17,6 +17,7 @@ export interface ImageSpec {
   signedBy?: string | null
   volumes?: number
   digest?: boolean
+  otherDigests?: string[]
   answers?: (string | undefined)[]
   stays?: boolean
   log?: string[]
@@ -27,6 +28,7 @@ export interface Image {
   reference: string
   repository: string
   digest: string | undefined
+  otherDigests: string[]
   env: string[]
   volumes: number
   signedBy: string | null
@@ -124,6 +126,7 @@ export class Docker {
       reference: `${repository}@${digest}`,
       repository,
       digest,
+      otherDigests: spec.otherDigests ?? [],
       env: [
         'NODE_ENV=production',
         ...(release === null ? [] : [`${releaseVariables[service] ?? 'RELEASE'}=${release}`])
@@ -212,7 +215,7 @@ export class Docker {
     if (format === '{{.Id}}') return { stdout: `${image.id}\n` }
     if (format === '{{range .Config.Env}}{{println .}}{{end}}') return { stdout: lines(image.env) }
     if (format === '{{range .RepoDigests}}{{println .}}{{end}}') {
-      return { stdout: image.digest ? `${image.reference}\n` : '' }
+      return { stdout: lines([...(image.digest ? [image.reference] : []), ...image.otherDigests]) }
     }
     if (format === '{{len .Config.Volumes}}') return { stdout: `${image.volumes}\n` }
     return undefined
