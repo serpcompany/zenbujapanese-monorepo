@@ -133,13 +133,15 @@ type (`chore`, `docs`).
   `docs`, `test`, `build`, `ci`, and `chore`.
 - **The body follows the template** (`.github/pull_request_template.md`). It starts with
   `Closes #<number>`, one line per issue it finishes, or says why there is none on a line of its
-  own: `No issue: <reason>`. `Part of #N` closes nothing: split the issue into sub-issues, one
-  pull request each ([`issue-tracker.md`](issue-tracker.md)). Then why, what changed, what was
-  left out, the evidence by level, the review's outcome, and Status, which a fresh agent starts
-  from.
+  own: `No issue: <reason>`. `Part of #N` closes nothing: split the issue into sub-issues, one pull
+  request each ([`issue-tracker.md`](issue-tracker.md)). Then why, what changed, what was left
+  out, the evidence by level, the review's outcome, and Status, which a fresh agent starts from.
 - **Bring a branch up to date by merging `main` into it,** not by rebasing, and merge a parent
   down into the branches stacked on it. Group stacked work into a few pull requests by what
   deploys together, not one per issue. `main` takes merge commits, through the merge queue.
+- **Agents commit, push, comment, and open pull requests as `serp-agent[bot]`,** through SERP's
+  `serp-github-app` skill, never `gh auth switch` ([`ci-agents.md`](ci-agents.md), Outside CI):
+  `eval "$(bash ~/dev/repos/serp/skills/serp-github-app/scripts/env.sh)" && <command>`.
 
 The `Pull request` workflow checks the title, the closing issue, and the test in a fix
 ([`ci.md`](ci.md), Pull request).

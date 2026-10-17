@@ -202,9 +202,10 @@ happened or its result was lost:
 
 ## The rest
 
-- **It reviews the pushes `@claude` makes.** `allowed_bots: "claude[bot]"` lets the review run on
-  a push an `@claude` request made to the pull request, whose actor is then a bot. A pull request
-  a bot opened, such as a gardening one, isn't reviewed.
+- **It reviews the pushes `@claude` and agents make.** `allowed_bots: "claude[bot],serp-agent[bot]"`
+  lets the review run on a push an `@claude` request made to the pull request, or one an agent
+  made as `serp-agent[bot]`, whose actor is then a bot. A pull request `claude[bot]`,
+  `dependabot[bot]`, or `renovate[bot]` opened, such as a gardening one, isn't reviewed.
 - **Subagents stay in the foreground** (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`). Claude Code runs
   them in the background by default, and the action stops at Claude's first result, so a review
   would end green having posted nothing (anthropics/claude-code-action#1646).

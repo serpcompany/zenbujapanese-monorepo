@@ -136,6 +136,45 @@ describe("what a workflow's last job reports, with its jobs played out as GitHub
   })
 })
 
+describe('whose pull requests the rules and the review check', () => {
+  const person = 'octocat'
+  const unchecked = ['claude[bot]', 'dependabot[bot]', 'renovate[bot]']
+  const checked = [person, 'serp-agent[bot]', 'Copilot']
+  const rules = readWorkflow('.github/workflows/pull-request.yml')
+  const review = readWorkflow('.github/workflows/code-review.yml')
+  const opened = (workflow: Workflow, login: string, more: Partial<Trigger> = {}) =>
+    jobResults(workflow, {
+      event: 'pull_request',
+      changed: true,
+      author: { login, type: login === person ? 'User' : 'Bot' },
+      ...more
+    })
+
+  test.each(checked)('checks and reviews a pull request %s opened', author => {
+    expect(opened(rules, author)).toEqual({
+      title: 'success',
+      'issue-link': 'success',
+      'fix-test': 'success'
+    })
+    expect(opened(review, author).changes).toBe('success')
+  })
+
+  test.each(unchecked)('leaves a pull request %s opened to the person who skims it', author => {
+    expect(Object.values(opened(rules, author))).toEqual(['skipped', 'skipped', 'skipped'])
+    expect(opened(review, author).changes).toBe('skipped')
+  })
+
+  test.each(unchecked)('passes %s in the merge queue, whose event names no author', author => {
+    const results = opened(rules, author, { event: 'merge_group' })
+    expect(Object.values(results)).toEqual(['success', 'success', 'success'])
+  })
+
+  test('reviews no draft, whoever opened it', () => {
+    for (const author of checked)
+      expect(opened(review, author, { draft: true }).changes).toBe('skipped')
+  })
+})
+
 describe('the changed-paths action', () => {
   const action = parse(readRepositoryFile('.github/actions/changed-paths/action.yml')) as {
     runs: { steps: { run: string }[] }

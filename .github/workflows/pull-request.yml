@@ -16,7 +16,9 @@ concurrency:
 
 jobs:
   title:
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.type != 'Bot'
+    if: >-
+      github.event_name != 'pull_request' ||
+      !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -32,7 +34,9 @@ jobs:
         run: node tools/checks/pull-request.mjs title
 
   issue-link:
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.type != 'Bot'
+    if: >-
+      github.event_name != 'pull_request' ||
+      !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -52,7 +56,9 @@ jobs:
         run: node tools/checks/pull-request.mjs issue-link
 
   fix-test:
-    if: github.event_name != 'pull_request' || github.event.pull_request.user.type != 'Bot'
+    if: >-
+      github.event_name != 'pull_request' ||
+      !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
