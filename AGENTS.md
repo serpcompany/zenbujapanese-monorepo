@@ -23,7 +23,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 ## Codebase
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — the repository's parts, how data moves between them, and each part's enforced layers. Start here for anything that crosses parts.
-- [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
+- [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch on iPhone, iPad, and the Mac, the platform adapters, installing on an iPhone, Simulator verification, and the current iOS test and CI boundary.
 - [`docs/agents/translate.md`](docs/agents/translate.md) — the iOS Translate tab: its engine target, the on-device speech and translation adapters, its tests, the Simulator harness, and device checks.
@@ -62,6 +62,7 @@ SERP's [engineering standards](https://github.com/serpcompany/serp/tree/main/doc
 - **One pipeline from `main`,** staging and then production, with no `staging` branch ([`ci-deploys.md`](docs/agents/ci-deploys.md)).
 - **Review runs on every push, beside CI,** not once CI is green ([`ci-agents.md`](docs/agents/ci-agents.md), Code review).
 - **Only the root `README.md` is a map.** A component's `README.md` is a leaf, with a leaf's size budget ([`code.md`](docs/agents/code.md), Docs).
+- **Staging's password differs a little** ([`staging-access.md`](docs/agents/staging-access.md)).
 - **A Debug build keeps the release bundle identifier,** with no `.debug` suffix ([`verification.md`](docs/agents/verification.md), This checkout's Simulator and build folder).
 
 ## Evidence and research

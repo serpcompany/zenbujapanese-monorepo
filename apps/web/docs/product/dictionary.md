@@ -1186,8 +1186,8 @@ lists no word and whose kanji has no meanings or readings (about 475 of 13,108, 
 search that finds nothing or only example sentences, `/dictionary/search/` itself, the JSON routes
 that load examples into a page (a word's, a search's, and a conjugated form's), and
 `/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are
-`noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write
+`noindex`. Production is indexed; staging asks for a password first
+([`staging-access.md`](../../../../docs/agents/staging-access.md)). Staging and production write
 their canonical URLs on their own host: staging's canonical tags name
 `https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
 production's.
