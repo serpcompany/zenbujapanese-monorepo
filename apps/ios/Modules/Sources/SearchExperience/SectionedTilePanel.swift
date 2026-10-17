@@ -163,7 +163,7 @@ struct PanelTile: View {
             .minimumScaleFactor(0.7)
         }
       }
-      .padding(.horizontal, 4)
+      .padding(.horizontal, 2)
       .padding(.vertical, 4)
       .frame(maxWidth: .infinity, minHeight: minHeight)
       .foregroundStyle(isSelected ? Color.white : Color.primary)

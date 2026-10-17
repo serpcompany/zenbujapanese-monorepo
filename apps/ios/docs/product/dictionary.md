@@ -84,8 +84,8 @@ background, flat candidate tiles in the same fill as the radical squares, and gl
   button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
   until one is.
 
-A candidate from either panel is added to the end of the query, so picking one character after
-another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
+A candidate from any panel is added to the end of the query, so picking one character after
+another, in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
 show, with the query in the field. In dark mode the strip and pad are black.
 
 A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
@@ -117,8 +117,8 @@ through the shared core, offline.
   of the query, as a radical candidate does, and the panel closes. Grade has no **Undo**.
 - **Filter.** Where Radicals has its strip, Grade has a filter field. An English meaning, a
   reading in kana, or the kanji itself narrows every grade at once: a grade with matches opens
-  and counts them, as **1 of 80**, and the rest are hidden. Clearing it restores every grade, open
-  or closed as before.
+  and counts them, as **1 of 80**, and the rest are hidden. Each change returns the list to the
+  top, and clearing it restores every grade, open or closed as before.
 - **Known kanji.** A kanji marked known from its kanji detail's **•••** menu has a green outline,
   the ✓ Known capsule's green, and each grade's header counts the known kanji it shows beside its
   total.
@@ -127,7 +127,7 @@ Check: UI `GradeInputUITests`: `testAGradesKanjiJoinsTheQueryAndOpensItsDetail` 
 kanji from the next one searched, and its kanji detail opened),
 `testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade` (marked known, then unknown),
 `testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade` (Radicals' sections too), and
-`testTurningOffKanjiMeaningsLeavesTheKanjiAlone`, on iPhone, iPad, and the Mac; package
+`testTurningOffKanjiMeaningsLeavesTheKanjiAlone`; package
 `SchoolKanjiTests` (each list against the bundled KANJIDIC2 grades, the filter, known counts,
 remembered sections, and Kanji Meanings on by default); core `browse/school-kanji.test.ts` (the
 lists as the website's `kanjiListResponse` answers them).

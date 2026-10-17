@@ -2925,7 +2925,8 @@
     }
   }
   var isRank = (value) => value === null || Number.isInteger(value);
-  var isReferenceEntry = (entry) => typeof entry?.character === "string" && isRank(entry.grade) && isRank(entry.frequencyRank) && Array.isArray(entry.meanings) && Array.isArray(entry.readings);
+  var isReading = (reading) => typeof reading?.value === "string" && typeof reading.kind === "string";
+  var isReferenceEntry = (entry) => typeof entry?.character === "string" && isRank(entry.grade) && isRank(entry.frequencyRank) && Array.isArray(entry.meanings) && entry.meanings.every((meaning) => typeof meaning === "string") && Array.isArray(entry.readings) && entry.readings.every(isReading);
   function checkedKanjiReference(read) {
     const file = read ?? {};
     checkReferenceSources(file);

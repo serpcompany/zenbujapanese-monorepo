@@ -86,12 +86,17 @@ function checkReferenceSources(sources: Partial<Record<keyof typeof referenceSou
 
 const isRank = (value: unknown) => value === null || Number.isInteger(value)
 
+const isReading = (reading: Partial<KanjiReadingRow> | null) =>
+  typeof reading?.value === 'string' && typeof reading.kind === 'string'
+
 const isReferenceEntry = (entry: Partial<KanjiReferenceEntry> | null) =>
   typeof entry?.character === 'string' &&
   isRank(entry.grade) &&
   isRank(entry.frequencyRank) &&
   Array.isArray(entry.meanings) &&
-  Array.isArray(entry.readings)
+  entry.meanings.every(meaning => typeof meaning === 'string') &&
+  Array.isArray(entry.readings) &&
+  entry.readings.every(isReading)
 
 export function checkedKanjiReference(read: unknown): KanjiReferenceFile {
   const file = (read ?? {}) as Partial<KanjiReferenceFile>

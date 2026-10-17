@@ -29,6 +29,7 @@ struct GradeInputView: View {
   }
 
   private func load(_ request: SchoolKanjiRequest) async {
+    guard !loadFailed else { return }
     let client = schoolKanjiClient
     do {
       let answered = try await Task.detached(priority: .userInitiated) {
@@ -38,7 +39,7 @@ struct GradeInputView: View {
       panel = answered
       shownFilter = request.filter
     } catch {
-      loadFailed = true
+      if !Task.isCancelled { loadFailed = true }
     }
   }
 
