@@ -15,10 +15,10 @@ describe('robots.txt', () => {
     )
   })
 
-  test('staging disallows crawling and lists its own sitemap index', () => {
+  test("staging disallows crawling, gives the site audit production's rules, and lists its own sitemap index", () => {
     vi.stubEnv('SITE_ENV', 'staging')
     expect(robotsTxt(request)).toBe(
-      'User-Agent: *\nDisallow: /\n\nSitemap: https://staging.zenbujapanese.com/sitemap-index.xml\n'
+      'User-Agent: *\nDisallow: /\n\nUser-Agent: AhrefsSiteAudit\nAllow: /\n\nSitemap: https://staging.zenbujapanese.com/sitemap-index.xml\n'
     )
   })
 

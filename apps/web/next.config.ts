@@ -5,8 +5,9 @@ import type { NextConfig } from 'next'
 import { accountServiceIn } from './src/lib/account/availability'
 import { dictionarySitemapFiles, movedDictionarySitemaps } from './src/lib/dictionary/sitemap-files'
 import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
-import { isProductionSite } from './src/lib/site'
+import { isDeployedSite } from './src/lib/site'
 import { movedSitemaps } from './src/lib/sitemap'
+import { environmentNoindex } from './src/lib/staging-access'
 
 const accountService = accountServiceIn(
   readFileSync(join(process.cwd(), 'wrangler.jsonc'), 'utf8'),
@@ -46,8 +47,8 @@ const nextConfig: NextConfig = {
     return [...dictionarySitemapFiles]
   },
   async headers() {
-    if (isProductionSite()) return []
-    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
+    if (isDeployedSite()) return []
+    return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: environmentNoindex }] }]
   }
 }
 

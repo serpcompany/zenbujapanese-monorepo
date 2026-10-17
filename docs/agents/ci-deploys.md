@@ -50,7 +50,9 @@ job, then the `production` job, each in the GitHub environment of that name:
 3. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
    the workers.dev URL the deploy printed, since the zone's bot protection blocks CI runners. When
    Cloudflare challenges the site's Worker for the runner too, the smoke test skips its dictionary
-   checks with a warning ([`web.md`](web.md), Dictionary service).
+   checks with a warning ([`web.md`](web.md), Dictionary service). On staging it also checks the
+   password gate, and skips, with a warning, its one request to the canonical host when the runner
+   is blocked ([`staging-access.md`](staging-access.md), Checks).
 
 Production runs once staging passes. Its environment has no required reviewer, by the owner's
 decision; add one to gate it by hand. The repository variable `DEPLOY_PRODUCTION` set to `false`
