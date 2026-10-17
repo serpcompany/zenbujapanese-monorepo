@@ -19,20 +19,6 @@ final class ImageSearchUITests: ZenbuUITestCase {
     waitFor(find("image-text.mode", in: app))
   }
 
-  private func assertSheetPlacement(_ sheet: XCUIElement, in app: XCUIApplication) {
-    let window = app.windows.firstMatch.frame
-    let frame = sheet.frame
-    switch device {
-    case .phone:
-      XCTAssertGreaterThan(frame.minY, window.height * 0.3, "the iPhone opens it at half height")
-    case .pad:
-      XCTAssertLessThan(frame.width, window.width, "the iPad opens it as a centered sheet")
-      XCTAssertEqual(frame.midX, window.midX, accuracy: 4)
-    case .mac:
-      XCTAssertTrue(window.contains(frame), "the Mac opens it over the window")
-    }
-  }
-
   func testClosingImageSearchReturnsToTranslatesHome() throws {
     let app = try openFixtureImage()
     tap(find("image-text.close", in: app))

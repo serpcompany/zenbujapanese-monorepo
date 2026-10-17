@@ -1,5 +1,4 @@
 import Foundation
-import notify
 
 actor HeldAnswers {
   static let letGoNotice = "com.zenbujapanese.dictionary.uitests.let-linking-go"
@@ -32,10 +31,7 @@ actor HeldAnswers {
   }
 
   nonisolated func letGoOnNotice() {
-    var registration: Int32 = 0
-    notify_register_dispatch(Self.letGoNotice, &registration, .global()) { registration in
-      var microseconds: UInt64 = 0
-      notify_get_state(registration, &microseconds)
+    DarwinNotice.observe(Self.letGoNotice) { microseconds in
       let cut = Date(timeIntervalSince1970: TimeInterval(microseconds) / 1_000_000)
       Task { await self.letGo(heldBefore: cut) }
     }
