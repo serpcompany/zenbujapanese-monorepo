@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   changes:
-    if: ${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}
+    if: ${{ !github.event.pull_request.draft && !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -393,7 +393,7 @@ jobs:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with: &reviewer
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          allowed_bots: "claude[bot]"
+          allowed_bots: "claude[bot],serp-agent[bot],Copilot"
           classify_inline_comments: "false"
           prompt: "/pr-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
           claude_args: >-

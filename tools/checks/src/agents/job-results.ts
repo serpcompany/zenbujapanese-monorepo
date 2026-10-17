@@ -9,6 +9,8 @@ export interface Trigger {
   changed: boolean
   failing?: readonly string[]
   vars?: Record<string, string>
+  author?: { login: string; type: 'User' | 'Bot' }
+  draft?: boolean
 }
 
 const statusCheck = /\b(always|success|failure|cancelled)\(\)/
@@ -100,7 +102,13 @@ export function jobResults(workflow: Workflow, trigger: Trigger): Record<string,
     const job = workflow.jobs[name]
     const earlier = before(name).map(resultOf)
     const scope: Value = {
-      github: { event_name: trigger.event },
+      github: {
+        event_name: trigger.event,
+        event:
+          trigger.event === 'pull_request'
+            ? { pull_request: { draft: trigger.draft ?? false, user: trigger.author ?? null } }
+            : {}
+      },
       vars: trigger.vars ?? {},
       needs: Object.fromEntries(
         needed(name).map(each => [each, { result: resultOf(each), outputs: outputs(each) }])
@@ -111,7 +119,8 @@ export function jobResults(workflow: Workflow, trigger: Trigger): Record<string,
       success: () => earlier.every(result => result === 'success'),
       failure: () => earlier.includes('failure'),
       cancelled: () => false,
-      contains: (list, item) => Array.isArray(list) && list.includes(item)
+      contains: (list, item) => Array.isArray(list) && list.includes(item),
+      fromJSON: text => JSON.parse(String(text)) as Value
     }
     const condition = job.if ?? 'success()'
     const starts = holds(

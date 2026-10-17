@@ -1,13 +1,15 @@
 # Claude's workflows
 
 Three workflows run Claude in GitHub Actions: it reviews every pull request, answers `@claude`,
-and gardens the docs and the code each week. Every workflow and what starts it is in
-[`ci.md`](ci.md). Change a workflow's section in the same pull request as the workflow.
+and gardens the docs and the code each week. Agents outside CI act as `serp-agent[bot]` (Outside
+CI, below). Every workflow and what starts it is in [`ci.md`](ci.md). Change a workflow's section
+in the same pull request as the workflow.
 
 ## Code review
 
 `.github/workflows/code-review.yml` has Claude review every push to a pull request that isn't a
-draft or opened by a bot, with the repository's `pr-review` skill
+draft or opened by `claude[bot]`, `dependabot[bot]`, or `renovate[bot]`, with the repository's
+`pr-review` skill
 (`.claude/skills/pr-review/SKILL.md`): three reviewers in parallel (bugs; rules; and the issue,
 tests, and docs) read the issue the pull request closes and every changed file. Each new finding
 is an inline comment marked blocking or suggestion, and one summary comment, updated on every
@@ -35,6 +37,11 @@ change to it are in [`ci-review.md`](ci-review.md).
   merging until it's fixed or answered and resolved. A finding can be answered with an `@claude`
   request in its thread (@claude requests, below). Making merges wait for the check is a branch
   rule the owners decide.
+- **An agent's pull request is reviewed.** Agents open pull requests and push as
+  `serp-agent[bot]` (Outside CI, below), so the job names the bots it skips rather than skip every
+  bot, and the action's `allowed_bots` lets `serp-agent[bot]` and GitHub's Copilot coding agent
+  (`Copilot`) start Claude as well as `claude[bot]`, whose `@claude` fixes push to the pull request
+  (`tools/checks/src/workflows.test.ts`, `code-review.test.ts`).
 
 It runs with the `CLAUDE_CODE_OAUTH_TOKEN` repository secret, which is set; without it the job
 only notes that it skipped (Claude's app and token, below).
@@ -43,7 +50,8 @@ only notes that it skipped (Claude's app and token, below).
 
 `.github/workflows/claude.yml` answers `@claude` in an issue, a pull request comment, a review,
 or a review comment, from the repository's owners, members, and collaborators, and never from a
-bot, so Claude's own comments can't start it again. The repository is public, so the job checks
+bot, so Claude's own comments can't start it again. That includes `serp-agent[bot]`: an `@claude`
+an agent posts isn't answered, so a person asks. The repository is public, so the job checks
 the commenter's association before it does anything: otherwise a stranger's `@claude` on their
 own fork's pull request would check out and install that pull request with the job's tokens.
 It also skips, with a notice, a pull request whose branch is in a fork, whoever asks: checking it
@@ -131,8 +139,8 @@ during the run, "No doc drift found", or an open one left alone. Code gardening'
 pull request opened, or "Nothing to garden"; a second pull request fails it. Both fail when Claude
 left no log, ended in an error or with subagents running, or reached no outcome, and a denied tool
 only warns when Claude got there anyway, since it often retries a refused command another way
-(`tools/checks/src/agents/maintenance-workflow.test.ts`). A bot opens their pull requests, so
-`Code review` skips them: skim each and merge it.
+(`tools/checks/src/agents/maintenance-workflow.test.ts`). `claude[bot]` opens their pull
+requests, so `Code review` and the `Pull request` checks skip them: skim each and merge it.
 
 Work the issue in small pull requests, one item each:
 
@@ -172,3 +180,25 @@ says to renew the token; when the step failed before Claude ran, it says to read
 `gh secret set CLAUDE_CODE_OAUTH_TOKEN --repo serpcompany/zenbujapanese-monorepo` and paste the
 token, then re-run a pull request's `review` job to confirm it.
 
+## Outside CI
+
+An agent on a person's machine acts on GitHub as the organization's GitHub App, `serp-agent`,
+which posts as `serp-agent[bot]`, never as a person: `gh` keeps one active account for every
+session on the machine, and a person's account that GitHub hides takes everything it posted out
+of everyone else's sight. SERP's
+[Agent GitHub Identity](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/agent-harness/agent-github-identity.md)
+standard says why, and its `serp-github-app` skill holds the scripts.
+
+- **Each command that reaches GitHub names the bot** in the same shell command:
+  `eval "$(bash ~/dev/repos/serp/skills/serp-github-app/scripts/env.sh)" && <command>`, for `gh`,
+  `git push`, and a commit that will be pushed. It sets the app's token, and the bot as author and
+  committer, for that shell only, so each new shell needs the line again.
+- **Nothing changes the machine's sign-in:** never `gh auth switch`, `gh auth login`,
+  `gh auth setup-git`, or `git config --global`.
+- **When the line prints `false`,** the command after `&&` doesn't run: stop and tell the owner
+  rather than fall back to a person's account.
+- **Its pull requests get every check.** The `Pull request` jobs and Code review skip only
+  `claude[bot]`, `dependabot[bot]`, and `renovate[bot]` (Code review, above, and
+  [`ci.md`](ci.md), Pull request). An `@claude` it posts isn't answered (@claude requests, above).
+- **What the app can't do stays with a person:** approving and merging (`AGENTS.md`), settings,
+  and secrets.
