@@ -964,7 +964,7 @@ window.
 yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#691),
 Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
 (`/register/`) in a build whose account pages are closed, the App Store (the Get the app on the
-product page and on the catalog's iPhone app card), the ten social accounts, and See all videos
+product page and on the catalog's iPhone app card), and See all videos
 (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for iPhone and All
 products now open their pages, `/products/zenbu-japanese-app/` and `/products/`
 ([Products pages](products.md)), from the same entries, as do All free tools, Free tools, and All
@@ -1049,19 +1049,19 @@ than the page in dark mode, after a rule, so the page, the homepage's closing ca
 read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in both themes
 (Theme, above). It has no theme toggle. It starts with the logo and the site name, linking home, and
 the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
-Dictionary, and, where the account pages are open, Sign in, or Account once signed in: [Account
-pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools), Company
-(About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
+Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
+[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
+Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
 Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
 one column. Below them, after a rule, a row of plain social icons with no boxes, each named "Zenbu
-Japanese on" its network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky,
-LinkedIn, and Facebook, in one row at every width. On phones the ten share the row evenly, each an
-18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a 360-pixel phone
-without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel target. Each is
-the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths (CC0), and for
-LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's brand downloads
-(`components/social-links.tsx`). The copyright line and Sitemap end it. The legal index (`/legal/`)
-is in the Company menu rather than the footer.
+Japanese on" its network and opening the account: YouTube, GitHub, X, Facebook, Reddit, Instagram,
+TikTok, LinkedIn, and Medium, in one row at every width. On phones the nine share the row evenly,
+each an 18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a
+360-pixel phone without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel
+target. Each is the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths
+(CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's
+brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
+index (`/legal/`) is in the Company menu rather than the footer.
 
 - Source: #648 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
   and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
@@ -1070,11 +1070,11 @@ is in the Company menu rather than the footer.
   `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
   from 768 pixels", "the footer leads with the brand linking home and its tagline", "one row of plain
-  brand icons, all ten on phones, links each account in src/lib/site.ts", and "the footer ends
+  brand icons, all nine on phones, links each account in src/lib/site.ts", and "the footer ends
   with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
   under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
   lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows
-  all ten social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
+  all nine social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
   phones); smoke "the footer links the Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
