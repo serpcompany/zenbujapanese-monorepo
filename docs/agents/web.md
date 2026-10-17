@@ -621,13 +621,13 @@ Each value that differs by environment lives where the code that reads it runs:
 (`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
 host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
 structured data URL is written on; local development writes production's. A build whose `SITE_ENV`
-isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
-`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
-disallows everything. Analytics load only in production and only when their build-time IDs are set:
-`NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
-`Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one tag,
-a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+isn't `production` sends workers.dev to staging (`next.config.ts`). Production is indexable, staging
+asks for a password ([`staging-access.md`](staging-access.md)), and a local build is `noindex`, with
+a `robots.txt` that disallows all. Analytics load only in production and only when their build-time
+IDs are set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable
+that the `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN`
+(Cloudflare Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`,
+holds one tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
 [Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
 added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
@@ -689,7 +689,7 @@ Sitemaps follow the SERP [XML sitemaps](https://github.com/serpcompany/serp/blob
 standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, rendered per request:
 
 - `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
-  staging, which disallows crawling: site audits such as Ahrefs find sitemaps through it.
+  staging, which disallows crawling but to `AhrefsSiteAudit`: site audits find sitemaps through it.
 - `/sitemap-index.xml` is the index. `/sitemap.xml`, where crawlers and site audits look by
   default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
   each child sitemap, never another index.

@@ -431,24 +431,9 @@ eventually "a search that finds nothing is noindex, and a kanji's search is inde
   'noindex is wrong on the searches for qzxvkj or 見' search_indexing_follows_results
 fi
 
-robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
-robots() { body /robots.txt; }
-lists_index() { grep -qxF "Sitemap: $canonical/sitemap-index.xml" <<<"$(robots)"; }
-eventually 'robots.txt lists the sitemap index' 'robots.txt is missing the sitemap index' lists_index
-
-if [ "$env" = production ]; then
-  for path in / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemap-words.xml; do
-    has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
-    eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag
-  done
-  allows_crawling() { grep -q '^Allow: /$' <<<"$(robots)"; }
-  eventually 'robots.txt allows crawling' 'robots.txt does not allow crawling' allows_crawling
-else
-  disallows_crawling() { grep -q '^Disallow: /$' <<<"$(robots)"; }
-  eventually 'robots.txt disallows crawling' 'robots.txt allows crawling' disallows_crawling
-  sends_noindex() { grep -qi 'noindex' <<<"$(robots_tag /)"; }
-  eventually 'X-Robots-Tag noindex' 'missing X-Robots-Tag noindex' sends_noindex
-fi
+. "$(dirname "${BASH_SOURCE[0]}")/smoke-indexing.sh"
+check_indexing "$base" "$env" "$canonical" \
+  / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemap-words.xml
 
 if [[ "$base" == *.workers.dev ]]; then
   for path in /legal/terms/ /legal/terms; do

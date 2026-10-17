@@ -103,12 +103,16 @@ export function isProductionSite() {
   return process.env.SITE_ENV === 'production'
 }
 
+export function isStagingSite() {
+  return process.env.SITE_ENV === 'staging'
+}
+
 export function isDeployedSite() {
-  return process.env.SITE_ENV === 'staging' || process.env.SITE_ENV === 'production'
+  return isStagingSite() || isProductionSite()
 }
 
 export function siteOrigin(): string {
-  return process.env.SITE_ENV === 'staging' ? stagingOrigin : productionOrigin
+  return isStagingSite() ? stagingOrigin : productionOrigin
 }
 
 export function servedOrigin(request: Request) {
