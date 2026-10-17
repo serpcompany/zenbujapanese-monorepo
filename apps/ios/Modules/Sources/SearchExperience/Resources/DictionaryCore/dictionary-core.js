@@ -3063,12 +3063,14 @@
         title: list.name,
         kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
           const entry = entries.get(character);
+          const base = character.normalize("NFKC");
+          const readings = spokenReadings(entry);
           return {
             character,
-            base: character.normalize("NFKC"),
+            base,
             meaning,
             meanings: (entry ? shownMeanings(kanji2, entry) : []).map((each) => each.toLowerCase()),
-            readings: spokenReadings(entry)
+            readings: readings.length > 0 || base === character ? readings : spokenReadings(entries.get(base))
           };
         })
       }));

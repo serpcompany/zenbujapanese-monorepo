@@ -83,12 +83,15 @@ export class SchoolKanji {
       title: list.name,
       kanji: (kanjiListResponse(kanji, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
         const entry = entries.get(character)
+        const base = character.normalize('NFKC')
+        const readings = spokenReadings(entry)
         return {
           character,
-          base: character.normalize('NFKC'),
+          base,
           meaning,
           meanings: (entry ? shownMeanings(kanji, entry) : []).map(each => each.toLowerCase()),
-          readings: spokenReadings(entry)
+          readings:
+            readings.length > 0 || base === character ? readings : spokenReadings(entries.get(base))
         }
       })
     }))

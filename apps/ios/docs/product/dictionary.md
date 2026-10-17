@@ -115,9 +115,9 @@ the shared core, offline.
   learner closed.
 - **Tiles.** A tile shows the kanji with a short meaning under it, unless **Show Kanji Meanings** in
   Account → Reading Aids is off (it's on until then). Tapping a tile adds its kanji to the end of
-  the query, as a radical candidate does, and the panel closes. Grade has no **Undo**. Each of
-  Jinmeiyō's 57 compatibility kanji, such as 猪 at U+FA16 beside U+732A, is its own tile; one with no
-  meaning shows its ordinary form's, and the filter finds it by either form or that meaning.
+  the query, as a radical candidate does, and the panel closes. Grade has no **Undo**. Jinmeiyō's
+  compatibility kanji (猪 at U+FA16 beside U+732A) are tiles of their own that search their ordinary
+  form and borrow its missing meaning or readings; the filter finds one by either form.
 - **Filter.** Where Radicals has its strip, Grade has a filter field. An English meaning, a
   reading in kana, or the kanji itself narrows every grade at once: a grade with matches opens
   and counts them, as **1 of 80**, and the rest are hidden. Each change returns the list to the
@@ -133,9 +133,9 @@ searched, and its kanji detail opened), `testMarkingAKanjiKnownOutlinesItsTileAn
 sections too), `testTurningOffKanjiMeaningsLeavesTheKanjiAlone`, and
 `testBothFormsOfACompatibilityKanjiAreTiles`; package `SchoolKanjiTests` (each list against the
 bundled KANJIDIC2 grades by code point, the filter, compatibility kanji, known counts, remembered
-sections, and Kanji Meanings on by default) and `PanelTileTests` (five tiles a row, three at
-accessibility sizes); core `browse/school-kanji.test.ts` (the lists as the website's
-`kanjiListResponse` answers them, and compatibility kanji).
+sections, and Kanji Meanings on by default) and `PanelTileTests` (the columns); core
+`browse/school-kanji.test.ts` (the lists as the website's `kanjiListResponse` answers them, and
+compatibility kanji).
 
 ### Results
 

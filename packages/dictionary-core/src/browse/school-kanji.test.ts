@@ -54,7 +54,7 @@ const withCompatibilityKanji = new SchoolKanji(
       ...file.entries,
       kanji('\u{732A}', 9, 1684, 'boar', 'チョ いのしし'),
       kanji('\u{FA16}', 9, null, 'pig', 'チョ'),
-      kanji('\u{FA45}', 9, null, '', 'カイ')
+      kanji('\u{FA45}', 9, null, '')
     ]
   })
 )
@@ -135,6 +135,16 @@ describe('the school kanji the app’s Grade panel lists', () => {
     ])
     expect(shownWithCompatibilityKanji('pig')).toEqual([['jinmeiyo', '1 of 4', '\u{FA16}']])
     expect(shownWithCompatibilityKanji('boar')).toEqual([['jinmeiyo', '1 of 4', '\u{732A}']])
+  })
+
+  test('finds a compatibility kanji with no readings of its own by its ordinary form’s', () => {
+    expect(shownWithCompatibilityKanji('うみ')).toEqual([
+      ['grade-2', '1 of 1', '海'],
+      ['jinmeiyo', '1 of 4', '\u{FA45}']
+    ])
+    expect(shownWithCompatibilityKanji('チョ')).toEqual([
+      ['jinmeiyo', '2 of 4', '\u{732A}\u{FA16}']
+    ])
   })
 
   test('marks the known kanji and counts them in each grade’s header', () => {
