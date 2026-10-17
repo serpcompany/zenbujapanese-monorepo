@@ -144,13 +144,16 @@ struct LiveConversationTests {
     #expect(harness.session.silencePromptDeadline == nil)
     await harness.pause(for: 1)
     #expect(harness.session.silencePromptDeadline == harness.time.now.addingTimeInterval(10))
+    #expect(harness.session.timeBeforeSilencePause == 10)
 
     await harness.pause(for: 9.9)
     #expect(harness.session.status == .live)
+    #expect(abs((harness.session.timeBeforeSilencePause ?? 0) - 0.1) < 0.001)
     await harness.pause(for: 0.1)
 
     #expect(harness.session.status == .paused(.silence))
     #expect(harness.session.silencePromptDeadline == nil)
+    #expect(harness.session.timeBeforeSilencePause == nil)
     #expect(harness.transcription.stopCount == 1)
     #expect(harness.playback.stopCount == 1)
   }
@@ -217,6 +220,7 @@ struct LiveConversationTests {
     harness.time.advance(5)
 
     #expect(harness.session.elapsed(at: harness.time.now) == 25)
+    #expect(harness.session.elapsedSoFar == 25)
   }
 
   @Test("each translated sentence is saved, and Exit Without Saving deletes the draft")

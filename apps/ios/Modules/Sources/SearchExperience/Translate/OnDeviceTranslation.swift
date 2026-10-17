@@ -146,6 +146,7 @@ struct TranslateServices: Sendable {
   var speechNeedsDownload: @Sendable ([SpokenLanguage]) async throws -> Bool
   var installSpeech: @Sendable ([SpokenLanguage], @escaping @Sendable (Double) -> Void) async throws -> Void
   var timing = ConversationTiming.standard
+  var now: @Sendable () -> Date = Date.init
   var setSpeechSpeed: @MainActor (Double) -> Void = { _ in }
 
   static let onDevice = TranslateServices(
