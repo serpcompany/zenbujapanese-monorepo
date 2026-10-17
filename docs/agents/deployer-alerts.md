@@ -178,6 +178,13 @@ the server:
   Mac lacks four of them (`flock`, `timeout`, and GNU `base64` and `xargs`), and gets small
   stand-ins for those.
 
+The stand-in for Docker writes its answer a line at a time, where the Docker CLI writes a short
+one at once, and the script doesn't depend on either. It reads the whole of an answer it searches
+before `grep` looks in it (`lists`, and `digest_reference_of`). Piped straight into
+`grep --quiet`, which stops reading at its match, Docker's next write would die of SIGPIPE, and
+`pipefail` would fail a check that found its line. A test gives it answers longer than a pipe
+holds, with the line it looks for first.
+
 They cover each deploy path, each refusal with its message, the settings file and its switches,
 what a message may hold, a send that fails, the memory, and a run cut short or failing in the
 script. The script needs bash 4.4 or later, which a Mac doesn't ship (`/bin/bash` is 3.2): there

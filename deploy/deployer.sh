@@ -149,8 +149,8 @@ release_of() {
 }
 
 digest_reference_of() {
-  docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$1" |
-    grep --max-count 1 "^$repository@sha256:[0-9a-f]\{64\}$"
+  grep --max-count 1 "^$repository@sha256:[0-9a-f]\{64\}$" \
+    <<<"$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$1")"
 }
 
 signed_on_main() {
@@ -158,24 +158,26 @@ signed_on_main() {
     --certificate-oidc-issuer "$signer_issuer" "$1" >/dev/null 2>&1
 }
 
+lists() {
+  grep --quiet --line-regexp --fixed-strings "$2" <<<"$1"
+}
+
 network_ready() {
   local private
   [ "$(docker network inspect --format '{{.Internal}}' "$network" 2>/dev/null)" = "$network_internal" ] &&
-    docker network inspect --format '{{range .Containers}}{{.Name}}{{println}}{{end}}' "$network" |
-    grep --quiet --line-regexp --fixed-strings "$nginx_container" || return 1
+    lists "$(docker network inspect --format '{{range .Containers}}{{.Name}}{{println}}{{end}}' "$network")" "$nginx_container" ||
+    return 1
   for private in "${private_networks[@]}"; do
     [ "$(docker network inspect --format '{{.Internal}}' "$private" 2>/dev/null)" = true ] || return 1
   done
 }
 
 on_network() {
-  docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$1" 2>/dev/null |
-    grep --quiet --line-regexp --fixed-strings "$network"
+  lists "$(docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}' "$1" 2>/dev/null)" "$network"
 }
 
 has_alias() {
-  docker inspect --format "{{range (index .NetworkSettings.Networks \"$network\").Aliases}}{{println .}}{{end}}" "$1" 2>/dev/null |
-    grep --quiet --line-regexp --fixed-strings "$2"
+  lists "$(docker inspect --format "{{range (index .NetworkSettings.Networks \"$network\").Aliases}}{{println .}}{{end}}" "$1" 2>/dev/null)" "$2"
 }
 
 give_alias() {
