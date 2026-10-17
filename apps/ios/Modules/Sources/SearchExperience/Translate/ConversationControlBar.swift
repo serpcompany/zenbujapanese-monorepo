@@ -19,7 +19,6 @@ struct ConversationControlBar: View {
     .padding(.top, 8)
     .padding(.bottom, 4)
     .accessibilityElement(children: .contain)
-    .accessibilityLabel("Conversation controls")
     .accessibilityIdentifier("translate.session")
   }
 
