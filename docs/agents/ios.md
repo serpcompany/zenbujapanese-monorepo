@@ -599,8 +599,8 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
   page's model takes well under a millisecond and is needed while a view is being built, so
   `PresentationCore` is synchronous and never waits behind the other two. Its slowest answers
-  are the radical panel's, which a tap asks for, not a redraw: about 11 ms to open, when the
-  core reads and checks the radical file, and about 2 ms a pick.
+  are the input panels', which a tap asks for, not a redraw: Grade's first, about 75 ms to read
+  the kanji file and build its lists, then 1 to 3 ms a filter; Radicals', 11 ms, then 2 ms a pick.
 - **One engine each, kept.** A context lives as long as its owner. Each call into it runs in an
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to
@@ -672,7 +672,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
   each query's uncached time, how long linking, a video's known-word count, and an abandoned search
   take, how long the presentation engine takes to start and to build each screen, how long the
-  frequency lists take to be ready, how long romaji, the radical panel, a stroke diagram, and the
+  frequency lists take to be ready, how long romaji, the input panels, a stroke diagram, and the
   kanji check take, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
@@ -1210,11 +1210,11 @@ When changing Search's top bar or the shared field in `SearchField.swift`, also 
   the field; and
 - Player's field looks and behaves the same.
 
-When changing the Handwriting or Radicals panels (`SearchInputPanel.swift`,
-`HandwritingInputView.swift`, `RadicalInputView.swift`), also check, in light and dark and at an
-accessibility text size:
+When changing the input panels (`SearchInputPanel.swift`, `SectionedTilePanel.swift`,
+`HandwritingInputView.swift`, `RadicalInputView.swift`, `GradeInputView.swift`), also check, in
+light and dark and at an accessibility text size:
 
-- the pencil and grid buttons show at the bottom left on Recent, on results, and above the
+- the pencil, grid, and cap buttons show at the bottom left on Recent, on results, and above the
   keyboard, and each opens its panel over the field and the tab bar, with the same buttons at
   its bottom left (the current one highlighted) and a grabber at the top;
 - drawing 十 shows candidate tiles with meanings, three rows deep, **Undo** leaves 一's
@@ -1223,8 +1223,8 @@ accessibility text size:
   selecting 子 then **Undo** leaves only 女 selected, and picking 好 closes the panel and shows its
   results;
 - handwriting 十, handwriting 一, then radicals 女 → 好 builds 十一好 in the field; and
-- dragging the grabber down closes the panel, and a downward stroke on the pad draws instead of
-  dragging.
+- dragging the grabber down closes the panel, a downward stroke on the pad draws, and in Grade a
+  known kanji's green outline shows in dark mode, with each meaning on one line at every size.
 
 ## Image Search manual checks
 

@@ -1,5 +1,15 @@
 import { jlptKanjiLists, joyoGrades, type KanjiList, kanjiList, schoolLists } from '../browse/lists'
-import type { KanjiData, KanjiReferenceEntry } from './kanji-data'
+import type { KanjiReferenceEntry, KanjiReferenceFile } from './kanji-data'
+
+export interface KanjiEntries {
+  entries(): KanjiReferenceEntry[]
+  row(character: string): { meanings: string[] } | null
+}
+
+export function kanjiEntries(file: KanjiReferenceFile): KanjiEntries {
+  const byCharacter = new Map(file.entries.map(entry => [entry.character, entry]))
+  return { entries: () => file.entries, row: character => byCharacter.get(character) ?? null }
+}
 
 export interface KanjiItem {
   character: string
@@ -31,13 +41,13 @@ const listed = (entry: KanjiReferenceEntry, list: KanjiList) =>
   (list.strokes === undefined || entry.strokeCount === list.strokes) &&
   (list.jlptLevel === undefined || entry.wallerJlptLevel === list.jlptLevel)
 
-const kanjiIn = (kanji: KanjiData, list: KanjiList) =>
+const kanjiIn = (kanji: KanjiEntries, list: KanjiList) =>
   kanji
     .entries()
     .filter(entry => listed(entry, list))
     .sort(byFrequency)
 
-export function kanjiHub(kanji: KanjiData): KanjiHubResponse {
+export function kanjiHub(kanji: KanjiEntries): KanjiHubResponse {
   const lists = schoolLists.map(list => ({
     slug: list.slug,
     characters: kanjiIn(kanji, list).map(entry => entry.character)
@@ -62,14 +72,14 @@ export function kanjiHub(kanji: KanjiData): KanjiHubResponse {
   return { lists, jlpt, strokes }
 }
 
-function firstMeaning(kanji: KanjiData, entry: KanjiReferenceEntry): string {
+function firstMeaning(kanji: KanjiEntries, entry: KanjiReferenceEntry): string {
   const [own] = entry.meanings
   if (own !== undefined) return own
   const base = entry.character.normalize('NFKC')
   return (base === entry.character ? undefined : kanji.row(base)?.meanings[0]) ?? ''
 }
 
-export function kanjiListResponse(kanji: KanjiData, slug: string): KanjiListResponse | null {
+export function kanjiListResponse(kanji: KanjiEntries, slug: string): KanjiListResponse | null {
   const list = kanjiList(slug)
   const entries = list ? kanjiIn(kanji, list) : []
   if (entries.length === 0) return null

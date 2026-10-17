@@ -56,7 +56,7 @@ final class SearchUITests: ZenbuUITestCase {
     tap(searchField(in: app))
     assertOnScreen(close, in: app)
     let keyboard = app.keyboards.firstMatch
-    for input in ["handwriting", "radicals"] {
+    for input in ["handwriting", "radicals", "grade"] {
       let button = find("search.input.\(input)", in: app)
       assertOnScreen(button, in: app)
       if keyboard.exists {
@@ -71,7 +71,7 @@ final class SearchUITests: ZenbuUITestCase {
     let app = launch()
     search("japan", in: app)
     XCTAssertEqual(searchField(in: app).value as? String, "japan", "the field keeps the query")
-    for input in ["handwriting", "radicals"] {
+    for input in ["handwriting", "radicals", "grade"] {
       assertOnScreen(find("search.input.\(input)", in: app), in: app)
     }
     returnToRecentSearches(in: app)

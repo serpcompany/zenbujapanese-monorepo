@@ -11,9 +11,7 @@ Macs with Apple silicon and macOS 26, as one app with one App Store record
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
-  from the **Sorted by** row at their top
-  ([Sorting results](dictionary.md#sorting-results),
-  [Filtering results](dictionary.md#filtering-results)).
+  from the **Sorted by** row at their top ([Sorting and filtering results](results.md)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
   ([Image Search](translate.md#image-search)).
@@ -141,7 +139,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Search on iPad and the Mac.** On iPad the tabs and the title bar stay above the search field
   while you type and beside the results, where the iPhone slides its title away, and there's no
   **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
-  empties it and returns to Recent. On the Mac, Handwriting and Radicals open as a sheet of a
+  empties it and returns to Recent. On the Mac, the input panels open as a sheet of a
   fixed size with a **Done** button, which Escape presses too, since a Mac can't drag a sheet
   away.
   Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and
@@ -217,9 +215,10 @@ It provides:
 - **Translations**, with how many conversations Translate has saved, which opens the same
   **Translations** screen as the Translate tab;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
-  meaning under each linked word the learner hasn't marked known); and Sentence Translations,
-  with a translation language (English so far) and who translates Player captions — YouTube, or
-  Apple Translation on the device, which Reading Aids offers to download;
+  meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
+  kanji in Search's Grade panel); and Sentence Translations, with a translation language (English
+  so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
+  Reading Aids offers to download;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
   open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
@@ -286,7 +285,7 @@ for each of the seven optional ones). Downloading an optional pack needs the net
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
-from Search's **Sorted by** row ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
+from Search's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. Several packs can download at
