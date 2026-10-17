@@ -29,7 +29,8 @@ other entry of 閻魔 moves to the one its page shows).
 anywhere in its text lists its word, or its kanji, in a group of its own, **In your notes**, after
 the Dictionary Matches. The note is read as Search reads a query: width, case, and a halfwidth
 kana with its voiced mark are folded, and white space of any kind is one space, so `squish` finds
-"To ＳＱＵＩＳＨ"; hiragana and katakana stay apart, as they do in a query. Each row shows the
+"To ＳＱＵＩＳＨ". Hiragana and katakana are not folded together, just as Search doesn't fold them
+in a query: `がっこう` doesn't find a note that says ガッコウ. Each row shows the
 word with its reading and the part of the note that matched, in bold, with up to 20 characters
 before it and the note cut to 80 around it, at a space where there is one; where how a letter
 folds depends on its word (a Greek word's last Σ), the whole word is in bold. A note that is the
