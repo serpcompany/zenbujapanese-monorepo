@@ -4,6 +4,8 @@ import Foundation
   final class StandInAccountService: URLProtocol {
     static let email = "learner@example.com"
     static let sessionToken = "stand-in-session.signed"
+    static let name = "Kana Fan"
+    static let username = "kana_fan"
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -36,6 +38,8 @@ import Foundation
         (200, [["providerId": "apple", "accountId": "stand-in"]], [:])
       case "POST /v1/sync":
         (200, sync(body), [:])
+      case "GET /v1/me":
+        (200, profile, [:])
       case "DELETE /v1/me":
         (200, ["status": "deleted"], [:])
       default:
@@ -51,6 +55,14 @@ import Foundation
           "image": NSNull(), "createdAt": "2026-10-09T00:00:00.000Z",
           "updatedAt": "2026-10-09T00:00:00.000Z",
         ],
+      ]
+    }
+
+    private static var profile: [String: Any] {
+      [
+        "id": "stand-in-learner", "name": name, "username": username, "email": email,
+        "version": 1, "createdAt": "2026-10-09T00:00:00.000Z",
+        "updatedAt": "2026-10-09T00:00:00.000Z",
       ]
     }
 

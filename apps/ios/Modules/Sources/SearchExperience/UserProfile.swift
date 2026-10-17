@@ -12,21 +12,22 @@ final class UserProfile {
     let email: String
   }
 
+  static let shared = UserProfile()
   private static let storageKey = "user-profile.v1"
   private nonisolated static let photoDimension: CGFloat = 512
   private let defaults: UserDefaults
   private let photoURL: URL
 
-  var name = "" {
-    didSet { persist() }
-  }
-  var username = "" {
-    didSet { persist() }
-  }
+  private(set) var name = ""
+  private(set) var username = ""
   var email = "" {
     didSet { persist() }
   }
   private(set) var photo: CGImage?
+  var refusal: ProfileRefusal?
+  @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
+
+  var fields: ProfileFields { ProfileFields(name: name, username: username) }
 
   var isEmpty: Bool {
     name.isEmpty && username.isEmpty && email.isEmpty && photo == nil
@@ -53,6 +54,26 @@ final class UserProfile {
     email = stored.email
   }
 
+  func edit(_ edited: ProfileFields) {
+    let previous = fields.limited(to: edited)
+    guard edited != previous else { return }
+    write(edited)
+    refusal = nil
+    let uploadable = edited.uploadable
+    guard !uploadable.isEmpty else { return }
+    changeObserver?(.profileEdited(uploadable, previous: previous.limited(to: uploadable)))
+  }
+
+  func applySynced(_ synced: ProfileFields) {
+    write(synced)
+  }
+
+  private func write(_ edited: ProfileFields) {
+    if let name = edited.name { self.name = name }
+    if let username = edited.username { self.username = username }
+    persist()
+  }
+
   func setPhoto(_ data: Data) async {
     let url = photoURL
     let scaled = await Task.detached(priority: .userInitiated) { () -> CGImage? in
@@ -75,6 +96,23 @@ final class UserProfile {
   }
 
   nonisolated static let usernameLengths = 3...30
+  nonisolated static let accountNameLengths = 1...100
+
+  nonisolated static let accountNameRule =
+    "Your Zenbu account needs a name of \(accountNameLengths.lowerBound) to \(accountNameLengths.upperBound) characters, with no control characters."
+
+  private nonisolated static let refusedInAName: Set<Unicode.GeneralCategory> = [
+    .control, .format, .surrogate,
+  ]
+
+  nonisolated static func isAccountName(_ name: String) -> Bool {
+    let words = name.precomposedStringWithCanonicalMapping.split {
+      $0.isWhitespace && $0 != Character(nextLine)
+    }
+    let scalars = words.joined(separator: " ").unicodeScalars
+    return accountNameLengths.contains(scalars.count)
+      && !scalars.contains { refusedInAName.contains($0.properties.generalCategory) }
+  }
 
   nonisolated static let usernameRule =
     "A username is \(usernameLengths.lowerBound) to \(usernameLengths.upperBound) letters a to z, digits, or underscores."
