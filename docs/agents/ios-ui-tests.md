@@ -47,8 +47,8 @@ what it waited for and for how long.
   each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
   `tools/checks/src/waits.ts`, which says what each proves; a new pause goes there and in this list.
 - **Repeat a gesture only while its effect hasn't shown,** and stop as soon as it has: `open`,
-  `press`, `tap(_:toShow:)`, `focus`, `choose`, and `pause` tap again only after a wait for what
-  the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
+  `press`, `tap(_:toShow:)`, `focus`, `choose`, `pause`, and `resume` tap again only after a wait
+  for what the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
   early, so write such a loop with a `break`.
 - **Never assert how long something took.** A busy Mac makes everything slow, so a time limit fails
   for the machine as often as for the app. Count what the app did instead: the Player test reads how
@@ -89,11 +89,13 @@ what it waited for and for how long.
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
 heard is on screen as the live card (`translate.live`) for only a second or so, so the tests
-wait for what stays: a finished sentence card, the prompt, or the controls. A paused line is
-heard again from its start on resuming, so the mid-sentence pause test waits for each paused
-line to be heard to its end before it pauses again. The harness's silence prompt counts down for
-two minutes, longer than the tests' 90-second patience, so tapping **Keep Listening** never races
-it.
+wait for what stays: a finished sentence card, the prompt, or the controls. A test that needs a
+passing state, a line half heard, a turn's audio waiting, or a translation playing, holds the
+script (`HeldConversationUITests`): the state stays until the test posts the notice to go on, so
+nothing depends on how fast the Mac is. The silence tests start on a silent script and post the
+notice that moves the harness's clock two minutes ahead, past the 20 s of silence and then past the
+prompt's countdown, so they wait for no real time; the countdown is longer than the tests'
+90-second patience, so tapping **Keep Listening** never races it.
 
 A test that starts failing after a wait got faster was passing by luck: it read or tapped
 something a moment before it was ready, and the second XCUITest used to add hid that. Find what

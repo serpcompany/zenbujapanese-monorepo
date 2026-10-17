@@ -158,6 +158,24 @@ extension ZenbuUITestCase {
     waitUntilGone(sheet("recognized-word-sheet", in: app))
   }
 
+  func assertSheetPlacement(
+    _ sheet: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+  ) {
+    let window = app.windows.firstMatch.frame
+    let frame = sheet.frame
+    switch device {
+    case .phone:
+      XCTAssertGreaterThan(
+        frame.minY, window.height * 0.3, "the iPhone opens it at half height", file: file, line: line)
+    case .pad:
+      XCTAssertLessThan(
+        frame.width, window.width, "the iPad opens it as a centered sheet", file: file, line: line)
+      XCTAssertEqual(frame.midX, window.midX, accuracy: 4, file: file, line: line)
+    case .mac:
+      XCTAssertTrue(window.contains(frame), "the Mac opens it over the window", file: file, line: line)
+    }
+  }
+
   func inWordSheet(_ identifier: String, in app: XCUIApplication) -> XCUIElement {
     let sheet = waitForSheet("recognized-word-sheet", in: app)
     waitFor(find("word-detail.screen", in: app))

@@ -424,8 +424,8 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
   accented in each sentence), and renders nine example-search cases: the count line, every pair
   ID in order, loading each whole list as the page does, and the first sentences' words and marks.
 - `components/dictionary/word-page.test.tsx` and `conjugations.test.tsx` draw every word-detail
-  case: the per-kanji furigana split, the pitch graph's points, each Frequency row's details, and
-  the conjugation table and each form's page, form by form, with the form's first examples.
+  case: the per-kanji furigana split, the pitch graph, each Frequency row's details, the first 25
+  examples and their marked words, the conjugation table, and each form's page and first examples.
 
 `pnpm test` skips the gate. To run it, start the service and point the tests at it:
 

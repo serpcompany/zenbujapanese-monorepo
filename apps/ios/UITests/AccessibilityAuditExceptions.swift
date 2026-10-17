@@ -238,8 +238,8 @@ private let clocks = [
     .dynamicType, .labels(["0:00 / 0:12", "0:00 / 0:00"]),
     on: ["A video", "A video without Japanese captions", "A video its owner won't share"], because: Why.clock),
   allow(.dynamicType, .label("0:12"), on: ["Player's Recent"], because: Why.clock),
-  allow(.dynamicType, .identifier("translate.still-there"), on: ["The silence prompt"], because: Why.clock),
-  allow(.textClipped, .identifier("translate.still-there"), on: ["The silence prompt"], because: Why.clock),
+  allow(.dynamicType, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
+  allow(.textClipped, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
   allow(.textClipped, .unnamed(4), on: ["The silence prompt"], because: Why.scrolls),
 ]
 

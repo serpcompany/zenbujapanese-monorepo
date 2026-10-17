@@ -25,9 +25,9 @@ struct TranslateSessionChrome: ViewModifier {
   func body(content: Content) -> some View {
     withAccessory(content)
       .overlay {
-        if let session = experience.session, let deadline = session.silencePromptDeadline {
+        if let session = experience.session, session.silencePromptDeadline != nil {
           StillThereCard(
-            deadline: deadline,
+            timeLeft: { session.timeBeforeSilencePause ?? 0 },
             timing: session.timing,
             keepListening: { session.keepListening() },
             pause: { session.pause() }
@@ -112,7 +112,7 @@ private struct TranslationDownloadTask: View {
 
 private struct StillThereCard: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  let deadline: Date
+  let timeLeft: () -> TimeInterval
   let timing: ConversationTiming
   let keepListening: () -> Void
   let pause: () -> Void
@@ -122,14 +122,15 @@ private struct StillThereCard: View {
       Color.black.opacity(0.25)
         .ignoresSafeArea()
         .accessibilityHidden(true)
-      TimelineView(.periodic(from: .now, by: 0.25)) { context in
-        let remaining = max(0, deadline.timeIntervalSince(context.date))
+      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        let remaining = timeLeft()
         ViewThatFits(in: .vertical) {
           card(remaining: remaining)
           ScrollView { card(remaining: remaining) }
         }
       }
     }
+    .accessibilityElement(children: .contain)
     .accessibilityAddTraits(.isModal)
     .accessibilityIdentifier("translate.still-there")
   }
@@ -143,11 +144,13 @@ private struct StillThereCard: View {
         Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
       }
       .gaugeStyle(.accessoryCircularCapacity)
+      .accessibilityIdentifier("translate.still-there.countdown")
       .tint(.accentColor)
       .scaleEffect(1.3)
       .padding(8)
       Text("Are you still there?")
         .font(.headline)
+        .accessibilityIdentifier("translate.still-there.title")
       Text(
         "No one has spoken for \(timing.silenceBeforePromptLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
       )
@@ -155,6 +158,7 @@ private struct StillThereCard: View {
       .foregroundStyle(.secondary)
       .multilineTextAlignment(.center)
       .fixedSize(horizontal: false, vertical: true)
+      .accessibilityIdentifier("translate.still-there.message")
       buttons
     }
     .padding(24)

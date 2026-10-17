@@ -247,12 +247,12 @@ filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 
 A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
 related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
-information when the corresponding data is available. Examples for a word written in kana, such as
-それで or でも, are the sentences Tatoeba's word index links to that word, so a kana word inside a longer
-one (でも in いつでも) does not count. Other words match their written forms and reading.
+information when the corresponding data is available. A kana word's examples, such as それで or でも,
+are the sentences Tatoeba's word index links to it, so でも in いつでも does not count. Other words
+match their written forms and reading, in either width NFKC reads as one (Ｔシャツ and Tシャツ).
 
 Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
-`KanaHeadwordExampleTests`.
+`KanaHeadwordExampleTests`; core `artifact/example-retrieval.test.ts`.
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
