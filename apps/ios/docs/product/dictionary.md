@@ -335,8 +335,8 @@ Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked wo
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
 website gives it (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The
-link goes as a web link, beside the text, on every device. Where Zenbu is installed it opens the
-word in Zenbu ([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), and elsewhere the
+link goes as a web link beside the text, or on the Mac as the text's last line. With Zenbu it
+opens the word in Zenbu ([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), else the
 website. Beside Share is a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
 Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
 shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner

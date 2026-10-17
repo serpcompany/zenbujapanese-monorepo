@@ -231,8 +231,8 @@ extension SharedPage {
       title: character.rawValue, text: page?.shareText ?? character.rawValue, url: page?.shareURL)
   }
 
-  var sharedItems: [Any] {
-    [text] + (url.map { [$0] } ?? [])
+  var textWithLink: String {
+    [text, url?.absoluteString].compactMap { $0 }.joined(separator: "\n")
   }
 }
 

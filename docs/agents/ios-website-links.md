@@ -29,11 +29,12 @@ the entry number, while `kanjiPage` answers the kanji's search ([`dictionary-cor
 Detail). `SharedPage` in `SavedItemActions.swift` holds a page's title, text, and link, and
 `ShareButton` (`Platform/ShareButton.swift`) shares them. On iPhone and iPad it gives SwiftUI's
 `ShareLink` the `URL` as the item, the text as its message, and a preview titled with the page.
-On the Mac, `ShareLink` with a `URL` item opened no picker at all (checked on macOS 26 with the UI
-test build, where a text item did), so the Mac shows AppKit's `NSSharingServicePicker` with
-`SharedPage.sharedItems`, the text and then the URL, from the button. A page without a link, such
-as a kanji whose page hasn't loaded, shares its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
-back through `websiteRoute`, `sharingPickerItems` checks the Mac's two items, and
+On the Mac, `ShareLink` with a `URL` item opened no picker at all, and nor did AppKit's
+`NSSharingServicePicker` shown from the button, while `ShareLink` with a text item did (checked on
+macOS 26 with the UI test build). So the Mac shares one text, `SharedPage.textWithLink`: the
+page's text, then its link on a line of its own, which Mail, Messages, and Notes turn into a link.
+A page without a link, such as a kanji whose page hasn't loaded, shares its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
+back through `websiteRoute`, `macShareText` checks the Mac's text, and
 `WordDetailUITests.testShareOffersTheWordsWebLink` and `testShareOffersTheKanjisWebLink` open
 the share sheet on iPhone and iPad and find **Add to Reading List**, which iOS offers only for a
 web link, under a preview titled with the page (LinkPresentation's caption,
