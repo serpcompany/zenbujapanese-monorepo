@@ -162,7 +162,7 @@ the service, the core, what the services share (`packages/node-service/`), its A
 (`docs/api/dictionary-api.md`, which its tests write), the website's dictionary code
 (`apps/web/src/lib/dictionary/`, `apps/web/src/components/dictionary/`, `apps/web/src/test/`,
 `apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
-`tools/checks/ports.mjs`), the conformance suites (`apps/ios/LanguageData/Conformance/`), the app's
+`tools/checks/ports.mjs`), the conformance suites (`language-data/conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
 (the release the service names) and its pins (`language-data/releases/`), and by hand. A new push
 cancels the pull request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deployer
@@ -222,19 +222,23 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 
 ## iOS
 
-`.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, or the
-username cases its tests share with the account service (`apps/account-api/src/domain/username-cases.json`),
-in two jobs:
+`.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, the
+language data it's built from and tested against (`sources/`, `generated/`, `conformance/`, and
+`tools/` in `language-data/`), or the username cases its tests share with the account service
+(`apps/account-api/src/domain/username-cases.json`), in two jobs:
 
-- `contracts` runs the data tools' contract tests (`apps/ios/Tools/tests/`) on Linux, with every
-  Git LFS file under `apps/ios` but the archived source snapshots (`LFS_SNAPSHOTS`), which only a
-  rebuild reads, and the recorded-audio check's recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
+- `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux, with
+  every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source
+  snapshots (`LFS_SNAPSHOTS`), which only a rebuild reads, and the recorded-audio check's
+  recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
   reports, and the bundled dictionary, and that each import report records the current hash of
-  the tool that wrote it ([`ios.md`](ios.md)). It also checks that Release builds sign in to
+  the tool that wrote it ([`ios.md`](ios.md)). Then the app's own Python tests
+  (`apps/ios/Tools/tests/`) check that Release builds sign in to
   production's account service, that every build signs as the App Store record
   ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad, and Mac
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
-  strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
+  strings, and entitlements), and test the Simulator script (`test_simulator.py`). Its LFS cache is
+  keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after
   another: `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro
   Max Simulator and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`,
@@ -262,9 +266,9 @@ in two jobs:
 
 `.github/workflows/language-data-build.yml` packages the next language-data release from the
 committed files (issue 463, step 2). It runs on pull requests and pushes to `main` that change
-`language-data/**`, the app's resources, `apps/ios/LanguageData/**`, the dictionary service's
-Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow),
-and tests in `language-data/pipeline/tests/` fail when an input or the Dockerfile doesn't start it.
+`language-data/**` (the sources and suites among it), the app's resources, the dictionary service's
+Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow). Tests
+in `language-data/pipeline/tests/` fail when a release input or the Dockerfile doesn't start it.
 
 Its `pins` job runs `package.py check-pin` first, without Git LFS: the committed files, the app's
 bundle, and the image's copies against the pinned release, and no change to a pin the base holds

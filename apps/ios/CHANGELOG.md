@@ -60,6 +60,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   and Example Sentences keeps your place when you come back from a word.
 - Example sentences that couldn’t be loaded now say so, with **Retry**; a word's page used to say
   it had no source-matched examples.
+- Words written with full-width letters or digits, such as Ｔシャツ, ＣＤプレーヤー, ＳＯＳ, and Ｘ線,
+  list their example sentences, in either width (Ｔシャツ and Tシャツ); their pages used to say
+  they had none. Numbers such as ３日 also list the sentences that write them full-width.
 - **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
   same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
   their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.

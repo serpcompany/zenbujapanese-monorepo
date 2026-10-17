@@ -120,7 +120,7 @@ describe('doc names', () => {
     ['docs/agents/Code_Rules.md', true],
     ['docs/Agents/code.md', true],
     ['apps/ios/docs/product/WordDetail.md', true],
-    ['apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md', false],
+    ['language-data/FREQUENCY_SOURCE_DECISIONS.md', false],
     ['AGENTS.md', false]
   ])('%s misnamed: %s', (path, expected) => {
     expect(misnamed(path)).toBe(expected)

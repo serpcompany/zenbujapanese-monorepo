@@ -5,9 +5,9 @@ struct ConversationClock: View {
   let session: LiveConversation
 
   var body: some View {
-    TimelineView(.periodic(from: .now, by: 1)) { context in
+    TimelineView(.periodic(from: .now, by: 1)) { _ in
       Text(
-        Duration.seconds(session.elapsed(at: context.date))
+        Duration.seconds(session.elapsedSoFar)
           .formatted(.time(pattern: .minuteSecond))
       )
       .font(.headline.monospacedDigit())

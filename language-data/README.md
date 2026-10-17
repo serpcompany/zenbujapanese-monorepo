@@ -1,4 +1,4 @@
-# Language data releases
+# Language data
 
 Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
@@ -8,12 +8,20 @@ R2 bucket, and each release's pinned manifest. No app reads the bucket: what the
 what ADR 0009's dictionary service copies into its image, are files of the release `release.json`
 names, and checks hold both to that release's pinned manifest before merge
 ([Pinned releases](#pinned-releases), [issue 473](https://github.com/serpcompany/zenbujapanese-monorepo/issues/473)).
-The source data, tools, and conformance suites still live under `apps/ios` until #469 moves them.
+It also holds what every client's data is built from and checked against: the pinned sources, the
+tools that build the app's bundled files from them, and the conformance suites (#469 moved them
+here from `apps/ios`). The built files stay in the app's bundle,
+`apps/ios/Modules/Sources/SearchExperience/Resources/`.
 
 | File | What it is |
 | --- | --- |
+| [`sources/`](sources/) | The pinned source records, the snapshots committed in Git LFS, and their notices ([its README](sources/README.md)). |
+| [`tools/`](tools/) | The importers and builders that write the app's bundled data and the import reports, and their contract tests in `tools/tests/` ([their README](tools/README.md): rebuilding everything, refreshing a snapshot, and provenance). |
+| [`generated/`](generated/) | The import reports, which tie each built file to its inputs and tools by SHA-256, and the frequency analyses. |
+| [`candidates/`](candidates/), [`FREQUENCY_SOURCE_DECISIONS.md`](FREQUENCY_SOURCE_DECISIONS.md) | The frequency lists considered, and how the current packs were chosen. |
+| [`conformance/`](conformance/) | The conformance suites every client is held to (ADR 0006), recorded from the app; the app's, the service's, and the website's tests replay them. |
 | [`release.json`](release.json) | The release the app and the service's image hold, and the next to publish (`YYYY.MM.N`). The release it follows comes from the bucket's `releases.json` when it's published. |
-| [`release-inputs.json`](release-inputs.json) | What goes in the release, by repository path, and what holds it: `app_bundles` (the roots the app bundles), `images` (the Dockerfiles that copy it), and `not_released` (what those hold that isn't language data, each with why). Paths start with a root name from `roots`, so a move (#469) changes only `roots`. Names and paths are checked when it loads: plain relative paths only, with no `..`. |
+| [`release-inputs.json`](release-inputs.json) | What goes in the release, by repository path, and what holds it: `app_bundles` (the roots the app bundles), `images` (the Dockerfiles that copy it), and `not_released` (what those hold that isn't language data, each with why). Paths start with a root name from `roots`, so a move changes only `roots`, as #469's did. Names and paths are checked when it loads: plain relative paths only, with no `..`. |
 | [`releases/`](releases/) | Each release's pinned manifest, `releases/<release>/manifest.json` ([Pinned releases](#pinned-releases)). |
 | [`publishing.md`](publishing.md) | Where releases live in the bucket, and how a release is published there. |
 | [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
@@ -183,7 +191,7 @@ why nothing published is overwritten are in [`publishing.md`](publishing.md).
 
 A pinned release's content never changes, so new data is a new release:
 
-1. Rebuild the files and record the conformance suites again (`apps/ios/Tools/README.md`).
+1. Rebuild the files and record the conformance suites again (`language-data/tools/README.md`).
 2. Bump [`release.json`](release.json) to the next ID: `YYYY.MM.N` for the month it's cut,
    counting from 1. It must come after every pinned release and every release in
    `releases.json`.

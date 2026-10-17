@@ -20,7 +20,7 @@ import { tokenizerFiles } from '../tokenizer'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
-const suites = join(repository, 'apps/ios/LanguageData/Conformance')
+const suites = join(repository, 'language-data/conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
 
 export const artifactAvailable = (() => {
