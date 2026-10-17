@@ -1,3 +1,4 @@
+import { wordExample } from '@zenbu/dictionary-core/detail/examples'
 import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
 import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
@@ -11,14 +12,17 @@ import {
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { htmlText } from '@/test/rendered'
 import {
+  readExamples,
   readFrequencyDetails,
   readFrequencyRows,
   readFurigana,
   readPitchGraph
 } from '@/test/rendered-word'
+import { ExampleList } from './example-list'
 import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
 import { WordHeader } from './word-header'
 
@@ -175,6 +179,7 @@ interface SuiteCase {
   furigana: SuiteFurigana[]
   pitch?: { graph: SuitePitchGraph }
   frequency: { name: string; text: string; details: SuiteFrequencyDetails }[]
+  examples: { shown: { id: string; tokens: { surface: string; pageWord?: boolean }[] }[] }
 }
 
 const suiteCases = recordedCases<SuiteCase>('word-detail.json')
@@ -203,5 +208,20 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
         )
       )
     ).toEqual(expected.frequency.map(row => row.details))
+    const links = serviceLinks(word.data.slugs, word.data.kanjiPages)
+    const examples = word.data.rows.examples.map(rows => pageExample(wordExample(rows), links))
+    const drawn = readExamples(
+      renderToStaticMarkup(<ExampleList initial={examples} listed={examples.length} path={null} />)
+    )
+    expect(drawn.map(example => `esp1_${example.pairId}`)).toEqual(
+      expected.examples.shown.map(shown => shown.id)
+    )
+    expect(
+      drawn.map(example => example.tokens.map(token => [token.surface, token.highlighted]))
+    ).toEqual(
+      expected.examples.shown.map(shown =>
+        shown.tokens.map(token => [token.surface, token.pageWord === true])
+      )
+    )
   })
 })

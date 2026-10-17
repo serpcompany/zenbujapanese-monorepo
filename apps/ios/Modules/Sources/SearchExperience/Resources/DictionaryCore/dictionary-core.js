@@ -1714,6 +1714,23 @@
     if (index < 0) return null;
     return graphemeCount(text.slice(0, index));
   }
+  function spellingsOf(form, written3) {
+    const spellings = [form];
+    for (const spelling of written3) {
+      if (!spellings.includes(spelling) && normalizedEntryEvidence(spelling) === form) {
+        spellings.push(spelling);
+      }
+    }
+    return spellings;
+  }
+  function earliestPosition(spellings, text) {
+    let earliest = null;
+    for (const spelling of spellings) {
+      const position = graphemePosition(spelling, text);
+      if (position !== null && (earliest === null || position < earliest)) earliest = position;
+    }
+    return earliest;
+  }
   function compareRanks(left, right) {
     if (left.relation !== right.relation) return left.relation - right.relation;
     if (left.position !== right.position) return left.position - right.position;
@@ -4191,6 +4208,7 @@
 
   // src/artifact/example-retrieval.ts
   var sentenceColumns = "e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english";
+  var storedForm = normalizeQuery;
   function result(matches) {
     return {
       sentences: matches.slice(0, exampleLimit).map((match) => match.sentence),
@@ -4210,18 +4228,21 @@
     const reading = rows.at(-1)?.reading;
     const writtenForms = new Set(rows.filter((row) => row.kind === 0).map((row) => row.form));
     const readingForms = new Set(rows.filter((row) => row.kind === 1).map((row) => row.form));
-    if (reading === void 0 || !readingForms.has(reading)) return null;
-    return { reading, writtenForms };
+    if (reading === void 0 || !readingForms.has(storedForm(reading))) return null;
+    return { reading: normalizedEntryEvidence(reading), writtenForms };
   }
   function unambiguousEntryCount(db, selectedForm, reading) {
-    const [row] = db.all(
-      `SELECT count(DISTINCT lower(hex(e.id))) AS count
+    const rows = db.all(
+      `SELECT DISTINCT lower(hex(e.id)) AS id, e.written_forms_json AS writtenForms
      FROM entries e
      JOIN forms written ON written.entry_id = e.id AND written.kind = 0 AND written.form = ?
      JOIN forms spoken ON spoken.entry_id = e.id AND spoken.kind = 1 AND spoken.form = ?`,
-      [selectedForm, reading]
+      [storedForm(selectedForm), storedForm(reading)]
     );
-    return row?.count ?? 0;
+    const writtenAsSelected = (json) => JSON.parse(json).some(
+      (form) => normalizedEntryEvidence(form.value) === selectedForm
+    );
+    return rows.filter((row) => writtenAsSelected(row.writtenForms)).length;
   }
   function retrieveIndexedEntry(db, id, selectedForm) {
     const rows = db.all(
@@ -4234,7 +4255,7 @@
     const matches = [];
     for (const { surface: rawSurface, ...sentence } of rows) {
       const surface = normalizedEntryEvidence(rawSurface);
-      const position = graphemePosition(surface, sentence.japanese);
+      const position = earliestPosition(spellingsOf(surface, [rawSurface]), sentence.japanese);
       if (position === null) continue;
       matches.push({
         sentence,
@@ -4246,6 +4267,16 @@
     }
     return result(matches.sort(compareRanks));
   }
+  function bestEvidence(terms, japanese) {
+    let best = null;
+    for (const { spellings, relation } of terms) {
+      const position = earliestPosition(spellings, japanese);
+      if (position === null) continue;
+      const outranks = !best || relation < best.relation || relation === best.relation && position < best.position;
+      if (outranks) best = { relation, position };
+    }
+    return best;
+  }
   function retrieveEntryExamples(db, entry) {
     const selectedForm = normalizedEntryEvidence(entry.headword);
     const reading = normalizedEntryEvidence(entry.reading);
@@ -4254,10 +4285,22 @@
     if (!evidence || evidence.reading !== reading) return "missingEntryEvidence";
     const isKanaHeadword = selectedForm === reading;
     if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm);
-    if (!evidence.writtenForms.has(selectedForm)) return "missingEntryEvidence";
+    if (!evidence.writtenForms.has(storedForm(selectedForm))) return "missingEntryEvidence";
     if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([]);
-    const alternateForms = entry.writtenForms.map(normalizedEntryEvidence).filter((form) => form !== selectedForm && evidence.writtenForms.has(form));
-    const terms = [selectedForm, ...[...new Set(alternateForms)].sort(), reading];
+    const written3 = [entry.headword, ...entry.writtenForms];
+    const alternateForms = entry.writtenForms.map(normalizedEntryEvidence).filter((form) => form !== selectedForm && evidence.writtenForms.has(storedForm(form)));
+    const evidenceTerms = [
+      {
+        spellings: spellingsOf(selectedForm, written3),
+        relation: LexicalRelation.selectedWrittenForm
+      },
+      ...[...new Set(alternateForms)].sort().map((form) => ({
+        spellings: spellingsOf(form, written3),
+        relation: LexicalRelation.alternateWrittenForm
+      })),
+      { spellings: spellingsOf(reading, [entry.reading]), relation: LexicalRelation.reading }
+    ];
+    const terms = [...new Set(evidenceTerms.flatMap((term) => term.spellings))];
     const rows = db.all(
       `SELECT ${sentenceColumns} FROM example_sentences e
      WHERE ${terms.map(() => "instr(e.japanese, ?) > 0").join(" OR ")}`,
@@ -4265,18 +4308,7 @@
     );
     const byPair = /* @__PURE__ */ new Map();
     for (const sentence of rows) {
-      const evidenceMatches = [];
-      const add = (term, relation) => {
-        const position = graphemePosition(term, sentence.japanese);
-        if (position !== null) evidenceMatches.push({ relation, position });
-      };
-      add(selectedForm, LexicalRelation.selectedWrittenForm);
-      for (const form of alternateForms) add(form, LexicalRelation.alternateWrittenForm);
-      add(reading, LexicalRelation.reading);
-      const best = evidenceMatches.reduce(
-        (min, next) => !min || next.relation < min.relation || next.relation === min.relation && next.position < min.position ? next : min,
-        null
-      );
+      const best = bestEvidence(evidenceTerms, sentence.japanese);
       if (!best) continue;
       const match = {
         sentence,
@@ -4747,16 +4779,22 @@
     }
   }
   function highlightedForms({ entry, query }) {
-    return new Set(
-      [query, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
-        (form) => form !== ""
-      )
-    );
+    const forms2 = /* @__PURE__ */ new Set();
+    for (const form of [
+      query,
+      entry.headword,
+      entry.reading,
+      ...entry.writtenForms,
+      ...entry.readingForms
+    ]) {
+      if (form !== "") forms2.add(form).add(form.normalize("NFKC"));
+    }
+    return forms2;
   }
   function isWrittenAs(candidate, forms2) {
     if (!forms2) return false;
     return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm].some(
-      (form) => forms2.has(form)
+      (form) => forms2.has(form) || forms2.has(form.normalize("NFKC"))
     );
   }
   function remembered2(compute) {
