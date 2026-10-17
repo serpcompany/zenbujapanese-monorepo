@@ -45,7 +45,9 @@ harness.
 ## The share sheet
 
 Three actions are listed among the share sheet's actions on iPhone and iPad, as other apps' are
-(**Edit Actions…** orders them), and in the Share menu on the Mac:
+(**Edit Actions…** orders them), and in the Share menu on the Mac once they're turned on there:
+macOS leaves a new app's share extensions off until the person ticks them in the menu's **Edit
+Extensions…**.
 
 - **Look Up in Zenbu**, for shared or selected text, does what the Shortcuts action does.
 - **Translate with Zenbu**, for text, does what its Shortcuts action does.
@@ -57,8 +59,10 @@ Three actions are listed among the share sheet's actions on iPhone and iPad, as 
 
 Each action opens Zenbu at once, with nothing to choose first. Blank text opens nothing.
 
-Check: package `ShareActionTests` (the text each action takes, the images copied for the app with
-their names kept apart, and the limits) and `AppLinkTests.destinations`; contract
+Check: package `ShareActionTests` (the text each action takes, a word's own Share text through
+each text action's handling to the screen it opens, on every device, the Mac's stand-in for its
+Share menu, the images copied for the app with their names kept apart, and the limits) and
+`AppLinkTests.destinations`; contract
 `apps/ios/Tools/tests/test_share_actions.py` (the three extensions, what each is offered for, and
 the App Group they share with the app); UI
 `AppLinkUITests.testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText` (the
@@ -92,5 +96,5 @@ check that comes closest:
 | Shortcuts lists both actions under Zenbu Japanese; a shortcut that takes the share sheet's text and runs Look Up in Zenbu opens the word | The same |
 | Safari: select 見る, Share, **Look Up in Zenbu** opens 見る; **Translate with Zenbu** opens Text with the selection | `AppLinkUITests.testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText` (Zenbu's own share sheet), `ShareActionTests.sharedText` |
 | Photos: share one photo, then eight, with **Image Search in Zenbu**; with nine the action isn't offered | `ShareActionTests.sharedImages` and `sharedImageLimits`; `test_share_actions.py` (offered for at most `importLimit`) |
-| The Mac: the same from Safari's and Photos' Share menus, and a word's **Share** in Zenbu, into the window already open | The package tests and `AppLinkUITests` on the Mac, from the link on |
+| The Mac: turn the three on in the Share menu's **Edit Extensions…**, then the same from Safari's and Photos' Share menus, and a word's **Share** in Zenbu, into the window already open | `ShareActionTests.wordShareThroughTheExtensions` and `AppLinkUITests` on the Mac, from the link on |
 | Zenbu Dev beside the TestFlight app: each one's actions open that app | `AppLinkTests.bundleIDs` and `notActions` |

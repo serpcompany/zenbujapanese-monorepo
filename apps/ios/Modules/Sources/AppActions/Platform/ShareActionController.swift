@@ -50,14 +50,7 @@ open class ShareActionController: ShareActionScreen {
       _ = try? await NSWorkspace.shared.open(
         [url], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
     #else
-      var responder: UIResponder? = self
-      while let current = responder {
-        if let application = current as? UIApplication {
-          _ = await application.open(url)
-          return
-        }
-        responder = current.next
-      }
+      _ = await view.window?.windowScene?.open(url, options: nil)
     #endif
   }
 }

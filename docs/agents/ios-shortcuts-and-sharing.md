@@ -71,11 +71,14 @@ items (`ShareAction`), opens the app with the link, and completes the request.
 - **What each is offered for** is its `NSExtensionActivationRule`: text for the two text actions,
   one to eight images for Image Search (`NSExtensionActivationSupportsImageWithMaxCount`, held to
   `ImageTextSource.importLimit` by `test_share_actions.py`).
-- **Opening the app.** iOS gives an extension no call that opens its own app:
-  `NSExtensionContext.open` works only for Today and iMessage extensions. The controller asks the
-  `UIApplication` at the end of its responder chain to open the link (`open(_:options:)`, which iOS
-  doesn't mark unavailable to extensions), as other apps' share actions do. If a later iOS refuses,
-  the action closes and nothing opens, and the share-sheet UI test (Tests) fails. On the Mac,
+- **Opening the app.** Apple documents no call that opens an Action or Share extension's own
+  app: `NSExtensionContext.open` works only for Today and iMessage extensions. The controller asks
+  its own window scene to open the link (`UIScene.open(_:options:)`, public and not marked
+  unavailable to extensions), which iOS 26.2 does; walking the responder chain to the
+  `UIApplication` isn't needed. If a later iOS refuses, the action closes and nothing opens, and
+  the share-sheet UI test (Tests) fails. App Review may still object to an extension that opens its
+  app; the supported alternative is an Action extension that shows the result in its own UI, as
+  Oyomi's does, which here means the dictionary and the core inside the extension. On the Mac,
   `NSWorkspace.open(_:withApplicationAt:)` opens the extension's own app, never another copy that
   claims the scheme, such as a second build on the same Mac.
 - **Bundle IDs.** `com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)` with `.look-up`,
@@ -119,8 +122,12 @@ and `apps/ios/ShareActions/ShareActions.entitlements`), which holds nothing else
   `AppLinkInbox` as the Shortcuts actions do, when the test posts
   `com.zenbujapanese.dictionary.uitests.open-link`. One test runs a share-sheet action end to end
   on iPhone and iPad: a word's **Share**, then **Translate with Zenbu** in the system's sheet,
-  whose extension opens the app on Text. On the Mac, XCUITest reached no Share menu from that
-  button, so the Mac's Share menu is checked by hand. In a Debug build,
+  whose extension opens the app on Text. On the Mac that button's Share menu opens, but it isn't
+  in the app's tree for XCUITest, and macOS lists a new app's share extensions there only once the
+  person turns them on in **Edit Extensions…** (`pluginkit -m -p com.apple.share-services` shows
+  them without the `+` the system's own carry). So on the Mac
+  `ShareActionTests.wordShareThroughTheExtensions` stands in: a word's Share text through each text
+  action's own handling, to the screen the app opens for it. In a Debug build,
   `ZENBU_SHARED_IMAGES={"share":"<UUID>","images":{"<name>":"<base64>"}}` writes those images to a
   folder in the app's temporary directory that stands in for the App Group, where the extension
   would have left them, so the Mac's test, which has no App Group, opens them too.

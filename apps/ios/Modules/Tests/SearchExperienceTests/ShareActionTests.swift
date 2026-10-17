@@ -47,6 +47,21 @@ struct ShareActionTests {
     }
   }
 
+  @Test("a word's Share text, through each text action's own handling, opens what the app opens")
+  func wordShareThroughTheExtensions() async throws {
+    let results = try await LookupClient.live.search(SearchQuery("japan"))
+    let japan = try #require(results.entries.first { $0.headword == "日本" })
+    let text = try #require(WordPage(japan)?.shareText)
+    let app = "com.zenbujapanese.dictionary.uitests"
+    let opened = { (action: ShareAction, suffix: String) async throws -> AppLink in
+      let url = try #require(
+        await action.appURL(for: [self.item([self.shared(text)])], extensionBundleID: app + suffix))
+      return AppLink(url, scheme: app, sharedImages: nil)
+    }
+    #expect(try await opened(.translate, ".translate") == .translate(text))
+    #expect(try await opened(.lookUp, ".look-up") == .dictionary(.lookUp(text)))
+  }
+
   @Test("shared images are copied for the app, named apart, and replace the share before them")
   func sharedImages() async throws {
     let images = SharedImages(folder: try ImageFixture.folder("shared"))

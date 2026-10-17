@@ -46,7 +46,9 @@ final class AppLinkUITests: ZenbuUITestCase {
   func testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText() throws {
     try XCTSkipIf(
       device == .mac,
-      "A word's Share opened no Share menu XCUITest could reach on the Mac; checked by hand")
+      "The Mac's Share menu opens but isn't in the app's tree for XCUITest, and lists a new "
+        + "share extension only once Edit Extensions turns it on; "
+        + "ShareActionTests.wordShareThroughTheExtensions stands in")
     let app = launch(opening: try link("look-up", ["text": "見る"]), TranslateUITests.script)
     assertWordPage(of: miru, in: app)
     tap(find("word-detail.share", in: app))
