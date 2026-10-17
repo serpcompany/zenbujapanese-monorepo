@@ -69,16 +69,35 @@ const linkTargets = [
     href: accountPagesOpen() ? accountPages.register.path : placeholderHref
   },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
-  { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
-  { id: 'x', kind: 'social', name: 'X', href: placeholderHref },
-  { id: 'instagram', kind: 'social', name: 'Instagram', href: placeholderHref },
-  { id: 'tiktok', kind: 'social', name: 'TikTok', href: placeholderHref },
-  { id: 'discord', kind: 'social', name: 'Discord', href: placeholderHref },
-  { id: 'reddit', kind: 'social', name: 'Reddit', href: placeholderHref },
-  { id: 'threads', kind: 'social', name: 'Threads', href: placeholderHref },
-  { id: 'bluesky', kind: 'social', name: 'Bluesky', href: placeholderHref },
-  { id: 'linkedin', kind: 'social', name: 'LinkedIn', href: placeholderHref },
-  { id: 'facebook', kind: 'social', name: 'Facebook', href: placeholderHref }
+  {
+    id: 'youtube',
+    kind: 'social',
+    name: 'YouTube',
+    href: 'https://www.youtube.com/@zenbu-japanese'
+  },
+  { id: 'github', kind: 'social', name: 'GitHub', href: 'https://github.com/zenbujapanese' },
+  { id: 'x', kind: 'social', name: 'X', href: 'https://x.com/zenbujapanese' },
+  {
+    id: 'facebook',
+    kind: 'social',
+    name: 'Facebook',
+    href: 'https://www.facebook.com/zenbujapanese/'
+  },
+  { id: 'reddit', kind: 'social', name: 'Reddit', href: 'https://www.reddit.com/r/ZenbuJapanese/' },
+  {
+    id: 'instagram',
+    kind: 'social',
+    name: 'Instagram',
+    href: 'https://www.instagram.com/zenbu_japanese'
+  },
+  { id: 'tiktok', kind: 'social', name: 'TikTok', href: 'https://www.tiktok.com/@zenbujapanese' },
+  {
+    id: 'linkedin',
+    kind: 'social',
+    name: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/zenbujapanese'
+  },
+  { id: 'medium', kind: 'social', name: 'Medium', href: 'https://medium.com/@zenbujapanese' }
 ] as const satisfies readonly LinkTarget[]
 
 export type LinkTargetId = (typeof linkTargets)[number]['id']

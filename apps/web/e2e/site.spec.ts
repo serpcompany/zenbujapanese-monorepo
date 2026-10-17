@@ -385,13 +385,13 @@ test.describe('site footer', () => {
     else expect(new Set(lefts).size).toBe(footerColumns.length)
   })
 
-  test('the footer shows all ten social icons in one row, with tap targets of 24 pixels or more', async ({
+  test('the footer shows all nine social icons in one row, with tap targets of 24 pixels or more', async ({
     page
   }) => {
     if (onPhone()) await page.setViewportSize({ width: 360, height: 740 })
     await page.goto('/')
     const icons = page.getByRole('contentinfo').getByRole('link', { name: /^Zenbu Japanese on / })
-    await expect(icons).toHaveCount(10)
+    await expect(icons).toHaveCount(9)
     const boxes = await icons.evaluateAll(links =>
       links.map(link => {
         const target = link.getBoundingClientRect()
