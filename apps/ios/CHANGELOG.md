@@ -79,6 +79,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - A word's notes and photos stay on it when a dictionary update changes the word's meanings; the
   ones you saved before move to the same word the first time Zenbu opens them. A note Zenbu
   can't match to a word is kept under Account → **Notes Without a Word**, to copy or delete.
+- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
+  you can type; the keyboard used to stay with the page.
 - In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
   part of speech (which opens its conjugations) now open, in the tab you're in.
 - Player's search results show only YouTube's results, between Player's own bars: YouTube's

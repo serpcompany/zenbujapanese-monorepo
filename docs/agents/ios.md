@@ -35,48 +35,50 @@ what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios
 
 ### Where the platforms differ in the code
 
-Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives
-in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
-extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
-`SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
-`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`,
-`ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
-`keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
-the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
-`.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
-`.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`, `.sheetClose`, `SheetCloseAndAction`,
-`.barTrailingItems`, `.tileIconLabel()`, `.backButtonHidden()`, `.listedInItsMenu()`,
-`.tabShell()`, and the rest). The tab shell (`.tabShell()`) is
-the sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26
-the sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps
-the first tab's stack: only pages registered on the first tab open (another tab's route shows
-SwiftUI's warning triangle, and its value links do nothing), and pushing onto another tab's
-`NavigationPath` while the first tab's path is a typed array crashes in
-`NavigationColumnState.boundPathChange`. The tab-bar-only style gives each tab its own stack, as
-on iPhone and iPad, so the Mac has a tab bar and no sidebar; `pnpm verify layers` refuses
-`sidebarAdaptable` outside `Platform/`. A sheet that iPhone and iPad close by dragging,
-as Search's Handwriting and Radicals panel does, uses `.dragToCloseSheet(sizeOnMac:)`: a Mac
-can't drag a sheet away, and sizes one from its content, so there it gets a fixed size
-(`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives in
+`apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view extension that
+feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and `SystemColor`,
+`Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`, `WebViewRepresentable`,
+`PagedView`, `CameraCapture` and `ImageCameraPicker`, `ImagePhotoLibraryPicker`,
+`importsImagesFromDevices`, `BackgroundRefresh`, `keyWindowAnchor`, `AppleSignInButton`,
+`ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in `PlatformModifiers.swift`
+(`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`, `.barLeading` and `.barTrailing`,
+`.bottomAccessory`, `.rowActions`, `.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`,
+`.sheetClose`, `SheetCloseAndAction`, `.barTrailingItems`, `.tileIconLabel()`,
+`.backButtonHidden()`, `.listedInItsMenu()`, `.tabShell()`, and the rest), and
+`.focusedOnceTheClickIsHandled(_:)` in `ListFieldFocus.swift`. The tab shell (`.tabShell()`) is the
+sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26 the
+sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps the
+first tab's stack: only pages registered on the first tab open (another tab's route shows SwiftUI's
+warning triangle, and its value links do nothing), and pushing onto another tab's `NavigationPath`
+while the first tab's path is a typed array crashes in `NavigationColumnState.boundPathChange`. The
+tab-bar-only style gives each tab its own stack, as on iPhone and iPad, so the Mac has a tab bar and
+no sidebar; `pnpm verify layers` refuses `sidebarAdaptable` outside `Platform/`. A sheet that iPhone
+and iPad close by dragging, as Search's Handwriting and Radicals panel does, uses
+`.dragToCloseSheet(sizeOnMac:)`: a Mac can't drag a sheet away, and sizes one from its content, so
+there it gets a fixed size (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+On the Mac a click on a `List` row leaves the keyboard with the list, so a field that the click
+shows, such as a note's editor after a click on the note or on **Add Note**, never got it, and
+clicks on the field didn't move it either; the editor takes `.focusedOnceTheClickIsHandled(_:)`,
+which asks for focus again once the click has been handled (`NotesInSearchUITests`).
 
 Every other sheet's root takes `.sheetSize(onMac: AppWindow.sheetSize)`, but the photo library's
-picker, which reports its own size (`AppWindow.photoPickerSize`). A Mac sizes a sheet from
-its content, and a `List`, a grouped `Form`, or a `ScrollView` has no height of its own, so
-without it the word sheet opened 80 points tall. A Mac sheet also has no toolbar. Of a
-`NavigationStack`'s toolbar it shows the title, one `cancellationAction` item and one
-`confirmationAction` item as buttons along its bottom, and a `destructiveAction` item at the
-bottom's leading edge; an item placed anywhere else (`.barLeading`, `.barTrailing`) isn't shown,
-and a second item in the same placement isn't either. So a sheet's close button goes in
-`.sheetClose` (the bar's leading edge on iPhone and iPad, the cancel button on the Mac, which
-Escape presses), the word sheet's **Close** and **Open Full Entry** in `SheetCloseAndAction`
-(one leading group on iPhone and iPad; side by side in the cancel slot on the Mac, because the
-confirm slot's button is the sheet's default, and Return in a note typed in the sheet would open
-the full entry), and a
-page's trailing bar items in `.barTrailingItems`, which puts them in a row above the page when
-the page is inside a Mac sheet (`sheetSize(onMac:)` says so through the environment) and in the
-bar everywhere else. That's how a word's **Share** and **•••** reach the Mac's word sheet.
-`.tileIconLabel()` lays a row's icon tile beside its title on the Mac, where a `List` gives a
-label's icon a slot too narrow for the tile and the title was drawn over it.
+picker, which reports its own size (`AppWindow.photoPickerSize`). A Mac sizes a sheet from its
+content, and a `List`, a grouped `Form`, or a `ScrollView` has no height of its own, so without it
+the word sheet opened 80 points tall. A Mac sheet also has no toolbar. Of a `NavigationStack`'s
+toolbar it shows the title, one `cancellationAction` item and one `confirmationAction` item as
+buttons along its bottom, and a `destructiveAction` item at the bottom's leading edge; an item
+placed anywhere else (`.barLeading`, `.barTrailing`) isn't shown, and a second item in the same
+placement isn't either. So a sheet's close button goes in `.sheetClose` (the bar's leading edge on
+iPhone and iPad, the cancel button on the Mac, which Escape presses), the word sheet's **Close** and
+**Open Full Entry** in `SheetCloseAndAction` (one leading group on iPhone and iPad; side by side in
+the cancel slot on the Mac, because the confirm slot's button is the sheet's default, and Return in
+a note typed in the sheet would open the full entry), and a page's trailing bar items in
+`.barTrailingItems`, which puts them in a row above the page when the page is inside a Mac sheet
+(`sheetSize(onMac:)` says so through the environment) and in the bar everywhere else. That's how a
+word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()` lays a row's icon tile
+beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
+the title was drawn over it.
 
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
 knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
@@ -85,19 +87,18 @@ every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). I
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
-(`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
-`#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window shares,
+(`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with `#if
+os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window shares,
 the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window sizes
-(`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
-commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
-(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
-from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The
-scene also shares one `TranslateExperience` between windows, since they share the one microphone,
-and pauses a conversation when the whole app goes to the background, or pauses it and drops a
-start still waiting when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
-lets an open window
-take a website link (`handlesExternalEvents`), where the Mac would otherwise open a new window
-for each.
+(`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu commands
+(`AppCommands`) go through `AppCommandRouter` to the window that was last active
+(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only from a
+view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The scene also
+shares one `TranslateExperience` between windows, since they share the one microphone, and pauses a
+conversation when the whole app goes to the background, or pauses it and drops a start still waiting
+when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
+lets an open window take a website link (`handlesExternalEvents`), where the Mac would otherwise
+open a new window for each.
 
 ### Build and run for iPad
 

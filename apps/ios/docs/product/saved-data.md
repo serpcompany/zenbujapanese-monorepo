@@ -17,7 +17,12 @@ the page is still loading its examples is kept like any other. If saved notes ca
 copy is kept on the device rather than written over, and every note that can be read stays, on
 its word or any other ([Saved data that can't be read](#saved-data-that-cant-be-read)).
 
-Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
+Tapping a note, or **Add Note** under a word's or kanji's notes, opens its field with the keyboard
+ready to type, on the Mac too, where a click on a note used to leave the keyboard with the page.
+
+Check: UI `NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce`
+(the note written from **Add Note**, then opened, changed, and cleared);
+`WordDetailUITests.testANoteIsKeptOnTheWord` and
 `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
 `WordNoteStorageTests`, `EncounterMediaStorageTests`, and `EarlierWordKeysTests` (a word's key is
 its Language Reference ID, which an edit to its meanings doesn't change, and a note under the
@@ -53,9 +58,8 @@ where it's cut, a Greek word's last Σ, the order, and one note on several words
 `embedded/dictionary.test.ts`; package `LearnerNotesTests` (a note in Search as soon as it's
 written, changed, or deleted on its page, after a relaunch, a kanji's note, none of the Notes
 Without a Word, and none with no name while the dictionary can't be read); UI
-`NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce` (written,
-then changed and deleted, on iPhone and iPad; on the Mac it stops after the note is found, since a
-note opened for editing there never gets the keyboard, and the package test checks the rest),
+`NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce` (written
+from **Add Note**, found, then changed and deleted),
 `NotesInSearchUITests.testOneNoteOnTwoWordsListsBothThenAndAfterARelaunch` (drawn once with
 the results, after the relaunch), and
 `NotesInSearchUITests.testNotesListedAfterTheDictionaryMatchesLeaveThemAsTheyWere` (two notes on
