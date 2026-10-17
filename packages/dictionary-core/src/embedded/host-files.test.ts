@@ -53,4 +53,40 @@ describe('what the embedded core decodes from a file its host reads', () => {
       'The host has no radical file to read'
     )
   })
+
+  test('lists the school kanji from the kanji reference file the host reads', async () => {
+    const kanjiReference = () => ({
+      metadataSourceIdentity: 'edrdg.kanjidic2',
+      componentSourceIdentity: 'edrdg.kradfile',
+      entries: [
+        {
+          character: '一',
+          strokeCount: 1,
+          grade: 1,
+          wallerJlptLevel: 5,
+          frequencyRank: 2,
+          meanings: ['one'],
+          readings: [{ value: 'イチ', kind: 'on' as const }],
+          components: ['一']
+        }
+      ]
+    })
+    const request = JSON.stringify({ filter: 'いち', known: ['一'] })
+    expect(await ask({ kanjiReference }, 'schoolKanjiPanel', request)).toEqual({
+      filtered: true,
+      sections: [
+        {
+          id: 'grade-1',
+          title: 'Grade 1',
+          count: '1 of 1',
+          known: 1,
+          spoken: 'Grade 1, 1 of 1 kanji, 1 known',
+          kanji: [{ character: '一', meaning: 'one', known: true }]
+        }
+      ]
+    })
+    await expect(ask({}, 'schoolKanjiPanel', request)).rejects.toThrow(
+      'The host has no kanji reference file to read'
+    )
+  })
 })

@@ -8,6 +8,7 @@ struct SearchView: View {
   let handwritingRecognitionClient: HandwritingRecognitionClient
   let kanjiLookupClient: KanjiLookupClient
   let radicalLookupClient: RadicalLookupClient
+  let schoolKanjiClient: SchoolKanjiClient
   let exampleSentenceClient: ExampleSentenceClient
   let focusRequest: Int
   @Environment(WordKnowledge.self) private var wordKnowledge
@@ -158,24 +159,30 @@ struct SearchView: View {
 
   private var inputPanelPresentation: Binding<Bool> {
     Binding(
-      get: { inputMode == .handwriting || inputMode == .radicals },
+      get: { inputMode.opensPanel },
       set: { presented in
-        if !presented, inputMode == .handwriting || inputMode == .radicals {
-          inputMode = .inactive
-        }
+        if !presented, inputMode.opensPanel { inputMode = .inactive }
       })
   }
 
   @ViewBuilder
   private var inputPanelContent: some View {
-    if inputPanelMode == .radicals {
+    switch inputPanelMode {
+    case .radicals:
       RadicalInputView(
         query: $query,
         mode: inputModeScope,
         lookupClient: radicalLookupClient,
         submit: submitRadicalQuery
       )
-    } else {
+    case .grade:
+      GradeInputView(
+        query: $query,
+        mode: inputModeScope,
+        schoolKanjiClient: schoolKanjiClient,
+        submit: submitRadicalQuery
+      )
+    default:
       HandwritingInputView(
         query: $query,
         mode: inputModeScope,
@@ -299,7 +306,7 @@ struct SearchView: View {
 
   private func selectInputMode(_ mode: SearchInputMode) {
     radicalQuery = nil
-    if mode == .handwriting || mode == .radicals { inputPanelMode = mode }
+    if mode.opensPanel { inputPanelMode = mode }
     inputMode = mode
     isSearchFocused = mode == .keyboard
   }

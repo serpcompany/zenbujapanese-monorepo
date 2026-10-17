@@ -4,6 +4,7 @@ import type {
   KanjiElementEntry,
   KanjiElementSources,
   KanjiReferenceEntry,
+  KanjiReferenceFile,
   KanjiSources,
   KanjiStructureEntry
 } from '../artifact/kanji-data'
@@ -38,6 +39,7 @@ export interface EmbeddedHost {
   kanjiEntry?(character: string): KanjiReferenceEntry | null
   kanjiStructure?(character: string): KanjiStructureEntry | null
   kanjiElement?(glyph: string): KanjiElementEntry | null
+  kanjiReference?(): KanjiReferenceFile | null
   radicals?(): unknown
   frequencyLists?(): HostFrequencyLists | null
   frequencyListRows?(list: string, sql: string, parametersJSON: string): HostRows | null

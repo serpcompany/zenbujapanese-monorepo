@@ -12,6 +12,14 @@ enum SearchInputCandidate {
   static func query(_ query: String, adding candidate: String) -> SearchQuery {
     SearchQuery(query + candidate)
   }
+
+  static func accept(
+    _ candidate: String, into query: Binding<String>, submit: (SearchQuery) -> Void
+  ) {
+    let submittedQuery = Self.query(query.wrappedValue, adding: candidate)
+    query.wrappedValue = submittedQuery.value
+    submit(submittedQuery)
+  }
 }
 
 struct SearchInputPanel<Content: View, Actions: View>: View {
@@ -44,6 +52,7 @@ struct SearchInputModeButtons: View {
     HStack(spacing: 12) {
       button("Handwriting", systemImage: "pencil.and.scribble", for: .handwriting)
       button("Radicals", systemImage: "square.grid.3x3", for: .radicals)
+      button("Grade", systemImage: "graduationcap", for: .grade)
     }
     .labelStyle(.iconOnly)
     .buttonBorderShape(.circle)

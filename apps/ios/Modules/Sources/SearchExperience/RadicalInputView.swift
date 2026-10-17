@@ -1,28 +1,29 @@
 import SwiftUI
 
 struct RadicalInputView: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   @Binding var mode: SearchInputMode
   let lookupClient: RadicalLookupClient
   let submit: (SearchQuery) -> Void
+  @AppStorage("search.radicals.closed-sections") private var closedSections = ClosedTileSections()
   @State private var selectionOrder: [String] = []
   @State private var panel: RadicalPanel?
   @State private var loadFailed = false
 
   var body: some View {
     SearchInputPanel(mode: $mode) {
-      VStack(spacing: 12) {
+      SectionedTilePanel(accessibilityIdentifier: "radical.grid") {
         SearchCandidateStrip(
           candidates: panel?.candidates ?? [],
           identifierPrefix: "radical",
-          select: accept
+          select: { SearchInputCandidate.accept($0, into: $query, submit: submit) }
         ) {
           CandidateStripMessage {
             Text("Select one or more radicals")
           }
         }
-        radicalGrid
+      } content: {
+        radicalSections
       }
     } actions: {
       SearchInputUndoButton(isEnabled: !selectionOrder.isEmpty) {
@@ -45,68 +46,41 @@ struct RadicalInputView: View {
     }
   }
 
-  private func accept(_ candidate: String) {
-    let submittedQuery = SearchInputCandidate.query(query, adding: candidate)
-    query = submittedQuery.value
-    submit(submittedQuery)
-  }
-
-  private var radicalGrid: some View {
-    ScrollView {
-      if loadFailed {
-        ContentUnavailableView {
-          Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
-            .foregroundStyle(.red)
-        }
-        .accessibilityIdentifier("radical.load-failure")
-      } else {
-        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
-          ForEach(panel?.groups ?? [], id: \.strokeCount) { group in
-            Section {
-              LazyVGrid(
-                columns: Array(
-                  repeating: GridItem(.flexible(), spacing: 4),
-                  count: dynamicTypeSize >= .xxLarge ? 5 : 8
-                ),
-                spacing: 4
-              ) {
-                ForEach(group.radicals) { radical in
-                  radicalButton(radical)
-                }
-              }
-            } header: {
-              Text(group.label)
-                .font(.footnote.weight(.semibold))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-                .background(SystemColor.panel)
-                .accessibilityAddTraits(.isHeader)
-                .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
-            }
-          }
-        }
+  @ViewBuilder
+  private var radicalSections: some View {
+    if loadFailed {
+      ContentUnavailableView {
+        Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
+          .foregroundStyle(.red)
+      }
+      .accessibilityIdentifier("radical.load-failure")
+    } else {
+      SectionedTiles(
+        sections: (panel?.groups ?? []).map { group in
+          TileSection(
+            id: "strokes-\(group.strokeCount)", title: group.label,
+            accessibilityIdentifier: "radical.stroke.\(group.strokeCount)",
+            items: group.radicals)
+        },
+        itemID: \.id,
+        closed: $closedSections.ids
+      ) { _ in
+        EmptyView()
+      } tile: { radical in
+        radicalTile(radical)
       }
     }
-    .scrollIndicators(.hidden)
-    .accessibilityIdentifier("radical.grid")
   }
 
-  private func radicalButton(_ radical: RadicalComponent) -> some View {
+  private func radicalTile(_ radical: RadicalComponent) -> some View {
     let isSelected = selectionOrder.contains(radical.id)
-    return Button(radical.glyph) { toggle(radical.id) }
-      .buttonStyle(.plain)
-      .font(.title3)
-      .frame(maxWidth: .infinity, minHeight: 44)
-      .background(
-        isSelected ? ZenbuTheme.radicalSelection : SystemColor.secondaryFill,
-        in: .rect(cornerRadius: 8)
-      )
-      .foregroundStyle(isSelected ? Color.white : Color.primary)
-      .contentShape(.rect(cornerRadius: 8))
-      .accessibilityLabel("Radical \(radical.glyph)")
-      .accessibilityValue(isSelected ? "Selected" : "Not selected")
-      .accessibilityIdentifier(radical.accessibilityIdentifier)
+    return PanelTile(
+      glyph: radical.glyph, spoken: "Radical \(radical.glyph)", isSelected: isSelected
+    ) {
+      toggle(radical.id)
+    }
+    .accessibilityValue(isSelected ? "Selected" : "Not selected")
+    .accessibilityIdentifier(radical.accessibilityIdentifier)
   }
 
   private func toggle(_ radical: String) {

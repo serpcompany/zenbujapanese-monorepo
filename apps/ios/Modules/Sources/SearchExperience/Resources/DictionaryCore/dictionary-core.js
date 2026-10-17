@@ -153,8 +153,8 @@
   };
   var decomposed = (rules2) => new Map(
     rules2.split(" ").map((rule) => {
-      const [kana, latin2] = rule.split(":");
-      return [kana.normalize("NFD"), latin2];
+      const [kana2, latin2] = rule.split(":");
+      return [kana2.normalize("NFD"), latin2];
     })
   );
   var syllables = decomposed(
@@ -235,12 +235,12 @@
       return { length: 1, written: "n'" };
     }
     for (let length2 = Math.min(longestSyllable, limit - position); length2 > 0; length2--) {
-      const kana = text.slice(position, position + length2).join("");
-      const glide = glides.get(kana);
+      const kana2 = text.slice(position, position + length2).join("");
+      const glide = glides.get(kana2);
       if (glide !== void 0 && isIn(glidingVowels, text[position + length2])) {
         return { length: length2, written: `${glide}~`, advance: 1 };
       }
-      const latin2 = syllables.get(kana);
+      const latin2 = syllables.get(kana2);
       if (latin2 !== void 0) return { length: length2, written: latin2 };
     }
     return null;
@@ -314,10 +314,10 @@
   for (let unit = 12353; unit <= 12436; unit++) kanaKinds[unit - firstKana] = hiraganaLetter;
   for (let unit = 12449; unit <= 12534; unit++) kanaKinds[unit - firstKana] = katakanaLetter;
   kanaKinds[12540 - firstKana] = hiraganaLetter | katakanaLetter;
-  for (const kana of "ぁぃぅぇぉゃゅょァィゥェォャュョー") {
-    kanaKinds[kana.charCodeAt(0) - firstKana] |= joinsThePrevious;
+  for (const kana2 of "ぁぃぅぇぉゃゅょァィゥェォャュョー") {
+    kanaKinds[kana2.charCodeAt(0) - firstKana] |= joinsThePrevious;
   }
-  for (const kana of "っんッン") kanaKinds[kana.charCodeAt(0) - firstKana] |= needsTheNext;
+  for (const kana2 of "っんッン") kanaKinds[kana2.charCodeAt(0) - firstKana] |= needsTheNext;
   var longestPiece = 4;
   var rememberedPieces = 8192;
   var knownPieces = /* @__PURE__ */ new Map();
@@ -439,8 +439,8 @@
   function isASCII(value) {
     return !/[\u0080-\uffff]/.test(value);
   }
-  function isJapaneseScalar(codePoint) {
-    return codePoint === 12293 || codePoint >= 12352 && codePoint <= 12543 || codePoint >= 13312 && codePoint <= 19903 || codePoint >= 19968 && codePoint <= 40959;
+  function isJapaneseScalar(codePoint2) {
+    return codePoint2 === 12293 || codePoint2 >= 12352 && codePoint2 <= 12543 || codePoint2 >= 13312 && codePoint2 <= 19903 || codePoint2 >= 19968 && codePoint2 <= 40959;
   }
   var japaneseTextRuns = [
     [12293, 12294],
@@ -728,6 +728,7 @@
     name: `JLPT N${level}`,
     level
   }));
+  var joyoGrades = [1, 2, 3, 4, 5, 6, 8];
   var gradeLists = [1, 2, 3, 4, 5, 6].map((grade) => ({
     slug: `grade-${grade}`,
     name: `Grade ${grade}`,
@@ -739,12 +740,23 @@
     grades: [8]
   };
   var jinmeiyo = { slug: "jinmeiyo", name: "Jinmeiyō", grades: [9, 10] };
+  var strokeList = (strokes) => ({
+    slug: `strokes-${strokes}`,
+    name: `${strokes} ${strokes === 1 ? "stroke" : "strokes"}`,
+    grades: joyoGrades,
+    strokes
+  });
   var schoolLists = [...gradeLists, secondarySchool, jinmeiyo];
   var jlptKanjiLists = jlptLists.map(({ slug, name: name2, level }) => ({
     slug,
     name: name2,
     jlptLevel: level
   }));
+  function kanjiList(slug) {
+    const strokes = slug.match(/^strokes-([1-9]\d?)$/u);
+    if (strokes) return strokeList(Number(strokes[1]));
+    return [...schoolLists, ...jlptKanjiLists].find((list) => list.slug === slug);
+  }
 
   // src/artifact/database.ts
   function searchDatabase(db) {
@@ -1617,7 +1629,7 @@
   }
   function readFrequency(lists, ids) {
     const asked = [...new Set(ids)];
-    const listed2 = [JSON.stringify(asked)];
+    const listed3 = [JSON.stringify(asked)];
     const dictionaries = [];
     const lookups = asked.map(() => []);
     for (const list of lists) {
@@ -1634,7 +1646,7 @@
           `SELECT lower(hex(language_reference_id)) AS id, ${value} AS value
          FROM ${list.schema ? `${list.schema}.` : ""}${table}
          WHERE language_reference_id IN (${listedIds})`,
-          listed2
+          listed3
         )
       );
       for (let index = 0; index < asked.length; index++) {
@@ -2773,10 +2785,10 @@
     }
     async search(query, morphology) {
       const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
-      const listed2 = listedResults(results);
+      const listed3 = listedResults(results);
       return {
-        ...listed2,
-        items: listed2.items.map((item, index) => ({
+        ...listed3,
+        items: listed3.items.map((item, index) => ({
           ...item,
           match: matchLabel(results.items[index].sourceOrder, results.items[index].matchRank)
         })),
@@ -2825,6 +2837,37 @@
       return written3 ? { kind: "word", id: written3 } : { kind: "search", query: saved.headword };
     }
   };
+
+  // src/artifact/browse-kanji.ts
+  function kanjiEntries(file) {
+    const byCharacter = new Map(file.entries.map((entry) => [entry.character, entry]));
+    return { entries: () => file.entries, row: (character) => byCharacter.get(character) ?? null };
+  }
+  var codePoint = (character) => character.codePointAt(0) ?? 0;
+  function byFrequency(left, right) {
+    const rank = (entry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY;
+    return rank(left) - rank(right) || codePoint(left.character) - codePoint(right.character);
+  }
+  var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
+  var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);
+  function firstMeaning(kanji2, entry) {
+    const [own] = entry.meanings;
+    if (own !== void 0) return own;
+    const base = entry.character.normalize("NFKC");
+    return (base === entry.character ? void 0 : kanji2.row(base)?.meanings[0]) ?? "";
+  }
+  function kanjiListResponse(kanji2, slug) {
+    const list = kanjiList(slug);
+    const entries = list ? kanjiIn(kanji2, list) : [];
+    if (entries.length === 0) return null;
+    return {
+      slug,
+      kanji: entries.map((entry) => ({
+        character: entry.character,
+        meaning: firstMeaning(kanji2, entry)
+      }))
+    };
+  }
 
   // src/artifact/cache.ts
   var LruCache = class {
@@ -2970,6 +3013,65 @@
           }
         ] : [];
       });
+    }
+  };
+
+  // src/browse/school-kanji.ts
+  var counted = new Intl.NumberFormat("en-US");
+  var kana = /[ぁ-ゖァ-ヺー]/u;
+  var okuriganaMarks = /[.-]/gu;
+  var spokenReadings = (entry) => (entry?.readings ?? []).filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
+  function matcher(filter) {
+    const query = normalizeQuery(filter);
+    if (query === "") return null;
+    const characters = graphemes(query).filter(isKanjiCharacter);
+    if (characters.length > 0) return ({ character }) => characters.includes(character);
+    if (kana.test(query)) {
+      const reading = hiragana(query);
+      return ({ readings }) => readings.some((value) => value.startsWith(reading));
+    }
+    return ({ meanings }) => meanings.some((meaning) => meaning.startsWith(query) || meaning.includes(` ${query}`));
+  }
+  var SchoolKanji = class {
+    lists;
+    constructor(kanji2) {
+      const entries = new Map(kanji2.entries().map((entry) => [entry.character, entry]));
+      this.lists = schoolLists.map((list) => ({
+        id: list.slug,
+        title: list.name,
+        kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
+          const entry = entries.get(character);
+          return {
+            character,
+            meaning,
+            meanings: (entry?.meanings ?? []).map((each) => each.toLowerCase()),
+            readings: spokenReadings(entry)
+          };
+        })
+      }));
+    }
+    panel({ filter, known }) {
+      const matches = matcher(filter);
+      const knownKanji = new Set(known);
+      const sections2 = this.lists.flatMap((list) => {
+        const shown = matches ? list.kanji.filter(matches) : list.kanji;
+        if (shown.length === 0) return [];
+        const kanji2 = shown.map(({ character, meaning }) => ({
+          character,
+          meaning,
+          known: knownKanji.has(character)
+        }));
+        const knownCount = kanji2.filter((tile) => tile.known).length;
+        const total = counted.format(list.kanji.length);
+        const count = matches ? `${counted.format(shown.length)} of ${total}` : total;
+        const spoken = [
+          list.title,
+          `${count} kanji`,
+          ...knownCount > 0 ? [`${counted.format(knownCount)} known`] : []
+        ].join(", ");
+        return [{ id: list.id, title: list.title, count, known: knownCount, spoken, kanji: kanji2 }];
+      });
+      return { filtered: matches !== null, sections: sections2 };
     }
   };
 
@@ -3554,7 +3656,7 @@
     };
   }
   function kanjiElementDetail(rows) {
-    const kanji2 = (listed2) => listed2.filter((row) => isKanjiCharacter(row.character));
+    const kanji2 = (listed3) => listed3.filter((row) => isKanjiCharacter(row.character));
     const standalone = kanji2(rows.family).sort(mostFrequentFirst).at(0);
     const alternatives = rows.alternatives.filter(isKanjiCharacter);
     const containing = kanji2(rows.containing).filter((row) => !standalone || unified(row.character) !== unified(standalone.character)).map(contribution);
@@ -3584,9 +3686,9 @@
   var atamadaka = 1;
   var moraWidth = 1;
   var combinedMoraWidth = 1.5;
-  function morae(kana) {
+  function morae(kana2) {
     const result3 = [];
-    for (const character of graphemes(kana)) {
+    for (const character of graphemes(kana2)) {
       const last = result3.at(-1);
       if (joinsPreviousMora.has(character) && last !== void 0)
         result3[result3.length - 1] = last + character;
@@ -3602,8 +3704,8 @@
     return { morae: levels, particle: downstep === heiban };
   }
   var particleWidth = 0.6;
-  function pitchGraph(kana, levels) {
-    const widths = kana.map((mora) => graphemes(mora).length > 1 ? combinedMoraWidth : moraWidth);
+  function pitchGraph(kana2, levels) {
+    const widths = kana2.map((mora) => graphemes(mora).length > 1 ? combinedMoraWidth : moraWidth);
     let x = 0;
     const points = widths.map((width, index) => {
       const point2 = { x: x + width / 2, high: levels.morae[index] };
@@ -3618,14 +3720,14 @@
     };
   }
   function pitchAccent(reading, pitch) {
-    const kana = morae(katakana(reading));
-    const levels = pitchLevels(pitch.downstep, kana.length);
+    const kana2 = morae(katakana(reading));
+    const levels = pitchLevels(pitch.downstep, kana2.length);
     return {
-      morae: kana.map((mora, index) => ({ mora, high: levels.morae[index] })),
+      morae: kana2.map((mora, index) => ({ mora, high: levels.morae[index] })),
       downstep: pitch.downstep,
       moraCount: pitch.moraCount,
       particleHigh: levels.particle,
-      graph: pitchGraph(kana, levels),
+      graph: pitchGraph(kana2, levels),
       spoken: `Pitch accent, downstep ${pitch.downstep}, ${pitch.moraCount} mora`
     };
   }
@@ -4031,6 +4133,7 @@
     host;
     files;
     radicals;
+    school;
     frequency = (ids) => hostFrequency(this.host, ids);
     readingsByKanji = new LruCache(
       rememberedKanji
@@ -4203,6 +4306,14 @@
         this.radicals = new RadicalLookup(checkedRadicalFile(file));
       }
       return this.radicals.panel(selected);
+    }
+    schoolKanjiPanel(request) {
+      if (!this.school) {
+        const file = this.host.kanjiReference?.();
+        if (!file) throw new Error("The host has no kanji reference file to read");
+        this.school = new SchoolKanji(kanjiEntries(file));
+      }
+      return this.school.panel(request);
     }
   };
 
@@ -5037,9 +5148,9 @@
       this.records = new DataView(records);
       this.text = new Uint8Array(text);
       this.lists = new Int32Array(lists, 0, lists.byteLength >> 2);
-      const listed2 = this.lists[0] ?? 0;
-      let listOf = new Int32Array(Math.max(listed2, 1));
-      for (let at = 1, read = 0; read < listed2; read++, at += 2 + this.lists[at + 1]) {
+      const listed3 = this.lists[0] ?? 0;
+      let listOf = new Int32Array(Math.max(listed3, 1));
+      for (let at = 1, read = 0; read < listed3; read++, at += 2 + this.lists[at + 1]) {
         const key = this.lists[at];
         if (key >= listOf.length) {
           const wider = new Int32Array(Math.max(key + 1, listOf.length * 2));
@@ -5288,8 +5399,8 @@
         found++;
         const list = this.known.list(-value - 1);
         const length2 = unitAt[at + 1] - from;
-        for (let listed2 = list + 1; listed2 <= list + lists[list]; listed2++) {
-          const word = lists[listed2];
+        for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
+          const word = lists[listed3];
           const record = word >> 1;
           lattice.add(
             character + length2,
@@ -5318,8 +5429,8 @@
       }
       const { shorts, lists } = this.unknown;
       const list = this.unknown.list(kind);
-      for (let listed2 = list + 1; listed2 <= list + lists[list]; listed2++) {
-        const word = lists[listed2];
+      for (let listed3 = list + 1; listed3 <= list + lists[list]; listed3++) {
+        const word = lists[listed3];
         const record = word >> 1;
         this.lattice.add(
           character + length2,
@@ -5652,11 +5763,11 @@
         if (candidates) this.counted.set(text, ids);
         words2.set(text, ids);
       }
-      const counted = [];
+      const counted2 = [];
       for (const text of lines) {
-        for (const id of words2.get(text) ?? []) counted.push(id);
+        for (const id of words2.get(text) ?? []) counted2.push(id);
       }
-      return counted;
+      return counted2;
     }
   };
   function words(text, tokens, analyzed, entries, highlight) {
@@ -5729,6 +5840,7 @@
       kanjiElementPage: (glyph) => presentation().kanjiElementPage(glyph),
       kanjiStrokes: (row) => presentation().kanjiStrokes(JSON.parse(row)),
       radicalPanel: (selected) => presentation().radicalPanel(JSON.parse(selected)),
+      schoolKanjiPanel: (request) => presentation().schoolKanjiPanel(JSON.parse(request)),
       gloss: shortGloss,
       phraseNote: (request) => {
         const { phrase, ...entry } = JSON.parse(request);

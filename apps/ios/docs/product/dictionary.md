@@ -9,8 +9,9 @@ A learner can search in Japanese or English using:
 
 - the keyboard;
 - handwriting recognition, which reads the finished drawing's shape, so stroke order and
-  direction don't matter; or
-- radical selection.
+  direction don't matter;
+- radical selection; or
+- kanji by school grade ([Grade](#grade)).
 
 Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the keyboard) and
 `SearchInputUITests` (a drawn stroke's kanji, and a radical's, searched); package
@@ -36,16 +37,17 @@ button while it has text.
 
 - **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
   Searches** while recent searches are listed. The recent searches are listed without a heading.
-- **Input buttons.** Two round buttons, a pencil for **Handwriting** and a grid for **Radicals**,
-  sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
+- **Input buttons.** Three round buttons, a pencil for **Handwriting**, a grid for **Radicals**,
+  and a cap for **Grade**, sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
   above the keyboard while typing. Either opens its panel in one tap.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
   the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
 - **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
-  or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
+  candidate, a radical candidate, or a grade's kanji, puts the keyboard away and keeps the query in the field at the top, with
   **X** beside it. The first row of the results names the order and opens Sort and Filter
-  ([Sorting results](#sorting-results), [Filtering results](#filtering-results)).
+  ([Sorting results](results.md#sorting-results),
+  [Filtering results](results.md#filtering-results)).
 - **X** clears the query and returns to Recent.
 
 On iPad, where the tabs sit at the top of the screen, nothing slides away: the title bar and the
@@ -54,7 +56,7 @@ the field sits in the window's toolbar. On both, the clear button inside the fie
 returns to Recent ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the query kept
-in the field, both input buttons beside the results, back to Recent with **X** on iPhone and the
+in the field, the input buttons beside the results, back to Recent with **X** on iPhone and the
 clear button on iPad and the Mac, and no heading),
 `testTheFieldOffersCloseAndTheInputButtonsWhileTyping` (iPhone),
 `testTheTabsStayBesideTheResultsWhichStayAcrossTabs`,
@@ -64,10 +66,10 @@ slides on iPhone is by hand ([Search manual checks](../../../../docs/agents/ios.
 
 ### Handwriting and Radicals
 
-Tapping the pencil or the grid slides up a full-height sheet over the search field and the tab
-bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the
-sheet. The same two buttons stay at its bottom left, in the same place as on the search screen,
-with the current one highlighted, so the other mode is one tap away. Both panels share one gray
+Tapping the pencil, the grid, or the cap slides up a full-height sheet over the search field and
+the tab bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags
+the sheet. The same three buttons stay at its bottom left, in the same place as on the search
+screen, with the current one highlighted, so another mode is one tap away. The panels share one gray
 background, flat candidate tiles in the same fill as the radical squares, and glass buttons
 (white in light mode).
 
@@ -77,7 +79,8 @@ background, flat candidate tiles in the same fill as the radical squares, and gl
   shows under the pad only while recognizing, when nothing matches, or when recognition fails.
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
   or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
-  headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
+  headers, six to a row, and radicals that can't combine with the selection are hidden. A header
+  opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, the same
   button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
   until one is.
 
@@ -89,7 +92,7 @@ A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size wit
 button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
-sheet, its two buttons, and closing it, dragged away on iPhone and iPad and with **Done** on the
+sheet, its three buttons, Grade without **Undo**, and closing it, dragged away on iPhone and iPad and with **Done** on the
 Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the keyboard),
 `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
 open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
@@ -97,6 +100,36 @@ first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate
 and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a
 pick lists and the radicals still offered, on the bundled radical file); core
 `search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
+
+### Grade
+
+The cap opens **Grade**: Grade 1 to Grade 6, **Secondary school**, and **Jinmeiyō**, each the
+website's kanji list for it, most frequent first
+([Kanji lists](../../../web/docs/product/browse.md#kanji-lists)), read from the bundled kanji data
+through the shared core, offline.
+
+- **Sections.** Grade and Radicals are one sectioned panel: a strip at the top, then sections
+  whose headers open and close them with a tap, six tiles to a row (four at the largest text
+  sizes). Every section starts open, and each panel remembers on the device which the learner
+  closed.
+- **Tiles.** A tile shows the kanji with a short meaning under it, unless **Show Kanji Meanings**
+  in Account → Reading Aids is off (it's on until then). Tapping a tile adds its kanji to the end
+  of the query, as a radical candidate does, and the panel closes. Grade has no **Undo**.
+- **Filter.** Where Radicals has its strip, Grade has a filter field. An English meaning, a
+  reading in kana, or the kanji itself narrows every grade at once: a grade with matches opens
+  and counts them, as **1 of 80**, and the rest are hidden. Clearing it restores every grade, open
+  or closed as before.
+- **Known kanji.** A kanji marked known from its kanji detail's **•••** menu has a green outline,
+  the ✓ Known capsule's green, and each grade's header counts its known kanji beside its total.
+
+Check: UI `GradeInputUITests`: `testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a
+kanji from the next one searched, and its kanji detail opened),
+`testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade` (marked known, then unknown),
+`testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade` (Radicals' sections too), and
+`testTurningOffKanjiMeaningsLeavesTheKanjiAlone`, on iPhone, iPad, and the Mac; package
+`SchoolKanjiTests` (each list against the bundled KANJIDIC2 grades, the filter, known counts,
+remembered sections, and Kanji Meanings on by default); core `browse/school-kanji.test.ts` (the
+lists as the website's `kanjiListResponse` answers them).
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -185,63 +218,6 @@ headings scroll with the results instead of staying pinned over them.
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
 `SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the
 Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
-
-### Sorting results
-
-While results are showing, their first row, above Example Sentences, names the order: **Sorted by
-Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping it opens a short menu with two
-rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)). **Sort By** names the
-current order underneath and opens a list with **Default**, one item for each enabled frequency
-dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual
-Novels, Video Games), and **Known Words**, one checked at a time. There is no direction to choose.
-
-- **Default** is the order described above.
-- **A dictionary** orders every matching word by that dictionary alone, most common first,
-  however it matched. JLPT orders by level, N5 first.
-- **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
-  at once.
-
-A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
-a rank, keep their Default order. A choice an earlier build saved with a direction reads as Default.
-
-Check: core `results/ordering.test.ts` (each order, and the row's words); package
-`ResultsScreenTests` (the same on the bundled data); UI
-`SearchResultsUITests.testTheSortedByRowNamesTheChosenOrder` (a dictionary, Known Words, and back
-to Default).
-
-Switching re-sorts the visible results without searching again and announces the new order to
-VoiceOver. The choice is kept on the device across launches and applies to Japanese, English, and
-romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it can
-be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji row,
-Example Sentences, the reading refinement, and Discovered Words keep their places; when there are no
-word rows to sort (only Discovered Words, or only a single kanji's Kanji row), the row isn't shown.
-
-Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement, the
-stored choice, unreadable ranks, a disabled dictionary); package `ResultsScreenTests` (the stored
-choice, an unreadable dictionary, a disabled one, and none enabled, on the bundled data).
-
-### Filtering results
-
-The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
-**Sort By**. It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows
-only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
-it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
-**Account → Frequency Dictionaries**, not here.
-
-While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
-filter**; no other row is added. Filtering keeps the chosen sort. When it hides every word, the
-list shows **No Words Match Your Filter** with the count and **Clear Filter**.
-
-Changing the filter updates the visible results without searching again and announces how many
-words show to VoiceOver. The filter is kept on the device across launches and applies to
-Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
-and Discovered Words are never filtered.
-
-Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
-stored filter); package `ResultsScreenTests` (known words only, and the count a filter hides); UI
-`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
-filter**, **No Words Match Your Filter**, and **Clear Filter**) and
-`testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
 
 ## Dictionary and kanji details
 
