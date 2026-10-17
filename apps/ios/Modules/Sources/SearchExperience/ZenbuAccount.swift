@@ -18,7 +18,7 @@ final class ZenbuAccount {
     ZenbuAccount(
       configuration: $0, session: LaunchHarness.accountSession ?? AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
-      watchHistory: .shared, translations: .shared,
+      watchHistory: .shared, translations: .shared, profile: .shared,
       providers: LaunchHarness.signInProviders ?? .system)
   }
 
@@ -37,6 +37,7 @@ final class ZenbuAccount {
     wordLists: WordLists,
     watchHistory: WatchHistory,
     translations: ConversationHistory,
+    profile: UserProfile,
     fileURL: URL = AccountSync.defaultFileURL,
     providers: SignInProviders = .system,
     now: @escaping @MainActor () -> Date = Date.init,
@@ -50,7 +51,7 @@ final class ZenbuAccount {
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
-      translations: translations, fileURL: fileURL, now: now)
+      translations: translations, profile: profile, fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now, clock: retryClock)
   }
 

@@ -66,7 +66,7 @@ function Mail() {
 
 export default function PrivacyPage() {
   return (
-    <PageShell title="Privacy Policy" updated="October 9, 2026">
+    <PageShell title="Privacy Policy" updated="October 18, 2026">
       <p>
         This policy covers the {site.name} iPhone app, Tomodachi for iPhone and Mac,
         zenbujapanese.com, and your Zenbu account.
@@ -129,7 +129,8 @@ export default function PrivacyPage() {
       <PolicyTable head={['What we keep', 'Why']} rows={whatWeKeep} />
       <p>
         When you remove a video, list, or bookmark, we keep only a record that it was removed, so
-        your other devices follow. The profile in the app, notes, photos, searches, settings, and
+        your other devices follow. The iPhone app's profile syncs its name and username, which your
+        account keeps anyway. The profile's photo and email, notes, photos, searches, settings, and
         whole Translate conversations don't sync. A sentence you bookmark may be something someone
         else said, so only the sentences you bookmark leave your device. We'll update this policy
         before an app or this website syncs anything else.

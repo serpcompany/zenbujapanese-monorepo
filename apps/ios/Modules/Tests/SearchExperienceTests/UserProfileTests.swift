@@ -77,7 +77,7 @@ struct UserProfileTests {
     let temporary = try TemporaryDefaults()
     let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
     let earlier = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
-    earlier.username = "kana.fan"
+    earlier.edit(ProfileFields(username: "kana.fan"))
     #expect(UserProfile.acceptedUsername(earlier.username) == nil)
 
     let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
@@ -87,6 +87,82 @@ struct UserProfileTests {
     field.focus()
     #expect(field.unfocus() == nil)
     #expect(field.text == "kana.fan")
+  }
+
+  @MainActor
+  @Test("an edit tells sync what changed and what it was, and a synced value doesn't")
+  func editsReachSync() throws {
+    let temporary = try TemporaryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    var edits: [ProfileFields] = []
+    var previous: [ProfileFields] = []
+    profile.changeObserver = { change in
+      guard case .profileEdited(let fields, let before) = change else { return }
+      edits.append(fields)
+      previous.append(before)
+    }
+
+    profile.applySynced(ProfileFields(name: "Kana Fan", username: "kana_fan"))
+    profile.edit(ProfileFields(name: "Kana Fan"))
+    profile.refusal = .usernameTaken
+    profile.edit(ProfileFields(username: "kana"))
+    profile.edit(ProfileFields(name: "", username: "kana.fan"))
+
+    #expect(edits == [ProfileFields(username: "kana")])
+    #expect(previous == [ProfileFields(username: "kana_fan")])
+    #expect(profile.fields == ProfileFields(name: "", username: "kana.fan"))
+    #expect(profile.refusal == nil)
+    #expect(UserProfile(defaults: temporary.defaults, photoURL: photoURL).username == "kana.fan")
+  }
+
+  @Test("signed in, a name is 1 to 100 characters, as the account requires")
+  func accountNames() {
+    #expect(!UserProfile.isAccountName(""))
+    #expect(UserProfile.isAccountName("A"))
+    #expect(UserProfile.isAccountName(String(repeating: "あ", count: 100)))
+    #expect(!UserProfile.isAccountName(String(repeating: "a", count: 101)))
+    #expect(UserProfile.isAccountName(String(repeating: "e\u{301}", count: 100)))
+    #expect(UserProfile.isAccountName("Kana " + String(repeating: " ", count: 100) + "Fan"))
+    #expect(!UserProfile.isAccountName("👩\u{200D}💻 Kana"))
+    #expect(!UserProfile.isAccountName("Ka\u{AD}na"))
+  }
+
+  @Test("the first sync keeps the account's non-empty fields and fills its empty ones")
+  func firstSync() {
+    let device = ProfileFields(name: "Phone Name", username: "phone_user")
+    let full = FirstProfileSync(
+      device: device, account: ProfileFields(name: "Devin", username: "devin"))
+    #expect(full.onDevice == ProfileFields(name: "Devin", username: "devin"))
+    #expect(full.uploads.isEmpty)
+
+    let empty = FirstProfileSync(device: device, account: ProfileFields(name: "", username: ""))
+    #expect(empty.onDevice == device)
+    #expect(
+      empty.uploads == [ProfileFields(name: "Phone Name"), ProfileFields(username: "phone_user")])
+
+    let half = FirstProfileSync(
+      device: ProfileFields(name: "", username: "phone_user"),
+      account: ProfileFields(name: "Devin", username: ""))
+    #expect(half.onDevice == ProfileFields(name: "Devin", username: "phone_user"))
+    #expect(half.uploads.map(\.syncFields) == [["username": .string("phone_user")]])
+    #expect(ProfileFields(username: "").syncFields == ["username": .null])
+
+    let another = FirstProfileSync(
+      device: device, account: ProfileFields(name: "", username: ""), fillsAccount: false)
+    #expect(another.onDevice == ProfileFields(name: "", username: ""))
+    #expect(another.uploads.isEmpty)
+  }
+
+  @Test("only what the account can take goes up: no empty name, and no username the rule refuses")
+  func uploadableFields() {
+    let earlier = FirstProfileSync(
+      device: ProfileFields(name: "Kana", username: "kana.fan"),
+      account: ProfileFields(name: "", username: ""))
+    #expect(earlier.onDevice == ProfileFields(name: "Kana", username: "kana.fan"))
+    #expect(earlier.uploads == [ProfileFields(name: "Kana")])
+    #expect(ProfileFields(name: "", username: "").uploadable == ProfileFields(username: ""))
+    #expect(ProfileFields(name: String(repeating: "a", count: 101)).uploadable.isEmpty)
   }
 
   @Test("email validation accepts one address and nothing else")
@@ -109,8 +185,7 @@ struct UserProfileTests {
     let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
 
     let profile = UserProfile(defaults: defaults, photoURL: photoURL)
-    profile.name = "Devin Schumacher"
-    profile.username = "devin"
+    profile.edit(ProfileFields(name: "Devin Schumacher", username: "devin"))
     profile.email = "devin@serp.co"
 
     let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
@@ -131,7 +206,7 @@ struct UserProfileTests {
     let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
     #expect(profile.isEmpty)
     #expect(temporary.defaults.keptCopies(of: "user-profile.v1") == [unreadable])
-    profile.name = "Devin Schumacher"
+    profile.edit(ProfileFields(name: "Devin Schumacher"))
     let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
     #expect(reloaded.name == "Devin Schumacher")
   }
