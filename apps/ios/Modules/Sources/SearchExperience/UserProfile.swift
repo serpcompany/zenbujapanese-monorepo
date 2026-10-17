@@ -106,7 +106,9 @@ final class UserProfile {
   ]
 
   nonisolated static func isAccountName(_ name: String) -> Bool {
-    let words = name.precomposedStringWithCanonicalMapping.split(whereSeparator: \.isWhitespace)
+    let words = name.precomposedStringWithCanonicalMapping.split {
+      $0.isWhitespace && $0 != Character(nextLine)
+    }
     let scalars = words.joined(separator: " ").unicodeScalars
     return accountNameLengths.contains(scalars.count)
       && !scalars.contains { refusedInAName.contains($0.properties.generalCategory) }

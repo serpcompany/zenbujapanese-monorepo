@@ -18,7 +18,7 @@ final class AccountSync: LocalFileStore {
   var account: SignedInAccount? { state.account }
   var sessionEndedOnItsOwn: Bool { state.endedOnItsOwn }
   var lastSyncedAt: Date? { state.lastSyncedAt }
-  var queuedChangeCount: Int { state.queue.count }
+  var queuedChangeCount: Int { state.queue.filter { !state.holds($0.key) }.count }
 
   @ObservationIgnored let tokens: AccountTokens
   @ObservationIgnored private let api: AccountAPI
@@ -355,7 +355,7 @@ final class AccountSync: LocalFileStore {
     case .bookmark(let bookmark):
       translations.applySynced(bookmark)
     case .profile(let fields):
-      userProfile.applySynced(fields)
+      userProfile.applySynced(fields.keepingWhatCantGoUp(on: userProfile.fields))
     case .gone:
       removeLocally(copy.key)
     }

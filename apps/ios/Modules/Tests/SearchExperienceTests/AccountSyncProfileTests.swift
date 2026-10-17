@@ -85,6 +85,8 @@ struct AccountSyncProfileTests {
     try await fixture.signIn()
     #expect(profileUpdates(in: fixture).isEmpty)
     #expect(fixture.profile.name == "Phone Name")
+    #expect(!fixture.sync.state.queue.isEmpty)
+    #expect(fixture.sync.queuedChangeCount == 0)
 
     fixture.serve(profile: .json(200, Fixture.profile(name: "Web Name")))
     try await fixture.syncNow()
@@ -224,5 +226,65 @@ struct AccountSyncProfileTests {
     #expect(phone.profile.fields == ProfileFields(name: "", username: ""))
     #expect(profileUpdates(in: phone).isEmpty)
     #expect(phone.profile.refusal == nil)
+  }
+
+  @Test("a name or username the account can't take stays on the phone through later syncs")
+  func unsendableFieldsStay() async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    phone.profile.edit(ProfileFields(name: "Kana", username: "kana.fan"))
+
+    try await phone.signIn()
+    #expect(phone.profile.fields == ProfileFields(name: "Kana", username: "kana.fan"))
+    #expect(service.profile(for: Fixture.email)["username"] is NSNull)
+
+    service.editProfileOnTheWebsite(for: Fixture.email, ["name": .string("Kana Fan")])
+    try await phone.syncNow()
+    #expect(phone.profile.fields == ProfileFields(name: "Kana Fan", username: "kana.fan"))
+
+    let softHyphen = "Ka\u{AD}na"
+    pad.profile.edit(ProfileFields(name: softHyphen))
+    try await pad.signIn(as: other)
+    service.editProfileOnTheWebsite(for: other, ["username": .string("kana_pad")])
+    try await pad.syncNow()
+    #expect(pad.profile.fields == ProfileFields(name: softHyphen, username: "kana_pad"))
+    #expect(service.profile(for: other)["name"] as? String == "")
+  }
+
+  @Test("a profile pulled before the profile is read waits, and the read decides")
+  func pulledProfileWaitsForTheRead() async throws {
+    let fixture = Fixture()
+    let pulled = StubSync.put(
+      SyncEntity.profile, Fixture.userID, 5, Fixture.profile(name: "Pulled", version: 5))
+    let pulledData = try JSONSerialization.data(withJSONObject: pulled)
+    fixture.serve(profile: .error(503, "unavailable")) { request in
+      let change = (try? JSONSerialization.jsonObject(with: pulledData)) ?? [:]
+      return StubSync.answer(
+        results: StubSync.applied(request), changes: [change as? [String: Any] ?? [:]],
+        cursor: "cursor-1")
+    }
+    await fixture.launch()
+    fixture.profile.edit(ProfileFields(name: "Phone"))
+
+    try await fixture.signIn()
+    #expect(fixture.profile.name == "Phone")
+
+    fixture.serve(profile: .json(200, Fixture.profile(name: "Read Name", version: 6)))
+    try await fixture.syncNow()
+    #expect(fixture.profile.name == "Read Name")
+  }
+
+  @Test("a later edit of a refused field that the account takes leaves no refusal showing")
+  func laterEditOfARefusedFieldClearsIt() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    service.editProfileOnTheWebsite(for: other, ["username": .string("taken_a")])
+    try await phone.signIn()
+
+    phone.profile.edit(ProfileFields(username: "taken_a"))
+    phone.profile.edit(ProfileFields(username: "kana_free"))
+    try await phone.syncNow()
+
+    #expect(phone.profile.username == "kana_free")
+    #expect(phone.profile.refusal == nil)
+    #expect(service.profile(for: Fixture.email)["username"] as? String == "kana_free")
   }
 }

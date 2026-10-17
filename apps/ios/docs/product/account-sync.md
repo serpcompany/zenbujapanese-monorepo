@@ -48,9 +48,10 @@ account in every app.
 
 **The profile at sign-in.** Each time the phone signs in, it reads the account's name and username,
 and the account's wins over the phone's for each it has. One the account has empty is filled from
-the phone and sent up, unless the phone signed out of another account: then the phone takes the
-new account's as they are. Until the read succeeds, profile edits wait on the phone. A name or username the account can't take (an empty name, or a
-username an earlier version saved that the rule refuses) stays on the phone without going up.
+the phone and sent up, unless the phone signed out of another account: then the phone takes the new
+account's as they are. Until the read succeeds, profile edits wait on the phone. A name or username
+the account can't take (an empty name, one with control characters, or a username an earlier version
+saved that the rule refuses) stays on the phone without going up.
 
 Check: package `AccountSyncTests` and `AccountSignedOutTests` (the first sync, and catching up on
 watch history and bookmarks); `AccountSyncProfileTests` (the profile at sign-in).
@@ -95,19 +96,19 @@ Check: package `AccountSyncTests` and `AccountSyncRecoveryTests`.
   bookmarked it again since without this one hearing; then it stays bookmarked. The account holds
   at most 2,000 bookmarks; past that, a new bookmark is taken back off, and bookmarks a first sync
   can't fit stay on the phone without syncing.
-- A name or username changed on the website and in the app before the app synced shows as the
-  website has it. One the account refuses, such as a username someone else has, goes back on the
-  phone, and Profile says why until the next edit.
+- When the website changed the name or username before the app synced its own edit of either, the
+  app's edit gives way, and the profile shows as the website has it. One the account refuses, such
+  as a username someone else has, goes back on the phone, and Profile says why until the next edit.
 
 Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`,
 `AccountSyncBookmarkTests`, and `AccountSyncProfileTests`.
 
-**Zenbu Account** shows the email, when the last sync was (or that one is running), how many
-changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
-**Delete Account…**. If the bookmarks synced from other devices can't be read at launch, such as
-before the device's first unlock, nothing syncs until Zenbu is reopened, so none are lost, and
-Zenbu Account says so; if a newer version of Zenbu saved them, nothing syncs until Zenbu is
-updated, and Zenbu Account says to update it.
+**Zenbu Account** shows the email, when the last sync was (or that one is running), how many changes
+are waiting (not counting profile edits waiting for the profile to be read), and a note when the
+last sync failed, with **Sync Now**, **Sign Out**, and **Delete Account…**. If the bookmarks synced
+from other devices can't be read at launch, such as before the device's first unlock, nothing syncs
+until Zenbu is reopened, so none are lost, and Zenbu Account says so; if a newer version of Zenbu
+saved them, nothing syncs until Zenbu is updated, and Zenbu Account says to update it.
 
 Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncBookmarkTests`
 (the unreadable and newer bookmarks messages); UI

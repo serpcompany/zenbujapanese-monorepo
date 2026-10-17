@@ -126,6 +126,7 @@ struct UserProfileTests {
     #expect(UserProfile.isAccountName("Kana " + String(repeating: " ", count: 100) + "Fan"))
     #expect(!UserProfile.isAccountName("👩\u{200D}💻 Kana"))
     #expect(!UserProfile.isAccountName("Ka\u{AD}na"))
+    #expect(!UserProfile.isAccountName("Kana\u{85}Fan"))
   }
 
   @Test("the first sync keeps the account's non-empty fields and fills its empty ones")

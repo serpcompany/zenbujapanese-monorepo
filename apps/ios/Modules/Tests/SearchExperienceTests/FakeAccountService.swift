@@ -213,8 +213,8 @@ final class FakeAccountService: @unchecked Sendable {
       }
       guard base == version else { return conflict() }
       if case .string(let name) = mutation.fields?["name"] {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-          .precomposedStringWithCanonicalMapping
+        let trimmed = name.precomposedStringWithCanonicalMapping
+          .split(whereSeparator: \.isWhitespace).joined(separator: " ")
         let refused: Set<Unicode.GeneralCategory> = [.control, .format]
         guard (1...100).contains(trimmed.unicodeScalars.count),
           !trimmed.unicodeScalars.contains(where: { refused.contains($0.properties.generalCategory) })

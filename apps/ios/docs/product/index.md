@@ -246,14 +246,14 @@ The profile card opens Profile, where a learner adds or changes a photo and edit
 username, and email in place. Each field saves when the learner leaves it. A username follows the
 account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, trimmed, and
 lowercased, or empty for none. An email is a single valid address or empty. A username the rule
-refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username
-an earlier version saved stays as it was until it is edited. Without a photo, the card shows the
-name's initials. Signed in, name and username sync with the Zenbu account: each sign-in keeps the
-account's, filling its empty ones from the phone ([The profile at sign-in](account-sync.md)).
-Email shows the account's, read-only (Apple's relay address for Hide My Email), the name can't be
-emptied, and a change the account refuses, such as a taken username, goes back and says why.
-Signed out, edits stay on the phone, and the photo always does. One this version can't read is kept aside ([Saved data that can't be
-read](#saved-data-that-cant-be-read)).
+refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username an
+earlier version saved stays as it was until it is edited. Without a photo, the card shows the name's
+initials. Signed in, name and username sync with the Zenbu account: each sign-in keeps the
+account's, filling its empty ones from the phone ([The profile at sign-in](account-sync.md)). Email
+shows the account's, read-only (Apple's relay address for Hide My Email), the name can't be emptied,
+and a change the account refuses, such as a taken username, goes back and says why. Signed out,
+edits stay on the phone, and the photo always does. One this version can't read is kept aside
+([Saved data that can't be read](#saved-data-that-cant-be-read)).
 
 Check: package `UserProfileTests` (the field rules, the username's from the cases the account
 service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a

@@ -30,6 +30,13 @@ struct ProfileFields: Codable, Hashable, Sendable {
     ProfileFields(
       name: other.name == nil ? nil : name, username: other.username == nil ? nil : username)
   }
+
+  func keepingWhatCantGoUp(on device: ProfileFields) -> ProfileFields {
+    let sendable = device.uploadable
+    return ProfileFields(
+      name: name == "" && sendable.name == nil ? device.name ?? name : name,
+      username: username == "" && sendable.username == nil ? device.username ?? username : username)
+  }
 }
 
 struct SyncedProfile: Decodable, Sendable {
