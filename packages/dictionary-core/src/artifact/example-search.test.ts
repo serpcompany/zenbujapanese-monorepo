@@ -1,7 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import { describe, expect, test } from 'vitest'
-import type { ArtifactDatabase, SqlValue } from './database'
+import type { ArtifactDatabase } from './database'
 import { searchExamples } from './example-search'
+import { sqliteDatabase } from './sqlite-database'
 
 const japanese = '例文です。'
 
@@ -33,11 +34,7 @@ function exampleIndex(english: readonly string[]): ArtifactDatabase {
     stemmed.run(row, sentence)
     exact.run(row, sentence)
   }
-  return {
-    all<Row>(sql: string, params: readonly SqlValue[] = []): Row[] {
-      return database.prepare(sql).all(...params) as Row[]
-    }
-  }
+  return sqliteDatabase(database)
 }
 
 function listed(english: readonly string[], query: string): string[] {
