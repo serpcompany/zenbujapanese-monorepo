@@ -117,9 +117,10 @@ and `apps/ios/ShareActions/ShareActions.entitlements`), which holds nothing else
   whichever copy of the app it picks, and a Mac that builds several checkouts has many, so a Debug
   build launched with `ZENBU_OPEN_LINK=<link>` hands that link to the window, through
   `AppLinkInbox` as the Shortcuts actions do, when the test posts
-  `com.zenbujapanese.dictionary.uitests.open-link`. One test runs a share-sheet action end to end:
-  a word's **Share**, then **Translate with Zenbu** in the system's sheet, whose extension opens
-  the app on Text. In a Debug build,
+  `com.zenbujapanese.dictionary.uitests.open-link`. One test runs a share-sheet action end to end
+  on iPhone and iPad: a word's **Share**, then **Translate with Zenbu** in the system's sheet,
+  whose extension opens the app on Text. On the Mac, XCUITest reached no Share menu from that
+  button, so the Mac's Share menu is checked by hand. In a Debug build,
   `ZENBU_SHARED_IMAGES={"share":"<UUID>","images":{"<name>":"<base64>"}}` writes those images to a
   folder in the app's temporary directory that stands in for the App Group, where the extension
   would have left them, so the Mac's test, which has no App Group, opens them too.

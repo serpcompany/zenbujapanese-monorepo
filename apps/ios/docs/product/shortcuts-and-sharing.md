@@ -62,7 +62,7 @@ their names kept apart, and the limits) and `AppLinkTests.destinations`; contrac
 `apps/ios/Tools/tests/test_share_actions.py` (the three extensions, what each is offered for, and
 the App Group they share with the app); UI
 `AppLinkUITests.testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText` (the
-real share sheet, from a word's **Share**, through the extension to Text),
+real share sheet, from a word's **Share**, through the extension to Text, on iPhone and iPad),
 `testAnImageSharedWithZenbuOpensImageSearchOnIt`, with a stand-in for the images an extension
 leaves the app, and `testSharedImagesTheAppCannotReadSaySo`.
 
@@ -80,7 +80,7 @@ Check: package `AppLinkTests.notActions`, `bundleIDs`, and `websiteLinkInTheApps
 ## Checked by hand
 
 XCUITest can't run Siri, Spotlight, the Shortcuts app, or another app's share sheet; it does run
-Zenbu's own share sheet, above. Check these on
+Zenbu's own share sheet on iPhone and iPad, above. Check these on
 a device, in a Zenbu Dev build so the TestFlight app is untouched
 ([`ios.md`](../../../../docs/agents/ios.md#beside-the-testflight-app)), each beside the automated
 check that comes closest:
@@ -92,5 +92,5 @@ check that comes closest:
 | Shortcuts lists both actions under Zenbu Japanese; a shortcut that takes the share sheet's text and runs Look Up in Zenbu opens the word | The same |
 | Safari: select 見る, Share, **Look Up in Zenbu** opens 見る; **Translate with Zenbu** opens Text with the selection | `AppLinkUITests.testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText` (Zenbu's own share sheet), `ShareActionTests.sharedText` |
 | Photos: share one photo, then eight, with **Image Search in Zenbu**; with nine the action isn't offered | `ShareActionTests.sharedImages` and `sharedImageLimits`; `test_share_actions.py` (offered for at most `importLimit`) |
-| The Mac: the same from Safari's and Photos' Share menus, into the window already open | The same, on the Mac |
+| The Mac: the same from Safari's and Photos' Share menus, and a word's **Share** in Zenbu, into the window already open | The package tests and `AppLinkUITests` on the Mac, from the link on |
 | Zenbu Dev beside the TestFlight app: each one's actions open that app | `AppLinkTests.bundleIDs` and `notActions` |
