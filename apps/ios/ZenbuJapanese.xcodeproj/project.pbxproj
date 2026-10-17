@@ -11,6 +11,19 @@
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
+		A39400F1000000000000000B /* ZenbuShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000A /* ZenbuShortcuts.swift */; };
+		A39401040000000000000000 /* LookUpShareAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39401010000000000000000 /* LookUpShareAction.swift */; };
+		A39401050000000000000000 /* AppActions in Frameworks */ = {isa = PBXBuildFile; productRef = A39401100000000000000000 /* AppActions */; };
+		A39401060000000000000000 /* LookUpShareAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A39401030000000000000000 /* LookUpShareAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A39402040000000000000000 /* TranslateShareAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39402010000000000000000 /* TranslateShareAction.swift */; };
+		A39402050000000000000000 /* AppActions in Frameworks */ = {isa = PBXBuildFile; productRef = A39402100000000000000000 /* AppActions */; };
+		A39402060000000000000000 /* TranslateShareAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A39402030000000000000000 /* TranslateShareAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A39403040000000000000000 /* ImageSearchShareAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39403010000000000000000 /* ImageSearchShareAction.swift */; };
+		A39403050000000000000000 /* AppActions in Frameworks */ = {isa = PBXBuildFile; productRef = A39403100000000000000000 /* AppActions */; };
+		A39403060000000000000000 /* ImageSearchShareAction.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A39403030000000000000000 /* ImageSearchShareAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A39401200000000000000000 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000F /* Assets.xcassets */; };
+		A39402200000000000000000 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000F /* Assets.xcassets */; };
+		A39403200000000000000000 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000F /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +35,18 @@
 		C5730A0000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenbuJapanese.entitlements; sourceTree = "<group>"; };
 		C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A39400F1000000000000000A /* ZenbuShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuShortcuts.swift; sourceTree = "<group>"; };
+		A39400F1000000000000000C /* ShareActions.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareActions.entitlements; sourceTree = "<group>"; };
+		A39401010000000000000000 /* LookUpShareAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LookUpShareAction.swift; sourceTree = "<group>"; };
+		A39401020000000000000000 /* LookUpShareAction-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LookUpShareAction-Info.plist"; sourceTree = "<group>"; };
+		A39401030000000000000000 /* LookUpShareAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = LookUpShareAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A39402010000000000000000 /* TranslateShareAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslateShareAction.swift; sourceTree = "<group>"; };
+		A39402020000000000000000 /* TranslateShareAction-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TranslateShareAction-Info.plist"; sourceTree = "<group>"; };
+		A39402030000000000000000 /* TranslateShareAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TranslateShareAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A39403010000000000000000 /* ImageSearchShareAction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageSearchShareAction.swift; sourceTree = "<group>"; };
+		A39403020000000000000000 /* ImageSearchShareAction-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ImageSearchShareAction-Info.plist"; sourceTree = "<group>"; };
+		A39403030000000000000000 /* ImageSearchShareAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ImageSearchShareAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A39400F1000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,7 +57,44 @@
 			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
 			remoteInfo = ZenbuJapanese;
 		};
+		A39401070000000000000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A394010B0000000000000000;
+			remoteInfo = LookUpShareAction;
+		};
+		A39402070000000000000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A394020B0000000000000000;
+			remoteInfo = TranslateShareAction;
+		};
+		A39403070000000000000000 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A394030B0000000000000000;
+			remoteInfo = ImageSearchShareAction;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A39400F1000000000000000E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A39401060000000000000000 /* LookUpShareAction.appex in Embed Foundation Extensions */,
+				A39402060000000000000000 /* TranslateShareAction.appex in Embed Foundation Extensions */,
+				A39403060000000000000000 /* ImageSearchShareAction.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C5730B0000000000000000B2 /* UITests */ = {
@@ -58,6 +120,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A39401080000000000000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39401050000000000000000 /* AppActions in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A39402080000000000000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39402050000000000000000 /* AppActions in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A39403080000000000000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39403050000000000000000 /* AppActions in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -74,6 +160,9 @@
 			children = (
 				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
 				C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */,
+				A39401030000000000000000 /* LookUpShareAction.appex */,
+				A39402030000000000000000 /* TranslateShareAction.appex */,
+				A39403030000000000000000 /* ImageSearchShareAction.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -84,6 +173,7 @@
 				9DF55C21A8674721DB56F09F /* App */,
 				0D9EF723FB60C0407E450D3E /* Packages */,
 				4A0C8C2271C037859685316D /* Products */,
+				A39400F1000000000000000D /* ShareActions */,
 				C5730B0000000000000000B2 /* UITests */,
 			);
 			sourceTree = "<group>";
@@ -96,8 +186,24 @@
 				48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */,
 				C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */,
 				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
+				A39400F1000000000000000A /* ZenbuShortcuts.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		A39400F1000000000000000D /* ShareActions */ = {
+			isa = PBXGroup;
+			children = (
+				A39400F1000000000000000F /* Assets.xcassets */,
+				A39400F1000000000000000C /* ShareActions.entitlements */,
+				A39401010000000000000000 /* LookUpShareAction.swift */,
+				A39401020000000000000000 /* LookUpShareAction-Info.plist */,
+				A39402010000000000000000 /* TranslateShareAction.swift */,
+				A39402020000000000000000 /* TranslateShareAction-Info.plist */,
+				A39403010000000000000000 /* ImageSearchShareAction.swift */,
+				A39403020000000000000000 /* ImageSearchShareAction-Info.plist */,
+			);
+			path = ShareActions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -111,10 +217,14 @@
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
 				F25800000000000000000001 /* Prepare bundled Sudachi Core */,
+				A39400F1000000000000000E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A394010C0000000000000000 /* PBXTargetDependency */,
+				A394020C0000000000000000 /* PBXTargetDependency */,
+				A394030C0000000000000000 /* PBXTargetDependency */,
 			);
 			name = ZenbuJapanese;
 			packageProductDependencies = (
@@ -144,6 +254,66 @@
 			productName = ZenbuJapaneseUITests;
 			productReference = C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		A394010B0000000000000000 /* LookUpShareAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A394010F0000000000000000 /* Build configuration list for PBXNativeTarget "LookUpShareAction" */;
+			buildPhases = (
+				A394010A0000000000000000 /* Sources */,
+				A39401080000000000000000 /* Frameworks */,
+				A39401090000000000000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = LookUpShareAction;
+			packageProductDependencies = (
+				A39401100000000000000000 /* AppActions */,
+			);
+			productName = LookUpShareAction;
+			productReference = A39401030000000000000000 /* LookUpShareAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A394020B0000000000000000 /* TranslateShareAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A394020F0000000000000000 /* Build configuration list for PBXNativeTarget "TranslateShareAction" */;
+			buildPhases = (
+				A394020A0000000000000000 /* Sources */,
+				A39402080000000000000000 /* Frameworks */,
+				A39402090000000000000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TranslateShareAction;
+			packageProductDependencies = (
+				A39402100000000000000000 /* AppActions */,
+			);
+			productName = TranslateShareAction;
+			productReference = A39402030000000000000000 /* TranslateShareAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A394030B0000000000000000 /* ImageSearchShareAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A394030F0000000000000000 /* Build configuration list for PBXNativeTarget "ImageSearchShareAction" */;
+			buildPhases = (
+				A394030A0000000000000000 /* Sources */,
+				A39403080000000000000000 /* Frameworks */,
+				A39403090000000000000000 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ImageSearchShareAction;
+			packageProductDependencies = (
+				A39403100000000000000000 /* AppActions */,
+			);
+			productName = ImageSearchShareAction;
+			productReference = A39403030000000000000000 /* ImageSearchShareAction.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -178,6 +348,9 @@
 			targets = (
 				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
 				C5730B0000000000000000B8 /* ZenbuJapaneseUITests */,
+				A394010B0000000000000000 /* LookUpShareAction */,
+				A394020B0000000000000000 /* TranslateShareAction */,
+				A394030B0000000000000000 /* ImageSearchShareAction */,
 			);
 		};
 /* End PBXProject section */
@@ -196,6 +369,30 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A39401090000000000000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39401200000000000000000 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A39402090000000000000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39402200000000000000000 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A39403090000000000000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39403200000000000000000 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -227,6 +424,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */,
+				A39400F1000000000000000B /* ZenbuShortcuts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -234,6 +432,30 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A394010A0000000000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39401040000000000000000 /* LookUpShareAction.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A394020A0000000000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39402040000000000000000 /* TranslateShareAction.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A394030A0000000000000000 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A39403040000000000000000 /* ImageSearchShareAction.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,6 +467,21 @@
 			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
 			targetProxy = C5730B0000000000000000B6 /* PBXContainerItemProxy */;
 		};
+		A394010C0000000000000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A394010B0000000000000000 /* LookUpShareAction */;
+			targetProxy = A39401070000000000000000 /* PBXContainerItemProxy */;
+		};
+		A394020C0000000000000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A394020B0000000000000000 /* TranslateShareAction */;
+			targetProxy = A39402070000000000000000 /* PBXContainerItemProxy */;
+		};
+		A394030C0000000000000000 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A394030B0000000000000000 /* ImageSearchShareAction */;
+			targetProxy = A39403070000000000000000 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -255,7 +492,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
@@ -277,7 +513,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
@@ -331,6 +566,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -344,6 +580,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 2.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -361,7 +598,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
@@ -383,7 +619,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
@@ -437,6 +672,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -456,6 +692,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 2.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -519,6 +756,240 @@
 			};
 			name = Release;
 		};
+		A394010D0000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/LookUpShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Look Up in Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).look-up";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Debug;
+		};
+		A394010E0000000000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/LookUpShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Look Up in Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).look-up";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Release;
+		};
+		A394020D0000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/TranslateShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Translate with Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).translate";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Debug;
+		};
+		A394020E0000000000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/TranslateShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Translate with Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).translate";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Release;
+		};
+		A394030D0000000000000000 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/ImageSearchShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Image Search in Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).image-search";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Debug;
+		};
+		A394030E0000000000000000 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				"ASSETCATALOG_COMPILER_APPICON_NAME[sdk=iphone*]" = ActionIcon;
+				CODE_SIGN_ENTITLEMENTS = ShareActions/ShareActions.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ShareActions/ImageSearchShareAction-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Image Search in Zenbu";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).image-search";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_SHARE_EXTENSION_POINT = "com.apple.ui-services";
+				"ZENBU_SHARE_EXTENSION_POINT[sdk=macosx*]" = "com.apple.share-services";
+				"ARCHS[sdk=macosx*]" = arm64;
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -549,6 +1020,33 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		A394010F0000000000000000 /* Build configuration list for PBXNativeTarget "LookUpShareAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A394010D0000000000000000 /* Debug */,
+				A394010E0000000000000000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A394020F0000000000000000 /* Build configuration list for PBXNativeTarget "TranslateShareAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A394020D0000000000000000 /* Debug */,
+				A394020E0000000000000000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A394030F0000000000000000 /* Build configuration list for PBXNativeTarget "ImageSearchShareAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A394030D0000000000000000 /* Debug */,
+				A394030E0000000000000000 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -562,6 +1060,18 @@
 		71B99CFA03F259B063FB7CC8 /* SearchExperience */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SearchExperience;
+		};
+		A39401100000000000000000 /* AppActions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppActions;
+		};
+		A39402100000000000000000 /* AppActions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppActions;
+		};
+		A39403100000000000000000 /* AppActions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppActions;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

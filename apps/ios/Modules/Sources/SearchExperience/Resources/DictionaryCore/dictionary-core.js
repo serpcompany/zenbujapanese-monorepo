@@ -1907,6 +1907,59 @@
     };
   }
 
+  // src/search/composition.ts
+  var searchResultLimit = 60;
+  function noResults() {
+    return {
+      items: [],
+      leadingLexicalEntryCount: 0,
+      presentation: "ranked",
+      resolution: "direct",
+      readingRefinement: null,
+      usesPrimaryEntryExamples: false,
+      hasExactOrPrefixMatch: false
+    };
+  }
+  function resultItems(ranked) {
+    return ranked.map((entry, fallbackOrder) => ({
+      entry: entry.entry,
+      sourceOrder: 0,
+      matchRank: entry.presentationRank,
+      fallbackOrder,
+      matchedSummary: entry.matchedSummary
+    }));
+  }
+  function leadingExactFormCount(items) {
+    let count = 0;
+    for (const item of items) {
+      if (item.matchRank.kind !== "japanese") break;
+      if (item.matchRank.relation > FormRelation.readingExact) break;
+      count++;
+    }
+    return count;
+  }
+  function composing(sources, options) {
+    const limit = options.limit ?? searchResultLimit;
+    const items = [];
+    const seen = /* @__PURE__ */ new Set();
+    compose: for (const [sourceOrder, source] of sources.entries()) {
+      for (const item of source) {
+        if (seen.has(item.entry.id)) continue;
+        seen.add(item.entry.id);
+        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
+        if (items.length === limit) break compose;
+      }
+    }
+    return {
+      ...noResults(),
+      items,
+      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
+      resolution: options.resolution ?? "direct",
+      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
+    };
+  }
+
   // src/search/fts.ts
   function ftsPhrase(value) {
     return `"${value.replaceAll('"', '""')}"`;
@@ -2229,59 +2282,6 @@
          AND ${readingRestrictionFilter}`,
       params
     );
-  }
-
-  // src/search/composition.ts
-  var searchResultLimit = 60;
-  function noResults() {
-    return {
-      items: [],
-      leadingLexicalEntryCount: 0,
-      presentation: "ranked",
-      resolution: "direct",
-      readingRefinement: null,
-      usesPrimaryEntryExamples: false,
-      hasExactOrPrefixMatch: false
-    };
-  }
-  function resultItems(ranked) {
-    return ranked.map((entry, fallbackOrder) => ({
-      entry: entry.entry,
-      sourceOrder: 0,
-      matchRank: entry.presentationRank,
-      fallbackOrder,
-      matchedSummary: entry.matchedSummary
-    }));
-  }
-  function leadingExactFormCount(items) {
-    let count = 0;
-    for (const item of items) {
-      if (item.matchRank.kind !== "japanese") break;
-      if (item.matchRank.relation > FormRelation.readingExact) break;
-      count++;
-    }
-    return count;
-  }
-  function composing(sources, options) {
-    const limit = options.limit ?? searchResultLimit;
-    const items = [];
-    const seen = /* @__PURE__ */ new Set();
-    compose: for (const [sourceOrder, source] of sources.entries()) {
-      for (const item of source) {
-        if (seen.has(item.entry.id)) continue;
-        seen.add(item.entry.id);
-        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
-        if (items.length === limit) break compose;
-      }
-    }
-    return {
-      ...noResults(),
-      items,
-      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
-      resolution: options.resolution ?? "direct",
-      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
-    };
   }
 
   // src/search/deinflect.ts
@@ -2723,6 +2723,14 @@
 
   // src/embedded/lookup.ts
   var sameText = (left, right) => left.normalize("NFC") === right.normalize("NFC");
+  function onlyEntry(results, query) {
+    if (isASCII(query) || isKanjiCharacter(query) || results.presentation !== "ranked") return null;
+    const [first] = results.items;
+    const exact = leadingExactFormCount(results.items);
+    if (exact > 0) return exact === 1 ? first.entry.id : null;
+    const ofOneEntry = results.resolution === "deinflected" && results.leadingLexicalEntryCount === 1;
+    return ofOneEntry ? first.entry.id : null;
+  }
   function canonicalEntries(groups) {
     return groups.map((ids) => canonicalEntry(ids.map((id) => ({ id })))?.id ?? null);
   }
@@ -2785,6 +2793,13 @@
       );
       if (entry) return { kind: "word", id: entry.id };
       return page.slug === "" ? { kind: "home" } : { kind: "search", query: page.slug };
+    }
+    async lookUp(text, morphology) {
+      const query = normalizeQuery(text);
+      if (query === "") return { kind: "home" };
+      const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
+      const id = onlyEntry(results, query);
+      return id === null ? { kind: "search", query } : { kind: "word", id };
     }
     async found(query, word, morphology) {
       const { items } = await new DictionarySearch(this.searchDb, { morphology }).search(query);
@@ -5661,6 +5676,7 @@
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
+      lookUp: (text2, analyze) => lookup().lookUp(text2, { analyze }),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),

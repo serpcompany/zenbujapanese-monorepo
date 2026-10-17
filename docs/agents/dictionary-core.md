@@ -46,10 +46,9 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   from a few labels a client still writes, such as the app's kanji element Source rows. Add a
   field to the answer, and have the client show it. What the app keeps native, and why, is in
   [`ios.md`](ios.md), The dictionary core in the app.
-- **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
-  ([Embedded](#embedded)). After changing anything the bundle holds, run
-  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
-  matches.
+- **Rebuild the app's bundle with the core.** The app runs a checked-in bundle of the core
+  ([Embedded](#embedded)). After changing what the bundle holds, run `pnpm bundle:javascriptcore`
+  and commit the file; `embedded/bundle.test.ts` fails until it matches.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
   ([`ios.md`](ios.md)); the service must then pass them. The app's answers are the core's own,
   read through JavaScriptCore, so the suites pin them against a later change, and the service
@@ -106,11 +105,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
     ([The tokenizer](#the-tokenizer)). A host without the files is asked for a sentence's words
     through the call (below). `tokenize(text)` stands in for the tokenizer in the core's own
     tests, which hand it a sentence's tokens; no client passes it.
-  - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, and
-    `kanjiElement(glyph)` answer the kanji files' source identities and one record at a time, as
-    the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
-    held them would walk on every collection, so the host keeps them and the core asks for the
-    few a page reads.
+  - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, `kanjiElement(glyph)`
+    answer the kanji files' source identities and one record at a time, as the files hold them, or
+    null. The two files parse to 16 MB of objects, which an engine that held them would walk on
+    every collection, so the host keeps them and the core asks for the few a page reads.
   - `radicals()` answers the radical file (`RadicalReferenceData.json`) whole, once, when the
     radical panel is first asked for.
   - `frequencyLists()` and `frequencyListRows(list, sql, parametersJSON)` answer the learner's
@@ -127,6 +125,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `entriesMatchingFirstForms` | For each word, the forms to try in order | Every form tried: nothing for a form no entry is written or read as, and for a word's first form that has entries, each as a `LinkEntry` (ID, reading, parts of speech), ranked and deduplicated as search ranks an exact form. An ASCII form is looked up in English. |
   | `entriesContainingKanji` | A kanji | The IDs of its 24 words, in the page's order |
   | `websiteRoute` | A link's host and percent-encoded path, as the host's own URL parser reads them | What the link opens: a word by its Language Reference ID, a kanji, a search, or home. A word link whose entry number the data lacks searches its slug, or opens home without one. |
+  | `lookUp` | Text to look up, from Shortcuts, Siri, or the share sheet | The word, by its Language Reference ID, for Japanese written or read as one entry or a form of only one; else a search, normalized; home for blank text |
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
   | `canonicalEntries` | Groups of equivalent IDs | Each group's smallest ID (`canonicalEntry`) |
   | `normalizeQuery` | What was typed | The query Search reads |
@@ -231,11 +230,11 @@ website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer
 ## Writing for an engine without a JIT
 
 The app runs the core in JavaScriptCore's interpreter (an app's JavaScriptCore has no JIT), where
-what is cheap differs from Node and a browser. Measure there before and after a change to
-anything a list row or a linked sentence runs:
+what is cheap differs from Node and a browser. Measure there before and after a change to anything
+a list row or a linked sentence runs:
 `/System/Library/Frameworks/JavaScriptCore.framework/Versions/Current/Helpers/jsc --useJIT=false`
-runs the app's bundle on a Mac, and `startSamplingProfiler()` with
-`samplingProfilerStackTraces()` says where the time goes.
+runs the app's bundle on a Mac, and `startSamplingProfiler()` with `samplingProfilerStackTraces()`
+says where the time goes.
 
 - **A loop the engine runs natively beats the same loop written out.** A regular expression test
   over a string (`everyUnitIsAGrapheme`, `isASCII`, `isJapaneseOnly`), `split`, `indexOf`,
@@ -258,7 +257,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 
 | Swift | Asks | For |
 | --- | --- | --- |
-| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
+| `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `lookUp`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a look-up, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
@@ -339,8 +338,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   still one Character each so the reading's positions don't move.
 - **Where the Swift threw**, the core returns an error value (`RetrievalError`,
   `ExampleSearchError`) or null, and the page shows what the app showed then, usually no examples.
-  Through `embedded/` it is the call's error, which the app names as before
-  (`missingEntryEvidence`).
+  Through `embedded/` it's the call's error, which the app names as it did (`missingEntryEvidence`).
 
 ## Search
 

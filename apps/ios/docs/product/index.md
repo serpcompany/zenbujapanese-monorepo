@@ -7,12 +7,12 @@ decided the app must have but doesn't yet.
 
 The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on
 Macs with Apple silicon and macOS 26, as one app with one App Store record
-([iPad and Mac](#ipad-and-mac)). It has four tabs:
+([iPad and Mac](#ipad-and-mac)). Shortcuts, Siri, Spotlight, and the share sheet open it from
+other apps ([Shortcuts and sharing](shortcuts-and-sharing.md)). It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
-  from the **Sorted by** row at their top
-  ([Sorting results](dictionary.md#sorting-results),
+  from the **Sorted by** row at their top ([Sorting results](dictionary.md#sorting-results),
   [Filtering results](dictionary.md#filtering-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
@@ -39,10 +39,10 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
   rule for every platform and for the website.
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
-  use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
-  Google's sign-in, the Translate harness's script for the microphone, a local player, fixture
-  captions, and a results page for YouTube, and a closed port for the offline account
-  ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
+  use stand-ins only at the edge: an image for the camera or a share, a sheet's answer for
+  Apple's and Google's sign-in, the Translate harness's script for the microphone, a local
+  player, fixture captions, and a results page for YouTube, and a closed port for the offline
+  account ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
 - **Contract tests** (`apps/ios/Tools/tests/`), which check the project settings and the bundled
   data, the same for every platform.
 - **The recorded-audio check** (`translate-replay`), which plays recorded speech through the real
@@ -55,7 +55,7 @@ iPhone and iPad and **Paste Image** on the Mac, runs on all three. **By hand** m
 can drive, with the automated check that comes closest: a real Apple or Google sign-in, a real
 camera, live speech into a microphone, YouTube's own player and results page, the system's photo
 and file pickers, and what iOS or macOS does outside the app (Split View, dragging from another
-app, Continuity Camera, opening a link from another app).
+app, Continuity Camera, opening a link from another app, Siri, Spotlight, and the share sheet).
 
 ## iPad and Mac
 

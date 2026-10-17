@@ -23,7 +23,7 @@ struct PlatformAdapterTests {
 
   @Test("decoded image data keeps its size, and data that isn't an image decodes to nothing")
   func decodedImage() throws {
-    let png = try pngData(width: 40, height: 20)
+    let png = try ImageFixture.png(width: 40, height: 20)
     let decoded = try #require(DecodedImage(data: png))
     #expect(decoded.size == CGSize(width: 40, height: 20))
     #expect(DecodedImage(data: Data("not an image".utf8)) == nil)
@@ -32,7 +32,7 @@ struct PlatformAdapterTests {
 
   @Test("a photo's orientation is applied when it's decoded, for display and for storage")
   func orientation() throws {
-    let image = try #require(solidImage(width: 60, height: 20))
+    let image = try #require(ImageFixture.solidImage(width: 60, height: 20))
     let data = NSMutableData()
     let destination = try #require(
       CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
@@ -48,7 +48,7 @@ struct PlatformAdapterTests {
 
   @Test("a pasted image is stored as a JPEG no larger than Image Search reads")
   func pastedImage() throws {
-    let png = try pngData(width: 5_000, height: 100)
+    let png = try ImageFixture.png(width: 5_000, height: 100)
     let asset = try #require(ImageTextAsset(pastedImageData: png, name: "Pasted Image"))
     let source = try #require(CGImageSourceCreateWithData(asset.data as CFData, nil))
     #expect(CGImageSourceGetType(source) as String? == UTType.jpeg.identifier)
@@ -64,9 +64,9 @@ struct PlatformAdapterTests {
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: folder) }
     let sign = folder.appending(path: "sign.png")
-    try pngData(width: 300, height: 200).write(to: sign)
+    try ImageFixture.png(width: 300, height: 200).write(to: sign)
     let banner = folder.appending(path: "banner.png")
-    try pngData(width: 12_001, height: 1).write(to: banner)
+    try ImageFixture.png(width: 12_001, height: 1).write(to: banner)
 
     let signProvider = try #require(NSItemProvider(contentsOf: sign))
     let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
@@ -93,7 +93,7 @@ struct PlatformAdapterTests {
     defer { defaults.removePersistentDomain(forName: suite) }
     let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
     defer { try? FileManager.default.removeItem(at: photoURL) }
-    let png = try pngData(width: 300, height: 200)
+    let png = try ImageFixture.png(width: 300, height: 200)
 
     let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     await profile.setPhoto(png)
@@ -158,17 +158,5 @@ struct PlatformAdapterTests {
     var values = EnvironmentValues()
     values.colorScheme = scheme
     return values
-  }
-
-  private func pngData(width: Int, height: Int) throws -> Data {
-    let image = try #require(solidImage(width: width, height: height))
-    return try #require(ImageCoding.pngData(image))
-  }
-
-  private func solidImage(width: Int, height: Int) -> CGImage? {
-    ImageCoding.drawing(width: width, height: height) { context in
-      context.setFillColor(CGColor(red: 0.2, green: 0.4, blue: 0.6, alpha: 1))
-      context.fill(CGRect(x: 0, y: 0, width: width, height: height))
-    }
   }
 }

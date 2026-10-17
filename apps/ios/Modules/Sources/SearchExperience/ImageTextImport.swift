@@ -1,3 +1,4 @@
+import AppActions
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -39,6 +40,7 @@ enum ImageTextSource: CaseIterable, Identifiable {
 
 struct ImageTextImport: ViewModifier {
   @Binding var showsSources: Bool
+  @Binding var sharedFiles: SharedImageFiles?
   let cameraAuthorizationClient: CameraAuthorizationClient
   let openImageText: ([ImageTextAsset]) -> Void
   @State private var chosenSource: ImageTextSource?
@@ -72,6 +74,13 @@ struct ImageTextImport: ViewModifier {
         return true
       }
       .importsImagesFromDevices { assets in open(assets) }
+      .onChange(of: sharedFiles, initial: true) { _, shared in
+        guard let shared else { return }
+        sharedFiles = nil
+        importFiles(
+          shared.files, failure: "The shared images are not supported images.",
+          then: { shared.share?.discard() })
+      }
       .onChange(of: requestedSource) { _, source in
         guard let source else { return }
         requestedSource = nil
@@ -168,27 +177,21 @@ struct ImageTextImport: ViewModifier {
 
   private func pasteImage() {
     switch Pasteboard.image {
-    case .files(let files): importPastedFiles(files)
+    case .files(let files):
+      importFiles(files, failure: "The pasted files are not supported images.", then: {})
     case .data(let data): importPastedImage(data)
     case nil: presentImageImportAlert(.importFailure("The clipboard doesn't hold an image."))
     }
   }
 
-  private func importPastedFiles(_ urls: [URL]) {
+  private func importFiles(_ urls: [URL], failure: String, then finish: @escaping () -> Void) {
     imageImportTask?.cancel()
     imageImportTask = Task {
-      var assets: [ImageTextAsset] = []
-      for url in urls.prefix(ImageTextSource.importLimit) {
-        guard !Task.isCancelled else { return }
-        let accessed = url.startAccessingSecurityScopedResource()
-        defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-        if let asset = try? await ImageTextAsset.loadCopy(from: url) {
-          assets.append(asset)
-        }
-      }
+      let assets = await ImageTextAsset.loadCopies(of: urls)
+      finish()
       guard !Task.isCancelled else { return }
       if assets.isEmpty {
-        presentImageImportAlert(.importFailure("The pasted files are not supported images."))
+        presentImageImportAlert(.importFailure(failure))
       } else {
         open(assets)
       }

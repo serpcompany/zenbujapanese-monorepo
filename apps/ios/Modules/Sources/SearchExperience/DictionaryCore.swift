@@ -7,6 +7,7 @@ enum DictionaryCoreError: Error, Equatable {
 }
 
 final class DictionaryCore {
+  private static let contextCreation = NSLock()
   private let context: JSContext
   private let endpoint: JSValue
   private let answerNow: JSValue
@@ -24,7 +25,7 @@ final class DictionaryCore {
         forResource: "dictionary-core", withExtension: "js", subdirectory: "DictionaryCore")
         ?? Bundle.module.url(forResource: "dictionary-core", withExtension: "js"),
       let source = try? String(contentsOf: url, encoding: .utf8),
-      let context = JSContext(),
+      let context = Self.contextCreation.withLock({ JSContext() }),
       let host = JSValue(newObjectIn: context)
     else { throw DictionaryCoreError.bundleUnavailable }
     if let statements {

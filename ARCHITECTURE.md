@@ -7,7 +7,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. Its Shortcuts actions and three share-sheet extensions (`apps/ios/ShareActions`) open it with links in its own scheme. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
@@ -91,11 +91,14 @@ saying where the code belongs:
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
   `worker.ts` runs before Next.js; the browse pages' data and the sitemaps ask the client
   `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
-- **The app**: only `SearchExperience/Platform/` may use `#if os(...)`, UIKit, AppKit, or an API
-  that iPhone, iPad, or the Mac lacks; everything else in the package, its tests, and the app
-  target calls its
-  adapters (`tools/checks/src/layers.ts`, [`docs/agents/ios.md`](docs/agents/ios.md), iPad and
-  Mac). `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
+- **The app**: only `SearchExperience/Platform/`, and `AppActions/Platform/` for the share-sheet
+  actions, may use `#if os(...)`, UIKit, AppKit, or an API that iPhone, iPad, or the Mac lacks;
+  everything else in the package, its tests, the app target, and the share-sheet extensions calls
+  their adapters (`tools/checks/src/layers.ts`, [`docs/agents/ios.md`](docs/agents/ios.md), iPad
+  and Mac). `AppActions`, the links every Shortcuts and share-sheet action opens the app with,
+  imports only Foundation, UniformTypeIdentifiers, UIKit, and AppKit, so the extensions link it
+  and never `SearchExperience`
+  ([`docs/agents/ios-shortcuts-and-sharing.md`](docs/agents/ios-shortcuts-and-sharing.md)). `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog, and can't import the app's `SearchExperience` target;
   the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
   recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,

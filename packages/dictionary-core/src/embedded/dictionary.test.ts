@@ -105,6 +105,32 @@ describe('the embedded dictionary', () => {
     expect(await route('/dictionary/日本-1582710/', 'example.com')).toEqual({ kind: 'home' })
   })
 
+  test('looks up Japanese written or read as one entry, or a form of one, as that word, and else searches', async () => {
+    const lookUp = (text: string, target = host()) => ask(target, 'lookUp', text)
+    expect(await lookUp(' 日本 ')).toEqual({ kind: 'word', id: 'a1' })
+    expect(await lookUp('にほん')).toEqual({ kind: 'word', id: 'a1' })
+    expect(await lookUp('日本語')).toEqual({ kind: 'word', id: 'b2' })
+    expect(await lookUp('ほんじ')).toEqual({ kind: 'search', query: 'ほんじ' })
+    expect(await lookUp('本')).toEqual({ kind: 'search', query: '本' })
+    expect(await lookUp(' \n')).toEqual({ kind: 'home' })
+    const twoReadAlike = fakeHost([...entries, { id: 'd4', headword: '二本', reading: 'にほん' }])
+    expect(await lookUp('にほん', twoReadAlike)).toEqual({ kind: 'search', query: 'にほん' })
+    const verbs = (...headwords: string[]) =>
+      fakeHost(
+        headwords.map((headword, index) => ({
+          id: `v${index}`,
+          headword,
+          reading: headword,
+          partsOfSpeech: ['ichidanVerb']
+        }))
+      )
+    expect(await lookUp('たべた', verbs('たべる'))).toEqual({ kind: 'word', id: 'v0' })
+    const english = begin(host(), 'lookUp', 'japan')
+    await settled(english)
+    english.analyzed('{"words":[]}')
+    expect(await settled(english)).toEqual({ value: { kind: 'search', query: 'japan' } })
+  })
+
   test('opens a related word by its entry, or by searching for how it is written', async () => {
     const related = (word: object) => ask(host(), 'relatedWord', JSON.stringify(word))
     const written = { query: '日本', headword: '日本語', reading: 'にほんご' }

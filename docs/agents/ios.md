@@ -36,11 +36,12 @@ what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios
 ### Where the platforms differ in the code
 
 Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives
-in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
-extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
-`SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
-`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`,
-`ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
+in `apps/ios/Modules/Sources/SearchExperience/Platform/` (and the share actions' controller in
+`AppActions/Platform/`, [`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)), behind
+a small adapter or view extension that feature code calls: `DecodedImage` and `Image(imageData:)`,
+`Color.adaptive` and `SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`,
+`ConversationAudioSession`, `WebViewRepresentable`, `PagedView`, `CameraCapture` and
+`ImageCameraPicker`, `ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
@@ -84,20 +85,20 @@ and names the adapter to use (`tools/checks/src/layers.ts`), so feature code sta
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
-(`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
-`#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window shares,
-the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window sizes
-(`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
-commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
-(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
-from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The
-scene also shares one `TranslateExperience` between windows, since they share the one microphone,
-and pauses a conversation when the whole app goes to the background, or pauses it and drops a
-start still waiting when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
-lets an open window
-take a website link (`handlesExternalEvents`), where the Mac would otherwise open a new window
-for each.
+The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
+(`ZenbuShortcuts.swift`, [`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)).
+`ZenbuJapaneseScenes` (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only
+be added with `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile
+every window shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac
+the window sizes (`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's
+menu. Menu commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
+(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only from a
+view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The scene also
+shares one `TranslateExperience` between windows, since they share the one microphone, and pauses a
+conversation when the whole app goes to the background, or pauses it and drops a start still waiting
+when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
+lets an open window take a website link (`handlesExternalEvents`), where the Mac would otherwise
+open a new window for each.
 
 ### Build and run for iPad
 
@@ -192,7 +193,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   the real Keychain, so these tests are skipped on the Mac, where a build signed to run locally
   has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness).
+  Simulator harness); `ZENBU_SHARED_IMAGES` and `ZENBU_OPEN_LINK` stand in for what a share or
+  another app hands the app ([`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md), Tests).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
   or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
   arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
@@ -364,29 +366,20 @@ only a person can do: enable Associated Domains for the App ID `com.zenbujapanes
 the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
 team, `847HR8U8D9`.
 
-SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
-which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
+SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
+also takes the Shortcuts and share-sheet actions' links
+([`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)). It switches to Search from any
+tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
 hands the link's host and path to the core (`websiteRoute`,
 [`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
 decoded one path segment at a time, with the parser the website uses, and finds a word URL's
 entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
 the host `zenbujapanese.com` routes the same way.
 
-Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
-association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlements and with a URL scheme that is never committed, added
-to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
-under that scheme:
-
-```sh
-cp apps/ios/App/Info.plist /tmp/link-check.plist
-plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
-xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
-  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
-xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
-```
+Check it with `WebsiteLinkTests`, and `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp`.
+The Simulator sends an `https` link to Safari until the association file is live, so to see a
+link land in the app before then, open it in the app's own scheme, its bundle ID:
+`xcrun simctl openurl <udid> 'com.zenbujapanese.dictionary://zenbujapanese.com/dictionary/見る-1259290/'`.
 
 Once the file is live, check it on a device: tapping
 `https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
@@ -605,7 +598,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to
   give memory back: in testing, a context dropped after a broad search kept its whole heap, and
-  memory climbed with every such search.
+  memory climbed with every such search. Contexts are made one at a time (`contextCreation`): a
+  link that launched the app made the lookup's while the warm-up made another, and JavaScriptCore
+  crashed building both.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.
@@ -1021,7 +1016,7 @@ submitting the first version built after iPad and the Mac came in, add the iPad 
 build, the Mac) platform's screenshots and set up the record (Releasing on iPad and the Mac,
 above), and say so in What's New.
 
-1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
+1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the project's configurations,
    as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise
    `MARKETING_VERSION` instead and set `CURRENT_PROJECT_VERSION` back to 1.
 2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of
