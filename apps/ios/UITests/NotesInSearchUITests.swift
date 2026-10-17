@@ -1,13 +1,10 @@
 import XCTest
 
 final class NotesInSearchUITests: ZenbuUITestCase {
-  private static let macNoteEditing =
-    "on the Mac, a note opened for editing on its word's page never gets the keyboard, however often its field is clicked (the page's list keeps it), so its text can't be changed there"
-
-  func testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce() throws {
+  func testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce() {
     let app = launch()
     openTaberu(in: app)
-    addNote("zk38 rice cake", in: app)
+    addNote("zk38 rice cake", fromItsRow: true, in: app)
     goBack(in: app)
     searchAgain("zk38", in: app)
     let row = waitFor(noteRow(on: "食べる", in: app))
@@ -16,7 +13,6 @@ final class NotesInSearchUITests: ZenbuUITestCase {
     assertOnScreen(find("search.no-results", in: app), in: app)
 
     tap(row, toShow: find("word-detail.screen", in: app))
-    try XCTSkipIf(device == .mac, Self.macNoteEditing)
     replaceNote(with: "zk52 rice cake", in: app)
     goBack(in: app)
     waitUntilGone(row)
@@ -135,8 +131,13 @@ final class NotesInSearchUITests: ZenbuUITestCase {
     let editor = waitFor(find("word-note.editor", in: app))
     let written = editor.value as? String ?? ""
     focus(editor)
-    editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
-    editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
+    if device == .mac {
+      editor.typeKey("a", modifierFlags: .command)
+      editor.typeText(XCUIKeyboardKey.delete.rawValue + replacement)
+    } else {
+      editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+      editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
+    }
     tap(find("word-note.done", in: app))
     if !replacement.isEmpty { waitFor(labeled(replacement, in: app)) }
   }

@@ -46,9 +46,13 @@ extension ZenbuUITestCase {
     return kind
   }
 
-  func addNote(_ text: String, in app: XCUIApplication) {
-    tap(find("word-detail.more-menu", in: app))
-    tap(menuChoice("Add Note", in: app))
+  func addNote(_ text: String, fromItsRow: Bool = false, in app: XCUIApplication) {
+    if fromItsRow {
+      tap(reveal(find("word-detail.add-note", in: app), in: app))
+    } else {
+      tap(find("word-detail.more-menu", in: app))
+      tap(menuChoice("Add Note", in: app))
+    }
     type(text, into: waitFor(find("word-note.editor", in: app)))
     tap(find("word-note.done", in: app))
     waitFor(labeled(text, in: app))
