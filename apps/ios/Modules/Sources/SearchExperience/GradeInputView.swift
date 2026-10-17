@@ -87,7 +87,6 @@ struct GradeInputView: View {
             id: section.id, title: section.title, spoken: section.spoken,
             accessibilityIdentifier: "grade.section.\(section.id)", items: section.kanji)
         },
-        itemID: \.character,
         closed: panel?.filtered == true ? $closedWhileFiltering : $closedSections.ids
       ) { section in
         sectionSummary(panel?.sections.first { $0.id == section.id })

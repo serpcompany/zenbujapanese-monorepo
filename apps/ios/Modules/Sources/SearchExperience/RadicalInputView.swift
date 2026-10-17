@@ -59,7 +59,6 @@ struct RadicalInputView: View {
             accessibilityIdentifier: "radical.stroke.\(group.strokeCount)",
             items: group.radicals)
         },
-        itemID: \.id,
         closed: $closedSections.ids
       ) { _ in
         EmptyView()

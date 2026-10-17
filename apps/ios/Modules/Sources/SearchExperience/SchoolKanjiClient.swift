@@ -6,10 +6,12 @@ struct SchoolKanjiRequest: Encodable, Hashable, Sendable {
 }
 
 struct SchoolKanjiPanel: Decodable, Hashable, Sendable {
-  struct Tile: Decodable, Hashable, Sendable {
+  struct Tile: Decodable, Hashable, Identifiable, Sendable {
     let character: String
     let meaning: String
     let known: Bool
+
+    var id: [Unicode.Scalar] { Array(character.unicodeScalars) }
   }
 
   struct Section: Decodable, Hashable, Identifiable, Sendable {

@@ -1,4 +1,4 @@
-import { type KanjiEntries, kanjiListResponse } from '../artifact/browse-kanji'
+import { type KanjiEntries, kanjiListResponse, shownMeanings } from '../artifact/browse-kanji'
 import type { KanjiReferenceEntry } from '../artifact/kanji-data'
 import { graphemes, hiragana, isKanjiCharacter } from '../detail/text'
 import { normalizeQuery } from '../search/query'
@@ -31,6 +31,7 @@ export interface SchoolKanjiPanel {
 
 interface FilteredKanji {
   character: string
+  base: string
   meaning: string
   meanings: string[]
   readings: string[]
@@ -64,7 +65,7 @@ function matcher(filter: string): ((kanji: FilteredKanji) => boolean) | null {
   const query = normalizeQuery(filter)
   if (query === '') return null
   const characters = graphemes(query).filter(isKanjiCharacter)
-  if (characters.length > 0) return ({ character }) => characters.includes(character)
+  if (characters.length > 0) return ({ base }) => characters.includes(base)
   if (kana.test(query)) {
     const reading = hiragana(query)
     return ({ readings }) => readings.some(value => value.startsWith(reading))
@@ -84,8 +85,9 @@ export class SchoolKanji {
         const entry = entries.get(character)
         return {
           character,
+          base: character.normalize('NFKC'),
           meaning,
-          meanings: (entry?.meanings ?? []).map(each => each.toLowerCase()),
+          meanings: (entry ? shownMeanings(kanji, entry) : []).map(each => each.toLowerCase()),
           readings: spokenReadings(entry)
         }
       })

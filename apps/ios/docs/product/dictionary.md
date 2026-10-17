@@ -37,17 +37,17 @@ button while it has text.
 
 - **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
   Searches** while recent searches are listed. The recent searches are listed without a heading.
-- **Input buttons.** Three round buttons, a pencil for **Handwriting**, a grid for **Radicals**,
-  and a cap for **Grade**, sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
-  above the keyboard while typing. Each opens its panel in one tap.
+- **Input buttons.** Three round buttons, a pencil for **Handwriting**, a grid for **Radicals**, and
+  a cap for **Grade**, sit at the bottom left on every Search screen: above the tab bar on Recent
+  and results, and above the keyboard while typing. Each opens its panel in one tap.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
   the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
 - **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
-  candidate, a radical candidate, or a grade's kanji, puts the keyboard away and keeps the query in the field at the top, with
-  **X** beside it. The first row of the results names the order and opens Sort and Filter
-  ([Sorting results](results.md#sorting-results),
-  [Filtering results](results.md#filtering-results)).
+  candidate, a radical candidate, or a grade's kanji, puts the keyboard away and keeps the query in
+  the field at the top, with **X** beside it. The first row of the results names the order and opens
+  Sort and Filter ([Sorting results](results.md#sorting-results), [Filtering
+  results](results.md#filtering-results)).
 - **X** clears the query and returns to Recent.
 
 On iPad, where the tabs sit at the top of the screen, nothing slides away: the title bar and the
@@ -85,37 +85,39 @@ background, flat candidate tiles in the same fill as the radical squares, and gl
   button as Handwriting's at the bottom right, removes the last radical selected and is dimmed until
   one is.
 
-A candidate from any panel is added to the end of the query, so picking one character after
-another, in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
+A candidate from any panel is added to the end of the query, so picking one character after another,
+in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
 show, with the query in the field. In dark mode the strip and pad are black.
 
 A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
 button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
-sheet, its three buttons, Grade without **Undo**, and closing it, dragged away on iPhone and iPad and with **Done** on the
-Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the keyboard),
-`testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
+sheet, its three buttons, Grade without **Undo**, and closing it, dragged away on iPhone and iPad
+and with **Done** on the Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the
+keyboard), `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
 open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
 first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate joins the query,
-and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a
-pick lists and the radicals still offered, on the bundled radical file); core
-`search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
+and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a pick
+lists and the radicals still offered, on the bundled radical file); core `search/radicals.test.ts`
+and `search/query.test.ts`. The panel's colors are by hand.
 
 ### Grade
 
 The cap opens **Grade**: Grade 1 to Grade 6, **Secondary school**, and **Jinmeiyō**, each the
-website's kanji list for it, most frequent first
-([Kanji lists](../../../web/docs/product/browse.md#kanji-lists)), read from the bundled kanji data
-through the shared core, offline.
+website's kanji list for it, most frequent first ([Kanji
+lists](../../../web/docs/product/browse.md#kanji-lists)), read from the bundled kanji data through
+the shared core, offline.
 
 - **Sections.** Grade and Radicals are one sectioned panel: a strip at the top, then sections whose
   headers open and close them with a tap, in Handwriting's tiles, five to a row (three at the
   largest text sizes). Every section starts open, and each panel remembers on the device which the
   learner closed.
-- **Tiles.** A tile shows the kanji with a short meaning under it, unless **Show Kanji Meanings**
-  in Account → Reading Aids is off (it's on until then). Tapping a tile adds its kanji to the end
-  of the query, as a radical candidate does, and the panel closes. Grade has no **Undo**.
+- **Tiles.** A tile shows the kanji with a short meaning under it, unless **Show Kanji Meanings** in
+  Account → Reading Aids is off (it's on until then). Tapping a tile adds its kanji to the end of
+  the query, as a radical candidate does, and the panel closes. Grade has no **Undo**. Each of
+  Jinmeiyō's 57 compatibility kanji, such as 猪 at U+FA16 beside U+732A, is its own tile; one with no
+  meaning shows its ordinary form's, and the filter finds it by either form or that meaning.
 - **Filter.** Where Radicals has its strip, Grade has a filter field. An English meaning, a
   reading in kana, or the kanji itself narrows every grade at once: a grade with matches opens
   and counts them, as **1 of 80**, and the rest are hidden. Each change returns the list to the
@@ -124,14 +126,16 @@ through the shared core, offline.
   the ✓ Known capsule's green, and each grade's header counts the known kanji it shows beside its
   total.
 
-Check: UI `GradeInputUITests`: `testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a
-kanji from the next one searched, and its kanji detail opened),
-`testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade` (marked known, then unknown),
-`testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade` (Radicals' sections too), and
-`testTurningOffKanjiMeaningsLeavesTheKanjiAlone`; package
-`SchoolKanjiTests` (each list against the bundled KANJIDIC2 grades, the filter, known counts,
-remembered sections, and Kanji Meanings on by default); core `browse/school-kanji.test.ts` (the
-lists as the website's `kanjiListResponse` answers them).
+Check: UI `GradeInputUITests` on iPhone only (iPad and Mac on hold, 2026-10-18):
+`testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a kanji from the next one
+searched, and its kanji detail opened), `testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade`
+(marked known, then unknown), `testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade` (Radicals'
+sections too), `testTurningOffKanjiMeaningsLeavesTheKanjiAlone`, and
+`testBothFormsOfACompatibilityKanjiAreTiles`; package `SchoolKanjiTests` (each list against the
+bundled KANJIDIC2 grades by code point, the filter, compatibility kanji, known counts, remembered
+sections, and Kanji Meanings on by default) and `PanelTileTests` (five tiles a row, three at
+accessibility sizes); core `browse/school-kanji.test.ts` (the lists as the website's
+`kanjiListResponse` answers them, and compatibility kanji).
 
 ### Results
 

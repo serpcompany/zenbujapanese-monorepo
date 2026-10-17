@@ -2850,11 +2850,10 @@
   }
   var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
   var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);
-  function firstMeaning(kanji2, entry) {
-    const [own] = entry.meanings;
-    if (own !== void 0) return own;
+  function shownMeanings(kanji2, entry) {
+    if (entry.meanings.length > 0) return entry.meanings;
     const base = entry.character.normalize("NFKC");
-    return (base === entry.character ? void 0 : kanji2.row(base)?.meanings[0]) ?? "";
+    return (base === entry.character ? void 0 : kanji2.row(base)?.meanings) ?? [];
   }
   function kanjiListResponse(kanji2, slug) {
     const list = kanjiList(slug);
@@ -2864,7 +2863,7 @@
       slug,
       kanji: entries.map((entry) => ({
         character: entry.character,
-        meaning: firstMeaning(kanji2, entry)
+        meaning: shownMeanings(kanji2, entry)[0] ?? ""
       }))
     };
   }
@@ -3048,7 +3047,7 @@
     const query = normalizeQuery(filter);
     if (query === "") return null;
     const characters = graphemes(query).filter(isKanjiCharacter);
-    if (characters.length > 0) return ({ character }) => characters.includes(character);
+    if (characters.length > 0) return ({ base }) => characters.includes(base);
     if (kana.test(query)) {
       const reading = hiragana(query);
       return ({ readings }) => readings.some((value) => value.startsWith(reading));
@@ -3066,8 +3065,9 @@
           const entry = entries.get(character);
           return {
             character,
+            base: character.normalize("NFKC"),
             meaning,
-            meanings: (entry?.meanings ?? []).map((each) => each.toLowerCase()),
+            meanings: (entry ? shownMeanings(kanji2, entry) : []).map((each) => each.toLowerCase()),
             readings: spokenReadings(entry)
           };
         })

@@ -72,11 +72,10 @@ export function kanjiHub(kanji: KanjiEntries): KanjiHubResponse {
   return { lists, jlpt, strokes }
 }
 
-function firstMeaning(kanji: KanjiEntries, entry: KanjiReferenceEntry): string {
-  const [own] = entry.meanings
-  if (own !== undefined) return own
+export function shownMeanings(kanji: KanjiEntries, entry: KanjiReferenceEntry): string[] {
+  if (entry.meanings.length > 0) return entry.meanings
   const base = entry.character.normalize('NFKC')
-  return (base === entry.character ? undefined : kanji.row(base)?.meanings[0]) ?? ''
+  return (base === entry.character ? undefined : kanji.row(base)?.meanings) ?? []
 }
 
 export function kanjiListResponse(kanji: KanjiEntries, slug: string): KanjiListResponse | null {
@@ -87,7 +86,7 @@ export function kanjiListResponse(kanji: KanjiEntries, slug: string): KanjiListR
     slug,
     kanji: entries.map(entry => ({
       character: entry.character,
-      meaning: firstMeaning(kanji, entry)
+      meaning: shownMeanings(kanji, entry)[0] ?? ''
     }))
   }
 }
