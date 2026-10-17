@@ -597,11 +597,10 @@ the app's 100. The page renders the first 25 and loads 25 more at a time as the 
 or with the Load more examples button. A line above the list gives the count: "N examples", or
 "The first 100 of more than 100 examples" when the app found more than it lists. A word without
 examples says "No source-matched examples". The section is at `#examples`, where a search's
-Example Sentences row opens it.
+Example Sentences row opens it. A sentence counts in either width, Ｔシャツ or Tシャツ, as in the app.
 
 - Source: App docs, Dictionary and kanji details; the core's `artifact/example-retrieval.ts`; #464 (25, then
-  load more as you scroll, plus the total); #499 (readings share examples, and headwords that
-  change under NFKC, such as Ｔシャツ, have none, as in the app).
+  load more as you scroll, plus the total); #499 (readings share examples).
 - Check: WD `examples` (`listed`, `reportedCount`, `truncated`, and the first 25 in `shown`);
   `src/lib/dictionary/data.test.ts`, "a word page shows its first 25 examples, and the rest load 25
   at a time"; `src/app/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a word's
@@ -611,13 +610,14 @@ Example Sentences row opens it.
   reaches its end, then has no more"; `#examples`: `src/app/dictionary/[word]/page.test.tsx`, "the
   Examples section sits at #examples, where search results send their sentences", and
   `apps/web/e2e/word.spec.ts`, "a word's #examples opens the page at its Examples section". The
-  empty message: No automated check yet (#511).
+  empty message: No automated check yet (#511). Either width: WD's Ｔシャツ, Ｈ, and ＮＧ, and
+  `packages/dictionary-core/src/artifact/example-retrieval.test.ts`.
 
 **Example words.** Each sentence shows each word underlined, as the app splits it; an inflected
 verb or adjective is one word with its endings. A word that resolves to one entry has furigana and
 opens its word page. A word the app can't resolve to one entry, such as だ, opens a search for its
-dictionary form. The page's own word is marked with a thicker underline; the app accents it in
-color. Split compounds such as 一日 have no marked word, as in the app.
+dictionary form. The page's own word, in either width (Tシャツ on Ｔシャツ's), is marked with a
+thicker underline; the app accents it in color. Split compounds such as 一日 have no marked word.
 
 - Source: App docs, Dictionary and kanji details; `LinkedJapaneseText.swift`;
   `JapaneseTextAnalysisClient.swift`; #499 (split compounds don't highlight).

@@ -115269,10 +115269,1321 @@
         "1029150"
       ],
       "examples" : {
-        "error" : "invalidQuery(SearchExperience.ExampleSentenceInvalidQueryReason.missingEntryEvidence)",
-        "listed" : 0,
+        "listed" : 96,
+        "reportedCount" : "more than 50",
         "shown" : [
-
+          {
+            "english" : "Would you like to be tested for HIV?",
+            "id" : "esp1_639d42769ebd9951d215cfbc39235bb4",
+            "japanese" : "HIV検査を希望しますか？",
+            "tokens" : [
+              {
+                "surface" : "HIV"
+              },
+              {
+                "entry" : "b6e52e49db446c598749130e714d3838",
+                "surface" : "検査"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "675502a3fffb67e52307abeeb979af5d",
+                "surface" : "希望"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "します"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "Have you ever been tested for HIV?",
+            "id" : "esp1_9f4511e24b9ec98b9df062bf7c3ace9d",
+            "japanese" : "HIV検査を受けたことがありますか？",
+            "tokens" : [
+              {
+                "surface" : "HIV"
+              },
+              {
+                "entry" : "b6e52e49db446c598749130e714d3838",
+                "surface" : "検査"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "e83f4fbf1710f3066504a002c6d18fcc",
+                "surface" : "受けた"
+              },
+              {
+                "candidates" : [
+                  "5c0efc251cbe41f69b8db2fe9a922225",
+                  "64fe9ec2d25c902f29eb0ad2b6d29245",
+                  "7dbe422ef145cd408b39631c76bc759e",
+                  "20b044e781944803031ae6a90d3126b3",
+                  "93b995b604b6a56822930e33a719e591"
+                ],
+                "surface" : "こと"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "あります"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "NHK is a public broadcaster.",
+            "id" : "esp1_95ea0a8d1700462e918e468a064e40fe",
+            "japanese" : "ＮＨＫは公共放送です。",
+            "tokens" : [
+              {
+                "surface" : "ＮＨＫ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "7f6cecb552d27d41df3b477521491526",
+                "surface" : "公共"
+              },
+              {
+                "entry" : "0bbebe8b8ff7dc5ea16e01bf794a7915",
+                "surface" : "放送"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "WHO stands for World Health Organization.",
+            "id" : "esp1_9c132fea83245d62418742258f39a692",
+            "japanese" : "ＷＨＯとは世界保健機構を表す。",
+            "tokens" : [
+              {
+                "surface" : "ＷＨＯ"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "1df14e83a0beefaa84f74720312222e4",
+                "surface" : "世界"
+              },
+              {
+                "entry" : "1e8c7ed880dd334b243996ff10da39d5",
+                "surface" : "保健"
+              },
+              {
+                "entry" : "49fa51a7aca3405edbd617a9f1b41b94",
+                "surface" : "機構"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "336194fd44cf23f4d4d85694fa4a1f42",
+                "surface" : "表す"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You can visit NHK any time.",
+            "id" : "esp1_f5f8cd1b6074d568a5f652c213cf658b",
+            "japanese" : "ＮＨＫはいつでも見学できます。",
+            "tokens" : [
+              {
+                "surface" : "ＮＨＫ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "e060feca7332af0ec5e1ae0066f92a53",
+                  "16b4f316c9c8af0edc5a6a84e3eb8214",
+                  "d01834b4f9ac431f6e0f81ef8ec8d3e4"
+                ],
+                "surface" : "いつ"
+              },
+              {
+                "entry" : "50dd118eea1c0b3e7cfd367c8ed6b1b8",
+                "surface" : "でも"
+              },
+              {
+                "entry" : "48e2695521f9f9b3a391fa447672be5f",
+                "surface" : "見学"
+              },
+              {
+                "candidates" : [
+                  "4bc5fe2e4e25270ac4a5d88364cd2d70",
+                  "073e0eafc9d1808b3b0a471f79ed1939"
+                ],
+                "surface" : "できます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "What do the letters WHO stand for?",
+            "id" : "esp1_2d3fb2520faed4e7913a144e1e1c70f2",
+            "japanese" : "ＷＨＯと言う文字は何の略字ですか。",
+            "tokens" : [
+              {
+                "surface" : "ＷＨＯ"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "f29080a71f7c90fd3a74d41ae1cac271",
+                "surface" : "言う"
+              },
+              {
+                "entry" : "6f55042aad23729a27959815ca524a45",
+                "surface" : "文字"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "9686ab4fa9cef25605421475ea3dc063",
+                "surface" : "何"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "8d49e14bf3d124a122c603e349d3c92a",
+                "surface" : "略字"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "PHP is a programming language.",
+            "id" : "esp1_ad51acec846c3097579b2c34f9265741",
+            "japanese" : "PHPは、プログラミング言語です。",
+            "tokens" : [
+              {
+                "surface" : "PHP"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "e3c994a9a088335c52f9f08f9c838cd9",
+                "surface" : "プログラミング"
+              },
+              {
+                "entry" : "f07883a2a52b257517a9ccc9e3d1e9a5",
+                "surface" : "言語"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Can you direct me to NHK?",
+            "id" : "esp1_da279ff81bacca0ba9dd2dee3b9bc882",
+            "japanese" : "ＮＨＫへの行き方を教えていただきませんか。",
+            "tokens" : [
+              {
+                "surface" : "ＮＨＫ"
+              },
+              {
+                "entry" : "cc5250789a3cec30278757d722eae89f",
+                "surface" : "へ"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "b185483d32475fb546716d0573ac2df2",
+                "surface" : "行き"
+              },
+              {
+                "entry" : "7da94571a12a081ff7d176e1be037b62",
+                "surface" : "方"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "08b733ac4c33da71b2bc304af30b3f6b",
+                "surface" : "教えていただきません"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I have ADHD.",
+            "id" : "esp1_b07fe39f8e12e97166c7c5ea837c4084",
+            "japanese" : "ADHDなんです。",
+            "tokens" : [
+              {
+                "surface" : "ADHD"
+              },
+              {
+                "candidates" : [
+                  "6ccb3397987eac083e3d6f48bd2466b9",
+                  "7945a1c66702d2c57b8c0adb7299da70",
+                  "8c3e93df5a904011c581dc8c3fd65e8c",
+                  "ac6acb5880c20a4c250060b31f3690d1",
+                  "6d57dd245b88858a3ae84bb5c1071721"
+                ],
+                "surface" : "な"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "What does IMHO mean?",
+            "id" : "esp1_3aa23424473050250164b1bd468bd42d",
+            "japanese" : "ＩＭＨＯってどういう意味なの？",
+            "tokens" : [
+              {
+                "surface" : "ＩＭＨＯ"
+              },
+              {
+                "entry" : "4dc69a7fe4306cf80cd8208337551951",
+                "surface" : "って"
+              },
+              {
+                "entry" : "27c36d9cca30ed012c5ffa7f8e389f59",
+                "surface" : "どういう"
+              },
+              {
+                "entry" : "ff6af6d8161e70c9a83e3d0f8004f4b5",
+                "surface" : "意味"
+              },
+              {
+                "candidates" : [
+                  "6ccb3397987eac083e3d6f48bd2466b9",
+                  "7945a1c66702d2c57b8c0adb7299da70",
+                  "8c3e93df5a904011c581dc8c3fd65e8c",
+                  "ac6acb5880c20a4c250060b31f3690d1",
+                  "6d57dd245b88858a3ae84bb5c1071721"
+                ],
+                "surface" : "な"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "D.H. Lawrence is a novelist and poet.",
+            "id" : "esp1_38a92be4175faf7137096a80a0e2ce67",
+            "japanese" : "Ｄ．Ｈ．ロレンスは小説家でもあり詩人でもある。",
+            "tokens" : [
+              {
+                "surface" : "Ｄ"
+              },
+              {
+                "surface" : "．"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "Ｈ"
+              },
+              {
+                "surface" : "．"
+              },
+              {
+                "surface" : "ロレンス"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "0cfcb6f283838d3302423477ccd70093",
+                "surface" : "小説"
+              },
+              {
+                "candidates" : [
+                  "6f54be67247dcd72328d454c302c328a",
+                  "11f59f15bcbbd9324880efb97d43df2b",
+                  "8e98db8b38eb85164c0d5b96e90316c6",
+                  "89e0002aea24586730b828bf87fe22d4"
+                ],
+                "surface" : "家"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "30701592e9873c43b883e1d3510287f4",
+                "surface" : "も"
+              },
+              {
+                "entry" : "c9728ce7b0ec2814c8daaeaca88b1d90",
+                "surface" : "あり"
+              },
+              {
+                "entry" : "d9c7a18f17eb37eff2191cb14c02b6e5",
+                "surface" : "詩人"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "30701592e9873c43b883e1d3510287f4",
+                "surface" : "も"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "How do I decompress the LZH file?",
+            "id" : "esp1_c1e58aa89e2444b085a0b40d2d5917d6",
+            "japanese" : "LZHファイルって、どうやって解凍するんですか？",
+            "tokens" : [
+              {
+                "surface" : "LZH"
+              },
+              {
+                "entry" : "9e1c46f98640a43dfebae8df9434f486",
+                "surface" : "ファイル"
+              },
+              {
+                "entry" : "4dc69a7fe4306cf80cd8208337551951",
+                "surface" : "って"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "eae0af93375e7d10d69d9d67cbe40716",
+                "surface" : "どう"
+              },
+              {
+                "candidates" : [
+                  "bec2e5ad75829619c808df25ff6122c6",
+                  "e4293283ae2df7aef3742865d5668973",
+                  "fc53f257d57825f3df56622b8df9e719",
+                  "388e73245abcad1835cf04dc407a827a"
+                ],
+                "surface" : "やって"
+              },
+              {
+                "entry" : "9eab88a8fc1cd98eab1f20949b16edff",
+                "surface" : "解凍"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "Have you ever had sex in a public park?",
+            "id" : "esp1_b917301d6db62101d2e7f967d9784540",
+            "japanese" : "公園でHしたことある？",
+            "tokens" : [
+              {
+                "entry" : "dd3cb7f6c283a8ae1b1c99ce485f81f8",
+                "surface" : "公園"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "H"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "した"
+              },
+              {
+                "candidates" : [
+                  "5c0efc251cbe41f69b8db2fe9a922225",
+                  "64fe9ec2d25c902f29eb0ad2b6d29245",
+                  "7dbe422ef145cd408b39631c76bc759e",
+                  "20b044e781944803031ae6a90d3126b3",
+                  "93b995b604b6a56822930e33a719e591"
+                ],
+                "surface" : "こと"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "The chemical symbol H indicates hydrogen.",
+            "id" : "esp1_afc782e4bf94c79ff3e47e0bd7a7d9aa",
+            "japanese" : "元素記号Ｈは水素をあらわす。",
+            "tokens" : [
+              {
+                "entry" : "0c1058c9cae71f7bbeb86425223592bf",
+                "surface" : "元素"
+              },
+              {
+                "entry" : "900b7b546adf000337946cf0e3a39071",
+                "surface" : "記号"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "Ｈ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "0256dcda588f1493d2d938ce6f081fd8",
+                "surface" : "水素"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "336194fd44cf23f4d4d85694fa4a1f42",
+                  "3c0fdafb7a683133ea1d2f3477906706"
+                ],
+                "surface" : "あらわす"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The next month he achieved his first NHL shutout and showed the talent of an NHL super goalie.",
+            "id" : "esp1_ec76dee5630402e878d879cf69c78703",
+            "japanese" : "翌月にはＮＨＬ初シャットアウトゲームを記録しＮＨＬスーパーゴーリーとしての才能を見せた。",
+            "tokens" : [
+              {
+                "entry" : "cb74b7fa15d87eeeee1841fe62fc106d",
+                "surface" : "翌月"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "ＮＨＬ"
+              },
+              {
+                "entry" : "30a3e1f790ebc9e7d494ff0577e80c64",
+                "surface" : "初"
+              },
+              {
+                "entry" : "1c5e33dee4265e77a0400dc289bc5408",
+                "surface" : "シャットアウト"
+              },
+              {
+                "entry" : "d4b8f51c451c9328bcadbab9b504c1d2",
+                "surface" : "ゲーム"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "c5c08b3bce49ad4cd22065ca7a06d494",
+                "surface" : "記録"
+              },
+              {
+                "entry" : "02522f52db8dc1475d371146c5a0d313",
+                "surface" : "し"
+              },
+              {
+                "surface" : "ＮＨＬ"
+              },
+              {
+                "surface" : "スーパーゴーリー"
+              },
+              {
+                "entry" : "729d3ac25d3af21f20dfab66a28e9c7c",
+                "surface" : "として"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "dd8929c3b43ed3405a836caf6d112437",
+                "surface" : "才能"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "42c1b6c90f9d98e673b7f8486d4751c6",
+                "surface" : "見せた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I have ADHD.",
+            "id" : "esp1_4429135fabd9b7ff24347fdc60ab991f",
+            "japanese" : "私自身、ADHDなんです。",
+            "tokens" : [
+              {
+                "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+                "surface" : "私"
+              },
+              {
+                "entry" : "5552f2dc4169e4fafefa0316b761f7f4",
+                "surface" : "自身"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "ADHD"
+              },
+              {
+                "candidates" : [
+                  "6ccb3397987eac083e3d6f48bd2466b9",
+                  "7945a1c66702d2c57b8c0adb7299da70",
+                  "8c3e93df5a904011c581dc8c3fd65e8c",
+                  "ac6acb5880c20a4c250060b31f3690d1",
+                  "6d57dd245b88858a3ae84bb5c1071721"
+                ],
+                "surface" : "な"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The chemical formula for water is H₂O.",
+            "id" : "esp1_64e02a9e6b77b1d27bbe28660e715e76",
+            "japanese" : "水の化学式はH₂Oである。",
+            "tokens" : [
+              {
+                "entry" : "722c94624b09c10ca07a96c1cb03701f",
+                "surface" : "水"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "e3d8daca7af9d251e20120a6118fb335",
+                "surface" : "化学"
+              },
+              {
+                "entry" : "0134d4373b14a226398957743958dded",
+                "surface" : "式"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "H"
+              },
+              {
+                "surface" : "₂"
+              },
+              {
+                "surface" : "O"
+              },
+              {
+                "candidates" : [
+                  "0739533096c82fb9c8aa0ba7c26c9324",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The chemical formula for water is H-O-H.",
+            "id" : "esp1_65111ffcf19b61e8c467e32370cc18d2",
+            "japanese" : "水の化学式は、Ｈ—Ｏ—Ｈである。",
+            "tokens" : [
+              {
+                "entry" : "722c94624b09c10ca07a96c1cb03701f",
+                "surface" : "水"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "e3d8daca7af9d251e20120a6118fb335",
+                "surface" : "化学"
+              },
+              {
+                "entry" : "0134d4373b14a226398957743958dded",
+                "surface" : "式"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "Ｈ"
+              },
+              {
+                "surface" : "—"
+              },
+              {
+                "surface" : "Ｏ"
+              },
+              {
+                "surface" : "—"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "Ｈ"
+              },
+              {
+                "candidates" : [
+                  "0739533096c82fb9c8aa0ba7c26c9324",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The structural formula for water is H-O-H.",
+            "id" : "esp1_098a90e384cf2742b02594ecd8ed31d8",
+            "japanese" : "水の構造式は H-O-H である。",
+            "tokens" : [
+              {
+                "entry" : "722c94624b09c10ca07a96c1cb03701f",
+                "surface" : "水"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "88e8a5816c118342973bc41c87f105ab",
+                "surface" : "構造"
+              },
+              {
+                "entry" : "0134d4373b14a226398957743958dded",
+                "surface" : "式"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : " "
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "H"
+              },
+              {
+                "surface" : "-"
+              },
+              {
+                "surface" : "O"
+              },
+              {
+                "surface" : "-"
+              },
+              {
+                "entry" : "e02e7d90d7a7c235d0e60a9458041bab",
+                "pageWord" : true,
+                "surface" : "H"
+              },
+              {
+                "surface" : " "
+              },
+              {
+                "candidates" : [
+                  "0739533096c82fb9c8aa0ba7c26c9324",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ある"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The French word 'chat' means 'cat'.",
+            "id" : "esp1_7a8c5cd71a6c88375483e4be86cd9792",
+            "japanese" : "フランス語のＣＨＡＴは英語のＣＡＴを意味する。",
+            "tokens" : [
+              {
+                "entry" : "299e3f663ce0d404067e5ed2d0f4116c",
+                "surface" : "フランス語"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "ＣＨＡＴ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "b08dc19901c515a7bf794d31ef6bbcb2",
+                "surface" : "英語"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "ＣＡＴ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "ff6af6d8161e70c9a83e3d0f8004f4b5",
+                "surface" : "意味"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You can get only NHK in the Ogasawara islands.",
+            "id" : "esp1_43bbf5bace4f05c395596d9754087561",
+            "japanese" : "小笠原諸島では、ＮＨＫの電波しか入らない。",
+            "tokens" : [
+              {
+                "surface" : "小笠原諸島"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "ＮＨＫ"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "b54fc27ca4cc9c0bc09bb4d67b15b522",
+                "surface" : "電波"
+              },
+              {
+                "entry" : "5c6532adf973bfbeddfc993128656b91",
+                "surface" : "しか"
+              },
+              {
+                "candidates" : [
+                  "c78ae645968bfa3a8b664c3652e1a533",
+                  "e36e4bdfdf4b6535e82b863470af9499"
+                ],
+                "surface" : "入らない"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I broke my gas-powered rice cooker so I got an induction rice cooker instead.",
+            "id" : "esp1_845bff5a2de2ef79f11acfd28c96cf32",
+            "japanese" : "ガス炊飯器が壊れたので、IH炊飯器に変えました。",
+            "tokens" : [
+              {
+                "entry" : "ee9107736500b9e3db713c26362a0eaa",
+                "surface" : "ガス"
+              },
+              {
+                "entry" : "ef08dac4302e55e751c199219d82806a",
+                "surface" : "炊飯"
+              },
+              {
+                "entry" : "4eecde3d04e0356ca150f2a50ae0ca4a",
+                "surface" : "器"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "a628eedb591670d4e4d935022e00af78",
+                "surface" : "壊れた"
+              },
+              {
+                "entry" : "76f4ac20c0021f2a3a56e695b4212459",
+                "surface" : "ので"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "IH"
+              },
+              {
+                "entry" : "ef08dac4302e55e751c199219d82806a",
+                "surface" : "炊飯"
+              },
+              {
+                "entry" : "4eecde3d04e0356ca150f2a50ae0ca4a",
+                "surface" : "器"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "8d8af9d02a7d3de3d1c6da26be309061",
+                "surface" : "変えました"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "The first German book I ever bought was the NHK textbook 'Everyday German'.",
+            "id" : "esp1_bf114bafb74fe04567e2fb6e59f1c322",
+            "japanese" : "初めて買ったドイツ語の本は、NHKテキスト『まいにちドイツ語』です。",
+            "tokens" : [
+              {
+                "entry" : "c0cb46736daa3c0e805f128b91f5f05d",
+                "surface" : "初めて"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買った"
+              },
+              {
+                "entry" : "eb0c8d89c3472c4aaeb6215567a84f01",
+                "surface" : "ドイツ"
+              },
+              {
+                "entry" : "b673b8d252793c2cd4b903b41e278120",
+                "surface" : "語"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "6245b12a543fe049cb5c9e623e12fb75",
+                "surface" : "本"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "NHK"
+              },
+              {
+                "entry" : "2cec3d218903d7cd523231edcd92c588",
+                "surface" : "テキスト"
+              },
+              {
+                "surface" : "『"
+              },
+              {
+                "entry" : "513be0a7a7bb0a9b3ece5b6a209f0f4e",
+                "surface" : "まい"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "candidates" : [
+                  "8d72e1bc3945b8f3579d26dc2049745d",
+                  "78a5bc7c084c501df320d04ccba8eacf",
+                  "1adcddee0a72da672154a9f65ba943df",
+                  "8bf17b0082c86762cb0a3203bdb1135a",
+                  "6251f14549bef95848b731d95ae657ee",
+                  "e2b63a37431d1a605eae5df15fd7aee9",
+                  "d1bf53f7e4dd4170afcd8811bb87ecb8",
+                  "9e71f08316fd0ae2657c0f8ed0101903",
+                  "a57ac55fed77b0a34a4281da84419725",
+                  "48454b3ee99d241a4b18e450afa71b09",
+                  "ca26f6a38bac7b95e67d29047fd3f4f0"
+                ],
+                "surface" : "ち"
+              },
+              {
+                "entry" : "eb0c8d89c3472c4aaeb6215567a84f01",
+                "surface" : "ドイツ"
+              },
+              {
+                "entry" : "b673b8d252793c2cd4b903b41e278120",
+                "surface" : "語"
+              },
+              {
+                "surface" : "』"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Tatoeba was created by Trang Ho in 2006.",
+            "id" : "esp1_d8828692b4f2f791a2ff903b6b236d82",
+            "japanese" : "Tatoebaは、2006年にTrang Hoさんによって開設されました。",
+            "tokens" : [
+              {
+                "surface" : "Tatoeba"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "surface" : "2006"
+              },
+              {
+                "entry" : "dd0960a6648dc271b678dea2764859f3",
+                "surface" : "年"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "surface" : "Trang"
+              },
+              {
+                "surface" : " "
+              },
+              {
+                "surface" : "Ho"
+              },
+              {
+                "candidates" : [
+                  "9ce3bec8860dce732187e80b12de018a",
+                  "89f7ba65c5ca8722fca206af294f0ee3",
+                  "a5bc40d9da4cd06dd867e0210990bddf",
+                  "abf8f3d2a63512a08b20f8958791d049",
+                  "35debabf397d6d956dbae556f61ae7f7",
+                  "76d0f54fa6dfbf40f4cf1b429053d2ff",
+                  "3bd6cf2e326228eac464e6b3c7579f45"
+                ],
+                "surface" : "さん"
+              },
+              {
+                "entry" : "b06e4e2b85d25e88ec53e29ece297f65",
+                "surface" : "によって"
+              },
+              {
+                "entry" : "56cc2b6f440a2fdef2d2d30e7e661ecf",
+                "surface" : "開設"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "されました"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "After getting downsized he started off on a clean slate and started a business working out of a home office.",
+            "id" : "esp1_1f8285aa60110a39a3351e3113c30c78",
+            "japanese" : "リストラされた彼は心機一転、自宅を拠点にＳＯＨＯビジネスを始めた。",
+            "tokens" : [
+              {
+                "entry" : "282673eb5310db458954b803cee379f1",
+                "surface" : "リストラ"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "された"
+              },
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6ce90cd03cceada1d05dbad188ec0a12",
+                "surface" : "心機一転"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "e2ec1eeadd8d0dbeac2d11b1c00c74d6",
+                "surface" : "自宅"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "53c0381aed364b62eb8c4800dd9f04ea",
+                "surface" : "拠点"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "surface" : "ＳＯＨＯ"
+              },
+              {
+                "entry" : "78460a20399031261b4b64396f7195c6",
+                "surface" : "ビジネス"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "843b2e6ac91c301f73a511f1c72aa1f1",
+                "surface" : "始めた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
         ],
         "truncated" : false
       },
@@ -115602,10 +116913,383 @@
         "1029390"
       ],
       "examples" : {
-        "error" : "invalidQuery(SearchExperience.ExampleSentenceInvalidQueryReason.missingEntryEvidence)",
-        "listed" : 0,
+        "listed" : 3,
+        "reportedCount" : "3",
         "shown" : [
-
+          {
+            "english" : "What's your favorite swear word?",
+            "id" : "esp1_aa6ca960c1099b80be17cbf4a9107b1f",
+            "japanese" : "好きなNGワードは何？",
+            "tokens" : [
+              {
+                "entry" : "9e6cae1cec1f8db2f36d808337436d8e",
+                "surface" : "好きな"
+              },
+              {
+                "entry" : "b797b22ddfa7195186b76162aa1d3f17",
+                "pageWord" : true,
+                "surface" : "NG"
+              },
+              {
+                "candidates" : [
+                  "ca9968c6f2933250e0c86e2b18d4cb22",
+                  "64f5a8e68ca810cb58bc4190836254b2"
+                ],
+                "surface" : "ワード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "9686ab4fa9cef25605421475ea3dc063",
+                "surface" : "何"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "I think a god's name has got to be out. From the moment the kid's named you know he's not going to be able to live up to it!",
+            "id" : "esp1_249fb99ad99b49c4aa410dcb191419f7",
+            "japanese" : "神様の名前はやっぱりＮＧだと思うよ～。もう名づけた時点で名前負けなわけじゃん。",
+            "tokens" : [
+              {
+                "surface" : "神様の名前はやっぱりＮＧだと思うよ～。もう名づけた時点で名前負けなわけじゃん。"
+              }
+            ]
+          },
+          {
+            "english" : "\"You speak Spanish at home, and English at school, right?\" \"Right.\" \"What about when you play basketball with your friends? Do you speak English or Spanish?\" \"English. My friends understand Spanish a bit, but all they know how to say is swear words.\"",
+            "id" : "esp1_3b13c9de7b9182635d6402dee4def20f",
+            "japanese" : "「家ではスペイン語で、学校では英語を話すんだよね？」「そうだよ」「じゃぁ、友達とバスケする時って、英語でするの？それともスペイン語？」「英語だよ。僕の友達は、スペイン語も少しわかるんだけど、でも話せるのはＮＧワードぐらいだから」",
+            "tokens" : [
+              {
+                "surface" : "「"
+              },
+              {
+                "entry" : "6f54be67247dcd72328d454c302c328a",
+                "surface" : "家"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "44f5a970c0b2f0348b0acba442afc969",
+                "surface" : "スペイン"
+              },
+              {
+                "entry" : "b673b8d252793c2cd4b903b41e278120",
+                "surface" : "語"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "6a612ccf4b94b5318d3c9badc0b32f1e",
+                "surface" : "学校"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "b08dc19901c515a7bf794d31ef6bbcb2",
+                "surface" : "英語"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "4f6dd65aeb7d4e8fbba112ceacf6163c",
+                "surface" : "話す"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+                "surface" : "ね"
+              },
+              {
+                "surface" : "？"
+              },
+              {
+                "surface" : "」"
+              },
+              {
+                "surface" : "「"
+              },
+              {
+                "entry" : "8fb2ea6878dacc21841a19ae484a3a43",
+                "surface" : "そう"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "」"
+              },
+              {
+                "surface" : "「"
+              },
+              {
+                "surface" : "じゃぁ"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "8437a68ce392574a87fc48a74e1d7409",
+                "surface" : "友達"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "4ef958d8772ddd2d32f99b8480d8a478",
+                "surface" : "バスケ"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "entry" : "54631efa14b97ca18161409867b9dc73",
+                "surface" : "時"
+              },
+              {
+                "entry" : "4dc69a7fe4306cf80cd8208337551951",
+                "surface" : "って"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "b08dc19901c515a7bf794d31ef6bbcb2",
+                "surface" : "英語"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "する"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "？"
+              },
+              {
+                "entry" : "5c5e84bc119ff470a756830b48e857ac",
+                "surface" : "それとも"
+              },
+              {
+                "entry" : "44f5a970c0b2f0348b0acba442afc969",
+                "surface" : "スペイン"
+              },
+              {
+                "entry" : "b673b8d252793c2cd4b903b41e278120",
+                "surface" : "語"
+              },
+              {
+                "surface" : "？"
+              },
+              {
+                "surface" : "」"
+              },
+              {
+                "surface" : "「"
+              },
+              {
+                "entry" : "b08dc19901c515a7bf794d31ef6bbcb2",
+                "surface" : "英語"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              },
+              {
+                "entry" : "a6af8452cff4495733137e23d2332f7a",
+                "surface" : "僕"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "8437a68ce392574a87fc48a74e1d7409",
+                "surface" : "友達"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "44f5a970c0b2f0348b0acba442afc969",
+                "surface" : "スペイン"
+              },
+              {
+                "entry" : "b673b8d252793c2cd4b903b41e278120",
+                "surface" : "語"
+              },
+              {
+                "entry" : "30701592e9873c43b883e1d3510287f4",
+                "surface" : "も"
+              },
+              {
+                "entry" : "bfcdf32dc7a6fd9802615271f98cdd5c",
+                "surface" : "少し"
+              },
+              {
+                "entry" : "d3094eebd02ffb0c94cb40cfbdf7d1c3",
+                "surface" : "わかる"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "859a17b9d5a56d1f6ca782759cea252a",
+                "surface" : "けど"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "50dd118eea1c0b3e7cfd367c8ed6b1b8",
+                "surface" : "でも"
+              },
+              {
+                "entry" : "b65ca01cfae71e2eed9ae9ca0a20397f",
+                "surface" : "話せる"
+              },
+              {
+                "candidates" : [
+                  "3040e40d02d889316af08f4dd14a15f9",
+                  "132012aaec93e930fd3b41c16f423ca2",
+                  "07d411d1300b50be3e31ed93ab8ed445"
+                ],
+                "surface" : "の"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "b797b22ddfa7195186b76162aa1d3f17",
+                "pageWord" : true,
+                "surface" : "ＮＧ"
+              },
+              {
+                "candidates" : [
+                  "ca9968c6f2933250e0c86e2b18d4cb22",
+                  "64f5a8e68ca810cb58bc4190836254b2"
+                ],
+                "surface" : "ワード"
+              },
+              {
+                "entry" : "f9cb315a535c8bde975eb288703efc3a",
+                "surface" : "ぐらい"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "88645228bc3d7a5ca032eedd9ffcc4cf",
+                "surface" : "から"
+              },
+              {
+                "surface" : "」"
+              }
+            ]
+          }
         ],
         "truncated" : false
       },
@@ -115686,6 +117370,1064 @@
         },
         {
           "meaning" : "outtake, blooper, retake",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "covers" : "Ｔシャツ: full-width headword NFKC changes, its sentences written Ｔシャツ and Tシャツ",
+      "entSeq" : [
+        "1000160"
+      ],
+      "examples" : {
+        "listed" : 45,
+        "reportedCount" : "45",
+        "shown" : [
+          {
+            "english" : "I bought a T-shirt.",
+            "id" : "esp1_9a625ba967374882d2995d09911453a4",
+            "japanese" : "Tシャツ買ったんだ。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買った"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You're wearing your T-shirt inside out.",
+            "id" : "esp1_c8320a746ef5901d054868cc6c59ab10",
+            "japanese" : "Tシャツ裏返しだよ。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "59acb6d03d7ca729c7253f555c22c8d9",
+                "surface" : "裏返し"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I bought a T-shirt.",
+            "id" : "esp1_d731840fec771dd1a1c1674f6291816f",
+            "japanese" : "Tシャツを買ったの。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買った"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I bought a T-shirt.",
+            "id" : "esp1_86073171d836b8528d9f9ce0a052b300",
+            "japanese" : "Tシャツを買いました。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買いました"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You have your T-shirt on backwards.",
+            "id" : "esp1_e29406926bb6c52d6a290a8e3065099f",
+            "japanese" : "Tシャツが後ろ前だよ。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "cff288bbd652ecefe08c4f95f77ddb27",
+                "surface" : "後ろ前"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You have a stain on your T-shirt.",
+            "id" : "esp1_2b3cad012d9378c43b195b6965659990",
+            "japanese" : "Tシャツにシミがついてるよ。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "7ff1ad1b9ee0195b331324585301cac7",
+                "surface" : "シミ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "197054f4ffdf5ade9f43b96d8d153a2e",
+                "surface" : "ついてる"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "You could pass for a teenager if you wore a T-shirt.",
+            "id" : "esp1_f261ccc78009a5e99cf1b2afcad91bec",
+            "japanese" : "Ｔシャツを着たら１０代で通るよ。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "1a75b65c93eb371b798d272cc2361a17",
+                "surface" : "着たら"
+              },
+              {
+                "surface" : "１"
+              },
+              {
+                "surface" : "０"
+              },
+              {
+                "entry" : "57bb2b4c6adca055cfb99d847b634d13",
+                "surface" : "代"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "43dc03cbdff7731d9dc73d1b0c39a013",
+                "surface" : "通る"
+              },
+              {
+                "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
+                "surface" : "よ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "T-shirts and jeans are not suitable for this occasion.",
+            "id" : "esp1_c767d0c578f6eaa5fde8a4147d02e492",
+            "japanese" : "Ｔシャツやジーンズはこの場合にはふさわしくない。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "4429019b517d79302b8579ea54c825a8",
+                "surface" : "や"
+              },
+              {
+                "entry" : "dc8c115aaaad521d0b73a16551edb296",
+                "surface" : "ジーンズ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "90d95e4c47f48effd29ed662094303ed",
+                "surface" : "場合"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "bb4ad962b86162a87d08e80773cfc8b0",
+                "surface" : "ふさわしくない"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "T-shirts and jeans are not suitable for this occasion.",
+            "id" : "esp1_6baf588229d26b5cbb335bdf678bb405",
+            "japanese" : "Tシャツやジーンズは、この場にふさわしくありません。",
+            "tokens" : [
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "4429019b517d79302b8579ea54c825a8",
+                "surface" : "や"
+              },
+              {
+                "entry" : "dc8c115aaaad521d0b73a16551edb296",
+                "surface" : "ジーンズ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "824b323a5b99c1e2b759d224b1dc332e",
+                "surface" : "場"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "bb4ad962b86162a87d08e80773cfc8b0",
+                "surface" : "ふさわしく"
+              },
+              {
+                "entry" : "45eefee1383a89cb3c6287032622e6fa",
+                "surface" : "ありません"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Do you want this T-shirt?",
+            "id" : "esp1_bc4f8b13e5cb7c361045bf69c743ed38",
+            "japanese" : "このTシャツを欲しい？",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "b95905db517f646af84a64d865c6828c",
+                "surface" : "欲しい"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "Do you like my T-shirt?",
+            "id" : "esp1_2d05db15d8d275ba1916f1c96a55a07b",
+            "japanese" : "私のTシャツは好きですか？",
+            "tokens" : [
+              {
+                "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+                "surface" : "私"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "9e6cae1cec1f8db2f36d808337436d8e",
+                "surface" : "好き"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "？"
+              }
+            ]
+          },
+          {
+            "english" : "This T-shirt wore quite well.",
+            "id" : "esp1_5d4c0c7a78f5a14460e96a9876dad62f",
+            "japanese" : "このＴシャツは長持ちした。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "ca823eaa98530cfa263aa04057b8f98a",
+                "surface" : "長持ち"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "した"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Which t-shirt is red?",
+            "id" : "esp1_7dc52048ba2bbd9e6a37c7daaa5ed19e",
+            "japanese" : "どのTシャツが赤いんですか。",
+            "tokens" : [
+              {
+                "entry" : "b49ffbd0e984ea110127aab91a9d7a54",
+                "surface" : "どの"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Tシャツ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "d98acfad3f49fb159afd26e449a22c35",
+                "surface" : "赤い"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "How much is this T-shirt?",
+            "id" : "esp1_9e2c5ef67b46a8da7b9b98fee115c239",
+            "japanese" : "このＴシャツはいくらですか。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "42a1987f7898a83626ac651d2a222a50",
+                  "f392176d6dfd82b044eb2f3926d27aa3"
+                ],
+                "surface" : "いくら"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I had my T-shirt washed.",
+            "id" : "esp1_cef05bdfcfc3b14f959137838e6c7acf",
+            "japanese" : "私はＴシャツを洗ってもらった。",
+            "tokens" : [
+              {
+                "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+                "surface" : "私"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "040cef22a24ac70fda5a96bd78b1cf2e",
+                "surface" : "洗ってもらった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Your T-shirt will dry soon.",
+            "id" : "esp1_b09e5fff2b624561c0e4c890fd6cab5f",
+            "japanese" : "君のＴシャツはすぐ乾くでしょう。",
+            "tokens" : [
+              {
+                "entry" : "1802b4366cfd987d2b2ae8b7bcfe8daa",
+                "surface" : "君"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "8815011dd9a34bb06719f31ea1b72f44",
+                "surface" : "すぐ"
+              },
+              {
+                "entry" : "c36a481fab122432f0827831b806007a",
+                "surface" : "乾くでしょう"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "This T-shirt is too small for me.",
+            "id" : "esp1_31630dbeda3d6205053764e7509406b1",
+            "japanese" : "このＴシャツはぼくには小さすぎる。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "a6af8452cff4495733137e23d2332f7a",
+                  "ab5ef0e64b0691d617613376795b7c08",
+                  "fad3da846e31612a6a06dcff1fb6b06d",
+                  "8c42d085da4d0424657711eb50af678d"
+                ],
+                "surface" : "ぼく"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "f7fffd6c0691093c55fcf5d07ae2fea1",
+                "surface" : "小さ"
+              },
+              {
+                "entry" : "60c3d52511ecfb18d31460b6f0d190a1",
+                "surface" : "すぎる"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "How much is this T-shirt?",
+            "id" : "esp1_f5f4c916eab4b91b64d84ede6661643f",
+            "japanese" : "このＴシャツの値段はいくらですか。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "f624225b97781fdf81fc720c285bfbaf",
+                "surface" : "値段"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "42a1987f7898a83626ac651d2a222a50",
+                  "f392176d6dfd82b044eb2f3926d27aa3"
+                ],
+                "surface" : "いくら"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I bought this T-shirt on sale.",
+            "id" : "esp1_1d35328a9c24f329563937d0c5966689",
+            "japanese" : "このＴシャツはバーゲンで買ったんだ。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "50eb86a13c32350f7c39fe70a783814f",
+                "surface" : "バーゲン"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買った"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I will dry your T-shirt.",
+            "id" : "esp1_faee75ba06224b9c51d5073d7e8519dc",
+            "japanese" : "君のＴシャツを乾かしてあげましょう。",
+            "tokens" : [
+              {
+                "entry" : "1802b4366cfd987d2b2ae8b7bcfe8daa",
+                "surface" : "君"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "3c66106b287867ea591bec46175ce31f",
+                "surface" : "乾かしてあげましょう"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I bought this T-shirt on sale.",
+            "id" : "esp1_27463bc0dd0390d3f983db39d90cb565",
+            "japanese" : "このＴシャツ、セールの時に買ったんだ。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "5ffe6849231c19476ed20742527a9efd",
+                "surface" : "セール"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "54631efa14b97ca18161409867b9dc73",
+                "surface" : "時"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買った"
+              },
+              {
+                "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+                "surface" : "ん"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I liked these T-shirts, and I bought three of them.",
+            "id" : "esp1_eb417bb619c759c9b14f3a20b49e4972",
+            "japanese" : "このＴシャツが気に入って３枚も買っちゃった。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "dadf516f9d56a7620ef0a5229f4690ed",
+                "surface" : "気に入って"
+              },
+              {
+                "surface" : "３"
+              },
+              {
+                "entry" : "93a1114d67a2c0a02c362328a21c5abc",
+                "surface" : "枚"
+              },
+              {
+                "entry" : "30701592e9873c43b883e1d3510287f4",
+                "surface" : "も"
+              },
+              {
+                "entry" : "d02c0e432941aa528593ef408591fd5f",
+                "surface" : "買っ"
+              },
+              {
+                "entry" : "4f6131a43e5f8a2b5eb40308ca26adfc",
+                "surface" : "ちゃった"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I washed my T-shirt.",
+            "id" : "esp1_9ae85288c9fd75b87bb5a8ca9ef9c14b",
+            "japanese" : "自分のＴシャツを洗った。",
+            "tokens" : [
+              {
+                "entry" : "7669931783fe46a882af7435ebcec82f",
+                "surface" : "自分"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "040cef22a24ac70fda5a96bd78b1cf2e",
+                "surface" : "洗った"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I washed my T-shirt.",
+            "id" : "esp1_c19c4bc9327243ea16fdf6202e8b4844",
+            "japanese" : "自分のＴシャツを洗濯した。",
+            "tokens" : [
+              {
+                "entry" : "7669931783fe46a882af7435ebcec82f",
+                "surface" : "自分"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "54403af90ac38096d744aeee6383659f",
+                "surface" : "洗濯"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "した"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Where would I find T-shirts?",
+            "id" : "esp1_8693d8d98aec98e9cf1a13d0b3219b87",
+            "japanese" : "どこでＴシャツが買えますか。",
+            "tokens" : [
+              {
+                "entry" : "628ff17f0d1999707460fc690ac6dcaa",
+                "surface" : "どこ"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "eb54c99bef0320396d822893952aab65",
+                "pageWord" : true,
+                "surface" : "Ｔシャツ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "surface" : "買え"
+              },
+              {
+                "entry" : "d3abb254a469eadc6074ba43b959b9c8",
+                "surface" : "ます"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "No rank"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "Ｔシャツ"
+        }
+      ],
+      "headword" : "Ｔシャツ",
+      "id" : "eb54c99bef0320396d822893952aab65",
+      "kanji" : [
+
+      ],
+      "languageReferenceID" : "eb54c99bef0320396d822893952aab65",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun",
+      "reading" : "ティーシャツ",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "meaning" : "T-shirt, tee shirt",
           "notes" : [
 
           ],

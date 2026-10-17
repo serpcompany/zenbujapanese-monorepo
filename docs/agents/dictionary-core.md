@@ -337,10 +337,9 @@ The core answers as the Swift it replaced did, which the suites pin.
   `detail/text.ts` shift scalar by scalar, `kanji-split.ts` shifts only one-scalar Characters, and
   `ruby.ts` turns ヷ–ヺ, which have no precomposed hiragana, into a kana and a combining dakuten,
   still one Character each so the reading's positions don't move.
-- **Where the Swift threw**, the core returns an error value (`RetrievalError`,
-  `ExampleSearchError`) or null, and the page shows what the app showed then, usually no examples.
-  Through `embedded/` it is the call's error, which the app names as before
-  (`missingEntryEvidence`).
+- **Where the Swift threw**, the core returns an error (`RetrievalError`, `ExampleSearchError`) or
+  null, and the page shows what the app showed then, usually no examples; through `embedded/` it
+  is the call's error, named as before (`missingEntryEvidence`), though not for a word NFKC changes.
 
 ## Search
 
@@ -401,20 +400,21 @@ The core answers as the Swift it replaced did, which the suites pin.
 
 ## Examples
 
-- **Linking** (`linkedTokens`). A word the page's entry is written with is that entry; any other
-  is looked up by its forms, narrowed by part of speech and reading, and links to its one entry or
-  lists its candidates. A joined inflection is looked up by its dictionary form, never its surface,
-  which can be an unrelated headword (しまった is also "darn it!"); one that resolves to nothing
-  falls back to its pieces. A client's `lookup` should cache by form, as `EmbeddedText` does.
+- **Linking** (`linkedTokens`). A word the page's entry is written with, in either width, is that
+  entry; any other is looked up by its forms, narrowed by part of speech and reading, and links to
+  its one entry or lists its candidates. A joined inflection is looked up by its dictionary form,
+  never its surface, which can be an unrelated headword (しまった is also "darn it!"); one that resolves
+  to nothing falls back to its pieces. A client should cache `lookup` by form (`EmbeddedText` does).
 - A word is looked up only when it is written in kana and kanji, so linking never asks for an
   ASCII form, and `formLookup` finds nothing for one. `entriesMatchingFirstForms` does look one
   up, in English, for the app's own exact-form lookups.
 - A tokenizer's analysis whose tokens don't tile the text is null, and the sentence shows as one
   unlinked word.
 - **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
-  何でも), so its examples come from the sentences Tatoeba's word index (`ExampleWordIndex`) links
-  to the entry. A page lists at most 100, and the count is exact up to 50, with 51 meaning more
-  (`ExampleSentenceResultCount`).
+  何でも), so its examples are the sentences Tatoeba's word index (`ExampleWordIndex`) links to the
+  entry; at most 100, counted exactly up to 50, 51 meaning more (`ExampleSentenceResultCount`).
+  Forms are checked as `forms` folds them (`normalizeQuery`), and a sentence counts in either
+  spelling NFKC reads as one word (Ｔシャツ, Tシャツ); entries folded to one form and reading list none.
 - **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed,
   the exact phrase first. Without one, a match needs each word to be the query's in another
   inflection (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything
