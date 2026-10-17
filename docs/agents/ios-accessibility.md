@@ -43,7 +43,7 @@ them with `xcrun xcresulttool export attachments`.
 | Trait | iPhone and iPad | Fails |
 | Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
 | Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
-| Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows only the system's code. The iPhone runs both on the same views |
+| Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
 
 `AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
 ones a device skips; the reported counts are in [`harness-debt.md`](../harness-debt.md). The Dynamic Type and text-clipped audits sweep the app

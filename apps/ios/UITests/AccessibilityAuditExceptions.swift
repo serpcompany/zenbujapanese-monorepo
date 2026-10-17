@@ -77,7 +77,7 @@ private enum Why {
   static let searchField =
     "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Search"
   static let floatingTabBar =
-    "On the iPad these audits step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding; a sample of the app shows only the system's code. The iPhone runs both on the same views, and the iPad's other audits still run at the largest size"
+    "On the iPad these audits step the text size while the system's floating tab bar lays itself out, and it loops in its own layout until the app stops responding: a sample of the hung app shows its main thread in _UIFloatingTabBar's layoutSubviews, under the audit's _axAuditCheckDynamicTextSupport, with none of the app's code. The iPhone runs both on the same views, and the iPad's other audits still run at the largest size"
   static let behindSheet =
     "Text behind an open sheet, which VoiceOver rightly skips while the sheet is up. The audit can't name it"
   static let inlineWord =
