@@ -208,7 +208,9 @@ private let textThatScales = [
     on: ["A video its owner won't share"], because: Why.scales),
   allow(.textClipped, .unnamed(2), on: ["A video its owner won't share", "Word Detail, its kanji"], because: Why.underTheBar),
   allow(.dynamicType, .unnamed(3), on: ["Word Detail, its kanji"], because: Why.underTheBar),
-  allow(.dynamicType, .unnamed(1), on: ["A word's note"], because: Why.underTheBar),
+  allow(.dynamicType, .unnamed(1), on: ["A word's note"], touch, [.standard], because: Why.underTheBar),
+  allow(.dynamicType, .unnamed(8), on: ["A word's note"], touch, [.largest], because: Why.underTheBar),
+  allow(.textClipped, .unnamed(3), on: ["Kanji Detail, its readings"], touch, [.largest], because: Why.underTheBar),
 ]
 
 private let videoScreens = [
