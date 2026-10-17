@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
+import { ipadicTokenizer, type ReadIpadicFile } from '@zenbu/dictionary-core/examples/ipadic'
+import type { Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
 import {
   artifactFile,
@@ -13,8 +15,8 @@ import {
   openArtifact,
   rejectGitLfsPointer
 } from '../artifact'
-import { loadKuromoji } from '../kuromoji'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
+import { tokenizerFiles } from '../tokenizer'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
@@ -31,6 +33,17 @@ export const artifactAvailable = (() => {
 })()
 
 export const sudachiAvailable = existsSync(sudachiDictionary)
+
+export const tokenizerDictionary = join(resources, 'Kuromoji')
+
+export const tokenizerDictionaryAvailable = (() => {
+  try {
+    rejectGitLfsPointer(join(tokenizerDictionary, 'base.dat.gz'))
+    return true
+  } catch {
+    return false
+  }
+})()
 
 if (process.env.ZENBU_REQUIRE_ARTIFACT === '1' && !(artifactAvailable && sudachiAvailable)) {
   throw new Error(
@@ -58,14 +71,16 @@ export function requirePinnedArtifacts(artifacts: { name: string; sha256: string
 
 let opened: Promise<{
   artifact: OpenedArtifact
-  tokenize: ReturnType<typeof loadKuromoji>
+  tokenizerFile: ReadIpadicFile
+  tokenize: Tokenize
 }> | null = null
 let sudachi: MorphologyAnalyzer | null = null
 
 async function open() {
   opened ??= (async () => {
     const artifact = openArtifact(resources, await fileSha256(join(resources, artifactFile)))
-    return { artifact, tokenize: loadKuromoji(join(resources, 'Kuromoji')) }
+    const tokenizerFile = tokenizerFiles(tokenizerDictionary)
+    return { artifact, tokenizerFile, tokenize: ipadicTokenizer(tokenizerFile) }
   })()
   return opened
 }
@@ -95,6 +110,10 @@ export async function artifactDatabase() {
 
 export async function artifactKanji() {
   return (await open()).artifact.kanji
+}
+
+export async function artifactTokenizerFile() {
+  return (await open()).tokenizerFile
 }
 
 export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {

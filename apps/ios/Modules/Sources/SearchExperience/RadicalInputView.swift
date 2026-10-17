@@ -3,138 +3,116 @@ import SwiftUI
 struct RadicalInputView: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
+  @Binding var mode: SearchInputMode
   let lookupClient: RadicalLookupClient
-  let selectMode: (SearchInputMode) -> Void
   let submit: (SearchQuery) -> Void
-  @State private var selectedRadicals: Set<String> = []
-  @State private var catalog: RadicalCatalog?
+  @State private var selectionOrder: [String] = []
+  @State private var panel: RadicalPanel?
   @State private var loadFailed = false
 
   var body: some View {
-    VStack(spacing: 0) {
-      candidateStrip
-      SearchInputModePicker(selectedMode: .radicals, selectMode: selectMode)
-
-      ScrollView {
-        if loadFailed {
-          ContentUnavailableView {
-            Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
-              .foregroundStyle(.red)
+    SearchInputPanel(mode: $mode) {
+      VStack(spacing: 12) {
+        SearchCandidateStrip(
+          candidates: panel?.candidates ?? [],
+          identifierPrefix: "radical",
+          select: accept
+        ) {
+          CandidateStripMessage {
+            Text("Select one or more radicals")
           }
-          .accessibilityIdentifier("radical.load-failure")
-        } else {
-          LazyVStack(alignment: .leading, spacing: 8) {
-            ForEach(groups, id: \.strokeCount) { group in
-              Text(group.strokeCount == 1 ? "1 Stroke" : "\(group.strokeCount) Strokes")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.primary)
-                .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
+        }
+        radicalGrid
+      }
+    } actions: {
+      SearchInputUndoButton(isEnabled: !selectionOrder.isEmpty) {
+        select(selectionOrder.dropLast())
+      }
+      .accessibilityLabel("Undo last radical")
+      .accessibilityIdentifier("radical.undo")
+    }
+    .task {
+      if panel == nil { select(selectionOrder) }
+    }
+  }
+
+  private func select(_ radicals: some Sequence<String>) {
+    selectionOrder = Array(radicals)
+    do {
+      panel = try lookupClient.panel(selectionOrder)
+    } catch {
+      loadFailed = true
+    }
+  }
+
+  private func accept(_ candidate: String) {
+    let submittedQuery = SearchInputCandidate.query(query, adding: candidate)
+    query = submittedQuery.value
+    submit(submittedQuery)
+  }
+
+  private var radicalGrid: some View {
+    ScrollView {
+      if loadFailed {
+        ContentUnavailableView {
+          Label("Radical data unavailable", systemImage: "exclamationmark.triangle")
+            .foregroundStyle(.red)
+        }
+        .accessibilityIdentifier("radical.load-failure")
+      } else {
+        LazyVStack(alignment: .leading, spacing: 0, pinnedViews: .sectionHeaders) {
+          ForEach(panel?.groups ?? [], id: \.strokeCount) { group in
+            Section {
               LazyVGrid(
                 columns: Array(
                   repeating: GridItem(.flexible(), spacing: 4),
-                  count: dynamicTypeSize >= .xxLarge ? 4 : 8
+                  count: dynamicTypeSize >= .xxLarge ? 5 : 8
                 ),
                 spacing: 4
               ) {
-                ForEach(group.values) { radical in
-                  Button(radical.glyph) { toggle(radical.id) }
-                    .font(.title3)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(
-                      selectedRadicals.contains(radical.id)
-                        ? ZenbuTheme.radicalSelection
-                        : Color(uiColor: .secondarySystemFill),
-                      in: RoundedRectangle(cornerRadius: 5)
-                    )
-                    .foregroundStyle(
-                      selectedRadicals.contains(radical.id) ? Color.white : Color.primary
-                    )
-                    .accessibilityLabel("Radical \(radical.glyph)")
-                    .accessibilityValue(
-                      selectedRadicals.contains(radical.id) ? "Selected" : "Not selected"
-                    )
-                    .accessibilityIdentifier(radical.accessibilityIdentifier)
+                ForEach(group.radicals) { radical in
+                  radicalButton(radical)
                 }
               }
+            } header: {
+              Text(group.label)
+                .font(.footnote.weight(.semibold))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 8)
+                .padding(.bottom, 6)
+                .background(SystemColor.panel)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityIdentifier("radical.stroke.\(group.strokeCount)")
             }
           }
-          .padding(10)
         }
       }
-      .accessibilityIdentifier("radical.grid")
-      .frame(minHeight: dynamicTypeSize >= .xxLarge ? 260 : 258)
-
-      HStack {
-        Button("Remove", systemImage: "delete.left") {
-          selectedRadicals.removeAll()
-          query = ""
-        }
-        .buttonStyle(.bordered)
-        .tint(.primary)
-        .disabled(selectedRadicals.isEmpty && SearchQuery(query).isEmpty)
-        .accessibilityLabel("Remove radical selection")
-        .accessibilityIdentifier("radical.remove")
-
-        Spacer()
-      }
-      .controlSize(.large)
-      .padding(.horizontal)
-      .padding(.bottom, 10)
     }
-    .task {
-      guard catalog == nil else { return }
-      do {
-        catalog = try lookupClient.load()
-      } catch {
-        loadFailed = true
-      }
-    }
+    .scrollIndicators(.hidden)
+    .accessibilityIdentifier("radical.grid")
   }
 
-  @ViewBuilder
-  private var candidateStrip: some View {
-    if radicalCandidates.isEmpty {
-      CandidateStripMessage {
-        Text("Select one or more radicals")
-      }
-    } else {
-      ScrollView(.horizontal, showsIndicators: false) {
-        LazyHStack(spacing: 0) {
-          ForEach(Array(radicalCandidates.enumerated()), id: \.element.value) {
-            index, candidate in
-            Button(candidate.value) {
-              let submittedQuery = SearchQuery(candidate.value)
-              query = submittedQuery.value
-              submit(submittedQuery)
-            }
-            .font(.title)
-            .frame(minWidth: 54, minHeight: 46)
-            .accessibilityLabel("Use radical candidate \(candidate.value)")
-            .accessibilityValue("Candidate rank \(index + 1)")
-            .accessibilityIdentifier("radical.candidate.\(candidate.value)")
-          }
-        }
-      }
-      .frame(minHeight: 46)
-      .accessibilityIdentifier("radical.candidate-strip")
-      .accessibilityValue("\(radicalCandidates.count) candidates")
-    }
-  }
-
-  private var radicalCandidates: [RadicalCharacter] {
-    catalog?.candidates(matching: selectedRadicals) ?? []
-  }
-
-  private var groups: [(strokeCount: Int, values: [RadicalComponent])] {
-    catalog?.componentGroups(matching: radicalCandidates) ?? []
+  private func radicalButton(_ radical: RadicalComponent) -> some View {
+    let isSelected = selectionOrder.contains(radical.id)
+    return Button(radical.glyph) { toggle(radical.id) }
+      .buttonStyle(.plain)
+      .font(.title3)
+      .frame(maxWidth: .infinity, minHeight: 44)
+      .background(
+        isSelected ? ZenbuTheme.radicalSelection : SystemColor.secondaryFill,
+        in: .rect(cornerRadius: 8)
+      )
+      .foregroundStyle(isSelected ? Color.white : Color.primary)
+      .contentShape(.rect(cornerRadius: 8))
+      .accessibilityLabel("Radical \(radical.glyph)")
+      .accessibilityValue(isSelected ? "Selected" : "Not selected")
+      .accessibilityIdentifier(radical.accessibilityIdentifier)
   }
 
   private func toggle(_ radical: String) {
-    if selectedRadicals.contains(radical) {
-      selectedRadicals.remove(radical)
-    } else {
-      selectedRadicals.insert(radical)
-    }
+    select(
+      selectionOrder.contains(radical)
+        ? selectionOrder.filter { $0 != radical } : selectionOrder + [radical])
   }
 }
 

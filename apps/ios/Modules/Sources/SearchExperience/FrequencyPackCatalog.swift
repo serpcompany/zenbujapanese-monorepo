@@ -143,7 +143,8 @@ struct FrequencyPackManifest: Codable, Equatable, Sendable {
       domain: domain,
       domainDescription: domainDescription,
       version: packVersion,
-      attribution: attribution
+      attribution: attribution,
+      coveredSourceRows: coveredSourceRows
     )
   }
 

@@ -16,7 +16,7 @@ public final class ConversationHistory: ConversationArchiving {
   public private(set) var conversations: [Conversation] = []
   public private(set) var sharedOnly: [SharedBookmark] = []
   public private(set) var isLoaded = false
-  public private(set) var bookmarksAreReadOnly = false
+  public private(set) var bookmarksProblem: SharedBookmarksProblem?
   public var liveConversationID: UUID?
   @ObservationIgnored public var bookmarkObserver: ((BookmarkChange) -> Void)?
 
@@ -177,7 +177,7 @@ public final class ConversationHistory: ConversationArchiving {
     sortNewestFirst()
     switch shared {
     case .loaded(let bookmarks): sharedOnly = bookmarks
-    case .keptAside: bookmarksAreReadOnly = true
+    case .keptAside(let problem): bookmarksProblem = problem
     }
     removedBeforeLoad = []
     isLoaded = true

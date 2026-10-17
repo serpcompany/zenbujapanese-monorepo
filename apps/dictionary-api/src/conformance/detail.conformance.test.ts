@@ -3,14 +3,12 @@ import type { Dictionary, WordResponse } from '@zenbu/dictionary-core/artifact/d
 import { licenseUrl } from '@zenbu/dictionary-core/detail/examples'
 import { tierLabels } from '@zenbu/dictionary-core/detail/frequency'
 import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
+import { shownPitch } from '@zenbu/dictionary-core/detail/pitch'
 import type { ExampleCountRow, ExampleSentenceRow } from '@zenbu/dictionary-core/detail/rows'
 import {
   type SuiteConjugationForm,
   type SuiteConjugations,
   type SuiteFormExamples,
-  type SuiteFrequencyDetails,
-  type SuiteFurigana,
-  type SuitePitchGraph,
   suiteConjugations,
   suiteFrequencyDetails,
   suiteFurigana,
@@ -18,109 +16,18 @@ import {
 } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { languageReferenceIds, shownAsRecorded } from './examples'
 import {
-  artifactAvailable,
-  artifactDatabase,
-  dictionary,
-  readSuite,
-  requirePinnedArtifacts
-} from './support'
-
-interface Artifact {
-  name: string
-  sha256: string
-}
-
-interface SuiteWord {
-  headword: string
-  id: string
-  reading: string
-  summary: string
-}
-
-interface SuiteToken {
-  surface: string
-  entry?: string
-  candidates?: string[]
-  pageWord?: boolean
-}
-
-interface SuiteExamples {
-  listed: number
-  reportedCount?: string
-  truncated: boolean
-  error?: string
-  shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
-}
-
-interface WordCase {
-  covers: string
-  entSeq: string[]
-  id: string
-  languageReferenceID: string
-  headword: string
-  reading: string
-  furigana: SuiteFurigana[]
-  partOfSpeech: string
-  opensConjugations: boolean
-  conjugations?: SuiteConjugations
-  senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
-  pitch?: {
-    downstep: number
-    levels: string
-    moraCount: number
-    particle: string
-    source: string
-    graph: SuitePitchGraph
-  }
-  frequency: {
-    name: string
-    pack: string
-    text: string
-    tier?: string
-    details: SuiteFrequencyDetails
-  }[]
-  alternativeForms: { kind: string; labels: string[]; value: string }[]
-  kanji: { character: string; meanings: string[] }[]
-  alternativeKanji: { character: string; meanings: string[] }[]
-  relatedWords: {
-    headword: string
-    reading: string
-    relation: string
-    summary: string
-    targetID?: string
-  }[]
-  examples: SuiteExamples
-}
-
-interface KanjiCase {
-  character: string
-  codePoint: string
-  covers: string
-  opensDetail: boolean
-  hasReference?: boolean
-  hasStrokeOrder?: boolean
-  strokeOrderStrokes?: number
-  strokeCount?: number
-  grade?: number
-  jlpt?: string
-  meanings?: string[]
-  readings?: { kind: string; value: string; words: SuiteWord[] }[]
-  words?: SuiteWord[]
-  elements?: { glyph: string; meanings: string[]; linkedOnReadings?: string[]; role: string }[]
-  components?: string[]
-}
-
-interface Suite<Case> {
-  artifacts: Artifact[]
-  cases: Case[]
-  exampleLimit?: number
-  formExampleLimit?: number
-}
-
-const wordSuite = readSuite<Suite<WordCase>>('word-detail')
-const kanjiSuite = readSuite<Suite<KanjiCase>>('kanji-detail')
+  codePoint,
+  type KanjiCase,
+  kanjiSuite,
+  type SuiteExamples,
+  type SuiteWord,
+  type WordCase,
+  withoutFields,
+  wordSuite
+} from './detail-suite'
+import { languageReferenceIds, shownAsRecorded } from './examples'
+import { artifactAvailable, artifactDatabase, dictionary, requirePinnedArtifacts } from './support'
 
 const defaultFrequencyPackIds: Record<string, string> = {
   JLPT: 'zenbu.jlpt.waller.levels',
@@ -129,15 +36,6 @@ const defaultFrequencyPackIds: Record<string, string> = {
 
 const meaningsShownPerKanji = 2
 const meaningsShownPerElement = 3
-
-function withoutFields<Case extends object>(expected: Case, skipped: string[]): Partial<Case> {
-  return Object.fromEntries(
-    Object.entries(expected).filter(([key]) => !skipped.includes(key))
-  ) as Partial<Case>
-}
-
-const codePoint = (character: string) =>
-  `U+${(character.codePointAt(0) ?? 0).toString(16).toUpperCase().padStart(4, '0')}`
 
 function expectEachSideAttributed(sentence: ExampleSentenceRow) {
   for (const side of ['japanese', 'english'] as const) {
@@ -219,7 +117,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
         )
         return { character, meanings }
       })
-    const pitch = entry.pitch ?? entry.compoundPitch
+    const pitch = shownPitch(entry)
     const observed: Omit<WordCase, 'covers' | 'entSeq'> = {
       id: entry.id,
       languageReferenceID: entry.id,
@@ -322,9 +220,10 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
       ...(rows.kanji.grade === null ? {} : { grade: rows.kanji.grade }),
       ...(jlpt === undefined ? {} : { jlpt }),
       meanings: detail.meanings,
-      readings: detail.readings.map(({ kind, value, words }) => ({
+      readings: detail.readings.map(({ kind, value, spoken, words }) => ({
         kind,
         value,
+        ...(spoken === null ? {} : { spoken }),
         words: words.map(suiteWord)
       })),
       words: detail.words.map(suiteWord),

@@ -329,7 +329,7 @@ and footer, whichever Worker vars it then runs with.
   leading to `/login/` ([`ci.md`](../../../../docs/agents/ci.md), Web).
 
 **Apple and Google in each environment.** Staging and production offer both: each Worker names
-the Services ID `com.zenbujapanese.web` and turns Google on, since each environment's account
+the Services ID `com.zenbujapanese.website` and turns Google on, since each environment's account
 service has Apple's key and Google's web client. The local site offers neither, since Apple takes
 no `localhost` return URL and Google's web client returns only to the deployed services.
 

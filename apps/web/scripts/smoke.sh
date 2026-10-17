@@ -451,16 +451,18 @@ else
 fi
 
 if [[ "$base" == *.workers.dev ]]; then
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base/legal/terms/")"
-    [ "$got" = "308 $canonical/legal/terms/" ] && break
-    sleep 3
+  for path in /legal/terms/ /legal/terms; do
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      got="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$base$path")"
+      [ "$got" = "308 $canonical/legal/terms/" ] && break
+      sleep 3
+    done
+    if [ "$got" = "308 $canonical/legal/terms/" ]; then
+      pass "workers.dev$path redirects to $canonical in one hop"
+    else
+      fail "workers.dev$path gave '$got' (want 308 -> $canonical/legal/terms/)"
+    fi
   done
-  if [ "$got" = "308 $canonical/legal/terms/" ]; then
-    pass "workers.dev redirects to $canonical"
-  else
-    fail "workers.dev gave '$got' (want 308 -> $canonical/legal/terms/)"
-  fi
 fi
 
 exit "$failed"

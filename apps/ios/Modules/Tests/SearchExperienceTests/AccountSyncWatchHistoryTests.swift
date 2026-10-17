@@ -17,6 +17,7 @@ struct AccountSyncWatchHistoryTests {
   private typealias Fixture = AccountFixture
   private let ramen = "ramenVideo1"
   private let sushi = "sushiVideo2"
+  private let recentKey = "watch.recent-videos.v1"
 
   @Test("the first sync uploads Recent at version 0, oldest first, with when each was watched")
   func firstSyncUploadsRecent() async throws {
@@ -229,6 +230,48 @@ struct AccountSyncWatchHistoryTests {
     #expect(history.videos.map(\.videoID) == [videoID(1), ramen, sushi])
     let reloaded = WatchHistory(defaults: defaults)
     #expect(reloaded.videos.map(\.watchedAt).suffix(2) == [start + 2, start + 1])
+  }
+
+  @Test("a Player's Recent that can't be read is kept aside, and Recent and sync carry on")
+  func keepsUnreadableRecentAside() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let defaults = try #require(UserDefaults(suiteName: fixture.defaultsSuite))
+    let unreadable = Data(#"{"videos":"not a list of videos"}"#.utf8)
+    defaults.set(unreadable, forKey: recentKey)
+
+    await fixture.launch()
+    #expect(defaults.keptCopies(of: recentKey) == [unreadable])
+    #expect(fixture.sync.canSync)
+    fixture.serve { _ in .offline }
+    fixture.watch(ramen)
+    #expect(fixture.queuedOperations == ["watchedVideo watch \(ramen)"])
+    #expect(WatchHistory(defaults: defaults).videos.map(\.videoID) == [ramen])
+  }
+
+  @Test("a saved video that can't be read is kept aside, and the others stay in Recent")
+  func keepsReadableVideos() throws {
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
+    let readable = try JSONEncoder().encode(WatchedVideo(videoID: ramen))
+    let stored = Data("[".utf8) + readable + Data(#",{"videoID":5}]"#.utf8)
+    defaults.set(stored, forKey: recentKey)
+
+    #expect(WatchHistory(defaults: defaults).videos.map(\.videoID) == [ramen])
+    #expect(defaults.keptCopies(of: recentKey) == [stored])
+    #expect(WatchHistory(defaults: defaults).videos.map(\.videoID) == [ramen])
+  }
+
+  @Test("a length that isn't a finite number is dropped, rather than emptying Recent")
+  func dropsNonFiniteNumbers() throws {
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
+    let history = WatchHistory(defaults: defaults)
+    history.record(try #require(YouTubeVideoID(rawValue: ramen)))
+    history.record(try #require(YouTubeVideoID(rawValue: sushi))) { $0.duration = .infinity }
+
+    let reloaded = WatchHistory(defaults: defaults).videos
+    #expect(Set(reloaded.map(\.videoID)) == [ramen, sushi])
+    #expect(reloaded.allSatisfy { $0.duration == nil })
   }
 
   @Test("the phone keeps the versions of the latest 100 videos gone from the account, and no more")

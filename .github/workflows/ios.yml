@@ -2,14 +2,12 @@ name: iOS
 
 on:
   pull_request:
-    paths:
-      - apps/ios/**
-      - .github/workflows/ios.yml
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: ios-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 permissions:
   contents: read
@@ -20,7 +18,23 @@ env:
   LFS_SNAPSHOTS: apps/ios/LanguageData/Sources/JMdict_e-*.gz,apps/ios/LanguageData/Sources/Tatoeba-*/*,apps/ios/LanguageData/Sources/KANJIDIC2-*/*,apps/ios/LanguageData/Sources/EDRDG-radicals-*/*,apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            apps/ios apps/account-api/src/domain/username-cases.json .xcode-version
+            .python-version .github/workflows/ios.yml .github/actions/changed-paths
+
   contracts:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,15 +46,23 @@ jobs:
           key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
         run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS,$LFS_RECORDINGS"
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
       - name: Run the data tools' contract tests
         run: python3 -m unittest discover --start-directory apps/ios/Tools/tests --pattern 'test_*.py' --verbose
 
   swift:
-    if: ${{ vars.IOS_SWIFT_TESTS == 'on' || github.event_name == 'workflow_dispatch' }}
+    needs: [changes, contracts]
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 240
     steps:
       - uses: actions/checkout@v5
+      - name: Select the pinned Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_$(cat .xcode-version).app"
       - name: Restore the Git LFS files
         uses: actions/cache@v5
         with:
@@ -48,31 +70,66 @@ jobs:
           key: lfs-ios-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz', 'apps/ios/LanguageData/Sources/*.xz', 'apps/ios/LanguageData/Sources/*/*.xz') }}
       - name: Fetch the Git LFS files
         run: git lfs pull --include="$LFS_FILES" --exclude="$LFS_SNAPSHOTS,$LFS_RECORDINGS"
-      - name: Pick the first iPhone Simulator on the newest iOS runtime
+      - name: Make the app's iPhone and iPad Simulators
         run: |
           xcodebuild -version
-          udid=$(xcrun simctl list devices available --json | python3 -c '
-          import json, sys
-          devices = json.load(sys.stdin)["devices"]
-          runtimes = sorted(
-              (runtime for runtime in devices if ".SimRuntime.iOS-" in runtime),
-              key=lambda runtime: [int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-")],
-          )
-          for runtime in reversed(runtimes):
-              phones = [device for device in devices[runtime] if device["name"].startswith("iPhone")]
-              if phones:
-                  print(phones[0]["udid"])
-                  break
-          else:
-              sys.exit("No available iPhone Simulator")
-          ')
-          echo "SIMULATOR=$udid" >>"$GITHUB_ENV"
-      - name: Run SearchExperienceTests
+          simulator=$(python3 apps/ios/Tools/simulator.py)
+          ipad=$(python3 apps/ios/Tools/simulator.py --device ipad)
+          printf 'SIMULATOR=%s\nIPAD_SIMULATOR=%s\n' "$simulator" "$ipad" >>"$GITHUB_ENV"
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the iPhone Simulator
         working-directory: apps/ios/Modules
         run: |
           xcodebuild -scheme ZenbuJapaneseModules-Package \
             -destination "platform=iOS Simulator,id=$SIMULATOR" \
             ONLY_ACTIVE_ARCH=YES test
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the iPad Simulator
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules-Package \
+            -destination "platform=iOS Simulator,id=$IPAD_SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES test
+      - name: Run SearchExperienceTests and TranslatorCoreTests on the Mac
+        working-directory: apps/ios/Modules
+        run: |
+          xcodebuild -scheme ZenbuJapaneseModules-Package \
+            -destination 'platform=macOS,arch=arm64' test
+      - name: Restore the Sudachi build cache
+        uses: actions/cache@v5
+        with:
+          path: ~/Library/Caches/com.zenbujapanese.build/SudachiCore
+          key: sudachi-core-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json') }}
+      - name: Fill the Sudachi build cache
+        run: |
+          python3 apps/ios/Tools/prepare_sudachi_core.py \
+            --manifest apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
+            --cache "$HOME/Library/Caches/com.zenbujapanese.build/SudachiCore" --cache-only
+      - name: Run the app's UI tests on the iPhone Simulator
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination "platform=iOS Simulator,id=$SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+      - name: Run the app's UI tests on the iPad Simulator
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination "platform=iOS Simulator,id=$IPAD_SIMULATOR" \
+            ONLY_ACTIVE_ARCH=YES ARCHS=arm64 ZENBU_BUNDLE_ID_SUFFIX=.uitests test
+      - name: Let UI tests drive the Mac
+        run: sudo automationmodetool enable-automationmode-without-authentication
+      - name: Run the app's UI tests on the Mac
+        run: |
+          xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
+            -destination 'platform=macOS,arch=arm64' ZENBU_BUNDLE_ID_SUFFIX=.uitests \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_ENTITLEMENTS= test
       - name: Run the recorded-audio check's scoring tests
         working-directory: apps/ios/Tools/TranslateReplay
         run: swift test
+
+  ios:
+    if: always()
+    needs: [changes, contracts, swift]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

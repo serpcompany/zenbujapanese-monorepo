@@ -89,18 +89,17 @@ Better Auth upgrade adds. The profile changes through `/v1/me`, and deleting an 
 
 **Apps and scopes.** Each app that signs in is listed in `src/domain/clients.ts`, with its scopes
 and its Apple bundle IDs (#570). A sign-in names its app in the `X-Zenbu-Client` header, or comes
-from one of the website's origins, or is refused (`unknown_client`); an Apple token made for
-another app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`),
-and its access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app
-has now. `/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against
-the scopes and reads only the entities they allow. The sign-in routes that manage the account
-(linking, unlinking, listing ways in and sessions, and signing sessions out) need the session's
-app to have `account`, and `get-session`, which shows the email and name, needs `profile`; a
-session whose app isn't listed gets no access token (`401 sign_in_again`). At most five sign-in
-codes go to one email in 10 minutes, from any address, counting only codes sent; the next gets
-`429 too_many_requests` with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The
-apps' side, and how to add one, is the
-[client guide](account-clients.md).
+from one of the website's origins, or is refused (`unknown_client`); an Apple token made for another
+app's bundle ID is refused (`client_mismatch`). The session keeps its app (`client_id`), and its
+access tokens carry the app (`azp`) and its scopes (`scope`), cut to the scopes the app has now.
+`/v1/me` needs `profile` (`403 insufficient_scope`), and sync checks each change against the scopes
+and reads only the entities they allow. The sign-in routes that manage the account (linking,
+unlinking, listing ways in and sessions, and signing sessions out) need the session's app to have
+`account`, and `get-session`, which shows the email and name, needs `profile`; a session whose app
+isn't listed gets no access token (`401 sign_in_again`). At most five sign-in codes go to one email
+in 10 minutes, from any address, counting only codes sent; the next gets `429 too_many_requests`
+with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The apps' side, and how to
+add one, is the [client guide](account-clients.md).
 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
@@ -161,12 +160,11 @@ Google made deletes the session it had made, and its cookie would replace the br
 The website's side is in the [client guide](account-clients.md#the-website).
 
 **Apple and Google, in the app.** The app asks this service for a nonce, gives it to Apple (as its
-SHA-256, as Apple asks) or Google, and sends the token it gets back with the nonce. Each nonce
-lasts 10 minutes and signs in once, so a token someone captures can't be used again. The token is
-checked against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIFIER` and
+SHA-256, as Apple asks) or Google, and sends the token it gets back with the nonce. Each nonce lasts
+10 minutes and signs in once, so a token someone captures can't be used again. The token is checked
+against the provider's keys, issuer, audience (`APPLE_APP_BUNDLE_IDENTIFIER` and
 `APPLE_SERVICES_IDS`, or `GOOGLE_CLIENT_IDS`), the nonce, and its age: none older than an hour. An
-account is made only for an email the provider has verified. The providers' own tokens aren't
-kept.
+account is made only for an email the provider has verified. The providers' own tokens aren't kept.
 
 **One account per email, and no account taken over by one** (#374, ADR 0013):
 
@@ -183,13 +181,13 @@ kept.
 
 **Codes** are six digits, last 10 minutes, are stored only encrypted, and allow five wrong
 guesses. **Rate limits**, kept in the database so they outlast a deploy, count by the address
-Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, 30 nonces
-and twenty Apple or Google sign-ins a minute, Better Auth's own tighter limits on some routes, and
-100 requests a minute to the rest. Each answers `429 too_many_requests` with `Retry-After`: Better
-Auth sends only `X-Retry-After`, so the service copies it (`src/http/errors.ts`). Only Cloudflare can set `CF-Connecting-IP` for a request that reaches
-the service, since nginx takes only Cloudflare's client certificate (Authenticated Origin Pulls,
-[`api-servers.md`](api-servers.md)). A request without it counts in one bucket shared by every
-such request.
+Cloudflare reports (`CF-Connecting-IP`): five codes sent and ten tried per 10 minutes, 30 nonces and
+twenty Apple or Google sign-ins a minute, Better Auth's own tighter limits on some routes, and 100
+requests a minute to the rest. Each answers `429 too_many_requests` with `Retry-After`: Better Auth
+sends only `X-Retry-After`, so the service copies it (`src/http/errors.ts`). Only Cloudflare can set
+`CF-Connecting-IP` for a request that reaches the service, since nginx takes only Cloudflare's
+client certificate (Authenticated Origin Pulls, [`api-servers.md`](api-servers.md)). A request
+without it counts in one bucket shared by every such request.
 
 ## Email
 
@@ -218,12 +216,11 @@ whether an email has an account.
 
 ## Profiles and sync
 
-Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from
-the iOS app, the videos the learner watched in its Player and the Translate sentences they
-bookmarked. Each has its own rule in `src/domain`, never
-blanket last-write-wins, and none needs a clock to settle a conflict: a change says the version it
-was made to, and the rule decides what a stale one does. `PATCH /v1/me` and a sync
-mutation change the profile through the same rule.
+Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from the
+iOS app, the videos the learner watched in its Player and the Translate sentences they bookmarked.
+Each has its own rule in `src/domain`, never blanket last-write-wins, and none needs a clock to
+settle a conflict: a change says the version it was made to, and the rule decides what a stale one
+does. `PATCH /v1/me` and a sync mutation change the profile through the same rule.
 
 - **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
   Unicode NFC, as the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
@@ -446,7 +443,8 @@ and remove the old one only in a later release (#374's planning notes of 2026-09
 pnpm check
 ```
 
-It runs Biome, the typecheck, the tests, and the bundle. The tests need no database server: they
+It runs Biome, the typecheck, drizzle-kit's check that the migrations and their snapshots agree
+(`pnpm db:check`), the tests, and the bundle. The tests need no database server: they
 run Postgres in the test process with PGlite, both directly and through its socket server, which
 the service's own `pg` driver connects to. The sign-in tests (`src/auth/`) run the whole service with the dev mailbox, and stand in for
 Apple's and Google's signing keys at their own URLs, so Better Auth's checks of a real token run.
@@ -460,6 +458,9 @@ They sign new and existing learners in each way, and refuse:
 - a second way in with an account's email, and an email code into an account Apple or Google made,
   until the signed-in learner adds it, and adding one with a session over 10 minutes old;
 - a session's token after signing out, and the unsigned token;
+- a request that carries the website's cookie from another origin, or from none. Better Auth
+  turns its origin and CSRF checks off when `NODE_ENV` is `test`, so `src/auth/auth.ts` sets both
+  on, and `src/auth/website.test.ts` fails without that;
 - every Better Auth route that isn't open.
 
 The profile and sync tests (`src/http/me.test.ts` and `sync.test.ts`) sign learners in the same
@@ -494,17 +495,17 @@ app's client in TypeScript) through offline changes on each until they hold the 
 new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
 changes watch history and bookmarks.
 
-The domain's own tests (`src/domain/`) cover the name and username rules and the cursor;
-`src/db/database.test.ts` covers the journal's trigger and backfill, the sync tables' rules, and
-fencing two restored copies of one backup; and
+The domain's own tests (`src/domain/`) cover the name and username rules and the cursor. The
+username's cases are `src/domain/username-cases.json`, beside the rule, which the app's
+`UserProfileTests`, run by hand, read too. `src/db/database.test.ts` covers the journal's trigger
+and backfill, the sync tables' rules, and fencing two restored copies of one backup; and
 `src/http/openapi.test.ts` keeps `openapi.json` and the API reference in step with the routes and
 checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and
 `src/http/sign-in-contract.test.ts` holds each sign-in answer, and each sign-in route's scope, to
-the contract. In CI, and when
-`ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database, `src/db/postgres.test.ts` also
-sends eight changes to one account at once through the `pg` pool, and one mutation six times at
-once: one change goes through, and the mutation applies once. It also watches eight videos at once
-on an account holding 48, which keeps the 50 newest.
+the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
+`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
+one mutation six times at once: one change goes through, and the mutation applies once. It also
+watches eight videos at once on an account holding 48, which keeps the 50 newest.
 
 ## Ship it
 
@@ -678,9 +679,9 @@ this order; each step says how to check it worked.
    ACCOUNT_API_SECRET=<openssl rand -hex 32>
    ACCOUNT_API_TRUSTED_ORIGINS=https://staging.zenbujapanese.com
    ACCOUNT_API_COOKIE_PREFIX=zenbu-staging
-   APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.app
+   APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.dictionary
    APPLE_SERVICES_IDS=<the website's Services ID>
-   APPLE_TEAM_ID=W3GXL2NQQP
+   APPLE_TEAM_ID=847HR8U8D9
    APPLE_KEY_ID=<the Sign in with Apple key's ID>
    APPLE_PRIVATE_KEY=<the .p8 file on one line, each line break written as \n>
    GOOGLE_CLIENT_IDS=<web client ID>,<iOS app's client ID>,<Tomodachi's client ID>
@@ -714,16 +715,18 @@ this order; each step says how to check it worked.
      session cookie stays on the API host; staging may still set
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
    - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
-     app's ID, `W3GXL2NQQP` while the app ships from the backup account, #616):
-     - **The App IDs.** Identifiers → `com.zenbujapanese.app` → Capabilities → Sign in with Apple →
-       Edit → **Enable as a primary App ID** → Save. Then the same for Tomodachi's,
-       `com.zenbujapanese.tomodachi`, choosing **Group with an existing primary App ID** and
-       `com.zenbujapanese.app`, so a learner who allowed one app isn't asked again by the other.
+     app's ID, TSMC LLC's `847HR8U8D9`, #616):
+     - **The App IDs.** Identifiers → `com.zenbujapanese.dictionary` → Capabilities → Sign in with
+       Apple → Edit → **Enable as a primary App ID** → Save. Tomodachi's,
+       `com.zenbujapanese.tomodachi`, then takes **Group with an existing primary App ID** and
+       `com.zenbujapanese.dictionary`, so a learner who allowed one app isn't asked again by the
+       other. Apple groups App IDs only within a team, and Tomodachi's is still on the backup team
+       (`W3GXL2NQQP`), so that waits until it moves ([`harness-debt.md`](../harness-debt.md)).
        Set `APPLE_APP_BUNDLE_IDENTIFIER` to the iOS app's ID; the service also takes every app's
        bundle ID from `src/domain/clients.ts`. Regenerate each app's provisioning profiles after
        turning the capability on ([`ios.md`](ios.md)).
      - **The key.** Keys → + → a name such as "Zenbu Sign in with Apple" → Sign in with Apple →
-       Configure → primary App ID `com.zenbujapanese.app` → Save → Continue → Register →
+       Configure → primary App ID `com.zenbujapanese.dictionary` → Save → Continue → Register →
        Download. The `.p8` downloads once only: keep it in the owners' password manager. Its Key
        ID is on the key's page, and the team ID at the top right. Set `APPLE_TEAM_ID`,
        `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`: deleting an account revokes its Apple sign-in with
@@ -738,14 +741,33 @@ this order; each step says how to check it worked.
        `support@zenbujapanese.com` → Register. Apple checks each domain's SPF, so do this after
        useSend has verified the domain (Email, below). Without it,
        a learner who hides their email gets no codes and no notices.
-     - Apple's user ID for a learner is the same in every app of one team, so the iOS app and
-       Tomodachi must stay in one team for an Apple sign-in to reach one account. Moving an app to
-       another team (#616's transfer to the business account) changes its learners' Apple user
-       IDs: before it, plan Apple's user migration for Sign in with Apple, and move both apps.
+     - Apple's user ID for a learner is the same in every app of one team, so the iOS app,
+       Tomodachi, and the website's Services ID must be in one team for an Apple sign-in to reach
+       one account, and the service holds one team's key.
+     - **Moving from the backup team** (#616). Staging and production were first set up on the
+       backup team (`W3GXL2NQQP`), with its key and the Services ID `com.zenbujapanese.web`. An
+       Apple user ID from that team doesn't match TSMC LLC's, and the service holds one team's
+       key, so the move is one cutover, in this order:
+       1. On TSMC LLC's team: the website's Services ID, `com.zenbujapanese.website` (Apple
+          doesn't let two teams register one identifier), the key, and the private email relay's
+          domains and address, as the steps here say.
+       2. In each environment, list the accounts that sign in with Apple (`user_identities` rows
+          whose provider is `apple`). After the move they can't sign in with Apple
+          (`oauth_link_error`) or a code (`account_not_linked`), so add another way in to each,
+          or delete it.
+       3. Each environment's file: `APPLE_APP_BUNDLE_IDENTIFIER=com.zenbujapanese.dictionary`,
+          `APPLE_SERVICES_IDS=com.zenbujapanese.website`, and TSMC LLC's `APPLE_TEAM_ID`,
+          `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`. Within 5 minutes the deployer restarts the
+          service with them, and the iOS app's Apple sign-ins and deletions work again.
+       4. The website: #616's pull request names the new Services ID in `apps/web/wrangler.jsonc`,
+          which staging deploys on merge and production with its next `Web deploy`; and the
+          Worker's `APPLE_TEAM_ID` in both environments ([`web.md`](web.md), Environment
+          configuration). Until an environment's website deploys, its Apple button signs in as
+          the old Services ID, which the service no longer takes.
      - **For the website: a Services ID.** Identifiers → + → Services IDs → Continue, with a
        description such as "Zenbu Japanese website" and an identifier such as
-       `com.zenbujapanese.web` → Register. Open it, turn on Sign in with Apple → Configure, with
-       `com.zenbujapanese.app` as its primary App ID. Its domains are the website's and the API
+       `com.zenbujapanese.website` → Register. Open it, turn on Sign in with Apple → Configure,
+       with `com.zenbujapanese.dictionary` as its primary App ID. Its domains are the website's and the API
        host's: `zenbujapanese.com`, `staging.zenbujapanese.com`, `api.zenbujapanese.com`, and
        `api-staging.zenbujapanese.com`. Its return URLs are the account page each site signs in
        from, `https://zenbujapanese.com/account/` and
@@ -768,8 +790,9 @@ this order; each step says how to check it worked.
           `https://api-staging.zenbujapanese.com/v1/auth/callback/google` and
           `https://api.zenbujapanese.com/v1/auth/callback/google`
           (`<ACCOUNT_API_URL>/v1/auth/callback/google`);
-        - an iOS client, for the app's bundle ID (`com.zenbujapanese.app`), and one for
-          Tomodachi's.
+        - an iOS client, for the app's bundle ID (`com.zenbujapanese.dictionary`), and one for
+          Tomodachi's. The app's was made for `com.zenbujapanese.app`; changing its bundle ID
+          keeps its client ID.
 
      Then set `GOOGLE_CLIENT_IDS` (the web client's, then the iOS clients') and
      `GOOGLE_CLIENT_SECRET` (the web client's), the iOS client's ID in the app's

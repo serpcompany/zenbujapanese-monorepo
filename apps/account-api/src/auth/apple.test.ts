@@ -10,10 +10,10 @@ test("makes Apple's client secret from the key: signed by it, for Apple, lasting
     privateKey: await exportPKCS8(privateKey)
   }
   const now = new Date('2026-10-06T12:00:00Z')
-  const secret = await appleClientSecret(key, 'com.zenbujapanese.web', now)
+  const secret = await appleClientSecret(key, 'com.zenbujapanese.website', now)
   const { payload, protectedHeader } = await jwtVerify(secret, publicKey, {
     issuer: 'TEAM123456',
-    subject: 'com.zenbujapanese.web',
+    subject: 'com.zenbujapanese.website',
     audience: 'https://appleid.apple.com',
     currentDate: now
   })

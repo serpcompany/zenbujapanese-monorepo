@@ -8,7 +8,7 @@ protocol SessionTokenStorage: Sendable {
 }
 
 struct KeychainSessionTokenStorage: SessionTokenStorage {
-  static let service = "com.zenbujapanese.app.account"
+  static let service = "com.zenbujapanese.dictionary.account"
   static let account = "session-token"
 
   private var query: [String: Any] {
@@ -16,6 +16,7 @@ struct KeychainSessionTokenStorage: SessionTokenStorage {
       kSecClass as String: kSecClassGenericPassword,
       kSecAttrService as String: Self.service,
       kSecAttrAccount as String: Self.account,
+      kSecUseDataProtectionKeychain as String: true,
     ]
   }
 

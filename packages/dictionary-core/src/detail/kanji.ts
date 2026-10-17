@@ -1,3 +1,4 @@
+import { canonicalEntry } from '../search/ranked-entries'
 import type {
   KanjiElementRow,
   KanjiReadingRow,
@@ -6,12 +7,14 @@ import type {
   KanjiWordRow
 } from './rows'
 import { type RubySegment, rubySegments } from './ruby'
+import { glossSeparator, type Section, sections } from './sections'
 import { type StrokeOrder, strokeOrder } from './strokes'
 import { hiragana, isKanjiCharacter } from './text'
 
-const kanjiWordLimit = 24
+export const kanjiWordLimit = 24
 
 export interface KanjiWord {
+  id: string
   entSeq: number
   headword: string
   reading: string
@@ -24,6 +27,8 @@ export interface KanjiReading {
   label: string
   value: string
   words: KanjiWord[]
+  wordsText: string
+  spoken: string | null
 }
 
 type KanjiElementRole = 'meaningStructure' | 'sound' | 'soundPattern'
@@ -32,12 +37,60 @@ export interface KanjiElement {
   character: string
   role: KanjiElementRole
   roleLabel: string
+  meanings: string[]
+  linkedOnReadings: string[]
   description: string
+  spoken: string
 }
 
+interface KanjiStat {
+  kind: 'strokes' | 'grade' | 'jlpt'
+  label: string
+  value: string
+  spoken: string
+}
+
+const kanjiSectionTitles = {
+  readings: 'Readings',
+  components: 'Components',
+  elements: 'Elements',
+  lists: 'Lists',
+  notes: 'Notes',
+  words: 'Words'
+}
+
+export type KanjiSectionKind = keyof typeof kanjiSectionTitles
+
+interface KanjiContent {
+  readings: readonly unknown[]
+  components: readonly unknown[]
+  elements: readonly unknown[]
+  words: readonly unknown[]
+}
+
+export function kanjiSections(
+  content: KanjiContent,
+  { readingsWhenNone = false } = {}
+): Section<KanjiSectionKind>[] {
+  return sections(kanjiSectionTitles, {
+    readings: readingsWhenNone || content.readings.length > 0,
+    components: content.components.length > 0,
+    elements: content.elements.length > 0,
+    words: content.words.length > 0
+  })
+}
+
+export const kanjiSectionsWithoutContent = kanjiSections({
+  readings: [],
+  components: [],
+  elements: [],
+  words: []
+})
+
 export interface KanjiDetail {
+  sections: Section<KanjiSectionKind>[]
   character: string
-  stats: { label: string; value: string }[]
+  stats: KanjiStat[]
   meanings: string[]
   readings: KanjiReading[]
   components: string[]
@@ -83,11 +136,7 @@ export function kanjiWords(
         right.rankScore - left.rankScore ||
         compareLowercaseHex(left.fingerprint, right.fingerprint)
     )
-  return ranked
-    .slice(0, limit)
-    .map(({ entries }) =>
-      entries.reduce((smallest, row) => (row.id < smallest.id ? row : smallest))
-    )
+  return ranked.slice(0, limit).flatMap(({ entries }) => canonicalEntry(entries) ?? [])
 }
 
 export function wordsForReading<Word extends { reading: string }>(
@@ -119,13 +168,17 @@ export function kanjiElements(
         : element.commonLinkedOnReadings.some(reading => structure.onReadings.includes(reading))
           ? 'soundPattern'
           : 'meaningStructure'
+    const meanings = element.meanings.slice(0, meaningsPerElement)
+    const linkedOnReadings = meanings.length > 0 ? [] : element.commonLinkedOnReadings
     const description =
-      element.meanings.length > 0
-        ? element.meanings.slice(0, meaningsPerElement).join(', ')
-        : element.commonLinkedOnReadings.length > 0
-          ? `Linked on-readings: ${element.commonLinkedOnReadings.join(', ')}`
+      meanings.length > 0
+        ? meanings.join(', ')
+        : linkedOnReadings.length > 0
+          ? `Linked on-readings: ${linkedOnReadings.join(', ')}`
           : ''
-    return [{ character: glyph, role, roleLabel: roleLabels[role], description }]
+    const roleLabel = roleLabels[role]
+    const spoken = `Element ${glyph}, ${roleLabel.toLowerCase()}, ${meanings.join(', ')}`
+    return [{ character: glyph, role, roleLabel, meanings, linkedOnReadings, description, spoken }]
   })
 }
 
@@ -137,6 +190,37 @@ function kanjiShareText(kanji: Pick<KanjiRows['kanji'], 'character' | 'readings'
   return [heading, kanji.meanings.join(', ')].filter(Boolean).join('\n')
 }
 
+function kanjiStats(
+  kanji: Pick<KanjiRows['kanji'], 'strokeCount' | 'grade' | 'jlpt'>
+): KanjiStat[] {
+  const strokes = kanji.strokeCount === 1 ? 'Stroke' : 'Strokes'
+  const stats: KanjiStat[] = [
+    {
+      kind: 'strokes',
+      label: strokes,
+      value: `${kanji.strokeCount}`,
+      spoken: `${kanji.strokeCount} ${strokes}`
+    }
+  ]
+  if (kanji.grade !== null) {
+    stats.push({
+      kind: 'grade',
+      label: 'Grade',
+      value: `${kanji.grade}`,
+      spoken: `Grade ${kanji.grade}`
+    })
+  }
+  if (kanji.jlpt !== null) {
+    stats.push({
+      kind: 'jlpt',
+      label: 'JLPT',
+      value: `N${kanji.jlpt}`,
+      spoken: `JLPT N${kanji.jlpt}`
+    })
+  }
+  return stats
+}
+
 function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrder | null {
   try {
     return strokeOrder(row)
@@ -145,9 +229,44 @@ function drawableStrokeOrder(row: NonNullable<KanjiRows['strokes']>): StrokeOrde
   }
 }
 
+const wordsTextSeparator = '   '
+
+type GlossedWord = Pick<KanjiWord, 'headword' | 'summary'>
+
+export function kanjiReadingText(
+  label: string,
+  value: string,
+  words: readonly GlossedWord[]
+): Pick<KanjiReading, 'wordsText' | 'spoken'> {
+  const [first] = words
+  return {
+    wordsText: words
+      .map(word => `${word.headword}${glossSeparator}${word.summary}`)
+      .join(wordsTextSeparator),
+    spoken: first ? `${label} reading ${value}, ${first.headword}, ${first.summary}` : null
+  }
+}
+
+function kanjiReading(reading: KanjiReadingRow, words: readonly KanjiWord[]): KanjiReading {
+  const label = readingLabels[reading.kind]
+  const shown = wordsForReading(reading, words)
+  return {
+    kind: reading.kind,
+    label,
+    value: reading.value,
+    words: shown,
+    ...kanjiReadingText(label, reading.value, shown)
+  }
+}
+
+export function savedKanjiReading(detail: Pick<KanjiDetail, 'readings'>): string {
+  return detail.readings[0]?.value ?? ''
+}
+
 export function kanjiDetail(rows: KanjiRows): KanjiDetail {
   const { kanji } = rows
   const words: KanjiWord[] = rows.words.map(row => ({
+    id: row.id,
     entSeq: row.entSeq,
     headword: row.headword,
     reading: row.reading,
@@ -155,21 +274,15 @@ export function kanjiDetail(rows: KanjiRows): KanjiDetail {
     summary: row.summary
   }))
   const elements = kanjiElements(rows.structure, rows.elements)
+  const readings = kanji.readings.map(reading => kanjiReading(reading, words))
+  const components = elements.length === 0 ? kanji.components : []
   return {
+    sections: kanjiSections({ readings, components, elements, words }),
     character: kanji.character,
-    stats: [
-      { label: kanji.strokeCount === 1 ? 'Stroke' : 'Strokes', value: `${kanji.strokeCount}` },
-      ...(kanji.grade === null ? [] : [{ label: 'Grade', value: `${kanji.grade}` }]),
-      ...(kanji.jlpt === null ? [] : [{ label: 'JLPT', value: `N${kanji.jlpt}` }])
-    ],
+    stats: kanjiStats(kanji),
     meanings: kanji.meanings,
-    readings: kanji.readings.map(reading => ({
-      kind: reading.kind,
-      label: readingLabels[reading.kind],
-      value: reading.value,
-      words: wordsForReading(reading, words)
-    })),
-    components: elements.length === 0 ? kanji.components : [],
+    readings,
+    components,
     elements,
     words,
     strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,

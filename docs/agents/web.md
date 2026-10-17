@@ -1,13 +1,12 @@
 # Website working guide
 
-`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with
-no database of its own. It reads the dictionary from the dictionary service
-(`apps/dictionary-api`, ADR 0009; see
-[`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's workspace (the
-root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
-(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys
-(ADR 0005). Run every command below from `apps/web`. Decisions and scope live in issue #402.
-What the dictionary pages show, and the check that enforces each behavior, is in
+`apps/web` is zenbujapanese.com: Next.js served from Cloudflare Workers through OpenNext, with no
+database of its own. It reads the dictionary from the dictionary service (`apps/dictionary-api`, ADR
+0009; see [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's
+workspace (the root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
+(`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys (ADR
+0005). Run every command below from `apps/web`. Decisions and scope live in issue #402. What the
+dictionary pages show, and the check that enforces each behavior, is in
 [`apps/web/docs/product/`](../../apps/web/docs/product/index.md).
 
 The website follows these SERP engineering standards:
@@ -15,12 +14,11 @@ The website follows these SERP engineering standards:
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
-  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths,
-  apart from the tools pages, which `toolPages` in `src/lib/tools/converters.ts` lists.
-  Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
-  `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
-  OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
-  slash (`https://zenbujapanese.com`): see Sitemaps.
+  other form redirects (308) to it. `src/lib/pages.ts` lists the static pages but the tools pages
+  ([`web-tools.md`](web-tools.md)). Next.js redirects `/robots.txt/` to `/robots.txt` itself, but
+  OpenNext skips it, so `next.config.ts` repeats that redirect, with a rule of its own for a
+  top-level file, since OpenNext can't fill an empty path parameter. The homepage is written as the
+  origin, without a slash (`https://zenbujapanese.com`): see Sitemaps.
 - [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md):
   `/sitemap-index.xml` lists `sitemap-<group>.xml` files at the site's root (see Sitemaps).
 
@@ -29,7 +27,8 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 
 ## Run and verify
 
-- `pnpm dev` runs Next.js in Node, with Cloudflare bindings and `.dev.vars` available through
+- `pnpm dev` runs Next.js in Node on this checkout's `site` port
+  ([`verification.md`](verification.md)), with Cloudflare bindings and `.dev.vars` available through
   `getCloudflareContext()` (`initOpenNextCloudflareForDev` in `next.config.ts`). Dictionary pages
   show local fixtures unless `.dev.vars` names a dictionary service (see Dictionary).
 - `pnpm preview` builds with OpenNext and serves the Worker in workerd, the production runtime.
@@ -37,12 +36,13 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
 - `pnpm check` runs Biome, typecheck, Vitest, and `next build`. The `Web` GitHub Actions workflow
   runs it on pull requests that change `apps/web/**` or the core.
 - `pnpm test:e2e` runs the browser tests in `apps/web/e2e/` with Playwright, at a desktop and a
-  phone width, on the dictionary fixtures. Locally it starts `next dev` on port 3100 with
-  `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when `.dev.vars` names
-  a service (it's ignored on staging and production); in CI it runs on the production build in
-  workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console error or throws, so a
-  hydration error anywhere a test goes fails the run. How to run one test, read a failure, and add a
-  regression test is in the `browser-tests` skill (`.claude/skills/browser-tests/SKILL.md`).
+  phone width, on the dictionary fixtures. Locally it starts `next dev` on this checkout's `e2e`
+  port with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when
+  `.dev.vars` names a service (it's ignored on staging and production); in CI it runs on the
+  production build in workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console
+  error or throws, so a hydration error anywhere a test goes fails the run. How to run one test,
+  read a failure, and add a regression test is in the `browser-tests` skill
+  (`.claude/skills/browser-tests/SKILL.md`).
 - `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
   `/privacy` redirect, that environment's search-engine rules, and dictionary pages against the
   app-recorded suites. Each check retries for about 15 seconds, since for a few seconds after a
@@ -53,15 +53,14 @@ lists every child sitemap and each child sitemap lists the new URLs.
 
 ### Phone layout
 
-`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
-the tools pages, search, a word, kanji details, every browse family, and a missing page) with what
-to open on each,
-and the views to check beyond it: each homepage area, and on About the phone menu and each of its
-groups. `openPageType` stands in for the account service (signed out), and waits until the account
-page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
-type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a test
-for every page type and the missing page. Add a page type there when one ships,
-and these cover it (#682):
+`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages, the
+tools pages, search, a word, kanji details, every browse family, and a missing page) with what to
+open on each, and the views to check beyond it: each homepage area, and on About the phone menu and
+each of its groups. `openPageType` stands in for the account service (signed out), and waits until
+the account page and a word's examples have loaded and animations have ended; `checkEachView` opens
+a page type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a
+test for every page type and the missing page. Add a page type there when one ships, and these cover
+it (#682):
 
 - **The phone checks**, `apps/web/e2e/phone-layout.spec.ts`, run with the other browser tests, in
   the `phone` project at 360 pixels, on every page type and view, and fail on: text under 12
@@ -182,21 +181,6 @@ drawing's furigana keeps its drawn size.
   `apps/web/src/components/json-ld.tsx`, which writes structured data (the dictionary breadcrumbs'
   `BreadcrumbList` and the converter pages' `FAQPage`) and escapes `<` so the JSON can't close its
   script tag (the Next.js JSON-LD guide).
-- The tools pages ([product docs](../../apps/web/docs/product/tools.md)): `/tools/` and the six
-  converters, `src/app/tools/[tool]/page.tsx`, are static: `generateStaticParams` lists the
-  converters, and the page answers any other name with `notFound()`. It leaves `dynamicParams` on:
-  the site's OpenNext build has no incremental cache, so with `dynamicParams = false` the Worker
-  answers 404 even for the prerendered converters (`next dev` serves them, so only the production
-  build shows it). The converters' logic and copy are in `src/lib/tools/`, pure functions with
-  tests beside them, which the browser runs, so nothing typed leaves it. Each converter keeps its
-  two boxes as one edit, the box last typed in and its text (`bothSides` in
-  `src/lib/tools/convert.ts`), and works out the other box from it, so the box being typed in is
-  never rewritten. The pages are stock shadcn components, as the owner's UI rules ask (#696): `card`, `table`,
-  `tabs`, `checkbox` with `label`, `textarea`, `toggle-group`, `kbd`, and `accordion`, through
-  `src/components/question-list.tsx`, which the product page shares. The conversion chart is the
-  browse pages' `KanaChart` (`src/components/dictionary/browse/kana-chart.tsx`), its tiles holding
-  each page's pair, in tabs whose panels stay mounted, so all 131 kana are in the HTML. A `Kbd` on the muted grey sits
-  in a `muted-surface` wrapper, which keeps its text at 4.5:1 (Theme, above).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
@@ -230,6 +214,31 @@ The site logs JSON lines through `log()` in `apps/web/src/lib/log.ts`: a level, 
 names the event (`dictionary_service_unreachable`), and fields. Workers Logs keep them. Nothing
 else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests, so every line an
 agent reads there has the same shape.
+
+### UI components
+
+The site is stock shadcn/ui (style `base-nova`, base colour neutral, `apps/web/components.json`),
+so every page looks like one design system:
+
+- **Use the stock component.** A table is `Table`, a filter or a set of views is `Tabs` or
+  `ToggleGroup`, a check box is `Checkbox` with `Label`, a text box is `Input` or `Textarea`, a
+  question list is `Accordion`, and an action is `Button`. Add one that's missing with the shadcn
+  CLI (`pnpm dlx shadcn@latest add <name>` in `apps/web`), and keep it as the CLI wrote it,
+  removing only exports nothing uses, which the dead-code check requires. Never hand-roll a pill,
+  chip, segmented control, table, or check box that a stock component covers.
+- **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
+  margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
+  variants and sizes instead. Colours come only from the shadcn tokens in `src/app/globals.css`,
+  through their Tailwind classes (`bg-background`, `text-muted-foreground`, `border-border`, and
+  the rest), never a literal or an arbitrary Tailwind value.
+- **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
+  breadcrumb follow `/products/` and the browse pages; reuse their components rather than drawing
+  new ones. Size a table to its content at the stock density, not stretched across the page.
+- **A prototype sets the structure and the words, not the styling.** Build a mockup's sections from
+  the stock components, never from its CSS.
+
+Before a pull request that changes how pages look, the `finish-change` skill has a fresh agent
+review the pages against these rules (Review the UI with fresh eyes).
 
 ## Dictionary
 
@@ -271,10 +280,10 @@ dictionary from before the service; they're safe to delete.
 
 To run `pnpm dev` on the whole dictionary, start the service (see
 [`dictionary-api.md`](dictionary-api.md)) and name it in `.dev.vars` in `apps/web`, which is
-never committed:
+never committed. Its address is the `dictionary` line of `pnpm -w ports`:
 
 ```sh
-DICTIONARY_API_URL=http://localhost:8788
+DICTIONARY_API_URL=<the service's address>
 DICTIONARY_API_TOKEN=<the token the service was started with>
 ```
 
@@ -282,10 +291,8 @@ DICTIONARY_API_TOKEN=<the token the service was started with>
 
 The service runs the search core (`packages/dictionary-core/src/search/`, the app's Search
 retrieval with its own SQL on the artifact's FTS4 indexes) and the results core
-(`packages/dictionary-core/src/results/`, ported from SearchResultsView.swift,
-SearchResultFrequencyOrdering.swift, and FrequencyPresentation.swift), and answers with the results
-screen. `orderedItems` is
-`SearchResultFrequencyOrdering.ordered`: within each match group (the result's source, then its
+(`packages/dictionary-core/src/results/`, which the app runs too), and answers with the results
+screen. `orderedByFrequency` orders it: within each match group (the result's source, then its
 coarse match rank), the more common tier from the first dictionary that has one, then each
 dictionary's value in priority order (lower first, ranked before unranked), then the retrieval
 order, then the Language Reference ID. Discovered Words keep their order.
@@ -319,9 +326,9 @@ about five; the service and the edge cache keep the answer after that.
 
 `packages/dictionary-core/src/detail/` is the detail core: pure functions, `wordDetail(rows)` and
 `kanjiDetail(rows)`, that turn the service's rows (`detail/rows.ts`) into what the word page and
-kanji details render. Each function is a port of the app's Swift (the Swift sources section of
-[`dictionary-core.md`](dictionary-core.md) names each one's source), so the pages show what the
-app shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
+kanji details render. The app builds its word and kanji pages from the same functions
+([`dictionary-core.md`](dictionary-core.md), The app's side), so the pages show what the app
+shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
 
 The word page holds everything the app drills into from a word (ADR 0010), in sections that open
 and close and stay in the HTML while closed (`components/dictionary/disclosure.tsx`):
@@ -347,10 +354,9 @@ appears that ADR 0010 doesn't list.
 
 Next.js passes a page its segment encoded but `generateMetadata` decoded: search pages tell
 `searchQuery` which it has (`decoded`), and word pages read it with `decodeSegment`
-(`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text
-from the request's path as sent and decode it once
-(`apps/web/src/lib/dictionary/example-routes.ts`); a search's route answers only a query already
-in its normal form, as its page asks for it.
+(`apps/web/src/lib/dictionary/urls.ts`), which accepts either. The JSON routes read their text from
+the request's path as sent and decode it once (`apps/web/src/lib/dictionary/example-routes.ts`); a
+search's route answers only a query already in its normal form, as its page asks for it.
 
 The detail core conjugates the word's rows into the Conjugations section's table. Both
 registers' forms are in the page's HTML, the one not shown hidden, so the Plain and Polite tabs
@@ -383,19 +389,19 @@ not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, 
 lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
 is cut to its first 20 words. Any other browse page is a 404 there.
 
-`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number,
-and `…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`),
-and its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
+`…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`), and
+its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
-`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No
-browse page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The
-hiragana and katakana routes, and each category's four, are one line each over the route helpers
-beside them (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without parameters that read the service are
-`force-dynamic`, as `/dictionary/` now is, so a build never reads it
-(`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when the
-service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead
-of a service without the browse routes, rather than failing the search box with them. The words show as search
-results' rows do (`components/dictionary/word-row.tsx`).
+`noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
+page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
+katakana routes, and each category's four, are one line each over the route helpers beside them
+(`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without
+parameters that read the service are `force-dynamic`, as `/dictionary/` now is, so a build never
+reads it (`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when
+the service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead of a
+service without the browse routes, rather than failing the search box with them. The words show as
+search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
@@ -416,11 +422,11 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
   chips, and link.
 - `components/dictionary/search-examples.test.tsx` holds every recorded Example Sentences row to
   the page it opens (as many examples as its count promises, 25 first, and a Japanese query
-  accented in each sentence), and renders eight example-search cases: every listed pair ID in
-  order, loading each whole list as the page does, and the first sentences' words and marks.
+  accented in each sentence), and renders nine example-search cases: the count line, every pair
+  ID in order, loading each whole list as the page does, and the first sentences' words and marks.
 - `components/dictionary/word-page.test.tsx` and `conjugations.test.tsx` draw every word-detail
-  case: the per-kanji furigana split, the pitch graph's points, each Frequency row's details, and
-  the conjugation table and each form's page, form by form, with the form's first examples.
+  case: the per-kanji furigana split, the pitch graph, each Frequency row's details, the first 25
+  examples and their marked words, the conjugation table, and each form's page and first examples.
 
 `pnpm test` skips the gate. To run it, start the service and point the tests at it:
 
@@ -428,7 +434,7 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run src/components/dictionary
 ```
 
-`ZENBU_DICTIONARY_API_URL` names another service (default `http://localhost:8788`). The
+`ZENBU_DICTIONARY_API_URL` names another service than this checkout's. The
 `Dictionary API` workflow runs the gate on pull requests against the service it builds, and
 `smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
 example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
@@ -476,7 +482,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   Apple and Google are on for staging and production, whose account services have Apple's key and
   Google's web client ([`account-api.md`](account-api.md), Set up the server): under
   `env.staging.vars` and `env.production.vars`,
-  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web"`, the first of the service's
+  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website"`, the first of the service's
   `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
   Apple takes no `localhost` return URL and Google's web client returns only to the deployed
   services.
@@ -507,9 +513,9 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   failed load keeps it for Try again, and coming back with Back drops it.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
-`ACCOUNT_API_TRUSTED_ORIGINS=http://localhost:3000,http://localhost:3100`; `pnpm dev` reads it at
-`http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another. Its dev mailbox,
-`http://localhost:8789/dev/mail`, holds the codes.
+`ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm -w ports`);
+`pnpm dev` reads it at `http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another.
+Its dev mailbox, `http://localhost:8789/dev/mail`, holds the codes.
 
 **Browser tests.** `e2e/account.spec.ts` stands in for the service in the browser, so it runs
 wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts` drives a learner
@@ -607,21 +613,21 @@ Each value that differs by environment lives where the code that reads it runs:
   by hand, so it outlives every deploy, however it's run: `pnpm exec wrangler secret put
   APPLE_TEAM_ID --env <staging|production>`. A var in `wrangler.jsonc` would have to be
   committed, and a `--var` on a deploy would drop it from the next deploy run without one. Set it
-  to `W3GXL2NQQP`, the team of the backup developer account that holds the app's
-  `com.zenbujapanese.app` record (#616). When #616 transfers the app to the business account, the
-  team changes, and this setting with it.
+  to `847HR8U8D9`, TSMC LLC's team, which holds the app's `com.zenbujapanese.dictionary` record
+  (#616). Until it's changed from the backup team's `W3GXL2NQQP`, where the app first went to
+  review, the association file names an app that doesn't exist, so no app opens the site's links.
 
 `SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment
 (`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
 host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
-structured data URL is written on; local development writes production's. A build whose
-`SITE_ENV` isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
-`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that disallows
-everything. Analytics load only in production and only when their build-time IDs are set:
+structured data URL is written on; local development writes production's. A build whose `SITE_ENV`
+isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
+`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
+disallows everything. Analytics load only in production and only when their build-time IDs are set:
 `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
 `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one
-tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one tag,
+a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
 [Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
 added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
@@ -644,25 +650,27 @@ exposed.
 
 Each environment has one canonical host: `zenbujapanese.com` for production and
 `staging.zenbujapanese.com` for staging. Every other host serving the same Worker permanently
-redirects (308) to it in one hop, keeping the canonical trailing-slash form, through
-`redirectHostTo` in `next.config.ts`:
+redirects (308) to the page's canonical URL in one hop. `otherHostResponse`
+(`src/lib/other-hosts.ts`) does it from `worker.ts`, before Next.js runs: it adds the trailing slash
+and follows a moved page in the same redirect, and keeps a path under `/_next/`, `/api`, or
+`/.well-known/` as asked. Next.js alone adds the slash on the old host first, a second hop, which an
+old URL that only a pattern in `next.config.ts` redirects still takes. The other hosts:
 
 - `www.zenbujapanese.com`, a custom domain on the production Worker.
 - Each Worker's workers.dev URL. Wrangler enables it by default; left alone it serves a crawlable
-  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs.
-
-`redirectHostTo` lists its file rules before `/:path+`, which would also match files, and gives
-`/` a rule of its own, since OpenNext can't fill an empty path parameter.
+  duplicate of the site. Keep `workers_dev` on: CI smoke-tests these URLs. `preview_urls` is off
+  in both environments, so no versioned preview host serves another copy.
 
 The zone is on the free plan, whose Bot Fight Mode blocks CI runners and cannot be skipped by WAF
 rules, so CI smoke-tests the workers.dev URLs with the `x-zenbu-smoke-test` header, which exempts a
 request from the host redirect. The header is not a secret. `scripts/smoke.sh` also checks, with a
-retry for edge propagation, that a plain workers.dev request 308s to the canonical host.
+retry for edge propagation, that a plain workers.dev request 308s to the canonical host, with its
+slash and without.
 
-When adding a host (a new custom domain, preview URLs), add a `redirectHostTo` rule and a smoke
-check in the same change. To test host rules locally, run `wrangler dev` without `--env production`
-and send a `Host` header: with that environment's custom domains, Wrangler rewrites `Host` to the
-route's domain and host rules never match.
+When adding a host (a new custom domain, preview URLs), add it to `otherHostResponse`, with a case
+in `e2e/urls.spec.ts` and a smoke check, in the same change. The browser tests send a `Host`
+header to the production build; under `wrangler dev --env production` Wrangler rewrites `Host`
+to the route's domain, and no other host is ever seen.
 
 `/privacy` and `/support` must keep working: the shipped iOS app, Tomodachi, and their App Store
 metadata link to them. A page that moved, such as `/privacy`, is listed in `apps/web/src/lib/moved-pages.ts`, and
@@ -686,20 +694,16 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
   default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
   each child sitemap, never another index.
 - Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`,
-  `/sitemap-tools.xml` (the tools pages, `toolPages` in `src/lib/tools/converters.ts`), then the
-  dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
-  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
-  in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
+  `/sitemap-tools.xml`, then the dictionary's. A child holds at most 50,000 URLs; a group that
+  outgrows one file adds `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap
+  to `childSitemaps` in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
   `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
-  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
-  Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
-  `/sitemap`; the tools pages are listed in `toolPages` (`src/lib/tools/converters.ts`), which
-  feeds `/sitemap-tools.xml`, and the HTML sitemap reads them through `toolsTree`
-  (`src/lib/dictionary/browse/site-tree.ts`).
-- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the
-  environment's canonical host on staging and production (so staging's sitemaps list
-  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address
-  the site is served at locally (`http://localhost:3000/…`). The homepage is the origin itself,
+  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are. Static pages are
+  listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at `/sitemap`.
+- Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the environment's
+  canonical host on staging and production (so staging's sitemaps list
+  `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address the
+  site is served at locally (such as `http://localhost:3000/…`). The homepage is the origin itself,
   with no slash (`absoluteUrl('/')`), as in its canonical tag and `og:url`: Next.js adds a slash to
   a metadata URL for `/` under `trailingSlash`, so the homepage writes those two tags itself
   (`src/components/origin-canonical.tsx`), React moves them into the head, and `pageMetadata`
@@ -783,7 +787,7 @@ extension, `.well-known` paths included, and redirects (308) to it, though Next.
 `retired.ts` covers it too, and `pnpm dev`, which runs Next.js alone, doesn't serve the file:
 check it in `pnpm preview`.
 
-The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.app`. The team ID is the
+The file names the app as `<APPLE_TEAM_ID>.com.zenbujapanese.dictionary`. The team ID is the
 Worker's `APPLE_TEAM_ID` (Environment configuration, above); until it's set, or when it isn't
 ten capital letters and digits, the file answers 404, so no app claims the site's links, and a
 malformed one logs `apple_team_id_invalid`. Locally, put it in `.dev.vars` for `pnpm preview`;

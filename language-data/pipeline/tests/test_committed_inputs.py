@@ -31,7 +31,7 @@ class RealInputsTests(unittest.TestCase):
         kuromoji = [
             name for name in names if name.startswith("Kuromoji/") and name != "Kuromoji/NOTICE.md"
         ]
-        self.assertEqual(len(kuromoji), 14)
+        self.assertEqual(len(kuromoji), 12)
         for name in (
             "LanguageReferenceData.sqlite3",
             "CompoundPitch.sqlite3",
@@ -75,7 +75,7 @@ class RealInputsTests(unittest.TestCase):
 
     def test_the_lfs_files_are_the_databases_and_the_kuromoji_dictionary(self):
         paths = committed_files.lfs_paths(REPO, self.inputs)
-        self.assertEqual(len(paths), 19)
+        self.assertEqual(len(paths), 18)
         self.assertTrue(
             all(re.search(r"(\.sqlite3|/Kuromoji/[a-z_]+\.dat\.gz)$", p) for p in paths)
         )

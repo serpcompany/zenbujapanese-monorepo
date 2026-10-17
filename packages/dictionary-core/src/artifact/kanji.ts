@@ -1,4 +1,4 @@
-import { kanjiWords } from '../detail/kanji'
+import { kanjiWordLimit, kanjiWords } from '../detail/kanji'
 import type { KanjiRows, KanjiStrokesRow, KanjiWordRow } from '../detail/rows'
 import type { ArtifactDatabase } from './database'
 import type { KanjiData } from './kanji-data'
@@ -17,16 +17,24 @@ export function kanjiCandidateRows(db: ArtifactDatabase, character: string): Kan
   }>(
     `WITH matching AS (
        SELECT DISTINCT f.entry_id FROM forms f WHERE f.kind = 0 AND instr(f.form, ?) > 0
+     ),
+     leading AS (
+       SELECT m.semantic_fingerprint
+       FROM entries m
+       WHERE m.id IN (SELECT entry_id FROM matching)
+       GROUP BY m.semantic_fingerprint
+       ORDER BY MIN(CASE WHEN instr(m.headword, ?) = 1 THEN 0 ELSE 1 END),
+         MIN(length(m.headword)), MAX(m.is_common) DESC, MAX(m.rank_score) DESC,
+         m.semantic_fingerprint
+       LIMIT ?
      )
      SELECT lower(hex(e.id)) AS id, e.source_record_id AS ent_seq, e.headword, e.reading,
        e.summary, lower(hex(e.semantic_fingerprint)) AS fingerprint, e.is_common, e.rank_score,
        e.id IN (SELECT entry_id FROM matching) AS contains_kanji
      FROM entries e
-     WHERE e.semantic_fingerprint IN (
-       SELECT m.semantic_fingerprint FROM entries m WHERE m.id IN (SELECT entry_id FROM matching)
-     )
+     WHERE e.semantic_fingerprint IN (SELECT semantic_fingerprint FROM leading)
      ORDER BY lower(hex(e.id))`,
-    [character]
+    [character, character, kanjiWordLimit]
   )
   return rows.map(row => ({
     id: row.id,

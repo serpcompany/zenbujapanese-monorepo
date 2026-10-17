@@ -43,7 +43,8 @@ public enum ConversationActivity: Sendable, Equatable {
 public final class LiveConversation {
   public internal(set) var conversation: Conversation
   public internal(set) var status = ConversationStatus.ready
-  public internal(set) var mode: TranslateMode
+  public let mode: TranslateMode
+  public internal(set) var isMuted = false
   public internal(set) var liveSentence: LiveSentence?
   public internal(set) var openTurnID: UUID?
   public internal(set) var speakingSentenceID: UUID?
@@ -69,6 +70,7 @@ public final class LiveConversation {
   @ObservationIgnored var provisionalTask: Task<Void, Never>?
   @ObservationIgnored var playbackTask: Task<Void, Never>?
   @ObservationIgnored var teardownTask: Task<Void, Never>?
+  @ObservationIgnored var finishUtteranceTask: Task<Void, Never>?
   @ObservationIgnored var translationTasks: [UUID: Task<Void, Never>] = [:]
 
   let clients: TranslatorClients
@@ -108,8 +110,12 @@ public final class LiveConversation {
     return conversation.turns.last { $0.id == openTurnID }
   }
 
+  var playback: TranslationPlayback {
+    isMuted ? .never : mode.playback
+  }
+
   public var heldSentenceCount: Int {
-    guard mode.playback == .afterEachTurn else { return 0 }
+    guard playback == .afterEachTurn else { return 0 }
     return openTurn?.sentences.count ?? 0
   }
 
@@ -130,6 +136,12 @@ public final class LiveConversation {
 
   public func elapsed(at date: Date) -> TimeInterval {
     accumulatedLiveTime + (liveSince.map { max(0, date.timeIntervalSince($0)) } ?? 0)
+  }
+
+  public var elapsedSoFar: TimeInterval { elapsed(at: now()) }
+
+  public var timeBeforeSilencePause: TimeInterval? {
+    silencePromptDeadline.map { max(0, $0.timeIntervalSince(now())) }
   }
 
   public func start() {
@@ -158,11 +170,10 @@ public final class LiveConversation {
     lastSpeechAt = now()
   }
 
-  public func switchMode(to newMode: TranslateMode) {
-    guard newMode != mode, mode.canSwitchWithinSession(to: newMode) else { return }
-    mode = newMode
-    conversation.mode = newMode
-    guard newMode.playback == .never else { return }
+  public func setMuted(_ muted: Bool) {
+    guard muted != isMuted else { return }
+    isMuted = muted
+    guard muted else { return }
     playbackQueue.removeAll()
     if speakingSentenceID != nil {
       Task { [clients] in await clients.playback.stop() }
@@ -256,7 +267,7 @@ public final class LiveConversation {
       now.timeIntervalSince(lastVolatileChangeAt) >= timing.stalledSpeechPause
     {
       lastVolatileChangeAt = now
-      Task { [clients] in await clients.transcription.finishUtterance() }
+      finishUtteranceTask = Task { [clients] in await clients.transcription.finishUtterance() }
     }
     if isQuiet, now.timeIntervalSince(lastSpeechAt) >= timing.silenceBeforePrompt {
       silencePromptDeadline = now.addingTimeInterval(timing.promptCountdown)
@@ -282,6 +293,7 @@ public final class LiveConversation {
       for task in translationTasks.values { await task.value }
       await provisionalTask?.value
       await playbackTask?.value
+      await finishUtteranceTask?.value
       await Task.yield()
     }
   }

@@ -1,97 +1,70 @@
 import SwiftUI
 
 struct HandwritingInputView: View {
-  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
-  let selectMode: (SearchInputMode) -> Void
+  @Binding var mode: SearchInputMode
+  let kanjiLookupClient: KanjiLookupClient
   let submit: (SearchQuery) -> Void
   @State private var model: HandwritingInputModel
 
   init(
     query: Binding<String>,
+    mode: Binding<SearchInputMode>,
     recognitionClient: HandwritingRecognitionClient,
-    selectMode: @escaping (SearchInputMode) -> Void,
+    kanjiLookupClient: KanjiLookupClient,
     submit: @escaping (SearchQuery) -> Void
   ) {
     _query = query
-    self.selectMode = selectMode
+    _mode = mode
+    self.kanjiLookupClient = kanjiLookupClient
     self.submit = submit
     _model = State(initialValue: HandwritingInputModel(recognitionClient: recognitionClient))
   }
 
   var body: some View {
-    VStack(spacing: 0) {
-      candidateStrip
-      SearchInputModePicker(selectedMode: .handwriting, selectMode: selectMode)
-
-      HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
-        .aspectRatio(1, contentMode: .fit)
-        .frame(
-          minWidth: dynamicTypeSize.isAccessibilitySize ? nil : 240,
-          maxWidth: .infinity,
-          minHeight: dynamicTypeSize.isAccessibilitySize ? nil : 240,
-          maxHeight: .infinity
-        )
-        .padding(8)
-
-      HStack {
-        Button {
-          model.eraseDrawing()
-        } label: {
-          Image(systemName: "eraser")
+    SearchInputPanel(mode: $mode) {
+      VStack(spacing: 10) {
+        HandwritingCanvas(strokes: $model.strokes, completedStroke: model.recognize)
+          .aspectRatio(1, contentMode: .fit)
+        SearchCandidateGrid(
+          candidates: model.candidates.map(\.value),
+          kanjiLookupClient: kanjiLookupClient,
+          identifierPrefix: "handwriting",
+          select: accept
+        ) {
+          recognitionMessage
         }
-        .buttonStyle(.bordered)
-        .disabled(model.strokes.isEmpty)
-        .accessibilityLabel("Erase drawing")
-        .accessibilityIdentifier("handwriting.erase")
-
-        Spacer()
       }
-      .controlSize(.large)
-      .padding(.horizontal)
-      .padding(.bottom, 10)
+    } actions: {
+      SearchInputUndoButton(isEnabled: !model.strokes.isEmpty, undo: model.undoStroke)
+        .accessibilityLabel("Undo stroke")
+        .accessibilityIdentifier("handwriting.undo")
     }
     .onDisappear { model.cancelRecognition() }
   }
 
-  @ViewBuilder
-  private var candidateStrip: some View {
-    if model.candidates.isEmpty {
-      CandidateStripMessage {
-        switch model.recognitionState {
-        case .idle:
-          Text("Draw one Japanese character")
-            .foregroundStyle(.primary)
-        case .recognizing:
-          ProgressView().controlSize(.small)
-          Text("Recognizing…")
-        case .noCandidates:
-          Text("No candidates yet. Add a stroke or erase and try again.")
-            .accessibilityIdentifier("handwriting.no-candidates")
-        case .failed:
-          Text("Recognition unavailable. Erase and try again.")
-            .accessibilityIdentifier("handwriting.failure")
-        }
+  private func accept(_ candidate: String) {
+    let submittedQuery = SearchInputCandidate.query(query, adding: candidate)
+    query = submittedQuery.value
+    model.acceptCandidate()
+    submit(submittedQuery)
+  }
+
+  private var recognitionMessage: some View {
+    CandidateStripMessage {
+      switch model.recognitionState {
+      case .idle:
+        EmptyView()
+      case .recognizing:
+        ProgressView().controlSize(.small)
+        Text("Recognizing…")
+      case .noCandidates:
+        Text("No candidates yet. Add a stroke, or undo and try again.")
+          .accessibilityIdentifier("handwriting.no-candidates")
+      case .failed:
+        Text("Recognition unavailable. Undo and try again.")
+          .accessibilityIdentifier("handwriting.failure")
       }
-    } else {
-      ScrollView(.horizontal, showsIndicators: false) {
-        HStack(spacing: 0) {
-          ForEach(Array(model.candidates.enumerated()), id: \.element.id) { index, candidate in
-            Button(candidate.value) {
-              let submittedQuery = SearchQuery(query + candidate.value)
-              query = submittedQuery.value
-              model.acceptCandidate()
-              submit(submittedQuery)
-            }
-            .font(.title)
-            .frame(minWidth: 54, minHeight: 46)
-            .accessibilityLabel("Use handwriting candidate \(candidate.value)")
-            .accessibilityValue("Candidate rank \(index + 1)")
-            .accessibilityIdentifier("handwriting.candidate.\(candidate.value)")
-          }
-        }
-      }
-      .frame(minHeight: 46)
     }
   }
 }

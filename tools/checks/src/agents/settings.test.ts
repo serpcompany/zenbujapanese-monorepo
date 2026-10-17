@@ -6,8 +6,16 @@ interface Rule {
   pattern: string | null
 }
 
+interface HookCommand {
+  type: string
+  command: string
+  timeout?: number
+  onFailure?: string
+}
+
 const settings = JSON.parse(readRepositoryFile('.claude/settings.json')) as {
   permissions: { deny: string[]; ask: string[] }
+  hooks: Record<string, { matcher?: string; hooks: HookCommand[] }[]>
 }
 const mcpServers = (
   JSON.parse(readRepositoryFile('.mcp.json')) as {
@@ -212,6 +220,7 @@ describe('the CI Claude jobs under .claude/settings.json', () => {
     expect(jobs.map(job => job.path)).toEqual([
       '.github/workflows/claude.yml',
       '.github/workflows/code-review.yml',
+      '.github/workflows/code-review.yml',
       '.github/workflows/maintenance.yml',
       '.github/workflows/maintenance.yml'
     ])
@@ -246,6 +255,33 @@ describe('the CI Claude jobs under .claude/settings.json', () => {
     'pnpm --filter zenbujapanese-web check'
   ])('let a CI job run %s', command => {
     expect(decision('Bash', command)).toBe('default')
+  })
+})
+
+describe('the hooks in .claude/settings.json', () => {
+  test('check each file an agent writes, and say so when the hook itself breaks', () => {
+    const [edit] = settings.hooks.PostToolUse
+    expect(edit.matcher).toBe('Write|Edit|MultiEdit')
+    expect(edit.hooks).toEqual([
+      {
+        type: 'command',
+        command: 'node "$CLAUDE_PROJECT_DIR/tools/checks/hook.mjs"',
+        timeout: 30,
+        onFailure: 'block'
+      }
+    ])
+  })
+
+  test('check the whole change before a turn ends, without holding the turn when it breaks', () => {
+    const [stop] = settings.hooks.Stop
+    expect(stop.matcher).toBeUndefined()
+    expect(stop.hooks).toEqual([
+      {
+        type: 'command',
+        command: 'node "$CLAUDE_PROJECT_DIR/tools/checks/stop-hook.mjs"',
+        timeout: 120
+      }
+    ])
   })
 })
 

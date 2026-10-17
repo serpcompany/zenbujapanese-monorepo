@@ -2,14 +2,45 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import {
   defaultFrequencyPacks,
+  type FrequencyDictionary,
+  type FrequencyLookup,
   frequencyChips,
+  frequencyFamily,
+  frequencyLookupChips,
+  frequencyLookupRow,
   frequencyResults,
   frequencyRowDetails,
-  frequencyRowLabel,
+  frequencyShortName,
+  frequencySortName,
+  frequencySortValue,
+  frequencyTier,
+  frequencyUnavailableNotice,
   tierForLevel,
   tierForRank,
   topPercent
 } from './frequency'
+
+function dictionary(
+  name: string,
+  kind: FrequencyDictionary['kind'] = 'rank',
+  id = name
+): FrequencyDictionary {
+  return {
+    id,
+    kind,
+    name,
+    domain: 'Fixture',
+    description: 'Fixture',
+    version: '1',
+    source: 'Fixture',
+    coveredSourceRows: 100_000
+  }
+}
+
+const unavailable = (pack: FrequencyDictionary | null, reason = 'Pack unavailable') => ({
+  dictionary: pack,
+  unavailable: reason
+})
 
 describe('tierForRank (FrequencyTier(rank:))', () => {
   test.each([
@@ -119,16 +150,23 @@ describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
     expect(youtube.details.explanation).toBe('YouTube has no mapped frequency rank for this entry.')
   })
 
-  test('frequencyRowLabel says each row as the app’s inlineAccessibilityLabel does', () => {
+  test('a row’s label says the level, or the rank ungrouped with how common it is', () => {
     expect(
       frequencyRowDetails([
         { pack: 'jlpt', level: 5 },
-        { pack: 'tubelex', rank: 949 }
-      ]).map(frequencyRowLabel)
-    ).toEqual(['JLPT level N5', 'YouTube frequency rank 949, very common'])
-    expect(frequencyRowDetails([]).map(frequencyRowLabel)).toEqual([
+        { pack: 'tubelex', rank: 14_572 }
+      ]).map(row => row.label)
+    ).toEqual(['JLPT level N5', 'YouTube frequency rank 14572, moderately common'])
+    expect(frequencyRowDetails([]).map(row => row.label)).toEqual([
       'JLPT does not list this entry',
       'YouTube has no rank for this entry'
+    ])
+  })
+
+  test('each row names its dictionary', () => {
+    expect(frequencyRowDetails([]).map(row => row.pack)).toEqual([
+      'zenbu.jlpt.waller.levels',
+      'zenbu.tubelex.youtube.ja.unidic-3.1'
     ])
   })
 
@@ -154,11 +192,12 @@ describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
         'utf8'
       )
     )
-    for (const { disclosure, coveredSourceRows } of defaultFrequencyPacks) {
-      const manifest = catalog.packs.find(pack => pack.packID === disclosure.id)
-      expect(manifest, disclosure.id).toBeDefined()
-      expect({ ...disclosure, coveredSourceRows }).toEqual({
+    for (const { pack: _, ...dictionary } of defaultFrequencyPacks) {
+      const manifest = catalog.packs.find(pack => pack.packID === dictionary.id)
+      expect(manifest, dictionary.id).toBeDefined()
+      expect(dictionary).toEqual({
         id: manifest?.packID,
+        kind: manifest?.kind ?? 'rank',
         name: manifest?.displayName,
         domain: manifest?.domain,
         description: manifest?.domainDescription,
@@ -167,5 +206,183 @@ describe('frequencyRowDetails (FrequencyDisclosurePresentation)', () => {
         coveredSourceRows: manifest?.coveredSourceRows
       })
     }
+  })
+})
+
+describe('a learner’s dictionaries', () => {
+  test('a dictionary’s family is the first three parts of its ID, which its short name follows', () => {
+    expect(frequencyFamily('zenbu.jiten.anime.ja.ordered-v2')).toBe('zenbu.jiten.anime')
+    expect(frequencyFamily('zenbu..jlpt.waller.levels')).toBe('zenbu.jlpt.waller')
+    expect(
+      [
+        dictionary('YouTube', 'rank', 'zenbu.tubelex.youtube.ja.unidic-3.1'),
+        dictionary('Japanese Wikipedia', 'rank', 'zenbu.wikipedia.written.ja.unidic-3.1'),
+        dictionary('JLPT Levels', 'level', 'zenbu.jlpt.waller.levels'),
+        dictionary('Video Games', 'rank', 'zenbu.jiten.video-games.ja.ordered-v2'),
+        dictionary('Anime', 'rank', 'zenbu.jiten.anime.ja.ordered-v2')
+      ].map(frequencyShortName)
+    ).toEqual(['YouTube', 'Wikipedia', 'JLPT', 'Games', 'Anime'])
+  })
+
+  test('Sort By names a level list by its short name and a rank list in full', () => {
+    expect(frequencySortName(dictionary('JLPT Levels', 'level', 'zenbu.jlpt.waller.levels'))).toBe(
+      'JLPT'
+    )
+    expect(
+      frequencySortName(
+        dictionary('Japanese Wikipedia', 'rank', 'zenbu.wikipedia.written.ja.unidic-3.1')
+      )
+    ).toBe('Japanese Wikipedia')
+  })
+
+  test('a rank sorts as itself and a level as its distance from N5, each with its tier', () => {
+    const jlpt = dictionary('JLPT', 'level')
+    const ranked = dictionary('ranked')
+    const lookups: FrequencyLookup[] = [
+      { dictionary: jlpt, value: 5 },
+      { dictionary: jlpt, value: 1 },
+      { dictionary: ranked, value: 20_000 },
+      { dictionary: ranked, value: null },
+      unavailable(ranked)
+    ]
+    expect(lookups.map(frequencySortValue)).toEqual([1, 5, 20_000, null, null])
+    expect(lookups.map(frequencyTier)).toEqual(['veryCommon', 'moderate', 'uncommon', null, null])
+  })
+
+  test('a dictionary that could not be read says so, with its reason as the details', () => {
+    expect(frequencyLookupRow(unavailable(dictionary('Anime')))).toMatchObject({
+      pack: 'Anime',
+      source: 'Anime',
+      value: 'Unavailable',
+      tier: null,
+      label: 'Anime rank unavailable',
+      details: { section: 'Frequency', rows: [], explanation: 'Pack unavailable' }
+    })
+    expect(frequencyLookupRow(unavailable(null, 'Frequency data unavailable'))).toMatchObject({
+      pack: null,
+      source: 'Frequency',
+      label: 'Frequency rank unavailable',
+      details: { pack: null, explanation: 'Frequency data unavailable' }
+    })
+  })
+
+  test('a rank’s percentile divides by the rows its own dictionary covers', () => {
+    expect(
+      frequencyLookupRow({ dictionary: dictionary('Anime'), value: 1_234 }).details.rows
+    ).toEqual([
+      { label: 'Rank', value: '#1,234' },
+      { label: 'Percentile', value: 'Top 1.23%' }
+    ])
+  })
+})
+
+describe('frequencyLookupChips (SearchFrequencyRankPresentationModel)', () => {
+  test('the first dictionary always shows; others show only with a rank', () => {
+    const shown = frequencyLookupChips([
+      { dictionary: dictionary('primary'), value: null },
+      { dictionary: dictionary('ranked'), value: 1_234 },
+      { dictionary: dictionary('unranked'), value: null }
+    ])
+    expect(shown.chips.map(chip => [chip.pack, chip.source, chip.value, chip.tier])).toEqual([
+      ['primary', 'primary', '—', null],
+      ['ranked', 'ranked', '1,234', 'veryCommon']
+    ])
+    expect(shown.spoken).toBe(
+      'primary has no rank for this entry, ranked frequency rank 1234, very common'
+    )
+  })
+
+  test('a JLPT level reads as a level chip and is hidden when the word is not listed', () => {
+    const jlpt = dictionary('JLPT', 'level')
+    const listed = frequencyLookupChips([
+      { dictionary: jlpt, value: 3 },
+      { dictionary: dictionary('ranked'), value: 20_000 }
+    ])
+    expect(listed.chips.map(chip => [chip.source, chip.value, chip.tier])).toEqual([
+      ['JLPT', 'N3', 'common'],
+      ['ranked', '20,000', 'uncommon']
+    ])
+    expect(listed.spoken).toBe('JLPT level N3, ranked frequency rank 20000, uncommon')
+    expect(
+      frequencyLookupChips([
+        { dictionary: jlpt, value: null },
+        { dictionary: dictionary('ranked'), value: 12 }
+      ]).chips.map(chip => chip.source)
+    ).toEqual(['ranked'])
+    expect(frequencyLookupChips([{ dictionary: jlpt, value: null }])).toEqual({
+      chips: [],
+      spoken: 'No frequency rank'
+    })
+  })
+
+  test('loading and no enabled dictionary show no chips, and say which', () => {
+    expect(frequencyLookupChips(null)).toEqual({ chips: [], spoken: 'Frequency rank loading' })
+    expect(frequencyLookupChips([])).toEqual({
+      chips: [],
+      spoken: 'No frequency dictionary enabled'
+    })
+  })
+
+  test('a first dictionary that could not be read shows as unavailable', () => {
+    expect(frequencyLookupChips([unavailable(null, 'Frequency data unavailable')])).toEqual({
+      chips: [{ pack: null, source: 'Frequency', value: '—', tier: null, spokenTier: null }],
+      spoken: 'Frequency rank unavailable'
+    })
+  })
+
+  test('the dictionary the list is sorted by shows first, and so shows without a rank', () => {
+    const anime = dictionary('Anime', 'rank', 'zenbu.jiten.anime.ja.ordered-v2')
+    const lookups: FrequencyLookup[] = [
+      { dictionary: dictionary('JLPT Levels', 'level', 'zenbu.jlpt.waller.levels'), value: 5 },
+      {
+        dictionary: dictionary('YouTube', 'rank', 'zenbu.tubelex.youtube.ja.unidic-3.1'),
+        value: 7
+      },
+      { dictionary: anime, value: null }
+    ]
+    expect(frequencyLookupChips(lookups).chips.map(chip => chip.source)).toEqual([
+      'JLPT',
+      'YouTube'
+    ])
+    expect(
+      frequencyLookupChips(lookups, 'zenbu.jiten.anime').chips.map(chip => chip.source)
+    ).toEqual(['Anime', 'JLPT', 'YouTube'])
+  })
+})
+
+describe('frequencyUnavailableNotice (SearchFrequencyUnavailableNotice)', () => {
+  const jlpt = dictionary('JLPT Levels', 'level', 'zenbu.jlpt.waller.levels')
+  const youtube = dictionary('TUBELEX', 'rank', 'zenbu.tubelex.youtube.ja.unidic-3.1')
+  const missing = (pack: FrequencyDictionary): FrequencyLookup => ({
+    dictionary: pack,
+    value: null
+  })
+
+  test('says nothing when every dictionary is available', () => {
+    expect(frequencyUnavailableNotice([[missing(jlpt), missing(youtube)]])).toBeNull()
+    expect(frequencyUnavailableNotice([])).toBeNull()
+  })
+
+  test('names a dictionary that failed, first or later, and says the others still order Search', () => {
+    expect(frequencyUnavailableNotice([[unavailable(jlpt), missing(youtube)]])).toBe(
+      'JLPT unavailable. Search is ordered by the other enabled dictionaries.'
+    )
+    expect(frequencyUnavailableNotice([[missing(jlpt), unavailable(youtube)]])).toBe(
+      'YouTube unavailable. Search is ordered by the other enabled dictionaries.'
+    )
+    const anime = dictionary('Anime')
+    expect(
+      frequencyUnavailableNotice([
+        [unavailable(jlpt), unavailable(youtube), unavailable(null), missing(anime)]
+      ])
+    ).toBe(
+      'JLPT, YouTube, and A frequency dictionary unavailable. Search is ordered by the other enabled dictionaries.'
+    )
+  })
+
+  test('claims relevance order only when every dictionary failed', () => {
+    expect(frequencyUnavailableNotice([[unavailable(jlpt), unavailable(youtube)]])).toBe(
+      'Frequency ordering unavailable. Showing dictionary relevance order. Pack unavailable'
+    )
   })
 })

@@ -2,32 +2,38 @@ name: Account API
 
 on:
   pull_request:
-    paths:
-      - apps/account-api/**
-      - packages/node-service/**
-      - apps/web/src/**
-      - apps/web/e2e/account-service.spec.ts
-      - apps/web/e2e/test.ts
-      - apps/web/next.config.ts
-      - apps/web/package.json
-      - apps/web/playwright.config.ts
-      - apps/web/wrangler.jsonc
-      - docs/api/account-api.md
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - .github/workflows/account-api.yml
+  merge_group:
   workflow_dispatch:
 
 concurrency:
   group: account-api-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      changed: ${{ steps.paths.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: paths
+        uses: ./.github/actions/changed-paths
+        with:
+          paths: >-
+            apps/account-api packages/node-service apps/web/src
+            apps/web/e2e/account-service.spec.ts apps/web/e2e/test.ts apps/web/next.config.ts
+            apps/web/package.json apps/web/playwright.config.ts apps/web/wrangler.jsonc
+            apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
+            docs/api/account-api.md package.json pnpm-lock.yaml pnpm-workspace.yaml
+            .github/workflows/account-api.yml .github/actions/changed-paths
+
   check:
+    needs: changes
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -51,7 +57,7 @@ jobs:
           package_json_file: package.json
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
@@ -62,6 +68,8 @@ jobs:
         run: pnpm check
 
   website:
+    needs: [changes, check]
+    if: needs.changes.outputs.changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -83,7 +91,7 @@ jobs:
           package_json_file: package.json
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
@@ -117,3 +125,13 @@ jobs:
           name: account-pages-report
           path: apps/web/e2e/results
           retention-days: 7
+
+  account-api:
+    if: always()
+    needs: [changes, check, website]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Every job passed, or had nothing to check
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

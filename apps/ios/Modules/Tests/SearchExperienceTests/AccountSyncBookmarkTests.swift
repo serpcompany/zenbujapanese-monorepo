@@ -156,17 +156,37 @@ struct AccountSyncBookmarkTests {
     #expect(fixture.queuedOperations == ["bookmarkedSentence remove \(id.uuidString.lowercased())"])
   }
 
-  @Test("a synced bookmarks file this version can't read stops sync, rather than losing bookmarks")
+  @Test("a synced bookmarks file from a newer Zenbu stops sync, and says to update")
   func unreadableBookmarksStopSync() async throws {
     let fixture = try await Fixture.afterSignIn()
     #expect(fixture.sync.canSync)
-    let folder = fixture.directory.appending(path: "Translate Conversations/Synced Bookmarks")
-    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let folder = try syncedBookmarksFolder(in: fixture)
     try Data(#"{"version":2,"bookmarks":[]}"#.utf8).write(to: folder.appending(path: "bookmarks.json"))
     await fixture.launch()
-    #expect(fixture.translations.bookmarksAreReadOnly)
+    #expect(fixture.translations.bookmarksProblem == .newerVersion)
     #expect(fixture.sync.waitsForUnreadableBookmarks)
     #expect(!fixture.sync.canSync)
+    let message = try #require(fixture.sync.bookmarksProblem.map(AccountMessage.syncPaused(by:)))
+    #expect(message.contains("Update Zenbu"))
+  }
+
+  @Test("a synced bookmarks file that can't be opened stops sync, and says to reopen")
+  func unopenableBookmarksStopSync() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let folder = try syncedBookmarksFolder(in: fixture)
+    try FileManager.default.createDirectory(
+      at: folder.appending(path: "bookmarks.json"), withIntermediateDirectories: true)
+    await fixture.launch()
+    #expect(fixture.translations.bookmarksProblem == .couldNotRead)
+    #expect(!fixture.sync.canSync)
+    let message = try #require(fixture.sync.bookmarksProblem.map(AccountMessage.syncPaused(by:)))
+    #expect(message.contains("Reopen Zenbu"))
+  }
+
+  private func syncedBookmarksFolder(in fixture: Fixture) throws -> URL {
+    let folder = fixture.directory.appending(path: "Translate Conversations/Synced Bookmarks")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    return folder
   }
 
   @Test("a pulled bookmark whose ID isn't its change's is left out")

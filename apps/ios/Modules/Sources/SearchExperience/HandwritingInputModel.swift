@@ -46,6 +46,10 @@ final class HandwritingInputModel {
     }
   }
 
+  func recognitionFinished() async {
+    await recognitionTask?.value
+  }
+
   func eraseDrawing() {
     recognitionTask?.cancel()
     recognitionTask = nil
@@ -53,6 +57,16 @@ final class HandwritingInputModel {
     strokes = []
     candidates = []
     recognitionState = .idle
+  }
+
+  func undoStroke() {
+    guard !strokes.isEmpty else { return }
+    strokes.removeLast()
+    if strokes.isEmpty {
+      eraseDrawing()
+    } else {
+      recognize(HandwritingSample(strokes: strokes))
+    }
   }
 
   func acceptCandidate() {

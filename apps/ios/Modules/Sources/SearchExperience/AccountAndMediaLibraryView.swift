@@ -1,7 +1,6 @@
 import SwiftUI
 import TranslatorCore
 @preconcurrency import Translation
-import UIKit
 
 struct AccountTabRoot: View {
   let store: EncounterMediaStore
@@ -57,7 +56,7 @@ struct AccountRootView: View {
 
       Section {
         NavigationLink(value: AccountRoute.mediaLibrary) {
-          AccountRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
+          SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
         }
         .accessibilityIdentifier("account.media-library")
 
@@ -85,12 +84,12 @@ struct AccountRootView: View {
 
       Section {
         NavigationLink(value: AccountRoute.readingAids) {
-          AccountRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+          SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
         }
         .accessibilityIdentifier("account.reading-aids")
 
         NavigationLink(value: AccountRoute.frequencyDictionaries) {
-          AccountRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+          SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
         }
         .accessibilityIdentifier("account.frequency-dictionaries")
       }
@@ -103,61 +102,25 @@ struct AccountRootView: View {
 
       Section {
         AccountExternalLink(destination: AccountLinks.support) {
-          AccountRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
+          SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
         }
         .accessibilityIdentifier("account.support")
 
         AccountExternalLink(destination: AccountLinks.privacyPolicy) {
-          AccountRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
+          SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
         }
         .accessibilityIdentifier("account.privacy-policy")
 
         NavigationLink(value: AccountRoute.credits) {
-          AccountRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
+          SettingsRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
         }
         .accessibilityIdentifier("account.credits")
       }
     }
-    .listSectionSpacing(.compact)
+    .compactSectionSpacing()
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
-  }
-}
-
-struct AccountRowLabel: View {
-  let title: LocalizedStringKey
-  let subtitle: String?
-  let systemImage: String
-  let tint: Color
-  @ScaledMetric(relativeTo: .body) private var tileSize = 30
-  @ScaledMetric(relativeTo: .body) private var symbolSize = 15
-
-  init(
-    _ title: LocalizedStringKey, subtitle: String? = nil, systemImage: String, tint: Color
-  ) {
-    self.title = title
-    self.subtitle = subtitle
-    self.systemImage = systemImage
-    self.tint = tint
-  }
-
-  var body: some View {
-    Label {
-      VStack(alignment: .leading, spacing: 2) {
-        Text(title)
-        if let subtitle {
-          Text(subtitle)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-        }
-      }
-    } icon: {
-      Image(systemName: systemImage)
-        .font(.system(size: symbolSize, weight: .semibold))
-        .foregroundStyle(.white)
-        .frame(width: tileSize, height: tileSize)
-        .background(tint.gradient, in: .rect(cornerRadius: tileSize * 0.23))
-    }
+    .inlineNavigationTitle()
   }
 }
 
@@ -180,7 +143,7 @@ private struct AccountCountRowLabel: View {
         Text(count, format: .number)
       }
     } label: {
-      AccountRowLabel(title, systemImage: systemImage, tint: tint)
+      SettingsRowLabel(title, systemImage: systemImage, tint: tint)
     }
   }
 }
@@ -214,8 +177,8 @@ private struct AccountAboutHeader: View {
       : AnyLayout(HStackLayout(spacing: 12))
     VStack(alignment: .leading, spacing: 12) {
       layout {
-        if let icon = AppBundleInfo.icon {
-          Image(uiImage: icon)
+        if let icon = AppIcon.image {
+          icon
             .resizable()
             .frame(width: 56, height: 56)
             .clipShape(.rect(cornerRadius: 13))
@@ -255,16 +218,6 @@ private enum AppBundleInfo {
   static var version: String? {
     Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
   }
-
-  static let icon: UIImage? = {
-    guard
-      let icons = Bundle.main.object(forInfoDictionaryKey: "CFBundleIcons") as? [String: Any],
-      let primary = icons["CFBundlePrimaryIcon"] as? [String: Any]
-    else { return nil }
-    let names = (primary["CFBundleIconFiles"] as? [String] ?? []).reversed()
-      + [primary["CFBundleIconName"] as? String].compactMap { $0 }
-    return names.lazy.compactMap { UIImage(named: $0) }.first
-  }()
 }
 
 enum AccountRoute: Hashable {
@@ -279,7 +232,7 @@ enum AccountRoute: Hashable {
   case credits
 }
 
-private struct ReadingAidSettingsView: View {
+struct ReadingAidSettingsView: View {
   @Environment(ReadingAidPreferences.self) private var preferences
   @State private var appleTranslation: NaturalTranslationAvailability?
   @State private var downloadRequest: TranslationSession.Configuration?
@@ -336,9 +289,11 @@ private struct ReadingAidSettingsView: View {
       appleTranslation = try? await NaturalTranslationClient.live.availability()
       downloadRequest = nil
     }
+    .formStyle(.grouped)
+    .accessibilityElement(children: .contain)
     .accessibilityIdentifier("reading-aids.form")
     .navigationTitle("Reading Aids")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 }
 
@@ -386,7 +341,7 @@ struct MediaLibraryView: View {
               EncounterMediaRow(item: item, store: store)
             }
             .accessibilityIdentifier("media-library.item.\(item.id)")
-            .swipeActions {
+            .rowActions {
               Button("Delete", role: .destructive) {
                 delete(item.id)
               }
@@ -409,14 +364,14 @@ struct MediaLibraryView: View {
 }
 
 private struct EncounterMediaRow: View {
-  @State private var image: UIImage?
+  @State private var image: Image?
   let item: EncounterMediaSummary
   let store: EncounterMediaStore
 
   var body: some View {
     HStack(spacing: 12) {
       if let image {
-        Image(uiImage: image)
+        image
           .resizable()
           .scaledToFill()
           .frame(width: 72, height: 72)
@@ -440,14 +395,12 @@ private struct EncounterMediaRow: View {
       }
     }
     .task(id: item.id) {
-      image = await store.media(item.id).flatMap { UIImage(data: $0.data) }
+      image = await store.media(item.id).flatMap { Image(imageData: $0.data) }
     }
   }
 
   private var encounterRomaji: String? {
-    let values = item.words.compactMap {
-      AppleJapaneseRomanization.romanizeTrustedReading($0.reading)
-    }
+    let values = item.words.compactMap { PresentationCore.shared.romaji($0.reading) }
     return values.count == item.words.count ? values.joined(separator: " · ") : nil
   }
 }
@@ -459,9 +412,9 @@ private struct EncounterMediaDetail: View {
 
   var body: some View {
     List {
-      if let media, let image = UIImage(data: media.data) {
+      if let media, let image = Image(imageData: media.data) {
         Section {
-          Image(uiImage: image)
+          image
             .resizable()
             .scaledToFit()
         }
@@ -470,7 +423,7 @@ private struct EncounterMediaDetail: View {
       Section("Associated Words") {
         ForEach(item.words, id: \.id) { word in
           LabeledContent {
-            JapaneseRubyText(surface: word.headword, reading: word.reading)
+            JapaneseRubyText(ruby: JapaneseRuby(surface: word.headword, reading: word.reading))
           } label: {
             Text("Word")
           }
@@ -478,7 +431,7 @@ private struct EncounterMediaDetail: View {
       }
     }
     .navigationTitle(item.name)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task(id: item.id) { media = await store.media(item.id) }
   }
 }

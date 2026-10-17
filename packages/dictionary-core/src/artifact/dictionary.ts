@@ -5,7 +5,7 @@ import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../d
 import { wordSlug } from '../detail/slug'
 import type { LinkEntry } from '../examples/linking'
 import type { Tokenize } from '../examples/morphology'
-import { loadFrequency, type SearchResultsScreen, searchResultsScreen } from '../results/results'
+import { type SearchResultsScreen, searchResultsScreen } from '../results/results'
 import { normalizeQuery } from '../search/query'
 import {
   DictionarySearch,
@@ -21,6 +21,7 @@ import {
   retrieveEntryExamples
 } from './example-retrieval'
 import { searchExamples } from './example-search'
+import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
@@ -32,6 +33,8 @@ import {
   exampleCount,
   exampleLinkEntSeqs,
   exampleRows,
+  examplesEntries,
+  screenAccent,
   segmentText,
   wordExampleRows
 } from './word-examples'
@@ -189,7 +192,10 @@ export class Dictionary {
     const cached = this.searches.get(query)
     if (cached) return cached
     const results = await this.readableResults(query)
-    const frequency = await loadFrequency(searchDatabase(this.db), results)
+    const frequency = bundledFrequency(
+      this.db,
+      results.items.map(item => item.entry.id)
+    )
     const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
     const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {
@@ -211,7 +217,7 @@ export class Dictionary {
       this.db,
       examples.sentences.slice(from, from + limit),
       from,
-      { entry: primary, query, accent: 'query' },
+      { entry: primary, query, accent: screenAccent.searchExamples },
       this.linking
     )
     return {
@@ -235,28 +241,9 @@ export class Dictionary {
 
   private examplesEntry(fingerprint: string): ExamplesEntry {
     const id = canonicalEntryId(this.db, fingerprint)
-    const [row] = this.db.all<{
-      headword: string
-      reading: string
-      parts_of_speech_json: string
-      written_forms_json: string
-      reading_forms_json: string
-    }>(
-      `SELECT headword, reading, parts_of_speech_json, written_forms_json, reading_forms_json
-       FROM entries WHERE id = unhex(?)`,
-      [id]
-    )
-    if (!row) throw new Error(`No entry ${id}`)
-    const values = (json: string) =>
-      (JSON.parse(json) as { value: string }[]).map(form => form.value)
-    return {
-      id,
-      headword: row.headword,
-      reading: row.reading,
-      partsOfSpeech: JSON.parse(row.parts_of_speech_json),
-      writtenForms: values(row.written_forms_json),
-      readingForms: values(row.reading_forms_json)
-    }
+    const entry = examplesEntries(this.db, [id]).get(id)
+    if (!entry) throw new Error(`No entry ${id}`)
+    return entry
   }
 
   word(entSeq: number): WordResponse | null {
@@ -318,7 +305,7 @@ export class Dictionary {
       this.db,
       sentences.slice(from, from + limit),
       from,
-      { entry: null, query: normalizeQuery(form), accent: 'query' },
+      { entry: null, query: normalizeQuery(form), accent: screenAccent.formExamples },
       this.linking
     ).map(({ sentence, example }) => ({
       sentence,

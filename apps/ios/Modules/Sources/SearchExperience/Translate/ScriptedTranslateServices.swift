@@ -4,10 +4,9 @@ import TranslatorCore
 extension TranslateServices {
   static var forThisLaunch: TranslateServices {
     #if DEBUG
-      if let name = ProcessInfo.processInfo.environment["ZENBU_TRANSLATE_SCRIPT"],
-        let script = TranslateScript(rawValue: name)
-      {
-        return .scripted(script)
+      let environment = ProcessInfo.processInfo.environment
+      if let name = environment["ZENBU_TRANSLATE_SCRIPT"], let script = TranslateScript(rawValue: name) {
+        return .scripted(script, holds: ScriptedHolds.forThisLaunch(environment))
       }
     #endif
     return .onDevice
@@ -61,10 +60,15 @@ extension TranslateServices {
   }
 
   actor ScriptedTranscriber {
+    private let holds: ScriptedHolds?
     private var nextLine: [Bool: Int] = [:]
     private var isHearing = true
     private var task: Task<Void, Never>?
     private var continuation: AsyncThrowingStream<TranscriptionEvent, any Error>.Continuation?
+
+    init(holds: ScriptedHolds?) {
+      self.holds = holds
+    }
 
     func start(_ request: TranscriptionRequest) -> AsyncThrowingStream<TranscriptionEvent, any Error> {
       stop()
@@ -74,13 +78,16 @@ extension TranslateServices {
         of: TranscriptionEvent.self, throwing: (any Error).self)
       self.continuation = continuation
       task = Task {
+        var isFirstLine = true
         while nextLine[listening, default: 0] < lines.count {
           let index = nextLine[listening, default: 0]
           let line = lines[index]
           do {
-            try await Task.sleep(for: .seconds(line.continuesTurn ? 0.4 : 2))
+            try await waitToBegin(line, isFirstLine: isFirstLine)
             while !isHearing { try await Task.sleep(for: .milliseconds(200)) }
-            for prefix in Self.growingPrefixes(of: line) {
+            let prefixes = Self.growingPrefixes(of: line)
+            for (place, prefix) in prefixes.enumerated() {
+              if place == prefixes.count / 2 { try await holds?.hearing.wait() }
               continuation.yield(.volatile(line.language, prefix))
               try await Task.sleep(for: .milliseconds(line.language == .japanese ? 140 : 180))
             }
@@ -89,6 +96,7 @@ extension TranslateServices {
           }
           continuation.yield(.final(line.language, line.text))
           nextLine[listening] = index + 1
+          isFirstLine = false
         }
       }
       return stream
@@ -96,6 +104,13 @@ extension TranslateServices {
 
     func setHearing(_ hearing: Bool) {
       isHearing = hearing
+    }
+
+    private func waitToBegin(_ line: TranslateScript.Line, isFirstLine: Bool) async throws {
+      guard let holds else {
+        return try await Task.sleep(for: .seconds(line.continuesTurn ? 0.4 : 2))
+      }
+      if !isFirstLine || holds.startsSilent, !line.continuesTurn { try await holds.hearing.wait() }
     }
 
     func stop() {
@@ -117,10 +132,16 @@ extension TranslateServices {
   }
 
   extension TranslateServices {
-    static func scripted(_ script: TranslateScript) -> TranslateServices {
-      let transcriber = ScriptedTranscriber()
+    private static let longerThanAnyTest: TimeInterval = 3600
+
+    static func scripted(_ script: TranslateScript, holds: ScriptedHolds? = nil) -> TranslateServices {
+      let transcriber = ScriptedTranscriber(holds: holds)
+      let clock = ScriptedClock()
       var timing = ConversationTiming.standard
-      timing.silenceBeforePrompt = 20
+      timing.silenceBeforePrompt = holds.map { $0.startsSilent ? 20 : Self.longerThanAnyTest } ?? 20
+      timing.longestTurn = holds == nil ? timing.longestTurn : Self.longerThanAnyTest
+      timing.promptCountdown = 120
+      clock.skipsAheadOnNotice(by: timing.promptCountdown)
       return TranslateServices(
         clients: TranslatorClients(
           transcription: TranscriptionClient(
@@ -134,8 +155,11 @@ extension TranslateServices {
             return TranslateScript.translation(of: text, from: language)
           },
           playback: SpeechPlaybackClient(
-            speak: { text, _ in try? await Task.sleep(for: .seconds(max(1, Double(text.count) * 0.06))) },
-            stop: {},
+            speak: { text, _ in
+              do { try await holds?.playing.wait() } catch { return }
+              try? await Task.sleep(for: .seconds(max(1, Double(text.count) * 0.06)))
+            },
+            stop: { await holds?.playing.cutShort() },
             reachesMicrophone: { false }
           )
         ),
@@ -143,7 +167,8 @@ extension TranslateServices {
         translationAvailability: { .installed },
         speechNeedsDownload: { _ in false },
         installSpeech: { _, _ in },
-        timing: timing
+        timing: timing,
+        now: { clock.now }
       )
     }
   }

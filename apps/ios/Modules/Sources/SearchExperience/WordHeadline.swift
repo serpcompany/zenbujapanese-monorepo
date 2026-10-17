@@ -3,10 +3,10 @@ import SwiftUI
 struct WordHeadline<Accessory: View>: View {
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
-  let surface: String
-  let reading: String
+  let ruby: JapaneseRuby
   var highlightedEnding = ""
-  var pitch: PitchAccent?
+  var pitch: WordPage.Pitch?
+  let pronounceLabel: String
   let identifierPrefix: String
   let pronounce: () -> Void
   @ViewBuilder let accessory: () -> Accessory
@@ -66,8 +66,7 @@ struct WordHeadline<Accessory: View>: View {
   private func rubyHeadword(baseFont: Font, rubyFont: Font) -> some View {
     VStack(alignment: .leading, spacing: 2) {
       JapaneseRubyText(
-        surface: surface,
-        reading: reading,
+        ruby: ruby,
         baseFont: baseFont,
         rubyFont: rubyFont,
         highlightedEnding: highlightedEnding
@@ -76,6 +75,10 @@ struct WordHeadline<Accessory: View>: View {
       readingWithoutFurigana
     }
   }
+
+  private var surface: String { ruby.surface }
+
+  private var reading: String { ruby.reading }
 
   @ViewBuilder
   private var readingWithoutFurigana: some View {
@@ -90,7 +93,7 @@ struct WordHeadline<Accessory: View>: View {
   private var controls: some View {
     HStack(spacing: 8) {
       if let pitch {
-        PitchAccentBadge(reading: reading, pitch: pitch, pronounce: pronounce)
+        PitchAccentBadge(pronounceLabel: pronounceLabel, pitch: pitch, pronounce: pronounce)
           .accessibilityIdentifier("\(identifierPrefix).pronounce")
       } else {
         Button(action: pronounce) {
@@ -100,7 +103,7 @@ struct WordHeadline<Accessory: View>: View {
             .contentShape(.rect)
         }
         .buttonStyle(.borderless)
-        .accessibilityLabel("Pronounce \(reading)")
+        .accessibilityLabel(pronounceLabel)
         .accessibilityIdentifier("\(identifierPrefix).pronounce")
       }
       accessory()
@@ -110,18 +113,18 @@ struct WordHeadline<Accessory: View>: View {
 
 extension WordHeadline where Accessory == EmptyView {
   init(
-    surface: String,
-    reading: String,
+    ruby: JapaneseRuby,
     highlightedEnding: String = "",
-    pitch: PitchAccent? = nil,
+    pitch: WordPage.Pitch? = nil,
+    pronounceLabel: String,
     identifierPrefix: String,
     pronounce: @escaping () -> Void
   ) {
     self.init(
-      surface: surface,
-      reading: reading,
+      ruby: ruby,
       highlightedEnding: highlightedEnding,
       pitch: pitch,
+      pronounceLabel: pronounceLabel,
       identifierPrefix: identifierPrefix,
       pronounce: pronounce,
       accessory: { EmptyView() }

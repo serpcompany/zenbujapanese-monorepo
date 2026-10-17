@@ -33,7 +33,7 @@ struct DeleteAccountView: View {
             Text("Your Zenbu account is deleted.")
               .font(.headline)
             Text(
-              "You're signed out. Your known words, lists, watch history, translations, notes, and media are still on this iPhone, and Zenbu works as before."
+              "You're signed out. Your known words, lists, watch history, translations, notes, and media are still on this \(ThisDevice.name), and Zenbu works as before."
             )
             .accessibilityIdentifier("delete-account.done-note")
           }
@@ -46,12 +46,13 @@ struct DeleteAccountView: View {
           }
         }
       }
+      .formStyle(.grouped)
       .disabled(isWorking)
       .overlay {
         if isWorking { ProgressView() }
       }
       .navigationTitle("Delete Account")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           if step == .deleted {
@@ -71,6 +72,7 @@ struct DeleteAccountView: View {
         Text("This deletes the account and everything it synced. It can't be undone.")
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
     .interactiveDismissDisabled(step == .deleted)
     .onAppear { email = zenbuAccount.account?.email ?? "" }
   }
@@ -81,7 +83,7 @@ struct DeleteAccountView: View {
         "Deleting your Zenbu account deletes it, the ways you sign in, and everything it synced, on every device and Zenbu app. It can't be undone."
       )
       Text(
-        "This iPhone keeps your known words, lists, watch history, translations, notes, and media, and Zenbu keeps working signed out."
+        "This \(ThisDevice.name) keeps your known words, lists, watch history, translations, notes, and media, and Zenbu keeps working signed out."
       )
       .foregroundStyle(.secondary)
     }
@@ -130,7 +132,7 @@ struct DeleteAccountView: View {
       Text("Sign in again to delete")
     } footer: {
       Text(
-        "Deleting needs a fresh sign-in, so no one else holding this iPhone can delete your account."
+        "Deleting needs a fresh sign-in, so no one else holding this \(ThisDevice.name) can delete your account."
       )
     }
   }

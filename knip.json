@@ -2,17 +2,20 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": ["apps/ios/**"],
   "workspaces": {
-    ".": {},
+    ".": {
+      "entry": [".github/actions/*/*.cjs"]
+    },
     "apps/web": {
       "entry": ["open-next.config.ts", "e2e/**/*.ts"]
     },
     "apps/dictionary-api": {
-      "entry": ["src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
+      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
     },
     "apps/account-api": {
       "entry": ["scripts/*.mjs"]
     },
     "packages/dictionary-core": {
+      "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
     "packages/node-service": {
@@ -20,7 +23,14 @@
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["hook.mjs"],
+      "entry": [
+        "hook.mjs",
+        "stop-hook.mjs",
+        "pull-request.mjs",
+        "ports.mjs",
+        "review-context.mjs",
+        "review-dry-run.mjs"
+      ],
       "ignoreDependencies": ["@secretlint/secretlint-rule-preset-recommend"]
     }
   }

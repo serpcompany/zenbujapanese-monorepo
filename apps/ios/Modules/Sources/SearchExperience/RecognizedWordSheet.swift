@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct RecognizedWordSheetRequest: Identifiable {
   let id: String
@@ -39,7 +38,7 @@ final class WordSheetPresentation {
 
 struct RecognizedWordSheet<EntryContent: View>: View {
   @Environment(\.dismiss) private var dismiss
-  @State private var candidateRanks: [LanguageReferenceID: FrequencyRanks] = [:]
+  @Environment(WordKnowledge.self) private var wordKnowledge
 
   let request: RecognizedWordSheetRequest
   @Binding var detent: PresentationDetent
@@ -66,7 +65,8 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     .presentationDetents([.medium, .large], selection: $detent)
     .presentationBackgroundInteraction(.enabled(upThrough: .medium))
     .presentationDragIndicator(.visible)
-    .presentationBackground(Color(uiColor: .systemBackground))
+    .presentationBackground(SystemColor.background)
+    .sheetSize(onMac: AppWindow.sheetSize)
     .accessibilityIdentifier("recognized-word-sheet")
   }
 
@@ -83,35 +83,32 @@ struct RecognizedWordSheet<EntryContent: View>: View {
         description: Text("Zenbu recognized “\(request.surface)” but found no matching entry.")
       )
       .navigationTitle("Dictionary")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .topBarLeading) { closeButton }
+        ToolbarItem(placement: .sheetClose) { closeButton }
       }
       .accessibilityIdentifier("recognized-word-sheet.unavailable")
     }
   }
 
   private var candidateList: some View {
-    List(request.candidateEntries.enumerated(), id: \.element.id) { index, candidate in
-      ResultRow(
-        entry: candidate,
-        summary: candidate.summary,
-        frequencyRanks: candidateRanks[candidate.id],
-        rank: .result(position: index + 1, count: request.candidateEntries.count),
-        link: candidate
-      )
+    let rows = WordRowsRequest(
+      entries: request.candidateEntries.map {
+        WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary)
+      },
+      known: request.candidateEntries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue)
+    ).rowsByEntry()
+    return List(request.candidateEntries, id: \.id) { candidate in
+      if let row = rows[candidate.id.rawValue] {
+        ResultRow(entry: candidate, row: row, link: candidate)
+      }
     }
     .listStyle(.plain)
-    .task(id: request.id) {
-      candidateRanks =
-        (try? await FrequencyCapability.live.evidence(for: request.candidateEntries.map(\.id)))
-        ?? [:]
-    }
     .toolbar {
-      ToolbarItem(placement: .topBarLeading) { closeButton }
+      ToolbarItem(placement: .sheetClose) { closeButton }
     }
     .navigationTitle("Choose “\(request.surface)”")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .navigationDestination(for: DictionaryEntry.self) { entry in
       presentedEntry(entry)
     }
@@ -127,8 +124,9 @@ struct RecognizedWordSheet<EntryContent: View>: View {
     entryContent(entry, request.encounterMedia)
       .toolbar(removing: .title)
       .toolbar {
-        ToolbarItemGroup(placement: .topBarLeading) {
+        SheetCloseAndAction {
           closeButton
+        } action: {
           Button("Open Full Entry", systemImage: "arrow.up.left.and.arrow.down.right") {
             openFullEntry(entry)
           }

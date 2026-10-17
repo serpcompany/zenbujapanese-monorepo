@@ -17,7 +17,7 @@ struct KanjiStrokeOrderView: View {
       )
       .aspectRatio(1, contentMode: .fit)
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel("Stroke drawing grid for \(diagram.character.rawValue)")
+      .accessibilityLabel(diagram.labels.grid)
       .accessibilityValue(gridAccessibilityValue)
       .accessibilityIdentifier("stroke-order.grid")
 
@@ -28,7 +28,7 @@ struct KanjiStrokeOrderView: View {
           Image(systemName: "chevron.backward")
         }
         .disabled(completedStrokeCount == 0 && activeStrokeProgress == 0)
-        .accessibilityLabel("Previous stroke")
+        .accessibilityLabel(diagram.labels.previous)
         .accessibilityIdentifier("stroke-order.previous")
 
         Button {
@@ -37,7 +37,7 @@ struct KanjiStrokeOrderView: View {
           Image(systemName: isPlaying ? "pause.fill" : "play.fill")
         }
         .disabled(diagram.strokes.isEmpty)
-        .accessibilityLabel(isPlaying ? "Pause stroke order" : "Play stroke order")
+        .accessibilityLabel(isPlaying ? diagram.labels.pause : diagram.labels.play)
         .accessibilityIdentifier(isPlaying ? "stroke-order.pause" : "stroke-order.play")
 
         Button {
@@ -46,17 +46,15 @@ struct KanjiStrokeOrderView: View {
           Image(systemName: "chevron.forward")
         }
         .disabled(completedStrokeCount == diagram.strokes.count)
-        .accessibilityLabel("Next stroke")
+        .accessibilityLabel(diagram.labels.next)
         .accessibilityIdentifier("stroke-order.next")
       }
       .font(.title)
       .frame(maxWidth: .infinity)
 
-      Text("Stroke \(visibleStrokeIndex) of \(diagram.strokes.count)")
+      Text(diagram.labels.position[completedStrokeCount])
         .font(.caption.monospacedDigit())
-        .accessibilityValue(
-          "\(completedStrokeCount) of \(diagram.strokes.count) complete"
-        )
+        .accessibilityValue(diagram.labels.completeOf[completedStrokeCount])
         .accessibilityIdentifier("stroke-order.progress")
     }
     .padding()
@@ -65,15 +63,9 @@ struct KanjiStrokeOrderView: View {
     .onDisappear { pause() }
   }
 
-  private var visibleStrokeIndex: Int {
-    min(completedStrokeCount + 1, diagram.strokes.count)
-  }
-
   private var gridAccessibilityValue: String {
-    if activeStrokeProgress > 0 {
-      return "\(completedStrokeCount) strokes complete, drawing stroke \(completedStrokeCount + 1)"
-    }
-    return "\(completedStrokeCount) strokes complete"
+    activeStrokeProgress > 0
+      ? diagram.labels.drawing[completedStrokeCount] : diagram.labels.complete[completedStrokeCount]
   }
 
   private func stepPrevious() {
@@ -165,7 +157,7 @@ private struct StrokeDrawingGrid: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack {
-        Color(uiColor: .systemBackground)
+        SystemColor.background
         StrokeGridLines()
           .stroke(
             .secondary,

@@ -1,9 +1,14 @@
 # Zenbu Japanese
 
-One Japanese dictionary shared by every Zenbu app: the iOS app, the website, and later the
-browser extension.
+One Japanese dictionary shared by every Zenbu app: the Zenbu Japanese app, the website, and later
+the browser extension.
 
 ## Language
+
+**Zenbu Japanese app**:
+The one app built from `apps/ios` for iPhone, iPad, and Mac, with one bundle ID and one App Store
+record. iPhone, iPad, and Mac are its platforms, not separate apps (ADR 0015).
+_Avoid_: Mac app or iPad app (as a product of its own), iOS app (for what also runs on the Mac)
 
 **Language Reference ID**:
 Zenbu's permanent identity for a dictionary entry. Anything a learner saves or syncs refers to a

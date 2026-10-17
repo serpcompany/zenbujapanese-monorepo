@@ -56,11 +56,11 @@ struct YouTubeCaptionsTests {
     #expect(YouTubeVideoID(navigatingTo: googleResults) == nil)
   }
 
-  @Test("each search provider builds its results page")
+  @Test("each search provider builds its results page, YouTube's mobile one on every device")
   func searchProviders() {
     #expect(
       VideoSearchProvider.youTube.resultsURL(for: "ci japanese")?.absoluteString
-        == "https://m.youtube.com/results?search_query=ci%20japanese")
+        == "https://m.youtube.com/results?search_query=ci%20japanese&app=m")
     #expect(
       VideoSearchProvider.googleVideos.resultsURL(for: "ci japanese")?.absoluteString
         == "https://www.google.com/search?q=ci%20japanese&tbm=vid")
@@ -164,6 +164,7 @@ struct WordMeaningTests {
     #expect(DictionaryEntry.shortMeaning(from: ["to fold (clothes, etc.), to shut"]) == "fold")
     #expect(DictionaryEntry.shortMeaning(from: ["(the) above, over, up"]) == "above")
     #expect(DictionaryEntry.shortMeaning(from: []) == nil)
+    #expect(DictionaryEntry.shortMeaning(from: ["(only a note)"]) == nil)
   }
 
   @Test("long meanings are shortened with an ellipsis")
@@ -175,8 +176,8 @@ struct WordMeaningTests {
   @Test("the Word Meanings preference persists and defaults to off")
   @MainActor
   func preference() throws {
-    let defaults = try #require(UserDefaults(suiteName: "WordMeaningTests"))
-    defaults.removePersistentDomain(forName: "WordMeaningTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == false)
     ReadingAidPreferences(defaults: defaults).showsWordMeanings = true
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == true)
@@ -213,8 +214,8 @@ struct PlayerReadingAidTests {
   @Test("new reading aid preferences persist with their defaults")
   @MainActor
   func preferences() throws {
-    let defaults = try #require(UserDefaults(suiteName: "PlayerReadingAidTests"))
-    defaults.removePersistentDomain(forName: "PlayerReadingAidTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     let fresh = ReadingAidPreferences(defaults: defaults)
     #expect(fresh.showsTranslations)
     #expect(fresh.translationLanguage == .english)
@@ -232,8 +233,8 @@ struct PlayerReadingAidTests {
   @Test("Translate's furigana starts off and is stored apart from the app's reading aids")
   @MainActor
   func translateFurigana() throws {
-    let defaults = try #require(UserDefaults(suiteName: "TranslateReadingAidTests"))
-    defaults.removePersistentDomain(forName: "TranslateReadingAidTests")
+    let temporary = try TemporaryDefaults()
+    let defaults = temporary.defaults
     let translate = ReadingAidPreferences(
       defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     #expect(!translate.showsFurigana)

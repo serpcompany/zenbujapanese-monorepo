@@ -43,7 +43,7 @@ fields and digests from the import reports, and the smoke test and the fields th
 against an artifact (pack version, covered rows, token total, and policy versions) from the rank
 packs' artifacts; JLPT's smoke test comes from its report.
 
-After a rebuild, re-record the five conformance suites and review their diffs, then run
+After a rebuild, re-record the six conformance suites and review their diffs, then run
 `SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),
 the dictionary service's checks with `ZENBU_REQUIRE_ARTIFACT=1`, and the language-data pipeline
 ([`language-data/README.md`](../../../language-data/README.md)).
@@ -148,7 +148,7 @@ so a lemma's reading names the word it counted even where JMdict files the spell
 readings; lemmas UniDic files under several readings, such as 家, get none. JMdict writes katakana
 words' readings in katakana and the rest in hiragana. A row gets a reading only where mapping V1
 can't place it, so no entry V1 ranks loses its rank or gets a worse one. The content digest is
-described in [`ios.md`](../../../docs/agents/ios.md), the frequency packs.
+described in [`frequency.md`](../../../docs/agents/frequency.md), Trust.
 
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at
@@ -197,3 +197,8 @@ trusted historical manifest stays downloadable, and then downloads each public U
 
 **`prepare_sudachi_core.py`** fills the Sudachi Core cache the app's build reads
 ([`ios.md`](../../../docs/agents/ios.md), Build and inspect).
+
+**`simulator.py`** isn't a data tool either: it prints the UDID of the Simulator this checkout
+uses, making it when it's missing, and the checkout's build folder, and removes both when the
+work is finished ([`verification.md`](../../../docs/agents/verification.md), This checkout's
+Simulator and build folder).

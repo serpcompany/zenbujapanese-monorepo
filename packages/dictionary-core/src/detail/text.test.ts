@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { graphemeCount, graphemes } from './text'
+import {
+  graphemeCount,
+  graphemes,
+  isCJKUnifiedIdeograph,
+  isKanjiCharacter,
+  scalarCount,
+  shortGloss
+} from './text'
 
 const character = (code: number) => String.fromCharCode(code)
 
@@ -26,6 +33,20 @@ describe('graphemeCount', () => {
     expect(joined).toEqual([])
   })
 
+  test('is each unit of such text, whatever stands beside it', () => {
+    const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' })
+    const neighbors = ['a', ' ', 'あ', 'ア', '日', 'Ａ', '、', 'ｱ']
+    const joined = unitsCountedWithoutSegmenting.filter(code =>
+      neighbors.some(
+        neighbor =>
+          Array.from(segmenter.segment(`${neighbor}${character(code)}${neighbor}`)).length !== 3
+      )
+    )
+    expect(joined).toEqual([])
+    expect(graphemes('私はAを食べた。')).toEqual(['私', 'は', 'A', 'を', '食', 'べ', 'た', '。'])
+    expect(graphemes('')).toEqual([])
+  })
+
   test('segments anything else: a combining mark, CR LF, or a flag joins its neighbor', () => {
     expect(graphemeCount(`か${character(0x3099)}`)).toBe(1)
     expect(graphemeCount(`ﾀ${character(0xff9e)}`)).toBe(1)
@@ -37,5 +58,67 @@ describe('graphemeCount', () => {
     expect(graphemeCount('私は毎日日本語を勉強します。')).toBe(14)
     expect(graphemeCount('I study Japanese every day.')).toBe(27)
     expect(graphemeCount('')).toBe(0)
+  })
+})
+
+describe('scalarCount', () => {
+  test('counts a pair of surrogates once, and a surrogate alone once', () => {
+    expect(scalarCount('')).toBe(0)
+    expect(scalarCount('日本語 abc')).toBe(7)
+    expect(scalarCount('𠀋が😀')).toBe(3)
+    expect(scalarCount(`${character(0xd83d)}a${character(0xde00)}`)).toBe(3)
+    expect(scalarCount(`😀${character(0xd83d)}`)).toBe(2)
+  })
+})
+
+describe('isKanjiCharacter', () => {
+  const compatibility = character(0xf900)
+
+  test('is one character, in the ideograph blocks', () => {
+    expect(['見', '㐀', compatibility, '𠀋'].map(isKanjiCharacter)).toEqual([
+      true,
+      true,
+      true,
+      true
+    ])
+    expect(
+      ['', '見る', '見見', 'み', '々', 'a', character(0xd840), '😀'].map(isKanjiCharacter)
+    ).toEqual([false, false, false, false, false, false, false, false])
+  })
+
+  test('a word has an ideograph when any of its characters is in the main blocks', () => {
+    expect(['見る', 'お茶', '㐀'].map(isCJKUnifiedIdeograph)).toEqual([true, true, true])
+    expect(['みる', '', '々', '𠀋', compatibility].map(isCJKUnifiedIdeograph)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false
+    ])
+  })
+})
+
+describe('shortGloss', () => {
+  test('is a meaning’s first part, without a note in brackets or a leading “to”', () => {
+    expect(shortGloss('husband')).toBe('husband')
+    expect(shortGloss('to wipe, to dry')).toBe('wipe')
+    expect(shortGloss('brothers and sisters, siblings')).toBe('brothers and sist…')
+    expect(shortGloss('to fold (clothes, etc.), to shut')).toBe('fold')
+    expect(shortGloss('(the) above, over, up')).toBe('above')
+  })
+
+  test('cuts a long gloss to seventeen characters and an ellipsis', () => {
+    const gloss = shortGloss('from the standpoint of, on')
+    expect(gloss).toBe('from the standpoi…')
+    expect(graphemes(gloss ?? '')).toHaveLength(18)
+    expect(shortGloss('exactly eighteen ch')).toBe('exactly eighteen …')
+    expect(shortGloss('eighteen in all 18')).toBe('eighteen in all 18')
+  })
+
+  test('skips an empty part before the first comma, and is nothing when nothing is left', () => {
+    expect(shortGloss(', spare')).toBe('spare')
+    expect(shortGloss('(note only)')).toBeNull()
+    expect(shortGloss('to ')).toBe('to')
+    expect(shortGloss('')).toBeNull()
   })
 })

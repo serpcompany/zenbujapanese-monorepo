@@ -1,10 +1,6 @@
 'use client'
 
-import {
-  type FrequencyDetails,
-  type FrequencyRowDetail,
-  frequencyRowLabel
-} from '@zenbu/dictionary-core/detail/frequency'
+import type { FrequencyDetails, FrequencyRowDetail } from '@zenbu/dictionary-core/detail/frequency'
 import { useState } from 'react'
 import { FrequencyDot, SpokenTier } from './frequency'
 import { Sheet } from './sheet'
@@ -56,7 +52,7 @@ export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
             <button
               type="button"
               aria-haspopup="dialog"
-              aria-label={frequencyRowLabel(row)}
+              aria-label={row.label}
               data-frequency-row={row.source}
               className="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
               onClick={() => {

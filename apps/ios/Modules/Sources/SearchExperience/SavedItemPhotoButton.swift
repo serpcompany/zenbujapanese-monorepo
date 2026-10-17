@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct SavedItemPhotoButton: View {
   @State private var presentedMedia: EncounterMedia?
@@ -12,12 +11,12 @@ struct SavedItemPhotoButton: View {
     Button {
       presentedMedia = media
     } label: {
-      if let image = UIImage(data: media.data) {
+      if let image = Image(imageData: media.data) {
         HStack(spacing: 8) {
           if count > 1 {
             Text("\(count)").font(.caption.monospacedDigit())
           }
-          Image(uiImage: image)
+          image
             .resizable()
             .scaledToFill()
             .frame(width: 56, height: 44)
@@ -59,11 +58,11 @@ private struct EncounterMediaViewer: View {
 
   var body: some View {
     NavigationStack {
-      TabView(selection: $selectedMediaID) {
+      PagedView(selection: $selectedMediaID, showsIndex: true) {
         ForEach(Array(encounterMedia.enumerated()), id: \.element.id) { index, media in
           VStack(spacing: 12) {
-            if let image = UIImage(data: media.data) {
-              Image(uiImage: image).resizable().scaledToFit()
+            if let image = Image(imageData: media.data) {
+              image.resizable().scaledToFit()
                 .accessibilityLabel("Image \(index + 1) of \(encounterMedia.count)")
                 .accessibilityIdentifier("word-detail.image-page")
                 .accessibilityHidden(media.id != selectedMediaID)
@@ -73,8 +72,7 @@ private struct EncounterMediaViewer: View {
           .tag(media.id)
         }
       }
-      .tabViewStyle(.page(indexDisplayMode: .automatic))
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Done", action: dismiss.callAsFunction)
@@ -89,6 +87,7 @@ private struct EncounterMediaViewer: View {
         }
       }
     }
+    .sheetSize(onMac: AppWindow.sheetSize)
   }
 
   private func removeSelectedMedia() async {

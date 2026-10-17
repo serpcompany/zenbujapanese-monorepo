@@ -4,7 +4,7 @@ import Testing
 @testable import TranslatorCore
 
 @MainActor
-@Suite("Live conversation")
+@Suite("Live conversation", .timeLimit(.minutes(1)))
 struct LiveConversationTests {
   private let tokyo = "今日は東京駅に行きます。"
   private let shibuya = "Please meet me at Shibuya Station at three o'clock."
@@ -114,20 +114,7 @@ struct LiveConversationTests {
     #expect(harness.playback.spoken.count >= 30)
   }
 
-  @Test("Text Only shows translations without playing them or closing the microphone")
-  func textOnlyPlaysNothing() async {
-    let harness = ConversationHarness(mode: .textOnly)
-    await harness.startAndWaitForListening()
-
-    await harness.hear(.japanese, tokyo)
-    await harness.pause(for: 1.3)
-
-    #expect(harness.session.conversation.turns[0].sentences[0].translation != nil)
-    #expect(harness.playback.spoken.isEmpty)
-    #expect(harness.transcription.hearing.isEmpty)
-  }
-
-  @Test("Listening hears only Japanese, plays each translation as it arrives, and never closes the microphone")
+  @Test("Listening hears Japanese and English, plays each translation as it arrives, and never closes the microphone")
   func listeningPlaysImmediately() async {
     let harness = ConversationHarness(mode: .listening)
     await harness.startAndWaitForListening()
@@ -136,7 +123,13 @@ struct LiveConversationTests {
     #expect(harness.playback.spoken.count == 1)
     await harness.hear(.japanese, "東京の最高気温は24度の予想です。")
     #expect(harness.playback.spoken.count == 2)
+    let train = "The next train to Shinjuku leaves from Track 3."
+    await harness.hear(.english, train)
+    #expect(
+      harness.playback.spoken.last
+        == .init(text: FakeTranslator.translation(of: train, from: .english), language: .japanese))
 
+    #expect(harness.transcription.requests.first?.languages == [.japanese, .english])
     #expect(harness.transcription.requests.first == TranscriptionRequest(mode: .listening))
     #expect(harness.transcription.requests.first?.capture == .distantSound)
     #expect(harness.transcription.hearing.isEmpty)
@@ -151,13 +144,16 @@ struct LiveConversationTests {
     #expect(harness.session.silencePromptDeadline == nil)
     await harness.pause(for: 1)
     #expect(harness.session.silencePromptDeadline == harness.time.now.addingTimeInterval(10))
+    #expect(harness.session.timeBeforeSilencePause == 10)
 
     await harness.pause(for: 9.9)
     #expect(harness.session.status == .live)
+    #expect(abs((harness.session.timeBeforeSilencePause ?? 0) - 0.1) < 0.001)
     await harness.pause(for: 0.1)
 
     #expect(harness.session.status == .paused(.silence))
     #expect(harness.session.silencePromptDeadline == nil)
+    #expect(harness.session.timeBeforeSilencePause == nil)
     #expect(harness.transcription.stopCount == 1)
     #expect(harness.playback.stopCount == 1)
   }
@@ -198,7 +194,6 @@ struct LiveConversationTests {
     #expect(harness.session.conversation.turns.isEmpty)
 
     await harness.startAndWaitForListening()
-    for _ in 0..<100 where harness.transcription.requests.count < 2 { await Task.yield() }
     #expect(harness.session.status == .live)
     #expect(harness.transcription.requests.count == 2)
   }
@@ -225,6 +220,7 @@ struct LiveConversationTests {
     harness.time.advance(5)
 
     #expect(harness.session.elapsed(at: harness.time.now) == 25)
+    #expect(harness.session.elapsedSoFar == 25)
   }
 
   @Test("each translated sentence is saved, and Exit Without Saving deletes the draft")
@@ -260,23 +256,6 @@ struct LiveConversationTests {
 
     #expect(harness.archive.saved.last?.sentences.first?.translation != nil)
     #expect(harness.session.status == .paused(.leaving))
-  }
-
-  @Test("muting switches to Text Only and stops what was queued")
-  func mutingStopsPlayback() async {
-    let harness = ConversationHarness()
-    await harness.startAndWaitForListening()
-    await harness.hear(.japanese, tokyo)
-
-    harness.session.switchMode(to: .textOnly)
-    await harness.pause(for: 1.3)
-
-    #expect(harness.session.mode == .textOnly)
-    #expect(harness.session.conversation.mode == .textOnly)
-    #expect(harness.playback.spoken.isEmpty)
-
-    harness.session.switchMode(to: .listening)
-    #expect(harness.session.mode == .textOnly)
   }
 
   @Test("live speech shows a provisional translation")
@@ -328,12 +307,11 @@ struct LiveConversationTests {
     harness.transcription.failure = .speechRecognitionUnavailable
 
     harness.session.start()
-    for _ in 0..<100 where harness.session.status == .live { await Task.yield() }
+    await until { harness.session.status != .live }
     #expect(harness.session.status == .failed(.speechRecognitionUnavailable))
 
     harness.transcription.failure = nil
     await harness.startAndWaitForListening()
-    for _ in 0..<100 where harness.transcription.requests.count < 2 { await Task.yield() }
     #expect(harness.session.status == .live)
   }
 
@@ -343,7 +321,7 @@ struct LiveConversationTests {
     await harness.startAndWaitForListening()
 
     harness.transcription.emit(.final(.japanese, tokyo))
-    for _ in 0..<100 where harness.session.conversation.turns.isEmpty { await Task.yield() }
+    await until { !harness.session.conversation.turns.isEmpty }
 
     #expect(harness.session.conversation.turns.first?.text == tokyo)
   }
@@ -372,20 +350,6 @@ struct LiveConversationTests {
 
     #expect(harness.playback.spoken.count == 1)
     #expect(harness.session.speakingSentenceID == nil)
-  }
-
-  @Test("muting while a translation plays stops the queue and opens the microphone again")
-  func muteDuringPlayback() async {
-    let harness = ConversationHarness()
-    harness.playback.reachesMicrophone = true
-    await startPlayingTwoSentenceTurn(harness)
-
-    harness.session.switchMode(to: .textOnly)
-    await harness.session.settle()
-
-    #expect(harness.playback.spoken.count == 1)
-    #expect(harness.transcription.hearing.last == true)
-    #expect(harness.session.status == .live)
   }
 
   @Test("Listening on the speaker closes the microphone while each translation plays")

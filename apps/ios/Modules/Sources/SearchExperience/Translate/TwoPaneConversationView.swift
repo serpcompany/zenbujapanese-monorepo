@@ -8,10 +8,10 @@ struct TwoPaneConversationView: View {
   var body: some View {
     VStack(spacing: 8) {
       ConversationPane(language: .japanese, lines: lines(in: .japanese), words: words)
-        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 6))
+        .background(SystemColor.secondaryBackground, in: .rect(cornerRadius: 6))
         .environment(\.colorScheme, .dark)
       ConversationPane(language: .english, lines: lines(in: .english), words: words)
-        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 6))
+        .background(SystemColor.secondaryBackground, in: .rect(cornerRadius: 6))
         .environment(\.colorScheme, .light)
     }
     .padding(.horizontal, 12)

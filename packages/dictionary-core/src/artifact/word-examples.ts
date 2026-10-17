@@ -6,6 +6,7 @@ import type {
   ExampleSentenceTokenRow,
   WordExampleRows
 } from '../detail/rows'
+import { scalarCount } from '../detail/text'
 import { usesForm } from '../examples/forms'
 import { toHiragana } from '../examples/kana'
 import {
@@ -16,7 +17,7 @@ import {
 } from '../examples/linking'
 import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
 import { normalizeQuery } from '../search/query'
-import type { ArtifactDatabase } from './database'
+import { type ArtifactDatabase, listedIds } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
 import type { FormLookup } from './lookup'
 
@@ -51,12 +52,8 @@ function provenance(db: ArtifactDatabase, pairIds: readonly string[]): Map<strin
   return new Map(rows.map(row => [row.pair_id, row]))
 }
 
-interface LinkedEntry {
+interface LinkedEntry extends ExamplesEntry {
   entSeq: number
-  headword: string
-  reading: string
-  writtenForms: string[]
-  readingForms: string[]
 }
 
 function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string, LinkedEntry> {
@@ -66,28 +63,36 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
     ent_seq: number
     headword: string
     reading: string
+    parts_of_speech_json: string
     written_forms_json: string
     reading_forms_json: string
   }>(
     `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading,
-       written_forms_json, reading_forms_json
-     FROM entries WHERE id IN (${ids.map(() => 'unhex(?)').join(', ')})`,
-    ids
+       parts_of_speech_json, written_forms_json, reading_forms_json
+     FROM entries WHERE id IN (${listedIds})`,
+    [JSON.stringify(ids)]
   )
   const values = (json: string) => (JSON.parse(json) as { value: string }[]).map(form => form.value)
   return new Map(
     rows.map(row => [
       row.id,
       {
+        id: row.id,
         entSeq: row.ent_seq,
         headword: row.headword,
         reading: row.reading,
+        partsOfSpeech: JSON.parse(row.parts_of_speech_json),
         writtenForms: values(row.written_forms_json),
         readingForms: values(row.reading_forms_json)
       }
     ])
   )
 }
+
+export const examplesEntries: (
+  db: ArtifactDatabase,
+  ids: readonly string[]
+) => Map<string, ExamplesEntry> = linkedEntries
 
 function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {
@@ -142,10 +147,18 @@ export interface ExampleHighlight {
   accent: 'entry' | 'query'
 }
 
-function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: number }[] {
+export const screenAccent = {
+  searchExamples: 'query',
+  wordExamples: 'entry',
+  formExamples: 'query'
+} as const satisfies Record<string, ExampleHighlight['accent']>
+
+export function tokenSpans(
+  tokens: readonly Pick<LinkedToken, 'surface'>[]
+): { start: number; end: number }[] {
   let start = 0
   return tokens.map(token => {
-    const end = start + Array.from(token.surface).length
+    const end = start + scalarCount(token.surface)
     const span = { start, end }
     start = end
     return span
@@ -153,6 +166,7 @@ function tokenSpans(tokens: readonly LinkedToken[]): { start: number; end: numbe
 }
 
 function occurrences(text: string, query: string): { start: number; end: number }[] {
+  if (query === '') return []
   const scalars = Array.from(text)
   const needle = Array.from(query)
   if (needle.length === 0 || needle.length > scalars.length) return []
@@ -163,6 +177,21 @@ function occurrences(text: string, query: string): { start: number; end: number 
     }
   }
   return found
+}
+
+export function accentedPositions(
+  text: string,
+  tokens: readonly Pick<LinkedToken, 'surface' | 'entry'>[],
+  highlight: ExampleHighlight
+): number[] {
+  if (highlight.accent === 'entry') {
+    const id = highlight.entry?.id
+    return tokens.flatMap((token, position) => (id && token.entry?.id === id ? [position] : []))
+  }
+  const found = occurrences(text, highlight.query)
+  return tokenSpans(tokens).flatMap((span, position) =>
+    found.some(match => match.start < span.end && span.start < match.end) ? [position] : []
+  )
 }
 
 export function exampleRows(
@@ -226,25 +255,13 @@ export function exampleRows(
         })
       }
     }
-    let highlights: number[]
-    if (highlight.accent === 'entry') {
-      const id = highlight.entry?.id
-      highlights = page.flatMap((token, position) =>
-        id && token.entry?.id === id ? [position] : []
-      )
-    } else {
-      const found = occurrences(sentence.japanese, highlight.query)
-      highlights = tokenSpans(page).flatMap((span, position) =>
-        found.some(match => match.start < span.end && span.start < match.end) ? [position] : []
-      )
-    }
     return {
       sentence: exampleSentenceRow(sentence, sharedRows, credits.get(sentence.pairId)),
       example: {
         entSeq,
         position: firstPosition + index,
         sentenceId: sentence.rowid,
-        highlights,
+        highlights: accentedPositions(sentence.japanese, page, highlight),
         links,
         tokens: sameWordsAsElsewhere ? null : rows
       }
@@ -265,7 +282,7 @@ export function wordExampleRows(
     db,
     retrieved.sentences.slice(from, from + limit),
     from,
-    { entry, query: normalizeQuery(entry.headword), accent: 'entry' },
+    { entry, query: normalizeQuery(entry.headword), accent: screenAccent.wordExamples },
     capabilities,
     entSeq
   )

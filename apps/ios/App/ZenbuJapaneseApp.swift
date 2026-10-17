@@ -4,11 +4,6 @@ import SwiftUI
 @main
 struct ZenbuJapaneseApp: App {
   var body: some Scene {
-    WindowGroup {
-      SearchExperienceRootView()
-    }
-    .backgroundTask(.appRefresh(AccountBackgroundSync.taskIdentifier)) {
-      await AccountBackgroundSync.run()
-    }
+    ZenbuJapaneseScenes()
   }
 }

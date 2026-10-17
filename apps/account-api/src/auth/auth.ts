@@ -106,6 +106,8 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       }
     },
     advanced: {
+      disableOriginCheck: false,
+      disableCSRFCheck: false,
       cookiePrefix: config.cookiePrefix,
       useSecureCookies: config.publicUrl.startsWith('https://'),
       ...(config.cookieDomain && {

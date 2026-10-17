@@ -6,7 +6,7 @@ const liveApp = {
   results: [
     {
       trackName: 'Zenbu Japanese',
-      bundleId: 'com.zenbujapanese.app',
+      bundleId: 'com.zenbujapanese.dictionary',
       version: '1.0.1',
       minimumOsVersion: '26.0',
       price: 0
@@ -68,7 +68,7 @@ describe('asking Apple', () => {
     expect(await appStoreRelease(fetcher)).toEqual({ version: '1.0.1', minimumOsVersion: '26.0' })
     expect(fetcher).toHaveBeenCalledTimes(1)
     expect(fetcher.mock.calls[0][0].url).toBe(
-      'https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.app'
+      'https://itunes.apple.com/lookup?bundleId=com.zenbujapanese.dictionary'
     )
     expect(kept.get(appStoreLookupUrl)?.headers.get('Cache-Control')).toBe('public, max-age=86400')
     expect(console.log).not.toHaveBeenCalled()

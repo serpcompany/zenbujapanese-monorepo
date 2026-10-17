@@ -13,6 +13,7 @@ import {
   jlptLists,
   secondarySchool
 } from '@zenbu/dictionary-core/browse/lists'
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -41,7 +42,6 @@ import {
   scriptPath,
   strokeCountsPath
 } from '@/lib/dictionary/browse/paths'
-import { sources } from '@/lib/dictionary/sources'
 
 const scriptNames: Record<KanaScript, { name: string; native: string }> = {
   hiragana: { name: 'Hiragana', native: 'ひらがな' },
@@ -192,7 +192,7 @@ export function BrowseHub({
           Browse common words →
         </Link>
       </Panel>
-      <SourceCredits sources={[sources.jmdict, sources.kanjidic2]} />
+      <SourceCredits sources={[sourceCredits.jmdict, sourceCredits.kanjidic2]} />
     </BrowsePage>
   )
 }
@@ -236,7 +236,7 @@ export function KanaChartsPage({
           <KanaCharts script={script} initials={initials[script]} withRomaji />
         </Panel>
       ))}
-      <SourceCredits sources={[sources.jmdict]} />
+      <SourceCredits sources={[sourceCredits.jmdict]} />
     </BrowsePage>
   )
 }

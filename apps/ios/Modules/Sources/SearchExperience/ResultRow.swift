@@ -2,9 +2,7 @@ import SwiftUI
 
 struct ResultRow<Link: Hashable>: View {
   let entry: DictionaryEntry
-  let summary: String
-  let frequencyRanks: FrequencyRanks?
-  let rank: ResultRank
+  let row: ListedWord
   let link: Link
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(WordKnowledge.self) private var wordKnowledge
@@ -21,7 +19,7 @@ struct ResultRow<Link: Hashable>: View {
             KnownWordBadge()
           }
         }
-        Text(summary)
+        Text(row.summary)
           .font(.body)
           .foregroundStyle(.primary)
           .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
@@ -40,40 +38,30 @@ struct ResultRow<Link: Hashable>: View {
     .contextMenu {
       KnownWordMenuButton(item: .word(entry), identifierPrefix: resultIdentifier)
     }
-    .accessibilityLabel("\(entry.headword), \(entry.reading), \(summary)")
-    .accessibilityValue(
-      ((isKnown ? ["Known"] : [])
-        + [rank.accessibilityValue, frequencyPresentation.accessibilityValue])
-        .joined(separator: ", ")
-    )
+    .accessibilityLabel("\(entry.headword), \(entry.reading), \(row.summary)")
+    .accessibilityValue(row.spoken)
     .accessibilityIdentifier(resultIdentifier)
   }
 
   @ViewBuilder
   private var frequencyChips: some View {
-    let visible = frequencyPresentation.collapsed(
-      to: dynamicTypeSize.isAccessibilitySize ? 1 : .max)
-    if !visible.chips.isEmpty {
+    let (shown, hidden) = row.chips(onlyFirst: dynamicTypeSize.isAccessibilitySize)
+    if !shown.isEmpty {
       FrequencyChipFlowLayout(spacing: chipSpacing) {
-        ForEach(visible.chips.enumerated(), id: \.offset) { _, chip in
-          FrequencyRankChip(presentation: chip)
+        ForEach(shown.enumerated(), id: \.offset) { _, chip in
+          FrequencyRankChip(chip: chip)
         }
-        if visible.hiddenCount > 0 {
-          FrequencyAdditionalRanksChip(count: visible.hiddenCount)
+        if hidden > 0 {
+          FrequencyAdditionalRanksChip(count: hidden)
         }
       }
       .accessibilityHidden(true)
     }
   }
 
-  private var frequencyPresentation: SearchFrequencyRankPresentationModel {
-    SearchFrequencyRankPresentationModel(ranks: frequencyRanks)
-  }
-
   private var titleBlock: some View {
     JapaneseRubyText(
-      surface: entry.headword,
-      reading: entry.reading,
+      ruby: JapaneseRuby(surface: entry.headword, reading: entry.reading),
       baseFont: .title3,
       rubyFont: .caption.weight(.semibold),
       highlightsKanjiOnTap: false

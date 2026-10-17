@@ -1,0 +1,21 @@
+name: Latest run
+description: >-
+  Fails a deploy job that would put old code over new: one whose job a later run of the same
+  workflow on the branch has already run. A later run that is still waiting, or that was
+  cancelled before it ran the job, doesn't count. Needs a checkout, and permission to read the
+  repository's workflow runs.
+inputs:
+  workflow:
+    description: The workflow's file name, such as web-deploy.yml.
+    required: true
+  token:
+    description: A token that can read the repository's workflow runs.
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.token }}
+        WORKFLOW: ${{ inputs.workflow }}
+      run: node "$GITHUB_ACTION_PATH/latest-run.cjs"

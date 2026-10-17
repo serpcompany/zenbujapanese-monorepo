@@ -9,10 +9,10 @@ struct ImageTextCanvas: View {
 
   var body: some View {
     GeometryReader { geometry in
-      if let image = UIImage(data: page.asset.data) {
-        let imageRect = aspectFitRect(imageSize: image.size, container: geometry.size)
+      if let decoded = DecodedImage(data: page.asset.data) {
+        let imageRect = aspectFitRect(imageSize: decoded.size, container: geometry.size)
         ZStack(alignment: .topLeading) {
-          Image(uiImage: image)
+          decoded.image
             .resizable()
             .scaledToFit()
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .top)

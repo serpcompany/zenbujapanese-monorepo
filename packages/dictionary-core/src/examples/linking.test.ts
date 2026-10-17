@@ -85,6 +85,22 @@ describe('linkedTokens', () => {
     expect(lookup).not.toHaveBeenCalled()
   })
 
+  test('a word written as the page entry’s form in the other width is that entry too', () => {
+    const tShirt: HighlightedEntry = {
+      ...entry('t-shirt', 'ティーシャツ', ['noun']),
+      headword: 'Ｔシャツ',
+      writtenForms: ['Ｔシャツ'],
+      readingForms: ['ティーシャツ']
+    }
+    const tokens = linkedTokens(
+      'TシャツとＴシャツ',
+      [candidate('Tシャツ', ['名詞']), candidate('と', ['助詞']), candidate('Ｔシャツ', ['名詞'])],
+      { entry: tShirt, query: 'Ｔシャツ' },
+      dictionary({})
+    )
+    expect(tokens.map(token => token.entry?.id ?? null)).toEqual(['t-shirt', null, 't-shirt'])
+  })
+
   test('other words resolve by part of speech, then by reading, or list the candidates neither tells apart', () => {
     const lookup = dictionary({ いる: [needs, be, shoot], か: [entry('q', 'か', ['particle'])] })
     const [verb, particle] = linkedTokens(
@@ -141,6 +157,7 @@ describe('linkedTokens', () => {
         candidates: [],
         reading: '文',
         dictionaryForm: '文',
+        partOfSpeech: [],
         lookupForm: null
       }
     ])

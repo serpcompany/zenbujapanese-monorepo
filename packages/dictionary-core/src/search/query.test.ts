@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { deinflect } from './deinflect'
+import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import {
   compareStrings,
+  containsJapaneseText,
   isJapaneseOnly,
   isMixedScript,
+  japaneseCandidates,
   normalizeQuery,
-  romajiDeinflectedCandidates
+  romajiDeinflectedCandidates,
+  writtenLanguage
 } from './query'
 
 describe('compareStrings', () => {
@@ -32,13 +35,99 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('食べ　る')).toBe('食べ る')
   })
 
+  test('joins a halfwidth kana and its voiced mark, and ends a Greek word in a final sigma', () => {
+    expect(normalizeQuery('\uff76\uff9e\uff77\uff9e')).toBe('\u30ac\u30ae')
+    expect(normalizeQuery('\uff8a\uff9f')).toBe('\u30d1')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('ΌΣΟΣ')).toBe('όσος')
+  })
+
+  test('leaves a query with no whitespace as folding made it', () => {
+    expect(normalizeQuery('食べる')).toBe('食べる')
+    expect(normalizeQuery('か\u3099')).toBe('\u304c')
+    expect(normalizeQuery('TABERU')).toBe('taberu')
+    expect(normalizeQuery('')).toBe('')
+  })
+
   test('drops a grapheme that starts with whitespace, as NFKC makes ゛', () => {
     expect(normalizeQuery('あ゛')).toBe('あ')
   })
 
-  test('splits words where Swift does, by grapheme', () => {
-    expect(normalizeQuery('eat\u0085now')).toBe('eat now')
-    expect(normalizeQuery('﻿taberu')).toBe('﻿taberu')
+  test('separates words at white space and at U+FEFF', () => {
+    expect(normalizeQuery('eat\u{85}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{FEFF}now')).toBe('eat now')
+    expect(normalizeQuery('\u{FEFF}taberu\u{FEFF}')).toBe('taberu')
+    expect(normalizeQuery('\u{FEFF}')).toBe('')
+  })
+
+  test('drops a combining mark with the separator before it, whichever separator that is', () => {
+    expect(normalizeQuery('eat \u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\t\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\n\u{3099}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{85}\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('eat\u{FEFF}\u{301}now')).toBe('eat now')
+    expect(normalizeQuery('\t\u{301}now')).toBe('now')
+    expect(normalizeQuery('\u{301}now')).toBe('\u{301}now')
+  })
+
+  test('separates at a space after a prepended mark, leaving none at an end or doubled', () => {
+    expect(normalizeQuery('\u{600} ')).toBe('\u{600}')
+    expect(normalizeQuery('a\u{600}  b')).toBe('a\u{600} b')
+    expect(normalizeQuery('a\u{600} \u{301}b')).toBe('a\u{600} b')
+  })
+
+  test('normalizes again what lowercasing leaves uncomposed or out of order', () => {
+    expect(normalizeQuery('J\u{30C}')).toBe('\u{1F0}')
+    expect(normalizeQuery('\u{130}\u{327}')).toBe('i\u{327}\u{307}')
+  })
+})
+
+describe('normalizeQuery, on every pairing of separators, marks, and letters', () => {
+  const basicPlane = Array.from({ length: 0x10000 }, (_, unit) => String.fromCharCode(unit))
+  const whiteSpace = basicPlane.filter(character => /\p{White_Space}/u.test(character))
+  const foldedToASpaceAndAMark = basicPlane.filter(character =>
+    /^ \p{M}/u.test(character.normalize('NFKC'))
+  )
+  const marks = [
+    '\u{301}',
+    '\u{30C}',
+    '\u{327}',
+    '\u{3099}',
+    '\u{903}',
+    '\u{200D}',
+    '\u{FE0F}',
+    '\u{1F3FB}'
+  ]
+  const characters = [
+    ...whiteSpace,
+    ...foldedToASpaceAndAMark,
+    '\u{FEFF}',
+    '\u{600}',
+    ...marks,
+    'a',
+    'J',
+    '\u{130}',
+    'あ'
+  ]
+  const pairings = characters.flatMap(first => characters.map(second => first + second))
+  const queries = pairings.flatMap(pair => [pair, `a${pair}`, `${pair}b`, `a${pair}b`])
+  const separator = /[\p{White_Space}\u{FEFF}]/u
+  const isWordsJoinedBySingleSpaces = (query: string) =>
+    query === '' || query.split(' ').every(word => word !== '' && !separator.test(word))
+
+  test('covers every white-space character and every character NFKC folds to a spaced mark', () => {
+    expect(whiteSpace).toHaveLength(25)
+    expect(foldedToASpaceAndAMark).toHaveLength(50)
+  })
+
+  test('returns its own answer unchanged', () => {
+    expect(
+      queries.filter(raw => normalizeQuery(normalizeQuery(raw)) !== normalizeQuery(raw))
+    ).toEqual([])
+  })
+
+  test('joins words with one space each, and leaves no other separator', () => {
+    expect(queries.filter(raw => !isWordsJoinedBySingleSpaces(normalizeQuery(raw)))).toEqual([])
   })
 })
 
@@ -47,6 +136,113 @@ describe('scripts', () => {
     expect(isJapaneseOnly('食べる')).toBe(true)
     expect(isJapaneseOnly('taberu')).toBe(false)
     expect(isMixedScript('taberu 食べる')).toBe(true)
+  })
+})
+
+type ScalarRun = [number, number]
+
+const scriptChecksBeforeTheCore: [string, ScalarRun[]][] = [
+  [
+    'Image Search’s lines and words',
+    [
+      [0x3040, 0x30ff],
+      [0x3400, 0x9fff],
+      [0x20000, 0x2fa1f]
+    ]
+  ],
+  [
+    'Image Search’s first recognition pass',
+    [
+      [0x3040, 0x30ff],
+      [0x3400, 0x9fff]
+    ]
+  ],
+  [
+    'Translate',
+    [
+      [0x3041, 0x309f],
+      [0x30a0, 0x30ff],
+      [0x31f0, 0x31ff],
+      [0xff66, 0xff9f],
+      [0x4e00, 0x9fff],
+      [0x3400, 0x4dbf],
+      [0xf900, 0xfaff],
+      [0x3005, 0x3006]
+    ]
+  ],
+  [
+    'search',
+    [
+      [0x3005, 0x3005],
+      [0x3040, 0x30ff],
+      [0x3400, 0x4dbf],
+      [0x4e00, 0x9fff]
+    ]
+  ]
+]
+
+function scalarsIn(runs: ScalarRun[]): number[] {
+  return runs.flatMap(([first, last]) =>
+    Array.from({ length: last - first + 1 }, (_, offset) => first + offset)
+  )
+}
+
+function countedRuns(): ScalarRun[] {
+  const runs: ScalarRun[] = []
+  for (let scalar = 0; scalar <= 0x10ffff; scalar++) {
+    if (scalar >= 0xd800 && scalar <= 0xdfff) continue
+    if (!containsJapaneseText(String.fromCodePoint(scalar))) continue
+    const last = runs.at(-1)
+    if (last && last[1] === scalar - 1) last[1] = scalar
+    else runs.push([scalar, scalar])
+  }
+  return runs
+}
+
+describe('containsJapaneseText', () => {
+  test.each(scriptChecksBeforeTheCore)('counts every scalar %s counted', (_, runs) => {
+    const lost = scalarsIn(runs).filter(
+      scalar => !containsJapaneseText(String.fromCodePoint(scalar))
+    )
+    expect(lost).toEqual([])
+  })
+
+  test('counts exactly the scalars some check counted, as they were written', () => {
+    expect(countedRuns()).toEqual([
+      [0x3005, 0x3006],
+      [0x3040, 0x30ff],
+      [0x31f0, 0x31ff],
+      [0x3400, 0x9fff],
+      [0xf900, 0xfaff],
+      [0xff66, 0xff9f],
+      [0x20000, 0x2fa1f]
+    ])
+  })
+
+  test('finds one anywhere in a text', () => {
+    expect(containsJapaneseText('Suicaカード')).toBe(true)
+    expect(containsJapaneseText('\u{20BB7}野家')).toBe(true)
+    expect(containsJapaneseText('Where is the station?')).toBe(false)
+    expect(containsJapaneseText('  123 ？！ ')).toBe(false)
+  })
+})
+
+describe('writtenLanguage', () => {
+  test('is Japanese with any scalar a check counted, English with an ASCII letter, else none', () => {
+    expect(writtenLanguage('駅まで歩いて何分ですか？')).toBe('ja')
+    expect(writtenLanguage('Suicaカードはどこで買えますか')).toBe('ja')
+    expect(writtenLanguage('\u{4DC0} and \u{20BB7}')).toBe('ja')
+    expect(writtenLanguage('Where can I buy a Suica card?')).toBe('en')
+    expect(writtenLanguage('ＳＵＩＣＡ')).toBeNull()
+    expect(writtenLanguage('  123 ？！ ')).toBeNull()
+  })
+})
+
+describe('japaneseCandidates', () => {
+  test('keeps what is written only in Japanese, normalized, each once, in order', () => {
+    expect(japaneseCandidates(['見る', 'ﾐﾙ', 'miru', '見る', '見る!', '', ' 木 ', 'ミル'])).toEqual(
+      ['見る', 'ミル', '木']
+    )
   })
 })
 
@@ -64,5 +260,26 @@ describe('deinflect', () => {
     expect(terms('行きました')).toContain('行く')
     expect(terms('高くて')).toContain('高い')
     expect(terms('勉強した')).toContain('勉強')
+  })
+
+  test('carries the word class the dictionary form must have, through a chain of endings', () => {
+    const classes = (text: string, term: string) =>
+      deinflect(text)
+        .filter(candidate => candidate.term === term)
+        .flatMap(candidate => candidate.wordClasses)
+    expect(classes('まけたら', 'まける')).toContain('ichidan')
+    expect(classes('まけたら', 'まけたら')).toEqual([])
+    expect(classes('食べさせられなかったら', '食べる')).toContain('ichidan')
+  })
+})
+
+describe('acceptsPartsOfSpeech', () => {
+  test('lets a word class accept only the parts of speech that inflect its way', () => {
+    expect(acceptsPartsOfSpeech('ichidan', ['ichidanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('ichidan', ['noun'])).toBe(false)
+    expect(acceptsPartsOfSpeech('godan', ['godanVerb'])).toBe(true)
+    expect(acceptsPartsOfSpeech('iAdjective', ['iAdjective'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'takesSuru', 'transitive'])).toBe(true)
+    expect(acceptsPartsOfSpeech('suruNoun', ['noun', 'transitive'])).toBe(false)
   })
 })

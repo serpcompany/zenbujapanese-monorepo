@@ -20,7 +20,7 @@ extension FrequencyPackManager {
       FrequencyPackCatalog.bundled(),
       storageDirectory: FileManager.default.temporaryDirectory
         .appending(path: "\(storagePrefix)-\(UUID().uuidString)"),
-      download: { _ in throw CancellationError() }
+      download: { _, _ in throw CancellationError() }
     )
   }
 }

@@ -1042,14 +1042,14 @@
           "reading" : "きっす"
         },
         {
+          "headword" : "食む",
+          "id" : "f00b0cb3395c0a92383a30e81428fa1c",
+          "reading" : "はむ"
+        },
+        {
           "headword" : "食する",
           "id" : "9f8d7172fa1120949c1722e697d4781e",
           "reading" : "しょくする"
-        },
-        {
-          "headword" : "口に運ぶ",
-          "id" : "7667b0f794554eaa670623ddea978984",
-          "reading" : "くちにはこぶ"
         }
       ]
     },
@@ -1104,9 +1104,9 @@
           "reading" : "あんせい"
         },
         {
-          "headword" : "大人しい",
-          "id" : "bf57f7762f8628bc90796424330479d2",
-          "reading" : "おとなしい"
+          "headword" : "ひっそり",
+          "id" : "9c370a841bfdace1fd45fbe13acce454",
+          "reading" : "ひっそり"
         }
       ]
     },
@@ -1146,6 +1146,11 @@
           "reading" : "ムショ"
         },
         {
+          "headword" : "獄舎",
+          "id" : "cdf519c82bbc7a541f1d92f978808a6e",
+          "reading" : "ごくしゃ"
+        },
+        {
           "headword" : "獄屋",
           "id" : "f6d11f3a58bca70796cab3415d5a3386",
           "reading" : "ごくや"
@@ -1159,11 +1164,6 @@
           "headword" : "プリズン",
           "id" : "14385cf8f3a1f632345145e532f1b96a",
           "reading" : "プリズン"
-        },
-        {
-          "headword" : "刑獄",
-          "id" : "ae539b4eb3dbaf4e84c8edeca9fd5ba4",
-          "reading" : "けいごく"
         }
       ]
     },
@@ -1213,14 +1213,14 @@
           "reading" : "しゃ"
         },
         {
+          "headword" : "宿す",
+          "id" : "696d55c2314eb75d99ac5a8dda39a307",
+          "reading" : "やどす"
+        },
+        {
           "headword" : "メゾン",
           "id" : "98592ecb80b7faec688bfb69817949e0",
           "reading" : "メゾン"
-        },
-        {
-          "headword" : "人家",
-          "id" : "a9bcc4eef6a8ac7c5845bfa24e26bd9a",
-          "reading" : "じんか"
         }
       ]
     },
@@ -1230,19 +1230,14 @@
       "resolution" : "direct",
       "results" : [
         {
-          "headword" : "水分",
-          "id" : "c36acf2a68500efbede75ec79e0bdb53",
-          "reading" : "すいぶん"
-        },
-        {
           "headword" : "水",
           "id" : "722c94624b09c10ca07a96c1cb03701f",
           "reading" : "みず"
         },
         {
-          "headword" : "手洗い",
-          "id" : "4c5219287d5466ea3a5b4d286a6bbf13",
-          "reading" : "てあらい"
+          "headword" : "水分",
+          "id" : "c36acf2a68500efbede75ec79e0bdb53",
+          "reading" : "すいぶん"
         },
         {
           "headword" : "お水",
@@ -1250,14 +1245,14 @@
           "reading" : "おみず"
         },
         {
-          "headword" : "ウォーター",
-          "id" : "8dbd6241ed7de0d3297f06dc19153994",
-          "reading" : "ウォーター"
-        },
-        {
           "headword" : "水をやる",
           "id" : "9214d27fe176d33e12a1300b65b47b72",
           "reading" : "みずをやる"
+        },
+        {
+          "headword" : "ウォーター",
+          "id" : "8dbd6241ed7de0d3297f06dc19153994",
+          "reading" : "ウォーター"
         },
         {
           "headword" : "注ぐ",
@@ -1275,9 +1270,128 @@
           "reading" : "ゆうすい"
         },
         {
-          "headword" : "凍結",
-          "id" : "87e3a83f1280d6a99379e6462c2244ca",
-          "reading" : "とうけつ"
+          "headword" : "通す",
+          "id" : "0800fc347e14f1d71501e463722e0cb6",
+          "reading" : "とおす"
+        },
+        {
+          "headword" : "引く",
+          "id" : "725ad020311fc37bf9f5f4f67073b842",
+          "reading" : "ひく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "dog",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "犬",
+          "id" : "681bff8274391329f3ce9ca80a4e04b0",
+          "reading" : "いぬ"
+        },
+        {
+          "headword" : "ドッグ",
+          "id" : "2cedda6078a12c71178433c78d475ee0",
+          "reading" : "ドッグ"
+        },
+        {
+          "headword" : "犬の顔",
+          "id" : "10926b7dd976036164b983dcaa76eb19",
+          "reading" : "いぬのかお"
+        },
+        {
+          "headword" : "ワン子",
+          "id" : "70c9fc24004bfbf8fe8f8f4bacbba8f1",
+          "reading" : "ワンコ"
+        },
+        {
+          "headword" : "ワン公",
+          "id" : "1ac85820038ebbbf5fc675cc6a7875fb",
+          "reading" : "ワンこう"
+        },
+        {
+          "headword" : "トックリ形",
+          "id" : "91d13c3cd31eb8e2bf85000a5ff91ae3",
+          "reading" : "とっくりけい"
+        },
+        {
+          "headword" : "ついて回る",
+          "id" : "770fa5eea49a331071c50563f94859c1",
+          "reading" : "ついてまわる"
+        },
+        {
+          "headword" : "スベタ",
+          "id" : "b1f019088daa8cb76dca96b0b66e9835",
+          "reading" : "スベタ"
+        },
+        {
+          "headword" : "ワンワン",
+          "id" : "98926421956765ffed928c296cbdffc9",
+          "reading" : "ワンワン"
+        },
+        {
+          "headword" : "鮭",
+          "id" : "40bc37d7ddc1a1a4e598a9fe4394d85a",
+          "reading" : "さけ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "cat",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "猫",
+          "id" : "59e7e7802475b49cbe31f60aff9187af",
+          "reading" : "ねこ"
+        },
+        {
+          "headword" : "猫",
+          "id" : "17595517dac59ceb6bc24ce55f1d9336",
+          "reading" : "ねこま"
+        },
+        {
+          "headword" : "ぬこ",
+          "id" : "74e34a8f16792dd7908ddbee85287508",
+          "reading" : "ぬこ"
+        },
+        {
+          "headword" : "家猫",
+          "id" : "9cdf2be40aab312ea2ca1f6ecc705897",
+          "reading" : "いえねこ"
+        },
+        {
+          "headword" : "唐猫",
+          "id" : "2db7bd3ac25d0d1de26381661bf56979",
+          "reading" : "からねこ"
+        },
+        {
+          "headword" : "カト",
+          "id" : "c5f6c0b90f3360c513793b59b257aca6",
+          "reading" : "カト"
+        },
+        {
+          "headword" : "キャット",
+          "id" : "a6f49daa13e873640de3137e1da107f8",
+          "reading" : "キャット"
+        },
+        {
+          "headword" : "クレジットカード与信照会用端末",
+          "id" : "1543e78bf89a557319f91589012478b9",
+          "reading" : "クレジットカードよしんしょうかいようたんまつ"
+        },
+        {
+          "headword" : "にゃん",
+          "id" : "fdd8db6e65831a7f76d65f34b5ee3b25",
+          "reading" : "にゃん"
+        },
+        {
+          "headword" : "にゃんにゃん",
+          "id" : "969ce5933815a34e8a4f883477baca74",
+          "reading" : "にゃんにゃん"
         }
       ]
     },
@@ -1317,16 +1431,6 @@
           "reading" : "みうける"
         },
         {
-          "headword" : "見送る",
-          "id" : "557c6faa01df2309dcfe2dc8a56fda03",
-          "reading" : "みおくる"
-        },
-        {
-          "headword" : "送り出す",
-          "id" : "ff394c616671a824fe0980b25bbea7aa",
-          "reading" : "おくりだす"
-        },
-        {
           "headword" : "見す",
           "id" : "d2ea5ae43851283312eb1ad96983e657",
           "reading" : "めす"
@@ -1335,6 +1439,16 @@
           "headword" : "ご覧じる",
           "id" : "1553f337a3dca303c8be4977acc7517a",
           "reading" : "ごろうじる"
+        },
+        {
+          "headword" : "目にする",
+          "id" : "9059b89cfcf05f559c3389ff24900ee5",
+          "reading" : "めにする"
+        },
+        {
+          "headword" : "御覧ぜらる",
+          "id" : "da9041e105bb61050dd8873534fcecce",
+          "reading" : "ごらんぜらる"
         }
       ]
     },
@@ -1343,31 +1457,6 @@
       "query" : "thank you",
       "resolution" : "direct",
       "results" : [
-        {
-          "headword" : "有難うございます",
-          "id" : "d4148b392890d51b7a69936cabc65f7f",
-          "reading" : "ありがとうございます"
-        },
-        {
-          "headword" : "有難うございました",
-          "id" : "7966f37d02995b7200200bbca05482a4",
-          "reading" : "ありがとうございました"
-        },
-        {
-          "headword" : "どうも",
-          "id" : "241d53310b1bebfc437f26a0f88a0cc8",
-          "reading" : "どうも"
-        },
-        {
-          "headword" : "メルシー",
-          "id" : "1366d88247c98ef977dc5ad1a483b699",
-          "reading" : "メルシー"
-        },
-        {
-          "headword" : "サンキュー",
-          "id" : "bf84fe10e7111700ab1edd2e424da1de",
-          "reading" : "サンキュー"
-        },
         {
           "headword" : "ご馳走様",
           "id" : "36e7053129094ab42c05c04788cfe1dc",
@@ -1384,9 +1473,34 @@
           "reading" : "おつかれさま"
         },
         {
+          "headword" : "有難うございます",
+          "id" : "d4148b392890d51b7a69936cabc65f7f",
+          "reading" : "ありがとうございます"
+        },
+        {
+          "headword" : "有難うございました",
+          "id" : "7966f37d02995b7200200bbca05482a4",
+          "reading" : "ありがとうございました"
+        },
+        {
+          "headword" : "どうも",
+          "id" : "241d53310b1bebfc437f26a0f88a0cc8",
+          "reading" : "どうも"
+        },
+        {
           "headword" : "頂きます",
           "id" : "45bbe04eb717c59ed533c6df51685030",
           "reading" : "いただきます"
+        },
+        {
+          "headword" : "メルシー",
+          "id" : "1366d88247c98ef977dc5ad1a483b699",
+          "reading" : "メルシー"
+        },
+        {
+          "headword" : "サンキュー",
+          "id" : "bf84fe10e7111700ab1edd2e424da1de",
+          "reading" : "サンキュー"
         },
         {
           "headword" : "３９",

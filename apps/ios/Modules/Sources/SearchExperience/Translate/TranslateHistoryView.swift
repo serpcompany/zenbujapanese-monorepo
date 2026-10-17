@@ -1,6 +1,5 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 enum HistoryFilter: Hashable {
   case all
@@ -33,7 +32,7 @@ struct TranslateHistoryView: View {
         conversations(results)
       }
     }
-    .listStyle(.insetGrouped)
+    .groupedList()
     .overlay {
       if filter == .bookmarked, history.bookmarks.isEmpty, history.isLoaded {
         ContentUnavailableView(
@@ -50,11 +49,11 @@ struct TranslateHistoryView: View {
       }
     }
     .searchable(text: $query, prompt: "Search Japanese or English")
-    .searchToolbarBehavior(.minimize)
+    .minimizedSearchToolbar()
     .navigationTitle("Translations")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) { moreMenu }
+      ToolbarItem(placement: .barTrailing) { moreMenu }
     }
     .confirmationDialog(
       "Delete this conversation? This can't be undone.",
@@ -89,7 +88,7 @@ struct TranslateHistoryView: View {
       }
       .contextMenu {
         Button("Copy", systemImage: "doc.on.doc") {
-          UIPasteboard.general.string = conversation.transcript
+          Pasteboard.copy(conversation.transcript)
         }
         ShareLink(item: conversation.transcript) {
           Label("Share", systemImage: "square.and.arrow.up")

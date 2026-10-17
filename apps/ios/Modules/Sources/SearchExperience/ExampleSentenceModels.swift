@@ -1,33 +1,24 @@
 import Foundation
+import Observation
 
-struct ExampleSentenceID: RawRepresentable, Hashable, Comparable, Sendable {
-  static let prefix = "esp1_"
-  static let encodedByteCount = 16
+struct ExampleSentenceID: RawRepresentable, Hashable, Sendable {
+  private static let prefix = "esp1_"
+  private static let hexDigits = 32
 
   let rawValue: String
 
   init?(rawValue: String) {
-    guard rawValue.count == Self.prefix.count + (Self.encodedByteCount * 2),
+    guard rawValue.count == Self.prefix.count + Self.hexDigits,
       rawValue.hasPrefix(Self.prefix),
-      rawValue.dropFirst(Self.prefix.count).allSatisfy({ Self.isLowercaseASCIIHexDigit($0) })
+      rawValue.dropFirst(Self.prefix.count).allSatisfy({
+        ("0"..."9").contains($0) || ("a"..."f").contains($0)
+      })
     else { return nil }
     self.rawValue = rawValue
   }
-
-  init?(bytes: UnsafeRawBufferPointer) {
-    guard bytes.count == Self.encodedByteCount else { return nil }
-    let hex = bytes.hexString
-    self.init(rawValue: Self.prefix + hex)
-  }
-
-  static func < (left: Self, right: Self) -> Bool {
-    left.rawValue < right.rawValue
-  }
-
-  private static func isLowercaseASCIIHexDigit(_ character: Character) -> Bool {
-    ("0"..."9").contains(character) || ("a"..."f").contains(character)
-  }
 }
+
+extension ExampleSentenceID: Decodable {}
 
 struct ExampleSentence: Hashable, Identifiable, Sendable {
   let id: ExampleSentenceID
@@ -35,99 +26,119 @@ struct ExampleSentence: Hashable, Identifiable, Sendable {
   let english: String
 }
 
-enum ExampleSentenceRetrievalRequest: Hashable, Sendable {
-  case directEnglish(SearchQuery)
-  case directJapanese(SearchQuery)
-  case dictionaryEntry(
-    LanguageReferenceID,
-    selectedForm: String,
-    writtenForms: [String],
-    reading: String
-  )
-
-  static func dictionaryEntry(_ entry: DictionaryEntry) -> Self {
-    .dictionaryEntry(
-      entry.id,
-      selectedForm: entry.headword,
-      writtenForms: entry.writtenForms.map(\.value),
-      reading: entry.reading
-    )
-  }
-}
-
-enum ExampleSentenceRetrievalRoute: String, Hashable, Sendable {
-  case directEnglish
-  case directJapanese
-  case dictionaryEntry
-}
-
-enum ExampleSentenceLexicalRelation: Int, Hashable, Sendable {
-  case exactSurfacePhrase = 0
-  case porterEquivalentPhrase = 1
-  case entireJapaneseSentence = 2
-  case containedJapaneseSurface = 3
-  case selectedWrittenForm = 4
-  case alternateWrittenForm = 5
-  case reading = 6
-}
-
-struct ExampleSentenceMatchedRange: Hashable, Sendable {
-  let location: Int
-  let length: Int
-}
-
-struct ExampleSentenceRankInputs: Hashable, Sendable {
-  let lexicalRelation: ExampleSentenceLexicalRelation
-  let matchPosition: Int
-  let englishTermCount: Int
-  let japaneseGraphemeCount: Int
-  let pairID: ExampleSentenceID
-}
-
-struct ExampleSentenceMatch: Hashable, Identifiable, Sendable {
-  var id: ExampleSentenceID { sentence.id }
+struct LinkedExample: Identifiable, Sendable {
   let sentence: ExampleSentence
-  let route: ExampleSentenceRetrievalRoute
-  let lexicalRelation: ExampleSentenceLexicalRelation
-  let matchedRange: ExampleSentenceMatchedRange
-  let exactSurface: Bool
-  let rankInputs: ExampleSentenceRankInputs
+  let words: [JapaneseTextToken]
+
+  var id: ExampleSentenceID { sentence.id }
 }
 
-enum ExampleSentenceResultCount: Hashable, Sendable {
-  case exact(Int)
-  case moreThan50
+struct ExamplePage: Sendable {
+  let examples: [LinkedExample]
+  let listed: Int
+  let countText: String?
+  let cutShort: Bool
+}
 
-  var compatibilityValue: Int {
-    switch self {
-    case .exact(let count): count
-    case .moreThan50: 51
-    }
+struct ExampleBatch: Hashable, Sendable {
+  let from: Int
+  var limit: Int?
+}
+
+struct EntryExamples: Sendable {
+  let page: ExamplePage
+  let count: Int
+  let truncated: Bool
+}
+
+@MainActor
+@Observable
+final class LoadedExamples {
+  typealias Read = @MainActor (ExampleBatch) async -> ExamplePage?
+
+  enum State: Equatable {
+    case loading, failed, empty, listed
   }
-}
 
-struct ExampleSentenceRetrievalResult: Hashable, Sendable {
-  let matches: [ExampleSentenceMatch]
-  let count: ExampleSentenceResultCount
-  let isTruncated: Bool
-  let policyVersion: String
+  private(set) var examples: [LinkedExample] = []
+  private(set) var countText: String?
+  private(set) var laterReadFailed = false
+  private var source: String?
+  private var listed = 0
+  private var firstReadFailed = false
+  private var readingFirst: String?
+  private var owesRestOfPage = false
+  @ObservationIgnored private var loads = 0
+  @ObservationIgnored private var readingMore:
+    (of: String?, from: Int, read: Task<ExamplePage?, Never>)?
 
-  var sentences: [ExampleSentence] { matches.map(\.sentence) }
+  var hasMore: Bool { !laterReadFailed && examples.count < listed }
+
+  func answers(_ source: String) -> Bool {
+    self.source == source
+  }
+
+  func state(of source: String) -> State {
+    guard answers(source), readingFirst != source else { return .loading }
+    if firstReadFailed { return .failed }
+    return examples.isEmpty ? .empty : .listed
+  }
+
+  func load(_ source: String, rowsOnScreen: Int?, read: @escaping Read) async {
+    loads += 1
+    let thisLoad = loads
+    laterReadFailed = false
+    readingFirst = nil
+    if !answers(source) || firstReadFailed {
+      readingFirst = source
+      let first = await read(ExampleBatch(from: 0, limit: rowsOnScreen))
+      guard loads == thisLoad else { return }
+      readingFirst = nil
+      guard !Task.isCancelled else { return }
+      self.source = source
+      firstReadFailed = first == nil
+      examples = first?.examples ?? []
+      countText = first?.countText
+      listed = first?.listed ?? 0
+      owesRestOfPage = first?.cutShort ?? false
+    }
+    if owesRestOfPage { await loadMore(read: read) }
+  }
+
+  func loadMore(read: @escaping Read) async {
+    guard hasMore else { return }
+    let (source, from) = (source, examples.count)
+    let underWay = readingMore.flatMap { $0.of == source && $0.from == from ? $0.read : nil }
+    let reading = underWay ?? Task { await read(ExampleBatch(from: from)) }
+    readingMore = (source, from, reading)
+    let next = await reading.value
+    if readingMore?.read == reading { readingMore = nil }
+    guard self.source == source, examples.count == from else { return }
+    guard let next else {
+      laterReadFailed = true
+      return
+    }
+    guard !next.examples.isEmpty else {
+      if next.listed <= from { listed = next.listed } else { laterReadFailed = true }
+      return
+    }
+    owesRestOfPage = next.cutShort
+    examples += next.examples
+    listed = next.listed
+  }
+
+  func readMoreAgain(read: @escaping Read) async {
+    laterReadFailed = false
+    await loadMore(read: read)
+  }
 }
 
 enum ExampleSentenceInvalidQueryReason: Hashable, Sendable {
-  case empty
-  case wrongLanguage
-  case embeddedQuote
-  case noPorterTerms
   case missingEntryEvidence
 }
 
 enum ExampleSentenceRetrievalUnavailableReason: Hashable, Sendable {
   case missingBundledData
-  case invalidBaseCorpus
-  case invalidIndexMetadata
-  case unavailableFTS4Porter
   case queryFailed
 }
 

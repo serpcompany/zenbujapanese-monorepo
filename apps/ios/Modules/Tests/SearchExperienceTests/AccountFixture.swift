@@ -16,12 +16,44 @@ final class CallCount: @unchecked Sendable {
 }
 
 @MainActor
+final class HeldRetries {
+  private(set) var waits: [TimeInterval] = []
+  private var held: [AsyncStream<Void>.Continuation] = []
+  private let (waitStarted, startWait) = AsyncStream.makeStream(of: Void.self)
+
+  var clock: SyncRetryClock {
+    SyncRetryClock(
+      wait: { [weak self] seconds in await self?.wait(seconds) }, jitter: { $0.upperBound })
+  }
+
+  func waited() async -> [TimeInterval] {
+    var started = waitStarted.makeAsyncIterator()
+    while waits.isEmpty, await started.next() != nil {}
+    return waits
+  }
+
+  func release() {
+    for retry in held { retry.finish() }
+    held = []
+  }
+
+  private func wait(_ seconds: TimeInterval) async {
+    waits.append(seconds)
+    startWait.yield()
+    let (released, retry) = AsyncStream.makeStream(of: Void.self)
+    held.append(retry)
+    for await _ in released {}
+  }
+}
+
+@MainActor
 final class AccountFixture {
   nonisolated static let sessionToken = "session-1.signed"
   nonisolated static let userID = "learner-1"
   nonisolated static let email = "learner@example.com"
   nonisolated static let taberu = "0123456789abcdef0123456789abcdef"
   nonisolated static let miru = "fedcba9876543210fedcba9876543210"
+  nonisolated static let nonce = "nonce-1"
 
   let directory = FileManager.default.temporaryDirectory
     .appending(path: "account-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
@@ -29,6 +61,9 @@ final class AccountFixture {
   let server: StubAccountServer
   let storage: MemorySessionTokenStorage
   var now = Date(timeIntervalSince1970: 1_791_000_000)
+  var providers = SignInProviders.system
+  var googleClientID: String?
+  let retries = HeldRetries()
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
@@ -57,10 +92,12 @@ final class AccountFixture {
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
     account = ZenbuAccount(
-      configuration: AccountServiceConfiguration(serviceURL: server.baseURL, googleClientID: nil),
+      configuration: AccountServiceConfiguration(
+        serviceURL: server.baseURL, googleClientID: googleClientID),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
-      fileURL: directory.appending(path: "account-sync.json"), now: { [unowned self] in now })
+      fileURL: directory.appending(path: "account-sync.json"), providers: providers,
+      now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
   }
@@ -85,8 +122,10 @@ final class AccountFixture {
         .json(200, ["token": accessToken])
       case "POST /v1/auth/email-otp/send-verification-otp":
         .json(200, ["success": true])
-      case "POST /v1/auth/sign-in/email-otp":
+      case "POST /v1/auth/sign-in/email-otp", "POST /v1/auth/sign-in/social":
         .json(200, Self.signedIn(), headers: ["set-auth-token": Self.sessionToken])
+      case "POST /v1/auth/sign-in/nonce":
+        .json(200, ["nonce": Self.nonce])
       case "POST /v1/sync":
         sync(request.sync)
       case "POST /v1/auth/sign-out":

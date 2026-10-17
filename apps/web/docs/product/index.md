@@ -47,6 +47,20 @@ The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.
 
+## Hosts
+
+Production is `zenbujapanese.com` and staging is `staging.zenbujapanese.com`. Another host that
+serves the site, `www.zenbujapanese.com` or a Worker's workers.dev address, redirects (308) to the
+same page on its environment's host in one hop: with the page's trailing slash whether or not the
+request had it, and at a moved page's new address.
+
+- Source: SERP's
+  [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md)
+  standard; #698, which found a `www` page without its slash taking two hops.
+- Check: `src/lib/other-hosts.test.ts`; `apps/web/e2e/urls.spec.ts`, "… reaches … in one hop"
+  and "a workers.dev request that carries the smoke test header is served there" (on the
+  production build); smoke `workers.dev/legal/terms redirects to … in one hop`.
+
 ## What defines the website's behavior
 
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
@@ -67,7 +81,8 @@ five kinds:
 
 - **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
-  `word-detail.json`, and `kanji-detail.json`. Each pins, by SHA-256, the app data files it was
+  `word-detail.json`, and `kanji-detail.json`, and `kanji-element.json` for a page the website
+  doesn't have yet. Each pins, by SHA-256, the app data files it was
   recorded from. The dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay
   them through the shared core on the app's own data, as the service answers the pages.
 - **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
@@ -93,5 +108,11 @@ from the service. Interaction tests
 (`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). Rows without either say
 "No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
 smoke checks.
+
+An interaction test waits for what a click leads to, with `shows` or `vi.waitFor` around the
+expectation, when the click starts work that leaves the JavaScript thread. `click` and `submit` in
+`src/test/account-page.ts` return one turn of the event loop later. That covers the stand-in
+service, whose answers arrive without leaving the thread, and not Sign in with Apple, whose nonce
+is hashed on another thread and can take longer than that turn on a busy machine.
 
 When a behavior changes, update its entry here and its check in the same PR.

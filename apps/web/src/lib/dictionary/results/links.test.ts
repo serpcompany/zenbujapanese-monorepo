@@ -15,8 +15,9 @@ const kanjiOnly: SearchResultsScreen = {
 }
 
 const yorokobi: KanjiDetailsData = {
+  sections: [],
   character: '㐂',
-  stats: [{ label: 'Strokes', value: '12' }],
+  stats: [{ kind: 'strokes', label: 'Strokes', value: '12', spoken: '12 Strokes' }],
   meanings: ['joy'],
   readings: [],
   components: [],
@@ -164,7 +165,7 @@ describe('isIndexable', () => {
       indexed({
         ...yorokobi,
         meanings: [],
-        readings: [{ kind: 'on', label: 'On', value: 'キ', words: [] }]
+        readings: [{ kind: 'on', label: 'On', value: 'キ', words: [], wordsText: '', spoken: null }]
       })
     ).toBe(true)
   })

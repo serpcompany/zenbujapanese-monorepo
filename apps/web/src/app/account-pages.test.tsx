@@ -60,9 +60,9 @@ describe('the account pages', () => {
   test('/forgot-password/ points to Sign in only for the ways the site offers, naming them', async () => {
     for (const [appleServicesId, google, line] of [
       [null, false, null],
-      ['com.zenbujapanese.web', false, 'Made your account with Apple?'],
+      ['com.zenbujapanese.website', false, 'Made your account with Apple?'],
       [null, true, 'Made your account with Google?'],
-      ['com.zenbujapanese.web', true, 'Made your account with Apple or Google?']
+      ['com.zenbujapanese.website', true, 'Made your account with Apple or Google?']
     ] as const) {
       settings.current = { apiUrl: 'https://api.example.com', appleServicesId, google }
       const html = renderToStaticMarkup(await pages['/forgot-password/']())

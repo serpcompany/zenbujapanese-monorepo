@@ -1,7 +1,7 @@
 import { defaultFrequencyPacks, frequencyChips } from '@zenbu/dictionary-core/detail/frequency'
 import { type RubySegment, rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { searchPath } from '@/lib/dictionary/urls'
-import { productionOrigin } from '@/lib/site'
+import { productionOrigin } from '@/lib/origins'
 
 const word = (headword: string, reading: string) => ({
   headword,
@@ -49,7 +49,7 @@ export const listPreview = {
 }
 
 export const frequencyPreview = {
-  enabled: defaultFrequencyPacks.map(pack => pack.disclosure.name),
+  enabled: defaultFrequencyPacks.map(pack => pack.name),
   available: [
     'Japanese Wikipedia',
     'TV & Movies',

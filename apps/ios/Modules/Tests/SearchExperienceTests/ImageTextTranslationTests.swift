@@ -30,7 +30,7 @@ struct ImageTextTranslationTests {
     let model = ImageTextFlowModel(
       assets: [ImageTextAsset(name: "page", data: Data())],
       recognitionClient: ImageTextRecognitionClient { [observations] _ in observations },
-      textAnalysisClient: .characterFallback,
+      textAnalysisClient: .eachLineOneWord,
       translationClient: NaturalTranslationClient(
         availability: { .installed },
         translateAllInstalled: { sources in

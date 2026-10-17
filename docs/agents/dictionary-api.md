@@ -29,14 +29,13 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
   (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
-- Kuromoji's files, for example word links and conjugated form examples. `src/kuromoji.ts` ports
-  `apps/ios/Modules/Sources/SearchExperience/KuromojiMorphologyClient.swift`: it runs the app's
-  kuromoji.js build in a bare V8 context, as the app runs it in a bare JavaScriptCore one, and
-  hands it each dictionary file, still gzipped, through the app's XMLHttpRequest shim. Tokens
-  come back through JSON, as the app decodes them, so an absent reading stays absent. The files
-  are pinned by SHA-256, as the word-detail suite records them: new files are a new tokenizer, so
-  record the suite again. The `Search parity` workflow fails a pull request that changes the port
-  or the Swift without the other.
+- The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
+  for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
+  SHA-256 against its pin, unpacks it, and hands the files to the core's tokenizer
+  (`packages/dictionary-core/src/examples/ipadic.ts`), the same one the app runs
+  ([`dictionary-core.md`](dictionary-core.md), The tokenizer). New files are a new tokenizer:
+  record the tokenizer suite again with `pnpm tokenizer-suite`, and the word-detail and
+  example-search suites on a Mac.
 - Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
   `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
   the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
@@ -56,17 +55,18 @@ echo "DICTIONARY_API_TOKEN=$(openssl rand -hex 24)" > .env
 pnpm dev
 ```
 
-`pnpm dev` restarts on changes and reads `.env`, which is never committed. It runs the TypeScript
-through tsx, whose loader doesn't reach worker threads by itself, so there each thread starts from
-`src/worker-dev.mjs`, which registers the loader first; the image runs the bundle. The service
-hashes the artifact and Sudachi's dictionary, starts its worker threads, and answers `/healthz`
-with 503 until every thread has loaded, then with its build. To run the website against it, name
-it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
+`pnpm dev` restarts on changes and reads `.env`, which is never committed. It listens on this
+checkout's `dictionary` port ([`verification.md`](verification.md)): 8788 in the main checkout. It
+runs the TypeScript through tsx, whose loader doesn't reach worker threads by itself, so each
+thread starts from `src/worker-dev.mjs`, which registers the loader first; the image runs the
+bundle. The service hashes the artifact and Sudachi's dictionary, starts its worker threads, and
+answers `/healthz` with 503 until every thread has loaded, then with its build. To run the website
+against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictionary).
 
 | Variable | Default | What it sets |
 | --- | --- | --- |
 | `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
-| `PORT` | `8788` | The HTTP port. |
+| `PORT` | `8788` | The HTTP port. `pnpm dev` sets this checkout's unless the shell or `.env` has. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
 | `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
@@ -85,15 +85,14 @@ Rules).
 
 ## Routes
 
-Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and
-answers JSON; a query or form is one
-URL-encoded path segment of at most 200 characters (`maximumQueryLength`, which the website
-checks too). The routes stay clear of `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, which the
-API host's nginx sends to the account service. A 404 means there's no such thing: no such word, kanji, or sitemap, a query without
-examples, or an unknown route. A word number or kanji that can't exist, such as word 0, a number
-past any JMdict entry, or two characters, is a 404 too. A 400 names what was malformed; a 401
-means the token is missing or wrong; a 503 means the service is still starting; a 500 says nothing
-more and logs the error.
+Every `/v1` route but the app routes (Apps, below) needs `Authorization: Bearer <token>` and answers
+JSON; a query or form is one URL-encoded path segment of at most 200 characters
+(`maximumQueryLength`, which the website checks too). The routes stay clear of `/v1/auth`, `/v1/me`,
+`/v1/sync`, and `/v1/health`, which the API host's nginx sends to the account service. A 404 means
+there's no such thing: no such word, kanji, or sitemap, a query without examples, or an unknown
+route. A word number or kanji that can't exist, such as word 0, a number past any JMdict entry, or
+two characters, is a 404 too. A 400 names what was malformed; a 401 means the token is missing or
+wrong; a 503 means the service is still starting; a 500 says nothing more and logs the error.
 
 | Route | Answer |
 | --- | --- |
@@ -179,7 +178,7 @@ The main thread hashes the artifact and Sudachi's dictionary once, checks Sudach
 HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
 process's environment, which only the main thread can set, so the main thread sets it
 (`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact
-read-only, checking it, its packs, and Kuromoji's pinned files as they load, and answer calls one
+read-only, checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one
 at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
 thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
 searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
@@ -214,7 +213,7 @@ the app's SQL.
 `noRestrictedImports` enforces each rule (`apps/dictionary-api/biome.json`), with a message that
 says where the code belongs; tests may import anything.
 
-- The readers (`src/artifact.ts`, `src/kuromoji.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
+- The readers (`src/artifact.ts`, `src/tokenizer.ts`, `src/sudachi.ts`, and `src/account-tokens.ts`,
   which reads the account service's keys) and the shared modules (`src/config.ts`,
   `src/rate-limit.ts`, `src/service.ts`, the `DictionaryService` interface) are the bottom layer.
   They import neither of the others, nor Hono.
@@ -241,30 +240,44 @@ pnpm check
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
 (`apps/ios/LanguageData/Conformance/`, ADR 0006) through the service's dictionary on the real
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
-row included), example search (every listed pair ID for 67 queries, and the first 5 sentences'
-words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
+row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
+sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
 highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
 every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
-them). The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
+them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
+`node:sqlite` with the real tokenizer, kanji, and frequency files (`embedded*.conformance.test.ts`),
+where the kanji element suite runs too: the website has no element page yet, so that
+is its only replay. A change that would alter what the app shows fails here before any Swift
+runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
 the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
 test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
 it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
-nothing useful. A suite the app recorded with reduced text analysis runs without Sudachi, as the
+nothing useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception:
+it holds readings and sentences with the romaji Foundation gave them, depends on no data file,
+so it pins none, and it is not among a language-data release's suites, whose packager refuses a
+suite that pins nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and
+through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
 app did. The results suite compares a row's first entry number only: the service keeps its
 Language Reference ID's, the first of the entries the app merged into the row. Where the app's
-example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
-Detail lists no examples, and neither does the page. Without the files the suites skip;
+example retrieval answers an error, the suite records it, and the page lists no examples either;
+none recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
 the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
 it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
-checks the cases the app's manual checks name.
-`conjugation-examples.test.ts` pages a form's examples.
-`full-text.test.ts` checks English search where FTS4 differs from other engines.
+checks the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's
+examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
+`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
-(see Ship it). The `Search parity` workflow pairs the core's ports with their Swift sources.
+(see Ship it).
+
+`pnpm tokenizer-suite` records `apps/ios/LanguageData/Conformance/tokenizer.json` again from the
+tokenizer as it is: each text's tokens, the digest of its random sample, and the dictionary
+files' hashes. `src/conformance/tokenizer.conformance.test.ts` replays it. It was first recorded
+from kuromoji.js, so record it again only when the dictionary files change or the tokenizer is
+meant to answer differently, and read the diff.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
 for `pnpm dev` without a service: the いる homographs and the words written with 要, with two
@@ -301,7 +314,7 @@ cache of the files it reads comes on top; a container's memory reading, such as 
 counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
 
 It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
-least to what changes most: Kuromoji, the language data, Sudachi's dictionary, the installed
+least to what changes most: the tokenizer's dictionary, the language data, Sudachi's dictionary, the installed
 packages, the language-data release's name, and last the bundled code. A code change so makes only a new top layer of a few MB,
 which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
 and moved only when the data changes. `scripts/build.mjs` bundles
@@ -331,10 +344,10 @@ The server's deployer verifies the signature and swaps the image into the enviro
 workflow can do is publish an image and move a tag. The workflow doesn't wait to see the server
 deploy it: Bot Fight Mode on the zone challenges CI runners, both when they ask the service and
 when the website's Worker asks it for them, whatever headers they send, so nothing in CI can see
-which build the service runs. The server's journal says what it deployed, and so do the service's
-`/healthz` and the website's `/dictionary/service.json` in a browser. Nothing confirms staging
-before production either, so with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then
-runs production by hand.
+which build the service runs. The server's journal says what it deployed, as do its Slack alerts
+once on ([`deployer-alerts.md`](deployer-alerts.md)), the service's `/healthz`, and the website's
+`/dictionary/service.json` in a browser. Nothing confirms staging before production either, so
+with `DEPLOY_PRODUCTION` set to `false`, a person checks staging, then runs production by hand.
 
 The `staging` job signs keylessly: cosign gets a certificate for the run's GitHub identity, which
 names this workflow and the branch it ran from. The `staging` environment only accepts `main`, so

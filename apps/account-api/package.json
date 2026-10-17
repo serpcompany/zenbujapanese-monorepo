@@ -9,11 +9,12 @@
     "start": "node dist/server.mjs",
     "build": "node scripts/build.mjs",
     "db:generate": "drizzle-kit generate",
+    "db:check": "drizzle-kit check",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm lint && pnpm typecheck && pnpm db:check && pnpm test && pnpm build"
   },
   "dependencies": {
     "@hono/zod-openapi": "1.6.3",

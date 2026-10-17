@@ -1,4 +1,6 @@
 import { exampleCountText, noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
+import type { Section as WordSection } from '@zenbu/dictionary-core/detail/sections'
+import type { WordSectionKind } from '@zenbu/dictionary-core/detail/word'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, permanentRedirect } from 'next/navigation'
@@ -13,7 +15,12 @@ import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordHeader } from '@/components/dictionary/word-header'
-import { getWordPage, type WordPageData, type WordPageKanji } from '@/lib/dictionary/data'
+import {
+  getWordPage,
+  type WordPageData,
+  type WordPageKanji,
+  type WordPageWithKanji
+} from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { wordExamplesAnchor } from '@/lib/dictionary/results/links'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
@@ -87,12 +94,12 @@ function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
     <p lang="ja" className="text-lg">
       {forms.map((form, index) => {
         const label = (
-          <span className={form.labels.length > 0 ? 'text-muted-foreground' : undefined}>
+          <span className={form.labelText ? 'text-muted-foreground' : undefined}>
             {form.value}
-            {form.labels.length > 0 ? (
+            {form.labelText ? (
               <span lang="en" className="text-sm">
                 {' '}
-                ({form.labels.join(', ')})
+                {form.labelText}
               </span>
             ) : null}
           </span>
@@ -114,69 +121,66 @@ function AlternativeForms({ forms }: { forms: WordPageData['alternatives'] }) {
   )
 }
 
-export default async function WordPage({ params }: Props) {
-  const word = await load(params)
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
-      <PageToolbar
-        page={{ label: word.headword, path: word.path, lang: 'ja' }}
-        shareText={word.shareText}
-      />
-
-      <WordHeader
-        headword={word.headword}
-        ruby={word.ruby}
-        reading={word.reading}
-        pitch={word.pitch}
-        partOfSpeech={word.partOfSpeech}
-        conjugations={word.conjugations}
-      />
-
-      <Section title="Meaning">
-        <ol className="flex flex-col gap-3">
-          {word.senses.map(sense => (
-            <li key={sense.number} className="flex gap-2">
-              <span className="font-medium tabular-nums">{sense.number}.</span>
-              <div>
-                <p className="font-medium">{sense.meaning}</p>
-                {sense.notes.length > 0 ? (
-                  <p className="text-muted-foreground">{sense.notes.join(' · ')}</p>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section title="Frequency">
-        <FrequencySection rows={word.frequencyRows} />
-      </Section>
-
-      {word.conjugations ? <ConjugationsSection conjugations={word.conjugations} /> : null}
-
-      {word.alternatives.length > 0 ? (
-        <Section title="Alternatives">
+function WordPageSection({
+  section,
+  word
+}: {
+  section: WordSection<WordSectionKind>
+  word: WordPageWithKanji
+}) {
+  switch (section.kind) {
+    case 'meaning':
+      return (
+        <Section title={section.title}>
+          <ol className="flex flex-col gap-3">
+            {word.senses.map(sense => (
+              <li key={sense.number} className="flex gap-2">
+                <span className="font-medium tabular-nums">{sense.number}.</span>
+                <div>
+                  <p className="font-medium">{sense.meaning}</p>
+                  {sense.noteText ? (
+                    <p className="text-muted-foreground">{sense.noteText}</p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Section>
+      )
+    case 'frequency':
+      return (
+        <Section title={section.title}>
+          <FrequencySection rows={word.frequencyRows} />
+        </Section>
+      )
+    case 'conjugations':
+      return word.conjugations ? (
+        <ConjugationsSection title={section.title} conjugations={word.conjugations} />
+      ) : null
+    case 'alternatives':
+      return (
+        <Section title={section.title}>
           <div className="flex flex-col gap-2">
             <AlternativeForms forms={word.alternatives.filter(form => form.kind === 'written')} />
             <AlternativeForms forms={word.alternatives.filter(form => form.kind === 'reading')} />
           </div>
         </Section>
-      ) : null}
-
-      {word.kanji.length > 0 ? (
-        <Section title="Kanji">
+      )
+    case 'kanji':
+      return (
+        <Section title={section.title}>
           <KanjiItems kanji={word.kanji} />
         </Section>
-      ) : null}
-
-      {word.alternativeKanji.length > 0 ? (
-        <Section title="Alternative kanji">
+      )
+    case 'alternativeKanji':
+      return (
+        <Section title={section.title}>
           <KanjiItems kanji={word.alternativeKanji} />
         </Section>
-      ) : null}
-
-      {word.related.length > 0 ? (
-        <Section title="Related words">
+      )
+    case 'related':
+      return (
+        <Section title={section.title}>
           <ul className="flex flex-col divide-y">
             {word.related.map(related => (
               <li
@@ -190,36 +194,61 @@ export default async function WordPage({ params }: Props) {
                 ) : (
                   <RubyText segments={related.ruby} className="text-lg font-medium" />
                 )}
-                <p className="text-sm text-muted-foreground">
-                  {related.relation} · {related.summary}
-                </p>
+                <p className="text-sm text-muted-foreground">{related.description}</p>
               </li>
             ))}
           </ul>
         </Section>
-      ) : null}
+      )
+    case 'lists':
+    case 'notes':
+      return (
+        <Section title={section.title}>
+          <LearnerPrompt kind={section.kind} />
+        </Section>
+      )
+    case 'examples':
+      return (
+        <Section title={section.title} id={wordExamplesAnchor}>
+          {word.exampleCount && word.examples.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-muted-foreground">{exampleCountText(word.exampleCount)}</p>
+              <ExampleList
+                initial={word.examples}
+                listed={word.exampleCount.listed}
+                path={word.examplesPath}
+              />
+            </div>
+          ) : (
+            <p className="text-muted-foreground">{noExamplesMessage}</p>
+          )}
+        </Section>
+      )
+  }
+}
 
-      <Section title="Lists">
-        <LearnerPrompt kind="lists" />
-      </Section>
-      <Section title="Notes">
-        <LearnerPrompt kind="notes" />
-      </Section>
+export default async function WordPage({ params }: Props) {
+  const word = await load(params)
+  return (
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
+      <PageToolbar
+        page={{ label: word.headword, path: word.path, lang: 'ja' }}
+        shareText={word.shareText}
+      />
 
-      <Section title="Examples" id={wordExamplesAnchor}>
-        {word.exampleCount && word.examples.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">{exampleCountText(word.exampleCount)}</p>
-            <ExampleList
-              initial={word.examples}
-              listed={word.exampleCount.listed}
-              path={word.examplesPath}
-            />
-          </div>
-        ) : (
-          <p className="text-muted-foreground">{noExamplesMessage}</p>
-        )}
-      </Section>
+      <WordHeader
+        headword={word.headword}
+        ruby={word.ruby}
+        reading={word.reading}
+        pronounce={word.pronounce}
+        pitch={word.pitch}
+        partOfSpeechRow={word.partOfSpeechRow}
+        conjugations={word.conjugations}
+      />
+
+      {word.sections.map(section => (
+        <WordPageSection key={section.kind} section={section} word={word} />
+      ))}
 
       <SourceCredits
         sources={withShownData(pageSources.word, {

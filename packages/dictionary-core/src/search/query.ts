@@ -1,7 +1,11 @@
+import { everyUnitIsAGrapheme } from '../detail/text'
+
 const graphemeSegmenter = new Intl.Segmenter('en', { granularity: 'grapheme' })
 
 export function graphemes(value: string): string[] {
-  return Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
+  return everyUnitIsAGrapheme(value)
+    ? value.split('')
+    : Array.from(graphemeSegmenter.segment(value), segment => segment.segment)
 }
 
 function compareScalars(lhs: string, rhs: string): number {
@@ -27,25 +31,28 @@ export function compareStrings(lhs: string, rhs: string): number {
   return lhs.length - rhs.length
 }
 
+const wordSeparator = /[\p{White_Space}\u{FEFF}]/u
+
+function withoutMarksASpaceCarries(word: string): string {
+  return graphemes(` ${word}`).slice(1).join('')
+}
+
+function foldedWidthAndCase(raw: string): string {
+  const normalized = raw.normalize('NFKC')
+  const lowered = normalized.toLowerCase()
+  return lowered === normalized ? lowered : lowered.normalize('NFKC')
+}
+
 export function normalizeQuery(raw: string): string {
-  const folded = raw.normalize('NFKC').toLowerCase()
-  if (/^[\x20-\x7e]*$/.test(folded)) return folded.split(' ').filter(Boolean).join(' ')
-  const words: string[] = []
-  let word = ''
-  for (const grapheme of graphemes(folded)) {
-    if (/^\p{White_Space}/u.test(grapheme)) {
-      if (word) words.push(word)
-      word = ''
-    } else {
-      word += grapheme
-    }
-  }
-  if (word) words.push(word)
-  return words.join(' ')
+  const folded = foldedWidthAndCase(raw)
+  if (!wordSeparator.test(folded)) return folded
+  if (everyUnitIsAGrapheme(folded)) return folded.split(' ').filter(Boolean).join(' ')
+  const [first, ...afterASeparator] = folded.split(wordSeparator)
+  return [first, ...afterASeparator.map(withoutMarksASpaceCarries)].filter(Boolean).join(' ')
 }
 
 export function isASCII(value: string): boolean {
-  return Array.from(value).every(character => (character.codePointAt(0) ?? 0) < 0x80)
+  return !/[\u0080-\uffff]/.test(value)
 }
 
 function isJapaneseScalar(codePoint: number): boolean {
@@ -55,6 +62,34 @@ function isJapaneseScalar(codePoint: number): boolean {
     (codePoint >= 0x3400 && codePoint <= 0x4dbf) ||
     (codePoint >= 0x4e00 && codePoint <= 0x9fff)
   )
+}
+
+export const japaneseTextRuns: readonly (readonly [number, number])[] = [
+  [0x3005, 0x3006],
+  [0x3040, 0x30ff],
+  [0x31f0, 0x31ff],
+  [0x3400, 0x9fff],
+  [0xf900, 0xfaff],
+  [0xff66, 0xff9f],
+  [0x20000, 0x2fa1f]
+]
+
+const escaped = (scalar: number) => `\\u{${scalar.toString(16)}}`
+
+const japaneseText = new RegExp(
+  `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join('')}]`,
+  'u'
+)
+
+export function containsJapaneseText(text: string): boolean {
+  return japaneseText.test(text)
+}
+
+const latinLetter = /[A-Za-z]/
+
+export function writtenLanguage(text: string): 'ja' | 'en' | null {
+  if (containsJapaneseText(text)) return 'ja'
+  return latinLetter.test(text) ? 'en' : null
 }
 
 export function japaneseSegments(value: string): string[] {
@@ -72,9 +107,19 @@ export function japaneseSegments(value: string): string[] {
   return segments.map(normalizeQuery)
 }
 
+const japaneseScalars = /^[\u3005\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]+$/
+
 export function isJapaneseOnly(value: string): boolean {
-  const segments = japaneseSegments(value)
-  return value !== '' && segments.length === 1 && segments[0] === value
+  return japaneseScalars.test(value) && normalizeQuery(value) === value
+}
+
+export function japaneseCandidates(candidates: readonly string[]): string[] {
+  const kept = new Set<string>()
+  for (const candidate of candidates) {
+    const query = normalizeQuery(candidate)
+    if (isJapaneseOnly(query)) kept.add(query)
+  }
+  return [...kept]
 }
 
 export function isMixedScript(value: string): boolean {

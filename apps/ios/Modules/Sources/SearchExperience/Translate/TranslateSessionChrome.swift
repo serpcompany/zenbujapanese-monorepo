@@ -15,7 +15,6 @@ struct TranslateSessionChrome: ViewModifier {
   let isTranslateSelected: Bool
   let isConversationOnScreen: Bool
   let returnToTranslate: () -> Void
-  @Environment(\.scenePhase) private var scenePhase
 
   private var showsSessionBar: Bool {
     TranslateChromeLayout(
@@ -26,36 +25,32 @@ struct TranslateSessionChrome: ViewModifier {
   func body(content: Content) -> some View {
     withAccessory(content)
       .overlay {
-        if let session = experience.session, let deadline = session.silencePromptDeadline {
+        if let session = experience.session, session.silencePromptDeadline != nil {
           StillThereCard(
-            deadline: deadline,
+            timeLeft: { session.timeBeforeSilencePause ?? 0 },
             timing: session.timing,
             keepListening: { session.keepListening() },
             pause: { session.pause() }
           )
         }
       }
-      .onChange(of: scenePhase) { _, phase in
-        if phase == .background { experience.sceneMovedToBackground() }
-      }
       .onChange(of: experience.session?.isLive == true, initial: true) { _, isLive in
-        UIApplication.shared.isIdleTimerDisabled = isLive
+        ScreenAwake.keepAwake(isLive)
       }
       .background { TranslationDownloadTask(experience: experience) }
   }
 
-  @ViewBuilder
   private func withAccessory(_ content: Content) -> some View {
-    if #available(iOS 26.1, *) {
-      content.tabViewBottomAccessory(isEnabled: showsSessionBar) { accessory }
-    } else {
+    content.bottomAccessory(isEnabled: showsSessionBar) {
+      accessory
+    } fallback: { content in
       content.safeAreaInset(edge: .bottom) {
         if showsSessionBar {
           accessory
             .padding(.vertical, 8)
             .glassEffect(.regular, in: .capsule)
             .padding(.horizontal)
-            .padding(.bottom, 60)
+            .padding(.bottom, TabBarLayout.bottomClearance)
         }
       }
     }
@@ -116,7 +111,7 @@ private struct TranslationDownloadTask: View {
 }
 
 private struct StillThereCard: View {
-  let deadline: Date
+  let timeLeft: () -> TimeInterval
   let timing: ConversationTiming
   let keepListening: () -> Void
   let pause: () -> Void
@@ -126,8 +121,8 @@ private struct StillThereCard: View {
       Color.black.opacity(0.25)
         .ignoresSafeArea()
         .accessibilityHidden(true)
-      TimelineView(.periodic(from: .now, by: 0.25)) { context in
-        let remaining = max(0, deadline.timeIntervalSince(context.date))
+      TimelineView(.periodic(from: .now, by: 0.25)) { _ in
+        let remaining = timeLeft()
         let seconds = Int(remaining.rounded(.up))
         VStack(spacing: 14) {
           Gauge(value: remaining, in: 0...timing.promptCountdown) {
@@ -136,6 +131,7 @@ private struct StillThereCard: View {
             Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
           }
           .gaugeStyle(.accessoryCircularCapacity)
+          .accessibilityIdentifier("translate.still-there.countdown")
           .tint(.accentColor)
           .scaleEffect(1.3)
           .padding(8)
@@ -162,6 +158,7 @@ private struct StillThereCard: View {
         .glassEffect(.regular, in: .rect(cornerRadius: 30))
       }
     }
+    .accessibilityElement(children: .contain)
     .accessibilityAddTraits(.isModal)
     .accessibilityIdentifier("translate.still-there")
   }

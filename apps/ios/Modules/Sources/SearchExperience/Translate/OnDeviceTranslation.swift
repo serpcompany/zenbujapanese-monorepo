@@ -37,7 +37,8 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     },
     stop: { await SystemSpeechPlayer.shared.stop() },
     reachesMicrophone: {
-      await OnDeviceTranscriber.shared.echoCancelledOutput() == nil && outputReachesMicrophone()
+      await OnDeviceTranscriber.shared.echoCancelledOutput() == nil
+        && ConversationAudioSession.outputReachesMicrophone()
     }
   )
 
@@ -53,16 +54,8 @@ final class SystemSpeechPlayer: NSObject, AVSpeechSynthesizerDelegate {
     resetObserver = Self.observeMediaServicesReset()
   }
 
-  nonisolated private static func outputReachesMicrophone() -> Bool {
-    AVAudioSession.sharedInstance().currentRoute.outputs.contains {
-      $0.portType == .builtInSpeaker || $0.portType == .builtInReceiver
-    }
-  }
-
-  nonisolated private static func observeMediaServicesReset() -> any NSObjectProtocol {
-    NotificationCenter.default.addObserver(
-      forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: nil
-    ) { _ in
+  nonisolated private static func observeMediaServicesReset() -> (any NSObjectProtocol)? {
+    ConversationAudioSession.observeMediaServicesReset {
       Task { @MainActor in SystemSpeechPlayer.shared.replaceSynthesizer() }
     }
   }
@@ -153,6 +146,7 @@ struct TranslateServices: Sendable {
   var speechNeedsDownload: @Sendable ([SpokenLanguage]) async throws -> Bool
   var installSpeech: @Sendable ([SpokenLanguage], @escaping @Sendable (Double) -> Void) async throws -> Void
   var timing = ConversationTiming.standard
+  var now: @Sendable () -> Date = Date.init
   var setSpeechSpeed: @MainActor (Double) -> Void = { _ in }
 
   static let onDevice = TranslateServices(

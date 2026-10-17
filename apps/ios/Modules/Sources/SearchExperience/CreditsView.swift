@@ -1,74 +1,37 @@
 import SwiftUI
 
 struct CreditsView: View {
+  private let shown = SourceCredits.shown
+
   var body: some View {
     List {
-      Section {
-        Text(
-          "Zenbu Japanese is built on these open sources. Zenbu converts each one into its own formats and shares converted Creative Commons data under the same license."
-        )
-      }
+      if let shown {
+        Section {
+          Text(verbatim: "Zenbu Japanese is built on these open sources. \(shown.conversionNotice)")
+        }
 
-      Section("JMdict, KANJIDIC2 & RADKFILE") {
-        Text("Dictionary, kanji, and radical data by the Electronic Dictionary Research and Development Group.")
-        LabeledContent("License", value: "CC BY-SA 4.0")
-        Link(
-          "JMdict",
-          destination: URL(
-            string: "https://www.edrdg.org/wiki/index.php/JMdict-EDICT_Dictionary_Project")!)
-        Link(
-          "KANJIDIC2", destination: URL(string: "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project")!)
-        Link("RADKFILE", destination: URL(string: "https://www.edrdg.org/krad/kradinf.html")!)
+        ForEach(shown.credits) { credit in
+          Section(credit.name) {
+            Text(verbatim: credit.credit)
+              .accessibilityIdentifier("credits.source.\(credit.id)")
+            if let notice = credit.notice {
+              Text(verbatim: notice)
+                .accessibilityIdentifier("credits.notice.\(credit.id)")
+            }
+            LabeledContent("License", value: credit.license.name)
+            Link("Project", destination: credit.url)
+          }
+        }
+      } else {
+        Section {
+          Text("Credits unavailable")
+            .accessibilityIdentifier("credits.unavailable")
+        }
       }
-      source(
-        "KanjiVG", credit: "Kanji stroke data by Ulrich Apel.",
-        license: "CC BY-SA 3.0", project: "https://kanjivg.tagaini.net/")
-      source(
-        "Kanjium", credit: "Kanji structure data by Uros O.",
-        license: "CC BY-SA 4.0", project: "https://github.com/mifunetoshiro/kanjium")
-      source(
-        "UniDic",
-        credit: "Pitch-accent data by the National Institute for Japanese Language and Linguistics.",
-        license: "BSD", project: "https://clrd.ninjal.ac.jp/unidic/")
-      source(
-        "JLPT Levels",
-        credit: "Unofficial level estimates from Jonathan Waller's lists, matched to JMdict by stephenmk.",
-        license: "CC BY-SA 4.0", project: "https://github.com/stephenmk/yomitan-jlpt-vocab")
-      source(
-        "JLPT Kanji Levels",
-        credit: "Unofficial level estimates from Jonathan Waller's JLPT kanji lists (tanos.co.uk).",
-        license: "CC BY",
-        project: "https://web.archive.org/web/20200806005029/http://www.tanos.co.uk/jlpt/jlpt5/kanji/")
-      source(
-        "TUBELEX", credit: "YouTube frequency data by Adam Nohejl and contributors.",
-        license: "BSD-3-Clause", project: "https://github.com/naist-nlp/tubelex")
-      source(
-        "Japanese Wikipedia Frequency",
-        credit: "Wikipedia frequency data by Adam Nohejl and contributors.",
-        license: "BSD-3-Clause",
-        project: "https://github.com/adno/wikipedia-word-frequency-clean")
-      source(
-        "Jiten",
-        credit:
-          "TV & Movies, Anime, Manga, Novels, Visual Novels, and Video Games frequency data by Jiten (jiten.moe).",
-        license: "CC BY-SA 4.0", project: "https://jiten.moe/frequency-dictionaries")
-      source(
-        "Sudachi", credit: "Japanese word analysis for Search by Sudachi.rs and SudachiDict.",
-        license: "Apache-2.0 · BSD-3-Clause · MIT",
-        project: "https://github.com/WorksApplications/SudachiDict")
-      source(
-        "Kuromoji", credit: "Interactive text parsing by kuromoji.js with MeCab IPADIC.",
-        license: "Apache-2.0 · IPADIC", project: "https://github.com/takuyaa/kuromoji.js")
-      source(
-        "Tatoeba", credit: "Example sentences by Tatoeba contributors.",
-        license: "CC BY 2.0 FR", project: "https://tatoeba.org/")
-      source(
-        "DaKanji", credit: "Handwriting recognition by Dario Radmann and contributors.",
-        license: "MIT", project: "https://github.com/dariyooo/DaKanji-Single-Kanji-Recognition")
 
       Section {
         NavigationLink("Licenses") {
-          LicensesView()
+          LicensesView(shown: shown)
         }
         .accessibilityIdentifier("credits.licenses")
       }
@@ -76,44 +39,67 @@ struct CreditsView: View {
     .accessibilityIdentifier("credits.list")
     .headerProminence(.increased)
     .navigationTitle("Credits & Attributions")
-    .navigationBarTitleDisplayMode(.inline)
-  }
-
-  private func source(_ name: String, credit: String, license: String, project: String)
-    -> some View
-  {
-    Section(name) {
-      Text(credit)
-      LabeledContent("License", value: license)
-      Link("Project", destination: URL(string: project)!)
-    }
+    .inlineNavigationTitle()
   }
 }
 
+struct BundledLicenseText: Identifiable, Sendable {
+  let source: String
+  var part: String?
+  let resource: String
+  var resourceExtension = "txt"
+  var subdirectory: String?
+
+  var id: String { "\(subdirectory.map { "\($0)/" } ?? "")\(resource).\(resourceExtension)" }
+
+  func title(in shown: SourceCredits?) -> String {
+    part ?? shown?.credit(source)?.name ?? resource
+  }
+
+  static let listed = [
+    BundledLicenseText(source: "kanjivg", resource: "KANJIVG-CC-BY-SA-3.0"),
+    BundledLicenseText(source: "unidic", resource: "UNIDIC-NEW-BSD"),
+    BundledLicenseText(source: "jlpt", resource: "JLPT-VOCABULARY-CC-BY-SA-4.0"),
+    BundledLicenseText(source: "tubelex", resource: "TUBELEX-BSD-3-CLAUSE"),
+    BundledLicenseText(source: "wikipedia", resource: "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE"),
+    BundledLicenseText(source: "sudachi", resource: "SudachiLanguageTechnologyNotices"),
+    BundledLicenseText(source: "kuromoji", resource: "LICENSE-2.0", subdirectory: "Kuromoji"),
+    BundledLicenseText(
+      source: "kuromoji", part: "IPADIC", resource: "NOTICE", resourceExtension: "md",
+      subdirectory: "Kuromoji"),
+    BundledLicenseText(source: "tatoeba", resource: "TATOEBA-NOTICE"),
+    BundledLicenseText(source: "dakanji", resource: "DAKANJI-MIT"),
+  ]
+
+  static let sourcesWithLinkedTerms = ["jmdict", "kanjium", "tatoeba"]
+}
+
 private struct LicensesView: View {
+  let shown: SourceCredits?
+
+  private var linkedTerms: [SourceCredit.License] {
+    BundledLicenseText.sourcesWithLinkedTerms.compactMap { shown?.credit($0)?.license }
+  }
+
   var body: some View {
     List {
       Section("License Texts") {
-        licenseText("KanjiVG", resource: "KANJIVG-CC-BY-SA-3.0")
-        licenseText("UniDic", resource: "UNIDIC-NEW-BSD")
-        licenseText("JLPT Levels", resource: "JLPT-VOCABULARY-CC-BY-SA-4.0")
-        licenseText("TUBELEX", resource: "TUBELEX-BSD-3-CLAUSE")
-        licenseText("Japanese Wikipedia Frequency", resource: "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE")
-        licenseText("Sudachi", resource: "SudachiLanguageTechnologyNotices")
-        licenseText("Kuromoji", resource: "LICENSE-2.0", subdirectory: "Kuromoji")
-        licenseText("IPADIC", resource: "NOTICE", extension: "md", subdirectory: "Kuromoji")
-        licenseText("Tatoeba", resource: "TATOEBA-NOTICE")
-        licenseText("DaKanji", resource: "DAKANJI-MIT")
+        ForEach(BundledLicenseText.listed) { file in
+          NavigationLink(file.title(in: shown)) {
+            BundledLicenseTextView(title: file.title(in: shown), file: file)
+          }
+          .accessibilityIdentifier("licenses.text.\(file.id)")
+        }
       }
 
-      Section("License Terms") {
-        Link("EDRDG License", destination: URL(string: "https://www.edrdg.org/edrdg/licence.html")!)
-        Link(
-          "CC BY-SA 4.0",
-          destination: URL(string: "https://creativecommons.org/licenses/by-sa/4.0/")!)
-        Link(
-          "CC BY 2.0 FR",
-          destination: URL(string: "https://creativecommons.org/licenses/by/2.0/fr/")!)
+      if !linkedTerms.isEmpty {
+        Section("License Terms") {
+          ForEach(linkedTerms, id: \.name) { license in
+            if let url = license.url {
+              Link(license.name, destination: url)
+            }
+          }
+        }
       }
 
       Section {
@@ -124,23 +110,7 @@ private struct LicensesView: View {
       }
     }
     .navigationTitle("Licenses")
-    .navigationBarTitleDisplayMode(.inline)
-  }
-
-  private func licenseText(
-    _ name: String,
-    resource: String,
-    extension resourceExtension: String = "txt",
-    subdirectory: String? = nil
-  ) -> some View {
-    NavigationLink(name) {
-      BundledLicenseTextView(
-        title: name,
-        resource: resource,
-        resourceExtension: resourceExtension,
-        subdirectory: subdirectory
-      )
-    }
+    .inlineNavigationTitle()
   }
 }
 
@@ -159,7 +129,7 @@ private struct TatoebaContributorCreditsView: View {
       }
     }
     .navigationTitle("Tatoeba Contributors")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .task {
       guard credits.isEmpty else { return }
       credits = TatoebaAttributionClient.contributorCredits()
@@ -169,20 +139,18 @@ private struct TatoebaContributorCreditsView: View {
 
 private struct BundledLicenseTextView: View {
   let title: String
-  let resource: String
-  var resourceExtension = "txt"
-  var subdirectory: String?
+  let file: BundledLicenseText
 
   private var text: String {
     let url =
       Bundle.module.url(
-        forResource: resource,
-        withExtension: resourceExtension,
-        subdirectory: subdirectory
+        forResource: file.resource,
+        withExtension: file.resourceExtension,
+        subdirectory: file.subdirectory
       )
       ?? Bundle.module.url(
-        forResource: resource,
-        withExtension: resourceExtension
+        forResource: file.resource,
+        withExtension: file.resourceExtension
       )
     guard let url,
       let contents = try? String(contentsOf: url, encoding: .utf8)
@@ -201,6 +169,6 @@ private struct BundledLicenseTextView: View {
       }
     }
     .navigationTitle(title)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
   }
 }

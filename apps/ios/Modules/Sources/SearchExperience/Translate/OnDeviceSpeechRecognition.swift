@@ -31,7 +31,7 @@ actor OnDeviceTranscriber {
       await stop()
       throw TranslatorFailure.audioUnavailable
     }
-    observers = AnalyzerAudioPipeline.observeInterruptions(
+    observers = ConversationAudioSession.observeInterruptions(
       interrupted: { [weak self] in Task { await self?.fail(.interrupted) } },
       mediaServicesReset: { [weak self] in Task { await self?.replaceEngine() } }
     )
@@ -66,7 +66,7 @@ actor OnDeviceTranscriber {
     feed = nil
     await recognizer.stop()
     gate.set(true)
-    AnalyzerAudioPipeline.releaseSession()
+    ConversationAudioSession.release()
   }
 
   private func fail(_ failure: TranslatorFailure) async {
@@ -81,7 +81,7 @@ actor OnDeviceTranscriber {
 
   private func startAudio() throws {
     guard let feed else { throw TranslatorFailure.audioUnavailable }
-    try AnalyzerAudioPipeline.configureSession(for: capture)
+    try ConversationAudioSession.configure(for: capture)
     let input = engine.inputNode
     try input.setVoiceProcessingEnabled(capture == .nearbyVoices)
     if capture == .nearbyVoices {

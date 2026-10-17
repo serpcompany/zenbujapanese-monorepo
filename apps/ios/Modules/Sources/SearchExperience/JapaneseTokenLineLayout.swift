@@ -71,6 +71,14 @@ enum JapaneseTokenLineBreakBehavior: Equatable, Sendable {
   case normal
   case attachesToPrevious
   case attachesToNext
+
+  init(attaching side: String?) {
+    switch side {
+    case "previous": self = .attachesToPrevious
+    case "next": self = .attachesToNext
+    default: self = .normal
+    }
+  }
 }
 
 struct JapaneseTokenLineBreakBehaviorKey: LayoutValueKey {
@@ -174,29 +182,5 @@ struct JapaneseTokenLineLayout {
       item.lastTextBaseline <= item.size.height
     else { return item.size.height }
     return item.lastTextBaseline
-  }
-}
-
-extension String {
-  var japaneseTokenLineBreakBehavior: JapaneseTokenLineBreakBehavior {
-    let scalars = unicodeScalars
-    guard !scalars.isEmpty,
-      scalars.allSatisfy({ scalar in
-        switch scalar.properties.generalCategory {
-        case .openPunctuation, .closePunctuation, .initialPunctuation, .finalPunctuation,
-          .otherPunctuation:
-          true
-        default:
-          false
-        }
-      })
-    else { return .normal }
-
-    switch scalars.first?.properties.generalCategory {
-    case .openPunctuation, .initialPunctuation:
-      return .attachesToNext
-    default:
-      return .attachesToPrevious
-    }
   }
 }

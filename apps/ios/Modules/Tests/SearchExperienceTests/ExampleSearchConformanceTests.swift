@@ -7,8 +7,8 @@ import Testing
 struct ExampleSearchConformanceTests {
   static let artifactNames =
     [
-      "LanguageReferenceData.sqlite3", "ExampleWordIndex.sqlite3", "Kuromoji/kuromoji.js",
-    ] + KuromojiContract.dictionaryFiles.map { "Kuromoji/\($0)" }
+      "LanguageReferenceData.sqlite3", "ExampleWordIndex.sqlite3",
+    ] + TokenizerDictionary.files.map { "Kuromoji/\($0)" }
 
   @Test("Example search shows what the suite recorded")
   func exampleSearchMatchesSuite() async throws {
@@ -41,8 +41,7 @@ struct ExampleSearchConformanceTests {
 private struct ExampleSearchObserver {
   let lookupClient = LookupClient.live
   let exampleSentenceClient = ExampleSentenceClient.live
-  let textAnalysisClient = JapaneseTextAnalysisClient.resolving(
-    morphologyClient: .kuromoji, lookupClient: .live)
+  let textAnalysisClient = JapaneseTextAnalysisClient.live()
 
   init() async throws {
     guard await textAnalysisClient.availability() == .full else {
@@ -54,48 +53,37 @@ private struct ExampleSearchObserver {
     var observed = ExampleSearchCase(query: recorded.query, covers: recorded.covers)
     let query = SearchQuery(recorded.query)
 
-    let results = try await lookupClient.search(query)
-    observed.count = await SearchResultsScreen.exampleCount(
-      results, query: query,
-      directCount: await SearchResultsScreen.directExampleCount(
-        query, using: exampleSentenceClient),
-      using: exampleSentenceClient)
-    if let count = observed.count, count > 0 {
-      observed.title = SearchResultsScreen.exampleActionTitle(count: count)
-    }
+    let searched = try await SearchedScreen.search(recorded.query)
+    let results = searched.results
+    let row = try? searched.list.examples
+    observed.count = row?.count ?? 0
+    observed.title = row?.title
 
-    let highlightedEntry = results.primaryEntry(for: query)
+    let highlightedEntry = results.primaryEntry
     observed.highlightedEntry = highlightedEntry?.id.rawValue
     observed.usesPrimaryEntryExamples = results.usesPrimaryEntryExamples
 
-    let examples = await ExampleSentencesScreen.examples(
-      query: query,
-      highlightedEntry: highlightedEntry,
-      usesHighlightedEntryExamples: results.usesPrimaryEntryExamples,
-      using: exampleSentenceClient)
-    observed.ids = examples.map(\.id.rawValue)
-    var shown: [ExampleSearchCase.Example] = []
-    for example in examples.prefix(tokenLimit) {
-      let tokens = await textAnalysisClient.linkedTokens(
-        example.japanese, query, highlightedEntry)
-      let queryRanges = ExampleSentencesScreen.queryScalarRanges(
-        in: example.japanese, query: query.value)
-      shown.append(
-        ExampleSearchCase.Example(
-          id: example.id.rawValue,
-          japanese: example.japanese,
-          english: example.english,
-          tokens: tokens.map { token in
-            ExampleSearchCase.Token(
-              surface: token.surface,
-              entry: token.recordedEntryID,
-              candidates: token.recordedCandidateIDs,
-              queryMatch: queryRanges.contains { $0.overlaps(token.scalarRange) } ? true : nil
-            )
-          }
-        ))
+    let listed = await ExamplePage.every {
+      await exampleSentenceClient.listed(
+        query, highlightedEntry, results.usesPrimaryEntryExamples, $0)
     }
-    observed.shown = shown
+    observed.countText = listed.countText
+    observed.ids = listed.examples.map(\.id.rawValue)
+    observed.shown = listed.examples.prefix(tokenLimit).map { example in
+      ExampleSearchCase.Example(
+        id: example.id.rawValue,
+        japanese: example.sentence.japanese,
+        english: example.sentence.english,
+        tokens: example.words.map { token in
+          ExampleSearchCase.Token(
+            surface: token.surface,
+            entry: token.recordedEntryID,
+            candidates: token.recordedCandidateIDs,
+            queryMatch: token.accent == .query ? true : nil
+          )
+        }
+      )
+    }
     return observed
   }
 }
@@ -116,6 +104,7 @@ private struct ExampleSearchCase: Codable {
   let query: String
   let covers: String?
   var count: Int?
+  var countText: String?
   var title: String?
   var highlightedEntry: String?
   var usesPrimaryEntryExamples: Bool?

@@ -127,22 +127,3 @@ body {
   border-radius: 28px;
   z-index: 3;
 }
-
-.badges {
-  position: absolute;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 22px;
-  z-index: 5;
-}
-
-.badges span {
-  padding: 22px 38px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 3px solid rgba(255, 255, 255, 0.55);
-  font-size: 42px;
-  font-weight: 700;
-}

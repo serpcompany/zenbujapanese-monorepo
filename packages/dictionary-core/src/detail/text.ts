@@ -1,39 +1,39 @@
 const segmenter = new Intl.Segmenter('ja', { granularity: 'grapheme' })
 
 export function graphemes(value: string): string[] {
-  return Array.from(segmenter.segment(value), ({ segment }) => segment)
+  return everyUnitIsAGrapheme(value)
+    ? value.split('')
+    : Array.from(segmenter.segment(value), ({ segment }) => segment)
 }
 
-function isSingleUnitGrapheme(unit: number): boolean {
-  return (
-    (unit >= 0x20 && unit <= 0x7e) ||
-    (unit >= 0x3000 &&
-      unit <= 0x30ff &&
-      !(unit >= 0x302a && unit <= 0x302f) &&
-      unit !== 0x3099 &&
-      unit !== 0x309a) ||
-    (unit >= 0x4e00 && unit <= 0x9fff) ||
-    (unit >= 0xff00 && unit <= 0xffef && unit !== 0xff9e && unit !== 0xff9f)
-  )
+const unitsThatAreGraphemes =
+  /^[\x20-\x7e\u3000-\u3029\u3030-\u3098\u309b-\u30ff\u4e00-\u9fff\uff00-\uff9d\uffa0-\uffef]*$/
+
+export function everyUnitIsAGrapheme(value: string): boolean {
+  return unitsThatAreGraphemes.test(value)
+}
+
+const highSurrogate = /[\ud800-\udbff]/
+
+export function scalarCount(value: string): number {
+  return highSurrogate.test(value) ? Array.from(value).length : value.length
 }
 
 export function graphemeCount(value: string): number {
-  for (let index = 0; index < value.length; index++) {
-    if (!isSingleUnitGrapheme(value.charCodeAt(index))) return graphemes(value).length
-  }
-  return value.length
+  return everyUnitIsAGrapheme(value) ? value.length : graphemes(value).length
 }
 
-const codePoints = (value: string) => Array.from(value, scalar => scalar.codePointAt(0) ?? 0)
-
 export function isCJKUnifiedIdeograph(character: string): boolean {
-  return codePoints(character).some(code => code >= 0x3400 && code <= 0x9fff)
+  for (let index = 0; index < character.length; index++) {
+    const unit = character.charCodeAt(index)
+    if (unit >= 0x3400 && unit <= 0x9fff) return true
+  }
+  return false
 }
 
 export function isKanjiCharacter(value: string): boolean {
-  const scalars = codePoints(value)
-  if (scalars.length !== 1) return false
-  const [code] = scalars
+  const code = value.codePointAt(0)
+  if (code === undefined || value.length !== (code > 0xffff ? 2 : 1)) return false
   return (
     (code >= 0x3400 && code <= 0x4dbf) ||
     (code >= 0x4e00 && code <= 0x9fff) ||
@@ -53,4 +53,22 @@ export function katakana(value: string): string {
   return value.replace(/[ぁ-ゖ]/gu, character =>
     String.fromCodePoint((character.codePointAt(0) ?? 0) + 0x60)
   )
+}
+
+export function listedWithAnd(items: readonly string[]): string {
+  return items.length <= 2
+    ? items.join(' and ')
+    : `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`
+}
+
+const glossLength = 18
+
+export function shortGloss(meaning: string): string | null {
+  const withoutNotes = meaning.replace(/\s*\([^)]*\)/gu, '')
+  const first = withoutNotes.split(',').find(part => part !== '') ?? withoutNotes
+  const trimmed = first.replace(/^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu, '')
+  const gloss = trimmed.startsWith('to ') ? trimmed.slice(3) : trimmed
+  if (!gloss) return null
+  const shown = graphemes(gloss)
+  return shown.length > glossLength ? `${shown.slice(0, glossLength - 1).join('')}…` : gloss
 }

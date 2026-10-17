@@ -1,5 +1,6 @@
 import { accountPagesOpen } from './account/availability'
 import { accountPages } from './account/pages'
+import { productionOrigin, stagingOrigin } from './origins'
 import { converterPath, toolsPath } from './tools/paths'
 
 export const site = {
@@ -97,14 +98,6 @@ export function linkTo(id: LinkTargetId): LinkTo {
 export const placeholderLinks: readonly LinkTarget[] = linkTargets.filter(
   link => link.href === placeholderHref
 )
-
-const deployedOrigins = {
-  production: 'https://zenbujapanese.com',
-  staging: 'https://staging.zenbujapanese.com'
-} as const
-
-export const productionOrigin = deployedOrigins.production
-export const stagingOrigin = deployedOrigins.staging
 
 export function isProductionSite() {
   return process.env.SITE_ENV === 'production'

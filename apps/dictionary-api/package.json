@@ -2,14 +2,15 @@
   "name": "zenbujapanese-dictionary-api",
   "version": "0.1.0",
   "private": true,
-  "description": "The website's dictionary service: the shared core (packages/dictionary-core) on the artifact, with Kuromoji and Sudachi (ADR 0009).",
+  "description": "The website's dictionary service: the shared core (packages/dictionary-core) on the artifact, with the core's tokenizer and Sudachi (ADR 0009).",
   "type": "module",
   "scripts": {
-    "dev": "node --env-file-if-exists=.env --watch --import tsx src/server.ts",
+    "dev": "node ../../tools/checks/ports.mjs run dictionary --settings .env -- node --env-file-if-exists=.env --watch --import tsx src/server.ts",
     "start": "node dist/server.mjs",
     "build": "node scripts/build.mjs",
     "sudachi": "node scripts/fetch-sudachi.mjs",
     "fixtures": "node --import tsx scripts/export-fixtures.ts",
+    "tokenizer-suite": "node --import tsx scripts/record-tokenizer-suite.ts",
     "word-cards": "node --import tsx scripts/word-cards.ts",
     "format": "biome format --write",
     "lint": "biome check",
@@ -36,6 +37,6 @@
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.16.0"
   }
 }

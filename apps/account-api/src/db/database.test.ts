@@ -134,6 +134,7 @@ describe('the migrations', () => {
   })
 
   test('fence a restored copy past every version and cursor an app saw, even a second copy of one backup', async () => {
+    const began = Date.now()
     const original = await migrated()
     expect(await fenceIfRestored(drizzle(original))).toBe('first start')
     expect(await fenceIfRestored(drizzle(original))).toBe('same database')
@@ -170,7 +171,7 @@ describe('the migrations', () => {
     const first = await restore()
     const seen = answered(await first.accounts.sync('u1', {}, everyScope))
     const firstVersion = seen.changes[0]?.version ?? 0
-    expect(firstVersion).toBeGreaterThan(Date.now() - 60_000)
+    expect(firstVersion).toBeGreaterThanOrEqual(began)
     const changed = await first.accounts.updateProfile('u1', firstVersion, {
       name: 'On the first copy'
     })
@@ -194,7 +195,7 @@ describe('the migrations', () => {
       'watchedVideo'
     ])
     for (const row of fenced.rows) {
-      expect(Number(row.entity_version)).toBeGreaterThan(Date.now() - 60_000)
+      expect(Number(row.entity_version)).toBeGreaterThan(firstVersion + 1)
     }
     for (const version of [firstVersion, firstVersion + 1]) {
       expect(

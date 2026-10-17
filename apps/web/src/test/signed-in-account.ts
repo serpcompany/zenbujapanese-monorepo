@@ -31,7 +31,7 @@ export const googleWay = { id: 'i3', providerId: 'google', accountId: '109' }
 
 export const settings = (apple = false, google = false): AccountSettings => ({
   apiUrl,
-  appleServicesId: apple ? 'com.zenbujapanese.web' : null,
+  appleServicesId: apple ? 'com.zenbujapanese.website' : null,
   google
 })
 

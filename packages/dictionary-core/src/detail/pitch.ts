@@ -1,4 +1,4 @@
-import type { PitchRow } from './rows'
+import type { EntryRow, PitchRow } from './rows'
 import { graphemes, katakana } from './text'
 
 interface PitchPoint {
@@ -19,6 +19,7 @@ export interface PitchAccent {
   moraCount: number
   particleHigh: boolean
   graph: PitchGraph
+  spoken: string
 }
 
 const joinsPreviousMora = new Set('ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ')
@@ -81,6 +82,11 @@ export function pitchAccent(reading: string, pitch: PitchRow): PitchAccent {
     downstep: pitch.downstep,
     moraCount: pitch.moraCount,
     particleHigh: levels.particle,
-    graph: pitchGraph(kana, levels)
+    graph: pitchGraph(kana, levels),
+    spoken: `Pitch accent, downstep ${pitch.downstep}, ${pitch.moraCount} mora`
   }
+}
+
+export function shownPitch(entry: Pick<EntryRow, 'pitch' | 'compoundPitch'>): PitchRow | null {
+  return entry.pitch ?? entry.compoundPitch
 }

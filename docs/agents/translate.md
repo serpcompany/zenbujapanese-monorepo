@@ -16,7 +16,10 @@ The tab is split across three Swift targets in `apps/ios/Modules`
   - `LiveConversation` is the conversation engine: turns and sentences, provisional and final
     translations, held audio, the turn-end pause (0.8 s), the 30-second cutoff, the silence prompt
     (170 s, then 10 s), pause, resume, the background, and leaving. Times are in
-    `ConversationTiming`.
+    `ConversationTiming`. Its mode (`TranslateMode`: Conversation or Listening) is fixed for the
+    session; muting (`setMuted`) only silences playback, so a muted session keeps its mode. A
+    conversation saved muted when muting was its own mode, stored as `textOnly`, reads as
+    Conversation.
   - It reaches the outside only through `TranscriptionClient`, `SentenceTranslationClient`, and
     `SpeechPlaybackClient` (`TranslatorClients.swift`), structs of closures like the app's other
     clients, so an Online engine is another set of clients, not a change to the engine.
@@ -45,8 +48,8 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     conversation), and takes the account's through `applySynced`. A bookmark whose sentence isn't
     in a conversation here is kept in `Synced Bookmarks/bookmarks.json` in that folder
     (`SharedBookmarks.swift`), which is left in place, and not written, if it can't be read
-    (`bookmarksAreReadOnly`, which stops the account's sync). The
-    account side is in [`ios.md`](ios.md), Account and sync.
+    (`bookmarksProblem`, which stops the account's sync and says whether a newer version wrote it).
+    The account side is in [`ios.md`](ios.md), Account and sync.
 - **`TranslatorOnDevice`** (`apps/ios/Modules/Sources/TranslatorOnDevice/`) holds the Apple
   adapters that don't need the microphone or the screen, and builds for iOS and macOS so the Mac
   can replay recordings through them (Recorded-audio check, below):
@@ -60,23 +63,36 @@ The tab is split across three Swift targets in `apps/ios/Modules`
     `TranslatorCore`.
 - **`SearchExperience`** (`apps/ios/Modules/Sources/SearchExperience/Translate/`) holds the screens
   and the rest of the adapters: `OnDeviceTranscriber` (an actor running `AVAudioEngine`, voice
-  processing, and the audio session, and feeding the microphone to a `BilingualRecognizer`),
+  processing, and the audio session through `ConversationAudioSession`, and feeding the microphone
+  to a `BilingualRecognizer`),
   `OnDeviceTranslation` (Apple Translation's availability and download prompt),
-  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session, History, the
-  remembered mode, and the start checks (microphone, Apple Translation, speech assets), which
-  are on-device-specific and change when an Online engine arrives. The home is
-  `TranslateHomeView`: the four `TranslateStart` options (`TranslateStartPicker`) and Start. Text
-  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document Upload reads the file with
-  `DocumentText` (PDFKit, then Vision text recognition for scanned pages and photos) and pushes
-  the same screen with its text. Muting a conversation still switches it to the internal Text
+  `SystemSpeechPlayer` (`AVSpeechSynthesizer`), and `TranslateExperience`, which owns the session,
+  History, and the start checks (microphone, Apple Translation, speech assets), which are
+  on-device-specific and change when an Online engine arrives. The home is
+  `TranslateHomeView`, a grouped `List` with a header card and the five `TranslateStart` options
+  (`TranslateStart.spokenRows`, then `TranslateStart.writtenRows`) as rows of `SettingsRowLabel`,
+  the row Account uses; a row opens its mode directly. Image shows the window's alert of the
+  `ImageTextSource`s the device offers (Take Photo and Photo Library; on the Mac, Photo Library
+  and Paste Image). `ImageTextImport`, on `SearchExperienceRootView` so drops, Continuity Camera,
+  and ⌘⇧I reach it from any tab, opens that picker once the alert has closed, then selects
+  Translate and pushes Image Search (`ImageTextFlowView`, the `.image` route) onto the Translate
+  stack once the picker has closed. Text
+  pushes `TypedTranslationScreen` with `TypedTranslationCard`; Document reads a PDF or text file
+  with `DocumentText` (PDFKit, then Vision text recognition for scanned pages) and pushes the same
+  screen with its
+  text. Muting a conversation still switches it to the internal Text
   Only mode, which the Translations screen labels Conversation. `TranslateDestinations` pushes
   the Translations screen, its transcripts, and Text for both the Translate tab and Account
   (Account → Translations), and `ConversationHistory.saved` leaves out the conversation still live.
   `SearchExperienceRootView` adds the tab, its navigation stack, and the word sheets for it and
   Account, and `TranslateSessionChrome` adds the session
-  bar for other tabs (`TranslateSessionAccessory`, a `tabViewBottomAccessory`, hidden while the
-  conversation is on screen), the silence prompt, the background pause, and the idle timer (off
-  while a session is live) to the whole `TabView`.
+  bar for other tabs (`TranslateSessionAccessory`, a tab bar accessory through `.bottomAccessory`,
+  hidden while the conversation is on screen), the silence prompt, and `ScreenAwake` (the screen
+  stays on while a session is live) to the whole `TabView`. Every window shares one
+  `TranslateExperience`, made by the scene (`ZenbuJapaneseScenes`), which also pauses a live
+  conversation when the app goes to the background (`AppLifecycle.sceneChanged`), and when its last
+  window closes (`AppLifecycle.lastWindowClosed`), which also drops a start still waiting on the
+  microphone or a download (`TranslateExperience.lastWindowClosed`).
   `TranslateChromeLayout` decides both bars: the tab bar hides only while the conversation itself
   is on screen, and the session bar shows exactly when it doesn't, so a screen pushed over a live
   conversation has both. The conversation itself puts `ConversationControlBar` (mute, speech speed,
@@ -116,8 +132,8 @@ to open.
   English speech, and left open through a long stretch of English it loses the start of the
   next Japanese. So at a pause `BilingualRecognizer` finalizes the Japanese analyzer when it has an
   unfinished sentence, or when it has had no result for 5 s (finalizing it at every pause cut the
-  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so
-  speech that has resumed stays in the next sentence. If its text
+  start of the app's own voice into a phantom 「はい。」), through 0.3 s after the voice ended so speech
+  that has resumed stays in the next sentence. If its text
   was still changing, it checks again every 0.3 s while the room stays quiet, up to four more
   times.
   It finalizes only the Japanese analyzer
@@ -139,32 +155,42 @@ to open.
   sets `translationDownload` and a hidden view runs `prepareTranslation()`.
 - `OnDeviceTranscriber` and `BilingualRecognizer` number each start; a `stop()` that lands while a
   start is still awaiting the analyzer makes that start give up, so a quick Resume then Pause can't
-  leave the microphone on. After a media-services reset it builds a new `AVAudioEngine`, and `SystemSpeechPlayer` a new
-  synthesizer, since the old ones no longer work.
+  leave the microphone on. After a media-services reset it builds a new `AVAudioEngine`, and
+  `SystemSpeechPlayer` a new synthesizer, since the old ones no longer work.
 - A conversation that has been left refuses to start again, so a dialog closing late can't revive
   it.
 - Pausing always stops the recognizer, the audio engine, playback, and the timers, and releases
   the audio session back to `.soloAmbient`, the category the rest of the app uses.
-- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, the session bar is a
-  `safeAreaInset` instead.
+- The cards' list (`LiveConversationView`) never holds fewer rows than it has held: a row that
+  goes away leaves a blank one until a new row takes its place (`ConversationRowFloor`). SwiftUI
+  applies a scroll to the bottom row a frame late, at the row's old position, so a pause that
+  took the live row away in between aborted the app in UIKit, on about one such pause in five.
+- On iOS 26.0, which lacks `tabViewBottomAccessory(isEnabled:)`, and on the Mac, which has no tab
+  bar, the session bar is a `safeAreaInset` instead.
+- The audio session, its interruptions, and its media-services reset exist only on iPhone and
+  iPad. `ConversationAudioSession` (in `SearchExperience/Platform/`) does nothing on the Mac,
+  where `AVAudioEngine` takes the Mac's selected input and output, and reports that the output
+  reaches the microphone, since it can't tell speakers from headphones without Core Audio, so
+  Listening on a Mac stops hearing while it plays. Keeping the screen on is the idle timer on iOS
+  and a `ProcessInfo` activity on the Mac (`ScreenAwake`).
 
 ## Tests
 
-`TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance
-fixture's J-E-J-E turns, held audio, the 30-second cutoff, Text Only, Listening, the silence
-prompt, pause and resume, the background, leaving with and without saving, muting, provisional
-translations, a stalled sentence, failures), conversation playback (echo-cancelled playback
-keeps listening, the app's own voice is ignored, playback waits while someone talks, a finished
-sentence keeps its live translation), the merger, the pause detector, typed-language detection,
-and History storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what
-the app adds around it: reading a
-document's text (`DocumentTextTests`), each conversation's known-word share
-(`ConversationWordsTests`), and the spoken translation's time limit (`SystemSpeechPlayerTests`).
-Run them from `apps/ios/Modules`:
+`TranslatorCoreTests` covers the engine with fake clients and a fake clock (the acceptance fixture's
+J-E-J-E turns, held audio, the 30-second cutoff, Listening, the silence prompt, pause and resume,
+the background, leaving with and without saving, provisional translations, a stalled sentence,
+failures), conversation playback (echo-cancelled playback keeps listening, the app's own voice is
+ignored, playback waits while someone talks, a finished sentence keeps its live translation), muting
+and unmuting in both modes (`ConversationMutingTests`), the merger, the pause detector, and History
+storage, bookmarks and the synced ones included. `SearchExperienceTests` covers what the app adds
+around it: reading a document's text (`DocumentTextTests`), the home's rows (`TranslateStartTests`),
+typed text's language, the core's answer (`WrittenLanguageTests`), each conversation's known-word
+share (`ConversationWordsTests`), and the spoken translation's time limit
+(`SystemSpeechPlayerTests`). Run them from `apps/ios/Modules`:
 
 ```sh
 xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=iOS Simulator,id=<booted-simulator-udid>' \
+  -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```
 
@@ -196,7 +222,7 @@ The engine is checked on an iPhone without anyone speaking:
 1. Install a Zenbu Dev Debug build ([`ios.md`](ios.md), Install on an iPhone) and start a Conversation on the phone.
 2. Make fixtures with `say -v Kyoko -o j1.aiff "今日は東京駅に行きます。"` and `say -v Samantha`, and play them beside the phone with `afplay`. Leave enough time after each one for the translation to play. Keep the Mac quiet enough that the recording doesn't clip: one of the 2026-10-07 runs reached full scale hundreds of times in the monologue, and both the phone and the Mac garbled the same words of it.
 3. Watch with `xcrun devicectl device capture screenshot --device <udid> --destination shot.png`. This works over Wi-Fi. `capture screen-record` doesn't, and iPhone Mirroring silences the microphone.
-4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.app.dev --source "<path>" --destination <file>`:
+4. Read the result with `xcrun devicectl device copy from --device <udid> --domain-type appDataContainer --domain-identifier com.zenbujapanese.dictionary.dev --source "<path>" --destination <file>`:
    - the conversation: `Library/Application Support/Zenbu Japanese/Translate Conversations/<id>.json`;
    - Debug diagnostics (`TranslateDiagnostics`): `Library/Caches/TranslateDiagnostics/<time>/`. `events.log` has every recognizer result, pause, finalize, and spoken translation, and `heard.wav` has the audio the recognizers heard, which the Recorded-audio check replays.
 5. To compare with another app, have the owner screen-record it. iOS records no microphone audio while an app holds the microphone, so read timing from the video.
@@ -250,52 +276,45 @@ engine change on real audio without a phone or a speaker.
 Apple Translation doesn't run in the Simulator, so the live engine can't either. A Debug build
 launched with `ZENBU_TRANSLATE_SCRIPT=station` replaces the clients with a scripted station
 conversation (and TV announcements in Listening, in Japanese then English), fixture translations,
-silent playback, and a 20-second silence prompt, so every screen can be checked:
+silent playback, and a silence prompt (20 s, then two minutes), so every screen can be checked:
 
 ```sh
-SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.app
+SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.dictionary
 ```
 
-Release builds don't contain the harness.
+The conversation, its timer, and the prompt's countdown read the harness's own clock
+(`ScriptedClock`). The Darwin notice `com.zenbujapanese.dictionary.uitests.skip-translate-countdown`
+moves that clock two minutes ahead, past the countdown, so a UI test sees it run out without
+waiting. With `ZENBU_TRANSLATE_HOLD=1` as well, the script waits for the test
+(`ScriptedTranslateControls.swift`): each line stops halfway until the notice `…translate-hear-on`,
+a line that starts a new turn waits for one too, except the first after a start or a resume, each
+translation plays only after `…translate-play-on` (or a mute), and there is no silence prompt or
+30-second cutoff. `ZENBU_TRANSLATE_HOLD=silent` waits for a notice before the first line too, and
+keeps the 20 s prompt, so a test can skip straight to it. A notice posted before its wait is kept for it, but two posted at once may
+arrive as one, so a test posts one and waits for what it lets happen. Release builds don't contain
+the harness.
 
 ## Translate manual checks
 
-In the Simulator, with the harness:
+`TranslateUITests`, `ConversationUITests`, and `HeldConversationUITests` walk every screen on the
+harness, on the iPhone, the iPad, and the Mac; the product docs name the test for each behavior. What they can't see is
+checked by eye:
 
-- **Text**, **Start**, then `Where can I buy a Suica card?`, shows **English →
-  Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
-  Detail at half height. **•••** → **Furigana** shows furigana over the Japanese.
-- The tab opens on Conversation, Listening, Text, and Document Upload; **Start** with Conversation shows the
-  station conversation full screen, without the tab bar: an English card, then a wider gap and one
-  Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
-  active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
-  button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
-  pane over a light English one) and back, and turns on **Furigana**.
-- In Translations, a conversation's transcript has a speaker and a bookmark on each sentence;
-  bookmarking one lists it under **Bookmarked**. Its **•••** → **Furigana** shows furigana, and
-  the conversation and Text screens follow the same switch.
-- Opening a word's full entry shows the full-width session bar above the tab bar; another tab
-  reads **Conversation still listening · Return**, which returns to the conversation.
-- Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and
-  Translations lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
-- Account → **Translations** shows how many conversations are saved and opens the same
-  Translations screen inside Account; a word in a transcript opens at half height, Back returns to Account, and a
-  deletion there lowers the count and leaves the Translate tab's Translations without it. With
-  a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
-  no speaker button.
-- **Listening** leads each card with its translation (English for the Japanese announcements,
-  Japanese for the English one) and plays as it goes. After 20 seconds of silence, **Are you
-  still there?** counts down and pauses with an alert offering **Resume**.
-- While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
-  Auto-Lock at 30 seconds); after a pause it locks as usual.
-- Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
-  no file in `Translate Conversations`.
+- **How it looks**, in the Simulator with the harness. The card being heard, and each card while
+  its translation plays, has a tinted fill and an accent outline, and a new turn starts after a
+  wider gap. The timer is red while listening and gray while paused, and its button a red pause or
+  a blue play; muting dims the speed. **Two Panes**' panes are dark and light. The session bar
+  spans the width above the tab bar. **•••** → **Furigana** puts readings over the Japanese in the
+  conversation, its transcript, and Text. The tests read what the screen says, not its colors or
+  sizes, and furigana isn't an accessibility element.
+- **Auto-Lock.** While listening, the screen doesn't lock (Settings → Display & Brightness →
+  Auto-Lock at 30 seconds); after a pause it locks as usual. XCUITest can't read the idle timer.
 
 On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Install on an iPhone) so the TestFlight
 app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
 harness:
 
-- The first Start asks for the microphone and downloads Apple's languages once, with progress.
+- The first Conversation or Listen asks for the microphone and downloads Apple's languages once, with progress.
 - The acceptance fixture, spoken in turn: `今日は東京駅に行きます。`,
   `Please meet me at Shibuya Station at three o'clock.`, `はい、三時に会いましょう。`,
   `Thank you. See you there.` — four turns, Japanese, English, Japanese, English, each

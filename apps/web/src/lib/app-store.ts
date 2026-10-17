@@ -1,8 +1,8 @@
+import { iosAppBundleId } from './app-links'
 import { edgeCache } from './edge-cache'
 import { errorFields, log } from './log'
 
-const appBundleId = 'com.zenbujapanese.app'
-export const appStoreLookupUrl = `https://itunes.apple.com/lookup?bundleId=${appBundleId}`
+export const appStoreLookupUrl = `https://itunes.apple.com/lookup?bundleId=${iosAppBundleId}`
 
 const lookupCacheSeconds = 24 * 60 * 60
 const failureCacheSeconds = 5 * 60

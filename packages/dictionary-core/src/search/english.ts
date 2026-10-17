@@ -5,7 +5,8 @@ import {
   entryColumns,
   FormKind,
   profile,
-  type SearchDatabase
+  type SearchDatabase,
+  stopIfInterrupted
 } from './database'
 import { ftsPhrase, ftsPrefix } from './fts'
 import { normalizeQuery } from './query'
@@ -26,12 +27,39 @@ const displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
 const hasSearchTerms = (value: string) => /[\p{L}\p{M}\p{N}]/u.test(value)
 const escapeRegExp = (value: string) => value.replace(/[\\^$.*+?()[\]{}|/]/g, '\\$&')
 
-function glossRelation(query: string, gloss: string, token: RegExp): number | null {
+export const glossToken = (query: string) =>
+  new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
+
+function closingParenthesis(note: string): number | null {
+  let depth = 0
+  for (let index = 0; index < note.length; index++) {
+    if (note[index] === '(') depth++
+    if (note[index] === ')') {
+      depth--
+      if (depth === 0) return index
+    }
+  }
+  return null
+}
+
+function endsInNote(gloss: string, phrase: string): boolean {
+  if (!gloss.startsWith(`${phrase} (`)) return false
+  let notes = gloss.slice(phrase.length + 1)
+  for (let close = closingParenthesis(notes); close !== null; close = closingParenthesis(notes)) {
+    notes = notes.slice(close + 1)
+    if (notes === '') return true
+    if (!notes.startsWith(' (')) return false
+    notes = notes.slice(1)
+  }
+  return false
+}
+
+export function glossRelation(query: string, gloss: string, token: RegExp): number | null {
   const value = normalizeQuery(gloss)
   if (value === query) return GlossRelation.exactGloss
-  if (value.startsWith(`${query} (`)) return GlossRelation.qualifiedGloss
+  if (endsInNote(value, query)) return GlossRelation.qualifiedGloss
   if (value === `to ${query}`) return GlossRelation.exactInfinitive
-  if (value.startsWith(`to ${query} (`)) return GlossRelation.qualifiedInfinitive
+  if (endsInNote(value, `to ${query}`)) return GlossRelation.qualifiedInfinitive
   return token.test(value) ? GlossRelation.glossToken : null
 }
 
@@ -64,7 +92,9 @@ export async function rankedEnglish(
   const { rows, glossMatches, romajiMatches } = evidence
 
   const ranked: RankedEntry[] = []
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const entry = decodeEntry(row)
     const displayedFormPriority = profile(row)
     const gloss = glossMatches.get(entry.id) ?? []
@@ -85,7 +115,6 @@ export async function rankedEnglish(
         corroborationRank: 0,
         romajiSpecificityRank: romajiRelation,
         senseOrder: 0,
-        relation: GlossRelation.glossToken,
         glossOrder: 0,
         ...shared
       }
@@ -114,7 +143,6 @@ export async function rankedEnglish(
       corroborationRank: corroborated ? 0 : 1,
       romajiSpecificityRank: 0,
       senseOrder: selectedGloss.senseOrder,
-      relation: selectedGloss.relation,
       glossOrder: selectedGloss.glossOrder,
       ...shared
     }
@@ -127,8 +155,11 @@ export async function rankedEnglish(
       matchedSummary: selectedGloss.meaning
     })
   }
-  ranked.sort((lhs, rhs) => compareEnglishRanks(lhs.rank as EnglishRank, rhs.rank as EnglishRank))
-  return deduplicated(ranked)
+  ranked.sort((lhs, rhs) => {
+    stopIfInterrupted(db, step++)
+    return compareEnglishRanks(lhs.rank as EnglishRank, rhs.rank as EnglishRank)
+  })
+  return deduplicated(ranked, db)
 }
 
 async function exactRomajiEvidence(db: SearchDatabase, query: string) {
@@ -198,9 +229,11 @@ async function glossEvidence(
        WHERE dictionary_gloss_fts MATCH ?`,
     [match]
   )
-  const token = new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, 'u')
+  const token = glossToken(query)
   const result = new Map<string, GlossEvidence[]>()
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const senseWrittenForms: string[] = JSON.parse(row.written_forms)
     const senseReadings: string[] = JSON.parse(row.readings)
     const appliesToShownForms =
@@ -234,7 +267,9 @@ async function romajiEvidence(
     [match]
   )
   const result = new Map<string, number[]>()
+  let step = 0
   for (const row of rows) {
+    stopIfInterrupted(db, step++)
     const relation =
       row.form === query
         ? RomajiRelation.exact

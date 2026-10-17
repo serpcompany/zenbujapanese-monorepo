@@ -1,8 +1,10 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
+import { defaultFrequencyLookups } from '../detail/frequency'
 import type { FrequencyRow } from '../detail/rows'
 import type { Rank } from '../search/rank'
-import type { SearchDatabase, SearchResultItem, SearchResults } from '../search/search'
-import { loadFrequency, orderedItems, searchResultsScreen } from './results'
+import type { SearchResultItem, SearchResults } from '../search/search'
+import { orderedByFrequency } from './ordering'
+import { type FrequencyByEntry, listedResults, resultsLayout, searchResultsScreen } from './results'
 
 const readingExact: Rank = {
   kind: 'japanese',
@@ -20,7 +22,6 @@ const strongGloss: Rank = {
   romajiSpecificityRank: 0,
   senseOrder: 0,
   priorityPresenceRank: 0,
-  relation: 0,
   priorityProfile: { primaryMask: 0, secondaryMask: 0, newsFrequencyBand: null },
   glossOrder: 0,
   headwordLength: 2,
@@ -69,10 +70,15 @@ function frequencyOf(entries: [SearchResultItem, FrequencyRow[]][]) {
   return new Map(entries.map(([entry, rows]) => [entry.entry.id, rows]))
 }
 
-const headwords = (ordered: { entry: { headword: string } }[]) =>
-  ordered.map(result => result.entry.headword)
+const headwords = (ordered: { headword: string }[]) => ordered.map(result => result.headword)
 
-describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
+function orderedItems(found: SearchResults, frequency: FrequencyByEntry) {
+  return orderedByFrequency(listedResults(found).items, id =>
+    defaultFrequencyLookups(frequency.get(id) ?? [])
+  )
+}
+
+describe('orderedByFrequency (SearchResultFrequencyOrdering.ordered)', () => {
   test('orders equal matches by tier, then JLPT, then YouTube, as the app orders いる', () => {
     const hairu = item('入る')
     const iru = item('要る')
@@ -135,15 +141,48 @@ describe('orderedItems (SearchResultFrequencyOrdering.ordered)', () => {
     ])
   })
 
-  test('leaves Discovered Words in their order', () => {
-    const first = item('一')
-    const second = item('二')
-    const frequency = frequencyOf([[second, [jlpt(5)]]])
+  test('gives equally relevant matches one place and a weaker match a later one', () => {
+    const gloss = item('上一', { rank: strongGloss })
+    const first = item('要る')
+    const second = item('入る')
+    const later = item('後', { sourceOrder: 1 })
     expect(
-      headwords(
-        orderedItems(results([first, second], { presentation: 'discoveredWords' }), frequency)
-      )
-    ).toEqual(['一', '二'])
+      listedResults(results([later, first, gloss, second])).items.map(listed => [
+        listed.headword,
+        listed.relevance
+      ])
+    ).toEqual([
+      ['後', 2],
+      ['要る', 1],
+      ['上一', 0],
+      ['入る', 1]
+    ])
+  })
+})
+
+describe('resultsLayout', () => {
+  test('leaves Discovered Words in their order, twelve at most', () => {
+    const many = Array.from({ length: 14 }, (_, index) => item(`語${index}`))
+    const layout = resultsLayout(
+      '猫がnyan',
+      listedResults(results(many, { presentation: 'discoveredWords' })),
+      0
+    )
+    expect(layout.isDiscovered).toBe(true)
+    expect(headwords(layout.presented)).toEqual(
+      headwords(listedResults(results(many)).items).slice(0, 12)
+    )
+  })
+
+  test('lists only the leading entries when asked, as the radical panel does for one character', () => {
+    const listed = listedResults(
+      results([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 2 })
+    )
+    expect(headwords(resultsLayout('一', listed, 0, true).presented)).toEqual(['一', '二'])
+    expect(headwords(resultsLayout('一', listed, 0).presented)).toEqual(['一', '二', '三'])
+    expect(
+      headwords(resultsLayout('一', { ...listed, leadingLexicalEntryCount: 9 }, 0, true).presented)
+    ).toEqual(['一', '二', '三'])
   })
 })
 
@@ -221,46 +260,5 @@ describe('searchResultsScreen (SearchResultsView)', () => {
       new Map()
     )
     expect(screen).toMatchObject({ sections: ['discoveredWords'], kanji: null, resultCount: 12 })
-  })
-})
-
-describe('loadFrequency', () => {
-  test("reads every result's evidence from the JLPT and TUBELEX packs, in catalog order", async () => {
-    const all = vi.fn(async (sql: string, _params: readonly string[]) =>
-      sql.includes('jlpt.level_evidence')
-        ? [{ id: 'a', level: 5 }]
-        : [
-            { id: 'a', rank: 120 },
-            { id: 'b', rank: 9000 }
-          ]
-    )
-    const db: SearchDatabase = { all: all as SearchDatabase['all'] }
-    const frequency = await loadFrequency(
-      db,
-      results([item('一', { id: 'a' }), item('二', { id: 'b' })])
-    )
-    expect(all).toHaveBeenCalledTimes(2)
-    expect(all.mock.calls.map(([, params]) => params)).toEqual([
-      ['a', 'b'],
-      ['a', 'b']
-    ])
-    expect(frequency).toEqual(
-      new Map([
-        [
-          'a',
-          [
-            { pack: 'jlpt', level: 5 },
-            { pack: 'tubelex', rank: 120 }
-          ]
-        ],
-        ['b', [{ pack: 'tubelex', rank: 9000 }]]
-      ])
-    )
-  })
-
-  test('reads nothing without results', async () => {
-    const all = vi.fn()
-    expect(await loadFrequency({ all }, results([]))).toEqual(new Map())
-    expect(all).not.toHaveBeenCalled()
   })
 })

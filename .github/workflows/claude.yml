@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Skip while the CLAUDE_CODE_OAUTH_TOKEN secret isn't set
         if: env.HAS_CLAUDE_TOKEN != 'true'
-        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't answer (docs/agents/ci.md, @claude requests)."
+        run: echo "::notice::CLAUDE_CODE_OAUTH_TOKEN isn't set, so Claude doesn't answer (docs/agents/ci-agents.md, @claude requests)."
 
       - name: Skip a pull request from a fork
         if: env.HAS_CLAUDE_TOKEN == 'true'
@@ -64,7 +64,7 @@ jobs:
             if (!response.ok) throw new Error(`GET /pulls/${process.env.ENTITY_NUMBER} returned ${response.status}`)
             const head = (await response.json())?.head?.repo?.full_name
             if (head === repo) return answer(true)
-            console.log(`::notice::This pull request's branch is in ${head || 'a deleted fork'}, so Claude doesn't answer on it: checking it would run that fork's code with this repository's tokens, and Claude can't push to it (docs/agents/ci.md, @claude requests).`)
+            console.log(`::notice::This pull request's branch is in ${head || 'a deleted fork'}, so Claude doesn't answer on it: checking it would run that fork's code with this repository's tokens, and Claude can't push to it (docs/agents/ci-agents.md, @claude requests).`)
             answer(false)
           }
           main().catch(error => {
@@ -72,22 +72,32 @@ jobs:
             process.exit(1)
           })
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: env.ANSWER == 'true'
         with:
           ref: ${{ env.IS_PR == 'true' && format('refs/pull/{0}/head', env.ENTITY_NUMBER) || env.BASE_BRANCH }}
           fetch-depth: 1
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - name: Take Node's version from main on a branch from before .node-version
+        if: env.ANSWER == 'true' && hashFiles('.node-version') == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/contents/.node-version?ref=$BASE_BRANCH" \
+            --header 'Accept: application/vnd.github.raw' > .node-version
+          mkdir -p .git/info
+          echo .node-version >> .git/info/exclude
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.ANSWER == 'true'
         with:
           package_json_file: package.json
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         if: env.ANSWER == 'true'
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -115,7 +125,7 @@ jobs:
       - name: Answer with Claude
         id: claude
         if: env.ANSWER == 'true'
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
@@ -132,7 +142,7 @@ jobs:
 
       - name: Keep the transcript
         if: always() && env.ANSWER == 'true' && steps.claude.outputs.execution_file != ''
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: claude-transcript
           path: ${{ steps.claude.outputs.execution_file }}
@@ -140,9 +150,10 @@ jobs:
           overwrite: true
 
       - name: Fail unless Claude pushed or replied
-        if: env.ANSWER == 'true'
+        if: ${{ !cancelled() && steps.claude.outcome != 'skipped' }}
         env:
           EXECUTION_FILE: ${{ steps.claude.outputs.execution_file }}
+          CLAUDE_OUTCOME: ${{ steps.claude.outcome }}
           CLAUDE_BRANCH: ${{ steps.claude.outputs.branch_name }}
           CLAUDE_BOT: "claude[bot]"
           GITHUB_TOKEN: ${{ github.token }}
@@ -154,9 +165,11 @@ jobs:
             console.log(`::error title=Claude didn't act on the request::${clean(message, 900)}`)
             process.exit(1)
           }
+          const tokenAdvice = result => result.api_error_status === 401 ? " The API refused the token (401), so renew the CLAUDE_CODE_OAUTH_TOKEN secret (docs/agents/ci-agents.md, Claude's app and token)." : ''
           const readLog = () => {
             const file = process.env.EXECUTION_FILE
             if (!file || !fs.existsSync(file)) {
+              if (process.env.CLAUDE_OUTCOME === 'failure') fail("The Claude step failed before Claude ran, so it wrote no execution log: that step's own log says why.")
               fail('Claude wrote no execution log, so it never ran. The action stops before Claude when the person who asked lacks write access, when the comment has no exact @claude mention, or when this workflow differs from main\'s copy (the log then says "Skipping action due to workflow validation").')
             }
             let messages
@@ -232,7 +245,7 @@ jobs:
             const summary = `Claude: ${result.num_turns} turns in ${Math.round((result.duration_ms || 0) / 1000)}s, about $${Number(result.total_cost_usd || 0).toFixed(2)} (estimate), models: ${models}.`
             console.log(summary)
             if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`)
-            if (result.is_error) fail(`Claude ended with ${result.subtype || 'an error'}.`)
+            if (result.is_error) fail(`Claude ended in an error: ${clean(result.result || result.subtype || 'no message', 400)}${tokenAdvice(result)}`)
             const sets = messages.filter(entry => entry?.type === 'system' && entry.subtype === 'background_tasks_changed')
             const running = (sets.at(-1)?.tasks || []).filter(task => task && !task.ambient)
             if (running.length) fail(`Claude ended with ${running.length} background task(s) still running.`)

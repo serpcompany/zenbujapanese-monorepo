@@ -4,24 +4,21 @@ struct WordDetailView: View {
   @FocusState private var noteEditorFocused: Bool
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
-  @State private var examples: [ExampleSentence] = []
-  @State private var examplesEntryID: LanguageReferenceID?
-  @State private var isLoadingExamples = true
+  @State private var examples = LoadedExamples()
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @State private var showsListPicker = false
-  @State private var frequencyDisclosure: FrequencyDisclosureItem?
+  @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @State private var frequency = FrequencyRanks()
 
   let entry: DictionaryEntry
   let initialEncounterMedia: EncounterMediaAttachment?
   let speechSynthesisClient: SpeechSynthesisClient
   let exampleSentenceClient: ExampleSentenceClient
   let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let frequencyCapability: FrequencyCapability
-  let conjugationTable: ConjugationTable?
   let openRelated: (DictionaryRelationship) -> Void
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
   let openWord: (DictionaryEntry) -> Void
+  let openConjugations: (Conjugations) -> Void
   let manageFrequencyDictionaries: () -> Void
   let openList: (UUID) -> Void
 
@@ -34,11 +31,10 @@ struct WordDetailView: View {
     wordNoteStore: WordNoteStore,
     encounterMediaStore: EncounterMediaStore,
     cameraAuthorizationClient: CameraAuthorizationClient,
-    frequencyCapability: FrequencyCapability,
-    conjugationTable: ConjugationTable?,
     openRelated: @escaping (DictionaryRelationship) -> Void,
     openKanji: @escaping (KanjiCharacter, DictionaryEntry?) -> Void,
     openWord: @escaping (DictionaryEntry) -> Void,
+    openConjugations: @escaping (Conjugations) -> Void,
     manageFrequencyDictionaries: @escaping () -> Void,
     openList: @escaping (UUID) -> Void
   ) {
@@ -51,114 +47,42 @@ struct WordDetailView: View {
     self.speechSynthesisClient = speechSynthesisClient
     self.exampleSentenceClient = exampleSentenceClient
     self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
-    self.frequencyCapability = frequencyCapability
-    self.conjugationTable = conjugationTable
     self.openRelated = openRelated
     self.openKanji = openKanji
     self.openWord = openWord
+    self.openConjugations = openConjugations
     self.manageFrequencyDictionaries = manageFrequencyDictionaries
     self.openList = openList
   }
 
   private var item: SavedItem { .word(entry) }
 
-  private var shareText: String {
-    let heading = entry.reading == entry.headword
-      ? entry.headword : "\(entry.headword)【\(entry.reading)】"
-    let meanings = entry.senses.enumerated().map { "\($0.offset + 1). \($0.element.meaning)" }
-    return ([heading] + meanings).joined(separator: "\n")
-  }
-
   var body: some View {
+    let page = WordPage(entry)
+    let frame = WordPage.frame(for: entry, page: page)
     ScrollViewReader { proxy in
       List {
         Section {
           WordHeroView(
             entry: entry,
+            page: page,
+            pronounceLabel: frame?.pronounce ?? "",
             encounterMedia: photos.displayable,
             removeEncounterMedia: photos.remove,
             pronounce: { speechSynthesisClient.speak(entry.reading) }
           )
-          PartOfSpeechRow(entry: entry, conjugationTable: conjugationTable)
+          PartOfSpeechRow(
+            title: page?.partOfSpeechRow ?? "", entryID: entry.id,
+            conjugations: page?.conjugations, openConjugations: openConjugations)
         }
 
-        Section("MEANING") {
-          MeaningSection(senses: entry.senses)
-        }
-
-        if !frequency.isEmpty {
-          Section("FREQUENCY") {
-            ForEach(frequency.enumerated(), id: \.offset) { _, result in
-              FrequencyRankRow(result: result) {
-                frequencyDisclosure = FrequencyDisclosureItem(result: $0)
-              }
-            }
-          }
-          .accessibilityIdentifier("word-detail.frequency")
-        }
-
-        if !entry.alternativeForms.isEmpty {
-          Section("ALTERNATIVES") {
-            AlternativeFormsSection(forms: entry.alternativeForms, openKanji: openKanji)
+        if let frame {
+          ForEach(frame.sections, id: \.kind) { section in
+            pageSection(section, of: page, in: frame)
           }
         }
-
-        if !entry.primaryKanji.isEmpty {
-          Section("KANJI") {
-            PrimaryKanjiSection(
-              characters: entry.primaryKanji, entry: entry)
-          }
-        }
-
-        if !entry.alternativeKanji.isEmpty {
-          Section("ALTERNATIVE KANJI") {
-            AlternativeKanjiSection(characters: entry.alternativeKanji)
-          }
-        }
-
-        if !entry.relationships.isEmpty {
-          Section("RELATED WORDS") {
-            RelationshipsSection(relationships: entry.relationships, openRelated: openRelated)
-          }
-        }
-
-        Section("LISTS") {
-          SavedItemListsSection(
-            item: item, identifierPrefix: "word-detail", openList: openList
-          ) { showsListPicker = true }
-        }
-
-        Section("NOTES") {
-          SavedItemNotesSection(
-            notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
-          .id("word-note.section")
-        }
-
-        if analysisAvailability == .reduced {
-          Section {
-            Label(
-              "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
-              systemImage: "info.circle"
-            )
-            .font(.footnote)
-            .foregroundStyle(.secondary)
-            .accessibilityIdentifier("word-detail.reduced-analysis")
-          }
-        }
-        ExampleSentenceSections(
-          title: "EXAMPLES",
-          examples: examplesEntryID == entry.id ? examples : [],
-          isLoading: isLoadingExamples || examplesEntryID != entry.id,
-          emptyMessage: "No source-matched examples",
-          highlightedQuery: SearchQuery(entry.headword),
-          highlightedEntry: entry,
-          presentation: { .wordDetail(index: $0) },
-          speechSynthesisClient: speechSynthesisClient,
-          japaneseTextAnalysisClient: japaneseTextAnalysisClient,
-          openWord: openWord
-        )
       }
-      .listStyle(.insetGrouped)
+      .groupedList()
       .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("word-detail.screen")
       .onChange(of: notes.editingNoteID) { _, noteID in
@@ -171,13 +95,14 @@ struct WordDetailView: View {
       }
     }
     .navigationTitle(entry.headword)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .savedItemActions(
-      for: item, identifierPrefix: "word-detail", shareText: shareText, notes: notes,
+      for: item, identifierPrefix: "word-detail", shareText: page?.shareText ?? entry.headword,
+      notes: notes,
       photos: photos, showsListPicker: $showsListPicker)
-    .sheet(item: $frequencyDisclosure) { item in
+    .sheet(item: $frequencyDisclosure) { row in
       FrequencyDisclosureView(
-        item: item,
+        details: row.details,
         manage: {
           frequencyDisclosure = nil
           manageFrequencyDictionaries()
@@ -188,26 +113,95 @@ struct WordDetailView: View {
       notes.finishEditing()
     }
     .task(id: entry.id) {
-      isLoadingExamples = true
+      await notes.load(entry.noteID)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
-      let loadedExamples = (try? await exampleSentenceClient.examples(entry)) ?? []
-      guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
-      frequency =
-        (try? await frequencyCapability.evidence(for: entry.id))
-        ?? [
-          .unavailable(
-            FrequencyPackUnavailable(
-              pack: nil,
-              reason: "Frequency data unavailable"
-            ))
-        ]
-      await notes.load(entry.noteID)
-      guard !Task.isCancelled else { return }
-      examples = loadedExamples
-      examplesEntryID = entry.id
-      isLoadingExamples = false
+    }
+    .screenTask(id: entry.id) { await loadExamples() }
+  }
+
+  private func loadExamples() async {
+    await examples.load(entry.id.rawValue, rowsOnScreen: rowsOnScreen, read: readExamples)
+  }
+
+  private func readExamples(_ batch: ExampleBatch) async -> ExamplePage? {
+    await exampleSentenceClient.shownExamples(entry, batch)
+  }
+}
+
+extension WordDetailView {
+  @ViewBuilder
+  fileprivate func pageSection(
+    _ section: WordPage.Section, of page: WordPage?, in frame: WordPage.Frame
+  ) -> some View {
+    let title = section.title.uppercased()
+    switch section.kind {
+    case .meaning:
+      Section(title) {
+        MeaningSection(senses: page?.senses ?? [])
+      }
+    case .frequency:
+      Section(title) {
+        ForEach((page?.frequency ?? []).enumerated(), id: \.offset) { _, row in
+          FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
+        }
+      }
+    case .conjugations:
+      EmptyView()
+    case .alternatives:
+      Section(title) {
+        AlternativeFormsSection(forms: page?.alternatives ?? [], openKanji: openKanji)
+      }
+    case .kanji:
+      Section(title) {
+        PrimaryKanjiSection(characters: page?.kanji ?? [], entry: entry, openKanji: openKanji)
+      }
+    case .alternativeKanji:
+      Section(title) {
+        AlternativeKanjiSection(characters: page?.alternativeKanji ?? [], openKanji: openKanji)
+      }
+    case .related:
+      Section(title) {
+        RelationshipsSection(
+          related: page?.related ?? [], relationships: entry.relationships,
+          openRelated: openRelated)
+      }
+    case .lists:
+      Section(title) {
+        SavedItemListsSection(
+          item: item, identifierPrefix: "word-detail", openList: openList
+        ) { showsListPicker = true }
+      }
+    case .notes:
+      Section(title) {
+        SavedItemNotesSection(
+          notes: notes, editorFocused: $noteEditorFocused, identifierPrefix: "word-detail")
+        .id("word-note.section")
+      }
+    case .examples:
+      if analysisAvailability == .reduced {
+        Section {
+          Label(
+            "Japanese text analysis is unavailable. Reinstall or update Zenbu to restore word links.",
+            systemImage: "info.circle"
+          )
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("word-detail.reduced-analysis")
+        }
+      }
+      ExampleSentenceSections(
+        title: title,
+        examples: examples,
+        source: entry.id.rawValue,
+        emptyMessage: frame.noExamples,
+        presentation: { .wordDetail(index: $0) },
+        speechSynthesisClient: speechSynthesisClient,
+        read: readExamples,
+        readAgain: { await loadExamples() },
+        openWord: openWord
+      )
     }
   }
 }
@@ -215,6 +209,7 @@ struct WordDetailView: View {
 private struct PrimaryKanjiSection: View {
   let characters: [String]
   let entry: DictionaryEntry
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
     ForEach(characters, id: \.self) { character in
@@ -223,7 +218,8 @@ private struct PrimaryKanjiSection: View {
           kanji: kanji,
           destinationEntry: entry,
           accessibilityLabel: "Kanji \(character)",
-          accessibilityIdentifier: "word-detail.kanji.\(character)"
+          accessibilityIdentifier: "word-detail.kanji.\(character)",
+          openKanji: openKanji
         )
       }
     }
@@ -232,6 +228,7 @@ private struct PrimaryKanjiSection: View {
 
 private struct AlternativeKanjiSection: View {
   let characters: [String]
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
     ForEach(characters, id: \.self) { character in
@@ -240,7 +237,8 @@ private struct AlternativeKanjiSection: View {
           kanji: kanji,
           destinationEntry: nil,
           accessibilityLabel: "Alternative kanji \(character)",
-          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)"
+          accessibilityIdentifier: "word-detail.alternative-kanji.\(character)",
+          openKanji: openKanji
         )
       }
     }
@@ -252,12 +250,14 @@ private struct WordDetailKanjiLink: View {
   let destinationEntry: DictionaryEntry?
   let accessibilityLabel: String
   let accessibilityIdentifier: String
+  let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    NavigationLink(value: SearchExperienceRoute.kanji(kanji, destinationEntry)) {
+    LinkRow {
+      openKanji(kanji, destinationEntry)
+    } label: {
       Text(kanji.rawValue)
         .font(.title2.weight(.semibold))
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     .accessibilityLabel(accessibilityLabel)
     .accessibilityIdentifier(accessibilityIdentifier)
@@ -266,6 +266,8 @@ private struct WordDetailKanjiLink: View {
 
 private struct WordHeroView: View {
   let entry: DictionaryEntry
+  let page: WordPage?
+  let pronounceLabel: String
   let encounterMedia: [EncounterMedia]
   let removeEncounterMedia: (String) async -> Void
   let pronounce: () -> Void
@@ -284,9 +286,9 @@ private struct WordHeroView: View {
 
   private var headline: some View {
     WordHeadline(
-      surface: entry.headword,
-      reading: entry.reading,
-      pitch: entry.pitchAccent,
+      ruby: JapaneseRuby(headwordOf: entry, on: page),
+      pitch: page?.pitch,
+      pronounceLabel: pronounceLabel,
       identifierPrefix: "word-detail",
       pronounce: pronounce
     ) {

@@ -56,43 +56,6 @@ enum AnalyzerAudioPipeline {
     }
   }
 
-  static func configureSession(for capture: CaptureProfile) throws {
-    let session = AVAudioSession.sharedInstance()
-    switch capture {
-    case .nearbyVoices:
-      try session.setCategory(
-        .playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP])
-    case .distantSound:
-      try session.setCategory(
-        .playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetoothA2DP])
-    }
-    try session.setActive(true)
-  }
-
-  static func releaseSession() {
-    let session = AVAudioSession.sharedInstance()
-    try? session.setActive(false, options: .notifyOthersOnDeactivation)
-    try? session.setCategory(.soloAmbient, mode: .default)
-  }
-
-  static func observeInterruptions(
-    interrupted: @escaping @Sendable () -> Void,
-    mediaServicesReset: @escaping @Sendable () -> Void
-  ) -> [any NSObjectProtocol] {
-    let center = NotificationCenter.default
-    let interruption = center.addObserver(
-      forName: AVAudioSession.interruptionNotification, object: nil, queue: nil
-    ) { note in
-      let type = (note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt)
-        .flatMap(AVAudioSession.InterruptionType.init(rawValue:))
-      if type == .began { interrupted() }
-    }
-    let reset = center.addObserver(
-      forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: nil
-    ) { _ in mediaServicesReset() }
-    return [interruption, reset]
-  }
-
   static func observeConfigurationChanges(
     of engine: AVAudioEngine, _ handle: @escaping @Sendable () -> Void
   ) -> any NSObjectProtocol {

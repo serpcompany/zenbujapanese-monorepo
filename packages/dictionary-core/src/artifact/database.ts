@@ -5,13 +5,15 @@ export type SqlValue = string | number | bigint | null | Uint8Array
 
 export interface ArtifactDatabase {
   all<Row>(sql: string, params?: readonly SqlValue[]): Row[]
+  interrupted?(): boolean
 }
 
 export function searchDatabase(db: ArtifactDatabase): SearchDatabase {
   return {
     async all<Row>(sql: string, params: readonly (string | number)[]) {
       return db.all<Row>(sql, params)
-    }
+    },
+    interrupted: () => db.interrupted?.() ?? false
   }
 }
 
@@ -68,15 +70,12 @@ function metadata(db: ArtifactDatabase, schema: string): Map<string, string> {
   return new Map(rows.map(row => [row.key, row.value]))
 }
 
-export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void {
-  const refuse = (message: string): never => {
-    throw new Error(`Refusing the language data: ${message}`)
-  }
+const refuse = (message: string): never => {
+  throw new Error(`Refusing the language data: ${message}`)
+}
+
+function checkExampleIndex(db: ArtifactDatabase): void {
   const main = metadata(db, 'main')
-  const transform = main.get('transform')
-  if (transform === undefined || !supportedTransforms.includes(transform)) {
-    refuse(`unsupported artifact transform ${transform}; the core reads ${supportedTransforms}`)
-  }
   for (const [key, expected] of Object.entries(exampleIndexMetadata)) {
     if (main.get(key) !== expected) refuse(`its ${key} is ${main.get(key)}, not ${expected}`)
   }
@@ -100,12 +99,32 @@ export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void 
   ) {
     refuse("its example index counts don't match its example sentences")
   }
+}
+
+function checkAttached(db: ArtifactDatabase, name: keyof typeof attachments): Map<string, string> {
+  const expected = attachments[name]
+  const recorded = metadata(db, name)
+  const schema = recorded.get('artifact_schema')
+  if (schema !== expected.schema) {
+    refuse(`${expected.file} is ${schema}; the core reads ${expected.schema}`)
+  }
+  return recorded
+}
+
+export function checkExamples(db: ArtifactDatabase): void {
+  checkExampleIndex(db)
+  checkAttached(db, 'word_index')
+}
+
+export function checkArtifact(db: ArtifactDatabase, sourceSha256: string): void {
+  const main = metadata(db, 'main')
+  const transform = main.get('transform')
+  if (transform === undefined || !supportedTransforms.includes(transform)) {
+    refuse(`unsupported artifact transform ${transform}; the core reads ${supportedTransforms}`)
+  }
+  checkExampleIndex(db)
   for (const [name, expected] of Object.entries(attachments)) {
-    const recorded = metadata(db, name)
-    const schema = recorded.get('artifact_schema')
-    if (schema !== expected.schema) {
-      refuse(`${expected.file} is ${schema}; the core reads ${expected.schema}`)
-    }
+    const recorded = checkAttached(db, name as keyof typeof attachments)
     if ('packId' in expected && recorded.get('pack_id') !== expected.packId) {
       refuse(`${expected.file} is pack ${recorded.get('pack_id')}, not ${expected.packId}`)
     }

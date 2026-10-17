@@ -6,7 +6,6 @@ extension TranslateMode {
     switch self {
     case .conversation: String(localized: "Conversation")
     case .listening: String(localized: "Listening")
-    case .textOnly: String(localized: "Conversation")
     }
   }
 
@@ -14,7 +13,6 @@ extension TranslateMode {
     switch self {
     case .conversation: "bubble.left.and.bubble.right"
     case .listening: "ear"
-    case .textOnly: "text.bubble"
     }
   }
 
@@ -92,11 +90,11 @@ extension TranslatorFailure {
   var message: String {
     switch self {
     case .microphoneDenied:
-      String(localized: "Translate needs the microphone to hear the conversation. Turn it on in Settings.")
+      String(localized: "Translate needs the microphone to hear the conversation. Turn it on in \(ThisDevice.settingsApp).")
     case .speechRecognitionUnavailable:
-      String(localized: "Speech recognition isn't available on this iPhone right now. Try again in a moment.")
+      String(localized: "Speech recognition isn't available on this \(ThisDevice.name) right now. Try again in a moment.")
     case .translationUnavailable:
-      String(localized: "On-device translation isn't ready. Download Japanese in Settings › Apps › Translate.")
+      String(localized: "On-device translation isn't ready. Download Japanese in \(ThisDevice.translationLanguagesSettings).")
     case .audioUnavailable:
       String(localized: "The microphone couldn't start. Close other apps that are recording and try again.")
     case .interrupted:
@@ -149,7 +147,6 @@ struct TranslateLinkedText: View {
     if language == .japanese {
       LinkedJapaneseText(
         text: text,
-        highlightedQuery: SearchQuery(""),
         highlightedEntry: nil,
         japaneseTextAnalysisClient: words.analysisClient,
         identifierPrefix: identifier,

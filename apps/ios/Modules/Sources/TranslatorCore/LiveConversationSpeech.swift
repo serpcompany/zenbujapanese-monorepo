@@ -65,7 +65,7 @@ extension LiveConversation {
     let sentence = TranslatedSentence(text: text, translation: provisional)
     conversation.turns[conversation.turns.count - 1].sentences.append(sentence)
     translate(sentence, from: language)
-    enqueuePlayback(mode.playback == .asTranslated ? [sentence.id] : [])
+    enqueuePlayback(playback == .asTranslated ? [sentence.id] : [])
   }
 
   static let coveredShare = 0.95
@@ -78,7 +78,7 @@ extension LiveConversation {
     guard let turn = openTurn else { return }
     openTurnID = nil
     openTurnStartedAt = nil
-    if mode.playback == .afterEachTurn { enqueuePlayback(turn.sentences.map(\.id)) }
+    if playback == .afterEachTurn { enqueuePlayback(turn.sentences.map(\.id)) }
   }
 
   private func translate(_ sentence: TranslatedSentence, from language: SpokenLanguage) {
@@ -157,7 +157,7 @@ extension LiveConversation {
   }
 
   private var playbackMustWait: Bool {
-    mode.playback == .afterEachTurn && liveSentence != nil
+    playback == .afterEachTurn && liveSentence != nil
   }
 
   func enqueuePlayback(_ ids: [UUID]) {
@@ -167,7 +167,7 @@ extension LiveConversation {
   }
 
   private func playbackReachesMicrophone() async -> Bool {
-    mode.playback == .never ? false : await clients.playback.reachesMicrophone()
+    playback == .never ? false : await clients.playback.reachesMicrophone()
   }
 
   private func drainPlayback() async {
@@ -175,18 +175,21 @@ extension LiveConversation {
       if let translating = translationTasks[id] { await translating.value }
       guard status == .live, !Task.isCancelled else { return }
       guard playbackQueue.first == id else { continue }
-      playbackQueue.removeFirst()
       guard let location = location(of: id),
         let translation = conversation.turns[location.turn].sentences[location.sentence]
           .translation
-      else { continue }
+      else {
+        playbackQueue.removeFirst()
+        continue
+      }
       let target = conversation.turns[location.turn].language.counterpart
       if !micClosedForPlayback, await playbackReachesMicrophone() {
         micClosedForPlayback = true
         await clients.transcription.setHearing(false)
       }
       guard status == .live, !Task.isCancelled else { return }
-      guard mode.playback != .never else { break }
+      guard playbackQueue.first == id else { continue }
+      playbackQueue.removeFirst()
       speakingSentenceID = id
       speakingLanguage = target
       echoGuard.startSpeaking(translation)

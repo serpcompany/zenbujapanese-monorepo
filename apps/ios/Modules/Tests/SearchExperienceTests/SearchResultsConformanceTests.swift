@@ -71,7 +71,8 @@ struct SearchResultsConformanceTests {
     guard textAnalysis != "full" else { return }
     let reachedAnalysis =
       observed.resolution == "analyzed" || observed.presentation == "discoveredWords"
-      || ((observed.results ?? []).isEmpty && !SearchQuery(observed.query).isASCII)
+      || ((observed.results ?? []).isEmpty
+        && !SearchQuery(observed.query).value.unicodeScalars.allSatisfy(\.isASCII))
     if reachedAnalysis {
       throw SearchResultsObserverError.dependsOnTextAnalysis(observed.query)
     }
@@ -112,12 +113,12 @@ struct SearchResultsConformanceTests {
 }
 
 private struct SearchResultsObserver {
-  let lookupClient = LookupClient.live
-  let exampleSentenceClient = ExampleSentenceClient.live
   let frequency: FrequencyPackManager
+  let core: PresentationCore
 
   init() async throws {
     frequency = try .freshInstall(storagePrefix: "SearchResultsConformance")
+    core = PresentationCore(listing: frequency.lists)
   }
 
   func enabledPackIDs() async throws -> [String] {
@@ -133,122 +134,66 @@ private struct SearchResultsObserver {
 
   func observe(_ recorded: SearchResultsCase) async throws -> SearchResultsCase {
     var observed = SearchResultsCase(query: recorded.query, covers: recorded.covers)
-    let query = SearchQuery(recorded.query)
-
-    let results = try await lookupClient.search(query)
-    let exampleCount = await SearchResultsScreen.exampleCount(
-      results, query: query,
-      directCount: await SearchResultsScreen.directExampleCount(
-        query, using: exampleSentenceClient),
-      using: exampleSentenceClient)
-    observed.resolution =
-      switch results.resolution {
-      case .direct: "direct"
-      case .deinflected: "deinflected"
-      case .analyzed: "analyzed"
-      }
-    observed.presentation =
-      switch results.presentation {
-      case .ranked: "ranked"
-      case .discoveredWords: "discoveredWords"
-      }
-    guard !SearchResultsScreen.showsNoResults(results, exampleCount: exampleCount, query: query)
-    else {
+    let searched = try await SearchedScreen.search(recorded.query, using: core)
+    let results = searched.results
+    observed.resolution = results.resolution.rawValue
+    observed.presentation = results.presentation.rawValue
+    guard case .results(let list) = searched.screen else {
       observed.state = "noResults"
       return observed
     }
     observed.state = "results"
-
-    let presentedEntries = SearchResultsScreen.presentedEntries(results, rankedEntryLimit: nil)
-    let displayedIDs = SearchResultsScreen.displayedEntryIDs(presentedEntries)
-    let capability = FrequencyCapability(batchLookup: { [frequency] ids in
-      try await frequency.evidence(for: ids)
-    })
-    let ranks = try await SearchFrequencyLoader.load(
-      SearchFrequencyTaskID(entryIDs: displayedIDs, refreshID: 0), using: capability
-    ).results
-    let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries, ranks: ranks)
-
-    var sections: [String] = []
-    if exampleCount > 0 {
-      sections.append("examples")
-      observed.examples = SearchResultsCase.Examples(
-        title: SearchResultsScreen.exampleActionTitle(count: exampleCount),
-        count: exampleCount,
-        primaryEntry: results.usesPrimaryEntryExamples
-          ? results.primaryEntry(for: query)?.id.rawValue : nil
-      )
+    observed.sections = list.sections.map(\.rawValue)
+    observed.examples = list.examples.map {
+      SearchResultsCase.Examples(
+        title: $0.title, count: $0.count,
+        primaryEntry: $0.usesHighlightedEntryExamples ? $0.highlightedEntry : nil)
     }
-    if let refinement = results.readingRefinement {
-      sections.append("readingRefinement")
-      observed.readingRefinement = SearchResultsCase.Refinement(
-        title: SearchResultsScreen.readingRefinementTitle(refinement),
-        query: refinement.query.value)
+    observed.readingRefinement = list.readingRefinement.map {
+      SearchResultsCase.Refinement(title: $0.title, query: $0.query)
     }
-
-    let shownEntries: [DictionaryEntry]
-    switch SearchResultsScreen.list(query: query, results: results, ordered: orderedEntries) {
-    case .discoveredWords(let entries):
-      sections.append("discoveredWords")
-      observed.heading = SearchResultsScreen.discoveredWordsHeading
-      shownEntries = entries
-      observed.voiceOverCount = entries.count
-    case .ranked(let kanji, let entries):
-      sections.append("results")
-      if let kanji {
-        let entry = results.primaryEntry(for: query)
-        observed.kanji = SearchResultsCase.Kanji(
-          character: kanji.rawValue,
-          label: SearchResultsScreen.kanjiLabel,
-          summary: SearchResultsScreen.kanjiSummary(entry),
-          entry: entry?.id.rawValue
-        )
-      }
-      shownEntries = entries
-      observed.voiceOverCount = SearchResultsScreen.rankedCount(query: query, entries: entries)
-    case .none:
-      shownEntries = []
+    observed.heading = list.heading
+    observed.kanji = list.kanji.map {
+      SearchResultsCase.Kanji(
+        character: $0.character, label: $0.label, summary: $0.summary, entry: $0.entry)
     }
-
-    observed.results = shownEntries.map { entry in
-      let relevance = results.relevance(for: entry)
+    let items = Dictionary(
+      searched.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+    observed.results = try list.rows.map { row in
+      let entry = try searched.entry(row.id)
       return SearchResultsCase.Row(
-        languageReferenceID: entry.id.rawValue,
+        languageReferenceID: row.id,
         entSeq: entry.sourceProvenances.map(\.sourceRecordID),
         headword: entry.headword,
         reading: entry.reading,
-        summary: results.displaySummary(for: entry),
-        chips: SearchFrequencyRankPresentationModel(ranks: ranks[entry.id])
-          .collapsed(to: .max).chips.map { chip in
-            SearchResultsCase.Chip(
-              pack: chip.pack?.id.rawValue,
-              name: chip.packName,
-              text: chip.inlineText,
-              tier: chip.tier?.label
-            )
-          },
-        match: Self.describe(relevance),
-        retrievalOrder: results.fallbackOrder(for: entry)
+        summary: row.summary,
+        chips: row.chips.map { chip in
+          SearchResultsCase.Chip(
+            pack: chip.pack, name: chip.source, text: chip.value, tier: chip.tier?.spoken)
+        },
+        match: items[row.id]?.match ?? "",
+        retrievalOrder: items[row.id]?.fallbackOrder ?? .max
       )
     }
-    if results.presentation != .discoveredWords {
-      observed.frequencyNotice = SearchFrequencyUnavailableNotice.text(
-        for: displayedIDs.compactMap { ranks[$0] })
+    if list.sections.contains(.discoveredWords) {
+      observed.voiceOverCount = list.rows.count
+    } else if list.sections.contains(.results) {
+      observed.voiceOverCount = list.rows.count + (list.kanji == nil ? 0 : 1)
     }
-    observed.sections = sections
+    observed.frequencyNotice = list.frequencyNotice
     return observed
   }
+}
 
-  private static func describe(_ relevance: DictionaryRelevance) -> String {
-    let match =
-      switch relevance.matchRank {
-      case .japanese(let rank): "japanese \(rank.relation)"
-      case .english(let rank):
-        "english \(rank.lane) corroboration=\(rank.corroborationRank) "
-          + "romaji=\(rank.romajiSpecificityRank) sense=\(rank.senseOrder) \(rank.relation)"
-      }
-    return "source=\(relevance.sourceOrder) \(match)"
+extension FrequencyTier {
+  var spoken: String {
+    switch self {
+    case .veryCommon: "very common"
+    case .common: "common"
+    case .moderate: "moderately common"
+    case .uncommon: "uncommon"
+    case .rare: "rare"
+    }
   }
 }
 

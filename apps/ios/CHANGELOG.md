@@ -6,6 +6,103 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
+  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
+  the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
+  the top, where they open into a sidebar; on the Mac the tabs sit in a bar at the top of the
+  window. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
+  goes to Search, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to ⌘4 switch tabs.
+  On the Mac, **Image** pastes an image in place of taking a photo, and a photo taken on your
+  iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
+  window to open them there. Right-click a list, a known word, a Recent video, or a frequency
+  dictionary on the Mac for what a swipe does on the iPhone.
+- Sort search results from the **Sorted by** row at the top of the results: a frequency
+  dictionary, most common first (JLPT by level), or your known words, known
+  first. Your choice stays across launches and applies to Japanese, English, and romaji
+  searches.
+- Filter search results to known or unknown words from the same **Sorted by** row. The row shows
+  when a filter is on, and your filter stays across launches.
+- Translate's **Listen** has the speaker button too: mute spoken translations while the
+  translated cards keep coming.
+- Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
+  first 100 of more than 100 examples".
+
+### Changed
+
+- Image Search moved from Search's camera button to Translate's **Image** row: take a photo or
+  pick one from your library, then tap any word to look it up.
+- Translate's home is laid out like Settings: a header, then **Spoken** (Conversation, Listen) and
+  **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
+  **Document** opens PDFs and text files.
+- Image Search can open up to 8 photos from your library at once.
+- Search's top bar matches Player's: a small title and the same search field, which slides up
+  while you type and keeps your query after a search, with **X** to go back to your recent
+  searches.
+- Search has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
+  slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
+  you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
+  have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
+- Player works out how many of a video's words you know more than twice as fast, so
+  **Counting known words…** gives way to the percentage sooner on a long video, and a video you
+  go back to while Zenbu stays open usually shows it at once. Translate counts a conversation's
+  words the same way.
+
+### Removed
+
+- Image Search no longer opens image files from Files; choose them from your photo library.
+- Translate's **Document** no longer reads photos; use **Image**, which also lets you tap words.
+
+### Fixed
+
+- Example sentences appear with their words already linked, with furigana, on Example Sentences,
+  a word's Examples, and a conjugated form's examples; a sentence used to be drawn as plain text
+  and then redrawn at another height. Long lists show 25 sentences and bring more as you scroll,
+  and Example Sentences keeps your place when you come back from a word.
+- Example sentences that couldn’t be loaded now say so, with **Retry**; a word's page used to say
+  it had no source-matched examples.
+- Words written with full-width letters or digits, such as Ｔシャツ, ＣＤプレーヤー, ＳＯＳ, and Ｘ線,
+  list their example sentences, in either width (Ｔシャツ and Tシャツ); their pages used to say
+  they had none. Numbers such as ３日 also list the sentences that write them full-width.
+- **Credits & Attributions** says that Jiten's frequency lists are modified and shared under the
+  same license, credits JMdict, KANJIDIC2, and RADKFILE each on its own, and calls three sources by
+  their authors' names: Wikipedia Word Frequency Clean, JLPT vocabulary lists, and JLPT kanji lists.
+  It reads the same as zenbujapanese.com's Sources page.
+- A conversation in Translate keeps following the newest line at larger text sizes, and stops
+  only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
+- At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button
+  could be pushed off the edge; press and hold one to see it larger.
+- VoiceOver says which kanji is selected when you tap one in a headword to see its part of the
+  furigana.
+- Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
+  when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
+  it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
+- In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
+  part of speech (which opens its conjugations) now open, in the tab you're in.
+- Player's search results show only YouTube's results, between Player's own bars: YouTube's
+  header, search field, voice search, and bottom bar (Home, Shorts, You) no longer appear, on
+  iPhone, iPad, and the Mac.
+- When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
+  to update Zenbu instead of reopening it.
+- Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
+  the one before. Every downloading row keeps its own progress ring, with a stop button.
+- Radicals no longer draws over the search results.
+- Choosing **Photo Library** for Image Search opens the picker again.
+- **Take Photo** opens the camera with its flash off. Turn the flash on, or to automatic, and the
+  camera opens with that choice the next time.
+- English searches put the common word first: `dog` shows 犬 first and `water` shows 水, where rarer
+  words whose meaning was exactly the query used to come ahead of them.
+- A profile's username follows the rule your Zenbu account uses: 3 to 30 letters a–z, numbers, or
+  underscores. One that doesn't fit now says why and isn't saved, where a period or a one-letter
+  name used to be kept and other characters were dropped without a word. A username you already
+  saved stays as it is until you change it.
+- After many sentences have been linked in one session, a caption card, an example sentence, a
+  Translate line, or a line of Image Search's text no longer shows some of its words as plain
+  text, with no meaning and nothing to tap.
+
+## [2.0.0] - 2026-10-09
+
+### Added
+
 - Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
   sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
   Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
@@ -96,9 +193,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 - A kanji's **JLPT** level is now Jonathan Waller's estimate, N5 to N1, so 一 and 日 show N5
   instead of the old four-level N4. A kanji his lists leave out, such as 分, shows no JLPT level.
-- The app is published as a new App Store app, with the bundle ID `com.zenbujapanese.app`. Copies
-  of 1.0.0 (`com.zenbujapanese.dictionary`) don't update to it, and their Known Words, notes, and
-  recent searches stay in that app.
+- Zenbu Japanese 2.0 is published by TSMC LLC as an update to 1.0, on the same App Store app
+  (`com.zenbujapanese.dictionary`).
 - Words you marked known no longer show an underline in linked Japanese.
 - The word sheet from Image Search and Player has a close button and **Open Full Entry** in its top
   bar instead of Done and a bottom button, and no longer repeats the word as its title. Its

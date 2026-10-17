@@ -17,8 +17,8 @@ import { createApp } from '../http/app'
 
 export const publicUrl = 'http://localhost:8789'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
-export const appBundleIdentifier = 'com.zenbujapanese.app'
-export const websiteServicesId = 'com.zenbujapanese.web'
+export const appBundleIdentifier = 'com.zenbujapanese.dictionary'
+export const websiteServicesId = 'com.zenbujapanese.website'
 export const websiteOrigin = 'http://localhost:3000'
 export const googleClientIds = ['web.apps.googleusercontent.com', 'ios.apps.googleusercontent.com']
 
@@ -36,7 +36,7 @@ let addresses = 0
 
 async function appleSigningKey() {
   const { privateKey } = await generateKeyPair('ES256', { extractable: true })
-  return { teamId: 'W3GXL2NQQP', keyId: 'TESTKEY123', privateKey: await exportPKCS8(privateKey) }
+  return { teamId: '847HR8U8D9', keyId: 'TESTKEY123', privateKey: await exportPKCS8(privateKey) }
 }
 
 export async function startService({

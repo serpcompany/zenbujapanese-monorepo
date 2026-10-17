@@ -17,7 +17,9 @@ enum VideoSearchProvider: String, Hashable, CaseIterable, Sendable {
     switch self {
     case .youTube:
       components = URLComponents(string: "https://m.youtube.com/results")
-      components?.queryItems = [URLQueryItem(name: "search_query", value: query)]
+      components?.queryItems = [
+        URLQueryItem(name: "search_query", value: query), URLQueryItem(name: "app", value: "m"),
+      ]
     case .googleVideos:
       components = URLComponents(string: "https://www.google.com/search")
       components?.queryItems = [
@@ -25,6 +27,20 @@ enum VideoSearchProvider: String, Hashable, CaseIterable, Sendable {
       ]
     }
     return components?.url
+  }
+
+  var styleHidingItsBars: String? {
+    switch self {
+    case .youTube:
+      """
+      ytm-header, ytm-header-bar, ytm-mobile-topbar-renderer, .ytTopBarViewModelHost,
+      .ytSearchboxComponentSuggestionsContainer, ytm-pivot-bar-renderer {
+        display: none !important;
+      }
+      ytm-app { padding-top: 0 !important; padding-bottom: 0 !important; }
+      """
+    case .googleVideos: nil
+    }
   }
 }
 
@@ -40,36 +56,44 @@ struct VideoSearchView: View {
   var body: some View {
     Group {
       if let url = search.provider.resultsURL(for: search.query) {
-        VideoSearchWebView(url: url, openVideo: openVideo)
+        VideoSearchWebView(url: url, provider: search.provider, openVideo: openVideo)
           .ignoresSafeArea(edges: .bottom)
       } else {
         ContentUnavailableView.search(text: search.query)
       }
     }
     .navigationTitle(search.query)
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .accessibilityIdentifier("watch.search-results")
   }
 }
 
-private struct VideoSearchWebView: UIViewRepresentable {
+private struct VideoSearchWebView: WebViewRepresentable {
   let url: URL
+  let provider: VideoSearchProvider
   let openVideo: (YouTubeVideoID) -> Void
 
   func makeCoordinator() -> Coordinator { Coordinator(openVideo: openVideo) }
 
-  func makeUIView(context: Context) -> WKWebView {
+  func makeWebView(context: Context) -> WKWebView {
     let configuration = WKWebViewConfiguration()
     configuration.mediaTypesRequiringUserActionForPlayback = .all
+    if let style = provider.styleHidingItsBars {
+      configuration.userContentController.addUserScript(.style(style))
+    }
     let webView = WKWebView(frame: .zero, configuration: configuration)
     webView.navigationDelegate = context.coordinator
     webView.allowsBackForwardNavigationGestures = true
     context.coordinator.observe(webView)
-    webView.load(URLRequest(url: url))
+    if let standIn = LaunchHarness.youTubeResultsPage {
+      webView.loadHTMLString(standIn, baseURL: url)
+    } else {
+      webView.load(URLRequest(url: url))
+    }
     return webView
   }
 
-  func updateUIView(_ webView: WKWebView, context: Context) {
+  func updateWebView(_ webView: WKWebView, context: Context) {
     context.coordinator.openVideo = openVideo
   }
 
@@ -106,5 +130,19 @@ private struct VideoSearchWebView: UIViewRepresentable {
       openVideo(videoID)
       return .cancel
     }
+  }
+}
+
+extension WKUserScript {
+  fileprivate static func style(_ style: String) -> WKUserScript {
+    WKUserScript(
+      source: """
+        (() => {
+          const style = document.createElement('style');
+          style.textContent = `\(style)`;
+          document.documentElement.append(style);
+        })();
+        """,
+      injectionTime: .atDocumentStart, forMainFrameOnly: true, in: .defaultClient)
   }
 }

@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 enum ZenbuTheme {
   static let radicalSelection = dynamic(
@@ -19,16 +18,11 @@ enum ZenbuTheme {
     dark: p3(0.933534, 0.431676, 0.423491)
   )
 
-  private static func dynamic(light: UIColor, dark: UIColor) -> Color {
-    Color(uiColor: UIColor { traits in traits.userInterfaceStyle == .dark ? dark : light })
+  private static func dynamic(light: DisplayP3Color, dark: DisplayP3Color) -> Color {
+    Color.adaptive(light: light, dark: dark)
   }
 
-  private static func p3(
-    _ red: CGFloat,
-    _ green: CGFloat,
-    _ blue: CGFloat,
-    alpha: CGFloat = 1
-  ) -> UIColor {
-    UIColor(displayP3Red: red, green: green, blue: blue, alpha: alpha)
+  private static func p3(_ red: Double, _ green: Double, _ blue: Double) -> DisplayP3Color {
+    DisplayP3Color(red: red, green: green, blue: blue)
   }
 }

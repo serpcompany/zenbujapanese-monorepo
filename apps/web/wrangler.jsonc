@@ -24,10 +24,11 @@
         "SITE_ENV": "staging",
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api-staging.zenbujapanese.com",
-        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website",
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
+      "preview_urls": false,
       "routes": [{ "pattern": "staging.zenbujapanese.com", "custom_domain": true }],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "zenbujapanese-web-staging" }]
     },
@@ -36,10 +37,11 @@
         "SITE_ENV": "production",
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api.zenbujapanese.com",
-        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.web",
+        "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website",
         "ACCOUNT_GOOGLE_SIGN_IN": "on"
       },
       "workers_dev": true,
+      "preview_urls": false,
       "routes": [
         { "pattern": "zenbujapanese.com", "custom_domain": true },
         { "pattern": "www.zenbujapanese.com", "custom_domain": true }

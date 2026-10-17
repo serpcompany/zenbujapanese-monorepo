@@ -56,17 +56,14 @@ final class StubAccountServer: @unchecked Sendable {
   private static let lock = NSLock()
   nonisolated(unsafe) private static var servers: [String: StubAccountServer] = [:]
 
-  let host = "stub-\(UUID().uuidString.lowercased()).test"
+  let host: String
   private let lock = NSLock()
   private var handler: @Sendable (StubRequest) -> StubReply = { _ in .error(404, "not_found") }
   private var received: [StubRequest] = []
 
-  init() {
+  init(host: String = "stub-\(UUID().uuidString.lowercased()).test") {
+    self.host = host
     Self.lock.withLock { Self.servers[host] = self }
-  }
-
-  deinit {
-    Self.lock.withLock { Self.servers[host] = nil }
   }
 
   var baseURL: URL { URL(string: "https://\(host)")! }
@@ -100,6 +97,27 @@ final class StubAccountServer: @unchecked Sendable {
   }
 }
 
+final class HeldReply: @unchecked Sendable {
+  static let limit: DispatchTimeInterval = .seconds(30)
+  private let letGoSignal = DispatchSemaphore(value: 0)
+  private let lock = NSLock()
+  private var expired = false
+
+  var wasNeverLetGo: Bool { lock.withLock { expired } }
+
+  func letGo() {
+    letGoSignal.signal()
+  }
+
+  func after(_ reply: @autoclosure () -> StubReply) -> StubReply {
+    guard letGoSignal.wait(timeout: .now() + Self.limit) == .success else {
+      lock.withLock { expired = true }
+      return .error(500, "held_reply_never_let_go")
+    }
+    return reply()
+  }
+}
+
 final class StubURLProtocol: URLProtocol {
   override class func canInit(with request: URLRequest) -> Bool { true }
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -111,7 +129,7 @@ final class StubURLProtocol: URLProtocol {
     }
     let stub = StubRequest(
       method: request.httpMethod ?? "GET", path: url.path(),
-      headers: request.allHTTPHeaderFields ?? [:], body: Self.body(of: request))
+      headers: request.allHTTPHeaderFields ?? [:], body: request.bodyData)
     switch server.reply(to: stub) {
     case .offline:
       client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
@@ -125,21 +143,6 @@ final class StubURLProtocol: URLProtocol {
   }
 
   override func stopLoading() {}
-
-  private static func body(of request: URLRequest) -> Data {
-    if let body = request.httpBody { return body }
-    guard let stream = request.httpBodyStream else { return Data() }
-    stream.open()
-    defer { stream.close() }
-    var data = Data()
-    var buffer = [UInt8](repeating: 0, count: 4096)
-    while stream.hasBytesAvailable {
-      let count = stream.read(&buffer, maxLength: buffer.count)
-      guard count > 0 else { break }
-      data.append(buffer, count: count)
-    }
-    return data
-  }
 }
 
 final class MemorySessionTokenStorage: SessionTokenStorage, @unchecked Sendable {

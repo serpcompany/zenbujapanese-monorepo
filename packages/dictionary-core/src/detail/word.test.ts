@@ -72,12 +72,36 @@ describe('wordDetail', () => {
       {
         number: 1,
         meaning: 'to be needed, to be necessary, to be required, to be wanted, to need, to want',
-        notes: ['Usually written in kana']
+        notes: ['Usually written in kana'],
+        noteText: 'Usually written in kana'
       }
     ])
-    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
-      { source: 'YouTube', value: '949', tier: 'veryCommon', spokenTier: 'very common' }
+    expect(detail.sections.map(section => section.title)).toEqual([
+      'Meaning',
+      'Frequency',
+      'Conjugations',
+      'Kanji',
+      'Lists',
+      'Notes',
+      'Examples'
+    ])
+    expect(detail.pronounce).toBe('Pronounce いる')
+    expect(detail.partOfSpeechRow).toBe('Godan verb (intransitive)')
+    expect(detail.frequencyRows.map(({ details: _, pack: __, ...row }) => row)).toEqual([
+      {
+        source: 'JLPT',
+        value: 'N5',
+        tier: 'veryCommon',
+        spokenTier: null,
+        label: 'JLPT level N5'
+      },
+      {
+        source: 'YouTube',
+        value: '949',
+        tier: 'veryCommon',
+        spokenTier: 'very common',
+        label: 'YouTube frequency rank 949, very common'
+      }
     ])
     expect(detail.kanji).toEqual([{ character: '要', meaning: 'need, main point' }])
     expect(detail.alternatives).toEqual([])
@@ -108,7 +132,7 @@ describe('wordDetail', () => {
     expect(detail.ruby).toEqual([{ text: 'いる' }])
     expect(detail.kanji).toEqual([])
     expect(detail.alternatives).toEqual([
-      { value: '居る', kind: 'written', labels: ['Rare'], kanji: '居' }
+      { value: '居る', kind: 'written', labels: ['Rare'], labelText: '(Rare)', kanji: '居' }
     ])
     expect(detail.alternativeKanji).toEqual([{ character: '居', meaning: 'reside, to be' }])
     expect(detail.related).toEqual([
@@ -118,12 +142,24 @@ describe('wordDetail', () => {
         ruby: [{ text: '有', reading: 'あ' }, { text: 'る' }],
         relation: 'See also',
         summary: 'to be, to exist, to live',
+        description: 'See also · to be, to exist, to live',
         entSeq: 1296400
       }
     ])
-    expect(detail.frequencyRows.map(({ details: _, ...row }) => row)).toEqual([
-      { source: 'JLPT', value: 'N5', tier: 'veryCommon', spokenTier: null },
-      { source: 'YouTube', value: 'No rank', tier: null, spokenTier: null }
+    expect(detail.sections.map(section => section.kind)).toEqual([
+      'meaning',
+      'frequency',
+      'conjugations',
+      'alternatives',
+      'alternativeKanji',
+      'related',
+      'lists',
+      'notes',
+      'examples'
+    ])
+    expect(detail.frequencyRows.map(({ source, value, tier }) => [source, value, tier])).toEqual([
+      ['JLPT', 'N5', 'veryCommon'],
+      ['YouTube', 'No rank', null]
     ])
     expect(detail.frequencyRows.map(row => [row.details.section, row.details.rows])).toEqual([
       ['Level', [{ label: 'JLPT Level', value: 'N5' }]],

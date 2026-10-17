@@ -1,16 +1,10 @@
+import { glossSeparator } from '@zenbu/dictionary-core/detail/sections'
 import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Item } from '@/components/ui/item'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 
 type Reading = KanjiDetailsData['readings'][number]
-
-function readingLabel(reading: Reading): string | null {
-  const first = reading.words[0]
-  return first
-    ? `${reading.label} reading ${reading.value}, ${first.headword}, ${first.summary}`
-    : null
-}
 
 function ReadingContent({ reading, opens }: { reading: Reading; opens: boolean }) {
   return (
@@ -26,7 +20,9 @@ function ReadingContent({ reading, opens }: { reading: Reading; opens: boolean }
         <span className="col-span-2 col-start-2 flex flex-wrap gap-x-3 text-muted-foreground">
           {reading.words.map(word => (
             <span key={word.entSeq}>
-              <span lang="ja">{word.headword}</span> · {word.summary}
+              <span lang="ja">{word.headword}</span>
+              {glossSeparator}
+              {word.summary}
             </span>
           ))}
         </span>
@@ -40,7 +36,7 @@ export function KanjiReadings({ readings }: { readings: Reading[] }) {
     <div className="-mx-3 flex flex-col divide-y">
       {readings.map(reading => {
         const path = reading.words[0]?.path ?? null
-        const label = readingLabel(reading)
+        const label = reading.spoken
         const className = 'grid grid-cols-[3.5rem_minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-base'
         const id = `${reading.kind}.${reading.value}`
         return path && label ? (

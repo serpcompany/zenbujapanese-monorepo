@@ -1,29 +1,41 @@
 import SwiftUI
 import TranslatorCore
-import UIKit
 
 struct TranslateHomeView: View {
   @Bindable var experience: TranslateExperience
   let openHistory: () -> Void
   let openText: (String) -> Void
+  let chooseImage: () -> Void
+  @State private var startingMode: TranslateStart?
   @State private var isChoosingDocument = false
   @State private var isReadingDocument = false
   @State private var unreadableDocument = false
 
   var body: some View {
-    ScrollView {
-      VStack(spacing: 16) {
-        TranslateStartPicker(selection: $experience.preferredStart)
+    List {
+      Section {
+        TranslateHomeHeader()
       }
-      .padding(.horizontal)
-      .padding(.bottom, 24)
+      Section {
+        ForEach(TranslateStart.spokenRows) { option in row(option) }
+      } header: {
+        Text("Spoken")
+      } footer: {
+        if let preparation = experience.preparation {
+          Text(preparation.label)
+            .accessibilityIdentifier("translate.preparing")
+        }
+      }
+      Section("Written") {
+        ForEach(TranslateStart.writtenRows) { option in row(option) }
+      }
     }
-    .safeAreaInset(edge: .bottom) { startButton }
-    .background(Color(uiColor: .systemBackground))
+    .compactSectionSpacing()
+    .contentMargins(.top, 4, for: .scrollContent)
     .navigationTitle("Translate")
-    .navigationBarTitleDisplayMode(.inline)
+    .inlineNavigationTitle()
     .toolbar {
-      ToolbarItem(placement: .topBarTrailing) {
+      ToolbarItem(placement: .barTrailing) {
         Button("Translations", systemImage: "clock.arrow.circlepath", action: openHistory)
           .accessibilityIdentifier("translate.history")
       }
@@ -37,20 +49,48 @@ struct TranslateHomeView: View {
     .alert("Couldn't read this document", isPresented: $unreadableDocument) {
       Button("OK", role: .cancel) {}
     } message: {
-      Text("Choose a PDF, a photo, or a text file with Japanese or English text in it.")
+      Text("Choose a PDF or a text file with Japanese or English text in it.")
     }
   }
 
   private var isBusy: Bool { experience.isPreparing || isReadingDocument }
 
-  private func start() {
-    switch experience.preferredStart {
-    case .conversation, .listening:
-      Task { await experience.start() }
-    case .text:
-      openText("")
-    case .document:
-      isChoosingDocument = true
+  private func row(_ option: TranslateStart) -> some View {
+    Button {
+      start(option)
+    } label: {
+      rowLabel(option)
+    }
+    .tint(.primary)
+    .disabled(isBusy)
+    .accessibilityIdentifier("translate.start.\(option.rawValue)")
+  }
+
+  private func rowLabel(_ option: TranslateStart) -> some View {
+    HStack {
+      SettingsRowLabel(
+        LocalizedStringKey(option.title), systemImage: option.systemImage, tint: option.tint)
+      Spacer()
+      if isBusy, startingMode == option {
+        ProgressView()
+      } else {
+        Image(systemName: "chevron.forward")
+          .font(.footnote.weight(.semibold))
+          .foregroundStyle(.tertiary)
+          .accessibilityHidden(true)
+      }
+    }
+    .contentShape(.rect)
+  }
+
+  private func start(_ option: TranslateStart) {
+    startingMode = option
+    switch option {
+    case .conversation: Task { await experience.start(.conversation) }
+    case .listening: Task { await experience.start(.listening) }
+    case .image: chooseImage()
+    case .text: openText("")
+    case .document: isChoosingDocument = true
     }
   }
 
@@ -63,33 +103,29 @@ struct TranslateHomeView: View {
       unreadableDocument = true
     }
   }
+}
 
-  private var startButton: some View {
-    VStack(spacing: 8) {
-      if let preparation = experience.preparation {
-        Text(preparation.label)
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("translate.preparing")
-      }
-      Button(action: start) {
-        Group {
-          if isBusy {
-            ProgressView()
-          } else {
-            Text("Start")
-          }
-        }
-        .font(.headline)
-        .padding(.horizontal, 28)
-      }
-      .buttonStyle(.borderedProminent)
-      .buttonBorderShape(.capsule)
-      .controlSize(.large)
-      .disabled(isBusy)
-      .accessibilityIdentifier("translate.start")
+private struct TranslateHomeHeader: View {
+  @ScaledMetric(relativeTo: .largeTitle) private var tileSize = 48
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Image(systemName: "translate")
+        .font(.system(size: tileSize * 0.5, weight: .semibold))
+        .foregroundStyle(.white)
+        .frame(width: tileSize, height: tileSize)
+        .background(Color.blue.gradient, in: .rect(cornerRadius: tileSize * 0.23))
+        .accessibilityHidden(true)
+      Text("Translate")
+        .font(.title2.bold())
+      Text("Japanese and English, on your \(ThisDevice.name).")
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
-    .padding(.bottom, 8)
+    .padding(.vertical, 2)
+    .accessibilityElement(children: .combine)
+    .accessibilityAddTraits(.isHeader)
+    .accessibilityIdentifier("translate.header")
   }
 }
 
@@ -109,11 +145,11 @@ struct TypedTranslationScreen: View {
       .environment(experience.readingAids)
       .padding(.horizontal)
       .padding(.bottom, 12)
-      .background(Color(uiColor: .systemBackground))
+      .background(SystemColor.background)
       .navigationTitle("Text")
-      .navigationBarTitleDisplayMode(.inline)
+      .inlineNavigationTitle()
       .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItem(placement: .barTrailing) {
           Menu("Options", systemImage: "ellipsis") {
             FuriganaToggle(readingAids: experience.readingAids)
           }
@@ -134,7 +170,7 @@ private struct StartProblemAlert: ViewModifier {
       switch problem {
       case .microphoneDenied:
         Button("Open Settings") {
-          if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+          if let url = SystemSettings.url(for: .microphone) { openURL(url) }
         }
         Button("Cancel", role: .cancel) {}
       case .translationUnavailable:
@@ -173,7 +209,7 @@ private struct StartProblemAlert: ViewModifier {
           "Japanese and English speech recognition need a one-time download over the internet. Try again when you're online."
       )
     case .translationUnavailable:
-      String(localized: "Translate runs on this iPhone with Apple's Japanese and English languages.")
+      String(localized: "Translate runs on this \(ThisDevice.name) with Apple's Japanese and English languages.")
     }
   }
 }

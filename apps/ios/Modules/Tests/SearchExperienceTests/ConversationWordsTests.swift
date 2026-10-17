@@ -5,21 +5,15 @@ import TranslatorCore
 @testable import SearchExperience
 
 @MainActor
-@Suite("Conversation comprehension")
+@Suite("Conversation comprehension", .timeLimit(.minutes(1)))
 struct ConversationWordsTests {
   private let analysis = JapaneseTextAnalysisClient(
-    lookupSegments: { _ in [] },
     availability: { .full },
-    linkedTokens: { text, _, _ in
-      text.split(separator: " ").enumerated().map { index, word in
-        let isParticle = word == "は"
-        return JapaneseTextToken(
-          id: index, surface: String(word),
-          entry: isParticle ? nil : .fixture(id: String(word), headword: String(word)),
-          partOfSpeech: isParticle ? ["助詞"] : ["名詞"])
-      }
-    },
-    words: { $0.split(separator: " ").map(String.init) })
+    linkedTokens: { _, _, _ in [] },
+    countedWords: { lines in
+      lines.flatMap { $0.split(separator: " ") }.filter { $0 != "は" }
+        .map { LanguageReferenceID(rawValue: String($0)) }
+    })
 
   @Test("counts the Japanese that was spoken, without particles or translations into Japanese")
   func countsSpokenJapanese() async {
@@ -38,11 +32,9 @@ struct ConversationWordsTests {
     let known: (LanguageReferenceID) -> Bool = { $0.rawValue == "今日" }
 
     #expect(words.comprehension(of: conversation, analysis: analysis, isKnown: known) == nil)
-    for _ in 0..<50 where words.comprehension(of: conversation, analysis: analysis, isKnown: known) == nil {
-      await Task.yield()
-    }
+    await words.countingFinished()
     let comprehension = words.comprehension(of: conversation, analysis: analysis, isKnown: known)
     #expect(comprehension == Comprehension(knownCount: 1, totalCount: 2))
-    #expect(comprehension?.percentText == "50%")
+    #expect(comprehension?.fraction == 0.5)
   }
 }

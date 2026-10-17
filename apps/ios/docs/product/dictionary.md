@@ -9,9 +9,94 @@ A learner can search in Japanese or English using:
 
 - the keyboard;
 - handwriting recognition, which reads the finished drawing's shape, so stroke order and
-  direction don't matter;
-- radical selection; or
-- Image Search using the camera, Photo Library, or an image file.
+  direction don't matter; or
+- radical selection.
+
+Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the keyboard) and
+`SearchInputUITests` (a drawn stroke's kanji, and a radical's, searched); package
+`HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
+`RadicalLookupTests` (radicals narrow to the kanji that have them).
+
+A query reads the same whatever its width or case (Ｎ as n, ｶﾞｷﾞ as ガギ, a voiced mark joined to
+its kana), and white space of any kind, or the U+FEFF a paste can carry, only separates its words.
+
+Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for scalar); core
+`search/query.test.ts` and `embedded/dictionary.test.ts`.
+
+Image Search, for Japanese in a photo, is Translate's **Image** option
+([Image Search](translate.md#image-search)).
+
+Check: UI `SearchUITests` (Search has no camera button) and `ImageSearchUITests`.
+
+### Top bar
+
+Search's top bar is Player's: a small, centered **Search** title above the same search field,
+with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
+button while it has text.
+
+- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
+  Searches** while recent searches are listed. The recent searches are listed without a heading.
+- **Input buttons.** Two round buttons, a pencil for **Handwriting** and a grid for **Radicals**,
+  sit at the bottom left on every Search screen: above the tab bar on Recent and results, and
+  above the keyboard while typing. Either opens its panel in one tap.
+- **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
+  the field moves to the top, and an **X** appears beside it. The clear button inside the field
+  clears the text.
+- **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
+  or radical candidate, puts the keyboard away and keeps the query in the field at the top, with
+  **X** beside it. The first row of the results names the order and opens Sort and Filter
+  ([Sorting results](#sorting-results), [Filtering results](#filtering-results)).
+- **X** clears the query and returns to Recent.
+
+On iPad, where the tabs sit at the top of the screen, nothing slides away: the title bar and the
+tabs stay above the field while typing and beside the results, and there is no **X**. On the Mac
+the field sits in the window's toolbar. On both, the clear button inside the field empties it and
+returns to Recent ([iPad and Mac](index.md#ipad-and-mac)).
+
+Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the query kept
+in the field, both input buttons beside the results, back to Recent with **X** on iPhone and the
+clear button on iPad and the Mac, and no heading),
+`testTheFieldOffersCloseAndTheInputButtonsWhileTyping` (iPhone),
+`testTheTabsStayBesideTheResultsWhichStayAcrossTabs`,
+`SearchResultsUITests.testClearingRecentSearchesEmptiesTheList` (the **•••** menu), and
+`LayoutUITests` (the field and the input buttons at every size the device offers). How the bar
+slides on iPhone is by hand ([Search manual checks](../../../../docs/agents/ios.md#search-manual-checks)).
+
+### Handwriting and Radicals
+
+Tapping the pencil or the grid slides up a full-height sheet over the search field and the tab
+bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the
+sheet. The same two buttons stay at its bottom left, in the same place as on the search screen,
+with the current one highlighted, so the other mode is one tap away. Both panels share one gray
+background, flat candidate tiles in the same fill as the radical squares, and glass buttons
+(white in light mode).
+
+- **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a
+  row, each with the kanji's first meaning. Three rows show and more scroll. **Undo**, at the bottom
+  right, removes the last stroke and recognizes the rest again. Before there are candidates, text
+  shows under the pad only while recognizing, when nothing matches, or when recognition fails.
+- **Radicals.** A white strip at the top lists the kanji that contain every selected radical,
+  or says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
+  headers, and radicals that can't combine with the selection are hidden. **Undo**, the same
+  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed
+  until one is.
+
+A candidate from either panel is added to the end of the query, so picking one character after
+another, in any mix of handwriting and radicals, builds a word. The panel closes and the results
+show, with the query in the field. In dark mode the strip and pad are black.
+
+A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
+button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
+
+Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
+sheet, its two buttons, and closing it, dragged away on iPhone and iPad and with **Done** on the
+Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the keyboard),
+`testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
+open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
+first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate joins the query,
+and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a
+pick lists and the radicals still offered, on the bundled radical file); core
+`search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
 
 Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
 among equally good matches, the enabled frequency dictionaries decide the order, in the
@@ -19,67 +104,196 @@ learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequ
 result the query did not match or lifts an incidental match above a direct one. English rows
 show the meaning that matched.
 
+Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
+`SearchResultOrderingTests`.
+
+An English query groups its matches, strongest first:
+
+1. words whose first meaning is the query, with or without notes in parentheses that end the
+   meaning ("dog", "dog (Canis familiaris)", and "soft (and fluffy) (e.g. bed)" count; "to (take
+   out and) show" isn't "to"), or, for a verb, "to" and the query;
+2. words where a later meaning is the query;
+3. words whose meanings mention it ("hot dog");
+4. words that match only by romaji: an exact romaji match, then one that starts with the query,
+   then one that contains it, each its own group.
+
+Within each group the more common word comes first, so `dog` leads with 犬 and `water` with 水.
+Words the frequency dictionaries don't rank follow, JMdict's common words first, then the earlier
+meaning; romaji that resembles the query (ドッグ for `dog`) only breaks a tie.
+
+Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; the recorded
+`SearchResultsConformanceTests`.
+
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
-dictionary, which orders the results (a dash when it doesn't rank the word), then one for each
-other dictionary that ranks it. JLPT shows only when it lists the word. At accessibility text
-sizes, only the first dictionary's chip shows, followed by a count of the rest.
+dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
+dictionary that ranks it. While Search is sorted by a dictionary (below), that dictionary takes the
+first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
+first dictionary's chip shows, followed by a count of the rest.
+
+Check: core `detail/frequency.test.ts` (which chips show, and in what order) and
+`results/learner.test.ts` (the sorted dictionary's chip first); package `ResultsScreenTests` (the
+same on the bundled data, and the one chip with a count at the largest text sizes); the recorded
+`SearchResultsConformanceTests`; UI `SearchResultsUITests` (each list drawn once, with its chips).
 
 A chip's dot says how common the word is: green for a rank up to 1,500, yellow to 5,000, orange
 to 15,000, red to 30,000, and gray beyond. These are Migaku's star cutoffs, so learners who know
 that scale read the chips the same way. JLPT N5 and N4 are green, N3 and N2 yellow, and N1
 orange. With Differentiate Without Color on, a star count such as 5★ replaces the dot.
 
-A word the learner knows shows a green **✓ Known** capsule at the right of its headword.
-Swiping a row to the right, or long-pressing it, marks the word known or unknown without
-opening it.
+Check: core `detail/frequency.test.ts` (the tiers); package `ResultsScreenTests` (their stars).
+
+A word the learner knows shows a green **✓ Known** capsule at the right of its headword. Swiping a
+row to the right, or long-pressing it, marks the word known or unknown without opening it.
+
+Check: UI `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule` (by swipe on iPhone and
+iPad, where it reads the row as known; by right-click on the Mac, where it checks the row's menu
+then offers **Mark as Unknown**, since a Mac row doesn't give a test its value); package
+`WordKnowledgeTests`.
 
 An inflected Japanese query such as `まけたら` or `勉強した` finds its dictionary forms on the
 device. When the query is itself a word (`いって` is 一手), that word stays first.
 
-Changing the enabled dictionaries or their order re-sorts the visible results without searching
-again. If frequency data can't be read, Search still shows every result and says which
-dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
-Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query.
+Check: package `JapaneseDeinflectionTests`; the recorded `SearchConformanceTests`.
 
-Recent text searches are stored on the device and listed under a **Recent** heading while the
-query is empty. A learner can repeat a search, remove one by swiping or long-pressing it, or clear the entire history
-from the **⋯** menu, which appears only while recent searches are listed. Result headings scroll
-with the results instead of staying pinned over them.
+Results show once, in order and with their chips; changing the enabled dictionaries or their
+order re-sorts them at once. If frequency data can't be read, Search still shows every result and
+says which dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
+Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
+English query's Example Sentences have its words in any form: `startled you` finds "startle you".
+
+Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a
+dictionary that can't be read named, the others still ordering); core `detail/frequency.test.ts`
+(the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
+(which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
+refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
+and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+`testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
+
+The Example Sentences row opens the query's sentences on a screen titled with the query. Under the
+title, a line says how many it lists: "60 examples", or "The first 100 of more than 100 examples"
+when more match than the 100 it lists. The website's section shows the same line.
+
+Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the website is held to as
+well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
+`SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
+
+Recent text searches are stored on the device and listed while the query is empty. A learner can
+repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
+**•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result
+headings scroll with the results instead of staying pinned over them.
+
+Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
+`SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the
+Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
+
+### Sorting results
+
+While results are showing, their first row, above Example Sentences, names the order: **Sorted by
+Default**, **Sorted by YouTube**, **Sorted by Known Words**. Tapping it opens a short menu with two
+rows, **Sort By** and **Filter** ([Filtering results](#filtering-results)). **Sort By** names the
+current order underneath and opens a list with **Default**, one item for each enabled frequency
+dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual
+Novels, Video Games), and **Known Words**, one checked at a time. There is no direction to choose.
+
+- **Default** is the order described above.
+- **A dictionary** orders every matching word by that dictionary alone, most common first,
+  however it matched. JLPT orders by level, N5 first.
+- **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
+  at once.
+
+A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
+a rank, keep their Default order. A choice an earlier build saved with a direction reads as Default.
+
+Check: core `results/ordering.test.ts` (each order, and the row's words); package
+`ResultsScreenTests` (the same on the bundled data); UI
+`SearchResultsUITests.testTheSortedByRowNamesTheChosenOrder` (a dictionary, Known Words, and back
+to Default).
+
+Switching re-sorts the visible results without searching again and announces the new order to
+VoiceOver. The choice is kept on the device across launches and applies to Japanese, English, and
+romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it can
+be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji row,
+Example Sentences, the reading refinement, and Discovered Words keep their places; when there are no
+word rows to sort (only Discovered Words, or only a single kanji's Kanji row), the row isn't shown.
+
+Check: core `results/ordering.test.ts` and `results/learner.test.ts` (VoiceOver's announcement, the
+stored choice, unreadable ranks, a disabled dictionary); package `ResultsScreenTests` (the stored
+choice, an unreadable dictionary, a disabled one, and none enabled, on the bundled data).
+
+### Filtering results
+
+The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
+**Sort By**. It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows
+only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
+it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
+**Account → Frequency Dictionaries**, not here.
+
+While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
+filter**; no other row is added. Filtering keeps the chosen sort. When it hides every word, the
+list shows **No Words Match Your Filter** with the count and **Clear Filter**.
+
+Changing the filter updates the visible results without searching again and announces how many
+words show to VoiceOver. The filter is kept on the device across launches and applies to
+Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
+and Discovered Words are never filtered.
+
+Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
+stored filter); package `ResultsScreenTests` (known words only, and the count a filter hides); UI
+`SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
+filter**, **No Words Match Your Filter**, and **Clear Filter**) and
+`testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms,
-kanji, related words, conjugations, source-matched Example Sentences, pronunciation, and
-frequency information when the corresponding data is available.
-Examples for a word written in kana, such as それで or でも, are the sentences Tatoeba's word
-index links to that word, so a kana word inside a longer one (でも in いつでも) does not count.
-Other words match their written forms and reading.
+A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
+related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
+information when the corresponding data is available. A kana word's examples, such as それで or でも,
+are the sentences Tatoeba's word index links to it, so でも in いつでも does not count. Other words
+match their written forms and reading, in either width NFKC reads as one (Ｔシャツ and Tシャツ).
+
+Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
+`KanaHeadwordExampleTests`; core `artifact/example-retrieval.test.ts`.
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
-The top of a word detail shows the headword with furigana, following the Reading Aids setting.
-Tapping one of its kanji shows which furigana belongs to it (see
-[Furigana kanji highlight](index.md#furigana-kanji-highlight)).
-When furigana is off, the reading appears under the headword instead. A long headword shrinks one size to
-keep its furigana beside the pitch accent; when even that doesn't fit, the pitch accent moves to
-its own line under a full-size headword. To the right of the
-headword are the pitch accent (the reading in katakana with an overline across the high morae and
-a hook at the downstep) in a capsule with a speaker, which pronounces the word when tapped, and
-the latest encounter photo. A word without pitch shows a standalone pronounce button. Pitch comes from
-UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is estimated from
-the parts' accent-combination types, and a word with neither shows no pitch. A part-of-speech row
-follows and opens the conjugation table when one exists. It names one word class and then its
-modifiers in sentence case without repeating "verb", for example "Godan verb (intransitive)",
-"Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
+Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
 
-The conjugation table starts with the word, its reading and meaning, its word class, and a
-one-line rule for how that class conjugates. A Plain/Polite control switches register when both
-exist. Each row names the form and shows it with the changed ending highlighted. Selecting a row
-opens that form's screen. It leads with what the form means, then shows the form the way Word
-Detail shows a word (furigana and a pronounce button) with its ending highlighted, and then every
-Example Sentence that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as potential and
-passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back returns
-to the form.
+A related word opens the entry it names. One that names none is searched for, and opens the
+result written and read the same, or the first result when none is.
+
+Check: package `WordResolutionTests`; core `embedded/dictionary.test.ts`.
+
+The top of a word detail shows the headword with furigana, following the Reading Aids setting.
+Tapping one of its kanji shows which furigana belongs to it (see [Furigana kanji
+highlight](index.md#furigana-kanji-highlight)). When furigana is off, the reading appears under the
+headword instead. A long headword shrinks one size to keep its furigana beside the pitch accent;
+when even that doesn't fit, the pitch accent moves to its own line under a full-size headword. To
+the right of the headword are the pitch accent (the reading in katakana with an overline across the
+high morae and a hook at the downstep) in a capsule with a speaker, which pronounces the word when
+tapped, and the latest encounter photo. A word without pitch shows a standalone pronounce button.
+Pitch comes from UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is
+estimated from the parts' accent-combination types, and a word with neither shows no pitch. A
+part-of-speech row follows and opens the conjugation table when one exists. It names one word class
+and then its modifiers in sentence case without repeating "verb", for example "Godan verb
+(intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
+
+Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
+core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI
+`WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
+`AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
+
+The conjugation table starts with the word, its reading and meaning, its word class, and a one-line
+rule for how that class conjugates. A Plain/Polite control switches register when both exist. Each
+row names the form and shows it with the changed ending highlighted. Selecting a row opens that
+form's screen. It leads with what the form means, then shows the form the way Word Detail shows a
+word (furigana and a pronounce button) with its ending highlighted, and then every Example Sentence
+that uses the complete form, in the same list Word Detail uses. Forms that share a spelling, such as
+potential and passive 見られる, say so. Selecting a word in the example opens its Word Detail, and Back
+returns to the form.
+
+Check: the recorded `WordDetailConformanceTests` (each table's forms and their examples); UI
+`SearchUITests.testAVerbOpensItsConjugationsAndAForm`.
 
 Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
 visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
@@ -89,19 +303,44 @@ furigana when **Hide Furigana on Known Words** is on, but can still be selected.
 Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and
 **Show Sentence Translations** controls whether example sentences show their English.
 
-A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word.
-Selecting a row opens that dictionary's details. JLPT levels are presented as unofficial study
-estimates.
+Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
+pieces join into one word), `artifact/word-examples.test.ts` (which words are accented), and
+`detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests` and
+`WordMeaningTests`.
 
-Selectable Japanese inside Word Detail and Example Sentences uses the same interactive
-word-boundary analysis as Image Search. Selecting a linked word continues into its normal
-dictionary entry.
+On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
+linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
+keeps. Each list shows 25 sentences, those that fit the screen first, then 25 more at its end.
+Back from a word opened on Example Sentences finds its sentence on screen, within a third of the
+list of where it was. A list that fails says "Examples couldn’t be loaded.", never that it has none;
+a later page, "More examples couldn’t be loaded." Each has **Retry** and is read again on return.
+
+Check: UI `ExampleRowsUITests` (rows 1, 23, and 26 of each screen arrive linked while held, after
+no empty or failed message, and keep their height; a form's word opens; the place is kept, Romaji
+on; a failed read says so, read on return and Retry); `LoadedExamplesTests`, `ExamplePlaceTests`.
+
+A **Frequency** section lists each enabled dictionary's rank or JLPT level for the word. It is drawn
+with the page, except just after a launch, and follows a change of dictionaries at once. Selecting a
+row opens that dictionary's details. JLPT levels are presented as unofficial study estimates.
+
+Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
+`ResultsScreenTests` (the rows' names, values, and details); UI
+`WordDetailUITests.testAFrequencyRowOpensItsDetails` and `AccountUITests` (one turned off).
+
+Selectable Japanese inside Word Detail and Example Sentences uses the same interactive word-boundary
+analysis as Image Search. Selecting a linked word continues into its normal dictionary entry.
+
+Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
-Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word shows the same
-**✓ Known** capsule under its headword. A word counts as unknown until the learner marks it, and
-known words persist on the device, keyed by the dictionary entry's stable identifier.
+Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
+shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner
+marks it, and known words persist on the device, keyed by the dictionary entry's stable identifier.
+
+Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
+without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what
+**Share** sends).
 
 **Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
@@ -109,24 +348,51 @@ creates the list, and adds the word to it, and Done closes the sheet. A **Lists*
 Notes names every list holding the word, each opening that list in Account, followed by
 **Add to List**, which opens the same sheet. Search results don't show which lists a word is in.
 
+Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (the sheet, New List,
+the Lists section, and a list opening in Account); package `WordListsTests`.
+
 A learner can write notes for a word and associate photos with it. Notes and associated
-photos persist on the device.
+photos persist on the device. A note written while the page is still loading its examples is
+kept like any other. If saved notes can't be read, a copy is kept on the device rather
+than written over, and every note that can be read stays, on its word or any other
+([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
 
-A kanji detail can present readings, meanings, stroke order, components, elements, and words
-that contain the kanji. Component and element links can be followed without losing the
-learner's place in the preceding detail.
+Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
+`SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
+`WordNoteStorageTests` and `EncounterMediaStorageTests`.
 
-Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and
-its JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The
-JLPT has published no kanji list since 2010, so the level is his estimate. A kanji his lists
-leave out shows no JLPT level, including 172 jōyō kanji, such as 分, that no modern list gives
-one. `KanjiStatTests` and the kanji detail conformance suite check it.
+A kanji detail presents readings, meanings, stroke order, components, elements, and words that
+contain the kanji, in the core's order: an empty one is left out, but not Lists, Notes, or a listed
+kanji's Readings. After a spinner, all but stroke order appear at once; links keep the place.
+
+Check: the recorded `KanjiDetailConformanceTests`; core `embedded/presentation.test.ts`; package
+`KanjiScrollMemoryTests`; UI `WordDetailUITests.testAKanjiShowsItsStrokeOrderAndItsWords` and
+`testAKanjiPageIsDrawnOnceWithItsFactsAndItsWords`.
+
+An element's page shows the element, its meanings and what it contributes, the on-readings it links,
+its alternative forms, the kanji it is on its own (the most frequent among the element and its
+alternatives), the kanji that contain it, each with up to three meanings and its on-readings, and
+the sources. A kanji opens its own detail, and coming back returns to it in the list.
+
+Check: the recorded `KanjiElementConformanceTests`; core `detail/kanji-element.test.ts`; package
+`KanjiScrollMemoryTests` and `KanjiFilesTests` (a compatibility kanji and the kanji it unifies
+with each keep their own page); UI
+`WordDetailUITests.testAKanjisElementShowsWhatItContributesAndAKanjiItIsIn`.
+
+Beside the kanji, a kanji detail shows its stroke count, its school grade when it has one, and its
+JLPT level when Jonathan Waller's kanji lists give one, as N5 to N1: 一 and 日 show N5. The JLPT has
+published no kanji list since 2010, so the level is his estimate. A kanji his lists leave out shows
+no JLPT level, including 172 jōyō kanji, such as 分, that no modern list gives one.
+
+Check: package `KanjiStatTests`; the recorded `KanjiDetailConformanceTests`.
 
 A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
 kanji, its readings, and its meanings as text. The menu marks the kanji known, adds it to lists,
 and adds notes and photos, which work as they do for a word. Lists and Notes sections appear
 above the words containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji
 is saved as itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
+
+Check: package `SavedKanjiTests`; UI `SavedWordsUITests.testAKanjiIsMarkedKnownFromItsMenu`.
 
 ## Links from zenbujapanese.com
 
@@ -145,64 +411,13 @@ going, and the bar above the tab bar returns to it. Then:
   open; and
 - any other zenbujapanese.com URL returns to the Search screen.
 
-A word's old conjugation pages open the word, and a search's old Example Sentences page the
-search, as the website redirects them. iOS opens Zenbu only for the URLs the website's
-association file claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
+A word's old conjugation pages open the word, and a search's old Example Sentences page the search,
+as the website redirects them. iOS opens Zenbu only for the URLs the website's association file
+claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
 until the website has Zenbu's Apple team ID, links open the website.
 
 - Source: #568, part of #563.
-- Check: `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
-  for how each URL reads and what it opens, against the bundled dictionary. That iOS hands a
-  tapped link to Zenbu is checked on a device.
-
-## Image Search
-
-Image Search recognizes Japanese text in one or more selected images. It reads both
-horizontal and vertical (縦書き) Japanese; vertical columns are read top to bottom, right to
-left, and English elsewhere in the image does not hide the Japanese.
-
-A segmented control switches between four views, and Image Search remembers the last one
-(**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu
-with **Copy Text**, **Share Image**, and **Show Words on Image**, which shows or hides the word
-marks on the image.
-
-- **Photo** shows the image, aligned to the top, with every recognized word marked in the
-  accent color. Words in vertical lines are tinted chips that alternate shade down each
-  column; words in horizontal lines are underlined.
-- **Both** fits the same marked, tappable image at the top and lists each recognized Japanese
-  line below it in the Player's caption cards, with furigana, word underlines, and the line's
-  translation. The first card's line is outlined on the image; tapping a card outlines its
-  line, and tapping a word on the image scrolls the cards to its line.
-- **Text** shows the recognized Japanese as paragraphs in the same caption cards, one text
-  size larger. Lines that wrap, such as book columns, are joined; list items and lines that
-  end a sentence stay separate.
-- **Translate** has two sections. **Translation** shows each paragraph with its natural
-  translation. **Context** says in a few sentences what the text is and what it's for, then
-  lists idioms, proverbs, and set expressions inside longer text with their dictionary
-  meanings; each opens its Word Detail. An idiom that is a whole paragraph, as in a list of
-  proverbs, isn't repeated there, since Translation already gives its meaning.
-
-Translation uses Apple Translation, preparing Apple's language resources first when needed.
-Where Apple Translation isn't available, Apple Intelligence's on-device model translates
-instead, and Translate says so. Both and Text show line and paragraph translations under their
-cards, following the Translations reading-aid preference, as soon as translation is ready
-without a download; choosing Translate starts a download when one is needed.
-
-Context needs Apple Intelligence; when it's off or still downloading, Translate says so, and on
-devices that can't run it the section is hidden. The on-device model only picks idioms and
-describes the text. Idioms are shown only when they're dictionary entries, with the
-dictionary's meaning, and those meanings are given to the model whenever it translates or
-describes the text, because on its own it misreads idioms word by word.
-
-Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to
-full height, as in the Player. The view behind stays usable, so tapping another word switches
-the sheet, and nothing behind it moves when a word opens. A word with several possible entries opens a
-**Choose** list that uses Search's result rows, and one with none shows a no-entry state. The
-sheet's top bar has a close button and **Open Full Entry**, which continues to the normal
-full-screen dictionary route in the tab the sheet was opened from. Words use the same
-Kuromoji parser family as the Zenbu browser extension and other linked Japanese in the app.
-
-A learner can also copy the recognized text and share the selected source image.
-
-The Image Search session itself is temporary. Opening a recognized word associates the
-source image with that word as Encounter Media, which then appears in the Media Library.
+- Check: package `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
+  for what each URL opens, against the bundled dictionary; core `detail/links.test.ts` for how
+  each URL reads, with the parser the website reads its own word URLs with. That iOS hands a
+  tapped link to Zenbu is by hand, on a device.

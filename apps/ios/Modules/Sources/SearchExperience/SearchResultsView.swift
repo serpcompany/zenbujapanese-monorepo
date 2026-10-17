@@ -1,156 +1,182 @@
 import SwiftUI
 
+struct ShownResults: Hashable, Sendable {
+  let request: ResultsScreenRequest
+  let list: ResultsList
+}
+
 struct SearchResultsView: View {
-  let query: SearchQuery
   let results: LookupSearchResults
-  let exampleCount: Int
-  let rankedEntryLimit: Int?
-  let frequencyCapability: FrequencyCapability
-  let frequencyRefreshID: Int
+  let fromRadicals: Bool
   let selectRefinement: (SearchRefinement) -> Void
-  @State private var frequencyLoadState = SearchFrequencyLoadState()
+  @State private var shown: ShownResults
+  @State private var animatesNextList = false
+  @AppStorage(ResultsLearner.sortKey) private var sort = ResultsLearner.defaultSort
+  @AppStorage(ResultsLearner.filterKey) private var filter = ResultsLearner.noFilter
+  @Environment(WordKnowledge.self) private var wordKnowledge
+
+  init(
+    results: LookupSearchResults,
+    first: ShownResults,
+    fromRadicals: Bool,
+    selectRefinement: @escaping (SearchRefinement) -> Void
+  ) {
+    self.results = results
+    self.fromRadicals = fromRadicals
+    self.selectRefinement = selectRefinement
+    _shown = State(initialValue: first)
+  }
 
   var body: some View {
-    let orderedEntries = SearchResultFrequencyOrdering.ordered(
-      results, entries: presentedEntries, ranks: frequencyLoadState.results)
+    let list = shown.list
+    let entries = Dictionary(
+      results.entries.map { ($0.id.rawValue, $0) }, uniquingKeysWith: { first, _ in first })
     List {
-      if exampleCount > 0 {
+      if let menu = list.menu {
+        Section {
+          SearchResultsMenu(menu: menu, chooseSort: chooseSort, chooseFilter: chooseFilter)
+            .listRowSeparator(.hidden, edges: .top)
+            .alignmentGuide(.listRowSeparatorLeading) { _ in 0 }
+        }
+      }
+
+      if let examples = list.examples {
         Section {
           NavigationLink(
             value: SearchExperienceRoute.examples(
-              query,
-              results.primaryEntry(for: query),
-              results.usesPrimaryEntryExamples
+              shown.request.query,
+              examples.highlightedEntry.flatMap { entries[$0] },
+              examples.usesHighlightedEntryExamples
             )
           ) {
-            Text(SearchResultsScreen.exampleActionTitle(count: exampleCount))
+            Text(examples.title)
               .font(.headline)
           }
           .accessibilityIdentifier("search.examples")
         }
       }
 
-      if let refinement = results.readingRefinement {
+      if let refinement = list.readingRefinement, let target = results.readingRefinement {
         Section {
           Button {
-            selectRefinement(refinement)
+            selectRefinement(target)
           } label: {
-            Text(SearchResultsScreen.readingRefinementTitle(refinement))
+            Text(refinement.title)
               .font(.headline)
           }
-          .accessibilityLabel("Search for Japanese reading \(refinement.query.value)")
+          .accessibilityLabel(refinement.spoken)
           .accessibilityIdentifier("search.reading-refinement")
         }
       }
 
-      switch SearchResultsScreen.list(query: query, results: results, ordered: orderedEntries) {
-      case .discoveredWords(let entries):
+      if list.sections.contains(.discoveredWords) {
         Section {
-          SearchListHeading(LocalizedStringKey(SearchResultsScreen.discoveredWordsHeading))
-          resultRows(entries) { .discovered(position: $0 + 1, count: entries.count) }
+          if let heading = list.heading {
+            SearchListHeading(LocalizedStringKey(heading))
+          }
+          resultRows(list.rows, entries: entries)
         }
-      case .ranked(let kanji, let entries):
+      } else if list.sections.contains(.results) {
         Section {
-          if let kanji {
+          if let kanji = list.kanji, let character = KanjiCharacter(kanji.character) {
             KanjiPrimaryRow(
-              character: kanji,
-              entry: primaryKanjiEntry,
-              resultCount: SearchResultsScreen.rankedCount(query: query, entries: entries)
-            )
+              kanji: kanji, character: character, entry: kanji.entry.flatMap { entries[$0] })
           }
-          resultRows(entries) { index in
-            .result(
-              position: index + (kanji == nil ? 1 : 2),
-              count: SearchResultsScreen.rankedCount(query: query, entries: entries)
-            )
+          resultRows(list.rows, entries: entries)
+          if let hidden = list.hiddenByFilter {
+            ContentUnavailableView {
+              Label("No Words Match Your Filter", systemImage: "line.3.horizontal.decrease.circle")
+            } description: {
+              Text(hidden)
+            } actions: {
+              Button("Clear Filter") {
+                if let all = list.menu?.filter.options.first { chooseFilter(all) }
+              }
+            }
+            .listRowSeparator(.hidden)
+            .accessibilityIdentifier("search.filter-empty")
           }
-          if let frequencyUnavailableNotice {
-            Label(frequencyUnavailableNotice, systemImage: "info.circle")
+          if let notice = list.frequencyNotice {
+            Label(notice, systemImage: "info.circle")
               .font(.footnote)
               .foregroundStyle(.secondary)
               .listRowSeparator(.hidden)
               .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
-      case .none:
-        EmptyView()
       }
     }
     .listStyle(.plain)
-    .id(query)
+    .id(shown.request.query)
     .accessibilityIdentifier("search.results")
-    .task(id: frequencyTaskID) {
-      let requestID = frequencyTaskID
-      frequencyLoadState.begin(requestID)
-      do {
-        let response = try await SearchFrequencyLoader.load(
-          requestID, using: frequencyCapability)
-        _ = frequencyLoadState.commit(response.results, for: response.request)
-      } catch is CancellationError {
-        return
-      } catch {
-        guard !Task.isCancelled else { return }
-        _ = frequencyLoadState.commit(
-          FrequencyLookupResult.unavailableResults(
-            for: requestID.entryIDs, pack: nil, reason: "Frequency data unavailable"
-          ).mapValues { [$0] },
-          for: requestID
-        )
+    .modifier(DrawRecorder(list, as: "search.results.drawn", summary: ResultsList.drawnSummary))
+    .onChange(of: list.forgetsSort, initial: true) { _, forgets in
+      if forgets { sort = ResultsLearner.defaultSort }
+    }
+    .task(id: request) {
+      let request = request
+      guard request != shown.request,
+        case .results(let list)? = try? await request.screen(),
+        !Task.isCancelled
+      else { return }
+      let animates = animatesNextList
+      animatesNextList = false
+      withAnimation(animates ? .default : nil) {
+        shown = ShownResults(request: request, list: list)
       }
     }
   }
 
+  private var request: ResultsScreenRequest {
+    var request = shown.request
+    request.learner = ResultsLearner(
+      sort: sort, filter: filter,
+      known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
+      fromRadicals: fromRadicals)
+    request.lists = FrequencyLists.live.version
+    return request
+  }
+
   private func resultRows(
-    _ entries: [DictionaryEntry], rank: @escaping (Int) -> ResultRank
+    _ rows: [ListedWord], entries: [String: DictionaryEntry]
   ) -> some View {
-    ForEach(entries.enumerated(), id: \.element.id) { index, entry in
-      ResultRow(
-        entry: entry,
-        summary: results.displaySummary(for: entry),
-        frequencyRanks: frequencyLoadState.results[entry.id],
-        rank: rank(index),
-        link: SearchExperienceRoute.word(entry, nil)
-      )
+    ForEach(rows, id: \.id) { row in
+      if let entry = entries[row.id] {
+        ResultRow(entry: entry, row: row, link: SearchExperienceRoute.word(entry, nil))
+      }
     }
   }
 
-  private var primaryKanjiEntry: DictionaryEntry? {
-    results.primaryEntry(for: query)
+  private func chooseSort(_ choice: ResultsChoice) {
+    guard choice.value != sort else { return }
+    animatesNextList = true
+    sort = choice.value
+    AccessibilityNotification.Announcement(choice.announcement).post()
   }
 
-  private var displayedEntryIDs: [LanguageReferenceID] {
-    SearchResultsScreen.displayedEntryIDs(presentedEntries)
-  }
-
-  private var presentedEntries: [DictionaryEntry] {
-    SearchResultsScreen.presentedEntries(results, rankedEntryLimit: rankedEntryLimit)
-  }
-
-  private var frequencyTaskID: SearchFrequencyTaskID {
-    SearchFrequencyTaskID(entryIDs: displayedEntryIDs, refreshID: frequencyRefreshID)
-  }
-
-  private var frequencyUnavailableNotice: String? {
-    SearchFrequencyUnavailableNotice.text(
-      for: displayedEntryIDs.compactMap { frequencyLoadState.results[$0] })
+  private func chooseFilter(_ choice: ResultsChoice) {
+    guard choice.value != filter else { return }
+    animatesNextList = true
+    filter = choice.value
+    AccessibilityNotification.Announcement(choice.announcement).post()
   }
 }
 
 private struct KanjiPrimaryRow: View {
+  let kanji: ResultsList.Kanji
   let character: KanjiCharacter
   let entry: DictionaryEntry?
-  let resultCount: Int
 
   var body: some View {
     NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
       HStack(spacing: 10) {
-        Text(character.rawValue)
+        Text(kanji.character)
           .font(.title.weight(.light))
         VStack(alignment: .leading, spacing: 3) {
-          Text(SearchResultsScreen.kanjiLabel)
+          Text(kanji.label)
             .font(.caption2.weight(.bold))
             .foregroundStyle(.primary)
-          Text(SearchResultsScreen.kanjiSummary(entry))
+          Text(kanji.summary)
             .foregroundStyle(.primary)
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -158,10 +184,8 @@ private struct KanjiPrimaryRow: View {
       }
       .contentShape(Rectangle())
     }
-    .accessibilityLabel(
-      "\(character.rawValue), \(SearchResultsScreen.kanjiLabel), "
-        + SearchResultsScreen.kanjiSummary(entry))
-    .accessibilityValue("Result 1 of \(resultCount), Kanji primary")
-    .accessibilityIdentifier("result.kanji-primary.\(character.rawValue)")
+    .accessibilityLabel("\(kanji.character), \(kanji.label), \(kanji.summary)")
+    .accessibilityValue(kanji.spoken)
+    .accessibilityIdentifier("result.kanji-primary.\(kanji.character)")
   }
 }

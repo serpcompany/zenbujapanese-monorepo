@@ -33,9 +33,14 @@ public enum BookmarkChange: Sendable, Equatable {
   case removed(SharedBookmark)
 }
 
+public enum SharedBookmarksProblem: Sendable, Equatable {
+  case couldNotRead
+  case newerVersion
+}
+
 enum SharedBookmarksLoad: Sendable {
   case loaded([SharedBookmark])
-  case keptAside
+  case keptAside(SharedBookmarksProblem)
 }
 
 actor SharedBookmarkFile {
@@ -68,7 +73,7 @@ actor SharedBookmarkFile {
     } catch {
       writable = false
       logger.error("Couldn't read synced bookmarks: \(error.localizedDescription)")
-      return .keptAside
+      return .keptAside(.couldNotRead)
     }
     let decoder = JSONDecoder.translatorStore
     if let stored = try? decoder.decode(StoredFile.self, from: data),
@@ -80,7 +85,7 @@ actor SharedBookmarkFile {
     let version = (try? decoder.decode(VersionProbe.self, from: data))?.version
     logger.error(
       "Left a synced bookmarks file this version can't read in place (version \(version ?? -1))")
-    return .keptAside
+    return .keptAside((version ?? 0) > StoredFile.currentVersion ? .newerVersion : .couldNotRead)
   }
 
   func write(_ bookmarks: [SharedBookmark]) {

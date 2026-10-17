@@ -2,11 +2,15 @@ import openNext from './.open-next/worker.js'
 import { appleAppSiteAssociationResponse } from './src/lib/app-links'
 import { retiredWordResponse, retiredWordsLookup } from './src/lib/dictionary/retired'
 import { movedPageResponse } from './src/lib/moved-pages'
+import { otherHostResponse } from './src/lib/other-hosts'
 
 export default {
   async fetch(request: Request, env: CloudflareEnv, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url)
-    const answered = movedPageResponse(url) ?? appleAppSiteAssociationResponse(url, env)
+    const answered =
+      appleAppSiteAssociationResponse(url, env) ??
+      otherHostResponse(request, env.SITE_ENV) ??
+      movedPageResponse(url)
     if (answered) return answered
     const lookup =
       request.method === 'GET' || request.method === 'HEAD' ? retiredWordsLookup(env) : null

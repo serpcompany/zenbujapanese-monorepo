@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { getWordPage } from '@/lib/dictionary/data'
 import { visibleText } from '@/test/rendered'
 import WordPage from './page'
 
@@ -37,19 +38,19 @@ describe('the word page, read from the fixtures', () => {
       'JMdict',
       'UniDic',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba',
       'RADKFILE',
       'KanjiVG',
       'Kanjium',
-      'JLPT kanji levels'
+      'JLPT kanji lists'
     ])
     expect(credited(await renderWord('いる-1577980'))).toEqual([
       'JMdict',
       'UniDic',
       'KANJIDIC2',
-      'JLPT levels',
+      'JLPT vocabulary lists',
       'TUBELEX',
       'Tatoeba'
     ])
@@ -77,6 +78,24 @@ describe('the word page, read from the fixtures', () => {
     const html = await renderWord('要-1609600')
     expect(html).not.toContain('id="conjugations"')
     expect(html).not.toContain('data-opens-conjugations')
+  })
+
+  test('its sections follow the core', async () => {
+    const html = await renderWord('要る-1546640')
+    const titles = [
+      ...html.matchAll(/data-slot="card-title"[^>]*>([^<]+)<|<h2[^>]*><button[^>]*>([^<]+)</g)
+    ].map(([, card, disclosure]) => card ?? disclosure)
+    const sections = (await getWordPage(1546640))?.sections.map(section => section.title) ?? []
+    expect(sections).toEqual([
+      'Meaning',
+      'Frequency',
+      'Conjugations',
+      'Kanji',
+      'Lists',
+      'Notes',
+      'Examples'
+    ])
+    expect(titles.slice(0, sections.length)).toEqual(sections)
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {

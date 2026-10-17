@@ -9,10 +9,6 @@
       "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
     },
     {
-      "name" : "Kuromoji/kuromoji.js",
-      "sha256" : "ab0ac10f1c4a9b5e246e63e57b04ba14d3a6148cd7e8d62cb97a960d4f85a3e6"
-    },
-    {
       "name" : "Kuromoji/base.dat.gz",
       "sha256" : "0803327762e1c93ca731e4319ab8343340f2806bb84941207782cde9d2d5a8eb"
     },
@@ -45,10 +41,6 @@
       "sha256" : "9a8e86fd9aff32d323fbb59f5a7006f05927a11f8173c90712cc56293aeb3225"
     },
     {
-      "name" : "Kuromoji/unk_compat.dat.gz",
-      "sha256" : "50f60aa29bc2e86c2903ab8c825bb6fa604d2b294d96941c1d3924259791899d"
-    },
-    {
       "name" : "Kuromoji/unk_invoke.dat.gz",
       "sha256" : "6b210889548457c3006913afd12c8b525562255f2709e404604be9614a25e94c"
     },
@@ -64,6 +56,7 @@
   "cases" : [
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A Japanese headword: the sentences that contain it",
       "highlightedEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
       "ids" : [
@@ -411,6 +404,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A Japanese headword",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
@@ -632,6 +626,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A Japanese word over 50 examples",
       "highlightedEntry" : "6342bfc30de4f6cc49b6c2db81692c98",
       "ids" : [
@@ -881,6 +876,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A Japanese word",
       "highlightedEntry" : "72309de2d19aa24aa677dfba2428ff13",
       "ids" : [
@@ -1123,6 +1119,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A single kanji",
       "highlightedEntry" : "fdfd4b61e060b36b5416c578de4bfec3",
       "ids" : [
@@ -1332,6 +1329,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad single kanji",
       "highlightedEntry" : "ad7071d79b9e8e3719514d8121d3699f",
       "ids" : [
@@ -1579,6 +1577,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A kana word",
       "highlightedEntry" : "8647047758cffbea50d72922fad277e0",
       "ids" : [
@@ -1813,6 +1812,7 @@
     },
     {
       "count" : 3,
+      "countText" : "3 examples",
       "covers" : "Kana with few examples",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
@@ -2010,6 +2010,7 @@
     },
     {
       "count" : 15,
+      "countText" : "15 examples",
       "covers" : "Kana with 15 examples",
       "highlightedEntry" : "850bc3ac4ddbe2a4bc8cb2e2d1270dfa",
       "ids" : [
@@ -2284,6 +2285,7 @@
     },
     {
       "count" : 22,
+      "countText" : "22 examples",
       "covers" : "Kana with 22 examples",
       "highlightedEntry" : "8d8af9d02a7d3de3d1c6da26be309061",
       "ids" : [
@@ -2609,6 +2611,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A kana greeting",
       "highlightedEntry" : "aead518e84274687eaf56db5618ffd7f",
       "ids" : [
@@ -2821,6 +2824,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Katakana",
       "highlightedEntry" : "8fba7d1668c6ef8b821ac01d5071b24c",
       "ids" : [
@@ -3069,6 +3073,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad kana query",
       "highlightedEntry" : "b8ecfe236307bd92a4d92ceba36733e2",
       "ids" : [
@@ -3296,6 +3301,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad particle",
       "highlightedEntry" : "08c0172000564955c420c01ddadc4b63",
       "ids" : [
@@ -3528,6 +3534,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A common inflection ending",
       "highlightedEntry" : "197054f4ffdf5ade9f43b96d8d153a2e",
       "ids" : [
@@ -3811,6 +3818,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Punctuation in nearly every sentence",
       "highlightedEntry" : "73c63266574d8fff0ef33fcf00dcd77c",
       "ids" : [
@@ -4031,6 +4039,7 @@
     },
     {
       "count" : 16,
+      "countText" : "16 examples",
       "covers" : "A phrase",
       "ids" : [
         "esp1_8847f6b5d63a32b2242e5a5bcfa4ba18",
@@ -4385,6 +4394,7 @@
     },
     {
       "count" : 26,
+      "countText" : "26 examples",
       "covers" : "A query that is a whole sentence (entireJapaneseSentence)",
       "ids" : [
         "esp1_be42fb1b8e8151193a562e8f9b6d5c6c",
@@ -4580,6 +4590,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A place name",
       "highlightedEntry" : "700295bbd9adcb6d441d5b325ab67854",
       "ids" : [
@@ -4838,6 +4849,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Deinflected: the primary entry's examples",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
@@ -5054,6 +5066,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Deinflected: the primary entry's examples",
       "highlightedEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
       "ids" : [
@@ -5396,6 +5409,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Deinflected polite past",
       "highlightedEntry" : "02b555a06b217e79bca2d442a5a03d86",
       "ids" : [
@@ -5612,6 +5626,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A deinflected adjective",
       "highlightedEntry" : "380d957d6f36dc2e2aacdb743198d104",
       "ids" : [
@@ -5882,6 +5897,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Romaji: the primary entry's examples",
       "highlightedEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
       "ids" : [
@@ -6224,6 +6240,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Romaji",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
@@ -6440,6 +6457,7 @@
     },
     {
       "count" : 3,
+      "countText" : "3 examples",
       "covers" : "Romaji whose primary entry has 3 examples",
       "highlightedEntry" : "4bb364adfa7d069ae7a532516ba7f31b",
       "ids" : [
@@ -6649,6 +6667,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Romaji",
       "highlightedEntry" : "8d8af9d02a7d3de3d1c6da26be309061",
       "ids" : [
@@ -7046,6 +7065,7 @@
     },
     {
       "count" : 100,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "Romaji",
       "highlightedEntry" : "8784500933ea7b27b14398efa769d7b8",
       "ids" : [
@@ -7421,6 +7441,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English: exact matches, then Porter matches (eats, eating)",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
@@ -7634,6 +7655,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English",
       "highlightedEntry" : "657d72cf95a8d0510ef6464fc032bae0",
       "ids" : [
@@ -7939,6 +7961,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English",
       "highlightedEntry" : "4177ac7d792e1845620b34050dcdbc02",
       "ids" : [
@@ -8271,8 +8294,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English",
-      "highlightedEntry" : "c36acf2a68500efbede75ec79e0bdb53",
+      "highlightedEntry" : "722c94624b09c10ca07a96c1cb03701f",
       "ids" : [
         "esp1_8c50f89da104764ae99246cf7fd9bc66",
         "esp1_867483d740fddb04da0b035fbd60dafb",
@@ -8576,6 +8600,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An English phrase",
       "highlightedEntry" : "be95cd848551d73159f4f2da5558bddd",
       "ids" : [
@@ -8935,8 +8960,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An English phrase",
-      "highlightedEntry" : "d4148b392890d51b7a69936cabc65f7f",
+      "highlightedEntry" : "36e7053129094ab42c05c04788cfe1dc",
       "ids" : [
         "esp1_4482c853c9a0d7b375ebad8886274bcc",
         "esp1_afbdea89b37cf5a3221a06704374d949",
@@ -9133,8 +9159,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad English word",
-      "highlightedEntry" : "a928f9c86f43d027274c70d4d62f1c31",
+      "highlightedEntry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
       "ids" : [
         "esp1_b6a437186e5bd11dd5050b22e40d83e2",
         "esp1_260172f9f318e235cb09d16c43d238d8",
@@ -9385,8 +9412,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad English word",
-      "highlightedEntry" : "912f37cf0d1db42392d7c0c80eb716af",
+      "highlightedEntry" : "7cdd73f88a66c25a26dbb801c31b7055",
       "ids" : [
         "esp1_c606fbf62593a8496c52e48966b7ceb8",
         "esp1_888832df4a6d0fa43983441d5e3899d1",
@@ -9601,6 +9629,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "The broadest English word",
       "highlightedEntry" : "1cc9a84b606c82ec5a77ca0497e28107",
       "ids" : [
@@ -9841,8 +9870,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English: run, runs, running",
-      "highlightedEntry" : "c7fbccbcc3ca1ede97a06ce0f8b350ec",
+      "highlightedEntry" : "35936bcf0f6c4f4b7b243a67f72da2dc",
       "ids" : [
         "esp1_35cf2e06a80707d851af9b832bf42d19",
         "esp1_53004e1940970cb1ddb23fef5cfaddbe",
@@ -10039,8 +10069,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English: exact running before run and runs",
-      "highlightedEntry" : "fdb2bbafe2673f34c4efffe031151be9",
+      "highlightedEntry" : "97b9f7c74c427255d42bd1dbad3915b6",
       "ids" : [
         "esp1_a5cabedba04b3b467cc516496b23ccf1",
         "esp1_e1d00a74709745a5385193de4804d805",
@@ -10372,6 +10403,78 @@
       "usesPrimaryEntryExamples" : false
     },
     {
+      "count" : 1,
+      "countText" : "1 example",
+      "covers" : "English in another form of a word: no sentence has these exact words, so the Porter match whose words are other forms of them (startle you) is listed",
+      "ids" : [
+        "esp1_ef5db7c44a3d69f69709e21bbd33e2e5"
+      ],
+      "query" : "startled you",
+      "shown" : [
+        {
+          "english" : "I didn't mean to startle you.",
+          "id" : "esp1_ef5db7c44a3d69f69709e21bbd33e2e5",
+          "japanese" : "びっくりさせるつもりじゃなかった。",
+          "tokens" : [
+            {
+              "entry" : "94c574b2215055f4e6e635269f40140c",
+              "surface" : "びっくり"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "させる"
+            },
+            {
+              "entry" : "7b0379eb84c861df90970c7893fc0dcd",
+              "surface" : "つもり"
+            },
+            {
+              "entry" : "818c411c7720a83ee142ddfa37edc898",
+              "surface" : "じゃ"
+            },
+            {
+              "candidates" : [
+                "1320172996dffedb0e11f232b8f79360",
+                "3339a283acf7daea039bc87b898cc58f",
+                "3d4908f75d7b71234e20d190717d957a",
+                "414e7987348ad201b60719d434ff2864",
+                "354ae6fc7f745c2dfb68f349c8e58287"
+              ],
+              "surface" : "なかっ"
+            },
+            {
+              "entry" : "a7b2505ddb948d3f18aa52ca154c82e1",
+              "surface" : "た"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
+      ],
+      "title" : "View 1 Example Sentence",
+      "usesPrimaryEntryExamples" : false
+    },
+    {
+      "count" : 0,
+      "covers" : "English that only shares a stem: no sentence has this word, and Porter's matches (generally, general, generation, generous) are other words, so nothing is listed",
+      "highlightedEntry" : "80e2147321c56606ccddf59ed4b18dae",
+      "ids" : [
+
+      ],
+      "query" : "generously",
+      "shown" : [
+
+      ],
+      "usesPrimaryEntryExamples" : false
+    },
+    {
       "count" : 0,
       "covers" : "An irregular English past",
       "highlightedEntry" : "6d6f1814c362782730f147d1e1ef9ce1",
@@ -10386,8 +10489,9 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English",
-      "highlightedEntry" : "6458a2702b664ffba1f90791c1ecb6e8",
+      "highlightedEntry" : "d54065984da2cc95de117b5dfce062ec",
       "ids" : [
         "esp1_01cc3cef514873f6c073bb57b5750c55",
         "esp1_ec7007118ef490701091e94a258b4e00",
@@ -10623,6 +10727,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "English",
       "highlightedEntry" : "8ec7fa20364f96f55314d514bf7563a8",
       "ids" : [
@@ -10809,6 +10914,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A phrase that must not cross a sentence end",
       "highlightedEntry" : "292dca2df5f2aa383a477ae68da4405f",
       "ids" : [
@@ -11040,6 +11146,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An apostrophe splits English words",
       "highlightedEntry" : "6ccb3397987eac083e3d6f48bd2466b9",
       "ids" : [
@@ -11242,6 +11349,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An apostrophe",
       "highlightedEntry" : "0a6ec1d1845d1971f6018539eec71aef",
       "ids" : [
@@ -11435,6 +11543,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An apostrophe",
       "highlightedEntry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
       "ids" : [
@@ -11804,6 +11913,7 @@
     },
     {
       "count" : 40,
+      "countText" : "40 examples",
       "covers" : "A hyphen",
       "highlightedEntry" : "e691a87680efad200b2d0e42af442eb7",
       "ids" : [
@@ -12087,6 +12197,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A period inside a phrase",
       "ids" : [
         "esp1_6e0223864479abdc1931a76e9c1283c9",
@@ -12438,6 +12549,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A common name",
       "highlightedEntry" : "3efbcbe84dc92fea4146837b28eb5571",
       "ids" : [
@@ -12669,6 +12781,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "An English place name",
       "highlightedEntry" : "feeade436a71761cb76b16e147f19f73",
       "ids" : [
@@ -13001,6 +13114,7 @@
     },
     {
       "count" : 47,
+      "countText" : "47 examples",
       "covers" : "Digits",
       "highlightedEntry" : "abee8f0136e3a48ea4401e6bcd7d6406",
       "ids" : [
@@ -13277,6 +13391,7 @@
     },
     {
       "count" : 1,
+      "countText" : "1 example",
       "covers" : "A long number, which FTS4's Porter shortens to its first and last three digits",
       "ids" : [
         "esp1_de596149bbdf2537b866669af30eb23f"
@@ -13349,7 +13464,7 @@
     },
     {
       "count" : 0,
-      "covers" : "Porter matches 11111011111 (both shorten to 111111), but no sentence has these exact words",
+      "covers" : "Porter matches 11111011111 (both shorten to 111111), but no sentence has these exact words, and one number is no form of another",
       "ids" : [
 
       ],
@@ -13361,6 +13476,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A prefix query",
       "highlightedEntry" : "80cc607e4daef4e7206b761f2366cfbd",
       "ids" : [
@@ -13566,6 +13682,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A one-letter prefix: over 100,000 candidates, which the website answers from the precomputed searches",
       "highlightedEntry" : "d418e58c46f0e84a6df458e97e0502a2",
       "ids" : [
@@ -13763,6 +13880,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A first-word query with about 70,000 candidates",
       "ids" : [
         "esp1_a525e1605167d0427816f3e4364200b6",
@@ -14002,6 +14120,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A first-word prefix",
       "highlightedEntry" : "d418e58c46f0e84a6df458e97e0502a2",
       "ids" : [
@@ -14199,6 +14318,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A phrase ending in a prefix",
       "ids" : [
         "esp1_4482c853c9a0d7b375ebad8886274bcc",
@@ -14396,6 +14516,7 @@
     },
     {
       "count" : 51,
+      "countText" : "The first 100 of more than 100 examples",
       "covers" : "A first-word query",
       "ids" : [
         "esp1_75ddae0c64a5d93a19d67196878cb40c",
@@ -14625,15 +14746,80 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 0,
-      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches",
+      "count" : 1,
+      "countText" : "1 example",
+      "covers" : "An underscore: a Porter word character, but a delimiter for exact matches, so its sentence is listed as a Porter match of the same word",
       "ids" : [
-
+        "esp1_fe75a67776955a0907583eb40aa75132"
       ],
       "query" : "_",
       "shown" : [
-
+        {
+          "english" : "Warning: unsupported characters are displayed using the '_' character.",
+          "id" : "esp1_fe75a67776955a0907583eb40aa75132",
+          "japanese" : "注意：サポートされていない文字は「_」と表示されます。",
+          "tokens" : [
+            {
+              "entry" : "a8a5cf09fd0f33e97a0defeafbed4276",
+              "surface" : "注意"
+            },
+            {
+              "surface" : "："
+            },
+            {
+              "entry" : "3608365cb370be0510b19120f6f3864a",
+              "surface" : "サポート"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "されていない"
+            },
+            {
+              "entry" : "6f55042aad23729a27959815ca524a45",
+              "surface" : "文字"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "surface" : "「"
+            },
+            {
+              "queryMatch" : true,
+              "surface" : "_」"
+            },
+            {
+              "entry" : "d005d8641e912ee4b72714255428699d",
+              "surface" : "と"
+            },
+            {
+              "entry" : "17a406959bdabec959c086e750a56a7c",
+              "surface" : "表示"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "されます"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
       ],
+      "title" : "View 1 Example Sentence",
       "usesPrimaryEntryExamples" : false
     },
     {

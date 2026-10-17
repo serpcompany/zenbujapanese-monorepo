@@ -1,3 +1,4 @@
+import type { KanjiSectionKind } from '@zenbu/dictionary-core/detail/kanji'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
@@ -25,6 +26,60 @@ function Part({ title, children }: { title: string; children: ReactNode }) {
       {children}
     </section>
   )
+}
+
+function KanjiDetailsPart({ kind, kanji }: { kind: KanjiSectionKind; kanji: KanjiDetailsData }) {
+  switch (kind) {
+    case 'readings':
+      return <KanjiReadings readings={kanji.readings} />
+    case 'components':
+      return (
+        <p className="text-xl">
+          {kanji.components.map((component, index) => (
+            <span key={component.character}>
+              {index > 0 ? ' · ' : null}
+              <CharacterLink {...component} />
+            </span>
+          ))}
+        </p>
+      )
+    case 'elements':
+      return (
+        <ul className="flex flex-col gap-3">
+          {kanji.elements.map(element => (
+            <li key={element.character} className="flex items-center gap-4">
+              <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-muted text-3xl">
+                <CharacterLink character={element.character} path={element.path} />
+              </span>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">{element.roleLabel}</p>
+                <p>{element.description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )
+    case 'lists':
+    case 'notes':
+      return <LearnerPrompt kind={kind} />
+    case 'words':
+      return (
+        <ul className="flex flex-col divide-y">
+          {kanji.words.map(word => (
+            <li key={word.entSeq} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
+              {word.path ? (
+                <Link href={word.path} className="shrink-0 underline-offset-4 hover:underline">
+                  <RubyText segments={word.ruby} className="text-xl" />
+                </Link>
+              ) : (
+                <RubyText segments={word.ruby} className="shrink-0 text-xl" />
+              )}
+              <span className="ml-auto text-right text-muted-foreground">{word.summary}</span>
+            </li>
+          ))}
+        </ul>
+      )
+  }
 }
 
 export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
@@ -60,69 +115,11 @@ export function KanjiDetails({ kanji }: { kanji: KanjiDetailsData }) {
         <p className="text-lg font-medium">{kanji.meanings.join(', ')}</p>
       ) : null}
 
-      {kanji.readings.length > 0 ? (
-        <Part title="Readings">
-          <KanjiReadings readings={kanji.readings} />
+      {kanji.sections.map(section => (
+        <Part key={section.kind} title={section.title}>
+          <KanjiDetailsPart kind={section.kind} kanji={kanji} />
         </Part>
-      ) : null}
-
-      {kanji.components.length > 0 ? (
-        <Part title="Components">
-          <p className="text-xl">
-            {kanji.components.map((component, index) => (
-              <span key={component.character}>
-                {index > 0 ? ' · ' : null}
-                <CharacterLink {...component} />
-              </span>
-            ))}
-          </p>
-        </Part>
-      ) : null}
-
-      {kanji.elements.length > 0 ? (
-        <Part title="Elements">
-          <ul className="flex flex-col gap-3">
-            {kanji.elements.map(element => (
-              <li key={element.character} className="flex items-center gap-4">
-                <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-muted text-3xl">
-                  <CharacterLink character={element.character} path={element.path} />
-                </span>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">{element.roleLabel}</p>
-                  <p>{element.description}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Part>
-      ) : null}
-
-      <Part title="Lists">
-        <LearnerPrompt kind="lists" />
-      </Part>
-
-      <Part title="Notes">
-        <LearnerPrompt kind="notes" />
-      </Part>
-
-      {kanji.words.length > 0 ? (
-        <Part title="Words">
-          <ul className="flex flex-col divide-y">
-            {kanji.words.map(word => (
-              <li key={word.entSeq} className="flex items-baseline gap-3 py-2 first:pt-0 last:pb-0">
-                {word.path ? (
-                  <Link href={word.path} className="shrink-0 underline-offset-4 hover:underline">
-                    <RubyText segments={word.ruby} className="text-xl" />
-                  </Link>
-                ) : (
-                  <RubyText segments={word.ruby} className="shrink-0 text-xl" />
-                )}
-                <span className="ml-auto text-right text-muted-foreground">{word.summary}</span>
-              </li>
-            ))}
-          </ul>
-        </Part>
-      ) : null}
+      ))}
     </div>
   )
 }

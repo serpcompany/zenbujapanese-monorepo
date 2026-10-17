@@ -10,7 +10,15 @@ const svgUnitsPerMora = 100
 const dotRadius = 12.5
 const dotInsetFromEdge = dotRadius + 5
 
-export function PitchAccent({ pitch, reading }: { pitch: PitchAccentData; reading: string }) {
+export function PitchAccent({
+  pitch,
+  reading,
+  pronounce
+}: {
+  pitch: PitchAccentData
+  reading: string
+  pronounce: string
+}) {
   const { graph } = pitch
   const viewHeight = (contourHeightEm / moraWidthEm) * svgUnitsPerMora
   const y = (high: boolean) => (high ? dotInsetFromEdge : viewHeight - dotInsetFromEdge)
@@ -36,7 +44,7 @@ export function PitchAccent({ pitch, reading }: { pitch: PitchAccentData; readin
     >
       <Volume2Icon aria-hidden className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
       <span className="sr-only">
-        Pronounce {reading}. Pitch accent, downstep {pitch.downstep}, {pitch.moraCount} mora
+        {pronounce}. {pitch.spoken}
       </span>
       <span
         aria-hidden

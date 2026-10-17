@@ -16,6 +16,14 @@ struct WatchedVideo: Codable, Hashable, Identifiable, Sendable {
   }
 
   var id: String { videoID }
+
+  var withFiniteNumbers: WatchedVideo {
+    var video = self
+    video.comprehension = comprehension.flatMap { $0.isFinite ? $0 : nil }
+    video.duration = duration.flatMap { $0.isFinite ? $0 : nil }
+    video.position = position.flatMap { $0.isFinite ? $0 : nil }
+    return video
+  }
   var thumbnailURL: URL? { URL(string: "https://i.ytimg.com/vi/\(videoID)/mqdefault.jpg") }
 
   func isNewer(than other: WatchedVideo) -> Bool {
@@ -41,22 +49,30 @@ final class WatchHistory {
   init(defaults: UserDefaults = .standard, now: @escaping @MainActor () -> Date = Date.init) {
     self.defaults = defaults
     self.now = now
-    let stored =
-      defaults.data(forKey: Self.storageKey)
-      .flatMap { try? JSONDecoder().decode([WatchedVideo].self, from: $0) } ?? []
+    let (stored, lostSome) = Self.readable(in: defaults)
     videos = stored.enumerated().map { index, video in
       var dated = video
       dated.watchedAt =
         video.watchedAt ?? Self.undatedStart.addingTimeInterval(Double(stored.count - index))
       return dated
     }
-    if stored.contains(where: { $0.watchedAt == nil }) { save() }
+    if lostSome || stored.contains(where: { $0.watchedAt == nil }) { save() }
+  }
+
+  private static func readable(in defaults: UserDefaults) -> ([WatchedVideo], lostSome: Bool) {
+    guard let data = defaults.storedData(forKey: storageKey) else { return ([], false) }
+    let stored = try? JSONDecoder().decode([LossyDecodable<WatchedVideo>].self, from: data)
+    let videos = stored?.compactMap(\.value) ?? []
+    guard videos.count != stored?.count else { return (videos, false) }
+    UnreadableCopy.keep(storageKey, in: defaults)
+    return (videos, true)
   }
 
   func record(_ videoID: YouTubeVideoID, update: (inout WatchedVideo) -> Void = { _ in }) {
     let previous = videos.first { $0.videoID == videoID.rawValue }
     var video = previous ?? WatchedVideo(videoID: videoID.rawValue)
     update(&video)
+    video = video.withFiniteNumbers
     video.watchedAt = now()
     place(video)
     changeObserver?(.videoWatched(video, previous: previous))
@@ -87,6 +103,7 @@ final class WatchHistory {
   }
 
   private func save() {
-    defaults.set(try? JSONEncoder().encode(videos), forKey: Self.storageKey)
+    guard let data = try? JSONEncoder().encode(videos) else { return }
+    defaults.set(data, forKey: Self.storageKey)
   }
 }

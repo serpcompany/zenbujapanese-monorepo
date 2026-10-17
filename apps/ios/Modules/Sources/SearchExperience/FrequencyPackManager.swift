@@ -1,8 +1,12 @@
 import Foundation
 
 actor FrequencyPackManager {
-  typealias Download = @Sendable (URL) async throws -> Data
+  typealias Progress = @Sendable (Double) -> Void
+  typealias Download = @Sendable (URL, @escaping Progress) async throws -> Data
 
+  static let unverifiedList = "Frequency data unavailable"
+
+  nonisolated let lists: FrequencyLists
   private let catalog: FrequencyPackCatalog
   private let bundledArtifactURLs: [FrequencyPackID: URL]
   private let languageDataURL: URL
@@ -18,12 +22,14 @@ actor FrequencyPackManager {
     bundledArtifactURLs: [FrequencyPackID: URL],
     languageDataURL: URL,
     storageDirectory: URL,
+    lists: FrequencyLists = FrequencyLists(),
     download: @escaping Download
   ) throws {
     let bundledPacks = catalog.packs.filter(\.bundled)
     guard !bundledPacks.isEmpty, bundledPacks.allSatisfy({ !$0.removable }) else {
       throw FrequencyPackError.invalidCatalog
     }
+    self.lists = lists
     self.catalog = catalog
     self.bundledArtifactURLs = bundledArtifactURLs
     self.languageDataURL = languageDataURL
@@ -31,6 +37,11 @@ actor FrequencyPackManager {
     downloadSource = download
     try FileManager.default.createDirectory(
       at: storageDirectory, withIntermediateDirectories: true)
+    let kept = try FileManager.default.contentsOfDirectory(
+      at: storageDirectory, includingPropertiesForKeys: nil)
+    for staged in kept where staged.pathExtension == Self.stagedExtension {
+      try? FileManager.default.removeItem(at: staged)
+    }
     let languageDataSHA256 = try fileSHA256(languageDataURL)
     for bundled in bundledPacks {
       guard let url = bundledArtifactURLs[bundled.packID],
@@ -59,19 +70,22 @@ actor FrequencyPackManager {
       try? FileManager.default.removeItem(
         at: Self.artifactURL(for: record.packID, in: storageDirectory))
     }
+    var verifiedInstalls: [FrequencyPackID: FrequencyPackArtifact] = [:]
     let validatedRecords: [FrequencyPackID: InstalledFrequencyPackRecord] = Dictionary(
       uniqueKeysWithValues: (saved?.installedRecords ?? []).compactMap { record in
         guard let manifest = catalog.packs.first(where: { $0.packID == record.packID }),
           !manifest.bundled,
-          Self.validInstalledRecord(
+          let artifact = Self.verifiedInstall(
             record,
             manifest: manifest,
             trustedManifests: catalog.allTrustedManifests,
             at: Self.artifactURL(for: record.packID, in: storageDirectory)
           )
         else { return nil }
+        verifiedInstalls[record.packID] = artifact
         return (record.packID, record)
       })
+    verifiedArtifacts.merge(verifiedInstalls) { _, installed in installed }
     for record in saved?.installedRecords ?? []
     where validatedRecords[record.packID] == nil && currentPackIDs.contains(record.packID) {
       try? FileManager.default.removeItem(
@@ -91,7 +105,12 @@ actor FrequencyPackManager {
         && seen.insert(id).inserted
     }
     try Self.persist(enabledPackIDs, installedRecords, bundledIDs, in: storageDirectory)
+    lists.publish(
+      Self.enabledLists(
+        enabledPackIDs, of: catalog, installed: validatedRecords, verified: verifiedArtifacts))
   }
+
+  private static let stagedExtension = "staged"
 
   private static let legacyBundledPackIDs = [
     FrequencyPackID(rawValue: "zenbu.tubelex.youtube.ja.unidic-3.1")
@@ -127,59 +146,43 @@ actor FrequencyPackManager {
     )
   }
 
-  func evidence(for id: LanguageReferenceID) throws -> FrequencyRanks {
-    guard let result = try evidence(for: [id])[id] else {
-      throw FrequencyPackError.invalidArtifact
-    }
-    return result
-  }
-
-  func evidence(for ids: [LanguageReferenceID]) throws -> [LanguageReferenceID: FrequencyRanks] {
-    var ranks = Dictionary(uniqueKeysWithValues: ids.map { ($0, FrequencyRanks()) })
-    for packID in enabledPackIDs {
-      guard let catalogManifest = catalog.packs.first(where: { $0.packID == packID }) else {
-        throw FrequencyPackError.invalidCatalog
-      }
-      let manifest = effectiveManifest(for: catalogManifest)
-      let results: [LanguageReferenceID: FrequencyLookupResult]
-      do {
-        results = try verifiedArtifact(for: manifest).evidence(for: ids)
-      } catch {
-        verifiedArtifacts[packID] = nil
-        results = FrequencyLookupResult.unavailableResults(
-          for: ids, pack: manifest.disclosure, reason: "Frequency data unavailable")
-      }
-      for id in ids {
-        guard let result = results[id] else { throw FrequencyPackError.invalidArtifact }
-        ranks[id, default: []].append(result)
-      }
-    }
-    return ranks
-  }
-
-  func download(_ packID: FrequencyPackID) async throws {
+  func download(_ packID: FrequencyPackID, progress: @escaping Progress = { _ in }) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), !manifest.bundled
     else { throw FrequencyPackError.invalidPack }
     failures[packID] = nil
     do {
-      let source = try await downloadSource(manifest.downloadURL)
+      let source = try await downloadSource(manifest.downloadURL, progress)
+      try Task.checkCancellation()
+      progress(1)
       guard source.count == manifest.sourceBytes, source.sha256 == manifest.sourceSHA256 else {
         throw FrequencyPackError.checksumMismatch
       }
+      let installed = artifactURL(for: manifest)
+      let staged = installed.appendingPathExtension(Self.stagedExtension)
+      defer { try? FileManager.default.removeItem(at: staged) }
       let record = try FrequencyPackInstaller.install(
         source: source,
         manifest: manifest,
         languageDataURL: languageDataURL,
-        destination: artifactURL(for: manifest)
+        destination: staged
       )
-      let isNewInstall = installedRecords[packID] == nil
-      installedRecords[packID] = record
-      verifiedArtifacts[packID] = nil
-      if isNewInstall, !enabledPackIDs.contains(packID) {
-        enabledPackIDs.append(packID)
+      var changed = packs
+      changed.verified[packID] = try FrequencyPackArtifact(url: staged, manifest: manifest)
+        .moved(to: installed)
+      if changed.installed[packID] == nil, !changed.enabled.contains(packID) {
+        changed.enabled.append(packID)
+      }
+      changed.installed[packID] = record
+      try publishLists(changed) {
+        if FileManager.default.fileExists(atPath: installed.path) {
+          _ = try FileManager.default.replaceItemAt(installed, withItemAt: staged)
+        } else {
+          try FileManager.default.moveItem(at: staged, to: installed)
+        }
       }
       try persist()
     } catch {
+      guard !Self.isCancellation(error) else { throw error }
       failures[packID] =
         error as? FrequencyPackError == .checksumMismatch
         ? "Downloaded file failed checksum validation."
@@ -188,18 +191,22 @@ actor FrequencyPackManager {
     }
   }
 
+  private static func isCancellation(_ error: Error) -> Bool {
+    error is CancellationError || (error as? URLError)?.code == .cancelled
+  }
+
   func enable(_ packID: FrequencyPackID) throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }) else {
       throw FrequencyPackError.packNotInstalled
     }
     let installedIsValid =
       installedRecords[packID].map {
-        Self.validInstalledRecord(
+        Self.verifiedInstall(
           $0,
           manifest: manifest,
           trustedManifests: catalog.allTrustedManifests,
           at: artifactURL(for: manifest)
-        )
+        ) != nil
       } ?? false
     guard manifest.bundled || installedIsValid else { throw FrequencyPackError.packNotInstalled }
     let installedManifest = effectiveManifest(for: manifest)
@@ -209,11 +216,13 @@ actor FrequencyPackManager {
     verifiedArtifacts[packID] = artifact
     guard !enabledPackIDs.contains(packID) else { return }
     enabledPackIDs.append(packID)
+    publishLists()
     try persist()
   }
 
   func disable(_ packID: FrequencyPackID) throws {
     enabledPackIDs.removeAll { $0 == packID }
+    publishLists()
     try persist()
   }
 
@@ -222,29 +231,66 @@ actor FrequencyPackManager {
       throw FrequencyPackError.invalidPack
     }
     enabledPackIDs = packIDs
+    publishLists()
     try persist()
   }
 
   func remove(_ packID: FrequencyPackID) throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), manifest.removable
     else { throw FrequencyPackError.packNotRemovable }
-    if FileManager.default.fileExists(atPath: artifactURL(for: manifest).path) {
-      try FileManager.default.removeItem(at: artifactURL(for: manifest))
+    var changed = packs
+    changed.enabled.removeAll { $0 == packID }
+    changed.installed[packID] = nil
+    changed.verified[packID] = nil
+    try publishLists(changed) {
+      if FileManager.default.fileExists(atPath: artifactURL(for: manifest).path) {
+        try FileManager.default.removeItem(at: artifactURL(for: manifest))
+      }
     }
     failures[packID] = nil
-    installedRecords[packID] = nil
-    verifiedArtifacts[packID] = nil
-    enabledPackIDs.removeAll { $0 == packID }
     try persist()
   }
 
-  private func verifiedArtifact(for manifest: FrequencyPackManifest) throws -> FrequencyPackArtifact {
-    if let artifact = verifiedArtifacts[manifest.packID], artifact.manifest == manifest {
-      return artifact
+  private func publishLists() {
+    lists.publish(
+      Self.enabledLists(
+        enabledPackIDs, of: catalog, installed: installedRecords, verified: verifiedArtifacts))
+  }
+
+  private typealias Packs = (
+    enabled: [FrequencyPackID], installed: [FrequencyPackID: InstalledFrequencyPackRecord],
+    verified: [FrequencyPackID: FrequencyPackArtifact]
+  )
+
+  private var packs: Packs { (enabledPackIDs, installedRecords, verifiedArtifacts) }
+
+  private func publishLists(
+    _ changed: Packs, afterClosing changeFiles: () throws -> Void
+  ) throws {
+    try lists.publish(
+      Self.enabledLists(
+        changed.enabled, of: catalog, installed: changed.installed, verified: changed.verified),
+      afterClosing: changeFiles)
+    (enabledPackIDs, installedRecords, verifiedArtifacts) = changed
+  }
+
+  private static func enabledLists(
+    _ enabledPackIDs: [FrequencyPackID], of catalog: FrequencyPackCatalog,
+    installed installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord],
+    verified verifiedArtifacts: [FrequencyPackID: FrequencyPackArtifact]
+  ) -> [EnabledFrequencyList] {
+    enabledPackIDs.compactMap { packID in
+      guard let catalogManifest = catalog.packs.first(where: { $0.packID == packID }) else {
+        return nil
+      }
+      let manifest = effectiveManifest(
+        for: catalogManifest, installed: installedRecords, trusted: catalog.allTrustedManifests)
+      guard let artifact = verifiedArtifacts[packID], artifact.manifest == manifest else {
+        return EnabledFrequencyList(
+          dictionary: manifest.disclosure, file: .unavailable(unverifiedList))
+      }
+      return EnabledFrequencyList(dictionary: manifest.disclosure, file: .verified(artifact.url))
     }
-    let artifact = try FrequencyPackArtifact(url: artifactURL(for: manifest), manifest: manifest)
-    verifiedArtifacts[manifest.packID] = artifact
-    return artifact
   }
 
   private func artifactURL(for manifest: FrequencyPackManifest) -> URL {
@@ -255,12 +301,18 @@ actor FrequencyPackManager {
   private func effectiveManifest(for catalogManifest: FrequencyPackManifest)
     -> FrequencyPackManifest
   {
+    Self.effectiveManifest(
+      for: catalogManifest, installed: installedRecords, trusted: catalog.allTrustedManifests)
+  }
+
+  private static func effectiveManifest(
+    for catalogManifest: FrequencyPackManifest,
+    installed installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord],
+    trusted trustedManifests: [FrequencyPackManifest]
+  ) -> FrequencyPackManifest {
     guard !catalogManifest.bundled,
       let record = installedRecords[catalogManifest.packID],
-      let installedManifest = Self.trustedManifest(
-        for: record,
-        in: catalog.allTrustedManifests
-      )
+      let installedManifest = trustedManifest(for: record, in: trustedManifests)
     else { return catalogManifest }
     return installedManifest
   }
@@ -294,20 +346,19 @@ actor FrequencyPackManager {
       to: storageDirectory.appendingPathComponent("state.json"), options: .atomic)
   }
 
-  private static func validInstalledRecord(
+  private static func verifiedInstall(
     _ record: InstalledFrequencyPackRecord,
     manifest: FrequencyPackManifest,
     trustedManifests: [FrequencyPackManifest],
     at url: URL
-  ) -> Bool {
+  ) -> FrequencyPackArtifact? {
     guard let installedManifest = trustedManifest(for: record, in: trustedManifests),
       record.packID == manifest.packID,
       installedManifest.packID == manifest.packID,
       FileManager.default.fileExists(atPath: url.path),
-      (try? fileSHA256(url)) == record.artifactSHA256,
-      Self.validArtifact(at: url, manifest: installedManifest)
-    else { return false }
-    return true
+      (try? fileSHA256(url)) == record.artifactSHA256
+    else { return nil }
+    return validArtifact(at: url, manifest: installedManifest)
   }
 
   private static func trustedManifest(
@@ -321,13 +372,15 @@ actor FrequencyPackManager {
     }
   }
 
-  private static func validArtifact(at url: URL, manifest: FrequencyPackManifest) -> Bool {
+  private static func validArtifact(
+    at url: URL, manifest: FrequencyPackManifest
+  ) -> FrequencyPackArtifact? {
     do {
       let artifact = try FrequencyPackArtifact(url: url, manifest: manifest)
       try artifact.validateSmokeTest()
-      return true
+      return artifact
     } catch {
-      return false
+      return nil
     }
   }
 }

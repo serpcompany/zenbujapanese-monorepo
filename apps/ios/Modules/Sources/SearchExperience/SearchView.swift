@@ -1,38 +1,32 @@
 import SwiftUI
 
 struct SearchView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Binding var query: String
   let lookupClient: LookupClient
   let recentSearchStore: RecentSearchStore
   let handwritingRecognitionClient: HandwritingRecognitionClient
-  let cameraAuthorizationClient: CameraAuthorizationClient
+  let kanjiLookupClient: KanjiLookupClient
   let radicalLookupClient: RadicalLookupClient
   let exampleSentenceClient: ExampleSentenceClient
-  let frequencyCapability: FrequencyCapability
-  let frequencyRefreshID: Int
-  let openImageText: ([ImageTextAsset]) -> Void
+  let focusRequest: Int
+  @Environment(WordKnowledge.self) private var wordKnowledge
   @State private var results = LookupSearchResults.empty
+  @State private var shown: ShownResults?
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
-  @State private var sparseRadicalQuery: SearchQuery?
-  @State private var exampleCount = 0
-  @State private var showsImageSources = false
+  @State private var radicalQuery: SearchQuery?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
+  @State private var isSearchPresented = false
+  @State private var inputPanelMode = SearchInputMode.handwriting
   @FocusState private var isSearchFocused: Bool
 
   var body: some View {
     searchScreen
-      .modifier(
-        SearchImageImport(
-          showsImageSources: $showsImageSources,
-          cameraAuthorizationClient: cameraAuthorizationClient,
-          openImageText: openImageText
-        )
-      )
       .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
         Button("Cancel", role: .cancel) {}
         Button("Clear All", role: .destructive) {
@@ -45,60 +39,61 @@ struct SearchView: View {
 
   private var searchScreen: some View {
     let taskID = searchTaskID
-    return VStack(spacing: 0) {
-      SearchBar(
-        query: $query,
-        isFocused: $isSearchFocused,
-        isInputActive: inputMode != .inactive,
-        activateKeyboard: { inputMode = .keyboard },
-        openImageSource: { showsImageSources = true },
-        cancel: deactivateInput
-      ) { submittedQuery in
-        sparseRadicalQuery = nil
-        completeSubmission(submittedQuery)
-      }
-
-      presentedContent
-
-      inputModeAccessory
-    }
+    return presentedContent
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
     .safeAreaInset(edge: .bottom, spacing: 0) {
-      if inputMode == .radicals {
-        RadicalInputView(
-          query: $query,
-          lookupClient: radicalLookupClient,
-          selectMode: selectInputMode,
-          submit: submitRadicalQuery
-        )
+      HStack {
+        SearchInputModeButtons(mode: inputModeScope)
+        Spacer()
       }
+      .padding(.horizontal, 16)
+      .padding(.bottom, 8)
+    }
+    .sheet(isPresented: inputPanelPresentation) {
+      inputPanelContent
+        .padding(.top, 20)
+        .dragToCloseSheet(sizeOnMac: AppWindow.inputPanelSize)
+        .presentationBackground(SystemColor.panel)
     }
     .navigationTitle("Search")
+    .searchField(
+      text: $query,
+      isPresented: $isSearchPresented,
+      prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
+      submit: submitTypedQuery
+    )
+    .searchFocused($isSearchFocused)
+    .onChange(of: isSearchFocused) { _, focused in
+      if focused { inputMode = .keyboard }
+    }
+    .onChange(of: isSearchPresented) { _, presented in
+      if !presented, inputMode == .keyboard { inputMode = .inactive }
+    }
     .toolbar {
       if showsRecentSearchActions {
-        ToolbarItem(placement: .topBarTrailing) {
-          Menu {
+        ToolbarItem(placement: .barTrailing) {
+          SearchActionsMenu {
             Button(role: .destructive) {
               isConfirmingClearAll = true
             } label: {
               Label("Clear Recent Searches", systemImage: "trash")
             }
             .accessibilityIdentifier("recent-search.clear-all")
-          } label: {
-            Label("Search Actions", systemImage: "ellipsis")
           }
-          .accessibilityIdentifier("search.actions-menu")
         }
       }
     }
-    .onChange(of: query) { _, _ in
+    .onChange(of: query) { _, newQuery in
+      if !SearchQuery(newQuery).isEmpty, !isSearchPresented { showResultsInField() }
       settledSearchTaskID = nil
       results = .empty
-      exampleCount = 0
+      shown = nil
       presentationState = .idle
     }
     .task(id: taskID) {
       await search(taskID)
     }
+    .onChange(of: focusRequest) { selectInputMode(.keyboard) }
   }
 
   @ViewBuilder
@@ -118,23 +113,21 @@ struct SearchView: View {
         .accessibilityIdentifier("search.loading")
 
     case .results:
-      SearchResultsView(
-        query: searchQuery,
-        results: results,
-        exampleCount: exampleCount,
-        rankedEntryLimit: sparseRadicalQuery == searchQuery
-          ? results.leadingLexicalEntryCount : nil,
-        frequencyCapability: frequencyCapability,
-        frequencyRefreshID: frequencyRefreshID,
-        selectRefinement: selectRefinement
-      )
-      .id(
-        SearchResultsIdentity(
-          query: searchQuery,
-          entries: results.entries.map(\.id),
-          refinement: results.readingRefinement?.query
+      if let shown {
+        SearchResultsView(
+          results: results,
+          first: shown,
+          fromRadicals: radicalQuery == searchQuery,
+          selectRefinement: selectRefinement
         )
-      )
+        .id(
+          SearchResultsIdentity(
+            query: searchQuery,
+            entries: results.entries.map(\.id),
+            refinement: results.readingRefinement?.query
+          )
+        )
+      }
 
     case .failure:
       ScrollView {
@@ -153,38 +146,43 @@ struct SearchView: View {
       }
       .accessibilityIdentifier("search.failure")
 
-    case .noResults:
+    case .noResults(let noMatches):
       ContentUnavailableView {
-        Label("No Dictionary Matches", systemImage: "magnifyingglass")
+        Label(noMatches.title, systemImage: "magnifyingglass")
       } description: {
-        Text("Try another Japanese or English Search query.")
+        Text(noMatches.message)
       }
       .accessibilityIdentifier("search.no-results")
-
-    case .specializedInput:
-      Color.clear
     }
   }
 
+  private var inputPanelPresentation: Binding<Bool> {
+    Binding(
+      get: { inputMode == .handwriting || inputMode == .radicals },
+      set: { presented in
+        if !presented, inputMode == .handwriting || inputMode == .radicals {
+          inputMode = .inactive
+        }
+      })
+  }
+
   @ViewBuilder
-  private var inputModeAccessory: some View {
-    switch inputMode {
-    case .keyboard where isSearchFocused:
-      SearchInputModePicker(
-        selectedMode: .keyboard,
-        selectMode: selectInputMode
+  private var inputPanelContent: some View {
+    if inputPanelMode == .radicals {
+      RadicalInputView(
+        query: $query,
+        mode: inputModeScope,
+        lookupClient: radicalLookupClient,
+        submit: submitRadicalQuery
       )
-    case .handwriting:
+    } else {
       HandwritingInputView(
         query: $query,
+        mode: inputModeScope,
         recognitionClient: handwritingRecognitionClient,
-        selectMode: selectInputMode,
+        kanjiLookupClient: kanjiLookupClient,
         submit: submitComposedQuery
       )
-    case .radicals:
-      EmptyView()
-    default:
-      EmptyView()
     }
   }
 
@@ -199,7 +197,7 @@ struct SearchView: View {
       presentationState = .idle
       guard !taskQuery.isEmpty else {
         results = .empty
-        exampleCount = 0
+        shown = nil
         return
       }
       presentationState = .loading
@@ -207,25 +205,38 @@ struct SearchView: View {
         try await Task.sleep(for: .milliseconds(100))
         try Task.checkCancellation()
         async let searchedResults = lookupClient.search(taskQuery)
-        async let searchedExampleCount = SearchResultsScreen.directExampleCount(
-          taskQuery, using: exampleSentenceClient)
+        async let searchedExampleCount = exampleSentenceClient.directCount(taskQuery)
         let foundResults = try await searchedResults
         try Task.checkCancellation()
-        let directExampleCount = await searchedExampleCount
+        _ = await searchedExampleCount
         try Task.checkCancellation()
-        let foundExampleCount = await SearchResultsScreen.exampleCount(
-          foundResults, query: taskQuery, directCount: directExampleCount,
-          using: exampleSentenceClient)
+        let exampleCount = await exampleSentenceClient.count(taskQuery, foundResults)
+        await FrequencyLists.live.ready()
+        let request = ResultsScreenRequest(
+          query: taskQuery,
+          results: foundResults.listed,
+          exampleCount: exampleCount,
+          learner: ResultsLearner(
+            sort: UserDefaults.standard.string(forKey: ResultsLearner.sortKey)
+              ?? ResultsLearner.defaultSort,
+            filter: UserDefaults.standard.string(forKey: ResultsLearner.filterKey)
+              ?? ResultsLearner.noFilter,
+            known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
+              .map(\.rawValue),
+            fromRadicals: radicalQuery == taskQuery),
+          lists: FrequencyLists.live.version)
+        try Task.checkCancellation()
+        let screen = try await request.screen()
         try Task.checkCancellation()
         guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
         settledSearchTaskID = taskID
         results = foundResults
-        exampleCount = foundExampleCount
-        if SearchResultsScreen.showsNoResults(
-          foundResults, exampleCount: foundExampleCount, query: taskQuery)
-        {
-          presentationState = .noResults
-        } else {
+        switch screen {
+        case .noResults(let noMatches):
+          shown = nil
+          presentationState = .noResults(noMatches)
+        case .results(let list):
+          shown = ShownResults(request: request, list: list)
           presentationState = .results
         }
       } catch is CancellationError {
@@ -236,10 +247,16 @@ struct SearchView: View {
         }
         settledSearchTaskID = taskID
         results = .empty
-        exampleCount = 0
+        shown = nil
         presentationState = .failure
       }
     }
+  }
+
+  private var inputModeScope: Binding<SearchInputMode> {
+    Binding(
+      get: { inputMode == .inactive ? .keyboard : inputMode },
+      set: { selectInputMode($0) })
   }
 
   private var searchQuery: SearchQuery {
@@ -250,17 +267,12 @@ struct SearchView: View {
     SearchTaskID(query: query, retryID: retryID)
   }
 
-  private var showsRecentSearches: Bool {
-    searchQuery.isEmpty && (inputMode == .inactive || inputMode == .keyboard)
-  }
-
   private var showsRecentSearchActions: Bool {
     resolvedPresentationState == .idle && !recentSearches.isEmpty
   }
 
   private var resolvedPresentationState: SearchPresentationState {
-    guard searchQuery.isEmpty else { return presentationState }
-    return showsRecentSearches ? .idle : .specializedInput
+    searchQuery.isEmpty ? .idle : presentationState
   }
 
   private func clearRecentSearches() {
@@ -271,17 +283,11 @@ struct SearchView: View {
   }
 
   private func selectRefinement(_ refinement: SearchRefinement) {
-    sparseRadicalQuery = nil
-    query = refinement.query.value
-    deactivateInput()
-    recordRecentSearch(refinement.query)
+    completeSubmission(refinement.query)
   }
 
   private func selectRecentSearch(_ recentSearch: SearchQuery) {
-    sparseRadicalQuery = nil
-    query = recentSearch.value
-    deactivateInput()
-    recordRecentSearch(recentSearch)
+    completeSubmission(recentSearch)
   }
 
   private func recordRecentSearch(_ recentSearch: SearchQuery) {
@@ -292,35 +298,40 @@ struct SearchView: View {
   }
 
   private func selectInputMode(_ mode: SearchInputMode) {
-    sparseRadicalQuery = nil
+    radicalQuery = nil
+    if mode == .handwriting || mode == .radicals { inputPanelMode = mode }
     inputMode = mode
     isSearchFocused = mode == .keyboard
   }
 
   private func submitComposedQuery(_ submittedQuery: SearchQuery) {
-    sparseRadicalQuery = nil
-    query = submittedQuery.value
-    recordRecentSearch(submittedQuery)
-    deactivateInput()
+    completeSubmission(submittedQuery)
   }
 
   private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    sparseRadicalQuery = submittedQuery
-    query = submittedQuery.value
-    recordRecentSearch(submittedQuery)
-    isSearchFocused = false
-    inputMode = .inactive
+    completeSubmission(submittedQuery, fromRadicals: true)
   }
 
-  private func completeSubmission(_ submittedQuery: SearchQuery) {
-    query = submittedQuery.value
-    recordRecentSearch(submittedQuery)
-    deactivateInput()
+  private func submitTypedQuery() {
+    completeSubmission(SearchQuery(query))
   }
 
-  private func deactivateInput() {
+  private func completeSubmission(_ submittedQuery: SearchQuery, fromRadicals: Bool = false) {
+    radicalQuery = fromRadicals ? submittedQuery : nil
+    query = submittedQuery.value
+    recordRecentSearch(submittedQuery)
+    showResultsInField()
+  }
+
+  private func showResultsInField() {
     isSearchFocused = false
     inputMode = .inactive
+    guard !isSearchPresented else { return }
+    isSearchPresented = true
+    Task { @MainActor in
+      isSearchFocused = false
+      inputMode = .inactive
+    }
   }
 }
 
@@ -331,10 +342,9 @@ private struct SearchTaskID: Hashable {
 
 private enum SearchPresentationState: Equatable {
   case idle
-  case specializedInput
   case loading
   case results
-  case noResults
+  case noResults(NoMatches)
   case failure
 }
 

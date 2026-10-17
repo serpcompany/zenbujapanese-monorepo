@@ -11,12 +11,12 @@ describe("the website's account settings", () => {
     expect(
       accountSettingsFrom({
         ACCOUNT_API_URL: 'https://api.zenbujapanese.com',
-        ACCOUNT_APPLE_SERVICES_ID: 'com.zenbujapanese.web',
+        ACCOUNT_APPLE_SERVICES_ID: 'com.zenbujapanese.website',
         ACCOUNT_GOOGLE_SIGN_IN: 'on'
       })
     ).toEqual({
       apiUrl: 'https://api.zenbujapanese.com',
-      appleServicesId: 'com.zenbujapanese.web',
+      appleServicesId: 'com.zenbujapanese.website',
       google: true
     })
     expect(accountSettingsFrom({ ACCOUNT_API_URL: 'http://localhost:8789' })).toEqual({
@@ -44,12 +44,12 @@ describe("the website's account settings", () => {
   test('offer Apple and Google on staging and in production, and neither locally', () => {
     expect(accountSettingsFrom(config.env.staging.vars)).toEqual({
       apiUrl: 'https://api-staging.zenbujapanese.com',
-      appleServicesId: 'com.zenbujapanese.web',
+      appleServicesId: 'com.zenbujapanese.website',
       google: true
     })
     expect(accountSettingsFrom(config.env.production.vars)).toEqual({
       apiUrl: 'https://api.zenbujapanese.com',
-      appleServicesId: 'com.zenbujapanese.web',
+      appleServicesId: 'com.zenbujapanese.website',
       google: true
     })
     expect(accountSettingsFrom(config.vars)).toMatchObject({ appleServicesId: null, google: false })
