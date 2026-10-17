@@ -200,7 +200,7 @@ prune() {
   while read -r id repository_name tag digest; do
     [ "$repository_name" = "$repository" ] || continue
     [ "$tag" = staging ] || [ "$tag" = production ] && continue
-    grep --quiet --fixed-strings --line-regexp "$id" <<<"$keep" && continue
+    lists "$keep" "$id" && continue
     if [ "$tag" != '<none>' ]; then
       docker image rm "$repository_name:$tag" >/dev/null 2>&1 || true
     elif [ "$digest" != '<none>' ]; then
