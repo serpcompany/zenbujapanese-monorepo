@@ -15,6 +15,7 @@ once it isn't needed. An entry is never raised to make a check pass.
 | `knownDuplicates` in `tools/checks/src/known-duplicates.ts` | Pairs of files that repeat a block |
 | `knownLongDocs` in `tools/checks/src/doc-rules/budgets.ts` | Docs over their size budget when the check arrived |
 | `allowedPauses` in `tools/checks/src/waits.ts` | Fixed pauses in each UI test file, each with what it proves does not happen |
+| `AllowedFinding.list` in `apps/ios/UITests/AccessibilityAuditExceptions.swift` | Accessibility audit findings the UI tests let pass, each naming one element, its screens, devices, and text sizes, and why ([`ios-accessibility.md`](ios-accessibility.md)). An entry that matches nothing on a screen a test audited fails the test. `AllowedFinding.reportedOnly` holds the one audit reported without failing, contrast, with why |
 | The file lists in `tools/checks/src/files.ts` | Files written by a tool, third-party files, and files whose bytes a checksum pins, each by name with its tool, source, or checksum. The comments check leaves them as they are |
 
 The weekly maintenance report counts the first three ([`ci-agents.md`](ci-agents.md), Weekly

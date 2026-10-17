@@ -9,10 +9,9 @@ The app runs on iPhone in portrait, on iPad in every orientation and beside othe
 Macs with Apple silicon and macOS 26, as one app with one App Store record
 ([iPad and Mac](#ipad-and-mac)). It has four tabs:
 
-- **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
-  re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
-  from the **Sorted by** row at their top
-  ([Sorting results](dictionary.md#sorting-results),
+- **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be re-sorted
+  by a frequency dictionary or by known words, and filtered to known or unknown words, from the
+  **Sorted by** row at their top ([Sorting results](dictionary.md#sorting-results),
   [Filtering results](dictionary.md#filtering-results)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
@@ -34,9 +33,8 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
   Simulator, and the Mac, so a package test checks all three.
 - **Core tests** (`packages/dictionary-core/src/`), named by file, such as
   `results/ordering.test.ts`. What the dictionary lists, orders, labels, and says is the shared
-  core's, which the app runs
-  ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)), so a core test checks a
-  rule for every platform and for the website.
+  core's, which the app runs ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)),
+  so a core test checks a rule for every platform and for the website.
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
   use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
@@ -74,14 +72,12 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   window), and on the Mac
   `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`; package
   `AppCommandTests` (window sizes).
-- **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
-  Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
-  keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
-  **Search an Image…** (⌘⇧I)
-  opens Translate and its **Image** alert, over whatever Translate is showing, and ⌘1 to ⌘4
-  switch to Search, Translate, Player, and Account.
-  With two windows open, a shortcut acts in the one used last. A website link opens in an open
-  window rather than a new one.
+- **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in Dictionary**
+  (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS keeps ⌘F for its
+  own Find, so Find in Dictionary is in the menu bar without a working shortcut. **Search an
+  Image…** (⌘⇧I) opens Translate and its **Image** alert, over whatever Translate is showing, and ⌘1
+  to ⌘4 switch to Search, Translate, Player, and Account. With two windows open, a shortcut acts in
+  the one used last. A website link opens in an open window rather than a new one.
   Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a
   second window);
   package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
@@ -174,6 +170,17 @@ iPhone-only API outside the adapters), and UI `LayoutUITests` (every tab fits th
 portrait, the iPad in both orientations, and the Mac's smallest window). By hand: the iPad beside
 another app ([iPad and Mac checks](../../../../docs/agents/ios.md#ipad-and-mac-checks)).
 
+## Accessibility
+
+Every screen follows the device's text size up to the largest accessibility size, in light and
+dark, and every control has a target of at least 44 by 44 points. The exceptions, each with its
+reason, are in [`ios-accessibility.md`](../../../../docs/agents/ios-accessibility.md); contrast is
+measured there but not yet held to a ratio.
+
+Check: UI `SearchAuditUITests`, `TranslateAuditUITests`, `PlayerAuditUITests`, and
+`AccountAuditUITests` (every screen, at the default and largest text sizes and in dark). VoiceOver
+is by hand, on a device.
+
 ## Furigana kanji highlight
 
 Wherever furigana appears over a run of kanji, a learner can tap one kanji to see which part of
@@ -183,10 +190,9 @@ compact furigana; nothing is spaced apart.
 
 Check: UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading`.
 
-The split comes from each kanji's own readings, including the sound changes compounds make
-(学校 is がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's
-reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
-per-kanji highlight.
+The split comes from each kanji's own readings, including the sound changes compounds make (学校 is
+がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's reading exactly one way.
+Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no per-kanji highlight.
 
 Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the recorded
 `WordDetailConformanceTests`.
@@ -277,21 +283,22 @@ pinned source, ranks, and the YouTube spellings); UI
 for each of the seven optional ones). Downloading an optional pack needs the network: by hand, with
 `FrequencyPackLifecycleTests` installing one from a local file.
 
-The screen lists one row per pack in three sections. **Enabled** holds packs that are
-switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
-sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
-from Search's **Sorted by** row ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
-places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
-by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
-**Available** offers a download button for each remaining pack. Several packs can download at
-once: each row shows its own progress ring with a stop button, and stopping one leaves the others
-running and its row ready to download again. When its download finishes, a row shows a spinner
-while the pack is installed, one pack at a time, and can no longer be stopped; a new pack then
-moves to **Enabled**. Remove and Update are hidden on a row while it downloads. A row's subtitle shows its
-domain and size, or a download failure. Swiping a row reveals Details and Remove, and Update
-when a newer version exists. When the app upgrades from the single active pack, that pack
-becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables
-it once at the top of the learner's list; disabling it afterward is remembered.
+The screen lists one row per pack in three sections. **Enabled** holds packs that are switched on,
+in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this
+order, and Search sorts by the first pack, breaking ties with each next pack, unless the learner
+sorts by one pack from Search's **Sorted by** row
+([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank places by
+how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places by its JLPT
+N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are
+switched off, and **Available** offers a download button for each remaining pack. Several packs can
+download at once: each row shows its own progress ring with a stop button, and stopping one leaves
+the others running and its row ready to download again. When its download finishes, a row shows a
+spinner while the pack is installed, one pack at a time, and can no longer be stopped; a new pack
+then moves to **Enabled**. Remove and Update are hidden on a row while it downloads. A row's
+subtitle shows its domain and size, or a download failure. Swiping a row reveals Details and Remove,
+and Update when a newer version exists. When the app upgrades from the single active pack, that pack
+becomes the only enabled one. An update that adds a bundled pack, such as JLPT Levels, enables it
+once at the top of the learner's list; disabling it afterward is remembered.
 
 Check: package `FrequencyPackLifecycleTests` (enabling, ordering, disabling, removing, and the
 upgrades), `FrequencyPackDownloadsTests` (several downloads side by side, stopping one, and a stop
@@ -326,16 +333,17 @@ like any other; once deleted it is not created again. Signed in, Favorites is on
 device and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kanji are added
 from their page's **•••** menu (see [Dictionary](dictionary.md)).
 
-The Account row shows how many lists there are. Lists shows every list in the learner's order
-with its word count; two lists in one place, as after signing in on a second phone, show in the
-same order on every device. A learner can create a list, swipe a list to rename or delete it (a list
-that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
-taps a list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are trimmed, can't be
-empty, hold at most 500 characters (control characters become spaces), and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
-it by headword or reading, swipe a word to remove it from that list, or open its word page, found
-the same way as in Known Words. Its **•••** menu renames the
-list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
-offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+The Account row shows how many lists there are. Lists shows every list in the learner's order with
+its word count; two lists in one place, as after signing in on a second phone, show in the same
+order on every device. A learner can create a list, swipe a list to rename or delete it (a list that
+has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
+list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
+trimmed, can't be empty, hold at most 500 characters (control characters become spaces), and may
+repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known
+words; the learner can search it by headword or reading, swipe a word to remove it from that list,
+or open its word page, found the same way as in Known Words. Its **•••** menu renames the list,
+deletes it (asking first when it has words), or selects words: while selecting, the top bar offers
+Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming,
 deleting, and dragging a list into order) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
@@ -522,9 +530,9 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
   ([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), Deleting the
   account). If Apple refuses or doesn't answer, nothing is deleted, and the learner signs in with
   Apple again to try again.
-- Afterwards the app is signed out and keeps everything on the phone: Known Words, lists,
-  Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
-  everything on the phone, as a first sync does.
+- Afterwards the app is signed out and keeps everything on the phone: Known Words, lists, Recent,
+  Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again
+  makes a new account, which gets everything on the phone, as a first sync does.
 
 Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (signing in again, a refused or
 lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over); UI

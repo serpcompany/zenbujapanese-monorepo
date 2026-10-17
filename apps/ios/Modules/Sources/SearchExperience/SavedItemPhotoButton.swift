@@ -1,15 +1,13 @@
 import SwiftUI
 
 struct SavedItemPhotoButton: View {
-  @State private var presentedMedia: EncounterMedia?
   let media: EncounterMedia
   let count: Int
-  let encounterMedia: [EncounterMedia]
-  let removeEncounterMedia: (String) async -> Void
+  let open: (EncounterMedia) -> Void
 
   var body: some View {
     Button {
-      presentedMedia = media
+      open(media)
     } label: {
       if let image = Image(imageData: media.data) {
         HStack(spacing: 8) {
@@ -28,7 +26,15 @@ struct SavedItemPhotoButton: View {
     .buttonStyle(.plain)
     .accessibilityLabel("Saved encounter images, \(count)")
     .accessibilityIdentifier("word-detail.image-attachment")
-    .sheet(item: $presentedMedia) { media in
+  }
+}
+
+extension View {
+  func encounterMediaViewer(
+    _ presented: Binding<EncounterMedia?>, encounterMedia: [EncounterMedia],
+    removeEncounterMedia: @escaping (String) async -> Void
+  ) -> some View {
+    sheet(item: presented) { media in
       EncounterMediaViewer(
         encounterMedia: encounterMedia,
         initialMediaID: media.id,

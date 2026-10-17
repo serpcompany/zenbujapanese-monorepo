@@ -22,6 +22,7 @@ public struct ZenbuJapaneseScenes: Scene {
         .environment(translate)
         .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
         .appWindowMinimumSize()
+        .preferredColorScheme(LaunchHarness.colorScheme)
     }
     .commands { AppCommands(router: commands) }
     .appWindowDefaults()
@@ -32,6 +33,7 @@ public struct ZenbuJapaneseScenes: Scene {
       Settings {
         AppSettingsView()
           .appEnvironment(readingAids: readingAids, profile: profile)
+          .preferredColorScheme(LaunchHarness.colorScheme)
       }
     #endif
   }

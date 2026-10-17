@@ -273,6 +273,7 @@ private struct WordHeroView: View {
   let pronounce: () -> Void
 
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @State private var presentedMedia: EncounterMedia?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -282,6 +283,8 @@ private struct WordHeroView: View {
           .padding(.bottom, 4)
       }
     }
+    .encounterMediaViewer(
+      $presentedMedia, encounterMedia: encounterMedia, removeEncounterMedia: removeEncounterMedia)
   }
 
   private var headline: some View {
@@ -293,12 +296,7 @@ private struct WordHeroView: View {
       pronounce: pronounce
     ) {
       if let latest = encounterMedia.first {
-        SavedItemPhotoButton(
-          media: latest,
-          count: encounterMedia.count,
-          encounterMedia: encounterMedia,
-          removeEncounterMedia: removeEncounterMedia
-        )
+        SavedItemPhotoButton(media: latest, count: encounterMedia.count) { presentedMedia = $0 }
       }
     }
   }

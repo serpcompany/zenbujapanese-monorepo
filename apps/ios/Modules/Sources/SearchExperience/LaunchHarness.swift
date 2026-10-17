@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 enum LaunchHarness {
   static let freshStateKey = "ZENBU_UI_TEST_FRESH"
@@ -9,6 +10,7 @@ enum LaunchHarness {
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
+  static let appearanceKey = "ZENBU_APPEARANCE"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -66,6 +68,20 @@ enum LaunchHarness {
   }
 
   static let countsDraws = countsDraws(ProcessInfo.processInfo.environment)
+
+  static func colorScheme(_ environment: [String: String]) -> ColorScheme? {
+    #if DEBUG
+      switch environment[appearanceKey] {
+      case "dark": .dark
+      case "light": .light
+      default: nil
+      }
+    #else
+      nil
+    #endif
+  }
+
+  static let colorScheme = colorScheme(ProcessInfo.processInfo.environment)
 
   static var signInProviders: SignInProviders? {
     #if DEBUG

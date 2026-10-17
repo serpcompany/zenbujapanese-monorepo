@@ -85,6 +85,7 @@ struct FrequencyDictionariesView: View {
           .font(.footnote)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityRespondsToUserInteraction(false)
       trailingControl(for: pack)
     }
     .accessibilityElement(children: .contain)
@@ -151,6 +152,8 @@ struct FrequencyDictionariesView: View {
           systemName: pack.failureMessage == nil ? "arrow.down.circle" : "arrow.clockwise.circle"
         )
         .font(.title2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(.rect)
       }
       .buttonStyle(.borderless)
       .accessibilityLabel(
@@ -158,6 +161,7 @@ struct FrequencyDictionariesView: View {
           ? "Download \(pack.manifest.displayName)" : "Retry \(pack.manifest.displayName)"
       )
       .accessibilityIdentifier("frequency-pack.download.\(pack.id.rawValue)")
+      .outsetHitTarget()
     }
   }
 
@@ -178,11 +182,14 @@ struct FrequencyDictionariesView: View {
         .tint(.accentColor)
         .scaleEffect(0.5)
         .frame(width: 28, height: 28)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(.rect)
       }
       .buttonStyle(.borderless)
       .accessibilityLabel("Stop Downloading \(pack.manifest.displayName)")
       .accessibilityValue(fraction.formatted(.percent.precision(.fractionLength(0))))
       .accessibilityIdentifier("frequency-pack.progress.\(pack.id.rawValue)")
+      .outsetHitTarget()
     } else {
       ProgressView()
         .accessibilityLabel("Installing \(pack.manifest.displayName)")
@@ -274,6 +281,7 @@ private struct FrequencyPackDetailView: View {
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)
+            .accessibilityIdentifier("frequency-pack.detail.done")
         }
       }
     }

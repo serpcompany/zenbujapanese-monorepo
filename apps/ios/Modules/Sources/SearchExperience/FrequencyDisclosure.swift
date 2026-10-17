@@ -62,6 +62,7 @@ struct FrequencyDisclosureView: View {
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)
+            .accessibilityIdentifier("frequency-detail.done")
         }
       }
     }

@@ -124,6 +124,7 @@ private struct HistoryRow: View {
     VStack(alignment: .leading, spacing: 3) {
       Text(conversation.firstSentence?.text ?? "")
         .lineLimit(1)
+        .accessibilityIdentifier("translate.history.row.preview")
       Text(subtitle)
         .font(.subheadline)
         .foregroundStyle(.secondary)

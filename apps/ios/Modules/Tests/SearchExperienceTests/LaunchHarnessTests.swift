@@ -1,3 +1,4 @@
+import SwiftUI
 import Testing
 
 @testable import SearchExperience
@@ -33,6 +34,14 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "2"]) == 2)
     #expect(LaunchHarness.linkingFailures([LaunchHarness.failLinkingKey: "some"]) == 0)
     #expect(LaunchHarness.linkingFailures([:]) == 0)
+  }
+
+  @Test("a launch is drawn light or dark only when it asks, and otherwise follows the device")
+  func askedAppearance() {
+    #expect(LaunchHarness.colorScheme([LaunchHarness.appearanceKey: "dark"]) == .dark)
+    #expect(LaunchHarness.colorScheme([LaunchHarness.appearanceKey: "light"]) == .light)
+    #expect(LaunchHarness.colorScheme([LaunchHarness.appearanceKey: "dim"]) == nil)
+    #expect(LaunchHarness.colorScheme([:]) == nil)
   }
 
   @Test("Player, Search, and a kanji page count or record their draws only when a UI test asks")

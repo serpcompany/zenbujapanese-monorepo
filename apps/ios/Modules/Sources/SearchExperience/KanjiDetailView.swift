@@ -19,6 +19,7 @@ struct KanjiDetailView: View {
   @State private var strokeDiagramLoadState = KanjiStrokeDiagramLoadState.loading
   @State private var strokeRetryID = 0
   @State private var presentedStrokeDiagram: KanjiStrokeDiagram?
+  @State private var presentedMedia: EncounterMedia?
   @State private var pendingScrollTarget: KanjiDetailScrollTarget?
 
   init(
@@ -64,12 +65,9 @@ struct KanjiDetailView: View {
             openStrokeOrder: openStrokeOrder
           )
           if let latest = photos.displayable.first {
-            SavedItemPhotoButton(
-              media: latest,
-              count: photos.displayable.count,
-              encounterMedia: photos.displayable,
-              removeEncounterMedia: photos.remove
-            )
+            SavedItemPhotoButton(media: latest, count: photos.displayable.count) {
+              presentedMedia = $0
+            }
           }
           if wordKnowledge.isKnown(item) {
             KnownWordBadge(announces: true)
@@ -127,6 +125,8 @@ struct KanjiDetailView: View {
     }
     .navigationTitle(character.rawValue)
     .inlineNavigationTitle()
+    .encounterMediaViewer(
+      $presentedMedia, encounterMedia: photos.displayable, removeEncounterMedia: photos.remove)
     .savedItemActions(
       for: item, identifierPrefix: "kanji-detail", shareText: shareText, notes: notes,
       photos: photos, showsListPicker: $showsListPicker)

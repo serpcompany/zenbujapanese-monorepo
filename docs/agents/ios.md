@@ -219,9 +219,9 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
 slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
-`xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
-element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
-text. On a busy Mac a tab tap, a shortcut, the conversation's pause, or a Simulator rotation
+`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Search's **Sorted by** row
+beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
+conversation's pause, or a Simulator rotation
 sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
 (`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
 page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once

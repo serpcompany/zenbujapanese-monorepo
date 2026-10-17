@@ -1,0 +1,76 @@
+# The app's accessibility audits
+
+The UI tests run Apple's accessibility audit, XCUITest's `performAccessibilityAudit`, on every
+screen the product docs list, on the iPhone, the iPad, and the Mac. How the UI tests are run, and
+the harnesses they launch the app with, are in [`ios.md`](ios.md), Tests on every platform; how a
+test waits is in [`ios-ui-tests.md`](ios-ui-tests.md).
+
+## What runs
+
+Four classes walk one tab each, `SearchAuditUITests`, `TranslateAuditUITests`,
+`PlayerAuditUITests`, and `AccountAuditUITests`, with three tests apiece:
+
+- **At the default text size**, in light appearance.
+- **At the largest text size**, Accessibility XXXL, in light appearance. The app is launched with
+  `-UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityXXXL`
+  (`TestDevice.largestTextArguments`), its own setting for that launch: the Simulator's
+  Settings stay as they were. The Mac skips it: macOS has no Dynamic Type, so an app's text
+  doesn't follow a size setting there.
+- **In dark appearance**, at the default text size. The app is launched with
+  `ZENBU_APPEARANCE=dark`, a Debug-only harness (`LaunchHarness.colorScheme`) that draws every
+  window and sheet dark, so the device's appearance isn't touched either. Color changes only what
+  the contrast audit sees, and the default size is where contrast is held to the stricter ratio,
+  so dark isn't run again at the largest size.
+
+A walk launches the app fresh for each part of its tab, reaches each screen the way a learner
+does, and audits it (`audit(_:in:)` in `AccessibilityAudit.swift`). It collects every finding and
+fails once, at the end, listing each finding that isn't allowed, so one run measures a whole tab.
+Each test attaches **Accessibility findings**: the screens it audited, the findings not allowed,
+those allowed, those only reported, any allowed entry that matched nothing, and what each kind of
+finding means. A screen with findings also attaches its screenshot;
+`TEST_RUNNER_ZENBU_AUDIT_SCREENSHOTS=1` on the `xcodebuild` command keeps every screen's. Read
+them with `xcrun xcresulttool export attachments`.
+
+## Each audit and what it decides
+
+| Audit | Where | Decision |
+| --- | --- | --- |
+| Hit region | Everywhere | Fails. A control is at least 44 by 44 points (`HitTarget.minimum`); `OutsetHitTarget` grows a small icon's target around it without moving anything laid out beside it |
+| Text clipped | iPhone and iPad | Fails |
+| Dynamic Type | iPhone and iPad | Fails |
+| Element detection | Everywhere | Fails |
+| Element description | iPhone and iPad | Fails |
+| Trait | iPhone and iPad | Fails |
+| Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
+| Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
+
+`AllowedFinding.reportedOnly` holds the reported audits and why; their counts are in
+[`harness-debt.md`](../harness-debt.md). The Dynamic Type and text-clipped audits sweep the app
+through every text size and report text they lose track of, so text that SwiftUI lays out again
+(a List's rows and headers, a Form's labels) or redraws (a clock) can be reported though it grows
+and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
+
+## Allowed findings
+
+Every finding a test lets pass is an entry in `AllowedFinding.list`
+(`apps/ios/UITests/AccessibilityAuditExceptions.swift`), the one list
+[`exceptions.md`](exceptions.md) names for the audits. An entry names its audit, the screens it is
+on (the names the walks give them), the devices and text sizes, why it is allowed, and one element:
+
+- by its identifier, or its identifier's prefix for one kind of element, such as a linked word
+  (`watch.cue.`);
+- by its label, or a few labels with one reason, where the element has no identifier; or
+- as a count of findings the audit can't attach to any element (`unnamed`), which XCTest then
+  reports with no element. An entry allows that many on each of its screens and no more.
+
+An entry is never added to make a test pass: fix the screen, and allow a finding only for a reason
+a person checking the screen would accept. A finding the list doesn't allow fails the test, and an
+unnamed finding is also recorded as XCTest's own issue. An entry that matched nothing is listed
+under **Allowed but unneeded** in the report, not failed, since a sweep through the sizes can find
+a little more or less on a busy machine; remove an entry that no device's run uses.
+
+## What the audits can't check
+
+The audits read the accessibility tree and the screen; they don't use VoiceOver. VoiceOver's
+order and announcements, and the largest text size on a real device, are checked by a person on
+an iPhone, from the checklist in the pull request that changes them.
