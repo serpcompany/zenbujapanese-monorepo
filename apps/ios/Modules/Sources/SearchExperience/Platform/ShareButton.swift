@@ -5,7 +5,7 @@ struct ShareButton: View {
 
   var body: some View {
     #if os(macOS)
-      ShareLink(item: page.textWithLink) { label }
+      ShareLink(item: page.text) { label }
     #else
       if let url = page.url {
         ShareLink(item: url, message: Text(page.text), preview: SharePreview(page.title)) { label }

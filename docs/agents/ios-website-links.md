@@ -29,17 +29,18 @@ the entry number, while `kanjiPage` answers the kanji's search ([`dictionary-cor
 Detail). `SharedPage` in `SavedItemActions.swift` holds a page's title, text, and link, and
 `ShareButton` (`Platform/ShareButton.swift`) shares them. On iPhone and iPad it gives SwiftUI's
 `ShareLink` the `URL` as the item, the text as its message, and a preview titled with the page.
-On the Mac, `ShareLink` with a `URL` item opened no picker at all, and nor did AppKit's
-`NSSharingServicePicker` shown from the button, while `ShareLink` with a text item did (checked on
-macOS 26 with the UI test build). So the Mac shares one text, `SharedPage.textWithLink`: the
-page's text, then its link on a line of its own, which Mail, Messages, and Notes turn into a link.
+The Mac shares the page's text alone, as before. In the Mac UI test build (macOS 26, sandboxed,
+signed to run locally), every share that held a URL opened no picker at all: `ShareLink` with a
+`URL` item, with or without its preview, `ShareLink` with the link at the end of its text, and
+AppKit's `NSSharingServicePicker` shown from the button. `ShareLink` with the text alone opened
+one. Whether a team-signed build shows the picker for a URL is unchecked (`docs/tech-debt.md`).
 A page without a link, such as a kanji whose page hasn't loaded, shares its text alone. `WordDetailShareTests` checks each link against the canonical URL and reads it
-back through `websiteRoute`, `macShareText` checks the Mac's text, and
+back through `websiteRoute`, and
 `WordDetailUITests.testShareOffersTheWordsWebLink` and `testShareOffersTheKanjisWebLink` open
 the share sheet on iPhone and iPad and find **Add to Reading List**, which iOS offers only for a
 web link, under a preview titled with the page (LinkPresentation's caption,
-`LP.CaptionBar.TopCaption`, which an iOS release could rename). They skip the Mac, whose sharing
-picker draws outside the app, where XCUITest can't see it. On
+`LP.CaptionBar.TopCaption`, which an iOS release could rename). They skip the Mac, which shares the
+text alone, in a picker drawn outside the app, where XCUITest can't see it. On
 the Simulator, **Copy** puts both on the pasteboard, a `public.url` and the text, but no test can
 read what other destinations get, so on a device share a word to Messages, Notes, Mail, AirDrop,
 and a messaging app such as LINE, check that the text and the link arrive together, and tap the

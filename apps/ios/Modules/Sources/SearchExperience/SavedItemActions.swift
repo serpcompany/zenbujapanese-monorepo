@@ -230,10 +230,6 @@ extension SharedPage {
     self.init(
       title: character.rawValue, text: page?.shareText ?? character.rawValue, url: page?.shareURL)
   }
-
-  var textWithLink: String {
-    [text, url?.absoluteString].compactMap { $0 }.joined(separator: "\n")
-  }
 }
 
 private struct SavedItemPhotoPresentation: ViewModifier {

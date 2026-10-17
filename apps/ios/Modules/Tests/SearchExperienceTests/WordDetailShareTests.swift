@@ -52,15 +52,6 @@ struct WordDetailShareTests {
     #expect(opened == entry)
   }
 
-  @Test("the Mac shares one text: the page's text, then its link on a line of its own")
-  func macShareText() throws {
-    let url = try #require(URL(string: "https://zenbujapanese.com/dictionary/search/%E6%97%A5/"))
-    #expect(
-      SharedPage(title: "日", text: "日【ニチ】\nday", url: url).textWithLink
-        == "日【ニチ】\nday\nhttps://zenbujapanese.com/dictionary/search/%E6%97%A5/")
-    #expect(SharedPage(title: "日", text: "日", url: nil).textWithLink == "日")
-  }
-
   @Test("a word the website has no page for sends its text alone")
   func wordWithoutLink() {
     let entry = DictionaryEntry.fixture(id: "sore", headword: "それ")
