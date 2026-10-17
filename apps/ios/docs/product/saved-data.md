@@ -52,7 +52,9 @@ where it's cut, a Greek word's last Σ, the order, and one note on several words
 `embedded/dictionary.test.ts`; package `LearnerNotesTests` (a note in Search as soon as it's
 written, changed, or deleted on its page, after a relaunch, a kanji's note, none of the Notes
 Without a Word, and none with no name while the dictionary can't be read); UI
-`NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce`,
+`NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce` (written,
+then changed and deleted, on iPhone and iPad; on the Mac it stops after the note is found, since a
+note opened for editing there never gets the keyboard, and the package test checks the rest),
 `NotesInSearchUITests.testOneNoteOnTwoWordsListsBothThenAndAfterARelaunch` (drawn once with
 the results, after the relaunch), and
 `NotesInSearchUITests.testNotesListedAfterTheDictionaryMatchesLeaveThemAsTheyWere` (two notes on
