@@ -420,5 +420,5 @@ until the website has Zenbu's Apple team ID, links open the website.
 - Check: package `WebsiteLinkTests` for what each URL opens, against the bundled dictionary; core
   `detail/links.test.ts` for how each URL reads, with the parser the website reads its own word
   URLs with; UI `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp` for a word link in Zenbu's
-  own scheme ([Shortcuts and sharing](shortcuts-and-sharing.md#links-in-zenbus-own-scheme)). That
-  iOS hands a tapped `https` link to Zenbu is by hand, on a device.
+  own scheme ([Shortcuts and Siri](shortcuts.md#links-in-zenbus-own-scheme)). That iOS hands a
+  tapped `https` link to Zenbu is by hand, on a device.

@@ -7,7 +7,6 @@ let package = Package(
   platforms: [.iOS(.v26), .macOS(.v26)],
   products: [
     .library(name: "SearchExperience", targets: ["SearchExperience"]),
-    .library(name: "AppActions", targets: ["AppActions"]),
     .library(name: "TranslatorOnDevice", targets: ["TranslatorCore", "TranslatorOnDevice"]),
   ],
   dependencies: [
@@ -21,7 +20,6 @@ let package = Package(
     ),
   ],
   targets: [
-    .target(name: "AppActions"),
     .target(name: "TranslatorCore"),
     .target(name: "TranslatorOnDevice", dependencies: ["TranslatorCore"]),
     .testTarget(
@@ -31,7 +29,6 @@ let package = Package(
     .target(
       name: "SearchExperience",
       dependencies: [
-        "AppActions",
         "TranslatorCore",
         "TranslatorOnDevice",
         .product(name: "Sudachi", package: "sudachi-swift"),
@@ -46,7 +43,7 @@ let package = Package(
     ),
     .testTarget(
       name: "SearchExperienceTests",
-      dependencies: ["AppActions", "SearchExperience"],
+      dependencies: ["SearchExperience"],
       resources: [.copy("Fixtures")]
     ),
   ]

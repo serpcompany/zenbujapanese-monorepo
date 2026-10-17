@@ -26,11 +26,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
   first 100 of more than 100 examples".
-- Look up and translate from other apps. **Look Up in Zenbu** and **Translate with Zenbu** are in
-  Shortcuts, in Spotlight, in Siri ("Look up in Zenbu"), and in the share sheet for selected text,
-  and **Image Search in Zenbu** is in the share sheet for photos. Each opens Zenbu on the word or
-  its search results, on Translate's Text, or on Image Search; on the Mac they're in the Share
-  menu.
+- Look up and translate from Shortcuts, Siri, and Spotlight. **Look Up in Zenbu** opens Zenbu on
+  the word or its search results, and **Translate with Zenbu** on Translate's Text with the text;
+  Siri runs them from "Look up in Zenbu" and "Translate with Zenbu".
 
 ### Changed
 

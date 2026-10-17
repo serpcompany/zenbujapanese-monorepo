@@ -1,4 +1,3 @@
-import AppActions
 import SwiftUI
 
 struct AppLinkOpening: ViewModifier {
@@ -7,7 +6,6 @@ struct AppLinkOpening: ViewModifier {
   @Binding var query: String
   let showSearch: () -> Void
   let translate: (String) -> Void
-  let searchImages: (SharedImageFiles) -> Void
   @State private var task: Task<Void, Never>?
   @Environment(\.appearsActive) private var appearsActive
   private let inbox = AppLinkInbox.shared
@@ -23,7 +21,7 @@ struct AppLinkOpening: ViewModifier {
   }
 
   private func open(_ url: URL) {
-    switch AppLink(url, scheme: AppLink.scheme, sharedImages: AppLink.sharedImages) {
+    switch AppLink(url, scheme: AppLink.scheme) {
     case .dictionary(let link):
       showSearch()
       task?.cancel()
@@ -35,8 +33,6 @@ struct AppLinkOpening: ViewModifier {
       }
     case .translate(let text):
       translate(text)
-    case .imageSearch(let images):
-      searchImages(images)
     }
   }
 }
@@ -49,22 +45,15 @@ private struct PendingLink: Equatable {
 enum AppLink: Equatable {
   case dictionary(DictionaryLink)
   case translate(String)
-  case imageSearch(SharedImageFiles)
 
   static let scheme = AppAction.scheme(ofApp: Bundle.main.bundleIdentifier ?? "")
-  static let sharedImages =
-    LaunchHarness.sharedImages
-    ?? SharedImages(appGroup: AppAction.appGroup(ofApp: Bundle.main.bundleIdentifier ?? ""))
 
-  init(_ url: URL, scheme: String, sharedImages: SharedImages?) {
+  init(_ url: URL, scheme: String) {
     switch AppAction(url, scheme: scheme) {
     case .lookUp(let text):
       self = .dictionary(.lookUp(text))
     case .translate(let text):
       self = .translate(text)
-    case .imageSearch(let id, let images):
-      let share = sharedImages?.share(id)
-      self = .imageSearch(SharedImageFiles(share: share, files: share?.files(named: images) ?? []))
     case nil:
       self = .dictionary(.website(url))
     }
@@ -74,11 +63,6 @@ enum AppLink: Equatable {
 enum DictionaryLink: Equatable, Sendable {
   case website(URL)
   case lookUp(String)
-}
-
-struct SharedImageFiles: Equatable, Sendable {
-  let share: SharedImages.Share?
-  let files: [URL]
 }
 
 extension LookupClient {

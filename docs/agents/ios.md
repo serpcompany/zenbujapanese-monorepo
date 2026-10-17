@@ -36,12 +36,11 @@ what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios
 ### Where the platforms differ in the code
 
 Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives
-in `apps/ios/Modules/Sources/SearchExperience/Platform/` (and the share actions' controller in
-`AppActions/Platform/`, [`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)), behind
-a small adapter or view extension that feature code calls: `DecodedImage` and `Image(imageData:)`,
-`Color.adaptive` and `SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`,
-`ConversationAudioSession`, `WebViewRepresentable`, `PagedView`, `CameraCapture` and
-`ImageCameraPicker`, `ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
+in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
+extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
+`SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
+`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`,
+`ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
 `keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
 the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
 `.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
@@ -86,7 +85,7 @@ every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). I
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
-(`ZenbuShortcuts.swift`, [`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)).
+(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)).
 `ZenbuJapaneseScenes` (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only
 be added with `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile
 every window shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac
@@ -193,8 +192,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   the real Keychain, so these tests are skipped on the Mac, where a build signed to run locally
   has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness); `ZENBU_SHARED_IMAGES` and `ZENBU_OPEN_LINK` stand in for what a share or
-  another app hands the app ([`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md), Tests).
+  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
+  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
   or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
   arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
@@ -367,10 +366,9 @@ the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE
 team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
-also takes the Shortcuts and share-sheet actions' links
-([`ios-shortcuts-and-sharing.md`](ios-shortcuts-and-sharing.md)). It switches to Search from any
-tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
-hands the link's host and path to the core (`websiteRoute`,
+also takes the Shortcuts actions' links ([`ios-shortcuts.md`](ios-shortcuts.md)). It switches to
+Search from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's
+stack. `LookupClient.websiteRoute` hands the link's host and path to the core (`websiteRoute`,
 [`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
 decoded one path segment at a time, with the parser the website uses, and finds a word URL's
 entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
@@ -1016,7 +1014,7 @@ submitting the first version built after iPad and the Mac came in, add the iPad 
 build, the Mac) platform's screenshots and set up the record (Releasing on iPad and the Mac,
 above), and say so in What's New.
 
-1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the project's configurations,
+1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
    as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise
    `MARKETING_VERSION` instead and set `CURRENT_PROJECT_VERSION` back to 1.
 2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of

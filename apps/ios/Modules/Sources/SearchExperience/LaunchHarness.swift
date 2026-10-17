@@ -1,4 +1,3 @@
-import AppActions
 import Foundation
 import notify
 
@@ -11,7 +10,6 @@ enum LaunchHarness {
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
-  static let sharedImagesKey = "ZENBU_SHARED_IMAGES"
   static let openLinkKey = "ZENBU_OPEN_LINK"
   static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
   static let uiTestBundleSuffix = ".uitests"
@@ -87,37 +85,6 @@ enum LaunchHarness {
       MainActor.assumeIsolated { AppLinkInbox.shared.receive(link) }
     }
   }
-
-  static let sharedImages: SharedImages? = {
-    #if DEBUG
-      sharedImagesStandIn(ProcessInfo.processInfo.environment)
-    #else
-      nil
-    #endif
-  }()
-
-  #if DEBUG
-    struct SharedImagesStandIn: Decodable {
-      let share: UUID
-      let images: [String: Data]
-    }
-
-    static func sharedImagesStandIn(_ environment: [String: String]) -> SharedImages? {
-      guard let json = environment[sharedImagesKey],
-        let standIn = try? JSONDecoder().decode(SharedImagesStandIn.self, from: Data(json.utf8))
-      else { return nil }
-      let images = SharedImages(
-        folder: URL.temporaryDirectory.appending(
-          path: "Shared Images Stand-in", directoryHint: .isDirectory))
-      let share = images.share(standIn.share)
-      try? FileManager.default.createDirectory(at: share.folder, withIntermediateDirectories: true)
-      for (name, data) in standIn.images {
-        guard let file = share.files(named: [name]).first else { continue }
-        try? data.write(to: file)
-      }
-      return images
-    }
-  #endif
 
   static var signInProviders: SignInProviders? {
     #if DEBUG

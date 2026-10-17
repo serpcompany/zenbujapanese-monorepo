@@ -130,30 +130,13 @@ test("keeps the UI tests' platform conditions in their own Platform folder", () 
   expect(problems[0]?.problem).toContain('outside apps/ios/UITests/Platform/, use a helper there')
 })
 
-test("keeps the share actions' platform code in AppActions/Platform, and the extensions small", () => {
-  const controller = 'apps/ios/Modules/Sources/AppActions/Platform/ShareActionController.swift'
-  const action = 'apps/ios/Modules/Sources/AppActions/ShareAction.swift'
-  const entryPoint = 'apps/ios/ShareActions/LookUpShareAction.swift'
-  const platformCode = '#if os(macOS)\n  import AppKit\n#else\n  import UIKit\n#endif\n'
-  expect(checkLayers([controller], swiftLayers, source(platformCode))).toEqual([])
-  for (const path of [action, entryPoint]) {
-    const problems = checkLayers([path], swiftLayers, source(platformCode))
-    expect(problems.map(problem => problem.line)).toEqual([1, 2, 4])
-    expect(problems[0]?.problem).toContain(
-      'outside apps/ios/Modules/Sources/AppActions/Platform/, use a helper there'
-    )
-  }
-  const imports = checkLayers([action], swiftLayers, source('import SearchExperience\n'))
-  expect(imports[0]?.problem).toMatch(/imports SearchExperience; .*may import only Foundation/)
-})
-
 test('checks the real app sources', () => {
   const sources = repositoryFiles().filter(
     path =>
       path.endsWith('.swift') && swiftPlatforms.sharedCode.some(folder => path.startsWith(folder))
   )
   expect(
-    swiftPlatforms.adapters.every(({ folder }) => sources.some(path => path.startsWith(folder)))
+    swiftPlatforms.adapters.every(folder => sources.some(path => path.startsWith(folder)))
   ).toBe(true)
   expect(checkLayers(sources)).toEqual([])
 }, 60_000)

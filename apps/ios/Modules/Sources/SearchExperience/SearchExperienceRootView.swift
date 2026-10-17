@@ -4,7 +4,6 @@ struct SearchExperienceRootView: View {
   @State private var selectedTab = SearchExperienceTab.search
   @State private var searchFocusRequest = 0
   @State private var showsImageSources = false
-  @State private var sharedImageFiles: SharedImageFiles?
   @State private var path: [SearchExperienceRoute] = []
   @State private var accountPath = NavigationPath()
   @State private var query = ""
@@ -54,8 +53,8 @@ struct SearchExperienceRootView: View {
     appTabs
       .modifier(
         ImageTextImport(
-          showsSources: $showsImageSources, sharedFiles: $sharedImageFiles,
-          cameraAuthorizationClient: cameraAuthorizationClient, openImageText: openImageText)
+          showsSources: $showsImageSources, cameraAuthorizationClient: cameraAuthorizationClient,
+          openImageText: openImageText)
       )
       .modifier(
         AppLinkOpening(
@@ -64,7 +63,7 @@ struct SearchExperienceRootView: View {
             selectedTab = .search
             dismissRecognizedWordSheet(if: true)
           },
-          translate: openTranslation, searchImages: { sharedImageFiles = $0 }))
+          translate: openTranslation))
       .modifier(AppCommandHandling(perform: perform))
       .environment(screenReturns)
   }

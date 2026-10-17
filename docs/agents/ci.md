@@ -233,8 +233,7 @@ in two jobs:
   production's account service, that every build signs as the App Store record
   ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad, and Mac
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
-  strings, and entitlements), and the share-sheet extensions' (`test_share_actions.py`). Its LFS
-  cache is keyed on the pointers of the LFS patterns it fetches.
+  strings, and entitlements). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after
   another: `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro
   Max Simulator and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`,

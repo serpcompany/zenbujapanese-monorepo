@@ -1,10 +1,9 @@
-import AppActions
 import Foundation
 import Testing
 
 @testable import SearchExperience
 
-@Suite("Shortcuts, Siri, and share-sheet links")
+@Suite("Shortcuts and Siri links")
 struct AppLinkTests {
   private let scheme = "com.zenbujapanese.dictionary.uitests"
 
@@ -12,13 +11,12 @@ struct AppLinkTests {
     try #require(action.url(scheme: scheme))
   }
 
-  @Test("each action's text or images come back from its link as they went in")
+  @Test("each action's text comes back from its link as it went in")
   func roundTrips() throws {
     let actions: [AppAction] = [
       .lookUp("見る"),
       .lookUp(" to eat & drink + 100% = ?#/"),
       .translate("Where can I buy a Suica card?\nThank you."),
-      .imageSearch(share: UUID(), images: ["IMG 0001.jpeg", "photo#2.png", "写真.heic"]),
     ]
     for action in actions {
       #expect(AppAction(try link(action), scheme: scheme) == action)
@@ -31,42 +29,26 @@ struct AppLinkTests {
     #expect(AppAction(lookUp, scheme: "com.zenbujapanese.dictionary") == nil)
     #expect(AppAction(lookUp, scheme: scheme.uppercased()) == .lookUp("見る"))
     for other in [
-      "\(scheme)://look-up", "\(scheme)://translate?image=a", "\(scheme)://image-search?share=a",
+      "\(scheme)://look-up", "\(scheme)://translate?image=a", "\(scheme)://image-search?text=a",
       "\(scheme)://settings?text=a", "https://look-up?text=a",
     ] {
       #expect(AppAction(try #require(URL(string: other)), scheme: scheme) == nil, "\(other)")
     }
   }
 
-  @Test("an extension finds its app's scheme and App Group from its own bundle ID, in every build")
-  func bundleIDs() {
+  @Test("each build's scheme is its own bundle ID, so Zenbu Dev and a test build open only themselves")
+  func schemes() {
     for suffix in ["", ".dev", ".uitests"] {
       let app = "com.zenbujapanese.dictionary\(suffix)"
-      for action in ["look-up", "translate", "image-search"] {
-        #expect(AppAction.appBundleID(ofExtension: "\(app).\(action)") == app)
-      }
       #expect(AppAction.scheme(ofApp: app) == app)
-      #expect(AppAction.appGroup(ofApp: app) == "group.\(app)")
     }
   }
 
-  @Test("a link opens the dictionary, Translate's typed text, or Image Search on the shared files")
+  @Test("a link opens the dictionary or Translate's typed text, and any other a website route")
   func destinations() throws {
-    let images = SharedImages(folder: try ImageFixture.folder("shared"))
-    defer { try? FileManager.default.removeItem(at: images.folder) }
-    let share = images.share(UUID())
-    let open = { (url: URL) in AppLink(url, scheme: scheme, sharedImages: images) }
+    let open = { (url: URL) in AppLink(url, scheme: scheme) }
     #expect(open(try link(.lookUp("見る"))) == .dictionary(.lookUp("見る")))
     #expect(open(try link(.translate("Hello"))) == .translate("Hello"))
-    let shared = try link(.imageSearch(share: share.id, images: ["a.png", "../a.png", "b.jpeg"]))
-    #expect(
-      open(shared)
-        == .imageSearch(
-          SharedImageFiles(
-            share: share, files: ["a.png", "b.jpeg"].map { share.folder.appending(path: $0) })))
-    #expect(
-      AppLink(shared, scheme: scheme, sharedImages: nil)
-        == .imageSearch(SharedImageFiles(share: nil, files: [])))
     for website in [
       "https://zenbujapanese.com/dictionary/見る-1259290/",
       "\(scheme)://zenbujapanese.com/dictionary/見る-1259290/",
@@ -106,7 +88,7 @@ struct AppLinkTests {
   }
 
   @MainActor
-  @Test("Shortcuts and Siri hand the window the same link the share sheet opens, once")
+  @Test("Shortcuts and Siri hand the window their action as a link in the app's scheme, once")
   func inbox() {
     let inbox = AppLinkInbox()
     inbox.lookUp("見る")

@@ -6,10 +6,6 @@
 	<array>
 		<string>Default</string>
 	</array>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)</string>
-	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:zenbujapanese.com</string>

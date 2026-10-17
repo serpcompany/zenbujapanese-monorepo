@@ -43,17 +43,6 @@ struct ImageTextAsset: Identifiable, Sendable {
     return ImageTextAsset(name: url.lastPathComponent, data: data)
   }
 
-  static func loadCopies(of urls: [URL]) async -> [ImageTextAsset] {
-    var assets: [ImageTextAsset] = []
-    for url in urls.prefix(ImageTextSource.importLimit) {
-      guard !Task.isCancelled else { break }
-      let accessed = url.startAccessingSecurityScopedResource()
-      defer { if accessed { url.stopAccessingSecurityScopedResource() } }
-      if let asset = try? await loadCopy(from: url) { assets.append(asset) }
-    }
-    return assets
-  }
-
   nonisolated(nonsending) static func dropped(_ provider: NSItemProvider) async -> ImageTextAsset? {
     await withCheckedContinuation { continuation in
       _ = provider.loadFileRepresentation(for: .image, openInPlace: false) { url, _, _ in

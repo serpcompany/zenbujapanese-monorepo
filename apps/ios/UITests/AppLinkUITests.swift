@@ -43,37 +43,6 @@ final class AppLinkUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("translate.typed.direction", in: app)), mentions: "English → Japanese")
   }
 
-  func testTranslateWithZenbuInTheShareSheetOpensTypedTranslationWithTheSharedText() throws {
-    try XCTSkipIf(
-      device == .mac,
-      "The Mac's Share menu opens but isn't in the app's tree for XCUITest, and lists a new "
-        + "share extension only once Edit Extensions turns it on; "
-        + "ShareActionTests.wordShareThroughTheExtensions stands in")
-    let app = launch(opening: try link("look-up", ["text": "見る"]), TranslateUITests.script)
-    assertWordPage(of: miru, in: app)
-    tap(find("word-detail.share", in: app))
-    tap(labeled("Translate with Zenbu", in: app))
-    waitUntil(waitFor(find("translate.typed.input", in: app)), "value CONTAINS %@", "見る【みる】")
-  }
-
-  func testAnImageSharedWithZenbuOpensImageSearchOnIt() throws {
-    let share = UUID().uuidString
-    let image = try Data(contentsOf: fixtures.appending(path: "vertical-proverbs.png"))
-    let standIn = try JSONSerialization.data(
-      withJSONObject: ["share": share, "images": ["proverbs.png": image.base64EncodedString()]])
-    let app = launch(
-      opening: try link("image-search", ["share": share, "image": "proverbs.png"]),
-      ["ZENBU_SHARED_IMAGES": String(decoding: standIn, as: UTF8.self)])
-    assertOnScreen(find("image-text.close", in: app), in: app)
-    waitFor(firstElement(identifiedBy: "image-text.region.", in: app))
-  }
-
-  func testSharedImagesTheAppCannotReadSaySo() throws {
-    let gone = try link("image-search", ["share": UUID().uuidString, "image": "gone.png"])
-    let app = launch(opening: gone)
-    waitFor(labeled("The shared images are not supported images.", in: app))
-  }
-
   func testAWebsiteLinkOpensItsWordInTheApp() throws {
     let word = "com.zenbujapanese.dictionary.uitests://zenbujapanese.com/dictionary/見る-1259290/"
     let app = launch(opening: try XCTUnwrap(URL(string: word)))

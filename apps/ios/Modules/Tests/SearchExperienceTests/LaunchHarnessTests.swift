@@ -1,4 +1,3 @@
-import AppActions
 import Foundation
 import Testing
 
@@ -82,18 +81,6 @@ struct LaunchHarnessTests {
   func signInStandInOffersApple() {
     #expect(LaunchHarness.standsInForSignIn([LaunchHarness.signInStandInKey: "1"]))
     #expect(!LaunchHarness.standsInForSignIn([:]))
-  }
-
-  @Test("the shared-images stand-in leaves its images where a share's link names them")
-  func sharedImagesStandIn() throws {
-    let share = UUID()
-    let json = #"{"share":"\#(share.uuidString)","images":{"sign.png":"AAEC"}}"#
-    let images = try #require(
-      LaunchHarness.sharedImagesStandIn([LaunchHarness.sharedImagesKey: json]))
-    defer { images.share(share).discard() }
-    let file = try #require(images.share(share).files(named: ["sign.png"]).first)
-    #expect(try Data(contentsOf: file) == Data([0, 1, 2]))
-    #expect(LaunchHarness.sharedImagesStandIn([:]) == nil)
   }
 
   @Test("a Mac test names the link the app opens when the test posts its notice")
