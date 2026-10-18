@@ -9,6 +9,8 @@ final class SearchInputUITests: ZenbuUITestCase {
     XCTAssertFalse(find("handwriting.undo", in: app).isEnabled, "there's no stroke to undo yet")
     switchInputPanel(to: "radicals", showing: "radical.grid", in: app)
     waitFor(labeled("Select one or more radicals", in: app))
+    switchInputPanel(to: "grade", showing: "grade.grid", in: app)
+    XCTAssertFalse(find("radical.undo", in: app).exists, "Grade has nothing to undo")
     switchInputPanel(to: "handwriting", showing: "handwriting.canvas", in: app)
     closeInputPanel(in: app)
     waitUntilGone(canvas)

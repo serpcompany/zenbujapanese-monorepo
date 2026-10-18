@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card'
 import { type Product, type ProductMark, productTypeLabel } from '@/lib/products/catalog'
 import { cn } from '@/lib/utils'
 
-function ProductMarkTile({ mark }: { mark: ProductMark }) {
+export function ProductMarkTile({ mark }: { mark: ProductMark }) {
   const className =
     'grid size-7 shrink-0 place-items-center rounded-md bg-muted text-[15px] font-medium text-foreground'
   if ('glyph' in mark) {

@@ -30,7 +30,7 @@ export function HomeWebTools() {
               {webTools.map(tool => (
                 <li key={tool.href}>
                   <Item
-                    render={<Link href={tool.href} />}
+                    render={<Link href={tool.href} data-link-target={tool.target} />}
                     className={cn(menuItemClassName, 'flex-nowrap rounded-none px-4 py-3')}
                   >
                     <SiteMenuItem link={tool} />

@@ -368,6 +368,21 @@ struct SearchLatencyTests {
       "SEARCH-LATENCY radical panel: opens in \(Self.milliseconds(opening)), a pick "
         + Self.summary(picks))
 
+    let grades = try clock.measure {
+      let _: SchoolKanjiPanel = try core.answer(
+        "schoolKanjiPanel", SchoolKanjiRequest(filter: "", known: []))
+    }
+    var filters: [Double] = []
+    for filter in ["", "w", "water", "み", "みず", "水", "日本"] {
+      let request = SchoolKanjiRequest(filter: filter, known: ["日", "水"])
+      filters.append(
+        Self.value(
+          try clock.measure { let _: SchoolKanjiPanel = try core.answer("schoolKanjiPanel", request) }))
+    }
+    print(
+      "SEARCH-LATENCY Grade panel: opens in \(Self.milliseconds(grades)), a filter "
+        + Self.summary(filters))
+
     var diagrams: [Double] = []
     for character in Self.kanji + ["鬱", "議", "驚"] {
       let kanji = try #require(KanjiCharacter(character))
