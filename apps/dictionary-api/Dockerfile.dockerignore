@@ -19,6 +19,7 @@
 !apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
 !language-data/release.json
 !language-data/releases/*/manifest.json
+!language-data/derived/RetiredEntries.json
 **/node_modules
 apps/dictionary-api/dist
 apps/dictionary-api/.sudachi

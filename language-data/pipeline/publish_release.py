@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
-from bucket_objects import MUTABLE, check_object, file_key, manifest_key, put_immutable, sha256_of
+from bucket_objects import MUTABLE, check_object, file_key, manifest_key, put_immutable
+from committed_files import sha256_of
 from object_store import PreconditionFailed, Store, StoreError
 from pinned_release import PROVENANCE, check_pinned
 from refusal import Refusal

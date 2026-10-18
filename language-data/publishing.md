@@ -63,8 +63,8 @@ alone, reached at `https://<CLOUDFLARE_ACCOUNT_ID>.r2.cloudflarestorage.com` thr
 
   The `Verify` step downloads and hashes every file, so it doesn't rely on either.
 - **A published release doesn't change.** If `releases/<release>/manifest.json` already
-  exists, the new manifest must match it in everything but `git_commit`, `workflow_run`, and
-  `core_sha256`.
+  exists, the new manifest must match it in everything but `git_commit`, `workflow_run`,
+  `core_sha256`, and `core`.
   - If it matches, the run is a no-op and the published manifest stays as it is. So rerunning,
     or merging a change that leaves the release's content alone, publishes nothing.
   - If the content differs, the publish fails before uploading anything. Since a merged pin never

@@ -17,6 +17,7 @@ export interface Config {
   resources: string
   languageDataRelease: string
   languageDataReleases: string
+  languageDataDerived: string
   sudachiDictionary: string | null
   workers: number
   release: string
@@ -70,6 +71,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
     ),
     languageDataReleases: resolve(
       env.LANGUAGE_DATA_RELEASES ?? join(serviceDir, '../../language-data/releases')
+    ),
+    languageDataDerived: resolve(
+      env.LANGUAGE_DATA_DERIVED ?? join(serviceDir, '../../language-data/derived')
     ),
     sudachiDictionary: env.SUDACHI_DICTIONARY === '' ? null : resolve(sudachi),
     workers,

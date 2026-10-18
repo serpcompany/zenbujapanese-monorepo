@@ -7,13 +7,14 @@ from refusal import Refusal
 from release_manifest import manifest_bytes
 from releases_index import release_key
 
-PROVENANCE = ("git_commit", "workflow_run", "core_sha256")
+PROVENANCE = ("git_commit", "workflow_run", "core_sha256", "core")
 BUCKET_FIELDS = ("previous_release", "previous_manifest_sha256")
 RUN_FIELDS = PROVENANCE + BUCKET_FIELDS
 PINNED_FILE = "manifest.json"
 HOW_TO_PIN = (
     "A release's content is pinned: bump language-data/release.json, build the release, run "
-    "package.py pin on it, and commit the new manifest (language-data/README.md, Changing the data)."
+    "package.py pin on it, and commit the new manifest (language-data/README.md, Changing the "
+    "data)."
 )
 
 

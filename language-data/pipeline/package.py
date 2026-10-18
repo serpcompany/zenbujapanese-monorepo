@@ -14,6 +14,7 @@ from refusal import Refusal
 from release_build import build
 from release_inputs import load_inputs, load_release
 from release_manifest import validate
+from retirement import retire
 
 DESCRIPTION = "Package a language-data release from the committed files."
 
@@ -30,7 +31,9 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
         "--release", type=Path, help="default: language-data/release.json in --repo"
     )
     parser.add_argument(
-        "--releases", type=Path, help="the pinned manifests; default: language-data/releases in --repo"
+        "--releases",
+        type=Path,
+        help="the pinned manifests; default: language-data/releases in --repo",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     build_parser = commands.add_parser(
@@ -45,7 +48,8 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
     )
     validate_parser.add_argument("out", type=Path)
     pin_parser = commands.add_parser(
-        "pin", help="pin the release OUT holds: write language-data/releases/<release>/manifest.json"
+        "pin",
+        help="pin the release OUT holds: write language-data/releases/<release>/manifest.json",
     )
     pin_parser.add_argument("out", type=Path, help="the directory `build` wrote")
     check_parser = commands.add_parser(
@@ -59,6 +63,16 @@ def parse(argv: list[str] | None) -> argparse.Namespace:
     check_parser.add_argument(
         "--base", help="a commit, such as a pull request's base: no pin it holds may change"
     )
+    retire_parser = commands.add_parser(
+        "retire",
+        help="write the release's entry changes since the release pinned before it, and the "
+        "retired-entries file they make",
+    )
+    retire_parser.add_argument(
+        "--previous-database",
+        type=Path,
+        help="that release's language-reference database; default: this checkout's Git LFS store",
+    )
     return parser.parse_args(argv)
 
 
@@ -70,7 +84,13 @@ def main(argv: list[str] | None = None) -> int:
     releases = args.releases or repo / "language-data" / "releases"
     try:
         if args.command == "build":
-            manifest = build(repo, load_inputs(inputs_path), load_release(release_path), args.out)
+            manifest = build(
+                repo,
+                load_inputs(inputs_path),
+                load_release(release_path),
+                args.out,
+                releases=releases,
+            )
             print(
                 f"Packaged release {manifest['release']}: {len(manifest['files'])} files, "
                 f"{len(manifest['sources'])} sources, {manifest['ids']['ent_seq_count']} entries"
@@ -81,6 +101,17 @@ def main(argv: list[str] | None = None) -> int:
             manifest = validate(args.out)
             print(
                 f"manifest.json for release {manifest['release']} is valid, with every staged file"
+            )
+        elif args.command == "retire":
+            release = load_release(release_path)["release"]
+            result = retire(
+                repo, load_inputs(inputs_path), releases, release, args.previous_database
+            )
+            since = f"since {result['previous']}" if result["previous"] else "as the first release"
+            print(
+                f"Release {release} {since}: {result['dropped']} entries dropped "
+                f"({result['replaced']} replaced), {result['added']} added; "
+                f"{result['retired']} retired in all"
             )
         elif args.command == "pin":
             manifest = validate(args.out)
