@@ -77,7 +77,8 @@ the screenshot. Fix what holds up, then repeat from step 1 until a review finds 
 - The product docs (`apps/*/docs/product/`) for any behavior change, with its check.
 - The area's doc that `AGENTS.md` routes to, for how it works.
 - The area's quality row when its tests, CI, or docs changed: `docs/quality.md`, or
-  `docs/quality-ios.md` and `docs/quality-web.md` for the app and the website.
+  `docs/quality-ios.md`, `docs/quality-ios-account.md`, and `docs/quality-web.md` for the app, its
+  Account tab, and the website.
 - `docs/tech-debt.md`, or `docs/harness-debt.md` for checks, delivery, and the harness: add debt
   the change knowingly leaves, and remove what it paid off.
 - An ADR when `docs/agents/domain.md` says one is warranted.
