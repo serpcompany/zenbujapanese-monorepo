@@ -233,7 +233,9 @@ and not indexed.
   lists the tools index and every converter"; `e2e/sitemaps.spec.ts`, "the tools sitemap lists the
   tools index and every converter, each with its slash, in English and Japanese";
   `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`; `src/lib/tools/converters.test.ts`, "the
-  tools pages in %s are the index and the six converters, …".
+  tools pages in %s are the index and the six converters, …"; `e2e/hreflang.spec.ts`, "every page
+  in the tools sitemap, both tools indexes included, names its languages as its sitemap entry
+  does, and they name it back".
 
 **In Japanese.** `/ja/tools/` and each `/ja/tools/<name>/` read in Japanese, from the cards and the
 converter's boxes, count, options, and Copy to the chart, the questions, and their FAQ data, and

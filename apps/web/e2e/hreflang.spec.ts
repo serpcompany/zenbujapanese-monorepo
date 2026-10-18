@@ -59,34 +59,44 @@ test.describe('hreflang (SERP localization standard)', () => {
     test.skip(testInfo.project.name !== 'desktop', 'The head is the same at every width')
   })
 
-  test('every page in the pages sitemap, both homepages included, names its languages as its sitemap entry does, and they name it back', async ({
-    request
-  }) => {
-    const xml = await (await request.get('/sitemap-pages.xml')).text()
-    const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc>(.*?)<\/url>/g)].map(
-      ([, loc, links]) => ({
-        path: pathOf(loc),
-        alternates: Object.fromEntries(
-          [...links.matchAll(/<xhtml:link [^>]*\/>/g)].map(([tag]) => {
-            const link = attributes(tag)
-            return [link.hreflang, pathOf(link.href)]
-          })
-        )
-      })
-    )
-    expect(entries.map(entry => entry.path)).toEqual(expect.arrayContaining(['/', '/ja/']))
-    for (const entry of entries) {
-      const head = await headOf(request, entry.path)
-      expectAPublishedPage(entry.path, head)
-      expect(head.alternates, `${entry.path} matches its sitemap entry`).toEqual(entry.alternates)
-      for (const alternate of Object.values(head.alternates)) {
-        expect(
-          entries.some(other => other.path === alternate),
-          alternate
-        ).toBe(true)
-      }
+  for (const sitemap of [
+    { name: 'pages', file: '/sitemap-pages.xml', included: 'both homepages', paths: ['/', '/ja/'] },
+    {
+      name: 'tools',
+      file: '/sitemap-tools.xml',
+      included: 'both tools indexes',
+      paths: ['/tools/', '/ja/tools/']
     }
-  })
+  ]) {
+    test(`every page in the ${sitemap.name} sitemap, ${sitemap.included} included, names its languages as its sitemap entry does, and they name it back`, async ({
+      request
+    }) => {
+      const xml = await (await request.get(sitemap.file)).text()
+      const entries = [...xml.matchAll(/<url><loc>([^<]+)<\/loc>(.*?)<\/url>/g)].map(
+        ([, loc, links]) => ({
+          path: pathOf(loc),
+          alternates: Object.fromEntries(
+            [...links.matchAll(/<xhtml:link [^>]*\/>/g)].map(([tag]) => {
+              const link = attributes(tag)
+              return [link.hreflang, pathOf(link.href)]
+            })
+          )
+        })
+      )
+      expect(entries.map(entry => entry.path)).toEqual(expect.arrayContaining(sitemap.paths))
+      for (const entry of entries) {
+        const head = await headOf(request, entry.path)
+        expectAPublishedPage(entry.path, head)
+        expect(head.alternates, `${entry.path} matches its sitemap entry`).toEqual(entry.alternates)
+        for (const alternate of Object.values(head.alternates)) {
+          expect(
+            entries.some(other => other.path === alternate),
+            alternate
+          ).toBe(true)
+        }
+      }
+    })
+  }
 
   for (const { name, path } of pageTypes.filter(type => type.path.startsWith('/dictionary/'))) {
     test(`${name}: the English and Japanese pages name each other`, async ({ request }) => {
