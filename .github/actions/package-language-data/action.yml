@@ -1,7 +1,8 @@
 name: Package language data
 description: >-
   Tests the pipeline, fetches the Git LFS files the release holds, then packages and validates the
-  next language-data release into `out` (language-data/pipeline/package.py). Needs a checkout.
+  next language-data release into `out` and checks it is the one language-data/releases pins
+  (language-data/pipeline/package.py). Needs a checkout.
   Shared by the Language data build and Language data release workflows.
 inputs:
   out:
@@ -46,3 +47,8 @@ runs:
       env:
         OUT: ${{ inputs.out }}
       run: python language-data/pipeline/package.py validate "$OUT"
+    - name: Compare it with the pinned manifest
+      shell: bash
+      env:
+        OUT: ${{ inputs.out }}
+      run: python language-data/pipeline/package.py check-pin --built "$OUT"

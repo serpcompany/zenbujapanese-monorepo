@@ -1,0 +1,6 @@
+sources/*.gz
+!sources/JMdict_e-*.gz
+sources/*.bz2
+sources/*.zip
+sources/*.sqlite
+sources/*.part

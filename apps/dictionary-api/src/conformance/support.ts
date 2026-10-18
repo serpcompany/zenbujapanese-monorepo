@@ -5,6 +5,12 @@ import { fileURLToPath } from 'node:url'
 import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
 import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
+import {
+  type RetiredEntries,
+  type RetiredEntriesFile,
+  retiredEntries,
+  retiredEntriesFile
+} from '@zenbu/dictionary-core/artifact/retired'
 import { ipadicTokenizer, type ReadIpadicFile } from '@zenbu/dictionary-core/examples/ipadic'
 import type { Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
@@ -20,8 +26,9 @@ import { tokenizerFiles } from '../tokenizer'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
-const suites = join(repository, 'apps/ios/LanguageData/Conformance')
+const suites = join(repository, 'language-data/conformance')
 const sudachiDictionary = join(repository, 'apps/dictionary-api/.sudachi/system_core.dic')
+export const retiredEntriesPath = join(repository, 'language-data/derived', retiredEntriesFile)
 
 export const artifactAvailable = (() => {
   try {
@@ -73,14 +80,20 @@ let opened: Promise<{
   artifact: OpenedArtifact
   tokenizerFile: ReadIpadicFile
   tokenize: Tokenize
+  retired: RetiredEntries
 }> | null = null
 let sudachi: MorphologyAnalyzer | null = null
 
 async function open() {
   opened ??= (async () => {
-    const artifact = openArtifact(resources, await fileSha256(join(resources, artifactFile)))
+    const artifactSha256 = await fileSha256(join(resources, artifactFile))
+    const artifact = openArtifact(resources, artifactSha256)
     const tokenizerFile = tokenizerFiles(tokenizerDictionary)
-    return { artifact, tokenizerFile, tokenize: ipadicTokenizer(tokenizerFile) }
+    const retired = retiredEntries(
+      JSON.parse(readFileSync(retiredEntriesPath, 'utf8')) as RetiredEntriesFile,
+      artifactSha256
+    )
+    return { artifact, tokenizerFile, tokenize: ipadicTokenizer(tokenizerFile), retired }
   })()
   return opened
 }
@@ -95,11 +108,12 @@ export function sudachiAnalyzer(): MorphologyAnalyzer | undefined {
 }
 
 export async function dictionary(options: { morphology: boolean }): Promise<Dictionary> {
-  const { artifact, tokenize } = await open()
+  const { artifact, tokenize, retired } = await open()
   const morphology = options.morphology ? sudachiAnalyzer() : undefined
   return new Dictionary({
     db: artifact.db,
     kanji: artifact.kanji,
+    retired,
     capabilities: { tokenize, ...(morphology ? { morphology } : {}) }
   })
 }

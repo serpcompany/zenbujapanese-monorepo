@@ -7,6 +7,7 @@ import type { Principal, Scope } from '../domain/clients'
 import type { Change } from '../domain/entities'
 import type { Profile } from '../domain/profile'
 import type { MutationResult } from '../domain/sync'
+import { languageHeader, languageOf } from '../language'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
@@ -14,6 +15,7 @@ import { json, meaningsText, refusal, refusalSchema } from './refusals'
 import {
   DeleteAccountSchema,
   ErrorSchema,
+  PageLanguageHeaders,
   ProfileConflictSchema,
   ProfilePatchSchema,
   ProfileSchema,
@@ -210,6 +212,7 @@ const removeAccount = createRoute({
     "Deletes the account, its ways to sign in, its sessions, and everything it synced, at once; backups age out within 30 days, and the account's email is told. It needs `account:delete`, and a sign-in from the last 10 minutes, so the app asks the learner to sign in again first. An account that signs in with Apple sends a fresh Sign in with Apple authorization code from that sign-in, which the service uses to revoke the app's access with Apple. Each device keeps its own data and works signed out.",
   security: needs('account:delete'),
   request: {
+    headers: PageLanguageHeaders,
     body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
   },
   responses: {
@@ -318,7 +321,8 @@ export function accountRoutes(
         scopes: context.get('scopes'),
         signedInAt: context.get('signedInAt')
       },
-      { code: appleAuthorizationCode, redirectUri: appleRedirectUri }
+      { code: appleAuthorizationCode, redirectUri: appleRedirectUri },
+      languageOf(context.req.valid('header')[languageHeader])
     )
     if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
     const [status, code, message] = deletionAnswers[deletion]

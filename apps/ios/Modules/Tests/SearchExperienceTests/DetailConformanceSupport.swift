@@ -10,10 +10,8 @@ enum DetailConformance {
   static func suiteURL(_ fileName: String) -> URL {
     URL(fileURLWithPath: #filePath)
       .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .deletingLastPathComponent()
-      .appending(path: "LanguageData/Conformance/\(fileName)")
+      .appending(path: "../../../../../language-data/conformance/\(fileName)")
+      .standardizedFileURL
   }
 
   static func artifacts(_ names: [String]) throws -> [ConformanceArtifact] {

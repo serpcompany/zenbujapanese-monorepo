@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:zenbu:schema:language-data-manifest:v1",
   "title": "zenbu.language-data-manifest.v1",
-  "description": "One language-data release: every file it contains, the CDN sources it names, its IDs, and the conformance suites it was checked against (issue 463). Written by language-data/pipeline/package.py. Cross-field rules JSON Schema can't express (unique names, depends_on naming a file or source in the release) are checked by `package.py validate`.",
+  "description": "One language-data release: every file it contains, the CDN sources it names, its IDs, and the conformance suites it was checked against (issue 463). Written by language-data/pipeline/package.py. Cross-field rules JSON Schema can't express (unique names, depends_on naming a file or source in the release, core_sha256 naming core's bundle) are checked by `package.py validate`.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -98,8 +98,40 @@
       }
     },
     "core_sha256": {
-      "description": "The shared core's hash. Null until the core exists (step 6 of the plan on issue 463).",
+      "description": "The SHA-256 of the shared core's bundle the app ships (core.bundle), as committed when the release was built. Null in a release built before releases recorded it. It records what the release was built beside, not what it holds, so a pinned manifest leaves it out.",
       "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256" }]
+    },
+    "core": {
+      "description": "The shared core the release was built beside, as committed: the app's bundle of it, and its source, which the dictionary service bundles. Absent in a release built before releases recorded it, as core_sha256 is null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bundle", "source"],
+      "properties": {
+        "bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "bytes"],
+          "properties": {
+            "path": { "$ref": "#/$defs/repository_path" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "bytes": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "files", "digest", "sha256"],
+          "properties": {
+            "path": { "$ref": "#/$defs/repository_path" },
+            "files": { "type": "integer", "minimum": 1 },
+            "digest": {
+              "description": "How sha256 is computed: SHA-256 over one line per file git tracks under path, `<the file's SHA-256>  <its path under path>` and a line feed, sorted by path.",
+              "const": "sha256-of-sha256sum-lines-by-path"
+            },
+            "sha256": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -113,6 +145,7 @@
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "git_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "repository_path": { "type": "string", "pattern": "^[^/\\s][^\\s]*$" },
     "name": {
       "description": "A file's name in the release: one or two path segments, such as Kuromoji/base.dat.gz.",
       "type": "string",

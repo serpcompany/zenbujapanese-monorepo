@@ -5,7 +5,7 @@ import unittest
 
 from contract_checks import CATALOG, GENERATED, RESOURCES, ROOT, sha256
 
-TOOLS = ROOT / "apps/ios/Tools"
+TOOLS = ROOT / "language-data/tools"
 SHARED = "language_data_tools.py"
 JMDICT_TOOLS = "the jmdict importer's files"
 RANKING_TOOLS = {
@@ -96,7 +96,7 @@ class ToolProvenanceTests(unittest.TestCase):
                         self.current_sha256(tool),
                         value,
                         f"{name}'s {key} isn't {tool}'s SHA-256: rebuild the language data "
-                        "(apps/ios/Tools/README.md)",
+                        "(language-data/tools/README.md)",
                     )
 
     def test_every_import_report_is_checked(self) -> None:

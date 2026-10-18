@@ -152,12 +152,11 @@ the Keychain: it's the refresh token, good for 60 days from its last use. Send i
 `POST /v1/auth/sign-out`; the rest manage the account and need `account` or `profile`. At most five
 codes go to one email in 10 minutes. Each address Cloudflare sees may also ask for five codes and
 try ten in 10 minutes, ask for 30 nonces and make 20 Apple or Google sign-ins a minute, and send
-at most 100 other requests to `/v1/auth` a minute, fewer to some of Better Auth's routes. Past any of them the answer is `429`, with
-`Retry-After`: wait that many seconds. The same
-Apple account, Google account, or email signs in to the same Zenbu account in
-every app, as long as the account has that way in; an email that already has an account through
-another way is refused until the learner adds it there, signed in (`401 oauth_link_error`,
-`403 account_not_linked`).
+at most 100 other requests to `/v1/auth` a minute, fewer to some of Better Auth's routes. Past any
+of them the answer is `429`, with `Retry-After`: wait that many seconds. The same Apple account,
+Google account, or email signs in to the same Zenbu account in every app, as long as the account
+has that way in; an email that already has an account through another way is refused until the
+learner adds it there, signed in (`401 oauth_link_error`, `403 account_not_linked`).
 
 An app with no `profile` scope, such as Tomodachi, can't read `GET /v1/me`: it keeps the `user`
 its sign-in answered (the account's `id` and `email`) to show who is signed in, and compares that
@@ -180,9 +179,8 @@ website's (`zenbu-web`). An app signs in with an ID token.
 
 ## The website
 
-zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origin the service
-trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
-([`web.md`](web.md), Account pages):
+zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origin the service trusts
+(`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own ([`web.md`](web.md), Account pages):
 
 - **Every call to `/v1/auth`** is a `fetch` with `credentials: 'include'`. The session is the
   service's HttpOnly cookie on its own host: a sign-in answers no `set-auth-token` to the website,
@@ -206,6 +204,9 @@ trusts (`ACCOUNT_API_TRUSTED_ORIGINS`), and keeps no token of its own
   in capitals, so compare ignoring case; treat any other code as a failed sign-in, to try again.
   A missing state, or a callback reused or reloaded, ends at `/v1/auth/error`, a JSON
   `404 not_found` the browser shows: the page can't catch it.
+- **The page's language**, `en` or `ja`, is to go in `Content-Language` on every call (it doesn't
+  yet: [`tech-debt.md`](../tech-debt.md)). A call's emails are in it, a new account keeps it
+  ([`account-email.md`](account-email.md)), and it needs no entry in `Access-Control-Allow-Headers`.
 - **On `429`**, wait what `Retry-After` says.
 
 ## Access tokens

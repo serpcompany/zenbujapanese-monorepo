@@ -3,7 +3,7 @@ import plistlib
 import re
 import unittest
 
-from contract_checks import BUILD_CONFIGURATION, PROJECT, ROOT, app_build_settings, build_setting
+from project_settings import BUILD_CONFIGURATION, PROJECT, ROOT, app_build_settings, build_setting
 
 ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
 SCHEME = ROOT / "apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme"
