@@ -3,6 +3,7 @@ import { APIError } from 'better-auth/api'
 import { isRejection, normalizeName } from '../domain/profile'
 import { signInAddedMessage, signInRemovedMessage } from '../email/account-notices'
 import type { Mailer } from '../email/mailer'
+import { languageFor, requestedLanguage, storedLanguage } from './languages'
 
 export const emailProvider = 'email'
 
@@ -27,7 +28,7 @@ export function identityHooks(mailer: Mailer) {
   return {
     user: {
       create: {
-        async before(user) {
+        async before(user, context) {
           if (!user.emailVerified) {
             throw new APIError('FORBIDDEN', {
               code: 'EMAIL_NOT_VERIFIED',
@@ -35,7 +36,14 @@ export function identityHooks(mailer: Mailer) {
                 "That Apple or Google account's email isn't verified, so it can't make an account."
             })
           }
-          return { data: { ...user, name: profileName(user.name), image: pictureUrl(user.image) } }
+          return {
+            data: {
+              ...user,
+              name: profileName(user.name),
+              image: pictureUrl(user.image),
+              language: await requestedLanguage(context)
+            }
+          }
         }
       }
     },
@@ -50,7 +58,9 @@ export function identityHooks(mailer: Mailer) {
           const identities = await adapter.findAccounts(account.userId)
           if (identities.length < 2) return
           const user = await adapter.findUserById(account.userId)
-          if (user) void mailer.send(signInAddedMessage(user.email, account.providerId))
+          if (!user) return
+          const language = await languageFor(context, async () => storedLanguage(user))
+          void mailer.send(signInAddedMessage(user.email, account.providerId, language))
         }
       },
       update: {
@@ -61,7 +71,9 @@ export function identityHooks(mailer: Mailer) {
       delete: {
         async after(account, context) {
           const user = await context?.context.internalAdapter.findUserById(account.userId)
-          if (user) void mailer.send(signInRemovedMessage(user.email, account.providerId))
+          if (!user) return
+          const language = await languageFor(context, async () => storedLanguage(user))
+          void mailer.send(signInRemovedMessage(user.email, account.providerId, language))
         }
       }
     }

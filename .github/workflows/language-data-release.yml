@@ -9,7 +9,6 @@ on:
       - '.github/workflows/language-data-release.yml'
       - '.github/actions/package-language-data/**'
       - 'apps/ios/Modules/Sources/SearchExperience/Resources/**'
-      - 'apps/ios/LanguageData/**'
   workflow_dispatch:
 
 concurrency:

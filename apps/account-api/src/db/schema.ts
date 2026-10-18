@@ -30,6 +30,7 @@ export const users = pgTable(
     emailVerified: boolean('email_verified').notNull().default(false),
     image: text('image'),
     username: text('username').unique(),
+    language: text('language'),
     version: bigint('version', { mode: 'number' }).notNull().default(1),
     createdAt: created(),
     updatedAt: updated()

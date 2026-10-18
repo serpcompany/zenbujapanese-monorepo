@@ -1148,10 +1148,10 @@ number past any JMdict entry.
   it answers, so a page and its links always agree.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
-replacement in one hop when the dictionary holds the replacement. No entry is recorded as retired
-until #463 records retired entries in the app's data.
+replacement in one hop when the dictionary holds the replacement. Each language-data release
+records the entries it drops (`language-data/retired-entries.md`).
 
-- Source: ADR 0007; #465.
+- Source: ADR 0007; #465; #463.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
 
 **Removed URLs.** The kanji, conjugation, and Example Sentences pages that came before ADR 0010

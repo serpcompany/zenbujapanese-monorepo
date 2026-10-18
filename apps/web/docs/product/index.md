@@ -80,7 +80,7 @@ Each behavior in [Dictionary](dictionary.md), [Account pages](account.md), and
 [Privacy Policy](privacy.md) names its automated check, or says "No automated check yet". The checks come in
 five kinds:
 
-- **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
+- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
   `word-detail.json`, and `kanji-detail.json`, and `kanji-element.json` for a page the website
   doesn't have yet. Each pins, by SHA-256, the app data files it was

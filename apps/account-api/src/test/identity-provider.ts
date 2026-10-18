@@ -8,6 +8,8 @@ export const appleCodeFor = (appleUserId: string) => `apple-code:${appleUserId}`
 export const misconfiguredAppleCode = 'invalid-client'
 export const appleCodeWithoutAppleId = 'no-id-token'
 const googleKeys = 'https://www.googleapis.com/oauth2/v3/certs'
+const googleToken = 'https://oauth2.googleapis.com/token'
+export const googleCodeFor = (subject: string, email: string) => `google-code:${subject}:${email}`
 
 type Key = Awaited<ReturnType<typeof generateKeyPair>>['privateKey']
 
@@ -64,6 +66,14 @@ export async function standInForProviders() {
     if (url === appleRevoke) {
       appleRevoked.push(form(init).get('token') ?? '')
       return new Response(null, { status: 200 })
+    }
+    if (url === googleToken) {
+      const [kind, subject = '', email = ''] = (form(init).get('code') ?? '').split(':')
+      if (kind !== 'google-code') return answer({ error: 'invalid_grant' }, 400)
+      const idToken = await google.signer.sign(
+        claims(google.signer, 'web.apps.googleusercontent.com', subject, { email })
+      )
+      return answer({ access_token: 'google-access', token_type: 'Bearer', id_token: idToken })
     }
     return realFetch(input, init)
   })

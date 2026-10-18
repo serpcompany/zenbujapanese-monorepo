@@ -10,6 +10,7 @@ from pathlib import Path
 
 from locations import LANGUAGE_DATA
 from object_store import AwsCliStore, PreconditionFailed, Store, StoreError
+from pinned_release import load_pinned
 from publish_release import publish
 from refusal import Refusal
 from release_inputs import load_release
@@ -31,6 +32,12 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
     parser.add_argument("--bucket", default=env.get("R2_BUCKET"), help="default: $R2_BUCKET")
     parser.add_argument(
         "--endpoint", default=env.get("R2_ENDPOINT"), help="the S3 endpoint; default: $R2_ENDPOINT"
+    )
+    parser.add_argument(
+        "--releases",
+        type=Path,
+        default=LANGUAGE_DATA / "releases",
+        help="the pinned manifests; default: language-data/releases",
     )
     commands = parser.add_subparsers(dest="command", required=True)
     publish_parser = commands.add_parser(
@@ -60,7 +67,8 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
                 raise Refusal("the bucket and its S3 endpoint are needed (R2_BUCKET, R2_ENDPOINT)")
             store = AwsCliStore(args.bucket, args.endpoint)
         if args.command == "publish":
-            result = publish(store, args.staged)
+            staged_release = json.loads((args.staged / "manifest.json").read_text())["release"]
+            result = publish(store, args.staged, load_pinned(args.releases, staged_release))
             print(
                 f"Published release {result['release']} (manifest sha256 "
                 f"{result['manifest_sha256']}, after {result['previous_release'] or 'nothing'}): "
@@ -72,8 +80,9 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
                 args.release
                 or load_release(LANGUAGE_DATA / "release.json")["release"]
             )
+            pinned = load_pinned(args.releases, release)
             with tempfile.TemporaryDirectory() as tmp:
-                verify(store, release, hash_files=args.hash == "all", workdir=Path(tmp))
+                verify(store, release, pinned, hash_files=args.hash == "all", workdir=Path(tmp))
     except (Refusal, StoreError, PreconditionFailed, OSError, json.JSONDecodeError) as refusal:
         print(f"Refused: {refusal}", file=sys.stderr)
         return 1

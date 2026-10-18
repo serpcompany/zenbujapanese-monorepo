@@ -14,9 +14,8 @@ Check: package `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecov
 
 What doesn't sync, and why:
 
-- **Word notes**, until they're keyed by Language Reference ID (#474, PR #480): they're keyed by a
-  hash of a word's meanings, which changes when the dictionary does, and the notes the app has
-  already saved need moving to the new key first.
+- **Word notes**, which the account service doesn't hold yet (it answers a note `unknown_entity`),
+  keyed by Language Reference ID but for those an earlier version saved that no word took.
 - **Media Library photos**, which need file storage the account service doesn't have.
 - **Translate conversations**, which hold other people's words: only the sentences the learner
   bookmarks sync, each on its own.
