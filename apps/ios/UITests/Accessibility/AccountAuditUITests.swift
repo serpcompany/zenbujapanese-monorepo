@@ -99,8 +99,8 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let app = launch(pass)
     open(.account, in: app)
     tap(reveal(find("account.sign-in", in: app), in: app))
-    waitForSheet("account.sign-in.google", in: app)
-    waitFor(find("account.sign-in.google", in: app))
+    waitForSheet("account.sign-in.cancel", in: app)
+    waitFor(find("account.sign-in.apple-unavailable", in: app))
     audit("Sign In", in: app)
   }
 
