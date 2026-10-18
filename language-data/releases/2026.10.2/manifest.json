@@ -478,8 +478,8 @@
     {
       "name": "word-detail.json",
       "suite": "word-detail",
-      "sha256": "f04dc5e4a83bfd1aeb14f4c968e535ba118e56ccb33d08293f8f7eb9d3edb5e9",
-      "bytes": 4204710
+      "sha256": "dfaa6dd16fa63aa643318ffc71f79b10afd0314a73a0bfc872d130404c60b793",
+      "bytes": 4294821
     },
     {
       "name": "kanji-detail.json",
