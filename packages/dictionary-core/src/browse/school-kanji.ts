@@ -99,14 +99,14 @@ export class SchoolKanji {
 
   panel({ filter, known }: SchoolKanjiRequest): SchoolKanjiPanel {
     const matches = matcher(filter)
-    const knownKanji = new Set(known)
+    const knownKanji = new Set(known.map(character => character.normalize('NFKC')))
     const sections = this.lists.flatMap(list => {
       const shown = matches ? list.kanji.filter(matches) : list.kanji
       if (shown.length === 0) return []
-      const kanji = shown.map(({ character, meaning }) => ({
+      const kanji = shown.map(({ character, base, meaning }) => ({
         character,
         meaning,
-        known: knownKanji.has(character)
+        known: knownKanji.has(base)
       }))
       const knownCount = kanji.filter(tile => tile.known).length
       const total = counted.format(list.kanji.length)

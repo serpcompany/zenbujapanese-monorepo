@@ -3077,14 +3077,14 @@
     }
     panel({ filter, known }) {
       const matches = matcher(filter);
-      const knownKanji = new Set(known);
+      const knownKanji = new Set(known.map((character) => character.normalize("NFKC")));
       const sections2 = this.lists.flatMap((list) => {
         const shown = matches ? list.kanji.filter(matches) : list.kanji;
         if (shown.length === 0) return [];
-        const kanji2 = shown.map(({ character, meaning }) => ({
+        const kanji2 = shown.map(({ character, base, meaning }) => ({
           character,
           meaning,
-          known: knownKanji.has(character)
+          known: knownKanji.has(base)
         }));
         const knownCount = kanji2.filter((tile) => tile.known).length;
         const total = counted.format(list.kanji.length);

@@ -155,4 +155,27 @@ describe('the school kanji the app’s Grade panel lists', () => {
     const [filtered] = school.panel({ filter: 'sun', known: ['水'] }).sections
     expect([filtered?.known, filtered?.spoken]).toEqual([0, 'Grade 1, 1 of 4 kanji'])
   })
+
+  test('marks a compatibility kanji known with its ordinary form and counts it in its grade', () => {
+    const knownIn = (known: string[]) =>
+      withCompatibilityKanji
+        .panel({ filter: '', known })
+        .sections.filter(section => section.known > 0)
+        .map(({ id, spoken, kanji }) => [
+          id,
+          spoken,
+          kanji
+            .filter(tile => tile.known)
+            .map(tile => tile.character)
+            .join('')
+        ])
+    expect(knownIn(['\u{732A}', '\u{6D77}'])).toEqual([
+      ['grade-2', 'Grade 2, 1 kanji, 1 known', '\u{6D77}'],
+      ['jinmeiyo', 'Jinmeiyō, 4 kanji, 3 known', '\u{732A}\u{FA16}\u{FA45}']
+    ])
+    expect(knownIn(['\u{FA16}'])).toEqual([
+      ['jinmeiyo', 'Jinmeiyō, 4 kanji, 2 known', '\u{732A}\u{FA16}']
+    ])
+    expect(knownIn(['丑'])).toEqual([['jinmeiyo', 'Jinmeiyō, 4 kanji, 1 known', '丑']])
+  })
 })

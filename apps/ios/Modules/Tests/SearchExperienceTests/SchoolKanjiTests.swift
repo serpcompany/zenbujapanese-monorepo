@@ -121,6 +121,20 @@ struct SchoolKanjiTests {
     #expect(try panel().sections.allSatisfy { $0.known == 0 })
   }
 
+  @Test("a known kanji marks its compatibility form's tile known too, and its grade counts both")
+  func knownCompatibilityKanji() throws {
+    let ordinary = Self.compatibilityPairs.map(\.ordinary)
+    let jinmeiyo = try #require(panel(known: ordinary).sections.last)
+    #expect(jinmeiyo.known == ordinary.count * 2)
+    #expect(
+      Set(jinmeiyo.kanji.filter(\.known).map(\.id))
+        == Set(Self.compatibilityPairs.flatMap { [codePoints($0.compatibility), codePoints($0.ordinary)] }))
+    let sea = try panel(known: ["\u{6D77}"]).sections
+    #expect(sea.first { $0.id == "grade-2" }?.known == 1)
+    #expect(sea.last?.known == 1)
+    #expect(sea.last?.kanji.first { $0.id == codePoints("\u{FA45}") }?.known == true)
+  }
+
   @Test("a panel remembers which sections were closed")
   func closedSections() {
     let closed = ClosedTileSections(ids: ["grade-2", "strokes-3"])
