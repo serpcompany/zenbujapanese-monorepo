@@ -88,8 +88,8 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     goBack(in: app)
     tap(reveal(find("account.profile", in: app), in: app))
-    fill(find("profile.name", in: app), with: "Ada Lovelace", in: app)
-    fill(find("profile.username", in: app), with: "ada.l\n", in: app)
+    fill("profile.name", with: "Ada Lovelace", in: app)
+    fill("profile.username", with: "ada.l\n", in: app)
     waitFor(labeled("A username is 3 to 30 letters a to z, digits, or underscores.", in: app))
     waitUntilGone(app.keyboards.firstMatch)
     audit("Profile", in: app)
@@ -116,10 +116,12 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Delete Account", in: app)
   }
 
-  private func fill(_ field: XCUIElement, with text: String, in app: XCUIApplication) {
+  private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {
+    let field = find(identifier, in: app)
     guard device != .mac else { return type(text, into: field) }
     waitFor(field).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: Self.inputLine)).tap()
-    waitFor(app.descendants(matching: .any).matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch)
+    let focused = NSPredicate(format: "hasKeyboardFocus == true AND identifier == %@", identifier)
+    waitFor(app.descendants(matching: .any).matching(focused).firstMatch)
     field.typeText(text)
   }
 

@@ -182,7 +182,9 @@ private let textThatScales = [
     on: ["Account", "Account, at its end", "Account, its rows"], because: Why.scales),
   allow(
     .dynamicType,
-    .label("Signing out keeps your known words, lists, watch history, translations, notes, and media on this iPhone."),
+    .label(
+      "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
+    ),
     on: ["Zenbu Account"], [.phone], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
@@ -192,6 +194,7 @@ private let textThatScales = [
     .textClipped, .labels(["Add Note", "Add to List"]), on: ["A word's note", "Word Detail, its kanji"],
     because: Why.scales),
   allow(.dynamicType, .identifiedBy(prefix: "radical.stroke."), on: ["Radicals"], because: Why.scales),
+  allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
   allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),
   allow(
     .dynamicType, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet", "A caption's word"],
