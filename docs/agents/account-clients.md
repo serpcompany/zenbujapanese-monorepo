@@ -204,9 +204,9 @@ zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origi
   in capitals, so compare ignoring case; treat any other code as a failed sign-in, to try again.
   A missing state, or a callback reused or reloaded, ends at `/v1/auth/error`, a JSON
   `404 not_found` the browser shows: the page can't catch it.
-- **The page's language**, `en` or `ja`, goes in `Content-Language` on every call: the emails a
-  call sends are in it, and an account a sign-in makes keeps it for later ones
-  ([`account-email.md`](account-email.md)). For those values it needs no preflight.
+- **The page's language**, `en` or `ja`, is to go in `Content-Language` on every call (it doesn't
+  yet: [`tech-debt.md`](../tech-debt.md)). A call's emails are in it, a new account keeps it
+  ([`account-email.md`](account-email.md)), and it needs no entry in `Access-Control-Allow-Headers`.
 - **On `429`**, wait what `Retry-After` says.
 
 ## Access tokens

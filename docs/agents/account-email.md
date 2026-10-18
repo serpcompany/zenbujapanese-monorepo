@@ -59,11 +59,12 @@ start keeps the language in Better Auth's OAuth state, through `addOAuthServerCo
 the service writes, and the callback reads it there (`apps/account-api/src/auth/languages.ts`).
 Linking Google on the website keeps it the same way for its notice.
 
-**The website** sends its page's language on every call, as the
-[client guide](account-clients.md#the-website) says. For `en` and `ja`, `Content-Language` is a
+**The website** is to send its page's language on every call, as the
+[client guide](account-clients.md#the-website) says. It doesn't yet
+([`tech-debt.md`](../tech-debt.md)), so its sign-ins and deletions get the stored language, or English. For `en` and `ja`, `Content-Language` is a
 CORS-safelisted request header, so a browser sends it without naming it in a preflight, and the
 service's CORS allows it without listing it. A value outside that list's characters would need a
-preflight that names it, which the service refuses; the website sends only the two.
+preflight that names it, which the service refuses; the website is to send only the two.
 
 **The copy** is in `apps/account-api/src/email/sign-in-code.ts` and
 `apps/account-api/src/email/account-notices.ts`, each email in both languages, signed
