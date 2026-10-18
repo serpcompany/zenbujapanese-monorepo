@@ -41,8 +41,8 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
   Google's sign-in, the Translate harness's script for the microphone, a local player, fixture
   captions, and a results page for YouTube, and a closed port for the offline account
   ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
-- **Contract tests** (`apps/ios/Tools/tests/`), which check the project settings and the bundled
-  data, the same for every platform.
+- **Contract tests** (`apps/ios/Tools/tests/` and `language-data/tools/tests/`), which check the
+  project settings and the bundled data, the same for every platform.
 - **The recorded-audio check** (`translate-replay`), which plays recorded speech through the real
   recognizers and Apple Translation on a Mac with Apple's speech models
   ([`translate.md`](../../../../docs/agents/translate.md#recorded-audio-check)).

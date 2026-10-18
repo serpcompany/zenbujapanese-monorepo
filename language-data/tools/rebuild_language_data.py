@@ -11,13 +11,16 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+import build_jiten_frequency_packs
+import import_frequency_pack
 from language_data_tools import file_sha256
 
 TOOLS = Path(__file__).resolve().parent
-IOS = TOOLS.parent
-REPOSITORY = IOS.parent.parent
-SOURCES = IOS / "LanguageData/Sources"
-GENERATED = IOS / "LanguageData/Generated"
+LANGUAGE_DATA = TOOLS.parent
+REPOSITORY = LANGUAGE_DATA.parent
+IOS = REPOSITORY / "apps/ios"
+SOURCES = LANGUAGE_DATA / "sources"
+GENERATED = LANGUAGE_DATA / "generated"
 RESOURCES = IOS / "Modules/Sources/SearchExperience/Resources"
 CATALOG = RESOURCES / "FrequencyPackCatalog.json"
 ANIME_FIXTURE = IOS / "Modules/Tests/SearchExperienceTests/Fixtures/jiten-anime.json.zip"
@@ -240,7 +243,7 @@ def same_source(manifest: dict, pack_report: dict) -> None:
     if pack_report["sourceSHA256"] != manifest["sourceSHA256"]:
         raise SystemExit(
             f"{manifest['packID']} has a new source: update its manifest's source fields "
-            "(apps/ios/Tools/README.md, Rebuild everything), publish a downloadable pack's source, then rebuild"
+            "(language-data/tools/README.md, Rebuild everything), publish a downloadable pack's source, then rebuild"
         )
 
 
@@ -339,9 +342,29 @@ def build_ranked_lists(wikipedia_artifact: Path, archives: Path) -> None:
     )
 
 
+def tools_built_in_paths() -> dict[str, Path]:
+    return {
+        "import_frequency_pack.RESOURCES": import_frequency_pack.RESOURCES,
+        "build_jiten_frequency_packs.RESOURCES": build_jiten_frequency_packs.RESOURCES,
+        "build_jiten_frequency_packs.SOURCE_RECORD": build_jiten_frequency_packs.SOURCE_RECORD,
+        "build_jiten_frequency_packs.ANALYSIS's folder": build_jiten_frequency_packs.ANALYSIS.parent,
+    }
+
+
+def refuse_missing_tool_paths() -> None:
+    missing = [f"{name} ({path})" for name, path in tools_built_in_paths().items() if not path.exists()]
+    if missing:
+        raise SystemExit(
+            "these paths the tools derive from their own folder don't exist: "
+            + ", ".join(missing)
+            + ". Point each at the app's Resources or at language-data/sources and generated "
+            "first (language-data/tools/README.md, Rebuild everything)"
+        )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Rebuild every artifact the iOS data tools write, in dependency order, and update the catalog."
+        description="Rebuild every artifact the language-data tools write, in dependency order, and update the catalog."
     )
     parser.add_argument("--download", action="store_true", help="fetch missing versioned upstream sources")
     parser.add_argument("--jiten-sources", type=Path, help="keep the Jiten source ZIPs here, for publishing")
@@ -351,6 +374,7 @@ def main() -> None:
             f"the data tools are pinned to Python {PINNED_PYTHON_TEXT}: "
             f"uv run --no-project --python {PINNED_PYTHON_TEXT} python {Path(__file__).relative_to(REPOSITORY)}"
         )
+    refuse_missing_tool_paths()
     published = published_jiten_sources()
     unidic = fixed_download(only("UniDic-*.source.json"), arguments.download)
     with tempfile.TemporaryDirectory() as directory:

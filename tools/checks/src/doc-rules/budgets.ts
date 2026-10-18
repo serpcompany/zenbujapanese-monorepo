@@ -11,12 +11,12 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'apps/web/docs/product/account.md': 345,
   'apps/web/docs/product/browse.md': 333,
   'apps/web/docs/product/dictionary.md': 1343,
-  'docs/agents/account-api.md': 941,
+  'docs/agents/account-api.md': 925,
   'docs/agents/account-clients.md': 602,
   'docs/agents/api-servers.md': 318,
-  'docs/agents/dictionary-api.md': 544,
+  'docs/agents/dictionary-api.md': 543,
   'docs/agents/dictionary-core.md': 604,
-  'docs/agents/ios.md': 1312,
+  'docs/agents/ios.md': 1307,
   'docs/agents/translate.md': 364,
   'docs/agents/web.md': 809
 }

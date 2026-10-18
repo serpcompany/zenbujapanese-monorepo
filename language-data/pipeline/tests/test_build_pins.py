@@ -8,7 +8,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from scratch_release import ScratchBuildTestCase, sha256
+from scratch_release import ScratchBuildTestCase
 
 
 class BuildPinTests(ScratchBuildTestCase):
@@ -93,17 +93,7 @@ class BuildPinTests(ScratchBuildTestCase):
                 connection.execute("INSERT INTO canonical_senses VALUES (2)")
                 connection.commit()
             changed = path.read_bytes()
-        self.scratch.lfs["data/res/Language.sqlite3"] = changed
-        self.scratch.language_sha = sha256(changed)
-        self.scratch.contract.update(databaseSHA256=sha256(changed), databaseBytes=len(changed))
-        self.scratch.set_contract()
-        for pack in self.scratch.catalog["packs"]:
-            pack["languageDataSHA256"] = sha256(changed)
-        self.scratch.bundle_pack(sha256(changed))
-        self.scratch.plain["data/conf/one.json"] = json.dumps(
-            {"suite": "one", "artifact": {"name": "Language.sqlite3", "sha256": sha256(changed)}}
-        ).encode()
-        self.scratch.set_suite_two()
+        self.scratch.set_language(changed)
         self.scratch.commit()
         self.refused(r"the row count of canonical_senses disagrees")
 

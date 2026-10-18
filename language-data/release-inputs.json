@@ -1,9 +1,10 @@
 {
   "roots": {
     "resources": "apps/ios/Modules/Sources/SearchExperience/Resources",
-    "sources": "apps/ios/LanguageData/Sources",
-    "conformance": "apps/ios/LanguageData/Conformance",
-    "notices": "language-data/notices"
+    "sources": "language-data/sources",
+    "conformance": "language-data/conformance",
+    "notices": "language-data/notices",
+    "derived": "language-data/derived"
   },
   "files": [
     {
@@ -61,9 +62,11 @@
     },
     { "name": "KANJIUM-NOTICE.txt", "path": "notices/KANJIUM-NOTICE.txt" },
     { "name": "JITEN-NOTICE.txt", "path": "notices/JITEN-NOTICE.txt" },
-    { "name": "JLPT-KANJI-LEVELS-NOTICE.txt", "path": "notices/JLPT-KANJI-LEVELS-NOTICE.txt" }
+    { "name": "JLPT-KANJI-LEVELS-NOTICE.txt", "path": "notices/JLPT-KANJI-LEVELS-NOTICE.txt" },
+    { "name": "RetiredEntries.json", "path": "derived/RetiredEntries.json" }
   ],
   "frequency_pack_catalog": "resources/FrequencyPackCatalog.json",
+  "retired_entries": "derived/RetiredEntries.json",
   "source_archives": {
     "zenbu.wikipedia.written.ja.unidic-3.1": "sources/Wikipedia-ja-20221020-310-nfkc.tsv.xz"
   },
@@ -75,5 +78,35 @@
     "conformance/kanji-detail.json",
     "conformance/kanji-element.json",
     "conformance/tokenizer.json"
+  ],
+  "core": {
+    "source": "packages/dictionary-core",
+    "bundle": "resources/DictionaryCore/dictionary-core.js"
+  },
+  "app_bundles": ["resources"],
+  "images": ["apps/dictionary-api/Dockerfile"],
+  "not_released": [
+    { "path": "resources/DAKANJI-MIT.txt", "why": "The licence of the handwriting model." },
+    { "path": "resources/DaKanji.mlpackage", "why": "The handwriting model, not language data." },
+    {
+      "path": "resources/DictionaryCore",
+      "why": "The app's bundle of the shared core, built from packages/dictionary-core."
+    },
+    {
+      "path": "resources/FrequencyPackContentDigestV1.json",
+      "why": "A test vector for the frequency packs' content digest."
+    },
+    {
+      "path": "resources/LanguageTechnologyPackCatalog.json",
+      "why": "Sudachi's pack catalog, which pins Sudachi's dictionary and where it comes from. Sudachi isn't in the release."
+    },
+    {
+      "path": "resources/SudachiLanguageTechnologyNotices.txt",
+      "why": "Sudachi's notices, which the pack catalog names."
+    },
+    {
+      "path": "resources/SudachiRuntime",
+      "why": "Sudachi's character and unknown-word definitions, which the pack catalog pins."
+    }
   ]
 }

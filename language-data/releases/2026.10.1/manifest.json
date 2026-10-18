@@ -1,0 +1,493 @@
+{
+  "manifest_schema": "zenbu.language-data-manifest.v1",
+  "release": "2026.10.1",
+  "sources": [
+    {
+      "name": "zenbu.wikipedia.written.ja.unidic-3.1",
+      "version": "2022-10-20",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.wikipedia.written.ja.unidic-3.1/2524bd18fa54ac15125c60cf137fb3ea2b0473ba7f7cb95e8eff7657fdf808ca.tsv.xz",
+      "sha256": "2524bd18fa54ac15125c60cf137fb3ea2b0473ba7f7cb95e8eff7657fdf808ca",
+      "bytes": 3452188,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV1.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.tv-movies.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.tv-movies.ja.ordered-v2/e6a6ec5cd4ebc7188ec8d963c0447d8c6a6ead4716fa8a2d728981efc9aedda1.json.zip",
+      "sha256": "e6a6ec5cd4ebc7188ec8d963c0447d8c6a6ead4716fa8a2d728981efc9aedda1",
+      "bytes": 2226011,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.anime.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.anime.ja.ordered-v2/ffbd2b21921ec5a12e1899cd1d67e1b6f162ce17779cd9daeff5e79758e80bc1.json.zip",
+      "sha256": "ffbd2b21921ec5a12e1899cd1d67e1b6f162ce17779cd9daeff5e79758e80bc1",
+      "bytes": 1953644,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.manga.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.manga.ja.ordered-v2/740d6faed5c1a3707304a643c82faffe6299f291892249ec458c2f763e649c1f.json.zip",
+      "sha256": "740d6faed5c1a3707304a643c82faffe6299f291892249ec458c2f763e649c1f",
+      "bytes": 2271836,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.novels.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.novels.ja.ordered-v2/8e7f37d621a837d91b77be9fd94bad0216102bcdb4a944b851f36c759c461dfb.json.zip",
+      "sha256": "8e7f37d621a837d91b77be9fd94bad0216102bcdb4a944b851f36c759c461dfb",
+      "bytes": 3165440,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.visual-novels.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.visual-novels.ja.ordered-v2/edf3056faa8386f4468590dfca981f7bd8dad616db77ea564f5109bad1240020.json.zip",
+      "sha256": "edf3056faa8386f4468590dfca981f7bd8dad616db77ea564f5109bad1240020",
+      "bytes": 2363658,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    },
+    {
+      "name": "zenbu.jiten.video-games.ja.ordered-v2",
+      "version": "2026-09-27",
+      "url": "https://cdn.zenbujapanese.com/frequency-packs/zenbu.jiten.video-games.ja.ordered-v2/58c1ab0ae5d8ac34868a319c52c8c657a5f11b1944a41d69df08446685d6a30b.json.zip",
+      "sha256": "58c1ab0ae5d8ac34868a319c52c8c657a5f11b1944a41d69df08446685d6a30b",
+      "bytes": 1588199,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ]
+    }
+  ],
+  "files": [
+    {
+      "name": "LanguageReferenceData.sqlite3",
+      "artifact_schema": "zenbu.language-reference.v2",
+      "schema_source": "plan",
+      "sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+      "bytes": 483983360,
+      "depends_on": [],
+      "row_counts": {
+        "canonical_senses": 253020,
+        "dictionary_form_fts": 752077,
+        "dictionary_gloss_fts": 441826,
+        "entries": 218382,
+        "example_sentence_contributors": 3184,
+        "example_sentence_english_exact_fts": 232774,
+        "example_sentence_english_porter_fts": 232774,
+        "example_sentence_fts_map": 232774,
+        "example_sentence_provenance": 232774,
+        "example_sentences": 232774,
+        "form_priority_profiles": 56127,
+        "forms": 752077,
+        "gloss_atoms": 441826,
+        "metadata": 53,
+        "reading_form_restrictions": 6201,
+        "sense_form_restrictions": 1929
+      }
+    },
+    {
+      "name": "CompoundPitch.sqlite3",
+      "artifact_schema": "zenbu.compound-pitch.v1",
+      "schema_source": "file",
+      "sha256": "1545dbc29fb6c453e5c3e82f54ea3d5f2b0e71d46fc1392185355136b34c648a",
+      "bytes": 1810432,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3"
+      ],
+      "row_counts": {
+        "entry_pitch": 16193,
+        "metadata": 4
+      }
+    },
+    {
+      "name": "ExampleWordIndex.sqlite3",
+      "artifact_schema": "zenbu.example-word-index.v1",
+      "schema_source": "file",
+      "sha256": "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d",
+      "bytes": 2904064,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3"
+      ],
+      "row_counts": {
+        "entry_sentences": 57953,
+        "metadata": 5
+      }
+    },
+    {
+      "name": "JLPTLevelPack.sqlite3",
+      "artifact_schema": "zenbu.level-pack.v1",
+      "schema_source": "file",
+      "sha256": "d4f98779aed948afe82897b73629a58f82a2d7cb439e771c27a4d09ad545f689",
+      "bytes": 188416,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3"
+      ],
+      "row_counts": {
+        "level_evidence": 7747,
+        "metadata": 10
+      }
+    },
+    {
+      "name": "TUBELEXFrequencyPack.sqlite3",
+      "artifact_schema": "zenbu.frequency-pack.v1",
+      "schema_source": "file",
+      "sha256": "81fa0e721d4968e3084fdb635acbfb10828ef74b25f86a5c491cc7a028d8f751",
+      "bytes": 8314880,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "FrequencyPackMappingV2.sql"
+      ],
+      "row_counts": {
+        "frequency_evidence": 58056,
+        "metadata": 14
+      }
+    },
+    {
+      "name": "RankedLists.sqlite3",
+      "artifact_schema": "zenbu.ranked-lists.v1",
+      "schema_source": "file",
+      "sha256": "77ce1ed48381b7afccd7b97d0cbd807cc185979fd3354f6afddc8c20134e28a3",
+      "bytes": 19587072,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3"
+      ],
+      "row_counts": {
+        "metadata": 3,
+        "ranked_evidence": 729637,
+        "ranked_lists": 7
+      }
+    },
+    {
+      "name": "KanjiStrokeData.sqlite3",
+      "artifact_schema": "zenbu.kanji-stroke-diagrams.v1",
+      "schema_source": "file",
+      "sha256": "c603b7befa57aa0c5952e37ae848080609ff8a7de6f95a127efe156e191c0acd",
+      "bytes": 21921792,
+      "depends_on": [],
+      "row_counts": {
+        "metadata": 4,
+        "stroke_diagrams": 6430
+      }
+    },
+    {
+      "name": "KanjiReferenceData.json",
+      "artifact_schema": "zenbu.kanji-reference.v1",
+      "schema_source": "plan",
+      "sha256": "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad",
+      "bytes": 4340453,
+      "depends_on": []
+    },
+    {
+      "name": "KanjiElementReferenceData.json",
+      "artifact_schema": "zenbu.kanji-elements.v1",
+      "schema_source": "file",
+      "sha256": "1984078130d717d5cccf3bb0b04ef6ed0a7a20983bb40872665ba9b3a048882f",
+      "bytes": 1561672,
+      "depends_on": []
+    },
+    {
+      "name": "RadicalReferenceData.json",
+      "artifact_schema": "zenbu.radical-reference.v1",
+      "schema_source": "plan",
+      "sha256": "f7c9eed0f56739c79e7970af916567fbe9d7c04ab084dbc24fac4bd0a6bd2a3c",
+      "bytes": 362198,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/base.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "0803327762e1c93ca731e4319ab8343340f2806bb84941207782cde9d2d5a8eb",
+      "bytes": 3956825,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/cc.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "02b7631be0d4de3a1a75cd9f9cc51536e4f94c9e6b389b813e06ba0f6e7de765",
+      "bytes": 1692067,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/check.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "193ae0035fff6fe812b58d9ee730e7a7d7ee601d918481ce51075c58114f6cc9",
+      "bytes": 3111633,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/tid.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "d43d831cb6fb0f0a411739cd287a6d5e998e121a8daca614df14a81a0dcac586",
+      "bytes": 1605820,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/tid_map.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "33efd5ffd87a70f669add093fa39dee44341d58f940844ef107c8fd98bb795b2",
+      "bytes": 1485576,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/tid_pos.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "60dbfc99a6ab993f30c5dab648bec6ad7f9aaefa5c14e1843837d95e509f8895",
+      "bytes": 5916009,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/unk.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "f7f991cdeb9bfd3e9c0e4577cc50ee0815a11c508cccd444a9d3ab3c81521100",
+      "bytes": 10512,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/unk_char.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "9a8e86fd9aff32d323fbb59f5a7006f05927a11f8173c90712cc56293aeb3225",
+      "bytes": 306,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/unk_invoke.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "6b210889548457c3006913afd12c8b525562255f2709e404604be9614a25e94c",
+      "bytes": 1140,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/unk_map.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "6df12460e5477230bb6fd9641def918b699fc0a8868016b6c9f794488630509b",
+      "bytes": 1190,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/unk_pos.dat.gz",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "5b183a29f281acc7e0542beca47b83f7985047c0a2d27e78a66f32276be5ad11",
+      "bytes": 10540,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/LICENSE-2.0.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "depends_on": []
+    },
+    {
+      "name": "DictionaryRankingArtifactContract.json",
+      "artifact_schema": "zenbu.dictionary-ranking-contract.v1",
+      "schema_source": "plan",
+      "sha256": "c2d2ab473effcaba0776ee761964746ff5abe357520f803696236708ddef7dc3",
+      "bytes": 1419,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3"
+      ]
+    },
+    {
+      "name": "FrequencyPackCatalog.json",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "aabac08f5e869177d71367fde7f14162c4dbd4965ddb8c6146436ca0f469b4fd",
+      "bytes": 82263,
+      "depends_on": [
+        "LanguageReferenceData.sqlite3",
+        "JLPTLevelPack.sqlite3",
+        "TUBELEXFrequencyPack.sqlite3",
+        "FrequencyPackMappingV2.sql",
+        "FrequencyPackMappingV1.sql"
+      ]
+    },
+    {
+      "name": "FrequencyPackMappingV1.sql",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "568d2c293eceae6aff760059dc803331d11490d74ab54f5e85e9e5ef7ff8b339",
+      "bytes": 4514,
+      "depends_on": []
+    },
+    {
+      "name": "FrequencyPackMappingV2.sql",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "ebc84f6bc0c5170f2c30555453e5436521102e79771321989c97b83ecfcafadf",
+      "bytes": 5925,
+      "depends_on": []
+    },
+    {
+      "name": "EDRDG-ATTRIBUTION.md",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "6baddb580ec74ffa12f14169870c7167ac42ffeac1ee0cbb3f43fa9c09d72fcf",
+      "bytes": 947,
+      "depends_on": []
+    },
+    {
+      "name": "TATOEBA-NOTICE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "03edebb3123d5f252284245ef68d1954256632b4c7cb8de685dbaeae5a46c3e7",
+      "bytes": 1010,
+      "depends_on": []
+    },
+    {
+      "name": "KANJIVG-CC-BY-SA-3.0.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "394e001120666d45984ca4cc89862f0aae05eba9d77c68f050f7c25bab1e9d3d",
+      "bytes": 20594,
+      "depends_on": []
+    },
+    {
+      "name": "Kuromoji/NOTICE.md",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "fab84e2471dada5afa7ea4226b629f3fda414f9b50b62b4f832f8b57fe9addd7",
+      "bytes": 4263,
+      "depends_on": []
+    },
+    {
+      "name": "UNIDIC-NEW-BSD.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "770a75de30705439084f869dbcb0bc4ebcffcb7c7124c0d74f5083170318a9bb",
+      "bytes": 1515,
+      "depends_on": []
+    },
+    {
+      "name": "JLPT-VOCABULARY-CC-BY-SA-4.0.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "638cc6f2d958b1add3883e8d5d73e32ae999ecdc0a4b4d1a83994b3d5b8e69e9",
+      "bytes": 18131,
+      "depends_on": []
+    },
+    {
+      "name": "TUBELEX-BSD-3-CLAUSE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "51b9e39825bbf19e4bb777bf11a7520a3935ff859c4d0ee724dfe9ddb26a961f",
+      "bytes": 1521,
+      "depends_on": []
+    },
+    {
+      "name": "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "701f8c8cd211e4ab462fc6ed92d3ef53ba3d72fdd6567648c79e79c2e7eaa06d",
+      "bytes": 1519,
+      "depends_on": []
+    },
+    {
+      "name": "KANJIUM-NOTICE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "c436a4f3d383eed0489aa6620a8eb425d2b06eb06a9910602985f673eb198659",
+      "bytes": 323,
+      "depends_on": []
+    },
+    {
+      "name": "JITEN-NOTICE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "18b2a87f79a400600ea6be718c899901b937395434c783ece0373f3c1c1daede",
+      "bytes": 479,
+      "depends_on": []
+    },
+    {
+      "name": "JLPT-KANJI-LEVELS-NOTICE.txt",
+      "artifact_schema": null,
+      "schema_source": "undeclared",
+      "sha256": "611396992cac23d8b3d8acac73cba634b18a6faea4b651a03403d7cf26bbfa6e",
+      "bytes": 463,
+      "depends_on": []
+    }
+  ],
+  "ids": {
+    "file": "LanguageReferenceData.sqlite3",
+    "ent_seq_count": 218382,
+    "ent_seq_digest": "sha256-ascending-decimal-lf",
+    "ent_seq_sha256": "e1c2eb06bb8c4971941a18a9cc852d123189ada19801d3a57cf854949362fb7b"
+  },
+  "conformance": [
+    {
+      "name": "search-retrieval.json",
+      "suite": "zenbu.search-retrieval-conformance",
+      "sha256": "88cfe0b25bdedbc2ced25c45ae7d1dd72f1254028a0c87dc3034f69815390d51",
+      "bytes": 44905
+    },
+    {
+      "name": "search-results.json",
+      "suite": "search-results",
+      "sha256": "c841dca4e4cb300e66d35d223bfe42a247c1aab316c651445bcb3380237ff01e",
+      "bytes": 1451455
+    },
+    {
+      "name": "example-search.json",
+      "suite": "example-search",
+      "sha256": "084f6fc106738203ccc328ade46ce1704cc5aa918313c489231fb31736483955",
+      "bytes": 542607
+    },
+    {
+      "name": "word-detail.json",
+      "suite": "word-detail",
+      "sha256": "dfaa6dd16fa63aa643318ffc71f79b10afd0314a73a0bfc872d130404c60b793",
+      "bytes": 4294821
+    },
+    {
+      "name": "kanji-detail.json",
+      "suite": "kanji-detail",
+      "sha256": "9d646aef32a3420fc7fd36941c1705e73436a1fc7aa66c8b0e07fa9e6e30eca2",
+      "bytes": 233964
+    },
+    {
+      "name": "kanji-element.json",
+      "suite": "kanji-element",
+      "sha256": "3ba168651dd5c75d789db841aa845d036d31611e13e568e2482d7bec1f2d84df",
+      "bytes": 30205
+    },
+    {
+      "name": "tokenizer.json",
+      "suite": "tokenizer",
+      "sha256": "6ac7dfe6df208eb48f5bfd276e72f762986905c1b45d484472655feb6fd1ed72",
+      "bytes": 321180
+    }
+  ]
+}

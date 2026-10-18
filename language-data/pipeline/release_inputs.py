@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from refusal import Refusal
@@ -17,6 +17,12 @@ class Inputs:
     catalog: str | None
     source_archives: dict[str, str]
     conformance: list[str]
+    roots: dict[str, str] = field(default_factory=dict)
+    app_bundles: list[str] = field(default_factory=list)
+    images: list[str] = field(default_factory=list)
+    not_released: list[str] = field(default_factory=list)
+    retired_entries: str | None = None
+    core: dict[str, str] | None = None
 
 
 def check_name(name: object, what: str) -> str:
@@ -71,7 +77,44 @@ def load_inputs(path: Path) -> Inputs:
             for pack, archive in config.get("source_archives", {}).items()
         },
         conformance=[resolve(roots, suite) for suite in config["conformance"]],
+        roots={root: directory.rstrip("/") for root, directory in roots.items()},
+        app_bundles=[bundled_root(roots, root) for root in config.get("app_bundles", [])],
+        images=[check_relative(image, "image") for image in config.get("images", [])],
+        not_released=[not_released(roots, entry) for entry in config.get("not_released", [])],
+        retired_entries=retired_entries(roots, files, config.get("retired_entries")),
+        core=core(roots, config.get("core")),
     )
+
+
+def retired_entries(roots: dict[str, str], files: list[dict], path: str | None) -> str | None:
+    if path is None:
+        return None
+    resolved = resolve(roots, path)
+    if resolved not in [entry["path"] for entry in files]:
+        raise Refusal(f"retired_entries names {path}, which isn't a file in the release")
+    return resolved
+
+
+def core(roots: dict[str, str], config: dict | None) -> dict[str, str] | None:
+    if config is None:
+        return None
+    return {
+        "source": check_relative(config.get("source"), "core source").rstrip("/"),
+        "bundle": resolve(roots, config.get("bundle")),
+    }
+
+
+def bundled_root(roots: dict[str, str], root: object) -> str:
+    if root not in roots:
+        raise Refusal(f"app_bundles names {root!r}, which isn't one of the roots {sorted(roots)}")
+    return roots[root].rstrip("/")
+
+
+def not_released(roots: dict[str, str], entry: dict) -> str:
+    why = entry.get("why")
+    if not isinstance(why, str) or not why.strip():
+        raise Refusal(f"not_released entry {entry.get('path')!r} needs a why")
+    return resolve(roots, entry.get("path")).rstrip("/")
 
 
 def load_release(path: Path) -> dict:
