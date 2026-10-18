@@ -21,9 +21,8 @@ test('with videos, Watch it work lists them and links to all videos, and Watch d
   expect(html).toContain('<section id="watch-it-work"')
   expect(html).toContain('>Watch it work.</h2>')
   expect(html).toContain('aria-label="Play A sample video"')
-  expect(html).toMatch(
-    new RegExp(`<a data-link-target="videos"[^>]* href="${linkTo('videos').href}">See all videos`)
-  )
+  const allVideos = html.match(/<a data-link-target="videos"[^>]* href="([^"]*)">See all videos/)
+  expect(allVideos?.[1]).toBe(linkTo('videos').href)
   expect(html).not.toMatch(/youtube|ytimg|<iframe|<script/)
   expect(hero(true)).toMatch(/<a href="#watch-it-work"[^>]*>.*Watch demo<\/a>/)
 })

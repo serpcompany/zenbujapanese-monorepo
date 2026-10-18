@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { pageFor, type SitePath } from './pages'
+import { pageFor, type SitePage, type SitePath } from './pages'
 import { site } from './site'
 
 export const siteOpenGraph = { siteName: site.name, type: 'website', locale: 'en_US' } as const
@@ -16,12 +16,18 @@ export const siteIcons = {
 
 export const siteManifest = '/site.webmanifest'
 
-export function pageMetadata(path: Exclude<SitePath, '/'>): Metadata {
-  const page = pageFor(path)
+export function sitePageMetadata(page: SitePage): Metadata {
   return {
     title: page.title,
     description: page.description,
-    alternates: { canonical: path },
-    openGraph: { ...siteOpenGraph, title: page.title, description: page.description, url: path }
+    alternates: { canonical: page.path },
+    openGraph: {
+      ...siteOpenGraph,
+      title: page.title,
+      description: page.description,
+      url: page.path
+    }
   }
 }
+
+export const pageMetadata = (path: Exclude<SitePath, '/'>) => sitePageMetadata(pageFor(path))

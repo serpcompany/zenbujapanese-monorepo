@@ -26,7 +26,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
-| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them. | None: the app has no browse screens. |
+| `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and conjugated form with its first 50 examples, for local development and tests, never production. | — |
 
@@ -48,8 +48,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   [`ios.md`](ios.md), The dictionary core in the app.
 - **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
   ([Embedded](#embedded)). After changing anything the bundle holds, run
-  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until it
-  matches.
+  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until then.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
   ([`ios.md`](ios.md)); the service must then pass them. The app's answers are the core's own,
   read through JavaScriptCore, so the suites pin them against a later change, and the service
@@ -109,8 +108,8 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   - `kanjiSources()`, `kanjiEntry(character)`, `kanjiStructure(character)`, and
     `kanjiElement(glyph)` answer the kanji files' source identities and one record at a time, as
     the files hold them, or null. The two files parse to 16 MB of objects, which an engine that
-    held them would walk on every collection, so the host keeps them and the core asks for the
-    few a page reads.
+    held them would walk on every collection, so the host keeps them and the core asks for the few
+    a page reads, or for the school kanji lists, the reference file once (`kanjiReference()`).
   - `radicals()` answers the radical file (`RadicalReferenceData.json`) whole, once, when the
     radical panel is first asked for.
   - `frequencyLists()` and `frequencyListRows(list, sql, parametersJSON)` answer the learner's
@@ -133,13 +132,13 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji`, `writtenLanguage`, `japaneseTextRuns` | A string; — | One kanji or not; `ja`, `en` (an ASCII letter), or null; the scalar runs any client's own check counted as Japanese |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
-  | `checkExamples` | — | True, or an error saying which example table or pack is missing or wrong |
+  | `checkExamples` | — | True, or an error naming the missing or wrong example table or pack |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
   | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, whether the radical panel picked the query) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A radical panel's one-character query lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A one-character query from a Radicals or Grade pick lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
   | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
@@ -147,7 +146,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `wordPageWithoutContent`, `kanjiPageWithoutContent` | A reading; — | The sections, and the labels, a page draws before or without its answer |
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
-  | `radicalPanel` | The radicals picked, in order | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading |
+  | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
   | `gloss`, `phraseNote` | A meaning; a phrase with its entry's meanings and parts of speech | The gloss under a linked word, or null; a set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
 
@@ -172,11 +171,10 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   uses them for what a view asks while it is being drawn: one crossing into the engine, no
   promise, and for a string or a flag no JSON either.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
-  the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore`
-  (`scripts/bundle-javascriptcore.mjs`) bundles it with esbuild into
-  `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, which
-  is checked in so the app builds without Node. `embedded/bundle.test.ts` builds it again and
-  fails when the file differs.
+  the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore` bundles it with
+  esbuild (`scripts/bundle-javascriptcore.mjs`) into
+  `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, checked
+  in so the app builds without Node; `embedded/bundle.test.ts` fails when the file differs.
 - The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
   real tokenizer and kanji files (the `embedded*.conformance.test.ts` files in
   `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
@@ -262,7 +260,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
-| `RadicalLookupClient.swift` (`RadicalInputView`) | `radicalPanel` | The radical panel |
+| `RadicalLookupClient.swift` (`RadicalInputView`), `SchoolKanjiClient.swift` (`GradeInputView`) | `radicalPanel`, `schoolKanjiPanel` | The Radicals and Grade panels |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
 | `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
@@ -308,10 +306,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   normalizes to itself. NFKC composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where
   Foundation left カ and a combining mark), and a word's final Σ lowercases to ς.
 - **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
-  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with
-  its own record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one
-  stands alone, and leaving it out of the kanji containing the element), and nowhere else. A host
-  keys the records by scalar, so a twin never answers for the other.
+  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with its
+  own record, keyed by scalar. A twin stands for the other only in `kanji-element.ts`, as the app
+  did (which one stands alone, and leaving it out of the kanji containing the element), and in the
+  kanji lists: one with no meanings or readings, such as U+FA45 for 海, borrows its ordinary form's
+  (`ownOrOrdinary`), and Grade finds it by either form and marks it known when its twin is.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
@@ -485,8 +484,7 @@ ready and a page's first request prepares nothing:
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
   9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
   KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
-  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57 CJK compatibility
-  characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its base kanji's.
+  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō has 57 twins (see Twins).
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 

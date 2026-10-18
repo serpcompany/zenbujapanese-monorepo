@@ -925,9 +925,9 @@ themes; text on the muted grey (the footer, the product page's demo, the homepag
   changes by keyboard, in the account menu or, on phones, the drawer", and "a saved choice is
   already applied, so the page never shows the other theme first"; `apps/web/e2e/contrast.spec.ts`,
   which runs axe's colour-contrast rule on every page type in `apps/web/e2e/page-types.ts` (every
-  page in `src/lib/pages.ts`, the account pages, search, a word with its conjugation form and kanji
-  open, kanji details, every kind of browse page, and a missing page), in both themes, at both
-  widths, and on phones on the phone menu and each of its groups.
+  page in `src/lib/pages.ts`, the account pages, the tools pages, search, a word with its
+  conjugation form and kanji open, kanji details, every kind of browse page, and a missing page), in
+  both themes, at both widths, and on phones on the phone menu and each of its groups.
 
 **Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
 footer line with a link. Company is a plain dropdown.
@@ -935,9 +935,10 @@ footer line with a link. Company is a plain dropdown.
 - **Dictionary:** a card with the App Store search screenshot that opens the dictionary home; Kana
   (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and Kanji
   and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
-- **Tools:** a card drawn with kana that leads to all tools; Reference (Dictionary, Kana charts),
-  Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to Kana, Kanji
-  to Furigana); then All free tools.
+- **Tools:** a card drawn with kana that leads to all tools (`/tools/`); Reference (Dictionary, Kana
+  charts), Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana and Romaji to
+  Kana, which open their pages, and Kanji to Furigana); then All free tools
+  ([Tools pages](tools.md)).
 - **Products:** a card with the App Store word screenshot for Zenbu Japanese for iPhone, with Get
   the app; Apps (Zenbu Japanese for iPhone, Browser extension), Free (Zenbu Japanese Dictionary,
   Free tools), and Learn (Reference guides, Courses); then All products.
@@ -951,50 +952,49 @@ window.
 
 - Source: #648 decision and mockups (Header switch); #650.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
-  browse pages", "the Tools menu leads to the reference pages, and its planned pages are
-  placeholders", "the Products menu leads to the products pages and the web dictionary, and its
-  planned pages are placeholders", and "the Company menu leads to About, Sources, Support, Contact,
-  and Legal"; `apps/web/e2e/site.spec.ts`, for each menu, "the … menu opens and closes with a
-  click", "the … menu opens with the keyboard and Escape closes it", and "a link in the … menu opens
-  its page and closes the menu", and "every link in the header menus opens a page the site has, with
-  no redirect" and "the Dictionary menu leads to the search box".
+  browse pages", "the Tools menu leads to the tools, the reference pages, and the converters, and
+  Kanji to Furigana is a placeholder", "the Products menu leads to the products pages and the web
+  dictionary, and its planned pages are placeholders", and "the Company menu leads to About,
+  Sources, Support, Contact, and Legal"; `apps/web/e2e/site.spec.ts`, for each menu, "the … menu
+  opens and closes with a click", "the … menu opens with the keyboard and Escape closes it", and "a
+  link in the … menu opens its page and closes the menu", and "every link in the header menus opens
+  a page the site has, with no redirect" and "the Dictionary menu leads to the search box".
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
-yet, and the outside addresses that aren't known yet, link to `#` for now: All free tools and Free
-tools (`/tools/`), the three converters, Browser extension, Reference guides, Courses, Log in
-(`/login/`) and Create an account (`/register/`) in a build whose account pages are closed, the
-App Store (the
-Get the app on the product page and on the catalog's iPhone app card), the ten social accounts, and
-See all videos (`/videos/`), which shows only once the product page has videos. Zenbu Japanese for
-iPhone and All products now open their pages, `/products/zenbu-japanese-app/` and
-`/products/` ([Products pages](products.md)), from the same entries; so do Log in and Create an
-account where the account pages are open, as on staging and in production
-([Account pages](account.md#pages)), the
-build choosing their addresses as it does the footer's Sign in. #650 asked for menu items to appear only once their page
-exists; the owner chose to show them now as `#` placeholders instead (#648). Every one is in one
-list, `linkTargets` in
-`src/lib/site.ts`, named for what it stands for, and its links carry `data-link-target` with its id.
-A browser test lists every `#` link the site renders and fails on one that isn't in that list, so
-none reaches production unnoticed; replacing a placeholder means giving its entry the real address,
-or linking the page directly once it exists.
+yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#691),
+Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
+(`/register/`) in a build whose account pages are closed, the App Store (the Get the app on the
+product page and on the catalog's iPhone app card), and See all videos
+(`/videos/`), which shows only once the product page has videos. Zenbu Japanese for iPhone and All
+products now open their pages, `/products/zenbu-japanese-app/` and `/products/`
+([Products pages](products.md)), from the same entries, as do All free tools, Free tools, and All
+tools (`/tools/`) and the Hiragana to Katakana and Romaji to Kana converters
+([Tools pages](tools.md)); so do Log in and Create an account where the account pages are open, as
+on staging and in production ([Account pages](account.md#pages)), the build choosing their addresses
+as it does the footer's Sign in. #650 asked for menu items to appear only once their page exists;
+the owner chose to show them now as `#` placeholders instead (#648). Every one is in one list,
+`linkTargets` in `src/lib/site.ts`, named for what it stands for, and its links carry
+`data-link-target` with its id. A browser test lists every `#` link the site renders and fails on
+one that isn't in that list, so none reaches production unnoticed; replacing a placeholder means
+giving its entry the real address, or linking the page directly once it exists.
 
 - Source: #648 decision (placeholder links), and the owner's decision on #650 (show planned items
   as placeholders).
 - Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
-  in src/lib/site.ts", which visits every page in `src/lib/pages.ts` and a search, word, and browse
-  page at both widths, with the account menu open from 1024 pixels and the phone menu open below,
-  and prints the placeholders it found; `apps/web/e2e/site.spec.ts`, "the planned pages in the
-  Tools and Products menus are # placeholders for now, and All products opens the catalog";
-  `src/lib/site.test.ts`, "%s opens its page in a build whose account pages are open, and isn't a
-  placeholder" and "%s stays a # placeholder in a build whose account pages are closed", for Log in
-  and Create an account.
+  in src/lib/site.ts", which visits every page in `src/lib/pages.ts`, the tools index, a converter,
+  and a search, word, and browse page at both widths, with the account menu open from 1024 pixels
+  and the phone menu open below, and prints the placeholders it found; `apps/web/e2e/site.spec.ts`,
+  "the Tools menu opens the tools and two converters, Kanji to Furigana and the Products menu’s
+  planned pages are # placeholders, and All products opens the catalog"; `src/lib/site.test.ts`, "%s
+  opens its page in a build whose account pages are open, and isn't a placeholder" and "%s stays a #
+  placeholder in a build whose account pages are closed", for Log in and Create an account.
 
 **Current section.** The menu button of the section the page is in is in the foreground color on a
 muted background, where the others are muted text, and screen readers hear it as current
-(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, and About, Sources,
-Support, Contact, and the legal pages are in Company. Home and the sitemap are in none. In the open
-menu and in the phone menu, the link to the page itself is marked as the current page
-(`aria-current="page"`).
+(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, every page under
+`/tools/` in Tools, and About, Sources, Support, Contact, and the legal pages are in Company. Home
+and the sitemap are in none. In the open menu and in the phone menu, the link to the page itself is
+marked as the current page (`aria-current="page"`).
 
 - Source: #462 design; #650.
 - Check: `src/components/site-header.test.tsx`, "the header marks the section the page is in";
@@ -1049,19 +1049,19 @@ than the page in dark mode, after a rule, so the page, the homepage's closing ca
 read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in both themes
 (Theme, above). It has no theme toggle. It starts with the logo and the site name, linking home, and
 the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
-Dictionary, and, where the account pages are open, Sign in, or Account once signed in: [Account
-pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools), Company
-(About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
+Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
+[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
+Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
 Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
 one column. Below them, after a rule, a row of plain social icons with no boxes, each named "Zenbu
-Japanese on" its network: YouTube, X, Instagram, TikTok, Discord, Reddit, Threads, Bluesky,
-LinkedIn, and Facebook, in one row at every width. On phones the ten share the row evenly, each an
-18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a 360-pixel phone
-without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel target. Each is
-the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths (CC0), and for
-LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's brand downloads
-(`components/social-links.tsx`). The copyright line and Sitemap end it. The legal index (`/legal/`)
-is in the Company menu rather than the footer.
+Japanese on" its network and opening the account: YouTube, GitHub, X, Facebook, Reddit, Instagram,
+TikTok, LinkedIn, and Medium, in one row at every width. On phones the nine share the row evenly,
+each an 18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a
+360-pixel phone without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel
+target. Each is the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths
+(CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's
+brand downloads (`components/social-links.tsx`). The copyright line and Sitemap end it. The legal
+index (`/legal/`) is in the Company menu rather than the footer.
 
 - Source: #648 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
   and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
@@ -1070,11 +1070,11 @@ is in the Company menu rather than the footer.
   `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
   from 768 pixels", "the footer leads with the brand linking home and its tagline", "one row of plain
-  brand icons, all ten on phones, links each account in src/lib/site.ts", and "the footer ends
+  brand icons, all nine on phones, links each account in src/lib/site.ts", and "the footer ends
   with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
   under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
   lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows
-  all ten social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
+  all nine social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
   phones); smoke "the footer links the Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
@@ -1097,8 +1097,8 @@ are 24 by 24. The same holds in the phone menu, with each of its groups open.
 
 - Source: #682 (the owner's review on a phone).
 - Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
-  `apps/web/e2e/page-types.ts` (the account pages among them), each homepage area, the phone menu
-  and each of its groups, and a missing page, with axe's `target-size` rule for the tap
+  `apps/web/e2e/page-types.ts` (the account and tools pages among them), each homepage area, the
+  phone menu and each of its groups, and a missing page, with axe's `target-size` rule for the tap
   targets.
 
 **App links.** The shipped iOS app, Tomodachi, and their App Store metadata link to `/privacy` and
@@ -1186,8 +1186,8 @@ lists no word and whose kanji has no meanings or readings (about 475 of 13,108, 
 search that finds nothing or only example sentences, `/dictionary/search/` itself, the JSON routes
 that load examples into a page (a word's, a search's, and a conjugated form's), and
 `/dictionary/service.json` (whether the site reaches its dictionary service, for CI) are
-`noindex`. Only production is indexed at all; staging sends `X-Robots-Tag: noindex` and disallows
-crawling (see [`docs/agents/web.md`](../../../../docs/agents/web.md)). Staging and production write
+`noindex`. Production is indexed; staging asks for a password first
+([`staging-access.md`](../../../../docs/agents/staging-access.md)). Staging and production write
 their canonical URLs on their own host: staging's canonical tags name
 `https://staging.zenbujapanese.com` (smoke "canonical tags name …"); local development writes
 production's.
@@ -1202,23 +1202,24 @@ production's.
   `src/lib/dictionary/results/links.test.ts`, "isIndexable".
 
 **Sitemaps.** `robots.txt` names the sitemap index, `/sitemap-index.xml`, in every environment, and
-`/sitemap.xml` redirects (308) to it. The index lists files at the site's root, each named for
-its group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
+`/sitemap.xml` redirects (308) to it. The index lists files at the site's root, each named for its
+group: `/sitemap-pages.xml`, which lists the dictionary home and the browse home; the word
 sitemaps, `/sitemap-words.xml`, `/sitemap-words-2.xml`, and on, with every word page's canonical
 URL; and the four browse sitemaps, `/sitemap-kana.xml`, `/sitemap-categories.xml`,
-`/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)). Every URL
-in them is on the environment's own host, so staging's name `https://staging.zenbujapanese.com`,
-and the homepage is the origin with no slash. The old `/sitemaps/pages.xml` and
-`/sitemaps/dictionary/<n>.xml` redirect (308) to them; the one browse sitemap, `/sitemaps/browse.xml`
-(later `/sitemap-browse.xml`), is gone (404), since only the index ever listed it. Those are the
+`/sitemap-frequency-lists.xml`, and `/sitemap-kanji-lists.xml` ([Browse pages](browse.md#site-wide)).
+Each deploy writes the word and browse sitemaps from its environment's dictionary build, so they
+answer even when the service can't (ADR 0016). Every URL is on the environment's own host, so
+staging's name `https://staging.zenbujapanese.com`, and the homepage is the origin with no slash.
+The old `/sitemaps/pages.xml` and `/sitemaps/dictionary/<n>.xml` redirect (308) to them; the one
+browse sitemap, `/sitemaps/browse.xml` (later `/sitemap-browse.xml`), is gone (404). Those are the
 only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in any sitemap yet.
 
-- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard).
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the index lists every word sitemap and each
-  browse sitemap, and nothing else" and "with SITE_ENV=… a request to … lists sitemaps on …";
+- Source: ADR 0007; #465; ADR 0010; #663 (the SERP XML sitemaps standard); #805, ADR 0016.
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "are every word sitemap, then each browse sitemap,
+  and nothing else" and "with SITE_ENV=… a request to … lists the written sitemaps on …";
   `src/lib/sitemap.test.ts`, "sitemap files sit at the root, named for their group";
   `src/lib/robots.test.ts`; `apps/web/e2e/sitemaps.spec.ts`; `apps/web/e2e/urls.spec.ts`, the old
-  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, word, and browse sitemaps on …, and no other" and `308 /sitemap.xml -> /sitemap-index.xml`, "word sitemap lists 1 to
+  sitemaps' one-hop redirects, with and without a slash; smoke "$index lists the pages, tools, word, and browse sitemaps on …, and no other" and `308 /sitemap.xml -> /sitemap-index.xml`, "word sitemap lists 1 to
   50,000 canonical URLs", "robots.txt lists the sitemap index", and `404 /sitemaps/kanji.xml`.
 
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
