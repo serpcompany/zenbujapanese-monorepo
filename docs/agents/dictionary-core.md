@@ -395,8 +395,8 @@ The core answers as the Swift it replaced did, which the suites pin.
   "Verb", "Noun", or "Adverb" beside a phrase that already says it.
 - `shortGloss` is a meaning's first part, without a note in brackets or a leading "to", cut to
   seventeen characters and an ellipsis: what the app shows under a linked word.
-- `wordSlug` and the website's other URL rules are in `detail/links.ts` (ADR 0007), so the
-  service, the website, and the app's Share (`wordURL`, `kanjiSearchURL`) build the same URLs.
+- `wordSlug` (`detail/slug.ts`) and the website's other URL rules (`detail/links.ts`, ADR 0007)
+  are the core's, so the service, the website, and the app's Share build the same URLs.
 
 ## Examples
 
