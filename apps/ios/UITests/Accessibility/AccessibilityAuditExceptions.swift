@@ -96,6 +96,8 @@ private enum Why {
     "Text that runs past the edge of a view that scrolls, so the rest of it is a scroll away"
   static let underTheBar =
     "Text scrolled under the navigation bar's or the tab bar's glass, which still shows through it; the audit can't name it, and it is whole once scrolled into view"
+  static let placedPage =
+    "Text on a page the walk scrolled to: as the audit's sweep through the sizes reflows the page, text moves under the bars' glass or off the screen, and the audit can't name it. The walk puts the page at the same spot every run, so the count holds, and the screenshot at the largest size shows the text whole"
   static let cappedControls =
     "Player's control bar stays at the largest standard size at the accessibility sizes, so it keeps to one line, and pressing and holding a button shows it larger (product docs, Player)"
   static let headword =
@@ -217,11 +219,11 @@ private let textThatScales = [
   allow(
     .textClipped, .label("The video's owner doesn't allow it to play in other apps."),
     on: ["A video its owner won't share"], because: Why.scales),
-  allow(.textClipped, .unnamed(2), on: ["A video its owner won't share", "Word Detail, its kanji"], because: Why.underTheBar),
-  allow(.dynamicType, .unnamed(3), on: ["Word Detail, its kanji"], because: Why.underTheBar),
-  allow(.dynamicType, .unnamed(1), on: ["A word's note"], touch, [.standard], because: Why.underTheBar),
-  allow(.dynamicType, .unnamed(8), on: ["A word's note"], touch, [.largest], because: Why.underTheBar),
-  allow(.textClipped, .unnamed(3), on: ["Kanji Detail, its readings"], touch, [.largest], because: Why.underTheBar),
+  allow(.textClipped, .unnamed(2), on: ["A video its owner won't share"], because: Why.underTheBar),
+  allow(.dynamicType, .unnamed(10), on: ["Word Detail, its kanji"], because: Why.placedPage),
+  allow(.dynamicType, .unnamed(2), on: ["A word's note"], touch, [.standard], because: Why.placedPage),
+  allow(.dynamicType, .unnamed(6), on: ["A word's note"], touch, [.largest], because: Why.placedPage),
+  allow(.textClipped, .unnamed(3), on: ["Kanji Detail, its readings"], touch, [.largest], because: Why.placedPage),
 ]
 
 private let videoScreens = [

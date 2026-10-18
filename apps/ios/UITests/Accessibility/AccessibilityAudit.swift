@@ -109,6 +109,16 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   func audit(_ screen: String, placing element: XCUIElement, in app: XCUIApplication) {
     place(reveal(element, in: app), in: app)
     audit(screen, in: app)
+    bringBack(element, in: app)
+  }
+
+  private func bringBack(_ element: XCUIElement, in app: XCUIApplication) {
+    let window = app.windows.firstMatch
+    for _ in 0..<Self.swipesBack {
+      if isReachable(element, in: app) { return }
+      let isBelow = laidOutFrame(of: element).map { $0.midY > window.frame.midY } ?? false
+      scroll(window, back: !isBelow)
+    }
   }
 
   func auditAtTheLargestSize(_ screen: String, showing element: XCUIElement, in app: XCUIApplication) {
@@ -120,7 +130,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     let window = app.windows.firstMatch
     guard device != .mac, let top = laidOutFrame(of: element)?.minY else { return }
     let height = window.frame.height
-    let grip = window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: Self.gripAt))
+    let grip = window.coordinate(withNormalizedOffset: CGVector(dx: Self.margin, dy: Self.gripAt))
     let spot = window.frame.minY + height * Self.placedAt
     grip.press(
       forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
@@ -129,6 +139,8 @@ class AccessibilityAuditCase: ZenbuUITestCase {
 
   private static let gripAt = 0.7
   private static let placedAt = 0.3
+  private static let margin = 0.03
+  private static let swipesBack = 24
 
   private var audits: [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
     TestDevice.audits.filter { AllowedFinding.notRun[$0.kind]?.devices.contains(device) != true }
