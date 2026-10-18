@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import SearchExperience
@@ -80,5 +81,12 @@ struct LaunchHarnessTests {
   func signInStandInOffersApple() {
     #expect(LaunchHarness.standsInForSignIn([LaunchHarness.signInStandInKey: "1"]))
     #expect(!LaunchHarness.standsInForSignIn([:]))
+  }
+
+  @Test("a Mac test names the link the app opens when the test posts its notice")
+  func linkToOpen() {
+    let link = "com.zenbujapanese.dictionary.uitests://look-up?text=%E8%A6%8B%E3%82%8B"
+    #expect(LaunchHarness.linkToOpen([LaunchHarness.openLinkKey: link])?.absoluteString == link)
+    #expect(LaunchHarness.linkToOpen([:]) == nil)
   }
 }

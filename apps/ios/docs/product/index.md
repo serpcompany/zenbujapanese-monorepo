@@ -5,9 +5,9 @@ It is updated with the implementation and is not a roadmap or an ideas backlog. 
 is [Required, not built yet](#required-not-built-yet-563), which lists behavior the owners have
 decided the app must have but doesn't yet.
 
-The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on
-Macs with Apple silicon and macOS 26, as one app with one App Store record
-([iPad and Mac](#ipad-and-mac)). It has four tabs:
+The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on Macs
+with Apple silicon and macOS 26, as one app with one App Store record ([iPad and
+Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) open it from other apps. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
@@ -53,7 +53,7 @@ iPhone and iPad and **Paste Image** on the Mac, runs on all three. **By hand** m
 can drive, with the automated check that comes closest: a real Apple or Google sign-in, a real
 camera, live speech into a microphone, YouTube's own player and results page, the system's photo
 and file pickers, and what iOS or macOS does outside the app (Split View, dragging from another
-app, Continuity Camera, opening a link from another app).
+app, Continuity Camera, opening a link from another app, Siri, Spotlight, and Shortcuts).
 
 ## iPad and Mac
 
