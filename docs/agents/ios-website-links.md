@@ -12,10 +12,10 @@ only a person can do: enable Associated Domains for the App ID `com.zenbujapanes
 the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
 team, `847HR8U8D9`.
 
-SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
-which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
-hands the link's host and path to the core (`websiteRoute`,
+SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
+also takes the Shortcuts actions' links ([`ios-shortcuts.md`](ios-shortcuts.md)). It switches to
+Search from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's
+stack. `LookupClient.websiteRoute` hands the link's host and path to the core (`websiteRoute`,
 [`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
 decoded one path segment at a time, with the parser the website uses, and finds a word URL's
 entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
@@ -48,20 +48,10 @@ AirDrop, and a messaging app such as LINE, and check that the text and the link 
 Then tap the link: it opens the word in Zenbu once the association file is live, and the website
 before then. On a Mac, click Share and check that the picker opens and does the same.
 
-Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
-association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlements and with a URL scheme that is never committed, added
-to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
-under that scheme:
-
-```sh
-cp apps/ios/App/Info.plist /tmp/link-check.plist
-plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
-xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
-  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
-xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
-```
+Check it with `WebsiteLinkTests`, and `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp`.
+The Simulator sends an `https` link to Safari until the association file is live, so to see a
+link land in the app before then, open it in the app's own scheme, its bundle ID:
+`xcrun simctl openurl <udid> 'com.zenbujapanese.dictionary://zenbujapanese.com/dictionary/見る-1259290/'`.
 
 Once the file is live, check it on a device: tapping
 `https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word

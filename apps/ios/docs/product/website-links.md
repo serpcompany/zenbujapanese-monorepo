@@ -32,9 +32,10 @@ the share sheet gets the link as a web link and the text as its message, under a
 with the word or kanji, and the Mac's sharing picker gets the same.
 
 - Source: #568, part of #563; Share's links, #467.
-- Check: package `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
-  for what each URL opens, against the bundled dictionary; core `detail/links.test.ts` for how
-  each URL reads, with the parser the website reads its own word URLs with, and that the links
-  Share sends are the website's canonical URLs and read back as the same page; package
-  `WordDetailShareTests` for the links the app shares, opened again. That iOS hands a tapped link
-  to Zenbu, and that a shared link arrives with its text, is by hand, on a device.
+- Check: package `WebsiteLinkTests` for what each URL opens, against the bundled dictionary; core
+  `detail/links.test.ts` for how each URL reads, with the parser the website reads its own word
+  URLs with, and that the links Share sends are the website's canonical URLs and read back as the
+  same page; package `WordDetailShareTests` for the links the app shares, opened again; UI
+  `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp` for a word link in Zenbu's own scheme
+  ([Shortcuts and Siri](shortcuts.md#links-in-zenbus-own-scheme)). That iOS hands a tapped `https`
+  link to Zenbu, and that a shared link arrives with its text, is by hand, on a device.

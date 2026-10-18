@@ -14,6 +14,7 @@ struct LookupClient: Sendable {
     @Sendable (_ id: String, _ headword: String, _ reading: String) async throws
       -> WebsiteLinkRoute
   var websiteRoute: @Sendable (URL) async -> WebsiteLinkRoute
+  var lookUp: @Sendable (String) async -> WebsiteLinkRoute
 
   init(
     search: @escaping @Sendable (SearchQuery) async throws -> LookupSearchResults,
@@ -30,7 +31,8 @@ struct LookupClient: Sendable {
     savedWord: @escaping @Sendable (String, String, String) async throws -> WebsiteLinkRoute = {
       _, headword, _ in .search(headword)
     },
-    websiteRoute: @escaping @Sendable (URL) async -> WebsiteLinkRoute = { _ in .home }
+    websiteRoute: @escaping @Sendable (URL) async -> WebsiteLinkRoute = { _ in .home },
+    lookUp: @escaping @Sendable (String) async -> WebsiteLinkRoute = { .search($0) }
   ) {
     self.search = search
     self.entry = entry
@@ -46,6 +48,7 @@ struct LookupClient: Sendable {
     self.relatedWord = relatedWord
     self.savedWord = savedWord
     self.websiteRoute = websiteRoute
+    self.lookUp = lookUp
   }
 
   static let live: LookupClient = {
@@ -68,7 +71,8 @@ struct LookupClient: Sendable {
         try await LanguageReferenceData.shared.route(
           openingSaved: SavedWord(id: id, headword: headword, reading: reading))
       },
-      websiteRoute: { await LanguageReferenceData.shared.route(openingWebsite: $0) }
+      websiteRoute: { await LanguageReferenceData.shared.route(openingWebsite: $0) },
+      lookUp: { await LanguageReferenceData.shared.route(lookingUp: $0) }
     )
   }()
 }
@@ -172,6 +176,13 @@ actor LanguageReferenceData {
   func route(openingWebsite url: URL) async -> WebsiteLinkRoute {
     let link = WebsiteAddress(host: url.host(), path: url.path(percentEncoded: true))
     guard let page: WebsitePage = try? await coreAnswer("websiteRoute", link) else { return .home }
+    return route(opening: page)
+  }
+
+  func route(lookingUp text: String) async -> WebsiteLinkRoute {
+    guard let page: WebsitePage = try? await coreAnswer("lookUp", text) else {
+      return .search(text)
+    }
     return route(opening: page)
   }
 

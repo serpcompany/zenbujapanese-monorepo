@@ -84,7 +84,8 @@ and names the adapter to use (`tools/checks/src/layers.ts`), so feature code sta
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
+The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
+(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
@@ -191,7 +192,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness).
+  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
+  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -578,7 +580,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to
   give memory back: in testing, a context dropped after a broad search kept its whole heap, and
-  memory climbed with every such search.
+  memory climbed with every such search. Contexts are made one at a time (`contextCreation`): a
+  link that launched the app made the lookup's while the warm-up made another, and JavaScriptCore
+  crashed building both.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.

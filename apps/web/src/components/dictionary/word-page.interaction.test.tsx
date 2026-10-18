@@ -1,6 +1,9 @@
 import { conjugations } from '@zenbu/dictionary-core/detail/conjugation'
 import { formExample } from '@zenbu/dictionary-core/detail/examples'
 import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
+import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
+import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
+import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -8,6 +11,7 @@ import { pageExample } from '@/lib/dictionary/page-example'
 import { ConjugationsLink, ConjugationsSection } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
+import { WordHeader } from './word-header'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -102,6 +106,55 @@ describe('the Frequency section', () => {
     expect(details?.querySelector('h3')?.textContent).toBe('YouTube')
     expect(details?.textContent).toContain('#949')
     expect(details?.textContent).toContain('Top 0.27%')
+  })
+})
+
+describe('pronouncing the word', () => {
+  const said: { text: string; lang: string }[] = []
+
+  beforeEach(() => {
+    said.length = 0
+    vi.stubGlobal(
+      'SpeechSynthesisUtterance',
+      class {
+        lang = ''
+        constructor(readonly text: string) {}
+      }
+    )
+    vi.stubGlobal('speechSynthesis', {
+      cancel: () => {},
+      speak: ({ text, lang }: { text: string; lang: string }) => said.push({ text, lang })
+    })
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  test.each([
+    [
+      'the pitch capsule',
+      pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: 'unidic' })
+    ],
+    ['the speaker of a word without pitch', null]
+  ])('%s says the reading in the browser’s Japanese voice', (_, pitch) => {
+    act(() =>
+      root.render(
+        <WordHeader
+          headword="今日"
+          ruby={rubySegments('今日', 'きょう')}
+          reading="きょう"
+          pronounce={pronounceLabel('きょう')}
+          pitch={pitch}
+          partOfSpeechRow="Noun"
+          conjugations={null}
+        />
+      )
+    )
+    const speaker = [...container.querySelectorAll('button')].find(button =>
+      (button.getAttribute('aria-label') ?? button.textContent ?? '').startsWith('Pronounce')
+    )
+    expect(said).toEqual([])
+    act(() => speaker?.click())
+    expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP' }])
   })
 })
 
