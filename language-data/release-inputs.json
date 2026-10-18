@@ -75,5 +75,31 @@
     "conformance/kanji-detail.json",
     "conformance/kanji-element.json",
     "conformance/tokenizer.json"
+  ],
+  "app_bundles": ["resources"],
+  "images": ["apps/dictionary-api/Dockerfile"],
+  "not_released": [
+    { "path": "resources/DAKANJI-MIT.txt", "why": "The licence of the handwriting model." },
+    { "path": "resources/DaKanji.mlpackage", "why": "The handwriting model, not language data." },
+    {
+      "path": "resources/DictionaryCore",
+      "why": "The app's bundle of the shared core, built from packages/dictionary-core."
+    },
+    {
+      "path": "resources/FrequencyPackContentDigestV1.json",
+      "why": "A test vector for the frequency packs' content digest."
+    },
+    {
+      "path": "resources/LanguageTechnologyPackCatalog.json",
+      "why": "Sudachi's pack catalog, which pins Sudachi's dictionary and where it comes from. Sudachi isn't in the release."
+    },
+    {
+      "path": "resources/SudachiLanguageTechnologyNotices.txt",
+      "why": "Sudachi's notices, which the pack catalog names."
+    },
+    {
+      "path": "resources/SudachiRuntime",
+      "why": "Sudachi's character and unknown-word definitions, which the pack catalog pins."
+    }
   ]
 }

@@ -12,6 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import committed_files
 import package
+import pinned_files
+import pinned_release
 import release_inputs
 from locations import REPO_ROOT as REPO
 
@@ -94,6 +96,17 @@ class RealInputsTests(unittest.TestCase):
         for path in paths:
             with self.subTest(path):
                 self.assertTrue(any(fnmatch.fnmatch(path, pattern) for pattern in filters), filters)
+
+    def test_the_app_and_the_service_image_hold_the_pinned_release(self):
+        self.assertEqual(
+            self.inputs.app_bundles, [self.inputs.roots["resources"]], "the app bundles resources"
+        )
+        self.assertEqual(self.inputs.images, ["apps/dictionary-api/Dockerfile"])
+        release = release_inputs.load_release(REPO / "language-data" / "release.json")["release"]
+        pinned = pinned_release.load_pinned(REPO / "language-data" / "releases", release)
+        counts = pinned_files.check_committed_pins(REPO, self.inputs, pinned)
+        self.assertEqual(counts["files"], len(self.inputs.files))
+        self.assertGreater(counts["copied"], 20)
 
     def test_lfs_paths_prints_a_comma_separated_list(self):
         output = io.StringIO()

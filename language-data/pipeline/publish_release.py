@@ -7,6 +7,7 @@ from typing import Callable
 
 from bucket_objects import MUTABLE, check_object, file_key, manifest_key, put_immutable, sha256_of
 from object_store import PreconditionFailed, Store, StoreError
+from pinned_release import PROVENANCE, check_pinned
 from refusal import Refusal
 from release_manifest import manifest_bytes, validate, write_manifest
 from releases_index import (
@@ -17,8 +18,6 @@ from releases_index import (
     release_key,
     validate_index,
 )
-
-PROVENANCE = ("git_commit", "workflow_run")
 
 
 def utc_now() -> str:
@@ -47,9 +46,12 @@ def check_same_release(published: dict, manifest: dict) -> None:
     )
 
 
-def publish(store: Store, staged: Path, *, now: Callable[[], str] = utc_now, log=print) -> dict:
+def publish(
+    store: Store, staged: Path, pinned: dict, *, now: Callable[[], str] = utc_now, log=print
+) -> dict:
     manifest = json.loads((staged / "manifest.json").read_text())
     release = manifest["release"]
+    check_pinned(manifest, pinned, f"the release staged in {staged}")
     index, etag = read_index(store)
     entries = index["releases"]
     position = next((i for i, e in enumerate(entries) if e["release"] == release), None)
