@@ -12,6 +12,7 @@ enum SavedItemChange: Sendable {
   case videoRemoved(WatchedVideo)
   case bookmarkAdded(SharedBookmark)
   case bookmarkRemoved(SharedBookmark)
+  case profileEdited(ProfileFields, previous: ProfileFields)
 }
 
 struct KnownWordChange: Codable, Hashable, Sendable {
@@ -31,6 +32,7 @@ enum SyncUndo: Codable, Hashable, Sendable {
   case restoreVideo(WatchedVideo)
   case removeBookmark(UUID)
   case restoreBookmark(SharedBookmark)
+  case restoreProfile(ProfileFields)
 }
 
 struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
@@ -39,7 +41,7 @@ struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
   let operation: String
   var baseVersion: Int
   let fields: [String: SyncFieldValue]?
-  let undo: SyncUndo?
+  var undo: SyncUndo?
 
   func merging(_ later: QueuedSyncChange) -> QueuedSyncChange {
     QueuedSyncChange(
@@ -66,6 +68,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case listWord(WordListMembership)
     case watchedVideo(WatchedVideo)
     case bookmark(SharedBookmark)
+    case profile(ProfileFields)
     case gone
   }
 
@@ -106,6 +109,9 @@ struct AccountCopy: Codable, Hashable, Sendable {
         shared.id.uuidString.lowercased() == change.key.entityID.lowercased()
       else { return nil }
       value = .bookmark(shared)
+    case .profile(let profile):
+      guard profile.id == change.key.entityID else { return nil }
+      value = .profile(profile.fields)
     case .gone:
       value = .gone
     case .unsynced:
@@ -132,6 +138,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var endedOnItsOwn = false
   var syncedEntities = SyncEntity.uploaded
   var goneVideos: [String] = []
+  var takesAccountProfile = false
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -155,6 +162,8 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       try container.decodeIfPresent([String].self, forKey: .syncedEntities)
       ?? SyncEntity.firstSynced
     goneVideos = try container.decodeIfPresent([String].self, forKey: .goneVideos) ?? []
+    takesAccountProfile =
+      try container.decodeIfPresent(Bool.self, forKey: .takesAccountProfile) ?? false
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }
@@ -331,6 +340,10 @@ extension SavedItemChange {
       return Self.queued(
         Self.key(bookmark: bookmark.id), "remove", state, fields: nil,
         undo: .restoreBookmark(bookmark))
+    case .profileEdited(let fields, let previous):
+      return Self.queued(
+        state.profileKey, "update", state, fields: fields.syncFields,
+        undo: .restoreProfile(previous))
     }
   }
 

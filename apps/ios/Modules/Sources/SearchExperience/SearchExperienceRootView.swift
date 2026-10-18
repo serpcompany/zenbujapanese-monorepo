@@ -162,6 +162,7 @@ struct SearchExperienceRootView: View {
         handwritingRecognitionClient: handwritingRecognitionClient,
         kanjiLookupClient: kanjiLookupClient,
         radicalLookupClient: .live,
+        schoolKanjiClient: .live,
         exampleSentenceClient: exampleSentenceClient,
         focusRequest: searchFocusRequest
       )

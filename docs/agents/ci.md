@@ -25,7 +25,7 @@ version file starts the workflows that read it (`tools/checks/src/workflow-rules
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment | [`ci-agents.md`](ci-agents.md) |
 | `Weekly maintenance` | `.github/workflows/maintenance.yml` | Mondays at 14:00 UTC; by hand, every job or one | [`ci-agents.md`](ci-agents.md) |
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site or the core changed | This doc |
-| `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site or the core; by hand | [`ci-deploys.md`](ci-deploys.md) |
+| `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
@@ -35,8 +35,8 @@ version file starts the workflows that read it (`tools/checks/src/workflow-rules
 | `Language data build` | `.github/workflows/language-data-build.yml` | Every pull request and the merge queue, working when a release's inputs changed; pushes to `main` that change them | This doc |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand | [`ci-deploys.md`](ci-deploys.md) |
 
-"The core" is `packages/dictionary-core`, and a change to the root `package.json`,
-`pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
+"The core" is `packages/dictionary-core`, and a change to the root `package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
 starts it too.
 
 GitHub also runs four workflows that have no file here, turned on in the repository's settings:
@@ -47,8 +47,8 @@ None is a check a merge waits for.
 
 ## Checks a merge can wait for
 
-`main`'s ruleset requires no status check yet ([`harness-debt.md`](../harness-debt.md), Checks), so a
-red check stops no merge. The workflows are built so the owners can require them as they are:
+`main`'s ruleset requires no status check yet ([`harness-debt.md`](../harness-debt.md), Checks), so
+a red check stops no merge. The workflows are built so the owners can require them as they are:
 
 - **Each starts on every pull request and on `merge_group`.** A required check has to report
   every time: a workflow that its `paths` filter skipped would leave its check pending and block
@@ -174,9 +174,9 @@ ShellCheck on it too, and its tests, on every pull request. Once `scripts` passe
    the app's pin, or downloads and checks it);
 2. runs `pnpm check` in `apps/dictionary-api`: Biome, typecheck, the app-recorded suites on the
    real files, and the bundle;
-3. exports the core's fixtures from the real files and fails if they differ from the committed
-   ones (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a fixture word's
-   rows re-exports them in the same pull request;
+3. exports the core's fixtures from the real files and fails if they differ from the committed ones
+   (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a
+   fixture word's rows re-exports them in the same pull request;
 4. starts the built service and runs the website's rendered-page gate against it
    ([`web.md`](web.md), The rendered-page gate), and prints the service's log if a step failed.
 

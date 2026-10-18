@@ -68,6 +68,7 @@ final class AccountFixture {
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
   private(set) var translations: ConversationHistory!
+  private(set) var profile: UserProfile!
   private(set) var account: ZenbuAccount!
 
   var sync: AccountSync { account.sync }
@@ -91,12 +92,15 @@ final class AccountFixture {
     translations = ConversationHistory(
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
+    profile = UserProfile(
+      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard,
+      photoURL: directory.appending(path: "photo.jpg"))
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(
         serviceURL: server.baseURL, googleClientID: googleClientID),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
-      fileURL: directory.appending(path: "account-sync.json"), providers: providers,
+      profile: profile, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
       now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
@@ -111,6 +115,7 @@ final class AccountFixture {
 
   func serve(
     tokenLifetime: TimeInterval = 15 * 60,
+    profile: StubReply = .json(200, AccountFixture.profile()),
     sync: @escaping @Sendable (StubSyncRequest) -> StubReply = { request in
       StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
     }
@@ -132,6 +137,8 @@ final class AccountFixture {
         .json(200, ["success": true])
       case "GET /v1/auth/list-accounts":
         .json(200, [["providerId": "email", "accountId": Self.email]])
+      case "GET /v1/me":
+        profile
       case "DELETE /v1/me":
         .json(200, ["status": "deleted"])
       default:
@@ -237,6 +244,16 @@ final class AccountFixture {
 
   var queuedOperations: [String] {
     sync.state.queue.map { "\($0.key.entity) \($0.operation) \($0.key.entityID)" }
+  }
+
+  nonisolated static func profile(name: String = "", username: String? = nil, version: Int = 1)
+    -> [String: Any]
+  {
+    [
+      "id": userID, "name": name, "username": username ?? NSNull(), "email": email,
+      "version": version, "createdAt": "2026-10-06T10:00:00.000Z",
+      "updatedAt": "2026-10-06T10:00:00.000Z",
+    ]
   }
 
   nonisolated static func signedIn(as userID: String = userID, email: String = email)

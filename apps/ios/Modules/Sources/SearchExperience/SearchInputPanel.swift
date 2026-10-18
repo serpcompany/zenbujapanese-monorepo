@@ -12,6 +12,14 @@ enum SearchInputCandidate {
   static func query(_ query: String, adding candidate: String) -> SearchQuery {
     SearchQuery(query + candidate)
   }
+
+  static func accept(
+    _ candidate: String, into query: Binding<String>, submit: (SearchQuery) -> Void
+  ) {
+    let submittedQuery = Self.query(query.wrappedValue, adding: candidate)
+    query.wrappedValue = submittedQuery.value
+    submit(submittedQuery)
+  }
 }
 
 struct SearchInputPanel<Content: View, Actions: View>: View {
@@ -44,6 +52,7 @@ struct SearchInputModeButtons: View {
     HStack(spacing: 12) {
       button("Handwriting", systemImage: "pencil.and.scribble", for: .handwriting)
       button("Radicals", systemImage: "square.grid.3x3", for: .radicals)
+      button("Grade", systemImage: "graduationcap", for: .grade)
     }
     .labelStyle(.iconOnly)
     .buttonBorderShape(.circle)
@@ -88,7 +97,7 @@ struct SearchCandidateGrid<Placeholder: View>: View {
   let select: (String) -> Void
   @ViewBuilder let placeholder: Placeholder
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-  @ScaledMetric(relativeTo: .title) private var tileHeight: CGFloat = 60
+  @ScaledMetric(relativeTo: .title) private var tileHeight = PanelTile.height
   @State private var meanings: [String: String] = [:]
 
   var body: some View {
@@ -97,16 +106,9 @@ struct SearchCandidateGrid<Placeholder: View>: View {
         placeholder
           .frame(maxWidth: .infinity, minHeight: visibleHeight)
       } else {
-        LazyVGrid(
-          columns: Array(
-            repeating: GridItem(.flexible(), spacing: 8),
-            count: dynamicTypeSize.isAccessibilitySize ? 3 : 5),
-          spacing: 8
-        ) {
+        LazyVGrid(columns: PanelTile.columns(dynamicTypeSize), spacing: PanelTile.spacing) {
           ForEach(Array(candidates.enumerated()), id: \.offset) { index, candidate in
-            SearchCandidateTile(
-              candidate: candidate, meaning: meanings[candidate], height: tileHeight
-            ) {
+            PanelTile(glyph: candidate, caption: meanings[candidate]) {
               select(candidate)
             }
             .accessibilityValue("Candidate rank \(index + 1)")
@@ -163,33 +165,5 @@ struct SearchCandidateStrip<Placeholder: View>: View {
     .fixedSize(horizontal: false, vertical: true)
     .background(SystemColor.panelContent, in: .rect(cornerRadius: 16))
     .accessibilityIdentifier("\(identifierPrefix).candidate-strip")
-  }
-}
-
-private struct SearchCandidateTile: View {
-  let candidate: String
-  let meaning: String?
-  let height: CGFloat
-  let select: () -> Void
-
-  var body: some View {
-    Button(action: select) {
-      VStack(spacing: 2) {
-        Text(candidate)
-          .font(.title)
-        if let meaning {
-          Text(meaning)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-        }
-      }
-      .padding(.horizontal, 4)
-      .frame(maxWidth: .infinity, minHeight: height)
-      .background(SystemColor.secondaryFill, in: .rect(cornerRadius: 8))
-      .contentShape(.rect(cornerRadius: 8))
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel(meaning.map { "\(candidate), \($0)" } ?? candidate)
   }
 }
