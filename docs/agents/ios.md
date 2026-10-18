@@ -209,13 +209,12 @@ don't contain them), so they need no network, account, camera, or microphone:
   laid out like YouTube's mobile results, by YouTube's element names, whose results change the
   page's address without loading it, as YouTube's do.
 - `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
-  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
-  Search and a kanji page record each list or page they drew (`search.results.drawn`,
-  `search.notes.drawn`, `kanji-detail.drawn`), so a test fails when a results list is drawn without
-  its chips and then again (`SearchResultsUITests`), Search's notes come after its results
-  (`NotesInSearchUITests`), a kanji page's facts come before its words (`WordDetailUITests`), or
-  nothing is recorded. Each is a clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives
-  a test no plain view's value.
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`). Search
+  and a kanji page record each list or page they drew (`search.results.drawn`, `search.notes.drawn`,
+  `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
+  again (`SearchResultsUITests`), Search's notes come after its results (`NotesInSearchUITests`), a
+  kanji page's facts come before its words (`WordDetailUITests`), or nothing is recorded. Each is a
+  clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -248,7 +247,9 @@ the same on every device:
   XCUITest's own tap looks the item up again and fails when the menu is redrawing just then, about
   one run in three. A submenu's choice is typed as one string of keys (`chooseFromSubmenu`): Down
   to the row, Right, Down to the choice, Return. Between separate clicks or keys, an open submenu
-  sometimes shut or lost its highlight while XCUITest looked the app over before its next step.
+  sometimes shut or lost its highlight while XCUITest looked the app over before its next step. A
+  click on **Add Note** in a word's **•••** once left it highlighted in a menu that stayed open, so
+  `addNote` presses Return when the note's field hasn't appeared and the choice is still there.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
@@ -372,12 +373,11 @@ team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
 which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
-hands the link's host and path to the core (`websiteRoute`,
-[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
-decoded one path segment at a time, with the parser the website uses, and finds a word URL's
-entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
-the host `zenbujapanese.com` routes the same way.
+and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute` hands the
+link's host and path to the core (`websiteRoute`, [`dictionary-core.md`](dictionary-core.md),
+Embedded), which reads the website's URL shapes, decoded one path segment at a time, with the parser
+the website uses, and finds a word URL's entry by its JMdict entry number. Only the host and path
+are read, so a URL with any scheme and the host `zenbujapanese.com` routes the same way.
 
 Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
 association file is live, which would also load the site, so to see a link land in the app

@@ -47,13 +47,18 @@ extension ZenbuUITestCase {
   }
 
   func addNote(_ text: String, fromItsRow: Bool = false, in app: XCUIApplication) {
+    let editor = find("word-note.editor", in: app)
     if fromItsRow {
       tap(reveal(find("word-detail.add-note", in: app), in: app))
     } else {
       tap(find("word-detail.more-menu", in: app))
-      tap(menuChoice("Add Note", in: app))
+      let choice = menuChoice("Add Note", in: app)
+      tap(choice)
+      if device == .mac, !appears(editor, within: Self.patience / 3), choice.exists {
+        app.typeKey(XCUIKeyboardKey.return.rawValue, modifierFlags: [])
+      }
     }
-    type(text, into: waitFor(find("word-note.editor", in: app)))
+    type(text, into: waitFor(editor))
     tap(find("word-note.done", in: app))
     waitFor(labeled(text, in: app))
   }
