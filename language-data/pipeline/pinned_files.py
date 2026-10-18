@@ -106,6 +106,24 @@ def check_committed_pins(repo: Path, inputs: Inputs, pinned: dict) -> dict:
                 f"pinned manifest has {record['sha256']} ({record['bytes']} bytes)"
             )
 
+    suites = {suite["name"]: suite for suite in pinned.get("conformance", [])}
+    suite_heads = committed(repo, inputs.conformance)
+    for path in inputs.conformance:
+        suite = suites.pop(Path(path).name, None)
+        if suite is None:
+            problems.append(f"the pinned manifest pins no conformance suite {Path(path).name}")
+            continue
+        sha256, size = committed_digest(repo, suite_heads[path])
+        if (sha256, size) != (suite["sha256"], suite["bytes"]):
+            problems.append(
+                f"{suite['name']}: {path} is {sha256} ({size} bytes) at HEAD, but the "
+                f"pinned manifest has {suite['sha256']} ({suite['bytes']} bytes)"
+            )
+    if suites:
+        problems.append(
+            f"the pinned manifest pins conformance suites release-inputs.json doesn't: {sorted(suites)}"
+        )
+
     released = {entry["path"] for entry in inputs.files}
     accounted = sorted(released) + inputs.not_released
     for path in inputs.not_released:
