@@ -194,6 +194,10 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
   ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
+- `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
+  `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
+  `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
+  (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
   or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
   arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
@@ -747,62 +751,10 @@ dictionaries are in [`frequency.md`](frequency.md).
 
 ## Local stores
 
-Known words (`WordKnowledge.swift`) and word lists (`WordLists.swift`) each keep one versioned
-JSON file through `LocalJSONFile`, loaded once off the main actor and rewritten in full, with
-dates in milliseconds since 1970. `LocalFileWriteQueue` runs the load and then each write in
-order, so a write never races the load. A file this version can't read in full is copied aside
-(`UnreadableCopy`) before its readable records replace it, and records decode one at a time
-(`LossyDecodable`), so one bad record doesn't lose the rest. A file from a newer version, or one
-that can't be read at launch (before the device's first unlock), is never written over; the store
-is read-only instead.
-
-The stores in `UserDefaults` that hold records, Player's Recent (`WatchHistory`), word notes
-(`WordNoteStorage`, under `lookup.word-notes.v4`), and the profile (`UserProfile`), and the Media
-Library's `index.json` (`EncounterMediaStorage`) follow the same rule without a version: what
-doesn't decode is copied aside, a value under `<key>.unreadable-<time>-<id>` or a file beside it
-(`UnreadableCopy`, which keeps the copy it just made and the newest 2 before it, and makes no
-copy of bytes a copy already holds; a value that isn't data at all is kept aside the same way,
-`storedData(forKey:)`), and the store carries on, still writable, from the records
-it could read (each video, note, and Media Library record; the profile is one record, so it
-starts empty). A Media Library index that can't be opened or copied aside is neither read nor
-written until it can be. Word notes are saved one note at a time (`WordNoteStorage.save`), so two
-pages open on one word, in two windows on iPad or the Mac, can't drop each other's new notes, and
-a page saves a note only when its text changed while it was being edited (when both pages change
-the same note, the last save wins); likewise Profile saves a field only when its
-text changed while it had focus, shows the newest saved value whenever the field doesn't have
-focus or is left unchanged, and keeps a rejected email as typed until it's focused again
-(`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write over each other.
-
-The Media Library deletes only images the learner deleted. When a kept copy of the index names
-the photo, or a copy can't be read, `deleteImage` records its ID and when in
-`deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
-At most once a day, after the index reads (for a word's photos, the Media Library, or
-`deleteImagesDue`, which `AppLifecycle` calls when the app becomes active; on the Mac that's
-seldom, since the app stays active while any window is in front), `retryDeferredDeletions` drops
-the IDs the index names
-again, by a media record or an encounter, without deleting their images, and deletes each other
-recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
-kept copy names, so a deleted photo is gone within 30 days (the
-[Privacy Policy](../../apps/web/docs/product/privacy.md) keeps data until it's deleted in the
-app). It does nothing while a kept copy can't be read, and writes the list only when
-it changed. `save` takes a photo saved again off the list once the index is written. A kept copy
-or a damaged list names an ID only as a whole run of 64 lowercase hex digits in its bytes
-(`DeferredImageDeletions.mediaIDs`), and a list's names that aren't such an ID are dropped as it
-loads, so no name reaches a file outside the folder. Only a missing list reads as empty: a damaged one is copied
-aside and its IDs recovered, dated again (so their 30 days start over), and one that can't be read or written records and
-retries nothing until the next launch, so a photo deleted then keeps its image, and its ID is
-logged. The store takes its copy step as `keepCopy` and its clock as `now`, so
-`EncounterMediaStorageTests` and `DeferredImageDeletionsTests` can make a copy fail and move the
-days on.
-
-Both files are at version 2, which added kanji; a version 1 app would read kanji as words, so it
-opens a version 2 file read-only. A word is keyed by its Language Reference ID and a kanji by
-`kanji:` and the character (`SavedItem.storedID`), which can't collide with the hexadecimal ID.
-Marking a word unknown keeps its record, so a later sync can tell a removal from no status. List
-records are shaped to become database rows, and a membership keeps its headword so the word can
-still be found if its entry's ID changes. Each store reports a learner's change to the account
-sync (`changeObserver`), and takes the account's changes through `applySynced`, which reports
-nothing (Account and sync, below).
+How known words, lists, word notes, the Media Library, Player's Recent, and the profile are kept
+on the device, what each does with what it can't read, how a deleted photo's image goes, and how
+notes and photos an earlier version saved move to their word's Language Reference ID are in
+[`ios-local-stores.md`](ios-local-stores.md).
 
 ## Account and sync
 

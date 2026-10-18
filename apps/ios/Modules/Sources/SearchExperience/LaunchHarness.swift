@@ -12,6 +12,7 @@ enum LaunchHarness {
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
   static let openLinkKey = "ZENBU_OPEN_LINK"
   static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
+  static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -249,13 +250,17 @@ enum LaunchHarness {
     #if DEBUG
       openLinkOnNotice()
       let bundleID = Bundle.main.bundleIdentifier
-      guard erasesSavedState(environment: ProcessInfo.processInfo.environment, bundleID: bundleID)
-      else { return }
+      let environment = ProcessInfo.processInfo.environment
+      guard erasesSavedState(environment: environment, bundleID: bundleID) else { return }
       if let bundleID { UserDefaults.standard.removePersistentDomain(forName: bundleID) }
       KeychainSessionTokenStorage().delete()
       for folder in savedStateFolders {
         try? FileManager.default.removeItem(
           at: URL.applicationSupportDirectory.appending(path: folder, directoryHint: .isDirectory))
+      }
+      if let earlierNotes = environment[earlierNotesKey] {
+        UserDefaults.standard.set(
+          Data(earlierNotes.utf8), forKey: WordNoteStorage.earlierStorageKey)
       }
     #endif
   }()

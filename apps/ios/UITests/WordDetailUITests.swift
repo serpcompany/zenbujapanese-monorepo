@@ -60,6 +60,14 @@ final class WordDetailUITests: ZenbuUITestCase {
     reveal(labeled("left by going back", in: app), in: app)
   }
 
+  func testANoteAnEarlierVersionSavedIsOnItsWord() throws {
+    let app = openJapan(try earlierNotes([Self.japanNoteIdentity: ["earlier": "saved by 2.0.0"]]))
+    reveal(labeled("saved by 2.0.0", in: app), in: app)
+  }
+
+  private static let japanNoteIdentity =
+    "wn1:45a54eddcad276de58be8b74fa87cfcbdab181ee8a14a6ac910f337758519de2"
+
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
     let app = launch()
     search("school", in: app)

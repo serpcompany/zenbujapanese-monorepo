@@ -14,7 +14,7 @@ struct MediaLibraryFixture {
   let directory = FileManager.default.temporaryDirectory
     .appending(path: "encounter-media-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
   let word = EncounterWordReference(
-    id: WordNoteID(rawValue: "taberu-note"), headword: "食べる", reading: "たべる")
+    id: SavedWords.taberu, headword: "食べる", reading: "たべる")
   let photo = EncounterMediaAttachment(name: "ramen.jpg", data: Data([1, 2, 3]))
   let otherPhoto = EncounterMediaAttachment(name: "sushi.jpg", data: Data([4, 5, 6]))
 
@@ -35,7 +35,12 @@ struct MediaLibraryFixture {
 
   func launch(on day: OSAllocatedUnfairLock<Double>) -> EncounterMediaStorage {
     EncounterMediaStorage(
-      directory: directory, now: { Self.firstDay + day.withLock { $0 } * 24 * 60 * 60 })
+      directory: directory, placing: SavedWords.lookup,
+      now: { Self.firstDay + day.withLock { $0 } * 24 * 60 * 60 })
+  }
+
+  func launch(placing: SavedKeyLookup) -> EncounterMediaStorage {
+    EncounterMediaStorage(directory: directory, placing: placing)
   }
 
   func delete(

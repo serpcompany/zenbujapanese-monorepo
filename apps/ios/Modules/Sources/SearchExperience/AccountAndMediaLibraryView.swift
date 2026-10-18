@@ -20,6 +20,8 @@ struct AccountTabRoot: View {
           ReadingAidSettingsView()
         case .mediaLibrary:
           MediaLibraryView(store: store)
+        case .notesWithoutAWord:
+          NotesWithoutAWordView()
         case .knownWords:
           KnownWordsView { openItem($0.entryID, $0.headword, $0.reading) }
         case .wordLists:
@@ -40,6 +42,7 @@ struct AccountRootView: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(WordLists.self) private var wordLists
   @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
+  @Environment(NotesWithoutAWord.self) private var notesWithoutAWord
   let translationHistory: ConversationHistory
 
   var body: some View {
@@ -80,6 +83,15 @@ struct AccountRootView: View {
             count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
         }
         .accessibilityIdentifier("account.translations")
+
+        if !notesWithoutAWord.notes.isEmpty {
+          NavigationLink(value: AccountRoute.notesWithoutAWord) {
+            AccountCountRowLabel(
+              "Notes Without a Word", systemImage: "note.text", tint: .yellow,
+              count: notesWithoutAWord.notes.count)
+          }
+          .accessibilityIdentifier("account.notes-without-a-word")
+        }
       }
 
       Section {
@@ -225,6 +237,7 @@ enum AccountRoute: Hashable {
   case zenbuAccount
   case readingAids
   case mediaLibrary
+  case notesWithoutAWord
   case knownWords
   case wordLists
   case wordList(UUID)
