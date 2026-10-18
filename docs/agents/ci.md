@@ -271,13 +271,13 @@ committed files (issue 463, step 2). It runs on pull requests and pushes to `mai
 Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow). Tests
 in `language-data/pipeline/tests/` fail when a release input or the Dockerfile doesn't start it.
 
-Its `pins` job runs `package.py check-pin` first, without Git LFS: the committed files, the app's
-bundle, and the image's copies against the pinned release, and no change to a pin the base holds
-([`language-data/README.md`](../../language-data/README.md), Pinned releases and Running it).
-Then `build` packages through the shared action ([`ci-deploys.md`](ci-deploys.md), The
-package-language-data action) and keeps only `manifest.json` and `files.tsv` (each staged
-file's size and path) as the Actions artifact `language-data-manifest-<commit>`, for 7 days. It
-has no credentials and publishes nothing. The files themselves (516 MiB) aren't kept:
-`Language data release` rebuilds them rather than trusting this output. The job names
-`shell: bash` so pipefail is on.
+Its `pins` job runs `package.py check-pin` first, without Git LFS: the committed files, the
+conformance suites, the app's bundle, and the image's copies against the pinned release, and no
+change to a pin the base holds ([`language-data/README.md`](../../language-data/README.md), Pinned
+releases and Running it). Then `build` packages through the shared action
+([`ci-deploys.md`](ci-deploys.md), The package-language-data action) and keeps only `manifest.json`
+and `files.tsv` (each staged file's size and path) as the Actions artifact
+`language-data-manifest-<commit>`, for 7 days. It has no credentials and publishes nothing. The
+files themselves (516 MiB) aren't kept: `Language data release` rebuilds them rather than trusting
+this output. The job names `shell: bash` so pipefail is on.
 

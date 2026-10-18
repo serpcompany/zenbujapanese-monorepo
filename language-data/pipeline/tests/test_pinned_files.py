@@ -49,6 +49,17 @@ class CommittedFilesTests(PinnedTestCase):
         self.scratch.commit()
         self.refused(r"Notices/NOTICE\.txt: data/res/NOTICE\.txt is .* at HEAD, but the pinned")
 
+    def test_a_changed_conformance_suite_needs_a_new_pin(self):
+        self.scratch.plain["data/conf/two.json"] += b"\n"
+        self.scratch.commit()
+        self.refused(r"two\.json: data/conf/two\.json is [0-9a-f]{64} \(\d+ bytes\) at HEAD, but the")
+
+    def test_a_conformance_suite_added_to_or_dropped_from_the_release_needs_a_new_pin(self):
+        pinned = self.pinned()
+        pinned["conformance"] = pinned["conformance"][:1] + [dict(pinned["conformance"][0], name="three.json")]
+        with self.assertRaisesRegex(Refusal, r"pins no conformance suite two\.json(.|\n)*doesn't: \['three\.json'\]"):
+            pinned_files.check_committed_pins(self.scratch.root, self.scratch.loaded_inputs(), pinned)
+
     def test_an_uncommitted_change_is_left_to_the_build(self):
         self.scratch.write("data/res/NOTICE.txt", b"edited\n")
         self.check()

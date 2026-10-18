@@ -118,6 +118,9 @@ What the app bundles, and what the dictionary service's image copies, are files 
   fails when:
   - a release file at HEAD differs from its pinned `sha256` and `bytes`: a Git LFS file by its
     pointer's oid and size, any other by its bytes. The release's names and the pin's must match.
+  - a conformance suite in `release-inputs.json` differs from its pinned `sha256` and `bytes`, or
+    the suites it names and the pin's differ, so a re-recorded suite fails here, not only after a
+    build;
   - the app bundles a file, under a root in `app_bundles`, that is neither a release file nor in
     `not_released`;
   - a Dockerfile in `images` copies such a file from under any root;
