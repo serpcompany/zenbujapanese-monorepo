@@ -1,11 +1,11 @@
 apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3 filter=lfs diff=lfs merge=lfs -text
 apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/*.dat.gz filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/JMdict_e-*.gz filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/*.tsv.xz filter=lfs diff=lfs merge=lfs -text
+language-data/sources/JMdict_e-*.gz filter=lfs diff=lfs merge=lfs -text
+language-data/sources/*.tsv.xz filter=lfs diff=lfs merge=lfs -text
 apps/ios/Modules/Sources/SearchExperience/Resources/SudachiRuntime/*.def whitespace=-trailing-space
-apps/ios/LanguageData/Sources/Jiten-*/*.csv.xz filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/Tatoeba-*/*.bz2 filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/KANJIDIC2-*/*.gz filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/EDRDG-radicals-*/*.gz filter=lfs diff=lfs merge=lfs -text
-apps/ios/LanguageData/Sources/Kanji-JLPT-Waller-*/*.html filter=lfs diff=lfs merge=lfs -text
+language-data/sources/Jiten-*/*.csv.xz filter=lfs diff=lfs merge=lfs -text
+language-data/sources/Tatoeba-*/*.bz2 filter=lfs diff=lfs merge=lfs -text
+language-data/sources/KANJIDIC2-*/*.gz filter=lfs diff=lfs merge=lfs -text
+language-data/sources/EDRDG-radicals-*/*.gz filter=lfs diff=lfs merge=lfs -text
+language-data/sources/Kanji-JLPT-Waller-*/*.html filter=lfs diff=lfs merge=lfs -text
 apps/ios/Tools/TranslateReplay/Recordings/*/heard.wav filter=lfs diff=lfs merge=lfs -text

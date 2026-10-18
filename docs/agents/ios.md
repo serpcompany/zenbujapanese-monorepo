@@ -440,7 +440,7 @@ The Translate tab has its own test target, `TranslatorCoreTests`, and its own gu
 app's UI tests on all three ([Tests on every platform](#tests-on-every-platform)).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
-`apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
+`language-data/conformance/search-retrieval.json` (see ADR 0006). Only each result's
 Language Reference ID and position are the contract; its headword and reading are there to make the
 file and failures readable. After an intended change to Search results or a dictionary rebuild,
 record it again by adding `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above,
@@ -520,13 +520,14 @@ does isn't recorded yet: sentence search (Discovered Words, above). The service 
 own test (`sentence-search.test.ts`) until a suite records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
-that change `apps/ios`, and, on a macOS runner, `SearchExperienceTests` and `TranslatorCoreTests`
-on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on all three, and the
-recorded-audio check's scoring tests, only once the owners turn that on. Until then, run them on a
-Mac ([Tests on every platform](#tests-on-every-platform)).
+that change `apps/ios` or the language data, and, on a macOS runner, `SearchExperienceTests` and
+`TranslatorCoreTests` on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on
+all three, and the recorded-audio check's scoring tests, only once the owners turn that on. Until
+then, run them on a Mac ([Tests on every platform](#tests-on-every-platform)).
 
-Frequency-pack selection has one repo-local Python contract test. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify
+The data tools' contract tests are in `language-data/tools/tests/`; run one with
+`python3 -m unittest discover -s language-data/tools/tests -p <file>`. Frequency-pack selection
+has one, `test_frequency_pack_runtime_contract.py`. It verifies
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
 with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
 the bundled JLPT level pack matches its pinned source files and import report. It also checks
@@ -534,35 +535,35 @@ that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict fi
 entries, carry their rank on the one entry their UniDic lemma reading names (#440).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
-bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to
-verify that it matches that database, its pinned source, and its import report. Without the index,
+bundled `LanguageReferenceData.sqlite3`. `test_example_word_index_contract.py` verifies
+that it matches that database, its pinned source, and its import report. Without the index,
 as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
 index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
-`CompoundPitch.sqlite3`, also built against that database. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_compound_pitch_contract.py` to verify it.
+`CompoundPitch.sqlite3`, also built against that database; `test_compound_pitch_contract.py`
+verifies it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so
 the language data is rebuilt as a whole, with one command on the pinned Python:
 
 ```sh
-uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.py --download
+uv run --no-project --python 3.14.8 python language-data/tools/rebuild_language_data.py --download
 ```
 
 It runs every importer in order, copies each pack's import report into its catalog manifest,
 moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
 learner already installed stay trusted, and runs the contract tests. Then re-record the six
-suites above and review their diffs. [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)
-says what each tool builds, why the Python is pinned, and how to move to a newer source snapshot.
+suites above and review their diffs. Its README says what each tool builds, why the Python is
+pinned, how to move to a newer source snapshot, and which two tools the next rebuild first points
+at the new folders ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
 `zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
 at `https://cdn.zenbujapanese.com/frequency-packs/<packID>/<sourceSHA256>.<ext>`, then upload the
 verified source file with
-`CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 apps/ios/Tools/publish_frequency_pack_sources.py <file>…`.
+`CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 language-data/tools/publish_frequency_pack_sources.py <file>…`.
 The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
 overwrite or delete an object: trusted historical manifests still reference it.
 

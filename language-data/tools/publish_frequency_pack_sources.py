@@ -11,7 +11,7 @@ import urllib.request
 from pathlib import Path
 
 
-REPOSITORY = Path(__file__).resolve().parents[3]
+REPOSITORY = Path(__file__).resolve().parents[2]
 CATALOG = (
     REPOSITORY
     / "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackCatalog.json"

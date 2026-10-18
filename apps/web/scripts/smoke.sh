@@ -188,7 +188,7 @@ expect /dictionary/ 200
 expect "$word" 200
 expect "$kanji_search" 200
 iru=/dictionary/search/iru/
-suite="$(dirname "$0")/../../ios/LanguageData/Conformance/search-results.json"
+suite="$(dirname "$0")/../../../language-data/conformance/search-results.json"
 expect "$iru" 200
 iru_expected="$(python3 -c '
 import json, sys, urllib.parse
@@ -247,7 +247,7 @@ eventually "eat leads with '$eat_examples', linked to its Example Sentences on t
   shows_examples_row
 
 gakkou=/dictionary/%E5%AD%A6%E6%A0%A1-1206730/
-word_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/word-detail.json"
+word_suite="$(dirname "$0")/../../../language-data/conformance/word-detail.json"
 expect "$gakkou" 200
 word_expected="$(python3 -c '
 import json, sys
@@ -389,7 +389,7 @@ show_iru_listed() { echo "$(wc -w <<<"$iru_listed" | tr -d ' ') rows (want $(wc 
 eventually "iru lists all its words at once, in the app's order" \
   "iru's words differ from the app" iru_lists_as_the_app_does show_iru_listed
 
-examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-search.json"
+examples_suite="$(dirname "$0")/../../../language-data/conformance/example-search.json"
 expect '/dictionary/search/t*/' 200
 eat_first_english="$(python3 -c '
 import json, sys

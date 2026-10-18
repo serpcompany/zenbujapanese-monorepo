@@ -10,8 +10,8 @@ test.each([
   'apps/ios/Modules/Tests/SearchExperienceTests/WordListsTests.swift',
   'apps/ios/UITests/SearchUITests.swift',
   'apps/ios/Tools/TranslateReplay/Tests/TranslateReplayTests/ScoringTests.swift',
-  'apps/ios/Tools/tests/test_compound_pitch_contract.py',
-  'apps/ios/LanguageData/Conformance/word-detail.json',
+  'language-data/tools/tests/test_compound_pitch_contract.py',
+  'language-data/conformance/word-detail.json',
   'language-data/pipeline/tests/test_build.py',
   'tools/checks/src/agents/settings.test.ts'
 ])('counts %s as a test', path => {
@@ -28,7 +28,7 @@ test.each([
   'apps/web/scripts/wait-for-dictionary-service.sh',
   '.github/workflows/web-deploy.yml',
   'docs/agents/web.md',
-  'apps/ios/Tools/import_kanjivg.py'
+  'language-data/tools/import_kanjivg.py'
 ])("doesn't count %s as a test", path => {
   expect(isTest(path)).toBe(false)
 })

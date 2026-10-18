@@ -3,9 +3,9 @@
 A data source supplies information, data, content, etc. for a technology to process or present.
 
 This is the index for the whole repository: one row per source and the apps that use it.
-Source names link to the official publisher or project. Each app's source records hold the
-exact versions, URLs, checksums, licenses, and transformations; for iOS, see the
-[`source index`](../apps/ios/LanguageData/Sources/README.md).
+Source names link to the official publisher or project. The language data's source records hold
+the exact versions, URLs, checksums, licenses, and transformations; see the
+[`source index`](../language-data/sources/README.md).
 
 Every client's credits come from one list, `sourceCredits` in
 [`packages/dictionary-core/src/sources/credits.ts`](../packages/dictionary-core/src/sources/credits.ts):
@@ -67,7 +67,7 @@ What is still kept by hand, so a new source reaches it only when it is added the
 | Frequency data | [Jiten](https://jiten.moe/frequency-dictionaries) | Optional domain frequency lists for TV and film, anime, manga, novels, visual novels, and video games, keyed by dictionary form and reading (CC BY-SA 4.0), downloaded on demand. | iOS, Website (the frequency dictionary pages rank words by them) | Jiten |
 | App releases | [Apple's App Store lookup](https://performance-partners.apple.com/search-api) | The live app's version and minimum iOS version, from `itunes.apple.com/lookup` by bundle ID, kept for a day. Nothing the app shows, so it needs no app credit. | Website (the iPhone app's product page) | None |
 | Video captions | [YouTube](https://www.youtube.com/) | Japanese captions for the video a learner opens in Player, and YouTube's English translation of them, fetched when the video opens and not stored. | iOS | None |
-| Unverified app-owned data | [`Zenbu Word Relationships`](../apps/ios/LanguageData/Sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS | None |
+| Unverified app-owned data | [`Zenbu Word Relationships`](../language-data/sources/Zenbu-Word-Relationships-v1.json) | Two uncited relationships between dictionary entries. No source or reviewer is recorded, so the file is pending a separate removal decision. | iOS | None |
 
 Which frequency sources iOS offers, and why, is recorded in the
-[`frequency source analysis`](../apps/ios/LanguageData/FREQUENCY_SOURCE_DECISIONS.md).
+[`frequency source analysis`](../language-data/FREQUENCY_SOURCE_DECISIONS.md).

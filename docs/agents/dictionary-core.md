@@ -216,7 +216,7 @@ website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer
   were compared over all 232,774 example sentences, the 655,146 headwords, readings, and
   summaries, and 1.7 million random texts: every token the same, and the same 118,171 texts
   refused. What pins the port now was recorded from kuromoji.js itself:
-  - `apps/ios/LanguageData/Conformance/tokenizer.json` holds its tokens for 747 texts (example
+  - `language-data/conformance/tokenizer.json` holds its tokens for 747 texts (example
     sentences, words, and odd cases, eleven of them refused) and its digest over 20,000 random
     texts built from the pieces the suite lists.
     `apps/dictionary-api/src/conformance/tokenizer.conformance.test.ts` replays it over the
@@ -276,7 +276,7 @@ The core began as a port of the Swift these files replaced: `LookupClient`'s sea
 `KanjiReadingSplitter`, `JapaneseTextAnalysisClient`, and the rest. That Swift is gone (issue 481).
 The modules keep its names and its ways of comparing ([Matching the Swift](#matching-the-swift)),
 their tests still name the Swift each case came from, and the app-recorded suites
-(`apps/ios/LanguageData/Conformance/`) pin what it showed. Before each part's Swift was removed,
+(`language-data/conformance/`) pin what it showed. Before each part's Swift was removed,
 the core's answer was compared with it across the whole of the data: every kanji's page and every
 element's page (13,139 characters), every entry's first meaning as a gloss (194,430), and every
 headword, reading, and summary as a query. The later moves were compared the same way: romaji for
@@ -324,7 +324,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   (ウィ is u~i). On the bundled data it differs from Foundation for no reading and no example
   sentence; it differs where a string holds another writing system, which Foundation also turned to
   Latin letters (α to a, 한 to han, and 〇 to the Chinese líng) and the core leaves as written.
-  `apps/ios/LanguageData/Conformance/romaji.json` holds the recorded cases.
+  `language-data/conformance/romaji.json` holds the recorded cases.
 - **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
   `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
   word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit
@@ -463,7 +463,7 @@ ready and a page's first request prepares nothing:
   the kana's own page. Groups list their words in kana order (by reading, then JMdict entry
   number), 200 to a page (`browsePageSize`).
 - **Categories** (`browse/categories.ts`) match any sense's `partsOfSpeech`, `usage`, `fields`, or
-  `dialects` labels ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md),
+  `dialects` labels ([`language-data/tools/README.md`](../../language-data/tools/README.md),
   `jmdict_labels.py`), or JMdict's common marker. A category's row shows the first sense that has
   its label, so と under Nouns reads "promoted pawn", not "if, when". Most used first, a category
   lists the words TUBELEX ranks whose first sense has the label, then those that have it only on a
