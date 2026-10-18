@@ -194,8 +194,8 @@ final class WordDetailUITests: ZenbuUITestCase {
   private func skipTheMacsSharingPicker() throws {
     try XCTSkipIf(
       device == .mac,
-      "The Mac shares the page's text alone, in a picker drawn outside the app, where "
-        + "XCUITest can't see it (docs/agents/ios-website-links.md)")
+      "The Mac's sharing picker draws outside the app, where XCUITest can't see it "
+        + "(docs/agents/ios-website-links.md)")
   }
 
   private func assertShareOffersAWebLink(
