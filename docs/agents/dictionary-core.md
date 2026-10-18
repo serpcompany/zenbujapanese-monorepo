@@ -306,10 +306,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   normalizes to itself. NFKC composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where
   Foundation left カ and a combining mark), and a word's final Σ lowercases to ς.
 - **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
-  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 pairs, each with its own
-  record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one stands
-  alone, and leaving it out of the kanji containing the element), and `school-kanji.ts` in Grade's
-  filter and known kanji. A host keys the records by scalar, so a twin never answers for the other.
+  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with its
+  own record, keyed by scalar. A twin stands for the other only in `kanji-element.ts`, as the app
+  did (which one stands alone, and leaving it out of the kanji containing the element), and in the
+  kanji lists: one with no meanings or readings, such as U+FA45 for 海, borrows its ordinary form's
+  (`ownOrOrdinary`), and Grade finds it by either form and marks it known when its twin is.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
@@ -483,8 +484,7 @@ ready and a page's first request prepares nothing:
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
   9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
   KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
-  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57 CJK compatibility
-  characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its base kanji's.
+  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō has 57 twins (see Twins).
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 

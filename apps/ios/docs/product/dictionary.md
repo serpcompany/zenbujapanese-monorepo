@@ -56,13 +56,14 @@ the field sits in the window's toolbar. On both, the clear button inside the fie
 returns to Recent ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the query kept
-in the field, the input buttons beside the results, back to Recent with **X** on iPhone and the
-clear button on iPad and the Mac, and no heading),
+in the field, the input buttons beside the results (Grade's on iPhone only), back to Recent with
+**X** on iPhone and the clear button on iPad and the Mac, and no heading),
 `testTheFieldOffersCloseAndTheInputButtonsWhileTyping` (iPhone),
 `testTheTabsStayBesideTheResultsWhichStayAcrossTabs`,
 `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList` (the **•••** menu), and
 `LayoutUITests` (the field and the input buttons at every size the device offers). How the bar
-slides on iPhone is by hand ([Search manual checks](../../../../docs/agents/ios.md#search-manual-checks)).
+slides on iPhone is by hand ([Search manual
+checks](../../../../docs/agents/ios.md#search-manual-checks)).
 
 ### Handwriting and Radicals
 
@@ -93,14 +94,14 @@ A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size wit
 button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
-sheet, its three buttons, Grade without **Undo**, and closing it, dragged away on iPhone and iPad
-and with **Done** on the Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret` (from above the
-keyboard), `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward leaves the sheet
-open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second pick added to the
-first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate joins the query,
-and only candidates written in Japanese are offered), and `RadicalLookupTests` (the kanji a pick
-lists and the radicals still offered, on the bundled radical file); core `search/radicals.test.ts`
-and `search/query.test.ts`. The panel's colors are by hand.
+sheet, its three buttons, Grade without **Undo** on iPhone only, and closing it, dragged away on
+iPhone and iPad and with **Done** on the Mac), `testThePanelOpensAndStaysWhileTheFieldHasTheCaret`
+(from above the keyboard), `testADrawnStrokeOffersKanjiUntilItsUndone` (a stroke drawn downward
+leaves the sheet open), and `testARadicalsKanjiJoinsTheQueryAndSearches` (**Undo**, and a second
+pick added to the first); package `HandwritingUndoTests`, `SearchInputCandidateTests` (a candidate
+joins the query, and only candidates written in Japanese are offered), and `RadicalLookupTests` (the
+kanji a pick lists and the radicals still offered, on the bundled radical file); core
+`search/radicals.test.ts` and `search/query.test.ts`. The panel's colors are by hand.
 
 ### Grade
 

@@ -1,9 +1,11 @@
 import { jlptKanjiLists, joyoGrades, type KanjiList, kanjiList, schoolLists } from '../browse/lists'
 import type { KanjiReferenceEntry, KanjiReferenceFile } from './kanji-data'
 
+type KanjiFacts = Pick<KanjiReferenceEntry, 'meanings' | 'readings'>
+
 export interface KanjiEntries {
   entries(): KanjiReferenceEntry[]
-  row(character: string): { meanings: string[] } | null
+  row(character: string): KanjiFacts | null
 }
 
 export function kanjiEntries(file: KanjiReferenceFile): KanjiEntries {
@@ -72,10 +74,17 @@ export function kanjiHub(kanji: KanjiEntries): KanjiHubResponse {
   return { lists, jlpt, strokes }
 }
 
-export function shownMeanings(kanji: KanjiEntries, entry: KanjiReferenceEntry): string[] {
-  if (entry.meanings.length > 0) return entry.meanings
-  const base = entry.character.normalize('NFKC')
-  return (base === entry.character ? undefined : kanji.row(base)?.meanings) ?? []
+export function ownOrOrdinary<T>(
+  kanji: KanjiEntries,
+  character: string,
+  pick: (facts: KanjiFacts) => T[]
+): T[] {
+  const own = kanji.row(character)
+  const values = own ? pick(own) : []
+  if (values.length > 0) return values
+  const ordinary = character.normalize('NFKC')
+  const borrowed = ordinary === character ? null : kanji.row(ordinary)
+  return borrowed ? pick(borrowed) : []
 }
 
 export function kanjiListResponse(kanji: KanjiEntries, slug: string): KanjiListResponse | null {
@@ -86,7 +95,7 @@ export function kanjiListResponse(kanji: KanjiEntries, slug: string): KanjiListR
     slug,
     kanji: entries.map(entry => ({
       character: entry.character,
-      meaning: shownMeanings(kanji, entry)[0] ?? ''
+      meaning: ownOrOrdinary(kanji, entry.character, facts => facts.meanings)[0] ?? ''
     }))
   }
 }

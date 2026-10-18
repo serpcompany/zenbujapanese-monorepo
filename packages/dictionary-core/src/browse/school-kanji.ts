@@ -1,4 +1,4 @@
-import { type KanjiEntries, kanjiListResponse, shownMeanings } from '../artifact/browse-kanji'
+import { type KanjiEntries, kanjiListResponse, ownOrOrdinary } from '../artifact/browse-kanji'
 import type { KanjiReferenceEntry } from '../artifact/kanji-data'
 import { graphemes, hiragana, isKanjiCharacter } from '../detail/text'
 import { normalizeQuery } from '../search/query'
@@ -47,8 +47,8 @@ const counted = new Intl.NumberFormat('en-US')
 const kana = /[ぁ-ゖァ-ヺー]/u
 const okuriganaMarks = /[.-]/gu
 
-const spokenReadings = (entry: KanjiReferenceEntry | undefined) =>
-  (entry?.readings ?? [])
+const spokenReadings = ({ readings }: Pick<KanjiReferenceEntry, 'readings'>) =>
+  readings
     .filter(({ kind }) => kind !== 'name')
     .map(({ value }) => hiragana(value).replace(okuriganaMarks, ''))
 
@@ -77,23 +77,18 @@ export class SchoolKanji {
   private readonly lists: SchoolList[]
 
   constructor(kanji: KanjiEntries) {
-    const entries = new Map(kanji.entries().map(entry => [entry.character, entry]))
     this.lists = schoolLists.map(list => ({
       id: list.slug,
       title: list.name,
-      kanji: (kanjiListResponse(kanji, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
-        const entry = entries.get(character)
-        const base = character.normalize('NFKC')
-        const readings = spokenReadings(entry)
-        return {
-          character,
-          base,
-          meaning,
-          meanings: (entry ? shownMeanings(kanji, entry) : []).map(each => each.toLowerCase()),
-          readings:
-            readings.length > 0 || base === character ? readings : spokenReadings(entries.get(base))
-        }
-      })
+      kanji: (kanjiListResponse(kanji, list.slug)?.kanji ?? []).map(({ character, meaning }) => ({
+        character,
+        base: character.normalize('NFKC'),
+        meaning,
+        meanings: ownOrOrdinary(kanji, character, facts => facts.meanings).map(each =>
+          each.toLowerCase()
+        ),
+        readings: ownOrOrdinary(kanji, character, spokenReadings)
+      }))
     }))
   }
 

@@ -1173,9 +1173,9 @@ YouTube can change: check the live page by hand.
 Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`. The
 UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By and
 Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and the
-Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`), and Grade on iPhone only
-(`GradeInputUITests`; iPad and Mac on hold, 2026-10-18); the lists below are what to look at beyond
-them. When changing Search results or frequency dictionaries, also check in the Simulator:
+Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`), and Grade's steps there and in
+`GradeInputUITests` on iPhone only (iPad and Mac on hold); the lists below are what to look at
+beyond them. When changing Search results or frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without

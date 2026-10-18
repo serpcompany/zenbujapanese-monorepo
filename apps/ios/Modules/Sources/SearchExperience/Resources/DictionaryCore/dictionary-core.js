@@ -2850,10 +2850,13 @@
   }
   var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
   var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);
-  function shownMeanings(kanji2, entry) {
-    if (entry.meanings.length > 0) return entry.meanings;
-    const base = entry.character.normalize("NFKC");
-    return (base === entry.character ? void 0 : kanji2.row(base)?.meanings) ?? [];
+  function ownOrOrdinary(kanji2, character, pick) {
+    const own = kanji2.row(character);
+    const values = own ? pick(own) : [];
+    if (values.length > 0) return values;
+    const ordinary = character.normalize("NFKC");
+    const borrowed = ordinary === character ? null : kanji2.row(ordinary);
+    return borrowed ? pick(borrowed) : [];
   }
   function kanjiListResponse(kanji2, slug) {
     const list = kanjiList(slug);
@@ -2863,7 +2866,7 @@
       slug,
       kanji: entries.map((entry) => ({
         character: entry.character,
-        meaning: shownMeanings(kanji2, entry)[0] ?? ""
+        meaning: ownOrOrdinary(kanji2, entry.character, (facts) => facts.meanings)[0] ?? ""
       }))
     };
   }
@@ -3035,7 +3038,7 @@
   var counted = new Intl.NumberFormat("en-US");
   var kana = /[ぁ-ゖァ-ヺー]/u;
   var okuriganaMarks = /[.-]/gu;
-  var spokenReadings = (entry) => (entry?.readings ?? []).filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
+  var spokenReadings = ({ readings }) => readings.filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
   var letter = /\p{L}/u;
   function startsAWord(meaning, query) {
     for (let at = meaning.indexOf(query); at !== -1; at = meaning.indexOf(query, at + 1)) {
@@ -3057,22 +3060,18 @@
   var SchoolKanji = class {
     lists;
     constructor(kanji2) {
-      const entries = new Map(kanji2.entries().map((entry) => [entry.character, entry]));
       this.lists = schoolLists.map((list) => ({
         id: list.slug,
         title: list.name,
-        kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
-          const entry = entries.get(character);
-          const base = character.normalize("NFKC");
-          const readings = spokenReadings(entry);
-          return {
-            character,
-            base,
-            meaning,
-            meanings: (entry ? shownMeanings(kanji2, entry) : []).map((each) => each.toLowerCase()),
-            readings: readings.length > 0 || base === character ? readings : spokenReadings(entries.get(base))
-          };
-        })
+        kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => ({
+          character,
+          base: character.normalize("NFKC"),
+          meaning,
+          meanings: ownOrOrdinary(kanji2, character, (facts) => facts.meanings).map(
+            (each) => each.toLowerCase()
+          ),
+          readings: ownOrOrdinary(kanji2, character, spokenReadings)
+        }))
       }));
     }
     panel({ filter, known }) {
