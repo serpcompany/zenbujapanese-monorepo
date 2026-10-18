@@ -124,7 +124,7 @@ the shared core, offline.
   top, and clearing it restores every grade, open or closed as before.
 - **Known kanji.** A kanji marked known from its kanji detail's **•••** menu has a green outline,
   the ✓ Known capsule's green, and each grade's header counts the known kanji it shows beside its
-  total. A compatibility kanji's tile is known, and counted, when its ordinary form is.
+  total. Both forms of a compatibility kanji are known, and counted, together.
 
 Check: UI `GradeInputUITests` on iPhone only (iPad and Mac on hold, 2026-10-18):
 `testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a kanji from the next one

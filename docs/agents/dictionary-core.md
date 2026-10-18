@@ -306,10 +306,10 @@ The core answers as the Swift it replaced did, which the suites pin.
   normalizes to itself. NFKC composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where
   Foundation left カ and a combining mark), and a word's final Σ lowercases to ς.
 - **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
-  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with
-  its own record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one
-  stands alone, and leaving it out of the kanji containing the element), and nowhere else. A host
-  keys the records by scalar, so a twin never answers for the other.
+  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 pairs, each with its own
+  record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one stands
+  alone, and leaving it out of the kanji containing the element), and `school-kanji.ts` in Grade's
+  filter and known kanji. A host keys the records by scalar, so a twin never answers for the other.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
