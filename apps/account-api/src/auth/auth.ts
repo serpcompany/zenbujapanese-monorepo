@@ -14,6 +14,7 @@ import { appleClientSecret } from './apple'
 import { sessionClientHooks, tokenClaims } from './clients'
 import { codesPerEmailCounter, signInGuards } from './guards'
 import { identityHooks } from './identities'
+import { keepLanguageThroughProviders, languageFor, storedLanguage } from './languages'
 import { signInNonce } from './nonce'
 import { authPath, route } from './routes'
 
@@ -59,6 +60,11 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
     secret: config.secret,
     trustedOrigins: config.trustedOrigins,
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
+    user: {
+      additionalFields: {
+        language: { type: 'string', required: false, input: false, returned: false }
+      }
+    },
     session: {
       expiresIn: 60 * day,
       updateAge: day,
@@ -75,9 +81,13 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
         expiresIn: codeMinutes * 60,
         allowedAttempts: 5,
         storeOTP: 'encrypted',
-        async sendVerificationOTP({ email, otp }) {
+        async sendVerificationOTP({ email, otp }, context) {
           codes.sent(email)
-          void mailer.send(signInCodeMessage(email, otp))
+          const stored = async () =>
+            storedLanguage((await context?.context.internalAdapter.findUserByEmail(email))?.user)
+          void languageFor(context, stored).then(language =>
+            mailer.send(signInCodeMessage(email, otp, language))
+          )
         }
       }),
       jwt({
@@ -90,7 +100,8 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
       signInNonce(),
       signInGuards(mailer, config.trustedOrigins, codes, identifier =>
         takeVerification(db, identifier)
-      )
+      ),
+      keepLanguageThroughProviders()
     ],
     databaseHooks: { ...identityHooks(mailer), ...sessionClientHooks(config.trustedOrigins) },
     rateLimit: {

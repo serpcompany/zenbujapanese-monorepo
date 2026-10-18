@@ -191,28 +191,11 @@ without it counts in one bucket shared by every such request.
 
 ## Email
 
-The codes are sent as SERP's
-[transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
-says (ADR 0013), by `src/email/mailer.ts`, the one function that sends:
-
-- **Through useSend's hosted API** (`https://app.usesend.com/api/v1/emails`), as serplists.com
-  sends, from `EMAIL_FROM`, with no other `Reply-To`, in staging and production. The owners chose
-  it on 2026-10-07: "the plan is updated to use usesend like serplists does"
-  ([ADR 0013](../adr/0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md),
-  Amendment). `ACCOUNT_API_EMAIL=cloudflare` sends through Cloudflare Email Service's REST API
-  instead, with nothing else changed; it still works, but isn't used.
-- **From the support address only.** `EMAIL_FROM` is refused unless it's
-  `support@zenbujapanese.com`, which an API key can't enforce the way a Worker binding does.
-- **Staging sends only to its test recipients.** `EMAIL_ALLOWED_RECIPIENTS` names them, and the
-  service won't start with a sender and no list; production sets `everyone`.
-- **A local run never sends.** With `dev-mailbox`, a message is kept in memory and shown at
-  `/dev/mail`, and the service listens on `127.0.0.1` only, so nothing off the machine reaches
-  it. The image runs with `NODE_ENV=production`, and refuses to start with `dev-mailbox`.
-- **Nothing logs a recipient, a code, or a link**: only "sent", "captured", "skipped", or "failed",
-  with the sender and a status or the error's kind.
-
-The service doesn't wait for the email before it answers, so how long it takes doesn't show
-whether an email has an account.
+`src/email/mailer.ts` sends each code and notice through useSend, from the support address only,
+and on staging only to its test recipients; a local run never sends, nothing logs a recipient, a
+code, or a link, and no answer waits for an email. Each is in English or Japanese: the language
+the request names in `Content-Language`, else the one the account was made with, else English.
+How, and why, is in [`account-email.md`](account-email.md).
 
 ## Profiles and sync
 
@@ -379,9 +362,9 @@ belongs; tests may import anything.
   `/v1/auth`, which are open (`routes.ts`), the guards that hold this doc's rules
   (`guards.ts`, a Better Auth plugin after `bearer`, so it sees the bearer session), the nonce
   (`nonce.ts`), what an identity may hold (`identities.ts`), which app a sign-in is and what its
-  tokens carry (`clients.ts`), and the access-token check the other routes use
-  (`access-tokens.ts`). It imports nothing of the HTTP layer.
-- **`src/email`** sends a message, and imports neither sign-in, the database, nor HTTP.
+  tokens carry (`clients.ts`), the language a request names (`languages.ts`), and the access-token
+  check the other routes use (`access-tokens.ts`). It imports nothing of the HTTP layer.
+- **`src/email`** writes and sends a message, and imports neither sign-in, the database, nor HTTP.
 - **`src/domain`** holds the account's rules: the apps and their scopes (`clients.ts`), a
   profile's fields, each synced entity's rule, versions and conflicts, the cursor, and the results
   kept by mutation ID. It works through the store it's handed
@@ -389,11 +372,11 @@ belongs; tests may import anything.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
 
-`src/config.ts` reads the environment, and `src/server.ts` wires the layers together and is
-imported by nothing. Logging, the request log, and stopping cleanly on SIGTERM come from
-`packages/node-service`, as in the dictionary service ([`dictionary-api.md`](dictionary-api.md),
-Code layout). Nothing calls `console`, and nothing logs a learner's email, a code, a token, or a
-link: only what happened, as SERP's
+`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
+`src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
+stopping cleanly on SIGTERM come from `packages/node-service`, as in the dictionary service
+([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and nothing logs a
+learner's email, a code, a token, or a link: only what happened, as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says for email.
 
@@ -403,7 +386,8 @@ The service owns one Postgres 18 database per environment, and only it connects 
 are in `src/db/schema.ts`:
 
 - `users`: the account (Better Auth's random ID, its name and email, unique whatever its case,
-  whether the email is verified, the username, unique, and the profile's version);
+  whether the email is verified, the username, unique, the language it was made with, `en`, `ja`,
+  or none, and the profile's version);
 - `user_identities`: each way an account signs in;
 - `sessions`: what an app or the website holds, and which app (`client_id`);
 - `verifications`: the codes, encrypted, and the sign-in nonces;
@@ -505,7 +489,8 @@ checks each route's scope, `src/http/sync-entities.test.ts` sends each documente
 the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
 `src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
 one mutation six times at once: one change goes through, and the mutation applies once. It also
-watches eight videos at once on an account holding 48, which keeps the 50 newest.
+watches eight videos at once on an account holding 48, which keeps the 50 newest. The emails'
+tests, in each language, are in [`account-email.md`](account-email.md), Check it.
 
 ## Ship it
 

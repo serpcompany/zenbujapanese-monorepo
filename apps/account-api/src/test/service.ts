@@ -76,7 +76,7 @@ export async function startService({
     auth,
     accounts: createAccounts(store, cursors(cursorKey(testSecret))),
     deleteAccount: accountDeleter(store, appleRevoker(config.apple, config.publicUrl), {
-      accountDeleted: email => void mailer.send(accountDeletedMessage(email))
+      accountDeleted: (email, language) => void mailer.send(accountDeletedMessage(email, language))
     }),
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
     allowedOrigins: config.trustedOrigins,
