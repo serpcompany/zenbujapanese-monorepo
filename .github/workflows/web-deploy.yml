@@ -6,11 +6,22 @@ on:
     paths:
       - apps/web/**
       - packages/dictionary-core/**
+      - apps/dictionary-api/**
+      - packages/node-service/**
+      - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
+      - language-data/release.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - .node-version
       - .github/workflows/web-deploy.yml
+      - '!apps/dictionary-api/**/*.test.ts'
+      - '!apps/dictionary-api/src/conformance/**'
+      - '!packages/node-service/**/*.test.ts'
+      - '!packages/node-service/src/test/**'
   workflow_dispatch:
 
 concurrency:
@@ -32,6 +43,10 @@ jobs:
     environment:
       name: staging
       url: https://staging.zenbujapanese.com
+    permissions:
+      contents: read
+      actions: read
+      packages: read
     env:
       SITE: staging
       DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
@@ -60,6 +75,14 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Write the dictionary's sitemaps from the environment's service image
+        run: ./scripts/write-dictionary-sitemaps.sh "$SITE"
       - name: Deploy
         run: pnpm deploy:staging 2>&1 | tee deploy.log
       - name: Smoke test
@@ -73,6 +96,10 @@ jobs:
     environment:
       name: production
       url: ${{ vars.WEB_PRODUCTION_URL }}
+    permissions:
+      contents: read
+      actions: read
+      packages: read
     env:
       SITE: production
       DICTIONARY_API_URL: ${{ vars.DICTIONARY_API_URL }}
@@ -101,6 +128,14 @@ jobs:
         run: ./scripts/wait-for-dictionary-service.sh "$SITE"
       - name: Point the site at the dictionary service
         run: ./scripts/use-dictionary-service.sh "$SITE" "$DICTIONARY_API_URL"
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Write the dictionary's sitemaps from the environment's service image
+        run: ./scripts/write-dictionary-sitemaps.sh "$SITE"
       - name: Deploy
         run: pnpm deploy:production 2>&1 | tee deploy.log
         env:

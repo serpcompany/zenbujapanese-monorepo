@@ -32,7 +32,10 @@ so a site running in another worktree is no reason to stop.
   the `preview` address, which is where redirects, headers, and caching behave as deployed. OpenNext
   can't build on Windows; there, build in a Linux container, or check the change on staging after it
   deploys.
-- **Staging**: `https://staging.zenbujapanese.com/` runs `main` after `Web deploy`. The zone's
+- **Staging**: `https://staging.zenbujapanese.com/` runs `main` after `Web deploy`. It asks for a
+  password: any username, and `stagingpassword` (`docs/agents/staging-access.md`). The prompt is
+  the browser's own, which the page tools can't fill, so open the first page with the username
+  and password written into the address before the host. The zone's
   Bot Fight Mode can challenge an automated browser: a challenge page there says nothing about
   the site, so check locally instead.
 
@@ -90,7 +93,8 @@ the responses, with `get_network_request` on the page's document request:
 - a URL without its slash answers 308 to the one with it;
 - a moved page (`apps/web/src/lib/moved-pages.ts`) answers 308 from `apps/web/worker.ts`, before
   Next.js runs;
-- staging and every local build send `X-Robots-Tag: noindex, nofollow`, and production sends none;
+- every local build, and staging to a request without its password, send `X-Robots-Tag: noindex,
+  nofollow`; staging with its password, and production, send none;
 - the document's `cache-control` says how the page was rendered: one rendered for each request
   answers `private, no-cache, no-store`, so a page meant to be static that answers it reads
   something per request.

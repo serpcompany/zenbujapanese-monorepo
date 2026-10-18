@@ -258,6 +258,8 @@ struct ReadingAidSettingsView: View {
       Section {
         Toggle("Show Word Meanings", isOn: $preferences.showsWordMeanings)
           .accessibilityIdentifier("reading-aids.show-word-meanings")
+        Toggle("Show Kanji Meanings", isOn: $preferences.showsKanjiMeanings)
+          .accessibilityIdentifier("reading-aids.show-kanji-meanings")
         Toggle("Show Sentence Translations", isOn: $preferences.showsTranslations)
           .accessibilityIdentifier("reading-aids.show-translations")
         Picker("Translation Language", selection: $preferences.translationLanguage) {
@@ -279,7 +281,7 @@ struct ReadingAidSettingsView: View {
         Text("Meanings and Translations")
       } footer: {
         Text(
-          "Word meanings show a short meaning under each linked word you haven’t marked known. Sentence translations show a natural translation under Player captions and example sentences. YouTube translates the whole video but can split lines differently; Apple translates each line on your device once its Japanese language is downloaded, and also fills lines YouTube leaves out."
+          "Word meanings show a short meaning under each linked word you haven’t marked known. Kanji meanings show a short meaning under each kanji in Search’s Grade panel. Sentence translations show a natural translation under Player captions and example sentences. YouTube translates the whole video but can split lines differently; Apple translates each line on your device once its Japanese language is downloaded, and also fills lines YouTube leaves out."
         )
       }
     }

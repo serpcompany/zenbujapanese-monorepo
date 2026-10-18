@@ -5,12 +5,12 @@ const mapBudget = 120
 const leafBudget = 300
 
 export const knownLongDocs: Readonly<Record<string, number>> = {
-  'apps/ios/docs/product/dictionary.md': 425,
-  'apps/ios/docs/product/index.md': 581,
+  'apps/ios/docs/product/dictionary.md': 410,
+  'apps/ios/docs/product/index.md': 443,
   'apps/ios/docs/product/translate.md': 357,
   'apps/web/docs/product/account.md': 345,
   'apps/web/docs/product/browse.md': 333,
-  'apps/web/docs/product/dictionary.md': 1344,
+  'apps/web/docs/product/dictionary.md': 1343,
   'docs/agents/account-api.md': 941,
   'docs/agents/account-clients.md': 602,
   'docs/agents/api-servers.md': 318,
@@ -18,7 +18,7 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'docs/agents/dictionary-core.md': 604,
   'docs/agents/ios.md': 1358,
   'docs/agents/translate.md': 364,
-  'docs/agents/web.md': 811
+  'docs/agents/web.md': 809
 }
 
 export function wrappedLines(text: string): number {

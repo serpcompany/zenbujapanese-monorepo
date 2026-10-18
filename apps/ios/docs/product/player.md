@@ -37,7 +37,7 @@ dictionary sheet Image Search uses.
   and the comprehension it keeps).
 - Recently watched videos are stored on the device, the 50 most recently watched. While the
   learner is signed in to their Zenbu account, Recent is the same on every device signed in to it
-  ([Zenbu account and sync](index.md#zenbu-account-and-sync)): a video watched on one appears on
+  ([Zenbu account and sync](account-sync.md)): a video watched on one appears on
   the others in its place by when it was watched, with how far the learner got and its
   comprehension, and one removed on one is removed on all. Only this app syncs it; the website
   and other Zenbu apps don't see it. If a saved video can't be read, Recent keeps a copy of what

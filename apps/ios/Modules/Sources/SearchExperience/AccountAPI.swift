@@ -140,6 +140,10 @@ struct AccountAPI: Sendable {
     )
   }
 
+  func profile(accessToken: String) async throws -> SyncedProfile {
+    try decoded(SyncedProfile.self, from: await send("GET", "v1/me", bearer: accessToken))
+  }
+
   func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws {
     let body = Deletion(appleAuthorizationCode: appleAuthorizationCode)
     _ = try await send("DELETE", "v1/me", body: json(body), bearer: accessToken)
