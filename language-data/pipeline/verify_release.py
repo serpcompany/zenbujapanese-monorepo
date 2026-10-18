@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bucket_objects import check_object, file_key, manifest_key, sha256_of
+from bucket_objects import check_object, file_key, manifest_key
+from committed_files import sha256_of
 from object_store import Store
 from pinned_release import check_pinned
 from refusal import Refusal

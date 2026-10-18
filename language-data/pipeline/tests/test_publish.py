@@ -101,7 +101,16 @@ class PublishTests(PublishTestCase):
         self.publish(self.staged())
         staged = self.staged(commit=COMMIT_B)
         manifest = json.loads((staged / "manifest.json").read_text())
-        release_manifest.write_manifest(staged, {**manifest, "core_sha256": "c" * 64})
+        core = {
+            "bundle": {"path": "core.js", "sha256": "c" * 64, "bytes": 1},
+            "source": {
+                "path": "core",
+                "files": 1,
+                "digest": "sha256-of-sha256sum-lines-by-path",
+                "sha256": "d" * 64,
+            },
+        }
+        release_manifest.write_manifest(staged, {**manifest, "core_sha256": "c" * 64, "core": core})
         self.store.puts.clear()
         self.assertFalse(self.publish(staged)["listed"])
         self.assertEqual(self.store.puts, [])

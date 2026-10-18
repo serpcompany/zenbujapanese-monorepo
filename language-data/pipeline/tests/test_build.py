@@ -87,7 +87,24 @@ class BuildTests(ScratchBuildTestCase):
         self.assertEqual(
             manifest["conformance"][0]["sha256"], sha256(self.scratch.plain["data/conf/one.json"])
         )
-        self.assertIsNone(manifest["core_sha256"])
+        core = self.scratch.plain["data/res/Core/core.js"]
+        self.assertEqual(manifest["core_sha256"], sha256(core))
+        source = "".join(
+            f"{sha256(self.scratch.plain[f'packages/core/{name}'])}  {name}\n"
+            for name in ("package.json", "src/index.ts")
+        ).encode()
+        self.assertEqual(
+            manifest["core"],
+            {
+                "bundle": {"path": "data/res/Core/core.js", "sha256": sha256(core), "bytes": 22},
+                "source": {
+                    "path": "packages/core",
+                    "files": 2,
+                    "digest": "sha256-of-sha256sum-lines-by-path",
+                    "sha256": sha256(source),
+                },
+            },
+        )
         self.assertIsNone(manifest["previous_release"])
         self.assertIsNone(manifest["previous_manifest_sha256"])
         self.assertRegex(manifest["git_commit"], r"^[0-9a-f]{40}$")

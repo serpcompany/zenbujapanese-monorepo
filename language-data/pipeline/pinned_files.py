@@ -5,7 +5,7 @@ import json
 import re
 from pathlib import Path
 
-from committed_files import Committed, committed, git
+from committed_files import Committed, committed, git, tree_blobs
 from pinned_release import HOW_TO_PIN, PINNED_FILE
 from refusal import Refusal
 from release_inputs import Inputs
@@ -15,8 +15,7 @@ WILDCARD = re.compile(r"[*?\[]")
 
 
 def tracked(repo: Path, path: str) -> list[str]:
-    listing = git(repo, "ls-tree", "-r", "-z", "--name-only", "--full-tree", "HEAD", "--", path)
-    return [name for name in listing.decode().split("\0") if name]
+    return [name for name, _, _ in tree_blobs(repo, [path], recursive=True)]
 
 
 def committed_digest(repo: Path, head: Committed) -> tuple[str, int]:
@@ -55,7 +54,9 @@ def copied_sources(dockerfile: str, image: str) -> list[str]:
             continue
         for source in [word for word in words if not word.startswith("--")][:-1]:
             if WILDCARD.search(source):
-                raise Refusal(f"{image} copies {source}: a wildcard can't be checked, name the files")
+                raise Refusal(
+                    f"{image} copies {source}: a wildcard can't be checked, name the files"
+                )
             sources.append(source.rstrip("/"))
     return sources
 
