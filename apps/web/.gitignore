@@ -39,3 +39,9 @@ next-env.d.ts
 /.search-d1.building/
 /.dictionary-d1/
 /.dictionary-d1.building/
+
+/public/sitemap-words*.xml
+/public/sitemap-kana.xml
+/public/sitemap-categories.xml
+/public/sitemap-frequency-lists.xml
+/public/sitemap-kanji-lists.xml

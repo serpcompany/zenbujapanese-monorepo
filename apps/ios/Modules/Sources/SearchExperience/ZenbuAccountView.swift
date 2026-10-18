@@ -60,7 +60,7 @@ struct ZenbuAccountView: View {
           Button("Sign Out") { confirmsSignOut = true }
             .accessibilityIdentifier("zenbu-account.sign-out")
         } footer: {
-          Text("Signing out keeps your known words, lists, watch history, translations, notes, and media on this \(ThisDevice.name).")
+          Text("Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this \(ThisDevice.name).")
         }
         Section {
           Button("Delete Account…", role: .destructive) { deletes = true }
@@ -127,7 +127,7 @@ struct ZenbuAccountView: View {
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
+        "Zenbu syncs your name and username, known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
       )
     }
   }

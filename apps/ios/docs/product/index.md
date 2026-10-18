@@ -11,9 +11,7 @@ Macs with Apple silicon and macOS 26, as one app with one App Store record
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
-  from the **Sorted by** row at their top
-  ([Sorting results](dictionary.md#sorting-results),
-  [Filtering results](dictionary.md#filtering-results)).
+  from the **Sorted by** row at their top ([Sorting and filtering results](results.md)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
   ([Image Search](translate.md#image-search)).
@@ -61,7 +59,7 @@ app, Continuity Camera, opening a link from another app).
 
 Every tab and screen is the same on iPhone, iPad, and Mac, except for what this section lists.
 Where these docs say iPhone or phone, the same holds for an iPad or a Mac. Signed in, an iPad or a
-Mac syncs through the Zenbu account like another iPhone ([Zenbu account and sync](#zenbu-account-and-sync)),
+Mac syncs through the Zenbu account like another iPhone ([Zenbu account and sync](account-sync.md)),
 and messages that name the device say iPad or Mac, such as "Everything stays on this Mac."
 
 - **The tabs.** iPhone has its tab bar. iPad shows the tabs at the top, and they open into a
@@ -141,7 +139,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Search on iPad and the Mac.** On iPad the tabs and the title bar stay above the search field
   while you type and beside the results, where the iPhone slides its title away, and there's no
   **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
-  empties it and returns to Recent. On the Mac, Handwriting and Radicals open as a sheet of a
+  empties it and returns to Recent. On the Mac, the input panels open as a sheet of a
   fixed size with a **Done** button, which Escape presses too, since a Mac can't drag a sheet
   away.
   Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and
@@ -203,12 +201,13 @@ Check: the recorded `WordDetailConformanceTests` (each conjugation's headword sp
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
 on-device content and preferences, and signing in to a Zenbu account, which syncs known words,
-lists, Player's watch history, and Translate's bookmarked sentences. Like the other tabs, it has
-a small **Account** title in the bar rather than a large one. It provides:
+lists, Player's watch history, Translate's bookmarked sentences, and the profile's name and
+username. Like the other tabs, it has a small **Account** title in the bar rather than a large one.
+It provides:
 
 - a profile card with the learner's photo, name, and username;
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
-  ([Zenbu account and sync](#zenbu-account-and-sync)), against production's account service in
+  ([Zenbu account and sync](account-sync.md)), against production's account service in
   TestFlight and App Store builds and staging's in Debug builds;
 - the [Media Library](saved-data.md#media-library);
 - Known Words;
@@ -217,9 +216,10 @@ a small **Account** title in the bar rather than a large one. It provides:
   **Translations** screen as the Translate tab;
 - [**Notes Without a Word**](saved-data.md#notes-without-a-word), only while there are any;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
-  meaning under each linked word the learner hasn't marked known); and Sentence Translations,
-  with a translation language (English so far) and who translates Player captions — YouTube, or
-  Apple Translation on the device, which Reading Aids offers to download;
+  meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
+  kanji in Search's Grade panel); and Sentence Translations, with a translation language (English
+  so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
+  Reading Aids offers to download;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
   open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
@@ -248,15 +248,20 @@ The profile card opens Profile, where a learner adds or changes a photo and edit
 username, and email in place. Each field saves when the learner leaves it. A username follows the
 account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, trimmed, and
 lowercased, or empty for none. An email is a single valid address or empty. A username the rule
-refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username
-an earlier version saved stays as it was until it is edited. Without a photo, the card shows the
-name's initials. The profile is stored only on the device, not synced. One this version can't
-read is kept aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
+refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username an
+earlier version saved stays as it was until it is edited. Without a photo, the card shows the name's
+initials. Signed in, name and username sync with the Zenbu account: each sign-in keeps the
+account's, filling its empty ones from the phone ([The profile at sign-in](account-sync.md)). Email
+shows the account's, read-only (Apple's relay address for Hide My Email), the name can't be emptied,
+and a change the account refuses, such as a taken username, goes back and says why. Signed out,
+edits stay on the phone, and the photo always does. One this version can't read is kept aside
+([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
 Check: package `UserProfileTests` (the field rules, the username's from the cases the account
 service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
-reload; an earlier username kept; an unreadable profile), `PlatformAdapterTests` (the photo); UI
-`AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard` (the card, and both fields' errors).
+reload; an earlier username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
+`PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
+(the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
 
 Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
 seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
@@ -283,7 +288,7 @@ for each of the seven optional ones). Downloading an optional pack needs the net
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
 switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
-from Search's **Sorted by** row ([Sorting results](dictionary.md#sorting-results)). A word the first pack doesn't rank
+from Search's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. Several packs can download at
@@ -310,7 +315,7 @@ known, most recent first. A learner can search the list by headword or reading, 
 mark it unknown, or open its word or kanji page in Search. A word whose entry ID changed opens the entry with the
 same headword and reading, and a search for the headword only when there is none.
 Known words are stored on the device, and sync through the Zenbu account while the learner is
-signed in ([Zenbu account and sync](#zenbu-account-and-sync)). If the saved known words
+signed in ([Zenbu account and sync](account-sync.md)). If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
 can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
 can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
@@ -326,7 +331,7 @@ word opens); UI `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownTh
 Lists are the learner's own named groups of dictionary words and kanji, such as "Favorites" or
 "Anime S1 vocab". A new install starts with one list, **Favorites**, which can be renamed or deleted
 like any other; once deleted it is not created again. Signed in, Favorites is one list on every
-device and Zenbu app ([Zenbu account and sync](#zenbu-account-and-sync)). Words and kanji are added
+device and Zenbu app ([Zenbu account and sync](account-sync.md)). Words and kanji are added
 from their page's **•••** menu (see [Dictionary](dictionary.md)).
 
 The Account row shows how many lists there are. Lists shows every list in the learner's order
@@ -359,141 +364,8 @@ Check: package `WordListsTests` (newer, damaged, and unreadable files).
 
 ### Zenbu account and sync
 
-A learner can sign in to their Zenbu account from Account, to keep their known words and lists the
-same on every device and Zenbu app they sign in to (#573), and Player's Recent videos and
-Translate's bookmarked sentences the same on every device running this app
-([Player](player.md#opening-a-video), [Translate](translate.md#translations)). Zenbu works the same signed
-out and offline: everything stays on the phone, and the phone's copy is what the app shows.
-
-Check: package `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
-`AccountSignedOutTests`, `AccountSyncWatchHistoryTests`, and `AccountSyncBookmarkTests`, against a
-stand-in account service; UI `AccountUITests` (offline, the app signed out).
-
-What doesn't sync, and why:
-
-- **Word notes**, which the account service doesn't hold yet (it answers a note `unknown_entity`),
-  keyed by Language Reference ID but for those an earlier version saved that no word took.
-- **Media Library photos**, which need file storage the account service doesn't have.
-- **Translate conversations**, which hold other people's words: only the sentences the learner
-  bookmarks sync, each on its own.
-- **Settings**, such as Reading Aids, which stay with each device.
-- **The profile on Account**, which is this phone's own.
-
-**Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
-Google** (in builds given a Google client ID, which every build is), and an emailed code: the learner enters their
-email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in says why, such as a
-wrong or expired code, or an email whose account signs in with Apple or Google. Sign in with Apple
-asks for the learner's name and email; a new account takes the name Apple shares on the first
-sign-in, which the website's account page shows and lets the learner change. Signed in, the
-Account row shows **Zenbu Account** and the email.
-
-Check: package `AccountProviderSignInTests` (Apple's and Google's sign-in, with only their sheets
-stood in: the nonce, PKCE, the token exchange, the account's answer, and the session; a closed
-sheet; a refused token) and `AccountSignInTests` (emailed codes, tokens, refused sign-ins); UI
-`AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached` and
-`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad,
-with the account service and Apple's sheet stood in, and the session kept in the Keychain across a
-relaunch, which only the app can do: a package test process has no keychain access group). A real Apple or Google sign-in is by hand ([Account manual checks](../../../../docs/agents/ios.md#account-manual-checks)).
-
-**The first sync.** When this phone signs in to an account other than the one it last signed out
-of, the app sends the account everything on the phone: every known word, every list, every list's
-words, Recent's videos, and bookmarked sentences, then brings down everything the account already
-has. A phone that signed in before the app synced watch history or bookmarks sends them once, after
-updating. The same Apple ID, Google account, or email reaches the same
-account in every app.
-
-Check: package `AccountSyncTests` and `AccountSignedOutTests` (the first sync, and catching up on
-watch history and bookmarks).
-
-**Favorites is one list.** Every device's and app's Favorites is the same list in the account, so
-signing in on a second phone puts that phone's Favorites words into the account's Favorites, under
-its name and place, rather than making a second Favorites. An install that already had Favorites
-before it could sign in joins it the same way, if its oldest list is still named Favorites. If
-Favorites was deleted in the account, a phone signing in keeps its own Favorites, with its words,
-as a new list.
-
-Check: package `AccountSignedOutTests`.
-
-**When it syncs.** After each change to a known word, a list, Recent, or a bookmark, when the app opens or returns to
-the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
-the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
-changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
-again a few times, waiting longer each time, only while the app is open.
-
-Check: package `AccountSyncTests` and `AccountSyncRecoveryTests`.
-
-**When the same thing changed elsewhere.** Each kind of change follows the account's rule
-([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), The rules):
-
-- A known word marked or un-marked on another device first shows as it is there, for the learner
-  to change again: an un-mark made before this phone saw a newer mark shows the word Known again.
-- A list renamed or moved elsewhere first keeps the other name or place.
-- A list deleted anywhere is deleted here with its words, whatever was done to it since. The one
-  exception is Favorites on a phone signing in to an account whose Favorites was deleted before
-  (above).
-- A word added to a list elsewhere stays, even if this phone removed it without seeing that add.
-- A change the account can never take, such as a word added to a list deleted elsewhere, is undone
-  on the phone.
-- A video watched on two devices keeps the place from the device that watched it last, by each
-  device's clock, even when the other syncs later. A
-  video removed from Recent on one device is removed everywhere, even if another device, which
-  hadn't heard of the removal, updated its place since; watching it again brings it back.
-- The account keeps the 50 most recently watched videos, as Recent does; a video watched on
-  another device that pushes one past 50 removes it here too.
-- A sentence un-bookmarked on one device is un-bookmarked everywhere, unless another device
-  bookmarked it again since without this one hearing; then it stays bookmarked. The account holds
-  at most 2,000 bookmarks; past that, a new bookmark is taken back off, and bookmarks a first sync
-  can't fit stay on the phone without syncing.
-
-Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`, and
-`AccountSyncBookmarkTests`.
-
-**Zenbu Account** shows the email, when the last sync was (or that one is running), how many
-changes are waiting, and a note when the last sync failed, with **Sync Now**, **Sign Out**, and
-**Delete Account…**. If the bookmarks synced from other devices can't be read at launch, such as
-before the device's first unlock, nothing syncs until Zenbu is reopened, so none are lost, and
-Zenbu Account says so; if a newer version of Zenbu saved them, nothing syncs until Zenbu is
-updated, and Zenbu Account says to update it.
-
-Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncBookmarkTests`
-(the unreadable and newer bookmarks messages); UI
-`AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad:
-the email, Sync Now, and the last sync).
-
-**Signing out** asks first, then forgets the sign-in on this phone and keeps everything: known
-words, lists, Recent, Translations, notes, and media stay, and every feature works. Changes made while signed out, such
-as an un-marked word, a deleted list, a removed word, or a rename, are kept in order (each word,
-list word, and list as just its latest change), and go to the account when the learner signs in to
-the same account again, by the account's rules: a change made elsewhere first wins. Signing in to a different account instead sends that account everything on the phone, as
-a first sync does. If the account ends the session itself, such as after the account is deleted
-from another app, the app signs out the same way, and the Account row says so.
-
-Check: package `AccountSignedOutTests` and `AccountSignInTests` (a session the service ended); UI
-`AccountSignedInUITests.testSigningOutAsksFirstAndKeepsTheLearnersWords` (iPhone and iPad).
-
-### Deleting the account
-
-A signed-in learner can delete their Zenbu account from **Zenbu Account → Delete Account…**
-(#574, App Review guideline 5.1.1(v)):
-
-- The sheet says what goes (the account, its ways to sign in, and everything it synced, on every
-  device and app) and that this phone keeps its data. **Delete Account…** asks to confirm.
-- The learner signs in again: with **Sign in with Apple** if the account uses Apple, otherwise with
-  Google or an emailed code to the account's email. Signing in to a different account deletes
-  nothing. A development build (Zenbu Dev) can't sign in with Apple, so for an account that uses
-  Apple it says to delete it from the App Store or TestFlight app.
-- The account and everything it synced are then deleted through the account service
-  ([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), Deleting the
-  account). If Apple refuses or doesn't answer, nothing is deleted, and the learner signs in with
-  Apple again to try again.
-- Afterwards the app is signed out and keeps everything on the phone: Known Words, lists,
-  Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
-  everything on the phone, as a first sync does.
-
-Check: package `AccountSyncTests` and `AccountSyncRecoveryTests` (signing in again, a refused or
-lost deletion, and the phone keeping its data) and `AccountSignedOutTests` (starting over); UI
-`AccountSignedInUITests.testDeletingTheAccountSignsInAgainThenLeavesTheAppSignedOut` (iPhone and
-iPad).
+Signing in to a Zenbu account, what syncs and what doesn't, and deleting the account are in
+[Zenbu account and sync](account-sync.md).
 
 ## Required, not built yet (#563)
 
@@ -504,7 +376,7 @@ it moves into its section above in the same PR.
 
 Decided on 2026-10-06 ([#563](https://github.com/serpcompany/zenbujapanese-monorepo/issues/563),
 decision 4). This app's side is built: it syncs Known marks through the account, and takes a mark
-made in another app, as [Zenbu account and sync](#zenbu-account-and-sync) says. Once a learner is
+made in another app, as [Zenbu account and sync](account-sync.md) says. Once a learner is
 signed in to the same Zenbu account in this app and in Tomodachi:
 
 - The first time a word reaches Tomo's "knows it" stage, Tomodachi marks it Known. After the app
