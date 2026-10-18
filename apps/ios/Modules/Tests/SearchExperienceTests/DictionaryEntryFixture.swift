@@ -7,7 +7,6 @@ extension DictionaryEntry {
     let record = LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: id),
-      noteID: WordNoteID(rawValue: id),
       sourceRecord: record,
       sourceProvenances: [record],
       reading: reading ?? headword,

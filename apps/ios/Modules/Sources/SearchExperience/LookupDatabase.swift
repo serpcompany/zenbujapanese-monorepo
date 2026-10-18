@@ -173,26 +173,25 @@ extension LanguageReferenceData {
   }
 
   func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
-    let meanings: [String] = try Self.decode(column: 7, statement: statement)
-    let partsOfSpeech: [PartOfSpeech] = try Self.decode(column: 8, statement: statement)
-    let writtenForms: [DictionaryForm] = try Self.decode(column: 9, statement: statement)
-    let readingForms: [DictionaryForm] = try Self.decode(column: 10, statement: statement)
-    let senses: [DictionarySense] = try Self.decode(column: 11, statement: statement)
-    let relationships: [DictionaryRelationship] = try Self.decode(column: 12, statement: statement)
-    let pitch: PitchAccent? = try Self.decodeIfPresent(column: 13, statement: statement)
-    let compoundPitch: PitchAccent? = try Self.decodeIfPresent(column: 16, statement: statement)
+    let meanings: [String] = try Self.decode(column: 6, statement: statement)
+    let partsOfSpeech: [PartOfSpeech] = try Self.decode(column: 7, statement: statement)
+    let writtenForms: [DictionaryForm] = try Self.decode(column: 8, statement: statement)
+    let readingForms: [DictionaryForm] = try Self.decode(column: 9, statement: statement)
+    let senses: [DictionarySense] = try Self.decode(column: 10, statement: statement)
+    let relationships: [DictionaryRelationship] = try Self.decode(column: 11, statement: statement)
+    let pitch: PitchAccent? = try Self.decodeIfPresent(column: 12, statement: statement)
+    let compoundPitch: PitchAccent? = try Self.decodeIfPresent(column: 15, statement: statement)
     let record = LanguageReferenceProvenance(
-      sourceIdentity: sqliteText(statement, 2),
-      sourceRecordID: sqliteText(statement, 3)
+      sourceIdentity: sqliteText(statement, 1),
+      sourceRecordID: sqliteText(statement, 2)
     )
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: sqliteText(statement, 0)),
-      noteID: WordNoteID(rawValue: sqliteText(statement, 1)),
       sourceRecord: record,
       sourceProvenances: [record],
-      reading: sqliteText(statement, 5),
-      headword: sqliteText(statement, 4),
-      summary: sqliteText(statement, 6),
+      reading: sqliteText(statement, 4),
+      headword: sqliteText(statement, 3),
+      summary: sqliteText(statement, 5),
       meanings: meanings,
       partsOfSpeech: partsOfSpeech,
       writtenForms: writtenForms,
@@ -201,8 +200,32 @@ extension LanguageReferenceData {
       relationships: relationships,
       pitch: pitch,
       compoundPitch: compoundPitch,
-      isCommon: sqlite3_column_int(statement, 14) == 1
+      isCommon: sqlite3_column_int(statement, 13) == 1
     )
+  }
+
+  func words(named noteIdentities: [String]) throws -> [String: SavedWordLabel] {
+    guard !noteIdentities.isEmpty else { return [:] }
+    let statement = try openStatements().statement(Self.noteIdentitiesSQL)
+    defer { sqlite3_reset(statement) }
+    let listed = String(decoding: try JSONEncoder().encode(noteIdentities), as: UTF8.self)
+    sqliteBind(listed, at: 1, to: statement)
+    var named: [String: String] = [:]
+    while try checkedSQLiteStep(statement) == .row {
+      named[sqliteText(statement, 0)] = sqliteText(statement, 1)
+    }
+    let shown = try shownWords(Array(Set(named.values)))
+    return named.compactMapValues { shown[$0] }
+  }
+
+  func shownWords(_ ids: [String]) throws -> [String: SavedWordLabel] {
+    let shown = try entries(equivalentTo: ids.map(LanguageReferenceID.init(rawValue:)))
+    var words: [String: SavedWordLabel] = [:]
+    for (id, entry) in shown {
+      words[id.rawValue] = SavedWordLabel(
+        id: SavedItem.word(entry).id, headword: entry.headword, reading: entry.reading)
+    }
+    return words
   }
 
   static func decode<Value: Decodable>(column: Int32, statement: OpaquePointer) throws
@@ -221,7 +244,7 @@ extension LanguageReferenceData {
   private static let decoder = JSONDecoder()
 
   static let selectedColumns = """
-    lower(hex(e.id)), e.note_identity, e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
+    lower(hex(e.id)), e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,
     e.senses_json, e.relationships_json, e.pitch_accent_json,
     e.is_common, lower(hex(e.semantic_fingerprint)),
@@ -233,6 +256,12 @@ extension LanguageReferenceData {
     FROM json_each(?) listed
     JOIN entries named ON named.id = unhex(listed.value)
     JOIN entries e ON e.semantic_fingerprint = named.semantic_fingerprint
+    """
+
+  private static let noteIdentitiesSQL = """
+    SELECT e.note_identity, lower(hex(e.id))
+    FROM json_each(?) listed
+    JOIN entries e ON e.note_identity = listed.value
     """
 }
 

@@ -79,7 +79,16 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
 3. Name the new records in `language-data/sources/README.md` and, for EDRDG's files,
    `EDRDG-ATTRIBUTION.md`, which ships in the language-data release. For a new JMdict, also update
    the evidence counts in `jmdict_entries.py` to the new export's.
-4. Rebuild everything, re-record the suites, and list in the pull request what changed for
+4. For a new JMdict, keep every existing entry's `note_identity`: the app moves the notes earlier
+   versions saved under it to their word (`docs/agents/ios-local-stores.md`), and
+   `test_note_identity_contract.py` fails on any changed value. The importer computes it from the
+   entry today, so it first has to write each entry the previous database has with that
+   database's value. Pin the test again once, after `ATTACH '<previous>.sqlite3' AS old`,
+   `SELECT count(*) FROM old.entries o JOIN entries e USING (id) WHERE e.note_identity <>
+   o.note_identity` answers 0, and list in the pull request the entries the new JMdict drops
+   (`SELECT o.id FROM old.entries o LEFT JOIN entries e USING (id) WHERE e.id IS NULL`), whose
+   notes go to Notes Without a Word.
+5. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
 ## Provenance
@@ -109,7 +118,9 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
 - `jmdict_normalization.py`: every JMdict part-of-speech entity code maps to stable app-owned
   category identifiers; the wording belongs to the app's part-of-speech formatter, so stored
   identifiers never carry display text. The retired description-substring labels are reproduced
-  only for durable-note identity, since saved notes are keyed by it; nothing displays them.
+  only for the note identity, which keyed notes and photos before Language Reference IDs did; the
+  app reads it to move those to their word (`docs/agents/ios-local-stores.md`), and nothing
+  displays them.
   Cross-references keep JMdict's form, optional reading, and optional target sense. A Language
   Reference ID is the SHA-256 of the source identity and record ID, so a provider's key is never
   exposed, and a note identity hashes an app-owned semantic signature, never provider coordinates.

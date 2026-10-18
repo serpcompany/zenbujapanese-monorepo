@@ -21,7 +21,8 @@ final class SavedKanjiTests {
     #expect(sai.storedID == "kanji:最")
     #expect(SavedItem.kanji(storedID: sai.storedID) == KanjiCharacter("最"))
     #expect(SavedItem.kanji(storedID: taberu.rawValue) == nil)
-    #expect(sai.noteID.rawValue == sai.storedID)
+    #expect(sai.id.rawValue == sai.storedID)
+    #expect(!sai.id.isNoteIdentity)
   }
 
   @Test("a known kanji survives a reload and stays apart from words")

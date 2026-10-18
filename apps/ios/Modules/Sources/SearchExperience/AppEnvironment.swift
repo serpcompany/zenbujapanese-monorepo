@@ -6,6 +6,7 @@ extension View {
       .environment(profile)
       .environment(WordKnowledge.shared)
       .environment(WordLists.shared)
+      .environment(NotesWithoutAWord.shared)
       .environment(ZenbuAccount.shared)
       .modifier(ExampleRowsOnScreen(readingAids: readingAids))
   }
