@@ -19,8 +19,8 @@ command from `apps/web`.
   for any other segment. There is no `src/app/layout.tsx`. A page reads its language with
   `await localeOf(params)` and passes `locale` to every component that writes text or links.
 - **Bare URLs are rewritten to `/en/…`** by the `afterFiles` rewrites in `src/lib/i18n/routing.ts`,
-  after the dictionary sitemaps' own rewrites, so the files, `robots.txt`, and the sitemaps never
-  reach them. The first segment's lookahead leaves `/ja`, `/en`, `/api`, and `/_next` alone.
+  which Next.js applies after its files and routes, so the files (the dictionary's sitemaps among
+  them), `robots.txt`, and the sitemaps never reach them. The first segment's lookahead leaves `/ja`, `/en`, `/api`, and `/_next` alone.
 - **`/en/…` redirects to the bare path** (`defaultLocaleRedirects`, first in `next.config.ts`'s
   redirects). Next.js adds a missing slash before it reads them, so `/en/about` would take two hops
   there; `worker.ts` answers every `/en` path in one 308 before Next.js runs
@@ -89,9 +89,8 @@ No keyword volumes are measured yet.
 - `localizedSitemapEntries(path, origin)`: a page's URL in each language, each with the same
   `xhtml:link` alternates. The pages, browse, and word sitemaps all use it. A word sitemap holds
   `wordsPerSitemap` (25,000) words, so each of the service's 50,000-word files becomes two
-  (`wordSitemapFiles` in `src/lib/dictionary/sitemaps.ts`). The edge cache keys a dictionary
-  sitemap by the dictionary build and the languages, so the deploy that added Japanese didn't
-  serve the old English-only files for their hour.
+  (`wordSitemapFiles` in `src/lib/dictionary/sitemaps.ts`, which `pnpm sitemaps` writes at each
+  deploy, ADR 0016). The tools sitemap lists each tools page in both languages too.
 - The header marks the current section from the public path: on the server, a page reads the
   rewritten `/en/…`, so `isCurrentSection` and `isCurrentPage` (`src/lib/site-menus.ts`) drop the
   prefix first, and the server's HTML and the browser's agree.
