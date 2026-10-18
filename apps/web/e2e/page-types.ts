@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test'
 import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
 import { siteMenus } from '../src/lib/site-menus'
+import { toolPages } from '../src/lib/tools/converters'
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
 import { accountPages, expect, menuButton, needed, phoneMenu, sourcesToggle, test } from './test'
 
@@ -88,6 +89,7 @@ export const missingPage: PageType = { name: 'Page not found', path: '/no-such-p
 export const pageTypes: PageType[] = [
   ...sitePages.map(({ title, path }) => ({ name: title, path, views: viewsOf[path] })),
   ...accountPages.map(({ title, path }) => ({ name: title, path })),
+  ...toolPages.map(({ title, path }) => ({ name: title, path })),
   { name: 'Search', path: '/dictionary/search/' },
   { name: 'Search results', path: '/dictionary/search/iru/' },
   {

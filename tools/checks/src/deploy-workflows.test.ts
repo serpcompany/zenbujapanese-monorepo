@@ -63,6 +63,35 @@ describe('the deploy workflows', () => {
   })
 })
 
+describe('Web deploy', () => {
+  const pushPaths = (name: string) =>
+    (readWorkflow(`.github/workflows/${name}.yml`).on.push as { paths: string[] }).paths
+
+  test("runs on every push that changes the dictionary service's image, whose sitemaps it writes", () => {
+    const site = pushPaths('web-deploy')
+    const image = pushPaths('dictionary-api-deploy').filter(
+      path => !path.startsWith('!') && path !== '.github/workflows/dictionary-api-deploy.yml'
+    )
+    const covered = (path: string) =>
+      site.some(
+        sitePath =>
+          sitePath === path || (sitePath.endsWith('/**') && path.startsWith(sitePath.slice(0, -2)))
+      )
+    expect(image.filter(path => !covered(path))).toEqual([])
+  })
+
+  test("skips a push that changes only the service's tests, as the service's deploy does", () => {
+    expect(pushPaths('web-deploy')).toEqual(
+      expect.arrayContaining([
+        '!apps/dictionary-api/**/*.test.ts',
+        '!apps/dictionary-api/src/conformance/**',
+        '!packages/node-service/**/*.test.ts',
+        '!packages/node-service/src/test/**'
+      ])
+    )
+  })
+})
+
 describe('the latest-run action', () => {
   const action = parse(readRepositoryFile('.github/actions/latest-run/action.yml'))
   const script = { run: readRepositoryFile('.github/actions/latest-run/latest-run.cjs') }

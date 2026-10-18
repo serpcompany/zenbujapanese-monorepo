@@ -75,7 +75,7 @@ class ZenbuUITestCase: XCTestCase {
       : app.alerts.firstMatch
   }
 
-  func text(of element: XCUIElement) -> String {
+  func text(of element: some XCUIElementAttributes) -> String {
     let label = element.label
     guard label.isEmpty, device == .mac else { return label }
     return element.value as? String ?? element.title

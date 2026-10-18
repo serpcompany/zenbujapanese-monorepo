@@ -6,7 +6,7 @@
       "entry": [".github/actions/*/*.cjs"]
     },
     "apps/web": {
-      "entry": ["open-next.config.ts", "e2e/**/*.ts"]
+      "entry": ["open-next.config.ts", "e2e/**/*.ts", "scripts/*.ts"]
     },
     "apps/dictionary-api": {
       "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs}"]

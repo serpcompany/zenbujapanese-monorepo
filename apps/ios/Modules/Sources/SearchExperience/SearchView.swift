@@ -8,6 +8,7 @@ struct SearchView: View {
   let handwritingRecognitionClient: HandwritingRecognitionClient
   let kanjiLookupClient: KanjiLookupClient
   let radicalLookupClient: RadicalLookupClient
+  let schoolKanjiClient: SchoolKanjiClient
   let exampleSentenceClient: ExampleSentenceClient
   let focusRequest: Int
   let openNote: (NotesInSearch.Row) -> Void
@@ -20,7 +21,7 @@ struct SearchView: View {
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
   @State private var inputMode = SearchInputMode.inactive
-  @State private var radicalQuery: SearchQuery?
+  @State private var pickedKanjiQuery: SearchQuery?
   @State private var isConfirmingClearAll = false
   @State private var recentSearchRefreshID = 0
   @State private var recentSearches: [SearchQuery] = []
@@ -125,7 +126,7 @@ struct SearchView: View {
         SearchResultsView(
           results: results,
           first: shown,
-          fromRadicals: radicalQuery == searchQuery,
+          fromRadicals: pickedKanjiQuery == searchQuery,
           notes: shownNotes?.notes,
           selectRefinement: selectRefinement,
           openNote: openNote
@@ -184,24 +185,30 @@ struct SearchView: View {
 
   private var inputPanelPresentation: Binding<Bool> {
     Binding(
-      get: { inputMode == .handwriting || inputMode == .radicals },
+      get: { inputMode.opensPanel },
       set: { presented in
-        if !presented, inputMode == .handwriting || inputMode == .radicals {
-          inputMode = .inactive
-        }
+        if !presented, inputMode.opensPanel { inputMode = .inactive }
       })
   }
 
   @ViewBuilder
   private var inputPanelContent: some View {
-    if inputPanelMode == .radicals {
+    switch inputPanelMode {
+    case .radicals:
       RadicalInputView(
         query: $query,
         mode: inputModeScope,
         lookupClient: radicalLookupClient,
-        submit: submitRadicalQuery
+        submit: submitPickedKanji
       )
-    } else {
+    case .grade:
+      GradeInputView(
+        query: $query,
+        mode: inputModeScope,
+        schoolKanjiClient: schoolKanjiClient,
+        submit: submitPickedKanji
+      )
+    default:
       HandwritingInputView(
         query: $query,
         mode: inputModeScope,
@@ -251,7 +258,7 @@ struct SearchView: View {
               ?? ResultsLearner.noFilter,
             known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
               .map(\.rawValue),
-            fromRadicals: radicalQuery == taskQuery),
+            fromRadicals: pickedKanjiQuery == taskQuery),
           lists: FrequencyLists.live.version)
         try Task.checkCancellation()
         let screen = try await request.screen()
@@ -336,8 +343,8 @@ struct SearchView: View {
   }
 
   private func selectInputMode(_ mode: SearchInputMode) {
-    radicalQuery = nil
-    if mode == .handwriting || mode == .radicals { inputPanelMode = mode }
+    pickedKanjiQuery = nil
+    if mode.opensPanel { inputPanelMode = mode }
     inputMode = mode
     isSearchFocused = mode == .keyboard
   }
@@ -346,16 +353,16 @@ struct SearchView: View {
     completeSubmission(submittedQuery)
   }
 
-  private func submitRadicalQuery(_ submittedQuery: SearchQuery) {
-    completeSubmission(submittedQuery, fromRadicals: true)
+  private func submitPickedKanji(_ submittedQuery: SearchQuery) {
+    completeSubmission(submittedQuery, pickedKanji: true)
   }
 
   private func submitTypedQuery() {
     completeSubmission(SearchQuery(query))
   }
 
-  private func completeSubmission(_ submittedQuery: SearchQuery, fromRadicals: Bool = false) {
-    radicalQuery = fromRadicals ? submittedQuery : nil
+  private func completeSubmission(_ submittedQuery: SearchQuery, pickedKanji: Bool = false) {
+    pickedKanjiQuery = pickedKanji ? submittedQuery : nil
     query = submittedQuery.value
     recordRecentSearch(submittedQuery)
     showResultsInField()

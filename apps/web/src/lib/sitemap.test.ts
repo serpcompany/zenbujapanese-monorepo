@@ -2,9 +2,10 @@ import { describe, expect, it, test } from 'vitest'
 import { routeAsNextMatches } from '@/test/next-routes'
 import {
   browseSitemapPath,
-  dictionarySitemapFiles,
+  isDictionarySitemapFile,
   movedDictionarySitemaps,
-  wordSitemapPath
+  wordSitemapPath,
+  writtenDictionarySitemaps
 } from './dictionary/sitemap-files'
 import { childSitemaps, movedSitemaps, sitemapIndexXml, urlSetXml } from './sitemap'
 
@@ -13,7 +14,7 @@ const moved = [...movedSitemaps, ...movedDictionarySitemaps]
 describe('sitemaps', () => {
   it('lists child sitemaps as absolute URLs on the origin it is given', () => {
     expect(sitemapIndexXml(childSitemaps, 'https://staging.zenbujapanese.com')).toBe(
-      '<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>https://staging.zenbujapanese.com/sitemap-pages.xml</loc></sitemap></sitemapindex>'
+      '<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><sitemap><loc>https://staging.zenbujapanese.com/sitemap-pages.xml</loc></sitemap><sitemap><loc>https://staging.zenbujapanese.com/sitemap-tools.xml</loc></sitemap></sitemapindex>'
     )
   })
 
@@ -33,9 +34,7 @@ describe('sitemap files sit at the root, named for their group', () => {
     [12, '/sitemap-words-12.xml']
   ])('word sitemap %i is %s', (number, path) => {
     expect(wordSitemapPath(number)).toBe(path)
-    expect(routeAsNextMatches(dictionarySitemapFiles, path)).toBe(
-      `/sitemaps/dictionary/${number}.xml`
-    )
+    expect(isDictionarySitemapFile(path.slice(1))).toBe(true)
   })
 
   test.each([
@@ -45,7 +44,7 @@ describe('sitemap files sit at the root, named for their group', () => {
     ['kanji-lists', '/sitemap-kanji-lists.xml']
   ] as const)('the %s browse sitemap is %s', (group, path) => {
     expect(browseSitemapPath(group)).toBe(path)
-    expect(routeAsNextMatches(dictionarySitemapFiles, path)).toBe(`/sitemaps/browse/${group}.xml`)
+    expect(isDictionarySitemapFile(path.slice(1))).toBe(true)
   })
 
   test.each([
@@ -56,7 +55,28 @@ describe('sitemap files sit at the root, named for their group', () => {
     '/sitemap-words-x.xml',
     '/sitemap-pages.xml'
   ])('%s is no dictionary sitemap', path => {
-    expect(routeAsNextMatches(dictionarySitemapFiles, path)).toBeNull()
+    expect(isDictionarySitemapFile(path.slice(1))).toBe(false)
+  })
+
+  test('the index lists the written word sitemaps in order, then the browse sitemaps', () => {
+    const written = [
+      'favicon.ico',
+      'sitemap-kanji-lists.xml',
+      'sitemap-words-10.xml',
+      'sitemap-words-2.xml',
+      'sitemap-kana.xml',
+      'sitemap-words.xml',
+      'sitemap-words-1.xml',
+      'sitemap-pages.xml'
+    ]
+    expect(writtenDictionarySitemaps(written)).toEqual([
+      '/sitemap-words.xml',
+      '/sitemap-words-2.xml',
+      '/sitemap-words-10.xml',
+      '/sitemap-kana.xml',
+      '/sitemap-kanji-lists.xml'
+    ])
+    expect(writtenDictionarySitemaps(['favicon.ico', 'site.webmanifest'])).toEqual([])
   })
 
   test.each([

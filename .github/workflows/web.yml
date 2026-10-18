@@ -47,7 +47,8 @@ jobs:
         working-directory: apps/web
         run: >-
           docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:v0.11.0 --severity=warning
-          scripts/smoke.sh scripts/use-dictionary-service.sh scripts/wait-for-dictionary-service.sh
+          scripts/smoke.sh scripts/smoke-indexing.sh scripts/use-dictionary-service.sh
+          scripts/wait-for-dictionary-service.sh
       - name: cloudflare-env.d.ts matches wrangler.jsonc
         working-directory: apps/web
         run: |

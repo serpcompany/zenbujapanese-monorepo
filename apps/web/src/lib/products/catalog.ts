@@ -162,9 +162,10 @@ export const products: readonly Product[] = [
     id: 'converters',
     type: 'free-tools',
     title: 'Converters',
-    description: 'Switch between hiragana, katakana, romaji, and furigana.',
+    description: 'Switch between hiragana, katakana, and romaji, and fix half-width text.',
     mark: { symbol: 'swap' },
-    facts: [web]
+    facts: [web],
+    href: linkTo('tools').href
   },
   {
     id: 'kana-chart-pdf',
