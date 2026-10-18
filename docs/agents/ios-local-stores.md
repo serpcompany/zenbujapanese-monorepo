@@ -107,5 +107,5 @@ database every entry has the value it had in 1.0.1's, which 1.0.0 shares, and in
 `import_jmdict.py` still computes the hash from each entry, so a JMdict refresh that edits a word
 would give it a new one; `test_note_identity_contract.py` pins every entry's ID and hash, and fails
 such a rebuild until the importer writes each existing entry's value from the previous database
-([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), Refresh a source snapshot).
+([`language-data/tools/README.md`](../../language-data/tools/README.md), Refresh a source snapshot).
 `EarlierWordKeysTests` reads the bundled database, so it fails without the column.

@@ -406,7 +406,7 @@ search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
-The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/Conformance/`)
+The service's own tests replay the app-recorded suites (`language-data/conformance/`)
 through the core on the real artifact: search retrieval, search results, example search, word
 detail, and kanji detail, every example field included (see
 [`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service

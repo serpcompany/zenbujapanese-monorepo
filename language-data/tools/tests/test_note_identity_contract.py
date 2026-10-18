@@ -12,7 +12,7 @@ KEEP_THEM = (
     "Every entry keeps the note_identity that 1.0.0 to 2.0.0 saved notes and photos under: the app "
     "reads it to move those to the word's Language Reference ID, and a learner can update from any "
     "of them. A rebuild writes each existing entry's note_identity from the previous database "
-    "(apps/ios/Tools/README.md, Refresh a source snapshot) and is pinned again here only once "
+    "(language-data/tools/README.md, Refresh a source snapshot) and is pinned again here only once "
     "every earlier entry's value is unchanged."
 )
 
