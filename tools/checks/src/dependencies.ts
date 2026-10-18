@@ -61,12 +61,14 @@ const webTestCode = '(\\.test\\.tsx?$|^e2e/|^src/test/)'
 const nextRouteFiles =
   '^src/app/(|.*/)(page|layout|route|not-found|global-not-found|error|global-error|loading|template|default|sitemap|robots|manifest|icon|opengraph-image)\\.tsx?$'
 
+const webScripts = '^scripts/[^/]+\\.ts$'
+
 const web: Part = {
   folder: 'apps/web',
-  sources: ['src', 'worker.ts', 'e2e'],
+  sources: ['src', 'worker.ts', 'e2e', 'scripts'],
   testCode: webTestCode,
   rules: [
-    reachableFrom([nextRouteFiles, '^worker\\.ts$'], webTestCode),
+    reachableFrom([nextRouteFiles, '^worker\\.ts$', webScripts], webTestCode),
     runtimeImportsNoDevDependency('^(src/|worker\\.ts$)', webTestCode),
     coreByName,
     neverImports(
@@ -91,10 +93,14 @@ const web: Part = {
       name: 'only-data-reads-the-service',
       severity: 'error',
       comment:
-        'Pages read the dictionary service only through src/lib/dictionary/data.ts; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead.',
+        'Pages read the dictionary service only through src/lib/dictionary/data.ts; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, and scripts/write-sitemaps.ts, which writes the sitemaps at deploy, call the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead.',
       from: {
-        path: '^(src/|worker\\.ts$)',
-        pathNot: ['^src/lib/dictionary/(data|retired)\\.ts$', webTestCode]
+        path: '^(src/|worker\\.ts$|scripts/)',
+        pathNot: [
+          '^src/lib/dictionary/(data|retired)\\.ts$',
+          '^scripts/write-sitemaps\\.ts$',
+          webTestCode
+        ]
       },
       to: { path: '^src/lib/dictionary/api\\.ts$' }
     },

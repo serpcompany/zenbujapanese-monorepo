@@ -10,6 +10,7 @@ import { coreText } from '../../i18n/core-text'
 import { getDictionary } from '../../i18n/dictionary'
 import { fill } from '../../i18n/format'
 import { legalPaths, pageFor, type SitePath } from '../../pages'
+import { converterPagesIn, toolsIndexIn } from '../../tools/tool-pages'
 import { categoryName } from './category-names'
 import { kanjiListHeading, kanjiListName } from './copy'
 import {
@@ -46,6 +47,18 @@ export function homeTreeIn(locale: Locale): TreeNode {
       { ...page('/legal/'), children: legalPaths.map(page) },
       page('/sitemap/')
     ]
+  }
+}
+
+export function toolsTreeIn(locale: Locale): TreeNode {
+  const index = toolsIndexIn(locale)
+  return {
+    title: index.title,
+    path: index.path,
+    children: converterPagesIn(locale).map(converter => ({
+      title: converter.name,
+      path: converter.path
+    }))
   }
 }
 

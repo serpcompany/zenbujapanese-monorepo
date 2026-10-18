@@ -27,12 +27,16 @@ photos) still open a prompt to get the app (#468).
   and of kanji, linking to the word and search pages.
 - **Products**, `/products/`: a catalog of the apps, free tools, guides, and courses, with search
   and type filters, and the iPhone app's page, `/products/zenbu-japanese-app/`.
+- **Tools**, `/tools/`: the free tools, and six converters that run in the browser, each at
+  `/tools/<name>/`: hiragana and katakana, romaji and kana, and half-width and full-width
+  ([Tools pages](tools.md)).
 
 The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
 Example Sentences pages that came before it redirect to the nearest of them. The shared header and
 footer, and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page, [Browse pages](browse.md)
-the browse pages, and [Products pages](products.md) the catalog and the product page.
+the browse pages, [Products pages](products.md) the catalog and the product page, and
+[Tools pages](tools.md) the tools index and the converters.
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
 learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
@@ -52,7 +56,8 @@ support page says about Tomodachi.
 Production is `zenbujapanese.com` and staging is `staging.zenbujapanese.com`. Another host that
 serves the site, `www.zenbujapanese.com` or a Worker's workers.dev address, redirects (308) to the
 same page on its environment's host in one hop: with the page's trailing slash whether or not the
-request had it, and at a moved page's new address.
+request had it, and at a moved page's new address. Static files, the dictionary's sitemaps among
+them, answer on every host, since they never reach the Worker; their URLs name the canonical host.
 
 - Source: SERP's
   [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md)

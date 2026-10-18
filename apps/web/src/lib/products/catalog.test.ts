@@ -78,7 +78,6 @@ test('the iPhone app’s page is a site page, and the menus, footer, and catalog
 test('a product without a page of its own is coming soon, and the others link to the site', () => {
   expect(products.filter(product => !product.href).map(product => product.id)).toEqual([
     'browser-extension',
-    'converters',
     'kana-chart-pdf',
     'verb-conjugations-pdf',
     'jlpt-n5-kanji-pdf',
@@ -88,11 +87,12 @@ test('a product without a page of its own is coming soon, and the others link to
     expect(product.badge).toBe(product.href ? 'Free' : 'Coming soon')
   }
   for (const product of products.filter(product => product.href)) {
-    expect(product.href).toMatch(/^\/dictionary\/(browse\/[a-z-]+\/)?$/)
+    expect(product.href).toMatch(/^\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
   }
   for (const product of catalogIn('ja').products.filter(product => product.href)) {
-    expect(product.href).toMatch(/^\/ja\/dictionary\/(browse\/[a-z-]+\/)?$/)
+    expect(product.href).toMatch(/^\/ja\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
   }
+  expect(products.find(product => product.id === 'converters')?.href).toBe('/tools/')
 })
 
 test('the iPhone app’s page links its question and related products in its own language', () => {

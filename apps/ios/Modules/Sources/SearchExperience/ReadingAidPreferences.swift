@@ -8,6 +8,7 @@ final class ReadingAidPreferences {
     let showsFurigana: Bool
     let showsRomaji: Bool
     let showsWordMeanings: Bool?
+    let showsKanjiMeanings: Bool?
     let showsTranslations: Bool?
     let translationLanguage: String?
     let hidesFuriganaOnKnownWords: Bool?
@@ -25,6 +26,9 @@ final class ReadingAidPreferences {
     didSet { persist() }
   }
   var showsWordMeanings = false {
+    didSet { persist() }
+  }
+  var showsKanjiMeanings = true {
     didSet { persist() }
   }
   var showsTranslations = true {
@@ -56,6 +60,7 @@ final class ReadingAidPreferences {
     showsFurigana = stored.showsFurigana
     showsRomaji = stored.showsRomaji
     showsWordMeanings = stored.showsWordMeanings ?? false
+    showsKanjiMeanings = stored.showsKanjiMeanings ?? true
     showsTranslations = stored.showsTranslations ?? true
     translationLanguage =
       stored.translationLanguage.flatMap(TranslationLanguage.init(rawValue:)) ?? .english
@@ -69,6 +74,7 @@ final class ReadingAidPreferences {
       showsFurigana: showsFurigana,
       showsRomaji: showsRomaji,
       showsWordMeanings: showsWordMeanings,
+      showsKanjiMeanings: showsKanjiMeanings,
       showsTranslations: showsTranslations,
       translationLanguage: translationLanguage.rawValue,
       hidesFuriganaOnKnownWords: hidesFuriganaOnKnownWords,

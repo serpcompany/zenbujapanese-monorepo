@@ -1,4 +1,5 @@
-import { absoluteUrl } from './site'
+import { localizedSitemapEntries } from './seo'
+import { absoluteUrl, servedOrigin } from './site'
 
 type SitemapAlternate = { hreflang: string; url: string }
 
@@ -21,7 +22,7 @@ function lastmod(date: Date | undefined) {
   return date ? `<lastmod>${date.toISOString()}</lastmod>` : ''
 }
 
-export const childSitemaps = ['/sitemap-pages.xml'] as const
+export const childSitemaps = ['/sitemap-pages.xml', '/sitemap-tools.xml'] as const
 
 export type PathRule = { source: string; destination: string }
 
@@ -67,29 +68,10 @@ export function urlSetXml(entries: readonly SitemapEntry[]) {
   return `${urlSetOpen}${urlItems(entries)}${urlSetClose}`
 }
 
-export function urlSetStream(pages: AsyncIterable<readonly SitemapEntry[]>) {
-  const encoder = new TextEncoder()
-  const iterator = pages[Symbol.asyncIterator]()
-  let opened = false
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      if (!opened) {
-        opened = true
-        controller.enqueue(encoder.encode(urlSetOpen))
-        return
-      }
-      const { done, value } = await iterator.next()
-      if (done) {
-        controller.enqueue(encoder.encode(urlSetClose))
-        controller.close()
-        return
-      }
-      controller.enqueue(encoder.encode(urlItems(value)))
-    },
-    async cancel() {
-      await iterator.return?.()
-    }
-  })
+export async function* urlSetChunks(pages: AsyncIterable<readonly SitemapEntry[]>) {
+  yield urlSetOpen
+  for await (const entries of pages) yield urlItems(entries)
+  yield urlSetClose
 }
 
 export function xmlResponse(body: BodyInit) {
@@ -99,4 +81,9 @@ export function xmlResponse(body: BodyInit) {
       'Cache-Control': 'public, max-age=3600'
     }
   })
+}
+
+export function pathsSitemapResponse(paths: readonly string[], request: Request) {
+  const origin = servedOrigin(request)
+  return xmlResponse(urlSetXml(paths.flatMap(path => localizedSitemapEntries(path, origin))))
 }

@@ -6,7 +6,7 @@ import {
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'
-import { site } from '@/lib/site'
+import { linkTo, site } from '@/lib/site'
 
 export const productsPath = '/products/'
 export const productTypeParameter = 'type'
@@ -119,7 +119,13 @@ export const products: readonly ProductShape[] = [
     facts: ['web', 'frequency'],
     href: frequencyDictionariesPath
   },
-  { id: 'converters', type: 'free-tools', mark: { symbol: 'swap' }, facts: ['web'] },
+  {
+    id: 'converters',
+    type: 'free-tools',
+    mark: { symbol: 'swap' },
+    facts: ['web'],
+    href: linkTo('tools').href
+  },
   { id: 'kana-chart-pdf', type: 'reference-guides', mark: { symbol: 'file' }, facts: ['pdf'] },
   {
     id: 'verb-conjugations-pdf',

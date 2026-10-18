@@ -17,7 +17,7 @@ const cards = (locale: Locale) => {
         text={{ ...t.products.catalog, getTheApp: t.chrome.getTheApp }}
       />
       <ProductCard product={productIn(catalog, 'kana-charts')} />
-      <ProductCard product={productIn(catalog, 'converters')} />
+      <ProductCard product={productIn(catalog, 'browser-extension')} />
     </>
   )
 }

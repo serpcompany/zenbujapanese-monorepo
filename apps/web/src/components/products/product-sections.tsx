@@ -4,17 +4,13 @@ import type { ReactNode } from 'react'
 import { ProductCard } from '@/components/products/product-card'
 import { productSymbols } from '@/components/products/product-symbols'
 import { sectionTitleClassName } from '@/components/products/section-title'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion'
+import { QuestionList } from '@/components/question-list'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'
 import type { CatalogProduct } from '@/lib/products/localized-catalog'
-import type { ProductPoint, ProductQuestion } from '@/lib/products/product-page'
+import type { ProductPoint } from '@/lib/products/product-page'
+import type { Question } from '@/lib/questions'
 import { linkTo } from '@/lib/site'
 
 export function ProductPoints({ points }: { points: readonly ProductPoint[] }) {
@@ -43,7 +39,7 @@ export function ProductQuestions({
   questions,
   locale
 }: {
-  questions: readonly ProductQuestion[]
+  questions: readonly Question[]
   locale: Locale
 }) {
   return (
@@ -51,26 +47,7 @@ export function ProductQuestions({
       <h2 className={sectionTitleClassName}>
         {getDictionary(locale).productPage.questionsHeading}
       </h2>
-      <Accordion
-        defaultValue={[questions[0]?.question]}
-        className="w-full max-w-2xl border-y text-left"
-      >
-        {questions.map(item => (
-          <AccordionItem key={item.question} value={item.question}>
-            <AccordionTrigger className="py-3.5 text-base hover:no-underline">
-              {item.question}
-            </AccordionTrigger>
-            <AccordionContent keepMounted className="pb-4 text-[15px] text-muted-foreground">
-              <p>{item.answer}</p>
-              {item.link ? (
-                <p>
-                  <Link href={item.link.href}>{item.link.title}</Link>
-                </p>
-              ) : null}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <QuestionList questions={questions} openFirst className="max-w-2xl text-left" />
     </div>
   )
 }

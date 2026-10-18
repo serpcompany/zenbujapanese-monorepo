@@ -1200,7 +1200,7 @@
     "account": {
       "heading": "Your Zenbu account",
       "intro": "While you're signed out, our apps send nothing to our account service. If you create or sign in to a Zenbu account where our apps or this website offer one, we keep:",
-      "removals": "When you remove a video, list, or bookmark, we keep only a record that it was removed, so your other devices follow. The profile in the app, notes, photos, searches, settings, and whole Translate conversations don't sync. A sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. We'll update this policy before an app or this website syncs anything else.",
+      "removals": "When you remove a video, list, or bookmark, we keep only a record that it was removed, so your other devices follow. The iPhone app's profile syncs its name and username, which your account keeps anyway. The profile's photo and email, notes, photos, searches, settings, and whole Translate conversations don't sync. A sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. We'll update this policy before an app or this website syncs anything else.",
       "emails": "Our account service emails you only to send sign-in codes, to tell you when a way to sign in is added or removed, and to confirm that your account was deleted.",
       "website": "Where this website offers sign-in, your account there lets you change your name and username, manage how you sign in, sign out, and delete your account. It doesn't read your study data yet, and we'll update this policy before it does. Signing in uses cookies only to sign you in and keep you signed in, and the website remembers your theme and that you're signed in."
     },
@@ -1543,7 +1543,7 @@
       },
       "converters": {
         "title": "Converters",
-        "description": "Switch between hiragana, katakana, romaji, and furigana."
+        "description": "Switch between hiragana, katakana, and romaji, and fix half-width text."
       },
       "kana-chart-pdf": {
         "title": "Kana chart PDF",
@@ -1663,6 +1663,329 @@
     "contact": {
       "heading": "10. Contact",
       "body": "Questions go to {email}. See also the {privacy}."
+    }
+  },
+  "tools": {
+    "index": {
+      "title": "Online tools for learning Japanese",
+      "description": "Convert between hiragana, katakana, and romaji, fix half-width text, and browse kana and kanji charts. Free, in your browser.",
+      "lead": "Convert between hiragana, katakana, and romaji, browse kana and kanji charts, and look up words. Free, in your browser, with nothing to install.",
+      "converters": "Converters",
+      "reference": "Dictionary and reference",
+      "appTitle": "Reading Japanese on paper or a screen?",
+      "appLine": "The iPhone app reads it from a photo."
+    },
+    "names": {
+      "name": "{from} to {to}",
+      "title": "{name} Converter"
+    },
+    "converters": {
+      "hiragana-to-katakana": {
+        "from": "Hiragana",
+        "to": "Katakana",
+        "description": "Convert hiragana to katakana as you type, free in your browser. Kanji, letters, and punctuation stay as they are.",
+        "lead": "Type or paste hiragana and get katakana as you type. Kanji, letters, and punctuation stay as they are.",
+        "card": "Turn hiragana into katakana as you type."
+      },
+      "katakana-to-hiragana": {
+        "from": "Katakana",
+        "to": "Hiragana",
+        "description": "Convert katakana to hiragana as you type, free in your browser. Kanji, letters, and punctuation stay as they are.",
+        "lead": "Type or paste katakana and get hiragana as you type. Kanji, letters, and punctuation stay as they are.",
+        "card": "Turn katakana back into hiragana."
+      },
+      "romaji-to-kana": {
+        "from": "Romaji",
+        "to": "Kana",
+        "description": "Type Japanese in romaji on any keyboard and get hiragana or katakana as you type, free in your browser.",
+        "lead": "Type Japanese in Latin letters on any keyboard and get hiragana or katakana as you type.",
+        "card": "Type romaji on any keyboard and get hiragana or katakana."
+      },
+      "kana-to-romaji": {
+        "from": "Kana",
+        "to": "Romaji",
+        "description": "Convert hiragana and katakana to romaji, spelled the Hepburn way, free in your browser.",
+        "lead": "Paste hiragana or katakana and read it in Latin letters, spelled the Hepburn way, as on signs and in most textbooks.",
+        "card": "Read kana in Latin letters, in Hepburn romanization."
+      },
+      "half-width-to-full-width": {
+        "from": "Half-width",
+        "to": "Full-width",
+        "description": "Convert half-width katakana, letters, and numbers to full-width, as many Japanese forms ask, free in your browser.",
+        "lead": "Turn half-width katakana, letters, and numbers into full-width, as many Japanese forms ask for.",
+        "card": "Fix half-width katakana and letters for Japanese forms."
+      },
+      "full-width-to-half-width": {
+        "from": "Full-width",
+        "to": "Half-width",
+        "description": "Convert full-width katakana, letters, and numbers to half-width, for systems that only take narrow characters, free in your browser.",
+        "lead": "Turn full-width katakana, letters, and numbers into half-width, for systems that only take narrow characters.",
+        "card": "Shrink full-width katakana, letters, and numbers."
+      }
+    },
+    "page": {
+      "section": "Tools",
+      "howItWorks": "How it works",
+      "questions": "Questions",
+      "related": "Related tools",
+      "allTools": "All tools",
+      "appTitle": "Found a word you don’t know?",
+      "appLine": "Search it in the dictionary, or read it from a photo with the app."
+    },
+    "appCard": {
+      "label": "The Zenbu app",
+      "dictionary": "Dictionary"
+    },
+    "card": {
+      "becomes": "becomes"
+    },
+    "converter": {
+      "heading": "Type in either box",
+      "line": "The other box converts as you type.",
+      "fromPlaceholder": "Type or paste here",
+      "toPlaceholder": "The result shows here, or type here to convert back",
+      "clear": "Clear",
+      "examples": "Try an example",
+      "try": "Try",
+      "copy": "Copy",
+      "copyLabel": "Copy {label}",
+      "copied": "Copied",
+      "selectToCopy": "Select the text to copy it",
+      "characters": {
+        "one": "{count} character",
+        "other": "{count} characters"
+      },
+      "writeIn": "Write in",
+      "change": "Change",
+      "scripts": {
+        "hiragana": "Hiragana",
+        "katakana": "Katakana"
+      },
+      "widths": {
+        "katakana": "Katakana",
+        "lettersAndNumbers": "Letters and numbers",
+        "symbolsAndSpaces": "Symbols and spaces"
+      }
+    },
+    "chart": {
+      "title": "Conversion chart",
+      "fullCharts": "Full kana charts, with common words",
+      "groupsLabel": "Kana groups",
+      "noHalfWidth": "no half-width form",
+      "smallTsu": "double",
+      "lines": {
+        "kana": "Every kana in hiragana and katakana, with its romaji, {count} in all.",
+        "romaji": "Every kana with the romaji that spell it, {count} in all.",
+        "width": "Every katakana in both widths, {count} in all. Hiragana has no half-width form."
+      },
+      "tabs": {
+        "basic": "Basic",
+        "combinations": "Combos",
+        "extended": "Katakana"
+      },
+      "groups": {
+        "basic": "Basic",
+        "marks": "With marks",
+        "small": "Small kana",
+        "combinations": "Combinations",
+        "extended": "Katakana only"
+      },
+      "extendedKatakana": "Extended katakana"
+    },
+    "reference": {
+      "for": "For",
+      "howToType": "How to type it",
+      "howSpelled": "How it’s spelled",
+      "examples": "Examples",
+      "separator": ", ",
+      "typingTipsTitle": "Typing tips",
+      "spellingRulesTitle": "Spelling rules",
+      "widthsTitle": "What changes",
+      "widthsLine": "Each kind of character, in both widths.",
+      "character": "Character",
+      "halfWidth": "Half-width",
+      "fullWidth": "Full-width",
+      "typingTips": {
+        "n": {
+          "label": "ん",
+          "rule": "n before a consonant or at the end, where nn works too; n’ before a vowel or y"
+        },
+        "nBeforeLabial": {
+          "label": "ん before b or p",
+          "rule": "m works too"
+        },
+        "smallTsu": {
+          "label": "Small っ",
+          "rule": "Double the consonant"
+        },
+        "longMark": {
+          "label": "Long mark ー",
+          "rule": "A hyphen"
+        },
+        "smallKana": {
+          "label": "Small kana",
+          "rule": "x or l first"
+        },
+        "wo": {
+          "label": "を",
+          "rule": "wo",
+          "note": "the particle"
+        },
+        "punctuation": {
+          "label": "Punctuation",
+          "rule": "Type it as usual"
+        }
+      },
+      "spellingRules": {
+        "smallTsu": {
+          "label": "Small っ",
+          "rule": "Doubles the next consonant"
+        },
+        "nBeforeVowel": {
+          "label": "ん before a vowel or y",
+          "rule": "Gets an apostrophe"
+        },
+        "longVowels": {
+          "label": "Long vowels",
+          "rule": "Spelled as written"
+        },
+        "longMark": {
+          "label": "ー in katakana",
+          "rule": "Repeats the vowel"
+        },
+        "wo": {
+          "label": "を",
+          "rule": "Spelled o",
+          "note": "as Hepburn writes it"
+        },
+        "kanji": {
+          "label": "Kanji",
+          "rule": "Stay as they are",
+          "note": "only kana have a spelling"
+        }
+      },
+      "widthRows": {
+        "katakana": {
+          "kind": "Katakana"
+        },
+        "voiced": {
+          "kind": "Voiced kana",
+          "note": "Two half-width characters join into one."
+        },
+        "letters": {
+          "kind": "Letters"
+        },
+        "numbers": {
+          "kind": "Numbers"
+        },
+        "punctuation": {
+          "kind": "Punctuation"
+        },
+        "space": {
+          "kind": "Space",
+          "note": "A narrow space becomes a wide one."
+        },
+        "hiragana": {
+          "kind": "Hiragana",
+          "note": "It has no half-width form, so it stays as it is."
+        }
+      }
+    },
+    "howItWorks": {
+      "hiragana-to-katakana": {
+        "first": "Each hiragana has one katakana partner: <ja>か</ja> becomes <ja>カ</ja>, <ja>しゃ</ja> becomes <ja>シャ</ja>, and small kana stay small. The long-vowel mark <ja>ー</ja> belongs to both, so it carries over.",
+        "second": "Katakana mostly writes words from other languages, like <ja>コーヒー</ja> (coffee) and <ja>スマートフォン</ja> (smartphone), and names from outside Japan."
+      },
+      "katakana-to-hiragana": {
+        "first": "Each katakana has one hiragana partner: <ja>カ</ja> becomes <ja>か</ja>, <ja>シャ</ja> becomes <ja>しゃ</ja>, and small kana stay small. The long-vowel mark <ja>ー</ja> belongs to both, so it carries over. <ja>ヷ</ja> to <ja>ヺ</ja> have no hiragana, so they stay as they are.",
+        "second": "Hiragana is how a learner reads a word aloud, so turning <ja>コーヒー</ja> into <ja>こーひー</ja> shows its sounds in the script you learned first."
+      },
+      "romaji-to-kana": {
+        "first": "Type Japanese sounds in Latin letters and each syllable turns into kana as soon as it’s complete: <typed>ka</typed> becomes <ja>か</ja>, <typed>kya</typed> becomes <ja>きゃ</ja>. Letters that can’t start a syllable yet wait for the next one.",
+        "second": "Choose hiragana for Japanese words and katakana for words from other languages. A hyphen types the long mark, so <typed>ko-hi-</typed> becomes <ja>コーヒー</ja> in katakana."
+      },
+      "kana-to-romaji": {
+        "first": "Each kana becomes its Hepburn spelling, the one on signs and in most textbooks: <ja>し</ja> is <latin>shi</latin>, <ja>つ</ja> is <latin>tsu</latin>, and <ja>ふ</ja> is <latin>fu</latin>. Katakana works the same way.",
+        "second": "Long vowels are spelled as they’re written: <ja>とうきょう</ja> is <latin>toukyou</latin>, and <ja>ー</ja> repeats the vowel before it, so <ja>コーヒー</ja> is <latin>koohii</latin>. Kana has no spaces between words, so neither does the romaji, and kanji stay as they are."
+      },
+      "half-width-to-full-width": {
+        "first": "Half-width characters are narrow versions from early computers that showed one byte per character. Each becomes its standard full-width form: <ja>ｶ</ja> becomes <ja>カ</ja>, and <latin>A</latin> becomes <ja>Ａ</ja>.",
+        "second": "A voiced half-width kana is two characters, the kana and a separate mark (<ja>ｶﾞ</ja>). They join into one (<ja>ガ</ja>)."
+      },
+      "full-width-to-half-width": {
+        "first": "Each full-width character becomes its narrow form: <ja>カ</ja> becomes <ja>ｶ</ja>, and <ja>Ａ</ja> becomes <latin>A</latin>. A voiced kana splits into two characters, <ja>ガ</ja> into <ja>ｶﾞ</ja>.",
+        "second": "Hiragana and kanji have no half-width form, so they stay as they are."
+      }
+    },
+    "questions": {
+      "kana": {
+        "kanjiAndLetters": {
+          "question": "Does it change kanji or letters?",
+          "answer": "No. Only kana change. Kanji, Latin letters, numbers, and punctuation stay as they are, so you can paste a whole sentence."
+        },
+        "longMark": {
+          "question": "What happens to the long mark ー?",
+          "answer": "Hiragana and katakana share it, so it carries over unchanged. コーヒー becomes こーひー, which is how a learner would read it."
+        },
+        "katakana": {
+          "question": "When is katakana used?",
+          "answer": "Mostly for words borrowed from other languages, like コーヒー (coffee), for names from outside Japan, and for emphasis, as italics are in English."
+        }
+      },
+      "romaji": {
+        "n": {
+          "question": "How do I type ん?",
+          "answer": "Type n before a consonant or at the end of a word, where nn works too. Before a vowel or y, type n’ so it isn’t read as な or にゃ: kin’en gives きんえん, while kinen gives きねん."
+        },
+        "smallTsu": {
+          "question": "How do I type a small っ?",
+          "answer": "Double the consonant after it: kitte gives きって, and matcha gives まっちゃ."
+        },
+        "romanization": {
+          "question": "Which romanization does it use?",
+          "answer": "Hepburn, the spelling on signs, maps, and most textbooks: し is shi, つ is tsu, and ふ is fu. It also accepts the other common spellings when you type, such as si, tu, and hu."
+        }
+      },
+      "width": {
+        "halfWidthKatakana": {
+          "question": "What is half-width katakana?",
+          "answer": "A narrow form of katakana from early computers that could only show one byte per character. It still turns up on receipts, bank statements, and old systems."
+        },
+        "forms": {
+          "question": "Why do forms ask for full-width?",
+          "answer": "Many Japanese forms check for full-width (全角) characters, especially in name and address fields, and reject half-width ones."
+        },
+        "hiragana": {
+          "question": "Does it change hiragana?",
+          "answer": "No. Hiragana has no half-width form, so it stays as it is either way."
+        }
+      }
+    },
+    "referenceTools": {
+      "dictionary": {
+        "title": "Dictionary",
+        "line": "Words and kanji, searched in Japanese, kana, romaji, or English."
+      },
+      "hiragana": {
+        "title": "Hiragana chart",
+        "line": "Every hiragana, with common words for each."
+      },
+      "katakana": {
+        "title": "Katakana chart",
+        "line": "Every katakana, with common words for each."
+      },
+      "kanji": {
+        "title": "Kanji lists",
+        "line": "Kanji by school grade, JLPT level, and jinmeiyō."
+      },
+      "frequency": {
+        "title": "Frequency lists",
+        "line": "The most common words, from JLPT N5 to anime and YouTube."
+      },
+      "categories": {
+        "title": "Word categories",
+        "line": "Words by part of speech, usage label, and subject."
+      }
     }
   },
   "word": {

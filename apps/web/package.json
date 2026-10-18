@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node ../../tools/checks/ports.mjs run site -- next dev",
     "build": "next build",
+    "sitemaps": "node --import tsx scripts/write-sitemaps.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "next typegen && tsc --noEmit",
@@ -44,6 +45,7 @@
     "@types/react-dom": "^19",
     "happy-dom": "^20.14.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.2",
     "wrangler": "^4.143.0"

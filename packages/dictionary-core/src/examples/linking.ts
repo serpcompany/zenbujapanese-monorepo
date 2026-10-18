@@ -100,17 +100,23 @@ interface Highlighted {
 }
 
 function highlightedForms({ entry, query }: Highlighted): Set<string> {
-  return new Set(
-    [query, entry.headword, entry.reading, ...entry.writtenForms, ...entry.readingForms].filter(
-      form => form !== ''
-    )
-  )
+  const forms = new Set<string>()
+  for (const form of [
+    query,
+    entry.headword,
+    entry.reading,
+    ...entry.writtenForms,
+    ...entry.readingForms
+  ]) {
+    if (form !== '') forms.add(form).add(form.normalize('NFKC'))
+  }
+  return forms
 }
 
 function isWrittenAs(candidate: MorphologyCandidate, forms: Set<string> | null): boolean {
   if (!forms) return false
-  return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm].some(form =>
-    forms.has(form)
+  return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm].some(
+    form => forms.has(form) || forms.has(form.normalize('NFKC'))
   )
 }
 

@@ -58,6 +58,35 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitFor(find("account.sign-in", in: app))
   }
 
+  func testSigningInFillsTheProfileFromTheAccountAndKeepsItsName() {
+    let app = launch(Self.standIns)
+    signInWithApple(in: app)
+    let card = waitFor(find("account.profile", in: app))
+    waitUntil(card, "label CONTAINS 'Kana Fan' AND label CONTAINS '@kana_fan'")
+    tap(card)
+    let name = waitFor(find("profile.name", in: app))
+    waitUntil(name, "value == 'Kana Fan'")
+    waitUntil(waitFor(find("profile.username", in: app)), "value == 'kana_fan'")
+    waitUntil(waitFor(find("profile.account-email", in: app)), mentions: "learner@example.com")
+    XCTAssertFalse(find("profile.email", in: app).exists, "the account's email can't be edited")
+    waitFor(
+      labeled(
+        "A username is 3 to 30 letters a to z, digits, or underscores. Your name and username sync"
+          + " with your Zenbu account. Your photo stays on this device.", in: app))
+
+    focus(name)
+    name.tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 16))
+    tap(find("profile.username", in: app))
+    waitFor(
+      labeled(
+        "Your Zenbu account needs a name of 1 to 100 characters, with no control characters.",
+        in: app))
+    waitUntil(name, "value == 'Kana Fan'")
+    goBack(in: app)
+    waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Kana Fan'")
+  }
+
   private func signInWithApple(in app: XCUIApplication) {
     open(.account, in: app)
     tap(find("account.sign-in", in: app))

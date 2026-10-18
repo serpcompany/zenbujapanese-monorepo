@@ -1,17 +1,9 @@
 import { PlayIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { FeatureDemo } from '@/components/products/feature-demo'
+import { SectionBreadcrumbs } from '@/components/section-breadcrumbs'
 import { AppStoreButton } from '@/components/site-actions'
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb'
 import { buttonVariants } from '@/components/ui/button'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -32,40 +24,6 @@ export interface ProductHeroContent {
   demos: readonly ProductDemo[]
 }
 
-function ProductBreadcrumbs({
-  title,
-  label,
-  locale
-}: {
-  title: string
-  label: string
-  locale: Locale
-}) {
-  const products = linkTo('products')
-  return (
-    <Breadcrumb aria-label={label}>
-      <BreadcrumbList className="justify-center">
-        <BreadcrumbItem>
-          <BreadcrumbLink
-            render={
-              <Link
-                href={localizedPath(products.href, locale)}
-                data-link-target={products.target}
-              />
-            }
-          >
-            {pageFor(productsPath, locale).title}
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>{title}</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-  )
-}
-
 const heroButtonClassName = 'h-11 px-4.5 text-[15px]'
 
 export function ProductHero({
@@ -83,7 +41,16 @@ export function ProductHero({
   const text = t.productPage
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4.5 px-4 pt-8 pb-12 text-center md:px-5 md:pt-10 md:pb-16">
-      <ProductBreadcrumbs title={product.title} label={text.breadcrumb} locale={locale} />
+      <SectionBreadcrumbs
+        section={{
+          title: pageFor(productsPath, locale).title,
+          ...linkTo('products'),
+          href: localizedPath(linkTo('products').href, locale)
+        }}
+        page={product.title}
+        label={text.breadcrumb}
+        className="justify-center"
+      />
       <Image
         src={product.icon}
         alt=""

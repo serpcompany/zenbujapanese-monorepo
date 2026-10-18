@@ -4,6 +4,7 @@ import type { Locale } from '../src/lib/i18n/config'
 import { getDictionary } from '../src/lib/i18n/dictionary'
 import { sitePagesIn } from '../src/lib/pages'
 import { siteMenusIn } from '../src/lib/site-menus'
+import { toolPagesIn } from '../src/lib/tools/tool-pages'
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
 import { accountPages, expect, needed, phoneMenu, sourcesToggle, test } from './test'
 
@@ -98,6 +99,7 @@ export const missingPage: PageType = { name: 'Page not found', path: '/no-such-p
 export const pageTypes: PageType[] = [
   ...sitePagesIn('en').map(({ title, path }) => ({ name: title, path, views: viewsOf[path] })),
   ...accountPages.map(({ title, path }) => ({ name: title, path })),
+  ...toolPagesIn('en').map(({ title, path }) => ({ name: title, path })),
   { name: 'Search', path: '/dictionary/search/' },
   { name: 'Search results', path: '/dictionary/search/iru/' },
   {

@@ -54,7 +54,7 @@ const kanaTile =
     const note = withRomaji ? cell.romaji : undefined
     return initials.has(cell.kana)
       ? { href: kanaPath(script, cell.kana), note }
-      : { href: null, note, label: noWords }
+      : { href: null, note, label: noWords, muted: true }
   }
 
 export function KanaCharts({

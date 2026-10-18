@@ -2,6 +2,7 @@ import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { searchPath } from '@/lib/dictionary/urls'
 import type { Locale } from '@/lib/i18n/config'
 import { localizedPath } from '@/lib/i18n/paths'
+import { placeholderHref } from '@/lib/site'
 import { drawerLinks, type MegaMenu, type SiteMenu, siteMenusIn } from '@/lib/site-menus'
 
 const exampleQueries = [
@@ -26,5 +27,5 @@ export function webToolsIn(locale: Locale) {
   return siteMenusIn(locale)
     .filter(isToolsMenu)
     .flatMap(menu => drawerLinks(menu))
-    .filter(link => link.target === undefined)
+    .filter(link => link.href !== placeholderHref)
 }

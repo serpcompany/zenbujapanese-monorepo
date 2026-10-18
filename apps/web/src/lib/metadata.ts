@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import type { Locale } from './i18n/config'
 import { getDictionary } from './i18n/dictionary'
 import { localizedPath } from './i18n/paths'
-import { pageFor, type SitePath } from './pages'
+import { pageFor, type SitePage, type SitePath } from './pages'
 import { localizedAlternates, siteOpenGraph } from './seo'
 import { site, siteOrigin } from './site'
 
@@ -29,17 +29,19 @@ export function siteMetadata(locale: Locale): Metadata {
   }
 }
 
-export function pageMetadata(path: Exclude<SitePath, '/'>, locale: Locale): Metadata {
-  const page = pageFor(path, locale)
+export function sitePageMetadata(page: SitePage, locale: Locale): Metadata {
   return {
     title: page.title,
     description: page.description,
-    alternates: localizedAlternates(path, locale),
+    alternates: localizedAlternates(page.path, locale),
     openGraph: {
       ...siteOpenGraph(locale),
       title: page.title,
       description: page.description,
-      url: localizedPath(path, locale)
+      url: localizedPath(page.path, locale)
     }
   }
 }
+
+export const pageMetadata = (path: Exclude<SitePath, '/'>, locale: Locale) =>
+  sitePageMetadata(pageFor(path, locale), locale)

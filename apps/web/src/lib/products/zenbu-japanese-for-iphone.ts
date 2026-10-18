@@ -5,12 +5,8 @@ import { localizedPath } from '@/lib/i18n/paths'
 import type { SitePath } from '@/lib/pages'
 import { featuredApp, type ProductId } from '@/lib/products/catalog'
 import { catalogIn, productIn } from '@/lib/products/localized-catalog'
-import type {
-  ProductDemo,
-  ProductPageSymbol,
-  ProductPoint,
-  ProductQuestion
-} from '@/lib/products/product-page'
+import type { ProductDemo, ProductPageSymbol, ProductPoint } from '@/lib/products/product-page'
+import type { Question } from '@/lib/questions'
 import { site } from '@/lib/site'
 
 type PageText = Dictionary['productPage']
@@ -54,7 +50,7 @@ const features: readonly { id: keyof PageText['features']; symbol: ProductPageSy
 
 const related: readonly ProductId[] = ['dictionary', 'browser-extension', 'kana-charts']
 
-function questionsIn(t: PageText, locale: Locale): ProductQuestion[] {
+function questionsIn(t: PageText, locale: Locale): Question[] {
   const { offline, frequency, web } = t.questions
   return [
     offline,

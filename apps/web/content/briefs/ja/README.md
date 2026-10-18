@@ -25,3 +25,4 @@ the page together.
 | The account pages | [`account.md`](account.md) |
 | The dictionary home, search results, and word pages | [`dictionary.md`](dictionary.md) |
 | The browse pages | [`browse.md`](browse.md) |
+| The tools index and the converters | [`tools.md`](tools.md) |

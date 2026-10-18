@@ -72,8 +72,10 @@ browser, with its IP address and user agent), study data (known words and lists,
 iPhone app the 50 most recently watched Player videos and the bookmarked Translate sentences),
 and a record of each synced change, so a change sent twice applies once. Expired sessions, codes,
 and counts go within an hour (said under the second table), and a removed video, list, or bookmark
-leaves only a record that it was removed. The app's profile, notes, photos, searches, settings, and whole conversations don't
-sync; a bookmarked sentence may be someone else's words, so only bookmarked ones leave the device.
+leaves only a record that it was removed. The app's profile syncs its name and username, which the
+account keeps anyway; the profile's photo and email, notes, photos, searches, settings, and whole
+conversations don't sync; a bookmarked sentence may be someone else's words, so only bookmarked
+ones leave the device.
 The account service emails only sign-in codes, a way to sign in added or removed, and a deletion's
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, signs out, and deletes the account, and doesn't read study data
@@ -83,11 +85,11 @@ syncs anything else.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
   sync); [`account-clients.md`](../../../../docs/agents/account-clients.md) (The website); the app's
-  [Zenbu account and sync](../../../ios/docs/product/index.md#zenbu-account-and-sync) docs;
+  [Zenbu account and sync](../../../ios/docs/product/account-sync.md) docs;
   [Account pages](account.md).
 - Check: Privacy spec, "names each kind of data an account keeps, and why", and "says what stays on
   the device, and that the app works without an account" (nothing sent signed out, "where our apps
-  or this website offer one", what doesn't sync). The email's uses and the website's lines: No
+  or this website offer one", the app's profile, what doesn't sync). The email's uses and the website's lines: No
   automated check yet.
 
 **Tomodachi.** Its own section, `/legal/privacy/#tomodachi`, which the support page links to.
