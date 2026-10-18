@@ -1,14 +1,16 @@
 import { graphemeCount } from '../detail/text'
 import {
   compareRanks,
+  earliestPosition,
   exampleLimit,
-  graphemePosition,
   LexicalRelation,
   normalizedEntryEvidence,
   type RetrievalEntry,
   type RetrievalError,
-  reportedExampleCount
+  reportedExampleCount,
+  spellingsOf
 } from '../examples/retrieval'
+import { normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
 
 export interface ExampleSentence {
@@ -32,7 +34,19 @@ interface Match {
   pairId: string
 }
 
+interface Evidence {
+  relation: number
+  position: number
+}
+
+interface EvidenceTerm {
+  spellings: string[]
+  relation: number
+}
+
 const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english'
+
+const storedForm = normalizeQuery
 
 function result(matches: Match[]): EntryExamples {
   return {
@@ -57,8 +71,8 @@ function entryEvidence(
   const reading = rows.at(-1)?.reading
   const writtenForms = new Set(rows.filter(row => row.kind === 0).map(row => row.form))
   const readingForms = new Set(rows.filter(row => row.kind === 1).map(row => row.form))
-  if (reading === undefined || !readingForms.has(reading)) return null
-  return { reading, writtenForms }
+  if (reading === undefined || !readingForms.has(storedForm(reading))) return null
+  return { reading: normalizedEntryEvidence(reading), writtenForms }
 }
 
 function unambiguousEntryCount(
@@ -66,14 +80,18 @@ function unambiguousEntryCount(
   selectedForm: string,
   reading: string
 ): number {
-  const [row] = db.all<{ count: number }>(
-    `SELECT count(DISTINCT lower(hex(e.id))) AS count
+  const rows = db.all<{ writtenForms: string }>(
+    `SELECT DISTINCT lower(hex(e.id)) AS id, e.written_forms_json AS writtenForms
      FROM entries e
      JOIN forms written ON written.entry_id = e.id AND written.kind = 0 AND written.form = ?
      JOIN forms spoken ON spoken.entry_id = e.id AND spoken.kind = 1 AND spoken.form = ?`,
-    [selectedForm, reading]
+    [storedForm(selectedForm), storedForm(reading)]
   )
-  return row?.count ?? 0
+  const writtenAsSelected = (json: string) =>
+    (JSON.parse(json) as { value: string }[]).some(
+      form => normalizedEntryEvidence(form.value) === selectedForm
+    )
+  return rows.filter(row => writtenAsSelected(row.writtenForms)).length
 }
 
 function retrieveIndexedEntry(
@@ -91,7 +109,7 @@ function retrieveIndexedEntry(
   const matches: Match[] = []
   for (const { surface: rawSurface, ...sentence } of rows) {
     const surface = normalizedEntryEvidence(rawSurface)
-    const position = graphemePosition(surface, sentence.japanese)
+    const position = earliestPosition(spellingsOf(surface, [rawSurface]), sentence.japanese)
     if (position === null) continue
     matches.push({
       sentence,
@@ -105,6 +123,18 @@ function retrieveIndexedEntry(
   return result(matches.sort(compareRanks))
 }
 
+function bestEvidence(terms: readonly EvidenceTerm[], japanese: string): Evidence | null {
+  let best: Evidence | null = null
+  for (const { spellings, relation } of terms) {
+    const position = earliestPosition(spellings, japanese)
+    if (position === null) continue
+    const outranks =
+      !best || relation < best.relation || (relation === best.relation && position < best.position)
+    if (outranks) best = { relation, position }
+  }
+  return best
+}
+
 export function retrieveEntryExamples(
   db: ArtifactDatabase,
   entry: RetrievalEntry
@@ -116,13 +146,25 @@ export function retrieveEntryExamples(
   if (!evidence || evidence.reading !== reading) return 'missingEntryEvidence'
   const isKanaHeadword = selectedForm === reading
   if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm)
-  if (!evidence.writtenForms.has(selectedForm)) return 'missingEntryEvidence'
+  if (!evidence.writtenForms.has(storedForm(selectedForm))) return 'missingEntryEvidence'
   if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([])
 
+  const written = [entry.headword, ...entry.writtenForms]
   const alternateForms = entry.writtenForms
     .map(normalizedEntryEvidence)
-    .filter(form => form !== selectedForm && evidence.writtenForms.has(form))
-  const terms = [selectedForm, ...[...new Set(alternateForms)].sort(), reading]
+    .filter(form => form !== selectedForm && evidence.writtenForms.has(storedForm(form)))
+  const evidenceTerms: EvidenceTerm[] = [
+    {
+      spellings: spellingsOf(selectedForm, written),
+      relation: LexicalRelation.selectedWrittenForm
+    },
+    ...[...new Set(alternateForms)].sort().map(form => ({
+      spellings: spellingsOf(form, written),
+      relation: LexicalRelation.alternateWrittenForm
+    })),
+    { spellings: spellingsOf(reading, [entry.reading]), relation: LexicalRelation.reading }
+  ]
+  const terms = [...new Set(evidenceTerms.flatMap(term => term.spellings))]
   const rows = db.all<ExampleSentence>(
     `SELECT ${sentenceColumns} FROM example_sentences e
      WHERE ${terms.map(() => 'instr(e.japanese, ?) > 0').join(' OR ')}`,
@@ -131,23 +173,7 @@ export function retrieveEntryExamples(
 
   const byPair = new Map<string, Match>()
   for (const sentence of rows) {
-    const evidenceMatches: { relation: number; position: number }[] = []
-    const add = (term: string, relation: number) => {
-      const position = graphemePosition(term, sentence.japanese)
-      if (position !== null) evidenceMatches.push({ relation, position })
-    }
-    add(selectedForm, LexicalRelation.selectedWrittenForm)
-    for (const form of alternateForms) add(form, LexicalRelation.alternateWrittenForm)
-    add(reading, LexicalRelation.reading)
-    const best = evidenceMatches.reduce<{ relation: number; position: number } | null>(
-      (min, next) =>
-        !min ||
-        next.relation < min.relation ||
-        (next.relation === min.relation && next.position < min.position)
-          ? next
-          : min,
-      null
-    )
+    const best = bestEvidence(evidenceTerms, sentence.japanese)
     if (!best) continue
     const match: Match = {
       sentence,

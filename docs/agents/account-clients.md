@@ -237,7 +237,7 @@ the dictionary service, as `Authorization: Bearer <token>`.
 ## The profile
 
 An app with `profile` reads and changes the learner's name and username at `/v1/me`. Sync carries
-the same profile (`profile`, below), so an app that syncs needn't call `/v1/me` too.
+the profile (`profile`, below) only once it changes, so an app that syncs reads `/v1/me` too.
 
 ```http
 GET /v1/me HTTP/1.1

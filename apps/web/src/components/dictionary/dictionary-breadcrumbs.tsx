@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Fragment } from 'react'
+import { JsonLd } from '@/components/json-ld'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,10 +21,6 @@ export interface Crumb {
 const home: Crumb = { label: 'Home', path: '/' }
 const shortTrail = 3
 const dictionary: Crumb = { label: 'Dictionary', path: '/dictionary/' }
-
-function jsonThatCannotCloseItsScript(value: unknown): string {
-  return JSON.stringify(value).replace(/</g, '\\u003c')
-}
 
 export function DictionaryBreadcrumbs({
   page,
@@ -69,10 +66,7 @@ export function DictionaryBreadcrumbs({
           </Fragment>
         ))}
       </BreadcrumbList>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonThatCannotCloseItsScript(structuredData) }}
-      />
+      <JsonLd data={structuredData} />
     </Breadcrumb>
   )
 }

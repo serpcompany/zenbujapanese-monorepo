@@ -73,7 +73,7 @@ export interface KanjiElementSources {
   metadataSourceSnapshot: string
 }
 
-export function checkKanjiSources(sources: KanjiSources): void {
+function checkReferenceSources(sources: Partial<Record<keyof typeof referenceSources, unknown>>) {
   for (const [key, value] of Object.entries(referenceSources)) {
     const recorded = sources[key as keyof typeof referenceSources]
     if (recorded !== value) {
@@ -82,6 +82,35 @@ export function checkKanjiSources(sources: KanjiSources): void {
       )
     }
   }
+}
+
+const isRank = (value: unknown) => value === null || Number.isInteger(value)
+
+const isReading = (reading: Partial<KanjiReadingRow> | null) =>
+  typeof reading?.value === 'string' && typeof reading.kind === 'string'
+
+const isReferenceEntry = (entry: Partial<KanjiReferenceEntry> | null) =>
+  typeof entry?.character === 'string' &&
+  isRank(entry.grade) &&
+  isRank(entry.frequencyRank) &&
+  Array.isArray(entry.meanings) &&
+  entry.meanings.every(meaning => typeof meaning === 'string') &&
+  Array.isArray(entry.readings) &&
+  entry.readings.every(isReading)
+
+export function checkedKanjiReference(read: unknown): KanjiReferenceFile {
+  const file = (read ?? {}) as Partial<KanjiReferenceFile>
+  checkReferenceSources(file)
+  if (!Array.isArray(file.entries) || !file.entries.every(isReferenceEntry)) {
+    throw new Error(
+      'Refusing the language data: KanjiReferenceData.json does not list kanji as the core reads them'
+    )
+  }
+  return file as KanjiReferenceFile
+}
+
+export function checkKanjiSources(sources: KanjiSources): void {
+  checkReferenceSources(sources)
   if (sources.schema !== elementsSchema) {
     throw new Error(
       `Refusing the language data: KanjiElementReferenceData.json is ${sources.schema}; the core reads ${elementsSchema}`
