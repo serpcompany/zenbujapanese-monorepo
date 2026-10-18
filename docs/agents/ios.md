@@ -30,8 +30,9 @@ its SHA-256; later builds reuse it.
 
 ## iPad and Mac
 
-One target builds the app for iPhone, iPad, and the Mac ([ADR 0015](../adr/0015-build-iphone-ipad-and-mac-from-one-native-swiftui-app.md));
-what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios/docs/product/index.md#ipad-and-mac).
+One target builds the app for iPhone, iPad, and the Mac ([ADR
+0015](../adr/0015-build-iphone-ipad-and-mac-from-one-native-swiftui-app.md)); what differs for a
+learner is in the product docs' [iPad and Mac](../../apps/ios/docs/product/index.md#ipad-and-mac).
 
 ### Where the platforms differ in the code
 
@@ -86,7 +87,8 @@ and names the adapter to use (`tools/checks/src/layers.ts`), so feature code sta
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
+The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
+(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
@@ -193,7 +195,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness).
+  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
+  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -370,28 +373,19 @@ only a person can do: enable Associated Domains for the App ID `com.zenbujapanes
 the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
 team, `847HR8U8D9`.
 
-SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
-which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute` hands the
-link's host and path to the core (`websiteRoute`, [`dictionary-core.md`](dictionary-core.md),
-Embedded), which reads the website's URL shapes, decoded one path segment at a time, with the parser
-the website uses, and finds a word URL's entry by its JMdict entry number. Only the host and path
-are read, so a URL with any scheme and the host `zenbujapanese.com` routes the same way.
+SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
+also takes the Shortcuts actions' links ([`ios-shortcuts.md`](ios-shortcuts.md)). It switches to
+Search from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's
+stack. `LookupClient.websiteRoute` hands the link's host and path to the core (`websiteRoute`,
+[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
+decoded one path segment at a time, with the parser the website uses, and finds a word URL's
+entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
+the host `zenbujapanese.com` routes the same way.
 
-Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
-association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlements and with a URL scheme that is never committed, added
-to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
-under that scheme:
-
-```sh
-cp apps/ios/App/Info.plist /tmp/link-check.plist
-plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
-xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
-  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
-xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
-```
+Check it with `WebsiteLinkTests`, and `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp`.
+The Simulator sends an `https` link to Safari until the association file is live, so to see a
+link land in the app before then, open it in the app's own scheme, its bundle ID:
+`xcrun simctl openurl <udid> 'com.zenbujapanese.dictionary://zenbujapanese.com/dictionary/見る-1259290/'`.
 
 Once the file is live, check it on a device: tapping
 `https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
@@ -613,7 +607,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to
   give memory back: in testing, a context dropped after a broad search kept its whole heap, and
-  memory climbed with every such search.
+  memory climbed with every such search. Contexts are made one at a time (`contextCreation`): a
+  link that launched the app made the lookup's while the warm-up made another, and JavaScriptCore
+  crashed building both.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.

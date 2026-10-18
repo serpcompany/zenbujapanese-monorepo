@@ -1,4 +1,5 @@
 import XCTest
+import notify
 
 #if os(macOS)
   import AppKit
@@ -69,6 +70,24 @@ enum TestDevice {
     #if os(macOS)
       app.typeKey("n", modifierFlags: .command)
       app.typeKey("2", modifierFlags: .command)
+    #endif
+  }
+
+  static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
+
+  static func linkEnvironment(_ link: URL) -> [String: String] {
+    #if os(macOS)
+      ["ZENBU_OPEN_LINK": link.absoluteString]
+    #else
+      [:]
+    #endif
+  }
+
+  @MainActor static func open(_ link: URL, in app: XCUIApplication) {
+    #if os(macOS)
+      notify_post(openLinkNotice)
+    #else
+      app.open(link)
     #endif
   }
 

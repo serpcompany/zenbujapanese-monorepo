@@ -57,12 +57,13 @@ struct SearchExperienceRootView: View {
           openImageText: openImageText)
       )
       .modifier(
-        WebsiteLinkOpening(
+        AppLinkOpening(
           lookupClient: lookupClient, searchPath: searchPath, query: $query,
           showSearch: {
             selectedTab = .search
             dismissRecognizedWordSheet(if: true)
-          }))
+          },
+          translate: openTranslation))
       .modifier(AppCommandHandling(perform: perform))
       .environment(screenReturns)
   }
@@ -95,6 +96,11 @@ struct SearchExperienceRootView: View {
   private func showTranslate() {
     selectedTab = .translate
     dismissRecognizedWordSheet(if: true)
+  }
+
+  private func openTranslation(_ text: String) {
+    showTranslate()
+    translatePath.append(TranslateRoute.text(text))
   }
 
   private func openImageText(_ assets: [ImageTextAsset]) {

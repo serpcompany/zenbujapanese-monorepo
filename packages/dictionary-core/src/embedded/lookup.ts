@@ -3,8 +3,10 @@ import { kanjiCandidateRows } from '../artifact/kanji'
 import { jmdictSource } from '../artifact/words'
 import { kanjiWords } from '../detail/kanji'
 import { type WebsitePage, websitePage } from '../detail/links'
+import { isKanjiCharacter } from '../detail/text'
 import type { LinkEntry } from '../examples/linking'
 import { type ListedItem, type ListedResults, listedResults, primaryItem } from '../results/results'
+import { leadingExactFormCount } from '../search/composition'
 import { type SearchDatabase, withParametersTruncatedAtNul } from '../search/database'
 import { rankedEnglish } from '../search/english'
 import { rankedJapaneseForms } from '../search/japanese'
@@ -25,12 +27,23 @@ export type WebsiteRoute = Exclude<WebsitePage, { kind: 'word' }> | { kind: 'wor
 
 export type SavedWordRoute = Extract<WebsiteRoute, { kind: 'word' | 'search' }>
 
+export type LookUpRoute = Extract<WebsiteRoute, { kind: 'word' | 'search' | 'home' }>
+
 interface WrittenWord {
   headword: string
   reading: string
 }
 
 const sameText = (left: string, right: string) => left.normalize('NFC') === right.normalize('NFC')
+
+function onlyEntry(results: SearchResults, query: string): string | null {
+  if (isASCII(query) || isKanjiCharacter(query) || results.presentation !== 'ranked') return null
+  const [first] = results.items
+  const exact = leadingExactFormCount(results.items)
+  if (exact > 0) return exact === 1 ? first.entry.id : null
+  const ofOneEntry = results.resolution === 'deinflected' && results.leadingLexicalEntryCount === 1
+  return ofOneEntry ? first.entry.id : null
+}
 
 export function canonicalEntries(groups: readonly (readonly string[])[]): (string | null)[] {
   return groups.map(ids => canonicalEntry(ids.map(id => ({ id })))?.id ?? null)
@@ -117,6 +130,14 @@ export class EmbeddedLookup {
     )
     if (entry) return { kind: 'word', id: entry.id }
     return page.slug === '' ? { kind: 'home' } : { kind: 'search', query: page.slug }
+  }
+
+  async lookUp(text: string, morphology: MorphologyAnalyzer): Promise<LookUpRoute> {
+    const query = normalizeQuery(text)
+    if (query === '') return { kind: 'home' }
+    const results = await new DictionarySearch(this.searchDb, { morphology }).search(query)
+    const id = onlyEntry(results, query)
+    return id === null ? { kind: 'search', query } : { kind: 'word', id }
   }
 
   private async found(
