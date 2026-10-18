@@ -78,6 +78,14 @@ enum TestDevice {
     #endif
   }
 
+  @MainActor static func selectAllText(in field: XCUIElement) {
+    #if os(macOS)
+      field.typeKey("a", modifierFlags: .command)
+    #else
+      field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    #endif
+  }
+
   @MainActor static func copyImage(_ data: Data) {
     #if os(macOS)
       NSPasteboard.general.clearContents()
