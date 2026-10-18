@@ -109,7 +109,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let app = launch(pass, AccountSignedInUITests.standIns)
     open(.account, in: app)
     tap(reveal(find("account.sign-in", in: app), in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
+    tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
     tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
     tap(find("zenbu-account.delete", in: app))
