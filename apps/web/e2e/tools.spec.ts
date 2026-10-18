@@ -33,6 +33,18 @@ async function typeAndSee(
   }).toPass({ timeout: 15_000 })
 }
 
+async function expectCardsLeadToTheirPages(
+  page: Page,
+  request: Page['request'],
+  cards: readonly { title: string; href: string }[]
+) {
+  for (const card of cards) {
+    const link = main(page).getByRole('link', { name: card.title, exact: true })
+    await expect(link).toHaveAttribute('href', card.href)
+    expect((await request.get(card.href, { maxRedirects: 0 })).status(), card.href).toBe(200)
+  }
+}
+
 const desktopOnly = () =>
   test.skip(onPhone(), 'A page’s HTML and metadata are the same at every width')
 
@@ -61,14 +73,10 @@ test.describe('the tools index', () => {
 
   test('each card leads to its page, with no redirect', async ({ page, request }) => {
     await page.goto('/tools/')
-    for (const card of [
+    await expectCardsLeadToTheirPages(page, request, [
       ...converters.map(c => ({ title: c.name, href: c.path })),
       ...referenceTools
-    ]) {
-      const link = main(page).getByRole('link', { name: card.title, exact: true })
-      await expect(link).toHaveAttribute('href', card.href)
-      expect((await request.get(card.href, { maxRedirects: 0 })).status(), card.href).toBe(200)
-    }
+    ])
     await main(page).getByRole('link', { name: 'Romaji to Kana', exact: true }).click()
     await expect(page).toHaveURL('/tools/romaji-to-kana/')
     await expect(main(page).getByRole('heading', { level: 1 })).toHaveText('Romaji to Kana')
@@ -91,11 +99,7 @@ test.describe('the tools index', () => {
         .getByRole('list', { name: text.index.converters })
         .getByRole('heading', { level: 3 })
     ).toHaveText(converterPagesIn('ja').map(converter => converter.name))
-    for (const card of cards) {
-      const link = main(page).getByRole('link', { name: card.title, exact: true })
-      await expect(link).toHaveAttribute('href', card.href)
-      expect((await request.get(card.href, { maxRedirects: 0 })).status(), card.href).toBe(200)
-    }
+    await expectCardsLeadToTheirPages(page, request, cards)
     await expect(
       main(page)
         .getByRole('region', { name: text.appCard.label })
