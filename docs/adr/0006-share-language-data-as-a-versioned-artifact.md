@@ -51,7 +51,7 @@ treated as a tokenizer decision, made by whichever candidate passes the conforma
 [ADR 0008](0008-share-one-typescript-search-core-built-for-the-most-constrained-client.md) makes
 search one TypeScript core, built for the most constrained client.
 
-The suite is [`search-retrieval.json`](../../apps/ios/LanguageData/Conformance/search-retrieval.json).
+The suite is [`search-retrieval.json`](../../language-data/conformance/search-retrieval.json).
 Each case maps a query to the Language Reference IDs Search returns, in order, before
 frequency evidence reorders them, along with its resolution, presentation, and reading
 refinement. The suite pins the artifact SHA-256 it was recorded against. Every client must pass

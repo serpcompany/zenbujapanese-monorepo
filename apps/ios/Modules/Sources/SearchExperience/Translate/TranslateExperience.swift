@@ -158,7 +158,8 @@ final class TranslateExperience {
     guard !droppedAbandonedStart() else { return }
     preparation = nil
     let session = LiveConversation(
-      mode: mode, clients: services.clients, archive: history, timing: services.timing)
+      mode: mode, clients: services.clients, archive: history, timing: services.timing,
+      now: services.now)
     self.session = session
     history.liveConversationID = session.conversation.id
     session.start()

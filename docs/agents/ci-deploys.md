@@ -36,7 +36,9 @@ script against a stand-in for the GitHub API.
 ## Web deploy
 
 `.github/workflows/web-deploy.yml` deploys the site on a push to `main` that changes the same files
-as `Web` ([`ci.md`](ci.md), Web), and by hand. Runs never overlap, and a running one is never cancelled. The `staging`
+as `Web` ([`ci.md`](ci.md), Web) or what the dictionary service's image holds (the paths
+`Dictionary API deploy` runs on, below, which `tools/checks/src/deploy-workflows.test.ts` holds it
+to), since the site's sitemaps are written from it, and by hand. Runs never overlap, and a running one is never cancelled. The `staging`
 job, then the `production` job, each in the GitHub environment of that name:
 
 1. waits for this commit's `Dictionary API deploy` run, if it has one, to sign and tag the image
@@ -47,10 +49,16 @@ job, then the `production` job, each in the GitHub environment of that name:
    ([`dictionary-api.md`](dictionary-api.md), How a deploy works).
 2. points the site at the environment's service (`apps/web/scripts/use-dictionary-service.sh`, with
    the environment's `DICTIONARY_API_URL` variable);
-3. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
+3. writes the dictionary's sitemaps (`apps/web/scripts/write-dictionary-sitemaps.sh`): it pulls the
+   environment's service image (`:staging` or `:production`), with the job's `packages: read`
+   permission, starts it on the runner, and runs `pnpm sitemaps` against it, failing the job when it
+   can't ([`web.md`](web.md), Sitemaps; ADR 0016);
+4. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
    the workers.dev URL the deploy printed, since the zone's bot protection blocks CI runners. When
    Cloudflare challenges the site's Worker for the runner too, the smoke test skips its dictionary
-   checks with a warning ([`web.md`](web.md), Dictionary service).
+   checks with a warning ([`web.md`](web.md), Dictionary service). On staging it also checks the
+   password gate, and skips, with a warning, its one request to the canonical host when the runner
+   is blocked ([`staging-access.md`](staging-access.md), Checks).
 
 Production runs once staging passes. Its environment has no required reviewer, by the owner's
 decision; add one to gate it by hand. The repository variable `DEPLOY_PRODUCTION` set to `false`
@@ -202,6 +210,6 @@ To update one, pin the new release's commit and change this table in the same pu
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
 | `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/web-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |

@@ -33,7 +33,8 @@ two-column list of what it includes, Get the app, and Learn more.
 reference guides (Kana chart PDF, Verb conjugations PDF, and JLPT N5 kanji PDF); and the course,
 Japanese from real clips (#623). Each card shows its icon, name, a Free or Coming soon badge, a
 line about it, and its facts and type. A free tool's card opens its page: the dictionary home,
-and the kana, kanji, and frequency browse pages. A planned product is a Coming soon card that
+the kana, kanji, and frequency browse pages, and, for Converters, the tools index (`/tools/`,
+[Tools pages](tools.md)). A planned product is a Coming soon card that
 isn't a link, so it adds no `#` link (the owner's decision on #652). The iPhone app's Get the app
 is the App Store placeholder, and Learn more opens its page.
 
@@ -161,7 +162,8 @@ HTML while closed; the last says the web dictionary has the app's entries, and w
 only in the app, and links to the dictionary. The offline dictionary's "more than
 200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
 words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
-dictionary, the browser extension, and kana charts as catalog cards, with All products.
+dictionary, the browser extension, and kana charts as catalog cards, with All products. The
+questions are the stock accordion (`src/components/question-list.tsx`), as the tools pages' are.
 
 - Source: #648 mockups (Product page); the app's product docs for every claim.
 - Check: Product page spec, "lists what’s inside and the questions, the first one open" and "More

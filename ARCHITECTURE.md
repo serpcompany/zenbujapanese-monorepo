@@ -7,21 +7,21 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 
 | Part | What it is | Its doc |
 | --- | --- | --- |
-| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which its importers in `apps/ios/Tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, and bookmarked translations. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
+| `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015). It reads the language data bundled with it, which the importers in `language-data/tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, bookmarked translations, and the profile's name and username. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
-| `language-data` | The language-data release: the manifest and the pipeline that packages and publishes the app's data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
+| `language-data` | What every client's language data comes from: the pinned sources, the importers that build the app's bundled data from them, the conformance suites every client passes, and the release, with the pipeline that packages and publishes that data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
 | `tools/checks` | The repository-wide checks behind `pnpm verify`, the script that hands each checkout its local ports, and the tests of what has no package of its own: the workflows and the server's deployer. | [`docs/agents/code.md`](docs/agents/code.md) |
 
 ## How data moves
 
 ```mermaid
 flowchart LR
-    Sources[("Upstream sources: JMdict, KANJIDIC2, Tatoeba, ...")] --> Tools["apps/ios/Tools importers"]
+    Sources[("Upstream sources: JMdict, KANJIDIC2, Tatoeba, ...")] --> Tools["language-data/tools importers"]
     Tools --> Data[("LanguageReferenceData.sqlite3 and packs, in apps/ios")]
     Data --> App["App for iPhone, iPad, and Mac"]
     Data --> Release["language-data release"]
@@ -50,7 +50,8 @@ which the service answers the website's retired word URLs from
 service, which runs the same core the website renders with. The app answers its dictionary
 screens with that core too, from a bundle of it checked in beside the data, so it shows what the
 website shows with no network ([`docs/agents/ios.md`](docs/agents/ios.md), The dictionary core in the app). A new build of the data is a new
-service image, deployed without touching the site. An app that doesn't bundle the data ships word
+service image; the site redeploys after it only to write the dictionary's sitemaps from it, on the
+CI runner (ADR 0016). An app that doesn't bundle the data ships word
 cards the core exports, and, signed in, fetches more cards and segmentation from the service's
 `/v1/apps` routes with its account's access token ([`language-data/word-cards.md`](language-data/word-cards.md)).
 
@@ -94,8 +95,9 @@ saying where the code belongs:
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
-  `worker.ts` runs before Next.js; the browse pages' data and the sitemaps ask the client
-  `data.ts` hands them ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
+  `worker.ts` runs before Next.js, and the deploy's sitemap writer, `scripts/write-sitemaps.ts`;
+  the browse pages' data asks the client `data.ts` hands it
+  ([`docs/agents/web.md`](docs/agents/web.md), Code layout).
 - **The app**: only `SearchExperience/Platform/` may use `#if os(...)`, UIKit, AppKit, or an API
   that iPhone, iPad, or the Mac lacks; everything else in the package, its tests, and the app
   target calls its

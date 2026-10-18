@@ -14,11 +14,11 @@ The website follows these SERP engineering standards:
 - [Environment configuration](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/environment-configuration.md)
 - [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md):
   pages end with a slash (`/about/`); files never do (`/robots.txt`, `/sitemap-index.xml`). The
-  other form redirects (308) to it. `src/lib/pages.ts` is the single list of static page paths.
-  Next.js redirects `/robots.txt/` to `/robots.txt` itself, but OpenNext skips it, so
-  `next.config.ts` repeats that redirect, with a rule of its own for a top-level file, since
-  OpenNext can't fill an empty path parameter. The homepage is written as the origin, without a
-  slash (`https://zenbujapanese.com`): see Sitemaps.
+  other form redirects (308) to it. `src/lib/pages.ts` lists the static pages but the tools pages
+  ([`web-tools.md`](web-tools.md)). Next.js redirects `/robots.txt/` to `/robots.txt` itself, but
+  OpenNext skips it, so `next.config.ts` repeats that redirect, with a rule of its own for a
+  top-level file, since OpenNext can't fill an empty path parameter. The homepage is written as the
+  origin, without a slash (`https://zenbujapanese.com`): see Sitemaps.
 - [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md):
   `/sitemap-index.xml` lists `sitemap-<group>.xml` files at the site's root (see Sitemaps).
 
@@ -53,14 +53,14 @@ lists every child sitemap and each child sitemap lists the new URLs.
 
 ### Phone layout
 
-`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages,
-search, a word, kanji details, every browse family, and a missing page) with what to open on each,
-and the views to check beyond it: each homepage area, and on About the phone menu and each of its
-groups. `openPageType` stands in for the account service (signed out), and waits until the account
-page and a word's examples have loaded and animations have ended; `checkEachView` opens a page
-type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a test
-for every page type and the missing page. Add a page type there when one ships,
-and these cover it (#682):
+`apps/web/e2e/page-types.ts` lists one page of every type (the static pages, the account pages, the
+tools pages, search, a word, kanji details, every browse family, and a missing page) with what to
+open on each, and the views to check beyond it: each homepage area, and on About the phone menu and
+each of its groups. `openPageType` stands in for the account service (signed out), and waits until
+the account page and a word's examples have loaded and animations have ended; `checkEachView` opens
+a page type, opens Sources, and runs a check on it and each view, and `testEachPageType` declares a
+test for every page type and the missing page. Add a page type there when one ships, and these cover
+it (#682):
 
 - **The phone checks**, `apps/web/e2e/phone-layout.spec.ts`, run with the other browser tests, in
   the `phone` project at 360 pixels, on every page type and view, and fail on: text under 12
@@ -178,8 +178,9 @@ drawing's furigana keeps its drawn size.
   says the screens overflow, and before it loads, when an area has more than three. A video is the
   product page's `VideoCard`; a hidden area's screens mount again, so a playing video stops.
 - `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
-  `apps/web/src/components/dictionary/dictionary-breadcrumbs.tsx`, for its `BreadcrumbList`
-  JSON-LD, which escapes `<` so the JSON can't close its script tag (the Next.js JSON-LD guide).
+  `apps/web/src/components/json-ld.tsx`, which writes structured data (the dictionary breadcrumbs'
+  `BreadcrumbList` and the converter pages' `FAQPage`) and escapes `<` so the JSON can't close its
+  script tag (the Next.js JSON-LD guide).
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which
@@ -200,9 +201,10 @@ may import anything.
 
 Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
-fixtures; the one other caller is `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
-Next.js. The browse pages' data (`src/lib/dictionary/browse/data.ts`) and the sitemaps
-(`src/lib/dictionary/sitemaps.ts`) ask the client `data.ts`'s `dictionaryService()` returns. The rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+fixtures; the other callers are `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
+Next.js, and `scripts/write-sitemaps.ts`, which writes the sitemaps at deploy. The browse pages'
+data (`src/lib/dictionary/browse/data.ts`) asks the client `dictionaryService()` returns. The
+rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
 
 `pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
 import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
@@ -404,7 +406,7 @@ search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
-The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/Conformance/`)
+The service's own tests replay the app-recorded suites (`language-data/conformance/`)
 through the core on the real artifact: search retrieval, search results, example search, word
 detail, and kanji detail, every example field included (see
 [`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service
@@ -424,8 +426,8 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
   accented in each sentence), and renders nine example-search cases: the count line, every pair
   ID in order, loading each whole list as the page does, and the first sentences' words and marks.
 - `components/dictionary/word-page.test.tsx` and `conjugations.test.tsx` draw every word-detail
-  case: the per-kanji furigana split, the pitch graph's points, each Frequency row's details, and
-  the conjugation table and each form's page, form by form, with the form's first examples.
+  case: the per-kanji furigana split, the pitch graph, each Frequency row's details, the first 25
+  examples and their marked words, the conjugation table, and each form's page and first examples.
 
 `pnpm test` skips the gate. To run it, start the service and point the tests at it:
 
@@ -541,8 +543,9 @@ database, or `delete from rate_limits` in it.
 | Production | `zenbujapanese-web-production` | `zenbujapanese.com` (`www` redirects to it) |
 
 Deploys run only through the `Web deploy` GitHub Actions workflow, never from an agent's machine.
-Each merge to `main` that changes `apps/web/**` or the core points staging at its dictionary
-service, deploys staging, and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
+Each merge to `main` that changes `apps/web/**`, the core, or the service's image points staging at
+its dictionary service, writes the sitemaps from that service's image (Sitemaps), deploys staging,
+and smoke-tests its workers.dev URL (`scripts/smoke.sh`). The
 production job then runs automatically once staging passes: it does the same for production with
 the same commit. Staging's smoke tests are the gate: the `production` GitHub environment has no
 required reviewer, by the owner's decision. Add one (Settings → Environments → production) to
@@ -584,9 +587,9 @@ when the Worker can't reach it (such as `TypeError` or `TimeoutError`), never it
 can name internal detail; it answers 404 where the site reads no service. Bot Fight Mode challenges
 the Worker's request too when a CI runner sets it off, whatever headers the runner sends, and
 `/dictionary/service.json` then reports the challenge: the smoke test skips its dictionary checks
-with a warning, `/sitemap-index.xml` among them since it lists the service's sitemaps, and runs
-them in full from a machine Cloudflare doesn't challenge, such as your own. Visitors Cloudflare
-scores as bots get a 500 on dictionary pages and the sitemap index for the same reason.
+with a warning, but not the sitemaps, which are files (Sitemaps, below), and runs them in full
+from a machine Cloudflare doesn't challenge, such as your own. Dictionary pages can answer 500 for
+the same reason: the Worker asks from Cloudflare's Workers address, `2a06:98c0:3600::103` (#805).
 
 The site reads whatever service its environment names, so a new service deploys before a site
 change that needs it. The `Dictionary API deploy` workflow deploys the service itself
@@ -620,13 +623,13 @@ Each value that differs by environment lives where the code that reads it runs:
 (`deploy:staging` and `deploy:production`). It also names the environment's origin, its canonical
 host (`siteOrigin()` in `src/lib/site.ts`), which every canonical tag, Open Graph URL, and
 structured data URL is written on; local development writes production's. A build whose `SITE_ENV`
-isn't `production` sends workers.dev to staging (`next.config.ts`). Anything but
-`SITE_ENV=production` is non-production: it sends `X-Robots-Tag: noindex` and a `robots.txt` that
-disallows everything. Analytics load only in production and only when their build-time IDs are set:
-`NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable that the
-`Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN` (Cloudflare
-Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`, holds one tag,
-a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
+isn't `production` sends workers.dev to staging (`next.config.ts`). Production is indexable, staging
+asks for a password ([`staging-access.md`](staging-access.md)), and a local build is `noindex`, with
+a `robots.txt` that disallows all. Analytics load only in production and only when their build-time
+IDs are set: `NEXT_PUBLIC_GTM_ID` (Google Tag Manager, a `production` GitHub environment variable
+that the `Web deploy` workflow passes to the production build) and `NEXT_PUBLIC_CF_BEACON_TOKEN`
+(Cloudflare Web Analytics, which production doesn't set). Production's container, `GTM-MCNL5QH4`,
+holds one tag, a Custom HTML tag that loads Ahrefs Web Analytics, which uses no cookies; the
 [Privacy Policy](../../apps/web/docs/product/privacy.md) names Ahrefs and Google for it, so a tag
 added there, or the Cloudflare beacon turned on, changes the policy in the same step.
 
@@ -685,21 +688,21 @@ and `dmca@zenbujapanese.com` to `dmca+zenbujapanese@serp.co`.
 ## Sitemaps
 
 Sitemaps follow the SERP [XML sitemaps](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/xml-sitemaps.md)
-standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, rendered per request:
+standard. The index and the pages and tools sitemaps are route handlers built on
+`src/lib/sitemap.ts`, rendered per request; the dictionary's are files each deploy writes (below):
 
 - `/robots.txt` (`src/lib/robots.ts`) names `/sitemap-index.xml` in every environment, including
-  staging, which disallows crawling: site audits such as Ahrefs find sitemaps through it.
+  staging, which disallows crawling but to `AhrefsSiteAudit`: site audits find sitemaps through it.
 - `/sitemap-index.xml` is the index. `/sitemap.xml`, where crawlers and site audits look by
   default, redirects (308) to it (`movedSitemaps`), so the index has one address. The index lists
   each child sitemap, never another index.
-- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`, then
-  the dictionary's. A child holds at most 50,000 URLs; a group that outgrows one file adds
-  `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap to `childSitemaps`
-  in `src/lib/sitemap.ts`, or, for a group the dictionary service answers, to
-  `dictionarySitemapPaths` in `src/lib/dictionary/sitemaps.ts` with its rewrite in
-  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are.
-  Static pages are listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at
-  `/sitemap`.
+- Each child sitemap is a file at the site's root named for its group: `/sitemap-pages.xml`,
+  `/sitemap-tools.xml`, then the dictionary's. A child holds at most 50,000 URLs; a group that
+  outgrows one file adds `-2`, `-3`, and so on (`/sitemap-words-2.xml`). Add a new group's sitemap
+  to `childSitemaps` in `src/lib/sitemap.ts`, or, for a group built from the dictionary service,
+  to `dictionarySitemaps` in `src/lib/dictionary/sitemaps.ts` with its file name in
+  `src/lib/dictionary/sitemap-files.ts`, as the word and browse sitemaps are. Static pages are
+  listed once, in `src/lib/pages.ts`, which also feeds the HTML sitemap at `/sitemap`.
 - Every URL is written on the origin `servedOrigin()` in `src/lib/site.ts` names: the environment's
   canonical host on staging and production (so staging's sitemaps list
   `https://staging.zenbujapanese.com/…`, even when CI asks through workers.dev), and the address the
@@ -711,49 +714,45 @@ standard. They are hand-written route handlers built on `src/lib/sitemap.ts`, re
 - The sitemaps that moved to the root in #663 redirect (308) in one hop from where they were,
   with or without a slash (`movedSitemaps` in `src/lib/sitemap.ts` and `movedDictionarySitemaps`
   in `src/lib/dictionary/sitemap-files.ts`, which `next.config.ts` lists before its file rules):
-  `/sitemaps/pages.xml` and `/sitemaps/dictionary/<n>.xml`. `src/lib/sitemap-index.ts` puts the
-  index together.
+  `/sitemaps/pages.xml`, `/sitemaps/dictionary/<n>.xml`, and `/sitemaps/browse/<group>.xml`.
+  `src/lib/sitemap-index.ts` puts the index together.
 - Each child sitemap holds one kind of page, as the standard asks, so Search Console reports each
   kind's indexing on its own. A new kind of page gets its own `sitemap-<group>.xml` rather than
   joining another's. The browse pages' sitemaps hold this with a test per file
   (`src/lib/dictionary/sitemaps.test.ts`, "the … sitemap lists only its own kind of browse
   page").
 
-The dictionary's sitemaps (`src/lib/dictionary/sitemaps.ts`, ADR 0007) exist wherever the site
-has a dictionary service, staging and production, not local fixtures, so the index renders per
-request (`force-dynamic`): a build can't reach the service, so
-prerendering would fail the build or freeze an index without them. `/dictionary/`, the search box
-and the browse sections below it, is listed in `src/lib/pages.ts`, and the pages sitemap also
-lists the browse home beside it (`src/lib/pages-sitemap.ts`), a section landing page as
-`/dictionary/` is:
+The dictionary's sitemaps (ADR 0007) are static files, written at each deploy from the build the
+environment's service runs (ADR 0016), so no crawler request reaches the service, which Bot Fight
+Mode can keep the Worker from. `/dictionary/`, the search box and the browse sections below it,
+is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse home beside it
+(`src/lib/pages-sitemap.ts`), a section landing page as `/dictionary/` is. The files:
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
   its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
-  A route can't have a parameter inside its file name, so `next.config.ts` rewrites these
-  (`dictionarySitemapFiles` in `src/lib/dictionary/sitemap-files.ts`, which imports no `@/`
-  path) to the route `src/app/sitemaps/dictionary/[file]`,
-  whose own URLs redirect back to them. The service works out each file's `ent_seq` range once,
-  and the site streams a file's words from it 10,000 at a time (`urlSetStream`), so a file never
-  sits whole in memory; a failure mid-stream errors the response rather than ending it early.
+  The service works out each file's `ent_seq` range, and the writer streams its words to the file
+  10,000 at a time, so a file never sits whole in memory.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
   lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs in all:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
   (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
   `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both
-  scripts, the category indexes, the frequency dictionaries, the kanji lists), so a hub is listed
-  only when the service answers, as its page needs. Each is far under 50,000, so none has a
-  second file.
-  `next.config.ts` rewrites them to the route `src/app/sitemaps/browse/[file]`, as the word
-  sitemaps are, and the four read one cached answer from the service.
+  scripts, the category indexes, the frequency dictionaries, the kanji lists). Each is far under
+  50,000, so none has a second file.
 
 Those are the only dictionary sitemaps (ADR 0010, amended for #614): the kanji and conjugations
 sitemaps went with their pages.
 
-They're kept in the Worker's edge cache (the Cache API) under the dictionary build the service
-names, so they change with the build, within the 10 minutes its answers stay cached. The key
-names the dictionary build, not the site's, so a site deploy that changes what a sitemap lists
-shows within the hour its answer is kept (`xmlResponse`'s `max-age`). Cloudflare
-doesn't cache a Worker's responses on its own, and `pnpm dev` has no such cache.
+`pnpm sitemaps` (`scripts/write-sitemaps.ts`) writes them into `public/`, which git ignores, on the
+host `SITE_ENV` names, from the service at `DICTIONARY_API_URL` with `DICTIONARY_API_TOKEN`. It
+writes to a scratch folder first and fails, leaving `public/` as it was, when the service lacks a
+file or a word file has fewer words than listed. Each deploy job runs it through
+`scripts/write-dictionary-sitemaps.sh`, which starts the environment's service image on the runner
+and asks it at `127.0.0.1` ([`ci-deploys.md`](ci-deploys.md), Web deploy). The build copies them
+into the assets, which Cloudflare serves without running the Worker, and `next.config.ts` hands the
+index the files it found (`writtenDictionarySitemaps`), listed after the pages and tools sitemaps;
+a local build has none. To see them locally, start the service (`verify-service`), run
+`pnpm sitemaps` with the three variables, then `pnpm preview`, and delete them afterwards.
 
 ## Retired word URLs
 

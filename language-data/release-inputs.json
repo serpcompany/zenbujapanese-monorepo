@@ -1,8 +1,8 @@
 {
   "roots": {
     "resources": "apps/ios/Modules/Sources/SearchExperience/Resources",
-    "sources": "apps/ios/LanguageData/Sources",
-    "conformance": "apps/ios/LanguageData/Conformance",
+    "sources": "language-data/sources",
+    "conformance": "language-data/conformance",
     "notices": "language-data/notices",
     "derived": "language-data/derived"
   },

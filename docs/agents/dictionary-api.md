@@ -24,10 +24,10 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `LanguageReferenceData.sqlite3`.
 - `RankedLists.sqlite3` holds the Wikipedia and six Jiten lists' ranks, mapped to Language
   Reference IDs as the app maps them when a learner installs the pack, from their pinned sources
-  ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), `build_ranked_lists.py`). The app
-  doesn't bundle it. With TUBELEX, which the app bundles, the service has all eight of the app's
-  ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
-  (`packages/dictionary-core/src/browse/lists.ts`).
+  ([`language-data/tools/README.md`](../../language-data/tools/README.md),
+  `build_ranked_lists.py`). The app doesn't bundle it. With TUBELEX, which the app bundles, the
+  service has all eight of the app's ranked frequency dictionaries; `checkArtifact` refuses a file
+  that lacks one the core lists (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
 - The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
   for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
@@ -242,7 +242,7 @@ pnpm check
 ```
 
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
-(`apps/ios/LanguageData/Conformance/`, ADR 0006) through the service's dictionary on the real
+(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
 row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
 sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
@@ -263,8 +263,8 @@ suite that pins nothing. It is replayed through the core's `romaji` and `sentenc
 through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
 app did. The results suite compares a row's first entry number only: the service keeps its
 Language Reference ID's, the first of the entries the app merged into the row. Where the app's
-example retrieval throws, on a headword NFKC changes such as Ｈ, the suite records the error: Word
-Detail lists no examples, and neither does the page. Without the files the suites skip;
+example retrieval answers an error, the suite records it, and the page lists no examples either;
+none recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
 the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
 it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
@@ -277,7 +277,7 @@ Sudachi's dictionary cached, then the website's rendered-page gate against the b
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
 (see Ship it).
 
-`pnpm tokenizer-suite` records `apps/ios/LanguageData/Conformance/tokenizer.json` again from the
+`pnpm tokenizer-suite` records `language-data/conformance/tokenizer.json` again from the
 tokenizer as it is: each text's tokens, the digest of its random sample, and the dictionary
 files' hashes. `src/conformance/tokenizer.conformance.test.ts` replays it. It was first recorded
 from kuromoji.js, so record it again only when the dictionary files change or the tokenizer is
@@ -359,8 +359,8 @@ names this workflow and the branch it ran from. The `staging` environment only a
 an image a branch pushed never runs. A rollback signs its image again only after checking that
 main signed it before.
 
-- **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
-  as `sha-0123456789ab`: it moves the tags to that image without building.
+- **Roll back** by running the workflow by hand with `tag` set to the version, such as
+  `sha-0123456789ab` (it moves the tags without building), then `Web deploy` (ADR 0016).
 - **See what runs and retry a failed image** as [`api-servers.md`](api-servers.md) says, with
   `zenbujapanese.dictionary-api.slot`, `journalctl -t zenbujapanese-dictionary-api`, and
   `/var/lib/zenbujapanese-dictionary-api/`.

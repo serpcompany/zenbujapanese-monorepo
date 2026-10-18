@@ -91,10 +91,12 @@ struct ProfileView: View {
   }
 
   @Environment(UserProfile.self) private var profile
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var photoSelection: PhotosPickerItem?
   @State private var name = ProfileFieldEdit()
   @State private var username = ProfileFieldEdit()
   @State private var email = ProfileFieldEdit()
+  @State private var showsNameError = false
   @State private var showsUsernameError = false
   @State private var showsEmailError = false
   @FocusState private var focusedField: Field?
@@ -132,29 +134,33 @@ struct ProfileView: View {
             .accessibilityIdentifier("profile.username")
         }
         LabeledContent("Email") {
-          TextField("Email", text: $email.text, prompt: Text(verbatim: "name@example.com"))
-            .textContentType(.emailAddress)
-            .textEntry(.email)
-            .autocorrectionDisabled()
-            .focused($focusedField, equals: .email)
-            .onChange(of: email.text) { showsEmailError = false }
-            .multilineTextAlignment(.trailing)
-            .labelsHidden()
-            .accessibilityIdentifier("profile.email")
+          if let accountEmail {
+            Text(verbatim: accountEmail)
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .truncationMode(.middle)
+              .textSelection(.enabled)
+              .accessibilityIdentifier("profile.account-email")
+          } else {
+            TextField("Email", text: $email.text, prompt: Text(verbatim: "name@example.com"))
+              .textContentType(.emailAddress)
+              .textEntry(.email)
+              .autocorrectionDisabled()
+              .focused($focusedField, equals: .email)
+              .onChange(of: email.text) { showsEmailError = false }
+              .multilineTextAlignment(.trailing)
+              .labelsHidden()
+              .accessibilityIdentifier("profile.email")
+          }
         }
       } footer: {
-        if showsUsernameError || showsEmailError {
+        if footerErrors.isEmpty {
+          Text(verbatim: "\(UserProfile.usernameRule) \(storageNote)")
+        } else {
           VStack(alignment: .leading, spacing: 4) {
-            if showsUsernameError {
-              Text(verbatim: UserProfile.usernameRule)
-            }
-            if showsEmailError {
-              Text(verbatim: "Enter a valid email address, like name@example.com.")
-            }
+            ForEach(footerErrors, id: \.self) { Text(verbatim: $0) }
           }
           .foregroundStyle(.red)
-        } else {
-          Text(verbatim: "\(UserProfile.usernameRule) Your profile is stored only on this device.")
         }
       }
       .submitLabel(.done)
@@ -170,7 +176,9 @@ struct ProfileView: View {
     .onChange(of: focusedField) { previous, current in
       if let previous { commit(previous) }
       switch current {
-      case .name: name.focus()
+      case .name:
+        name.focus()
+        showsNameError = false
       case .username: username.focus()
       case .email: email.focus()
       case nil: break
@@ -208,6 +216,33 @@ struct ProfileView: View {
     }
   }
 
+  private var accountEmail: String? { zenbuAccount?.account?.email }
+
+  private var storageNote: String {
+    accountEmail == nil
+      ? "Your profile is stored only on this device."
+      : "Your name and username sync with your Zenbu account. Your photo stays on this device."
+  }
+
+  private var footerErrors: [String] {
+    let errors = [
+      showsNameError ? UserProfile.accountNameRule : nil,
+      showsUsernameError ? UserProfile.usernameRule : nil,
+      showsEmailError ? "Enter a valid email address, like name@example.com." : nil,
+      profile.refusal.map(Self.message),
+    ]
+    return errors.compactMap { $0 }.reduce(into: []) { shown, error in
+      if !shown.contains(error) { shown.append(error) }
+    }
+  }
+
+  private static func message(for refusal: ProfileRefusal) -> String {
+    switch refusal {
+    case .usernameTaken: "That username is taken. Choose another."
+    case .other: "Your Zenbu account didn't take that change, so it went back."
+    }
+  }
+
   private func showSaved() {
     name.show(profile.name)
     username.show(profile.username)
@@ -218,7 +253,12 @@ struct ProfileView: View {
     switch field {
     case .name:
       if let edited = name.unfocus() {
-        profile.name = edited.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
+        if accountEmail == nil || UserProfile.isAccountName(trimmed) {
+          profile.edit(ProfileFields(name: trimmed))
+        } else {
+          showsNameError = true
+        }
       }
       name.show(profile.name)
     case .username:
@@ -227,7 +267,7 @@ struct ProfileView: View {
         case .keep:
           break
         case .save(let accepted):
-          profile.username = accepted
+          profile.edit(ProfileFields(username: accepted))
         case .refuse:
           username.reject()
           showsUsernameError = true

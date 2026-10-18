@@ -8,7 +8,7 @@ import { cardFields, type RecordedWord, recordedFields } from './suite'
 
 const suite = JSON.parse(
   readFileSync(
-    new URL('../../../../apps/ios/LanguageData/Conformance/word-detail.json', import.meta.url),
+    new URL('../../../../language-data/conformance/word-detail.json', import.meta.url),
     'utf8'
   )
 ) as { cases: (RecordedWord & { entSeq: string[] })[] }

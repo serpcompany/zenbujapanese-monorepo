@@ -38,6 +38,8 @@ final class KanjiFiles: Sendable {
 
   func entry(_ character: String) -> [UInt8]? { reference.record(character, in: "entries") }
 
+  func wholeReference() -> [UInt8] { reference.whole() }
+
   func structure(_ character: String) -> [UInt8]? { elements.record(character, in: "kanji") }
 
   func element(_ glyph: String) -> [UInt8]? { elements.record(glyph, in: "elements") }
@@ -77,6 +79,8 @@ private struct JSONRecordFile: Sendable {
     self.strings = strings
     self.records = records
   }
+
+  func whole() -> [UInt8] { Array(data) + [0] }
 
   func record(_ name: String, in list: String) -> [UInt8]? {
     let scalars = name.unicodeScalars

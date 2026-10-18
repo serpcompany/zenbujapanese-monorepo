@@ -25,7 +25,8 @@
         "DICTIONARY_API_URL": "DICTIONARY_API_URL",
         "ACCOUNT_API_URL": "https://api-staging.zenbujapanese.com",
         "ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website",
-        "ACCOUNT_GOOGLE_SIGN_IN": "on"
+        "ACCOUNT_GOOGLE_SIGN_IN": "on",
+        "STAGING_BASIC_AUTH_PASSWORD": "stagingpassword"
       },
       "workers_dev": true,
       "preview_urls": false,

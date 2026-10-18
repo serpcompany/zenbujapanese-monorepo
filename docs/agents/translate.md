@@ -282,45 +282,33 @@ silent playback, and a silence prompt (20 s, then two minutes), so every screen 
 SIMCTL_CHILD_ZENBU_TRANSLATE_SCRIPT=station xcrun simctl launch <udid> com.zenbujapanese.dictionary
 ```
 
-Release builds don't contain the harness.
+The conversation, its timer, and the prompt's countdown read the harness's own clock
+(`ScriptedClock`). The Darwin notice `com.zenbujapanese.dictionary.uitests.skip-translate-countdown`
+moves that clock two minutes ahead, past the countdown, so a UI test sees it run out without
+waiting. With `ZENBU_TRANSLATE_HOLD=1` as well, the script waits for the test
+(`ScriptedTranslateControls.swift`): each line stops halfway until the notice `…translate-hear-on`,
+a line that starts a new turn waits for one too, except the first after a start or a resume, each
+translation plays only after `…translate-play-on` (or a mute), and there is no silence prompt or
+30-second cutoff. `ZENBU_TRANSLATE_HOLD=silent` waits for a notice before the first line too, and
+keeps the 20 s prompt, so a test can skip straight to it. A notice posted before its wait is kept for it, but two posted at once may
+arrive as one, so a test posts one and waits for what it lets happen. Release builds don't contain
+the harness.
 
 ## Translate manual checks
 
-In the Simulator, with the harness:
+`TranslateUITests`, `ConversationUITests`, and `HeldConversationUITests` walk every screen on the
+harness, on the iPhone, the iPad, and the Mac; the product docs name the test for each behavior. What they can't see is
+checked by eye:
 
-- **Text**, then `Where can I buy a Suica card?`, shows **English →
-  Japanese**, copy, speak, and linked Japanese; tapping a word closes the keyboard and opens Word
-  Detail at half height. **•••** → **Furigana** shows furigana over the Japanese.
-- The tab opens on a header card, then Spoken (Conversation, Listen) and Written (Image, Text,
-  Document), all without scrolling; **Image** shows an alert with Take Photo and Photo Library,
-  and a library photo opens Image Search (Take Photo needs an iPhone). **Conversation** shows the
-  station conversation full screen, without the tab bar: an English card, then a wider gap and one
-  Japanese turn of three cards whose audio waits (**N waiting for a pause**), each card turning
-  active while it plays. Along the bottom are the speaker, − 1.0× +, and the red timer with a pause
-  button that becomes a blue play while paused. **•••** switches to **Two Panes** (a dark Japanese
-  pane over a light English one) and back, and turns on **Furigana**.
-- In Translations, a conversation's transcript has a speaker and a bookmark on each sentence;
-  bookmarking one lists it under **Bookmarked**. Its **•••** → **Furigana** shows furigana, and
-  the conversation and Text screens follow the same switch.
-- Opening a word's full entry shows the full-width session bar above the tab bar; another tab
-  reads **Conversation still listening · Return**, which returns to the conversation.
-- Back shows **Leave this conversation?** from the Back button; **Save and Exit** returns home, and
-  Translations lists it with **Today, HH:MM · N turns**, a long-press menu, and the transcript.
-- Account → **Translations** shows how many conversations are saved and opens the same
-  Translations screen inside Account; a word in a transcript opens at half height, Back returns to Account, and a
-  deletion there lowers the count and leaves the Translate tab's Translations without it. With
-  a conversation live (start one, then switch to Account), it isn't listed, and transcripts have
-  no speaker button.
-- **Listen** leads each card with its translation (English for the Japanese announcements, Japanese
-  for the English one) and plays as it goes. Its bottom bar matches Conversation's: speaker, − 1.0×
-  +, and the timer. The speaker turns to a slashed speaker and dims the speed; the next
-  announcements still appear, and none turns active while it would have played. After 20 seconds of
-  silence, **Are you still there?** counts down two minutes, the harness's countdown (the app's own
-  is 10 seconds), and then pauses with an alert offering **Resume**.
-- While listening, the Simulator's screen doesn't auto-lock (Settings → Display & Brightness →
-  Auto-Lock at 30 seconds); after a pause it locks as usual.
-- Sending the app home pauses with **Paused while you were away**; **Exit Without Saving** leaves
-  no file in `Translate Conversations`.
+- **How it looks**, in the Simulator with the harness. The card being heard, and each card while
+  its translation plays, has a tinted fill and an accent outline, and a new turn starts after a
+  wider gap. The timer is red while listening and gray while paused, and its button a red pause or
+  a blue play; muting dims the speed. **Two Panes**' panes are dark and light. The session bar
+  spans the width above the tab bar. **•••** → **Furigana** puts readings over the Japanese in the
+  conversation, its transcript, and Text. The tests read what the screen says, not its colors or
+  sizes, and furigana isn't an accessibility element.
+- **Auto-Lock.** While listening, the screen doesn't lock (Settings → Display & Brightness →
+  Auto-Lock at 30 seconds); after a pause it locks as usual. XCUITest can't read the idle timer.
 
 On an iPhone, in a **Zenbu Dev** build ([`ios.md`](ios.md), Install on an iPhone) so the TestFlight
 app is untouched, with iPhone Mirroring closed (it silences the microphone), and without the
