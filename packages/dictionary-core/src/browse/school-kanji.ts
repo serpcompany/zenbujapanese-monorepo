@@ -1,4 +1,4 @@
-import { type KanjiEntries, kanjiListResponse } from '../artifact/browse-kanji'
+import { type KanjiEntries, kanjiListResponse, ownOrOrdinary } from '../artifact/browse-kanji'
 import type { KanjiReferenceEntry } from '../artifact/kanji-data'
 import { graphemes, hiragana, isKanjiCharacter } from '../detail/text'
 import { normalizeQuery } from '../search/query'
@@ -31,6 +31,7 @@ export interface SchoolKanjiPanel {
 
 interface FilteredKanji {
   character: string
+  base: string
   meaning: string
   meanings: string[]
   readings: string[]
@@ -46,8 +47,8 @@ const counted = new Intl.NumberFormat('en-US')
 const kana = /[ぁ-ゖァ-ヺー]/u
 const okuriganaMarks = /[.-]/gu
 
-const spokenReadings = (entry: KanjiReferenceEntry | undefined) =>
-  (entry?.readings ?? [])
+const spokenReadings = ({ readings }: Pick<KanjiReferenceEntry, 'readings'>) =>
+  readings
     .filter(({ kind }) => kind !== 'name')
     .map(({ value }) => hiragana(value).replace(okuriganaMarks, ''))
 
@@ -64,7 +65,7 @@ function matcher(filter: string): ((kanji: FilteredKanji) => boolean) | null {
   const query = normalizeQuery(filter)
   if (query === '') return null
   const characters = graphemes(query).filter(isKanjiCharacter)
-  if (characters.length > 0) return ({ character }) => characters.includes(character)
+  if (characters.length > 0) return ({ base }) => characters.includes(base)
   if (kana.test(query)) {
     const reading = hiragana(query)
     return ({ readings }) => readings.some(value => value.startsWith(reading))
@@ -76,32 +77,31 @@ export class SchoolKanji {
   private readonly lists: SchoolList[]
 
   constructor(kanji: KanjiEntries) {
-    const entries = new Map(kanji.entries().map(entry => [entry.character, entry]))
     this.lists = schoolLists.map(list => ({
       id: list.slug,
       title: list.name,
-      kanji: (kanjiListResponse(kanji, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
-        const entry = entries.get(character)
-        return {
-          character,
-          meaning,
-          meanings: (entry?.meanings ?? []).map(each => each.toLowerCase()),
-          readings: spokenReadings(entry)
-        }
-      })
+      kanji: (kanjiListResponse(kanji, list.slug)?.kanji ?? []).map(({ character, meaning }) => ({
+        character,
+        base: character.normalize('NFKC'),
+        meaning,
+        meanings: ownOrOrdinary(kanji, character, facts => facts.meanings).map(each =>
+          each.toLowerCase()
+        ),
+        readings: ownOrOrdinary(kanji, character, spokenReadings)
+      }))
     }))
   }
 
   panel({ filter, known }: SchoolKanjiRequest): SchoolKanjiPanel {
     const matches = matcher(filter)
-    const knownKanji = new Set(known)
+    const knownKanji = new Set(known.map(character => character.normalize('NFKC')))
     const sections = this.lists.flatMap(list => {
       const shown = matches ? list.kanji.filter(matches) : list.kanji
       if (shown.length === 0) return []
-      const kanji = shown.map(({ character, meaning }) => ({
+      const kanji = shown.map(({ character, base, meaning }) => ({
         character,
         meaning,
-        known: knownKanji.has(character)
+        known: knownKanji.has(base)
       }))
       const knownCount = kanji.filter(tile => tile.known).length
       const total = counted.format(list.kanji.length)

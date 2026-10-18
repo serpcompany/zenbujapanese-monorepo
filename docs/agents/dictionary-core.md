@@ -138,7 +138,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, whether Radicals or Grade picked the query) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A Radicals or Grade pick lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A one-character query from a Radicals or Grade pick lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
   | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
@@ -306,10 +306,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   normalizes to itself. NFKC composes a halfwidth kana and its voiced mark (ｶﾞ is ガ, where
   Foundation left カ and a combining mark), and a word's final Σ lowercases to ς.
 - **Twins.** Swift compares strings by canonical equivalence, so a CJK compatibility ideograph
-  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with
-  its own record. `kanji-element.ts` treats a twin as the same kanji where the app did (which one
-  stands alone, and leaving it out of the kanji containing the element), and nowhere else. A host
-  keys the records by scalar, so a twin never answers for the other.
+  equals the kanji it unifies with (U+FA5B and 者); the kanji files hold 74 such pairs, each with its
+  own record, keyed by scalar. A twin stands for the other only in `kanji-element.ts`, as the app
+  did (which one stands alone, and leaving it out of the kanji containing the element), and in the
+  kanji lists: one with no meanings or readings, such as U+FA45 for 海, borrows its ordinary form's
+  (`ownOrOrdinary`), and Grade finds it by either form and marks it known when its twin is.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
@@ -483,8 +484,7 @@ ready and a page's first request prepares nothing:
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
   9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
   KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
-  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō holds 57 CJK compatibility
-  characters, such as U+FA45 for 海; one KANJIDIC2 gives no meaning shows its base kanji's.
+  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō has 57 twins (see Twins).
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 

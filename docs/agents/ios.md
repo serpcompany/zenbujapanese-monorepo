@@ -86,18 +86,17 @@ encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
-`#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window shares,
-the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window sizes
-(`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
+`#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
+shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
+sizes (`AppWindow`), the Settings scene (`AppSettingsView`), and Continuity Camera's menu. Menu
 commands (`AppCommands`) go through `AppCommandRouter` to the window that was last active
-(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only
-from a view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The
-scene also shares one `TranslateExperience` between windows, since they share the one microphone,
-and pauses a conversation when the whole app goes to the background, or pauses it and drops a
-start still waiting when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
-lets an open window
-take a website link (`handlesExternalEvents`), where the Mac would otherwise open a new window
-for each.
+(`AppCommandHandling`, from `appearsActive`): SwiftUI's focused values reached the menu only from a
+view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The scene also
+shares one `TranslateExperience` between windows, since they share the one microphone, and pauses a
+conversation when the whole app goes to the background, or pauses it and drops a start still waiting
+when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
+lets an open window take a website link (`handlesExternalEvents`), where the Mac would otherwise
+open a new window for each.
 
 ### Build and run for iPad
 
@@ -578,22 +577,24 @@ The Swift keeps the screens, reads the files, and decodes the core's
 answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which type asks for what.
 
 - **The host.** `DictionaryCore` (`DictionaryCore.swift`) loads the bundle,
-  `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it what its owner
-  has. `zenbuHost.all` is answered by `SQLiteJSONRows` from a read-only SQLite connection: rows
-  as JSON bytes, each BLOB as hex, an error as its message. JavaScriptCore parses those bytes
-  into its own objects (`JSValueMakeFromJSONString`), so a broad search's rows never also exist
-  as a Swift string, a bridged `NSString`, and a JavaScript string. The kanji functions are
-  answered by `KanjiFiles`, one record at a time, and `frequencyLists` and `frequencyListRows` by
-  `FrequencyLists` ([`frequency.md`](frequency.md)). The bundle is checked in; after changing the
-  core, rebuild it with `pnpm bundle:javascriptcore` in `packages/dictionary-core`, which the
-  core's tests require ([`dictionary-core.md`](dictionary-core.md), Embedded).
+  `Resources/DictionaryCore/dictionary-core.js`, into a `JSContext` and gives it what its owner has.
+  `zenbuHost.all` is answered by `SQLiteJSONRows` from a read-only SQLite connection: rows as JSON
+  bytes, each BLOB as hex, an error as its message. JavaScriptCore parses those bytes into its own
+  objects (`JSValueMakeFromJSONString`), so a broad search's rows never also exist as a Swift
+  string, a bridged `NSString`, and a JavaScript string. The kanji functions are answered by
+  `KanjiFiles`, one record at a time, except `kanjiReference()`, which hands over all of
+  `KanjiReferenceData.json` once, for Grade's lists (`KanjiFiles.wholeReference()`), and
+  `frequencyLists` and `frequencyListRows` by `FrequencyLists` ([`frequency.md`](frequency.md)). The
+  bundle is checked in; after changing the core, rebuild it with `pnpm bundle:javascriptcore` in
+  `packages/dictionary-core`, which the core's tests require
+  ([`dictionary-core.md`](dictionary-core.md), Embedded).
 - **Three engines, one bundle.** Each is a `DictionaryCore` its owner keeps for its lifetime:
 
   | Owner | Reads | Answers |
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, and which entry stands for its equivalents |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, handwriting candidates and their meanings, Image Search notes, credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -648,11 +649,13 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
 - **The kanji files.** `KanjiFiles` maps `KanjiReferenceData.json` and
   `KanjiElementReferenceData.json` into memory and scans them once for where each record starts and
-  ends, then hands the core a record's bytes as they are in the file. It builds no objects from the
-  files: parsing their 6 MB with `JSONSerialization` took a quarter of a second and left over 100 MB
-  behind. Records are keyed by scalar, not by `String`: Swift calls a compatibility kanji equal to
-  the kanji it unifies with, and the files hold 74 such pairs, each with its own strokes, grade, and
-  readings. `KanjiFilesTests` compares every record with a full parse of the files.
+  ends, then hands the core a record's bytes, or Grade the whole reference file's, as they are in
+  the file. It builds no objects from the files: parsing their 6 MB with `JSONSerialization` took a
+  quarter of a second and left over 100 MB behind. Records are keyed by scalar, not by `String`:
+  Swift calls a compatibility kanji equal to the kanji it unifies with, and the files hold 74 such
+  pairs, each with its own strokes, grade, and readings. `KanjiFilesTests` compares every record
+  with a full parse of the files. Grade's tiles are keyed by scalar too
+  (`SchoolKanjiPanel.Tile.id`).
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
   entry (64, until the frequency lists change), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
@@ -711,12 +714,12 @@ What stays native, and why:
 
 ## Search and linked text
 
-`LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never
-reads frequency; the results screen reads the learner's lists for that bounded set and reorders
-only it (`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before
-する), then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける)
-outranks a longer chain, then prefix and contains matches. Radical searches keep only the
-leading lexical-rank group.
+`LookupClient` retrieves a relevance-filtered, deduplicated set in dictionary order and never reads
+frequency; the results screen reads the learner's lists for that bounded set and reorders only it
+(`orderedByFrequency` in the core). An exact dictionary form stays first (した is 下 and 舌 before する),
+then deinflected lemmas by chain length, so a direct conjugation (まけたら → 負ける) outranks a longer
+chain, then prefix and contains matches. A one-character query from a Radicals or Grade pick keeps
+only the leading lexical-rank group.
 
 How a query is matched, ranked, and deinflected is the core's
 ([`dictionary-core.md`](dictionary-core.md), Search). A result carries its relevance as
@@ -1167,12 +1170,12 @@ YouTube can change: check the live page by hand.
 
 ## Search manual checks
 
-Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.
-The UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By
-and Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and
-the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`); the lists below are what
-to look at beyond them. When changing Search results or frequency dictionaries, also check in the
-Simulator:
+Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`. The
+UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By and
+Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and the
+Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`), and Grade's steps there and in
+`GradeInputUITests` on iPhone only (iPad and Mac on hold); the lists below are what to look at
+beyond them. When changing Search results or frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without
@@ -1219,9 +1222,8 @@ light and dark and at an accessibility text size:
   its bottom left (the current one highlighted) and a grabber at the top;
 - drawing 十 shows candidate tiles with meanings, three rows deep, **Undo** leaves 一's
   candidates, and a second **Undo** empties the pad;
-- selecting 女 fills the strip (女, 姦, 奴, 奸, 好…), **Undo** at the bottom right turns active,
-  selecting 子 then **Undo** leaves only 女 selected, and picking 好 closes the panel and shows its
-  results;
+- selecting 女 fills the strip (女, 姦, 奴, 奸, 好…), **Undo** at the bottom right turns active, selecting
+  子 then **Undo** leaves only 女 selected, and picking 好 closes the panel and shows its results;
 - handwriting 十, handwriting 一, then radicals 女 → 好 builds 十一好 in the field; and
 - dragging the grabber down closes the panel, a downward stroke on the pad draws, and in Grade a
   known kanji's green outline shows in dark mode, with each meaning on one line at every size.

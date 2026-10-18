@@ -30,14 +30,28 @@ struct SchoolKanjiTests {
     try SchoolKanjiClient.live.panel(SchoolKanjiRequest(filter: filter, known: known))
   }
 
-  private func mostFrequentFirst(_ grades: Set<Int>, in reference: Reference) -> [String] {
+  private static let compatibilityPairs: [(compatibility: String, ordinary: String)] = [
+    ("\u{FA16}", "\u{732A}"),
+    ("\u{FA46}", "\u{6E1A}"),
+    ("\u{FA4A}", "\u{7422}"),
+    ("\u{FA4F}", "\u{7950}"),
+    ("\u{FA53}", "\u{798E}"),
+  ]
+
+  private func codePoints(_ character: String) -> [Unicode.Scalar] {
+    Array(character.unicodeScalars)
+  }
+
+  private func mostFrequentFirst(
+    _ grades: Set<Int>, in reference: Reference
+  ) -> [[Unicode.Scalar]] {
     reference.entries
       .filter { $0.grade.map(grades.contains) ?? false }
       .sorted {
         ($0.frequencyRank ?? .max, $0.character.unicodeScalars.first?.value ?? 0)
           < ($1.frequencyRank ?? .max, $1.character.unicodeScalars.first?.value ?? 0)
       }
-      .map(\.character)
+      .map { codePoints($0.character) }
   }
 
   @Test("each grade lists the bundled KANJIDIC2 grade's kanji, most frequent first, as the website does")
@@ -49,10 +63,36 @@ struct SchoolKanjiTests {
     for (section, list) in zip(sections, Self.lists) {
       #expect(section.title == list.title)
       #expect(section.count == list.count)
-      #expect(section.kanji.map(\.character) == mostFrequentFirst(list.grades, in: reference))
+      #expect(section.kanji.map(\.id) == mostFrequentFirst(list.grades, in: reference))
     }
     #expect(sections.first?.kanji.prefix(5).map(\.character) == ["日", "一", "人", "年", "大"])
     #expect(sections.first?.kanji.first?.meaning == "day")
+  }
+
+  @Test("each Jinmeiyō tile has its own ID, so both forms of a compatibility kanji are two tiles")
+  func compatibilityKanjiTiles() throws {
+    let jinmeiyo = try #require(panel().sections.last)
+    let ids = jinmeiyo.kanji.map(\.id)
+    #expect(Set(ids).count == ids.count)
+    for pair in Self.compatibilityPairs {
+      #expect(ids.contains(codePoints(pair.compatibility)))
+      #expect(ids.contains(codePoints(pair.ordinary)))
+    }
+  }
+
+  @Test("a compatibility kanji is found by either form of it, and by the meaning its tile shows")
+  func compatibilityKanjiFilter() throws {
+    for pair in Self.compatibilityPairs {
+      for typed in [pair.compatibility, pair.ordinary] {
+        let jinmeiyo = try #require(panel(typed).sections.first { $0.id == "jinmeiyo" })
+        #expect(
+          Set(jinmeiyo.kanji.map(\.id))
+            == [codePoints(pair.ordinary), codePoints(pair.compatibility)])
+      }
+    }
+    let sea = try #require(panel("sea").sections.first { $0.id == "jinmeiyo" })
+    let tile = try #require(sea.kanji.first { $0.id == codePoints("\u{FA45}") })
+    #expect(tile.meaning == "sea")
   }
 
   @Test("a filter narrows every grade at once by meaning, kana reading, or the kanji itself")
@@ -79,6 +119,20 @@ struct SchoolKanjiTests {
     #expect(first.kanji.filter(\.known).map(\.character) == ["日", "水"])
     #expect(sections.dropFirst().first?.known == 1)
     #expect(try panel().sections.allSatisfy { $0.known == 0 })
+  }
+
+  @Test("a known kanji marks its compatibility form's tile known too, and its grade counts both")
+  func knownCompatibilityKanji() throws {
+    let ordinary = Self.compatibilityPairs.map(\.ordinary)
+    let jinmeiyo = try #require(panel(known: ordinary).sections.last)
+    #expect(jinmeiyo.known == ordinary.count * 2)
+    #expect(
+      Set(jinmeiyo.kanji.filter(\.known).map(\.id))
+        == Set(Self.compatibilityPairs.flatMap { [codePoints($0.compatibility), codePoints($0.ordinary)] }))
+    let sea = try panel(known: ["\u{6D77}"]).sections
+    #expect(sea.first { $0.id == "grade-2" }?.known == 1)
+    #expect(sea.last?.known == 1)
+    #expect(sea.last?.kanji.first { $0.id == codePoints("\u{FA45}") }?.known == true)
   }
 
   @Test("a panel remembers which sections were closed")

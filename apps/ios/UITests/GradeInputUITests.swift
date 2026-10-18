@@ -62,6 +62,25 @@ final class GradeInputUITests: ZenbuUITestCase {
     XCTAssertFalse(find("radical.one", in: app).exists, "1 Stroke reopens closed")
   }
 
+  func testBothFormsOfACompatibilityKanjiAreTiles() {
+    let app = launch()
+    open(.search, in: app)
+    openGrades(in: app)
+    type("いのしし", into: find("grade.filter", in: app))
+    waitUntil(find("grade.section.jinmeiyo", in: app), mentions: "2 of 863")
+    let tiles = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'grade.kanji.'"))
+    waitUntil("both forms of 猪 to show as tiles") { tiles.count == 2 }
+    let pig = tiles.matching(NSPredicate(format: "label ENDSWITH ', pig'")).firstMatch
+    let boar = tiles.matching(NSPredicate(format: "label ENDSWITH ', boar'")).firstMatch
+    assertOnScreen(pig, in: app)
+    assertOnScreen(boar, in: app)
+    tap(pig)
+    waitUntilGone(find("grade.grid", in: app))
+    waitUntil("the query to be 猪's ordinary form, as every query is") {
+      (searchField(in: app).value as? String)?.unicodeScalars.map(\.value) == [0x732A]
+    }
+  }
+
   func testTurningOffKanjiMeaningsLeavesTheKanjiAlone() {
     let app = launch()
     open(.search, in: app)

@@ -2850,11 +2850,13 @@
   }
   var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
   var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);
-  function firstMeaning(kanji2, entry) {
-    const [own] = entry.meanings;
-    if (own !== void 0) return own;
-    const base = entry.character.normalize("NFKC");
-    return (base === entry.character ? void 0 : kanji2.row(base)?.meanings[0]) ?? "";
+  function ownOrOrdinary(kanji2, character, pick) {
+    const own = kanji2.row(character);
+    const values = own ? pick(own) : [];
+    if (values.length > 0) return values;
+    const ordinary = character.normalize("NFKC");
+    const borrowed = ordinary === character ? null : kanji2.row(ordinary);
+    return borrowed ? pick(borrowed) : [];
   }
   function kanjiListResponse(kanji2, slug) {
     const list = kanjiList(slug);
@@ -2864,7 +2866,7 @@
       slug,
       kanji: entries.map((entry) => ({
         character: entry.character,
-        meaning: firstMeaning(kanji2, entry)
+        meaning: ownOrOrdinary(kanji2, entry.character, (facts) => facts.meanings)[0] ?? ""
       }))
     };
   }
@@ -3036,7 +3038,7 @@
   var counted = new Intl.NumberFormat("en-US");
   var kana = /[ぁ-ゖァ-ヺー]/u;
   var okuriganaMarks = /[.-]/gu;
-  var spokenReadings = (entry) => (entry?.readings ?? []).filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
+  var spokenReadings = ({ readings }) => readings.filter(({ kind }) => kind !== "name").map(({ value }) => hiragana(value).replace(okuriganaMarks, ""));
   var letter = /\p{L}/u;
   function startsAWord(meaning, query) {
     for (let at = meaning.indexOf(query); at !== -1; at = meaning.indexOf(query, at + 1)) {
@@ -3048,7 +3050,7 @@
     const query = normalizeQuery(filter);
     if (query === "") return null;
     const characters = graphemes(query).filter(isKanjiCharacter);
-    if (characters.length > 0) return ({ character }) => characters.includes(character);
+    if (characters.length > 0) return ({ base }) => characters.includes(base);
     if (kana.test(query)) {
       const reading = hiragana(query);
       return ({ readings }) => readings.some((value) => value.startsWith(reading));
@@ -3058,31 +3060,30 @@
   var SchoolKanji = class {
     lists;
     constructor(kanji2) {
-      const entries = new Map(kanji2.entries().map((entry) => [entry.character, entry]));
       this.lists = schoolLists.map((list) => ({
         id: list.slug,
         title: list.name,
-        kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => {
-          const entry = entries.get(character);
-          return {
-            character,
-            meaning,
-            meanings: (entry?.meanings ?? []).map((each) => each.toLowerCase()),
-            readings: spokenReadings(entry)
-          };
-        })
+        kanji: (kanjiListResponse(kanji2, list.slug)?.kanji ?? []).map(({ character, meaning }) => ({
+          character,
+          base: character.normalize("NFKC"),
+          meaning,
+          meanings: ownOrOrdinary(kanji2, character, (facts) => facts.meanings).map(
+            (each) => each.toLowerCase()
+          ),
+          readings: ownOrOrdinary(kanji2, character, spokenReadings)
+        }))
       }));
     }
     panel({ filter, known }) {
       const matches = matcher(filter);
-      const knownKanji = new Set(known);
+      const knownKanji = new Set(known.map((character) => character.normalize("NFKC")));
       const sections2 = this.lists.flatMap((list) => {
         const shown = matches ? list.kanji.filter(matches) : list.kanji;
         if (shown.length === 0) return [];
-        const kanji2 = shown.map(({ character, meaning }) => ({
+        const kanji2 = shown.map(({ character, base, meaning }) => ({
           character,
           meaning,
-          known: knownKanji.has(character)
+          known: knownKanji.has(base)
         }));
         const knownCount = kanji2.filter((tile) => tile.known).length;
         const total = counted.format(list.kanji.length);

@@ -64,9 +64,8 @@ struct PanelDataUnavailable: View {
   }
 }
 
-struct SectionedTiles<Item, ItemID: Hashable, Summary: View, Tile: View>: View {
+struct SectionedTiles<Item: Identifiable, Summary: View, Tile: View>: View {
   let sections: [TileSection<Item>]
-  let itemID: KeyPath<Item, ItemID>
   @Binding var closed: Set<String>
   @ViewBuilder let summary: (TileSection<Item>) -> Summary
   @ViewBuilder let tile: (Item) -> Tile
@@ -79,7 +78,7 @@ struct SectionedTiles<Item, ItemID: Hashable, Summary: View, Tile: View>: View {
         Section {
           if isOpen {
             LazyVGrid(columns: PanelTile.columns(dynamicTypeSize), spacing: PanelTile.spacing) {
-              ForEach(section.items, id: itemID) { tile($0) }
+              ForEach(section.items) { tile($0) }
             }
             .padding(.bottom, 8)
           }
