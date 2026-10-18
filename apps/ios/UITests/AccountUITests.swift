@@ -75,7 +75,9 @@ final class AccountUITests: ZenbuUITestCase {
     let app = launch()
     open(.account, in: app)
     tap(reveal(find("account.reading-aids", in: app), in: app))
-    for toggle in ["show-furigana", "show-romaji", "show-word-meanings", "show-translations"] {
+    for toggle in [
+      "show-furigana", "show-romaji", "show-word-meanings", "show-kanji-meanings", "show-translations",
+    ] {
       waitFor(find("reading-aids.\(toggle)", in: app))
     }
     goBack(in: app)

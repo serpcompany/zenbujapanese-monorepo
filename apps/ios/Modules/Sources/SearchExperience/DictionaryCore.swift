@@ -43,6 +43,7 @@ final class DictionaryCore {
       Self.answer(host, "kanjiEntry") { kanji()?.entry($0) }
       Self.answer(host, "kanjiStructure") { kanji()?.structure($0) }
       Self.answer(host, "kanjiElement") { kanji()?.element($0) }
+      Self.answer(host, "kanjiReference") { _ in kanji()?.wholeReference() }
     }
     if let radicals {
       Self.answer(host, "radicals") { _ in radicals() }
