@@ -74,6 +74,21 @@ extension ZenbuUITestCase {
 
   static var countingDraws: [String: String] { ["ZENBU_COUNT_DRAWS": "1"] }
 
+  func earlierNotes(_ words: [String: [String: String]], headwords: [String: String] = [:]) throws
+    -> [String: String]
+  {
+    var notes: [String: [[String: String]]] = [:]
+    for (key, texts) in words {
+      notes[key] = texts.map { id, text in
+        var note = ["id": id, "text": text]
+        note["headword"] = headwords[key]
+        return note
+      }
+    }
+    let json = try JSONSerialization.data(withJSONObject: notes)
+    return ["ZENBU_EARLIER_NOTES": String(decoding: json, as: UTF8.self)]
+  }
+
   func draws(
     recordedBy identifier: String, labeled labels: Set<String>, in app: XCUIApplication,
     file: StaticString = #filePath, line: UInt = #line
