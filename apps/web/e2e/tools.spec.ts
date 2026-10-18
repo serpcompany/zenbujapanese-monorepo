@@ -146,7 +146,7 @@ test.describe('a converter page', () => {
     await expect(
       main(page).getByText(text.converter.characters.other.replace('{count}', '7'), { exact: true })
     ).toHaveCount(1)
-    await main(page).getByText(text.converter.widths.lettersAndNumbers).click()
+    await main(page).getByText(text.converter.widths.lettersAndNumbers, { exact: true }).click()
     await expect(box(page, converter.to)).toHaveValue('パン　ABC')
     const counterpart = converterPageIn(converter.reverse, 'ja')
     await expect(
