@@ -15,8 +15,19 @@ const accounts = useAccountService({ appleKey: true })
 
 afterEach(() => vi.useRealTimers())
 
-const remove = (learner: Learner, body: Record<string, unknown> = { confirm: true }) =>
-  accounts.running.service.call('/v1/me', { token: learner.token, body, method: 'DELETE' })
+const remove = (
+  learner: Learner,
+  body: Record<string, unknown> = { confirm: true },
+  headers: Record<string, string> = {}
+) =>
+  accounts.running.service.call('/v1/me', { token: learner.token, body, method: 'DELETE', headers })
+
+async function deletedNotice(email: string, language?: string, headers?: Record<string, string>) {
+  const learner = await accounts.learner(email, 'zenbu-ios', language)
+  const before = accounts.running.service.mailbox.messages().length
+  expect(await remove(learner, { confirm: true }, headers)).toMatchObject({ status: 200 })
+  return (await accounts.running.as.lastMessageTo(email, before)).subject
+}
 
 async function appleLearner(audience: string, appleUserId: string, onTheWebsite: boolean) {
   const { as, service } = accounts.running
@@ -112,6 +123,21 @@ describe('DELETE /v1/me', () => {
     const again = await accounts.learner('delete-me@example.com')
     expect(again.userId).not.toBe(learner.userId)
     expect((await accounts.me(again.token)).body).toMatchObject({ version: 1 })
+  })
+
+  test("tells the email in the language the request names, or the account's, or English", async () => {
+    const japanese = 'Zenbuアカウントが削除されました'
+    const english = 'Your Zenbu Japanese account was deleted'
+    expect(await deletedNotice('delete-ja@example.com', 'ja')).toBe(japanese)
+    expect(
+      await deletedNotice('delete-asks-ja@example.com', undefined, { 'content-language': 'ja' })
+    ).toBe(japanese)
+    expect(
+      await deletedNotice('delete-asks-en@example.com', 'ja', { 'content-language': 'en' })
+    ).toBe(english)
+    expect(
+      await deletedNotice('delete-fr@example.com', undefined, { 'content-language': 'fr' })
+    ).toBe(english)
   })
 
   test('needs a sign-in from the last 10 minutes, and the learner to confirm', async () => {

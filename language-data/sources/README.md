@@ -2,14 +2,17 @@
 
 This directory contains the pinned source records, dependency notices, and local
 inputs used to build or install Zenbu Japanese language data. The repository-wide
-[`data sources`](../../../../docs/data-sources.md) index lists every source and its consumers;
-this directory holds the iOS specifics.
+[`data sources`](../../docs/data-sources.md) index lists every source and its consumers;
+this directory holds the specifics.
 
 The `*.source.json` files are the source of truth for upstream identity,
 snapshot, download location, checksum, and import configuration. The importers under
-`apps/ios/Tools/` define the transformations ([their README](../../Tools/README.md), which says how
-to rebuild everything and refresh a snapshot). Generated runtime artifacts live
-under `apps/ios/Modules/Sources/SearchExperience/Resources/`.
+`language-data/tools/` define the transformations ([their README](../tools/README.md), which says
+how to rebuild everything and refresh a snapshot). Generated runtime artifacts live
+under `apps/ios/Modules/Sources/SearchExperience/Resources/`. Records written while this directory
+was in the app's folder (#469 moved it) still name files by their paths there. They stay as they
+were recorded: TUBELEX's and Wikipedia's are pinned by SHA-256 in their import reports, and the
+others, Kuromoji's and the historical public catalog's, are records of what was imported.
 
 Sources published only as the latest file at a fixed URL are committed, in Git LFS, beside their
 records: `JMdict_e-2026-08-10.gz`, and the `Tatoeba-2026-10-03/`, `Tatoeba-jpn-indices-2026-10-03/`,
@@ -38,7 +41,7 @@ Required notices for bundled dependencies remain beside their source records
 ([EDRDG](EDRDG-ATTRIBUTION.md), [MeCab IPADIC](MECAB-IPADIC-NOTICE.md)) and in the app
 resources. Frequency-pack manifests contain the runtime source URL,
 attribution, checksums, mapping contract, and delivery behavior. Import reports
-under `apps/ios/LanguageData/Generated/` connect pinned inputs to generated
+under `language-data/generated/` connect pinned inputs to generated
 artifact checksums and remain versioned with those artifacts.
 
 Downloadable frequency packs are fetched by the app only when a learner chooses one;

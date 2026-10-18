@@ -12,7 +12,7 @@ LANGUAGE_DATA = RESOURCES / "LanguageReferenceData.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
 JLPT_RECORD = SOURCES / "JLPT-Waller-2025-08-26.source.json"
 JLPT_REPORT = GENERATED / "JLPT-Waller-2025-08-26.import.json"
-JLPT_IMPORTER = ROOT / "apps/ios/Tools/import_jlpt_level_pack.py"
+JLPT_IMPORTER = ROOT / "language-data/tools/import_jlpt_level_pack.py"
 
 
 class FrequencyPackRuntimeContractTests(unittest.TestCase):
