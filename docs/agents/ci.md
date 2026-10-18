@@ -35,8 +35,8 @@ version file starts the workflows that read it (`tools/checks/src/workflow-rules
 | `Language data build` | `.github/workflows/language-data-build.yml` | Every pull request and the merge queue, working when a release's inputs changed; pushes to `main` that change them | This doc |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand | [`ci-deploys.md`](ci-deploys.md) |
 
-"The core" is `packages/dictionary-core`, and a change to the root `package.json`,
-`pnpm-lock.yaml`, `pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
+"The core" is `packages/dictionary-core`, and a change to the root `package.json`, `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
 starts it too.
 
 GitHub also runs four workflows that have no file here, turned on in the repository's settings:
@@ -47,8 +47,8 @@ None is a check a merge waits for.
 
 ## Checks a merge can wait for
 
-`main`'s ruleset requires no status check yet ([`harness-debt.md`](../harness-debt.md), Checks), so a
-red check stops no merge. The workflows are built so the owners can require them as they are:
+`main`'s ruleset requires no status check yet ([`harness-debt.md`](../harness-debt.md), Checks), so
+a red check stops no merge. The workflows are built so the owners can require them as they are:
 
 - **Each starts on every pull request and on `merge_group`.** A required check has to report
   every time: a workflow that its `paths` filter skipped would leave its check pending and block
@@ -64,10 +64,11 @@ red check stops no merge. The workflows are built so the owners can require them
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
 - **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
-  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), and `swift` needs
-  `contracts` (`iOS`), on a pull request and in the queue alike. A failed fast check then spends
-  no runner time on the browser tests, the suites on the real files, or a Mac: the heavy job is
-  skipped, and the last job fails for the fast one. A passing change starts the heavy job later
+  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
+  `contracts` (`iOS`), and `build` needs `pins` (`Language data build`), on a pull request and in
+  the queue alike. A failed fast check then spends no runner time on the browser tests, the suites
+  or the release on the real files, or a Mac: the heavy job is skipped, and the last job fails for
+  the fast one. A passing change starts the heavy job later
   by the fast job's time: about 1.5 minutes in the first two, under 40 seconds in the others.
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
@@ -163,19 +164,19 @@ the service, the core, what the services share (`packages/node-service/`), its A
 `apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
 `tools/checks/ports.mjs`), the conformance suites (`language-data/conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
-(the release the service names), and by hand. A new push cancels the pull request's last run. Its
-`scripts` job runs ShellCheck 0.11 on the server's deployer (`deploy/deployer.sh`), in Docker, since
-the runner's own ShellCheck is older; `Repository` runs ShellCheck on it too, and its tests, on
-every pull request. Once `scripts` passes, its `check` job:
+(the release the service names) and its pins (`language-data/releases/`), and by hand. A new push
+cancels the pull request's last run. Its `scripts` job runs ShellCheck 0.11 on the server's deployer
+(`deploy/deployer.sh`), in Docker, since the runner's own ShellCheck is older; `Repository` runs
+ShellCheck on it too, and its tests, on every pull request. Once `scripts` passes, its `check` job:
 
 1. restores and pulls the app's Git LFS files the service reads (the `.sqlite3` files and
    Kuromoji's), then Sudachi's dictionary (`pnpm sudachi`, which keeps a cached copy that matches
    the app's pin, or downloads and checks it);
 2. runs `pnpm check` in `apps/dictionary-api`: Biome, typecheck, the app-recorded suites on the
    real files, and the bundle;
-3. exports the core's fixtures from the real files and fails if they differ from the committed
-   ones (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a fixture word's
-   rows re-exports them in the same pull request;
+3. exports the core's fixtures from the real files and fails if they differ from the committed ones
+   (`packages/dictionary-core/src/fixtures/`) or add a file, so a data rebuild that changes a
+   fixture word's rows re-exports them in the same pull request;
 4. starts the built service and runs the website's rendered-page gate against it
    ([`web.md`](web.md), The rendered-page gate), and prints the service's log if a step failed.
 
@@ -265,15 +266,17 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
 
 `.github/workflows/language-data-build.yml` packages the next language-data release from the
 committed files (issue 463, step 2). It runs on pull requests and pushes to `main` that change
-`language-data/**` (the sources and suites among it), the app's resources, the shared action, or the
-workflow (and, on pull requests, the release workflow). Tests in `language-data/pipeline/tests/`
-fail when a release input doesn't start it.
+`language-data/**` (the sources and suites among it), the app's resources, the dictionary service's
+Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow). Tests
+in `language-data/pipeline/tests/` fail when a release input or the Dockerfile doesn't start it.
 
-It packages through the shared action ([`ci-deploys.md`](ci-deploys.md), The
-package-language-data action), then keeps only `manifest.json` and `files.tsv` (each staged
-file's size and path) as the Actions artifact `language-data-manifest-<commit>`, for 7 days. It
-has no credentials and publishes nothing. The files themselves (516 MiB) aren't kept:
-`Language data release` rebuilds them rather than trusting this output. The job names
-`shell: bash` so pipefail is on. See [`language-data/README.md`](../../language-data/README.md),
-Running it.
+Its `pins` job runs `package.py check-pin` first, without Git LFS: the committed files, the
+conformance suites, the app's bundle, and the image's copies against the pinned release, and no
+change to a pin the base holds ([`language-data/README.md`](../../language-data/README.md), Pinned
+releases and Running it). Then `build` packages through the shared action
+([`ci-deploys.md`](ci-deploys.md), The package-language-data action) and keeps only `manifest.json`
+and `files.tsv` (each staged file's size and path) as the Actions artifact
+`language-data-manifest-<commit>`, for 7 days. It has no credentials and publishes nothing. The
+files themselves (516 MiB) aren't kept: `Language data release` rebuilds them rather than trusting
+this output. The job names `shell: bash` so pipefail is on.
 

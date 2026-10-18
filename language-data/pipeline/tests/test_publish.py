@@ -8,9 +8,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import bucket_objects
+import publish_release
 import release_manifest
 import releases_index
-from publish_fixtures import COMMIT_A, COMMIT_B, FILES_1, FILES_2, PublishTestCase, sha256
+from publish_fixtures import (
+    COMMIT_A,
+    COMMIT_B,
+    FILES_1,
+    FILES_2,
+    PublishTestCase,
+    pinned_of,
+    quiet,
+    sha256,
+)
 from refusal import Refusal
 
 
@@ -49,6 +59,25 @@ class PublishTests(PublishTestCase):
             self.store.objects[notice_key]["content_type"], "text/plain; charset=utf-8"
         )
 
+    def test_a_build_that_differs_from_the_pinned_manifest_uploads_nothing(self):
+        pinned = pinned_of(self.staged())
+        with self.assertRaisesRegex(
+            Refusal, r"differs from release 2026\.10\.1's pinned manifest in files: Data\.json"
+        ):
+            publish_release.publish(self.store, self.staged(files=FILES_2), pinned, log=quiet)
+        self.assertEqual(self.store.puts, [])
+        self.assertEqual(self.store.objects, {})
+
+    def test_the_run_and_the_bucket_fields_are_not_pinned(self):
+        pinned = pinned_of(self.staged())
+        self.publish(self.staged())
+        staged = self.staged("2026.11.1", commit=COMMIT_B)
+        later = pinned_of(staged)
+        self.assertNotIn("previous_release", later)
+        result = publish_release.publish(self.store, staged, later, log=quiet)
+        self.assertEqual(result["previous_release"], "2026.10.1")
+        self.assertEqual({**pinned, "release": "2026.11.1"}, later)
+
     def test_rerunning_the_same_publish_writes_nothing(self):
         self.publish(self.staged())
         before = copy.deepcopy(self.store.objects)
@@ -67,6 +96,15 @@ class PublishTests(PublishTestCase):
         self.assertEqual(self.store.objects["releases/2026.10.1/manifest.json"]["body"], published)
         self.assertEqual(result["manifest_sha256"], sha256(published))
         self.assertEqual(self.store.index()["releases"][0]["git_commit"], COMMIT_A)
+
+    def test_the_same_content_beside_another_core_is_a_no_op(self):
+        self.publish(self.staged())
+        staged = self.staged(commit=COMMIT_B)
+        manifest = json.loads((staged / "manifest.json").read_text())
+        release_manifest.write_manifest(staged, {**manifest, "core_sha256": "c" * 64})
+        self.store.puts.clear()
+        self.assertFalse(self.publish(staged)["listed"])
+        self.assertEqual(self.store.puts, [])
 
     def test_different_content_under_a_published_release_is_refused(self):
         self.publish(self.staged())

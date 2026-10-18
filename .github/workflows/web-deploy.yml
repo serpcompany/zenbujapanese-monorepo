@@ -13,6 +13,7 @@ on:
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
       - language-data/release.json
+      - language-data/releases/*/manifest.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
