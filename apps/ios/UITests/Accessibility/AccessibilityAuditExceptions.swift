@@ -119,7 +119,6 @@ private let systemControls = [
   allow(.elementDetection, .unnamed(3), on: ["Image's sources"], [.pad], [.standard], because: Why.alert),
   allow(.elementDetection, .unnamed(8), on: ["Image's sources"], [.pad], [.largest], because: Why.alert),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
-  allow(.textClipped, .label("Search YouTube or paste a link"), on: ["Player"], because: Why.searchField),
   allow(
     .hitRegion, .label("Clear text"),
     on: ["Search's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
@@ -189,20 +188,10 @@ private let textThatScales = [
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
-  allow(.dynamicType, .labels(["Add Note", "Add to List"]), on: ["Word Detail"], because: Why.scales),
-  allow(
-    .textClipped, .labels(["Add Note", "Add to List"]), on: ["A word's note", "Word Detail, its kanji"],
-    because: Why.scales),
-  allow(.dynamicType, .identifiedBy(prefix: "radical.stroke."), on: ["Radicals"], because: Why.scales),
+  allow(.textClipped, .labels(["Add Note", "Add to List"]), on: ["A word's note"], because: Why.scales),
   allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
   allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),
-  allow(
-    .dynamicType, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet", "A caption's word"],
-    because: Why.scales),
-  allow(
-    .textClipped, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet", "A caption's word"],
-    because: Why.scales),
-  allow(.dynamicType, .label("MEANING"), on: ["The word sheet", "A caption's word"], because: Why.scales),
+  allow(.textClipped, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet"], because: Why.scales),
   allow(.textClipped, .label("MEANING"), on: ["The word sheet", "A caption's word"], because: Why.scales),
   allow(.textClipped, .unnamed(1), on: ["A caption's word"], because: Why.scrolls),
   allow(
@@ -229,14 +218,11 @@ private let textThatScales = [
   allow(.textClipped, .unnamed(3), on: ["Kanji Detail, its readings"], touch, [.largest], because: Why.placedPage),
 ]
 
-private let videoScreens = [
-  "A video", "A caption's word", "A video without Japanese captions", "A video its owner won't share",
+private let playerControls = [
+  allow(
+    .dynamicType, .label("1×"), on: ["A video", "A video without Japanese captions", "A video its owner won't share"],
+    because: Why.cappedControls)
 ]
-
-private let playerControls =
-  ["watch.previous", "watch.play-pause", "watch.next", "watch.repeat", "watch.speed"].map { control in
-    allow(.dynamicType, .identifier(control), on: videoScreens, because: Why.cappedControls)
-  } + [allow(.dynamicType, .label("1×"), on: videoScreens, because: Why.cappedControls)]
 
 private let clocks = [
   allow(
