@@ -22,7 +22,8 @@ Weekly maintenance). A folder in Code counts as changed when any file in it chan
 
 ## The apps
 
-The app's areas are graded in [`quality-ios.md`](quality-ios.md), and the website's in
+The app's areas are graded in [`quality-ios.md`](quality-ios.md), its Account tab and Zenbu account
+in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
 [`quality-web.md`](quality-web.md).
 
 ## Dictionary service and core

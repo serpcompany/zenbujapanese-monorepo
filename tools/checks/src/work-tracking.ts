@@ -61,7 +61,12 @@ export interface QualityRows {
 
 const dayOf = (seconds: number) => new Date(seconds * 1000).toISOString().slice(0, 10)
 
-export const qualityFiles = ['docs/quality.md', 'docs/quality-ios.md', 'docs/quality-web.md']
+export const qualityFiles = [
+  'docs/quality.md',
+  'docs/quality-ios.md',
+  'docs/quality-ios-account.md',
+  'docs/quality-web.md'
+]
 
 export function scoresToRegrade(text: string, times: ReadonlyMap<string, number>): QualityRows {
   const stale: ScoreToRegrade[] = []
