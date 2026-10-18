@@ -7,8 +7,8 @@ test waits is in [`ios-ui-tests.md`](ios-ui-tests.md).
 
 ## What runs
 
-Four classes walk one tab each, `SearchAuditUITests`, `TranslateAuditUITests`,
-`PlayerAuditUITests`, and `AccountAuditUITests`, with three tests apiece:
+Four classes in `apps/ios/UITests/Accessibility/` walk one tab each, `SearchAuditUITests`,
+`TranslateAuditUITests`, `PlayerAuditUITests`, and `AccountAuditUITests`, with three tests apiece:
 
 - **At the default text size**, in light appearance.
 - **At the largest text size**, Accessibility XXXL, in light appearance. The app is launched with
@@ -56,7 +56,7 @@ and fits; each such entry says which, and the largest-size pass's screenshot sho
 ## Allowed findings
 
 Every finding a test lets pass is an entry in `AllowedFinding.list`
-(`apps/ios/UITests/AccessibilityAuditExceptions.swift`), the one list
+(`apps/ios/UITests/Accessibility/AccessibilityAuditExceptions.swift`), the one list
 [`exceptions.md`](exceptions.md) names for the audits. An entry names its audit, the screens it is
 on (the names the walks give them), the devices and text sizes, why it is allowed, and one element:
 
