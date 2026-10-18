@@ -227,7 +227,7 @@ deletes it), `ConversationHistoryTests`, and UI `testExitWithoutSavingLeavesNoth
 
 **Bookmarks on every device.** Signed in to a Zenbu account, the learner's bookmarked sentences are
 the same on every device running this app ([Zenbu account and
-sync](index.md#zenbu-account-and-sync)). Only a bookmarked sentence syncs: its text, its
+sync](account-sync.md)). Only a bookmarked sentence syncs: its text, its
 translation, which language it was said in, and when it was bookmarked; never the conversation
 around it, or any sentence that isn't bookmarked. A sentence bookmarked on another device is listed
 under **Bookmarked** here even though its conversation isn't on this iPhone: it shows on its own,

@@ -1,6 +1,13 @@
+import { kanjiEntries } from '../artifact/browse-kanji'
 import { LruCache } from '../artifact/cache'
-import { checkKanjiSources, type KanjiElementSources, KanjiReference } from '../artifact/kanji-data'
+import {
+  checkedKanjiReference,
+  checkKanjiSources,
+  type KanjiElementSources,
+  KanjiReference
+} from '../artifact/kanji-data'
 import { jmdictSource } from '../artifact/words'
+import { SchoolKanji, type SchoolKanjiPanel, type SchoolKanjiRequest } from '../browse/school-kanji'
 import { sharedSpellingNote } from '../detail/conjugation'
 import { noExamplesMessage } from '../detail/examples'
 import { type FrequencyLookupRow, frequencyLookupRow } from '../detail/frequency'
@@ -117,6 +124,7 @@ function wordPageURL(entry: EmbeddedEntry): string | null {
 export class EmbeddedPresentation {
   private files: KanjiFiles | undefined
   private radicals: RadicalLookup | undefined
+  private school: SchoolKanji | undefined
   private readonly frequency: ReadFrequency = ids => hostFrequency(this.host, ids)
   private readonly readingsByKanji = new LruCache<string, readonly KanjiReadingRow[]>(
     rememberedKanji
@@ -318,5 +326,14 @@ export class EmbeddedPresentation {
       this.radicals = new RadicalLookup(checkedRadicalFile(file))
     }
     return this.radicals.panel(selected)
+  }
+
+  schoolKanjiPanel(request: SchoolKanjiRequest): SchoolKanjiPanel {
+    if (!this.school) {
+      const file = this.host.kanjiReference?.()
+      if (!file) throw new Error('The host has no kanji reference file to read')
+      this.school = new SchoolKanji(kanjiEntries(checkedKanjiReference(file)))
+    }
+    return this.school.panel(request)
   }
 }

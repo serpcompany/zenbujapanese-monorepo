@@ -1,6 +1,5 @@
-import { type PathRule, withSlashedSources } from '../sitemap'
+import { withSlashedSources } from '../sitemap'
 
-const wordSitemapRoute = (number: string) => `/sitemaps/dictionary/${number}.xml`
 const laterFile = ':number([2-9]|[1-9]\\d+)'
 
 export const wordSitemapPath = (number: number) =>
@@ -10,22 +9,33 @@ export const browseSitemapGroups = ['kana', 'categories', 'frequency-lists', 'ka
 
 export type BrowseSitemapGroup = (typeof browseSitemapGroups)[number]
 
-export const isBrowseSitemapGroup = (group: string): group is BrowseSitemapGroup =>
-  (browseSitemapGroups as readonly string[]).includes(group)
-
 export const browseSitemapPath = (group: BrowseSitemapGroup) => `/sitemap-${group}.xml`
 
-const browseSitemapRoute = (group: string) => `/sitemaps/browse/${group}.xml`
 const browseGroup = `:group(${browseSitemapGroups.join('|')})`
 
-export const dictionarySitemapFiles: readonly PathRule[] = [
-  { source: wordSitemapPath(1), destination: wordSitemapRoute('1') },
-  { source: `/sitemap-words-${laterFile}.xml`, destination: wordSitemapRoute(':number') },
-  { source: `/sitemap-${browseGroup}.xml`, destination: browseSitemapRoute(':group') }
-]
-
 export const movedDictionarySitemaps = withSlashedSources([
-  { source: wordSitemapRoute('1'), destination: wordSitemapPath(1) },
-  { source: wordSitemapRoute(laterFile), destination: '/sitemap-words-:number.xml' },
-  { source: browseSitemapRoute(browseGroup), destination: '/sitemap-:group.xml' }
+  { source: '/sitemaps/dictionary/1.xml', destination: wordSitemapPath(1) },
+  { source: `/sitemaps/dictionary/${laterFile}.xml`, destination: '/sitemap-words-:number.xml' },
+  { source: `/sitemaps/browse/${browseGroup}.xml`, destination: '/sitemap-:group.xml' }
 ])
+
+const wordSitemapFile = /^sitemap-words(?:-([2-9]|[1-9]\d+))?\.xml$/
+
+function wordSitemapNumber(name: string): number | null {
+  const match = name.match(wordSitemapFile)
+  return match ? Number(match[1] ?? 1) : null
+}
+
+export function writtenDictionarySitemaps(names: readonly string[]): string[] {
+  const words = names
+    .map(wordSitemapNumber)
+    .filter(number => number !== null)
+    .sort((a, b) => a - b)
+    .map(wordSitemapPath)
+  const browse = browseSitemapGroups.filter(group => names.includes(`sitemap-${group}.xml`))
+  return [...words, ...browse.map(browseSitemapPath)]
+}
+
+export const isDictionarySitemapFile = (name: string) =>
+  wordSitemapNumber(name) !== null ||
+  browseSitemapGroups.some(group => name === `sitemap-${group}.xml`)
