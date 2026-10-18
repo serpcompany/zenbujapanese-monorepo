@@ -64,7 +64,9 @@ on (the names the walks give them), the devices and text sizes, why it is allowe
   (`watch.cue.`);
 - by its label, or a few labels with one reason, where the element has no identifier; or
 - as a count of findings the audit can't attach to any element (`unnamed`), which XCTest then
-  reports with no element. An entry allows that many on each of its screens and no more.
+  reports with no element. An entry allows that many on each of its screens and no more. Most
+  are text under the bars, so a walk auditing the lower part of a long screen first drags its
+  element to one height (`audit(_:placing:in:)`), which makes the count the same every run.
 
 An entry is never added to make a test pass: fix the screen, and allow a finding only for a reason
 a person checking the screen would accept. A finding the list doesn't allow fails the test, and an
