@@ -750,7 +750,7 @@
     "body": "Email {email}. We read every message."
   },
   "dictionary": {
-    "title": "Japanese dictionary",
+    "title": "Japanese–English Dictionary",
     "lead": "Words and kanji with readings, meanings, pitch accent, and examples. Search in Japanese, kana, romaji, or English."
   },
   "dmca": {
@@ -1128,8 +1128,8 @@
       "description": "Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too."
     },
     "/dictionary/": {
-      "title": "Japanese dictionary",
-      "description": "Look up Japanese words and kanji in Japanese, kana, romaji, or English, and see each word’s reading, pitch accent, conjugations, and example sentences."
+      "title": "Japanese Dictionary: English, Romaji & Kanji Lookup",
+      "description": "Free Japanese dictionary: search English to Japanese or Japanese to English in romaji, kana or kanji, with readings, meanings and example sentences."
     },
     "/products/": {
       "title": "Products",
@@ -1593,7 +1593,19 @@
       "descriptionForEnglish": "{count} Japanese words for “{query}”, with readings and meanings.",
       "descriptionForJapanese": "{count} Japanese words for “{query}”, with readings and meanings.",
       "noResults": "No Japanese words match “{query}”.",
-      "more": "Open any word for its pitch accent, kanji, conjugations, and example sentences."
+      "more": "Open any word for its pitch accent, kanji, conjugations, and example sentences.",
+      "howToSay": "How to Say {query} in Japanese",
+      "answered": "{title}: {word}",
+      "withExamples": "{title}",
+      "spelled": "{headword} ({spelling})",
+      "wordFor": "Japanese Word for {query}: {word}",
+      "answer": "{query} in Japanese is {word}.",
+      "otherWords": {
+        "one": "See {count} more Japanese word for “{query}”, with its reading and meaning.",
+        "other": "See {count} more Japanese words for “{query}”, with readings and meanings."
+      },
+      "onlyWord": "It’s the only Japanese word found for “{query}”.",
+      "moreShort": "Each word opens to its pitch accent, kanji, and examples."
     },
     "wordsFor": {
       "one": "{count} word for {query}",

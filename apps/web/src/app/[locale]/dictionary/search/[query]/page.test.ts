@@ -99,6 +99,18 @@ describe('a search lives at the query the core searches', () => {
   })
 })
 
+describe('the results page’s heading', () => {
+  test.each([
+    ['iru', 'en', 'iru in Japanese'],
+    ['いる', 'ja', 'いるの英語・意味'],
+    ['qzxvkj', 'en', 'qzxvkj in Japanese']
+  ])('%s (%s) is headed with its title', async (query, locale, heading) => {
+    const html = renderToStaticMarkup(await SearchResultsPage(decodedSegment(query, locale)))
+    expect(html).toMatch(new RegExp(`<h1 [^>]*>${heading}</h1>`))
+    expect((await generateMetadata(decodedSegment(query, locale))).title).toBe(heading)
+  })
+})
+
 describe('the results page’s Sources', () => {
   const rendered = async (query: string, locale = 'en') =>
     renderToStaticMarkup(await SearchResultsPage(decodedSegment(query, locale)))
