@@ -118,12 +118,11 @@ struct WatchSessionView: View {
   @ViewBuilder
   private var playerFailure: some View {
     if case .failed(let code) = player.state {
-      ViewThatFits(in: .vertical) {
-        unavailable(code)
-        ScrollView { unavailable(code) }
-      }
-      .background(.black)
-      .environment(\.colorScheme, .dark)
+      ScrollView { unavailable(code) }
+        .defaultScrollAnchor(.center, for: .alignment)
+        .scrollBounceBehavior(.basedOnSize)
+        .background(.black)
+        .environment(\.colorScheme, .dark)
     }
   }
 

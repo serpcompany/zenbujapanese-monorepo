@@ -123,11 +123,9 @@ private struct StillThereCard: View {
         .ignoresSafeArea()
         .accessibilityHidden(true)
       TimelineView(.periodic(from: .now, by: 0.25)) { _ in
-        let remaining = timeLeft()
-        ViewThatFits(in: .vertical) {
-          card(remaining: remaining)
-          ScrollView { card(remaining: remaining) }
-        }
+        ScrollView { card(remaining: timeLeft()) }
+          .defaultScrollAnchor(.center, for: .alignment)
+          .scrollBounceBehavior(.basedOnSize)
       }
     }
     .accessibilityElement(children: .contain)

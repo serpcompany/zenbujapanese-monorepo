@@ -97,8 +97,6 @@ private enum Why {
     "A one-line preview of a longer text that the next screen shows whole, as Mail's and Messages' lists do"
   static let scrolls =
     "Text that runs past the edge of a view that scrolls, so the rest of it is a scroll away"
-  static let underTheBar =
-    "Text scrolled under the navigation bar's or the tab bar's glass, which still shows through it; the audit can't name it, and it is whole once scrolled into view"
   static let placedPage =
     "Text on a page the walk scrolled to: as the audit's sweep through the sizes reflows the page, text moves under the bars' glass or off the screen, and the audit can't name it. The walk puts the page at the same spot every run, so the count holds, and the screenshot at the largest size shows the text whole"
   static let cappedControls =
@@ -215,7 +213,6 @@ private let textThatScales = [
   allow(
     .textClipped, .label("The video's owner doesn't allow it to play in other apps."),
     on: ["A video its owner won't share"], because: Why.scales),
-  allow(.textClipped, .unnamed(2), on: ["A video its owner won't share"], because: Why.underTheBar),
   allow(.dynamicType, .unnamed(10), on: ["Word Detail, its kanji"], because: Why.placedPage),
   allow(.dynamicType, .unnamed(2), on: ["A word's note"], touch, [.standard], because: Why.placedPage),
   allow(.dynamicType, .unnamed(6), on: ["A word's note"], touch, [.largest], because: Why.placedPage),
@@ -235,7 +232,6 @@ private let clocks = [
   allow(.dynamicType, .label("0:12"), on: ["Player's Recent"], because: Why.clock),
   allow(.dynamicType, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
   allow(.textClipped, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
-  allow(.textClipped, .unnamed(4), on: ["The silence prompt"], because: Why.scrolls),
 ]
 
 private let previews = [
