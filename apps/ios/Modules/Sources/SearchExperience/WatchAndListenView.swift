@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WatchAndListenView: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var query = ""
   @State private var isSearching = false
   let history: WatchHistory
@@ -49,7 +50,8 @@ struct WatchAndListenView: View {
     .searchField(
       text: $query,
       isPresented: $isSearching,
-      prompt: Text("Search \(searchProvider.name) or paste a link"),
+      prompt: Text(
+        dynamicTypeSize >= .xxLarge ? "Search" : "Search \(searchProvider.name) or paste a link"),
       submit: submit
     )
     .textEntry(.webSearch)

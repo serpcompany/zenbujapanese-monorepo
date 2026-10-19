@@ -47,6 +47,7 @@ struct CaptionCard: View {
           .font(.callout)
           .foregroundStyle(.secondary)
           .padding(.top, 8)
+          .accessibilityRespondsToUserInteraction(false)
       }
     }
     .padding(.top, label == nil ? 10 : 22)
@@ -57,6 +58,7 @@ struct CaptionCard: View {
           .font(.caption2.monospacedDigit())
           .foregroundStyle(.tint)
           .padding(.top, 4)
+          .accessibilityRespondsToUserInteraction(false)
       }
     }
     .frame(maxWidth: .infinity, alignment: .leading)

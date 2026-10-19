@@ -63,6 +63,17 @@ extension ZenbuUITestCase {
     app.typeKey(key, modifierFlags: modifiers)
   }
 
+  func press(
+    _ key: String, _ modifiers: XCUIElement.KeyModifierFlags = .command, until element: XCUIElement,
+    in app: XCUIApplication
+  ) {
+    for _ in 0..<3 {
+      shortcut(key, modifiers, in: app)
+      if appears(element, within: Self.patience / 3) { return }
+    }
+    waitFor(element)
+  }
+
   func goBack(in app: XCUIApplication) {
     if device == .mac {
       tap(app.toolbars.buttons["Back"].firstMatch)
