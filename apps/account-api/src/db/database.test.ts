@@ -158,7 +158,7 @@ describe('the migrations', () => {
     await original.exec(`
       insert into word_notes (user_id, id, item_id, text, present, version) values ('u1', '00000000-0000-4000-8000-000000000003', 'kanji:日', 'Sun.', true, 1);
       insert into photo_files (user_id, id, content_type, byte_size, storage_key) values ('u1', '${photo}', 'image/jpeg', 1, 'u1/one');
-      insert into photos (user_id, id, name, saved_at, present, version) values ('u1', '${photo}', 'x', now(), true, 1);
+      insert into photos (user_id, id, name, saved_at, status, version) values ('u1', '${photo}', 'x', now(), 'shown', 1);
       insert into photo_words (user_id, photo_id, item_id, headword, reading, saved_at, present, version) values ('u1', '${photo}', 'kanji:日', '日', 'にち', now(), true, 1);
       insert into profile_photos (user_id, photo_id, version) values ('u1', '${photo}', 1);
       insert into learner_settings (user_id, name, value, version) values ('u1', 'readingAids.romaji', 'true', 1);

@@ -12,6 +12,7 @@ type Answer = {
   changes: { entity: string; entityId: string; version: number; data: Record<string, unknown> }[]
   cursor: string
   hasMore: boolean
+  searchKey?: string
 }
 
 const rename = (name: string, baseVersion: number, id: string = randomUUID()) => ({
@@ -54,10 +55,17 @@ describe('POST /v1/sync', () => {
         }
       ],
       cursor: expect.any(String),
-      hasMore: false
+      hasMore: false,
+      searchKey: expect.stringMatching(/^[0-9a-f]{64}$/)
     })
     const empty = await synced(learner, { cursor: first.cursor })
-    expect(empty).toEqual({ results: [], changes: [], cursor: first.cursor, hasMore: false })
+    expect(empty).toEqual({
+      results: [],
+      changes: [],
+      cursor: first.cursor,
+      hasMore: false,
+      searchKey: first.searchKey
+    })
   })
 
   test('answers only what changed after the cursor, including PATCH /v1/me', async () => {
