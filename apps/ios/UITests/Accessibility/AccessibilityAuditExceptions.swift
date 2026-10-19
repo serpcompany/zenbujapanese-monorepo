@@ -140,6 +140,7 @@ private let systemControls = [
   allow(.elementDetection, .unnamed(8), on: ["Sign In"], [.pad], [.standard], because: Why.behindSheet),
   allow(.elementDetection, .unnamed(2), on: ["Sign In"], [.pad], [.largest], because: Why.behindSheet),
   allow(.elementDetection, .unnamed(7), on: ["Delete Account"], [.pad], [.standard], because: Why.behindSheet),
+  allow(.elementDetection, .unnamed(2), on: ["Delete Account"], [.pad], [.largest], because: Why.behindSheet),
 ]
 
 private let linkedWords = [
