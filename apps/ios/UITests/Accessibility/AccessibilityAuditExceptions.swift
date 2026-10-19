@@ -70,7 +70,7 @@ private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
 ]
-private let shareCards = ["A shared sentence's card", "A shared word's card", "A shared photo's card"]
+private let shareCards = ["A shared sentence's card", "A shared photo's card"]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -191,8 +191,6 @@ private let textThatScales = [
   allow(
     .textClipped, .labels(["New List"]), on: ["Add to List"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-list-picker.list."), on: ["Add to List"], because: Why.scales),
-  allow(.dynamicType, .labels(["FREQUENCY", "Add to List"]), on: ["A shared word's card"], because: Why.scales),
-  allow(.textClipped, .label("Add to List"), on: ["A shared word's card"], because: Why.scales),
   allow(.textClipped, .label("japan"), on: ["Recent searches"], because: Why.scales),
   allow(.dynamicType, .identifiedBy(prefix: "translate.pane."), on: ["Two Panes"], because: Why.scales),
   allow(

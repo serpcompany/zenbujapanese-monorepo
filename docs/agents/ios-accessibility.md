@@ -69,7 +69,7 @@ The share sheet's card is drawn by the share extension, in a process of its own,
 reads only the app's: in the share sheet it finds nothing on the card, not even the contrast
 findings every screen of the app has. So `ShareSheetAuditUITests` opens the same card, the
 extension's `ShareCardScene`, full screen inside the app (`ZENBU_SHARE_CARD_IN_APP=1`,
-[`ios-share-sheet.md`](ios-share-sheet.md), Tests).
+[`ios-share-sheet.md`](ios-share-sheet.md), Tests), for a sentence and for a photo.
 
 ## Allowed findings
 
@@ -97,9 +97,8 @@ that no device's run uses.
 The audits read the accessibility tree and the screen; they don't use VoiceOver. VoiceOver's
 order and announcements, and the largest text size on a real device, are checked by a person on
 an iPhone, from the checklist in the pull request that changes them. They read only the app's own
-process, so the share sheet's card is audited inside the app rather than in the sheet. A headword
-too long to keep its reading beside the pitch accent, such as 食べる, shrinks one size as the text
-grows (product docs, the word's page), and the Dynamic Type sweep from the default size loses its
-furigana, kanji, and pitch kana without naming them, though it names them from the largest size.
-The walks' word pages, 日本 and 駅, keep theirs beside it, and a conjugated form's headword, which
-the sweep names, is allowed as a design choice.
+process, so the share sheet's card is audited inside the app rather than in the sheet. The card
+for a word isn't audited yet: on the iPhone, the Dynamic Type sweep from the default size loses its
+headword's furigana, kanji, and pitch kana without naming them, four findings for 駅 and six for
+食べる, though it names the same pieces from the largest size, and the same headline on 駅's page
+in the app loses nothing ([`harness-debt.md`](../harness-debt.md)).
