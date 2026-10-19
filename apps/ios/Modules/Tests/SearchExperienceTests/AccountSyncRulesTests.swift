@@ -141,6 +141,17 @@ struct AccountSyncRulesTests {
     #expect(started == 1)
   }
 
+  @Test("a phone closed after signing in but before its first upload sends everything when it opens again, from no cursor")
+  func relaunchBeforeTheFirstUpload() async throws {
+    let (_, request) = try await Fixture.caughtUp(from: []) { fixture in
+      fixture.markKnown(Fixture.taberu)
+      fixture.watch("dQw4w9WgXcQ")
+    }
+    #expect(request.cursor == nil)
+    #expect(Set(request.mutations.map(\.entity)).isSuperset(of: ["knownWord", "list", "watchedVideo"]))
+    #expect(request.mutations.allSatisfy { $0.baseVersion == 0 })
+  }
+
   @Test("signing in records that nothing has gone up yet, so a relaunch or a sign-out before the first upload still sends it")
   func interruptedFirstUpload() async throws {
     let fixture = Fixture()

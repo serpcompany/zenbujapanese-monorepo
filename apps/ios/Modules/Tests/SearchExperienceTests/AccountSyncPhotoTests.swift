@@ -147,6 +147,7 @@ struct AccountSyncPhotoTests {
     await save(on: taberu, in: phone)
     phone.markKnown(Fixture.miru)
     try await phone.signIn()
+    #expect(phone.sync.photosUnavailable)
     #expect(
       Set(phone.queuedOperations) == [
         "photo add \(photoID)", "photoWord add \(photoID)/\(Fixture.taberu)",
