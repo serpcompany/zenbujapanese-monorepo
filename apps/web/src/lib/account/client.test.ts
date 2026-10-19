@@ -127,13 +127,83 @@ describe("the website's account service client", () => {
   })
 
   test("deletes with the learner's confirmation, and Apple's code with its return URL", async () => {
-    const { api, send } = answering({ status: 'deleted' })
+    const { api, send } = answering({ status: 'deleted', appStoreSubscriptionContinues: true })
     const apple = { appleAuthorizationCode: 'c1', appleRedirectUri: 'https://site/account/' }
-    expect(await api.deleteAccount('access.jwt', apple)).toEqual({ ok: true, value: true })
+    expect(await api.deleteAccount('access.jwt', apple)).toEqual({
+      ok: true,
+      value: { appStoreSubscriptionContinues: true }
+    })
     expect(sent(send)).toMatchObject({ method: 'DELETE', body: { confirm: true, ...apple } })
     const plain = answering({ status: 'deleted' })
-    await plain.api.deleteAccount('access.jwt', null)
+    expect(await plain.api.deleteAccount('access.jwt', null)).toEqual({
+      ok: true,
+      value: { appStoreSubscriptionContinues: false }
+    })
     expect(sent(plain.send).body).toEqual({ confirm: true })
+  })
+
+  test('reads the subscription and the plans, and opens Checkout and the portal, with an access token', async () => {
+    const read = answering({
+      status: 'active',
+      managedIn: 'website',
+      expiresAt: '2026-11-19T00:00:00.000Z',
+      willRenew: true,
+      running: [
+        { status: 'active', managedIn: 'website', expiresAt: null, willRenew: true },
+        { status: 'frozen', managedIn: 'website' },
+        { status: 'active', managedIn: 'somewhere' }
+      ],
+      canSubscribe: false,
+      offers: { appStore: ['com.zenbujapanese.sync.monthly'], website: ['price_monthly'] }
+    })
+    expect(await read.api.subscription('access.jwt')).toEqual({
+      ok: true,
+      value: {
+        latest: {
+          status: 'active',
+          managedIn: 'website',
+          expiresAt: '2026-11-19T00:00:00.000Z',
+          willRenew: true
+        },
+        running: [{ status: 'active', managedIn: 'website', expiresAt: null, willRenew: true }],
+        canSubscribe: false,
+        websitePrices: ['price_monthly'],
+        appStoreProducts: ['com.zenbujapanese.sync.monthly']
+      }
+    })
+    expect(sent(read.send)).toMatchObject({ method: 'GET', credentials: 'omit' })
+    const plan = {
+      price: 'p',
+      name: 'Zenbu Sync',
+      amount: 499,
+      currency: 'usd',
+      interval: 'month',
+      intervalCount: 1
+    }
+    expect(await answering({ plans: [plan], trialDays: 7 }).api.plans('access.jwt')).toEqual({
+      ok: true,
+      value: { plans: [plan], trialDays: 7 }
+    })
+    expect(
+      await answering({ plans: [{ ...plan, interval: 'fortnight' }] }).api.plans('access.jwt')
+    ).toMatchObject({ ok: false, failure: { kind: 'unexpected' } })
+    const checkout = answering({ url: 'https://checkout.stripe.com/c/pay/cs_1' })
+    const pages = {
+      price: 'p',
+      successUrl: 'https://site/account/?subscribed=1',
+      cancelUrl: 'https://site/account/'
+    }
+    expect(await checkout.api.checkout('access.jwt', pages)).toEqual({
+      ok: true,
+      value: 'https://checkout.stripe.com/c/pay/cs_1'
+    })
+    expect(sent(checkout.send)).toMatchObject({ method: 'POST', body: pages })
+    const portal = answering({ url: 'https://billing.stripe.com/p/session/1' })
+    expect(await portal.api.portal('access.jwt', 'https://site/account/')).toEqual({
+      ok: true,
+      value: 'https://billing.stripe.com/p/session/1'
+    })
+    expect(sent(portal.send).body).toEqual({ returnUrl: 'https://site/account/' })
   })
 
   test("reads how long to wait from Retry-After, or Better Auth's X-Retry-After", async () => {

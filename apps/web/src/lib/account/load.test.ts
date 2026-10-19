@@ -13,6 +13,13 @@ const profile = {
   version: 1,
   createdAt: '2026-10-07T00:00:00.000Z'
 }
+const subscription = {
+  latest: null,
+  running: [],
+  canSubscribe: true,
+  websitePrices: ['price_monthly'],
+  appStoreProducts: []
+}
 const ok = <T>(value: T): Result<T> => ({ ok: true, value })
 const refused = (status: number) =>
   refusedResult(status, status === 401 ? 'unauthorized' : 'internal')
@@ -23,6 +30,7 @@ const stubApi = (parts: Partial<Record<keyof AccountApi, unknown>>) =>
     accessToken: ok(jwtFor({ sub: 'u1' })),
     profile: ok(profile),
     identities: ok([]),
+    subscription: ok(subscription),
     ...parts
   })
 
@@ -32,7 +40,14 @@ describe('loading the account page', () => {
   test('reads the session from the cookie, then the profile with an access token and the ways in', async () => {
     expect(await load(stubApi({}))).toEqual({
       kind: 'signed-in',
-      account: { session, profile, identities: [] }
+      account: { session, profile, identities: [], subscription }
+    })
+  })
+
+  test("keeps the account when its subscription can't be read, and shows none", async () => {
+    expect(await load(stubApi({ subscription: refused(500) }))).toMatchObject({
+      kind: 'signed-in',
+      account: { profile, subscription: null }
     })
   })
 

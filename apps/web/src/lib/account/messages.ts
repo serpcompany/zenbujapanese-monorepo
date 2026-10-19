@@ -25,7 +25,11 @@ const refusals = new Map<string, Refusal>([
   ['apple_authorization_needed', 'appleAuthorizationNeeded'],
   ['apple_authorization_invalid', 'appleAuthorizationInvalid'],
   ['apple_account_mismatch', 'appleAccountMismatch'],
-  ['apple_unavailable', 'appleUnavailable']
+  ['apple_unavailable', 'appleUnavailable'],
+  ['already_subscribed', 'alreadySubscribed'],
+  ['billing_unavailable', 'billingUnavailable'],
+  ['no_subscription', 'noWebsiteSubscription'],
+  ['unknown_price', 'unknownPrice']
 ])
 
 const returnedErrors = new Map<string, Refusal>([

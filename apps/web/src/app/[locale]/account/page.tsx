@@ -4,6 +4,7 @@ import { AccountView } from '@/components/account/account-view'
 import { accountMetadata } from '@/lib/account/metadata'
 import { returnedError } from '@/lib/account/pages'
 import { accountSettings } from '@/lib/account/settings'
+import { returnedFromCheckout } from '@/lib/account/subscription'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { localeOf } from '@/lib/i18n/params'
 
@@ -20,7 +21,8 @@ export default async function AccountPage({
   searchParams
 }: PageProps<'/[locale]/account'>) {
   const locale = await localeOf(params)
-  const error = returnedError(await searchParams)
+  const query = await searchParams
+  const error = returnedError(query)
   return (
     <AccountPageShell page="account" locale={locale} settings={await accountSettings()}>
       {settings => (
@@ -29,6 +31,7 @@ export default async function AccountPage({
           text={getDictionary(locale).account}
           settings={settings}
           returnedError={error}
+          returnedFromCheckout={returnedFromCheckout(query)}
         />
       )}
     </AccountPageShell>

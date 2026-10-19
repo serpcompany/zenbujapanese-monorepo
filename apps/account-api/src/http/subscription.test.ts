@@ -305,6 +305,50 @@ describe('POST /v1/me/subscription/checkout', () => {
   })
 })
 
+describe('GET /v1/me/subscription/plans', () => {
+  const plans = (learner: Learner) =>
+    billing.call('/v1/me/subscription/plans', { token: learner.token })
+
+  test("describes the website's prices from Stripe, and the trial only for an account that never subscribed", async () => {
+    const learner = await billing.accounts.learner('sub-plans@example.com')
+    expect(await plans(learner)).toMatchObject({
+      status: 200,
+      body: {
+        plans: [
+          {
+            price: 'price_monthly',
+            name: 'Zenbu Sync',
+            amount: 499,
+            currency: 'usd',
+            interval: 'month',
+            intervalCount: 1
+          },
+          {
+            price: 'price_yearly',
+            name: 'Zenbu Sync',
+            amount: 4999,
+            currency: 'usd',
+            interval: 'year',
+            intervalCount: 1
+          }
+        ],
+        trialDays: 7
+      }
+    })
+    const { learner: subscriber } = await stripeSubscriber('sub-plans-again@example.com')
+    expect((await plans(subscriber)).body).toMatchObject({ trialDays: null })
+  })
+
+  test("answers 503 while Stripe doesn't answer", async () => {
+    const learner = await billing.accounts.learner('sub-plans-down@example.com')
+    stripe.state.down = true
+    expect(await plans(learner)).toMatchObject({
+      status: 503,
+      body: { error: { code: 'billing_unavailable' } }
+    })
+  })
+})
+
 describe('POST /v1/me/subscription/portal', () => {
   test("opens Stripe's portal for a website subscriber's customer", async () => {
     const { learner, customer } = await stripeSubscriber('sub-portal@example.com')

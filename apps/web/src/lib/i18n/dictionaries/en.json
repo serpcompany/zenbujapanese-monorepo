@@ -77,7 +77,8 @@
       "signedInAs": "Signed in as {email}",
       "signOut": "Sign out",
       "signOutHere": "Sign out of this browser. Your other devices stay signed in.",
-      "signedOut": "You’re signed out."
+      "signedOut": "You’re signed out.",
+      "appStoreStillBilling": "Your App Store subscription is still running, and Apple keeps billing you until you cancel it in your Apple Account’s subscriptions."
     },
     "profile": {
       "heading": "Profile",
@@ -119,7 +120,72 @@
       "keepMine": "Keep my account",
       "appleConfirms": "Your account signs in with Apple, so Apple confirms it’s you and we stop its access to your Apple ID.",
       "whyFresh": "Deleting needs a sign-in from the last few minutes.",
-      "appleElsewhere": "Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple."
+      "appleElsewhere": "Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple.",
+      "appStoreContinues": "Deleting your account doesn’t cancel your App Store subscription: Apple keeps billing you until you cancel it in your Apple Account’s subscriptions.",
+      "websiteCanceled": "Your subscription on zenbujapanese.com is canceled with your account."
+    },
+    "subscription": {
+      "heading": "Subscription",
+      "loadingPlans": "Loading the plans…",
+      "place": {
+        "app_store": "In the App Store",
+        "website": "On zenbujapanese.com"
+      },
+      "status": {
+        "active": "Active",
+        "grace_period": "Active, but your last payment didn’t go through",
+        "billing_retry": "Your last payment didn’t go through",
+        "pending": "Waiting for your payment",
+        "paused": "Paused",
+        "expired": "Ended",
+        "revoked": "Refunded"
+      },
+      "renews": "Renews on {date}.",
+      "ends": "Ends on {date}.",
+      "fixPaymentWebsite": "Update your payment method in Manage your subscription to keep syncing.",
+      "fixPaymentAppStore": "Update your payment method in the App Store to keep syncing.",
+      "pendingDetail": "It starts once your payment arrives.",
+      "manage": "Manage your subscription",
+      "manageExplained": "Change your plan, update your payment method, see your invoices, or cancel, on Stripe.",
+      "appStoreManaged": "You subscribed in the Zenbu Japanese app, so it’s managed in the App Store: change or cancel it in your Apple Account’s subscriptions.",
+      "openAppStore": "Open your App Store subscriptions",
+      "payingTwice": "You’re paying for two subscriptions, one in the App Store and one here. Cancel the one you don’t need where you bought it.",
+      "pitch": "A Zenbu subscription syncs your known words, lists, watch history, and bookmarked translations across the Zenbu apps, on every device you sign in to. Everything else in Zenbu stays free.",
+      "subscribe": "Subscribe",
+      "subscribeTo": "Subscribe to {plan}",
+      "planPrice": "{price} {period}",
+      "per": {
+        "day": "a day",
+        "week": "a week",
+        "month": "a month",
+        "year": "a year"
+      },
+      "every": {
+        "day": {
+          "one": "every day",
+          "other": "every {count} days"
+        },
+        "week": {
+          "one": "every week",
+          "other": "every {count} weeks"
+        },
+        "month": {
+          "one": "every month",
+          "other": "every {count} months"
+        },
+        "year": {
+          "one": "every year",
+          "other": "every {count} years"
+        }
+      },
+      "trial": {
+        "one": "Starts with a {count}-day free trial",
+        "other": "Starts with a {count}-day free trial"
+      },
+      "terms": "You pay on Stripe’s secure checkout page. Your subscription renews automatically until you cancel it, which you can do here at any time.",
+      "inTheApp": "Subscribe in the Zenbu Japanese app on your iPhone, iPad, or Mac.",
+      "waiting": "Thanks! We’re confirming your payment with Stripe…",
+      "slow": "Stripe hasn’t confirmed your payment yet. It can take a few minutes: reload this page to check."
     },
     "messages": {
       "refusals": {
@@ -139,7 +205,11 @@
         "appleAuthorizationInvalid": "Apple didn’t accept that. Continue with Apple again.",
         "appleAccountMismatch": "That Apple ID is a different one from the one your account uses. Continue with the Apple ID your account uses.",
         "appleUnavailable": "Apple didn’t answer, so nothing was deleted. Continue with Apple again in a few minutes.",
-        "googleCancelled": "Signing in with Google was cancelled."
+        "googleCancelled": "Signing in with Google was cancelled.",
+        "alreadySubscribed": "Your account already has a subscription. Reload this page to see it.",
+        "billingUnavailable": "Payments aren’t answering right now, so nothing changed. Try again in a few minutes.",
+        "noWebsiteSubscription": "This account hasn’t subscribed on this website. A subscription bought in the App Store is managed there.",
+        "unknownPrice": "That plan isn’t offered anymore. Reload this page to see the plans."
       },
       "signsInWithAProvider": {
         "offered": "This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.",
@@ -1182,7 +1252,7 @@
     "short": {
       "heading": "The short version",
       "works": "The app works without an account, and keeps what you do in it on your device.",
-      "account": "If you create a Zenbu account, we keep your email, how you sign in, and the study data you sync, so your devices stay in step.",
+      "account": "If you create a Zenbu account, we keep your email, how you sign in, and the study data you sync, so your devices stay in step. If you subscribe, we keep a record of your subscription and payments; Apple or Stripe takes the payment itself.",
       "noSale": "We don't sell or share your personal information, and the app has no ads, analytics, or tracking.",
       "providers": "A few companies help us run the service, such as Cloudflare, which carries our traffic, and useSend, which sends our email.",
       "rights": "You can see, export, correct, or delete your data, and delete your account any time."
@@ -1202,7 +1272,7 @@
       "intro": "While you're signed out, our apps send nothing to our account service. If you create or sign in to a Zenbu account where our apps or this website offer one, we keep:",
       "removals": "When you remove a video, list, or bookmark, we keep only a record that it was removed, so your other devices follow. The iPhone app's profile syncs its name and username, which your account keeps anyway. The profile's photo and email, notes, photos, searches, settings, and whole Translate conversations don't sync. A sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. We'll update this policy before an app or this website syncs anything else.",
       "emails": "Our account service emails you only to send sign-in codes, to tell you when a way to sign in is added or removed, and to confirm that your account was deleted.",
-      "website": "Where this website offers sign-in, your account there lets you change your name and username, manage how you sign in, sign out, and delete your account. It doesn't read your study data yet, and we'll update this policy before it does. Signing in uses cookies only to sign you in and keep you signed in, and the website remembers your theme and that you're signed in."
+      "website": "Where this website offers sign-in, your account there lets you change your name and username, manage how you sign in, subscribe and manage a subscription you bought here, sign out, and delete your account. It doesn't read your study data yet, and we'll update this policy before it does. Signing in uses cookies only to sign you in and keep you signed in, and the website remembers your theme and that you're signed in."
     },
     "keep": {
       "what": "What we keep",
@@ -1223,6 +1293,10 @@
         "what": "Your study data: known words and lists, and from the iPhone app, the 50 videos you most recently watched in Player and the Translate sentences you bookmark",
         "why": "To keep your devices and apps in step"
       },
+      "subscription": {
+        "what": "Your subscription, if you have one: where you bought it (the App Store or this website), its plan and status, when it renews or ends, and each payment, refund, or dispute, with its amount and date. Never your card details",
+        "why": "To unlock syncing on every device you sign in to, and to keep a record of what you paid"
+      },
       "changes": {
         "what": "A record of each change you sync",
         "why": "So a change sent twice is applied once"
@@ -1239,10 +1313,11 @@
       "intro": "We don't sell or share your personal information. These companies handle it for us, under their own terms:",
       "cloudflare": "{provider} hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address. It processes routine request details, such as IP addresses.",
       "useSend": "{provider} sends our email, so it gets your email address and the messages we send you, and keeps copies of them.",
+      "stripe": "{provider} takes the payments for subscriptions bought on this website. It receives your email, payment details, and billing address under its own privacy policy; we never see your full card number.",
       "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
       "ahrefs": "{provider} counts visits to this website with Ahrefs Web Analytics, which uses no cookies.",
       "google": "{provider} serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google.",
-      "apple": "{provider} signs you in if you choose Apple.",
+      "apple": "{provider} signs you in if you choose Apple, and takes the payment for a subscription you buy in the iPhone app.",
       "youtube": "{provider} receives your requests when you use Player.",
       "where": "These companies may process information in the United States and other countries. If we add anything to Google Tag Manager that uses cookies, we'll update this policy and ask for consent where the law requires it."
     },
@@ -1253,6 +1328,10 @@
       "account": {
         "what": "Your account and study data",
         "howLong": "Until you delete your account"
+      },
+      "subscription": {
+        "what": "Your subscription and payment records",
+        "howLong": "Kept after you delete your account, without your account, as our record of payments"
       },
       "sessions": {
         "what": "Sessions",
@@ -1283,6 +1362,7 @@
     "bases": {
       "heading": "Why we're allowed to use it",
       "account": "Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for.",
+      "subscription": "Your subscription and payment records: they're needed to provide the subscription you bought, and to keep a record of payments.",
       "security": "Sessions, request counts, backups, running this website and our downloads, and counting visits: our legitimate interest in keeping the service secure, reliable, and working well.",
       "support": "Support email: our legitimate interest in answering you."
     },
@@ -1298,7 +1378,7 @@
       },
       "delete": {
         "title": "Delete.",
-        "text": "{title} Delete your account in any of our apps that lets you create one, or on this website wherever you can sign in to it. That deletes your account and the data you synced at once, and the backups that hold them within 30 days. Your devices keep their own data and keep working."
+        "text": "{title} Delete your account in any of our apps that lets you create one, or on this website wherever you can sign in to it. That deletes your account and the data you synced at once, and the backups that hold them within 30 days. Your devices keep their own data and keep working. Deleting your account cancels a subscription you bought on this website; one bought in the App Store keeps billing until you cancel it there."
       },
       "object": {
         "title": "Object or restrict.",

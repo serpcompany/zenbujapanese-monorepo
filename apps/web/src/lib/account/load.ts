@@ -1,5 +1,5 @@
 import type { AccessTokens } from './access-tokens'
-import type { AccountSession, Identity, Profile, Provider } from './answers'
+import type { AccountSession, Identity, Profile, Provider, Subscription } from './answers'
 import type { AccountApi, Failure, Result } from './client'
 import { isSignedOut } from './messages'
 
@@ -7,6 +7,7 @@ export interface SignedInAccount {
   session: AccountSession
   profile: Profile
   identities: Identity[]
+  subscription?: Subscription | null
 }
 
 export type LoadedAccount =
@@ -24,15 +25,21 @@ export async function loadAccount(api: AccountApi, tokens: AccessTokens): Promis
   if (!session.ok) return notLoaded(session)
   if (session.value === null) return { kind: 'signed-out' }
   tokens.belongTo(session.value.userId)
-  const [profile, identities] = await Promise.all([
+  const [profile, identities, subscription] = await Promise.all([
     tokens.use(token => api.profile(token)),
-    api.identities()
+    api.identities(),
+    tokens.use(token => api.subscription(token))
   ])
   if (!profile.ok) return notLoaded(profile)
   if (!identities.ok) return notLoaded(identities)
   return {
     kind: 'signed-in',
-    account: { session: session.value, profile: profile.value, identities: identities.value }
+    account: {
+      session: session.value,
+      profile: profile.value,
+      identities: identities.value,
+      subscription: subscription.ok ? subscription.value : null
+    }
   }
 }
 

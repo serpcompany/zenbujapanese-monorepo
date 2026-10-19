@@ -97,6 +97,7 @@ describe('the OpenAPI contract', () => {
       '/v1/me/subscription',
       '/v1/me/subscription/apple',
       '/v1/me/subscription/checkout',
+      '/v1/me/subscription/plans',
       '/v1/me/subscription/portal',
       '/v1/sync',
       '/v1/webhooks/apple',

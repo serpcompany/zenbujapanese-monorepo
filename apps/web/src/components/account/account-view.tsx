@@ -19,6 +19,7 @@ import {
   rememberSignedIn,
   seemsSignedIn
 } from '@/lib/account/signed-in'
+import { appStoreSubscriptions } from '@/lib/account/subscription'
 import type { Locale } from '@/lib/i18n/config'
 import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
@@ -26,6 +27,7 @@ import { DeleteAccount } from './delete-account'
 import { FormMessage, Notice } from './form-message'
 import { ProfileForm } from './profile-form'
 import { SignInWaysSection } from './sign-in-ways'
+import { SubscriptionSection } from './subscription-section'
 
 interface Landed {
   madeANewAccount: boolean
@@ -36,7 +38,7 @@ type View =
   | { kind: 'loading' }
   | { kind: 'unreachable'; failure: Failure }
   | { kind: 'signed-out'; notice: string | null }
-  | { kind: 'deleted' }
+  | { kind: 'deleted'; appStoreSubscriptionContinues: boolean }
   | { kind: 'signed-in'; account: SignedInAccount; landed: Landed | null }
 
 interface Words {
@@ -94,10 +96,14 @@ export function AccountView({
   locale,
   text,
   settings,
-  returnedError
+  returnedError,
+  returnedFromCheckout = false,
+  checkAgainAfterMs
 }: Words & {
   settings: AccountSettings
   returnedError: string | null
+  returnedFromCheckout?: boolean
+  checkAgainAfterMs?: readonly number[]
 }) {
   const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const tokens = useMemo(() => accessTokens(api), [api])
@@ -190,7 +196,15 @@ export function AccountView({
         <output className="flex flex-col gap-3">
           <p>{text.view.deleted}</p>
           <p className="text-sm text-muted-foreground">{text.view.goneEverywhere}</p>
+          {view.appStoreSubscriptionContinues ? (
+            <p className="text-sm">{text.view.appStoreStillBilling}</p>
+          ) : null}
         </output>
+        {view.appStoreSubscriptionContinues ? (
+          <a href={appStoreSubscriptions} className="underline">
+            {text.subscription.openAppStore}
+          </a>
+        ) : null}
         <Link href={localizedPath('/', locale)} className="underline">
           {text.view.home}
         </Link>
@@ -237,6 +251,19 @@ export function AccountView({
         onChanged={profile => update(current => ({ ...current, profile }))}
         onSignedOut={shared.onSignedOut}
       />
+      {account.subscription ? (
+        <SubscriptionSection
+          key={`subscription-${account.session.userId}`}
+          api={api}
+          tokens={tokens}
+          locale={locale}
+          text={text}
+          subscription={account.subscription}
+          returnedFromCheckout={returnedFromCheckout}
+          waits={checkAgainAfterMs}
+          onSignedOut={shared.onSignedOut}
+        />
+      ) : null}
       <SignInWaysSection
         key={`ways-${account.session.userId}`}
         {...shared}
@@ -265,10 +292,10 @@ export function AccountView({
       <DeleteAccount
         key={`delete-${account.session.userId}`}
         {...shared}
-        onDeleted={() => {
+        onDeleted={appStoreSubscriptionContinues => {
           tokens.forget()
           rememberSignedIn(false)
-          setView({ kind: 'deleted' })
+          setView({ kind: 'deleted', appStoreSubscriptionContinues })
         }}
       />
     </div>

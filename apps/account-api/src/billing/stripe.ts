@@ -1,7 +1,12 @@
 import { log } from '@zenbu/node-service/log'
 import Stripe from 'stripe'
 import type { StripeSettings } from '../billing-config'
-import { type BillingProvider, BillingUnavailable, type ProviderEvent } from '../domain/billing'
+import {
+  type BillingProvider,
+  BillingUnavailable,
+  type ProviderEvent,
+  type WebsitePlan
+} from '../domain/billing'
 import {
   accountMetadataKey,
   customerHint,
@@ -40,6 +45,27 @@ async function guarded<T>(what: string, work: () => Promise<T>): Promise<T> {
       requestId: failure?.requestId ?? null
     })
     throw new BillingUnavailable(`Stripe could not ${what}`)
+  }
+}
+
+const intervals = new Set<string>(['day', 'week', 'month', 'year'])
+
+const isInterval = (interval: string): interval is WebsitePlan['interval'] =>
+  intervals.has(interval)
+
+function planOf(price: Stripe.Price): WebsitePlan {
+  const product = typeof price.product === 'object' && !price.product.deleted ? price.product : null
+  const interval = price.recurring?.interval ?? ''
+  if (price.unit_amount === null || price.recurring === null || !isInterval(interval)) {
+    throw new Error(`price ${price.id} has no fixed recurring amount`)
+  }
+  return {
+    price: price.id,
+    name: product?.name ?? price.nickname ?? price.id,
+    amount: price.unit_amount,
+    currency: price.currency,
+    interval,
+    intervalCount: price.recurring.interval_count
   }
 }
 
@@ -136,6 +162,16 @@ export function stripeBilling(
     source: stripeSource,
     prices: config.prices,
     gracePeriodDays: config.gracePeriodDays,
+    trialDays: config.trialDays,
+
+    describePrices: () =>
+      guarded('describe the prices', async () =>
+        Promise.all(
+          config.prices.map(async price =>
+            planOf(await stripe.prices.retrieve(price, { expand: ['product'] }))
+          )
+        )
+      ),
 
     createCheckout: request =>
       guarded('start a checkout', async () => {
