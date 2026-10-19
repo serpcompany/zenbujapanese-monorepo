@@ -292,7 +292,6 @@ struct SavedItemMenu: View {
       Section {
         KnownWordMenuButton(item: item, identifierPrefix: identifierPrefix)
         Button("Add to List…", systemImage: "text.badge.plus", action: addToList)
-          .accessibilityIdentifier("\(identifierPrefix).add-to-list")
       }
       Section {
         Button("Add Note", systemImage: "square.and.pencil", action: addNote)
