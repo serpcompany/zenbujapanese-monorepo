@@ -29,6 +29,21 @@ struct AccountSyncFullReadTests {
     service.forget("wordNote:\(deleted)", for: Fixture.email)
   }
 
+  private func forgetANoteThePadSaw(
+    phone: Fixture, pad: Fixture, in service: FakeAccountService, besides others: [String] = []
+  ) async throws -> String {
+    let deleted = UUID().uuidString.lowercased()
+    try await phone.signIn()
+    await phone.notes.save(LearnerWordNote(id: deleted, text: "朝"), for: taberu)
+    for text in others { await phone.notes.save(LearnerWordNote(text: text), for: taberu) }
+    try await phone.syncNow()
+    try await pad.signIn()
+    await phone.notes.save(LearnerWordNote(id: deleted, text: ""), for: taberu)
+    try await phone.syncNow()
+    service.forget("wordNote:\(deleted)", for: Fixture.email)
+    return deleted
+  }
+
   @Test("a device signing in reads every page of an account that forgot a removal past its first page, with no 410")
   func fullReadPastAForgottenRemoval() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
@@ -48,15 +63,8 @@ struct AccountSyncFullReadTests {
   func rereadDropsWhatTheAccountForgot() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
     service.setPageSize(2)
-    let deleted = UUID().uuidString.lowercased()
-    try await phone.signIn()
-    await phone.notes.save(LearnerWordNote(id: deleted, text: "朝"), for: taberu)
-    for text in ["夜", "晩"] { await phone.notes.save(LearnerWordNote(text: text), for: taberu) }
-    try await phone.syncNow()
-    try await pad.signIn()
-    await phone.notes.save(LearnerWordNote(id: deleted, text: ""), for: taberu)
-    try await phone.syncNow()
-    service.forget("wordNote:\(deleted)", for: Fixture.email)
+    let deleted = try await forgetANoteThePadSaw(
+      phone: phone, pad: pad, in: service, besides: ["夜", "晩"])
     await pad.notes.save(LearnerWordNote(text: "昼"), for: taberu)
 
     try await pad.syncNow()
@@ -72,14 +80,7 @@ struct AccountSyncFullReadTests {
   @Test("a catch-up read from no cursor drops what the account forgot since, with no 410")
   func catchUpReadDropsWhatTheAccountForgot() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
-    let deleted = UUID().uuidString.lowercased()
-    try await phone.signIn()
-    await phone.notes.save(LearnerWordNote(id: deleted, text: "朝"), for: taberu)
-    try await phone.syncNow()
-    try await pad.signIn()
-    await phone.notes.save(LearnerWordNote(id: deleted, text: ""), for: taberu)
-    try await phone.syncNow()
-    service.forget("wordNote:\(deleted)", for: Fixture.email)
+    let deleted = try await forgetANoteThePadSaw(phone: phone, pad: pad, in: service)
     try await pad.storeSyncedEntities(SyncEntity.uploaded.filter { $0 != SyncEntity.setting })
     await pad.launch()
 
