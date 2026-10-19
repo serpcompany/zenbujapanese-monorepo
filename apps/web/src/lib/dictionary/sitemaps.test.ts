@@ -155,7 +155,7 @@ describe('the dictionary sitemaps a deploy writes', () => {
       '/sitemap-words-3.xml',
       ...browseGroupFiles
     ])
-    expect(files.map(file => file.urls)).toEqual([4, 4, 2, 14, 20, 30, 4])
+    expect(files.map(file => file.urls)).toEqual([4, 4, 2, 14, 20, 26, 4])
   })
 
   test('list URLs on the origin they are given', async () => {
@@ -201,13 +201,13 @@ describe('the dictionary sitemaps a deploy writes', () => {
         `${site}/frequency-dictionaries/anime/1-1000/`,
         `${site}/frequency-dictionaries/anime/1-1000/2/`,
         `${site}/frequency-dictionaries/anime/1001-2000/`,
-        `${site}/frequency-dictionaries/anime/1001-2000/5/`,
+        `${site}/frequency-dictionaries/anime/1001-2000/4/`,
         `${site}/frequency-dictionaries/jlpt/n5/`,
         `${site}/frequency-dictionaries/jlpt/n5/4/`,
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(listed).toHaveLength(68)
+    expect(listed).toHaveLength(64)
     expect(listed.filter(url => url.startsWith(`${local}/ja/`))).toEqual(
       listed
         .filter(url => !url.startsWith(`${local}/ja/`))
@@ -221,7 +221,7 @@ describe('the dictionary sitemaps a deploy writes', () => {
       'paleontology',
       '9001-10000',
       '-1000/1/',
-      '-2000/6/',
+      '-2000/5/',
       'strokes-29'
     ]) {
       expect(
@@ -231,14 +231,12 @@ describe('the dictionary sitemaps a deploy writes', () => {
     }
   })
 
-  test('a band of 10 words or more is listed as its five pages of 200 ranks, its first as the band’s URL', async () => {
+  test('a band of 10 words or more is listed as its pages of 200 words, its first as the band’s URL', async () => {
     const bands = (await browseUrls('frequency-lists')).filter(url =>
       url.startsWith(`${site}/frequency-dictionaries/anime/`)
     )
     const pagesOf = (band: string) =>
-      ['', '2/', '3/', '4/', '5/'].map(
-        page => `${site}/frequency-dictionaries/anime/${band}/${page}`
-      )
+      ['', '2/', '3/', '4/'].map(page => `${site}/frequency-dictionaries/anime/${band}/${page}`)
     expect(bands).toEqual([...pagesOf('1-1000'), ...pagesOf('1001-2000')])
   })
 

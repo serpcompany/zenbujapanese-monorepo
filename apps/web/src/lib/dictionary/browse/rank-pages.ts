@@ -1,27 +1,35 @@
 import {
   browsePageSize,
+  pageCount,
   type RankBand,
-  rankBand,
-  rankBandSize
+  rankBand
 } from '@zenbu/dictionary-core/browse/lists'
 
 export type Ranks = Pick<RankBand, 'first' | 'last'>
 
-export const rankPagesPerBand = rankBandSize / browsePageSize
-
-export function rankPageRanks(band: number, page: number): Ranks {
-  const first = rankBand(band).first + (page - 1) * browsePageSize
-  return { first, last: first + browsePageSize - 1 }
+export interface RankBandPage<Word> {
+  words: Word[]
+  pages: number
+  total: number
+  ranks: Ranks
 }
 
 export function rankBandPage<Word extends { rank: number | null }>(
   words: readonly Word[],
   band: number,
   page: number
-): { words: Word[]; pages: number } | null {
-  const { first } = rankBand(band)
-  const pageOf = ({ rank }: Word) => Math.floor(((rank ?? first) - first) / browsePageSize) + 1
-  const pages = words.reduce((last, word) => Math.max(last, pageOf(word)), 1)
+): RankBandPage<Word> | null {
+  const pages = pageCount(words.length)
   if (page < 1 || page > pages) return null
-  return { words: words.filter(word => pageOf(word) === page), pages }
+  const shown = words.slice((page - 1) * browsePageSize, page * browsePageSize)
+  const { first, last } = rankBand(band)
+  return {
+    words: shown,
+    pages,
+    total: words.length,
+    ranks: {
+      first: page === 1 ? first : (shown[0]?.rank ?? first),
+      last: page === pages ? last : (shown.at(-1)?.rank ?? last)
+    }
+  }
 }

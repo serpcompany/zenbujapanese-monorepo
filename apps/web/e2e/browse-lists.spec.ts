@@ -74,16 +74,16 @@ test.describe('frequency dictionaries', () => {
     await expect(page).toHaveURL(browse('frequency-dictionaries/anime/1-1000/'))
   })
 
-  test('a ranked list shows a band’s first 200 ranks, says which words it skips, and credits Jiten', async ({
+  test('a ranked list shows its first band’s words, says which words it skips, and credits Jiten', async ({
     page
   }) => {
     await page.goto(browse('frequency-dictionaries/anime/1-1000/'))
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Most used Japanese words: Anime'
     )
-    await expect(page).toHaveTitle('Anime: most used Japanese words, 1–200 | Zenbu Japanese')
+    await expect(page).toHaveTitle('Anime: most used Japanese words, 1–1,000 | Zenbu Japanese')
     const main = page.getByRole('main')
-    await expect(main).toContainText('Ranks 1–200')
+    await expect(main).toContainText('Ranks 1–1,000')
     await expect(main).toContainText('such as に, は, and が, aren’t ranked')
     const bands = page.getByRole('navigation', { name: 'Anime ranks' })
     await expect(bands.getByText('1–1k', { exact: true })).toHaveAttribute('aria-current', 'page')

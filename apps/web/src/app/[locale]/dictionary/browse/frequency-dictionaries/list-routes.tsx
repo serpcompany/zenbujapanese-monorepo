@@ -19,7 +19,6 @@ import {
   parseRankBand,
   rankBandPath
 } from '@/lib/dictionary/browse/paths'
-import { rankPageRanks } from '@/lib/dictionary/browse/rank-pages'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
@@ -63,7 +62,7 @@ async function loadBand(slug: string, segment: string, page: number, locale: Loc
 type LoadedBand = Awaited<ReturnType<typeof loadBand>>
 
 function bandMetadata({ list, band, page, copy, words, locale }: LoadedBand): Metadata {
-  const ranks = rankPageRanks(band, page)
+  const { ranks } = words
   const range = rankRange(ranks, locale)
   return dictionaryMetadata(
     rankBandPath(list.slug, band, page),
@@ -74,7 +73,7 @@ function bandMetadata({ list, band, page, copy, words, locale }: LoadedBand): Me
       [frequencyText(locale).bandMetaMore],
       locale
     ),
-    { index: words.words.length >= minimumIndexedWords }
+    { index: words.total >= minimumIndexedWords }
   )
 }
 

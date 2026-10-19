@@ -2,7 +2,6 @@ import { allRankBands, rankBand, rankedLists } from '@zenbu/dictionary-core/brow
 import type { Metadata } from 'next'
 import { describe, expect, test, vi } from 'vitest'
 import { rankBandTitle } from '@/lib/dictionary/browse/copy'
-import { rankPageRanks, rankPagesPerBand } from '@/lib/dictionary/browse/rank-pages'
 import { locales } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -58,17 +57,11 @@ describe('every kind of browse page fits search results', () => {
 
   test.each(
     locales
-  )('in %s, every ranked list’s every band page is titled within 70 characters', locale => {
+  )('in %s, every ranked list’s every band is titled within 70 characters, at its widest ranks', locale => {
     for (const list of rankedLists) {
-      for (const { band } of allRankBands) {
-        for (let page = 1; page <= rankPagesPerBand; page += 1) {
-          const title = rankBandTitle(
-            coreText(list.name, locale),
-            rankPageRanks(band, page),
-            locale
-          )
-          expect(fitsTitle(title), siteTitle(title)).toBe(true)
-        }
+      for (const band of allRankBands) {
+        const title = rankBandTitle(coreText(list.name, locale), band, locale)
+        expect(fitsTitle(title), siteTitle(title)).toBe(true)
       }
     }
   })

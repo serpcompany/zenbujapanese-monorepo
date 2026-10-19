@@ -40,8 +40,8 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70).
 - Check: `src/lib/dictionary/word-snippet.test.ts`, "leaves the reading out when the title with it
   would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
-  list’s every band page is titled within 70 characters" and each kind of browse page;
-  browse-lists spec, "a ranked list shows a band’s first 200 ranks, …"; browse spec, "the JLPT
+  list’s every band is titled within 70 characters, at its widest ranks" and each kind of browse
+  page; browse-lists spec, "a ranked list shows its first band’s words, …"; browse spec, "the JLPT
   kanji lists are Waller’s, credited under CC BY".
 
 ## Descriptions

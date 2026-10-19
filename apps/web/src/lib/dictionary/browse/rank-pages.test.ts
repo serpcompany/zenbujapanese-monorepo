@@ -1,40 +1,46 @@
 import { describe, expect, test } from 'vitest'
-import { rankBandPage, rankPageRanks, rankPagesPerBand } from './rank-pages'
+import { rankBandPage } from './rank-pages'
 
 const ranked = (...ranks: number[]) => ranks.map(rank => ({ rank }))
+const band = (first: number, count: number, step = 1) =>
+  ranked(...Array.from({ length: count }, (_, index) => first + index * step))
 const ranksOf = (words: readonly { rank: number | null }[] | undefined) =>
   words?.map(word => word.rank)
 
 describe('a band’s pages', () => {
-  test('a band of 1,000 ranks is five pages of 200 ranks each', () => {
-    expect(rankPagesPerBand).toBe(5)
-    expect(rankPageRanks(1, 1)).toEqual({ first: 1, last: 200 })
-    expect(rankPageRanks(2, 1)).toEqual({ first: 1_001, last: 1_200 })
-    expect(rankPageRanks(2, 2)).toEqual({ first: 1_201, last: 1_400 })
-    expect(rankPageRanks(10, 5)).toEqual({ first: 9_801, last: 10_000 })
+  test('a band shows its words 200 to a page, as the other lists do', () => {
+    const words = band(1_001, 450, 2)
+    expect(rankBandPage(words, 2, 1)?.words).toHaveLength(200)
+    expect(rankBandPage(words, 2, 2)?.words).toHaveLength(200)
+    expect(ranksOf(rankBandPage(words, 2, 3)?.words)).toHaveLength(50)
+    expect(rankBandPage(words, 2, 1)).toMatchObject({ pages: 3, total: 450 })
   })
 
-  test('each page shows the words ranked in its 200 ranks, and the band ends at its last ranked word', () => {
-    const band = ranked(1_001, 1_200, 1_201, 1_400, 1_401, 1_750)
-    expect(ranksOf(rankBandPage(band, 2, 1)?.words)).toEqual([1_001, 1_200])
-    expect(ranksOf(rankBandPage(band, 2, 2)?.words)).toEqual([1_201, 1_400])
-    expect(ranksOf(rankBandPage(band, 2, 3)?.words)).toEqual([1_401])
-    expect(ranksOf(rankBandPage(band, 2, 4)?.words)).toEqual([1_750])
-    expect(rankBandPage(band, 2, 1)?.pages).toBe(4)
-    expect(rankBandPage(band, 2, 5)).toBeNull()
-    expect(rankBandPage(band, 2, 0)).toBeNull()
+  test('the first page starts at the band’s first rank and the last ends at its last, the pages between at their words', () => {
+    const words = band(1_003, 450, 2)
+    expect(rankBandPage(words, 2, 1)?.ranks).toEqual({ first: 1_001, last: 1_401 })
+    expect(rankBandPage(words, 2, 2)?.ranks).toEqual({ first: 1_403, last: 1_801 })
+    expect(rankBandPage(words, 2, 3)?.ranks).toEqual({ first: 1_803, last: 2_000 })
   })
 
-  test('a full band has all five pages, and a page between ranked words may be empty', () => {
-    const band = ranked(1, 650, 1_000)
-    expect(rankBandPage(band, 1, 2)).toEqual({ words: [], pages: 5 })
-    expect(ranksOf(rankBandPage(band, 1, 5)?.words)).toEqual([1_000])
-    expect(rankBandPage(band, 1, 6)).toBeNull()
+  test('there is no page before the first or past the last, so every page a sitemap lists exists', () => {
+    const words = band(1, 401)
+    expect(rankBandPage(words, 1, 3)?.words).toHaveLength(1)
+    expect(rankBandPage(words, 1, 4)).toBeNull()
+    expect(rankBandPage(words, 1, 0)).toBeNull()
   })
 
-  test('a band that ranks no word past its first 200 ranks, as on the fixtures, is one page', () => {
-    expect(rankBandPage(ranked(5, 20, 65), 1, 1)?.pages).toBe(1)
+  test('a band of 200 words or fewer, as on the fixtures, is one page named for the whole band', () => {
+    expect(rankBandPage(ranked(5, 20, 65), 1, 1)).toMatchObject({
+      pages: 1,
+      ranks: { first: 1, last: 1_000 }
+    })
     expect(rankBandPage(ranked(5, 20, 65), 1, 2)).toBeNull()
-    expect(rankBandPage([], 3, 1)).toEqual({ words: [], pages: 1 })
+    expect(rankBandPage([], 3, 1)).toEqual({
+      words: [],
+      pages: 1,
+      total: 0,
+      ranks: { first: 2_001, last: 3_000 }
+    })
   })
 })
