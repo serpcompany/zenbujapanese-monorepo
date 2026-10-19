@@ -158,7 +158,11 @@ struct SubscriptionPaywall: View {
               Task { await subscription.subscribe(to: offer.id) }
             } label: {
               LabeledContent {
-                Text("\(offer.price) \(offer.period)")
+                if let introduction = offer.introduction {
+                  Text("\(introduction), then \(offer.price) \(offer.period)")
+                } else {
+                  Text("\(offer.price) \(offer.period)")
+                }
               } label: {
                 Text(offer.name)
                 Text(offer.summary)
@@ -172,9 +176,16 @@ struct SubscriptionPaywall: View {
               .accessibilityIdentifier("paywall.problem")
           }
         } footer: {
-          Text(
-            "Payment is charged to your Apple Account. The subscription renews automatically at the same price unless you cancel it at least 24 hours before the period ends. Manage or cancel it in your App Store account settings."
-          )
+          VStack(alignment: .leading, spacing: 8) {
+            Text(
+              "Payment is charged to your Apple Account. The subscription renews automatically at the same price unless you cancel it at least 24 hours before the period ends. Manage or cancel it in your App Store account settings."
+            )
+            if subscription.offers.contains(where: { $0.introduction != nil }) {
+              Text(
+                "A free trial or introductory price ends with its period, and the plan's price is charged then, unless you cancel at least 24 hours before."
+              )
+            }
+          }
         }
         Section {
           Button("Restore Purchases") { Task { await subscription.restore() } }

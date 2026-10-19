@@ -12,9 +12,12 @@ actor StoreKitPurchases: AppStorePurchases {
   func offers(for productIDs: [String]) async throws -> [SubscriptionOffer] {
     let found = try await Product.products(for: productIDs)
     for product in found { products[product.id] = product }
-    return productIDs.compactMap { id in
-      found.first { $0.id == id }.map(Self.offer)
+    var offers: [SubscriptionOffer] = []
+    for id in productIDs {
+      guard let product = found.first(where: { $0.id == id }) else { continue }
+      offers.append(await Self.offer(product))
     }
+    return offers
   }
 
   @MainActor
@@ -86,11 +89,42 @@ actor StoreKitPurchases: AppStorePurchases {
       signedTransaction: result.jwsRepresentation, finish: { await transaction.finish() })
   }
 
-  private nonisolated static func offer(_ product: Product) -> SubscriptionOffer {
-    SubscriptionOffer(
+  private nonisolated static func offer(_ product: Product) async -> SubscriptionOffer {
+    let subscription = product.subscription
+    let eligible = await subscription?.isEligibleForIntroOffer ?? false
+    return SubscriptionOffer(
       id: product.id, name: product.displayName, summary: product.description,
       price: product.displayPrice,
-      period: product.subscription.map { Self.period($0.subscriptionPeriod) } ?? "")
+      period: subscription.map { Self.period($0.subscriptionPeriod) } ?? "",
+      introduction: eligible ? subscription?.introductoryOffer.map(Self.introduction) : nil)
+  }
+
+  private nonisolated static func introduction(_ offer: Product.SubscriptionOffer) -> String {
+    let length = Self.length(of: offer.period, times: offer.periodCount)
+    return switch offer.paymentMode {
+    case .freeTrial: String(localized: "\(length) free")
+    case .payAsYouGo:
+      String(localized: "\(offer.displayPrice) \(Self.period(offer.period)) for \(length)")
+    default: String(localized: "\(offer.displayPrice) for \(length)")
+    }
+  }
+
+  private nonisolated static func length(
+    of period: Product.SubscriptionPeriod, times count: Int
+  ) -> String {
+    let value = period.value * count
+    var components = DateComponents()
+    switch period.unit {
+    case .day: components.day = value
+    case .week: components.weekOfMonth = value
+    case .month: components.month = value
+    case .year: components.year = value
+    @unknown default: components.day = value
+    }
+    let formatter = DateComponentsFormatter()
+    formatter.unitsStyle = .full
+    formatter.allowedUnits = [.day, .weekOfMonth, .month, .year]
+    return formatter.string(from: components) ?? ""
   }
 
   private nonisolated static func period(_ period: Product.SubscriptionPeriod) -> String {

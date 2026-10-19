@@ -139,10 +139,11 @@ it on at the service, every account syncs as before, and the app shows no subscr
   so. An ended or refunded one shows its status.
 - **Subscribe to Sync…** appears only when the account has no subscription running anywhere, so no
   one is offered a second. The paywall says what syncs and that the rest stays free, lists each
-  plan with its name, price, and period from the App Store, and has the renewal terms, **Restore
-  Purchases**, **Terms of Use**, and **Privacy Policy**. A purchase belongs to the signed-in account;
-  one waiting for Ask to Buy says so, and unlocks once approved. If the Apple Account's subscription
-  belongs to another Zenbu account, the app says to sign in to that one.
+  plan with its name, price, and period from the App Store, with a free trial or introductory price
+  when the Apple Account may have one, and has the renewal terms, **Restore Purchases**, **Terms of
+  Use**, and **Privacy Policy**. A purchase belongs to the signed-in account; one waiting for Ask to
+  Buy says so, and unlocks once approved. If the Apple Account's subscription belongs to another
+  Zenbu account, the app says to sign in to that one.
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
   on the device and sync once the learner subscribes, and nothing queued is lost. Subscribing syncs
   at once.
@@ -152,10 +153,10 @@ it on at the service, every account syncs as before, and the app shows no subscr
 Check: package `AccountSubscriptionTests` (the answer kept per account, the purchase and its token,
 no second offer, a service that's down, another account's purchase, Ask to Buy, restoring, signing
 in, signed out, a refused sync, unknown values, and deletion's answer); `StoreKitPurchasesTests`
-(iPhone, iPad, and the Mac, against StoreKit with the StoreKit configuration file: the plans, a
-purchase carrying the account's token, current purchases, one made outside the app, Ask to Buy);
-UI `SubscriptionUITests` (iPhone and iPad: buying unlocks sync and offers no second, a website
-subscription, and deleting with an App Store one).
+(iPhone, iPad, and the Mac, against StoreKit with the StoreKit configuration file: the plans and an
+introductory offer, a purchase carrying the account's token, current purchases, one made outside
+the app, Ask to Buy); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks sync and offers no
+second, a website subscription, and deleting with an App Store one).
 
 ## Deleting the account
 

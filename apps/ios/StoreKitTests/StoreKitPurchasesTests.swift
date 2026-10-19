@@ -18,6 +18,15 @@ struct StoreKitPurchasesTests {
     #expect(offers.map(\.price) == ["$49.99", "$4.99"])
     #expect(offers.map(\.period) == ["a year", "a month"])
     #expect(offers.map(\.name) == ["Zenbu Sync, Yearly", "Zenbu Sync"])
+    #expect(offers.map(\.introduction) == ["1 week free", nil])
+    session.clearTransactions()
+  }
+
+  @Test func offersNoIntroductoryOfferToAnAppleAccountThatHadThePlan() async throws {
+    let session = try Self.session()
+    try await session.buyProduct(identifier: Self.yearly)
+    let offers = try await StoreKitPurchases().offers(for: [Self.yearly])
+    #expect(offers.map(\.introduction) == [nil])
     session.clearTransactions()
   }
 

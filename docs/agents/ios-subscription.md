@@ -66,7 +66,8 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **Offering.** **Subscribe to Sync…** shows only when `canSubscribe` is true and the App Store
   offers products, so no learner is offered a second subscription, and buying refuses otherwise.
   The products are the service's `offers.appStore`, in its order, read from StoreKit; the app names
-  none itself.
+  none itself. A plan's introductory offer, a free trial or a lower first price, shows with its
+  terms when StoreKit says the Apple Account may have it (`isEligibleForIntroOffer`).
 - **Buying.** `Product.purchase(options: [.appAccountToken(token)])`, with the account's token,
   then the verified transaction's `jwsRepresentation` goes to `POST /v1/me/subscription/apple`. The
   transaction is finished after a `200` or a `4xx` (except `401` and `429`), and left unfinished after a
@@ -94,9 +95,10 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **StoreKit tests**, `ZenbuJapaneseStoreKitTests` (`apps/ios/StoreKitTests/`), on iPhone, iPad,
   and the Mac: `StoreKitPurchasesTests` runs `StoreKitPurchases` against StoreKit itself, through
   `SKTestSession` and the StoreKit configuration file `apps/ios/App/ZenbuSync.storekit` (a monthly
-  and a yearly plan in one group): the products and their prices, a purchase whose signed
-  transaction carries the account's token, the Apple Account's current purchases, a purchase made
-  outside the app and not finished, Ask to Buy, and a product StoreKit doesn't sell. StoreKit
+  and a yearly plan with a free week, in one group): the products, their prices, and the free week
+  only for an Apple Account that hasn't had the plan, a purchase whose signed transaction carries
+  the account's token, the Apple Account's current purchases, a purchase made outside the app and
+  not finished, Ask to Buy, and a product StoreKit doesn't sell. StoreKit
   Testing needs an app to host it, which the package's tests don't have, so this target runs inside
   the app, with its other two source files compiled in, and the scheme runs it with the UI tests
   (the same `xcodebuild … test` command, `ios.md`, Tests on every platform). `xcodebuild` doesn't

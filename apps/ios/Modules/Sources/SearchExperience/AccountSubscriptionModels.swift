@@ -104,6 +104,7 @@ struct SubscriptionOffer: Identifiable, Equatable, Sendable {
   let summary: String
   let price: String
   let period: String
+  var introduction: String? = nil
 }
 
 struct StoreTransaction: Sendable {
