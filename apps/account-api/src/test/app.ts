@@ -7,6 +7,8 @@ import type { AppOptions } from '../http/app'
 export const noBillingStore: BillingStore = {
   account: async () => null,
   ensureCustomer: async () => null,
+  customerOf: async () => null,
+  rememberCheckout: async () => {},
   subscriptionsOf: async () => [],
   eventRecorded: async () => false,
   transaction: () => Promise.reject(new Error('the stand-in app has no database')),

@@ -33,7 +33,8 @@ describe("Stripe's payments, past the card's", () => {
     expect(await billing.subscription(learner)).toMatchObject({
       status: 'pending',
       active: false,
-      canSubscribe: true
+      canSubscribe: false,
+      running: [{ status: 'pending', managedIn: 'website' }]
     })
     stripe.change(id, { firstPayment: 'paid' })
     await billing.stripeWebhook(

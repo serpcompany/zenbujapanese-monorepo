@@ -54,6 +54,12 @@ export interface ProviderEvent {
 
 export type Verified<T> = T | 'invalid' | 'unreadable' | 'retry'
 
+export interface CheckoutSession {
+  status: 'open' | 'complete' | 'expired'
+  subscriptionId: string | null
+  createdAt: Date
+}
+
 interface CheckoutRequest {
   userId: string
   email: string
@@ -69,7 +75,9 @@ export interface BillingProvider {
   source: SubscriptionSource
   prices: readonly string[]
   gracePeriodDays: number
-  createCheckout(request: CheckoutRequest): Promise<string>
+  createCheckout(request: CheckoutRequest): Promise<{ id: string; url: string }>
+  checkoutSession(id: string): Promise<CheckoutSession>
+  expireCheckout(id: string): Promise<void>
   createPortal(customerId: string, returnUrl: string, language: Language | null): Promise<string>
   verifyEvent(body: string, signature: string): Promise<Verified<ProviderEvent>>
   cancel(subscriptionId: string): Promise<void>
@@ -92,6 +100,7 @@ export interface StoreBilling {
 interface BillingCustomer {
   appAccountToken: string
   stripeCustomerId: string | null
+  checkoutSessionId: string | null
 }
 
 export type EventOutcome = 'applied' | 'ignored'
@@ -130,11 +139,16 @@ export interface BillingTransaction {
 export interface BillingStore {
   account(userId: string): Promise<{ email: string; madeAt: Date } | null>
   ensureCustomer(userId: string): Promise<BillingCustomer | null>
+  customerOf(userId: string): Promise<BillingCustomer | null>
+  rememberCheckout(userId: string, sessionId: string): Promise<void>
   subscriptionsOf(userId: string): Promise<StoredSubscription[]>
   eventRecorded(source: SubscriptionSource, id: string): Promise<boolean>
   transaction<T>(work: (tx: BillingTransaction) => Promise<T>): Promise<T>
-  claimOwedAction(): Promise<OwedAction | null>
-  settleOwedAction(id: number, failure: string | null): Promise<'settled' | 'retry' | 'gave_up'>
+  claimOwedAction(sources: readonly SubscriptionSource[]): Promise<OwedAction | null>
+  settleOwedAction(
+    action: OwedAction,
+    failure: string | null
+  ): Promise<'settled' | 'retry' | 'gave_up' | 'lost'>
 }
 
 export class BillingUnavailable extends Error {}

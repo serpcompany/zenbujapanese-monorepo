@@ -106,6 +106,38 @@ describe('the App Store Server API, when its key is set', () => {
     expect(await billing.accounts.running.service.billing.catchUpOnStoreNotifications()).toBe(0)
     expect((await billing.subscription(learner)).source).toBe('apple')
   })
+
+  test('goes on past a notification that fails while it catches up, and applies the next', async () => {
+    const { token: failingToken } = await learnerWithToken('catch-up-fails@example.com')
+    const { learner, token } = await learnerWithToken('catch-up-next@example.com')
+    const failing = randomUUID()
+    const notified = async (appAccountToken: string, originalTransactionId: string) =>
+      JSON.parse(
+        await appStore.notification({
+          type: 'SUBSCRIBED',
+          transaction: { originalTransactionId, appAccountToken },
+          status: 1,
+          environment: 'Production'
+        })
+      ).signedPayload as string
+    appStore.api.history.push(
+      await notified(failingToken, failing),
+      await notified(token, randomUUID())
+    )
+    await billing.rows(
+      `create function refuse_one() returns trigger as $$ begin if new.provider_id = '${failing}' then raise exception 'refused for the test'; end if; return new; end $$ language plpgsql`
+    )
+    await billing.rows(
+      'create trigger refuse_one before insert on subscriptions for each row execute function refuse_one()'
+    )
+    try {
+      expect(await billing.accounts.running.service.billing.catchUpOnStoreNotifications()).toBe(1)
+    } finally {
+      await billing.rows('drop trigger refuse_one on subscriptions')
+      await billing.rows('drop function refuse_one')
+    }
+    expect((await billing.subscription(learner)).source).toBe('apple')
+  })
 })
 
 describe('a sandbox purchase in production', () => {
@@ -131,6 +163,22 @@ describe('a sandbox purchase in production', () => {
       }
     })
     expect(checkout.status).toBe(200)
+    const customer = `cus_${tester.userId.slice(0, 10)}`
+    const id = String(stripe.subscription({ userId: tester.userId, customer }).id)
+    await billing.stripeWebhook(
+      stripe.event('checkout.session.completed', {
+        id: `cs_${id}`,
+        object: 'checkout.session',
+        mode: 'subscription',
+        client_reference_id: tester.userId,
+        customer,
+        subscription: id
+      })
+    )
+    expect(await billing.owedActions()).not.toContainEqual(
+      expect.objectContaining({ subscription_id: id })
+    )
+    expect(await billing.subscription(tester)).toMatchObject({ active: true, source: 'stripe' })
   })
 })
 

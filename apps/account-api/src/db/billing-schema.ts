@@ -26,6 +26,7 @@ export const billingCustomers = pgTable('billing_customers', {
   userId: accountOf().primaryKey(),
   appAccountToken: uuid('app_account_token').notNull().unique().defaultRandom(),
   stripeCustomerId: text('stripe_customer_id').unique(),
+  checkoutSessionId: text('checkout_session_id'),
   createdAt: at('created_at').notNull().defaultNow()
 })
 

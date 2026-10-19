@@ -14,6 +14,7 @@ CREATE TABLE "billing_customers" (
 	"user_id" text PRIMARY KEY NOT NULL,
 	"app_account_token" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"stripe_customer_id" text,
+	"checkout_session_id" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "billing_customers_app_account_token_unique" UNIQUE("app_account_token"),
 	CONSTRAINT "billing_customers_stripe_customer_id_unique" UNIQUE("stripe_customer_id")

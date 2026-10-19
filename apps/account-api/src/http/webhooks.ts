@@ -19,7 +19,7 @@ const invalidSignature = (signedBy: string) => ({
   invalid_signature: `${signedBy} didn't sign the body, or it is for another app or environment. Nothing was recorded.`
 })
 
-const answers = (signedBy: string, refused: Record<string, string>) => ({
+const answers = (refused: Record<string, string>) => ({
   200: json(ReceivedSchema, 'Taken, or a repeat of an event already taken, which changed nothing.'),
   400: refusal(refused),
   404: refusal({ not_found: "This environment doesn't take this store's events." }),
@@ -41,7 +41,7 @@ const stripeWebhook = createRoute({
     headers: StripeWebhookHeaders,
     body: { content: { 'application/json': { schema: StripeEventSchema } }, required: true }
   },
-  responses: answers('Stripe', {
+  responses: answers({
     ...invalidSignature('Stripe'),
     unreadable_event:
       "Stripe signed it, but it isn't in a format the service reads, such as a thin event. Nothing was recorded; the endpoint must send Snapshot events."
@@ -57,7 +57,7 @@ const appleWebhook = createRoute({
   request: {
     body: { content: { 'application/json': { schema: AppleNotificationSchema } }, required: true }
   },
-  responses: answers('Apple', invalidSignature('Apple'))
+  responses: answers(invalidSignature('Apple'))
 })
 
 const answered = (context: Context, outcome: WebhookAnswer, source: string) => {
