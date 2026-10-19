@@ -66,9 +66,9 @@ free, there's no section.
 
 **Subscribe** opens Stripe Checkout for that price, through the service, to come back to the
 account page (`?subscribed=1`) or, if the learner leaves Checkout, to the page as it was. Back
-from Checkout, the page says it's confirming the payment and reads the subscription again after 1,
-2, 4, 8, and 15 seconds until it runs, then shows it; if it still doesn't, it says Stripe can take a
-few minutes and to reload. A refusal says so: payments not answering, a plan no longer offered, or
+from Checkout, the page says it's confirming the payment and reads the subscription again, waiting
+1, 2, 4, 8, then 15 seconds between reads, until it runs, then shows it; if it still doesn't, it
+says Stripe can take a few minutes and to reload. A refusal says so: payments not answering, a plan no longer offered, or
 a subscription already running.
 
 - Source: #868; the service's `POST /v1/me/subscription/checkout` and `/portal`.
