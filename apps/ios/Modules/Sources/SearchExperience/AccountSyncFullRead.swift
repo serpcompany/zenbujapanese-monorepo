@@ -32,7 +32,7 @@ extension AccountSync {
     state.rereadSeen = nil
     for stored in Array(state.versions.keys) where !seen.contains(stored) {
       guard let key = SyncEntityKey(stored: stored), SyncEntity.forgotten.contains(key.entity),
-        !state.hasQueuedChange(to: key), !state.keepsRefused(key)
+        !state.hasQueuedChange(to: key)
       else { continue }
       state.versions[stored] = nil
       state.goneVideos.removeAll { $0 == stored }
