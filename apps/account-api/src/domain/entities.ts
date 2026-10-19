@@ -123,7 +123,16 @@ export type Outcome =
   | { status: 'conflict'; current: Change }
   | { status: 'rejected'; rejection: Rejection }
 
-type Operation = (account: LockedAccount, mutation: ClientMutation) => Promise<Outcome>
+export interface SyncContext {
+  granted: ReadonlySet<Scope>
+  searchKey: string
+}
+
+type Operation = (
+  account: LockedAccount,
+  mutation: ClientMutation,
+  context: SyncContext
+) => Promise<Outcome>
 
 export interface Entity {
   reads: Scope
@@ -156,7 +165,7 @@ export const needsBaseVersion = rejection(
 
 const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
-const noteIdentity = /^wn1:[0-9a-f]{64}$/
+const noteIdentity = /^wn1:[0-9a-f]{64}(:\d{1,3})?$/
 const sha256Hex = /^[0-9a-f]{64}$/
 const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 

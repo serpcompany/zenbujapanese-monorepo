@@ -2,7 +2,14 @@ import { createHash } from 'node:crypto'
 import { bookmarks } from './bookmarks'
 import type { Scope } from './clients'
 import type { Cursors } from './cursor'
-import { type Change, type ClientMutation, type Entity, type Outcome, rejected } from './entities'
+import {
+  type Change,
+  type ClientMutation,
+  type Entity,
+  type Outcome,
+  rejected,
+  type SyncContext
+} from './entities'
 import { knownWords } from './known-words'
 import { photos, photoWords } from './photos'
 import { type Rejection, type RejectionCode, rejection } from './profile'
@@ -48,6 +55,7 @@ export type SyncAnswer =
       changes: Change[]
       cursor: string
       hasMore: boolean
+      searchKey?: string
     }
   | { status: 'invalid_cursor' }
   | { status: 'no_account' }
@@ -124,7 +132,7 @@ function requestSha256(mutation: ClientMutation): string {
 async function outcomeOf(
   account: LockedAccount,
   mutation: ClientMutation,
-  granted: ReadonlySet<Scope>
+  context: SyncContext
 ): Promise<Outcome> {
   const entity = entityOf(mutation.entity)
   if (!entity) return rejected(unknownEntity)
@@ -132,8 +140,8 @@ async function outcomeOf(
     ? entity.operations[mutation.operation]
     : undefined
   if (!operation) return rejected(unknownOperation)
-  if (!operation.needs.some(scope => granted.has(scope))) return rejected(notAllowed)
-  return operation.apply(account, mutation)
+  if (!operation.needs.some(scope => context.granted.has(scope))) return rejected(notAllowed)
+  return operation.apply(account, mutation, context)
 }
 
 function resultOf(id: string, outcome: Outcome): MutationResult {
@@ -182,7 +190,7 @@ function applyMutation(
   store: AccountStore,
   userId: string,
   mutation: ClientMutation,
-  granted: ReadonlySet<Scope>
+  context: SyncContext
 ) {
   return store.withLockedAccount(userId, async account => {
     const sha256 = requestSha256(mutation)
@@ -193,7 +201,7 @@ function applyMutation(
         recorded.requestSha256 === sha256 ? await replayed(recorded, account) : rejected(reused)
       )
     }
-    const outcome = await outcomeOf(account, mutation, granted)
+    const outcome = await outcomeOf(account, mutation, context)
     await account.recordMutation(recordOf(mutation, sha256, outcome))
     await account.forgetMutationsOlderThan(syncLimits.resultsKeptDays)
     return resultOf(mutation.id, outcome)
@@ -222,7 +230,12 @@ async function changesIn(
   return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-export function syncer(store: AccountStore, cursors: Cursors, afterChanges: () => void) {
+export function syncer(
+  store: AccountStore,
+  cursors: Cursors,
+  searchKeys: (userId: string) => string,
+  afterChanges: () => void
+) {
   return async (
     userId: string,
     request: SyncRequest,
@@ -232,8 +245,9 @@ export function syncer(store: AccountStore, cursors: Cursors, afterChanges: () =
     const after = request.cursor ? cursors.decode(userId, request.cursor) : 0
     if (after === null || after > (await store.journalHead())) return { status: 'invalid_cursor' }
     const results: MutationResult[] = []
+    const context = { granted, searchKey: searchKeys(userId) }
     for (const mutation of request.mutations ?? []) {
-      const result = await applyMutation(store, userId, mutation, granted)
+      const result = await applyMutation(store, userId, mutation, context)
       if (!result) return { status: 'no_account' }
       results.push(result)
     }
@@ -251,7 +265,8 @@ export function syncer(store: AccountStore, cursors: Cursors, afterChanges: () =
       cursor: last
         ? cursors.encode(userId, last.sequence)
         : (request.cursor ?? cursors.encode(userId, after)),
-      hasMore: entries.length > limit
+      hasMore: entries.length > limit,
+      ...(granted.has('searches:read') ? { searchKey: context.searchKey } : {})
     }
   }
 }

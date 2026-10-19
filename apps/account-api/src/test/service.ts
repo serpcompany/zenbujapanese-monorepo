@@ -9,7 +9,7 @@ import { type AuthConfig, migrationsFolder as migrations } from '../config'
 import { accountStore } from '../db/accounts'
 import { accountDeleter } from '../domain/account-deletion'
 import { createAccounts } from '../domain/accounts'
-import { cursorKey, cursors } from '../domain/cursor'
+import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { photoFiles } from '../domain/photo-files'
 import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
@@ -78,7 +78,9 @@ export async function startService({
     release: 'test',
     databaseReady: async () => true,
     auth,
-    accounts: createAccounts(store, cursors(cursorKey(testSecret))),
+    accounts: createAccounts(store, cursors(cursorKey(testSecret)), searchKeys(testSecret), () => {
+      void files.sweep()
+    }),
     deleteAccount: accountDeleter(
       store,
       appleRevoker(config.apple, config.publicUrl),

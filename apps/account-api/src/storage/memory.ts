@@ -8,10 +8,29 @@ export class MemoryPhotoStorage implements PhotoStorage {
   }
 
   async get(key: string) {
-    return this.objects.get(key)?.bytes.slice() ?? null
+    const stored = this.objects.get(key)
+    if (!stored) return null
+    const bytes = stored.bytes.slice()
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes)
+        controller.close()
+      }
+    })
+    return { body, size: bytes.byteLength }
+  }
+
+  async has(key: string) {
+    return this.objects.has(key)
   }
 
   async delete(key: string) {
     this.objects.delete(key)
+  }
+
+  async deleteUnder(prefix: string) {
+    for (const key of [...this.objects.keys()]) {
+      if (key.startsWith(prefix)) this.objects.delete(key)
+    }
   }
 }

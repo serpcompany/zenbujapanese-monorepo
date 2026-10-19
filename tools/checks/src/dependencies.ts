@@ -213,9 +213,9 @@ const account: Part = {
       from: { path: '^src/email/', pathNot: accountTestCode },
       to: {
         path: [
-          '^src/(http|db|auth|domain)/',
+          '^src/(http|db|auth|domain|storage)/',
           '^src/server\\.ts$',
-          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/'
         ]
       }
     },
@@ -225,15 +225,27 @@ const account: Part = {
       comment:
         'src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
       from: { path: '^src/auth/', pathNot: accountTestCode },
-      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+      to: {
+        path: [
+          '^src/(http|storage)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(hono|@hono|aws4fetch)/'
+        ]
+      }
     },
     {
       name: 'account-database-knows-no-http',
       severity: 'error',
       comment:
-        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP or photo storage (docs/agents/account-api.md, Code layout).',
       from: { path: '^src/db/', pathNot: accountTestCode },
-      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+      to: {
+        path: [
+          '^src/(http|storage)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(hono|@hono|aws4fetch)/'
+        ]
+      }
     }
   ]
 }

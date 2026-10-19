@@ -8,7 +8,7 @@ import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { type Accounts, createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
-import { cursorKey, cursors } from '../domain/cursor'
+import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
 import { purgeExpired } from './housekeeping'
@@ -172,7 +172,10 @@ describe('the migrations', () => {
       await copy.query('update sync_origin set database_oid = 1')
       expect(await fenceIfRestored(db)).toBe('restored')
       expect(await fenceIfRestored(db)).toBe('same database')
-      return { copy, accounts: createAccounts(accountStore(db), cursors(cursorKey('test'))) }
+      return {
+        copy,
+        accounts: createAccounts(accountStore(db), cursors(cursorKey('test')), searchKeys('test'))
+      }
     }
     const answered = (answer: Awaited<ReturnType<Accounts['sync']>>) =>
       answer.status === 'synced' ? answer : expect.unreachable()

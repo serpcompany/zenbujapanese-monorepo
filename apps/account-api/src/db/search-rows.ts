@@ -1,7 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { RecentSearch } from '../domain/kept-store'
 import type { Drizzle } from './database'
-import { recentRows } from './recent-rows'
+import { keptRows } from './kept-rows'
 import { recentSearches } from './schema'
 
 const searchColumns = {
@@ -26,13 +26,12 @@ export function searchReader(db: Drizzle, userId: string) {
 }
 
 export function searchWriter(db: Drizzle, userId: string) {
-  const recents = recentRows(db, userId, {
+  const recents = keptRows(db, userId, {
     table: recentSearches,
     userId: recentSearches.userId,
     id: recentSearches.id,
-    status: recentSearches.status,
+    live: eq(recentSearches.status, 'searched'),
     updatedAt: recentSearches.updatedAt,
-    live: 'searched',
     entity: 'recentSearch'
   })
   return {

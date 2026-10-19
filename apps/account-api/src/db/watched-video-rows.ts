@@ -1,7 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { WatchedVideo } from '../domain/store'
 import type { Drizzle } from './database'
-import { recentRows } from './recent-rows'
+import { keptRows } from './kept-rows'
 import { watchedVideos } from './schema'
 
 const watchedVideoColumns = {
@@ -30,13 +30,12 @@ export function watchedVideoReader(db: Drizzle, userId: string) {
 }
 
 export function watchedVideoWriter(db: Drizzle, userId: string) {
-  const recents = recentRows(db, userId, {
+  const recents = keptRows(db, userId, {
     table: watchedVideos,
     userId: watchedVideos.userId,
     id: watchedVideos.videoId,
-    status: watchedVideos.status,
+    live: eq(watchedVideos.status, 'watched'),
     updatedAt: watchedVideos.updatedAt,
-    live: 'watched',
     entity: 'watchedVideo'
   })
   return {

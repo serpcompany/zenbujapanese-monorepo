@@ -277,7 +277,8 @@ export const photos = pgTable(
     id: text('id').notNull(),
     name: text('name'),
     savedAt: moment('saved_at'),
-    ...keptRevision()
+    status: text('status', { enum: ['shown', 'emptied', 'deleted'] }).notNull(),
+    ...revision()
   },
   byAccountAndId
 )

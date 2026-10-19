@@ -1,5 +1,7 @@
-import { describe, expect, test } from 'vitest'
-import { type Learner, useAccountService } from '../test/accounts'
+import { drizzle } from 'drizzle-orm/pglite'
+import { describe, expect, test, vi } from 'vitest'
+import { purgeExpired } from '../db/housekeeping'
+import { appliedAt, deleted, type Learner, outcomesOf, useAccountService } from '../test/accounts'
 import { aJpeg, uploaded } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
@@ -37,8 +39,8 @@ const rows = (sql: string) => accounts.running.service.rows(sql)
 const fileCount = async (learner: Learner) =>
   (await rows(`select count(*)::int as n from photo_files where user_id = '${learner.userId}'`))[0]
     ?.n
-const dueDeletions = async () =>
-  (await rows('select count(*)::int as n from photo_file_deletions where due_at <= now()'))[0]?.n
+const photoStatus = async (photoId: string) =>
+  (await rows(`select status from photos where id = '${photoId}'`))[0]?.status
 
 describe('Media Library photos', () => {
   test('a photo needs its file first, then an add puts it in the account, and adding it again changes nothing', async () => {
@@ -102,27 +104,40 @@ describe('Media Library photos', () => {
     ])
   })
 
-  test('removing the last word deletes the photo and its file, as the app does', async () => {
+  test("removing a photo's last word empties it: it syncs as a delete and keeps its file, and a word added elsewhere brings it back", async () => {
     const learner = await accounts.learner('photo-last-word@example.com')
     const photoId = await uploaded(accounts, learner)
-    await results(learner, add(photoId), onWord(photoId, 1), onWord(photoId, 2))
-    await results(learner, offWord(photoId, 1, 1))
-    expect(await fileCount(learner)).toBe(1)
-    expect(await results(learner, offWord(photoId, 2, 1))).toMatchObject([
-      { status: 'applied', version: 2 }
-    ])
+    await results(learner, add(photoId), onWord(photoId, 1))
+    expect(await results(learner, offWord(photoId, 1, 1))).toMatchObject(appliedAt(2))
     expect(await changes(learner)).toEqual(
       expect.arrayContaining([
-        { entity: 'photo', entityId: photoId, operation: 'delete', version: 2, data: null }
+        deleted('photo', photoId, 2),
+        deleted('photoWord', `${photoId}/${word(1)}`, 2)
       ])
     )
-    expect(await fileCount(learner)).toBe(0)
-    expect(await dueDeletions()).toBeGreaterThan(0)
-    await accounts.running.service.files.sweep()
-    expect(await dueDeletions()).toBe(0)
+    expect(await fileCount(learner)).toBe(1)
+    expect(await results(learner, onWord(photoId, 2))).toMatchObject(appliedAt(1))
+    expect(await changes(learner)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ entity: 'photo', operation: 'put', version: 3 }),
+        expect.objectContaining({ entityId: `${photoId}/${word(2)}`, operation: 'put' })
+      ])
+    )
   })
 
-  test('a delete wins over words added since, takes them and the file, and the same photo saved again comes back', async () => {
+  test('a word added elsewhere before the last word goes keeps the photo, whichever order the two arrive in', async () => {
+    const learner = await accounts.learner('photo-both-orders@example.com')
+    const photoId = await uploaded(accounts, learner)
+    await results(learner, add(photoId), onWord(photoId, 1))
+    await results(learner, onWord(photoId, 2), offWord(photoId, 1, 1))
+    const after = await changes(learner)
+    expect(after.find(change => change.entity === 'photo')).toMatchObject({ operation: 'put' })
+    expect(
+      after.filter(change => change.operation === 'put').map(change => change.entityId)
+    ).toEqual([photoId, `${photoId}/${word(2)}`])
+  })
+
+  test('a delete wins over words added since, marks them removed, takes the file, and the same photo saved again starts past them', async () => {
     const learner = await accounts.learner('photo-delete@example.com')
     const bytes = aJpeg()
     const photoId = await uploaded(accounts, learner, bytes)
@@ -130,24 +145,58 @@ describe('Media Library photos', () => {
     await results(learner, onWord(photoId, 2))
     expect(
       await results(learner, drop(photoId), drop(photoId), drop('d'.repeat(64)))
-    ).toMatchObject([
-      { status: 'applied', version: 2 },
-      { status: 'applied', version: 2 },
-      { status: 'applied', version: 0 }
-    ])
+    ).toMatchObject(appliedAt(2, 2, 0))
     expect(await changes(learner)).toEqual([
-      { entity: 'photo', entityId: photoId, operation: 'delete', version: 2, data: null }
+      deleted('photo', photoId, 2),
+      deleted('photoWord', `${photoId}/${word(1)}`, 2),
+      deleted('photoWord', `${photoId}/${word(2)}`, 2)
     ])
     expect(
-      await rows(`select count(*)::int as n from photo_words where user_id = '${learner.userId}'`)
-    ).toEqual([{ n: 0 }])
+      await rows(
+        `select count(*)::int as n from photo_words where user_id = '${learner.userId}' and not present`
+      )
+    ).toEqual([{ n: 2 }])
     expect(await fileCount(learner)).toBe(0)
-    expect(await results(learner, onWord(photoId, 3), add(photoId))).toMatchObject([
-      { status: 'rejected', error: { code: 'unknown_photo' } },
-      { status: 'rejected', error: { code: 'photo_not_uploaded' } }
+    expect(outcomesOf(await results(learner, onWord(photoId, 3), add(photoId)))).toEqual([
+      'unknown_photo',
+      'photo_not_uploaded'
     ])
     await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(photoId))).toMatchObject([{ status: 'applied', version: 3 }])
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 3))
+    expect(await results(learner, offWord(photoId, 1, 1))).toMatchObject([
+      { status: 'conflict', version: 3, current: { operation: 'put' } }
+    ])
+  })
+
+  test("a delete's file leaves storage after the sync, with nothing else to start it", async () => {
+    const learner = await accounts.learner('photo-swept@example.com')
+    const photoId = await uploaded(accounts, learner)
+    const stored = () =>
+      [...accounts.running.service.photoStorage.objects.keys()].filter(key =>
+        key.startsWith(`${learner.userId}/`)
+      )
+    await results(learner, add(photoId), onWord(photoId, 1))
+    expect(stored()).toHaveLength(1)
+    await results(learner, drop(photoId))
+    await vi.waitFor(() => expect(stored()).toEqual([]))
+  })
+
+  test('housekeeping empties a photo left with no word for a day, and deletes it with its file 30 days on', async () => {
+    const learner = await accounts.learner('photo-housekeeping@example.com')
+    const photoId = await uploaded(accounts, learner)
+    await results(learner, add(photoId))
+    const housekeep = () => purgeExpired(drizzle(accounts.running.service.client))
+    await housekeep()
+    expect(await photoStatus(photoId)).toBe('shown')
+    await rows(`update photos set updated_at = now() - interval '25 hours' where id = '${photoId}'`)
+    await housekeep()
+    expect(await photoStatus(photoId)).toBe('emptied')
+    expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
+    expect(await fileCount(learner)).toBe(1)
+    await rows(`update photos set updated_at = now() - interval '31 days' where id = '${photoId}'`)
+    await housekeep()
+    expect(await photoStatus(photoId)).toBe('deleted')
+    expect(await fileCount(learner)).toBe(0)
   })
 
   test('refuses a bad ID or fields', async () => {

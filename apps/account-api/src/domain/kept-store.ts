@@ -17,11 +17,13 @@ export interface PhotoFile {
   uploadedAt: Date
 }
 
+export type PhotoStatus = 'shown' | 'emptied' | 'deleted'
+
 export interface Photo {
   id: string
   name: string | null
   savedAt: Date | null
-  present: boolean
+  status: PhotoStatus
   version: number
   updatedAt: Date
 }
@@ -76,12 +78,16 @@ export interface KeptReader {
 export interface KeptWriter {
   saveWordNote(note: Omit<WordNote, 'updatedAt'>): Promise<void>
   wordNoteCount(): Promise<number>
+  forgetGoneNotes(kept: number): Promise<void>
   savePhoto(photo: Omit<Photo, 'updatedAt'>): Promise<void>
+  forgetGonePhotos(kept: number): Promise<void>
   photoWordCount(photoId: string): Promise<number>
+  photoWordsOn(photoId: string): Promise<PhotoWord[]>
   savePhotoWord(word: Omit<PhotoWord, 'updatedAt'>): Promise<void>
-  dropPhotoWords(photoId: string): Promise<void>
+  forgetGonePhotoWords(kept: number): Promise<void>
   saveProfilePhoto(photo: Omit<ProfilePhoto, 'updatedAt'>): Promise<void>
   photoFileCount(): Promise<number>
+  filesOutsideTheLibrary(): Promise<number>
   savePhotoFile(file: Omit<PhotoFile, 'uploadedAt'>): Promise<PhotoFile>
   releasePhotoFile(id: string): Promise<void>
   holdPhotoDeletion(storageKey: string, hours: number): Promise<void>

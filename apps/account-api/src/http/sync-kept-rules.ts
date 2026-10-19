@@ -1,5 +1,5 @@
 import { photoLimits } from '../domain/photo-files'
-import { searchLimits } from '../domain/recent-searches'
+import { searchIdOf, searchLimits } from '../domain/recent-searches'
 import { settingRules, valueText } from '../domain/settings'
 import { noteLimits } from '../domain/word-notes'
 import { type EntityRule, itemId, word } from './sync-entity-rules'
@@ -11,7 +11,8 @@ export const examplePhotoIds = {
   profile: '02a3e298f1533f62558c58e4c70edcab9af5a50d62d925fd5390942020fb0fb8'
 } as const
 const photoWordId = `${examplePhotoIds.library}/${itemId}`
-const searchId = '2b7ce3887f50f5f184c4a947e7b9492921788dce0df00aa6b446db01842836f1'
+export const exampleSearchKey = '0'.repeat(64)
+const searchId = searchIdOf(exampleSearchKey, '食べる')
 
 const settingList = Object.entries(settingRules)
   .map(([name, rule]) => `- \`${name}\` (${valueText(name)}): ${rule.means}`)
@@ -41,13 +42,13 @@ export const keptRules = {
     }
   },
   photo: {
-    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo stays while it's on a word: removing its last word deletes it, as the app does.`,
+    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a \`delete\` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too.`,
     entityId: "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
     data: 'Photo',
     operations: {
       add: {
         baseVersion: false,
-        rule: 'It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete comes back. Adding one the account has changes nothing. Send its words next, as `photoWord` adds.',
+        rule: 'It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete or once emptied comes back. Adding one the account shows changes nothing. Send its words next, as `photoWord` adds.',
         fields: 'PhotoFields',
         example: {
           entityId: examplePhotoIds.library,
@@ -56,26 +57,26 @@ export const keptRules = {
       },
       delete: {
         baseVersion: false,
-        rule: "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes the photo's words and its file with it, unless the profile photo is the same file: drop them on the device.",
+        rule: 'The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.',
         example: { entityId: examplePhotoIds.library }
       }
     }
   },
   photoWord: {
-    rule: `A word or kanji a photo is on. A photo is on at most ${photoLimits.wordsPerPhoto} words. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.`,
+    rule: `A word or kanji a photo is on. A photo is on at most ${photoLimits.wordsPerPhoto} words. A removed word keeps its version, through its photo's deletion too, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.`,
     entityId:
       "The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.",
     data: 'PhotoWord',
     operations: {
       add: {
         baseVersion: false,
-        rule: `It always applies to a photo the account has. To a deleted or unknown photo it's rejected \`unknown_photo\`, and past ${photoLimits.wordsPerPhoto} words \`photo_full\`. Adding a word the photo is on is applied and changes nothing.`,
+        rule: `It always applies to a photo the account has, an emptied one too, which it brings back. To a deleted or unknown photo it's rejected \`unknown_photo\`: drop the word on the device, and the photo if no other word holds it. Past ${photoLimits.wordsPerPhoto} words it's \`photo_full\`: keep the word on the device. Adding a word the photo is on is applied and changes nothing.`,
         fields: 'PhotoWordFields',
         example: { entityId: photoWordId, fields: { ...word, savedAt: '2026-10-07T03:25:00Z' } }
       },
       remove: {
         baseVersion: true,
-        rule: "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word deletes the photo too, which syncs as the photo's `delete`.",
+        rule: "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.",
         example: { entityId: photoWordId, baseVersion: 1 }
       }
     }
@@ -114,7 +115,7 @@ export const keptRules = {
   recentSearch: {
     rule: `A search the learner made, as the app's recent searches list it. The account keeps the ${searchLimits.kept} with the latest \`searchedAt\`, and remembers the latest ${searchLimits.goneKept} it removed or pruned, as it does Player's Recent.`,
     entityId:
-      'The SHA-256 of the query in UTF-8, after Unicode NFC, in 64 lowercase hex digits, so one query is one entity on every device.',
+      "The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.",
     data: 'RecentSearch',
     operations: {
       search: {

@@ -83,6 +83,9 @@ describe('settings', () => {
       })
     )
     expect(answer.map(result => result.status)).toEqual(names.map(() => 'applied'))
+    expect(outcomesOf(await results(learner, set('frequencyDictionaries.chosen', 1, '')))).toEqual([
+      'applied'
+    ])
   })
 
   test('refuses a setting it does not know, a value out of its kind, and any other field', async () => {

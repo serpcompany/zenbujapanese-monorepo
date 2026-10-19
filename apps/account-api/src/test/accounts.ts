@@ -31,6 +31,7 @@ export interface SyncedAnswer {
   changes: SyncedChange[]
   cursor: string
   hasMore: boolean
+  searchKey?: string
 }
 
 export function useAccountService(options: { appleKey?: boolean } = {}) {

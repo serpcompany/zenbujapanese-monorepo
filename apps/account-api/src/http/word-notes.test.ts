@@ -95,7 +95,7 @@ describe('word notes', () => {
       learner,
       write(kept, 0, { item: 'kanji:見', text: ' 一行目\r\n二行目\t三\u0007 ' }),
       write(long, 0, { item: miru, text: 'あ'.repeat(10_001) }),
-      write(edge, 0, { item: `wn1:${'a'.repeat(64)}`, text: 'あ'.repeat(10_000) })
+      write(edge, 0, { item: `wn1:${'a'.repeat(64)}:2`, text: 'あ'.repeat(10_000) })
     )
     expect(outcomesOf(answer)).toEqual(['applied', 'invalid_fields', 'applied'])
     const changes = await changesOf(learner)
@@ -128,6 +128,21 @@ describe('word notes', () => {
       'invalid_mutation',
       'invalid_mutation'
     ])
+  })
+
+  test('remembers the latest 1,000 deleted notes, and forgets older ones with their journal rows', async () => {
+    const learner = await accounts.learner('note-forgets@example.com')
+    await rows(
+      `insert into word_notes (user_id, id, present, version, updated_at) select '${learner.userId}', gen_random_uuid()::text, false, 2, now() - make_interval(mins => n) from generate_series(1, 1000) as n`
+    )
+    const id = randomUUID()
+    await results(learner, write(id, 0))
+    await results(learner, remove(id, 1))
+    expect(
+      await rows(
+        `select count(*)::int as n, count(*) filter (where id = '${id}')::int as latest from word_notes where user_id = '${learner.userId}'`
+      )
+    ).toEqual([{ n: 1000, latest: 1 }])
   })
 
   test('holds at most 10,000 notes to an account, and still takes a change to one it has', async () => {

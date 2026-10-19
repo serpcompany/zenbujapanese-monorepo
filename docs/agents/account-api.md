@@ -321,7 +321,8 @@ belongs; tests may import anything.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
 - **`src/storage`** keeps photo files in R2 (`r2.ts`) or, on a local run and in tests, in memory
-  (`memory.ts`), behind the domain's `PhotoStorage`, and imports no other layer.
+  (`memory.ts`), behind the domain's `PhotoStorage`. It imports only that type and `src/config.ts`'s
+  settings, and no layer but the server imports it, nor `aws4fetch`.
 
 `src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
 `src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
@@ -349,8 +350,8 @@ are in `src/db/schema.ts`:
 - `watched_videos`: the watch history, each video with its version and whether it's watched,
   removed, or pruned;
 - `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
-- `word_notes`, `photos`, `photo_words`, `profile_photos`, `learner_settings`, and
-  `recent_searches`: #867's entities, each with its version; `photo_files`: each photo file an
+- `word_notes`, `photos` (shown, emptied, or deleted), `photo_words`, `profile_photos`,
+  `learner_settings`, and `recent_searches`: #867's entities, each with its version; `photo_files`: each photo file an
   account holds, by its SHA-256, with its R2 key; `photo_file_deletions`: the R2 keys waiting to be
   deleted, which name no account ([`account-photos.md`](account-photos.md));
 - `sync_changes`: the journal, read by account and sequence;

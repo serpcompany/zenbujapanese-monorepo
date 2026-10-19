@@ -6,6 +6,7 @@ import {
   cutText,
   type Entity,
   gone,
+  journaled,
   momentOf,
   needsBaseVersion,
   type Outcome,
@@ -130,12 +131,7 @@ async function save(
   operation: string
 ) {
   await account.saveWatchedVideo(video)
-  await account.journal({
-    entityType: 'watchedVideo',
-    entityId: video.videoId,
-    entityVersion: video.version,
-    operation
-  })
+  await journaled(account, 'watchedVideo', video.videoId, video.version, operation)
 }
 
 const keepTheNewestOf = (account: LockedAccount) =>

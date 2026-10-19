@@ -16,6 +16,11 @@ export function cursorKey(secret: string): Buffer {
   return createHmac('sha256', secret).update('zenbu sync cursor').digest()
 }
 
+export function searchKeys(secret: string): (userId: string) => string {
+  const key = createHmac('sha256', secret).update('zenbu recent searches').digest()
+  return userId => createHmac('sha256', key).update(userId).digest('hex')
+}
+
 const boundTo = (userId: string) => Buffer.concat([Buffer.of(format), Buffer.from(userId)])
 
 export function cursors(key: Buffer): Cursors {

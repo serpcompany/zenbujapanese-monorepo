@@ -1,5 +1,5 @@
 {
-  "id": "8124fa6e-60da-4c3b-a1f5-b947aa6b6c0b",
+  "id": "52247938-4626-4ea3-a24d-f8cb49f3f8c3",
   "prevId": "642481a1-5d13-4f6b-bb9d-15c59a170146",
   "version": "7",
   "dialect": "postgresql",
@@ -480,9 +480,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "present": {
-          "name": "present",
-          "type": "boolean",
+        "status": {
+          "name": "status",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },

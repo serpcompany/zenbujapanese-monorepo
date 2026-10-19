@@ -9,14 +9,26 @@ export const photoLimits = {
   wordsPerPhoto: 500,
   nameLength: 200,
   uploadHeldHours: 24,
-  deletionsPerSweep: 100
+  deletionsPerSweep: 100,
+  goneKept: 1_000,
+  outsideTheLibrary: 2,
+  emptiedKeptDays: 30
 } as const
+
+export interface StoredPhoto {
+  body: ReadableStream<Uint8Array>
+  size: number | null
+}
 
 export interface PhotoStorage {
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>
-  get(key: string): Promise<Uint8Array<ArrayBuffer> | null>
+  get(key: string): Promise<StoredPhoto | null>
+  has(key: string): Promise<boolean>
   delete(key: string): Promise<void>
+  deleteUnder(prefix: string): Promise<void>
 }
+
+export const accountFolder = (userId: string) => `${userId}/`
 
 type Refused<S extends string> = S extends string ? { status: S } : never
 
@@ -25,8 +37,8 @@ type Upload =
   | Refused<'digest_mismatch' | 'unsupported' | 'too_many' | 'no_account' | 'unavailable'>
 
 type Download =
-  | { status: 'found'; file: PhotoFile; bytes: Uint8Array<ArrayBuffer> }
-  | Refused<'missing' | 'no_account' | 'unavailable'>
+  | { status: 'found'; file: PhotoFile; photo: StoredPhoto }
+  | Refused<'missing' | 'file_missing' | 'no_account' | 'unavailable'>
 
 const startsWith = (bytes: Uint8Array, at: number, ascii: string) =>
   [...ascii].every((letter, index) => bytes[at + index] === letter.charCodeAt(0))
@@ -53,11 +65,15 @@ const sha256Of = (bytes: Uint8Array) => createHash('sha256').update(bytes).diges
 
 async function roomFor(
   account: LockedAccount,
-  photoId: string
+  photoId: string,
+  library: boolean
 ): Promise<Upload | { status: 'room' }> {
   const existing = await account.photoFile(photoId)
   if (existing) return { status: 'kept', file: existing }
   if ((await account.photoFileCount()) >= photoLimits.photos) return { status: 'too_many' }
+  if (!library && (await account.filesOutsideTheLibrary()) >= photoLimits.outsideTheLibrary) {
+    return { status: 'too_many' }
+  }
   return { status: 'room' }
 }
 
@@ -69,7 +85,7 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
     for (;;) {
       const due = storage ? await store.photoDeletions.due(photoLimits.deletionsPerSweep) : []
       for (const key of due) {
-        await storage?.delete(key)
+        await (key.endsWith('/') ? storage?.deleteUnder(key) : storage?.delete(key))
         await store.photoDeletions.done(key)
       }
       deleted += due.length
@@ -77,25 +93,34 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
     }
   }
 
+  async function restored(file: PhotoFile, bytes: Uint8Array): Promise<Upload> {
+    if (!(await storage?.has(file.storageKey))) {
+      await storage?.put(file.storageKey, bytes, file.contentType)
+    }
+    return { status: 'kept', file }
+  }
+
   async function keep(
     userId: string,
     photoId: string,
     bytes: Uint8Array,
-    contentType: string
+    contentType: string,
+    library: boolean
   ): Promise<Upload> {
-    const storageKey = `${userId}/${randomUUID()}`
+    const storageKey = `${accountFolder(userId)}${randomUUID()}`
     const before = await store.withLockedAccount(userId, async account => {
-      const ready = await roomFor(account, photoId)
+      const ready = await roomFor(account, photoId, library)
       if (ready.status === 'room') {
         await account.holdPhotoDeletion(storageKey, photoLimits.uploadHeldHours)
       }
       return ready
     })
     if (!before) return { status: 'no_account' }
+    if (before.status === 'kept') return restored(before.file, bytes)
     if (before.status !== 'room') return before
     await storage?.put(storageKey, bytes, contentType)
     const after = await store.withLockedAccount(userId, async account => {
-      const ready = await roomFor(account, photoId)
+      const ready = await roomFor(account, photoId, library)
       if (ready.status !== 'room') return ready
       const file = { id: photoId, contentType, byteSize: bytes.byteLength, storageKey }
       const stored = await account.savePhotoFile(file)
@@ -107,12 +132,21 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
   }
 
   return {
-    async upload(userId: string, photoId: string, bytes: Uint8Array): Promise<Upload> {
+    async upload(
+      userId: string,
+      photoId: string,
+      bytes: Uint8Array,
+      granted: ReadonlySet<Scope>
+    ): Promise<Upload> {
       if (!storage) return { status: 'unavailable' }
       if (sha256Of(bytes) !== photoId) return { status: 'digest_mismatch' }
       const contentType = imageTypeOf(bytes)
       if (!contentType) return { status: 'unsupported' }
-      return keep(userId, photoId, bytes, contentType)
+      const library = granted.has('photos:write')
+      const upload = await keep(userId, photoId, bytes, contentType, library)
+      return upload.status === 'kept' && !library
+        ? { status: 'stored', file: { ...upload.file, uploadedAt: new Date() } }
+        : upload
     },
 
     async download(
@@ -128,8 +162,8 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
         (granted.has('profile') && (await reader.profilePhoto())?.photoId === photoId)
       if (!file && !(await store.profile(userId))) return { status: 'no_account' }
       if (!file || !readable) return { status: 'missing' }
-      const bytes = await storage.get(file.storageKey)
-      return bytes ? { status: 'found', file, bytes } : { status: 'missing' }
+      const photo = await storage.get(file.storageKey)
+      return photo ? { status: 'found', file, photo } : { status: 'file_missing' }
     },
 
     sweep(): Promise<number> {

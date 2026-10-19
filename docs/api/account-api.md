@@ -164,7 +164,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 
 Upload a photo's file.
 
-The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included.
+The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included. An app with only `profile` may hold 2 files outside the Media Library, its photo and the one replacing it, and is always answered `201`, so it learns nothing of the library.
 
 **Auth:** `accessToken` with `photos:write`, or `accessToken` with `profile`.
 
@@ -185,7 +185,7 @@ The file of a Media Library photo or the profile photo, before the sync change t
 - **409** `too_many_photos`: The account holds 1,000 files. Remove a photo first.
 - **413** `too_large`: The file is over 12 MB.
 - **415** `unsupported_photo`: The file isn't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image.
-- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads already. Wait the seconds `Retry-After` says.
+- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads at once, 2 from this account. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.
 
@@ -193,7 +193,7 @@ The file of a Media Library photo or the profile photo, before the sync change t
 
 Download a photo's file.
 
-The bytes uploaded, with their type. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.
+The bytes uploaded, with their type, streamed. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.
 
 **Auth:** `accessToken` with `photos:read`, or `accessToken` with `profile`.
 
@@ -207,8 +207,9 @@ The bytes uploaded, with their type. A file never changes under its ID, so the a
 - **400** `bad_request`: `photoId` is not 64 lowercase hex digits.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `photos:read` or `profile`.
-- **404** `not_found`: The account holds no file with that ID, or this app's scopes don't reach it.
-- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
+- **404** `not_found`: The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync.
+- **404** `photo_file_missing`: The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it.
+- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the account or the service is sending as many files as it may at once. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.
 
@@ -216,6 +217,8 @@ The bytes uploaded, with their type. A file never changes under its ID, so the a
 
 - A 200 sends `Cache-Control`: `private, max-age=31536000, immutable`: the file under this ID never changes.
 - A 200 sends `ETag`: The photo ID, quoted.
+- A 200 sends `Content-Disposition`: `attachment`, with the photo ID as its file name.
+- A 200 sends `X-Content-Type-Options`: `nosniff`.
 
 ### `POST /v1/auth/email-otp/send-verification-otp`
 
@@ -842,13 +845,13 @@ Fields ([`NoteFields`](#notefields)), and no others:
 
 ### Entity `photo`
 
-A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo stays while it's on a word: removing its last word deletes it, as the app does.
+A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too.
 
 - **ID** (`entityId`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
 - **Read with:** `photos:read`
 - **As it is now** (a `put`'s `data`): [`Photo`](#photo)
 
-**`add`**, with `photos:write`; `baseVersion` not read. It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete comes back. Adding one the account has changes nothing. Send its words next, as `photoWord` adds.
+**`add`**, with `photos:write`; `baseVersion` not read. It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete or once emptied comes back. Adding one the account shows changes nothing. Send its words next, as `photoWord` adds.
 
 Fields ([`PhotoFields`](#photofields)), and no others:
 
@@ -868,7 +871,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 }
 ```
 
-**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes the photo's words and its file with it, unless the profile photo is the same file: drop them on the device.
+**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.
 
 ```json
 {
@@ -881,13 +884,13 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 
 ### Entity `photoWord`
 
-A word or kanji a photo is on. A photo is on at most 500 words. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
+A word or kanji a photo is on. A photo is on at most 500 words. A removed word keeps its version, through its photo's deletion too, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
 
 - **ID** (`entityId`): The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
 - **Read with:** `photos:read`
 - **As it is now** (a `put`'s `data`): [`PhotoWord`](#photoword)
 
-**`add`**, with `photos:write`; `baseVersion` not read. It always applies to a photo the account has. To a deleted or unknown photo it's rejected `unknown_photo`, and past 500 words `photo_full`. Adding a word the photo is on is applied and changes nothing.
+**`add`**, with `photos:write`; `baseVersion` not read. It always applies to a photo the account has, an emptied one too, which it brings back. To a deleted or unknown photo it's rejected `unknown_photo`: drop the word on the device, and the photo if no other word holds it. Past 500 words it's `photo_full`: keep the word on the device. Adding a word the photo is on is applied and changes nothing.
 
 Fields ([`PhotoWordFields`](#photowordfields)), and no others:
 
@@ -909,7 +912,7 @@ Fields ([`PhotoWordFields`](#photowordfields)), and no others:
 }
 ```
 
-**`remove`**, with `photos:write`; `baseVersion` required. It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word deletes the photo too, which syncs as the photo's `delete`.
+**`remove`**, with `photos:write`; `baseVersion` required. It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.
 
 ```json
 {
@@ -967,15 +970,15 @@ One of the learner's settings, which follow the account rather than the device. 
 - `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.
 - `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.
 - `readingAids.translations` (`true` or `false`): Reading Aids: translations.
-- `readingAids.translationLanguage` (text of at most 35 characters): Reading Aids: the language translations are in, as a language tag, such as `en`.
+- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.
 - `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.
 - `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.
 - `translate.furigana` (`true` or `false`): Translate's own furigana switch.
 - `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.
-- `search.sort` (text of at most 120 characters): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.
+- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.
 - `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.
 - `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.
-- `frequencyDictionaries.chosen` (text of at most 5,000 characters): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas. Each device downloads its own copy.
+- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.
 
 - **ID** (`entityId`): The setting's name, from the list above.
 - **Read with:** `settings:read`
@@ -1004,7 +1007,7 @@ Fields ([`SettingFields`](#settingfields)), and no others:
 
 A search the learner made, as the app's recent searches list it. The account keeps the 50 with the latest `searchedAt`, and remembers the latest 100 it removed or pruned, as it does Player's Recent.
 
-- **ID** (`entityId`): The SHA-256 of the query in UTF-8, after Unicode NFC, in 64 lowercase hex digits, so one query is one entity on every device.
+- **ID** (`entityId`): The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.
 - **Read with:** `searches:read`
 - **As it is now** (a `put`'s `data`): [`RecentSearch`](#recentsearch)
 
@@ -1020,7 +1023,7 @@ Fields ([`SearchFields`](#searchfields)), and no others:
   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
   "entity": "recentSearch",
   "operation": "search",
-  "entityId": "2b7ce3887f50f5f184c4a947e7b9492921788dce0df00aa6b446db01842836f1",
+  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
   "baseVersion": 0,
   "fields": {
     "query": "食べる",
@@ -1036,7 +1039,7 @@ Fields ([`SearchFields`](#searchfields)), and no others:
   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
   "entity": "recentSearch",
   "operation": "remove",
-  "entityId": "2b7ce3887f50f5f184c4a947e7b9492921788dce0df00aa6b446db01842836f1"
+  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"
 }
 ```
 
@@ -1057,10 +1060,10 @@ A `rejected` result's `error.code`. A rejection is final for that mutation ID.
 | `too_many_lists` | The account has 500 lists. |
 | `list_full` | The list has 5,000 words. |
 | `too_many_bookmarks` | The account has 2,000 bookmarked sentences. |
-| `too_many_notes` | The account has 10,000 notes. |
-| `unknown_photo` | The photo word's photo isn't in the account, or was deleted. |
+| `too_many_notes` | The account has 10,000 notes. Keep the note on the device, untouched. |
+| `unknown_photo` | The photo word's photo isn't in the account, or was deleted: drop the word on the device, and the photo if no other word holds it. |
 | `photo_not_uploaded` | The account holds no file for that photo: upload it with `PUT /v1/photos/{photoId}`, then send the change again under a new ID. |
-| `photo_full` | The photo is on 500 words. |
+| `photo_full` | The photo is on 500 words. Keep the word on the device. |
 | `unknown_setting` | The service syncs no setting of that name, as when it is older than the app. Keep the setting on the device, and send it again once the service knows it. |
 | `not_allowed` | The app's scopes don't include the operation's. |
 
@@ -1094,6 +1097,7 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `oauth_link_error` | 401 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `otp_expired` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
 | `photo_digest_mismatch` | 400 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
+| `photo_file_missing` | 404 | [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `photos_unavailable` | 503 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `provider_not_found` | 404 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `session_not_fresh` | 403 | [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account) |
@@ -1225,6 +1229,7 @@ The profile changed since `baseVersion`. `current` is the profile as it is now.
 - `changes` (array of [`Change`](#change), required): The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists and photos come before their words, but a word can come on an earlier page than its list or photo: hold it until the sync reaches `hasMore: false`.
 - `cursor` (string, required): Opaque, and at most 200 characters. Keep it once the changes are applied, and send it next time.
 - `hasMore` (boolean, required): More changes are waiting: sync again with the new cursor.
+- `searchKey` (string, optional): To an app with `searches:read`: the account's key for recent searches' IDs, 64 hex digits. A recent search's `entityId` is the HMAC-SHA256 of its query, after Unicode NFC, under this key, so a removed search keeps nothing that reveals what was searched. Keep it with the account; it changes only if the service's secret does.
 
 ### MutationResult
 
@@ -1435,7 +1440,7 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
   - `photoWord`: The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
   - `profilePhoto`: The account's ID, or left out.
   - `setting`: The setting's name, from the list above.
-  - `recentSearch`: The SHA-256 of the query in UTF-8, after Unicode NFC, in 64 lowercase hex digits, so one query is one entity on every device.
+  - `recentSearch`: The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.
 - `baseVersion` (integer, optional, at least 0): The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, what happens is the operation's rule, in `x-sync-entities`, which also says which operations read it.
 - `fields` (map to string, number, boolean, or null, optional): What the operation sets: the operation's fields, in `x-sync-entities`. Each value is a string, number, boolean, or null.
 

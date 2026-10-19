@@ -16,10 +16,10 @@ import { errorBody, errorCode, inErrorFormat } from './errors'
 import { type PhotoRoutesFiles, photoBodyLimit, photoRoutes } from './photos'
 import {
   atMostAtOnce,
+  atOnce,
   perAccountLimit,
   perClientLimit,
-  requestsPerMinute,
-  uploadsAtOnce
+  requestsPerMinute
 } from './rate-limit'
 import { bodyLimitKb, requireAccount, requireScope } from './route-answers'
 import { signInContract } from './sign-in-contract'
@@ -79,14 +79,12 @@ export function createApp(options: AppOptions) {
   const crossOrigin = cors({
     origin: origin => (options.allowedOrigins.includes(origin) ? origin : null),
     credentials: true,
-    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowHeaders: ['authorization', 'content-type', 'x-zenbu-client'],
     exposeHeaders: ['retry-after', 'x-retry-after'],
     maxAge: 600
   })
-  for (const path of ['/v1/auth/*', '/v1/health', '/v1/me', '/v1/sync']) {
-    app.use(path, crossOrigin)
-  }
+  for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
   const appLimit = perClientLimit(id => clientById(id)?.requestsPerMinute ?? 0)
   for (const path of accountPaths) {
     app.use(path, requireAccount(options.verifyAccessToken))
@@ -99,7 +97,8 @@ export function createApp(options: AppOptions) {
   app.put('/v1/photos/*', requireScope('photos:write', 'profile'))
   app.get('/v1/photos/*', requireScope('photos:read', 'profile'))
   app.use('/v1/photos/*', perAccountLimit(requestsPerMinute.photos))
-  app.put('/v1/photos/*', atMostAtOnce(uploadsAtOnce))
+  app.put('/v1/photos/*', atMostAtOnce(atOnce.uploads))
+  app.get('/v1/photos/*', atMostAtOnce(atOnce.downloads))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>

@@ -127,7 +127,7 @@ describe('DELETE /v1/me', () => {
     expect((await accounts.me(again.token)).body).toMatchObject({ version: 1 })
   })
 
-  test('deletes its notes, photos, profile photo, every file it uploaded, settings, and recent searches', async () => {
+  test('deletes its notes, photos, profile photo, every file in its folder, settings, and recent searches', async () => {
     const learner = await accounts.learner('delete-kept@example.com')
     const { appOnly, profilePhoto } = await oneOfEachKept(accounts, learner)
     await uploaded(accounts, learner)
@@ -139,6 +139,7 @@ describe('DELETE /v1/me', () => {
     const stored = () =>
       [...photoStorage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
     expect(stored()).toHaveLength(3)
+    await photoStorage.put(`${learner.userId}/left-by-a-restore`, aJpeg(), 'image/jpeg')
     expect(await remove(learner)).toMatchObject({ status: 200 })
     await vi.waitFor(() => expect(stored()).toEqual([]))
     const { sendPhoto } = accounts.running.service

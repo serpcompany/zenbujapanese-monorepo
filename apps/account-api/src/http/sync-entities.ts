@@ -31,11 +31,12 @@ export const rejectionMeanings: Readonly<Record<RejectionCode, string>> = {
   too_many_lists: `The account has ${count(listLimits.lists)} lists.`,
   list_full: `The list has ${count(listLimits.wordsPerList)} words.`,
   too_many_bookmarks: `The account has ${count(bookmarkLimits.bookmarks)} bookmarked sentences.`,
-  too_many_notes: `The account has ${count(noteLimits.notes)} notes.`,
-  unknown_photo: "The photo word's photo isn't in the account, or was deleted.",
+  too_many_notes: `The account has ${count(noteLimits.notes)} notes. Keep the note on the device, untouched.`,
+  unknown_photo:
+    "The photo word's photo isn't in the account, or was deleted: drop the word on the device, and the photo if no other word holds it.",
   photo_not_uploaded:
     'The account holds no file for that photo: upload it with `PUT /v1/photos/{photoId}`, then send the change again under a new ID.',
-  photo_full: `The photo is on ${photoLimits.wordsPerPhoto} words.`,
+  photo_full: `The photo is on ${photoLimits.wordsPerPhoto} words. Keep the word on the device.`,
   unknown_setting:
     'The service syncs no setting of that name, as when it is older than the app. Keep the setting on the device, and send it again once the service knows it.',
   not_allowed: "The app's scopes don't include the operation's."

@@ -6,6 +6,7 @@ import {
   cutText,
   type Entity,
   gone,
+  journaled,
   momentOf,
   needsBaseVersion,
   rejected,
@@ -82,13 +83,7 @@ async function save(
   operation: string
 ) {
   await account.saveBookmark(bookmark)
-  await account.journal({
-    entityType: 'bookmarkedSentence',
-    entityId: bookmark.id,
-    entityVersion: bookmark.version,
-    operation
-  })
-  return applied(bookmark.version)
+  return journaled(account, 'bookmarkedSentence', bookmark.id, bookmark.version, operation)
 }
 
 async function add(account: LockedAccount, mutation: ClientMutation) {

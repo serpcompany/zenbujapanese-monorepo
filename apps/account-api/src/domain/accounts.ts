@@ -6,13 +6,14 @@ import { syncer } from './sync'
 export function createAccounts(
   store: AccountStore,
   cursors: Cursors,
+  searchKeys: (userId: string) => string,
   afterChanges: () => void = () => {}
 ) {
   return {
     profile: (userId: string) => store.profile(userId),
     updateProfile: (userId: string, baseVersion: number, fields: Record<string, unknown>) =>
       store.withLockedAccount(userId, account => updateProfile(account, baseVersion, fields)),
-    sync: syncer(store, cursors, afterChanges)
+    sync: syncer(store, cursors, searchKeys, afterChanges)
   }
 }
 

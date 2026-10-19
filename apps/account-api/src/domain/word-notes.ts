@@ -19,6 +19,7 @@ import type { LockedAccount } from './store'
 
 export const noteLimits = {
   notes: 10_000,
+  goneKept: 1_000,
   textLength: 10_000,
   labelLength: itemTextLength
 } as const
@@ -95,6 +96,7 @@ const sameNote = (current: WordNote, next: Written) =>
 
 async function save(account: LockedAccount, note: Omit<WordNote, 'updatedAt'>, operation: string) {
   await account.saveWordNote(note)
+  await account.forgetGoneNotes(noteLimits.goneKept)
   return journaled(account, 'wordNote', note.id, note.version, operation)
 }
 

@@ -9,7 +9,7 @@ import { purgeExpired } from './db/housekeeping'
 import { migratePostgres, openPostgres } from './db/postgres'
 import { accountDeleter } from './domain/account-deletion'
 import { createAccounts } from './domain/accounts'
-import { cursorKey, cursors } from './domain/cursor'
+import { cursorKey, cursors, searchKeys } from './domain/cursor'
 import { type PhotoStorage, photoFiles } from './domain/photo-files'
 import { accountDeletedMessage } from './email/account-notices'
 import { DevMailbox } from './email/mailbox'
@@ -51,7 +51,12 @@ async function main() {
     release: config.release,
     databaseReady: database.ready,
     auth,
-    accounts: createAccounts(store, cursors(cursorKey(config.auth.secret)), sweepPhotos),
+    accounts: createAccounts(
+      store,
+      cursors(cursorKey(config.auth.secret)),
+      searchKeys(config.auth.secret),
+      sweepPhotos
+    ),
     deleteAccount: accountDeleter(
       store,
       appleRevoker(config.auth.apple, config.auth.publicUrl),

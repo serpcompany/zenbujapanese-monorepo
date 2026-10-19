@@ -41,13 +41,13 @@ const badWordFields = rejection(
 )
 export const notUploaded = rejection(
   'photo_not_uploaded',
-  'The account has no file with that SHA-256: upload it with PUT /v1/photos/{photoId} first, then send the change again under a new ID.'
+  'The account has no file with that SHA-256 this app may use: upload it with PUT /v1/photos/{photoId} first, then send the change again under a new ID.'
 )
-const noPhoto = rejection('unknown_photo', 'That photo is not in this account, or was removed.')
+const noPhoto = rejection('unknown_photo', 'That photo is not in this account, or was deleted.')
 const full = rejection('photo_full', `A photo is on at most ${photoLimits.wordsPerPhoto} words.`)
 
 const photoChange = (photo: Photo): Change =>
-  photo.present && photo.name !== null && photo.savedAt !== null
+  photo.status === 'shown' && photo.name !== null && photo.savedAt !== null
     ? {
         entity: 'photo',
         entityId: photo.id,
@@ -94,15 +94,37 @@ function photoWordIdOf(entityId: string | undefined) {
   return photo && item ? { photo, item } : null
 }
 
+const badWordId = (mutation: ClientMutation) =>
+  rejected(mutation.entityId?.includes(listWordSeparator) ? badSavedItem : badPhotoWord)
+
 async function savePhoto(account: LockedAccount, photo: Omit<Photo, 'updatedAt'>, op: string) {
   await account.savePhoto(photo)
+  await account.forgetGonePhotos(photoLimits.goneKept)
   return journaled(account, 'photo', photo.id, photo.version, op)
 }
 
-async function removePhoto(account: LockedAccount, current: Photo) {
-  await account.dropPhotoWords(current.id)
-  const removed = { id: current.id, name: null, savedAt: null, present: false }
-  const outcome = await savePhoto(account, { ...removed, version: current.version + 1 }, 'delete')
+async function saveWord(account: LockedAccount, word: Omit<PhotoWord, 'updatedAt'>, op: string) {
+  await account.savePhotoWord(word)
+  await account.forgetGonePhotoWords(photoLimits.goneKept)
+  return journaled(
+    account,
+    'photoWord',
+    listWordEntityId(word.photoId, word.itemId),
+    word.version,
+    op
+  )
+}
+
+export async function emptyPhoto(account: LockedAccount, photo: Photo) {
+  return savePhoto(account, { ...photo, status: 'emptied', version: photo.version + 1 }, 'empty')
+}
+
+export async function deletePhoto(account: LockedAccount, current: Photo) {
+  for (const word of await account.photoWordsOn(current.id)) {
+    await saveWord(account, { ...word, present: false, version: word.version + 1 }, 'remove')
+  }
+  const deleted = { id: current.id, name: null, savedAt: null, status: 'deleted' as const }
+  const outcome = await savePhoto(account, { ...deleted, version: current.version + 1 }, 'delete')
   await account.releasePhotoFile(current.id)
   return outcome
 }
@@ -111,23 +133,22 @@ async function addPhoto(account: LockedAccount, mutation: ClientMutation): Promi
   const id = sha256IdOf(mutation.entityId)
   if (!id) return rejected(badPhoto)
   const current = await account.photo(id)
-  if (current?.present) return applied(current.version)
+  if (current?.status === 'shown') return applied(current.version)
   const fields = photoFields(mutation.fields ?? {})
   if (isRejection(fields)) return rejected(fields)
   if (!(await account.photoFile(id))) return rejected(notUploaded)
   return savePhoto(
     account,
-    { id, ...fields, present: true, version: (current?.version ?? 0) + 1 },
+    { id, ...fields, status: 'shown', version: (current?.version ?? 0) + 1 },
     'add'
   )
 }
 
 async function addPhotoWord(account: LockedAccount, mutation: ClientMutation): Promise<Outcome> {
   const id = photoWordIdOf(mutation.entityId)
-  if (!id)
-    return rejected(mutation.entityId?.includes(listWordSeparator) ? badSavedItem : badPhotoWord)
+  if (!id) return badWordId(mutation)
   const photo = await account.photo(id.photo)
-  if (!photo?.present) return rejected(noPhoto)
+  if (!photo || photo.status === 'deleted') return rejected(noPhoto)
   const current = await account.photoWord(id.photo, id.item)
   if (current?.present) return applied(current.version)
   const fields = mutation.fields ?? {}
@@ -138,44 +159,30 @@ async function addPhotoWord(account: LockedAccount, mutation: ClientMutation): P
   }
   if (isRejection(text)) return rejected(text)
   if ((await account.photoWordCount(id.photo)) >= photoLimits.wordsPerPhoto) return rejected(full)
-  const version = (current?.version ?? 0) + 1
-  await account.savePhotoWord({
-    photoId: id.photo,
-    itemId: id.item,
-    ...text,
-    savedAt,
-    present: true,
-    version
-  })
-  await account.journal({
-    entityType: 'photo',
-    entityId: photo.id,
-    entityVersion: photo.version,
-    operation: 'word'
-  })
-  return journaled(account, 'photoWord', listWordEntityId(id.photo, id.item), version, 'add')
+  if (photo.status === 'emptied') {
+    await savePhoto(account, { ...photo, status: 'shown', version: photo.version + 1 }, 'add')
+  } else {
+    await journaled(account, 'photo', photo.id, photo.version, 'word')
+  }
+  const word = { photoId: id.photo, itemId: id.item, ...text, savedAt, present: true }
+  return saveWord(account, { ...word, version: (current?.version ?? 0) + 1 }, 'add')
 }
 
 async function removePhotoWord(account: LockedAccount, mutation: ClientMutation) {
   const id = photoWordIdOf(mutation.entityId)
-  if (!id)
-    return rejected(mutation.entityId?.includes(listWordSeparator) ? badSavedItem : badPhotoWord)
+  if (!id) return badWordId(mutation)
   if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
   const current = await account.photoWord(id.photo, id.item)
   if (!current?.present) return applied(current?.version ?? 0)
   if (mutation.baseVersion !== current.version) return conflict(photoWordChange(current))
-  const version = current.version + 1
-  await account.savePhotoWord({ ...current, present: false, version })
-  const outcome = await journaled(
+  const outcome = await saveWord(
     account,
-    'photoWord',
-    listWordEntityId(id.photo, id.item),
-    version,
+    { ...current, present: false, version: current.version + 1 },
     'remove'
   )
   const photo = await account.photo(id.photo)
-  if (photo?.present && (await account.photoWordCount(id.photo)) === 0) {
-    await removePhoto(account, photo)
+  if (photo?.status === 'shown' && (await account.photoWordCount(id.photo)) === 0) {
+    await emptyPhoto(account, photo)
   }
   return outcome
 }
@@ -192,8 +199,8 @@ export const photos: Entity = {
         const id = sha256IdOf(mutation.entityId)
         if (!id) return rejected(badPhoto)
         const current = await account.photo(id)
-        if (!current?.present) return applied(current?.version ?? 0)
-        return removePhoto(account, current)
+        if (!current || current.status === 'deleted') return applied(current?.version ?? 0)
+        return deletePhoto(account, current)
       }
     }
   },

@@ -1,4 +1,5 @@
 import { and, asc, eq, gt, lt, lte, max, sql } from 'drizzle-orm'
+import { accountFolder } from '../domain/photo-files'
 import type { AccountStore, LockedAccount } from '../domain/store'
 import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
@@ -59,6 +60,8 @@ export function accountStore(db: Drizzle): AccountStore {
 
     async deleteAccount(userId, email) {
       await db.transaction(async tx => {
+        await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for('update')
+        await deletionDueAt(tx, accountFolder(userId), 0)
         await tx
           .insert(photoFileDeletions)
           .select(

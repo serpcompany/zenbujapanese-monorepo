@@ -489,6 +489,10 @@
           "hasMore": {
             "type": "boolean",
             "description": "More changes are waiting: sync again with the new cursor."
+          },
+          "searchKey": {
+            "type": "string",
+            "description": "To an app with `searches:read`: the account's key for recent searches' IDs, 64 hex digits. A recent search's `entityId` is the HMAC-SHA256 of its query, after Unicode NFC, under this key, so a removed search keeps nothing that reveals what was searched. Keep it with the account; it changes only if the service's secret does."
           }
         },
         "required": [
@@ -1408,7 +1412,7 @@
           "entityId": {
             "type": "string",
             "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$",
-            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.\n- `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase.\n- `wordNote`: The note's UUID, in either case; answers name it in lowercase.\n- `photo`: The SHA-256 of the photo's file, in 64 lowercase hex digits.\n- `photoWord`: The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.\n- `profilePhoto`: The account's ID, or left out.\n- `setting`: The setting's name, from the list above.\n- `recentSearch`: The SHA-256 of the query in UTF-8, after Unicode NFC, in 64 lowercase hex digits, so one query is one entity on every device."
+            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.\n- `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase.\n- `wordNote`: The note's UUID, in either case; answers name it in lowercase.\n- `photo`: The SHA-256 of the photo's file, in 64 lowercase hex digits.\n- `photoWord`: The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.\n- `profilePhoto`: The account's ID, or left out.\n- `setting`: The setting's name, from the list above.\n- `recentSearch`: The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros."
           },
           "baseVersion": {
             "type": "integer",
@@ -1768,7 +1772,7 @@
             }
           },
           "photo": {
-            "description": "A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo stays while it's on a word: removing its last word deletes it, as the app does.",
+            "description": "A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too.",
             "entityId": "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
             "read": "photos:read",
             "data": {
@@ -1780,7 +1784,7 @@
                   "photos:write"
                 ],
                 "baseVersion": false,
-                "description": "It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete comes back. Adding one the account has changes nothing. Send its words next, as `photoWord` adds.",
+                "description": "It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete or once emptied comes back. Adding one the account shows changes nothing. Send its words next, as `photoWord` adds.",
                 "fields": {
                   "$ref": "#/components/schemas/PhotoFields"
                 },
@@ -1800,7 +1804,7 @@
                   "photos:write"
                 ],
                 "baseVersion": false,
-                "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes the photo's words and its file with it, unless the profile photo is the same file: drop them on the device.",
+                "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.",
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
                   "entity": "photo",
@@ -1811,7 +1815,7 @@
             }
           },
           "photoWord": {
-            "description": "A word or kanji a photo is on. A photo is on at most 500 words. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.",
+            "description": "A word or kanji a photo is on. A photo is on at most 500 words. A removed word keeps its version, through its photo's deletion too, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.",
             "entityId": "The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.",
             "read": "photos:read",
             "data": {
@@ -1823,7 +1827,7 @@
                   "photos:write"
                 ],
                 "baseVersion": false,
-                "description": "It always applies to a photo the account has. To a deleted or unknown photo it's rejected `unknown_photo`, and past 500 words `photo_full`. Adding a word the photo is on is applied and changes nothing.",
+                "description": "It always applies to a photo the account has, an emptied one too, which it brings back. To a deleted or unknown photo it's rejected `unknown_photo`: drop the word on the device, and the photo if no other word holds it. Past 500 words it's `photo_full`: keep the word on the device. Adding a word the photo is on is applied and changes nothing.",
                 "fields": {
                   "$ref": "#/components/schemas/PhotoWordFields"
                 },
@@ -1844,7 +1848,7 @@
                   "photos:write"
                 ],
                 "baseVersion": true,
-                "description": "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word deletes the photo too, which syncs as the photo's `delete`.",
+                "description": "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.",
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
                   "entity": "photoWord",
@@ -1898,7 +1902,7 @@
             }
           },
           "setting": {
-            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas. Each device downloads its own copy.",
+            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.",
             "entityId": "The setting's name, from the list above.",
             "read": "settings:read",
             "data": {
@@ -1929,7 +1933,7 @@
           },
           "recentSearch": {
             "description": "A search the learner made, as the app's recent searches list it. The account keeps the 50 with the latest `searchedAt`, and remembers the latest 100 it removed or pruned, as it does Player's Recent.",
-            "entityId": "The SHA-256 of the query in UTF-8, after Unicode NFC, in 64 lowercase hex digits, so one query is one entity on every device.",
+            "entityId": "The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.",
             "read": "searches:read",
             "data": {
               "$ref": "#/components/schemas/RecentSearch"
@@ -1948,7 +1952,7 @@
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
                   "entity": "recentSearch",
                   "operation": "search",
-                  "entityId": "2b7ce3887f50f5f184c4a947e7b9492921788dce0df00aa6b446db01842836f1",
+                  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
                   "baseVersion": 0,
                   "fields": {
                     "query": "食べる",
@@ -1966,7 +1970,7 @@
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
                   "entity": "recentSearch",
                   "operation": "remove",
-                  "entityId": "2b7ce3887f50f5f184c4a947e7b9492921788dce0df00aa6b446db01842836f1"
+                  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"
                 }
               }
             }
@@ -1984,10 +1988,10 @@
           "too_many_lists": "The account has 500 lists.",
           "list_full": "The list has 5,000 words.",
           "too_many_bookmarks": "The account has 2,000 bookmarked sentences.",
-          "too_many_notes": "The account has 10,000 notes.",
-          "unknown_photo": "The photo word's photo isn't in the account, or was deleted.",
+          "too_many_notes": "The account has 10,000 notes. Keep the note on the device, untouched.",
+          "unknown_photo": "The photo word's photo isn't in the account, or was deleted: drop the word on the device, and the photo if no other word holds it.",
           "photo_not_uploaded": "The account holds no file for that photo: upload it with `PUT /v1/photos/{photoId}`, then send the change again under a new ID.",
-          "photo_full": "The photo is on 500 words.",
+          "photo_full": "The photo is on 500 words. Keep the word on the device.",
           "unknown_setting": "The service syncs no setting of that name, as when it is older than the app. Keep the setting on the device, and send it again once the service knows it.",
           "not_allowed": "The app's scopes don't include the operation's."
         }
@@ -3224,7 +3228,7 @@
     "/v1/photos/{photoId}": {
       "put": {
         "summary": "Upload a photo's file",
-        "description": "The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included.",
+        "description": "The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included. An app with only `profile` may hold 2 files outside the Media Library, its photo and the one replacing it, and is always answered `201`, so it learns nothing of the library.",
         "security": [
           {
             "accessToken": [
@@ -3483,7 +3487,7 @@
             }
           },
           "429": {
-            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads already. Wait the seconds `Retry-After` says.",
+            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads at once, 2 from this account. Wait the seconds `Retry-After` says.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3585,7 +3589,7 @@
       },
       "get": {
         "summary": "Download a photo's file",
-        "description": "The bytes uploaded, with their type. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.",
+        "description": "The bytes uploaded, with their type, streamed. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.",
         "security": [
           {
             "accessToken": [
@@ -3623,6 +3627,18 @@
               },
               "ETag": {
                 "description": "The photo ID, quoted.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "description": "`attachment`, with the photo ID as its file name.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Content-Type-Options": {
+                "description": "`nosniff`.",
                 "schema": {
                   "type": "string"
                 }
@@ -3737,7 +3753,7 @@
             }
           },
           "404": {
-            "description": "`not_found`: The account holds no file with that ID, or this app's scopes don't reach it.",
+            "description": "`not_found`: The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync. `photo_file_missing`: The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3749,7 +3765,8 @@
                         "code": {
                           "type": "string",
                           "enum": [
-                            "not_found"
+                            "not_found",
+                            "photo_file_missing"
                           ]
                         },
                         "message": {
@@ -3770,7 +3787,7 @@
             }
           },
           "429": {
-            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the account or the service is sending as many files as it may at once. Wait the seconds `Retry-After` says.",
             "content": {
               "application/json": {
                 "schema": {

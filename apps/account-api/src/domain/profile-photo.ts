@@ -9,6 +9,7 @@ import {
   needsBaseVersion,
   type Outcome,
   rejected,
+  type SyncContext,
   sha256IdOf
 } from './entities'
 import type { ProfilePhoto } from './kept-store'
@@ -25,6 +26,13 @@ const badFields = rejection(
   "A profile photo's `set` has photoId, the SHA-256 of an uploaded file, in 64 lowercase hex digits. Nothing else."
 )
 
+async function usable(account: LockedAccount, photoId: string, context: SyncContext) {
+  if (!(await account.photoFile(photoId))) return false
+  if (context.granted.has('photos:read')) return true
+  const inTheLibrary = await account.photo(photoId)
+  return !inTheLibrary || inTheLibrary.status === 'deleted'
+}
+
 const asChange = (accountId: string, photo: ProfilePhoto | null): Change =>
   photo?.photoId
     ? {
@@ -39,7 +47,8 @@ const asChange = (accountId: string, photo: ProfilePhoto | null): Change =>
 async function change(
   account: LockedAccount,
   mutation: ClientMutation,
-  photoId: string | null
+  photoId: string | null,
+  context: SyncContext
 ): Promise<Outcome> {
   if (mutation.entityId !== undefined && mutation.entityId !== account.profile.id) {
     return rejected(notTheAccount)
@@ -49,7 +58,7 @@ async function change(
   const version = current?.version ?? 0
   if ((current?.photoId ?? null) === photoId) return applied(version)
   if (mutation.baseVersion !== version) return conflict(asChange(account.profile.id, current))
-  if (photoId && !(await account.photoFile(photoId))) return rejected(notUploaded)
+  if (photoId && !(await usable(account, photoId, context))) return rejected(notUploaded)
   await account.saveProfilePhoto({ photoId, version: version + 1 })
   if (current?.photoId) await account.releasePhotoFile(current.photoId)
   return journaled(
@@ -66,14 +75,17 @@ export const profilePhotos: Entity = {
   operations: {
     set: {
       needs: ['profile'],
-      apply: async (account, mutation) => {
+      apply: async (account, mutation, context) => {
         const fields = mutation.fields ?? {}
         const photoId = sha256IdOf(typeof fields.photoId === 'string' ? fields.photoId : undefined)
         if (!photoId || Object.keys(fields).length !== 1) return rejected(badFields)
-        return change(account, mutation, photoId)
+        return change(account, mutation, photoId, context)
       }
     },
-    remove: { needs: ['profile'], apply: (account, mutation) => change(account, mutation, null) }
+    remove: {
+      needs: ['profile'],
+      apply: (account, mutation, context) => change(account, mutation, null, context)
+    }
   },
   async current(reader, entityId) {
     return asChange(entityId, await reader.profilePhoto())

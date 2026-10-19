@@ -296,7 +296,8 @@ export function accountRoutes(
         results: answer.results.map(resultJson),
         changes: answer.changes.map(changeJson),
         cursor: answer.cursor,
-        hasMore: answer.hasMore
+        hasMore: answer.hasMore,
+        ...(answer.searchKey ? { searchKey: answer.searchKey } : {})
       },
       200
     )

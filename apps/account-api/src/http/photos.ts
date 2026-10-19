@@ -5,9 +5,9 @@ import type { PhotoFile } from '../domain/kept-store'
 import { type PhotoFiles, photoLimits } from '../domain/photo-files'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
-import { requestsPerMinute, uploadsAtOnce } from './rate-limit'
+import { atOnce, requestsPerMinute } from './rate-limit'
 import { json, refusal } from './refusals'
-import { failed, needsOneOf, refuse, tooMany, unauthorized } from './route-answers'
+import { failed, needsOneOf, refuse, unauthorized } from './route-answers'
 
 const megabytes = photoLimits.bytes / 1024 / 1024
 const imageTypes = 'JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP'
@@ -47,7 +47,7 @@ const uploadPhoto = createRoute({
   method: 'put',
   path: '/v1/photos/{photoId}',
   summary: "Upload a photo's file",
-  description: `The file of a Media Library photo or the profile photo, before the sync change that names it (\`photo\`'s \`add\`, or \`profilePhoto\`'s \`set\`). The body is the file's bytes, at most ${megabytes} MB, ${imageTypes}; the service reads the type from the bytes, not from \`Content-Type\`, and keeps them as they are. Uploading a file the account holds changes nothing. A file no photo names 24 hours after its upload is deleted. An account holds at most ${photoLimits.photos.toLocaleString('en-US')} files, the profile photo's included.`,
+  description: `The file of a Media Library photo or the profile photo, before the sync change that names it (\`photo\`'s \`add\`, or \`profilePhoto\`'s \`set\`). The body is the file's bytes, at most ${megabytes} MB, ${imageTypes}; the service reads the type from the bytes, not from \`Content-Type\`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most ${photoLimits.photos.toLocaleString('en-US')} files, the profile photo's included. An app with only \`profile\` may hold ${photoLimits.outsideTheLibrary} files outside the Media Library, its photo and the one replacing it, and is always answered \`201\`, so it learns nothing of the library.`,
   security: needsOneOf('photos:write', 'profile'),
   request: {
     params: PhotoIdParameter,
@@ -76,7 +76,7 @@ const uploadPhoto = createRoute({
     413: refusal({ too_large: `The file is over ${megabytes} MB.` }),
     415: refusal({ unsupported_photo: `The file isn't a ${imageTypes} image.` }),
     429: refusal({
-      too_many_requests: `This account sent more than ${requestsPerMinute.photos} requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking ${uploadsAtOnce} uploads already. Wait the seconds \`Retry-After\` says.`
+      too_many_requests: `This account sent more than ${requestsPerMinute.photos} requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking ${atOnce.uploads.service} uploads at once, ${atOnce.uploads.account} from this account. Wait the seconds \`Retry-After\` says.`
     }),
     500: failed,
     503: unavailable
@@ -88,7 +88,7 @@ const downloadPhoto = createRoute({
   path: '/v1/photos/{photoId}',
   summary: "Download a photo's file",
   description:
-    "The bytes uploaded, with their type. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.",
+    "The bytes uploaded, with their type, streamed. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.",
   security: needsOneOf('photos:read', 'profile'),
   request: { params: PhotoIdParameter },
   responses: {
@@ -101,7 +101,12 @@ const downloadPhoto = createRoute({
             '`private, max-age=31536000, immutable`: the file under this ID never changes.',
           schema: { type: 'string' }
         },
-        ETag: { description: 'The photo ID, quoted.', schema: { type: 'string' } }
+        ETag: { description: 'The photo ID, quoted.', schema: { type: 'string' } },
+        'Content-Disposition': {
+          description: '`attachment`, with the photo ID as its file name.',
+          schema: { type: 'string' }
+        },
+        'X-Content-Type-Options': { description: '`nosniff`.', schema: { type: 'string' } }
       }
     },
     400: refusal({ bad_request: '`photoId` is not 64 lowercase hex digits.' }),
@@ -111,9 +116,14 @@ const downloadPhoto = createRoute({
         "This app's access to the account doesn't include `photos:read` or `profile`."
     }),
     404: refusal({
-      not_found: "The account holds no file with that ID, or this app's scopes don't reach it."
+      not_found:
+        "The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync.",
+      photo_file_missing:
+        "The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it."
     }),
-    429: tooMany(requestsPerMinute.photos),
+    429: refusal({
+      too_many_requests: `This account sent more than ${requestsPerMinute.photos} requests here from this app in the current minute, the app more than its limit from all its accounts together, or the account or the service is sending as many files as it may at once. Wait the seconds \`Retry-After\` says.`
+    }),
     500: failed,
     503: unavailable
   }
@@ -139,7 +149,7 @@ export function photoRoutes(app: OpenAPIHono<AccountEnv>, files: PhotoRoutesFile
   app.openapi(uploadPhoto, async context => {
     const { photoId } = context.req.valid('param')
     const bytes = new Uint8Array(await context.req.arrayBuffer())
-    const upload = await files.upload(context.get('userId'), photoId, bytes)
+    const upload = await files.upload(context.get('userId'), photoId, bytes, context.get('scopes'))
     if (upload.status === 'stored') return context.json(fileJson(upload.file), 201)
     if (upload.status === 'kept') return context.json(fileJson(upload.file), 200)
     if (upload.status === 'no_account') return refuse(context)
@@ -171,10 +181,20 @@ export function photoRoutes(app: OpenAPIHono<AccountEnv>, files: PhotoRoutesFile
     if (found.status === 'missing') {
       return context.json(errorBody('not_found', 'The account holds no such photo.'), 404)
     }
-    return context.body(found.bytes, 200, {
+    if (found.status === 'file_missing') {
+      return context.json(
+        errorBody('photo_file_missing', "The photo's file isn't in storage. Upload it again."),
+        404
+      )
+    }
+    const size = found.photo.size
+    return context.body(found.photo.body, 200, {
       'Content-Type': found.file.contentType,
       'Cache-Control': 'private, max-age=31536000, immutable',
-      ETag: `"${found.file.id}"`
+      ETag: `"${found.file.id}"`,
+      'Content-Disposition': `attachment; filename="${found.file.id}"`,
+      'X-Content-Type-Options': 'nosniff',
+      ...(size === null ? {} : { 'Content-Length': String(size) })
     })
   })
 }

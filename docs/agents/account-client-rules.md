@@ -87,9 +87,9 @@ and `notes:write`.
   as a new note, under a new UUID, on the same word, beside `current`.
 - **A delete that conflicts** means the note was written elsewhere since: take `current`, and show
   the note. A write of a note deleted elsewhere brings it back.
-- **A note longer than 10,000 characters** is refused (`invalid_fields`): keep it on the device,
-  and stop its sending, rather than cut what the learner wrote. At most 10,000 notes an account
-  (`too_many_notes`).
+- **A note the service refuses** stays on the device, untouched: one over 10,000 characters
+  (`invalid_fields`), and one past 10,000 notes an account (`too_many_notes`). Never delete or cut
+  what the learner wrote; stop sending that note, and send it again when it next changes.
 
 ## Photos
 
@@ -106,16 +106,22 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   `GET /v1/photos/{photoId}`, which may be kept for good. Hold a photo word until its photo comes,
   as a list word.
 - **Removing a word** sends a `remove` at the version your app had, which conflicts if the photo
-  was put on that word again elsewhere: take `current`. Removing the photo's last word deletes the
-  photo in the account too, which comes down as the photo's `delete`, so send only the word's
-  `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it again,
-  downloading its file.
+  was put on that word again elsewhere: take `current`. When the photo's last word goes, the
+  account empties the photo, which comes down as the photo's `delete`; send only the word's
+  `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
+  again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
   added elsewhere since: when a photo is deleted, drop its words on the device.
+- **A word the service refuses:** `unknown_photo` means the photo was deleted elsewhere first, so
+  drop the word on the device, and the photo with it if no other word holds it; the photo's
+  `delete` comes down too. `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
   image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`).
-- **A file that answers `404`** belongs to a photo the account no longer has a file for, as after a
-  restore: delete that photo.
+- **A download that answers `404`** never deletes anything: `not_found` means the account no
+  longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
+  account lost the file, so upload it again if the device has it. Try again at a later sync.
+- **`429`** on a photo route means the account is sending its share of files at once: wait the
+  seconds `Retry-After` says.
 
 ## The profile photo
 
@@ -145,14 +151,14 @@ The learner's settings, as `setting`, by name, one entity each. It needs `settin
 
 ## Recent searches
 
-The searches the learner made, as `recentSearch`, by the SHA-256 of the query in UTF-8 after
-Unicode NFC. It needs `searches:read` and `searches:write`.
+The searches the learner made, as `recentSearch`. It needs `searches:read` and `searches:write`.
 
+- **Its ID** is the HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's
+  `searchKey`, which each sync answer carries to an app with `searches:read`. Keep the key with the
+  account, and hold recent searches back until the first answer brings it.
 - **Send a `search`** with the `query` and `searchedAt` each time the learner searches, at the
   version your app had. A search of a query the account has always applies, and the later time is
-  kept.
-- **Removing one** sends `remove`, and clearing them all sends one for each. A search the device
-  made before it saw a removal conflicts, and `current` is the delete: take it.
-- **The account keeps the 50 latest by `searchedAt`**: a search past that removes the oldest,
-  which comes down as a `delete`. Keep 50 on the device the same way, and order them newest first.
+  kept. A search the device kept without a time, from before it synced them, goes up in its order
+  with times from 2000-01-02T00:00:00Z on, a second apart, oldest first, so it sorts after every
+  search with a real time.
 - **A query over 1,000 characters** is refused (`invalid_fields`): keep it on the device only.

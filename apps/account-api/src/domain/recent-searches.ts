@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHmac } from 'node:crypto'
 import {
   applied,
   type Change,
@@ -11,6 +11,7 @@ import {
   needsBaseVersion,
   type Outcome,
   rejected,
+  type SyncContext,
   sha256IdOf
 } from './entities'
 import type { RecentSearch } from './kept-store'
@@ -22,15 +23,15 @@ export const searchLimits = { ...recentLimits, queryLength: 1_000 } as const
 
 const badSearch = rejection(
   'invalid_mutation',
-  "A recent search's entityId is the SHA-256 of its query in UTF-8, after Unicode NFC, in 64 lowercase hex digits."
+  "A recent search's entityId is the HMAC-SHA256 of its query in UTF-8, after Unicode NFC, keyed with the account's searchKey, in 64 lowercase hex digits."
 )
 const badFields = rejection(
   'invalid_fields',
   `A search has its query (1 to ${searchLimits.queryLength.toLocaleString('en-US')} characters, with no control characters) and searchedAt, an ISO 8601 time from 2000 on. Nothing else.`
 )
 
-export const searchIdOf = (query: string) =>
-  createHash('sha256').update(query.normalize('NFC')).digest('hex')
+export const searchIdOf = (searchKey: string, query: string) =>
+  createHmac('sha256', Buffer.from(searchKey, 'hex')).update(query.normalize('NFC')).digest('hex')
 
 const asChange = (search: RecentSearch): Change =>
   search.status === 'searched' && search.query !== null && search.searchedAt !== null
@@ -69,7 +70,11 @@ const keepTheNewestOf = (account: LockedAccount) =>
     forget: kept => account.forgetRecentSearches(kept)
   })
 
-async function search(account: LockedAccount, mutation: ClientMutation): Promise<Outcome> {
+async function search(
+  account: LockedAccount,
+  mutation: ClientMutation,
+  context: SyncContext
+): Promise<Outcome> {
   const id = sha256IdOf(mutation.entityId)
   if (!id) return rejected(badSearch)
   if (mutation.baseVersion === undefined) return rejected(needsBaseVersion)
@@ -78,7 +83,7 @@ async function search(account: LockedAccount, mutation: ClientMutation): Promise
   const searchedAt = momentOf(fields.searchedAt)
   const onlyThose = Object.keys(fields).every(key => key === 'query' || key === 'searchedAt')
   if (!query || !searchedAt || !onlyThose) return rejected(badFields)
-  if (searchIdOf(query) !== id) return rejected(badSearch)
+  if (searchIdOf(context.searchKey, query) !== id) return rejected(badSearch)
   const current = await account.recentSearch(id)
   if (current?.status === 'removed' && mutation.baseVersion !== current.version) {
     return conflict(asChange(current))

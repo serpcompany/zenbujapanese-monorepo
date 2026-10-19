@@ -14,8 +14,9 @@ app shows, and the account only carries changes between devices and apps (#374).
 ## The host
 
 `https://api.zenbujapanese.com`, and `https://api-staging.zenbujapanese.com` for staging. Every
-route is under `/v1`, and every body is JSON (`Content-Type: application/json`), at most 64 KB. An
-error is `{ "error": { "code": "...", "message": "..." } }`: branch on `code`, show or log
+route is under `/v1`, and every body is JSON (`Content-Type: application/json`), at most 64 KB, but
+a photo's upload, which is the photo's file, up to 12 MB ([Photos](account-client-rules.md#photos)).
+An error is `{ "error": { "code": "...", "message": "..." } }`: branch on `code`, show or log
 `message` (Errors, below).
 
 Staging and production are separate: an account, a session, or an access token from one means

@@ -52,23 +52,36 @@ export const perClientLimit = (limitOf: (clientId: string) => number) =>
     most => `This app sent more than ${most} requests a minute, from every account together.`
   )
 
-export const uploadsAtOnce = 4
+export const atOnce = {
+  uploads: { service: 4, account: 2 },
+  downloads: { service: 16, account: 4 }
+} as const
 
-export function atMostAtOnce(most: number) {
+export function atMostAtOnce(most: { service: number; account: number }) {
   let running = 0
+  const byAccount = new Map<string, number>()
   return createMiddleware<AccountEnv>(async (context, next) => {
-    if (running >= most) {
+    const account = context.get('userId')
+    const mine = byAccount.get(account) ?? 0
+    if (running >= most.service || mine >= most.account) {
       return context.json(
-        errorBody('too_many_requests', `The service takes ${most} uploads at once. Try again.`),
+        errorBody(
+          'too_many_requests',
+          `The service takes ${most.service} of these at once, and ${most.account} from one account. Try again.`
+        ),
         429,
         { 'Retry-After': '1' }
       )
     }
     running++
+    byAccount.set(account, mine + 1)
     try {
       await next()
     } finally {
       running--
+      const left = (byAccount.get(account) ?? 1) - 1
+      if (left > 0) byAccount.set(account, left)
+      else byAccount.delete(account)
     }
   })
 }

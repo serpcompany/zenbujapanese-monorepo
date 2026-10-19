@@ -1,8 +1,8 @@
 import { drizzle } from 'drizzle-orm/pglite'
 import { describe, expect, test } from 'vitest'
 import { purgeExpired } from '../db/housekeeping'
-import { type Learner, useAccountService } from '../test/accounts'
-import { uploaded } from '../test/photos'
+import { type Learner, outcomesOf, useAccountService } from '../test/accounts'
+import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
@@ -126,6 +126,34 @@ describe('the profile photo', () => {
     const send = accounts.running.service.sendPhoto
     expect((await send(web.token, profile, new Uint8Array(), 'GET')).status).toBe(200)
     expect((await send(web.token, library, new Uint8Array(), 'GET')).status).toBe(404)
+  })
+
+  test('an app with only `profile` never sets a Media Library photo as the profile photo, nor learns the library', async () => {
+    const email = 'profile-photo-only@example.com'
+    const zenbu = await accounts.learner(email)
+    const bytes = aJpeg()
+    const library = await uploaded(accounts, zenbu, bytes)
+    await results(zenbu, {
+      entity: 'photo',
+      operation: 'add',
+      entityId: library,
+      fields: { name: 'Menu.jpg', savedAt: '2026-10-01T12:00:00Z' }
+    })
+    const web = await accounts.learner(email, 'zenbu-web')
+    const again = await accounts.running.service.sendPhoto(web.token, library, bytes)
+    expect(again.status).toBe(201)
+    expect(outcomesOf(await results(web, set(library, 0)))).toEqual(['photo_not_uploaded'])
+    expect(outcomesOf(await results(zenbu, set(library, 0)))).toEqual(['applied'])
+  })
+
+  test('an app with only `profile` holds two files outside the Media Library at most', async () => {
+    const email = 'profile-photo-files@example.com'
+    await accounts.learner(email)
+    const web = await accounts.learner(email, 'zenbu-web')
+    const send = (bytes: Uint8Array) =>
+      accounts.running.service.sendPhoto(web.token, photoIdOf(bytes), bytes)
+    expect([(await send(aJpeg())).status, (await send(aJpeg())).status]).toEqual([201, 201])
+    expect((await send(aJpeg())).status).toBe(409)
   })
 })
 

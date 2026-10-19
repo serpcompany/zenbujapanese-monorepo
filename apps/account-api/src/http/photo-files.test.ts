@@ -3,8 +3,9 @@ import { imageTypeOf } from '../domain/photo-files'
 import { useAccountService } from '../test/accounts'
 import { standIns } from '../test/app'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
+import { websiteOrigin } from '../test/service'
 import { createApp } from './app'
-import { uploadsAtOnce } from './rate-limit'
+import { atOnce } from './rate-limit'
 
 const accounts = useAccountService()
 
@@ -56,6 +57,9 @@ describe('photo files', () => {
     expect(answer.headers.get('content-type')).toBe('image/jpeg')
     expect(answer.headers.get('cache-control')).toBe('private, max-age=31536000, immutable')
     expect(answer.headers.get('etag')).toBe(`"${photoId}"`)
+    expect(answer.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(answer.headers.get('content-disposition')).toBe(`attachment; filename="${photoId}"`)
+    expect(answer.headers.get('content-length')).toBe('300')
     expect(new Uint8Array(await answer.arrayBuffer())).toEqual(bytes)
     for (const [token, id] of [
       [other.token, photoId],
@@ -146,32 +150,63 @@ describe('photo files', () => {
     }
   })
 
-  test(`takes ${uploadsAtOnce} uploads at once, and asks the next to wait a second`, async () => {
+  test.each([
+    ['uploads', 'PUT', atOnce.uploads],
+    ['downloads', 'GET', atOnce.downloads]
+  ] as const)('takes a few %s at once from each account, and asks the next to wait a second', async (_, method, most) => {
     let release = () => {}
     const held = new Promise<void>(resolve => {
       release = resolve
     })
     let started = 0
-    const app = standInApp({
-      ...standIns.photoFiles,
-      upload: async () => {
-        started++
-        await held
-        return { status: 'unavailable' }
-      }
-    })
+    const waitThenRefuse = async () => {
+      started++
+      await held
+      return { status: 'unavailable' } as const
+    }
+    const app = standInApp({ upload: waitThenRefuse, download: waitThenRefuse })
     const bytes = aJpeg()
-    const waiting = Array.from({ length: uploadsAtOnce }, () => standInRequest(app, 'PUT', bytes))
-    await vi.waitFor(() => expect(started).toBe(uploadsAtOnce))
-    const turnedAway = await standInRequest(app, 'PUT', bytes)
-    expect(turnedAway.status).toBe(429)
-    expect(turnedAway.headers.get('retry-after')).toBe('1')
-    expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+    const accounts = Array.from({ length: most.service / most.account }, (_, n) => `account-${n}`)
+    const waiting = accounts.flatMap(account =>
+      Array.from({ length: most.account }, () => standInRequest(app, method, bytes, account))
+    )
+    await vi.waitFor(() => expect(started).toBe(most.service))
+    for (const account of [accounts[0] ?? '', 'one-more-account']) {
+      const turnedAway = await standInRequest(app, method, bytes, account)
+      expect(turnedAway.status, account).toBe(429)
+      expect(turnedAway.headers.get('retry-after')).toBe('1')
+      expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+    }
     release()
     expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
-      Array(uploadsAtOnce).fill(503)
+      Array(most.service).fill(503)
     )
-    expect((await standInRequest(app, 'PUT', bytes)).status).toBe(503)
+    expect((await standInRequest(app, method, bytes)).status).toBe(503)
+  })
+
+  test("puts back a file its storage lost when it's uploaded again, and says a lost file is missing, not gone", async () => {
+    const learner = await accounts.learner('photo-lost-file@example.com')
+    const bytes = aJpeg()
+    const photoId = await uploaded(accounts, learner, bytes)
+    service().photoStorage.objects.clear()
+    const lost = await get(learner.token, photoId)
+    expect(lost.status).toBe(404)
+    expect(await lost.json()).toMatchObject({ error: { code: 'photo_file_missing' } })
+    expect((await put(learner.token, photoId, bytes)).status).toBe(200)
+    expect(new Uint8Array(await (await get(learner.token, photoId)).arrayBuffer())).toEqual(bytes)
+  })
+
+  test('lets the website send and read photo files from its own origin', async () => {
+    const preflight = await service().app.request('http://localhost:8789/v1/photos/x', {
+      method: 'OPTIONS',
+      headers: {
+        origin: websiteOrigin,
+        'access-control-request-method': 'PUT',
+        'access-control-request-headers': 'authorization, content-type'
+      }
+    })
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(websiteOrigin)
+    expect(preflight.headers.get('access-control-allow-methods')).toContain('PUT')
   })
 })
 
@@ -179,8 +214,8 @@ function standInApp(photoFiles = standIns.photoFiles) {
   return createApp({
     ...standIns,
     photoFiles,
-    verifyAccessToken: async () => ({
-      userId: 'someone',
+    verifyAccessToken: async token => ({
+      userId: token,
       clientId: 'zenbu-ios',
       scopes: new Set(['photos:read', 'photos:write'] as const),
       signedInAt: new Date()
@@ -188,9 +223,14 @@ function standInApp(photoFiles = standIns.photoFiles) {
   })
 }
 
-const standInRequest = (app: ReturnType<typeof createApp>, method: string, bytes: Uint8Array) =>
+const standInRequest = (
+  app: ReturnType<typeof createApp>,
+  method: string,
+  bytes: Uint8Array,
+  account = 'someone'
+) =>
   app.request(`/v1/photos/${photoIdOf(bytes)}`, {
     method,
-    headers: { authorization: 'Bearer token' },
+    headers: { authorization: `Bearer ${account}` },
     body: method === 'PUT' ? bytes : undefined
   })

@@ -1,22 +1,15 @@
-import { and, count, eq, sql } from 'drizzle-orm'
+import { and, count, eq, ne, notExists, sql } from 'drizzle-orm'
 import { listWordSeparator } from '../domain/entities'
 import type { Photo, PhotoFile, PhotoWord, ProfilePhoto } from '../domain/kept-store'
-import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
-import {
-  photoFileDeletions,
-  photoFiles,
-  photos,
-  photoWords,
-  profilePhotos,
-  syncChanges
-} from './schema'
+import { keptRows } from './kept-rows'
+import { photoFileDeletions, photoFiles, photos, photoWords, profilePhotos } from './schema'
 
 const photoColumns = {
   id: photos.id,
   name: photos.name,
   savedAt: photos.savedAt,
-  present: photos.present,
+  status: photos.status,
   version: photos.version,
   updatedAt: photos.updatedAt
 }
@@ -39,8 +32,6 @@ const fileColumns = {
   storageKey: photoFiles.storageKey,
   uploadedAt: photoFiles.uploadedAt
 }
-
-const photoWordEntity: EntityType = 'photoWord'
 
 const dueIn = (hours: number) => sql`now() + make_interval(hours => ${hours})`
 
@@ -88,6 +79,22 @@ export function photoReader(db: Drizzle, userId: string) {
 }
 
 export function photoWriter(db: Drizzle, userId: string) {
+  const photoRows = keptRows(db, userId, {
+    table: photos,
+    userId: photos.userId,
+    id: photos.id,
+    live: ne(photos.status, 'deleted'),
+    updatedAt: photos.updatedAt,
+    entity: 'photo'
+  })
+  const wordRows = keptRows(db, userId, {
+    table: photoWords,
+    userId: photoWords.userId,
+    id: sql<string>`${photoWords.photoId} || ${listWordSeparator} || ${photoWords.itemId}`,
+    live: eq(photoWords.present, true),
+    updatedAt: photoWords.updatedAt,
+    entity: 'photoWord'
+  })
   return {
     async savePhoto(photo: Omit<Photo, 'updatedAt'>) {
       await db
@@ -120,20 +127,20 @@ export function photoWriter(db: Drizzle, userId: string) {
           set: { ...word, updatedAt: sql`now()` }
         })
     },
-    async dropPhotoWords(photoId: string) {
-      await db
-        .delete(syncChanges)
+    async photoWordsOn(photoId: string): Promise<PhotoWord[]> {
+      return db
+        .select(photoWordColumns)
+        .from(photoWords)
         .where(
           and(
-            eq(syncChanges.userId, userId),
-            eq(syncChanges.entityType, photoWordEntity),
-            sql`${syncChanges.entityId} like ${`${photoId}${listWordSeparator}%`}`
+            eq(photoWords.userId, userId),
+            eq(photoWords.photoId, photoId),
+            eq(photoWords.present, true)
           )
         )
-      await db
-        .delete(photoWords)
-        .where(and(eq(photoWords.userId, userId), eq(photoWords.photoId, photoId)))
     },
+    forgetGonePhotoWords: wordRows.forgetGone,
+    forgetGonePhotos: photoRows.forgetGone,
     async saveProfilePhoto(photo: Omit<ProfilePhoto, 'updatedAt'>) {
       await db
         .insert(profilePhotos)
@@ -142,6 +149,29 @@ export function photoWriter(db: Drizzle, userId: string) {
           target: profilePhotos.userId,
           set: { ...photo, updatedAt: sql`now()` }
         })
+    },
+    async filesOutsideTheLibrary() {
+      const [row] = await db
+        .select({ files: count() })
+        .from(photoFiles)
+        .where(
+          and(
+            eq(photoFiles.userId, userId),
+            notExists(
+              db
+                .select({ id: photos.id })
+                .from(photos)
+                .where(
+                  and(
+                    eq(photos.userId, userId),
+                    eq(photos.id, photoFiles.id),
+                    ne(photos.status, 'deleted')
+                  )
+                )
+            )
+          )
+        )
+      return row?.files ?? 0
     },
     async photoFileCount() {
       const [row] = await db
@@ -162,7 +192,7 @@ export function photoWriter(db: Drizzle, userId: string) {
       const [shown] = await db
         .select({ id: photos.id })
         .from(photos)
-        .where(and(eq(photos.userId, userId), eq(photos.id, id), eq(photos.present, true)))
+        .where(and(eq(photos.userId, userId), eq(photos.id, id), ne(photos.status, 'deleted')))
       const [onProfile] = await db
         .select({ id: profilePhotos.photoId })
         .from(profilePhotos)

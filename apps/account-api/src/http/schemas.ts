@@ -324,6 +324,10 @@ export const SyncAnswerSchema = z
     }),
     hasMore: z
       .boolean()
-      .openapi({ description: 'More changes are waiting: sync again with the new cursor.' })
+      .openapi({ description: 'More changes are waiting: sync again with the new cursor.' }),
+    searchKey: z.string().optional().openapi({
+      description:
+        "To an app with `searches:read`: the account's key for recent searches' IDs, 64 hex digits. A recent search's `entityId` is the HMAC-SHA256 of its query, after Unicode NFC, under this key, so a removed search keeps nothing that reveals what was searched. Keep it with the account; it changes only if the service's secret does."
+    })
   })
   .openapi('SyncAnswer')

@@ -57,7 +57,10 @@ server {
         set $dictionary "zenbujapanese-dictionary-api-staging";
 
         location ~ ^/v1/(auth|me|sync|photos|health)(/|$) {
-                client_max_body_size 13m;
+                location ^~ /v1/photos/ {
+                        client_max_body_size 13m;
+                        proxy_pass http://$account:8789;
+                }
                 proxy_http_version 1.1;
                 proxy_set_header Connection "";
                 proxy_set_header Host $host;
@@ -87,8 +90,8 @@ server {
 
 - `ssl_client_certificate` and `ssl_verify_client on` take only Cloudflare's client certificate
   (Authenticated Origin Pulls), so a request that skips Cloudflare gets `400` from nginx, and the
-  `CF-Connecting-IP` the account service counts by is always Cloudflare's. `client_max_body_size`
-  lets a 12 MB photo through, past nginx's 1 MB default.
+  `CF-Connecting-IP` the account service counts by is always Cloudflare's. Only the nested
+  `/v1/photos/` location lets a 12 MB photo through, past nginx's 1 MB default.
 - `resolver … valid=5s` with the alias in a variable makes nginx look the alias up every 5
   seconds, so it finds the new slot after a deploy without a reload, and
   `proxy_next_upstream … http_502 http_503` with two tries sends a request a slot can't answer to
@@ -135,10 +138,8 @@ missing or isn't internal, since a slot there couldn't serve.
 1. It creates the new image's container in the free slot without the alias, so nginx sends it
    nothing while it starts, connects it to the service's private networks, and only then starts
    it, so the service never starts without its database.
-2. It waits until its `/healthz` names the image's release. Each check may take 3 seconds, and the
-   whole wait 3 minutes.
-3. It gives it the alias, by reconnecting it to the network, since Docker can't add an alias to a
-   connected container.
+2. It waits until its `/healthz` names the image's release: 3 seconds a check, 3 minutes in all.
+3. It gives it the alias by reconnecting it to the network: Docker can't alias a connected one.
 4. It waits 10 seconds more, past nginx's 5-second resolver cache, so nginx has seen it.
 5. It stops the old one.
 
@@ -198,9 +199,8 @@ To look after it:
 
 ## Set up the server
 
-A person with root sets these up once. Each service then has its own steps
-([`dictionary-api.md`](dictionary-api.md), Set up the server;
-[`account-api.md`](account-api.md), Set up the server).
+A person with root sets these up once; then each service has its own steps
+([`dictionary-api.md`](dictionary-api.md) and [`account-api.md`](account-api.md), Set up the server).
 
 1. **cosign**, which the deployer verifies each image's signature with: the version the workflows
    sign with, checked against its release's SHA-256 (for an arm64 server, `cosign-linux-arm64`
@@ -303,6 +303,5 @@ A person with root sets these up once. Each service then has its own steps
    (`curl -k --resolve api-staging.zenbujapanese.com:443:<server address> https://api-staging.zenbujapanese.com/healthz`),
    gets nginx's `400 No required SSL certificate was sent`.
 
-   The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI
-   runners, so nothing in CI checks a deployed service, and it may challenge the apps' requests
-   (ADR 0013).
+   The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI runners,
+   so nothing in CI checks a deployed service, and it may challenge the apps' requests (ADR 0013).

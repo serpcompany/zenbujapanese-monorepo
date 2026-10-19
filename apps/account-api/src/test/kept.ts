@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import { searchKeys } from '../domain/cursor'
 import { searchIdOf } from '../domain/recent-searches'
 import type { Learner, useAccountService } from './accounts'
 import { uploaded } from './photos'
+import { testSecret } from './service'
 
 const item = '0'.repeat(32)
 const savedAt = '2026-10-01T12:00:00Z'
@@ -37,7 +39,7 @@ export async function oneOfEachKept(
     {
       entity: 'recentSearch',
       operation: 'search',
-      entityId: searchIdOf('見る'),
+      entityId: searchIdOf(searchKeys(testSecret)(learner.userId), '見る'),
       baseVersion: 0,
       fields: { query: '見る', searchedAt: savedAt }
     }

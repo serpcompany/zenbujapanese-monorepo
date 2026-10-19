@@ -67,9 +67,9 @@ export const settingRules: Readonly<Record<string, SettingRule>> = {
     means: "Image Search's view: the photo, the photo and its text, the text, or its translation."
   },
   'frequencyDictionaries.chosen': {
-    value: { kind: 'text', pattern: new RegExp(`^${packId}(,${packId}){0,49}$`), most: 5_000 },
+    value: { kind: 'text', pattern: new RegExp(`^(${packId}(,${packId}){0,49})?$`), most: 5_000 },
     means:
-      'The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas. Each device downloads its own copy.'
+      'The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.'
   }
 }
 
@@ -87,7 +87,7 @@ export function valueText(name: string): string {
     return `one of ${kind.choices.map(each => `\`${each}\``).join(', ')}`
   }
   if (kind?.kind === 'number') return `a number from ${kind.least} to ${kind.most}`
-  return `text of at most ${(kind?.most ?? 0).toLocaleString('en-US')} characters`
+  return `text of at most ${(kind?.most ?? 0).toLocaleString('en-US')} characters matching \`${kind?.kind === 'text' ? kind.pattern.source : ''}\``
 }
 
 function checked(kind: SettingKind, value: unknown): SettingValue | null {

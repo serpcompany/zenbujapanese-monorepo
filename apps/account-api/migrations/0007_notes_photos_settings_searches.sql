@@ -41,7 +41,7 @@ CREATE TABLE "photos" (
 	"id" text NOT NULL,
 	"name" text,
 	"saved_at" timestamp with time zone,
-	"present" boolean NOT NULL,
+	"status" text NOT NULL,
 	"version" bigint NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "photos_user_id_id_pk" PRIMARY KEY("user_id","id")

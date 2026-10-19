@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
-import { cursorKey, cursors } from '../domain/cursor'
+import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { photoFiles } from '../domain/photo-files'
 import { MemoryPhotoStorage } from '../storage/memory'
 import { accountStore } from './accounts'
@@ -87,7 +87,11 @@ describe('Postgres, through the driver the service runs', () => {
     'lets one of many changes made at once to one account through, and applies a mutation sent many times at once once',
     async () => {
       const { database, raw, id, done } = await anAccount('race')
-      const accounts = createAccounts(accountStore(database.db), cursors(cursorKey('test')))
+      const accounts = createAccounts(
+        accountStore(database.db),
+        cursors(cursorKey('test')),
+        searchKeys('test')
+      )
       const updates = await Promise.all(
         Array.from({ length: 8 }, (_, index) =>
           accounts.updateProfile(id, 1, { name: `Name ${index}` })
@@ -130,7 +134,11 @@ describe('Postgres, through the driver the service runs', () => {
         "insert into watched_videos (user_id, video_id, watched_at, status, version) select $1, 'race' || lpad(n::text, 7, '0'), timestamptz '2026-10-01T00:00:00Z' + n * interval '1 second', 'watched', 1 from generate_series(0, 47) as n",
         [id]
       )
-      const accounts = createAccounts(accountStore(database.db), cursors(cursorKey('test')))
+      const accounts = createAccounts(
+        accountStore(database.db),
+        cursors(cursorKey('test')),
+        searchKeys('test')
+      )
       const watched = (n: number) => ({
         id: `watch-at-once-${n}`,
         entity: 'watchedVideo',
@@ -175,7 +183,7 @@ describe('Postgres, through the driver the service runs', () => {
       const bytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, ...Buffer.from(id)])
       const photoId = createHash('sha256').update(bytes).digest('hex')
       const uploads = await Promise.all(
-        Array.from({ length: 6 }, () => files.upload(id, photoId, bytes))
+        Array.from({ length: 6 }, () => files.upload(id, photoId, bytes, everyScope))
       )
       expect(uploads.map(upload => upload.status).sort()).toEqual([
         ...Array(5).fill('kept'),

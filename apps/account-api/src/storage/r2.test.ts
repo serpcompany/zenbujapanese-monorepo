@@ -14,6 +14,17 @@ interface Seen {
 const seen: Seen[] = []
 const objects = new Map<string, { body: Buffer; type: string }>()
 let failing = false
+let noBucket = false
+const bucket = '/zenbujapanese-account-photos-test'
+
+function listing(url: URL) {
+  const prefix = `${bucket}/${url.searchParams.get('prefix') ?? ''}`
+  const keys = [...objects.keys()].filter(key => key.startsWith(prefix)).sort()
+  const after = url.searchParams.get('continuation-token')
+  const page = keys.filter(key => !after || key > after).slice(0, 1)
+  const more = keys.length > 0 && page[0] !== keys.at(-1)
+  return `<ListBucketResult>${page.map(key => `<Contents><Key>${key.slice(bucket.length + 1).replaceAll('&', '&amp;')}</Key></Contents>`).join('')}${more ? `<NextContinuationToken>${page[0]}</NextContinuationToken>` : ''}</ListBucketResult>`
+}
 
 const server = createServer((request, response) => {
   const chunks: Buffer[] = []
@@ -26,15 +37,28 @@ const server = createServer((request, response) => {
       response.writeHead(403).end('<Error><Code>AccessDenied</Code></Error>')
       return
     }
-    if (request.method === 'PUT') {
-      objects.set(path, { body, type: String(request.headers['content-type']) })
+    if (noBucket) {
+      response.writeHead(404).end('<Error><Code>NoSuchBucket</Code></Error>')
+      return
+    }
+    const url = new URL(path, 'http://r2.test')
+    if (url.searchParams.get('list-type') === '2') {
+      response.writeHead(200, { 'content-type': 'application/xml' }).end(listing(url))
+    } else if (request.method === 'PUT') {
+      objects.set(decodeURIComponent(url.pathname), {
+        body,
+        type: String(request.headers['content-type'])
+      })
       response.writeHead(200).end()
-    } else if (request.method === 'GET') {
-      const found = objects.get(path)
-      if (found) response.writeHead(200, { 'content-type': found.type }).end(found.body)
-      else response.writeHead(404).end('<Error><Code>NoSuchKey</Code></Error>')
+    } else if (request.method === 'GET' || request.method === 'HEAD') {
+      const found = objects.get(decodeURIComponent(url.pathname))
+      if (found) {
+        response
+          .writeHead(200, { 'content-type': found.type, 'content-length': found.body.length })
+          .end(found.body)
+      } else response.writeHead(404).end('<Error><Code>NoSuchKey</Code></Error>')
     } else {
-      objects.delete(path)
+      objects.delete(decodeURIComponent(url.pathname))
       response.writeHead(204).end()
     }
   })
@@ -73,11 +97,34 @@ describe('photos in R2', () => {
     )
     expect(put?.headers.authorization).toContain('x-amz-content-sha256')
     expect(new Uint8Array(put?.body ?? [])).toEqual(bytes)
-    expect(await storage.get('account-1/5f0c')).toEqual(bytes)
+    const read = await storage.get('account-1/5f0c')
+    expect(read?.size).toBe(bytes.byteLength)
+    expect(new Uint8Array(await new Response(read?.body).arrayBuffer())).toEqual(bytes)
+    expect(await storage.has('account-1/5f0c')).toBe(true)
     await storage.delete('account-1/5f0c')
     expect(seen.at(-1)).toMatchObject({ method: 'DELETE' })
     expect(await storage.get('account-1/5f0c')).toBeNull()
+    expect(await storage.has('account-1/5f0c')).toBe(false)
     await storage.delete('account-1/5f0c')
+  })
+
+  test("deletes every object under an account's folder, page by page, and no other", async () => {
+    for (const key of ['account-2/a', 'account-2/b&c', 'account-2/d', 'account-20/kept']) {
+      await storage.put(key, new Uint8Array([1]), 'image/png')
+    }
+    await storage.deleteUnder('account-2/')
+    expect([...objects.keys()].filter(key => key.includes('account-2'))).toEqual([
+      `${bucket}/account-20/kept`
+    ])
+  })
+
+  test('tells a missing object from a missing bucket, which it never takes for a missing photo', async () => {
+    noBucket = true
+    try {
+      await expect(storage.get('account-1/x')).rejects.toThrow('not for a missing key')
+    } finally {
+      noBucket = false
+    }
   })
 
   test('throws when R2 refuses, saying only the status', async () => {

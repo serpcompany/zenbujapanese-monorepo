@@ -1,22 +1,21 @@
-import { and, count, desc, eq, inArray, ne } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, not, type SQL, sql } from 'drizzle-orm'
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core'
 import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
 import { syncChanges } from './schema'
 
-interface RecentRows {
+interface KeptRows {
   table: PgTable
   userId: PgColumn
-  id: PgColumn
-  status: PgColumn
+  id: PgColumn | SQL
+  live: SQL
   updatedAt: PgColumn
-  live: string
   entity: EntityType
 }
 
-export function recentRows(db: Drizzle, userId: string, rows: RecentRows) {
+export function keptRows(db: Drizzle, userId: string, rows: KeptRows) {
   const ofTheAccount = eq(rows.userId, userId)
-  const live = and(ofTheAccount, eq(rows.status, rows.live))
+  const live = and(ofTheAccount, rows.live)
   return {
     live,
     async liveCount() {
@@ -27,7 +26,7 @@ export function recentRows(db: Drizzle, userId: string, rows: RecentRows) {
       const forgotten = await db
         .select({ id: rows.id })
         .from(rows.table)
-        .where(and(ofTheAccount, ne(rows.status, rows.live)))
+        .where(and(ofTheAccount, not(rows.live)))
         .orderBy(desc(rows.updatedAt), desc(rows.id))
         .offset(kept)
       const ids = forgotten.map(row => String(row.id))
@@ -41,7 +40,7 @@ export function recentRows(db: Drizzle, userId: string, rows: RecentRows) {
             inArray(syncChanges.entityId, ids)
           )
         )
-      await db.delete(rows.table).where(and(ofTheAccount, inArray(rows.id, ids)))
+      await db.delete(rows.table).where(and(ofTheAccount, inArray(sql`${rows.id}`, ids)))
     }
   }
 }

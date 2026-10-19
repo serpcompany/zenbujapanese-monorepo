@@ -13,14 +13,24 @@ A file is named by the SHA-256 of its bytes, which is the ID the iOS app's Media
 gives each photo. An app uploads it before the sync change that names it:
 
 1. `PUT /v1/photos/{photoId}` with the bytes, which answers `201` with the file (`id`,
-   `contentType`, `byteSize`, `uploadedAt`), or `200` if the account already holds it.
+   `contentType`, `byteSize`, `uploadedAt`), or `200` if the account already holds it. If the
+   account names the file but its storage lost it, as after a restore, the upload puts it back.
 2. A `photo`'s `add` or the `profilePhoto`'s `set` naming it, which the service rejects
    `photo_not_uploaded` until the account holds the file.
 
-`GET /v1/photos/{photoId}` answers the bytes with their type, and `Cache-Control: private,
-max-age=31536000, immutable`: a file never changes under its ID. Uploading needs `photos:write` or
-`profile`; downloading needs `photos:read`, or `profile` for the profile photo's file alone, so a
-website that shows the profile never reads the Media Library.
+`GET /v1/photos/{photoId}` streams the bytes with their type, `Cache-Control: private,
+max-age=31536000, immutable` (a file never changes under its ID), `Content-Disposition: attachment`,
+and `X-Content-Type-Options: nosniff`. A `404` is `not_found` when the account names no such file
+for this app, and `photo_file_missing` when it names the file but storage hasn't it; a client
+never deletes a photo for either, since a real deletion comes down in sync. Storage that fails in
+any other way, a missing bucket included, is a `500`, never a missing file. The website may call
+both routes from its own origins (CORS).
+
+**Who may.** Uploading needs `photos:write` or `profile`; downloading `photos:read`, or `profile`
+for the profile photo's file alone. An app with only `profile`, such as the website, may hold two
+files outside the Media Library, the profile photo and the one replacing it, is answered `201` for
+a file the library already holds, so it learns nothing of the library, and can't set a library
+photo's file as the profile photo.
 
 The service refuses bytes whose SHA-256 isn't the ID (`400 photo_digest_mismatch`), bytes that
 aren't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image, by their first bytes rather
@@ -39,9 +49,11 @@ would change the hash the photo is named by.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
   library takes a few minutes, bound by the device's connection rather than the limit.
-- **4 uploads at once** in each slot, and the next answers `429` with `Retry-After: 1`: a slot has
-  512 MB of memory ([`api-servers.md`](api-servers.md), The deployer), and each upload holds its
-  file, up to 12 MB, while it hashes and sends it.
+- **4 uploads at once in each slot, 2 from one account; 16 downloads, 4 from one account** (`atOnce`,
+  `src/http/rate-limit.ts`). The next answers `429` with `Retry-After: 1`. A slot has 512 MB
+  ([`api-servers.md`](api-servers.md), The deployer): an upload holds its file, up to 12 MB, while
+  it hashes and sends it, and a download streams from R2 without holding the file, so one account
+  can neither fill a slot's memory nor take every turn.
 
 What R2 costs at these sizes is the owner's call (#867); the limits are in `photoLimits`
 (`src/domain/photo-files.ts`).
@@ -49,9 +61,9 @@ What R2 costs at these sizes is the owner's call (#867); the limits are in `phot
 ## How a file is kept and deleted
 
 `photo_files` holds each file an account has: its SHA-256, type, size, and R2 key. The key is
-`<account ID>/<a new UUID>`, keyed by account, and new for every upload, never the hash: a file
-deleted and uploaded again gets a new key, so a deletion waiting for the old one can never delete
-the new copy.
+`<account ID>/<a new UUID>`, in the account's folder, and new for every upload, never the hash: a
+file deleted and uploaded again gets a new key, so a deletion waiting for the old one can never
+delete the new copy.
 
 Every deletion from R2 goes through `photo_file_deletions`, a queue of keys that names no account,
 so it outlives the account it came from:
@@ -59,23 +71,26 @@ so it outlives the account it came from:
 - **An upload holds its key first.** Before putting the bytes to R2, the service queues the new
   key to be deleted in 24 hours, then cancels that once the file's row is saved. An upload cut
   off between the two leaves nothing in R2 for good.
-- **A file no photo names goes.** When a photo is deleted, or its last word removed, or the
-  profile photo replaced or removed, the file's row goes and its key is queued, unless the other
-  still names the same file. A file no photo names 24 hours after its upload goes the same way,
-  in the hourly housekeeping (`src/db/housekeeping.ts`).
-- **Deleting an account** queues every key the account has in the transaction that deletes it.
-- **The sweep** deletes each queued key that's due from R2, then its row: right after a deletion
-  or a sync that changed something, and every hour, so a key R2 didn't take is tried again.
-  Deleting a key R2 hasn't is fine.
+- **A file no photo names goes.** When a photo is deleted, or the profile photo replaced or
+  removed, the file's row goes and its key is queued, unless the other still names the same file.
+  An emptied photo keeps its file until it's deleted, 30 days on. A file no photo names 24 hours
+  after its upload goes the same way, in the hourly housekeeping (`src/db/housekeeping.ts`), which
+  works through at most 10,000 files, and 10,000 photos of each kind, an hour.
+- **Deleting an account** locks the account, then queues its whole folder, `<account ID>/`, and
+  each of its keys, in the transaction that deletes it, so an upload finishing at the same moment,
+  or a file a restore left behind, goes too.
+- **The sweep** deletes each queued key that's due from R2, and every object under a queued
+  folder, then the row: right after a deletion or a sync that changed something, and every hour,
+  so a key R2 didn't take is tried again. Deleting a key R2 hasn't is fine.
 
 ## A restore
 
 Photo files aren't in the database's backups: they stay in R2. A database restored from a backup
 names the files it had then. A photo deleted since comes back in the account (Back up and
-restore, in [`account-api.md`](account-api.md)), and its file, deleted since, answers `404`: the
-app deletes such a photo again. A photo saved since the backup is gone from the account, and its
-file stays in R2 with nothing naming it, which the debt list records
-([`harness-debt.md`](../harness-debt.md), Delivery).
+restore, in [`account-api.md`](account-api.md)), its file answers `photo_file_missing`, and a
+device that still has the image uploads it again, which puts it back. A photo saved since the
+backup is gone from the account, and its file stays in R2 with nothing naming it until the account
+is deleted, which the debt list records ([`harness-debt.md`](../harness-debt.md), Delivery).
 
 ## Set it up
 
@@ -97,9 +112,9 @@ Nothing here is created by an agent; the owners make each of these.
    ```
    The deployer deploys the environment again within 5 minutes, and the service's `listening` log
    line says `"photos":"r2"`.
-4. **nginx**, in the API host's sites in the nginx repository: `photos` in the account location,
-   `location ~ ^/v1/(auth|me|sync|photos|health)(/|$)`, and `client_max_body_size 13m;` in it, since
-   nginx refuses a body over 1 MB by default ([`api-servers.md`](api-servers.md), The API host).
+4. **nginx**, in the API host's sites in the nginx repository: a location of its own for
+   `/v1/photos/`, the account location's with `client_max_body_size 13m;` added, so only photo
+   uploads get past nginx's 1 MB default ([`api-servers.md`](api-servers.md), The API host).
 5. **Check it on staging**: an upload answers `201`, a download the same bytes, and deleting the
    account leaves nothing under its ID in the bucket.
 
@@ -109,16 +124,18 @@ skill; the image refuses it.
 ## Check it
 
 `src/http/photo-files.test.ts` uploads and downloads through the service with the in-memory
-stand-in: a file kept under a new key and answered with its type and cache headers, a second upload
-changing nothing, another account's file and an unknown one answering `404`, each refused upload,
-each image type read from its bytes, the 1,000-file cap, `503` with no storage, and a fifth upload
-at once turned away until one of four finishes.
-`src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo entities to their
-rules, and show a released file swept from storage, a file shared by the profile photo and a Media
-Library photo kept while either names it, an unnamed file released after 24 hours, and an app with
-only `profile` reading the profile photo's file and no other. `src/http/delete-account.test.ts`
-deletes an account's files from storage with it, and then refuses its token at both routes
-(`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo six times at once: one
-file is kept, and the other copies are swept. `src/storage/r2.test.ts` runs the R2 adapter against
-a stand-in S3 server: each request signed with SigV4 and the body's SHA-256, an object put, read,
-deleted, and missing, and a refusal thrown with only its status.
+stand-in: a file kept under a new key and answered with its type and headers, a second upload
+changing nothing, another account's file and an unknown one answering `404`, a lost file answered
+`photo_file_missing` and put back by an upload, each refused upload, each image type read from its
+bytes, the 1,000-file cap, `503` with no storage, the slots for each account and the service, and
+CORS for the website. `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo
+entities to their rules, and show a file swept from storage after the sync that deleted its photo,
+an emptied photo keeping its file, housekeeping emptying and deleting, a file shared by the profile
+photo and a Media Library photo kept while either names it, an unnamed file released after 24
+hours, and an app with only `profile` kept to its own files. `src/http/delete-account.test.ts`
+deletes an account's folder from storage with it, a file no row names included, and then refuses
+its token at both routes (`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo
+six times at once: one file is kept, and the other copies are swept. `src/storage/r2.test.ts` runs
+the R2 adapter against a stand-in S3 server: each request signed with SigV4 and the body's SHA-256,
+an object put, streamed, checked, deleted, and missing, a folder deleted page by page, a missing
+bucket never taken for a missing object, and a refusal thrown with only its status.

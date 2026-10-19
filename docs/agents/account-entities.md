@@ -88,40 +88,54 @@ and the email typed while signed out.
   learner saw, and neither device's writing is lost: the client keeps its text as a new note when
   `current`'s text differs from the one its change started from. A note's text is 1 to 10,000
   characters, line breaks and tabs kept, and never cut: the learner wrote it. A deleted note keeps
-  only its ID and version. At most 10,000 notes an account (`too_many_notes`).
+  only its ID and version, and the account remembers the latest 1,000 deleted notes: an older
+  delete is forgotten with its journal row, which a write would have overridden anyway. At most
+  10,000 notes an account (`too_many_notes`).
 - **Photo** (`photo`, by the SHA-256 of its file, `src/domain/photos.ts`): the Media Library's
-  photos, whose files [`account-photos.md`](account-photos.md) keeps. `add` sends the name and
-  `savedAt`, and applies once the account holds the file (`photo_not_uploaded` before), whatever
-  its version, so the same image saved again after a delete comes back. `delete` is the learner
-  deleting it in the Media Library, and wins as a list's does: it takes the photo's words and its
-  file. The ID is the file's hash because the iOS app already names each photo so: two devices that
-  save the same image hold one photo.
+  photos, whose files [`account-photos.md`](account-photos.md) keeps. The ID is the file's hash
+  because the iOS app already names each photo so: two devices that save the same image hold one
+  photo. A photo is shown, emptied, or deleted:
+  - `add` sends the name and `savedAt`, and applies once the account holds the file
+    (`photo_not_uploaded` before), whatever the photo's version: the same image saved again after
+    a delete comes back.
+  - Removing its last word empties it, as the app does: it syncs as a `delete`, but keeps its file
+    and name for 30 days, and a word added from a device that never saw the removal brings it back.
+    So a word removed on one device and another added offline elsewhere end the same whichever
+    syncs first, and no add is lost.
+  - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it marks
+    every word on it removed, at a new version each, and takes the file. A word added later is
+    rejected `unknown_photo`.
+  - Housekeeping empties a photo left with no word for a day, as when its words' adds failed, so
+    the account shows no photo that no word shows, and deletes an emptied photo after 30 days.
 - **Photo word** (`photoWord`, `<photo>/<item>`): a word or kanji the photo is on, by the same rule
   as a list word (`add` always applies to a photo the account has, `unknown_photo` otherwise;
-  `remove` only at its version), with at most 500 a photo (`photo_full`). Removing a photo's last
-  word deletes the photo, as the app does, so the account keeps no photo that no word shows; one
-  added elsewhere first keeps it. Adding a word journals its photo again, so a device that dropped
-  the photo when its own last word went gets it back with the new word.
+  `remove` only at its version), with at most 500 a photo (`photo_full`). A removed word keeps its
+  row and version, through the photo's deletion and its return, so a remove from before can't take
+  the new add; the account remembers the latest 1,000 removed words. Adding a word journals its
+  photo again, so a device that dropped the photo when its own last word went gets it back.
 - **Profile photo** (`profilePhoto`, by the account's ID, or none, `src/domain/profile-photo.ts`):
   `set` with a file's SHA-256, and `remove`, each only at the profile photo's own version, as a
   profile's name is changed, so the second of two changes gets the photo as it is. It has a version
   of its own, not the profile's, so changing the name on the website never conflicts with a new
   photo from the app. Its file is replaced and deleted like a photo's. Read and changed with
-  `profile`, like the name.
+  `profile`, like the name; an app without `photos:read` can't set it to a Media Library photo's
+  file (`photo_not_uploaded`), so the profile can't reach into the library.
 - **Setting** (`setting`, by name, `src/domain/settings.ts`): one entity for each setting the
   service lists (`settingRules`), each with its kind: on or off, one of its choices, a number in
-  its range, or text of its form. A `set` applies only at the setting's version, so the first
+  its range, or text of its pattern. A `set` applies only at the setting's version, so the first
   device to sync a change wins and the other shows it; each setting has its own version, so
   changing furigana on one device never conflicts with the speech speed on another. A name the
   service doesn't list is rejected `unknown_setting`, and the device keeps its value: settings are
   the device's first, and an older service only stops carrying a newer one. Translate's layout
   isn't one (#867's decision 3).
-- **Recent search** (`recentSearch`, by the SHA-256 of the query after NFC,
-  `src/domain/recent-searches.ts`): as watch history, with `searchedAt` for `watchedAt`: the later
-  search keeps its time, the account keeps the latest 50 (#867's decision 2), a prune syncs as a
-  delete, a removal wins over a search that never saw it, and the latest 100 removed or pruned are
-  remembered. The ID is the query's hash, which the service checks, so one query is one entity on
-  every device, and a removed search's row keeps only the hash.
+- **Recent search** (`recentSearch`, `src/domain/recent-searches.ts`): as watch history, with
+  `searchedAt` for `watchedAt`: the later search keeps its time, the account keeps the latest 50
+  (#867's decision 2), a prune syncs as a delete, a removal wins over a search that never saw it,
+  and the latest 100 removed or pruned are remembered. Its ID is the HMAC-SHA256 of the query after
+  NFC, under a key for the account that the service derives from its secret
+  (`searchKeys`, `src/domain/cursor.ts`) and gives an app with `searches:read` in each sync answer:
+  one query is one entity on every device, the service checks the ID, and a removed search keeps
+  only an ID that no one with the database, or a backup, can turn back into the query.
 
 Only the iOS app has the scopes for notes, photos, settings, and searches
 ([`account-clients.md`](account-clients.md), Your app). The profile photo goes with `profile`.

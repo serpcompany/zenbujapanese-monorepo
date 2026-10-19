@@ -1,6 +1,7 @@
-import { and, count, eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import type { Setting, WordNote } from '../domain/kept-store'
 import type { Drizzle } from './database'
+import { keptRows } from './kept-rows'
 import { learnerSettings, wordNotes } from './schema'
 
 const noteColumns = {
@@ -41,7 +42,16 @@ export function noteReader(db: Drizzle, userId: string) {
 }
 
 export function noteWriter(db: Drizzle, userId: string) {
+  const notes = keptRows(db, userId, {
+    table: wordNotes,
+    userId: wordNotes.userId,
+    id: wordNotes.id,
+    live: eq(wordNotes.present, true),
+    updatedAt: wordNotes.updatedAt,
+    entity: 'wordNote'
+  })
   return {
+    forgetGoneNotes: notes.forgetGone,
     async saveWordNote(note: Omit<WordNote, 'updatedAt'>) {
       await db
         .insert(wordNotes)
@@ -51,13 +61,7 @@ export function noteWriter(db: Drizzle, userId: string) {
           set: { ...note, updatedAt: sql`now()` }
         })
     },
-    async wordNoteCount() {
-      const [row] = await db
-        .select({ notes: count() })
-        .from(wordNotes)
-        .where(and(eq(wordNotes.userId, userId), eq(wordNotes.present, true)))
-      return row?.notes ?? 0
-    },
+    wordNoteCount: notes.liveCount,
     async saveSetting(setting: Omit<Setting, 'updatedAt'>) {
       await db
         .insert(learnerSettings)
