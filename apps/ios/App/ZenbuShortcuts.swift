@@ -4,7 +4,7 @@ import SearchExperience
 struct LookUpIntent: AppIntent {
   static let title: LocalizedStringResource = "Look Up in Zenbu"
   static let description = IntentDescription(
-    "Opens Zenbu Japanese on the word's page, or on its search results when the text isn't one word."
+    "Opens Zenbu Japanese on the word's page, or on its results in Look Up when the text isn't one word."
   )
   static let supportedModes: IntentModes = .foreground(.immediate)
 

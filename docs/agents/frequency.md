@@ -2,7 +2,7 @@
 
 A frequency dictionary says how common a word is: JLPT Levels gives it a level, and every other
 one a rank. The app's code calls one a pack, and the core a list. What a learner sees is in the
-app's product docs ([Search](../../apps/ios/docs/product/dictionary.md#search),
+app's product docs ([Look Up](../../apps/ios/docs/product/dictionary.md#look-up),
 [Account](../../apps/ios/docs/product/index.md#account)); this guide is how a list's values reach
 a screen, on the website and in the app.
 
@@ -67,7 +67,7 @@ view is drawn and can't wait for an actor, and it never calls into the engine.
 - **Why a list can't be read.** A list whose file can't be opened is `Pack unavailable`, one
   whose read fails is `Frequency data unavailable`, and when the manager can't start at all every
   word is `Bundled frequency data unavailable`. The core puts the reason in the row, the word
-  page's details, and Search's notice. A pack that fails its checks never gets that far: an
+  page's details, and Look Up's notice. A pack that fails its checks never gets that far: an
   installed one is dropped at launch, a bundled one stops the manager, and a download installs
   nothing. `PresentationCore` remembers a word page for one version of the lists, so a page built
   while a read failed says so until the lists are next published.
@@ -92,7 +92,7 @@ view is drawn and can't wait for an actor, and it never calls into the engine.
   published, and reading it, or the lists themselves, while a view is drawn registers that view.
   The results list carries the version in its request (`ResultsScreenRequest.lists`) and asks
   for its screen again when it changes; `PresentationCore` remembers a word page for one version;
-  and a sheet asks for its rows in its body. So Search, an open word, and the word sheet show a
+  and a sheet asks for its rows in its body. So Look Up, an open word, and the word sheet show a
   change made in Account, or in the Mac's Settings window, at once.
 - **What it costs.** With the JIT off, in an optimized build on the iPhone Simulator, a results
   screen of 60 rows takes about 1.5 ms with the two bundled lists and 4.9 ms with nine. Before,
@@ -113,7 +113,7 @@ view is drawn and can't wait for an actor, and it never calls into the engine.
   `FrequencyPackLifecycleTests` (the lists after each thing the manager does, a file that can't
   be changed, a staged download left behind, and the smoke test), `ResultsScreenTests` (a first
   screen, a word page, and a sheet's rows, finished), and `FrequencyLookupPerformanceTests`.
-- **A screen is drawn once.** `SearchResultsUITests` reads every results list Search drew
+- **A screen is drawn once.** `SearchResultsUITests` reads every results list Look Up drew
   (`ZENBU_COUNT_DRAWS=1`) and fails when one was drawn without its chips and then again.
   `AccountUITests` turns a dictionary off with a word open and finds the word and its results
   changed, and `TranslateUITests` opens a word with several entries and finds them listed with

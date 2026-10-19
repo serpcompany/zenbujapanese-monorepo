@@ -70,7 +70,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
     let translates = app.descendants(matching: .any).matching(identifier: "translate.header")
     let searches = app.descendants(matching: .any).matching(identifier: "search.input.handwriting")
     waitUntil("one window showing Translate") { translates.count == 1 }
-    XCTAssertEqual(searches.count, 1, "the first window stays on Search")
+    XCTAssertEqual(searches.count, 1, "the first window stays on Look Up")
   }
 
   private func launchAndTouch() -> XCUIApplication {

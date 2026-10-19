@@ -266,7 +266,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
-| `LearnerNotes.swift` (`SearchView`) | `notesInSearch` | The notes Search lists after its matches |
+| `LearnerNotes.swift` (`SearchView`) | `notesInSearch` | The notes Look Up lists after matches |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |

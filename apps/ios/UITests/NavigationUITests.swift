@@ -10,6 +10,18 @@ final class NavigationUITests: ZenbuUITestCase {
     }
   }
 
+  func testLookUpNamesItsTabTitleAndFieldAtTheDefaultAndLargestTextSizes() {
+    let prompt = "Look up Japanese or English"
+    let largestPrompt = device == .mac ? prompt : "Look Up"
+    for (arguments, shown) in [([], prompt), (TestDevice.largestTextArguments, largestPrompt)] {
+      let app = launch(arguments: arguments)
+      open(.search, in: app)
+      XCTAssertTrue(tabItem(.search, in: app).label.hasPrefix("Look Up"), "VoiceOver reads Look Up")
+      if device != .mac { waitFor(app.navigationBars["Look Up"]) }
+      waitUntil(searchField(in: app), "placeholderValue == %@", shown)
+    }
+  }
+
   func testAPageOpensInEveryTabAfterVisitingTheOthers() {
     let app = launch(PlayerWatchUITests.standIn())
     let noConversations = labeled("No Conversations Yet", in: app)
@@ -36,7 +48,7 @@ final class NavigationUITests: ZenbuUITestCase {
     let app = launch()
     let items = AppTab.allCases.map { tabItem($0, in: app) }
     let positions = items.map(\.frame.minX)
-    XCTAssertEqual(positions, positions.sorted(), "the tabs are in Search, Translate, Player, Account order")
+    XCTAssertEqual(positions, positions.sorted(), "the tabs are in Look Up, Translate, Player, Account order")
     if device == .phone {
       XCTAssertTrue(app.tabBars.firstMatch.exists, "the iPhone has its tab bar")
       XCTAssertGreaterThan(items[0].frame.minY, app.windows.firstMatch.frame.midY, "at the bottom")

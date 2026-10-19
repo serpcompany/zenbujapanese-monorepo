@@ -10,7 +10,7 @@ with Apple silicon and macOS 26, as one app with one App Store record ([iPad and
 Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) open it from other apps, and its
 [Share sheet](share-sheet.md) card looks up what another app shares. It has four tabs:
 
-- **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
+- **Look Up** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
   from the **Sorted by** row at their top ([Sorting and filtering results](results.md)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
@@ -74,11 +74,11 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`; package
   `AppCommandTests` (window sizes).
 - **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
-  Dictionary** (⌘F on the Mac) goes to Search and puts the cursor in its field; on iPad, iPadOS
+  Dictionary** (⌘F on the Mac) goes to Look Up and puts the cursor in its field; on iPad, iPadOS
   keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
   **Search an Image…** (⌘⇧I)
   opens Translate and its **Image** alert, over whatever Translate is showing, and ⌘1 to ⌘4
-  switch to Search, Translate, Player, and Account.
+  switch to Look Up, Translate, Player, and Account.
   With two windows open, a shortcut acts in the one used last. A website link opens in an open
   window rather than a new one.
   Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a
@@ -87,7 +87,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings; a change to Frequency Dictionaries shows in Search, an
+  too, and both show the same settings; a change to Frequency Dictionaries shows in Look Up, an
   open word, and the word sheet at once.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
@@ -104,7 +104,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   `testReturnInAWordSheetsNoteKeepsTheSheetOpen`, and
   `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer`; package
   `WordSheetPresentationTests`.
-- **Sheets on the Mac.** Every sheet but Search's input panel and the photo library's own picker
+- **Sheets on the Mac.** Every sheet but Look Up's input panel and the photo library's own picker
   (720 by 520) opens 480 points wide and 520 tall, plus its row of buttons, which fits the
   smallest window: the word sheet, **Add to List**, a
   frequency rank's details, a frequency dictionary's details, **Stroke Order**, a word's saved
@@ -137,7 +137,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   and 40 megapixels; a pasted image file has the same limits.
   Check: package `PlatformAdapterTests` (a dropped image's limits). Dragging from another app is
   by hand.
-- **Search on iPad and the Mac.** On iPad the tabs and the title bar stay above the search field
+- **Look Up on iPad and the Mac.** On iPad the tabs and the title bar stay above its field
   while you type and beside the results, where the iPhone slides its title away, and there's no
   **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
   empties it and returns to Recent. On the Mac, the input panels open as a sheet of a
@@ -150,7 +150,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing
-  its details, and deleting a Media Library image. Search results, recent searches, and
+  its details, and deleting a Media Library image. Look Up's results, recent lookups, and
   Translations already open a menu on long-press, which is right-click on the Mac.
   Check: UI `ListsUITests` (renaming and deleting a list), `SavedWordsUITests` (marking a word
   unknown and deleting a Media Library image), and `SearchUITests.testMarkingAResultKnownShowsTheKnownCapsule`,
@@ -191,9 +191,9 @@ Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the re
 `WordDetailConformanceTests`.
 
 It works on any furigana that isn't itself a tap target: Word Detail and conjugation headwords,
-conjugation tables, and Media Library words. Where tapping a word already opens it — Search
-results, Known Words and list rows, a kanji's word list, Related Words, and linked words in
-sentences and captions — a tap opens the word, whose headword then offers the highlight.
+conjugation tables, and Media Library words. Where tapping a word already opens it —
+Look Up's results, Known Words and list rows, a kanji's word list, Related Words, and linked words
+in sentences and captions — a tap opens the word, whose headword then offers the highlight.
 
 Check: the recorded `WordDetailConformanceTests` (each conjugation's headword split); UI
 `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (a result row opens the word).
@@ -218,7 +218,7 @@ It provides:
 - [**Notes Without a Word**](saved-data.md#notes-without-a-word), only while there are any;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
   meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
-  kanji in Search's Grade panel); and Sentence Translations, with a translation language (English
+  kanji in Look Up's Grade panel); and Sentence Translations, with a translation language (English
   so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
   Reading Aids offers to download;
 - management of optional frequency dictionaries; and
@@ -287,9 +287,9 @@ for each of the seven optional ones). Downloading an optional pack needs the net
 `FrequencyPackLifecycleTests` installing one from a local file.
 
 The screen lists one row per pack in three sections. **Enabled** holds packs that are
-switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Search
+switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Look Up
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
-from Search's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
+from Look Up's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
 places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. Several packs can download at
@@ -307,14 +307,14 @@ upgrades), `FrequencyPackDownloadsTests` (several downloads side by side, stoppi
 not counted as a failure), and `SearchResultOrderingTests` (a word the first pack doesn't rank); UI
 `AccountUITests.testAFrequencyDictionaryShowsItsDetailsAndTurnsOff` (a row's Details, by swipe or
 right-click, and its switch). A real download needs the network: by hand
-([Search manual checks](../../../../docs/agents/ios.md#search-manual-checks)).
+([Look Up manual checks](../../../../docs/agents/ios.md#look-up-manual-checks)).
 
 ### Known Words
 
 Known Words shows its count on the Account row and lists every word and kanji the learner marked
 known, most recent first. A learner can search the list by headword or reading, swipe an item to
-mark it unknown, or open its word or kanji page in Search. A word whose entry ID changed opens the entry with the
-same headword and reading, and a search for the headword only when there is none.
+mark it unknown, or open its word or kanji page in Look Up. A word whose entry ID changed opens the entry with the
+same headword and reading, and looks the headword up only when there is none.
 Known words are stored on the device, and sync through the Zenbu account while the learner is
 signed in ([Zenbu account and sync](account-sync.md)). If the saved known words
 came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but

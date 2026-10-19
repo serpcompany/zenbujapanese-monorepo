@@ -21,7 +21,7 @@ conformance"). **SRR** is `search-results.json`, the results screen after the fr
 replayed field by field by `apps/dictionary-api/src/conformance/results.conformance.test.ts`
 ("search results conformance"), and rendered for seven of its cases by
 `src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
-app"). **ES** is `example-search.json`, what the Example Sentences screen that Search's examples
+app"). **ES** is `example-search.json`, what the Example Sentences screen that Look Up's examples
 row opens lists for 69 queries, replayed by
 `apps/dictionary-api/src/conformance/example-search.conformance.test.ts` ("example search
 conformance") and rendered for nine of its cases by
@@ -1257,7 +1257,7 @@ say where), and without it, on the website, which redirects a kanji URL to the k
 `<team ID>.com.zenbujapanese.dictionary`, and claims `/dictionary/search/?*`,
 `/dictionary/kanji/?*`, and `/dictionary/*-*`, after excluding `/dictionary/*.json`, the JSON
 routes that load more of a page. The pattern can't say that a word URL ends in digits, so any
-other dictionary path with a dash, which the website answers 404, opens the app's Search screen.
+other dictionary path with a dash, which the website answers 404, opens the app's Look Up screen.
 The dictionary home and the site's other pages stay on the website. The file answers 200 as
 `application/json` at that exact path, without a redirect, and 404 until the site has the Apple
 team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims the site's links before then.
