@@ -167,7 +167,8 @@ describe('POST /v1/webhooks/stripe', () => {
     expect(await billing.subscription(learner)).toMatchObject({
       status: 'expired',
       active: false,
-      managedIn: null,
+      managedIn: 'website',
+      running: [],
       canSubscribe: true
     })
   })

@@ -62,7 +62,7 @@ export const SubscriptionSchema = z
     }),
     managedIn: z.enum(['app_store', 'website']).nullable().openapi({
       description:
-        "Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs."
+        "Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one."
     }),
     running: z.array(RunningSchema).openapi({
       description:

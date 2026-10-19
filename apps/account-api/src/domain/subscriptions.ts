@@ -188,7 +188,7 @@ export function entitlementOf(
     productId: chosen.productId,
     expiresAt: chosen.expiresAt,
     willRenew: chosen.willRenew,
-    managedIn: runningOnes.includes(chosen) ? stores(chosen.source).managedIn : null,
+    managedIn: stores(chosen.source).managedIn,
     canSubscribe: running.length === 0,
     running
   }
