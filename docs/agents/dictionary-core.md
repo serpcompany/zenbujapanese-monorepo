@@ -130,12 +130,13 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
   | `canonicalEntries` | Groups of equivalent IDs | Each group's smallest ID (`canonicalEntry`) |
   | `normalizeQuery` | What was typed | The query Search reads |
-  | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
+  | `japaneseCandidates` | Handwriting candidates | Japanese-only ones, normalized, once, in order |
   | `isKanji`, `writtenLanguage`, `japaneseTextRuns` | A string; — | One kanji or not; `ja`, `en` (an ASCII letter), or null; the scalar runs any client's own check counted as Japanese |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
+  | `siriWords` | Learner words, a limit | Siri's words ([`ios-shortcuts.md`](ios-shortcuts.md)) |
   | `checkExamples` | — | True, or an error naming the missing or wrong example table or pack |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
-  | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
+  | `exampleCount`, `resultsExampleCount` | A query, or it and its primary entry | Examples' count |
   | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
@@ -272,6 +273,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |
 | `DictionaryEntry.swift` (`shortMeaning`), `ImageTextExplanationClient.swift` | `gloss`, `phraseNote` | The meaning under a linked word; an Image Search note |
 | `SourceCredits.swift` (`CreditsView`) | `sourceCredits` | Credits & Attributions and Licenses |
+| `SiriWords.swift` (`SiriWordList`) | `siriWords` | The words "Zenbu look up …" takes at once |
 
 The core began as a port of the Swift these files replaced: `LookupClient`'s search and ranking,
 `SearchResultsView`, `SearchResultFrequencyOrdering`, `WordDetailView`, `JapaneseConjugationClient`,

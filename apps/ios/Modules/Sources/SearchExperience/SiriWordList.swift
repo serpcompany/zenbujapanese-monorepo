@@ -3,7 +3,10 @@ import Observation
 
 @MainActor
 public final class SiriWordList {
-  public static let shared = SiriWordList(sources: .live, defaults: .standard)
+  public static let shared: SiriWordList = {
+    LaunchHarness.prepare()
+    return SiriWordList(sources: .live, defaults: .standard)
+  }()
   static let defaultLimit = 100
   private static let settling = Duration.seconds(2)
   private static let storageKey = "siri.words.v1"

@@ -31,7 +31,7 @@ Every action opens the app with a link, and the app has one place a link lands.
 ## Shortcuts, Siri, and Spotlight
 
 `apps/ios/App/ZenbuShortcuts.swift` holds `LookUpIntent` and `TranslateIntent`, App Intents with a
-text parameter, and `ZenbuShortcuts`, the `AppShortcutsProvider` that gives Siri and Spotlight
+text parameter, `LookUpWordIntent` (Words Siri knows ahead of time, below), and `ZenbuShortcuts`, the `AppShortcutsProvider` that gives Siri and Spotlight
 their phrases. They live in the app target because the App Intents metadata processor reads the
 app target's own sources; what they call is in the package, where it's tested.
 
@@ -53,13 +53,51 @@ app target's own sources; what they call is in the package, where it's tested.
   on a device.
 - They need no entitlement, App Group, or App ID beyond the app's own.
 
+## Words Siri knows ahead of time
+
+"Zenbu look up taberu" in one breath is `LookUpWordIntent`, whose phrase
+`\(.applicationName) look up \(\.$word)` holds a `WordEntity`. Siri learns the entity's values
+ahead of time from `WordQuery.suggestedEntities()`, so the phrase works only for the words the app
+told it about; any other word still goes through "Zenbu look up" and Siri's question. `perform()`
+hands `AppLinkInbox` a Look Up link for the word's written form, so the core's `lookUp` routes it
+as it routes typed text.
+
+- **The words.** `SiriWord` (`SiriWords.swift`) is a word's spoken form and its written form; the
+  entity's title is the spoken form, its subtitle the written one when they differ, and its ID both,
+  so a shortcut saved with a word resolves after the list changes. The core's `siriWords`
+  (`packages/dictionary-core/src/embedded/siri-words.ts`, [`dictionary-core.md`](dictionary-core.md))
+  picks and spells them: the learner's words in the order the app gives (`LearnerWord.gathered`:
+  recent searches, then list words and known words, newest first, without saved kanji), then JLPT
+  N5 to N3 by TUBELEX rank, each spoken form once, up to the limit. `SiriWordData` runs it on its
+  own core over the dictionary with the bundled JLPT and TUBELEX packs attached as `jlpt` and
+  `tubelex`, so a learner who turns those lists off in Settings still gets the common words.
+- **The spoken form** is romaji, since Siri listens in the device's language: text typed in
+  English letters as typed, lowercased; kana in the core's romaji without long marks or
+  apostrophes; kanji in the romaji of its only reading. A form longer than 32 letters or three
+  words is left out, since Siri hears it as a sentence.
+- **Refreshing.** `SiriWordList` keeps the list in `UserDefaults` (`siri.words.v1`), which
+  `suggestedEntities()` answers from. It works the list out again two seconds after launch, after
+  `RecentSearchStore.live` records or removes a search, and after `WordLists` or `WordKnowledge`
+  change (a save, a known word, a sync, or their first load), and calls
+  `ZenbuShortcuts.updateAppShortcutParameters()` only when the list changed. The app also calls it
+  once at launch, as Apple's sample apps do.
+- **The limit** is `SiriWordList.defaultLimit`. Apple publishes no cap; a DTS engineer wrote that
+  the values can't be "a huge number", since Siri learns each value once per phrase, so the word
+  has one phrase. A Debug build launched with `ZENBU_SIRI_WORD_LIMIT=<n>` uses that limit and keeps
+  it for Siri's own launches, to measure a larger list on a device:
+  `xcrun devicectl device process launch --device <udid> --terminate-existing --environment-variables '{"ZENBU_SIRI_WORD_LIMIT":"300"}' com.zenbujapanese.dictionary.dev`.
+  What was measured is in the product docs (Saying the word in one breath).
+
 ## Tests
 
 - **Package:** `AppLinkTests` (each link both ways, which links are actions, the schemes, the
   screen each opens, Look Up on the bundled dictionary, and the Shortcuts actions' inbox).
   `DictionaryCoreTests.coresMadeAtOnce` makes cores on several threads at once, as a look-up's and
   the screens' are made at launch: JavaScriptCore crashed making two contexts at once, so
-  `DictionaryCore` makes one at a time. **Core:** `embedded/dictionary.test.ts` for `lookUp`.
+  `DictionaryCore` makes one at a time. `SiriWordsTests` (the learner's words, the list on the
+  bundled dictionary, a word's spoken form and ID, and relearning only on a change), and
+  `LaunchHarnessTests.siriWordLimit`. **Core:** `embedded/dictionary.test.ts` for `lookUp`, and
+  `embedded/siri-words.test.ts` for `siriWords`.
 - **UI:** `AppLinkUITests` hands the running app each action's link on iPhone, iPad, and the Mac
   (`TestDevice.open(_:in:)`). On iPhone and iPad that's `XCUIApplication.open(_:)`, which works only
   because the app registers its scheme. On the Mac, LaunchServices gives a scheme's link to
@@ -68,7 +106,8 @@ app target's own sources; what they call is in the package, where it's tested.
   `AppLinkInbox` as the Shortcuts actions do, when the test posts
   `com.zenbujapanese.dictionary.uitests.open-link`.
 - **The actions' metadata:** after a build, the app's `Metadata.appintents/extract.actionsdata`
-  names both intents, their text parameter, and the provider's phrases.
+  names the three intents, their parameters, `WordEntity`, and the provider's phrases, among them
+  `${applicationName} look up ${word}`.
 - To try a link in the Simulator:
   `xcrun simctl openurl <udid> 'com.zenbujapanese.dictionary://look-up?text=%E8%A6%8B%E3%82%8B'`.
 - What only a device shows, and the check closest to each, is in the product docs' Checked by
