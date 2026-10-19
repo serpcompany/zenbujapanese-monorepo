@@ -13,7 +13,7 @@ import { type AccountText, failureMessage } from '@/lib/account/messages'
 import type { AccountSettings } from '@/lib/account/settings'
 import {
   appStoreSubscriptions,
-  runsInTheAppStore,
+  renewsInTheAppStore,
   runsOnTheWebsite
 } from '@/lib/account/subscription'
 import type { Locale } from '@/lib/i18n/config'
@@ -21,6 +21,13 @@ import { ConfirmItsYou } from './confirm-its-you'
 import { FormMessage } from './form-message'
 
 type Step = 'closed' | 'confirm' | 'confirm-identity' | 'deleting'
+
+function appStoreWarning(account: SignedInAccount, words: AccountText['deletion']) {
+  if (account.subscription === null) return words.subscriptionUnknown
+  return account.subscription && renewsInTheAppStore(account.subscription)
+    ? words.appStoreContinues
+    : null
+}
 
 interface DeleteAccountProps {
   api: AccountApi
@@ -78,9 +85,9 @@ export function DeleteAccount({
       {account.subscription && runsOnTheWebsite(account.subscription) ? (
         <p className="text-sm text-muted-foreground">{words.websiteCanceled}</p>
       ) : null}
-      {runsInTheAppStore(account.subscription) ? (
+      {appStoreWarning(account, words) ? (
         <p className="text-sm">
-          {words.appStoreContinues}{' '}
+          {appStoreWarning(account, words)}{' '}
           <a href={appStoreSubscriptions}>{text.subscription.openAppStore}</a>
         </p>
       ) : null}

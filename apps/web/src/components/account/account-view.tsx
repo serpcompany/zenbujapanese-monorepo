@@ -259,8 +259,10 @@ export function AccountView({
           locale={locale}
           text={text}
           subscription={account.subscription}
+          plans={account.plans ?? null}
           returnedFromCheckout={returnedFromCheckout}
           waits={checkAgainAfterMs}
+          onChanged={subscription => update(current => ({ ...current, subscription }))}
           onSignedOut={shared.onSignedOut}
         />
       ) : null}

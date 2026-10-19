@@ -1,13 +1,15 @@
 import type { AccessTokens } from './access-tokens'
-import type { AccountSession, Identity, Profile, Provider, Subscription } from './answers'
+import type { AccountSession, Identity, Plans, Profile, Provider, Subscription } from './answers'
 import type { AccountApi, Failure, Result } from './client'
 import { isSignedOut } from './messages'
+import { offersOnTheWebsite } from './subscription'
 
 export interface SignedInAccount {
   session: AccountSession
   profile: Profile
   identities: Identity[]
   subscription?: Subscription | null
+  plans?: Result<Plans> | null
 }
 
 export type LoadedAccount =
@@ -25,20 +27,27 @@ export async function loadAccount(api: AccountApi, tokens: AccessTokens): Promis
   if (!session.ok) return notLoaded(session)
   if (session.value === null) return { kind: 'signed-out' }
   tokens.belongTo(session.value.userId)
-  const [profile, identities, subscription] = await Promise.all([
+  const subscriptionAndPlans = async () => {
+    const subscription = await tokens.use(token => api.subscription(token))
+    const offered = subscription.ok && offersOnTheWebsite(subscription.value)
+    return { subscription, plans: offered ? await tokens.use(token => api.plans(token)) : null }
+  }
+  const [profile, identities, { subscription, plans }] = await Promise.all([
     tokens.use(token => api.profile(token)),
     api.identities(),
-    tokens.use(token => api.subscription(token))
+    subscriptionAndPlans()
   ])
   if (!profile.ok) return notLoaded(profile)
   if (!identities.ok) return notLoaded(identities)
+  if (plans && !plans.ok && isSignedOut(plans.failure)) return { kind: 'signed-out' }
   return {
     kind: 'signed-in',
     account: {
       session: session.value,
       profile: profile.value,
       identities: identities.value,
-      subscription: subscription.ok ? subscription.value : null
+      subscription: subscription.ok ? subscription.value : null,
+      plans
     }
   }
 }

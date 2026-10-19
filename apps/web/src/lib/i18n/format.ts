@@ -29,6 +29,10 @@ export function formatDate(isoDate: string, locale: Locale): string {
   )
 }
 
+export function formatMoment(moment: string, locale: Locale, timeZone?: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone }).format(new Date(moment))
+}
+
 export function templateParts(template: string): { text: string; name?: string }[] {
   const parts: { text: string; name?: string }[] = []
   let last = 0

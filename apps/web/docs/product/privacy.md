@@ -71,7 +71,8 @@ and profile picture link if the learner or the provider at sign-up gives one), h
 browser, with its IP address and user agent), study data (known words and lists, and from the
 iPhone app the 50 most recently watched Player videos and the bookmarked Translate sentences),
 a subscription if the learner has one (where it was bought, its plan and status, when it renews
-or ends, and each payment, refund, or dispute with its amount and date, never card details), to
+or ends, and each payment, failed payment, refund, dispute, or card network's fraud warning with
+its amount and date, never card details), to
 unlock sync on every device and keep a record of what was paid, and a record of each synced
 change, so a change sent twice applies once. Expired sessions, codes,
 and counts go within an hour (said under the second table), and a removed video, list, or bookmark
@@ -135,7 +136,7 @@ script, the support mailbox, on Google Workspace, and sign-in with Google), Stri
 for subscriptions bought on the website: it receives the email, payment details, and billing
 address, and keeps its own record of them under its own policy, also after the account is
 deleted; we never see a full card number), Apple (sign-in with Apple, and the payment for a
-subscription bought in the iPhone app), and YouTube (Player). These companies may process information in the United States and
+subscription bought in our apps on iPhone, iPad, or Mac), and YouTube (Player). These companies may process information in the United States and
 other countries; the page names no particular safeguard. Adding anything to Google Tag Manager
 that uses cookies means updating the page and asking for consent where the law requires it.
 
@@ -151,9 +152,10 @@ that uses cookies means updating the page and asking for consent where the law r
   the no-sale, transfer, and consent lines.
 
 **How long we keep it.** The second table: the account and study data until it's deleted;
-subscription and payment records after the account is deleted, without the account, as the
-record of payments; that an account was deleted (its ID and when, nothing else), so a payment that
-arrives for it afterwards is refunded; sessions
+subscription and payment records for 7 years after the payment or the subscription's end, also
+after the account is deleted, without it; that an account was deleted (its ID and when, nothing
+else) for 7 years, so a payment that arrives for it afterwards is refunded; the service purges both
+after that (`billingRecordsKeptYears`, a proposal the owner sets); sessions
 until sign-out, or 60 days after their last use; sign-in codes 10 minutes; request counts by IP
 address a day after the last request; each synced change's record 30 days, and then until the next
 change synced; backups 30 days; support email as long as it's needed.

@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test'
 import { signedInService, standInForTheAccountService } from './account-stand-in'
 import { expect, sidewaysOverflow, test } from './test'
 
-const paidThrough = '2030-01-01T00:00:00.000Z'
+const paidThrough = '2030-01-01T12:00:00.000Z'
 
 type Store = 'app_store' | 'website'
 
@@ -66,10 +66,20 @@ async function openAccount(
   answers: Record<string, unknown>,
   { path = '/account/', heading = 'Subscription' } = {}
 ) {
-  await standInForTheAccountService(page, { ...signedInService, ...answers })
+  await standInForTheAccountService(page, Object.assign(answers, signedInService, { ...answers }))
   await page.route('https://*.stripe.com/**', route =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Stripe</h1>' })
   )
+  await page.addInitScript(() => {
+    const seen = window as unknown as { plansAtFirstPaint?: number; heightAtFirstPaint?: number }
+    new MutationObserver((_, observer) => {
+      const section = document.querySelector('section[aria-labelledby="subscription"]')
+      if (!section) return
+      seen.plansAtFirstPaint = section.querySelectorAll('button[aria-label]').length
+      seen.heightAtFirstPaint = section.getBoundingClientRect().height
+      observer.disconnect()
+    }).observe(document, { childList: true, subtree: true })
+  })
   await page.goto(path)
   const section = page.getByRole('region', { name: heading })
   await expect(section).toBeVisible()
@@ -93,6 +103,54 @@ test.describe('the subscription on the account page', () => {
     expect((await asked).postDataJSON()).toMatchObject({ price: 'price_monthly' })
     await expect(page).toHaveURL(checkoutPage)
     expect(await sidewaysOverflow(page)).toBe(0)
+  })
+
+  test('the plans arrive with the section, so nothing on the page moves when they do', async ({
+    page
+  }) => {
+    const section = await openAccount(page, {
+      'GET /v1/me/subscription': subscription([]),
+      'GET /v1/me/subscription/plans': { ...plans, trialDays: 7 }
+    })
+    await expect(section.getByText('Starts with a 7-day free trial').first()).toBeVisible()
+    const first = await page.evaluate(() => {
+      const seen = window as unknown as { plansAtFirstPaint?: number; heightAtFirstPaint?: number }
+      return { plans: seen.plansAtFirstPaint, height: seen.heightAtFirstPaint }
+    })
+    expect(first.plans).toBe(2)
+    expect(first.height).toBe((await section.boundingBox())?.height)
+  })
+
+  test('back from Checkout, the account page shows the subscription and drops ?subscribed from its address', async ({
+    page
+  }) => {
+    const answers: Record<string, unknown> = {
+      'GET /v1/me/subscription': subscription([]),
+      'GET /v1/me/subscription/plans': plans
+    }
+    const section = await openAccount(page, answers)
+    await page.route('**/v1/me/subscription/checkout', async route => {
+      if (route.request().method() !== 'POST') return route.fallback()
+      const { successUrl } = route.request().postDataJSON() as { successUrl: string }
+      expect(successUrl).toMatch(/\/account\/\?subscribed=1$/)
+      answers['GET /v1/me/subscription'] = subscription([running('website')])
+      await page.route(checkoutPage, stripe =>
+        stripe.fulfill({ status: 303, headers: { location: successUrl } })
+      )
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'access-control-allow-origin': (await route.request().headerValue('origin')) ?? '*',
+          'access-control-allow-credentials': 'true'
+        },
+        json: { url: checkoutPage }
+      })
+    })
+    await section.getByRole('button', { name: 'Subscribe to Zenbu Sync, $4.99 a month' }).click()
+    const back = page.getByRole('region', { name: 'Subscription' })
+    await expect(back.getByText('On zenbujapanese.com', { exact: true })).toBeVisible()
+    await expect(page).toHaveURL(/\/account\/$/)
+    await expect(back.getByRole('button', { name: /^Subscribe/ })).toHaveCount(0)
   })
 
   test('a website subscription opens the Customer Portal, and no plan is offered', async ({
@@ -151,7 +209,7 @@ test.describe('the subscription on the account page', () => {
     )
     await expect(section.getByText('月額￥600')).toBeVisible()
     await expect(
-      section.getByRole('button', { name: 'Zenbu Sync, 月額￥600に登録する' })
+      section.getByRole('button', { name: 'Zenbu Sync、月額￥600に登録する' })
     ).toBeVisible()
     await expect(section.getByText(/解約するまで自動で更新され/)).toBeVisible()
   })

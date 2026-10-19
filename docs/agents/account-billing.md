@@ -107,7 +107,7 @@ every account syncs as before, and the stores are off until their settings are s
 | Route | What it does |
 | --- | --- |
 | `GET /v1/me/subscription` | The entitlement, `running`, `canSubscribe`, `cloudAccess` (what sync does for this app now), the `appAccountToken`, and the offers: the App Store product IDs and Stripe price IDs. |
-| `GET /v1/me/subscription/plans` | The website's plans before Checkout: each of `offers.website` with Stripe's name, amount, currency, and interval, read from Stripe on each request, and the free trial this account would get. |
+| `GET /v1/me/subscription/plans` | The website's plans before Checkout: each of `offers.website` with Stripe's name, amount, currency, and interval, read from Stripe at most every 5 minutes, and the free trial this account would get. A price Stripe can't describe as a fixed recurring amount is left out and logged by its ID. |
 | `POST /v1/me/subscription/apple` | The app sends a StoreKit 2 transaction after a purchase, a restore, or an update. |
 | `POST /v1/me/subscription/checkout` | Stripe Checkout's URL for one of the website's prices. |
 | `POST /v1/me/subscription/portal` | The Stripe Customer Portal's URL, for any account that has bought on the website. |

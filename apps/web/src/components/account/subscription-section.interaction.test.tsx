@@ -22,7 +22,7 @@ const offers = {
 const held = (managedIn: string, more: Record<string, unknown> = {}) => ({
   status: 'active',
   managedIn,
-  expiresAt: '2026-11-19T00:00:00.000Z',
+  expiresAt: '2026-11-19T12:00:00.000Z',
   willRenew: true,
   ...more
 })
@@ -36,6 +36,14 @@ const subscription = (running: object[] = [], more: Record<string, unknown> = {}
   appAccountToken: '6f1c3c3e-0b5d-4c4e-9a51-7d0c2f1e8a01',
   offers,
   ...more
+})
+
+const paidAfterReads = (reads: number) => ({
+  'GET /v1/me/subscription': [
+    ...Array.from({ length: reads }, () => answer(subscription())),
+    answer(subscription([held('website')]))
+  ],
+  'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null })
 })
 
 function leaving() {
@@ -131,16 +139,7 @@ describe('the subscription on the account page', () => {
   })
 
   test('back from Checkout, reads the subscription again until it runs, or says Stripe is still confirming', async () => {
-    signedIn({
-      more: {
-        'GET /v1/me/subscription': [
-          answer(subscription()),
-          answer(subscription()),
-          answer(subscription([held('website')]))
-        ],
-        'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null })
-      }
-    })
+    signedIn({ more: paidAfterReads(2) })
     const page = renderAccountView(settings(), 'en', true)
     await shows(page, 'Renews on November 19, 2026.')
     expect(page.textContent).not.toContain('confirming your payment')
@@ -228,7 +227,193 @@ describe('the subscription on the account page', () => {
   })
 })
 
+describe('each state of a subscription', () => {
+  test.each([
+    [
+      'website',
+      'billing_retry',
+      'Your last payment didn’t go through',
+      'in Manage your subscription to sync again'
+    ],
+    [
+      'app_store',
+      'billing_retry',
+      'Your last payment didn’t go through',
+      'in the App Store to sync again'
+    ],
+    [
+      'app_store',
+      'grace_period',
+      'Active, but your last payment didn’t go through',
+      'in the App Store to keep syncing'
+    ],
+    ['website', 'pending', 'Waiting for your payment', 'It starts once your payment arrives.'],
+    ['app_store', 'paused', 'Paused', 'In the App Store']
+  ])('shows a %s subscription in %s', async (store, status, title, detail) => {
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(
+          subscription([held(store, { status })], { canSubscribe: false })
+        )
+      }
+    })
+    const page = renderAccountView()
+    await shows(page, title)
+    expect(page.textContent).toContain(detail)
+    expect(page.textContent).not.toContain('Subscribe')
+  })
+
+  test('shows the latest one, where it was bought, when none runs any more', async () => {
+    for (const [status, says] of [
+      ['expired', 'Ended'],
+      ['revoked', 'Refunded or revoked']
+    ]) {
+      signedIn({
+        more: {
+          'GET /v1/me/subscription': answer(
+            subscription([], {
+              status,
+              managedIn: 'website',
+              cloudAccess: 'subscription_required'
+            })
+          ),
+          'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null })
+        }
+      })
+      const page = renderAccountView()
+      await shows(page, says)
+      expect(page.textContent).toContain('On zenbujapanese.com')
+      expect(page.textContent).not.toContain('Manage your subscription')
+      unmount()
+    }
+  })
+
+  test("says the plans can't be shown when Stripe doesn't answer, or none can be offered", async () => {
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription()),
+        'GET /v1/me/subscription/plans': refusal(503, 'billing_unavailable')
+      }
+    })
+    const failed = renderAccountView()
+    await shows(failed, 'Payments aren’t answering right now')
+    expect(failed.textContent).not.toContain('Subscribe')
+    unmount()
+
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription()),
+        'GET /v1/me/subscription/plans': answer({ plans: [], trialDays: null })
+      }
+    })
+    const none = renderAccountView()
+    await shows(none, 'The plans aren’t available right now.')
+  })
+
+  test('says why Subscribe started nothing: a running subscription, or a payment still confirming', async () => {
+    leaving()
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription()),
+        'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null }),
+        'POST /v1/me/subscription/checkout': [
+          refusal(409, 'already_subscribed'),
+          refusal(409, 'payment_confirming')
+        ]
+      }
+    })
+    const page = renderAccountView()
+    await shows(page, '$4.99 a month')
+    await click(page, 'Subscribe to Zenbu Sync, $4.99 a month')
+    await shows(page, 'Your account already has a subscription.')
+    await click(page, 'Subscribe to Zenbu Sync, $4.99 a month')
+    await shows(page, 'Stripe is still confirming your last payment')
+  })
+
+  test('says when the portal has nothing to manage, and shows signed out when the session ends mid-click', async () => {
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription([held('website')])),
+        'POST /v1/me/subscription/portal': refusal(404, 'no_subscription')
+      }
+    })
+    const page = renderAccountView()
+    await shows(page, 'On zenbujapanese.com')
+    await click(page, 'Manage your subscription')
+    await shows(page, 'This account hasn’t subscribed on this website.')
+    unmount()
+
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription()),
+        'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null }),
+        'POST /v1/me/subscription/checkout': refusal(401, 'unauthorized')
+      }
+    })
+    const ended = renderAccountView()
+    await shows(ended, '$4.99 a month')
+    await click(ended, 'Subscribe to Zenbu Sync, $4.99 a month')
+    await shows(ended, 'You’re not signed in.')
+  })
+
+  test('back from Checkout, offers nothing while it confirms, also when React runs its effects twice', async () => {
+    signedIn({ more: paidAfterReads(2) })
+    const page = renderAccountView(settings(), 'en', true, true)
+    await shows(page, 'Renews on November 19, 2026.')
+    expect(page.textContent).not.toContain('Subscribe to')
+    unmount()
+
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription()),
+        'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null })
+      }
+    })
+    const slow = renderAccountView(settings(), 'en', true)
+    await shows(slow, 'a bank debit or konbini payment can take a few days')
+    expect(slow.querySelector('button[aria-label^="Subscribe to"]')).toBeNull()
+  })
+
+  test("shows signed out when the session ends while it's confirming a payment", async () => {
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': [answer(subscription()), refusal(401, 'unauthorized')],
+        'GET /v1/me/subscription/plans': answer({ plans: [monthly], trialDays: null })
+      }
+    })
+    const page = renderAccountView(settings(), 'en', true)
+    await shows(page, 'You’re not signed in.')
+  })
+})
+
 describe('deleting an account with a subscription', () => {
+  test("warns only about an App Store subscription that renews, and says so when it couldn't check", async () => {
+    signedIn({
+      more: {
+        'GET /v1/me/subscription': answer(subscription([held('app_store', { willRenew: false })]))
+      }
+    })
+    const ending = renderAccountView()
+    await shows(ending, 'In the App Store')
+    expect(ending.textContent).not.toContain('doesn’t cancel your App Store subscription')
+    unmount()
+
+    signedIn({ more: { 'GET /v1/me/subscription': refusal(503, 'internal') } })
+    const unknown = renderAccountView()
+    await shows(unknown, 'We couldn’t check your subscriptions just now.')
+    expect(
+      [...unknown.querySelectorAll('a')].some(
+        each => each.textContent === 'Open your App Store subscriptions'
+      )
+    ).toBe(true)
+  })
+
+  test('warns from the subscription it read last, after Checkout', async () => {
+    signedIn({ more: paidAfterReads(1) })
+    const page = renderAccountView(settings(), 'en', true)
+    await shows(page, 'cancels your zenbujapanese.com subscription at once')
+  })
+
   test('says an App Store subscription keeps billing, before deleting and after', async () => {
     signedIn({
       more: {
@@ -247,7 +432,7 @@ describe('deleting an account with a subscription', () => {
   test('says a website subscription is canceled with the account', async () => {
     signedIn({ more: { 'GET /v1/me/subscription': answer(subscription([held('website')])) } })
     const page = renderAccountView()
-    await shows(page, 'Your subscription on zenbujapanese.com is canceled with your account.')
+    await shows(page, 'cancels your zenbujapanese.com subscription at once, with no refund')
     expect(page.textContent).not.toContain('doesn’t cancel your App Store subscription')
   })
 })

@@ -23,7 +23,10 @@ import {
 export interface StripeConnection {
   fetch: typeof globalThis.fetch
   retries: number
+  plansKeptForMs?: number
 }
+
+const plansKeptForMs = 5 * 60_000
 
 const timeoutMs = 10_000
 const checkoutMinutes = 30
@@ -166,6 +169,22 @@ export function stripeBilling(
     }
   }
 
+  let described: { plans: WebsitePlan[]; until: number } | null = null
+
+  async function describedPrice(price: string): Promise<WebsitePlan | null> {
+    try {
+      return planOf(await stripe.prices.retrieve(price, { expand: ['product'] }))
+    } catch (error) {
+      const refused = error instanceof Stripe.errors.StripeInvalidRequestError
+      if (error instanceof Stripe.errors.StripeError && !refused) throw error
+      log('error', "stripe: a price in STRIPE_PRICE_IDS can't be offered, so it's left out", {
+        price,
+        reason: error instanceof Error ? error.message : 'unknown'
+      })
+      return null
+    }
+  }
+
   async function cancelUnlessEnded(subscription: Stripe.Subscription) {
     if (!ended.has(subscription.status)) await stripe.subscriptions.cancel(subscription.id)
   }
@@ -176,14 +195,15 @@ export function stripeBilling(
     gracePeriodDays: config.gracePeriodDays,
     trialDays: config.trialDays,
 
-    describePrices: () =>
-      guarded('describe the prices', async () =>
-        Promise.all(
-          config.prices.map(async price =>
-            planOf(await stripe.prices.retrieve(price, { expand: ['product'] }))
-          )
-        )
-      ),
+    async describePrices() {
+      if (described && Date.now() < described.until) return described.plans
+      const plans = await guarded('describe the prices', async () => {
+        const each = await Promise.all(config.prices.map(describedPrice))
+        return each.filter((plan): plan is WebsitePlan => plan !== null)
+      })
+      described = { plans, until: Date.now() + (connection.plansKeptForMs ?? plansKeptForMs) }
+      return plans
+    },
 
     createCheckout: request =>
       guarded('start a checkout', async () => {

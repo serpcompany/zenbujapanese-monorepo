@@ -99,7 +99,8 @@ function subscriptionObject(fields: SubscriptionFields): StripeObject {
 
 const prices: Record<string, StripeObject> = {
   price_monthly: { unit_amount: 499, recurring: { interval: 'month', interval_count: 1 } },
-  price_yearly: { unit_amount: 4999, recurring: { interval: 'year', interval_count: 1 } }
+  price_yearly: { unit_amount: 4999, recurring: { interval: 'year', interval_count: 1 } },
+  price_metered: { unit_amount: null, recurring: { interval: 'month', interval_count: 1 } }
 }
 
 export function standInStripe() {

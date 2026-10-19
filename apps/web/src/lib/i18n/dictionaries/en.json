@@ -122,11 +122,11 @@
       "whyFresh": "Deleting needs a sign-in from the last few minutes.",
       "appleElsewhere": "Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple.",
       "appStoreContinues": "Deleting your account doesn’t cancel your App Store subscription: Apple keeps billing you until you cancel it in your Apple Account’s subscriptions.",
-      "websiteCanceled": "Your subscription on zenbujapanese.com is canceled with your account."
+      "websiteCanceled": "Deleting your account cancels your zenbujapanese.com subscription at once, with no refund for the time left.",
+      "subscriptionUnknown": "We couldn’t check your subscriptions just now. Deleting your account cancels one bought on this website, but not one bought in the App Store: Apple keeps billing for it until you cancel it in your Apple Account’s subscriptions."
     },
     "subscription": {
       "heading": "Subscription",
-      "loadingPlans": "Loading the plans…",
       "place": {
         "app_store": "In the App Store",
         "website": "On zenbujapanese.com"
@@ -138,7 +138,7 @@
         "pending": "Waiting for your payment",
         "paused": "Paused",
         "expired": "Ended",
-        "revoked": "Refunded"
+        "revoked": "Refunded or revoked"
       },
       "renews": "Renews on {date}.",
       "ends": "Ends on {date}.",
@@ -146,7 +146,7 @@
       "fixPaymentAppStore": "Update your payment method in the App Store to keep syncing.",
       "pendingDetail": "It starts once your payment arrives.",
       "manage": "Manage your subscription",
-      "manageExplained": "Change your plan, update your payment method, see your invoices, or cancel, on Stripe.",
+      "manageExplained": "Update your payment method, see your invoices, or cancel, on Stripe.",
       "appStoreManaged": "You subscribed in the Zenbu Japanese app, so it’s managed in the App Store: change or cancel it in your Apple Account’s subscriptions.",
       "openAppStore": "Open your App Store subscriptions",
       "payingTwice": "You’re paying for two subscriptions, one in the App Store and one here. Cancel the one you don’t need where you bought it.",
@@ -185,7 +185,11 @@
       "terms": "You pay on Stripe’s secure checkout page. Your subscription renews automatically until you cancel it, which you can do here at any time.",
       "inTheApp": "Subscribe in the Zenbu Japanese app on your iPhone, iPad, or Mac.",
       "waiting": "Thanks! We’re confirming your payment with Stripe…",
-      "slow": "Stripe hasn’t confirmed your payment yet. It can take a few minutes: reload this page to check."
+      "slow": "Stripe hasn’t confirmed your payment yet. A card payment takes a few minutes, and a bank debit or konbini payment can take a few days. Your subscription shows here once it’s confirmed.",
+      "failedPaymentWebsite": "Your last payment didn’t go through. Update your payment method in Manage your subscription to sync again.",
+      "failedPaymentAppStore": "Your last payment didn’t go through. Update your payment method in the App Store to sync again.",
+      "planAndPrice": "{plan}, {price}",
+      "plansUnavailable": "The plans aren’t available right now. Try again in a few minutes."
     },
     "messages": {
       "refusals": {
@@ -209,7 +213,8 @@
         "alreadySubscribed": "Your account already has a subscription. Reload this page to see it.",
         "billingUnavailable": "Payments aren’t answering right now, so nothing changed. Try again in a few minutes.",
         "noWebsiteSubscription": "This account hasn’t subscribed on this website. A subscription bought in the App Store is managed there.",
-        "unknownPrice": "That plan isn’t offered anymore. Reload this page to see the plans."
+        "unknownPrice": "That plan isn’t offered anymore. Reload this page to see the plans.",
+        "paymentConfirming": "Stripe is still confirming your last payment, so nothing new was started. Your subscription shows here once it’s confirmed."
       },
       "signsInWithAProvider": {
         "offered": "This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.",
@@ -1294,7 +1299,7 @@
         "why": "To keep your devices and apps in step"
       },
       "subscription": {
-        "what": "Your subscription, if you have one: where you bought it (the App Store or this website), its plan and status, when it renews or ends, and each payment, refund, or dispute, with its amount and date. Never your card details",
+        "what": "Your subscription, if you have one: where you bought it (the App Store or this website), its plan and status, when it renews or ends, and each payment, failed payment, refund, dispute, or card network's fraud warning, with its amount and date. Never your card details",
         "why": "To unlock syncing on every device you sign in to, and to keep a record of what you paid"
       },
       "changes": {
@@ -1317,7 +1322,7 @@
       "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
       "ahrefs": "{provider} counts visits to this website with Ahrefs Web Analytics, which uses no cookies.",
       "google": "{provider} serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google.",
-      "apple": "{provider} signs you in if you choose Apple, and takes the payment for a subscription you buy in the iPhone app.",
+      "apple": "{provider} signs you in if you choose Apple, and takes the payment for a subscription you buy in our apps on iPhone, iPad, or Mac.",
       "youtube": "{provider} receives your requests when you use Player.",
       "where": "These companies may process information in the United States and other countries. If we add anything to Google Tag Manager that uses cookies, we'll update this policy and ask for consent where the law requires it."
     },
@@ -1331,11 +1336,11 @@
       },
       "subscription": {
         "what": "Your subscription and payment records",
-        "howLong": "Kept after you delete your account, without your account, as our record of payments"
+        "howLong": "7 years after the payment or the subscription's end, also after you delete your account, then deleted"
       },
       "deletedAccount": {
         "what": "That an account was deleted",
-        "howLong": "Its account ID and when it was deleted, with nothing else, kept so a payment that arrives for it afterwards is refunded"
+        "howLong": "Its account ID and when it was deleted, with nothing else, for 7 years, so a payment that arrives for it afterwards is refunded"
       },
       "sessions": {
         "what": "Sessions",

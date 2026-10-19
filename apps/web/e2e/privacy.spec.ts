@@ -97,7 +97,7 @@ test.describe('privacy policy', () => {
       /^How you sign in: Apple, Google, or a code we email you.*To sign you in/,
       /^Your sessions: .*IP address.*keep the service secure/,
       /^Your study data: known words and lists.*Player.*Translate sentences you bookmark.*in step/,
-      /^Your subscription, if you have one: where you bought it.*each payment, refund, or dispute.*Never your card details.*record of what you paid$/,
+      /^Your subscription, if you have one: where you bought it.*each payment, failed payment, refund, dispute, or card network's fraud warning.*Never your card details.*record of what you paid$/,
       /^A record of each change you sync/
     ])
   })
@@ -110,7 +110,7 @@ test.describe('privacy policy', () => {
       /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
       /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
       /^Google serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google/,
-      /^Apple signs you in if you choose Apple, and takes the payment for a subscription you buy in the iPhone app\.$/,
+      /^Apple signs you in if you choose Apple, and takes the payment for a subscription you buy in our apps on iPhone, iPad, or Mac\.$/,
       /^YouTube receives your requests when you use Player/
     ])
     await expectNamed(page, 'Who else handles your information', [
@@ -123,8 +123,8 @@ test.describe('privacy policy', () => {
   test('says how long each kind of data is kept', async ({ page }) => {
     await expect(tableRows(page, 'How long')).toHaveText([
       /^Your account and study data.*Until you delete your account$/,
-      /^Your subscription and payment records.*Kept after you delete your account, without your account, as our record of payments$/,
-      /^That an account was deleted.*Its account ID and when it was deleted, with nothing else/,
+      /^Your subscription and payment records.*7 years after the payment or the subscription's end, also after you delete your account, then deleted$/,
+      /^That an account was deleted.*Its account ID and when it was deleted, with nothing else, for 7 years/,
       /^Sessions.*60 days after you last use one$/,
       /^Sign-in codes.*10 minutes$/,
       /^Request counts.*A day after the last request$/,

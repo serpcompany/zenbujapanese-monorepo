@@ -1,5 +1,5 @@
 import type { Locale } from '../i18n/config'
-import { countOf, fill, formatDate } from '../i18n/format'
+import { countOf, fill, formatMoment } from '../i18n/format'
 import { localizedPath } from '../i18n/paths'
 import type { HeldSubscription, Plan, Subscription } from './answers'
 import type { AccountText } from './messages'
@@ -30,8 +30,8 @@ export const offersOnlyInTheApp = (subscription: Subscription) =>
 export const runsOnTheWebsite = (subscription: Subscription) =>
   subscription.running.some(held => held.managedIn === 'website')
 
-export const runsInTheAppStore = (subscription: Subscription | null | undefined) =>
-  subscription?.running.some(held => held.managedIn === 'app_store') ?? false
+export const renewsInTheAppStore = (subscription: Subscription) =>
+  subscription.running.some(held => held.managedIn === 'app_store' && held.willRenew !== false)
 
 export const isShown = (subscription: Subscription) =>
   shownSubscriptions(subscription).length > 0 ||
@@ -52,15 +52,22 @@ export function priceOf(plan: Plan, locale: Locale, words: Words): string {
   return fill(words.planPrice, { price, period })
 }
 
-const dayOf = (moment: string) => moment.slice(0, 10)
-
-export function detailOf(held: HeldSubscription, locale: Locale, words: Words): string | null {
-  if (held.status === 'grace_period' || held.status === 'billing_retry') {
-    return held.managedIn === 'website' ? words.fixPaymentWebsite : words.fixPaymentAppStore
+export function detailOf(
+  held: HeldSubscription,
+  locale: Locale,
+  words: Words,
+  timeZone?: string
+): string | null {
+  const website = held.managedIn === 'website'
+  if (held.status === 'grace_period') {
+    return website ? words.fixPaymentWebsite : words.fixPaymentAppStore
+  }
+  if (held.status === 'billing_retry') {
+    return website ? words.failedPaymentWebsite : words.failedPaymentAppStore
   }
   if (held.status === 'pending') return words.pendingDetail
   if (held.status !== 'active' || held.expiresAt === null) return null
-  const date = formatDate(dayOf(held.expiresAt), locale)
+  const date = formatMoment(held.expiresAt, locale, timeZone)
   return fill(held.willRenew === false ? words.ends : words.renews, { date })
 }
 
