@@ -10,12 +10,13 @@ translating run on it, as they do inside the app. How it's built is in
 
 ## Look Up in Zenbu
 
-**Look Up in Zenbu** is a Shortcuts action that takes text and opens Zenbu on it. Siri runs it
-from "Zenbu" on its own, "Zenbu look up", "Look up in Zenbu", or "Look up a word in Zenbu", each
-also with "Zenbu Japanese", and asks what to look up; Spotlight lists it with the app's other
-shortcuts. A phrase can't carry the word itself, so "Zenbu look up 見る" in one breath isn't a
-phrase Siri knows. In Shortcuts it takes the text the step before it hands on, so
-a shortcut shown in the share sheet can pass it the shared text.
+**Look Up in Zenbu** is a Shortcuts action that takes text and opens Zenbu on it. Siri runs it from
+"Zenbu look up", "Zenbu lookup", "Look up in Zenbu", or "Look up a word in Zenbu", each also with
+"Zenbu Japanese", and asks what to look up; Spotlight lists it with the app's other shortcuts.
+"Zenbu" on its own is a phrase for it too, but whether Siri runs it rather than opening the app
+isn't checked yet (Checked by hand, below). A phrase can't carry the word itself, so "Zenbu look up
+見る" in one breath isn't a phrase Siri knows. In Shortcuts it takes the text the step before it hands
+on, so a shortcut shown in the share sheet can pass it the shared text.
 
 From any tab, Translate included, Zenbu switches to Search and closes an open word sheet. A running
 Translate conversation keeps going. Then:
