@@ -28,7 +28,7 @@ async function inView(slide: Locator) {
 }
 
 test.describe('the Zenbu Japanese for iPhone page', () => {
-  test('leads with the app, its Get the app button to the App Store placeholder, and the facts', async ({
+  test('leads with the app, its Get the app button to the App Store, and the facts', async ({
     page
   }) => {
     await page.goto(path)
