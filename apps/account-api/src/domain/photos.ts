@@ -46,8 +46,18 @@ export const notUploaded = rejection(
 const noPhoto = rejection('unknown_photo', 'That photo is not in this account, or was deleted.')
 const full = rejection('photo_full', `A photo is on at most ${photoLimits.wordsPerPhoto} words.`)
 
-const photoChange = (photo: Photo): Change =>
-  photo.status === 'shown' && photo.name !== null && photo.savedAt !== null
+function photoChange(photo: Photo): Change {
+  if (photo.status === 'emptied') {
+    return {
+      entity: 'photo',
+      entityId: photo.id,
+      operation: 'delete',
+      version: photo.version,
+      data: null,
+      emptied: true
+    }
+  }
+  return photo.status === 'shown' && photo.name !== null && photo.savedAt !== null
     ? {
         entity: 'photo',
         entityId: photo.id,
@@ -56,6 +66,7 @@ const photoChange = (photo: Photo): Change =>
         data: { id: photo.id, name: photo.name, savedAt: photo.savedAt }
       }
     : gone('photo', photo.id, photo.version)
+}
 
 const photoWordChange = (word: PhotoWord): Change => {
   const entityId = listWordEntityId(word.photoId, word.itemId)

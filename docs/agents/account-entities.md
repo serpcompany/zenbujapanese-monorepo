@@ -99,8 +99,9 @@ and the email typed while signed out.
   - `add` sends the name and `savedAt`, and applies once the account holds the file
     (`photo_not_uploaded` before), whatever the photo's version: the same image saved again after
     a delete comes back.
-  - Removing its last word empties it, as the app does: it syncs as a `delete`, but keeps its file
-    and name for 30 days, and a word added from a device that never saw the removal brings it back.
+  - Removing its last word empties it, as the app does: it syncs as a `delete` marked `emptied:
+    true`, but keeps its file, its place among the 1,000, and its name for 30 days, and a word added
+    from a device that never saw the removal brings it back.
     So a word removed on one device and another added offline elsewhere end the same whichever
     syncs first, and no add is lost.
   - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it marks
@@ -109,14 +110,16 @@ and the email typed while signed out.
     same image is saved again before it syncs.
   - Housekeeping empties a photo left with no word for a day, as when its words' adds failed, so
     the account shows no photo that no word shows, and deletes an emptied photo after 30 days,
-    never sooner, since a word queued on a device may still bring it back.
+    never sooner, since a word queued on a device may still bring it back. That deletion syncs as a
+    plain `delete`, so devices learn its place was freed.
   - The account remembers its latest 1,000 deleted photos, as it does notes, and forgets an older
     one with its words.
   - **What the account forgets, no device keeps.** The account keeps the highest version and
     journal sequence it forgot of each kind (`forgotten_versions`). A note, photo, or word saved
     again after it's forgotten starts past that version, so a change from before conflicts rather
-    than applying, and a cursor from before that sequence is refused `410 invalid_cursor`: the
-    device reads everything again and drops what it had from the account that didn't come.
+    than applying, and a device whose cursor the account has since forgotten a deletion past is
+    refused `410 invalid_cursor`: it reads everything again and drops the notes, photos, and words
+    it had from the account that didn't come. A read from no cursor is never refused for them.
 - **Photo word** (`photoWord`, `<photo>/<item>`): a word or kanji the photo is on, by the same rule
   as a list word (`add` always applies to a photo the account has, `unknown_photo` otherwise;
   `remove` only at its version), with at most 500 a photo (`photo_full`). A removed word keeps its

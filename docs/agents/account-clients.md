@@ -338,8 +338,7 @@ and the cursor across launches.
 
 ## How to sync
 
-`POST /v1/sync` with the queued changes and the cursor from the last sync you applied, or none the
-first time:
+`POST /v1/sync` with the queued changes and the cursor from the last sync you applied, or none:
 
 1. **Queue each change as it's made**, with:
    - a new UUID as its `id`, kept with it;
@@ -357,9 +356,8 @@ first time:
      your copy.
    - `rejected`: undo the change on the device, unless it was part of the first upload (below),
      or the code is `unknown_entity`: the service is older than your app, so keep the change, stop
-     sending that entity's changes, and upload it again later, as a first upload.
-     To try something else, queue a new change with a new `id`; never send a result's `id` again
-     with a different change.
+     sending that entity's changes, and upload it again later, as a first upload. To try something
+     else, queue a new change with a new `id`; never send a result's `id` with a different change.
 4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the
    entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
    A list word can arrive a page before its list: hold it until `hasMore` is false. An entity
@@ -367,8 +365,10 @@ first time:
    change's result. A conflict's `current` replaces it. If the change is applied at a newer
    version, the account's copy of that comes in `changes`; if it's applied at the held copy's
    version (it changed nothing), or rejected, take the held copy.
-5. **On `410 invalid_cursor`**, sync again with no cursor, take what comes back over your copy, and
-   drop each entity you hold a version for that the whole read didn't bring. Queued changes go.
+5. **On `410 invalid_cursor`**, sync again with no cursor; queued changes still go. **A read from no
+   cursor is a full read** (a first sign-in, a catch-up, after a 410): at `hasMore: false`, drop
+   each note, photo, and photo word you hold a version for that it didn't bring, send, or still has
+   queued, and nothing else. A 410 during a full read: back off and report it, never loop.
 
 A request and its answer:
 
@@ -459,7 +459,7 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
-| `410 invalid_cursor` | Sync again with no cursor; drop what you had that didn't come back. |
+| `410 invalid_cursor` | Read again from no cursor, as a full read (How to sync, step 5). |
 | `413 too_large` | The body is over 64 KB: send fewer mutations at a time. A photo's file is over 12 MB: keep the photo on the device only. |
 | `400 photo_digest_mismatch` | The bytes sent aren't the file the ID names: read the file again, and upload it once more. |
 | `409 too_many_photos`, `415 unsupported_photo` | The account can't keep this file: keep the photo on the device only. |

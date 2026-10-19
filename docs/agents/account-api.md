@@ -206,9 +206,8 @@ the iOS app, the videos the learner watched in its Player and the Translate sent
 bookmarked; and, since #867, notes, Media Library photos and their words, the profile photo,
 settings, and recent searches. Each has its own rule in `src/domain`, never blanket last-write-wins,
 and none needs a clock to settle a conflict: a change says the version it was made to, and the rule
-decides what a stale one does. Each rule but the profile's is in
-[`account-entities.md`](account-entities.md). `PATCH /v1/me` and a sync mutation change the profile
-through the same rule:
+decides what a stale one does ([`account-entities.md`](account-entities.md) has all but the
+profile's). `PATCH /v1/me` and a sync mutation change the profile through the same rule:
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
   invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
@@ -247,13 +246,14 @@ through the same rule:
   and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
   older service can answer a newer app.
-- **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
-  account with a key derived from `ACCOUNT_API_SECRET`, so it shows nothing of the journal, and a
-  sync that reads nothing new answers the cursor it was sent. A cursor another account was given,
-  one past the end of the journal, as when an environment goes back to a database it left, or one
-  older than a deletion the account has since forgotten (`forgotten_versions`), is refused with
-  `410 invalid_cursor` before anything applies. The client then syncs from no cursor, keeps what
-  comes back, and drops what it had from the account that doesn't. A new secret does that once.
+- **The cursor** is opaque: a journal position and the forgotten mark it was checked against
+  (`forgotten_versions`' highest sequence), encrypted and authenticated (AES-256-GCM) with a key
+  from `ACCOUNT_API_SECRET`, so a new secret refuses every cursor once; one from before marks reads
+  as marked 0, and a sync that reads nothing new answers the cursor it was sent. A cursor another
+  account was given, one past the journal's end (as after going back to an older database), or one
+  the account has since forgotten a deletion past, beyond its mark and position, is refused `410
+  invalid_cursor` before anything applies, and the client reads again from no cursor. Such a full
+  read is never refused for what was forgotten before it began or by its own changes.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Deleting an account
@@ -418,9 +418,9 @@ way and call the routes with their access tokens. They show:
   paging; queued mutations applied in order; a retry applied once and answered the same; a
   conflict, again on a retry; unknown entities and operations, and a reused ID, rejected while the
   rest apply; and a result forgotten after 30 days.
-- **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged or
-  too-new cursor refused before anything applies; the request bounds, and fields that nest or hold
-  control characters; and logs that hold no profile, email, or token.
+- **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged, too-new,
+  or forgotten-past cursor refused before anything applies, once, and a full read never refused
+  (`sync-forgotten.test.ts`); request bounds; nested or control-character fields; and safe logs.
 - **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.

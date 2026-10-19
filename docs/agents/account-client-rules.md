@@ -107,8 +107,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   as a list word.
 - **Removing a word** sends a `remove` at the version your app had, which conflicts if the photo
   was put on that word again elsewhere: take `current`. When the photo's last word goes, the
-  account empties the photo, which comes down as the photo's `delete`; send only the word's
-  `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
+  account empties the photo, which comes down as its `delete` marked `emptied: true`; send only the
+  word's `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
   again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
   added elsewhere since: when a photo is deleted, drop its words on the device. Each word's removal
@@ -121,7 +121,9 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
   image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), where a
-  photo emptied in the last 30 days still holds its place: send it again once one is deleted.
+  photo emptied in the last 30 days still holds its place. A refused-as-too-many file is worth
+  sending again once a photo `delete` without `emptied` comes down, or the device deletes one the
+  account held; an `emptied` one frees no place.
 - **A download that answers `404`** never deletes anything: `not_found` means the account no
   longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
   account lost the file, which comes back when a device that holds the image uploads it, as one

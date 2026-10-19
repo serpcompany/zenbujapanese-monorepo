@@ -150,4 +150,21 @@ describe('what the account remembers of removed photos and words', () => {
       appliedAt(3, 3)
     )
   })
+
+  test('a device away while the account forgets a photo deleted with no words is refused once, then drops the photo', async () => {
+    const learner = await accounts.learner('photo-forgotten-away@example.com')
+    const { photoId, phone, pad } = await devicesWithPhoto(learner, aJpeg(), [])
+    phone.change('photo', 'delete', photoId)
+    await phone.sync()
+    await rows(
+      `insert into photos (user_id, id, status, version) select '${learner.userId}', md5(n::text) || md5(n::text), 'deleted', 2 from generate_series(1, ${photoLimits.goneKept}) as n`
+    )
+    const next = await uploaded(accounts, learner)
+    phone.change('photo', 'add', next, add(next).fields)
+    await phone.sync()
+    expect(await journaled(learner, photoId)).toBe(0)
+    await pad.sync()
+    expect(pad.local.has(`photo:${photoId}`)).toBe(false)
+    expect(pad.state()).toEqual(phone.state())
+  })
 })

@@ -155,7 +155,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 - **200**, [`SyncAnswer`](#syncanswer): The results and the changes.
 - **400** `bad_request`: The body is not JSON, or not this shape.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
-- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or is older than a note, photo, or photo word's deletion the account has since forgotten. Nothing was applied. Sync again with no cursor, keep what comes back, and drop what your app holds from the account that doesn't.
+- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.
@@ -845,7 +845,7 @@ Fields ([`NoteFields`](#notefields)), and no others:
 
 ### Entity `photo`
 
-A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's 1,000 for its 30 days, so the word that brings it back always finds it.
+A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` marked `emptied: true` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's 1,000 for its 30 days, so the word that brings it back always finds it; then it's deleted, which syncs as a plain `delete`, freeing its place.
 
 - **ID** (`entityId`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
 - **Read with:** `photos:read`
@@ -1337,6 +1337,13 @@ One of:
   - `operation` (`"delete"`, required)
   - `version` (integer, required)
   - `data` (null, required)
+- `entity` `"photo"`, `operation` `"delete"`, `emptied` `true`
+  - `entity` (`"photo"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"delete"`, required)
+  - `version` (integer, required)
+  - `data` (null, required)
+  - `emptied` (`true`, required): The photo was emptied, its last word removed, not deleted. Drop it and its words as for any delete, but no place among the account's files was freed: it keeps its file for 30 days, and a word added from elsewhere brings it back. Any other delete leaves this out.
 
 ### KnownWord
 

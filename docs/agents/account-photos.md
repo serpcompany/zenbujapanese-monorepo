@@ -55,8 +55,9 @@ would change the hash the photo is named by.
   a learner builds by hand, while bounding what one account can store at 12 GB. A typical photo
   of a few MB puts a full library near 3 GB. An emptied photo holds its place for its 30 days:
   the service can't tell whether a device has a word queued that brings it back, so it never
-  deletes one early. An app with only `profile` isn't held to the 1,000, only to its own two, so
-  the library's count tells it nothing.
+  deletes one early. Its `delete` comes marked `emptied: true`, and the one 30 days on comes plain,
+  so a device knows when a place is freed. An app with only `profile` isn't held to the 1,000, only
+  to its own two, so the library's count tells it nothing.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
   library takes a few minutes, bound by the device's connection rather than the limit.
@@ -161,8 +162,8 @@ whatever other apps upload, setting a library photo once it uploads the image, a
 the profile photo moved off or it never set. `src/http/photo-bounds.test.ts` shows a device away
 during a thousand word removals from other photos still told of one before them, one away while a
 photo is deleted and saved again dropping its old words, one whose cursor predates a forgotten
-removal refused `410`, rereading, and dropping the word, and a photo word or photo the account
-forgot coming back past its versions. `src/http/delete-account.test.ts`
+word removal or photo deletion refused `410`, rereading, and dropping it, and a photo word or photo
+the account forgot coming back past its versions. `src/http/delete-account.test.ts`
 deletes an account's folder from storage with it, a file no row names included, and then refuses
 its token at both routes (`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo
 six times at once: one file is kept, and the other copies are swept; and it deletes the file
