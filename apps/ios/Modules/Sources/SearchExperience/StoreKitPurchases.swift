@@ -95,7 +95,8 @@ actor StoreKitPurchases: AppStorePurchases {
     guard case .verified(let transaction) = result else { return nil }
     return StoreTransaction(
       id: String(transaction.id), productID: transaction.productID,
-      signedTransaction: result.jwsRepresentation, finish: { await transaction.finish() })
+      signedTransaction: result.jwsRepresentation, signedAt: transaction.signedDate,
+      finish: { await transaction.finish() })
   }
 
   private nonisolated static func offer(_ product: Product) async -> SubscriptionOffer {

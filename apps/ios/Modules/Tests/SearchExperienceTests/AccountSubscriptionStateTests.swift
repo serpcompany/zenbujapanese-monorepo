@@ -147,6 +147,64 @@ struct AccountSubscriptionStateTests {
     #expect(fixture.server.requests(to: "POST /v1/sync").count > syncs)
   }
 
+  @Test func readsTheSubscriptionNowAndThenWhileSyncWaitsForOne() async throws {
+    let required = StubReply.json(200, Answers.answer())
+    let fixture = try await Answers.signedIn { _ in required }
+    let reads = { fixture.server.requests(to: "GET /v1/me/subscription").count }
+    fixture.markKnown(AccountFixture.taberu)
+    fixture.now += ZenbuAccount.waitingReadEvery + 1
+    let before = reads()
+
+    try await fixture.syncNow()
+    await fixture.account.subscriptionWork?.value
+    try await fixture.syncNow()
+    await fixture.account.subscriptionWork?.value
+    #expect(reads() == before + 1)
+
+    fixture.now += ZenbuAccount.waitingReadEvery + 1
+    try await fixture.syncNow()
+    await fixture.account.subscriptionWork?.value
+    #expect(reads() == before + 2)
+  }
+
+  @Test func syncNowReadsTheSubscriptionFirstSoAWebsitePurchaseSyncsAtOnce() async throws {
+    let calls = CallCount()
+    let required = StubReply.json(200, Answers.answer())
+    let website = StubReply.json(200, Answers.subscribed("website"))
+    let fixture = try await Answers.signedIn { _ in calls.next() <= 2 ? required : website }
+    fixture.markKnown(AccountFixture.taberu)
+    try await fixture.syncNow()
+    await fixture.account.subscriptionWork?.value
+    let syncs = fixture.server.requests(to: "POST /v1/sync").count
+
+    await fixture.account.syncNowAsked()
+    await fixture.account.scheduler.settled()
+
+    #expect(fixture.server.requests(to: "POST /v1/sync").count > syncs)
+    #expect(!fixture.queuedOperations.contains("knownWord mark \(AccountFixture.taberu)"))
+  }
+
+  @Test func keepsAUsernameEditedAfterANameEditWhoseAnswerWasLost() async throws {
+    let profiles = StubProfiles()
+    let fixture = AccountFixture()
+    let required = StubReply.json(200, Answers.answer())
+    fixture.serve(subscription: { _ in required }, profiles: profiles)
+    await fixture.launch()
+    try await fixture.signIn()
+    await fixture.account.subscriptionWork?.value
+    await fixture.account.scheduler.settled()
+
+    profiles.dropNextAnswer()
+    fixture.profile.edit(ProfileFields(name: "Kana Fan"))
+    await #expect(throws: AccountServiceError.self) { try await fixture.syncNow() }
+    fixture.profile.edit(ProfileFields(name: "Kana Fan", username: "kanafan"))
+    try await fixture.syncNow()
+
+    #expect(profiles.held.name == "Kana Fan")
+    #expect(profiles.held.username == "kanafan")
+    #expect(!fixture.queuedOperations.contains { $0.hasPrefix("profile") })
+  }
+
   @Test func keepsTheQueueAndReadsTheSubscriptionAgainWhenSyncNeedsOne() async throws {
     let fixture = AccountFixture()
     fixture.serve(sync: { _ in .error(402, "subscription_required") })

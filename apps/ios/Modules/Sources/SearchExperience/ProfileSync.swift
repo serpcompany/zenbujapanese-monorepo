@@ -46,6 +46,13 @@ struct SyncedProfile: Decodable, Sendable {
   let version: Int
 
   var fields: ProfileFields { ProfileFields(name: name, username: username ?? "") }
+
+  func holds(_ change: [String: SyncFieldValue]) -> Bool {
+    let held: [String: SyncFieldValue] = [
+      "name": .string(name), "username": username.map(SyncFieldValue.string) ?? .null,
+    ]
+    return !change.isEmpty && change.allSatisfy { held[$0.key] == $0.value }
+  }
 }
 
 struct FirstProfileSync: Sendable {

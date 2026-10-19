@@ -23,7 +23,7 @@ enum SubscriptionText {
     case .pending: String(localized: "Waiting for payment")
     case .paused: String(localized: "Paused")
     case .expired: String(localized: "Ended")
-    case .revoked: String(localized: "Refunded")
+    case .revoked: String(localized: "Refunded or revoked")
     case .none: String(localized: "None")
     }
   }
@@ -99,6 +99,18 @@ enum SubscriptionText {
       String(localized: "This Apple Account has no Zenbu subscription to restore.")
     case .notOffered:
       String(localized: "This account already has a subscription.")
+    case .appleAccountSubscribed:
+      String(
+        localized:
+          "This Apple Account already has a Zenbu subscription. Restore Purchases to use it with this account."
+      )
+    case .paymentPending:
+      String(
+        localized:
+          "This account's subscription is waiting for its first payment. Syncing starts once it arrives."
+      )
+    case .notNeeded:
+      String(localized: "Syncing doesn't need a subscription for this account right now.")
     }
   }
 

@@ -33,6 +33,9 @@ final class ZenbuAccount {
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let session: URLSession
   @ObservationIgnored private let providers: SignInProviders
+  @ObservationIgnored private let now: @MainActor () -> Date
+  @ObservationIgnored private var lastWaitingRead: Date?
+  static let waitingReadEvery: TimeInterval = 5 * 60
 
   init(
     configuration: AccountServiceConfiguration,
@@ -54,6 +57,7 @@ final class ZenbuAccount {
     self.api = api
     self.session = session
     self.providers = providers
+    self.now = now
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
@@ -62,11 +66,12 @@ final class ZenbuAccount {
     subscription = AccountSubscription(
       api: api, tokens: sync.tokens, store: store,
       fileURL: fileURL.deletingLastPathComponent().appending(path: AccountSubscription.fileName),
-      signedInAs: { [sync] in sync.account?.userID })
+      signedInAs: { [sync] in sync.account?.userID }, now: now)
     subscription.onActive = { [scheduler] in scheduler.syncNow() }
     subscription.onSyncAllowed = { [scheduler] in scheduler.syncNow() }
     sync.waitsForSubscription = { [subscription] in subscription.syncNeedsSubscription }
     sync.onRefusedForSubscription = { [weak self] in self?.refreshSubscription() }
+    sync.onWaitingForSubscription = { [weak self] in self?.readWhileSyncWaits() }
   }
 
   var account: SignedInAccount? { sync.account }
@@ -150,6 +155,19 @@ final class ZenbuAccount {
 
   func appBecameActive() {
     scheduler.appBecameActive()
+    refreshSubscription()
+  }
+
+  func syncNowAsked() async {
+    await subscriptionWork?.value
+    await subscription.refresh()
+    await scheduler.refresh()
+  }
+
+  private func readWhileSyncWaits() {
+    let at = now()
+    if let lastWaitingRead, at.timeIntervalSince(lastWaitingRead) < Self.waitingReadEvery { return }
+    lastWaitingRead = at
     refreshSubscription()
   }
 

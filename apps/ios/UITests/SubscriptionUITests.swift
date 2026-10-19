@@ -101,6 +101,7 @@ final class SubscriptionUITests: ZenbuUITestCase {
     signInWithApple(in: app)
     tap(find("account.zenbu-account", in: app))
     waitUntil(find("subscription.detail", in: app), mentions: "Ends on")
+    waitFor(labeled("Managed by the Apple Account that bought it.", in: app))
     tap(find("subscription.manage", in: app))
     waitFor(find("app-store-subscriptions.stand-in", in: app))
   }

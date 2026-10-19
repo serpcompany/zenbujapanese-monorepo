@@ -63,3 +63,46 @@ enum SubscriptionAnswers {
     return try await signedIn { $0.method == "GET" ? read : purchases }
   }
 }
+
+final class StubProfiles: @unchecked Sendable {
+  private let lock = NSLock()
+  private var name = ""
+  private var username: String?
+  private var version = 1
+  private var dropsNextAnswer = false
+
+  var held: (name: String, username: String?) { lock.withLock { (name, username) } }
+
+  func dropNextAnswer() {
+    lock.withLock { dropsNextAnswer = true }
+  }
+
+  func reply(to request: StubRequest) -> StubReply {
+    lock.withLock {
+      guard request.method == "PATCH" else { return current }
+      let body = request.json
+      guard body["baseVersion"] as? Int == version else { return .error(409, "version_conflict") }
+      if let edited = body["name"] as? String { name = edited }
+      if let edited = body["username"] as? String { username = edited }
+      version += 1
+      guard !dropsNextAnswer else {
+        dropsNextAnswer = false
+        return .offline
+      }
+      return current
+    }
+  }
+
+  private var current: StubReply {
+    .json(200, AccountFixture.profile(name: name, username: username, version: version))
+  }
+}
+
+@MainActor
+final class Said {
+  private(set) var lines: [String] = []
+
+  func say(_ line: String) {
+    lines.append(line)
+  }
+}

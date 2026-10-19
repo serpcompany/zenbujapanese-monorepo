@@ -117,10 +117,11 @@ struct StoreKitPurchasesTests {
     }
   }
 
-  @Test func syncsWithTheAppStoreToRestore() async throws {
-    let session = try await Self.session()
-    try await StoreKitPurchases().syncWithAppStore()
-    session.clearTransactions()
+  @Test func restoresBySyncingWithTheAppStoreThenListingWhatItHolds() async throws {
+    let (session, store) = try await Self.holding(Self.yearly)
+    defer { session.clearTransactions() }
+    try await store.syncWithAppStore()
+    #expect(Self.products(await store.currentTransactions()) == [Self.yearly])
   }
 
   @Test func refusesAProductTheStoreDoesNotSell() async throws {

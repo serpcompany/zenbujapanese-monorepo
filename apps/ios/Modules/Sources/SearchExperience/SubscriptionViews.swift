@@ -79,12 +79,6 @@ struct SubscriptionProblemText: View {
       Text(SubscriptionText.problem(problem))
         .foregroundStyle(.secondary)
         .accessibilityIdentifier(identifier)
-        .onAppear {
-          AccessibilityNotification.Announcement(SubscriptionText.problem(problem)).post()
-        }
-        .onChange(of: problem) { _, now in
-          AccessibilityNotification.Announcement(SubscriptionText.problem(now)).post()
-        }
     }
   }
 }

@@ -70,7 +70,7 @@ struct KnownSubscription: Codable, Equatable, Sendable {
   let running: [Running]
   let canSubscribe: Bool
   let cloudAccess: CloudAccess
-  let appAccountToken: UUID
+  let appAccountToken: UUID?
   let offers: Offers
 
   init(from decoder: Decoder) throws {
@@ -83,7 +83,7 @@ struct KnownSubscription: Codable, Equatable, Sendable {
     running = try container.decodeIfPresent([Running].self, forKey: .running) ?? []
     canSubscribe = try container.decode(Bool.self, forKey: .canSubscribe)
     cloudAccess = try container.decode(CloudAccess.self, forKey: .cloudAccess)
-    appAccountToken = try container.decode(UUID.self, forKey: .appAccountToken)
+    appAccountToken = try? container.decodeIfPresent(UUID.self, forKey: .appAccountToken)
     offers = try container.decode(Offers.self, forKey: .offers)
   }
 
@@ -119,7 +119,10 @@ struct StoreTransaction: Sendable {
   let id: String
   let productID: String
   let signedTransaction: String
+  let signedAt: Date
   let finish: @Sendable () async -> Void
+
+  var deliveryKey: String { "\(id)@\(signedAt.timeIntervalSince1970)" }
 }
 
 enum StorePurchase: Sendable {
@@ -147,6 +150,9 @@ enum SubscriptionProblem: String, Codable, Equatable, Sendable {
   case pendingApproval
   case nothingToRestore
   case notOffered
+  case appleAccountSubscribed
+  case paymentPending
+  case notNeeded
 }
 
 struct AccountDeletion: Decodable, Sendable {

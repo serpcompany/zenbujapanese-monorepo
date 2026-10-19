@@ -61,16 +61,20 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **Reading.** `GET /v1/me/subscription` after signing in, at launch once the account's file has
   loaded, on becoming active, and on opening Zenbu Account. The answer is kept in
   `account-subscription.json` beside `account-sync.json`, for that account only, and shown offline.
-  An answer that comes after the learner signed out or switched accounts is dropped, and so is one
-  asked before an answer the app already has, so a slow read can't undo a purchase. Sync and the
-  subscription asking at once share one access token refresh (`AccountTokens`), which a request
-  can stop waiting for, and a `401` refreshes through the same one.
+  An answer that comes after the learner signed out or switched accounts is dropped. A purchase's
+  answer wins over every read asked before it arrived, and reads count in the order they were
+  asked, so a slow read can't undo a purchase. Sync and the subscription asking at once share one
+  access token refresh (`AccountTokens`), which lasts until it's done even when the request that
+  started it stops waiting, and a `401` refreshes through the same one.
 - **Offering.** **Subscribe to Sync…** shows only when the service says sync needs a subscription
   (`cloudAccess: subscription_required`), `canSubscribe` is true, the App Store offers products,
   the Apple Account has no subscription of its own running, and no `409` is waiting, so no learner
   is offered a second subscription or one sync doesn't need. Opening the paywall and buying read the
-  subscription again first, and buying refuses when it's no longer offered (a website purchase that
-  just landed). An App Store that sells none of the plans says so.
+  subscription again first: buying needs that fresh answer, says so when the service can't be
+  reached, and refuses when it's no longer offered (a website purchase that just landed). When
+  nothing is offered the paywall says why (the Apple Account already subscribes, a first payment
+  is on its way, sync needs none now, the account has one), and an App Store that sells none of
+  the plans says so.
   The products are the service's `offers.appStore`, in its order, read from StoreKit; the app names
   none itself. A plan's introductory offer, a free trial or a lower first price, shows with its
   terms when StoreKit says the Apple Account may have it (`isEligibleForIntroOffer`).
@@ -80,13 +84,16 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   `POST /v1/me/subscription/apple`. The
   transaction is finished after a `200` or a `4xx` (except `401` and `429`), and left unfinished after a
   `5xx` or no network, so StoreKit hands it over again. Ask to Buy says it's waiting, across a
-  relaunch, until the approved purchase arrives; a `409` says the Apple Account's subscription is
-  another Zenbu account's, until the learner signs out or a purchase goes through.
+  relaunch, for a day, or until the approved purchase arrives or the learner tries again; a `409`
+  says the Apple Account's subscription is another Zenbu account's, until the learner signs out, a
+  purchase goes through, or the Apple Account no longer has one. These notes are kept for the
+  account they were made for, and VoiceOver reads each new one once.
 - **Listening.** From launch, once the account's file has loaded, `Transaction.updates` are sent
   the same way: a renewal, an approval, an offer code, a refund. `Transaction.unfinished` is sent
   after each read of the subscription (at launch, on becoming active, and after signing in), so a
   purchase left unfinished by a `5xx` goes again. A transaction is sent once at a time and, once
-  answered, not again until the next sign-in. A signed-out app sends and finishes nothing, so they
+  answered, not again until the next sign-in, unless StoreKit signs it again (a refund or an
+  upgrade of the same transaction). A signed-out app sends and finishes nothing, so they
   wait for the next sign-in.
 - **Signing in and restoring.** Signing in sends `Transaction.currentEntitlements`, so the Apple
   Account's subscription unlocks the account or says it's another's. **Restore Purchases** calls
@@ -99,8 +106,11 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   failed, with no step to take there. Paying in both stores shows both, and says to cancel one.
 - **Sync.** While the answer says sync needs a subscription, the app sends no `POST /v1/sync`,
   which the service would refuse; the queue waits, and the profile, which stays free, goes alone
-  through `PATCH /v1/me`. A `402 subscription_required` keeps the queue and reads the subscription
-  again. The Account row and Zenbu Account say why sync waits: no subscription, a payment being
+  through `PATCH /v1/me`; an edit whose answer was lost is recognized after the service's
+  `409`, by the account already holding it, so the edits after it go on. A waiting sync reads the
+  subscription again at most every 5 minutes, and **Sync Now** reads it first, so a website
+  purchase made while the app is open unlocks sync without a relaunch. A
+  `402 subscription_required` keeps the queue and reads the subscription again. The Account row and Zenbu Account say why sync waits: no subscription, a payment being
   retried, a paused subscription, or a first payment still to come. A subscription that turns
   active, or an answer that lets sync go, syncs at once.
 - **Deleting.** The sheet warns while an App Store subscription runs, and afterwards when
@@ -110,11 +120,15 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 
 - **Package tests**, on iPhone, iPad, and the Mac (`ios.md`, Tests on every platform), against
   `StubAccountServer` and `FakeAppStore`: `AccountSubscriptionTests` (buying, refusals, Ask to Buy,
-  restoring, listening, and offering nothing while sync is free, the website or the Apple Account
-  already has one, or the store sells none), `AccountSubscriptionStateTests` (switching accounts,
-  late and out-of-order answers, a relaunch, sync and the profile while sync waits, decoding, and
-  deleting), `SubscriptionTextTests` (each state's words), and `AccountTokenRefreshTests` (the
-  shared refresh). A reply the test sends later is a `LaterReply`, which holds no thread.
+  restoring, listening, offering nothing while sync is free, the website or the Apple Account
+  already has one, or the store sells none, buying only on a fresh read, a purchase's answer over
+  an older read, and an update signed again), `AccountSubscriptionStateTests` (switching accounts,
+  late and out-of-order answers, a relaunch, sync and the profile while sync waits, Sync Now and
+  the waiting read, a profile edit after a lost answer, decoding, and deleting),
+  `AccountSubscriptionNotesTests` (each note, how long it lasts, whose it is, why nothing is
+  offered, and what VoiceOver hears), `SubscriptionTextTests` (each state's words, and the links
+  matching the listing), and `AccountTokenRefreshTests` (the shared refresh, a cancelled starter,
+  and two `401`s). A reply the test sends later is a `LaterReply`, which holds no thread.
 - **StoreKit tests**, `ZenbuJapaneseStoreKitTests` (`apps/ios/StoreKitTests/`), on iPhone, iPad,
   and the Mac: `StoreKitPurchasesTests` runs `StoreKitPurchases` against StoreKit itself, through
   `SKTestSession` and the StoreKit configuration file `apps/ios/App/ZenbuSync.storekit` (a monthly
@@ -122,7 +136,8 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   only for an Apple Account that hasn't had the plan, a purchase whose signed transaction carries
   the account's token, the Apple Account's current purchases, a purchase made outside the app and
   not finished and handed over once, Ask to Buy and its approval, a refund, a renewal, an expiry,
-  `AppStore.sync()`, and a product StoreKit doesn't sell. StoreKit
+  restoring with `AppStore.sync()`, and a product StoreKit doesn't sell, each waiting for
+  StoreKit's own state. StoreKit
   Testing needs an app to host it, which the package's tests don't have, so this target runs inside
   the app, with its other two source files compiled in, and the scheme runs it with the UI tests
   (the same `xcodebuild … test` command, `ios.md`, Tests on every platform). `xcodebuild` doesn't

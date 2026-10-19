@@ -124,7 +124,9 @@ final class AccountFixture {
       .error(404, "not_found")
     },
     deletion: StubReply = .json(200, ["status": "deleted"]),
-    patched: StubReply = .json(200, AccountFixture.profile(name: "Kana Fan", version: 2))
+    patched: StubReply = .json(200, AccountFixture.profile(name: "Kana Fan", version: 2)),
+    profiles: StubProfiles? = nil,
+    signsInAs signedInID: String = AccountFixture.userID
   ) {
     let accessToken = StubTokens.access(expiresAt: now + tokenLifetime)
     server.respond { request in
@@ -134,7 +136,7 @@ final class AccountFixture {
       case "POST /v1/auth/email-otp/send-verification-otp":
         .json(200, ["success": true])
       case "POST /v1/auth/sign-in/email-otp", "POST /v1/auth/sign-in/social":
-        .json(200, Self.signedIn(), headers: ["set-auth-token": Self.sessionToken])
+        .json(200, Self.signedIn(as: signedInID), headers: ["set-auth-token": Self.sessionToken])
       case "POST /v1/auth/sign-in/nonce":
         .json(200, ["nonce": Self.nonce])
       case "POST /v1/sync":
@@ -144,9 +146,9 @@ final class AccountFixture {
       case "GET /v1/auth/list-accounts":
         .json(200, [["providerId": "email", "accountId": Self.email]])
       case "GET /v1/me":
-        profile
+        profiles?.reply(to: request) ?? profile
       case "PATCH /v1/me":
-        patched
+        profiles?.reply(to: request) ?? patched
       case "DELETE /v1/me":
         deletion
       case "GET /v1/me/subscription", "POST /v1/me/subscription/apple":

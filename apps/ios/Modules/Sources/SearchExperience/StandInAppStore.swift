@@ -18,8 +18,9 @@ import SwiftUI
       _ productID: String, for appAccountToken: UUID, confirmingWith action: PurchaseAction?
     ) async throws -> StorePurchase {
       let signed = "stand-in-transaction.\(productID).\(appAccountToken.uuidString)"
+      guard action != nil else { throw StorePurchaseError.unverified }
       let transaction = StoreTransaction(
-        id: signed, productID: productID, signedTransaction: signed, finish: {})
+        id: signed, productID: productID, signedTransaction: signed, signedAt: Date(), finish: {})
       await keep(transaction)
       return .purchased(transaction)
     }

@@ -145,25 +145,29 @@ it on at the service, every account syncs as before, and the app shows no subscr
   plan with its name, price, and period from the App Store, with a free trial or introductory price
   when the Apple Account may have one, and has the renewal terms, **Restore Purchases**, **Terms of
   Use**, and **Privacy Policy**. A purchase belongs to the signed-in account; one waiting for Ask to
-  Buy says so, across a relaunch, and unlocks once approved. If the Apple Account's subscription
-  belongs to another Zenbu account, the app says to sign in to that one until the learner signs
-  out. An App Store that doesn't sell the plans, or an Apple Account with nothing to restore, says
-  so; VoiceOver reads each of these notes as it appears.
+  Buy says so, across a relaunch, for a day or until it's approved or the learner tries again. If
+  the Apple Account's subscription belongs to another Zenbu account, the app says to sign in to
+  that one until the learner signs out or the Apple Account has none. The app buys only after
+  reading the account's subscription again, and says so when it can't. When nothing is offered
+  the paywall says why, and an App Store that doesn't sell the plans, or an Apple Account with
+  nothing to restore, says so; VoiceOver reads each of these notes once, as it appears.
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
   on the device and sync once the learner subscribes, and nothing queued is lost; a payment being
   retried, a paused subscription, and a first payment still to come each say that instead. The app
   sends no sync the service would refuse, but the profile, which stays free, still syncs.
-  Subscribing syncs at once.
+  Subscribing syncs at once, and so does **Sync Now** after a purchase on the website, since it
+  reads the subscription first.
 - **Restore Purchases** asks the App Store for the Apple Account's purchases and sends them; signing
   in sends them too, so an earlier subscription unlocks the account.
 
 Check: package `AccountSubscriptionTests` (the purchase and its token, no offer while sync is free
 or another subscription runs, reading again before buying, a service that's down, another
 account's purchase, Ask to Buy, a store that sells none, restoring with and without a purchase,
-signing in, and a purchase handed over twice), `AccountSubscriptionStateTests` (the answer kept per
-account, switching accounts, late answers, a relaunch, signed out, no refused sync but the profile,
-a refused sync, unknown values, and deletion's answer), and `SubscriptionTextTests` (each state's
-words); `StoreKitPurchasesTests` (iPhone, iPad, and the Mac, against StoreKit with the StoreKit
+signing in, a purchase handed over twice, buying only on a fresh read, and a purchase's answer over
+an older read), `AccountSubscriptionStateTests` (the answer kept per account, switching accounts,
+late answers, a relaunch, signed out, no refused sync but the profile, Sync Now, a refused sync,
+unknown values, and deletion's answer), `AccountSubscriptionNotesTests` (each note's life, why
+nothing is offered, and VoiceOver), and `SubscriptionTextTests` (each state's words); `StoreKitPurchasesTests` (iPhone, iPad, and the Mac, against StoreKit with the StoreKit
 configuration file: the plans and an introductory offer, a purchase carrying the account's token,
 current purchases, one made outside the app, Ask to Buy and its approval, a refund, a renewal, an
 expiry, and syncing with the App Store); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks

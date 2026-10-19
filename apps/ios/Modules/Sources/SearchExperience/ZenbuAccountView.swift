@@ -137,7 +137,7 @@ struct ZenbuAccountView: View {
           .foregroundStyle(.secondary)
       }
       Button("Sync Now") {
-        Task { await zenbuAccount.scheduler.refresh() }
+        Task { await zenbuAccount.syncNowAsked() }
       }
       .disabled(zenbuAccount.sync.isSyncing || zenbuAccount.sync.waitsForUnreadableBookmarks)
       .accessibilityIdentifier("zenbu-account.sync-now")

@@ -20,7 +20,7 @@ struct SubscriptionTextTests {
     let statuses: [(KnownSubscription.Status, String)] = [
       (.active, "Active"), (.gracePeriod, "Active, payment failed"),
       (.billingRetry, "Payment failed"), (.pending, "Waiting for payment"), (.paused, "Paused"),
-      (.expired, "Ended"), (.revoked, "Refunded"),
+      (.expired, "Ended"), (.revoked, "Refunded or revoked"),
     ]
     for (status, words) in statuses {
       #expect(SubscriptionText.status(Self.held(status)) == words)
@@ -73,10 +73,21 @@ struct SubscriptionTextTests {
     #expect(StoreKitPurchases.length(.day, 3) == "3 days")
   }
 
+  @Test func linksTheSupportAndPrivacyPagesTheAppStoreListingNames() throws {
+    let listing = URL(filePath: #filePath).deletingLastPathComponent()
+      .appending(path: "../../../metadata")
+    let appInfo = try JSONSerialization.jsonObject(
+      with: Data(contentsOf: listing.appending(path: "app-info/en-US.json"))) as? [String: Any]
+    let version = try JSONSerialization.jsonObject(
+      with: Data(contentsOf: listing.appending(path: "version/1.0/en-US.json"))) as? [String: Any]
+    #expect(appInfo?["privacyPolicyUrl"] as? String == ZenbuLinks.privacyPolicy.absoluteString)
+    #expect(version?["supportUrl"] as? String == ZenbuLinks.support.absoluteString)
+  }
+
   @Test func namesEveryProblem() {
     let problems: [SubscriptionProblem] = [
       .anotherAccount, .unreachable, .storeUnavailable, .notAvailableHere, .pendingApproval,
-      .nothingToRestore, .notOffered,
+      .nothingToRestore, .notOffered, .appleAccountSubscribed, .paymentPending, .notNeeded,
     ]
     #expect(Set(problems.map(SubscriptionText.problem)).count == problems.count)
     #expect(SubscriptionText.problem(.nothingToRestore).contains("no Zenbu subscription"))

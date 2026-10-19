@@ -61,4 +61,47 @@ struct AccountTokenRefreshTests {
     later.send(Self.fresh)
     #expect(try await other.value.isEmpty == false)
   }
+
+  @Test("a refresh outlives the request that started it, so the next request joins it")
+  func refreshOutlivesItsStarter() async throws {
+    let (server, later, tokens) = Self.heldRefresh()
+    let starter = Task { try await tokens.withAccessToken { $0 } }
+    try await Self.asked(later)
+    starter.cancel()
+    _ = try? await starter.value
+    let next = Task { try await tokens.withAccessToken { $0 } }
+    await Task.yield()
+    later.send(Self.fresh)
+    #expect(try await next.value.isEmpty == false)
+    #expect(server.requests(to: "GET /v1/auth/token").count == 1)
+  }
+
+  @Test("two requests the service refuses with 401 share one refresh")
+  func refusedRequestsShareOneRefresh() async throws {
+    let server = StubAccountServer()
+    let later = LaterReply()
+    let tokensAsked = CallCount()
+    let stale = StubTokens.access(expiresAt: Date().addingTimeInterval(15 * 60), subject: "stale")
+    server.respond { request in
+      guard request.route == "GET /v1/auth/token" else { return .error(404, "not_found") }
+      return tokensAsked.next() == 1 ? .json(200, ["token": stale]) : .later(later)
+    }
+    let tokens = AccountTokens(
+      api: AccountAPI(baseURL: server.baseURL, session: server.session),
+      storage: MemorySessionTokenStorage("first.signed"))
+    #expect(try await tokens.withAccessToken { $0 } == stale)
+    let refusesStale: @Sendable (String) async throws -> String = { token in
+      guard token != stale else {
+        throw AccountServiceError.refused(
+          status: 401, code: "unauthorized", message: "", retryAfter: nil)
+      }
+      return token
+    }
+    let one = Task { try await tokens.withAccessToken(refusesStale) }
+    let two = Task { try await tokens.withAccessToken(refusesStale) }
+    try await Self.asked(later)
+    later.send(Self.fresh)
+    #expect(try await one.value == two.value)
+    #expect(server.requests(to: "GET /v1/auth/token").count == 2)
+  }
 }

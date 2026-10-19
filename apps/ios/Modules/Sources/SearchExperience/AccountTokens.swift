@@ -112,7 +112,10 @@ final class AccountTokens {
     if let refreshing, refreshing.signIn == signIns { return try await joined(refreshing.task) }
     let task = Task { try await refreshedAccessToken() }
     refreshing = (signIns, task)
-    defer { if refreshing?.task == task { refreshing = nil } }
+    Task { [weak self] in
+      _ = try? await task.value
+      if self?.refreshing?.task == task { self?.refreshing = nil }
+    }
     return try await joined(task)
   }
 

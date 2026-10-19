@@ -50,8 +50,8 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
     lock.withLock { sells = productIDs }
   }
 
-  func update(_ signedTransaction: String) {
-    sendUpdate.yield(transaction(signedTransaction))
+  func update(_ signedTransaction: String, signedAt: Date = Date(timeIntervalSince1970: 0)) {
+    sendUpdate.yield(transaction(signedTransaction, signedAt: signedAt))
   }
 
   func finishing(_ signedTransaction: String) async {
@@ -87,11 +87,11 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
   }
 
   func currentTransactions() async -> [StoreTransaction] {
-    lock.withLock { current }.map(transaction)
+    lock.withLock { current }.map { transaction($0) }
   }
 
   func unfinishedTransactions() async -> [StoreTransaction] {
-    lock.withLock { waiting }.map(transaction)
+    lock.withLock { waiting }.map { transaction($0) }
   }
 
   func syncWithAppStore() async throws {
@@ -100,8 +100,12 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
 
   func transactionUpdates() -> AsyncStream<StoreTransaction> { updates }
 
-  private func transaction(_ signed: String) -> StoreTransaction {
-    StoreTransaction(id: signed, productID: Self.monthly, signedTransaction: signed) { [self] in
+  private func transaction(
+    _ signed: String, signedAt: Date = Date(timeIntervalSince1970: 0)
+  ) -> StoreTransaction {
+    StoreTransaction(
+      id: signed, productID: Self.monthly, signedTransaction: signed, signedAt: signedAt
+    ) { [self] in
       lock.withLock { finishedTransactions.append(signed) }
       sendFinish.yield(signed)
     }

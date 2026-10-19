@@ -209,6 +209,59 @@ struct AccountSubscriptionTests {
     await fixture.account.scheduler.settled()
   }
 
+  @Test func buysNothingOnAnOldAnswerWhenTheSubscriptionCantBeReadFirst() async throws {
+    let reads = CallCount()
+    let none = StubReply.json(200, Answers.answer())
+    let fixture = try await Answers.signedIn { request in
+      guard request.method == "GET" else { return .json(200, Answers.subscribed()) }
+      return reads.next() == 1 ? none : .offline
+    }
+    #expect(fixture.account.subscription.offering)
+
+    await fixture.account.subscription.subscribe(to: Answers.monthly)
+
+    #expect(fixture.store.purchases.isEmpty)
+    #expect(fixture.account.subscription.problem == .unreachable)
+  }
+
+  @Test func keepsThePurchasesAnswerOverARefreshThatReadBeforeIt() async throws {
+    let reads = CallCount()
+    let laterRead = LaterReply()
+    let laterPurchase = LaterReply()
+    let none = StubReply.json(200, Answers.answer())
+    let fixture = try await Answers.signedIn { request in
+      guard request.method == "GET" else { return .later(laterPurchase) }
+      return reads.next() <= 2 ? none : .later(laterRead)
+    }
+    let subscription = fixture.account.subscription
+    let buying = Task { await subscription.subscribe(to: Answers.monthly) }
+    while !laterPurchase.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    let reading = Task { await subscription.refresh() }
+    while !laterRead.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+
+    laterPurchase.send(.json(200, Answers.subscribed()))
+    await buying.value
+    laterRead.send(none)
+    await reading.value
+
+    #expect(subscription.current?.active == true)
+    await fixture.account.scheduler.settled()
+  }
+
+  @Test func sendsAnUpdateStoreKitSignsAgainForTheSamePurchase() async throws {
+    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
+    let posted = { fixture.server.requests(to: "POST /v1/me/subscription/apple").count }
+    fixture.account.subscription.listen()
+    fixture.store.update(Answers.bought)
+    await fixture.store.finishing(Answers.bought)
+    fixture.store.update(Answers.bought)
+    fixture.store.update(Answers.bought, signedAt: Date(timeIntervalSince1970: 1_800_000_000))
+    while posted() < 2 { try await Task.sleep(for: .milliseconds(5)) }
+
+    #expect(posted() == 2)
+    await fixture.account.scheduler.settled()
+  }
+
   @Test func listensFromLaunchOnceTheAccountsFileHasLoaded() async throws {
     let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
     fixture.account.startSubscription()
