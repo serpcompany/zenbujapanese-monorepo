@@ -17,7 +17,7 @@ export interface PhotoFile {
   uploadedAt: Date
 }
 
-export type PhotoStatus = 'shown' | 'emptied' | 'deleted'
+type PhotoStatus = 'shown' | 'emptied' | 'deleted'
 
 export interface Photo {
   id: string

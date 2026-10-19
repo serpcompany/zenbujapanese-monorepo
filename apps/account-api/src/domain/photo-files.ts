@@ -15,7 +15,7 @@ export const photoLimits = {
   emptiedKeptDays: 30
 } as const
 
-export interface StoredPhoto {
+interface StoredPhoto {
   body: ReadableStream<Uint8Array>
   size: number | null
 }
