@@ -270,7 +270,7 @@ describe('photo files', () => {
     expect((await turns.send('someone')).status).toBe(503)
   })
 
-  test("holds a download's turn until its file is sent, cancelled, or cut, and logs a cut one", async () => {
+  test("holds a download's turn until its file is sent, cancelled, or cut, logs a cut one, and gives a HEAD's back at once", async () => {
     const sources: ReadableStreamDefaultController<Uint8Array>[] = []
     const streaming = async () => ({
       status: 'found' as const,
@@ -313,6 +313,10 @@ describe('photo files', () => {
     vi.restoreAllMocks()
     const again = await Promise.all(Array.from({ length: 4 }, download))
     expect(again.map(answer => answer.status)).toEqual([200, 200, 200, 429])
+    for (const answer of [sending[3], ...again]) await answer?.body?.cancel()
+    const heads = []
+    for (let n = 0; n <= share; n++) heads.push((await standInRequest(app, 'HEAD', bytes)).status)
+    expect(heads).toEqual(Array(share + 1).fill(200))
   })
 
   test("puts back a file its storage lost when it's uploaded again, and says a lost file is missing, not gone", async () => {

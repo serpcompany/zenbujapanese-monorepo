@@ -146,7 +146,8 @@ changing nothing, another account's file and an unknown one answering `404`, a l
 stray object, each refused upload, each image type read from its bytes, the 1,000-file cap and an
 upload past it deleting the photo emptied longest ago, `503` with no storage, the slots for one
 account while the service has room and for the service, a download keeping its slot until its
-body is sent, cancelled, or cut, and a cut one logged, and CORS for the website.
+body is sent, cancelled, or cut, a cut one logged, a `HEAD` giving its slot back at once, and CORS
+for the website.
 `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo entities to their
 rules, and show a file swept from storage after the sync that deleted its photo, an emptied photo
 keeping its file, the hour's housekeeping emptying and deleting a photo and sweeping its file, a

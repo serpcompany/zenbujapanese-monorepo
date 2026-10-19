@@ -114,8 +114,13 @@ export function atMostAtOnce(most: { service: number; account: number }, untilSe
       await next()
       const body = context.res.body
       if (untilSent && context.res.status === 200 && body) {
-        context.res = heldUntilSent(context.res, body, release)
-        sending = true
+        if (context.req.method === 'HEAD') {
+          context.res = new Response(null, context.res)
+          await body.cancel()
+        } else {
+          context.res = heldUntilSent(context.res, body, release)
+          sending = true
+        }
       }
     } finally {
       if (!sending) release()
