@@ -3,7 +3,7 @@ import { watchLimits } from '../domain/watch-history'
 import { listLimits } from '../domain/word-lists'
 import { count } from './sync-fields'
 
-export interface OperationRule {
+interface OperationRule {
   baseVersion: boolean
   rule: string
   fields?: string

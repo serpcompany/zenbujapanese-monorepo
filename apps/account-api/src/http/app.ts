@@ -8,12 +8,12 @@ import { routePath } from 'hono/route'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
 import { clientById, type Principal } from '../domain/clients'
-import type { PhotoFiles } from '../domain/photo-files'
+
 import { failureFields } from '../failure'
 import { accountRoutes } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
-import { photoBodyLimit, photoRoutes } from './photos'
+import { type PhotoRoutesFiles, photoBodyLimit, photoRoutes } from './photos'
 import {
   atMostAtOnce,
   perAccountLimit,
@@ -38,7 +38,7 @@ export interface AppOptions {
   auth: AuthHandler
   accounts: Accounts
   deleteAccount: DeleteAccount
-  photoFiles: PhotoFiles
+  photoFiles: PhotoRoutesFiles
   verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null

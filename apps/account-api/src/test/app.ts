@@ -18,10 +18,8 @@ export const standIns: AppOptions = {
   },
   deleteAccount: async () => 'no_account',
   photoFiles: {
-    available: false,
     upload: async () => noPhotos,
-    download: async () => noPhotos,
-    sweep: async () => 0
+    download: async () => noPhotos
   },
   verifyAccessToken: async () => null,
   allowedOrigins: [],

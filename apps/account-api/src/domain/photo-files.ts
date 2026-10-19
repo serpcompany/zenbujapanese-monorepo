@@ -20,11 +20,11 @@ export interface PhotoStorage {
 
 type Refused<S extends string> = S extends string ? { status: S } : never
 
-export type Upload =
+type Upload =
   | { status: 'stored' | 'kept'; file: PhotoFile }
   | Refused<'digest_mismatch' | 'unsupported' | 'too_many' | 'no_account' | 'unavailable'>
 
-export type Download =
+type Download =
   | { status: 'found'; file: PhotoFile; bytes: Uint8Array<ArrayBuffer> }
   | Refused<'missing' | 'no_account' | 'unavailable'>
 
@@ -107,8 +107,6 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
   }
 
   return {
-    available: storage !== null,
-
     async upload(userId: string, photoId: string, bytes: Uint8Array): Promise<Upload> {
       if (!storage) return { status: 'unavailable' }
       if (sha256Of(bytes) !== photoId) return { status: 'digest_mismatch' }

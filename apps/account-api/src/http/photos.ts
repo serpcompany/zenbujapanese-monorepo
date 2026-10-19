@@ -133,7 +133,9 @@ const refused = (
   message: string
 ) => context.json(errorBody(code, message), status)
 
-export function photoRoutes(app: OpenAPIHono<AccountEnv>, files: PhotoFiles) {
+export type PhotoRoutesFiles = Pick<PhotoFiles, 'upload' | 'download'>
+
+export function photoRoutes(app: OpenAPIHono<AccountEnv>, files: PhotoRoutesFiles) {
   app.openapi(uploadPhoto, async context => {
     const { photoId } = context.req.valid('param')
     const bytes = new Uint8Array(await context.req.arrayBuffer())

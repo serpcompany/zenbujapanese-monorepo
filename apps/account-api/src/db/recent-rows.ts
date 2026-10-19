@@ -4,7 +4,7 @@ import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
 import { syncChanges } from './schema'
 
-export interface RecentRows {
+interface RecentRows {
   table: PgTable
   userId: PgColumn
   id: PgColumn
