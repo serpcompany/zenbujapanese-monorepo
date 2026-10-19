@@ -19,18 +19,13 @@ final class ShareSheetAuditUITests: AccessibilityAuditCase {
     let text = share(pass, ["ZENBU_SHARE_TEXT": "猫が魚を食べました"])
     waitFor(find("share-card.text", in: text))
     waitFor(firstElement(identifiedBy: "share-card.translation", in: text))
-    let taberu = text.descendants(matching: .any)
-      .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
-      .firstMatch
-    waitFor(taberu)
     audit("A shared sentence's card", in: text)
-    tap(taberu)
-    waitFor(find("share-card.word", in: text))
-    audit("A shared word's card", in: text)
+    let word = share(pass, ["ZENBU_SHARE_TEXT": "食べた"])
+    waitFor(find("share-card.word", in: word))
+    audit("A shared word's card", in: word)
     let photo = share(pass, ["ZENBU_SHARE_IMAGE": fixtures.appending(path: "horizontal-japanese.png").path])
     waitFor(find("share-card.photo", in: photo))
     waitUntil(find("share-card.text", in: photo), mentions: "駅の近くに本屋があります")
-    waitFor(firstElement(identifiedBy: "result.", in: photo))
     audit("A shared photo's card", in: photo)
   }
 

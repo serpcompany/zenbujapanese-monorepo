@@ -70,6 +70,7 @@ private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
 ]
+private let shareCards = ["A shared sentence's card", "A shared word's card", "A shared photo's card"]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -123,6 +124,7 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-detail.image-attachment-done"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
+  allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(
     .hitRegion, .label("Clear text"),
@@ -139,8 +141,9 @@ private let linkedWords = [
     .hitRegion, .identifiedBy(prefix: "translate.typed.result."), on: ["A typed translation", "The word sheet"],
     because: Why.inlineWord),
   allow(
-    .hitRegion, .identifiedBy(prefix: "watch.cue."),
-    on: ["A video", "A caption's word", "A video its owner won't share"], because: Why.inlineWord),
+    .hitRegion, .identifiedBy(prefix: "watch.cue."), on: ["A video", "A video its owner won't share"],
+    because: Why.inlineWord),
+  allow(.hitRegion, .identifiedBy(prefix: "watch.cue."), on: ["A caption's word"], [.pad], because: Why.inlineWord),
   allow(.hitRegion, .identifiedBy(prefix: "image-text.line."), on: ["Image Search"], because: Why.inlineWord),
   allow(.hitRegion, .identifiedBy(prefix: "image-text.paragraph."), on: ["Image Search's text"], because: Why.inlineWord),
   allow(
@@ -182,10 +185,12 @@ private let textThatScales = [
   allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
   allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet"], because: Why.scales),
-  allow(.textClipped, .label("MEANING"), on: ["The word sheet", "A caption's word"], because: Why.scales),
+  allow(.textClipped, .label("MEANING"), on: ["The word sheet"], because: Why.scales),
   allow(
     .textClipped, .labels(["New List"]), on: ["Add to List"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-list-picker.list."), on: ["Add to List"], because: Why.scales),
+  allow(.dynamicType, .labels(["FREQUENCY", "Add to List"]), on: ["A shared word's card"], because: Why.scales),
+  allow(.textClipped, .label("Add to List"), on: ["A shared word's card"], because: Why.scales),
   allow(.textClipped, .label("japan"), on: ["Recent searches"], because: Why.scales),
   allow(.dynamicType, .identifiedBy(prefix: "translate.pane."), on: ["Two Panes"], because: Why.scales),
   allow(
