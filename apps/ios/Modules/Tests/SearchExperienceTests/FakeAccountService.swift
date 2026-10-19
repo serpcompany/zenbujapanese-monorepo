@@ -128,15 +128,7 @@ final class FakeAccountService: @unchecked Sendable {
     let current = accounts[user]?[key]
     let version = current?.version ?? 0
     let base = mutation.baseVersion ?? 0
-    let applied = { (version: Int) -> [String: Any] in
-      ["id": mutation.id, "status": "applied", "version": version]
-    }
-    let conflict = { () -> [String: Any] in
-      StubSync.conflict(
-        mutation.id,
-        current.map { self.change(key: key, $0) }
-          ?? StubSync.gone(mutation.entity, mutation.entityId, version: 0))
-    }
+    let (applied, conflict) = outcomes(of: mutation, key: key, current: current)
     let text = { (name: String) -> String in
       if case .string(let value) = mutation.fields?[name] { return value }
       return current?.data?[name] as? String ?? ""
@@ -244,6 +236,21 @@ final class FakeAccountService: @unchecked Sendable {
     default:
       return StubSync.rejected(mutation.id, "unknown_operation")
     }
+  }
+
+  func outcomes(
+    of mutation: StubSyncRequest.Mutation, key: String, current: Entity?
+  ) -> (applied: (Int) -> [String: Any], conflict: () -> [String: Any]) {
+    let entityID = String(key.drop { $0 != ":" }.dropFirst())
+    return (
+      { version in ["id": mutation.id, "status": "applied", "version": version] },
+      {
+        StubSync.conflict(
+          mutation.id,
+          current.map { self.change(key: key, $0) }
+            ?? StubSync.gone(mutation.entity, entityID, version: 0))
+      }
+    )
   }
 
   private func usernameTaken(_ username: String, byOtherThan user: String) -> Bool {

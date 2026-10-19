@@ -37,15 +37,7 @@ extension FakeAccountService {
     let version = current?.version ?? 0
     let base = mutation.baseVersion ?? 0
     let fields = (mutation.fields ?? [:]).mapValues(Self.json)
-    let applied = { (version: Int) -> [String: Any] in
-      ["id": mutation.id, "status": "applied", "version": version]
-    }
-    let conflict = { () -> [String: Any] in
-      StubSync.conflict(
-        mutation.id,
-        current.map { self.change(key: key, $0) }
-          ?? StubSync.gone(mutation.entity, entityID, version: 0))
-    }
+    let (applied, conflict) = outcomes(of: mutation, key: key, current: current)
     let same = { (data: [String: Any]?) in
       NSDictionary(dictionary: data ?? [:]).isEqual(to: current?.data ?? [:])
     }
