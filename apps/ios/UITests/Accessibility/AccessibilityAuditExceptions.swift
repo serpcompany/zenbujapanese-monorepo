@@ -208,12 +208,6 @@ private let textThatScales = [
   allow(
     .textClipped, .identifier("watch.captions-unavailable"), on: ["A video without Japanese captions"],
     because: Why.scales),
-  allow(
-    .dynamicType, .labels(["Video Unavailable", "The video's owner doesn't allow it to play in other apps."]),
-    on: ["A video its owner won't share"], because: Why.scales),
-  allow(
-    .textClipped, .label("The video's owner doesn't allow it to play in other apps."),
-    on: ["A video its owner won't share"], because: Why.scales),
   allow(.dynamicType, .unnamed(10), on: ["Word Detail, its kanji"], because: Why.placedPage),
   allow(.dynamicType, .unnamed(2), on: ["A word's note"], touch, [.standard], because: Why.placedPage),
   allow(.dynamicType, .unnamed(6), on: ["A word's note"], touch, [.largest], because: Why.placedPage),
@@ -231,8 +225,6 @@ private let clocks = [
     .dynamicType, .labels(["0:00 / 0:12", "0:00 / 0:00"]),
     on: ["A video", "A video without Japanese captions", "A video its owner won't share"], because: Why.clock),
   allow(.dynamicType, .label("0:12"), on: ["Player's Recent"], because: Why.clock),
-  allow(.dynamicType, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
-  allow(.textClipped, .identifiedBy(prefix: "translate.still-there"), on: ["The silence prompt"], because: Why.clock),
 ]
 
 private let previews = [
