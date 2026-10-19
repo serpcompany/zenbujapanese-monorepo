@@ -41,7 +41,7 @@ extension LanguageReferenceData {
   }
 
   private static func attachCompoundPitch(_ database: OpaquePointer) throws {
-    let url = Bundle.module.url(forResource: "CompoundPitch", withExtension: "sqlite3")
+    let url = BundledData.bundle.url(forResource: "CompoundPitch", withExtension: "sqlite3")
     var statement: OpaquePointer?
     guard
       sqlite3_prepare_v2(database, "ATTACH DATABASE ? AS compound_pitch", -1, &statement, nil)

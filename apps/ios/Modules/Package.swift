@@ -7,6 +7,7 @@ let package = Package(
   platforms: [.iOS(.v26), .macOS(.v26)],
   products: [
     .library(name: "SearchExperience", targets: ["SearchExperience"]),
+    .library(name: "DictionaryData", targets: ["DictionaryData"]),
     .library(name: "TranslatorOnDevice", targets: ["TranslatorCore", "TranslatorOnDevice"]),
   ],
   dependencies: [
@@ -34,16 +35,50 @@ let package = Package(
         .product(name: "Sudachi", package: "sudachi-swift"),
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],
-      exclude: ["Resources/RankedLists.sqlite3"],
-      resources: [.process("Resources")],
+      exclude: ["Resources"],
       linkerSettings: [
         .linkedFramework("JavaScriptCore"),
         .linkedLibrary("sqlite3"),
       ]
     ),
+    .target(
+      name: "DictionaryData",
+      path: "Sources/SearchExperience/Resources",
+      exclude: ["RankedLists.sqlite3"],
+      sources: ["DictionaryData.swift"],
+      resources: [
+        .process("CompoundPitch.sqlite3"),
+        .process("DAKANJI-MIT.txt"),
+        .process("DaKanji.mlpackage"),
+        .process("DictionaryCore"),
+        .process("DictionaryRankingArtifactContract.json"),
+        .process("ExampleWordIndex.sqlite3"),
+        .process("FrequencyPackCatalog.json"),
+        .process("FrequencyPackContentDigestV1.json"),
+        .process("FrequencyPackMappingV1.sql"),
+        .process("FrequencyPackMappingV2.sql"),
+        .process("JLPT-VOCABULARY-CC-BY-SA-4.0.txt"),
+        .process("JLPTLevelPack.sqlite3"),
+        .process("KANJIVG-CC-BY-SA-3.0.txt"),
+        .process("KanjiElementReferenceData.json"),
+        .process("KanjiReferenceData.json"),
+        .process("KanjiStrokeData.sqlite3"),
+        .process("Kuromoji"),
+        .process("LanguageReferenceData.sqlite3"),
+        .process("LanguageTechnologyPackCatalog.json"),
+        .process("RadicalReferenceData.json"),
+        .process("SudachiLanguageTechnologyNotices.txt"),
+        .process("SudachiRuntime"),
+        .process("TATOEBA-NOTICE.txt"),
+        .process("TUBELEX-BSD-3-CLAUSE.txt"),
+        .process("TUBELEXFrequencyPack.sqlite3"),
+        .process("UNIDIC-NEW-BSD.txt"),
+        .process("WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt"),
+      ]
+    ),
     .testTarget(
       name: "SearchExperienceTests",
-      dependencies: ["SearchExperience"],
+      dependencies: ["SearchExperience", "DictionaryData"],
       resources: [.copy("Fixtures")]
     ),
   ]

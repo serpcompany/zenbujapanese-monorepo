@@ -52,7 +52,7 @@ actor FrequencyPackManager {
       else { throw FrequencyPackError.invalidArtifact }
       if bundled.packKind == .rank {
         guard
-          let mappingPolicyURL = Bundle.module.url(
+          let mappingPolicyURL = BundledData.bundle.url(
             forResource: "FrequencyPackMappingV\(bundled.mappingPolicyVersion)",
             withExtension: "sql"),
           try fileSHA256(mappingPolicyURL) == bundled.mappingPolicySHA256

@@ -15,6 +15,17 @@ extension View {
 
 enum AppLifecycle {
   @MainActor
+  static func applySharedChanges() {
+    Task { await SharedChanges.inbox?.apply(to: .shared, .shared) }
+  }
+
+  static func applySharedChangesWhenPosted() {
+    DarwinNotice.observe(SharedChanges.notice) { _ in
+      Task { @MainActor in applySharedChanges() }
+    }
+  }
+
+  @MainActor
   static func lastWindowClosed(translate: TranslateExperience) {
     translate.lastWindowClosed()
     ScreenAwake.keepAwake(false)
@@ -26,6 +37,7 @@ enum AppLifecycle {
     case .active:
       WordKnowledge.shared.saveIfNeeded()
       WordLists.shared.saveIfNeeded()
+      applySharedChanges()
       ZenbuAccount.shared?.scheduler.appBecameActive()
       Task.detached(priority: .utility) { await EncounterMediaStore.live.deleteImagesDue() }
     case .background:

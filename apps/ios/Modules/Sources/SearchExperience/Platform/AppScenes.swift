@@ -9,6 +9,7 @@ public struct ZenbuJapaneseScenes: Scene {
 
   public init() {
     LaunchHarness.prepare()
+    AppLifecycle.applySharedChangesWhenPosted()
     _readingAids = State(initialValue: ReadingAidPreferences())
     _profile = State(initialValue: UserProfile.shared)
     _translate = State(initialValue: TranslateExperience.live())
@@ -22,6 +23,7 @@ public struct ZenbuJapaneseScenes: Scene {
         .environment(translate)
         .handlesExternalEvents(preferring: ["*"], allowing: ["*"])
         .appWindowMinimumSize()
+        .task { ShareSheetHarness.open() }
     }
     .commands { AppCommands(router: commands) }
     .appWindowDefaults()

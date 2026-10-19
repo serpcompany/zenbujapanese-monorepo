@@ -22,7 +22,7 @@ struct RadicalLookupClient: Sendable {
   static let live = RadicalLookupClient { try PresentationCore.shared.answer("radicalPanel", $0) }
 
   static func bundledFile() -> [UInt8]? {
-    Bundle.module.url(forResource: "RadicalReferenceData", withExtension: "json")
+    BundledData.bundle.url(forResource: "RadicalReferenceData", withExtension: "json")
       .flatMap { try? Data(contentsOf: $0) }
       .map { Array($0) + [0] }
   }

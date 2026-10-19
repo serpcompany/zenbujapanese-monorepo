@@ -6,7 +6,7 @@ translating run on it, as they do inside the app. How it's built is in
 [`ios-shortcuts.md`](../../../../docs/agents/ios-shortcuts.md).
 
 - Source: #394. Of the four actions the owner chose on 2026-10-16, the two Shortcuts actions ship
-  first; the share sheet's wait, since App Review may reject an extension that opens its app.
+  first. The share sheet has a card instead, which doesn't open the app ([Share sheet](share-sheet.md)).
 
 ## Look Up in Zenbu
 
