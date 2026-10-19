@@ -3,6 +3,7 @@ import { appleAppSiteAssociationResponse } from './src/lib/app-links'
 import { retiredWordResponse, retiredWordsLookup } from './src/lib/dictionary/retired'
 import { movedPageResponse } from './src/lib/moved-pages'
 import { otherHostResponse } from './src/lib/other-hosts'
+import { cachedPage } from './src/lib/page-cache'
 import { behindStagingAccess, withEnvironmentNoindex } from './src/lib/staging-access'
 
 async function served(
@@ -16,7 +17,9 @@ async function served(
   const lookup =
     request.method === 'GET' || request.method === 'HEAD' ? retiredWordsLookup(env) : null
   const retired = lookup ? await retiredWordResponse(url, lookup) : null
-  return retired ?? openNext.fetch(request, env, ctx)
+  if (retired) return retired
+  const context = { version: env.CF_VERSION_METADATA.id, waitUntil: ctx.waitUntil.bind(ctx) }
+  return cachedPage(request, url, context, () => openNext.fetch(request, env, ctx))
 }
 
 export default {
