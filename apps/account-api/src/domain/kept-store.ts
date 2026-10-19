@@ -84,7 +84,6 @@ export interface KeptWriter {
   forgetGoneNotes(kept: number): Promise<void>
   savePhoto(photo: Omit<Photo, 'updatedAt'>): Promise<void>
   forgetGonePhotos(kept: number): Promise<void>
-  oldestEmptiedPhoto(): Promise<Photo | null>
   forgottenVersion(entity: 'photo' | 'photoWord'): Promise<number>
   photoWordCount(photoId: string): Promise<number>
   savePhotoWord(word: Omit<PhotoWord, 'updatedAt'>): Promise<void>

@@ -43,8 +43,8 @@ photo.
 The service refuses bytes whose SHA-256 isn't the ID (`400 photo_digest_mismatch`), bytes that
 aren't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image, by their first bytes rather
 than their `Content-Type` (`415 unsupported_photo`), a file over 12 MB (`413 too_large`), and a
-1,001st file when no emptied photo can make room (`409 too_many_photos`). It keeps the bytes as
-they came: re-encoding or resizing would change the hash the photo is named by.
+1,001st file (`409 too_many_photos`). It keeps the bytes as they came: re-encoding or resizing
+would change the hash the photo is named by.
 
 ## The limits, and why
 
@@ -53,9 +53,10 @@ they came: re-encoding or resizing would change the hash the photo is named by.
   pixel JPEG, so nothing the app makes today is refused.
 - **1,000 files an account**, the profile photo's included: room for a Media Library far larger than
   a learner builds by hand, while bounding what one account can store at 12 GB. A typical photo
-  of a few MB puts a full library near 3 GB. An emptied photo, already gone from every device,
-  never holds a place: an upload past 1,000 deletes the one emptied longest ago. An app with only
-  `profile` isn't held to the 1,000, only to its own two, so the library's count tells it nothing.
+  of a few MB puts a full library near 3 GB. An emptied photo holds its place for its 30 days:
+  the service can't tell whether a device has a word queued that brings it back, so it never
+  deletes one early. An app with only `profile` isn't held to the 1,000, only to its own two, so
+  the library's count tells it nothing.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
   library takes a few minutes, bound by the device's connection rather than the limit.
@@ -86,7 +87,7 @@ so it outlives the account it came from:
   leaves nothing in R2 that no row names or the queue awaits.
 - **A file no photo names goes.** When a photo is deleted, or the profile photo replaced or
   removed, the file's row goes and its key is queued, unless the other still names the same file.
-  An emptied photo keeps its file until it's deleted, 30 days on or when an upload needs its place.
+  An emptied photo keeps its file until it's deleted, 30 days on.
   A file no photo names 24 hours after its upload goes the same way, in the hourly housekeeping
   (`src/db/housekeeping.ts`), which works through at most 10,000 files, and 10,000 photos of each
   kind, an hour, and stops counting a file an app with only `profile` uploaded a day ago and never
@@ -144,8 +145,8 @@ skill; the image refuses it.
 stand-in: a file kept under a new key and answered with its type and headers, a second upload
 changing nothing, another account's file and an unknown one answering `404`, a lost file answered
 `photo_file_missing` and put back by an upload, one put back while its photo is deleted leaving no
-stray object, each refused upload, each image type read from its bytes, the 1,000-file cap and an
-upload past it deleting the photo emptied longest ago, `503` with no storage, the slots for one
+stray object, each refused upload, each image type read from its bytes, the 1,000-file cap with an
+emptied photo keeping its place for a word sent later, `503` with no storage, the slots for one
 account while the service has room and for the service, a download keeping its slot until its
 body is sent, cancelled, or cut or its client goes, a cut one logged, a `HEAD` giving its slot back
 at once, and CORS for the website. `src/http/download-disconnect.test.ts` runs the real Node

@@ -120,8 +120,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   Otherwise, as when the photo's file was refused, keep the word on the device without syncing.
   `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
-  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), which
-  comes only once no emptied photo is left for the account to delete in its place.
+  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), where a
+  photo emptied in the last 30 days still holds its place: send it again once one is deleted.
 - **A download that answers `404`** never deletes anything: `not_found` means the account no
   longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
   account lost the file, which comes back when a device that holds the image uploads it, as one

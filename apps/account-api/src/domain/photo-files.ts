@@ -2,7 +2,6 @@ import { createHash, randomUUID } from 'node:crypto'
 import type { Scope } from './clients'
 import type { PhotoFile } from './kept-store'
 import { photoLimits } from './photo-limits'
-import { deletePhoto } from './photos'
 import type { AccountStore, LockedAccount } from './store'
 
 interface StoredPhoto {
@@ -53,15 +52,6 @@ export function imageTypeOf(bytes: Uint8Array): string | null {
 
 const sha256Of = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
-async function roomInTheLibrary(account: LockedAccount) {
-  while ((await account.photoFileCount()) >= photoLimits.photos) {
-    const emptied = await account.oldestEmptiedPhoto()
-    if (!emptied) return false
-    await deletePhoto(account, emptied)
-  }
-  return true
-}
-
 async function roomFor(
   account: LockedAccount,
   photoId: string,
@@ -78,7 +68,8 @@ async function roomFor(
     return { status: 'kept', file: existing }
   }
   if (existing) return { status: 'kept', file: existing }
-  return (await roomInTheLibrary(account)) ? { status: 'room' } : { status: 'too_many' }
+  if ((await account.photoFileCount()) >= photoLimits.photos) return { status: 'too_many' }
+  return { status: 'room' }
 }
 
 async function saved(

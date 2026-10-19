@@ -106,8 +106,8 @@ and the email typed while signed out.
     its words, which devices drop with the photo rather than one by one, and its file. A word
     added later is rejected `unknown_photo`.
   - Housekeeping empties a photo left with no word for a day, as when its words' adds failed, so
-    the account shows no photo that no word shows, and deletes an emptied photo after 30 days, or
-    sooner when an upload past the 1,000 files needs its place.
+    the account shows no photo that no word shows, and deletes an emptied photo after 30 days,
+    never sooner, since a word queued on a device may still bring it back.
   - The account remembers its latest 1,000 deleted photos, as it does notes: a device that missed
     an older deletion keeps that photo.
   - **Nothing comes back under a version it had.** The account keeps the highest version it

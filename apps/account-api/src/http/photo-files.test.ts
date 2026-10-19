@@ -145,44 +145,36 @@ describe('photo files', () => {
     ).toEqual([{ n: 0 }])
   })
 
-  test('an upload past 1,000 files deletes the photo emptied longest ago to make room, and is refused when none is', async () => {
+  test('an emptied photo keeps its place at the 1,000-file cap, so a word sent later still brings it back', async () => {
     const learner = await accounts.learner('photo-cap-emptied@example.com')
-    const emptied: string[] = []
-    for (const name of ['First.jpg', 'Second.jpg']) {
-      const photoId = await uploaded(accounts, learner)
-      const wordId = `${photoId}/${'0'.repeat(32)}`
-      await accounts.results(
-        learner,
-        { entity: 'photo', operation: 'add', entityId: photoId, fields: { name, savedAt } },
-        {
-          entity: 'photoWord',
-          operation: 'add',
-          entityId: wordId,
-          fields: { headword: '見る', savedAt }
-        },
-        { entity: 'photoWord', operation: 'remove', entityId: wordId, baseVersion: 1 }
-      )
-      emptied.push(photoId)
-    }
-    await rows(
-      `insert into photo_files (user_id, id, content_type, byte_size, storage_key) select '${learner.userId}', md5(n::text) || md5(n::text), 'image/jpeg', 1, '${learner.userId}/' || n from generate_series(1, 998) as n`
+    const photoId = await uploaded(accounts, learner)
+    const wordId = (n: number) => `${photoId}/${String(n).repeat(32)}`
+    const onWord = (n: number) => ({
+      entity: 'photoWord',
+      operation: 'add',
+      entityId: wordId(n),
+      fields: { headword: '見る', savedAt }
+    })
+    await accounts.results(
+      learner,
+      {
+        entity: 'photo',
+        operation: 'add',
+        entityId: photoId,
+        fields: { name: 'Menu.jpg', savedAt }
+      },
+      onWord(0),
+      { entity: 'photoWord', operation: 'remove', entityId: wordId(0), baseVersion: 1 }
     )
-    const statuses = async () => {
-      const found = await rows(`select id, status from photos where user_id = '${learner.userId}'`)
-      return emptied.map(id => found.find(row => row.id === id)?.status)
-    }
-    const send = async () => {
-      const bytes = aJpeg()
-      return (await put(learner.token, photoIdOf(bytes), bytes)).status
-    }
-    expect(await statuses()).toEqual(['emptied', 'emptied'])
-    expect(await send()).toBe(201)
-    expect(await statuses()).toEqual(['deleted', 'emptied'])
-    expect([await send(), await send()]).toEqual([201, 409])
-    expect(await statuses()).toEqual(['deleted', 'deleted'])
-    expect(
-      await rows(`select count(*)::int as n from photo_files where user_id = '${learner.userId}'`)
-    ).toEqual([{ n: 1000 }])
+    await rows(
+      `insert into photo_files (user_id, id, content_type, byte_size, storage_key) select '${learner.userId}', md5(n::text) || md5(n::text), 'image/jpeg', 1, '${learner.userId}/' || n from generate_series(1, 999) as n`
+    )
+    const bytes = aJpeg()
+    expect((await put(learner.token, photoIdOf(bytes), bytes)).status).toBe(409)
+    expect(await accounts.results(learner, onWord(1))).toMatchObject([{ status: 'applied' }])
+    expect(await rows(`select status from photos where id = '${photoId}'`)).toEqual([
+      { status: 'shown' }
+    ])
   })
 
   test('a lost file put back while its photo is deleted leaves nothing in storage that no row names', async () => {

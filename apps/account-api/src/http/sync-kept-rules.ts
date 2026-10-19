@@ -42,7 +42,7 @@ export const keptRules = {
     }
   },
   photo: {
-    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a \`delete\` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo never stops an upload: past the account's ${photoLimits.photos.toLocaleString('en-US')} files, the one emptied longest ago is deleted to make room.`,
+    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a \`delete\` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's ${photoLimits.photos.toLocaleString('en-US')} for its 30 days, so the word that brings it back always finds it.`,
     entityId: "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
     data: 'Photo',
     operations: {

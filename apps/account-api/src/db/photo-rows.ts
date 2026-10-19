@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNotNull, ne, notExists, sql } from 'drizzle-orm'
+import { and, count, eq, isNotNull, ne, sql } from 'drizzle-orm'
 import { listWordSeparator } from '../domain/entities'
 import type { NewPhotoFile, Photo, PhotoFile, PhotoWord, ProfilePhoto } from '../domain/kept-store'
 import type { Drizzle } from './database'
@@ -191,26 +191,6 @@ export function photoWriter(db: Drizzle, userId: string) {
     },
     async forgetGonePhotos(kept: number) {
       await remember('photo', await photoRows.forgetGone(kept))
-    },
-    async oldestEmptiedPhoto(): Promise<Photo | null> {
-      const [photo] = await db
-        .select(photoColumns)
-        .from(photos)
-        .where(
-          and(
-            eq(photos.userId, userId),
-            eq(photos.status, 'emptied'),
-            notExists(
-              db
-                .select({ id: profilePhotos.photoId })
-                .from(profilePhotos)
-                .where(and(eq(profilePhotos.userId, userId), eq(profilePhotos.photoId, photos.id)))
-            )
-          )
-        )
-        .orderBy(asc(photos.updatedAt), asc(photos.id))
-        .limit(1)
-      return photo ?? null
     },
     async forgottenVersion(entityType: 'photo' | 'photoWord') {
       const [row] = await db
