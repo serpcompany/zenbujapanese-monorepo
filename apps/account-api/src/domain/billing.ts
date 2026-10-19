@@ -90,6 +90,7 @@ export interface BillingTransaction {
     userId: string | null
   ): Promise<void>
   lockSubscription(key: SubscriptionKey): Promise<StoredSubscription | null>
+  subscriptionsOf(userId: string): Promise<StoredSubscription[]>
   saveSubscription(userId: string, subscription: Subscription): Promise<void>
   accountExists(userId: string): Promise<boolean>
   accountByToken(appAccountToken: string): Promise<string | null>

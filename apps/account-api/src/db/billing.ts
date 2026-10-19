@@ -39,6 +39,9 @@ async function userWhere(
   return row?.userId ?? null
 }
 
+const subscriptionsOn = (db: Drizzle, userId: string): Promise<StoredSubscription[]> =>
+  db.select(subscriptionColumns).from(subscriptions).where(eq(subscriptions.userId, userId))
+
 const subscriptionFields = (subscription: Subscription) => {
   const { source, providerId, ...fields } = subscription
   return fields
@@ -69,6 +72,8 @@ function transactionOn(tx: Drizzle): BillingTransaction {
       const [row] = await tx.select(subscriptionColumns).from(subscriptions).where(isKey(key))
       return (row as StoredSubscription | undefined) ?? null
     },
+
+    subscriptionsOf: userId => subscriptionsOn(tx, userId),
 
     async saveSubscription(userId, subscription) {
       const fields = subscriptionFields(subscription)
@@ -142,11 +147,7 @@ export function billingStore(db: Drizzle): BillingStore {
       return row ?? null
     },
 
-    subscriptionsOf: userId =>
-      db
-        .select(subscriptionColumns)
-        .from(subscriptions)
-        .where(eq(subscriptions.userId, userId)) as Promise<StoredSubscription[]>,
+    subscriptionsOf: userId => subscriptionsOn(db, userId),
 
     transaction: work => db.transaction(tx => work(transactionOn(tx)))
   }

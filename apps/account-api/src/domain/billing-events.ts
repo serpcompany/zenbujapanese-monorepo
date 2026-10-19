@@ -6,6 +6,7 @@ import type {
   ProviderState
 } from './billing'
 import {
+  entitlementOf,
   type StoredSubscription,
   type Subscription,
   type SubscriptionKey,
@@ -16,7 +17,7 @@ export type EventAnswer = EventOutcome | 'duplicate'
 
 export interface EventRules {
   grants(subscription: Subscription): boolean
-  orphaned(key: SubscriptionKey): Promise<void>
+  refundAndCancel(key: SubscriptionKey): Promise<void>
 }
 
 async function accountFor(
@@ -38,17 +39,23 @@ async function linkCustomer(tx: BillingTransaction, userId: string, hints: Accou
   }
 }
 
-async function applyState(
+const sameKey = (one: SubscriptionKey, other: SubscriptionKey) =>
+  one.source === other.source && one.providerId === other.providerId
+
+async function anotherRuns(tx: BillingTransaction, userId: string, subscription: Subscription) {
+  const others = (await tx.subscriptionsOf(userId)).filter(each => !sameKey(each, subscription))
+  return !entitlementOf(others, subscription.stateAt).canSubscribe
+}
+
+async function unwantedStart(
   tx: BillingTransaction,
-  state: ProviderState,
-  held: StoredSubscription | null,
-  rules: EventRules
-): Promise<string | null> {
-  const userId = await accountFor(tx, state.hints, held)
-  if (userId === null || !rules.grants(state.subscription)) return null
-  await linkCustomer(tx, userId, state.hints)
-  if (supersedes(state.subscription, held)) await tx.saveSubscription(userId, state.subscription)
-  return userId
+  event: ProviderEvent,
+  userId: string | null,
+  subscription: Subscription
+): Promise<boolean> {
+  if (!event.startsSubscription) return false
+  if (userId !== null) return anotherRuns(tx, userId, subscription)
+  return event.hints.userId !== undefined && !(await tx.accountExists(event.hints.userId))
 }
 
 async function subscriptionOwner(
@@ -59,21 +66,19 @@ async function subscriptionOwner(
   const update = event.subscription
   if (update === null) return null
   const held = await tx.lockSubscription(update.key)
-  const state = await update.read()
+  let state = await update.read()
   if (state === null) return held?.userId ?? null
+  if (!rules.grants(state.subscription)) return null
   const hints = { ...event.hints, ...state.hints }
-  const owner = await applyState(tx, { ...state, hints }, held, rules)
-  const accountGone =
-    event.hints.userId !== undefined && !(await tx.accountExists(event.hints.userId))
-  if (
-    owner === null &&
-    event.startsSubscription &&
-    accountGone &&
-    rules.grants(state.subscription)
-  ) {
-    await rules.orphaned(update.key)
+  const userId = await accountFor(tx, hints, held)
+  if (await unwantedStart(tx, event, userId, state.subscription)) {
+    await rules.refundAndCancel(update.key)
+    state = (await update.read()) ?? state
   }
-  return owner
+  if (userId === null) return null
+  await linkCustomer(tx, userId, hints)
+  if (supersedes(state.subscription, held)) await tx.saveSubscription(userId, state.subscription)
+  return userId
 }
 
 export async function applyEvent(

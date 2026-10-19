@@ -86,7 +86,7 @@ export function createBilling(
         ? (stripe?.prices ?? [])
         : (apple?.products ?? [])
       ).includes(subscription.productId),
-    orphaned: async (key: SubscriptionKey) => {
+    refundAndCancel: async (key: SubscriptionKey) => {
       if (key.source === 'stripe') await stripe?.refundAndCancel(key.providerId)
     }
   }
@@ -121,7 +121,6 @@ export function createBilling(
   }
 
   return {
-    rules,
     view,
 
     async cloudAccess(principal: Principal, now: Date): Promise<CloudAccess | 'no_account'> {

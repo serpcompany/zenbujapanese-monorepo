@@ -134,8 +134,10 @@ to version 22.
   is `pending`; `canceled` and `incomplete_expired` are `expired`.
 - **A refund** is recorded and changes no access: ending the subscription does, so refund and
   cancel together in Stripe's dashboard.
-- **A checkout that completes for a deleted account** is refunded and canceled at once, with
-  Stripe idempotency keys, so a retried event refunds once.
+- **A checkout that completes for a deleted account**, or while the account's other subscription
+  still runs (two checkout tabs, or the app's purchase first), is refunded and canceled at once,
+  with Stripe idempotency keys, so a retried event refunds once. An App Store purchase can't be
+  refunded by the service; the app offers none while a subscription runs.
 - **Stripe down:** Checkout and the portal answer `503 billing_unavailable`; the webhook answers
   `503` and records nothing, so Stripe sends the event again. Each failure is logged as
   `stripe: <what> failed`, with Stripe's error type, code, and request ID, never a key.
@@ -254,7 +256,7 @@ renewals, and notifications with them, which the service trusts in place of Appl
 
 - `src/http/stripe-webhook.test.ts`: a checkout, a bad signature and a changed body, a repeat, a
   renewal, a cancellation, a lapse and its recovery, a refund, events out of order, other
-  products, a checkout for a deleted account, and Stripe down.
+  products, a checkout for a deleted account or a second subscription, and Stripe down.
 - `src/http/apple-notifications.test.ts`: a purchase, a forged or changed payload, another app or
   environment, a repeat, a renewal, auto-renew off and expiry, a billing retry and a grace period,
   a refund and its reversal, a partial refund, a late notification, and one no account holds.

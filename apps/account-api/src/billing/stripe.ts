@@ -55,7 +55,7 @@ export function stripeBilling(
     try {
       await stripe.refunds.create(
         { payment_intent: paymentIntent },
-        { idempotencyKey: `refund-orphaned-${paymentIntent}` }
+        { idempotencyKey: `refund-unwanted-${paymentIntent}` }
       )
     } catch (error) {
       const refunded =

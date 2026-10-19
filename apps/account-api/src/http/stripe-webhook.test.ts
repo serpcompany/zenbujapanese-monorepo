@@ -269,7 +269,7 @@ describe('POST /v1/webhooks/stripe', () => {
         expect.objectContaining({
           method: 'POST',
           path: '/v1/refunds',
-          idempotencyKey: 'refund-orphaned-pi_orphan'
+          idempotencyKey: 'refund-unwanted-pi_orphan'
         }),
         expect.objectContaining({ method: 'DELETE', path: `/v1/subscriptions/${id}` })
       ])
@@ -285,6 +285,40 @@ describe('POST /v1/webhooks/stripe', () => {
     )
     expect(answer.status).toBe(200)
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+  })
+
+  test("refunds and cancels a second checkout that completes while the account's first subscription runs", async () => {
+    const { learner, customer, id: first } = await subscribed('stripe-second@example.com')
+    const second = stripe.subscription({
+      userId: learner.userId,
+      customer,
+      paymentIntent: 'pi_second'
+    })
+    const secondId = String(second.id)
+    await billing.stripeWebhook(updated(secondId))
+    await billing.stripeWebhook(
+      stripe.event('checkout.session.completed', {
+        id: `cs_${secondId}`,
+        object: 'checkout.session',
+        mode: 'subscription',
+        client_reference_id: learner.userId,
+        customer,
+        subscription: secondId
+      })
+    )
+    expect(stripe.subscriptions.get(secondId)?.status).toBe('canceled')
+    expect(stripe.requests).toContainEqual(
+      expect.objectContaining({ path: '/v1/refunds', idempotencyKey: 'refund-unwanted-pi_second' })
+    )
+    expect(
+      await billing.rows(
+        `select provider_id, status from subscriptions where user_id = '${learner.userId}' order by provider_id = '${first}' desc`
+      )
+    ).toEqual([
+      { provider_id: first, status: 'active' },
+      { provider_id: secondId, status: 'expired' }
+    ])
+    expect((await billing.subscription(learner)).active).toBe(true)
   })
 
   test("answers 503 and records nothing while Stripe doesn't answer, so Stripe sends the event again", async () => {
