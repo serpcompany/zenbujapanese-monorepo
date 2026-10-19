@@ -139,7 +139,7 @@ Stripe's test mode and Apple's sandbox, and production's keys never reach stagin
      `STRIPE_WEBHOOK_SECRET`.
    - **Developers → API keys → Create restricted key**, with write access to Checkout Sessions,
      Customer portal, Subscriptions, and Charges (Stripe's `charge_write`, which covers refunds),
-     and read access to Invoices. It is `STRIPE_SECRET_KEY`. A call the key may not
+     and read access to Invoices, Prices, and Products (the website's plans). It is `STRIPE_SECRET_KEY`. A call the key may not
      make is logged with Stripe's error, which names the permission to add.
    - **Settings → Billing → Customer portal**: cancelling, updating the payment method, and invoice
      history on; the privacy policy and terms links.

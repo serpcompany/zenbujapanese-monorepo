@@ -167,6 +167,7 @@ describe("the website's account service client", () => {
         },
         running: [{ status: 'active', managedIn: 'website', expiresAt: null, willRenew: true }],
         canSubscribe: false,
+        cloudAccess: 'free',
         websitePrices: ['price_monthly'],
         appStoreProducts: ['com.zenbujapanese.sync.monthly']
       }

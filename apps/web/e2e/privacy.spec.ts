@@ -85,7 +85,8 @@ test.describe('privacy policy', () => {
       'where our apps or this website offer one',
       "The iPhone app's profile syncs its name and username",
       "notes, photos, searches, settings, and whole Translate conversations don't sync",
-      'only the sentences you bookmark leave your device'
+      'only the sentences you bookmark leave your device',
+      'subscribe and manage a subscription you bought here'
     ])
   })
 
@@ -96,6 +97,7 @@ test.describe('privacy policy', () => {
       /^How you sign in: Apple, Google, or a code we email you.*To sign you in/,
       /^Your sessions: .*IP address.*keep the service secure/,
       /^Your study data: known words and lists.*Player.*Translate sentences you bookmark.*in step/,
+      /^Your subscription, if you have one: where you bought it.*each payment, refund, or dispute.*Never your card details.*record of what you paid$/,
       /^A record of each change you sync/
     ])
   })
@@ -104,10 +106,11 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'Who else handles your information')).toHaveText([
       /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address/,
       /^useSend sends our email, so it gets your email address and the messages we send you, and keeps copies of them/,
+      /^Stripe takes the payments for subscriptions bought on this website\..*keeps its own record of them.*also after you delete your account; we never see your full card number\.$/,
       /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
       /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
       /^Google serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google/,
-      /^Apple signs you in if you choose Apple/,
+      /^Apple signs you in if you choose Apple, and takes the payment for a subscription you buy in the iPhone app\.$/,
       /^YouTube receives your requests when you use Player/
     ])
     await expectNamed(page, 'Who else handles your information', [
@@ -120,6 +123,8 @@ test.describe('privacy policy', () => {
   test('says how long each kind of data is kept', async ({ page }) => {
     await expect(tableRows(page, 'How long')).toHaveText([
       /^Your account and study data.*Until you delete your account$/,
+      /^Your subscription and payment records.*Kept after you delete your account, without your account, as our record of payments$/,
+      /^That an account was deleted.*Its account ID and when it was deleted, with nothing else/,
       /^Sessions.*60 days after you last use one$/,
       /^Sign-in codes.*10 minutes$/,
       /^Request counts.*A day after the last request$/,
@@ -132,6 +137,7 @@ test.describe('privacy policy', () => {
   test('gives the legal basis for each use', async ({ page }) => {
     await expect(listAfter(page, "Why we're allowed to use it")).toHaveText([
       /^Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for/,
+      /^Your subscription and payment records: they're needed to provide the subscription you bought, and to keep a record of payments\.$/,
       /^Sessions, request counts, backups, running this website and our downloads, and counting visits: our legitimate interest/,
       /^Support email: our legitimate interest/
     ])
@@ -143,7 +149,7 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'Your rights')).toHaveText([
       /^See and export\. Email support@zenbujapanese\.com for a copy of the data your account holds/,
       /^Correct\. Change your name and username/,
-      /^Delete\. Delete your account.*within 30 days/,
+      /^Delete\. Delete your account.*within 30 days.*cancels a subscription you bought on this website; one bought in the App Store keeps billing until you cancel it there\.$/,
       /^Object or restrict\. Ask us to stop or limit/
     ])
     await expectNamed(page, 'Your rights', [

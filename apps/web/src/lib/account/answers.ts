@@ -119,13 +119,18 @@ export interface HeldSubscription {
   managedIn: ManagedIn | null
 }
 
+export type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
+
 export interface Subscription {
   latest: HeldSubscription | null
   running: HeldSubscription[]
   canSubscribe: boolean
+  cloudAccess: CloudAccess
   websitePrices: string[]
   appStoreProducts: string[]
 }
+
+const cloudAccesses: readonly CloudAccess[] = ['subscribed', 'free', 'subscription_required']
 
 const managedInOf = (value: unknown): ManagedIn | null =>
   value === 'app_store' || value === 'website' ? value : null
@@ -154,6 +159,7 @@ export function subscriptionOf(value: unknown): Subscription | null {
     latest: heldOf(value, false),
     running: running.filter((held): held is HeldSubscription => held !== null),
     canSubscribe: value.canSubscribe,
+    cloudAccess: cloudAccesses.find(each => each === value.cloudAccess) ?? 'free',
     websitePrices: textsIn(offers.website),
     appStoreProducts: textsIn(offers.appStore)
   }

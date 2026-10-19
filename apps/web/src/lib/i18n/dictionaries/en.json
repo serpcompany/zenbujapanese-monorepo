@@ -1313,7 +1313,7 @@
       "intro": "We don't sell or share your personal information. These companies handle it for us, under their own terms:",
       "cloudflare": "{provider} hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address. It processes routine request details, such as IP addresses.",
       "useSend": "{provider} sends our email, so it gets your email address and the messages we send you, and keeps copies of them.",
-      "stripe": "{provider} takes the payments for subscriptions bought on this website. It receives your email, payment details, and billing address under its own privacy policy; we never see your full card number.",
+      "stripe": "{provider} takes the payments for subscriptions bought on this website. It receives your email, payment details, and billing address, and keeps its own record of them under its own privacy policy, also after you delete your account; we never see your full card number.",
       "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
       "ahrefs": "{provider} counts visits to this website with Ahrefs Web Analytics, which uses no cookies.",
       "google": "{provider} serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google.",
@@ -1332,6 +1332,10 @@
       "subscription": {
         "what": "Your subscription and payment records",
         "howLong": "Kept after you delete your account, without your account, as our record of payments"
+      },
+      "deletedAccount": {
+        "what": "That an account was deleted",
+        "howLong": "Its account ID and when it was deleted, with nothing else, kept so a payment that arrives for it afterwards is refunded"
       },
       "sessions": {
         "what": "Sessions",

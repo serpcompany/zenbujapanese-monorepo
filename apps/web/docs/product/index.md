@@ -39,9 +39,10 @@ the browse pages, [Products pages](products.md) the catalog and the product page
 [Tools pages](tools.md) the tools index and the converters.
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
-learner in to their Zenbu account and manage it; [Account pages](account.md) describes them. They
-are `noindex` and in no sitemap, and where they're closed, in a build whose environment names no
-account service, nothing links to them.
+learner in to their Zenbu account and manage it; [Account pages](account.md) describes them, and
+[The subscription](subscription.md) the account page's subscription: Stripe Checkout, the Customer
+Portal, and one bought in the App Store. They are `noindex` and in no sitemap, and where they're
+closed, in a build whose environment names no account service, nothing links to them.
 
 Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
 in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
@@ -81,7 +82,8 @@ its app source and planned check, and is then built with its check in the same P
 ## How behavior is verified
 
 Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
-[Languages](languages.md), and [Privacy Policy](privacy.md) names its automated check, or says "No
+[The subscription](subscription.md), [Languages](languages.md), and [Privacy Policy](privacy.md)
+names its automated check, or says "No
 automated check yet". The checks come in
 five kinds:
 

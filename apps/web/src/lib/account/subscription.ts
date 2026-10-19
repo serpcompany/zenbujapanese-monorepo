@@ -16,11 +16,14 @@ export function shownSubscriptions(subscription: Subscription): HeldSubscription
   return subscription.latest ? [subscription.latest] : []
 }
 
+const needsOne = (subscription: Subscription) =>
+  subscription.canSubscribe && subscription.cloudAccess === 'subscription_required'
+
 export const offersOnTheWebsite = (subscription: Subscription) =>
-  subscription.canSubscribe && subscription.websitePrices.length > 0
+  needsOne(subscription) && subscription.websitePrices.length > 0
 
 export const offersOnlyInTheApp = (subscription: Subscription) =>
-  subscription.canSubscribe &&
+  needsOne(subscription) &&
   subscription.websitePrices.length === 0 &&
   subscription.appStoreProducts.length > 0
 

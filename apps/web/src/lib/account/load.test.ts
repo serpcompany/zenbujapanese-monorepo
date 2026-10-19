@@ -17,6 +17,7 @@ const subscription = {
   latest: null,
   running: [],
   canSubscribe: true,
+  cloudAccess: 'subscription_required' as const,
   websitePrices: ['price_monthly'],
   appStoreProducts: []
 }

@@ -518,12 +518,12 @@ To run them locally, run the account service ([`account-api.md`](account-api.md)
 `pnpm dev` reads it at `http://localhost:8789`, and `ACCOUNT_API_URL` in `.dev.vars` names another.
 Its dev mailbox, `http://localhost:8789/dev/mail`, holds the codes.
 
-**Browser tests.** `e2e/account.spec.ts` stands in for the service in the browser, so it runs
-wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts` drives a learner
-through registering, editing the profile, signing out, signing in again, and deleting the account
-with a fresh sign-in, against a real service and its dev mailbox. Like the dictionary's
-rendered-page gate, it runs only when asked (`ZENBU_ACCOUNT_API=1`), and the `Account API`
-workflow starts the service it checks and runs it ([`ci.md`](ci.md), Account API):
+**Browser tests.** `e2e/account.spec.ts` and `e2e/subscription.spec.ts` stand in for the service in
+the browser, so they run wherever the others do, CI's `Web` included. `e2e/account-service.spec.ts`
+drives a learner through registering, editing the profile, signing out, signing in again, and
+deleting the account with a fresh sign-in, against a real service and its dev mailbox. Like the
+rendered-page gate, it runs only when asked (`ZENBU_ACCOUNT_API=1`), and the `Account API` workflow
+starts the service it checks and runs it ([`ci.md`](ci.md), Account API):
 
 ```sh
 ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop

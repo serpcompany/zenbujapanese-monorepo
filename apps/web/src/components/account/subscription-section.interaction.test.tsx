@@ -32,7 +32,7 @@ const subscription = (running: object[] = [], more: Record<string, unknown> = {}
   active: running.length > 0,
   running,
   canSubscribe: running.length === 0,
-  cloudAccess: running.length > 0 ? 'subscribed' : 'free',
+  cloudAccess: running.length > 0 ? 'subscribed' : 'subscription_required',
   appAccountToken: '6f1c3c3e-0b5d-4c4e-9a51-7d0c2f1e8a01',
   offers,
   ...more
@@ -174,6 +174,16 @@ describe('the subscription on the account page', () => {
     await shows(page, 'Payments aren’t answering right now, so nothing changed.')
     await click(page, 'Subscribe to Zenbu Sync, $4.99 a month')
     await shows(page, 'That plan isn’t offered anymore.')
+  })
+
+  test('offers nothing while sync is free, as before the owner turns the gate on', async () => {
+    const { calls } = signedIn({
+      more: { 'GET /v1/me/subscription': answer(subscription([], { cloudAccess: 'free' })) }
+    })
+    const page = renderAccountView()
+    await shows(page, `Signed in as ${email}`)
+    expect(page.textContent).not.toContain('Subscription')
+    expect(callTo(calls, 'GET /v1/me/subscription/plans')).toEqual([])
   })
 
   test('shows nothing where neither store sells it, and sends to the app where only the App Store does', async () => {

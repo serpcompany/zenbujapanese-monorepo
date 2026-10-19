@@ -12,10 +12,19 @@ import { site } from '@/lib/site'
 
 const shortVersion = ['works', 'account', 'noSale', 'providers', 'rights'] as const
 
-const whatWeKeep = ['account', 'signIn', 'sessions', 'studyData', 'changes'] as const
+const whatWeKeep = [
+  'account',
+  'signIn',
+  'sessions',
+  'studyData',
+  'subscription',
+  'changes'
+] as const
 
 const howLongWeKeepIt = [
   'account',
+  'subscription',
+  'deletedAccount',
   'sessions',
   'codes',
   'requestCounts',
@@ -27,6 +36,7 @@ const howLongWeKeepIt = [
 const providers = [
   { key: 'cloudflare', name: 'Cloudflare' },
   { key: 'useSend', name: 'useSend' },
+  { key: 'stripe', name: 'Stripe' },
   { key: 'lambda', name: 'Lambda, Inc.' },
   { key: 'ahrefs', name: 'Ahrefs' },
   { key: 'google', name: 'Google' },
@@ -34,7 +44,7 @@ const providers = [
   { key: 'youtube', name: 'YouTube' }
 ] as const
 
-const legalBases = ['account', 'security', 'support'] as const
+const legalBases = ['account', 'subscription', 'security', 'support'] as const
 
 const rights = ['export', 'correct', 'delete', 'object'] as const
 
@@ -73,7 +83,7 @@ export default async function PrivacyPage({ params }: PageProps<'/[locale]/legal
   const t = getDictionary(locale).privacy
   const named = { name: site.name }
   return (
-    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-18" englishPrevails>
+    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-19" englishPrevails>
       <p>{fill(t.intro, named)}</p>
 
       <h2>{t.short.heading}</h2>
