@@ -1,4 +1,5 @@
 import { romaji } from '@zenbu/dictionary-core/detail/romaji'
+import type { SearchData } from '@/lib/dictionary/data'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, pluralOf } from '@/lib/i18n/format'
@@ -16,6 +17,9 @@ export interface SearchSnippet {
   heading: string
   description: string
 }
+
+export const showsExampleSentences = (data: SearchData) =>
+  data.state === 'results' && data.examples?.target.kind === 'inline'
 
 const combiningMark = /\p{Mn}/gu
 const particleEnding = /[はへ]$/u
