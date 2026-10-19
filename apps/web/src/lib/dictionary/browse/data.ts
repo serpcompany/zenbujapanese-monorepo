@@ -18,8 +18,14 @@ import { errorFields, log } from '@/lib/log'
 import { dictionaryService } from '../data'
 import type { Linked } from '../page-example'
 import { linkedWordPath } from '../results/links'
+import { rankBandPage } from './rank-pages'
 
 export type BrowseWordsPage = Omit<BrowseWordsResponse, 'words'> & { words: Linked<BrowseWord>[] }
+
+export interface RankBandWords {
+  words: Linked<BrowseWord>[]
+  pages: number
+}
 
 export type KanaInitialPage = Omit<KanaInitialResponse, 'words'> & {
   words: Linked<BrowseWord>[]
@@ -120,6 +126,15 @@ export const getRankedLists = cache(async () => {
 export const getRankedWords = cache(async (slug: string, page: number) =>
   wordsPage(await answer(browseService.rankedWords(slug, page)))
 )
+
+export async function getRankBandWords(
+  slug: string,
+  band: number,
+  page: number
+): Promise<RankBandWords | null> {
+  const found = await getRankedWords(slug, band)
+  return found ? rankBandPage(found.words, band, page) : null
+}
 
 export const getKanjiHub = cache(async () => (await required(browseService.kanjiHub())).data)
 

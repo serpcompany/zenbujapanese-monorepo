@@ -164,24 +164,25 @@ the chips beside each word use the same tiers.
 - Source: #614 mockup "/dictionary/browse/frequency-dictionaries/" ("[Tier cut-offs as the app's
   chips use them]"); the decision on #614 that the site has all eight lists, ranked as the app
   ranks them.
-- Check: Browse lists spec, "lead to each list’s first band and each JLPT level, with the app’s
-  four tiers"; `src/lib/dictionary/browse/copy.test.ts`, "the tier legend gives the cut-offs the
-  app’s chips use"; Browse service, "the %s list ranks words from 1, a band of 1,000 ranks at a
-  time".
+- Check: Browse lists spec, "lead to each list’s first band and each JLPT level, with the app’s four
+  tiers"; `src/lib/dictionary/browse/copy.test.ts`, "the tier legend gives the cut-offs the app’s
+  chips use"; Browse service, "the %s list ranks words from 1, a band of 1,000 ranks at a time".
 
-**A ranked list.** A band of 1,000 ranks is a page: `/dictionary/browse/frequency-dictionaries/anime/1-1000/`
-lists the words ranked 1 to 1,000, each with its rank, then `…/anime/1001-2000/` and so on to
-`…/anime/9001-10000/`, as the mockup names them. The list's name links to its first band, and
-the bands link to each other. A rank no word holds is skipped. Wikipedia's and Jiten's pages say
-which words that leaves out and why: the lists count spellings (Jiten's with their readings), and
-the app ranks one only when it names a single dictionary word, so ones several words share, such
-as に, は, and が, aren't ranked. The app's mapping does this on purpose
+**A ranked list.** A band of 1,000 ranks (`/dictionary/browse/frequency-dictionaries/anime/1-1000/`
+to `…/anime/9001-10000/`) shows 200 ranks a page, so no page passes the 2 MB a crawler reads:
+`…/anime/1001-2000/` lists the words ranked 1,001 to 1,200, each with its rank, and `…/2/` to `…/5/`
+the rest. The list's name links to its first band, the bands to each other, and a band's pages as
+other lists' do. A rank no word holds is skipped, and a band ends at its last ranked word.
+Wikipedia's and Jiten's pages say which words that leaves out and why: the lists count spellings
+(Jiten's with their readings), and the app ranks one only when it names a single dictionary word, so
+ones several words share, such as に, は, and が, aren't ranked. The app's mapping does this on purpose
 (`apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV2.sql`, which every
 installed pack pins), and the site keeps it, so it ranks words as the app does.
 
-- Source: #614 mockup's bands and their URLs; the decision on #614.
-- Check: Browse lists spec, "a ranked list shows a band of 1,000 ranks, says which words it
-  skips, and credits Jiten"; `src/lib/dictionary/browse/paths.test.ts`;
+- Source: #614 mockup's bands and their URLs; the decision on #614; decision D1 on #871 (#878).
+- Check: Browse lists spec, "a ranked list shows a band’s first 200 ranks, says which words it
+  skips, and credits Jiten"; `src/lib/dictionary/browse/paths.test.ts` and `rank-pages.test.ts`;
+  `src/app/[locale]/dictionary/browse/frequency-dictionaries/list-routes.test.tsx`;
   `src/lib/dictionary/browse/copy.test.ts`, "the Wikipedia and Jiten lists say which words aren’t
   ranked, and why".
 
@@ -197,9 +198,9 @@ rankings are shared under the same licence. Wikipedia's and TUBELEX's lists are 
 BSD-3-Clause, and the JLPT lists as the word pages credit them.
 
 - Source: the decision on #614.
-- Check: Browse lists spec, "a ranked list shows a band of 1,000 ranks, says which words it
-  skips, and credits Jiten"; `src/lib/dictionary/browse/copy.test.ts`, "each ranked list credits
-  its source".
+- Check: Browse lists spec, "a ranked list shows a band’s first 200 ranks, says which words it
+  skips, and credits Jiten"; `src/lib/dictionary/browse/copy.test.ts`, "each ranked list credits its
+  source".
 
 ## Categories
 
@@ -285,15 +286,15 @@ dictionary and browse pages: kana pages, kanji lists, frequency dictionaries, an
 - Check: Browse spec, "the sitemap page lists the browse pages".
 
 **URLs and indexing.** Every browse page is its own canonical URL. A list's first page has no
-number: `…/2/` is its second, `…/1/` redirects (308) to the list's URL, and a page past the last,
-or a list, band, kana, or category the dictionary doesn't have, is 404. A list of fewer than 10
-words (or kanji) isn't indexed (`noindex, follow`), and neither is a category in kana order; the
+number: `…/2/` is its second, `…/1/` redirects (308) to the list's URL, and a page past the last, or
+a list, band, kana, or category the dictionary doesn't have, is 404. A list, or a band's page, of
+fewer than 10 words (or kanji) isn't indexed (`noindex, follow`), nor a category in kana order; the
 rest are. The thin lists today are 11 categories (audiovisual and paleontology with 1 word, manga,
 Nagano dialect, and pathology with 2, and Tsugaru dialect, mechanical engineering, Tosa dialect,
-motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana groups (such as
-かカ), 14 kana with fewer than 10 words (such as ﾀ, 〜, and ヲ), and five stroke counts (1, 21, 22,
-23, and 29 strokes). They stay linked from their kana, category list, or kanji lists, so every
-word stays a few links from the dictionary home.
+motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana groups (such as かカ), 14
+kana with fewer than 10 words (such as ﾀ, 〜, and ヲ), and five stroke counts (1, 21, 22, 23, and 29
+strokes). They stay linked from their kana, category list, or kanji lists, so every word stays a few
+links from the dictionary home.
 
 - Source: ADR 0010 (amended); #614 (the thin lists).
 - Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks is
@@ -302,9 +303,8 @@ word stays a few links from the dictionary home.
   it's asked for, never at build time: `src/app/[locale]/dictionary/browse/dynamic.test.ts`.
 
 **No link is a redirect.** Every link on a browse page goes straight to its page, never to a URL
-that redirects, which a site audit (Ahrefs, for #614) reports. So a kanji links to the search
-page of its normalized form, a list's name to its first band, and a first page to the list's own
-URL.
+that redirects, which a site audit (Ahrefs, for #614) reports. So a kanji links to the search page
+of its normalized form, a list's name to its first band, and a first page to the list's own URL.
 
 - Source: #614 (the Ahrefs site audit).
 - Check: Browse links spec, "no link on a browse page leads to a redirect, as a site audit would
@@ -313,19 +313,20 @@ URL.
 
 **Browse sitemaps.** Every indexed browse page is in exactly one sitemap, by kind:
 `/sitemap-kana.xml` (the hiragana and katakana lists), `/sitemap-categories.xml`,
-`/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary), and `/sitemap-kanji-lists.xml`.
-Each hub leads its kind's sitemap: the kana charts and both scripts lead the kana sitemap, the
-three category indexes the categories sitemap, the frequency dictionaries the frequency lists
-sitemap, and the kanji lists the kanji lists sitemap. The browse home is in `/sitemap-pages.xml`,
-beside `/dictionary/`. The sitemap index lists the four wherever a deploy wrote them: staging
-and production.
+`/sitemap-frequency-lists.xml` (ranked bands' pages and JLPT vocabulary), and
+`/sitemap-kanji-lists.xml`. Each hub leads its kind's sitemap: the kana charts and both scripts lead
+the kana sitemap, the three category indexes the categories sitemap, the frequency dictionaries the
+frequency lists sitemap, and the kanji lists the kanji lists sitemap. The browse home is in
+`/sitemap-pages.xml`, beside `/dictionary/`. The sitemap index lists the four wherever a deploy
+wrote them: staging and production.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
   `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
   SERP XML sitemaps standard asks.
-- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemaps list every browse page with
-  10 words or more, each once" and "the … sitemap lists only its own kind of browse page";
-  `src/lib/sitemap.test.ts`, "the … browse sitemap is …"; `apps/web/e2e/sitemaps.spec.ts`, the
-  pages sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four
-  together stay under one file's 50,000 URLs, so each does); Browse categories service, "the
-  categories under 10 words are the thin ones the sitemap leaves out".
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemaps list every browse page with 10
+  words or more, each once", "a band of 10 words or more is listed as its five pages of 200 ranks,
+  its first as the band’s URL", and "the … sitemap lists only its own kind of browse page";
+  `src/lib/sitemap.test.ts`, "the … browse sitemap is …"; `apps/web/e2e/sitemaps.spec.ts`, the pages
+  sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four together
+  stay under one file's 50,000 URLs, so each does); Browse categories service, "the categories under
+  10 words are the thin ones the sitemap leaves out".

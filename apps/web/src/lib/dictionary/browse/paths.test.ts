@@ -48,6 +48,16 @@ describe('browse URLs', () => {
     expect(parseRankBand('1-1000')).toBe(1)
   })
 
+  test('a band’s first page is the band’s URL, and its later pages add their number', () => {
+    expect(rankBandPath('anime', 2, 1)).toBe(rankBandPath('anime', 2))
+    expect(rankBandPath('anime', 2, 2)).toBe(
+      '/dictionary/browse/frequency-dictionaries/anime/1001-2000/2/'
+    )
+    expect(rankBandPath('anime', 10, 5)).toBe(
+      '/dictionary/browse/frequency-dictionaries/anime/9001-10000/5/'
+    )
+  })
+
   test.each([
     '1001-1999',
     '0-1000',

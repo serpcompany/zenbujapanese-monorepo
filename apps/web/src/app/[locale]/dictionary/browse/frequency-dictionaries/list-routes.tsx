@@ -1,6 +1,7 @@
 import { minimumIndexedWords, rankedList } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
+import type { ReactNode } from 'react'
 import { JlptListPage, RankBandPage } from '@/components/dictionary/browse/frequency-pages'
 import {
   counted,
@@ -11,7 +12,7 @@ import {
   rankedListCopy,
   rankRange
 } from '@/lib/dictionary/browse/copy'
-import { getRankedWords } from '@/lib/dictionary/browse/data'
+import { getRankBandWords, getRankedWords } from '@/lib/dictionary/browse/data'
 import {
   jlptVocabularyPath,
   pageNumber,
@@ -19,6 +20,7 @@ import {
   parseRankBand,
   rankBandPath
 } from '@/lib/dictionary/browse/paths'
+import { rankPageRanks } from '@/lib/dictionary/browse/rank-pages'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
@@ -27,40 +29,71 @@ import { fill, formatNumber } from '@/lib/i18n/format'
 import { localeOf } from '@/lib/i18n/params'
 import { localizedPath } from '@/lib/i18n/paths'
 
-type BandParams = { params: Promise<{ locale: string; list: string; band: string }> }
-type LevelParams = { params: Promise<{ locale: string; level: string }> }
-type LevelPageParams = { params: Promise<{ locale: string; level: string; page: string }> }
+type BandParams = Promise<{ locale: string; list: string; band: string }>
+type BandPageParams = Promise<{ locale: string; list: string; band: string; page: string }>
+type LevelParams = Promise<{ locale: string; level: string }>
+type LevelPageParams = Promise<{ locale: string; level: string; page: string }>
 
 const frequencyText = (locale: Locale) => getDictionary(locale).browse.frequency
 
-async function loadBand(params: BandParams['params']) {
-  const locale = await localeOf(params)
-  const { list: slug, band: segment } = await params
+function listRoute<Params, Loaded>(
+  load: (params: Params) => Promise<Loaded>,
+  metadata: (loaded: Loaded) => Metadata,
+  view: (loaded: Loaded) => ReactNode
+) {
+  return {
+    async generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+      return metadata(await load(params))
+    },
+    async Page({ params }: { params: Params }) {
+      return view(await load(params))
+    }
+  }
+}
+
+async function loadBand(slug: string, segment: string, page: number, locale: Locale) {
   const list = rankedList(slug)
   const band = parseRankBand(segment)
   const copy = rankedListCopy(slug, locale)
-  const words = list && band && copy ? await getRankedWords(slug, band) : null
+  const words = list && band && copy ? await getRankBandWords(slug, band, page) : null
   if (!list || !band || !copy || !words) notFound()
-  return { list, band, copy, words, locale }
+  return { list, band, page, copy, words, locale }
 }
 
-export const rankBandRoute = {
-  async generateMetadata({ params }: BandParams): Promise<Metadata> {
-    const { list, band, copy, words, locale } = await loadBand(params)
-    const range = rankRange(band, locale)
-    return dictionaryMetadata(
-      rankBandPath(list.slug, band),
-      locale,
-      rankBandTitle(coreText(list.name, locale), band, locale),
-      joinSentences([copy.description, fill(frequencyText(locale).bandRanks, { range })], locale),
-      { index: words.words.length >= minimumIndexedWords }
-    )
-  },
-  async Page({ params }: BandParams) {
-    const { list, band, copy, words, locale } = await loadBand(params)
-    return <RankBandPage list={list} band={band} copy={copy} words={words} locale={locale} />
-  }
+type LoadedBand = Awaited<ReturnType<typeof loadBand>>
+
+function bandMetadata({ list, band, page, copy, words, locale }: LoadedBand): Metadata {
+  const ranks = rankPageRanks(band, page)
+  const range = rankRange(ranks, locale)
+  return dictionaryMetadata(
+    rankBandPath(list.slug, band, page),
+    locale,
+    rankBandTitle(coreText(list.name, locale), ranks, locale),
+    joinSentences([copy.description, fill(frequencyText(locale).bandRanks, { range })], locale),
+    { index: words.words.length >= minimumIndexedWords }
+  )
 }
+
+const bandView = (loaded: LoadedBand) => <RankBandPage {...loaded} />
+
+async function firstBand(params: BandParams) {
+  const { list, band } = await params
+  return loadBand(list, band, 1, await localeOf(params))
+}
+
+async function pagedBand(params: BandPageParams) {
+  const locale = await localeOf(params)
+  const { list, band: segment, page: pageSegment } = await params
+  const band = parseRankBand(segment)
+  const number = pageNumber(pageSegment)
+  if (!rankedList(list) || !band || !number) notFound()
+  if ('redirect' in number) permanentRedirect(localizedPath(rankBandPath(list, band), locale))
+  return loadBand(list, segment, number.page, locale)
+}
+
+export const rankBandRoute = listRoute(firstBand, bandMetadata, bandView)
+
+export const pagedRankBandRoute = listRoute(pagedBand, bandMetadata, bandView)
 
 async function loadLevel(segment: string, page: number, locale: Locale) {
   const level = parseJlptLevel(segment)
@@ -90,7 +123,7 @@ const levelView = ({ level, words, page, locale }: LoadedLevel) => (
   <JlptListPage level={level} words={words} page={page} locale={locale} />
 )
 
-async function pagedLevel(params: LevelPageParams['params']) {
+async function pagedLevel(params: LevelPageParams) {
   const locale = await localeOf(params)
   const { level: segment, page: pageSegment } = await params
   const level = parseJlptLevel(segment)
@@ -101,24 +134,10 @@ async function pagedLevel(params: LevelPageParams['params']) {
   return loadLevel(segment, number.page, locale)
 }
 
-async function firstLevel(params: LevelParams['params']) {
+async function firstLevel(params: LevelParams) {
   return loadLevel((await params).level, 1, await localeOf(params))
 }
 
-export const jlptRoute = {
-  async generateMetadata({ params }: LevelParams): Promise<Metadata> {
-    return levelMetadata(await firstLevel(params))
-  },
-  async Page({ params }: LevelParams) {
-    return levelView(await firstLevel(params))
-  }
-}
+export const jlptRoute = listRoute(firstLevel, levelMetadata, levelView)
 
-export const pagedJlptRoute = {
-  async generateMetadata({ params }: LevelPageParams): Promise<Metadata> {
-    return levelMetadata(await pagedLevel(params))
-  },
-  async Page({ params }: LevelPageParams) {
-    return levelView(await pagedLevel(params))
-  }
-}
+export const pagedJlptRoute = listRoute(pagedLevel, levelMetadata, levelView)
