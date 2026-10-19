@@ -264,6 +264,29 @@ describe('the embedded dictionary', () => {
     expect(note('背水')).toBe('null')
   })
 
+  test('answers at once the notes Search lists for a query, or nothing', () => {
+    const endpoint = embeddedEndpoint(host())
+    const notes = [
+      { key: 'a1', id: '1', text: 'to squish flat', headword: '潰す', reading: 'つぶす' }
+    ]
+    const asked = (query: string) => JSON.stringify({ query, notes })
+    expect(endpoint.answer('notesInSearch', asked('ＳＱＵＩＳＨ'))).toEqual({
+      title: 'In your notes',
+      rows: [
+        {
+          key: 'a1',
+          id: '1',
+          headword: '潰す',
+          reading: 'つぶす',
+          before: 'to ',
+          match: 'squish',
+          after: ' flat'
+        }
+      ]
+    })
+    expect(endpoint.answerJSON('notesInSearch', asked('mochi'))).toBe('null')
+  })
+
   test('answers a client’s source credits at once, and refuses a client it does not know', () => {
     const endpoint = embeddedEndpoint(host())
     expect(endpoint.answer('sourceCredits', 'app')).toEqual(creditsShownBy('app'))

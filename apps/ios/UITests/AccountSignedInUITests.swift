@@ -75,7 +75,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
           + " with your Zenbu account. Your photo stays on this device.", in: app))
 
     focus(name)
-    name.tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    TestDevice.selectAllText(in: name)
     name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 16))
     tap(find("profile.username", in: app))
     waitFor(

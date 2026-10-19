@@ -21,7 +21,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | --- | --- | --- |
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
-| `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and the Example Sentences, reading-refinement, and kanji rows. | `ResultsScreen` |
+| `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and Example Sentences, reading-refinement, kanji, and notes rows. | `ResultsScreen` |
 | `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and a linked word's gloss. Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, what a link names (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
@@ -141,6 +141,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A one-character query from a Radicals or Grade pick lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
+  | `notesInSearch` | A query and the learner's notes (key, word, text) | **In your notes**: the notes the query is part of, folded as a query, each with its word and the part that matched; or null |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
   | `wordPage` | An entry the host read | `EmbeddedWordPage`: titled sections, furigana, part of speech, conjugations, pitch, senses, frequency rows, forms, kanji, related words, labels, share text |
   | `kanjiPage`, `candidateMeanings` | A kanji, its words, and the word it was opened from; candidates | `EmbeddedKanjiPage`: sections, stats, meanings, readings with words and labels, elements, components, share text, the reading to save; a one-kanji candidate's first meaning |
@@ -204,8 +205,7 @@ website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer
     words make it throw; and
   - a class's `max_length` is ignored: one unknown word spans the whole run of a grouped class.
 
-  Fixing one of these is a behavior change for every client at once: change it here, and record
-  the suite again.
+  Fixing one changes every client's behavior at once: change it here, and record the suite again.
 - **Why the core has its own.** In an engine without a JIT, kuromoji.js spent half of each linked
   sentence: it re-encodes the rest of the sentence at every character, decodes each word's
   feature line a byte at a time, and builds an object per lattice node. `ipadic.ts` encodes a
@@ -266,6 +266,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
+| `LearnerNotes.swift` (`SearchView`) | `notesInSearch` | The notes Search lists after its matches |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |
@@ -509,10 +510,8 @@ ready and a page's first request prepares nothing:
   page's entry is written as stays whole. A `FormExampleRow` is keyed by the form's spelling alone
   and has no page entry, so its words link as no word page sees them.
 - An `ExampleCountRow`'s `listed` is at most 100, its `count` is exact up to 50 (51 means more),
-  and `truncated` says more than 100 matched. A word page shows 25 examples and loads the rest as
-  it scrolls.
-- A Tatoeba pair's two sentences each have their own ID, contributor (null when Tatoeba names
-  none), and license.
+  and `truncated` says over 100 matched. A word page shows 25 examples, and more as it scrolls.
+- Each sentence of a Tatoeba pair has its own ID, contributor (null if none is named), and license.
 - A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel` in
   `KanjiReferenceData.json`), shown as `N` and the level, and null for a kanji his lists leave out.
   KANJIDIC2's own pre-2010 `jlpt` is still in the file, and nothing reads it. `structure` is null
