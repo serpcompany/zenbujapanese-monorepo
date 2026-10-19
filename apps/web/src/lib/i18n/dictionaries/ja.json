@@ -725,8 +725,7 @@
       "signOut": "ログアウト"
     },
     "switcher": {
-      "label": "{language}、表示言語を切り替える",
-      "heading": "言語"
+      "label": "{language}、表示言語を切り替える"
     },
     "social": {
       "elsewhere": "{name}のSNS",

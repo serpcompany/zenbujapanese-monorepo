@@ -204,24 +204,11 @@ function languageTrigger(html: string): string {
   )
 }
 
-describe('from 1024 pixels the header has the language menu, named in the current language', () => {
-  test.each([
-    ['en', '/about/', 'English', 'English, change language'],
-    ['ja', '/ja/about/', '日本語', '日本語、表示言語を切り替える']
-  ] as const)('on a %s page it reads %s', (locale, path, name, label) => {
-    const html = header(path, locale)
-    const trigger = languageTrigger(html)
-    expect(attribute(trigger, 'aria-label')).toBe(label)
-    expect(attribute(trigger, 'aria-haspopup')).toBe('menu')
-    expect(classesOf(trigger)).toContain('max-lg:hidden')
-    expect(html).toContain(`</svg>${name}</button>`)
-  })
-
-  test('it comes before Get the app', () => {
-    const html = header('/')
-    const [getTheApp = ''] = headerButtons(html)[0] ?? []
-    expect(html.indexOf(languageTrigger(html))).toBeLessThan(html.indexOf(getTheApp))
-  })
+test.each([
+  ['en', '/about/'],
+  ['ja', '/ja/about/']
+] as const)('the %s header has no language button: the footer holds the languages', (locale, path) => {
+  expect(languageTrigger(header(path, locale))).toBe('')
 })
 
 describe("a Japanese page's header is in Japanese, and its links stay in Japanese", () => {

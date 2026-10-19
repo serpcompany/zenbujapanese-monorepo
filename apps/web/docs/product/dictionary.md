@@ -868,8 +868,8 @@ Detail in the app, so its row doesn't open.
 ## Header, footer, and site-wide
 
 **Header.** The logo and the site name link home. From 1024 pixels the header shows the logo and
-name, the Dictionary, Tools, Products, and Company menus, then the language menu
-([Languages](languages.md)), Get the app, and the round account button (Account menu, below). Below
+name, the Dictionary, Tools, Products, and Company menus, then Get the app and the round account
+button (Account menu, below); the languages are in the footer ([Languages](languages.md)). Below
 1024 pixels it shows the logo, the name left to screen readers, and a menu button (lucide `Menu`).
 The header has no search and no email address: the Dictionary menu leads to the dictionary home,
 whose box searches (#561). It stays pinned to the top of the window while the page scrolls, on the
@@ -1025,7 +1025,7 @@ marked as the current page (`aria-current="page"`).
 screen's width and at most 384 pixels (#682: at three-quarters, a 360-pixel phone left its items'
 lines a word or two long), titled with the logo and the site name, with the Theme button beside its
 close button (Theme, above). It holds the four menus as groups that open and close (one at a time),
-the current section's group open, then the languages, Log in, or Your account in a browser that
+the current section's group open, then Log in, or Your account in a browser that
 signed in, and Get the app. A mega menu's group lists its columns' links, with the Dictionary group
 led by Search. A group opens and closes with a click, Enter, or Space. Following a link, its close
 button (lucide `X`), Escape, going back or forward, or widening the window to 1024 pixels closes the

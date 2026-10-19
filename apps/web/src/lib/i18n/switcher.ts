@@ -3,13 +3,18 @@ import { getDictionary } from './dictionary'
 import { fill } from './format'
 import { localizedPath } from './paths'
 
-export type SwitcherLanguage = { code: Locale; name: string; home: string }
+type SwitcherLanguage = {
+  code: Locale
+  name: string
+  short: string
+  region: string
+  home: string
+}
 
 export type Switcher = {
   current: Locale
   languages: readonly SwitcherLanguage[]
   label: string
-  heading: string
 }
 
 export function switcherFor(locale: Locale): Switcher {
@@ -19,9 +24,10 @@ export function switcherFor(locale: Locale): Switcher {
     languages: languages.map(language => ({
       code: language.code,
       name: language.name,
+      short: language.code.toUpperCase(),
+      region: language.ogLocale.slice(-2),
       home: localizedPath('/', language.code)
     })),
-    label: fill(text.label, { language: languageOf(locale).name }),
-    heading: text.heading
+    label: fill(text.label, { language: languageOf(locale).name })
   }
 }
