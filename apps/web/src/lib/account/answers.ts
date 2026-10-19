@@ -98,7 +98,7 @@ export const textAnswer = (value: unknown, key: string) =>
 
 export const trueAnswer = (value: unknown, key: string) => isFields(value) && value[key] === true
 
-export type ManagedIn = 'app_store' | 'website'
+type ManagedIn = 'app_store' | 'website'
 
 const subscriptionStatuses = [
   'active',
@@ -110,7 +110,7 @@ const subscriptionStatuses = [
   'revoked'
 ] as const
 
-export type SubscriptionStatus = (typeof subscriptionStatuses)[number]
+type SubscriptionStatus = (typeof subscriptionStatuses)[number]
 
 export interface HeldSubscription {
   status: SubscriptionStatus
@@ -119,7 +119,7 @@ export interface HeldSubscription {
   managedIn: ManagedIn | null
 }
 
-export type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
+type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
 
 export interface Subscription {
   latest: HeldSubscription | null
