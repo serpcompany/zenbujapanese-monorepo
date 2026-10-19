@@ -35,7 +35,7 @@ in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
 
 - **Dictionary service, A.** Every recorded suite runs on the real data on each pull request that
   changes the service, the core, a suite, or the data, and the image is checked before it ships.
-  Main gap: sentence search is held to the service's own cases, not to the app (#470).
+  Main gap: sentence search is held to the service's own cases, not to the app (#830).
 - **Shared dictionary core, A.** Unit tests, the recorded suites, and import rules that keep it
   free of any runtime all run before merge. The app runs all of it, so each rule has one
   implementation (#481). Main gap: the app's own tests of the Swift around it don't run before
@@ -55,7 +55,7 @@ in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
   snapshots, and the image is checked before it ships. Main gaps: Apple's and Google's real keys and
   useSend are first used on staging, the website's Apple deletion with them; it hasn't run on the
   server (#565's, #566's, and #567's server steps); and the iOS app syncs with it from Debug builds
-  on staging, and from 2.0.0's TestFlight and App Store builds in production (#573, #616).
+  on staging, and from 2.0.0's TestFlight and App Store builds in production (#573, #797).
 - **What the Node services share, A.** Small, and tested on its own and through both services.
 
 ## Language data
@@ -69,7 +69,7 @@ in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
   service's Dockerfile checks the app's files and the image's copies against the pinned release,
   then rebuilds it, checks its retired entries against every pinned release, and compares it with
   its pin. Main gap: publishing has run only against the
-  fake bucket, since the `language-data-release` environment has no R2 token (#463).
+  fake bucket, since the `language-data-release` environment has no R2 token (#828).
 - **Language-data tools, B.** The `iOS` workflow runs the contract tests before merge, and a
   rebuild is one command, on a pinned Python, from sources archived beside their records. But the
   importers, such as `language-data/tools/import_jmdict.py`, have no tests of their own, and two

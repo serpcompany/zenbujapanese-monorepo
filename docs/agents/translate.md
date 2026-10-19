@@ -2,7 +2,7 @@
 
 How the app's Translate tab is built, tested, and checked. What it does for a learner is in
 [`apps/ios/docs/product/translate.md`](../../apps/ios/docs/product/translate.md); the plan for the
-rest of the translator, including an Online engine, is the epic #624.
+rest of the translator, including an Online engine, is the epic #836.
 
 ## Code layout
 
@@ -196,7 +196,7 @@ xcodebuild -scheme ZenbuJapaneseModules-Package \
 
 ## Tuned values
 
-These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fixture, five English sentence pairs with 0.5–2.0 s pauses, and a 25 s fast Japanese monologue, in the Mac's Kyoko and Samantha voices. Owll Translator was measured on the same script. What's still wrong is in #640.
+These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #794 fixture, five English sentence pairs with 0.5–2.0 s pauses, and a 25 s fast Japanese monologue, in the Mac's Kyoko and Samantha voices. Owll Translator was measured on the same script. What's still wrong is in #843.
 
 | Value | Where | Now | What it fixed |
 | --- | --- | --- | --- |
@@ -209,7 +209,7 @@ These were tuned on 2026-10-07 on an iPhone 17 Pro Max. A Mac played the #627 fi
 | Pause | `SpeechPauseDetector` | 0.6 s below 3 × the noise floor | Owll splits sentences at about 0.5 s. |
 | Pause confirmation | `BilingualRecognizer.pauseConfirmation` | 0.3 s | Japanese is finalized only if its text stopped changing. A loudness dip inside fast speech no longer cuts it. |
 | Stalled sentence | `SpeechPauseDetector.stalledSentence`, `abandonedSentence` | 2 s once the room is quiet for 0.6 s; 5 s while someone is talking | Only a recognizer that has really stopped is finalized. Finalizing during fast speech chopped the monologue and lost its words (2026-10-08, recorded-audio check). |
-| Idle reset | `BilingualRecognizer.idleBeforeReset` | 5 s without a Japanese result | Left open from 118.7 s through the English pairs, the Japanese analyzer lost the start of the monologue at 155 s (problem 1 on #640). |
+| Idle reset | `BilingualRecognizer.idleBeforeReset` | 5 s without a Japanese result | Left open from 118.7 s through the English pairs, the Japanese analyzer lost the start of the monologue at 155 s (problem 1 on #843). |
 | Pause re-checks | `BilingualRecognizer.pauseChecks`, `pauseMargin` | 5 checks, 0.3 s apart; finalized through 0.3 s after the voice ended | A pause whose Japanese text was still catching up was skipped, and the sentence waited for the stall timer; the late Japanese final then lost to an English guess. |
 | Doubtful guess over shown speech | `BilingualTranscriptMerger.confidenceOverShownSpeech` | 0.55 | The English recognizer's "Hi" (0.40) for the end of 「はい、3時」 became its own turn. Its junk measured 0.30–0.51 on the recordings; real English 0.59 and up. |
 | Turn-end pause | `ConversationTiming.turnEndPause` | 0.8 s (was 1.2) | Translations start 1.4–2.3 s after the speaker stops (was 2.3–5.4 s). Owll takes about 1.7–2 s. |
@@ -241,7 +241,7 @@ engine change on real audio without a phone or a speaker.
   on the phone and the Mac alike. Add a recording by copying its `heard.wav` into a new folder
   there.
 - **Scripts** say what was spoken, line by line (`Scripts/fixture-pairs-monologue.json` is the
-  device rig's: the #627 fixture, five English pairs, and a fast Japanese monologue). `heard` gives
+  device rig's: the #794 fixture, five English pairs, and a fast Japanese monologue). `heard` gives
   a line the way a perfect recognizer writes it, with digits, when it differs from what `say` reads.
 - **Run** it from `apps/ios/Tools/TranslateReplay`:
 

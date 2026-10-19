@@ -31,7 +31,7 @@ search in Zenbu where it's installed, and the website's page for it elsewhere. O
 the share sheet gets the link as a web link and the text as its message, under a preview titled
 with the word or kanji, and the Mac's sharing picker gets the same.
 
-- Source: #568, part of #563; Share's links, #467.
+- Source: #568, part of #563; Share's links, #829.
 - Check: package `WebsiteLinkTests` for what each URL opens, against the bundled dictionary; core
   `detail/links.test.ts` for how each URL reads, with the parser the website reads its own word
   URLs with, and that the links Share sends are the website's canonical URLs and read back as the
