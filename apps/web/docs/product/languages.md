@@ -134,13 +134,17 @@ keep the Open Graph they had (`en_US` on the site's pages, none on the dictionar
   pages name each other"; smoke "/ and /ja/ are English and Japanese, …".
 
 **Sitemaps.** Each child sitemap lists every URL in English and then Japanese, each with the same
-`xhtml:link` alternates as its hreflang. A word sitemap holds 25,000 words, 50,000 URLs, so the
-words take twice the files they did; the index lists them all.
+`xhtml:link` alternates as its hreflang. A word sitemap holds 20,000 words, 40,000 URLs, so each of
+the service's 50,000-word files becomes three, the largest about 21 MiB: a Cloudflare Workers file
+is at most 25 MiB, and 25,000 words came to 26.4 MiB. The index lists them all, and `pnpm
+sitemaps` refuses to write a file over 25 MiB.
 
 - Source: SERP localization standard, SEO signals (Sitemap); SERP XML sitemaps standard (50,000
-  URLs a file).
-- Check: `src/lib/dictionary/sitemaps.test.ts`; `e2e/sitemaps.spec.ts`, "the pages sitemap writes
-  the homepage as the origin and every other page with its slash, each in English and then
+  URLs a file); Cloudflare Workers' static asset limit (25 MiB a file).
+- Check: `src/lib/dictionary/sitemaps.test.ts`, "a service sitemap of more than 20,000 words takes
+  two files, …"; `src/lib/dictionary-sitemaps-deploy.test.ts`, "refuses a sitemap larger than a
+  Cloudflare Workers asset may be, …"; `e2e/sitemaps.spec.ts`, "the pages sitemap writes the
+  homepage as the origin and every other page with its slash, each in English and then
   Japanese"; hreflang spec.
 
 ## Language switcher

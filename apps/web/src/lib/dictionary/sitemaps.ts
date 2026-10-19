@@ -6,9 +6,7 @@ import { browseSitemapPaths } from './browse/sitemap'
 import { browseSitemapGroups, browseSitemapPath, wordSitemapPath } from './sitemap-files'
 
 const wordsPerQuery = 10_000
-const sitemapUrlLimit = 50_000
-
-export const wordsPerSitemap = Math.floor(sitemapUrlLimit / pageLocales().length)
+export const wordsPerSitemap = 20_000
 
 type Answered<T> = { data: T }
 
