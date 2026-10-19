@@ -2010,13 +2010,25 @@
       "word": "{headword} ({reading})",
       "title": "{word} meaning",
       "titleWithExamples": "{word} meaning",
-      "description": "{word}: {meaning}.",
-      "descriptionWithPartOfSpeech": "{word}: {meaning}. {partOfSpeech}.",
+      "titles": {
+        "first": "{romaji} Meaning & Definition: {word} in English",
+        "second": "{romaji} Meaning & Definition: {headword} in English",
+        "third": "{romaji} Meaning: {headword}",
+        "fourth": "{word} Meaning & Definition in English"
+      },
+      "titleFeatures": {
+        "meaning": "meaning, reading",
+        "kanji": ", kanji",
+        "examples": ", examples"
+      },
+      "description": "{word} means “{meaning}” in English.",
+      "descriptionWithPartOfSpeech": "{word} means “{meaning}” in English. {partOfSpeech}.",
+      "asked": "What does {romaji} mean? {lead}",
       "features": "See its {features} in the {name} dictionary.",
       "featureNames": {
         "reading": "reading",
         "meanings": "every meaning",
-        "pitch": "pitch accent",
+        "pitch": "pronunciation",
         "kanji": "kanji",
         "conjugations": "conjugations",
         "examples": {

@@ -169,14 +169,16 @@ describe('the word page, read from the fixtures', () => {
     expect(html).not.toMatch(/href="\/dictionary\/(?!examples\/|conjugations\/)/)
   })
 
-  test('a Japanese word page is titled for its English, its meaning, and its examples', async () => {
+  test('a word page is titled with its romaji in English, and its English, meaning, and examples in Japanese', async () => {
     const metadata = await generateMetadata(props('要る-1546640', 'ja'))
-    expect(metadata.title).toBe('要る（いる）の英語・意味・例文')
+    expect(metadata.title).toBe('「要る」は英語で？to be needed｜意味・読み方・漢字・例文')
     expect(metadata.description).toBe(
       '「要る（いる）」は英語で「to be needed, to be necessary, to be required, to be wanted, to need, to want」という意味です。品詞は五段動詞（自動詞）。'
     )
     expect(metadata.alternates?.canonical).toBe(`/ja${encodeURI('/dictionary/要る-1546640/')}`)
-    expect((await generateMetadata(props('要る-1546640'))).title).toBe('要る (いる) meaning')
+    expect((await generateMetadata(props('要る-1546640'))).title).toBe(
+      'Iru Meaning & Definition: 要る (いる) in English'
+    )
   })
 
   test('a word under an old slug redirects to its current one in the same language', async () => {

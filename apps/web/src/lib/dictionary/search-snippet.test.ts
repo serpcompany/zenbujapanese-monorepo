@@ -2,13 +2,8 @@ import { describe, expect, test } from 'vitest'
 import type { SearchData } from '@/lib/dictionary/data'
 import { locales } from '@/lib/i18n/config'
 import { characters, descriptionLength, fitsTitle } from '@/lib/snippets'
-import {
-  plainRomaji,
-  type SnippetSearch,
-  searchSnippet,
-  showsExampleSentences,
-  spellsReading
-} from './search-snippet'
+import { plainRomaji, spellsReading } from './plain-romaji'
+import { type SnippetSearch, searchSnippet, showsExampleSentences } from './search-snippet'
 
 const word = (headword: string, reading: string) => ({ headword, reading })
 

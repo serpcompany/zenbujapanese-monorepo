@@ -94,16 +94,17 @@ reading, the pitch accent, the conjugations, and Tatoeba's example sentences in 
 
 | Field | Text |
 | --- | --- |
-| Title, with examples | 〈headword〉（〈reading〉）の英語・意味・例文 |
-| Title, without examples | 〈headword〉（〈reading〉）の英語・意味 |
+| Title | 「〈headword〉」は英語で？〈first meaning〉｜意味・読み方・漢字・例文, with ・漢字 and ・例文 only as the word has them |
 | H1 | the headword with its furigana, named for the headword, as in English |
 | Section that answers the query | 英語の意味, the first section, with JMdict's numbered meanings |
 | Meta description | 「〈headword〉（〈reading〉）」は英語で「〈JMdict's summary〉」という意味です。品詞は〈part of speech〉。 |
 
-For example 「要る（いる）の英語・意味・例文」, and 「要る（いる）」は英語で「to be needed, to be
-necessary, …」という意味です。品詞は五段動詞（自動詞）。The reading is left out when the headword is
-already kana (いるの英語・意味・例文), and 例文 only when the word has examples, so the title never
-promises a section the page lacks. The description quotes JMdict's English summary as it is: it
+For example 「要る」は英語で？to be needed｜意味・読み方・漢字・例文, and 「要る（いる）」は英語で「to be
+needed, to be necessary, …」という意味です。品詞は五段動詞（自動詞）。The title answers 「〈word〉
+英語」 with the first meaning, and names 漢字 and 例文 only when the word has them, so it never
+promises a section the page lacks. Past 70 characters it keeps 意味・読み方 alone, then drops the
+meaning (「要る」の英語｜意味・読み方・漢字・例文), then is 「要る」の英語・意味 (#888,
+[snippets.md](../../../docs/product/snippets.md)). The description quotes JMdict's English summary as it is: it
 is the answer the searcher wants, and it makes the snippet match the page.
 
 The H1 stays the headword, as Weblio's pages and the app's word screen keep it: it is exactly what
