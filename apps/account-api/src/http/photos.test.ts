@@ -1,6 +1,4 @@
-import { drizzle } from 'drizzle-orm/pglite'
 import { describe, expect, test, vi } from 'vitest'
-import { purgeExpired } from '../db/housekeeping'
 import { appliedAt, deleted, type Learner, outcomesOf, useAccountService } from '../test/accounts'
 import { aJpeg, uploaded } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
@@ -181,11 +179,13 @@ describe('Media Library photos', () => {
     await vi.waitFor(() => expect(stored()).toEqual([]))
   })
 
-  test('housekeeping empties a photo left with no word for a day, and deletes it with its file 30 days on', async () => {
+  test("the hour's housekeeping empties a photo left with no word for a day, and deletes it and its stored file 30 days on", async () => {
     const learner = await accounts.learner('photo-housekeeping@example.com')
     const photoId = await uploaded(accounts, learner)
     await results(learner, add(photoId))
-    const housekeep = () => purgeExpired(drizzle(accounts.running.service.client))
+    const { housekeep, photoStorage } = accounts.running.service
+    const stored = () =>
+      [...photoStorage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
     await housekeep()
     expect(await photoStatus(photoId)).toBe('shown')
     await rows(`update photos set updated_at = now() - interval '25 hours' where id = '${photoId}'`)
@@ -193,10 +193,12 @@ describe('Media Library photos', () => {
     expect(await photoStatus(photoId)).toBe('emptied')
     expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
     expect(await fileCount(learner)).toBe(1)
+    expect(stored()).toHaveLength(1)
     await rows(`update photos set updated_at = now() - interval '31 days' where id = '${photoId}'`)
     await housekeep()
     expect(await photoStatus(photoId)).toBe('deleted')
     expect(await fileCount(learner)).toBe(0)
+    expect(stored()).toEqual([])
   })
 
   test('refuses a bad ID or fields', async () => {

@@ -324,11 +324,11 @@ belongs; tests may import anything.
   (`memory.ts`), behind the domain's `PhotoStorage`. It imports only that type and `src/config.ts`'s
   settings, and no layer but the server imports it, nor `aws4fetch`.
 
-`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
-`src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
-stopping cleanly on SIGTERM come from `packages/node-service`, as in the dictionary service
-([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and nothing logs a
-learner's email, a code, a token, or a link: only what happened, as SERP's
+`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer.
+`src/wiring.ts` wires the layers and the photo sweeps for `src/server.ts` (imported by nothing; it
+runs the housekeeping hourly) and the tests alike. Logging, the request log, and stopping cleanly on
+SIGTERM come from `packages/node-service` ([`dictionary-api.md`](dictionary-api.md), Code layout).
+Nothing calls `console`, and no log holds a learner's email, a code, a token, or a link, as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says for email.
 
