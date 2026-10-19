@@ -158,6 +158,9 @@ describe('Media Library photos', () => {
     expect(await results(learner, offWord(photoId, 1, 3))).toMatchObject([
       { status: 'conflict', version: 4, current: { operation: 'put' } }
     ])
+    await results(learner, drop(photoId))
+    await uploaded(accounts, learner, bytes)
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(5, 5))
   })
 
   test("a delete's file leaves storage after the sync, with nothing else to start it", async () => {
