@@ -28,7 +28,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
   }
 
   static func bundled() throws -> FrequencyPackCatalog {
-    guard let url = Bundle.module.url(forResource: "FrequencyPackCatalog", withExtension: "json")
+    guard let url = BundledData.bundle.url(forResource: "FrequencyPackCatalog", withExtension: "json")
     else { throw FrequencyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
     guard catalog.schemaVersion == 1, catalog.packs.count >= 2,
@@ -58,7 +58,7 @@ struct FrequencyPackCatalog: Codable, Equatable, Sendable {
     try Dictionary(
       uniqueKeysWithValues: packs.filter(\.bundled).map { manifest in
         guard let resource = manifest.bundledResource,
-          let url = Bundle.module.url(forResource: resource, withExtension: "sqlite3")
+          let url = BundledData.bundle.url(forResource: resource, withExtension: "sqlite3")
         else { throw FrequencyPackError.missingBundledPack }
         return (manifest.packID, url)
       })

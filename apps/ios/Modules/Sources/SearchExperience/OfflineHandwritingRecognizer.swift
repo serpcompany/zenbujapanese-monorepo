@@ -40,7 +40,7 @@ actor OfflineHandwritingRecognizer {
 
   private func loadModel() throws -> MLModel {
     if let cachedModel { return cachedModel }
-    guard let url = Bundle.module.url(
+    guard let url = BundledData.bundle.url(
       forResource: "DaKanji",
       withExtension: "mlmodelc"
     ) else {

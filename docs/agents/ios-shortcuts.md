@@ -2,8 +2,9 @@
 
 How the app's Shortcuts, Siri, and Spotlight actions are built (#394). What each does for a
 learner, and what is checked by hand, is in the product docs'
-[Shortcuts and Siri](../../apps/ios/docs/product/shortcuts.md). The rest of the app is in
-[`ios.md`](ios.md).
+[Shortcuts and Siri](../../apps/ios/docs/product/shortcuts.md). The share sheet's card, the other
+way in from another app, is in [`ios-share-sheet.md`](ios-share-sheet.md). The rest of the app is
+in [`ios.md`](ios.md).
 
 ## One entry point: the app's links
 
