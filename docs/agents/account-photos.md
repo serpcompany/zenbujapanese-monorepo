@@ -1,7 +1,7 @@
 # Photo files in the account service
 
 The account service keeps the files of a learner's Media Library photos and profile photo in
-Cloudflare R2 (#867, decision 1; [ADR 0017](../adr/0017-keep-learners-photos-in-r2-by-their-sha-256-apart-from-sync.md)).
+Cloudflare R2 (#867, decision 1; [ADR 0018](../adr/0018-keep-learners-photos-in-r2-by-their-sha-256-apart-from-sync.md)).
 The photos themselves, and the words each is on, are sync entities
 ([`account-entities.md`](account-entities.md)); this doc is their files. The service is
 [`account-api.md`](account-api.md), and the routes are in the
