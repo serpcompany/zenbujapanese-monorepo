@@ -66,6 +66,16 @@ them, answer on every host, since they never reach the Worker; their URLs name t
   and "a workers.dev request that carries the smoke test header is served there" (on the
   production build); smoke `workers.dev/legal/terms redirects to … in one hop`.
 
+## App Store banner
+
+Every page, English and Japanese, names the iPhone app (App Store ID `6800229215`) in an
+`apple-itunes-app` tag, so Safari on an iPhone shows its banner at the top: Open where the app is
+installed, Get where it isn't. The site draws no banner or pop-up of its own.
+
+- Source: #829 (word pages offer "open in app" and "get the app"); the owner's choice on
+  2026-10-19.
+- Check: `apps/web/e2e/app-banner.spec.ts`, "… names the iPhone app once, for Safari's banner".
+
 ## What defines the website's behavior
 
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),

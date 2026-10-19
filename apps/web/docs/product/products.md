@@ -36,14 +36,15 @@ line about it, and its facts and type. A free tool's card opens its page: the di
 the kana, kanji, and frequency browse pages, and, for Converters, the tools index (`/tools/`,
 [Tools pages](tools.md)). A planned product is a Coming soon card that
 isn't a link, so it adds no `#` link (the owner's decision on #652). The iPhone app's Get the app
-is the App Store placeholder, and Learn more opens its page.
+opens its App Store listing (`https://apps.apple.com/app/id6800229215`), and Learn more
+opens its page.
 
 - Source: #844 mockups (Products page) and its notes; the owner's decision on #652 (show planned
   products as Coming soon).
 - Check: `src/lib/products/catalog.test.ts`, "a product without a page of its own is coming
   soon, and the others link to the site"; Products spec, "a free tool’s card opens its page, and
   a coming-soon card is not a link" and "the iPhone app’s Learn more opens its page, and its Get
-  the app is the App Store placeholder".
+  the app opens the App Store".
 
 **Filters.** All, Apps, Extensions, Free tools, Reference guides, and Courses are links, each to
 its own address: `/products/` for All, and `/products/?type=<type>` for the others
@@ -81,7 +82,7 @@ The iPhone app's page is the template for every product page: each section is a 
 
 **Hero.** Centered: a breadcrumb (Products, then the product), the app icon, the name (Zenbu
 Japanese), Japanese dictionary and translator for iPhone, a line about the app, and Get the app,
-which is the App Store placeholder. Get the app in the header and the phone menu, and in the
+which opens the App Store listing. Get the app in the header and the phone menu, and in the
 prompt that the word page's app-only actions open, now opens this page instead (the mockup's
 note).
 

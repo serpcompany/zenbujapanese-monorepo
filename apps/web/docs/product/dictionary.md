@@ -1045,8 +1045,8 @@ sheet; choosing a theme keeps it open.
   is 384 wide".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
-Store link, a placeholder until that address is known. It is the same button in the header, the
+iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the app's App
+Store listing. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
 or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
 login page, `/login/`, where the account pages are open, as on staging and in production, and is

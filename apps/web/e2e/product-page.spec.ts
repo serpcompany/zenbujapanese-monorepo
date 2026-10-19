@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
+import { iosAppStoreUrl } from '../src/lib/app-links'
 import { pageFor as localizedPageFor, type SitePath } from '../src/lib/pages'
 import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
 import { iphoneAppPageIn } from '../src/lib/products/zenbu-japanese-for-iphone'
@@ -37,7 +38,7 @@ test.describe('the Zenbu Japanese for iPhone page', () => {
     )
     await expect(main.getByRole('heading', { level: 1, name: iphoneAppPage.name })).toBeVisible()
     const getApp = main.getByRole('button', { name: 'Get the app' })
-    await expect(getApp).toHaveAttribute('href', '#')
+    await expect(getApp).toHaveAttribute('href', iosAppStoreUrl)
     await expect(getApp).toHaveAttribute('data-link-target', 'app-store')
     const facts = main.locator('dt')
     await expect(facts.first()).toHaveText('Platform')
