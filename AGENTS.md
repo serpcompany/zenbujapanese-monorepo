@@ -37,7 +37,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`docs/agents/ci.md`](docs/agents/ci.md) — every GitHub Actions workflow and what starts it, the checks a merge can wait for, and each workflow that checks a pull request: what it runs, and why.
 - [`docs/agents/ci-agents.md`](docs/agents/ci-agents.md) — the workflows Claude runs in: the review of every pull request, `@claude` requests, weekly maintenance, and the app and token they use.
 - [`docs/agents/ci-deploys.md`](docs/agents/ci-deploys.md) — the workflows that deploy the site, ship the services' images, and publish language data, and the actions pinned by commit.
-- [`language-data/README.md`](language-data/README.md) — language-data releases: the manifest, what a release packages, the build workflow, and publishing to R2.
+- [`language-data/README.md`](language-data/README.md) — the language data's sources, importers, and conformance suites, and its releases: the manifest, the build workflow, and publishing to R2.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.
 - [`apps/web/docs/product/index.md`](apps/web/docs/product/index.md) — durable current website behavior and the automated check for each. Open only the relevant page's section. Update the behavior and its check in the same PR as a behavior change.
 

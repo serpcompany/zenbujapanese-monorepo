@@ -61,14 +61,14 @@ export const footerAccountLink = (page: Page) =>
 export const onPhone = () => test.info().project.name === 'phone'
 
 export const accountButton = (page: Page) =>
-  page.getByRole('banner').getByRole('button', { name: /^Account/ })
+  page.getByRole('banner').getByRole('button', { name: /^(Account|アカウント)/ })
 
-export const accountMenu = (page: Page) => page.getByRole('menu', { name: /^Account/ })
+export const accountMenu = (page: Page) => page.getByRole('menu', { name: /^(Account|アカウント)/ })
 
 export const phoneMenu = (page: Page) => page.getByRole('dialog', { name: 'Zenbu Japanese' })
 
 export const menuButton = (page: Page) =>
-  page.getByRole('banner').getByRole('button', { name: 'Menu' })
+  page.getByRole('banner').getByRole('button', { name: /^(Menu|メニュー)$/ })
 
 export async function headerLogIn(page: Page) {
   if (!onPhone()) {

@@ -17,6 +17,7 @@ import {
   submit,
   unmount
 } from '@/test/account-page'
+import { renderAccountView, accountText as text } from '@/test/account-view'
 import {
   appleAnswering,
   appleWay,
@@ -34,13 +35,12 @@ import {
   someoneElse,
   thenSomeoneElse
 } from '@/test/signed-in-account'
-import { AccountView } from './account-view'
 import { ConfirmItsYou } from './confirm-its-you'
 
 afterEach(unmount)
 
 async function askedToDelete(appleOffered = false) {
-  const page = render(<AccountView settings={settings(appleOffered)} returnedError={null} />)
+  const page = renderAccountView(settings(appleOffered))
   await shows(page, `Signed in as ${email}`)
   await click(page, 'Delete account')
   await click(page, 'Delete my account')
@@ -62,10 +62,12 @@ function confirmingWith(
   identity: Omit<Identity, 'id'>,
   onConfirmed: Parameters<typeof ConfirmItsYou>[0]['onConfirmed'] = () => undefined
 ) {
-  const api = accountApi(apiUrl)
+  const api = accountApi(apiUrl, 'en')
   return render(
     <ConfirmItsYou
       api={api}
+      locale="en"
+      text={text}
       tokens={accessTokens(api)}
       settings={settings()}
       account={{
@@ -74,7 +76,7 @@ function confirmingWith(
         identities: [{ id: 'i1', ...identity }]
       }}
       appleOnly={false}
-      why="Deleting needs a sign-in from the last few minutes."
+      why={text.deletion.whyFresh}
       onConfirmed={onConfirmed}
       onCancel={() => undefined}
     />
@@ -84,7 +86,7 @@ function confirmingWith(
 describe('the account page', () => {
   test('shows who is signed in, the profile, and the ways to sign in, reading /v1/me with an access token only', async () => {
     const { calls } = signedIn({ ways: [emailWay, appleWay] })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Kana Fan')
     expect(page.querySelector<HTMLInputElement>('#profile-username')?.value).toBe('kana_fan')
@@ -101,11 +103,23 @@ describe('the account page', () => {
     expect(window.localStorage.getItem('zenbu-initials')).toBe('KF')
   })
 
+  test('speaks Japanese on a Japanese page, with Japanese dates and links to the Japanese pages', async () => {
+    signedIn({ ways: [emailWay] })
+    const page = renderAccountView(settings(), 'ja')
+    await shows(page, `${email}でログイン中`)
+    expect(page.textContent).toContain(`メールで届くコード（${email}）`)
+    expect(page.textContent).toContain('登録日：2026年10月1日')
+    await click(page, 'ログアウト')
+    await shows(page, 'ログアウトしました。')
+    expect(page.querySelector('a[href="/ja/login/"]')?.textContent).toBe('ログイン')
+    expect(page.querySelector('a[href="/ja/register/"]')?.textContent).toBe('アカウントを作成')
+  })
+
   test('shows signed out, and forgets it was signed in, when there is no session', async () => {
     window.localStorage.setItem('zenbu-signed-in', 'yes')
     window.localStorage.setItem('zenbu-initials', 'KF')
     stubAccountService({ 'GET /v1/auth/get-session': answer(null) })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
     expect(window.localStorage.getItem('zenbu-initials')).toBeNull()
@@ -123,7 +137,7 @@ describe('the account page', () => {
     Object.entries(signOutsElsewhere)
   )('shows signed out when this browser signs out from %s, without asking the service', async (_, signOut) => {
     const { calls } = signedIn()
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await act(async () => signOut())
     await shows(page, 'You’re not signed in.')
@@ -133,7 +147,7 @@ describe('the account page', () => {
 
   test('shows signed out when the browser signs out while the account is still loading', async () => {
     signedIn()
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await act(async () => rememberSignedIn(false))
     await shows(page, 'You’re not signed in.')
     expect(window.localStorage.getItem('zenbu-signed-in')).toBeNull()
@@ -143,7 +157,7 @@ describe('the account page', () => {
     const { calls } = signedIn({
       more: { 'GET /v1/me': [refusal(401, 'unauthorized'), answer(profile)] }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     expect(callTo(calls, 'GET /v1/me').map(call => call.authorization)).toEqual([
       `Bearer ${oldAccess}`,
@@ -153,7 +167,7 @@ describe('the account page', () => {
 
   test('says it could not reach the account service, and tries again when asked', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, 'We couldn’t reach your Zenbu account')
     signedIn()
     await click(page, 'Try again')
@@ -167,7 +181,7 @@ describe('the account page', () => {
         'PATCH /v1/me': refusal(409, 'version_conflict', { current })
       }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await fill(page, 'Name', 'Kana')
     await submit(page, 'Save')
@@ -178,7 +192,7 @@ describe('the account page', () => {
 
   test('signs out of this browser', async () => {
     const { calls } = signedIn()
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Sign out')
     await shows(page, 'You’re signed out.')
@@ -188,7 +202,7 @@ describe('the account page', () => {
 
   test('deletes after the learner confirms and, with a sign-in over nine minutes old, signs in again by code', async () => {
     const { calls, routes } = signedIn({ signedInMinutesAgo: 20 })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Delete account')
     await shows(page, `Delete ${email} and everything it synced?`)
@@ -285,7 +299,7 @@ describe('the account page', () => {
 
   test('keeps the learner signed in, and says so, when signing out fails', async () => {
     signedIn({ more: { 'POST /v1/auth/sign-out': refusal(500, 'internal') } })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Sign out')
     await shows(page, 'Something went wrong on our side')
@@ -298,7 +312,7 @@ describe('the account page', () => {
       JSON.stringify({ userId: 'u1', token: 'older' })
     )
     const same = signedIn()
-    let page = render(<AccountView settings={settings()} returnedError={null} />)
+    let page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     await vi.waitFor(() =>
       expect(callTo(same.calls, 'POST /v1/auth/revoke-session')[0]?.body).toEqual({
@@ -309,7 +323,7 @@ describe('the account page', () => {
 
     window.sessionStorage.setItem('zenbu-confirming', JSON.stringify({ userId: 'u9', token: 'x' }))
     const other = signedIn()
-    page = render(<AccountView settings={settings()} returnedError={null} />)
+    page = renderAccountView()
     await shows(page, `That Google account signs in to another Zenbu account`)
     expect(callTo(other.calls, 'POST /v1/auth/revoke-session')).toEqual([])
     expect(window.sessionStorage.getItem('zenbu-confirming')).toBeNull()
@@ -344,7 +358,7 @@ describe('the account page', () => {
         'GET /v1/me': answer(made)
       }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, 'That Google account had no Zenbu account, so it made a new one')
     expect(page.textContent).toContain(`Signed in as ${made.email}`)
   })
@@ -419,7 +433,7 @@ describe('the account page', () => {
         'POST /v1/auth/unlink-account': answer({ status: true })
       }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Kana Fan')
     await click(page, 'Remove Google')

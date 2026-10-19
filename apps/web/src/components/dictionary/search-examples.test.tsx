@@ -10,7 +10,7 @@ import { readRenderedExamples, visibleText } from '@/test/rendered'
 import { SearchExamplesSection } from './search-results'
 
 const render = (data: SearchExamplesData) =>
-  renderToStaticMarkup(<SearchExamplesSection data={data} />)
+  renderToStaticMarkup(<SearchExamplesSection data={data} locale="en" />)
 
 const links: Links = {
   word: entSeq => (entSeq === null ? null : `/dictionary/w-${entSeq}/`),

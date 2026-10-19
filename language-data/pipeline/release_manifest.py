@@ -77,3 +77,6 @@ def validate_manifest(manifest: dict, schema_path: Path = SCHEMA_PATH) -> None:
             )
     if manifest["ids"]["file"] not in [f["name"] for f in manifest["files"]]:
         raise Refusal(f"ids.file {manifest['ids']['file']} isn't a file in the release")
+    bundle = manifest.get("core", {}).get("bundle", {}).get("sha256")
+    if manifest["core_sha256"] != bundle:
+        raise Refusal(f"core_sha256 is {manifest['core_sha256']}, but core's bundle is {bundle}")

@@ -13,11 +13,27 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
 import { bothSides, defaultConverterOptions, type Edit } from '@/lib/tools/convert'
 import { converterFor, languageOf } from '@/lib/tools/converters'
 import type { ConverterSlug } from '@/lib/tools/paths'
 
-export function Converter({ slug }: { slug: ConverterSlug }) {
+export type ConverterText = Dictionary['tools']['converter']
+
+export function Converter({
+  slug,
+  from,
+  to,
+  text,
+  locale
+}: {
+  slug: ConverterSlug
+  from: string
+  to: string
+  text: ConverterText
+  locale: Locale
+}) {
   const converter = converterFor(slug)
   const [options, setOptions] = useState(defaultConverterOptions)
   const [edit, setEdit] = useState<Edit>({ side: 'from', text: converter.sample })
@@ -28,25 +44,27 @@ export function Converter({ slug }: { slug: ConverterSlug }) {
     <Card>
       <CardHeader>
         <CardTitle>
-          <h2>Type in either box</h2>
+          <h2>{text.heading}</h2>
         </CardTitle>
-        <CardDescription>The other box converts as you type.</CardDescription>
+        <CardDescription>{text.line}</CardDescription>
         {converter.setting === 'script' ? (
           <CardAction>
-            <ScriptSetting options={options} onChange={setOptions} />
+            <ScriptSetting options={options} onChange={setOptions} text={text} />
           </CardAction>
         ) : null}
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         {converter.setting === 'widths' ? (
-          <WidthSettings options={options} onChange={setOptions} />
+          <WidthSettings options={options} onChange={setOptions} text={text} />
         ) : null}
         <ConverterBox
-          label={converter.from}
+          label={from}
           lang={languageOf[converter.input]}
           text={sides.from}
-          onType={text => setEdit({ side: 'from', text })}
-          placeholder="Type or paste here"
+          onType={typed => setEdit({ side: 'from', text: typed })}
+          placeholder={text.fromPlaceholder}
+          words={text}
+          locale={locale}
           fieldRef={fromField}
           actions={
             <Button
@@ -56,23 +74,25 @@ export function Converter({ slug }: { slug: ConverterSlug }) {
                 fromField.current?.focus()
               }}
             >
-              Clear
+              {text.clear}
             </Button>
           }
         />
         <ConverterBox
-          label={converter.to}
+          label={to}
           lang={languageOf[converter.output]}
           text={sides.to}
-          onType={text => setEdit({ side: 'to', text })}
-          placeholder="The result shows here, or type here to convert back"
+          onType={typed => setEdit({ side: 'to', text: typed })}
+          placeholder={text.toPlaceholder}
+          words={text}
+          locale={locale}
         />
       </CardContent>
       <CardFooter>
         <fieldset className="flex flex-wrap items-center gap-2 text-sm">
-          <legend className="sr-only">Try an example</legend>
+          <legend className="sr-only">{text.examples}</legend>
           <span aria-hidden="true" className="font-medium">
-            Try
+            {text.try}
           </span>
           {converter.tries.map(example => (
             <Button

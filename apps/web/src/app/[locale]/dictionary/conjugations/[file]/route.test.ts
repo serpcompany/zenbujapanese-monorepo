@@ -1,0 +1,62 @@
+import { NextRequest } from 'next/server'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { getConjugationExamples, type PageExample } from '@/lib/dictionary/data'
+import { GET } from './route'
+
+vi.mock('@/lib/dictionary/data', () => ({ getConjugationExamples: vi.fn() }))
+
+const example = { position: 0, text: '食べた。', tokens: [] } as unknown as PageExample
+
+const get = (file: string, locale = 'en', path = '/dictionary') =>
+  GET(new NextRequest(`https://zenbujapanese.com${path}/conjugations/${file}`), {
+    params: Promise.resolve({ locale, file })
+  })
+
+describe('GET /dictionary/conjugations/<form>.json', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test("returns every one of a form's examples at once", async () => {
+    vi.mocked(getConjugationExamples).mockResolvedValue([example])
+    const response = await get(`${encodeURIComponent('食べた')}.json`)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ examples: [example] })
+    expect(getConjugationExamples).toHaveBeenCalledWith('食べた')
+    expect(response.headers.get('X-Robots-Tag')).toBe('noindex')
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600')
+  })
+
+  test('a form no sentence uses has no examples', async () => {
+    vi.mocked(getConjugationExamples).mockResolvedValue([])
+    expect(await (await get(`${encodeURIComponent('食べさせられる')}.json`)).json()).toEqual({
+      examples: []
+    })
+  })
+
+  test('reads the form as written, not normalized', async () => {
+    vi.mocked(getConjugationExamples).mockResolvedValue([])
+    await get(`${encodeURIComponent('Ｈした')}.json`)
+    expect(getConjugationExamples).toHaveBeenCalledWith('Ｈした')
+  })
+
+  test('reads the form from the path the rewrite to the English pages gives it', async () => {
+    vi.mocked(getConjugationExamples).mockResolvedValue([])
+    await get(`${encodeURIComponent('食べた')}.json`, 'en', '/en/dictionary')
+    expect(getConjugationExamples).toHaveBeenCalledWith('食べた')
+  })
+
+  test('is not found under another language, since files are never prefixed', async () => {
+    const response = await get(`${encodeURIComponent('食べた')}.json`, 'ja', '/ja/dictionary')
+    expect(response.status).toBe(404)
+    expect(getConjugationExamples).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    ['a file that is not JSON', encodeURIComponent('食べた')],
+    ['an empty form', '.json']
+  ])('is not found for %s', async (_, file) => {
+    expect((await get(file)).status).toBe(404)
+    expect(getConjugationExamples).not.toHaveBeenCalled()
+  })
+})

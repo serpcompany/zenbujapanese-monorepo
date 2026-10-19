@@ -25,6 +25,7 @@ import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
+import type { RetiredEntries } from './retired'
 import { primaryExamplesEntry, resultsExampleCount, resultsExamples } from './search-examples'
 import { readWordCards } from './word-cards'
 import {
@@ -92,6 +93,7 @@ export interface DictionaryCapabilities {
 export interface DictionaryOptions {
   db: ArtifactDatabase
   kanji: KanjiData
+  retired: RetiredEntries
   capabilities: DictionaryCapabilities
   cacheSize?: number
 }
@@ -127,6 +129,7 @@ export class Dictionary {
   readonly features: SearchFeatures
   private readonly db: ArtifactDatabase
   private readonly kanjiData: KanjiData
+  private readonly retiredEntries: RetiredEntries
   private readonly capabilities: DictionaryCapabilities
   private readonly searchCore: DictionarySearch
   private readonly lookup: ReturnType<typeof formLookup>
@@ -142,6 +145,7 @@ export class Dictionary {
     const sentenceListCacheSize = Math.max(1, Math.floor(size / 4))
     this.db = options.db
     this.kanjiData = options.kanji
+    this.retiredEntries = options.retired
     this.capabilities = options.capabilities
     this.searchCore = new DictionarySearch(searchDatabase(options.db), {
       morphology: options.capabilities.morphology
@@ -387,8 +391,8 @@ export class Dictionary {
     }))
   }
 
-  retired(): Record<number, number | null> {
-    return {}
+  retired(): RetiredEntries {
+    return this.retiredEntries
   }
 
   wordCards(languageReferenceIDs: readonly string[]): WordCard[] {

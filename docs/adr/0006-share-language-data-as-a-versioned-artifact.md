@@ -22,12 +22,17 @@ produces the artifact, then a publish job runs from `main` behind a protected en
 a token scoped to the bucket. Frequency-pack sources are still uploaded
 with `publish_frequency_pack_sources.py` until this pipeline exists.
 
-Amended (issue 463, step 3): the `language-data-release` environment has no required reviewer,
+Amended (issue 828, step 3): the `language-data-release` environment has no required reviewer,
 by the owner's decision, as for website production deploys; a reviewer can be added without
 changing the workflow. The index of releases, `releases.json`, lives in the bucket beside them
 rather than in the repository, and is only ever appended to. The bucket is
 `zenbujapanese-language-data`; its public domain isn't set up yet. The layout and rules are in
 [`language-data/README.md`](../../language-data/README.md).
+
+Amended (issue 473): the app and the dictionary service's image hold a release's files from the
+repository rather than downloading them. Each release's manifest, without the fields that depend on
+the run or the bucket, is committed in `language-data/releases/`, and checks before merge hold the
+committed files to it. So no check reads the bucket, and none waits for its public domain.
 
 ## Language Reference IDs are permanent
 
@@ -46,7 +51,7 @@ treated as a tokenizer decision, made by whichever candidate passes the conforma
 [ADR 0008](0008-share-one-typescript-search-core-built-for-the-most-constrained-client.md) makes
 search one TypeScript core, built for the most constrained client.
 
-The suite is [`search-retrieval.json`](../../apps/ios/LanguageData/Conformance/search-retrieval.json).
+The suite is [`search-retrieval.json`](../../language-data/conformance/search-retrieval.json).
 Each case maps a query to the Language Reference IDs Search returns, in order, before
 frequency evidence reorders them, along with its resolution, presentation, and reading
 refinement. The suite pins the artifact SHA-256 it was recorded against. Every client must pass

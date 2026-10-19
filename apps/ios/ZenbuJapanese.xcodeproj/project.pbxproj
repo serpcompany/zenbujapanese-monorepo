@@ -11,6 +11,7 @@
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
 		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
+		A39400F1000000000000000B /* ZenbuShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000A /* ZenbuShortcuts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +23,7 @@
 		C5730A0000000000000000A1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ZenbuJapanese.entitlements; sourceTree = "<group>"; };
 		C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenbuJapaneseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A39400F1000000000000000A /* ZenbuShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZenbuShortcuts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
@@ -96,6 +98,7 @@
 				48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */,
 				C5730A0000000000000000A2 /* ZenbuJapanese.entitlements */,
 				A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */,
+				A39400F1000000000000000A /* ZenbuShortcuts.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -227,6 +230,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */,
+				A39400F1000000000000000B /* ZenbuShortcuts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -255,7 +259,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
@@ -361,7 +365,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";

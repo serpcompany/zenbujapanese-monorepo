@@ -8,7 +8,9 @@ struct ShownResults: Hashable, Sendable {
 struct SearchResultsView: View {
   let results: LookupSearchResults
   let fromRadicals: Bool
+  let notes: NotesInSearch?
   let selectRefinement: (SearchRefinement) -> Void
+  let openNote: (NotesInSearch.Row) -> Void
   @State private var shown: ShownResults
   @State private var animatesNextList = false
   @AppStorage(ResultsLearner.sortKey) private var sort = ResultsLearner.defaultSort
@@ -19,11 +21,15 @@ struct SearchResultsView: View {
     results: LookupSearchResults,
     first: ShownResults,
     fromRadicals: Bool,
-    selectRefinement: @escaping (SearchRefinement) -> Void
+    notes: NotesInSearch?,
+    selectRefinement: @escaping (SearchRefinement) -> Void,
+    openNote: @escaping (NotesInSearch.Row) -> Void
   ) {
     self.results = results
     self.fromRadicals = fromRadicals
+    self.notes = notes
     self.selectRefinement = selectRefinement
+    self.openNote = openNote
     _shown = State(initialValue: first)
   }
 
@@ -104,6 +110,10 @@ struct SearchResultsView: View {
               .accessibilityIdentifier("search.frequency-ordering-unavailable")
           }
         }
+      }
+
+      if let notes {
+        NotesInSearchSection(notes: notes, open: openNote)
       }
     }
     .listStyle(.plain)

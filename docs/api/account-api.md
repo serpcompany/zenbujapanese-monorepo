@@ -9,6 +9,7 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 - **Errors.** Every error is `{ "error": { "code": "...", "message": "..." } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.
 - **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.
 - **Bodies** are JSON, at most 64 KB (`413 too_large`).
+- **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.
 - **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).
 - **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`.
 
@@ -108,6 +109,10 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 
 **Auth:** `accessToken` with `account:delete`.
 
+**Header parameters:**
+
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
+
 **Body** (JSON, required, [`DeleteAccount`](#deleteaccount)):
 
 - `confirm` (`true`, required): The learner confirmed in the app.
@@ -161,6 +166,10 @@ Answers the same whether or not the email has an account. Five codes per address
 
 **Auth:** none.
 
+**Header parameters:**
+
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
+
 **Body** (JSON, required):
 
 - `email` (string (email), required)
@@ -185,6 +194,7 @@ Makes the account on the first sign-in. A `name` is used only then, held to the 
 
 **Header parameters:**
 
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
 - `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, or `"tomodachi"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
 
 **Body** (JSON, required):
@@ -234,6 +244,7 @@ With `idToken`, signs in with the token the device got, and makes the account on
 
 **Header parameters:**
 
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
 - `x-zenbu-client` (`"zenbu-ios"`, `"zenbu-web"`, or `"tomodachi"`, optional): The app signing in: its access is the account's, limited to the app's scopes. A browser on one of the website's origins may leave it out.
 
 **Body** (JSON, required):
@@ -283,6 +294,10 @@ Needs a sign-in from the last 10 minutes. The account email is told. Without `id
 
 **Auth:** `sessionToken` with `account`.
 
+**Header parameters:**
+
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
+
 **Body** (JSON, required):
 
 - `provider` (`"apple"` or `"google"`, required)
@@ -308,6 +323,10 @@ Remove a way to sign in.
 Needs a sign-in from the last 10 minutes. The last way never goes. The account's email is told.
 
 **Auth:** `sessionToken` with `account`.
+
+**Header parameters:**
+
+- `content-language` (string, optional): The language of the page the request comes from: `ja` or `en`. The email the request sends is in it, and an account the request makes keeps it for the emails sent later without one. Any other value, or none, means the account's language, or English. `Accept-Language` is never read.
 
 **Body** (JSON, required):
 

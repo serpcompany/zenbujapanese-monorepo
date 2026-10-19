@@ -1,3 +1,5 @@
+import { withoutDefaultLocale } from './i18n/routing'
+
 export const movedPages: Readonly<Record<string, string>> = {
   '/privacy': '/legal/privacy/'
 }
@@ -12,13 +14,14 @@ export const removedDictionaryPages: readonly { source: string; destination: str
 ]
 
 export function movedPath(pathname: string): string | undefined {
-  return movedPages[pathname.replace(/(.)\/$/, '$1')]
+  const unprefixed = withoutDefaultLocale(pathname)
+  return movedPages[(unprefixed ?? pathname).replace(/(.)\/$/, '$1')] ?? unprefixed
 }
 
 export function movedPageResponse(url: URL): Response | null {
   const destination = movedPath(url.pathname)
   if (!destination) return null
-  const location = new URL(destination, url)
-  location.search = url.search
+  const location = new URL(url)
+  location.pathname = destination
   return Response.redirect(location.href, 308)
 }

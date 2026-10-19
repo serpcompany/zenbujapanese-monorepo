@@ -9,8 +9,17 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { type SpellingRule, spellingRules, typingTips, widthRows } from '@/lib/tools/content'
+import type { Locale } from '@/lib/i18n/config'
+import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
 import type { Converter } from '@/lib/tools/converters'
+import {
+  type SpellingRule,
+  spellingRulesIn,
+  typingTipsIn,
+  widthRowsIn
+} from '@/lib/tools/tool-pages'
+
+type ReferenceText = Dictionary['tools']['reference']
 
 function Example({ from, to, typed }: { from: string; to: string; typed: boolean }) {
   return typed ? (
@@ -27,11 +36,13 @@ function Example({ from, to, typed }: { from: string; to: string; typed: boolean
 function SpellingRules({
   title,
   rules,
-  typed
+  typed,
+  text
 }: {
   title: string
   rules: readonly SpellingRule[]
   typed: boolean
+  text: ReferenceText
 }) {
   return (
     <ToolSection title={title}>
@@ -39,24 +50,24 @@ function SpellingRules({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>For</TableHead>
-              <TableHead>{typed ? 'How to type it' : 'How it’s spelled'}</TableHead>
-              <TableHead>Examples</TableHead>
+              <TableHead>{text.for}</TableHead>
+              <TableHead>{typed ? text.howToType : text.howSpelled}</TableHead>
+              <TableHead>{text.examples}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rules.map(rule => (
-              <TableRow key={rule.label}>
+              <TableRow key={rule.id}>
                 <TableCell className="whitespace-normal">{rule.label}</TableCell>
                 <TableCell className="whitespace-normal">{rule.rule}</TableCell>
                 <TableCell className="whitespace-normal">
                   {rule.examples.map(([from, to], index) => (
                     <Fragment key={from}>
-                      {index ? ', ' : ''}
+                      {index ? text.separator : ''}
                       <Example from={from} to={to} typed={typed} />
                     </Fragment>
                   ))}
-                  {rule.note ? `${rule.examples.length ? ', ' : ''}${rule.note}` : ''}
+                  {rule.note ? `${rule.examples.length ? text.separator : ''}${rule.note}` : ''}
                 </TableCell>
               </TableRow>
             ))}
@@ -67,21 +78,21 @@ function SpellingRules({
   )
 }
 
-function WidthReference() {
+function WidthReference({ locale, text }: { locale: Locale; text: ReferenceText }) {
   return (
-    <ToolSection title="What changes" line="Each kind of character, in both widths.">
+    <ToolSection title={text.widthsTitle} line={text.widthsLine}>
       <div className="w-fit max-w-full">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Character</TableHead>
-              <TableHead>Half-width</TableHead>
-              <TableHead>Full-width</TableHead>
+              <TableHead>{text.character}</TableHead>
+              <TableHead>{text.halfWidth}</TableHead>
+              <TableHead>{text.fullWidth}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {widthRows.map(row => (
-              <TableRow key={row.kind}>
+            {widthRowsIn(locale).map(row => (
+              <TableRow key={row.id}>
                 <TableCell className="whitespace-normal">
                   {row.kind}
                   {row.note ? (
@@ -99,13 +110,23 @@ function WidthReference() {
   )
 }
 
-export function ToolReference({ converter }: { converter: Converter }) {
-  if (converter.pair === 'width') return <WidthReference />
+export function ToolReference({ converter, locale }: { converter: Converter; locale: Locale }) {
+  const text = getDictionary(locale).tools.reference
+  if (converter.pair === 'width') return <WidthReference locale={locale} text={text} />
   if (converter.slug === 'romaji-to-kana') {
-    return <SpellingRules title="Typing tips" rules={typingTips} typed />
+    return (
+      <SpellingRules title={text.typingTipsTitle} rules={typingTipsIn(locale)} typed text={text} />
+    )
   }
   if (converter.slug === 'kana-to-romaji') {
-    return <SpellingRules title="Spelling rules" rules={spellingRules} typed={false} />
+    return (
+      <SpellingRules
+        title={text.spellingRulesTitle}
+        rules={spellingRulesIn(locale)}
+        typed={false}
+        text={text}
+      />
+    )
   }
   return null
 }

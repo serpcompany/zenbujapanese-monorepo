@@ -37,6 +37,7 @@ const artifact = openArtifact(resources, await fileSha256(join(resources, artifa
 const dictionary = new Dictionary({
   db: artifact.db,
   kanji: artifact.kanji,
+  retired: {},
   capabilities: { tokenize: loadTokenizer(join(resources, 'Kuromoji')) }
 })
 

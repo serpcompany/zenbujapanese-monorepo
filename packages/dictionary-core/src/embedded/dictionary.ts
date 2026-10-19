@@ -1,6 +1,7 @@
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
+import { notesInSearch } from '../results/notes'
 import {
   japaneseCandidates,
   japaneseTextRuns,
@@ -47,6 +48,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
     entriesContainingKanji: character => lookup().entriesContainingKanji(character),
     websiteRoute: link => lookup().websiteRoute(JSON.parse(link)),
+    lookUp: (text, analyze) => lookup().lookUp(text, { analyze }),
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
     canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
@@ -68,6 +70,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
+    notesInSearch: request => notesInSearch(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
     wordPageWithoutContent: reading => presentation().wordPageWithoutContent(reading),
@@ -77,6 +80,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     kanjiElementPage: glyph => presentation().kanjiElementPage(glyph),
     kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),
     radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
+    schoolKanjiPanel: request => presentation().schoolKanjiPanel(JSON.parse(request)),
     gloss: shortGloss,
     phraseNote: request => {
       const { phrase, ...entry } = JSON.parse(request) as PhraseEntry & { phrase: string }

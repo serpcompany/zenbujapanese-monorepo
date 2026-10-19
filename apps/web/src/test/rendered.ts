@@ -1,6 +1,6 @@
 const screenReaderOnly = /<span class="sr-only">[\s\S]*?<\/span>/g
 
-function removeUntilNoneRemain(text: string, pattern: RegExp, replacement = ''): string {
+export function removeUntilNoneRemain(text: string, pattern: RegExp, replacement = ''): string {
   let previous: string
   let current = text
   do {

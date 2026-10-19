@@ -47,11 +47,7 @@ final class WordDetailUITests: ZenbuUITestCase {
 
   func testANoteIsKeptOnTheWord() {
     let app = openJapan()
-    tap(find("word-detail.more-menu", in: app))
-    tap(menuChoice("Add Note", in: app))
-    type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
-    tap(find("word-note.done", in: app))
-    waitFor(labeled("the country, not the language", in: app))
+    addNote("the country, not the language", in: app)
     tap(find("word-detail.more-menu", in: app))
     tap(menuChoice("Add Note", in: app))
     type("left by going back", into: waitFor(find("word-note.editor", in: app)))
@@ -59,6 +55,14 @@ final class WordDetailUITests: ZenbuUITestCase {
     tap(find("result.japan", in: app))
     reveal(labeled("left by going back", in: app), in: app)
   }
+
+  func testANoteAnEarlierVersionSavedIsOnItsWord() throws {
+    let app = openJapan(try earlierNotes([Self.japanNoteIdentity: ["earlier": "saved by 2.0.0"]]))
+    reveal(labeled("saved by 2.0.0", in: app), in: app)
+  }
+
+  private static let japanNoteIdentity =
+    "wn1:45a54eddcad276de58be8b74fa87cfcbdab181ee8a14a6ac910f337758519de2"
 
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
     let app = launch()
@@ -175,6 +179,35 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(labeled("Percentile", in: app))
     tap(app.buttons["Done"].firstMatch)
     waitFor(find("word-detail.screen", in: app))
+  }
+
+  func testShareOffersTheWordsWebLink() throws {
+    try skipTheMacsSharingPicker()
+    let app = openJapan()
+    assertShareOffersAWebLink(titled: "日本", from: find("word-detail.share", in: app), in: app)
+  }
+
+  func testShareOffersTheKanjisWebLink() throws {
+    try skipTheMacsSharingPicker()
+    let app = openJapan()
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
+    waitFor(find("kanji-detail.strokes", in: app))
+    assertShareOffersAWebLink(titled: "日", from: find("kanji-detail.share", in: app), in: app)
+  }
+
+  private func skipTheMacsSharingPicker() throws {
+    try XCTSkipIf(
+      device == .mac,
+      "The Mac's sharing picker draws outside the app, where XCUITest can't see it "
+        + "(docs/agents/ios-website-links.md)")
+  }
+
+  private func assertShareOffersAWebLink(
+    titled title: String, from share: XCUIElement, in app: XCUIApplication
+  ) {
+    tap(share)
+    waitFor(app.cells["Add to Reading List"])
+    waitUntil(app.otherElements["LP.CaptionBar.TopCaption"], mentions: title)
   }
 
   private func openJapan(_ environment: [String: String] = [:]) -> XCUIApplication {

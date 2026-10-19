@@ -1,7 +1,12 @@
 import { cn } from 'cn'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { Fill } from '@/components/fill'
+import { browseText } from '@/lib/dictionary/browse/copy'
 import { type PageNumber, pageNumbers } from '@/lib/dictionary/browse/pagination'
+import type { Locale } from '@/lib/i18n/config'
+import { formatNumber } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 
 export function BrowsePage({ children }: { children: ReactNode }) {
   return (
@@ -17,6 +22,25 @@ export function BrowseHeading({ title, children }: { title: ReactNode; children?
       <h1 className="text-3xl font-semibold tracking-tight text-balance">{title}</h1>
       {children ? <p className="max-w-3xl text-muted-foreground">{children}</p> : null}
     </div>
+  )
+}
+
+export function Sentences({
+  locale,
+  sentences
+}: {
+  locale: Locale
+  sentences: readonly ReactNode[]
+}) {
+  const [first, ...rest] = sentences.filter(
+    sentence => sentence !== null && sentence !== undefined && sentence !== false
+  )
+  if (rest.length === 0) return first
+  return (
+    <Fill
+      template={browseText(locale).sentences}
+      values={{ first, second: <Sentences locale={locale} sentences={rest} /> }}
+    />
   )
 }
 
@@ -42,17 +66,19 @@ export function Panel({
 export function PanelHeading({
   title,
   href,
-  aside
+  aside,
+  locale
 }: {
   title: string
   href?: string
   aside?: ReactNode
+  locale: Locale
 }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
       <h2 className="text-xl font-semibold">
         {href ? (
-          <Link href={href} className="hover:underline">
+          <Link href={localizedPath(href, locale)} className="hover:underline">
             {title}
           </Link>
         ) : (
@@ -64,10 +90,18 @@ export function PanelHeading({
   )
 }
 
-export function MoreLink({ href, children }: { href: string; children: ReactNode }) {
+export function MoreLink({
+  href,
+  locale,
+  children
+}: {
+  href: string
+  locale: Locale
+  children: ReactNode
+}) {
   return (
     <Link
-      href={href}
+      href={localizedPath(href, locale)}
       className="self-start text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
     >
       {children}
@@ -79,16 +113,18 @@ export function LevelCard({
   href,
   title,
   preview,
-  count
+  count,
+  locale
 }: {
   href: string
   title: string
   preview: string
   count: string
+  locale: Locale
 }) {
   return (
     <Link
-      href={href}
+      href={localizedPath(href, locale)}
       className="flex flex-col gap-1.5 rounded-lg border px-4 py-3.5 hover:bg-muted"
     >
       <span className="font-semibold">{title}</span>
@@ -108,11 +144,21 @@ export function Chips({ children, label }: { children: ReactNode; label?: string
   )
 }
 
-export function Chip({ href, children, lang }: { href: string; children: ReactNode; lang?: 'ja' }) {
+export function Chip({
+  href,
+  children,
+  lang,
+  locale
+}: {
+  href: string
+  children: ReactNode
+  lang?: 'ja'
+  locale: Locale
+}) {
   return (
     <li>
       <Link
-        href={href}
+        href={localizedPath(href, locale)}
         lang={lang}
         className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[15px] hover:bg-muted"
       >
@@ -131,11 +177,13 @@ export interface Tab {
 export function LinkTabs({
   label,
   tabs,
-  trailing
+  trailing,
+  locale
 }: {
   label: string
   tabs: readonly Tab[]
   trailing?: ReactNode
+  locale: Locale
 }) {
   const tabClass =
     '-mb-px inline-flex min-h-11 items-center border-b-2 border-transparent text-sm text-muted-foreground hover:text-foreground'
@@ -151,7 +199,7 @@ export function LinkTabs({
             {tab.label}
           </span>
         ) : (
-          <Link key={tab.href} href={tab.href} className={tabClass}>
+          <Link key={tab.href} href={localizedPath(tab.href, locale)} className={tabClass}>
             {tab.label}
           </Link>
         )
@@ -168,21 +216,23 @@ export function Pagination({
   page,
   pages,
   pathFor,
-  label = 'Pages'
+  locale
 }: {
   page: number
   pages: number
   pathFor: (page: number) => string
-  label?: string
+  locale: Locale
 }) {
   if (pages <= 1) return null
+  const t = browseText(locale).pagination
+  const href = (number: number) => localizedPath(pathFor(number), locale)
   const box =
     'inline-flex h-11 min-w-11 items-center justify-center rounded-lg border px-3 text-sm tabular-nums'
   return (
-    <nav aria-label={label} className="flex flex-wrap items-center gap-2">
+    <nav aria-label={t.label} className="flex flex-wrap items-center gap-2">
       {page > 1 ? (
-        <Link href={pathFor(page - 1)} className={cn(box, 'hover:bg-muted')} rel="prev">
-          ← <span className="max-sm:sr-only">Previous</span>
+        <Link href={href(page - 1)} className={cn(box, 'hover:bg-muted')} rel="prev">
+          ← <span className="max-sm:sr-only">{t.previous}</span>
         </Link>
       ) : null}
       {pageNumbers(page, pages).map(({ number, onPhone, gapBefore }) => (
@@ -195,21 +245,21 @@ export function Pagination({
               aria-current="page"
               className={cn(box, 'border-primary bg-primary text-primary-foreground')}
             >
-              {number}
+              {formatNumber(number, locale)}
             </span>
           ) : (
             <Link
-              href={pathFor(number)}
+              href={href(number)}
               className={cn(box, 'hover:bg-muted', !onPhone && 'max-sm:hidden')}
             >
-              {number}
+              {formatNumber(number, locale)}
             </Link>
           )}
         </span>
       ))}
       {page < pages ? (
-        <Link href={pathFor(page + 1)} className={cn(box, 'hover:bg-muted')} rel="next">
-          <span className="max-sm:sr-only">Next</span> →
+        <Link href={href(page + 1)} className={cn(box, 'hover:bg-muted')} rel="next">
+          <span className="max-sm:sr-only">{t.next}</span> →
         </Link>
       ) : null}
     </nav>

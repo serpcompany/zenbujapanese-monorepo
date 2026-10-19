@@ -2,7 +2,7 @@
 
 This folder describes user-facing behavior that is built and live on zenbujapanese.com, and the
 automated check that enforces each behavior. It is updated with the implementation and is not a
-roadmap. The one exception is [Required, not built yet](dictionary.md#required-not-built-yet-511),
+roadmap. The one exception is [Required, not built yet](not-built-yet.md),
 which lists features the website must have but doesn't yet, with the check each will get.
 
 The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
@@ -43,6 +43,10 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 are `noindex` and in no sitemap, and where they're closed, in a build whose environment names no
 account service, nothing links to them.
 
+Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
+in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
+each language shows, the search-engine tags, and the switcher.
+
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.
@@ -52,7 +56,8 @@ support page says about Tomodachi.
 Production is `zenbujapanese.com` and staging is `staging.zenbujapanese.com`. Another host that
 serves the site, `www.zenbujapanese.com` or a Worker's workers.dev address, redirects (308) to the
 same page on its environment's host in one hop: with the page's trailing slash whether or not the
-request had it, and at a moved page's new address.
+request had it, and at a moved page's new address. Static files, the dictionary's sitemaps among
+them, answer on every host, since they never reach the Worker; their URLs name the canonical host.
 
 - Source: SERP's
   [URL trailing slash](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/url-trailing-slash.md)
@@ -66,20 +71,21 @@ request had it, and at a moved page's new address.
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
 and the Swift views it describes define what the website shows. The website differs only where a
 decision on file says so: the #462 designs, and the decisions on #464, #465, #466, #485, #499, and
-#511. Each difference names its decision. A difference without one is a bug, listed under
-[Required, not built yet](dictionary.md#required-not-built-yet-511).
+#831. Each difference names its decision. A difference without one is a bug, listed under
+[Required, not built yet](not-built-yet.md).
 
-The owner's decision on #511 makes every app dictionary feature the #511 inventory found missing
+The owner's decision on #831 makes every app dictionary feature the #831 inventory found missing
 a requirement for the website, and sets the order of work: a behavior is written here first, with
 its app source and planned check, and is then built with its check in the same PR.
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md), [Account pages](account.md), and
-[Privacy Policy](privacy.md) names its automated check, or says "No automated check yet" (#511 for the dictionary). The checks come in
+Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
+[Languages](languages.md), and [Privacy Policy](privacy.md) names its automated check, or says "No
+automated check yet". The checks come in
 five kinds:
 
-- **App-recorded conformance suites** in `apps/ios/LanguageData/Conformance/`, recorded from the
+- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the
   app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
   `word-detail.json`, and `kanji-detail.json`, and `kanji-element.json` for a page the website
   doesn't have yet. Each pins, by SHA-256, the app data files it was
@@ -105,9 +111,8 @@ The suites and most unit tests check the data a page is built from. Rendered-pag
 and read back what a reader sees; the search results page's, its Example Sentences section's, the
 word page's, and its Conjugations section's run the app-recorded suites through the components
 from the service. Interaction tests
-(`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). Rows without either say
-"No automated check yet (#511)". #511 plans more rendered-HTML checks for the designs, and more
-smoke checks.
+(`*.interaction.test.tsx`) click through a component in a DOM (happy-dom). A behavior with no
+automated check says "No automated check yet".
 
 An interaction test waits for what a click leads to, with `shows` or `vi.waitFor` around the
 expectation, when the click starts work that leaves the JavaScript thread. `click` and `submit` in

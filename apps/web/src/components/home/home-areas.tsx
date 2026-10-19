@@ -11,9 +11,11 @@ import {
   type AppArea,
   type AppAreaId,
   type AreaMedia,
-  appAreas,
+  appAreasIn,
   type DrawnPreviewId
 } from '@/lib/app-areas'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 
 const areaIcons: Record<AppAreaId, ReactNode> = {
   dictionary: <BookOpenIcon aria-hidden="true" />,
@@ -23,14 +25,21 @@ const areaIcons: Record<AppAreaId, ReactNode> = {
   lists: <ListIcon aria-hidden="true" />
 }
 
-const drawnPreviews: Record<DrawnPreviewId, Pick<ShowcaseMedia, 'shape' | 'content'>> = {
-  player: { shape: 'phone', content: <PlayerPreview /> },
-  list: { shape: 'card', content: <ListPreview /> },
-  frequency: { shape: 'card', content: <FrequencyPreview /> },
-  furigana: { shape: 'card', content: <FuriganaPreview /> }
-}
+const drawnPreviews = (
+  locale: Locale,
+  tapKanji: string
+): Record<DrawnPreviewId, Pick<ShowcaseMedia, 'shape' | 'content'>> => ({
+  player: { shape: 'phone', content: <PlayerPreview locale={locale} /> },
+  list: { shape: 'card', content: <ListPreview locale={locale} /> },
+  frequency: { shape: 'card', content: <FrequencyPreview locale={locale} /> },
+  furigana: { shape: 'card', content: <FuriganaPreview tapKanji={tapKanji} /> }
+})
 
-function showcaseMedia(media: AreaMedia): ShowcaseMedia {
+function showcaseMedia(
+  media: AreaMedia,
+  drawn: ReturnType<typeof drawnPreviews>,
+  play: string
+): ShowcaseMedia {
   switch (media.kind) {
     case 'screenshot':
       return {
@@ -40,18 +49,27 @@ function showcaseMedia(media: AreaMedia): ShowcaseMedia {
         content: <AppScreenshot screenshot={media.screenshot} className="block w-full" />
       }
     case 'drawn':
-      return { key: media.preview, label: media.label, ...drawnPreviews[media.preview] }
+      return { key: media.preview, label: media.label, ...drawn[media.preview] }
     case 'video':
       return {
         key: media.video.youtubeId,
         label: media.label,
         shape: 'card',
-        content: <VideoCard video={media.video} className="w-full md:w-full" />
+        content: <VideoCard video={media.video} play={play} className="w-full md:w-full" />
       }
   }
 }
 
-export function HomeAreas({ areas = appAreas }: { areas?: readonly AppArea[] }) {
+export function HomeAreas({
+  locale,
+  areas = appAreasIn(locale)
+}: {
+  locale: Locale
+  areas?: readonly AppArea[]
+}) {
+  const t = getDictionary(locale)
+  const text = t.home.areas
+  const drawn = drawnPreviews(locale, text.tapKanji)
   return (
     <section
       aria-labelledby="areas-title"
@@ -59,16 +77,17 @@ export function HomeAreas({ areas = appAreas }: { areas?: readonly AppArea[] }) 
     >
       <SectionHeading
         id="areas-title"
-        title="One app for reading, watching, and talking"
-        description="Five areas, and one dictionary behind all of them."
+        title={text.title}
+        description={text.description}
         className="mb-9"
       />
       <AreaShowcase
-        label="Areas of the app"
+        label={text.label}
+        text={{ previous: text.previous, next: text.next, slide: text.slide }}
         areas={areas.map(area => ({
           ...area,
           icon: areaIcons[area.id],
-          media: area.media.map(showcaseMedia)
+          media: area.media.map(media => showcaseMedia(media, drawn, t.productPage.videos.play))
         }))}
       />
     </section>

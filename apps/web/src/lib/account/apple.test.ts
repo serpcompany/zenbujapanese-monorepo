@@ -5,6 +5,7 @@ import {
   type AppleAuth,
   appleAuthorizationOf,
   appleReturnUrl,
+  appleScriptUrl,
   appleUserOf,
   sha256Hex,
   signInWithApplePopup
@@ -78,4 +79,12 @@ describe('Sign in with Apple on the website', () => {
     expect(appleUserOf('not-a-token')).toBeNull()
     expect(appleAuthorizationOf({ authorization: { code: 'c' } }, 's')).toBeNull()
   })
+})
+
+test('Sign in with Apple loads in the language of the page', () => {
+  const script = (locale: string) =>
+    `https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/${locale}/appleid.auth.js`
+  expect(appleScriptUrl('en')).toBe(script('en_US'))
+  expect(appleScriptUrl('ja')).toBe(script('ja_JP'))
+  expect(appleScriptUrl('')).toBe(script('en_US'))
 })

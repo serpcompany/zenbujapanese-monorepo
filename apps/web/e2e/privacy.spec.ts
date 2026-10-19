@@ -83,6 +83,7 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your Zenbu account', [
       "While you're signed out, our apps send nothing to our account service",
       'where our apps or this website offer one',
+      "The iPhone app's profile syncs its name and username",
       "notes, photos, searches, settings, and whole Translate conversations don't sync",
       'only the sentences you bookmark leave your device'
     ])

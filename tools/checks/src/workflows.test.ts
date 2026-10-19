@@ -13,7 +13,7 @@ const gated: [name: string, jobs: string[], waits: Record<string, string>][] = [
   ['dictionary-api', ['scripts', 'check'], { check: 'scripts' }],
   ['account-api', ['check', 'website'], { website: 'check' }],
   ['ios', ['contracts', 'swift'], { swift: 'contracts' }],
-  ['language-data-build', ['build'], {}]
+  ['language-data-build', ['pins', 'build'], { build: 'pins' }]
 ]
 
 const requirable = [...gated.map(([name]) => name), 'repository', 'pull-request']

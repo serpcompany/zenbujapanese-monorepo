@@ -87,7 +87,8 @@ struct EncounterMediaStorageTests {
   func migratesTheOldIndex() async throws {
     defer { fixture.remove() }
     let photoID = fixture.photo.sha256
-    _ = try fixture.writeIndex(#"{"taberu-note":{"name":"ramen.jpg","blobID":"\#(photoID)"}}"#)
+    let taberu = SavedWords.taberuNoteIdentity
+    _ = try fixture.writeIndex(#"{"\#(taberu)":{"name":"ramen.jpg","blobID":"\#(photoID)"}}"#)
     try fixture.photo.data.write(to: fixture.imageURL(of: fixture.photo))
 
     let library = await fixture.launch().library()
@@ -117,7 +118,8 @@ struct EncounterMediaStorageTests {
     let unreadable = try fixture.writeIndex(#"{"media":"not a record"}"#)
 
     let storage = EncounterMediaStorage(
-      directory: fixture.directory, keepCopy: { _ in throw CopyFailed() })
+      directory: fixture.directory, placing: SavedWords.lookup,
+      keepCopy: { _ in throw CopyFailed() })
     await storage.save(fixture.photo, for: fixture.word)
 
     #expect(await storage.library().isEmpty)

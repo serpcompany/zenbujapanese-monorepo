@@ -5,8 +5,9 @@ import { useAppleSignIn } from '@/hooks/use-apple-sign-in'
 import { useBusy } from '@/hooks/use-busy'
 import type { AppleAuthorization, AppleCode } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
-import { failureMessage } from '@/lib/account/messages'
+import { type AccountText, failureMessage } from '@/lib/account/messages'
 import type { AccountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
 import { EmailCodeForm } from './email-code-form'
 import { FormMessage } from './form-message'
 import { AppleButton, GoogleButton } from './provider-buttons'
@@ -17,13 +18,16 @@ export interface SignInWays {
   email: boolean
 }
 
+type SignInButtons = AccountText['buttons']['signIn']
+
 interface SignInOptionsProps {
   api: AccountApi
+  locale: Locale
+  text: AccountText
   settings: AccountSettings
   ways: SignInWays
   email?: string
-  verb: string
-  emailLabels: { send: string; signIn: string }
+  buttons: SignInButtons
   googleReturn: { done: string; failed: string }
   refuseApple?: (authorization: AppleAuthorization) => string | null
   beforeGoogle?: () => boolean
@@ -32,17 +36,18 @@ interface SignInOptionsProps {
 
 export function SignInOptions({
   api,
+  locale,
+  text,
   settings,
   ways,
   email,
-  verb,
-  emailLabels,
+  buttons,
   googleReturn,
   refuseApple,
   beforeGoogle,
   onSignedIn
 }: SignInOptionsProps) {
-  const apple = useAppleSignIn(api, settings.appleServicesId)
+  const apple = useAppleSignIn(api, settings.appleServicesId, text.messages, locale)
   const [busy, setBusy] = useBusy()
   const [problem, setProblem] = useState<string | null>(null)
   const offersApple = ways.apple && settings.appleServicesId !== null
@@ -68,7 +73,7 @@ export function SignInOptions({
       name: authorization.name
     })
     if (signedIn.ok) await onSignedIn({ code: authorization.code, returnUrl })
-    else setProblem(failureMessage(signedIn.failure))
+    else setProblem(failureMessage(signedIn.failure, text.messages, locale))
     setBusy(false)
   }
 
@@ -82,7 +87,7 @@ export function SignInOptions({
     })
     if (!started.ok) {
       setBusy(false)
-      return setProblem(failureMessage(started.failure))
+      return setProblem(failureMessage(started.failure, text.messages, locale))
     }
     if (beforeGoogle && !beforeGoogle()) return setBusy(false)
     window.location.assign(started.value)
@@ -94,18 +99,14 @@ export function SignInOptions({
         <div className="flex flex-col gap-2">
           {offersApple ? (
             <AppleButton
-              label={`${verb} with Apple`}
+              label={buttons.apple}
               busy={busy}
               onIntent={() => void apple.prepare()}
               onClick={() => void withApple()}
             />
           ) : null}
           {offersGoogle ? (
-            <GoogleButton
-              label={`${verb} with Google`}
-              busy={busy}
-              onClick={() => void withGoogle()}
-            />
+            <GoogleButton label={buttons.google} busy={busy} onClick={() => void withGoogle()} />
           ) : null}
           <FormMessage problem={problem} />
         </div>
@@ -113,16 +114,17 @@ export function SignInOptions({
       {(offersApple || offersGoogle) && ways.email ? (
         <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase">
           <span className="h-px flex-1 bg-border" />
-          or
+          {text.or}
           <span className="h-px flex-1 bg-border" />
         </div>
       ) : null}
       {ways.email ? (
         <EmailCodeForm
           api={api}
+          locale={locale}
+          text={text}
           email={email}
-          sendLabel={emailLabels.send}
-          signInLabel={emailLabels.signIn}
+          signInLabel={buttons.submit}
           providersHere={{ apple: settings.appleServicesId !== null, google: settings.google }}
           onSignedIn={() => onSignedIn(null)}
         />

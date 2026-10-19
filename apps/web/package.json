@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node ../../tools/checks/ports.mjs run site -- next dev",
     "build": "next build",
+    "sitemaps": "node --import tsx scripts/write-sitemaps.ts",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "next typegen && tsc --noEmit",
@@ -14,7 +15,8 @@
     "preview": "opennextjs-cloudflare build && node ../../tools/checks/ports.mjs run preview -- opennextjs-cloudflare preview --port @port",
     "deploy:staging": "SITE_ENV=staging opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
     "deploy:production": "SITE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare deploy --env production",
-    "cf-typegen": "wrangler types ./cloudflare-env.d.ts --env-interface CloudflareEnv --env-file /dev/null"
+    "cf-typegen": "wrangler types ./cloudflare-env.d.ts --env-interface CloudflareEnv --env-file /dev/null",
+    "i18n:stamp": "node scripts/stamp-translations.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -43,6 +45,7 @@
     "@types/react-dom": "^19",
     "happy-dom": "^20.14.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.2",
     "wrangler": "^4.143.0"

@@ -15,12 +15,14 @@ import {
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
+import { categoryName } from '@/lib/dictionary/browse/category-names'
 import {
+  browseText,
   categoryHeading,
   categoryIntro,
-  formatCount,
+  joinSentences,
   moreWaysToBrowse,
-  orderNames
+  orderName
 } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
 import {
@@ -31,22 +33,30 @@ import {
   categoryPath
 } from '@/lib/dictionary/browse/paths'
 import { pageSources } from '@/lib/dictionary/sources'
+import type { Locale } from '@/lib/i18n/config'
+import { fill, formatNumber } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 
-function MoreWaysToBrowse({ current }: { current: string }) {
+const indexCrumbs = (index: CategoryIndex, locale: Locale) => [
+  { label: browseText(locale).names.browse, path: browsePath },
+  { label: browseText(locale).categoryIndexes[index].name, path: categoryIndexes[index].path }
+]
+
+function MoreWaysToBrowse({ current, locale }: { current: string; locale: Locale }) {
   const shown = moreWaysToBrowse
     .filter(slug => slug !== current)
     .flatMap(slug => browseCategory(slug) ?? [])
   return (
     <section className="flex flex-col gap-3 border-t pt-5">
-      <h2 className="font-semibold">More ways to browse</h2>
+      <h2 className="font-semibold">{browseText(locale).category.moreWays}</h2>
       <ul className="flex flex-wrap gap-x-5 gap-y-1.5">
         {shown.map(category => (
           <li key={category.slug}>
             <Link
-              href={categoryPath(category.slug)}
+              href={localizedPath(categoryPath(category.slug), locale)}
               className="underline decoration-border underline-offset-4 hover:decoration-foreground"
             >
-              {category.name}
+              {categoryName(category, locale)}
             </Link>
           </li>
         ))}
@@ -59,67 +69,77 @@ export function CategoryWords({
   category,
   words,
   order,
-  page
+  page,
+  locale
 }: {
   category: BrowseCategory
   words: BrowseWordsPage
   order: CategoryOrder
   page: number
+  locale: Locale
 }) {
+  const t = browseText(locale)
   const index = categoryIndexOf(category.kind)
+  const pageOf =
+    words.pages > 1
+      ? fill(t.pageOf, {
+          page: formatNumber(page, locale),
+          pages: formatNumber(words.pages, locale)
+        })
+      : null
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
+        locale={locale}
         pages={[
-          { label: 'Browse', path: browsePath },
-          ...(index
-            ? [{ label: categoryIndexes[index].name, path: categoryIndexes[index].path }]
-            : []),
-          { label: category.name, path: categoryPath(category.slug) }
+          ...(index ? indexCrumbs(index, locale) : [{ label: t.names.browse, path: browsePath }]),
+          { label: categoryName(category, locale), path: categoryPath(category.slug) }
         ]}
       />
-      <BrowseHeading title={categoryHeading(category)}>
-        {categoryIntro(category, words.total, order)}
-        {words.pages > 1 ? ` Page ${page} of ${words.pages}.` : ''}
+      <BrowseHeading title={categoryHeading(category, locale)}>
+        {joinSentences([categoryIntro(category, words.total, order, locale), pageOf], locale)}
       </BrowseHeading>
       <LinkTabs
-        label="Order"
+        label={t.category.orderLabel}
+        locale={locale}
         tabs={categoryOrders.map(each => ({
-          label: orderNames[each],
+          label: orderName(each, locale),
           href: categoryPath(category.slug, each),
           current: each === order
         }))}
       />
-      <WordList words={words.words} section="words" />
+      <WordList words={words.words} section="words" locale={locale} />
       <Pagination
         page={page}
         pages={words.pages}
         pathFor={number => categoryPath(category.slug, order, number)}
+        locale={locale}
       />
-      <MoreWaysToBrowse current={category.slug} />
-      <SourceCredits sources={pageSources.browse} />
+      <MoreWaysToBrowse current={category.slug} locale={locale} />
+      <SourceCredits sources={pageSources.browse} locale={locale} />
     </BrowsePage>
   )
 }
 
+export interface CategoryGroup {
+  title: string | null
+  categories: { category: BrowseCategory; count: number }[]
+}
+
 export function CategoryIndexPage({
   index,
-  intro,
-  groups
+  groups,
+  locale
 }: {
   index: CategoryIndex
-  intro: string
-  groups: { title: string | null; categories: { category: BrowseCategory; count: number }[] }[]
+  groups: CategoryGroup[]
+  locale: Locale
 }) {
+  const t = browseText(locale).categoryIndexes[index]
   return (
     <BrowsePage>
-      <DictionaryBreadcrumbs
-        pages={[
-          { label: 'Browse', path: browsePath },
-          { label: categoryIndexes[index].name, path: categoryIndexes[index].path }
-        ]}
-      />
-      <BrowseHeading title={categoryIndexes[index].name}>{intro}</BrowseHeading>
+      <DictionaryBreadcrumbs locale={locale} pages={indexCrumbs(index, locale)} />
+      <BrowseHeading title={t.heading}>{t.intro}</BrowseHeading>
       {groups.map(group => (
         <section key={group.title ?? index} className="flex flex-col gap-3">
           {group.title ? <h2 className="text-xl font-semibold">{group.title}</h2> : null}
@@ -127,12 +147,12 @@ export function CategoryIndexPage({
             {group.categories.map(({ category, count }) => (
               <li key={category.slug}>
                 <Link
-                  href={categoryPath(category.slug)}
+                  href={localizedPath(categoryPath(category.slug), locale)}
                   className="flex min-h-12 items-center justify-between gap-3 rounded-lg border px-4 hover:bg-muted"
                 >
-                  <span>{category.name}</span>
+                  <span>{categoryName(category, locale)}</span>
                   <span className="text-sm text-muted-foreground tabular-nums">
-                    {formatCount(count)}
+                    {formatNumber(count, locale)}
                   </span>
                 </Link>
               </li>
@@ -140,7 +160,7 @@ export function CategoryIndexPage({
           </ul>
         </section>
       ))}
-      <SourceCredits sources={[sourceCredits.jmdict]} />
+      <SourceCredits sources={[sourceCredits.jmdict]} locale={locale} />
     </BrowsePage>
   )
 }

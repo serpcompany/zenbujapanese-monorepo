@@ -263,7 +263,7 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)"; #648 decision and mockups (the footer's
+- Source: #614 mockup "Footer + /sitemap/ (changed)"; #844 decision and mockups (the footer's
   columns).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
@@ -296,10 +296,10 @@ motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana grou
 word stays a few links from the dictionary home.
 
 - Source: ADR 0010 (amended); #614 (the thin lists).
-- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks
-  is 404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
-  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read
-  when it's asked for, never at build time: `src/app/dictionary/browse/dynamic.test.ts`.
+- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks is
+  404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
+  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read when
+  it's asked for, never at build time: `src/app/[locale]/dictionary/browse/dynamic.test.ts`.
 
 **No link is a redirect.** Every link on a browse page goes straight to its page, never to a URL
 that redirects, which a site audit (Ahrefs, for #614) reports. So a kanji links to the search
@@ -317,8 +317,8 @@ URL.
 Each hub leads its kind's sitemap: the kana charts and both scripts lead the kana sitemap, the
 three category indexes the categories sitemap, the frequency dictionaries the frequency lists
 sitemap, and the kanji lists the kanji lists sitemap. The browse home is in `/sitemap-pages.xml`,
-beside `/dictionary/`. The sitemap index lists the four wherever the site has a dictionary
-service.
+beside `/dictionary/`. The sitemap index lists the four wherever a deploy wrote them: staging
+and production.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
   `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
@@ -329,4 +329,3 @@ service.
   pages sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four
   together stay under one file's 50,000 URLs, so each does); Browse categories service, "the
   categories under 10 words are the thin ones the sitemap leaves out".
-

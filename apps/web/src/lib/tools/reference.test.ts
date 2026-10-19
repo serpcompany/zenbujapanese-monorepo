@@ -7,12 +7,12 @@ const everyRow = kanaGroups.flatMap(entriesIn)
 
 describe('the kana reference', () => {
   test('has 131 rows in five groups', () => {
-    expect(kanaGroups.map(group => [group.label, entriesIn(group).length])).toEqual([
-      ['Basic', 46],
-      ['With marks', 25],
-      ['Small kana', 10],
-      ['Combinations', 33],
-      ['Katakana only', 17]
+    expect(kanaGroups.map(group => [group.id, entriesIn(group).length])).toEqual([
+      ['basic', 46],
+      ['marks', 25],
+      ['small', 10],
+      ['combinations', 33],
+      ['extended', 17]
     ])
     expect(everyRow).toHaveLength(131)
   })

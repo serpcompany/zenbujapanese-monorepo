@@ -15,3 +15,5 @@ export const isConverterSlug = (value: string): value is ConverterSlug =>
   (converterSlugs as readonly string[]).includes(value)
 
 export const converterPath = (slug: ConverterSlug) => `${toolsPath}${slug}/`
+
+export const toolPaths: readonly string[] = [toolsPath, ...converterSlugs.map(converterPath)]

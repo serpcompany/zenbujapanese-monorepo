@@ -45,7 +45,7 @@ const testPaths = [
   /(^|\/)test_[^/]+\.py$/,
   /^apps\/web\/scripts\/smoke\.sh$/,
   /^apps\/ios\/(?:Modules\/Tests|UITests|Tools\/TranslateReplay\/Tests)\/(?:.+\/)?[^/]+Tests\.swift$/,
-  /^apps\/ios\/LanguageData\/Conformance\/[^/]+\.json$/
+  /^language-data\/conformance\/[^/]+\.json$/
 ]
 
 export const isTest = path => testPaths.some(pattern => pattern.test(path))

@@ -36,7 +36,9 @@ script against a stand-in for the GitHub API.
 ## Web deploy
 
 `.github/workflows/web-deploy.yml` deploys the site on a push to `main` that changes the same files
-as `Web` ([`ci.md`](ci.md), Web), and by hand. Runs never overlap, and a running one is never cancelled. The `staging`
+as `Web` ([`ci.md`](ci.md), Web) or what the dictionary service's image holds (the paths
+`Dictionary API deploy` runs on, below, which `tools/checks/src/deploy-workflows.test.ts` holds it
+to), since the site's sitemaps are written from it, and by hand. Runs never overlap, and a running one is never cancelled. The `staging`
 job, then the `production` job, each in the GitHub environment of that name:
 
 1. waits for this commit's `Dictionary API deploy` run, if it has one, to sign and tag the image
@@ -47,7 +49,11 @@ job, then the `production` job, each in the GitHub environment of that name:
    ([`dictionary-api.md`](dictionary-api.md), How a deploy works).
 2. points the site at the environment's service (`apps/web/scripts/use-dictionary-service.sh`, with
    the environment's `DICTIONARY_API_URL` variable);
-3. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
+3. writes the dictionary's sitemaps (`apps/web/scripts/write-dictionary-sitemaps.sh`): it pulls the
+   environment's service image (`:staging` or `:production`), with the job's `packages: read`
+   permission, starts it on the runner, and runs `pnpm sitemaps` against it, failing the job when it
+   can't ([`web.md`](web.md), Sitemaps; ADR 0016);
+4. deploys and smoke-tests (`apps/web/scripts/smoke.sh`)
    the workers.dev URL the deploy printed, since the zone's bot protection blocks CI runners. When
    Cloudflare challenges the site's Worker for the runner too, the smoke test skips its dictionary
    checks with a warning ([`web.md`](web.md), Dictionary service). On staging it also checks the
@@ -67,8 +73,10 @@ Environments and deploys.
 (`apps/dictionary-api/Dockerfile`, ADR 0009). It runs on a push to `main` that changes what the
 image holds: the service, the core, what the services share, the package files it installs from
 (the root ones and `apps/web/package.json`), the app's files it copies (the `.sqlite3` files, the
-`Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's), and
-`language-data/release.json`, the release the app routes name. Tests and the service's
+`Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's),
+`language-data/release.json`, the release the app routes name, the pinned manifests
+(`language-data/releases/*/manifest.json`), which the service checks its files against, and the
+release's retired entries (`language-data/derived/RetiredEntries.json`). Tests and the service's
 conformance code (`apps/dictionary-api/src/conformance/`) aren't in the image, so they don't start
 it. A pull request that
 changes the same files runs only the `image` job, which builds and checks without pushing; a new
@@ -129,7 +137,7 @@ in [`account-api.md`](account-api.md), How a deploy works.
 ## Language data release
 
 `.github/workflows/language-data-release.yml` publishes the release `language-data/release.json`
-names to the `zenbujapanese-language-data` R2 bucket (issue 463, step 3). It runs on a push to
+names to the `zenbujapanese-language-data` R2 bucket (issue 828, step 3). It runs on a push to
 `main` that changes any input of a release (the same inputs as the build, which the same tests
 check), so changed content can't sit unpublished: it publishes, or fails until `release.json` is
 bumped. It also runs by hand. One publish runs at a time, and none is cancelled halfway.
@@ -140,17 +148,19 @@ each release by hand). It:
 
 1. checks that the environment has the R2 token's two secrets and the `CLOUDFLARE_ACCOUNT_ID`
    variable, before the 516 MiB build, so a missing one fails in seconds, by name;
-2. rebuilds the release from this commit with the shared action;
-3. publishes (`language-data/pipeline/publish.py`), then verifies: reads `releases.json` and the
-   manifest back, and downloads and hashes every file. Both write to the job summary.
+2. rebuilds the release from this commit with the shared action, which fails unless it is the
+   pinned release;
+3. publishes (`language-data/pipeline/publish.py`), which refuses a staged release that isn't its
+   pin, then verifies: reads `releases.json` and the manifest back, checks the manifest against
+   the pin, and downloads and hashes every file. Both write to the job summary.
 
 `AWS_REQUEST_CHECKSUM_CALCULATION` and `AWS_RESPONSE_CHECKSUM_VALIDATION` are `WHEN_REQUIRED` so
 the AWS CLI sends only the checksum the publisher gives (SHA-256, in `object_store.py`), not its
 default CRC trailers.
 This is the only workflow with the bucket's token, so every action its job runs, the shared
 action's included, is pinned by commit SHA (see Pinned actions). What a publish writes, and why
-nothing published is overwritten, is in [`language-data/README.md`](../../language-data/README.md),
-Publishing a release.
+nothing published is overwritten, is in
+[`language-data/publishing.md`](../../language-data/publishing.md).
 
 ## The package-language-data action
 
@@ -162,7 +172,8 @@ needs a checkout. It:
 2. lists the Git LFS files the release holds (`language-data/pipeline/package.py lfs-paths`),
    restores them from the cache, and pulls only those;
 3. packages the release into its `out` input (`package.py build`), then validates the manifest and
-   the staged files.
+   the staged files, and checks that it is the release `language-data/releases/` pins
+   (`package.py check-pin --built`).
 
 - The list is taken on its own line, so a failure stops the step, and checked not to be empty: an
   empty `--include` would pull every Git LFS file in the repository.
@@ -199,6 +210,6 @@ To update one, pin the new release's commit and change this table in the same pu
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
 | `docker/setup-buildx-action` | `f87e5991a6d7451dcb8d9637bfbc97413f497069` | v4.4.1 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
-| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
+| `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/web-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |

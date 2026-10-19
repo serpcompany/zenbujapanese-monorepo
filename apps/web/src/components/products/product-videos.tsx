@@ -13,6 +13,10 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '@/components/ui/carousel'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 import { linkTo } from '@/lib/site'
 import { cn } from '@/lib/utils'
 import { type AppVideo, videosSectionId, youtubeEmbedUrl } from '@/lib/videos'
@@ -20,7 +24,15 @@ import { type AppVideo, videosSectionId, youtubeEmbedUrl } from '@/lib/videos'
 const youtubePlayerFeatures =
   'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
 
-export function VideoCard({ video, className }: { video: AppVideo; className?: string }) {
+export function VideoCard({
+  video,
+  play,
+  className
+}: {
+  video: AppVideo
+  play: string
+  className?: string
+}) {
   const [playing, setPlaying] = useState(false)
   return (
     <div className={cn('flex w-72 flex-col gap-2 md:w-80', className)}>
@@ -37,7 +49,7 @@ export function VideoCard({ video, className }: { video: AppVideo; className?: s
       ) : (
         <button
           type="button"
-          aria-label={`Play ${video.title}`}
+          aria-label={fill(play, { title: video.title })}
           onClick={() => setPlaying(true)}
           className="group/video relative block aspect-video w-full overflow-hidden rounded-lg bg-neutral-900 ring-1 ring-foreground/10 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
@@ -54,7 +66,17 @@ export function VideoCard({ video, className }: { video: AppVideo; className?: s
   )
 }
 
-export function ProductVideos({ videos }: { videos: readonly AppVideo[] }) {
+export function ProductVideos({
+  videos,
+  locale,
+  text,
+  carousel
+}: {
+  videos: readonly AppVideo[]
+  locale: Locale
+  text: Dictionary['productPage']['videos']
+  carousel: Dictionary['productPage']['carousel']
+}) {
   if (videos.length === 0) return null
   const allVideos = linkTo('videos')
   return (
@@ -63,10 +85,11 @@ export function ProductVideos({ videos }: { videos: readonly AppVideo[] }) {
       className="mx-auto flex w-full max-w-5xl scroll-mt-6 flex-col items-center gap-6 px-4 py-12 md:px-5 md:py-16"
     >
       <h2 id="videos-heading" className={sectionTitleClassName}>
-        Watch it work.
+        {text.heading}
       </h2>
       <Carousel
         opts={{ align: 'start' }}
+        aria-roledescription={carousel.region}
         aria-labelledby="videos-heading"
         className="flex w-full min-w-0 flex-col gap-6"
       >
@@ -75,10 +98,11 @@ export function ProductVideos({ videos }: { videos: readonly AppVideo[] }) {
             {videos.map((video, index) => (
               <CarouselItem
                 key={video.youtubeId}
-                aria-label={`${index + 1} of ${videos.length}`}
+                aria-roledescription={carousel.slide}
+                aria-label={fill(carousel.position, { index: index + 1, count: videos.length })}
                 className="basis-auto pl-3"
               >
-                <VideoCard video={video} />
+                <VideoCard video={video} play={text.play} />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -87,20 +111,20 @@ export function ProductVideos({ videos }: { videos: readonly AppVideo[] }) {
           <CarouselPrevious
             size="icon-lg"
             className="static translate-none rounded-lg"
-            aria-label="Previous videos"
+            aria-label={text.previous}
           />
           <Link
-            href={allVideos.href}
+            href={localizedPath(allVideos.href, locale)}
             data-link-target={allVideos.target}
             className={buttonVariants({ variant: 'outline', size: 'lg' })}
           >
-            See all videos
+            {text.seeAll}
             <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
           </Link>
           <CarouselNext
             size="icon-lg"
             className="static translate-none rounded-lg"
-            aria-label="Next videos"
+            aria-label={text.next}
           />
         </div>
       </Carousel>

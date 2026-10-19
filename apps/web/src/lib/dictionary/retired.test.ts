@@ -50,6 +50,23 @@ describe('retiredWordResponse', () => {
     )
   })
 
+  test('a retired word on a Japanese page is gone, or redirects, in Japanese', async () => {
+    const gone = await retiredWordResponse(
+      at('/ja/dictionary/1000010/'),
+      apiRetiredLookup(fakeApi())
+    )
+    expect(gone?.status).toBe(410)
+    expect(await gone?.text()).toBe('この言葉は、もう辞書にありません。\n')
+    const moved = await retiredWordResponse(
+      at('/ja/dictionary/old-1000020/'),
+      apiRetiredLookup(fakeApi())
+    )
+    expect(moved?.status).toBe(308)
+    expect(moved?.headers.get('Location')).toBe(
+      'https://staging.zenbujapanese.com/ja/dictionary/%E8%A6%8B%E3%82%8B-1259290/'
+    )
+  })
+
   test('a replacement this release lacks leaves the word gone', async () => {
     const response = await retiredWordResponse(
       at('/dictionary/1000030/'),

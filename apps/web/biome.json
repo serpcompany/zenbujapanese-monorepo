@@ -96,7 +96,7 @@
                   },
                   {
                     "group": ["@/lib/dictionary/api", "./api"],
-                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, and scripts/write-sitemaps.ts, which writes the sitemaps at deploy, call the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
                   }
                 ]
               }
@@ -151,7 +151,7 @@
                   },
                   {
                     "group": ["@/lib/dictionary/api", "./api"],
-                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, and scripts/write-sitemaps.ts, which writes the sitemaps at deploy, call the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
                   }
                 ]
               }
@@ -171,7 +171,7 @@
                 "patterns": [
                   {
                     "group": ["@/lib/dictionary/api", "./api"],
-                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, calls the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
+                    "message": "Pages read the dictionary service only through src/lib/dictionary/data.ts, which adds the site's URLs and falls back to fixtures in local development; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, and scripts/write-sitemaps.ts, which writes the sitemaps at deploy, call the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead."
                   }
                 ]
               }

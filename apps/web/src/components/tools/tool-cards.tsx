@@ -2,10 +2,14 @@ import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { ProductMarkTile } from '@/components/products/product-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
 import type { ProductMark } from '@/lib/products/catalog'
 import { convert } from '@/lib/tools/convert'
-import { converterFor, languageOf } from '@/lib/tools/converters'
+import { languageOf } from '@/lib/tools/converters'
 import type { ConverterSlug } from '@/lib/tools/paths'
+import { converterPageIn } from '@/lib/tools/tool-pages'
 
 export function ToolCard({
   title,
@@ -40,13 +44,13 @@ export function ToolCard({
   )
 }
 
-export function ConverterCard({ slug }: { slug: ConverterSlug }) {
-  const converter = converterFor(slug)
+export function ConverterCard({ slug, locale }: { slug: ConverterSlug; locale: Locale }) {
+  const converter = converterPageIn(slug, locale)
   return (
     <ToolCard
       title={converter.name}
       line={converter.card.line}
-      href={converter.path}
+      href={localizedPath(converter.path, locale)}
       mark={{ glyph: converter.card.mark }}
     >
       <p className="flex flex-wrap items-center gap-1.5">
@@ -54,7 +58,7 @@ export function ConverterCard({ slug }: { slug: ConverterSlug }) {
         <span aria-hidden="true" className="text-muted-foreground">
           →
         </span>
-        <span className="sr-only">becomes</span>
+        <span className="sr-only">{getDictionary(locale).tools.card.becomes}</span>
         <span lang={languageOf[converter.output]}>
           {convert(converter.slug, converter.card.sample)}
         </span>

@@ -1,4 +1,5 @@
 import Foundation
+import notify
 
 enum LaunchHarness {
   static let freshStateKey = "ZENBU_UI_TEST_FRESH"
@@ -9,6 +10,9 @@ enum LaunchHarness {
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
+  static let openLinkKey = "ZENBU_OPEN_LINK"
+  static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
+  static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -66,6 +70,22 @@ enum LaunchHarness {
   }
 
   static let countsDraws = countsDraws(ProcessInfo.processInfo.environment)
+
+  static func linkToOpen(_ environment: [String: String]) -> URL? {
+    #if DEBUG
+      environment[openLinkKey].flatMap(URL.init(string:))
+    #else
+      nil
+    #endif
+  }
+
+  private static func openLinkOnNotice() {
+    guard let link = linkToOpen(ProcessInfo.processInfo.environment) else { return }
+    var registration: Int32 = 0
+    notify_register_dispatch(openLinkNotice, &registration, .main) { _ in
+      MainActor.assumeIsolated { AppLinkInbox.shared.receive(link) }
+    }
+  }
 
   static var signInProviders: SignInProviders? {
     #if DEBUG
@@ -228,14 +248,19 @@ enum LaunchHarness {
 
   private static let prepared: Void = {
     #if DEBUG
+      openLinkOnNotice()
       let bundleID = Bundle.main.bundleIdentifier
-      guard erasesSavedState(environment: ProcessInfo.processInfo.environment, bundleID: bundleID)
-      else { return }
+      let environment = ProcessInfo.processInfo.environment
+      guard erasesSavedState(environment: environment, bundleID: bundleID) else { return }
       if let bundleID { UserDefaults.standard.removePersistentDomain(forName: bundleID) }
       KeychainSessionTokenStorage().delete()
       for folder in savedStateFolders {
         try? FileManager.default.removeItem(
           at: URL.applicationSupportDirectory.appending(path: folder, directoryHint: .isDirectory))
+      }
+      if let earlierNotes = environment[earlierNotesKey] {
+        UserDefaults.standard.set(
+          Data(earlierNotes.utf8), forKey: WordNoteStorage.earlierStorageKey)
       }
     #endif
   }()

@@ -3,14 +3,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from bucket_objects import check_object, file_key, manifest_key, sha256_of
+from bucket_objects import check_object, file_key, manifest_key
+from committed_files import sha256_of
 from object_store import Store
+from pinned_release import check_pinned
 from refusal import Refusal
 from release_manifest import validate_manifest
 from releases_index import read_index
 
 
-def verify(store: Store, release: str, *, hash_files: bool, workdir: Path, log=print) -> dict:
+def verify(
+    store: Store, release: str, pinned: dict, *, hash_files: bool, workdir: Path, log=print
+) -> dict:
     index, _ = read_index(store)
     if not index["releases"]:
         raise Refusal("releases.json is missing or lists no releases")
@@ -39,6 +43,7 @@ def verify(store: Store, release: str, *, hash_files: bool, workdir: Path, log=p
     for field, value in expected.items():
         if manifest[field] != value:
             raise Refusal(f"{key}'s {field} is {manifest[field]!r}, not {value!r}")
+    check_pinned(manifest, pinned, key)
     head = store.head(key)
     if head is None:
         raise Refusal(f"{key} doesn't exist")

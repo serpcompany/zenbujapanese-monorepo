@@ -9,20 +9,20 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { countOf, fill } from '@/lib/i18n/format'
 import {
-  featuredApp,
-  featuredAppSearchText,
   type ProductFilter,
-  productFilterFor,
   productFilterFrom,
   productFilterPath,
-  productFilters,
-  productSearchText,
   productShown,
-  products,
   productTypeParameter
 } from '@/lib/products/catalog'
+import type { Catalog, CatalogFilter } from '@/lib/products/localized-catalog'
 import { cn } from '@/lib/utils'
+
+type CatalogText = Dictionary['products']['catalog'] & { getTheApp: string }
 
 function useShortcutToFocus(key: string) {
   const target = useRef<HTMLInputElement>(null)
@@ -44,19 +44,26 @@ const useFilterAtAddress = () => productFilterFrom(useSearchParams().get(product
 const opensElsewhere = (event: MouseEvent) =>
   event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
 
-function FilterLinks({ current }: { current: ProductFilter }) {
+type FilterLinksProps = { filters: readonly CatalogFilter[]; locale: Locale; label: string }
+
+function FilterLinks({
+  current,
+  filters,
+  locale,
+  label
+}: FilterLinksProps & { current: ProductFilter }) {
   const choose = (event: MouseEvent<HTMLAnchorElement>, filter: ProductFilter) => {
     if (opensElsewhere(event)) return
     event.preventDefault()
-    if (filter !== current) window.history.pushState(null, '', productFilterPath(filter))
+    if (filter !== current) window.history.pushState(null, '', productFilterPath(filter, locale))
   }
   return (
-    <nav aria-label="Product types">
+    <nav aria-label={label}>
       <ul className="flex flex-wrap justify-center gap-1.5">
-        {productFilters.map(filter => (
+        {filters.map(filter => (
           <li key={filter.id}>
             <a
-              href={productFilterPath(filter.id)}
+              href={productFilterPath(filter.id, locale)}
               aria-current={filter.id === current ? 'page' : undefined}
               onClick={event => choose(event, filter.id)}
               className={cn(
@@ -74,11 +81,19 @@ function FilterLinks({ current }: { current: ProductFilter }) {
   )
 }
 
-function FilterLinksAtAddress() {
-  return <FilterLinks current={useFilterAtAddress()} />
+function FilterLinksAtAddress(props: FilterLinksProps) {
+  return <FilterLinks current={useFilterAtAddress()} {...props} />
 }
 
-function CatalogSearch({ query, onChange }: { query: string; onChange: (query: string) => void }) {
+function CatalogSearch({
+  query,
+  onChange,
+  text
+}: {
+  query: string
+  onChange: (query: string) => void
+  text: CatalogText
+}) {
   const input = useShortcutToFocus('k')
   return (
     <search className="w-full max-w-md">
@@ -91,8 +106,8 @@ function CatalogSearch({ query, onChange }: { query: string; onChange: (query: s
           type="search"
           value={query}
           onChange={event => onChange(event.target.value)}
-          placeholder="Search products…"
-          aria-label="Search products"
+          placeholder={text.searchPlaceholder}
+          aria-label={text.search}
           aria-keyshortcuts="Meta+K Control+K"
           className="text-[15px] [&::-webkit-search-cancel-button]:hidden"
         />
@@ -107,18 +122,25 @@ function CatalogSearch({ query, onChange }: { query: string; onChange: (query: s
   )
 }
 
-type ResultsProps = { query: string; onClear: () => void }
+type ResultsProps = {
+  query: string
+  onClear: () => void
+  catalog: Catalog
+  locale: Locale
+  text: CatalogText
+}
 
-function CatalogResults({ filter, query, onClear }: ResultsProps & { filter: ProductFilter }) {
-  const heading = productFilterFor(filter)
-  const appShown = productShown(
-    { type: featuredApp.type, searchText: featuredAppSearchText },
-    filter,
-    query
-  )
-  const shown = products.map(product =>
-    productShown({ type: product.type, searchText: productSearchText(product) }, filter, query)
-  )
+function CatalogResults({
+  filter,
+  query,
+  onClear,
+  catalog,
+  locale,
+  text
+}: ResultsProps & { filter: ProductFilter }) {
+  const heading = catalog.filters.find(candidate => candidate.id === filter) ?? catalog.filters[0]
+  const appShown = productShown(catalog.featuredApp, filter, query)
+  const shown = catalog.products.map(product => productShown(product, filter, query))
   const count = shown.filter(Boolean).length + (appShown ? 1 : 0)
   return (
     <section aria-labelledby="catalog-heading" className="flex w-full flex-col gap-4 text-left">
@@ -128,10 +150,10 @@ function CatalogResults({ filter, query, onClear }: ResultsProps & { filter: Pro
         </h2>
         <p className="text-[15px] text-muted-foreground">{heading.description}</p>
       </div>
-      <output className="sr-only">{count === 1 ? '1 product' : `${count} products`}</output>
+      <output className="sr-only">{countOf(text.count, count, locale)}</output>
       <div hidden={count === 0} className="grid gap-4 md:grid-cols-2">
-        <FeaturedAppCard hidden={!appShown} />
-        {products.map((product, index) => (
+        <FeaturedAppCard app={catalog.featuredApp} locale={locale} text={text} hidden={!appShown} />
+        {catalog.products.map((product, index) => (
           <ProductCard key={product.id} product={product} hidden={!shown[index]} />
         ))}
       </div>
@@ -139,11 +161,11 @@ function CatalogResults({ filter, query, onClear }: ResultsProps & { filter: Pro
         <Empty className="border border-dashed py-12">
           <EmptyHeader>
             <EmptyTitle className="font-normal text-muted-foreground">
-              No products match “{query}”.
+              {fill(text.noMatch, { query })}
             </EmptyTitle>
           </EmptyHeader>
           <Button variant="outline" size="lg" onClick={onClear}>
-            Clear search
+            {text.clear}
           </Button>
         </Empty>
       ) : null}
@@ -155,16 +177,27 @@ function CatalogResultsAtAddress(props: ResultsProps) {
   return <CatalogResults filter={useFilterAtAddress()} {...props} />
 }
 
-export function ProductCatalog({ children }: { children: ReactNode }) {
+export function ProductCatalog({
+  children,
+  catalog,
+  locale,
+  text
+}: {
+  children: ReactNode
+  catalog: Catalog
+  locale: Locale
+  text: CatalogText
+}) {
   const [query, setQuery] = useState('')
-  const results = { query, onClear: () => setQuery('') }
+  const results = { query, onClear: () => setQuery(''), catalog, locale, text }
+  const filterLinks = { filters: catalog.filters, locale, label: text.types }
   return (
     <>
       <header className="flex w-full flex-col items-center gap-4.5">
         {children}
-        <CatalogSearch query={query} onChange={setQuery} />
-        <Suspense fallback={<FilterLinks current="all" />}>
-          <FilterLinksAtAddress />
+        <CatalogSearch query={query} onChange={setQuery} text={text} />
+        <Suspense fallback={<FilterLinks current="all" {...filterLinks} />}>
+          <FilterLinksAtAddress {...filterLinks} />
         </Suspense>
       </header>
       <Suspense fallback={<CatalogResults filter="all" {...results} />}>

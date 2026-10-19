@@ -1,0 +1,58 @@
+# Links between zenbujapanese.com and the app
+
+How the app opens the website's links, and the links its **Share** sends. The rest of the app's
+guide is [`ios.md`](ios.md).
+
+The app opens zenbujapanese.com's search and word URLs, and the kanji URLs the website removed,
+as universal links (#568; what each opens is in the [product docs](../../apps/ios/docs/product/website-links.md)).
+`apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
+link in the app only once it has fetched the site's association file, through Apple's CDN, and
+found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
+only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.dictionary` in
+the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
+team, `847HR8U8D9`.
+
+SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
+also takes the Shortcuts actions' links ([`ios-shortcuts.md`](ios-shortcuts.md)). It switches to
+Search from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's
+stack. `LookupClient.websiteRoute` hands the link's host and path to the core (`websiteRoute`,
+[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
+decoded one path segment at a time, with the parser the website uses, and finds a word URL's
+entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
+the host `zenbujapanese.com` routes the same way.
+
+**Share** on a word or kanji sends one of these links with its text (#829). `WordPage.Entry` hands
+the core the record the entry was read from (`DictionaryEntry.sourceRecord`; for an entry JMdict
+lists twice, the one whose Language Reference ID stands for both, as the website's search picks),
+and the core's `wordPage` answers `shareURL`, the word page's canonical URL, from `wordSlug` and
+the entry number, while `kanjiPage` answers the kanji's search ([`dictionary-core.md`](dictionary-core.md),
+Detail). `SharedPage` in `SavedItemActions.swift` holds a page's title, text, and link, and
+`ShareButton` there gives SwiftUI's `ShareLink` the `URL` as the item, the text as its message, and
+a preview titled with the page, on every device. A page without a link, such as a kanji whose page
+hasn't loaded, shares its text alone.
+
+`WordDetailShareTests` checks each link against the canonical URL and reads it back through
+`websiteRoute`. `WordDetailUITests.testShareOffersTheWordsWebLink` and
+`testShareOffersTheKanjisWebLink` open the share sheet on iPhone and iPad and find **Add to
+Reading List**, which iOS offers only for a web link, under a preview titled with the page
+(LinkPresentation's caption, `LP.CaptionBar.TopCaption`, which an iOS release could rename). On the
+Simulator, **Copy** puts both on the pasteboard, a `public.url` and the text.
+
+The tests skip the Mac. Its sharing picker draws outside the app, where XCUITest finds no element
+of it, and in the Mac UI test build (macOS 26, sandboxed, signed to run locally) it showed on a
+screenshot in only one of seven tries. That one was the old text item, and the old text item also
+failed, so whether the picker opens on the Mac is checked by hand.
+
+No test can read what a destination gets. On a device, share a word to Messages, Notes, Mail,
+AirDrop, and a messaging app such as LINE, and check that the text and the link arrive together.
+Then tap the link: it opens the word in Zenbu once the association file is live, and the website
+before then. On a Mac, click Share and check that the picker opens and does the same.
+
+Check it with `WebsiteLinkTests`, and `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp`.
+The Simulator sends an `https` link to Safari until the association file is live, so to see a
+link land in the app before then, open it in the app's own scheme, its bundle ID:
+`xcrun simctl openurl <udid> 'com.zenbujapanese.dictionary://zenbujapanese.com/dictionary/見る-1259290/'`.
+
+Once the file is live, check it on a device: tapping
+`https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
+Detail, and the same link opens the website on a device without the app.

@@ -34,13 +34,18 @@ function signIn(service: Service) {
     return message as { to: string; subject: string; text: string }
   }
 
-  const emailCode = async (email: string) => {
+  const codeMessage = async (email: string, headers: Record<string, string> = {}) => {
     const before = service.mailbox.messages().length
     const sent = await service.call('/v1/auth/email-otp/send-verification-otp', {
-      body: { email, type: 'sign-in' }
+      body: { email, type: 'sign-in' },
+      headers
     })
     expect(sent).toMatchObject({ status: 200, body: { success: true } })
-    const code = /code is (\d{6})/.exec((await lastMessageTo(email, before)).text)?.[1]
+    return lastMessageTo(email, before)
+  }
+
+  const emailCode = async (email: string, headers: Record<string, string> = {}) => {
+    const code = /\d{6}/.exec((await codeMessage(email, headers)).text)?.[0]
     expect(code).toBeDefined()
     return code as string
   }
@@ -50,15 +55,23 @@ function signIn(service: Service) {
     {
       session,
       client,
-      headers
-    }: { session?: string; client?: string | null; headers?: Record<string, string> } = {}
-  ) =>
-    service.call('/v1/auth/sign-in/email-otp', {
-      body: { email, otp: await emailCode(email) },
+      headers,
+      language
+    }: {
+      session?: string
+      client?: string | null
+      headers?: Record<string, string>
+      language?: string
+    } = {}
+  ) => {
+    const named: Record<string, string> = language ? { 'content-language': language } : {}
+    return service.call('/v1/auth/sign-in/email-otp', {
+      body: { email, otp: await emailCode(email, named) },
       token: session,
       client,
-      headers
+      headers: { ...named, ...headers }
     })
+  }
 
   const nonce = async () => {
     const answer = await service.call('/v1/auth/sign-in/nonce', { body: {} })
@@ -74,12 +87,18 @@ function signIn(service: Service) {
     tokenNonce: string
   ) => issuer.sign(claims(issuer, audience, subject, { email, nonce: tokenNonce }))
 
-  const withIdToken = (provider: Provider, token: string, presented?: string) =>
+  const withIdToken = (
+    provider: Provider,
+    token: string,
+    presented?: string,
+    headers: Record<string, string> = {}
+  ) =>
     service.call('/v1/auth/sign-in/social', {
       body: {
         provider,
         idToken: { token, ...(presented === undefined ? {} : { nonce: presented }) }
-      }
+      },
+      headers
     })
 
   const link = (session: string, provider: Provider, token: string, presented: string) =>
@@ -102,6 +121,7 @@ function signIn(service: Service) {
     )
 
   return {
+    codeMessage,
     emailCode,
     withCode,
     nonce,

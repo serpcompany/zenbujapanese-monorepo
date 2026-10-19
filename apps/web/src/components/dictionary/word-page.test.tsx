@@ -13,6 +13,8 @@ import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import { exampleListText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { htmlText } from '@/test/rendered'
 import {
@@ -31,7 +33,8 @@ const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 type HeaderProps = Parameters<typeof WordHeader>[0]
 
 function header(
-  props: Omit<HeaderProps, 'conjugations' | 'headword' | 'pronounce'> & Partial<HeaderProps>
+  props: Omit<HeaderProps, 'conjugations' | 'headword' | 'pronounce' | 'locale'> &
+    Partial<HeaderProps>
 ) {
   const headword = props.ruby.map(segment => segment.text).join('')
   return renderToStaticMarkup(
@@ -39,6 +42,7 @@ function header(
       headword={headword}
       conjugations={null}
       pronounce={pronounceLabel(props.reading)}
+      locale="en"
       {...props}
     />
   )
@@ -138,7 +142,23 @@ describe('the word header', () => {
     expect(readPitchGraph(html)).toBeNull()
     expect(html).toContain('aria-label="Pronounce いる"')
   })
+
+  test('on a Japanese page, names the pronunciation, the pitch, and the part of speech in Japanese', () => {
+    const html = header({
+      ruby: rubySegments('今日', 'きょう'),
+      reading: 'きょう',
+      pitch: pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: unidic }),
+      partOfSpeechRow: 'Noun',
+      locale: 'ja'
+    })
+    expect(html).toContain('きょうの発音を聞く。アクセント：1型、2拍')
+    expect(html).toContain('<p class="text-sm">名詞</p>')
+  })
 })
+
+const english = getDictionary('en').frequency
+
+const shownRows = (rows: Parameters<typeof frequencyRowsIn>[0]) => frequencyRowsIn(rows, 'en')
 
 describe('the Frequency section', () => {
   test('lists each dictionary as a row that opens its details', () => {
@@ -146,7 +166,7 @@ describe('the Frequency section', () => {
       { pack: 'jlpt', level: 5 },
       { pack: 'tubelex', rank: 949 }
     ])
-    const html = renderToStaticMarkup(<FrequencySection rows={rows} />)
+    const html = renderToStaticMarkup(<FrequencySection rows={shownRows(rows)} text={english} />)
     expect(readFrequencyRows(html)).toEqual([
       { name: 'JLPT', text: 'N5' },
       { name: 'YouTube', text: '949' }
@@ -155,21 +175,39 @@ describe('the Frequency section', () => {
   })
 
   test('details show the dictionary, then the rank and percentile, or why there is none', () => {
-    const [jlpt, youtube] = frequencyRowDetails([{ pack: 'tubelex', rank: 949 }])
+    const core = frequencyRowDetails([{ pack: 'tubelex', rank: 949 }])
+    const [jlpt, youtube] = shownRows(core)
     const ranked = readFrequencyDetails(
-      renderToStaticMarkup(<FrequencyDetailsContent details={youtube.details} />)
+      renderToStaticMarkup(<FrequencyDetailsContent details={youtube.details} text={english} />)
     )
-    expect(ranked).toEqual(suiteFrequencyDetails(youtube.details))
+    expect(ranked).toEqual(suiteFrequencyDetails(core[1].details))
     expect(ranked.rows).toEqual([
       { label: 'Rank', value: '#949' },
       { label: 'Percentile', value: 'Top 0.27%' }
     ])
     const missing = readFrequencyDetails(
-      renderToStaticMarkup(<FrequencyDetailsContent details={jlpt.details} />)
+      renderToStaticMarkup(<FrequencyDetailsContent details={jlpt.details} text={english} />)
     )
     expect(missing.section).toBe('Frequency')
     expect(missing.rows).toEqual([])
     expect(missing.explanation).toMatch(/^JLPT Levels does not list this entry\./)
+  })
+
+  test('on a Japanese page, reads in Japanese while keeping each row named for its dictionary', () => {
+    const [, youtube] = frequencyRowsIn(frequencyRowDetails([{ pack: 'tubelex', rank: 949 }]), 'ja')
+    const html = renderToStaticMarkup(
+      <FrequencySection rows={[youtube]} text={getDictionary('ja').frequency} />
+    )
+    expect(html).toContain('data-frequency-row="YouTube"')
+    expect(html).toContain('aria-label="YouTubeの頻度順位：949位、とてもよく使われる"')
+    const details = renderToStaticMarkup(
+      <FrequencyDetailsContent details={youtube.details} text={getDictionary('ja').frequency} />
+    )
+    expect(details).toContain(
+      'data-details-section="Frequency"><h3 class="font-medium">使用頻度</h3>'
+    )
+    expect(details).toContain('<dd class="tabular-nums">949位</dd>')
+    expect(details).toContain('<dd class="tabular-nums">上位0.27%</dd>')
   })
 })
 
@@ -197,21 +235,31 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
     })
     expect(readFurigana(html)).toEqual(expected.furigana)
     expect(readPitchGraph(html)).toEqual(expected.pitch?.graph ?? null)
-    const section = renderToStaticMarkup(<FrequencySection rows={detail.frequencyRows} />)
+    const section = renderToStaticMarkup(
+      <FrequencySection rows={shownRows(detail.frequencyRows)} text={english} />
+    )
     expect(readFrequencyRows(section)).toEqual(
       expected.frequency.map(({ name, text }) => ({ name, text }))
     )
     expect(
-      detail.frequencyRows.map(row =>
+      shownRows(detail.frequencyRows).map(row =>
         readFrequencyDetails(
-          renderToStaticMarkup(<FrequencyDetailsContent details={row.details} />)
+          renderToStaticMarkup(<FrequencyDetailsContent details={row.details} text={english} />)
         )
       )
     ).toEqual(expected.frequency.map(row => row.details))
     const links = serviceLinks(word.data.slugs, word.data.kanjiPages)
     const examples = word.data.rows.examples.map(rows => pageExample(wordExample(rows), links))
     const drawn = readExamples(
-      renderToStaticMarkup(<ExampleList initial={examples} listed={examples.length} path={null} />)
+      renderToStaticMarkup(
+        <ExampleList
+          initial={examples}
+          listed={examples.length}
+          path={null}
+          locale="en"
+          text={exampleListText('en')}
+        />
+      )
     )
     expect(drawn.map(example => `esp1_${example.pairId}`)).toEqual(
       expected.examples.shown.map(shown => shown.id)

@@ -1,5 +1,5 @@
 import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
-import { toolPages } from '../src/lib/tools/converters'
+import { toolPaths } from '../src/lib/tools/paths'
 import { expect, test } from './test'
 
 const locs = (xml: string) => [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1])
@@ -33,23 +33,26 @@ test.describe('sitemaps', () => {
     })
   }
 
-  test('the pages sitemap writes the homepage as the origin and every other page with its slash', async ({
+  test('the pages sitemap writes the homepage as the origin and every other page with its slash, each in English and then Japanese', async ({
     request,
     baseURL
   }) => {
     const origin = new URL(baseURL ?? '').origin
     const listed = locs(await (await request.get('/sitemap-pages.xml')).text())
     expect(listed).toEqual(
-      pagesSitemapPaths.map(path => (path === '/' ? origin : `${origin}${path}`))
+      pagesSitemapPaths.flatMap(path => [
+        path === '/' ? origin : `${origin}${path}`,
+        `${origin}/ja${path}`
+      ])
     )
   })
 
-  test('the tools sitemap lists the tools index and every converter, each with its slash', async ({
+  test('the tools sitemap lists the tools index and every converter, each with its slash, in English and Japanese', async ({
     request,
     baseURL
   }) => {
     const origin = new URL(baseURL ?? '').origin
     const listed = locs(await (await request.get('/sitemap-tools.xml')).text())
-    expect(listed).toEqual(toolPages.map(page => `${origin}${page.path}`))
+    expect(listed).toEqual(toolPaths.flatMap(path => [`${origin}${path}`, `${origin}/ja${path}`]))
   })
 })

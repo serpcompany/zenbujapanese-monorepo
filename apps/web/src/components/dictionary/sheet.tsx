@@ -26,6 +26,7 @@ export function Sheet({
   title,
   header,
   wide: wideDialog = false,
+  done,
   children
 }: {
   open: boolean
@@ -33,6 +34,7 @@ export function Sheet({
   title: string
   header?: ReactNode
   wide?: boolean
+  done: string
   children: ReactNode
 }) {
   const wide = useMediaQuery('(min-width: 768px)')
@@ -49,7 +51,7 @@ export function Sheet({
           </DialogHeader>
           <div className="-mx-4 overflow-y-auto px-4">{children}</div>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Done</DialogClose>
+            <DialogClose render={<Button variant="outline" />}>{done}</DialogClose>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -64,7 +66,7 @@ export function Sheet({
         </DrawerHeader>
         <div className="overflow-y-auto px-4">{children}</div>
         <DrawerFooter>
-          <DrawerClose render={<Button variant="outline" />}>Done</DrawerClose>
+          <DrawerClose render={<Button variant="outline" />}>{done}</DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

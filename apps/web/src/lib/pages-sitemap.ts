@@ -1,4 +1,4 @@
 import { browsePath } from './dictionary/browse/paths'
-import { sitePages } from './pages'
+import { sitePaths } from './pages'
 
-export const pagesSitemapPaths = [...sitePages.map(page => page.path), browsePath]
+export const pagesSitemapPaths = [...sitePaths, browsePath]

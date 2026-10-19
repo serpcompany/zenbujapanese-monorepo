@@ -146,6 +146,21 @@ describe('the embedded presentation engine', () => {
     })
   })
 
+  test('shares a word at its page’s canonical URL, which only a JMdict entry has', async () => {
+    const shared = async (entry: EmbeddedEntry) =>
+      ((await ask(host, 'wordPage', JSON.stringify(entry))) as EmbeddedWordPage).shareURL
+    expect(await shared(eat)).toBe(
+      'https://zenbujapanese.com/dictionary/%E9%A3%9F%E3%81%B9%E3%82%8B-1358280/'
+    )
+    expect(await shared({ ...eat, headword: 'A/B ?C', reading: 'えー' })).toBe(
+      'https://zenbujapanese.com/dictionary/A-B-C-1358280/'
+    )
+    expect(await shared({ ...eat, headword: '/', reading: 'すらっしゅ' })).toBe(
+      `https://zenbujapanese.com/dictionary/${encodeURIComponent('すらっしゅ')}-1358280/`
+    )
+    expect(await shared({ ...eat, sourceIdentity: 'fixture' })).toBeNull()
+  })
+
   test('gives a word that does not conjugate no table, and one without pitch no contour', async () => {
     const noun: EmbeddedEntry = {
       ...eat,
@@ -227,6 +242,7 @@ describe('the embedded presentation engine', () => {
       ruby: [{ text: '高校', reading: 'こうこう' }]
     })
     expect(page.shareText).toBe('校【コウ、キョウ、たかし】\n校 meaning, second, third')
+    expect(page.shareURL).toBe('https://zenbujapanese.com/dictionary/search/%E6%A0%A1/')
     expect(page.savedReading).toBe('コウ')
   })
 
@@ -274,7 +290,8 @@ describe('the embedded presentation engine', () => {
       meanings: [],
       readings: [],
       savedReading: '',
-      shareText: '㐂'
+      shareText: '㐂',
+      shareURL: `https://zenbujapanese.com/dictionary/search/${encodeURIComponent('㐂')}/`
     })
     expect(page.words.map(word => word.id)).toEqual(['w1'])
   })
