@@ -61,7 +61,7 @@ Every finding a test lets pass is an entry in `AllowedFinding.list`
 on (the names the walks give them), the devices and text sizes, why it is allowed, and one element:
 
 - by its identifier, or its identifier's prefix for one kind of element, such as a linked word
-  (`watch.cue.`);
+  (`watch.cue.`), or a prefix and a part, where the prefix also names a card's buttons (`word`);
 - by its label, or a few labels with one reason, where the element has no identifier; or
 - as a count of findings the audit can't attach to any element (`unnamed`), which XCTest then
   reports with no element. An entry allows that many on each of its screens and no more. Most

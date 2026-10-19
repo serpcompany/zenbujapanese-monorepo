@@ -4,6 +4,7 @@ struct AllowedFinding {
   enum Element {
     case identifier(String)
     case identifiedBy(prefix: String)
+    case word(prefix: String, inside: [String])
     case label(String)
     case labels([String])
     case unnamed(Int)
@@ -12,6 +13,8 @@ struct AllowedFinding {
       switch self {
       case .identifier(let identifier): finding.identifier == identifier
       case .identifiedBy(let prefix): finding.identifier.hasPrefix(prefix)
+      case .word(let prefix, let inside):
+        finding.identifier.hasPrefix(prefix) && inside.contains { finding.identifier.contains($0) }
       case .label(let label): finding.identifier.isEmpty && finding.label == label
       case .labels(let labels): finding.identifier.isEmpty && labels.contains(finding.label)
       case .unnamed: finding.elementType == nil
@@ -146,7 +149,7 @@ private let systemControls = [
 private let linkedWords = [
   allow(.hitRegion, .identifiedBy(prefix: "translate.pane.ja."), on: ["Two Panes"], because: Why.inlineWord),
   allow(
-    .hitRegion, .identifiedBy(prefix: "translate.sentence."),
+    .hitRegion, .word(prefix: "translate.sentence.", inside: [".source.", ".translation."]),
     on: ["A paused conversation", "A saved conversation", "Listening, paused"], because: Why.inlineWord),
   allow(
     .hitRegion, .identifiedBy(prefix: "translate.typed.result."), on: ["A typed translation", "The word sheet"],
