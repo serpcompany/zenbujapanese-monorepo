@@ -4,11 +4,11 @@ extension DictionaryEntry {
   static func fixture(
     id: String, headword: String, reading: String? = nil, partsOfSpeech: [PartOfSpeech] = []
   ) -> DictionaryEntry {
-    DictionaryEntry(
+    let record = LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)
+    return DictionaryEntry(
       id: LanguageReferenceID(rawValue: id),
-      sourceProvenances: [
-        LanguageReferenceProvenance(sourceIdentity: "fixture", sourceRecordID: id)
-      ],
+      sourceRecord: record,
+      sourceProvenances: [record],
       reading: reading ?? headword,
       headword: headword,
       summary: headword,

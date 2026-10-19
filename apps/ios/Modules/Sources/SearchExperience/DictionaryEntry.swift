@@ -2,6 +2,7 @@ import Foundation
 
 struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let id: LanguageReferenceID
+  let sourceRecord: LanguageReferenceProvenance
   let sourceProvenances: [LanguageReferenceProvenance]
   let reading: String
   let headword: String
@@ -25,6 +26,7 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   func withSourceProvenances(_ provenances: [LanguageReferenceProvenance]) -> DictionaryEntry {
     DictionaryEntry(
       id: id,
+      sourceRecord: sourceRecord,
       sourceProvenances: LanguageReferenceIdentity.sortedProvenances(provenances),
       reading: reading,
       headword: headword,

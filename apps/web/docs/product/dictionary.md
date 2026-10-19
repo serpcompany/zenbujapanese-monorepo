@@ -787,8 +787,8 @@ actions and Open in App open the get-the-app prompt. Each button is named for it
 要", "More actions for 要"), since a word page can show several kanji's details.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `KanjiDetailView.swift`
-  (`ShareLink(item: shareText)`, `SavedItemMenu`); `SavedItemActions.swift`; #462 (the menu
-  items and the get-the-app prompt).
+  (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462 (the
+  menu items and the get-the-app prompt).
 - Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
   `src/components/dictionary/saved-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
   the kanji, its share text, and its search page, not the page it is on" and "copies the kanji's
