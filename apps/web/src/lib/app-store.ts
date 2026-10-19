@@ -1,6 +1,7 @@
 import { iosAppBundleId } from './app-links'
 import { edgeCache } from './edge-cache'
 import { errorFields, log } from './log'
+import { markRenderIncomplete } from './render-health'
 
 export const appStoreLookupUrl = `https://itunes.apple.com/lookup?bundleId=${iosAppBundleId}`
 
@@ -62,6 +63,7 @@ export async function appStoreRelease(
     return readAppStoreLookup(answer)
   } catch (error) {
     log('warn', 'app_store_lookup_failed', errorFields(error))
+    markRenderIncomplete()
     await cache?.put(key, kept(nothingFound, failureCacheSeconds)).catch(() => undefined)
     return null
   }

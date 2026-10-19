@@ -2,6 +2,7 @@ import { accountPages } from './account/pages'
 import { edgeCache } from './edge-cache'
 import { pathLocale } from './i18n/paths'
 import { errorFields, log } from './log'
+import { watchedRender } from './render-health'
 
 export const pageCacheHeader = 'X-Page-Cache'
 export const pageFreshSeconds = 600
@@ -105,14 +106,15 @@ export async function cachedPage(
   if (!cache || !isCachedPageRequest(request, url)) return render()
   const now = context.now ?? Date.now
   const key = cacheKey(url, context.version)
-  const keep = async (response: Response) => {
+  const keep = async (response: Response, incomplete: () => boolean) => {
     const html = await response.text()
-    if (!isWholePage(html)) return
+    if (incomplete() || !isWholePage(html)) return
     await cache.put(key, stored(new Response(html, response), now()))
   }
   const refresh = async () => {
-    const response = await render()
-    if (isCachedPageResponse(response)) await keep(response)
+    const { result, incomplete } = watchedRender(render)
+    const response = await result
+    if (isCachedPageResponse(response)) await keep(response, incomplete)
   }
   const hit = await cache.match(key).catch(failed('read'))
   if (hit) {
@@ -127,8 +129,9 @@ export async function cachedPage(
     }
     return served(hit, 'STALE')
   }
-  const response = await render()
+  const { result, incomplete } = watchedRender(render)
+  const response = await result
   if (!isCachedPageResponse(response)) return response
-  context.waitUntil(keep(response.clone()).catch(failed('keep')))
+  context.waitUntil(keep(response.clone(), incomplete).catch(failed('keep')))
   return marked(response, 'MISS')
 }
