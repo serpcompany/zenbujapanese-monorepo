@@ -8,8 +8,10 @@ import Testing
 struct CrashReporterOptionsTests {
   private static let dsn = "https://key@o1.ingest.us.sentry.io/2"
 
-  private static func configured() -> (options: Options, defaultCaches: String) {
-    let options = Options()
+  @discardableResult
+  private static func configured(
+    _ options: Options = Options()
+  ) -> (options: Options, defaultCaches: String) {
     let caches = options.cacheDirectoryPath
     CrashReporter.configure(
       options, dsn: dsn, environment: "qa", installID: "install-id",
@@ -79,6 +81,22 @@ struct CrashReporterOptionsTests {
     #expect(Set(CrashReportingPlatform.switchedOffOptions.map(\.name)) == expected)
     for entry in CrashReportingPlatform.switchedOffOptions {
       #expect(options[keyPath: entry.option] == false, "\(entry.name)")
+    }
+  }
+
+  @Test("session replay records nothing: its sample rates are 0 where the device has it")
+  func sessionReplayIsOff() {
+    let options = Options()
+    for entry in CrashReportingPlatform.zeroedRates {
+      options[keyPath: entry.rate] = 1
+    }
+    Self.configured(options)
+    let expected: Set<String> =
+      ThisDevice.name == "Mac"
+      ? [] : ["sessionReplay.sessionSampleRate", "sessionReplay.onErrorSampleRate"]
+    #expect(Set(CrashReportingPlatform.zeroedRates.map(\.name)) == expected)
+    for entry in CrashReportingPlatform.zeroedRates {
+      #expect(options[keyPath: entry.rate] == 0, "\(entry.name)")
     }
   }
 

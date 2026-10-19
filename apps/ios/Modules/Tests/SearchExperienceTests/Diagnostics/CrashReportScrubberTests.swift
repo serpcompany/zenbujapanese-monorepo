@@ -22,6 +22,8 @@ struct CrashReportScrubberTests {
     #expect(scrub("missing \"/Volumes/Backup/photo.png\" here") == "missing “<name>” here")
     #expect(scrub("saved to ~/Desktop/notes.md") == "saved to <path>")
     #expect(scrub("wrote /tmp/draft.txt") == "wrote <path>")
+    #expect(scrub("wrote /private/var/folders/x1/T/draft.txt") == "wrote <path>")
+    #expect(scrub("can't open /Users/pat/Documents/Pat's Q3 plan.txt") == "can't open <path>")
   }
 
   @Test("URLs and email addresses are removed, wherever they start")
@@ -30,9 +32,14 @@ struct CrashReportScrubberTests {
     #expect(scrub("file:///var/mobile/a.txt") == "<url>")
     #expect(scrub("Error 404https://example.com/x") == "Error 404<url>")
     #expect(scrub("(https://example.com)") == "(<url>")
+    #expect(scrub("1.https://example.com") == "1.<url>")
+    #expect(scrub("-https://example.org") == "-<url>")
+    #expect(scrub("smb://server/share/Pat Q3.txt") == "<url>")
     #expect(scrub("sent by pat.lee@example.com today") == "sent by <email> today")
     #expect(scrub("Write to o'brien@example.com or josé@example.es") == "Write to <email> or <email>")
     #expect(scrub("pat@example.com-jo@example.org") == "<email><email>")
+    #expect(scrub("राम@उदाहरण.भारत") == "<email>")
+    #expect(scrub("jose\u{0301}@example.es") == "<email>")
   }
 
   @Test("Japanese text, quoted or not, is removed")
@@ -50,10 +57,15 @@ struct CrashReportScrubberTests {
   @Test("Cocoa's quoted names are removed in every language's quotes")
   func quotedNamesAreRemoved() {
     #expect(scrub("The file “Q3 plan.txt” couldn’t be opened") == "The file “<name>” couldn’t be opened")
+    #expect(scrub("“/Users/pat/Pat’s notes.txt” is locked") == "“<name>” is locked")
     #expect(scrub("Die Datei „Q3 plan.txt“ fehlt") == "Die Datei “<name>” fehlt")
+    #expect(scrub("Plik „Q3 plan.txt” jest") == "Plik “<name>” jest")
+    #expect(scrub("Filen ”Q3 plan.txt” saknas") == "Filen “<name>” saknas")
     #expect(scrub("Le fichier « Q3 plan.txt » manque") == "Le fichier “<name>” manque")
+    #expect(scrub("Datoteka »Q3 plan.txt« manjka") == "Datoteka “<name>” manjka")
     #expect(scrub("檔案「Q3 plan.txt」無法打開") == "<japanese>“<name>”<japanese>")
     #expect(scrub("הקובץ ״Q3 plan.txt״ חסר") == "הקובץ “<name>” חסר")
+    #expect(scrub("الملف \"Q3 plan.txt\" مفقود") == "الملف “<name>” مفقود")
   }
 
   @Test("what diagnoses a crash is kept")
@@ -87,6 +99,9 @@ struct CrashReportScrubberTests {
     #expect(scrub(token) == token)
     #expect(scrub(english) == english)
     #expect(scrub(String(repeating: "漢", count: 50_000)) == "<japanese>")
+    for opening in ["「", "『", "“", "«", "״", "\""] {
+      #expect(!scrub(String(repeating: opening + "a", count: 25_000)).isEmpty)
+    }
     #expect(ContinuousClock.now - start < .seconds(1))
   }
 

@@ -87,9 +87,9 @@ and names the adapter to use (`tools/checks/src/layers.ts`), so feature code sta
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
-(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card is a
-second target ([`ios-share-sheet.md`](ios-share-sheet.md)). `ZenbuJapaneseScenes`
+The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
+actions (`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card
+is a second target ([`ios-share-sheet.md`](ios-share-sheet.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window

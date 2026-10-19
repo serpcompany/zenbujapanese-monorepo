@@ -88,7 +88,7 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
   the profile, the Zenbu account, Send Crash Reports, Reading Aids, and Frequency Dictionaries.
   They stay in Account too, and both show the same settings; a change to Frequency Dictionaries
-  shows in Search, an open word, and the word sheet at once.
+  shows in Search, an open word, and the word sheet at once. Its crash switch is checked by hand.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
   window), and `FrequencyPackLifecycleTests` and `FrequencyListsTests` (each change published).

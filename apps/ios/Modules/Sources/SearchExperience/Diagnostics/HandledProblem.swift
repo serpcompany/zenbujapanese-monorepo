@@ -1,7 +1,7 @@
 import Foundation
 import Sentry
 
-enum ProblemArea: String, Sendable, CaseIterable {
+enum ProblemArea: String, Sendable {
   case accountSync = "account_sync"
   case frequencyPack = "frequency_pack"
   case languagePack = "language_pack"

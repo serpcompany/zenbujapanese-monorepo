@@ -25,7 +25,8 @@ nothing. Turning it back on starts them again without a relaunch.
 
 Check: UI `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` (on at first, and off
 once flipped) and `testAccountListsEveryArea` (the row); package `CrashReportingPolicyTests` (on
-until turned off, and a build without a destination that the switch can't start).
+until turned off, and a build without a destination that the switch can't start). The Mac's
+Settings pane is checked by hand while the Mac is on hold (2026-10-18).
 
 ## What a report holds
 
@@ -49,13 +50,15 @@ lost connection, or a session that ended sends nothing, since each is expected.
 
 Every report carries a random ID made once for this install, and nothing else about the learner:
 no name, email, account, IP address, location, device name, locale, or time zone. Before a report
-leaves the device, web addresses, email addresses, file paths and names, quoted text, and Japanese
-text are removed from everything it says, and the app's own name is the only file name kept.
+leaves the device, web addresses, email addresses, quoted text, Japanese text, and paths into the
+app's or the learner's folders are removed from everything it says; of a library loaded from those
+folders, such as the app itself, only its name is kept. The system's own libraries keep their
+paths, which say nothing about the learner.
 
 Check: package `CrashReporterOptionsTests` (every Sentry option, the install ID as the only user,
 and every report through the scrubber), `CrashReportScrubberTests` (paths, web and email addresses,
 Japanese and quoted text, and a fully populated report), and `HandledProblemTests` (each failure's
-code, never its message or payload).
+code, once a launch, never its message or payload).
 
 ## Which builds send
 

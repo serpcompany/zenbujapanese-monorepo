@@ -2,8 +2,9 @@ import plistlib
 import re
 import unittest
 
-from project_settings import BUILD_CONFIGURATION, PROJECT, ROOT
+from project_settings import ROOT
 from project_settings import app_build_settings as app_settings
+from project_settings import share_extension_build_settings as share_extension_settings
 from project_settings import build_setting as setting
 
 APP = ROOT / "apps/ios/App"
@@ -13,14 +14,6 @@ DIAGNOSTICS = {
     "NSPrivacyCollectedDataTypeCrashData",
     "NSPrivacyCollectedDataTypeOtherDiagnosticData",
 }
-
-
-def share_extension_settings() -> list[str]:
-    return [
-        found["settings"]
-        for found in BUILD_CONFIGURATION.finditer(PROJECT.read_text(encoding="utf-8"))
-        if "INFOPLIST_FILE = ShareExtension/Info.plist;" in found["settings"]
-    ]
 
 
 class CrashReportSettingsTests(unittest.TestCase):

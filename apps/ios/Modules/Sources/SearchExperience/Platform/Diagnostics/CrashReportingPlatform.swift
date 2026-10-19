@@ -15,9 +15,23 @@ enum CrashReportingPlatform {
     #endif
   }
 
+  static var zeroedRates: [(name: String, rate: ReferenceWritableKeyPath<Options, Float>)] {
+    #if os(macOS)
+      []
+    #else
+      [
+        ("sessionReplay.sessionSampleRate", \.sessionReplay.sessionSampleRate),
+        ("sessionReplay.onErrorSampleRate", \.sessionReplay.onErrorSampleRate),
+      ]
+    #endif
+  }
+
   static func configure(_ options: Options) {
     for entry in switchedOffOptions {
       options[keyPath: entry.option] = false
+    }
+    for entry in zeroedRates {
+      options[keyPath: entry.rate] = 0
     }
   }
 }

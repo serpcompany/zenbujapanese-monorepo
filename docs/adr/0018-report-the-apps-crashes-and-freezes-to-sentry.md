@@ -4,11 +4,12 @@ status: accepted
 
 # Report the app's crashes and freezes to Sentry
 
-The iOS app reports its crashes, its freezes, and the failures it handles at a few boundaries to
-Sentry's `zenbujapanese-ios` project (#859), through `sentry-cocoa` pinned to an exact 9.x version.
-Reports are on by default, with a **Send Crash Reports** switch in Settings that takes effect at
-once. This replaces #21's posture of no third-party crash-reporting SDK; the rest of #21's privacy
-rules stand, and the app still keeps no analytics, sessions, or tracing.
+The Zenbu Japanese app reports its crashes, its freezes, and the failures it handles at a few
+boundaries to Sentry's `zenbujapanese-ios` project (#859), through `sentry-cocoa` pinned to an
+exact 9.x version. Reports are on by default, with a **Send Crash Reports** switch in Account (on
+the Mac, in Settings) that takes effect at once. This replaces #21's posture of no third-party
+crash-reporting SDK; the rest of #21's privacy rules stand, and the app still keeps no analytics,
+sessions, or tracing.
 
 - **One folder imports Sentry.** `SearchExperience/Diagnostics/` holds the reporter, its options,
   the scrubber, and the handled failures, and `pnpm verify layers` refuses `import Sentry`
@@ -21,7 +22,7 @@ rules stand, and the app still keeps no analytics, sessions, or tracing.
   collects: default PII, sessions, automatic and network breadcrumbs, failed requests, tracing and
   trace headers, file I/O and Core Data tracing, MetricKit, Sentry's logs and metrics, client
   reports, swizzling, screenshots, the view hierarchy, user-interaction tracing, and on the Mac
-  uncaught `NSException` reporting. Session replay stays at the SDK's default sample rates of 0.
+  uncaught `NSException` reporting. Session replay's sample rates are set to 0 as well.
 - **Every report goes through a scrubber** in `beforeSend` and `beforeBreadcrumb`, ported from
   Keybumps (its ADR 0007): fields cleared, contexts on an allowlist, only the app's own
   breadcrumbs, and URLs, emails, paths, quoted names, and Japanese text removed, by rules that each
@@ -68,8 +69,8 @@ rules stand, and the app still keeps no analytics, sessions, or tracing.
 - TestFlight builds are archived by hand, so their debug symbols reach Sentry through
   `apps/ios/Tools/upload_dsyms.py` in the TestFlight steps; without them, a report's stack trace
   is unsymbolicated, and a failed upload is a warning, not a failed release.
-- The app links `sentry-cocoa`, and so does the share extension, through `SearchExperience`, though
-  it never starts it.
+- The app links `sentry-cocoa` statically, and so does the share extension, through
+  `SearchExperience`, though it never starts it.
 - [`ios-crash-reports.md`](../agents/ios-crash-reports.md) has how it's built and checked, and the
   product docs' [Crash reports](../../apps/ios/docs/product/crash-reports.md) what the learner
   sees.

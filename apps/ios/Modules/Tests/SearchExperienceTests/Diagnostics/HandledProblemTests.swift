@@ -32,6 +32,15 @@ struct HandledProblemTests {
     #expect(HandledProblem.code(for: CarriedError()) == "carried_error")
   }
 
+  @Test("each problem is sent at most once a launch, by its area and code")
+  func eachProblemOnceALaunch() {
+    let code = "once_a_launch." + UUID().uuidString.lowercased().prefix(8)
+    #expect(CrashReporter.isFirstThisLaunch(HandledProblem(area: .frequencyPack, code: code)))
+    let again = HandledProblem(area: .frequencyPack, code: code, details: ["status": "502"])
+    #expect(!CrashReporter.isFirstThisLaunch(again))
+    #expect(CrashReporter.isFirstThisLaunch(HandledProblem(area: .accountSync, code: code)))
+  }
+
   @Test("cancellations, network failures, and an unreachable or ended session aren't problems")
   func expectedOutcomesAreSkipped() {
     #expect(HandledProblem(CancellationError(), in: .frequencyPack) == nil)

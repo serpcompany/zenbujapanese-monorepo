@@ -25,11 +25,11 @@ the app has a crash-reporting SDK at all in
   [`layers.ts`](../../tools/checks/src/layers.ts)). Code elsewhere reports through
   `CrashReporter`. `TranslatorCore` and `TranslatorOnDevice` never import it.
 - **The package** is `sentry-cocoa`, pinned to an exact 9.x version in
-  `apps/ios/Modules/Package.swift`. It links as the dynamic `Sentry.framework`, embedded with its
-  own privacy manifest. To move it, change the version there and resolve all three
-  `Package.resolved` files: `apps/ios/Modules`, the project's workspace, and
-  `apps/ios/Tools/TranslateReplay`. The share extension links it through `SearchExperience` but
-  never starts it.
+  `apps/ios/Modules/Package.swift`. Its code links statically, and the app embeds a 33 KB
+  `Sentry.framework` stub that carries Sentry's privacy manifest. To move it, change the version
+  there and resolve all three `Package.resolved` files: `apps/ios/Modules`, the project's
+  workspace, and `apps/ios/Tools/TranslateReplay`. The share extension links the same code
+  through `SearchExperience`, so its binary carries it, but it never starts it.
 
 ## Which builds send
 
@@ -66,9 +66,9 @@ and that the privacy manifest declares Crash Data and Other Diagnostic Data, unl
 - **`shutdownTimeInterval` is 0,** so turning the switch off never waits on the network, and
   `cacheDirectoryPath` is `Library/Caches/<bundle ID>/Sentry`, the app's own folder.
 - Sentry still lists its session replay and metrics integrations as installed. Both are inert:
-  replay's sample rates stay at 0 and swizzling is off, and the app records no metrics. Its frames
-  tracker runs for app hangs, to tell a fully blocked hang from a partial one. The SDK sends
-  `infer_ip: never`, so Sentry keeps no IP address.
+  replay's sample rates are set to 0 and swizzling is off, and the app records no metrics. Its
+  frames tracker runs for app hangs, to tell a fully blocked hang from a partial one. The SDK
+  sends `infer_ip: never`, so Sentry keeps no IP address.
 
 ## What a report holds
 
@@ -94,8 +94,8 @@ in: area)` builds the code from the error's type and case in snake case
 `unknown`. At most four details go with it, and only short, stable keys and values (a status or a
 pack's ID). Cancellation, `NSURLErrorDomain` errors, and an unreachable service or an ended session
 send nothing; each area and code is sent once a launch, grouped by `["handled-problem", area,
-code]`. `HandledProblemTests` checks the codes, and that a message, a service's answer, or a payload
-never reaches the event.
+code]`. `HandledProblemTests` checks the codes, once a launch, and that a message, a service's
+answer, or a payload never reaches the event.
 
 | Area | Where | Codes |
 | --- | --- | --- |

@@ -44,10 +44,12 @@ public enum CrashReporter {
   }
 
   nonisolated static func record(_ problem: HandledProblem) {
-    guard SentrySDK.isEnabled, recorded.withLock({ $0.insert(problem.key).inserted }) else {
-      return
-    }
+    guard SentrySDK.isEnabled, isFirstThisLaunch(problem) else { return }
     SentrySDK.capture(event: problem.event())
+  }
+
+  nonisolated static func isFirstThisLaunch(_ problem: HandledProblem) -> Bool {
+    recorded.withLock { $0.insert(problem.key).inserted }
   }
 
   private static func start(_ build: CrashReportingBuild, defaults: UserDefaults) {

@@ -6,8 +6,8 @@ enum CrashReportScrubber {
 
   private static let quotedNameRules: [(NSRegularExpression, String)] = compile([
     (#"[“„”«‹»]\s?[^“”„«»‹›\n]*\s?[”“»›«]"#, "“<name>”"),
-    (#"「[^」\n]*」"#, "“<name>”"),
-    (#"『[^』\n]*』"#, "“<name>”"),
+    (#"「[^「」\n]*」"#, "“<name>”"),
+    (#"『[^『』\n]*』"#, "“<name>”"),
     (#"״[^״\n]*״"#, "“<name>”"),
     (#""[^"\n]*""#, "“<name>”"),
   ])
