@@ -47,8 +47,8 @@ Every page's title and description fit a search result, and a shared link shows 
 [Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
 
 Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
-in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
-each language shows, the search-engine tags, and the switcher.
+in the footer; [Languages](languages.md) describes the URLs, what each language shows, the
+search-engine tags, and the switcher.
 
 Pages are kept at Cloudflare's edge after they render, so a page asked for again answers without
 waiting on the dictionary service; [Speed](speed.md) describes what is kept, and for how long.

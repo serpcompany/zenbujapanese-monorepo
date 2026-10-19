@@ -728,8 +728,7 @@
       "signOut": "Sign out"
     },
     "switcher": {
-      "label": "{language}, change language",
-      "heading": "Language"
+      "label": "{language}, change language"
     },
     "social": {
       "elsewhere": "{name} elsewhere",

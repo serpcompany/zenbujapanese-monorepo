@@ -123,7 +123,7 @@ test('the footer ends with the copyright, the language menu, and the Sitemap', (
   const ending = footerEnding()
   expect(ending).toContain(`© ${new Date().getFullYear()} ${site.name}`)
   expect(ending).toMatch(
-    /<button [^>]*aria-label="English, change language"[^>]*><svg [^>]*lucide-languages[^>]*>[\s\S]*?<\/svg>English<\/button><a [^>]*href="\/sitemap\/"[^>]*>Sitemap<\/a><\/div>$/
+    /<button [^>]*aria-label="EN, English, change language"[^>]*><svg [^>]*data-flag="US"[^>]*>[\s\S]*?<\/svg>EN<svg [^>]*lucide-chevron-down[^>]*>[\s\S]*?<\/svg><\/button><a [^>]*href="\/sitemap\/"[^>]*>Sitemap<\/a><\/div>$/
   )
 })
 
@@ -142,6 +142,8 @@ test('a Japanese page’s footer is in Japanese, and its links stay in Japanese'
   }
   expect(footer('ja')).toContain(getDictionary('ja').site.description)
   const ending = footerEnding('ja')
-  expect(ending).toContain('aria-label="日本語、表示言語を切り替える"')
+  expect(ending).toMatch(
+    /aria-label="JA, 日本語、表示言語を切り替える"[^>]*><svg [^>]*data-flag="JP"/
+  )
   expect(ending).toMatch(/<a [^>]*href="\/ja\/sitemap\/"[^>]*>サイトマップ<\/a><\/div>$/)
 })
