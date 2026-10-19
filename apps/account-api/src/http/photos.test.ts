@@ -135,34 +135,28 @@ describe('Media Library photos', () => {
     ).toEqual([photoId, `${photoId}/${word(2)}`])
   })
 
-  test('a delete wins over words added since, marks them removed, takes the file, and the same photo saved again starts past them', async () => {
+  test('a delete wins over words added since, takes its words and file, and the same photo saved again starts its words past theirs', async () => {
     const learner = await accounts.learner('photo-delete@example.com')
     const bytes = aJpeg()
     const photoId = await uploaded(accounts, learner, bytes)
-    await results(learner, add(photoId), onWord(photoId, 1))
-    await results(learner, onWord(photoId, 2))
+    await results(learner, add(photoId), onWord(photoId, 1), onWord(photoId, 2))
+    await results(learner, offWord(photoId, 1, 1), onWord(photoId, 1))
     expect(
       await results(learner, drop(photoId), drop(photoId), drop('d'.repeat(64)))
     ).toMatchObject(appliedAt(2, 2, 0))
-    expect(await changes(learner)).toEqual([
-      deleted('photo', photoId, 2),
-      deleted('photoWord', `${photoId}/${word(1)}`, 2),
-      deleted('photoWord', `${photoId}/${word(2)}`, 2)
-    ])
+    expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
     expect(
-      await rows(
-        `select count(*)::int as n from photo_words where user_id = '${learner.userId}' and not present`
-      )
-    ).toEqual([{ n: 2 }])
+      await rows(`select count(*)::int as n from photo_words where user_id = '${learner.userId}'`)
+    ).toEqual([{ n: 0 }])
     expect(await fileCount(learner)).toBe(0)
     expect(outcomesOf(await results(learner, onWord(photoId, 3), add(photoId)))).toEqual([
       'unknown_photo',
       'photo_not_uploaded'
     ])
     await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 3))
-    expect(await results(learner, offWord(photoId, 1, 1))).toMatchObject([
-      { status: 'conflict', version: 3, current: { operation: 'put' } }
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 4))
+    expect(await results(learner, offWord(photoId, 1, 3))).toMatchObject([
+      { status: 'conflict', version: 4, current: { operation: 'put' } }
     ])
   })
 
@@ -266,4 +260,10 @@ test('two devices converge on photos and their words, and one that dropped a pho
   const fresh = new SyncClient(accounts, learner.token)
   await fresh.sync()
   expect(fresh.state()).toEqual(phone.state())
+
+  phone.change('photo', 'delete', kept)
+  await phone.sync()
+  await pad.sync()
+  expect(pad.dataOf('photoWord', `${kept}/${word(1)}`)).toBeNull()
+  expect(pad.state()).toEqual(phone.state())
 })

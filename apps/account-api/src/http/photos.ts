@@ -2,7 +2,8 @@ import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Context } from 'hono'
 import type { Scope } from '../domain/clients'
 import type { PhotoFile } from '../domain/kept-store'
-import { type PhotoFiles, photoLimits } from '../domain/photo-files'
+import type { PhotoFiles } from '../domain/photo-files'
+import { photoLimits } from '../domain/photo-limits'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { atOnce, requestsPerMinute } from './rate-limit'
@@ -47,7 +48,7 @@ const uploadPhoto = createRoute({
   method: 'put',
   path: '/v1/photos/{photoId}',
   summary: "Upload a photo's file",
-  description: `The file of a Media Library photo or the profile photo, before the sync change that names it (\`photo\`'s \`add\`, or \`profilePhoto\`'s \`set\`). The body is the file's bytes, at most ${megabytes} MB, ${imageTypes}; the service reads the type from the bytes, not from \`Content-Type\`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most ${photoLimits.photos.toLocaleString('en-US')} files, the profile photo's included. An app with only \`profile\` may hold ${photoLimits.outsideTheLibrary} files outside the Media Library, its photo and the one replacing it, and is always answered \`201\`, so it learns nothing of the library.`,
+  description: `The file of a Media Library photo or the profile photo, before the sync change that names it (\`photo\`'s \`add\`, or \`profilePhoto\`'s \`set\`). The body is the file's bytes, at most ${megabytes} MB, ${imageTypes}; the service reads the type from the bytes, not from \`Content-Type\`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most ${photoLimits.photos.toLocaleString('en-US')} files, the profile photo's included; past that, an upload deletes the photo emptied longest ago to make room. An app with only \`profile\` holds at most ${photoLimits.profileUploads} files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, \`201\` or \`409\`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.`,
   security: needsOneOf('photos:write', 'profile'),
   request: {
     params: PhotoIdParameter,
@@ -71,7 +72,7 @@ const uploadPhoto = createRoute({
         "This app's access to the account doesn't include `photos:write` or `profile`."
     }),
     409: refusal({
-      too_many_photos: `The account holds ${photoLimits.photos.toLocaleString('en-US')} files. Remove a photo first.`
+      too_many_photos: `The account holds ${photoLimits.photos.toLocaleString('en-US')} files, none of them an emptied photo's, or an app with only \`profile\` holds the ${photoLimits.profileUploads} it may. Remove a photo first, or set the profile photo to one of the two.`
     }),
     413: refusal({ too_large: `The file is over ${megabytes} MB.` }),
     415: refusal({ unsupported_photo: `The file isn't a ${imageTypes} image.` }),

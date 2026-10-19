@@ -1,4 +1,4 @@
-import { photoLimits } from '../domain/photo-files'
+import { photoLimits } from '../domain/photo-limits'
 import { searchIdOf, searchLimits } from '../domain/recent-searches'
 import { settingRules, valueText } from '../domain/settings'
 import { noteLimits } from '../domain/word-notes'
@@ -42,7 +42,7 @@ export const keptRules = {
     }
   },
   photo: {
-    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a \`delete\` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too.`,
+    rule: `A photo in the learner's Media Library, by its file, which \`PUT /v1/photos/{photoId}\` uploads first and \`GET /v1/photos/{photoId}\` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a \`delete\` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo never stops an upload: past the account's ${photoLimits.photos.toLocaleString('en-US')} files, the one emptied longest ago is deleted to make room.`,
     entityId: "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
     data: 'Photo',
     operations: {
@@ -57,13 +57,13 @@ export const keptRules = {
       },
       delete: {
         baseVersion: false,
-        rule: 'The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.',
+        rule: 'The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes its words and its file, unless the profile photo is the same file. Drop the photo and its words on the device: the words come down with it, not one by one. A word added later is rejected `unknown_photo`.',
         example: { entityId: examplePhotoIds.library }
       }
     }
   },
   photoWord: {
-    rule: `A word or kanji a photo is on. A photo is on at most ${photoLimits.wordsPerPhoto} words. A removed word keeps its version, through its photo's deletion too, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.`,
+    rule: `A word or kanji a photo is on. A photo is on at most ${photoLimits.wordsPerPhoto} words, and remembers its latest ${photoLimits.removedWordsPerPhoto} removed ones. A word the account forgets, with its photo's deletion or past those, comes back past every version it had, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.`,
     entityId:
       "The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.",
     data: 'PhotoWord',
@@ -88,7 +88,7 @@ export const keptRules = {
     operations: {
       set: {
         baseVersion: true,
-        rule: "It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. The file it replaces is deleted, unless a Media Library photo is the same file.",
+        rule: "It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. An app without `photos:read` may set only a file it uploaded itself (else `photo_not_uploaded`). The file it replaces is deleted, unless a Media Library photo is the same file.",
         fields: 'ProfilePhotoFields',
         example: { baseVersion: 0, fields: { photoId: examplePhotoIds.profile } }
       },

@@ -48,10 +48,13 @@ export function noteWriter(db: Drizzle, userId: string) {
     id: wordNotes.id,
     live: eq(wordNotes.present, true),
     updatedAt: wordNotes.updatedAt,
+    version: wordNotes.version,
     entity: 'wordNote'
   })
   return {
-    forgetGoneNotes: notes.forgetGone,
+    async forgetGoneNotes(kept: number) {
+      await notes.forgetGone(kept)
+    },
     async saveWordNote(note: Omit<WordNote, 'updatedAt'>) {
       await db
         .insert(wordNotes)

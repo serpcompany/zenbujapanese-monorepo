@@ -1,5 +1,5 @@
 import { bookmarkLimits } from '../domain/bookmarks'
-import { photoLimits } from '../domain/photo-files'
+import { photoLimits } from '../domain/photo-limits'
 import type { RejectionCode } from '../domain/profile'
 import type { EntityType } from '../domain/store'
 import { syncedEntities } from '../domain/sync'

@@ -18,6 +18,8 @@ const put = (token: string, photoId: string, bytes: Uint8Array) =>
 const get = (token: string, photoId: string) =>
   service().sendPhoto(token, photoId, new Uint8Array(), 'GET')
 
+const savedAt = '2026-10-01T12:00:00Z'
+
 const bytesOf = (hex: string, size = 16) => {
   const bytes = new Uint8Array(size)
   bytes.set(Buffer.from(hex, 'hex'))
@@ -143,6 +145,84 @@ describe('photo files', () => {
     ).toEqual([{ n: 0 }])
   })
 
+  test('an upload past 1,000 files deletes the photo emptied longest ago to make room, and is refused when none is', async () => {
+    const learner = await accounts.learner('photo-cap-emptied@example.com')
+    const emptied: string[] = []
+    for (const name of ['First.jpg', 'Second.jpg']) {
+      const photoId = await uploaded(accounts, learner)
+      const wordId = `${photoId}/${'0'.repeat(32)}`
+      await accounts.results(
+        learner,
+        { entity: 'photo', operation: 'add', entityId: photoId, fields: { name, savedAt } },
+        {
+          entity: 'photoWord',
+          operation: 'add',
+          entityId: wordId,
+          fields: { headword: '見る', savedAt }
+        },
+        { entity: 'photoWord', operation: 'remove', entityId: wordId, baseVersion: 1 }
+      )
+      emptied.push(photoId)
+    }
+    await rows(
+      `insert into photo_files (user_id, id, content_type, byte_size, storage_key) select '${learner.userId}', md5(n::text) || md5(n::text), 'image/jpeg', 1, '${learner.userId}/' || n from generate_series(1, 998) as n`
+    )
+    const statuses = async () => {
+      const found = await rows(`select id, status from photos where user_id = '${learner.userId}'`)
+      return emptied.map(id => found.find(row => row.id === id)?.status)
+    }
+    const send = async () => {
+      const bytes = aJpeg()
+      return (await put(learner.token, photoIdOf(bytes), bytes)).status
+    }
+    expect(await statuses()).toEqual(['emptied', 'emptied'])
+    expect(await send()).toBe(201)
+    expect(await statuses()).toEqual(['deleted', 'emptied'])
+    expect([await send(), await send()]).toEqual([201, 409])
+    expect(await statuses()).toEqual(['deleted', 'deleted'])
+    expect(
+      await rows(`select count(*)::int as n from photo_files where user_id = '${learner.userId}'`)
+    ).toEqual([{ n: 1000 }])
+  })
+
+  test('a lost file put back while its photo is deleted leaves nothing in storage that no row names', async () => {
+    const learner = await accounts.learner('photo-lost-race@example.com')
+    const bytes = aJpeg()
+    const photoId = await uploaded(accounts, learner, bytes)
+    await accounts.results(learner, {
+      entity: 'photo',
+      operation: 'add',
+      entityId: photoId,
+      fields: { name: 'Lost.jpg', savedAt }
+    })
+    const storage = service().photoStorage
+    const stored = () =>
+      [...storage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
+    for (const key of stored()) storage.objects.delete(key)
+    const putting = gate()
+    const finish = gate()
+    const putNow = storage.put.bind(storage)
+    const held = vi.spyOn(storage, 'put').mockImplementationOnce(async (key, data, type) => {
+      putting.open()
+      await finish.opened
+      await putNow(key, data, type)
+    })
+    const upload = put(learner.token, photoId, bytes)
+    await putting.opened
+    await accounts.results(learner, { entity: 'photo', operation: 'delete', entityId: photoId })
+    await service().files.sweep()
+    finish.open()
+    expect([200, 201]).toContain((await upload).status)
+    held.mockRestore()
+    await service().files.sweep()
+    const named = (
+      await rows(
+        `select storage_key from photo_files where user_id = '${learner.userId}' union select storage_key from photo_file_deletions`
+      )
+    ).map(row => row.storage_key)
+    expect(stored().filter(key => !named.includes(key))).toEqual([])
+  })
+
   test('answers 503 where the service keeps no photos', async () => {
     const bytes = aJpeg()
     for (const method of ['PUT', 'GET']) {
@@ -199,7 +279,8 @@ describe('photo files', () => {
         contentType: 'image/jpeg',
         byteSize: 3,
         storageKey: 'k',
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
+        profileUploadAt: null
       },
       photo: {
         body: new ReadableStream<Uint8Array>({

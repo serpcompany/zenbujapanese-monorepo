@@ -102,24 +102,33 @@ and the email typed while signed out.
     and name for 30 days, and a word added from a device that never saw the removal brings it back.
     So a word removed on one device and another added offline elsewhere end the same whichever
     syncs first, and no add is lost.
-  - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it marks
-    every word on it removed, at a new version each, and takes the file. A word added later is
-    rejected `unknown_photo`.
+  - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it takes
+    its words, which devices drop with the photo rather than one by one, and its file. A word
+    added later is rejected `unknown_photo`.
   - Housekeeping empties a photo left with no word for a day, as when its words' adds failed, so
-    the account shows no photo that no word shows, and deletes an emptied photo after 30 days.
+    the account shows no photo that no word shows, and deletes an emptied photo after 30 days, or
+    sooner when an upload past the 1,000 files needs its place.
+  - The account remembers its latest 1,000 deleted photos, as it does notes: a device that missed
+    an older deletion keeps that photo.
+  - **Nothing comes back under a version it had.** The account keeps the highest version it
+    forgot of a photo and of a photo word (`forgotten_versions`), and one saved again after it's
+    forgotten starts past that, so a change from before conflicts rather than applying.
 - **Photo word** (`photoWord`, `<photo>/<item>`): a word or kanji the photo is on, by the same rule
   as a list word (`add` always applies to a photo the account has, `unknown_photo` otherwise;
   `remove` only at its version), with at most 500 a photo (`photo_full`). A removed word keeps its
-  row and version, through the photo's deletion and its return, so a remove from before can't take
-  the new add; the account remembers the latest 1,000 removed words. Adding a word journals its
-  photo again, so a device that dropped the photo when its own last word went gets it back.
+  row and version, and each photo remembers its latest 500 removed words, so one photo's words
+  never push out another's: a device away while they change hears of every removal but on a photo
+  that lost over 500 words meanwhile, far past the few a photo is on. A deleted photo's words go
+  with it. Adding a word journals its photo again, so a device that dropped the photo when its own
+  last word went gets it back.
 - **Profile photo** (`profilePhoto`, by the account's ID, or none, `src/domain/profile-photo.ts`):
   `set` with a file's SHA-256, and `remove`, each only at the profile photo's own version, as a
   profile's name is changed, so the second of two changes gets the photo as it is. It has a version
   of its own, not the profile's, so changing the name on the website never conflicts with a new
   photo from the app. Its file is replaced and deleted like a photo's. Read and changed with
-  `profile`, like the name; an app without `photos:read` can't set it to a Media Library photo's
-  file (`photo_not_uploaded`), so the profile can't reach into the library.
+  `profile`, like the name; an app without `photos:read` sets it only to a file it uploaded itself
+  (`photo_not_uploaded` otherwise), a Media Library photo's once it sends the same image, so the
+  profile can't reach into the library.
 - **Setting** (`setting`, by name, `src/domain/settings.ts`): one entity for each setting the
   service lists (`settingRules`), each with its kind: on or off, one of its choices, a number in
   its range, or text of its pattern. A `set` applies only at the setting's version, so the first

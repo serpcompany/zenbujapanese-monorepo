@@ -32,6 +32,7 @@ export function searchWriter(db: Drizzle, userId: string) {
     id: recentSearches.id,
     live: eq(recentSearches.status, 'searched'),
     updatedAt: recentSearches.updatedAt,
+    version: recentSearches.version,
     entity: 'recentSearch'
   })
   return {
@@ -54,6 +55,8 @@ export function searchWriter(db: Drizzle, userId: string) {
         .limit(1)
       return search ?? null
     },
-    forgetRecentSearches: recents.forgetGone
+    async forgetRecentSearches(kept: number) {
+      await recents.forgetGone(kept)
+    }
   }
 }

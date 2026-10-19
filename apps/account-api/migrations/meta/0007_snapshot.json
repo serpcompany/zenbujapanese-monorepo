@@ -1,9 +1,62 @@
 {
-  "id": "52247938-4626-4ea3-a24d-f8cb49f3f8c3",
+  "id": "04d7a1bd-d184-4bfc-85b2-d2fd7b212859",
   "prevId": "642481a1-5d13-4f6b-bb9d-15c59a170146",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.forgotten_versions": {
+      "name": "forgotten_versions",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "forgotten_versions_user_id_users_id_fk": {
+          "name": "forgotten_versions_user_id_users_id_fk",
+          "tableFrom": "forgotten_versions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "forgotten_versions_user_id_entity_type_pk": {
+          "name": "forgotten_versions_user_id_entity_type_pk",
+          "columns": [
+            "user_id",
+            "entity_type"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.known_words": {
       "name": "known_words",
       "schema": "",
@@ -321,6 +374,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "profile_upload_at": {
+          "name": "profile_upload_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},

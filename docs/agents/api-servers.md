@@ -57,7 +57,7 @@ server {
         set $dictionary "zenbujapanese-dictionary-api-staging";
 
         location ~ ^/v1/(auth|me|sync|photos|health)(/|$) {
-                location ^~ /v1/photos/ {
+                location ~ ^/v1/photos/ {
                         client_max_body_size 13m;
                         proxy_pass http://$account:8789;
                 }
@@ -91,14 +91,14 @@ server {
 - `ssl_client_certificate` and `ssl_verify_client on` take only Cloudflare's client certificate
   (Authenticated Origin Pulls), so a request that skips Cloudflare gets `400` from nginx, and the
   `CF-Connecting-IP` the account service counts by is always Cloudflare's. Only the nested
-  `/v1/photos/` location lets a 12 MB photo through, past nginx's 1 MB default.
+  `/v1/photos/` location lets a 12 MB photo through, past nginx's 1 MB default: a regex, since
+  nginx loads no prefix location in a regex one, with its own `proxy_pass`, which isn't inherited.
 - `resolver … valid=5s` with the alias in a variable makes nginx look the alias up every 5
   seconds, so it finds the new slot after a deploy without a reload, and
   `proxy_next_upstream … http_502 http_503` with two tries sends a request a slot can't answer to
   the other.
-- The nginx repository's dictionary sites also keep a `location = /v1/sitemaps/conjugations` that
-  doesn't fail over on a `503`; the dictionary service no longer has that route (it answers
-  `404`), so the API host's sites leave it out.
+- The dictionary sites' `location = /v1/sitemaps/conjugations`, which doesn't fail over on a
+  `503`, is left out: the dictionary service no longer has that route (it answers `404`).
 
 The dictionary service also keeps its own host (`dictionary-api.zenbujapanese.com`), which the
 website's Worker reads; it can move to the API host by changing `DICTIONARY_API_URL`. The two

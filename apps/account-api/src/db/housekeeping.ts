@@ -1,6 +1,6 @@
-import { and, eq, lt, ne, notExists, type SQL, sql } from 'drizzle-orm'
+import { and, eq, lt, ne, notExists, or, type SQL, sql } from 'drizzle-orm'
 import type { PgColumn } from 'drizzle-orm/pg-core'
-import { photoLimits } from '../domain/photo-files'
+import { photoLimits } from '../domain/photo-limits'
 import { deletePhoto, emptyPhoto } from '../domain/photos'
 import { accountStore } from './accounts'
 import type { Drizzle } from './database'
@@ -15,7 +15,7 @@ import {
 } from './schema'
 
 const day = 24 * 60 * 60 * 1000
-const atOnce = 500
+export const housekeepingBatch = 500
 const roundsAnHour = 20
 
 const olderThan = (column: PgColumn, hours: number) =>
@@ -26,28 +26,35 @@ async function inBatches(
   each: (found: { userId: string; id: string }) => Promise<void>
 ) {
   for (let round = 0; round < roundsAnHour; round++) {
-    const found = await find(atOnce)
+    const found = await find(housekeepingBatch)
     for (const one of found) await each(one)
-    if (found.length < atOnce) return
+    if (found.length < housekeepingBatch) return
   }
 }
 
-const namedBy = (db: Drizzle, file: typeof photoFiles) => [
+const notInTheLibrary = (db: Drizzle) =>
   notExists(
     db
       .select({ id: photos.id })
       .from(photos)
       .where(
-        and(eq(photos.userId, file.userId), eq(photos.id, file.id), ne(photos.status, 'deleted'))
+        and(
+          eq(photos.userId, photoFiles.userId),
+          eq(photos.id, photoFiles.id),
+          ne(photos.status, 'deleted')
+        )
       )
-  ),
+  )
+
+const notOnTheProfile = (db: Drizzle) =>
   notExists(
     db
       .select({ id: profilePhotos.photoId })
       .from(profilePhotos)
-      .where(and(eq(profilePhotos.userId, file.userId), eq(profilePhotos.photoId, file.id)))
+      .where(
+        and(eq(profilePhotos.userId, photoFiles.userId), eq(profilePhotos.photoId, photoFiles.id))
+      )
   )
-]
 
 const photosWhere = (db: Drizzle, condition: SQL | undefined) => (limit: number) =>
   db.select({ userId: photos.userId, id: photos.id }).from(photos).where(condition).limit(limit)
@@ -61,8 +68,14 @@ async function tidyPhotos(db: Drizzle) {
         .from(photoFiles)
         .where(
           and(
-            olderThan(photoFiles.uploadedAt, photoLimits.uploadHeldHours),
-            ...namedBy(db, photoFiles)
+            notOnTheProfile(db),
+            or(
+              and(
+                olderThan(photoFiles.uploadedAt, photoLimits.uploadHeldHours),
+                notInTheLibrary(db)
+              ),
+              olderThan(photoFiles.profileUploadAt, photoLimits.uploadHeldHours)
+            )
           )
         )
         .limit(limit),

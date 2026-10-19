@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/pglite'
-import { describe, expect, test } from 'vitest'
-import { purgeExpired } from '../db/housekeeping'
+import { describe, expect, test, vi } from 'vitest'
+import { housekeepingBatch, purgeExpired } from '../db/housekeeping'
 import { type Learner, outcomesOf, useAccountService } from '../test/accounts'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
@@ -27,6 +27,18 @@ const filesOf = async (learner: Learner) =>
   (await rows(`select id from photo_files where user_id = '${learner.userId}' order by id`)).map(
     row => row.id
   )
+const inTheLibrary = async (learner: Learner, bytes: Uint8Array) => {
+  const photoId = await uploaded(accounts, learner, bytes)
+  await results(learner, {
+    entity: 'photo',
+    operation: 'add',
+    entityId: photoId,
+    fields: { name: 'Menu.jpg', savedAt: '2026-10-01T12:00:00Z' }
+  })
+  return photoId
+}
+const webSends = (web: Learner, bytes: Uint8Array) =>
+  accounts.running.service.sendPhoto(web.token, photoIdOf(bytes), bytes)
 
 describe('the profile photo', () => {
   test('a set at the version seen applies, a stale one conflicts, and the file it replaces goes', async () => {
@@ -128,32 +140,71 @@ describe('the profile photo', () => {
     expect((await send(web.token, library, new Uint8Array(), 'GET')).status).toBe(404)
   })
 
-  test('an app with only `profile` never sets a Media Library photo as the profile photo, nor learns the library', async () => {
+  test('an app with only `profile` sets only a file it uploaded, a Media Library photo once it sends the image', async () => {
     const email = 'profile-photo-only@example.com'
     const zenbu = await accounts.learner(email)
     const bytes = aJpeg()
-    const library = await uploaded(accounts, zenbu, bytes)
-    await results(zenbu, {
-      entity: 'photo',
-      operation: 'add',
-      entityId: library,
-      fields: { name: 'Menu.jpg', savedAt: '2026-10-01T12:00:00Z' }
-    })
+    const library = await inTheLibrary(zenbu, bytes)
+    const waiting = await uploaded(accounts, zenbu)
     const web = await accounts.learner(email, 'zenbu-web')
-    const again = await accounts.running.service.sendPhoto(web.token, library, bytes)
-    expect(again.status).toBe(201)
-    expect(outcomesOf(await results(web, set(library, 0)))).toEqual(['photo_not_uploaded'])
-    expect(outcomesOf(await results(zenbu, set(library, 0)))).toEqual(['applied'])
+    expect(outcomesOf(await results(web, set(library, 0), set(waiting, 0)))).toEqual([
+      'photo_not_uploaded',
+      'photo_not_uploaded'
+    ])
+    expect((await webSends(web, bytes)).status).toBe(201)
+    expect(outcomesOf(await results(web, set(library, 0)))).toEqual(['applied'])
+    const send = accounts.running.service.sendPhoto
+    expect(
+      new Uint8Array(await (await send(web.token, library, bytes, 'GET')).arrayBuffer())
+    ).toEqual(bytes)
+    expect(await rows(`select status from photos where id = '${library}'`)).toEqual([
+      { status: 'shown' }
+    ])
   })
 
-  test('an app with only `profile` holds two files outside the Media Library at most', async () => {
+  test("an app with only `profile` is answered the same whether or not the library holds an image, and other apps' uploads leave it its two", async () => {
     const email = 'profile-photo-files@example.com'
-    await accounts.learner(email)
+    const zenbu = await accounts.learner(email)
+    const [held, alsoHeld] = [aJpeg(), aJpeg()]
+    await inTheLibrary(zenbu, held)
+    await inTheLibrary(zenbu, alsoHeld)
+    await uploaded(accounts, zenbu)
+    await uploaded(accounts, zenbu)
     const web = await accounts.learner(email, 'zenbu-web')
-    const send = (bytes: Uint8Array) =>
-      accounts.running.service.sendPhoto(web.token, photoIdOf(bytes), bytes)
-    expect([(await send(aJpeg())).status, (await send(aJpeg())).status]).toEqual([201, 201])
-    expect((await send(aJpeg())).status).toBe(409)
+    const statuses = async (...files: Uint8Array[]) => {
+      const answers: number[] = []
+      for (const bytes of files) answers.push((await webSends(web, bytes)).status)
+      return answers
+    }
+    const puts = vi.spyOn(accounts.running.service.photoStorage, 'put')
+    expect(await statuses(held, aJpeg())).toEqual([201, 201])
+    expect(puts).toHaveBeenCalledTimes(2)
+    puts.mockRestore()
+    expect(await statuses(alsoHeld, aJpeg())).toEqual([409, 409])
+  })
+
+  test('a Media Library photo the profile photo no longer is, and a file an app with only `profile` never set, stop counting toward its two', async () => {
+    const email = 'profile-photo-turns@example.com'
+    const zenbu = await accounts.learner(email)
+    const [shared, unset] = [aJpeg(), aJpeg()]
+    const library = await inTheLibrary(zenbu, shared)
+    await inTheLibrary(zenbu, unset)
+    const web = await accounts.learner(email, 'zenbu-web')
+    const replacing = aJpeg()
+    await webSends(web, shared)
+    await results(web, set(library, 0))
+    await webSends(web, replacing)
+    await results(web, set(photoIdOf(replacing), 1))
+    expect((await webSends(web, unset)).status).toBe(201)
+    expect((await webSends(web, aJpeg())).status).toBe(409)
+    await rows(
+      `update photo_files set profile_upload_at = now() - interval '25 hours' where id = '${photoIdOf(unset)}'`
+    )
+    await accounts.running.service.housekeep()
+    expect((await webSends(web, aJpeg())).status).toBe(201)
+    expect(await filesOf(zenbu)).toEqual(
+      expect.arrayContaining([library, photoIdOf(unset), photoIdOf(replacing)])
+    )
   })
 })
 
@@ -178,6 +229,15 @@ test('a file no photo names a day after its upload is deleted', async () => {
   expect(
     await rows('select count(*)::int as n from photo_file_deletions where due_at <= now()')
   ).toEqual([{ n: 0 }])
+})
+
+test("the hour's housekeeping works through more files than one batch holds", async () => {
+  const learner = await accounts.learner('photo-unnamed-batches@example.com')
+  await rows(
+    `insert into photo_files (user_id, id, content_type, byte_size, storage_key, uploaded_at) select '${learner.userId}', md5(n::text) || md5(n::text), 'image/jpeg', 1, '${learner.userId}/batch-' || n, now() - interval '25 hours' from generate_series(1, ${housekeepingBatch + 1}) as n`
+  )
+  await purgeExpired(drizzle(accounts.running.service.client))
+  expect(await filesOf(learner)).toEqual([])
 })
 
 test('two devices converge on the profile photo: the first change to sync wins', async () => {

@@ -36,6 +36,7 @@ export function watchedVideoWriter(db: Drizzle, userId: string) {
     id: watchedVideos.videoId,
     live: eq(watchedVideos.status, 'watched'),
     updatedAt: watchedVideos.updatedAt,
+    version: watchedVideos.version,
     entity: 'watchedVideo'
   })
   return {
@@ -58,6 +59,8 @@ export function watchedVideoWriter(db: Drizzle, userId: string) {
         .limit(1)
       return video ?? null
     },
-    forgetWatchedVideos: recents.forgetGone
+    async forgetWatchedVideos(kept: number) {
+      await recents.forgetGone(kept)
+    }
   }
 }

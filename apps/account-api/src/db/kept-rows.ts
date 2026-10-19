@@ -10,37 +10,45 @@ interface KeptRows {
   id: PgColumn | SQL
   live: SQL
   updatedAt: PgColumn
+  version: PgColumn
   entity: EntityType
 }
 
 export function keptRows(db: Drizzle, userId: string, rows: KeptRows) {
   const ofTheAccount = eq(rows.userId, userId)
   const live = and(ofTheAccount, rows.live)
+  const found = () => db.select({ id: rows.id, version: rows.version }).from(rows.table)
+
+  async function forget(forgotten: { id: unknown; version: unknown }[]) {
+    const ids = forgotten.map(row => String(row.id))
+    if (ids.length === 0) return 0
+    await db
+      .delete(syncChanges)
+      .where(
+        and(
+          eq(syncChanges.userId, userId),
+          eq(syncChanges.entityType, rows.entity),
+          inArray(syncChanges.entityId, ids)
+        )
+      )
+    await db.delete(rows.table).where(and(ofTheAccount, inArray(sql`${rows.id}`, ids)))
+    return Math.max(...forgotten.map(row => Number(row.version)))
+  }
+
   return {
     live,
     async liveCount() {
       const [row] = await db.select({ live: count() }).from(rows.table).where(live)
       return row?.live ?? 0
     },
-    async forgetGone(kept: number) {
-      const forgotten = await db
-        .select({ id: rows.id })
-        .from(rows.table)
-        .where(and(ofTheAccount, not(rows.live)))
-        .orderBy(desc(rows.updatedAt), desc(rows.id))
-        .offset(kept)
-      const ids = forgotten.map(row => String(row.id))
-      if (ids.length === 0) return
-      await db
-        .delete(syncChanges)
-        .where(
-          and(
-            eq(syncChanges.userId, userId),
-            eq(syncChanges.entityType, rows.entity),
-            inArray(syncChanges.entityId, ids)
-          )
-        )
-      await db.delete(rows.table).where(and(ofTheAccount, inArray(sql`${rows.id}`, ids)))
-    }
+    async forgetGone(kept: number, within?: SQL) {
+      return forget(
+        await found()
+          .where(and(ofTheAccount, within, not(rows.live)))
+          .orderBy(desc(rows.updatedAt), desc(rows.id))
+          .offset(kept)
+      )
+    },
+    forgetAll: async (within: SQL) => forget(await found().where(and(ofTheAccount, within)))
   }
 }
