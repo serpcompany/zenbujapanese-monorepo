@@ -44,12 +44,22 @@ async function settle(page: Page) {
 const clickBeforeHydrationIsLost = { timeout: 1_000 }
 const untilItTakes = { timeout: 15_000 }
 
-async function expand(page: Page, name: string) {
+async function pressOpen(page: Page, name: string) {
   const button = page.getByRole('button', { name, exact: true })
   await expect(async () => {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
   }).toPass(untilItTakes)
+  return button
+}
+
+async function expand(page: Page, name: string) {
+  await pressOpen(page, name)
+  await settle(page)
+}
+
+async function expandMenuGroup(page: Page, name: string) {
+  const button = await pressOpen(page, name)
   const menu = phoneMenu(page)
   await expect(menu.locator(`[id="${await button.getAttribute('aria-controls')}"]`)).toBeVisible()
   await expect(menu.locator('[data-slot="accordion-content"]:visible')).toHaveCount(1)
@@ -84,7 +94,7 @@ function phoneMenuViews(locale: Locale): PageView[] {
     ...siteMenusIn(locale).map(({ label }) => ({
       name: `Phone menu, ${label}`,
       overlay: true,
-      show: (page: Page) => expand(page, label)
+      show: (page: Page) => expandMenuGroup(page, label)
     }))
   ]
 }
