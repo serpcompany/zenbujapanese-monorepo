@@ -135,7 +135,8 @@ photo and a Media Library photo kept while either names it, an unnamed file rele
 hours, and an app with only `profile` kept to its own files. `src/http/delete-account.test.ts`
 deletes an account's folder from storage with it, a file no row names included, and then refuses
 its token at both routes (`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo
-six times at once: one file is kept, and the other copies are swept. `src/storage/r2.test.ts` runs
+six times at once: one file is kept, and the other copies are swept; and it deletes the file
+of an upload that finishes while its account is being deleted. `src/storage/r2.test.ts` runs
 the R2 adapter against a stand-in S3 server: each request signed with SigV4 and the body's SHA-256,
 an object put, streamed, checked, deleted, and missing, a folder deleted page by page, a missing
 bucket never taken for a missing object, and a refusal thrown with only its status.

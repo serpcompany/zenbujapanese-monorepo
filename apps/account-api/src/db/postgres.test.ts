@@ -196,4 +196,39 @@ describe('Postgres, through the driver the service runs', () => {
       await done()
     }
   )
+
+  test.skipIf(realPostgres === '')(
+    'deletes the file of an upload that finishes while its account is being deleted',
+    async () => {
+      const { database, id, done } = await anAccount('photo-deleted-mid-upload')
+      const storage = new MemoryPhotoStorage()
+      let letPutFinish = () => {}
+      const putHeld = new Promise<void>(resolve => {
+        letPutFinish = resolve
+      })
+      let putStarted = () => {}
+      const started = new Promise<void>(resolve => {
+        putStarted = resolve
+      })
+      const heldStorage = Object.assign(Object.create(storage), {
+        put: async (key: string, bytes: Uint8Array, type: string) => {
+          putStarted()
+          await putHeld
+          await storage.put(key, bytes, type)
+        }
+      })
+      const store = accountStore(database.db)
+      const files = photoFiles(store, heldStorage)
+      const bytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, ...Buffer.from(id)])
+      const photoId = createHash('sha256').update(bytes).digest('hex')
+      const upload = files.upload(id, photoId, bytes, everyScope)
+      await started
+      await store.deleteAccount(id, `${id}@example.com`)
+      letPutFinish()
+      expect(await upload).toEqual({ status: 'no_account' })
+      await files.sweep()
+      expect([...storage.objects.keys()]).toEqual([])
+      await done()
+    }
+  )
 })
