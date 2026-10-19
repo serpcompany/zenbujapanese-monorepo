@@ -217,10 +217,13 @@ happened or its result was lost:
 - **The settings never block what a CI job uses.** The action restores `.claude/` from the base
   branch, so `.claude/settings.json` applies in CI, where an ask rule can't prompt and so denies.
   Its rules therefore never deny or ask for a tool a Claude job uses: the tools in each job's
-  `--allowedTools`, Read, Glob, and Grep, `git push` to a branch, and `gh pr create`. Every
-  `gh api` write still asks, which is why the review's summary is posted by a workflow step
-  rather than by Claude. `tools/checks/src/agents/settings.test.ts` checks both directions: every
-  package script that deploys is asked, and nothing a Claude job in any workflow runs is.
+  `--allowedTools`, Read, Glob, and Grep, `git push` to a branch, and `gh pr create`. No job lists
+  `gh api`, so CI denies it, which is why the review's summary is posted by a workflow step rather
+  than by Claude. The rules ask only before deploys, secrets and variables, repository settings,
+  deletes, a forced ref, and the merges API, so a local agent's GitHub reads, comments, GraphQL, and
+  `gh pr merge` run without a prompt. `tools/checks/src/agents/settings.test.ts` checks both
+  directions: every package script that deploys is asked, and nothing a Claude job in any workflow
+  runs is.
 - **The transcripts are kept** for a week as the `claude-review-transcript` artifact, with the
   first attempt's log and summary beside the last when there were two: the action's own log
   shows counts only. The step summary shows the last attempt's turns, time, estimated cost, and
