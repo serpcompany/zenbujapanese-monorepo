@@ -50,14 +50,24 @@ a second 556 MB on the device, and the card wouldn't work until the app had run 
 
 A share extension is stopped when it uses more memory than iOS allows extensions, about 120 MB.
 `DictionaryCore`'s JavaScriptCore contexts and SQLite read the files without loading them; what
-counts is what the card computes. Measured in the Simulator (`phys_footprint`, beyond the
-process's own), and on an iPhone 17 Pro Max in a Debug Zenbu Dev build:
+counts is what the card computes. The extension's peak `phys_footprint` in the iPhone 17 Pro Max
+Simulator (iOS 27), from the Debug memory log below, on 2026-10-20:
 
-| Card | Simulator | iPhone |
-| --- | --- | --- |
-| A word (食べた) | 15 MB | pending |
-| A sentence, the first one (unpacks the tokenizer) | 25 MB | pending |
-| A photo (Vision, the peak while it reads) | 130 MB peak in a test, 123 MB in the extension | pending |
+| Card | Peak |
+| --- | --- |
+| A word, shared from Safari (辞書) | 42 MB |
+| A sentence, the first one, which unpacks the tokenizer | about 10 MB more than a word, in a test |
+| A photo (the book page in `apps/ios/Modules/Tests/SearchExperienceTests/Fixtures/ImageText`) | 138 MB |
+
+Vision's Japanese recognition is about 105 MB of a photo's peak in the Simulator, whatever the
+photo's size, since its models run there on the CPU. An iPhone runs them on the Neural Engine, but
+the card hasn't been measured on one: that, and the system stopping an extension over its limit,
+only a device shows.
+
+- **Hashing a file holds one chunk at a time.** Opening the frequency lists checks the bundled
+  packs against the dictionary's SHA-256, which reads all 462 MB of it; `fileSHA256` drains each
+  4 MB chunk as it's hashed (`DigestTests`). It used to keep them all until the hash was done, a
+  500 MB peak in the extension and at every launch of the app.
 
 - **The tokenizer is mapped, not unpacked into memory.** The app unpacks its eleven files into
   100 MB of memory. The extension unpacks each once into its own `Caches/Tokenizer` folder,
