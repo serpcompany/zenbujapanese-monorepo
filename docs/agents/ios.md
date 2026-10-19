@@ -189,11 +189,13 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_SIGN_IN_STAND_IN=1` stands in for Apple's sign-in sheet and Google's web sign-in, and
   offers Apple in a `.uitests` build; the nonce, the account client, and the session after them
   run as they would.
-- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app (`StandInAccountService`,
-  on the account's own `URLSession`): sign-in, tokens, the profile (Kana Fan), sync, signing out,
-  and deleting, so the signed-in screens run without a service. The session token goes to the real
-  Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
-  keychain access group; a build signed with the team keeps it.
+- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app
+  (`StandInAccountService`, on the account's own `URLSession`): sign-in, tokens, the profile (Kana
+  Fan), sync, photo files, signing out, and deleting, so the signed-in screens run without a
+  service; with `ZENBU_ACCOUNT_STAND_IN_KEPT=1` its first sync also brings a photo, a setting, and
+  a recent search from another device ([`ios-account-sync.md`](ios-account-sync.md)). The session
+  token goes to the real Keychain, so these tests are skipped on the Mac, where a build signed to
+  run locally has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
   ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
