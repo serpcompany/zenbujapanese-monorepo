@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
@@ -7,6 +7,8 @@ import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
 import { cursorKey, cursors } from '../domain/cursor'
+import { photoFiles } from '../domain/photo-files'
+import { MemoryPhotoStorage } from '../storage/memory'
 import { accountStore } from './accounts'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
@@ -29,6 +31,25 @@ beforeAll(async () => {
 })
 
 afterAll(() => stop())
+
+async function anAccount(prefix: string) {
+  await migratePostgres(url, migrations)
+  const database = openPostgres(url)
+  const raw = new pg.Client({ connectionString: url })
+  await raw.connect()
+  const id = `${prefix}-${randomUUID()}`
+  await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
+    id,
+    '',
+    `${id}@example.com`
+  ])
+  const done = async () => {
+    await raw.query('delete from users where id = $1', [id])
+    await raw.end()
+    await database.close()
+  }
+  return { database, raw, id, done }
+}
 
 describe('Postgres, through the driver the service runs', () => {
   test('applies the migrations, and again with nothing left to do', async () => {
@@ -65,16 +86,7 @@ describe('Postgres, through the driver the service runs', () => {
   test.skipIf(realPostgres === '')(
     'lets one of many changes made at once to one account through, and applies a mutation sent many times at once once',
     async () => {
-      await migratePostgres(url, migrations)
-      const database = openPostgres(url)
-      const raw = new pg.Client({ connectionString: url })
-      await raw.connect()
-      const id = `race-${randomUUID()}`
-      await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
-        id,
-        '',
-        `${id}@example.com`
-      ])
+      const { database, raw, id, done } = await anAccount('race')
       const accounts = createAccounts(accountStore(database.db), cursors(cursorKey('test')))
       const updates = await Promise.all(
         Array.from({ length: 8 }, (_, index) =>
@@ -106,25 +118,14 @@ describe('Postgres, through the driver the service runs', () => {
         [id]
       )
       expect(journal.rows).toEqual([{ operation: 'update', entity_version: 3 }])
-      await raw.query('delete from users where id = $1', [id])
-      await raw.end()
-      await database.close()
+      await done()
     }
   )
 
   test.skipIf(realPostgres === '')(
     'keeps an account to its newest 50 videos when several are watched at once',
     async () => {
-      await migratePostgres(url, migrations)
-      const database = openPostgres(url)
-      const raw = new pg.Client({ connectionString: url })
-      await raw.connect()
-      const id = `watch-race-${randomUUID()}`
-      await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
-        id,
-        '',
-        `${id}@example.com`
-      ])
+      const { database, raw, id, done } = await anAccount('watch-race')
       await raw.query(
         "insert into watched_videos (user_id, video_id, watched_at, status, version) select $1, 'race' || lpad(n::text, 7, '0'), timestamptz '2026-10-01T00:00:00Z' + n * interval '1 second', 'watched', 1 from generate_series(0, 47) as n",
         [id]
@@ -161,9 +162,30 @@ describe('Postgres, through the driver the service runs', () => {
         { operation: 'prune', n: 6 },
         { operation: 'watch', n: 8 }
       ])
-      await raw.query('delete from users where id = $1', [id])
-      await raw.end()
-      await database.close()
+      await done()
+    }
+  )
+
+  test.skipIf(realPostgres === '')(
+    'keeps one file when one photo is uploaded several times at once, and deletes the other copies',
+    async () => {
+      const { database, raw, id, done } = await anAccount('photo-race')
+      const storage = new MemoryPhotoStorage()
+      const files = photoFiles(accountStore(database.db), storage)
+      const bytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, ...Buffer.from(id)])
+      const photoId = createHash('sha256').update(bytes).digest('hex')
+      const uploads = await Promise.all(
+        Array.from({ length: 6 }, () => files.upload(id, photoId, bytes))
+      )
+      expect(uploads.map(upload => upload.status).sort()).toEqual([
+        ...Array(5).fill('kept'),
+        'stored'
+      ])
+      const kept = await raw.query('select storage_key from photo_files where user_id = $1', [id])
+      expect(kept.rows).toHaveLength(1)
+      await files.sweep()
+      expect([...storage.objects.keys()]).toEqual([kept.rows[0]?.storage_key])
+      await done()
     }
   )
 })

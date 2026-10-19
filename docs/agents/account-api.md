@@ -446,8 +446,9 @@ checks each route's scope, `src/http/sync-entities.test.ts` sends each documente
 the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
 `src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
 one mutation six times at once: one change goes through, and the mutation applies once. It also
-watches eight videos at once on an account holding 48, which keeps the 50 newest. The emails'
-tests, in each language, are in [`account-email.md`](account-email.md), Check it.
+watches eight videos at once on an account holding 48, which keeps the 50 newest, and uploads one
+photo six times at once, which keeps one file and deletes the other copies. The emails' tests, in
+each language, are in [`account-email.md`](account-email.md), Check it.
 
 ## Ship it
 

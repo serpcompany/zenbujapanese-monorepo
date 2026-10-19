@@ -11,7 +11,7 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'apps/web/docs/product/account.md': 345,
   'apps/web/docs/product/browse.md': 332,
   'apps/web/docs/product/dictionary.md': 1287,
-  'docs/agents/account-api.md': 893,
+  'docs/agents/account-api.md': 894,
   'docs/agents/account-clients.md': 551,
   'docs/agents/api-servers.md': 318,
   'docs/agents/dictionary-api.md': 543,

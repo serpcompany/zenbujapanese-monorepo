@@ -117,6 +117,8 @@ at once turned away until one of four finishes.
 rules, and show a released file swept from storage, a file shared by the profile photo and a Media
 Library photo kept while either names it, an unnamed file released after 24 hours, and an app with
 only `profile` reading the profile photo's file and no other. `src/http/delete-account.test.ts`
-deletes an account's files from storage with it. `src/storage/r2.test.ts` runs the R2 adapter
-against a stand-in S3 server: each request signed with SigV4 and the body's SHA-256, an object put,
-read, deleted, and missing, and a refusal thrown with only its status.
+deletes an account's files from storage with it, and then refuses its token at both routes
+(`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo six times at once: one
+file is kept, and the other copies are swept. `src/storage/r2.test.ts` runs the R2 adapter against
+a stand-in S3 server: each request signed with SigV4 and the body's SHA-256, an object put, read,
+deleted, and missing, and a refusal thrown with only its status.
