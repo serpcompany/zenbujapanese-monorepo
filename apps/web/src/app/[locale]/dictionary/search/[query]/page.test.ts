@@ -86,7 +86,7 @@ describe('a search lives at the query the core searches', () => {
     const japanese = await generateMetadata(decodedSegment('いる', 'ja'))
     expect(japanese.title).toBe('いるの英語・意味')
     expect(japanese.description).toBe(
-      '「いる」の英語の意味を、一致する6語の読み方と一緒に紹介します。'
+      '「いる」の英語の意味を、一致する6語の読み方と一緒に紹介します。一覧の言葉を開くと、それぞれのアクセント、漢字、活用、例文まで確認できます。Zenbu Japaneseの和英辞典は、ウェブでもiPhoneアプリでも無料で使えます。'
     )
     expect((await generateMetadata(decodedSegment('いる'))).title).toBe('いる in Japanese')
   })

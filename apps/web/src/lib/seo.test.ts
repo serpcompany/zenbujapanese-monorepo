@@ -31,7 +31,7 @@ describe('every page names each language it is published in, itself included, an
   })
 
   test('Open Graph names the language of the page', () => {
-    expect(siteOpenGraph('en')).toEqual({
+    expect(siteOpenGraph('en')).toMatchObject({
       siteName: 'Zenbu Japanese',
       type: 'website',
       locale: 'en_US'

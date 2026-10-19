@@ -194,7 +194,7 @@ test.describe('browse pages', () => {
   test('the JLPT kanji lists are Waller’s, credited under CC BY', async ({ page }) => {
     await page.goto(browse('kanji/'))
     await expect(page).toHaveTitle(
-      'Kanji lists by school grade, JLPT level, and stroke count | Zenbu Japanese'
+      'Kanji lists by grade, JLPT level, and stroke count | Zenbu Japanese'
     )
     const levels = page.getByRole('region', { name: 'By JLPT level' })
     await expect(levels.getByRole('link')).toHaveCount(5)

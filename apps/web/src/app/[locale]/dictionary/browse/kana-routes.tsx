@@ -20,12 +20,16 @@ import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
 import { localeOf } from '@/lib/i18n/params'
 import { localizedPath } from '@/lib/i18n/paths'
+import { fittedDescription } from '@/lib/snippets'
 
 type LocaleParams = { params: Promise<{ locale: string }> }
 type PrefixParams = { params: Promise<{ locale: string; prefix: string }> }
 type PagedParams = { params: Promise<{ locale: string; prefix: string; page: string }> }
 
 const kanaText = (locale: Locale) => getDictionary(locale).browse.kana
+
+const kanaDescription = (lead: string, locale: Locale) =>
+  fittedDescription(lead, [kanaText(locale).metaMore], locale)
 
 export function scriptIndexRoute(script: KanaScript) {
   return {
@@ -37,7 +41,7 @@ export function scriptIndexRoute(script: KanaScript) {
         scriptPath(script),
         locale,
         t.scripts[script].title,
-        counted(t.scriptDescription, total, locale)
+        kanaDescription(counted(t.scriptDescription, total, locale), locale)
       )
     },
     async Page({ params }: LocaleParams) {
@@ -99,7 +103,10 @@ function prefixMetadata(
     kanaPath(script, prefix, page),
     locale,
     pagedTitle(startingWith(prefix, locale), page, locale),
-    counted(kanaText(locale).prefixDescription, total, locale, { kana: prefix }),
+    kanaDescription(
+      counted(kanaText(locale).prefixDescription, total, locale, { kana: prefix }),
+      locale
+    ),
     { index: total >= minimumIndexedWords }
   )
 }

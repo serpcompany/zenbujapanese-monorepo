@@ -47,6 +47,9 @@ Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a
 in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
 each language shows, the search-engine tags, and the switcher.
 
+Every page's title and description fit a search result, and a shared link shows the site's image;
+[Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
+
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.

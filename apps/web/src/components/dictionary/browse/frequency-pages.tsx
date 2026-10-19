@@ -25,7 +25,6 @@ import {
   counted,
   inKanaOrder,
   jlptCopy,
-  joinSentences,
   legendTiers,
   type RankedListCopy,
   rankedListCopy,
@@ -48,6 +47,7 @@ import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
+import { joinedSentences } from '@/lib/snippets'
 
 type Word = Linked<{ entSeq: number; headword: string; reading: string }>
 
@@ -202,7 +202,7 @@ export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; 
           <TierLegend locale={locale} />
         </div>
         <p className="text-sm text-muted-foreground">
-          {joinSentences([tierCutoffs(locale), t.frequency.bandDot], locale)}
+          {joinedSentences([tierCutoffs(locale), t.frequency.bandDot], locale)}
         </p>
         {ranked.lists.map(list => (
           <RankedPanel key={list.slug} list={list} locale={locale} />
@@ -240,7 +240,7 @@ export function RankBandPage({
         ]}
       />
       <BrowseHeading title={fill(t.frequency.bandHeading, { name })}>
-        {joinSentences(
+        {joinedSentences(
           [
             copy.description,
             counted(t.frequency.bandWords, words.words.length, locale, { range }),
@@ -279,7 +279,7 @@ export function JlptListPage({
         ]}
       />
       <BrowseHeading title={fill(t.frequency.jlptHeading, { name: level.name })}>
-        {joinSentences(
+        {joinedSentences(
           [copy.description, inKanaOrder(words.total, page, words.pages, locale)],
           locale
         )}
