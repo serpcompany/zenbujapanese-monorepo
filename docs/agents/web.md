@@ -729,9 +729,10 @@ is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse hom
 (`src/lib/pages-sitemap.ts`), a section landing page as `/dictionary/` is. The files:
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
-  its slug, percent-encoded, in English and Japanese, 25,000 words (50,000 URLs) to a file in
-  `ent_seq` order (nine files for 218,382 words). The service works out each file's `ent_seq`
+  its slug, percent-encoded, in English and Japanese, 20,000 words (40,000 URLs) to a file in
+  `ent_seq` order (13 files for 218,382 words). The service works out each file's `ent_seq`
   range, and the writer streams its words 10,000 at a time, so a file never sits whole in memory.
+  `pnpm sitemaps` refuses a file over 25 MiB, the most a Cloudflare Workers asset may be.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
   lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 pages in all, each in both languages:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
