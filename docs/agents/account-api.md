@@ -133,8 +133,7 @@ it differs: after changing a route, run `pnpm test -u` and commit both files wit
   example to the service, which applies each, and sends each operation that reads `baseVersion`
   without it, which is refused.
 - Sign-in's routes are Better Auth's, declared in `src/http/sign-in-contract.ts`. A test holds the
-  list to `src/auth/routes.ts`, and calls each route to check its answer against what's
-  declared.
+  list to `src/auth/routes.ts`, and calls each route to check its answer against what's declared.
 
 ## Sign-in
 
@@ -336,12 +335,14 @@ else, and deletes only after a fresh sign-in.
   - anything else, Apple down or refusing the key: `503 apple_unavailable`, with nothing deleted,
     and the key's refusal logged as an error. The code may be used up, so the app gets a new one
     by signing in with Apple again.
-- **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
-  its synced profile, known words, lists, list words, watched videos, and bookmarked sentences,
-  its journal, its mutation results, and its billing customer, its website subscription canceled
-  first ([`account-billing.md`](account-billing.md)); and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
-  `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
-  account's email is told. Backups that hold it are deleted within 30 days (Back up and
+- **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions, its
+  synced profile, known words, lists, list words, watched videos, and bookmarked sentences, its
+  journal, its mutation results, and its billing customer, its website subscription canceled first;
+  and any sign-in code waiting for its email. What stays, with no account: its ID in
+  `deleted_accounts`, and its subscriptions, ledger rows, and store events
+  ([`account-billing.md`](account-billing.md), The model). Its access tokens stop working at
+  `/v1/me` and `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere
+  else. The account's email is told. Backups that hold it are deleted within 30 days (Back up and
   restore).
 - **Each device** keeps its own data and works signed out, as the apps' product docs say.
 - **Signing in again** with the same email or Apple or Google account makes a new account.

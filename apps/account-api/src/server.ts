@@ -4,6 +4,7 @@ import { accessTokenVerifier } from './auth/access-tokens'
 import { appleRevoker } from './auth/apple-revoke'
 import { createAuth } from './auth/auth'
 import { appStoreBilling } from './billing/app-store'
+import { storeTraits } from './billing/stores'
 import { stripeBilling, stripeMode } from './billing/stripe'
 import type { BillingConfig } from './billing-config'
 import { readConfig } from './config'
@@ -44,7 +45,8 @@ function billingRules({ cloud, appStore }: BillingConfig) {
     cloud,
     storeTesting: both
       ? { environment: 'Sandbox', accounts: appStore?.sandboxAccounts ?? null }
-      : null
+      : null,
+    stores: storeTraits
   }
 }
 

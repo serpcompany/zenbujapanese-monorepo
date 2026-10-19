@@ -1,3 +1,4 @@
+import { log } from '@zenbu/node-service/log'
 import type {
   AccountHints,
   BillingTransaction,
@@ -7,8 +8,8 @@ import type {
 } from './billing'
 import {
   entitlementOf,
-  type ManagedInOf,
   type StoredSubscription,
+  type StoreTraitsOf,
   type Subscription,
   type SubscriptionKey,
   type SubscriptionStatus,
@@ -22,7 +23,8 @@ export interface EventRules {
   grants(subscription: Subscription): boolean
   gracePeriodDays(subscription: Subscription): number
   refundsAndCancels(key: SubscriptionKey): boolean
-  managedIn: ManagedInOf
+  stores: StoreTraitsOf
+  counts(subscription: StoredSubscription, email: string): boolean
 }
 
 async function accountFor(
@@ -59,7 +61,9 @@ async function anotherRuns(
   for (const each of await tx.subscriptionsOf(userId)) {
     if (!sameKey(each, subscription) && !(await tx.isBeingEnded(each))) others.push(each)
   }
-  return !entitlementOf(others, subscription.stateAt, rules.managedIn).canSubscribe
+  const email = (await tx.emailOf(userId)) ?? ''
+  const counted = others.filter(each => rules.counts(each, email))
+  return !entitlementOf(counted, subscription.stateAt, rules.stores).canSubscribe
 }
 
 async function unwanted(
@@ -75,7 +79,22 @@ async function unwanted(
     const named = hints.userId
     if (named === undefined) return false
     if (!event.startsSubscription && endedAtTheStore.has(subscription.status)) return false
-    return !(await tx.accountExists(named)) && (await tx.accountWasDeleted(named))
+    if (await tx.accountExists(named)) return false
+    const deletedAt = await tx.accountDeletedAt(named)
+    if (deletedAt === null) {
+      if (!endedAtTheStore.has(subscription.status)) {
+        log(
+          'error',
+          'billing: a running subscription names an account this service never deleted, as after a restore; re-link or cancel it',
+          {
+            source: subscription.source,
+            subscription: subscription.providerId
+          }
+        )
+      }
+      return false
+    }
+    return deletedAt <= subscription.stateAt
   }
   if (!event.startsSubscription || endedAtTheStore.has(subscription.status)) return false
   await tx.lockAccount(userId)

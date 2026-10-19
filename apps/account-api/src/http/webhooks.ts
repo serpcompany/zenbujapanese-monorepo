@@ -15,12 +15,13 @@ import {
 
 const webhookBodyLimitKb = 256
 
-const answers = (signedBy: string) => ({
+const invalidSignature = (signedBy: string) => ({
+  invalid_signature: `${signedBy} didn't sign the body, or it is for another app or environment. Nothing was recorded.`
+})
+
+const answers = (signedBy: string, refused: Record<string, string>) => ({
   200: json(ReceivedSchema, 'Taken, or a repeat of an event already taken, which changed nothing.'),
-  400: refusal({
-    invalid_signature: `${signedBy} didn't sign the body, or it is for another app or environment. Nothing was recorded.`,
-    unreadable_event: `${signedBy} signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.`
-  }),
+  400: refusal(refused),
   404: refusal({ not_found: "This environment doesn't take this store's events." }),
   413: refusal({ too_large: `The body is over ${webhookBodyLimitKb} KB.` }),
   500: refusal({ internal: 'The event failed and was not recorded, so the store sends it again.' }),
@@ -35,12 +36,16 @@ const stripeWebhook = createRoute({
   path: '/v1/webhooks/stripe',
   summary: "Stripe's events, for subscriptions bought on the website",
   description:
-    "Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, and `refund.*`, reads each subscription's state from Stripe as it is then, and records every charge and refund in its ledger.",
+    "Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.*`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, `refund.*`, `charge.dispute.*`, and `radar.early_fraud_warning.created`, reads each subscription's state from Stripe as it is then, and records every charge, refund, dispute, and fraud warning in its ledger.",
   request: {
     headers: StripeWebhookHeaders,
     body: { content: { 'application/json': { schema: StripeEventSchema } }, required: true }
   },
-  responses: answers('Stripe')
+  responses: answers('Stripe', {
+    ...invalidSignature('Stripe'),
+    unreadable_event:
+      "Stripe signed it, but it isn't in a format the service reads, such as a thin event. Nothing was recorded; the endpoint must send Snapshot events."
+  })
 })
 
 const appleWebhook = createRoute({
@@ -52,7 +57,7 @@ const appleWebhook = createRoute({
   request: {
     body: { content: { 'application/json': { schema: AppleNotificationSchema } }, required: true }
   },
-  responses: answers('Apple')
+  responses: answers('Apple', invalidSignature('Apple'))
 })
 
 const answered = (context: Context, outcome: WebhookAnswer, source: string) => {

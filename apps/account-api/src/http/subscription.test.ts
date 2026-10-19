@@ -240,6 +240,10 @@ describe('POST /v1/me/subscription/checkout', () => {
       locale: 'ja',
       'subscription_data[trial_period_days]': '7'
     })
+    const expiresAt = Number(created?.form.get('expires_at'))
+    const nowS = Date.now() / 1000
+    expect(expiresAt).toBeGreaterThan(nowS + 29 * 60)
+    expect(expiresAt).toBeLessThan(nowS + 31 * 60)
   })
 
   test("reuses the account's Stripe customer on a second checkout, after the first ended, with no second trial", async () => {
@@ -275,9 +279,9 @@ describe('POST /v1/me/subscription/checkout', () => {
     expect((await billing.subscription(learner)).status).toBe('pending')
     expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
     const created = stripe.requests.findLast(each => each.path === '/v1/checkout/sessions')
-    expect(Number(created?.form.get('expires_at'))).toBeLessThanOrEqual(
-      Math.floor(Date.now() / 1000) + 30 * 60
-    )
+    const expiresAt = Number(created?.form.get('expires_at'))
+    expect(expiresAt).toBeGreaterThan(Date.now() / 1000 + 29 * 60)
+    expect(expiresAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 30 * 60)
   })
 
   test("refuses a price the website doesn't offer, none of several, and pages off the website", async () => {

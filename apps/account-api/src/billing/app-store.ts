@@ -189,9 +189,8 @@ export function appStoreBilling(
       latest.status,
       each => new Date(each.signedDate ?? Date.now())
     )
-    const token = transaction.appAccountToken
     return {
-      state: { ...state, hints: token ? { appAccountToken: token } : state.hints },
+      state,
       ledger: [...appleLedger(transaction, undefined), ...appleLedger(current, undefined)]
     }
   }

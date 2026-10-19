@@ -6,6 +6,7 @@ import { accessTokenVerifier } from '../auth/access-tokens'
 import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
 import { appStoreBilling } from '../billing/app-store'
+import { storeTraits } from '../billing/stores'
 import { stripeBilling } from '../billing/stripe'
 import type { CloudSettings } from '../billing-config'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
@@ -13,6 +14,7 @@ import { accountStore } from '../db/accounts'
 import { billingStore } from '../db/billing'
 import { accountDeleter } from '../domain/account-deletion'
 import { createAccounts } from '../domain/accounts'
+import type { BillingStore } from '../domain/billing'
 import { cloudIsFree } from '../domain/cloud-access'
 import { cursorKey, cursors } from '../domain/cursor'
 import { createBilling } from '../domain/subscription-billing'
@@ -88,11 +90,28 @@ function billingProviders(standIns: BillingStandIns) {
   }
 }
 
+function watchedTransactions(store: BillingStore, stripe: StandInStripe | undefined): BillingStore {
+  let open = 0
+  if (stripe) stripe.state.inATransaction = () => open > 0
+  return {
+    ...store,
+    async transaction(work) {
+      open += 1
+      try {
+        return await store.transaction(work)
+      } finally {
+        open -= 1
+      }
+    }
+  }
+}
+
 const billingRules = (standIns: BillingStandIns) => ({
   cloud: standIns.cloud ?? cloudIsFree,
   storeTesting: standIns.sandboxAccounts
     ? { environment: 'Sandbox', accounts: standIns.sandboxAccounts }
-    : null
+    : null,
+  stores: storeTraits
 })
 
 export async function startService({
@@ -129,7 +148,7 @@ export async function startService({
   const auth = await createAuth({ config, db, mailer })
   const store = accountStore(db)
   const billing = createBilling(
-    billingStore(db),
+    watchedTransactions(billingStore(db), standIns.stripe),
     billingProviders(standIns),
     billingRules(standIns)
   )

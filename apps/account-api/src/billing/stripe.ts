@@ -112,12 +112,23 @@ export function stripeBilling(
     return base
   }
 
-  async function refundOnce(paymentIntent: string) {
+  const refund = (paymentIntent: string, email: string | null) =>
+    stripe.refunds.create(
+      { payment_intent: paymentIntent, ...(email ? { instructions_email: email } : {}) },
+      { idempotencyKey: `refund-unwanted-${paymentIntent}${email ? '-by-email' : ''}` }
+    )
+
+  async function refundOnce(paymentIntent: string, email: string | null) {
     try {
-      await stripe.refunds.create(
-        { payment_intent: paymentIntent },
-        { idempotencyKey: `refund-unwanted-${paymentIntent}` }
-      )
+      try {
+        await refund(paymentIntent, null)
+      } catch (error) {
+        const needsEmail =
+          error instanceof Stripe.errors.StripeInvalidRequestError &&
+          error.param === 'instructions_email'
+        if (!needsEmail || email === null) throw error
+        await refund(paymentIntent, email)
+      }
     } catch (error) {
       if (!(error instanceof Stripe.errors.StripeInvalidRequestError)) throw error
       if (error.code === 'charge_already_refunded') return
@@ -215,11 +226,13 @@ export function stripeBilling(
           expand: ['latest_invoice.payments']
         })
         await cancelUnlessEnded(subscription)
-        const invoice = subscription.latest_invoice
-        const payments = typeof invoice === 'object' && invoice ? invoice.payments?.data : []
-        for (const payment of payments ?? []) {
+        const invoice =
+          typeof subscription.latest_invoice === 'object' ? subscription.latest_invoice : null
+        for (const payment of invoice?.payments?.data ?? []) {
           const intent = idOf(payment.payment.payment_intent)
-          if (intent && payment.status === 'paid') await refundOnce(intent)
+          if (intent && payment.status === 'paid') {
+            await refundOnce(intent, invoice?.customer_email ?? null)
+          }
         }
       })
   }

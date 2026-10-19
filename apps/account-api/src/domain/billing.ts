@@ -100,6 +100,7 @@ interface OwedAction {
   id: number
   source: SubscriptionSource
   subscriptionId: string
+  attempts: number
 }
 
 export interface BillingTransaction {
@@ -116,7 +117,8 @@ export interface BillingTransaction {
   saveSubscription(userId: string, subscription: Subscription): Promise<void>
   assignSubscription(key: SubscriptionKey, userId: string): Promise<void>
   accountExists(userId: string): Promise<boolean>
-  accountWasDeleted(userId: string): Promise<boolean>
+  emailOf(userId: string): Promise<string | null>
+  accountDeletedAt(userId: string): Promise<Date | null>
   accountByToken(appAccountToken: string): Promise<string | null>
   accountByCustomer(stripeCustomerId: string): Promise<string | null>
   linkCustomer(userId: string, stripeCustomerId: string): Promise<void>
@@ -131,8 +133,8 @@ export interface BillingStore {
   subscriptionsOf(userId: string): Promise<StoredSubscription[]>
   eventRecorded(source: SubscriptionSource, id: string): Promise<boolean>
   transaction<T>(work: (tx: BillingTransaction) => Promise<T>): Promise<T>
-  claimOwedActions(limit: number): Promise<OwedAction[]>
-  settleOwedAction(id: number, failure: string | null): Promise<void>
+  claimOwedAction(): Promise<OwedAction | null>
+  settleOwedAction(id: number, failure: string | null): Promise<'settled' | 'retry' | 'gave_up'>
 }
 
 export class BillingUnavailable extends Error {}

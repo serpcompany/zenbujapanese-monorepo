@@ -269,7 +269,7 @@ The app sends each verified transaction StoreKit 2 gives it, so the subscription
 
 Stripe's events, for subscriptions bought on the website.
 
-Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, and `refund.*`, reads each subscription's state from Stripe as it is then, and records every charge and refund in its ledger.
+Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.*`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, `refund.*`, `charge.dispute.*`, and `radar.early_fraud_warning.created`, reads each subscription's state from Stripe as it is then, and records every charge, refund, dispute, and fraud warning in its ledger.
 
 **Auth:** none.
 
@@ -286,7 +286,7 @@ Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before
 
 - **200**, [`Received`](#received): Taken, or a repeat of an event already taken, which changed nothing.
 - **400** `invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded.
-- **400** `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.
+- **400** `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin event. Nothing was recorded; the endpoint must send Snapshot events.
 - **404** `not_found`: This environment doesn't take this store's events.
 - **413** `too_large`: The body is over 256 KB.
 - **500** `internal`: The event failed and was not recorded, so the store sends it again.
@@ -308,7 +308,6 @@ The App Store's notification URL. The signed payload is checked with Apple's App
 
 - **200**, [`Received`](#received): Taken, or a repeat of an event already taken, which changed nothing.
 - **400** `invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded.
-- **400** `unreadable_event`: Apple signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.
 - **404** `not_found`: This environment doesn't take this store's events.
 - **413** `too_large`: The body is over 256 KB.
 - **500** `internal`: The event failed and was not recorded, so the store sends it again.
@@ -960,7 +959,7 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `unknown_client` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `unknown_price` | 400 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `unknown_product` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
-| `unreadable_event` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
+| `unreadable_event` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe) |
 | `username_taken` | 409 | [`PATCH /v1/me`](#patch-v1me) |
 | `validation_error` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session) |
 | `version_conflict` | 409 | [`PATCH /v1/me`](#patch-v1me) |

@@ -63,6 +63,14 @@ export function useBillingService(billing: BillingStandIns) {
       await rows(`delete from users where id = '${userId}'`)
       await rows(`insert into deleted_accounts (user_id) values ('${userId}')`)
     },
+    holds: (
+      learner: Learner,
+      held: { source: string; expiresAt: Date; willRenew?: boolean; environment?: string }
+    ) =>
+      rows(
+        `insert into subscriptions (source, provider_id, user_id, product_id, status, expires_at, will_renew, environment, period_started_at, state_at, origin)
+          values ('${held.source}', '${held.source}_${learner.userId}', '${learner.userId}', 'product', 'active', '${held.expiresAt.toISOString()}', ${held.willRenew ?? true}, '${held.environment ?? 'test'}', now() - interval '30 days', now(), 'provider')`
+      ),
     deleteAccount: (learner: Learner) =>
       call('/v1/me', { token: learner.token, body: { confirm: true }, method: 'DELETE' }),
     expectNothingDeleted: async (learner: Learner, answer: { status: number; body: unknown }) => {

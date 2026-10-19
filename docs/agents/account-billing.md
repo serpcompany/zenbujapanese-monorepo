@@ -29,9 +29,12 @@ every account syncs as before, and the stores are off until their settings are s
   Only `active` and `grace_period` give access. An `active` subscription set to renew keeps its
   features for a day past `expiresAt` (`renewalLeewayMs`), so a renewal that reaches the service
   late cuts nothing off.
-- **Running** means giving access, in a billing retry, or paused, each for at most 60 days from the
-  first failure or the last word (`billingRetryWindowMs`, Apple's retry window), so a store's lost
-  last notification can't block subscribing forever. A pending first payment isn't running.
+- **Running** means giving access, in a billing retry, or paused. An App Store one counts for at
+  most 60 days from the first failure or the last word (`billingRetryWindowMs`, Apple's retry
+  window), so a lost last notification can't block subscribing forever; a website one counts until
+  Stripe ends it, since Stripe can retry for two months and revive an unpaid one. Each store's
+  traits are in `src/billing/stores.ts`, by the source on each row, whether or not the store is set
+  up. A pending first payment isn't running.
 - **No second subscription.** `canSubscribe` is false while any subscription runs, so neither
   client offers another, and `POST /v1/me/subscription/checkout` refuses one
   (`409 already_subscribed`).
@@ -58,18 +61,25 @@ every account syncs as before, and the stores are off until their settings are s
   again. Events are kept, as the ledger is: a few rows a subscriber a month.
 - **Owed refunds.** A subscription the service has to refund and cancel is a row in
   `billing_actions`, written in the event's transaction and done after it commits, by the event's
-  request and by a sweep every minute, until Stripe takes it. A subscription being ended this way
-  doesn't count as another one running.
-- **Deleted accounts.** `deleted_accounts` keeps the ID of each account deleted, so a running
-  subscription that names a missing account is refunded and canceled only when the account was
-  deleted, never because a restore rolled the database back past it.
+  request and by a sweep every minute: each is claimed for 5 minutes as it runs, one at a time,
+  and a failure is tried again 5 minutes later. After 48 attempts (about 4 hours) it gives up and
+  logs `billing: gave up on an owed refund and cancel`, leaving the row with `done_at` and its
+  `last_failure`, to end by hand in Stripe's dashboard. A failure of the sweep itself is logged,
+  never left to crash the service. A subscription being ended this way doesn't count as another
+  one running.
+- **Deleted accounts.** `deleted_accounts` keeps the ID of each account deleted, and when, so a
+  running subscription that names a missing account is refunded and canceled only when the
+  account was deleted before the event's read of Stripe began: never because a restore rolled the
+  database back past it (that one is logged, [`account-backups.md`](account-backups.md)), and never
+  from a read older than the deletion, which canceled it with no refund.
 - **Deleting an account** first checks that every website subscription can be ended
   (`503 billing_unavailable` when Stripe is off and one may still bill), revokes Apple sign-in,
   cancels the website subscription at Stripe with no refund, then deletes the account. Its answer
-  says whether an App Store subscription still runs (`appStoreSubscriptionContinues`), which Apple
-  bills until the learner cancels it. The account's subscriptions stay, with no account, so a
-  refunded App Store purchase stays refunded; its customer row goes, and its ledger rows and events
-  stay, with no account. The Stripe customer, with its email and saved card, stays at Stripe.
+  says whether an App Store subscription still runs and renews (`appStoreSubscriptionContinues`),
+  which Apple bills until the learner cancels it. The account's subscriptions stay, with no
+  account, so a refunded App Store purchase stays refunded; its customer row goes, and its ledger
+  rows and events stay, with no account. The Stripe customer, with its email and saved card, stays
+  at Stripe.
 
 ## Routes
 
@@ -138,7 +148,9 @@ cover the iOS app without the App Store set up, since the app must sell it in-ap
   `billing.ts` (what a store's adapter and the database give the rules: `BillingProvider`, the
   website's store, `StoreBilling`, the app's, and `BillingStore`), `billing-events.ts` (an event,
   once, under its subscription's lock), `device-purchases.ts` (whose App Store purchase), and
-  `subscription-billing.ts` (each route's work). It names no store: each adapter says its source.
+  `subscription-billing.ts` (each route's work). Its rules key each subscription by the source its
+  adapter names and take each store's traits as a setting; the names that remain are the roles'
+  (the website's customer is Stripe's, `stripeCustomerId`, and the app's purchases Apple's).
 - `src/billing`: the stores' adapters, which turn Stripe's and Apple's objects into the domain's
   and call their APIs. They import only the domain's types and rules, and no other layer.
 - `src/db`: `billing-schema.ts` and `billing.ts`, the store the rules work through.
@@ -160,6 +172,9 @@ Store Server API.
   invoice whose failed attempt arrives late, and Stripe down.
 - `src/http/stripe-payments.test.ts`: a grace period from the first failure, a delayed first
   payment, a dispute and a fraud warning, a refund linked and ordered, and a thin event.
+  `src/http/owed-refunds.test.ts`: no Stripe call in a transaction, a konbini refund's email, one
+  owed refund claimed at a time, giving up loudly, a failed sweep logged, and a read from before
+  a deletion refunding nothing.
 - `src/http/apple-notifications.test.ts`: a purchase, a forged or changed payload, another app or
   environment, a repeat, a renewal, auto-renew off and expiry, a billing retry and a grace period,
   a refund and its reversal, a partial refund, a late notification, a resubscription bought from
@@ -169,8 +184,9 @@ Store Server API.
 - `src/http/subscription.test.ts`: the entitlement, both stores at once, the app's transactions and
   whose they are, Checkout, and the portal. `src/http/cloud-access.test.ts`: the gate, and every
   route on it or kept free.
-- `src/http/delete-subscribed-account.test.ts` and `delete-with-stripe-off.test.ts`: deletion with
-  each store's subscription, a refunded purchase after it, and with Stripe off.
+- `src/http/delete-subscribed-account.test.ts`, `delete-with-stripe-off.test.ts`, and
+  `delete-with-app-store-off.test.ts`: deletion with each store's subscription, a refunded purchase
+  after it, with either store off, and an App Store one that won't renew.
 - `src/db/billing-races.test.ts`, on a real Postgres (`ACCOUNT_API_TEST_DATABASE_URL`, as in CI):
   two checkouts for one account completing at once, and the subscription lock holding a second
   writer.

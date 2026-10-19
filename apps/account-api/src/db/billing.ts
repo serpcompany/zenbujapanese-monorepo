@@ -12,7 +12,8 @@ import {
 import type { Drizzle } from './database'
 import { users } from './schema'
 
-const claimMinutes = 2
+const claimMinutes = 5
+export const mostOwedAttempts = 48
 const retryMinutes = 5
 
 const subscriptionColumns = {
@@ -121,12 +122,17 @@ function transactionOn(tx: Drizzle): BillingTransaction {
       return row !== undefined
     },
 
-    async accountWasDeleted(userId) {
+    async emailOf(userId) {
+      const [row] = await tx.select({ email: users.email }).from(users).where(eq(users.id, userId))
+      return row?.email ?? null
+    },
+
+    async accountDeletedAt(userId) {
       const [row] = await tx
-        .select({ userId: deletedAccounts.userId })
+        .select({ deletedAt: deletedAccounts.deletedAt })
         .from(deletedAccounts)
         .where(eq(deletedAccounts.userId, userId))
-      return row !== undefined
+      return row?.deletedAt ?? null
     },
 
     accountByToken: token =>
@@ -220,7 +226,7 @@ export function billingStore(db: Drizzle): BillingStore {
 
     transaction: work => db.transaction(tx => work(transactionOn(tx))),
 
-    claimOwedActions(limit) {
+    async claimOwedAction() {
       const owed = db
         .select({ id: billingActions.id })
         .from(billingActions)
@@ -231,9 +237,9 @@ export function billingStore(db: Drizzle): BillingStore {
           )
         )
         .orderBy(asc(billingActions.id))
-        .limit(limit)
+        .limit(1)
         .for('update', { skipLocked: true })
-      return db
+      const [claimed] = await db
         .update(billingActions)
         .set({
           claimedUntil: sql`now() + make_interval(mins => ${claimMinutes})`,
@@ -243,22 +249,31 @@ export function billingStore(db: Drizzle): BillingStore {
         .returning({
           id: billingActions.id,
           source: billingActions.source,
-          subscriptionId: billingActions.subscriptionId
+          subscriptionId: billingActions.subscriptionId,
+          attempts: billingActions.attempts
         })
+      return claimed ?? null
     },
 
     async settleOwedAction(id, failure) {
-      await db
+      if (failure === null) {
+        await db
+          .update(billingActions)
+          .set({ doneAt: sql`now()`, claimedUntil: null, lastFailure: null })
+          .where(eq(billingActions.id, id))
+        return 'settled'
+      }
+      const givesUp = sql`${billingActions.attempts} >= ${mostOwedAttempts}`
+      const [settled] = await db
         .update(billingActions)
-        .set(
-          failure === null
-            ? { doneAt: sql`now()`, claimedUntil: null, lastFailure: null }
-            : {
-                lastFailure: failure.slice(0, 500),
-                claimedUntil: sql`now() + make_interval(mins => ${retryMinutes})`
-              }
-        )
+        .set({
+          lastFailure: failure.slice(0, 500),
+          claimedUntil: sql`case when ${givesUp} then null else now() + make_interval(mins => ${retryMinutes}) end`,
+          doneAt: sql`case when ${givesUp} then now() end`
+        })
         .where(eq(billingActions.id, id))
+        .returning({ doneAt: billingActions.doneAt })
+      return settled?.doneAt ? 'gave_up' : 'retry'
     }
   }
 }

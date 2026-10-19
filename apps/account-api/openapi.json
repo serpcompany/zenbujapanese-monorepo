@@ -3871,7 +3871,7 @@
     "/v1/webhooks/stripe": {
       "post": {
         "summary": "Stripe's events, for subscriptions bought on the website",
-        "description": "Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.completed`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, and `refund.*`, reads each subscription's state from Stripe as it is then, and records every charge and refund in its ledger.",
+        "description": "Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before anything in the body is read, and each event is recorded once by its ID: a repeat answers 200 and changes nothing. The service takes `checkout.session.*`, `customer.subscription.*`, `invoice.paid`, `invoice.payment_failed`, `refund.*`, `charge.dispute.*`, and `radar.early_fraud_warning.created`, reads each subscription's state from Stripe as it is then, and records every charge, refund, dispute, and fraud warning in its ledger.",
         "parameters": [
           {
             "schema": {
@@ -3906,7 +3906,7 @@
             }
           },
           "400": {
-            "description": "`invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded. `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.",
+            "description": "`invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded. `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin event. Nothing was recorded; the endpoint must send Snapshot events.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4100,7 +4100,7 @@
             }
           },
           "400": {
-            "description": "`invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded. `unreadable_event`: Apple signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.",
+            "description": "`invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4112,8 +4112,7 @@
                         "code": {
                           "type": "string",
                           "enum": [
-                            "invalid_signature",
-                            "unreadable_event"
+                            "invalid_signature"
                           ]
                         },
                         "message": {
