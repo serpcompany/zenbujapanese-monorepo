@@ -18,7 +18,7 @@ export const knownLongDocs: Readonly<Record<string, number>> = {
   'docs/agents/dictionary-core.md': 604,
   'docs/agents/ios.md': 1276,
   'docs/agents/translate.md': 364,
-  'docs/agents/web.md': 809
+  'docs/agents/web.md': 808
 }
 
 export function wrappedLines(text: string): number {
