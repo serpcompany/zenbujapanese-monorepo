@@ -1,4 +1,5 @@
 import XCTest
+import notify
 
 final class AccountSignedInUITests: ZenbuUITestCase {
   static let standIns = [
@@ -98,6 +99,15 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("reading-aids.show-romaji", in: app)), Self.switchedOn)
     open(.search, in: app)
     waitUntil(waitFor(find("recent-search.0", in: app)), "label == '猫'")
+  }
+
+  func testAnOpenMediaLibraryShowsAPhotoFromAnotherDeviceAsItArrives() {
+    let app = launch(Self.standIns.merging(["ZENBU_ACCOUNT_STAND_IN_KEPT": "hold"]) { a, _ in a })
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitFor(find("media-library.empty", in: app))
+    notify_post("com.zenbujapanese.dictionary.uitests.release-kept")
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
   }
 
   private func signInWithApple(in app: XCUIApplication) {

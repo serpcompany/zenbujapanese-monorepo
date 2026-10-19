@@ -80,17 +80,21 @@ sync; what the learner sees is in the product docs'
     goes up as a new note on the word, or as the same note again when the other device only moved
     it (`startedFrom`, the text the edit began from); while a later edit of it is still queued, only
     that one does, so two offline edits make one new note. A page saves with the text it showed:
-    when the store's note changed underneath it, the edit is saved as a new note, and a deletion
-    leaves the newer text. A note refused `invalid_fields` or `too_many_notes` is kept from the
+    when the store's note changed underneath it, compared as the service keeps text (NFC, one kind
+    of line break, other control characters as spaces), the edit is saved as a new note, unless
+    it's the newer text already, and a deletion leaves the newer text. The page loads the word's
+    notes again after each save, so after a split it edits the new note. A note refused `invalid_fields` or `too_many_notes` is kept from the
     account's copies, and its version from moving, until the learner changes it (`refusedNotes`).
   - **Photos.** A photo's `add`, or the profile photo's `set`, uploads its file first
     (`PUT /v1/photos/{id}`, the bytes as the Media Library or the profile keeps them). A request
-    carries at most four new photo files (`filesPerRequest`), holding back their words, so settings,
-    notes, and the profile photo never wait behind a library; each file that went is remembered
+    carries at most four new photo files (`filesPerRequest`), holding back every later change to
+    those photos and their words, so their order holds and settings, notes, and the profile photo
+    never wait behind a library; each file that went is remembered
     (`uploadedFiles`) until its change's result, so a sync cut off mid-way doesn't send it again. A
     file the account refuses (`409`, `413`, `415`) drops that change, and the photo stays on the
     device, named in `refusedPhotos` for Zenbu Account's message; one refused as too many goes
-    again at the next launch, with its words.
+    again, with its words, at the next launch after a photo is deleted on this device or comes
+    down deleted (`photoRoomFreed`), so a full account isn't sent the same files at every launch.
     `503` (no photo storage) holds every photo, photo word, and profile photo change for the rest
     of the sync (`filesWait`), and Zenbu Account says photos wait (`photosUnavailable`); so does `photo_not_uploaded`, which queues its change again for
     the next sync. A word rejected `unknown_photo` is queued again if its photo's change still is;
@@ -103,13 +107,15 @@ sync; what the learner sees is in the product docs'
     photo word whose photo isn't on the device waits for it (`heldPhotoWords`). A download cut off
     on the way, a `5xx`, or one the device couldn't save is tried again at the end of the next sync
     (`waitingFiles`). A `429` stops downloads for the sync (`downloadsWait`) and asks the scheduler
-    for another after its `Retry-After` (`onRetryFiles`). Each download checks the session after
-    it, so one that finishes after a sign-out or another sign-in changes nothing.
+    for another after its `Retry-After` (`onRetryFiles`). Each download checks the session before
+    it records anything, so one that arrives or fails after a sign-out or another sign-in changes
+    nothing, and a new session starts with no photos on their way and no note that photos wait.
     A `404` (`not_found` or `photo_file_missing`), a `402`, or any other refusal never deletes
     anything, and waits for the next launch's first sync (`missingFiles`), so a file the account
     lost isn't asked for on every sync.
   - **Applying.** The kept copies of one answer are applied together, the latest per entity: one
-    write of the notes, one of the recent searches, and one of the Media Library's words. Each batch
+    write of the notes, one of the recent searches, and one each of the Media Library's photos and
+    words, each downloaded file saved on its own as it arrives (`storeFile`). Each batch
     raises `keptRevision`, which the Media Library, recent searches, Frequency Dictionaries, and a
     word's or kanji's page watch to load again, and `photosOnTheirWay` counts the photos still
     downloading or waiting, which the Media Library shows.

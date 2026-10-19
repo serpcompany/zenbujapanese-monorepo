@@ -8,6 +8,11 @@ import Foundation
     static let name = "Kana Fan"
     static let username = "kana_fan"
     static let searchKey = String(repeating: "5a", count: 32)
+    static let releaseKeptNotice = "com.zenbujapanese.dictionary.uitests.release-kept"
+    private static let keptReleased = DispatchSemaphore(value: 0)
+    private static let watchesRelease: Void = DarwinNotice.observe(releaseKeptNotice) { _ in
+      keptReleased.signal()
+    }
     static let photo =
       ImageCoding.drawing(width: 8, height: 8) { context in
         context.setFillColor(CGColor(red: 0.9, green: 0.5, blue: 0.2, alpha: 1))
@@ -100,10 +105,12 @@ import Foundation
       let results = mutations.compactMap { mutation -> [String: Any]? in
         (mutation["id"] as? String).map { ["id": $0, "status": "applied", "version": 1] }
       }
-      let elsewhere =
-        request?["cursor"] is String
-          || ProcessInfo.processInfo.environment[LaunchHarness.accountKeptStandInKey] != "1"
-        ? [] : keptElsewhere
+      let kept = ProcessInfo.processInfo.environment[LaunchHarness.accountKeptStandInKey]
+      let elsewhere = request?["cursor"] is String || kept == nil ? [] : keptElsewhere
+      if !elsewhere.isEmpty, kept == "hold" {
+        _ = watchesRelease
+        _ = keptReleased.wait(timeout: .now() + 60)
+      }
       return [
         "results": results, "changes": elsewhere, "cursor": "stand-in", "hasMore": false,
         "searchKey": searchKey,

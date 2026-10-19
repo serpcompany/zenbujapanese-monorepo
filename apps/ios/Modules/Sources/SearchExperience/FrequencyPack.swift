@@ -56,6 +56,13 @@ extension FrequencyChoice {
       await downloadQuietly(await manager.pendingSyncedPacks(), with: manager)
     })
 
+  static func quietRequest(for url: URL) -> URLRequest {
+    var request = URLRequest(url: url)
+    request.allowsConstrainedNetworkAccess = false
+    request.allowsExpensiveNetworkAccess = false
+    return request
+  }
+
   @MainActor
   static func downloadQuietly(_ packIDs: [FrequencyPackID], with manager: FrequencyPackManager) {
     for packID in packIDs {
@@ -96,10 +103,7 @@ private actor FrequencyPackStore {
       relay: relay,
       download: { url, progress in try await fetched(URLRequest(url: url), progress) },
       quietDownload: { url, progress in
-        var request = URLRequest(url: url)
-        request.allowsConstrainedNetworkAccess = false
-        request.allowsExpensiveNetworkAccess = false
-        return try await fetched(request, progress)
+        try await fetched(FrequencyChoice.quietRequest(for: url), progress)
       }
     )
   }

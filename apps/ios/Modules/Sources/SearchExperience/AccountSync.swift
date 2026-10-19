@@ -123,7 +123,7 @@ final class AccountSync: LocalFileStore {
   func begin(_ signIn: AccountSignIn) async {
     await ready()
     tokens.replaceSession(with: signIn.sessionToken)
-    session += 1
+    startSession()
     lastFailure = nil
     let account = SignedInAccount(userID: signIn.userID, email: signIn.email)
     if !state.resume(as: account) {
@@ -138,13 +138,19 @@ final class AccountSync: LocalFileStore {
     persist()
   }
 
+  private func startSession() {
+    session += 1
+    downloadsLeft = 0
+    photosUnavailable = false
+  }
+
   func confirm(_ signIn: AccountSignIn) throws {
     guard signIn.userID == account?.userID else { throw AccountServiceError.differentAccount }
     tokens.confirmSession(with: signIn.sessionToken)
   }
 
   func endSession(onItsOwn: Bool = false) {
-    session += 1
+    startSession()
     tokens.forgetSession()
     state.signOut(onItsOwn: onItsOwn)
     userProfile.refusal = nil
@@ -153,7 +159,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func forgetAccount() {
-    session += 1
+    startSession()
     tokens.forgetSession()
     state = AccountSyncState()
     userProfile.refusal = nil

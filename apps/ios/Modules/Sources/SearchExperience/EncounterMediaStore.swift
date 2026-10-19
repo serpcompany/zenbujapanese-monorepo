@@ -214,16 +214,24 @@ actor EncounterMediaStorage {
     return try? Data(contentsOf: blobURL(mediaID))
   }
 
-  func applySynced(_ photo: KeptPhoto, data: Data) async -> Bool {
+  func storeFile(_ data: Data, as mediaID: String) async -> Bool {
     await prepared()
-    guard var current = index(), data.sha256 == photo.id else { return false }
-    let destination = blobURL(photo.id)
-    if !blobExists(photo.id) { try? data.write(to: destination, options: .atomic) }
-    guard blobExists(photo.id) else { return false }
-    current.media[photo.id] = MediaRecord(name: photo.name, savedAt: photo.savedAt)
-    guard write(current) else { return false }
-    deferredDeletions.remove(photo.id)
-    return true
+    guard data.sha256 == mediaID else { return false }
+    if !blobExists(mediaID) { try? data.write(to: blobURL(mediaID), options: .atomic) }
+    return blobExists(mediaID)
+  }
+
+  func applySynced(photos: [KeptPhoto]) async -> Set<String> {
+    guard !photos.isEmpty else { return [] }
+    await prepared()
+    guard var current = index() else { return [] }
+    let placed = photos.filter { blobExists($0.id) }
+    for photo in placed {
+      current.media[photo.id] = MediaRecord(name: photo.name, savedAt: photo.savedAt)
+    }
+    guard write(current) else { return [] }
+    for photo in placed { deferredDeletions.remove(photo.id) }
+    return Set(placed.map(\.id))
   }
 
   func applySynced(words: [KeptPhotoWord]) async -> [KeptPhotoWord] {

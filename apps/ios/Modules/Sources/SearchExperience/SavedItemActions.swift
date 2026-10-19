@@ -13,6 +13,7 @@ final class SavedItemNotes {
   @ObservationIgnored private var writtenBeforeLoading: [LearnerWordNote] = []
   @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
+  @ObservationIgnored private var saves = 0
   @ObservationIgnored private let store: WordNoteStore
 
   init(store: WordNoteStore) {
@@ -75,19 +76,26 @@ final class SavedItemNotes {
   }
 
   func refresh() async {
-    guard let item else { return }
     await saveTask?.value
+    await reload(after: saves)
+  }
+
+  private func reload(after save: Int) async {
+    guard let item, save == saves else { return }
     let loaded = await store.load(item.id)
-    guard !Task.isCancelled else { return }
+    guard !Task.isCancelled, self.item?.id == item.id, save == saves else { return }
     notes = loaded
   }
 
   private func save(_ note: LearnerWordNote, to itemID: SavedItemID, startedFrom: String? = nil) {
     let store = store
     let precedingSave = saveTask
+    saves += 1
+    let save = saves
     saveTask = Task {
       await precedingSave?.value
       await store.save(note, itemID, startedFrom)
+      await reload(after: save)
     }
   }
 }

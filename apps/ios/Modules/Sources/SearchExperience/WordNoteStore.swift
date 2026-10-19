@@ -107,10 +107,12 @@ actor WordNoteStorage {
     await placeEarlierNotes()
     var stored = notes(under: Self.storageKey)
     var word = stored[id.rawValue] ?? []
-    let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
     var note = note
-    if let startedFrom, let underneath = word.note(note.id), trimmed(underneath.text) != trimmed(startedFrom) {
-      guard !trimmed(note.text).isEmpty else { return }
+    if let startedFrom, let underneath = word.note(note.id),
+      Self.normalized(underneath.text) != Self.normalized(startedFrom)
+    {
+      let edited = Self.normalized(note.text)
+      guard !edited.isEmpty, edited != Self.normalized(underneath.text) else { return }
       note = LearnerWordNote(text: note.text, headword: note.headword, reading: note.reading)
     }
     let before = word.note(note.id)
@@ -124,6 +126,16 @@ actor WordNoteStorage {
     } else if before != nil {
       await relay.post(KeptChanges.noteDeleted(note.id))
     }
+  }
+
+  static func normalized(_ text: String) -> String {
+    let lines = text.precomposedStringWithCanonicalMapping
+      .replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
+    let spaced = lines.unicodeScalars.map { scalar -> Character in
+      scalar.properties.generalCategory == .control && scalar != "\n" && scalar != "\t"
+        ? " " : Character(scalar)
+    }
+    return String(spaced).trimmingCharacters(in: .whitespacesAndNewlines)
   }
 
   func keptNotes() async -> [KeptNote] {

@@ -41,22 +41,53 @@ struct AccountSyncFileTests {
   }
 
   @Test(
-    "a file the account refuses stays on the device and says why; one refused as too many goes again the next time the app opens",
+    "a file the account refuses stays on the device and says why; one refused as too many goes again only once space is freed, at the next launch",
     arguments: [(409, "too_many_photos", true), (413, "too_large", false), (415, "unsupported_photo", false)])
   func refusedFiles(status: Int, code: String, retries: Bool) async throws {
     let (service, phone, _) = await Fixture.twoPhones()
     service.refuseFiles(.error(status, code))
-    await save(1, in: phone)
+    await save(2, in: phone)
     try await phone.signIn()
-    #expect(phone.sync.state.refusedPhotos == [photo(0).sha256: code])
+    #expect(phone.sync.state.refusedPhotos == [photo(0).sha256: code, photo(1).sha256: code])
     #expect(AccountMessage.refusedPhotos(phone.sync.state.refusedPhotos).count == 1)
 
     service.refuseFiles(nil)
     await phone.launch()
     try await phone.syncNow()
+    #expect(uploads(of: photo(0), on: phone) == 1)
+    await phone.media.deleteMedia(photo(1).sha256)
+    await phone.launch()
+    try await phone.syncNow()
     #expect(uploads(of: photo(0), on: phone) == (retries ? 2 : 1))
     #expect(service.liveKeys(for: Fixture.email, entity: "photo").count == (retries ? 1 : 0))
     #expect(service.liveKeys(for: Fixture.email, entity: "photoWord").count == (retries ? 1 : 0))
+  }
+
+  @Test("a photo held back for a later request keeps its changes in order, so a deletion and a re-save after it end as the learner left them")
+  func heldBackPhotoKeepsItsOrder() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    try await phone.signIn()
+    await save(AccountSync.filesPerRequest + 1, in: phone)
+    let last = photo(AccountSync.filesPerRequest)
+    await phone.media.deleteMedia(last.sha256)
+    let miru = EncounterWordReference(
+      id: SavedItemID(rawValue: AccountFixture.miru), headword: "見る", reading: "みる")
+    await phone.media.save(EncounterMediaAttachment(name: "again.jpg", data: last), for: miru)
+    try await phone.syncNow()
+
+    #expect(
+      service.liveKeys(for: Fixture.email, entity: "photoWord").filter { $0.contains(last.sha256) }
+        == ["photoWord:\(last.sha256)/\(AccountFixture.miru)"])
+  }
+
+  @Test("downloads from the account are saved together, each photo with its word")
+  func downloadsSavedTogether() async throws {
+    let (_, phone, pad) = await Fixture.twoPhones()
+    await save(3, in: phone)
+    try await phone.signIn()
+    try await pad.signIn()
+    #expect(await shown(in: pad) == 3)
+    #expect(await pad.media.library().allSatisfy { $0.words.map(\.headword) == ["食べる"] })
   }
 
   @Test(
@@ -147,12 +178,14 @@ struct AccountSyncFileTests {
   }
 
   @Test(
-    "a download on its way across a sign-out and another sign-in leaves the new account's sync alone",
-    .timeLimit(.minutes(1)))
-  func downloadAcrossAnotherSignIn() async throws {
+    "a download on its way across a sign-out and another sign-in leaves the new account's sync alone, whether it arrives or fails",
+    .timeLimit(.minutes(1)), arguments: [true, false])
+  func downloadAcrossAnotherSignIn(arrives: Bool) async throws {
     let fixture = try await Fixture.afterSignIn()
     let held = HeldReply()
     let file = photo(0)
+    let reply: StubReply =
+      arrives ? .answer(status: 200, headers: [:], body: file) : .error(404, "photo_file_missing")
     fixture.serve(
       sync: { _ in
         StubSync.answer(
@@ -162,12 +195,14 @@ struct AccountSyncFileTests {
               ["id": file.sha256, "name": "0.jpg", "savedAt": "2026-10-06T10:00:00.000Z"])
           ], cursor: "c2")
       },
-      files: { _ in held.after(.answer(status: 200, headers: [:], body: file)) })
+      files: { _ in held.after(reply) })
     try await fixture.syncAcrossAnotherSignIn(letting: held, once: "GET /v1/photos/\(file.sha256)")
+    #expect(fixture.sync.photosOnTheirWay == 0)
 
     #expect(!held.wasNeverLetGo, "the held download was never let go")
     #expect(await shown(in: fixture) == 0)
     #expect(fixture.sync.state.waitingFiles.isEmpty)
+    #expect(fixture.sync.state.missingFiles.isEmpty)
     #expect(fixture.sync.account?.userID == "learner-2")
   }
 }

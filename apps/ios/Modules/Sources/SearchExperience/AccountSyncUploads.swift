@@ -29,7 +29,7 @@ extension AccountSync {
     state.missingFiles = []
     for change in state.retryNextLaunch { requeue(change) }
     state.retryNextLaunch = []
-    await requeueRefusedPhotos()
+    if state.photoRoomFreed { await requeueRefusedPhotos() }
     await kept.frequency.resume()
     let entities = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
     guard !entities.isEmpty else { return }
@@ -55,7 +55,9 @@ extension AccountSync {
     var bytes = 0
     var files = 0
     for change in state.queue where isSendable(change) {
-      if change.key.entity == SyncEntity.photoWord, waitingPhotos.contains(change.photoID) {
+      if [SyncEntity.photo, SyncEntity.photoWord].contains(change.key.entity),
+        waitingPhotos.contains(change.photoID)
+      {
         continue
       }
       if change.key.entity == SyncEntity.photo, Self.fileUploaded(by: change) != nil,
@@ -130,6 +132,7 @@ extension AccountSync {
   }
 
   private func requeueRefusedPhotos() async {
+    state.photoRoomFreed = false
     let full = state.refusedPhotos.filter { $0.value == AccountSync.tooManyPhotos }.map(\.key)
     guard !full.isEmpty else { return }
     let media = await kept.media.keptPhotos()
@@ -163,7 +166,9 @@ extension AccountSyncState {
     guard case .kept(let kept) = change else { return }
     switch kept.key.entity {
     case SyncEntity.wordNote: refusedNotes.removeAll { $0 == kept.key.entityID }
-    case SyncEntity.photo where kept.operation == "delete": refusedPhotos[kept.key.entityID] = nil
+    case SyncEntity.photo where kept.operation == "delete":
+      refusedPhotos[kept.key.entityID] = nil
+      photoRoomFreed = true
     default: return
     }
   }

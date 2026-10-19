@@ -23,6 +23,24 @@ struct AccountSyncNoteTests {
     return (service, phone, pad)
   }
 
+  private func openPage(showing note: LearnerWordNote, thenSynced text: String) async throws
+    -> (SavedItemNotes, WordNoteStorage, TemporaryDefaults)
+  {
+    let temporary = try TemporaryDefaults()
+    let storage = WordNoteStorage(defaults: temporary.defaults, placing: SavedWords.lookup)
+    let page = SavedItemNotes(store: SavedWords.observed(storage).0)
+    await storage.save(note, for: SavedWords.taberu)
+    await page.load(SavedWords.taberuItem)
+    await synced(text, to: storage)
+    return (page, storage, temporary)
+  }
+
+  private func synced(_ text: String, to storage: WordNoteStorage) async {
+    await storage.applySynced(
+      [KeptNote(id: noteID, item: SavedWords.taberu.rawValue, text: text, headword: nil, reading: nil)],
+      removing: [])
+  }
+
   @Test("a note deleted on one phone but edited on the other since stays, with the edit")
   func deleteLosesToAnEdit() async throws {
     let (_, phone, pad) = try await shared("朝")
@@ -68,14 +86,9 @@ struct AccountSyncNoteTests {
 
   @Test("an edit on a page that loaded before a sync changed the note becomes a note of its own, beside the newer text")
   func stalePageEdit() async throws {
-    let temporary = try TemporaryDefaults()
-    let storage = WordNoteStorage(defaults: temporary.defaults, placing: SavedWords.lookup)
-    let page = SavedItemNotes(store: SavedWords.observed(storage).0)
     let note = LearnerWordNote(id: noteID, text: "朝")
-    await storage.save(note, for: SavedWords.taberu)
-    await page.load(SavedWords.taberuItem)
-    await storage.applySynced(
-      [KeptNote(id: noteID, item: SavedWords.taberu.rawValue, text: "夜", headword: nil, reading: nil)], removing: [])
+    let (page, _, temporary) = try await openPage(showing: note, thenSynced: "夜")
+    defer { _ = temporary }
 
     page.beginEditing(note)
     page.draft = "朝ごはん"
@@ -86,16 +99,37 @@ struct AccountSyncNoteTests {
     #expect(page.notes.contains { $0.id == noteID && $0.text == "夜" })
   }
 
+  @Test("an edit the other device already made, however its line breaks are written, isn't saved again; after a split the page edits the new note")
+  func sameEditAndASecondEdit() async throws {
+    let note = LearnerWordNote(id: noteID, text: "朝")
+    let (page, storage, temporary) = try await openPage(showing: note, thenSynced: "朝ごはん\nです")
+    defer { _ = temporary }
+
+    page.beginEditing(note)
+    page.draft = "朝ごはん\r\nです"
+    page.finishEditing()
+    await page.refresh()
+    #expect(page.notes.map(\.text) == ["朝ごはん\nです"])
+
+    await synced("夜", to: storage)
+    page.beginEditing(try #require(page.notes.first))
+    page.draft = "昼"
+    page.finishEditing()
+    await page.refresh()
+    let split = try #require(page.notes.first { $0.id != noteID })
+    page.beginEditing(split)
+    page.draft = "昼ごはん"
+    page.finishEditing()
+    await page.refresh()
+
+    #expect(Set(await storage.load(SavedWords.taberu).map(\.text)) == ["夜", "昼ごはん"])
+  }
+
   @Test("deleting a note on a page left open across a sync deletes it, whatever case its ID is in")
   func deleteAcrossTheSyncedEcho() async throws {
-    let temporary = try TemporaryDefaults()
-    let storage = WordNoteStorage(defaults: temporary.defaults, placing: SavedWords.lookup)
-    let page = SavedItemNotes(store: SavedWords.observed(storage).0)
     let legacy = LearnerWordNote(id: noteID.uppercased(), text: "朝")
-    await storage.save(legacy, for: SavedWords.taberu)
-    await page.load(SavedWords.taberuItem)
-    await storage.applySynced(
-      [KeptNote(id: noteID, item: SavedWords.taberu.rawValue, text: "朝", headword: nil, reading: nil)], removing: [])
+    let (page, storage, temporary) = try await openPage(showing: legacy, thenSynced: "朝")
+    defer { _ = temporary }
 
     page.beginEditing(legacy)
     page.draft = ""

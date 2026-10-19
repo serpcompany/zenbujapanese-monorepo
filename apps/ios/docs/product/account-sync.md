@@ -116,7 +116,7 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
 - A note edited on two devices keeps both: the edit that syncs second becomes a new note on the
   same word, and a note edited twice before it synced becomes one new note, its latest text. An
   edit made on a page that was open while a sync changed the note becomes a note of its own beside
-  the newer text, and an open page shows what arrived. A note deleted on one device stays on another
+  the newer text, unless it's the same text, and an open page shows what arrived. A note deleted on one device stays on another
   that edited it since. A note the account refuses, such as one over 10,000 characters, stays on
   the phone untouched, even when the account's copy of it comes down, until the learner changes it.
 - A photo goes up with its file before the change that names it, and another device downloads
@@ -126,7 +126,7 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   everywhere, and a word added to it elsewhere since is dropped. A file the account refuses (over
   12 MB, not an image it takes, or past 1,000 photos) stays on the phone with its words, without
   syncing, and Zenbu Account says how many and why; one past 1,000 goes again the next time the
-  app opens. While the account has no photo storage, photos and their words wait, Zenbu Account
+  app opens after a photo is deleted, here or on another device. While the account has no photo storage, photos and their words wait, Zenbu Account
   says so, and the rest syncs. Files go up a few at a time beside everything else, and one cut off
   goes again without the ones before it. A file the account can't send, or won't while it isn't
   subscribed, never deletes the photo: it's tried again the next time the app opens. One cut off,

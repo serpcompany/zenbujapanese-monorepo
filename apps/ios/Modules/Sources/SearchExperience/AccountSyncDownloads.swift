@@ -49,19 +49,30 @@ extension AccountSync {
     if batch.touchesSearches, let key = state.searchKey {
       await kept.searches.applySynced(batch.searches, removing: batch.goneSearches, under: key)
     }
+    if !batch.gonePhotos.isEmpty { state.photoRoomFreed = true }
     for photoID in batch.gonePhotos {
       state.heldPhotoWords.removeAll { $0.key.entityID.hasPrefix("\(photoID)/") }
       await kept.media.applySyncedRemoval(ofPhoto: photoID)
     }
     downloadsLeft += batch.photos.count
+    var stored: [(copy: AccountCopy, photo: KeptPhoto)] = []
     for copy in batch.photos {
-      guard self.session == session else { break }
-      if case .kept(.photo(let photo)) = copy.value { await fetch(copy, photoID: photo.id, in: session) }
+      guard self.session == session, case .kept(.photo(let photo)) = copy.value else { return }
+      let data = await file(for: copy, photoID: photo.id, in: session)
+      guard self.session == session else { return }
       downloadsLeft = max(0, downloadsLeft - 1)
+      if let data, await kept.media.storeFile(data, as: photo.id) {
+        stored.append((copy, photo))
+      } else if data != nil || downloadsWait != nil {
+        state.waitingFiles.append(copy)
+      }
     }
     guard self.session == session else { return }
+    let saved = await kept.media.applySynced(photos: stored.map(\.photo))
+    state.waitingFiles += stored.filter { !saved.contains($0.photo.id) }.map(\.copy)
     await kept.media.applySyncedRemoval(ofWords: batch.goneWords.compactMap(\.photoWordParts))
-    await place(batch.words)
+    let held = state.heldPhotoWords.filter { saved.contains($0.photoID) }
+    await place(batch.words + held)
     for copy in batch.singles {
       guard self.session == session else { return }
       await applySingle(copy, in: session)
@@ -120,7 +131,7 @@ extension AccountSync {
   private func applySingle(_ copy: AccountCopy, in session: Int) async {
     switch copy.value {
     case .kept(.profilePhoto(let photoID)):
-      await fetch(copy, photoID: photoID, in: session)
+      await applyProfilePhoto(copy, photoID: photoID, in: session)
     case .kept(.setting(let name, let value)):
       if name == FrequencyChoice.setting {
         await kept.frequency.apply(value)
@@ -134,43 +145,42 @@ extension AccountSync {
     }
   }
 
-  private func fetch(_ copy: AccountCopy, photoID: String, in session: Int) async {
-    var file = await heldFile(photoID)
-    if file == nil, downloadsWait == nil { file = await downloaded(copy, photoID: photoID) }
-    guard self.session == session else { return }
-    guard let data = file else {
-      if downloadsWait != nil, !state.missingFiles.contains(where: { $0.key == copy.key }) {
-        state.waitingFiles.append(copy)
-      }
-      return
+  private func file(for copy: AccountCopy, photoID: String, in session: Int) async -> Data? {
+    if let held = await heldFile(photoID) { return held }
+    guard downloadsWait == nil else { return nil }
+    let answer: Result<Data, AccountServiceError>
+    do {
+      answer = .success(
+        try await tokens.withAccessToken { [api] token in
+          try await api.photo(photoID, accessToken: token)
+        })
+    } catch let failure as AccountServiceError {
+      answer = .failure(failure)
+    } catch {
+      answer = .failure(.unreachable)
     }
-    switch copy.value {
-    case .kept(.photo(let photo)):
-      guard await kept.media.applySynced(photo, data: data), self.session == session else {
-        if self.session == session { state.waitingFiles.append(copy) }
-        return
-      }
-      await place(state.heldPhotoWords.filter { $0.key.entityID.hasPrefix("\(photoID)/") })
+    guard self.session == session else { return nil }
+    switch answer {
+    case .success(let data) where data.sha256 == photoID:
+      return data
+    case .failure(.refused(status: 429, _, _, let retryAfter)):
+      downloadsWait = retryAfter ?? 1
+    case .failure(.refused(let status, _, _, _)) where (400..<500).contains(status):
+      state.missingFiles.append(copy)
     default:
-      userProfile.applySyncedPhoto(data)
+      state.waitingFiles.append(copy)
     }
+    return nil
   }
 
-  private func downloaded(_ copy: AccountCopy, photoID: String) async -> Data? {
-    do {
-      let data = try await tokens.withAccessToken { [api] token in
-        try await api.photo(photoID, accessToken: token)
-      }
-      if data.sha256 == photoID { return data }
-    } catch AccountServiceError.refused(status: 429, _, _, let retryAfter) {
-      downloadsWait = retryAfter ?? 1
-      return nil
-    } catch AccountServiceError.refused(let status, _, _, _) where (400..<500).contains(status) {
-      state.missingFiles.append(copy)
-      return nil
-    } catch {}
-    state.waitingFiles.append(copy)
-    return nil
+  private func applyProfilePhoto(_ copy: AccountCopy, photoID: String, in session: Int) async {
+    let data = await file(for: copy, photoID: photoID, in: session)
+    guard self.session == session else { return }
+    guard let data else {
+      if downloadsWait != nil { state.waitingFiles.append(copy) }
+      return
+    }
+    userProfile.applySyncedPhoto(data)
   }
 }
 
@@ -179,6 +189,10 @@ extension AccountCopy {
     guard let slash = key.entityID.firstIndex(of: "/") else { return nil }
     return (String(key.entityID[key.entityID.index(after: slash)...]), String(key.entityID[..<slash]))
   }
+}
+
+extension AccountCopy {
+  var photoID: String { String(key.entityID.prefix { $0 != "/" }) }
 }
 
 extension KeptPhotoWord {
