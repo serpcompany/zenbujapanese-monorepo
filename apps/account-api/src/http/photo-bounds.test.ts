@@ -38,6 +38,29 @@ const devicesWithPhoto = async (learner: Learner, bytes: Uint8Array, words: numb
   return { photoId, phone, pad }
 }
 
+interface Filler {
+  photo: (photoId: string) => string
+  from: number
+  count: number
+}
+
+const removedWhileAway = async (learner: Learner, filler: Filler, thenRemoved: number) => {
+  const { photoId, phone, pad } = await devicesWithPhoto(learner, aJpeg(), [1, 2, 3])
+  const before = (await accounts.mutate(learner.token)).cursor
+  phone.change('photoWord', 'remove', `${photoId}/${word(1)}`)
+  await phone.sync()
+  await removedWords(learner, filler.photo(photoId), filler.from, filler.count)
+  phone.change('photoWord', 'remove', `${photoId}/${word(thenRemoved)}`)
+  await phone.sync()
+  return { photoId, phone, pad, before }
+}
+
+const expectCaughtUp = async (away: Awaited<ReturnType<typeof removedWhileAway>>) => {
+  await away.pad.sync()
+  expect(away.pad.dataOf('photoWord', `${away.photoId}/${word(1)}`)).toBeNull()
+  expect(away.pad.state()).toEqual(away.phone.state())
+}
+
 describe('what the account remembers of removed photos and words', () => {
   test('a device away while a photo is deleted and the same image saved again drops the deleted words', async () => {
     const learner = await accounts.learner('photo-away-saved-again@example.com')
@@ -58,40 +81,28 @@ describe('what the account remembers of removed photos and words', () => {
 
   test('a device whose cursor is older than a removal the account forgot reads everything again, and drops what the account no longer has', async () => {
     const learner = await accounts.learner('photo-word-forgotten-away@example.com')
-    const { photoId, phone, pad } = await devicesWithPhoto(learner, aJpeg(), [1, 2, 3])
-    const before = (await accounts.mutate(learner.token)).cursor
-    phone.change('photoWord', 'remove', `${photoId}/${word(1)}`)
-    await phone.sync()
-    await removedWords(learner, `'${photoId}'`, 0x100, photoLimits.removedWordsPerPhoto - 1)
-    phone.change('photoWord', 'remove', `${photoId}/${word(3)}`)
-    await phone.sync()
-    expect(await journaled(learner, `${photoId}/${word(1)}`)).toBe(0)
-    expect(await accounts.sync(learner.token, { cursor: before })).toMatchObject({
+    const onTheSamePhoto = {
+      photo: (photoId: string) => `'${photoId}'`,
+      from: 0x100,
+      count: photoLimits.removedWordsPerPhoto - 1
+    }
+    const away = await removedWhileAway(learner, onTheSamePhoto, 3)
+    expect(await journaled(learner, `${away.photoId}/${word(1)}`)).toBe(0)
+    expect(await accounts.sync(learner.token, { cursor: away.before })).toMatchObject({
       status: 410,
       body: { error: { code: 'invalid_cursor' } }
     })
-    await pad.sync()
-    expect(pad.dataOf('photoWord', `${photoId}/${word(1)}`)).toBeNull()
-    expect(pad.state()).toEqual(phone.state())
+    await expectCaughtUp(away)
   })
 
   test('a device away while a thousand words are removed from other photos still hears of the one removed before them', async () => {
     const learner = await accounts.learner('photo-word-away@example.com')
-    const photoId = await uploaded(accounts, learner)
-    const phone = new SyncClient(accounts, learner.token)
-    const pad = new SyncClient(accounts, learner.token)
-    phone.change('photo', 'add', photoId, add(photoId).fields)
-    for (const n of [1, 2, 3]) phone.change('photoWord', 'add', `${photoId}/${word(n)}`, fields)
-    await phone.sync()
-    await pad.sync()
-    phone.change('photoWord', 'remove', `${photoId}/${word(1)}`)
-    await phone.sync()
-    await removedWords(learner, 'md5(n::text) || md5(n::text)', 1, photoLimits.goneKept)
-    phone.change('photoWord', 'remove', `${photoId}/${word(2)}`)
-    await phone.sync()
-    await pad.sync()
-    expect(pad.dataOf('photoWord', `${photoId}/${word(1)}`)).toBeNull()
-    expect(pad.state()).toEqual(phone.state())
+    const onOtherPhotos = {
+      photo: () => 'md5(n::text) || md5(n::text)',
+      from: 1,
+      count: photoLimits.goneKept
+    }
+    await expectCaughtUp(await removedWhileAway(learner, onOtherPhotos, 2))
   })
 
   test('a photo remembers its latest removed words, and a word it forgot comes back past every version it had', async () => {
