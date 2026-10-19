@@ -141,8 +141,7 @@ type (`chore`, `docs`).
 - **Bring a branch up to date by merging `main` into it,** not by rebasing, and merge a parent
   down into the branches stacked on it. Group stacked work into a few pull requests by what
   deploys together, not one per issue. `main` takes merge commits, through the merge queue.
-- **Agents commit, push, comment, and open pull requests as `serp-agent[bot]`,** through SERP's
-  `serp-github-app` skill, never `gh auth switch` ([`ci-agents.md`](ci-agents.md), Outside CI):
+- **Agents use GitHub as `serp-agent[bot]`,** not `gh auth switch` ([`ci-agents.md`](ci-agents.md)):
   `eval "$(bash ~/dev/repos/serp/skills/serp-github-app/scripts/env.sh)" && <command>`.
 
 The `Pull request` workflow checks the title, the closing issue, and the test in a fix

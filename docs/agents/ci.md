@@ -112,15 +112,12 @@ without a bash new enough.
 
 It runs again when the title or body is edited, which `Repository` doesn't, so a retitled pull
 request is checked at once. Each job runs `tools/checks/pull-request.mjs`, which uses nothing but
-Node, so the job checks out that one file and installs nothing. The title and body reach it
-through the environment, never through the command line. A pull request `claude[bot]`,
-`dependabot[bot]`, or `renovate[bot]` opened, such as a gardening one, skips all three. The jobs
-name those bots rather than skip every bot, so a pull request an agent opens as `serp-agent[bot]`
-([`code.md`](code.md), Pull requests) gets every check (`tools/checks/src/workflows.test.ts`).
-On `merge_group` the jobs start and pass without doing anything: a required check that never
-reports in the merge queue would block every merge, and the pull request has already been
-checked. SERP's own `pr-issue-link.yml` isn't copied unchanged for that
-reason, and because workflow files here hold no comments.
+Node, so the job checks out that one file and installs nothing. The title and body reach it through
+the environment, never through the command line. Pull requests from `claude[bot]`,
+`dependabot[bot]`, and `renovate[bot]` skip all three; `serp-agent[bot]`'s don't. On `merge_group`
+the jobs pass without doing anything: a required check that never reports in the merge queue would
+block every merge, and the pull request has already been checked. SERP's own `pr-issue-link.yml`
+isn't copied unchanged for that reason, and because workflow files here hold no comments.
 
 ## Web
 
