@@ -556,14 +556,14 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
    (a `providerId` of `apple`). One without it, such as Tomodachi, sends step 3 without a code: an
    Apple account answers `400 apple_authorization_needed`, so it then signs in with Apple and
    sends the code. If the fresh sign-in in step 1 was Apple's, send its code at once.
-3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account: the code from signing in with the Apple ID the account uses. The website sends its
-   popup's return URL too, as `"appleRedirectUri"`. The service revokes your
-   app's Apple access with it before deleting. `apple_authorization_needed`,
-   `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
-   nothing: sign in with Apple again for a new code, and try again.
+3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple account:
+   the code from signing in with the Apple ID the account uses. The website sends its popup's return
+   URL too, as `"appleRedirectUri"`. The service revokes your app's Apple access with it before
+   deleting. `apple_authorization_needed`, `apple_authorization_invalid`, `apple_account_mismatch`,
+   and `503 apple_unavailable` delete nothing: sign in with Apple again for a new code, and retry.
 4. On `200`, sign out on the device: forget the session token and the cursor, and keep the device's
-   data. The account, and everything it synced, is gone; signing in again makes a new one.
+   data. The account, and all it synced, is gone; signing in again makes a new one. With
+   `appStoreSubscriptionContinues`, say that Apple bills until the learner cancels in the App Store.
 
 The fresh sign-in in step 1 makes a new session: use its tokens, and sign the earlier session out
 (`POST /v1/auth/sign-out` with its token) so it doesn't linger. Refuse a fresh sign-in into another

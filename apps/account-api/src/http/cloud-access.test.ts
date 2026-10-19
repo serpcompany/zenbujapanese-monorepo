@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, test } from 'vitest'
 import type { Learner } from '../test/accounts'
+import { standIns } from '../test/app'
 import { standInAppStore } from '../test/app-store'
 import { useBillingService } from '../test/billing'
+import { createApp } from './app'
 import { cloudDataPaths } from './subscription'
 
 const appStore = standInAppStore()
@@ -98,5 +100,26 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
     const learner = await billing.accounts.learner('cloud-deleted@example.com')
     await billing.rows(`delete from users where id = '${learner.userId}'`)
     expect((await billing.accounts.sync(learner.token, {})).status).toBe(401)
+  })
+
+  test('covers every route that holds cloud data: each is gated, or one kept free on purpose', () => {
+    const freeOfTheGate = [
+      '/v1/health',
+      '/v1/me',
+      '/v1/me/subscription',
+      '/v1/me/subscription/apple',
+      '/v1/me/subscription/checkout',
+      '/v1/me/subscription/portal',
+      '/v1/webhooks/apple',
+      '/v1/webhooks/stripe'
+    ]
+    const document = createApp(standIns).getOpenAPI31Document({
+      openapi: '3.1.0',
+      info: { title: 'gate', version: '1' }
+    })
+    const paths = Object.keys(document.paths ?? {}).filter(path => !path.startsWith('/v1/auth/'))
+    const gated: readonly string[] = cloudDataPaths
+    expect(paths.filter(path => !gated.includes(path) && !freeOfTheGate.includes(path))).toEqual([])
+    expect(freeOfTheGate.filter(path => gated.includes(path))).toEqual([])
   })
 })

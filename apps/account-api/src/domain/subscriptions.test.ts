@@ -1,15 +1,20 @@
 import { describe, expect, test } from 'vitest'
 import {
+  billingRetryWindowMs,
   entitlementOf,
   hasAccess,
   renewalLeewayMs,
   type Subscription,
-  supersedes
+  supersedes,
+  withRetryStart
 } from './subscriptions'
 
 const now = new Date('2027-03-01T12:00:00Z')
 const at = (offsetMs: number) => new Date(now.getTime() + offsetMs)
 const hour = 60 * 60 * 1000
+const day = 24 * hour
+const managedIn = (source: string) => (source === 'apple' ? 'app_store' : 'website')
+const entitlement = (subscriptions: Subscription[]) => entitlementOf(subscriptions, now, managedIn)
 
 const subscription = (fields: Partial<Subscription> = {}): Subscription => ({
   source: 'stripe',
@@ -66,6 +71,7 @@ describe('a newer state', () => {
       subscription({ status, origin: 'device', stateAt: at(0) })
     expect(supersedes(device('expired'), fromTheStore)).toBe(false)
     expect(supersedes(device('revoked'), fromTheStore)).toBe(true)
+    expect(supersedes({ ...device('revoked'), stateAt: at(-2 * hour) }, fromTheStore)).toBe(false)
     expect(supersedes({ ...device('active'), periodStartedAt: at(0) }, fromTheStore)).toBe(true)
   })
 })
@@ -74,7 +80,7 @@ describe("the account's entitlement", () => {
   test('is the subscription giving access, wherever it was bought, and offers no second one', () => {
     const lapsed = subscription({ status: 'expired', stateAt: at(0), expiresAt: at(-24 * hour) })
     const apple = subscription({ source: 'apple', providerId: '1000', productId: 'monthly' })
-    expect(entitlementOf([lapsed, apple], now)).toMatchObject({
+    expect(entitlement([lapsed, apple])).toMatchObject({
       status: 'active',
       active: true,
       source: 'apple',
@@ -84,7 +90,7 @@ describe("the account's entitlement", () => {
   })
 
   test('shows a billing retry where it can be fixed, and offers nothing while it runs', () => {
-    expect(entitlementOf([subscription({ status: 'billing_retry' })], now)).toMatchObject({
+    expect(entitlement([subscription({ status: 'billing_retry' })])).toMatchObject({
       status: 'billing_retry',
       active: false,
       managedIn: 'website',
@@ -93,17 +99,71 @@ describe("the account's entitlement", () => {
   })
 
   test('shows a lapsed grace period as a billing retry, and an active one past its time as expired', () => {
-    expect(
-      entitlementOf([subscription({ status: 'grace_period', expiresAt: at(-1) })], now).status
-    ).toBe('billing_retry')
-    expect(
-      entitlementOf([subscription({ expiresAt: at(-2 * renewalLeewayMs) })], now)
-    ).toMatchObject({ status: 'expired', active: false, managedIn: null, canSubscribe: true })
+    expect(entitlement([subscription({ status: 'grace_period', expiresAt: at(-1) })]).status).toBe(
+      'billing_retry'
+    )
+    expect(entitlement([subscription({ expiresAt: at(-2 * renewalLeewayMs) })])).toMatchObject({
+      status: 'expired',
+      active: false,
+      managedIn: null,
+      canSubscribe: true
+    })
   })
 
   test('is none for an account that never subscribed', () => {
-    expect(entitlementOf([], now)).toMatchObject({
+    expect(entitlement([])).toMatchObject({
       status: 'none',
+      active: false,
+      canSubscribe: true
+    })
+  })
+})
+
+describe('a payment that keeps failing', () => {
+  test('stops counting as running once the store would have given up retrying, so the learner may subscribe again', () => {
+    const retrying = subscription({ status: 'billing_retry', retryStartedAt: at(-59 * day) })
+    expect(entitlement([retrying])).toMatchObject({ status: 'billing_retry', canSubscribe: false })
+    const forgotten = {
+      ...retrying,
+      retryStartedAt: new Date(now.getTime() - billingRetryWindowMs - 1)
+    }
+    expect(entitlement([forgotten])).toMatchObject({
+      status: 'expired',
+      canSubscribe: true,
+      running: []
+    })
+  })
+
+  test('starts its grace period at the first failure, and never again while it keeps failing', () => {
+    const firstFailure = subscription({ status: 'billing_retry', stateAt: at(-2 * day) })
+    const graced = withRetryStart(firstFailure, null, 3)
+    expect(graced).toMatchObject({
+      status: 'grace_period',
+      expiresAt: at(day),
+      retryStartedAt: at(-2 * day)
+    })
+    const nextPeriod = subscription({
+      status: 'billing_retry',
+      periodStartedAt: at(0),
+      stateAt: at(0)
+    })
+    const held = { ...graced, userId: 'account' }
+    expect(withRetryStart(nextPeriod, held, 3)).toMatchObject({
+      status: 'grace_period',
+      expiresAt: at(day),
+      retryStartedAt: at(-2 * day)
+    })
+    expect(withRetryStart({ ...nextPeriod, stateAt: at(2 * day) }, held, 3)).toMatchObject({
+      status: 'billing_retry'
+    })
+    expect(withRetryStart(subscription(), held, 3).retryStartedAt).toBeNull()
+  })
+})
+
+describe('a first payment still on its way', () => {
+  test("doesn't stop the learner subscribing again", () => {
+    expect(entitlement([subscription({ status: 'pending', expiresAt: null })])).toMatchObject({
+      status: 'pending',
       active: false,
       canSubscribe: true
     })

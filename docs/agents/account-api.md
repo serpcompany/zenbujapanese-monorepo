@@ -55,7 +55,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | `EMAIL_ALLOWED_RECIPIENTS` | required to send | Who may be emailed: on staging, the testers, comma-separated (addresses, or domains as `@example.com`); in production, `everyone`. With `cloudflare` or `usesend` and nothing here, the service doesn't start, so staging never emails a stranger. |
 | `PORT` | `8789` | The port it listens on. |
 | `ACCOUNT_API_RELEASE` | `local` | The release `/healthz` names. The image sets it to its commit. |
-| `ACCOUNT_API_CLOUD_*`, `STRIPE_*`, `APP_STORE_*` | free, off | The subscription's ([`account-billing.md`](account-billing.md), Settings). |
+| `ACCOUNT_API_CLOUD_*`, `STRIPE_*`, `APP_STORE_*` | off | [Billing's](account-billing-stores.md). |
 
 ## Routes
 
@@ -338,7 +338,7 @@ else, and deletes only after a fresh sign-in.
     by signing in with Apple again.
 - **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
   its synced profile, known words, lists, list words, watched videos, and bookmarked sentences,
-  its journal, its mutation results, and its subscriptions, its website one canceled at Stripe
+  its journal, its mutation results, and its billing customer, its website subscription canceled
   first ([`account-billing.md`](account-billing.md)); and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
   `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
   account's email is told. Backups that hold it are deleted within 30 days (Back up and
@@ -374,7 +374,7 @@ belongs; tests may import anything.
   (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
-- **`src/billing`** holds Stripe's and the App Store's adapters, which know no other layer
+- **`src/billing`** holds Stripe's and the App Store's adapters, which import only the domain
   ([`account-billing.md`](account-billing.md), Code layout).
 
 `src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
@@ -415,7 +415,7 @@ maps them to these tables, and `account` to #374's `user_identities`, whose `pro
 `subject` are Better Auth's `providerId` and `accountId`.
 
 The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To change the schema,
-change `src/db/schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
+change `src/db/schema.ts` or billing's `src/db/billing-schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
 `meta/` files it writes. Never edit or regenerate a migration once it has run anywhere: Drizzle
 runs only those dated after the last one a database ran, so an edited one never runs where the old
 one did, and a regenerated one, with a new date, runs again over the tables it made. Add a new one. For
@@ -660,7 +660,7 @@ this order; each step says how to check it worked.
      session cookie stays on the API host; staging may still set
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
    - **The subscription** (Stripe, App Store Connect, and nginx's `/v1/webhooks`): its own steps,
-     in [`account-billing.md`](account-billing.md), Set it up.
+     in [`account-billing-stores.md`](account-billing-stores.md), Set it up.
    - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
      app's ID, TSMC LLC's `847HR8U8D9`, #797):
      - **The App IDs.** Identifiers → `com.zenbujapanese.dictionary` → Capabilities → Sign in with

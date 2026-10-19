@@ -22,14 +22,23 @@ unlock what the server didn't.
 by its ID, keeps no ledger, handles neither invoices nor refunds, models only Stripe's
 subscriptions, adds a column to `users`, and serves its routes inside sign-in's, so it would
 leave Apple's subscriptions in a second model and the standard unmet. The adapter is Stripe's own
-SDK, and it reads each subscription from Stripe when an event about it arrives, under a lock, so
-deliveries out of order leave the latest state.
+SDK. It reads each subscription from Stripe when an event about it arrives, before opening a
+database transaction, and a read that started later wins, so deliveries out of order leave the
+latest state and no Stripe call holds a database connection. Refunds the service owes are done
+after the event commits, and retried until Stripe takes them.
 
 **The App Store through Apple's App Store Server Library.** It checks every signed transaction and
 notification against Apple's root certificate. Each purchase carries the account's
-`appAccountToken`, so it belongs to the Zenbu account rather than to an Apple ID alone. The
-service needs no App Store Server API key: every state it keeps comes signed from Apple, in the
-app's post or in a notification.
+`appAccountToken`, so it belongs to the Zenbu account rather than to an Apple ID alone. Every
+state the service keeps comes signed from Apple, in the app's post or in a notification; with an
+App Store Server API key, it also asks Apple for a purchase's current status and for the
+notifications it missed.
+
+**Sandbox purchases in production.** App Review and TestFlight buy in Apple's sandbox, so
+production must take sandbox purchases or the reviewer's purchase unlocks nothing. Taken from
+everyone, any TestFlight tester syncs free in production, and their sandbox renewals notify
+staging; taken only from `APP_STORE_SANDBOX_ACCOUNTS` (App Review's demo account), testers don't.
+Which is the owner's to choose.
 
 **One subscription per store, one entitlement per account.** The service keeps each store's
 subscription in its own row and makes the account's entitlement from them, so one store's events

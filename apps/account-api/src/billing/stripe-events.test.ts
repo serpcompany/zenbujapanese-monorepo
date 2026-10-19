@@ -8,8 +8,8 @@ const dayS = 24 * 60 * 60
 const now = new Date()
 const nowS = Math.floor(now.getTime() / 1000)
 
-const stateOf = (fields: Parameters<typeof stripe.subscription>[0], graceDays = 0) =>
-  subscriptionState(stripe.subscription(fields) as unknown as Stripe.Subscription, graceDays, now)
+const stateOf = (fields: Parameters<typeof stripe.subscription>[0]) =>
+  subscriptionState(stripe.subscription(fields) as unknown as Stripe.Subscription, now)
     ?.subscription
 
 describe("a Stripe subscription's state", () => {
@@ -23,14 +23,18 @@ describe("a Stripe subscription's state", () => {
     }
   })
 
-  test('is a billing retry while past due, or a grace period when the owner set one', () => {
-    const lapsed = { status: 'past_due', periodStart: nowS - dayS }
-    expect(stateOf(lapsed)?.status).toBe('billing_retry')
-    expect(stateOf(lapsed, 3)).toMatchObject({
-      status: 'grace_period',
-      expiresAt: new Date((nowS + 2 * dayS) * 1000)
+  test('is a billing retry while past due, as of when it was read', () => {
+    expect(stateOf({ status: 'past_due', periodStart: nowS - dayS })).toMatchObject({
+      status: 'billing_retry',
+      stateAt: now
     })
-    expect(stateOf({ ...lapsed, periodStart: nowS - 4 * dayS }, 3)?.status).toBe('billing_retry')
+  })
+
+  test('is pending while its first payment, by a bank debit or konbini, is still on its way', () => {
+    expect(stateOf({ status: 'active', firstPayment: 'open' })).toMatchObject({
+      status: 'pending',
+      expiresAt: null
+    })
   })
 
   test('has ended once canceled, or if its first payment never came', () => {
@@ -48,7 +52,6 @@ describe("a Stripe subscription's state", () => {
         userId: 'account-1',
         customer: 'cus_1'
       }) as unknown as Stripe.Subscription,
-      0,
       now
     )
     expect(state?.hints).toEqual({ userId: 'account-1', stripeCustomerId: 'cus_1' })

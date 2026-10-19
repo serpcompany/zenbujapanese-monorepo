@@ -261,7 +261,7 @@ describe('POST /v1/webhooks/stripe', () => {
   async function orphanedCheckout(email: string, paymentIntent: string) {
     const learner = await billing.accounts.learner(email)
     const subscription = stripe.subscription({ userId: learner.userId, paymentIntent })
-    await billing.rows(`delete from users where id = '${learner.userId}'`)
+    await billing.deleted(learner.userId)
     const id = String(subscription.id)
     const event = stripe.event('checkout.session.completed', {
       id: `cs_${id}`,
@@ -305,18 +305,29 @@ describe('POST /v1/webhooks/stripe', () => {
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
   })
 
-  test('cancels an orphaned checkout first, and refunds it when Stripe sends the event again', async () => {
+  test('cancels an orphaned checkout first, and keeps the refund owed until Stripe takes it', async () => {
     stripe.state.refusingRefunds = { status: 500, code: 'api_error' }
     logged()
     const { id, event, answer } = await orphanedCheckout(
       'stripe-orphan-retry@example.com',
       'pi_retry'
     )
-    expect(answer.status).toBe(503)
+    expect(answer.status).toBe(200)
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+    expect(await billing.owedActions()).toContainEqual({
+      subscription_id: id,
+      attempts: 1,
+      done: false
+    })
     stripe.state.refusingRefunds = null
     expect((await billing.stripeWebhook(event)).status).toBe(200)
+    await billing.retryOwedNow()
     expect(stripe.refunded.has('pi_retry')).toBe(true)
+    expect(await billing.owedActions()).toContainEqual({
+      subscription_id: id,
+      attempts: 2,
+      done: true
+    })
     expect(refundsOf('pi_retry').map(each => each.idempotencyKey)).toEqual([
       'refund-unwanted-pi_retry',
       'refund-unwanted-pi_retry'
@@ -339,7 +350,7 @@ describe('POST /v1/webhooks/stripe', () => {
     const { learner, id } = await subscribed('stripe-account-gone@example.com', {
       paymentIntent: 'pi_account_gone'
     })
-    await billing.rows(`delete from users where id = '${learner.userId}'`)
+    await billing.deleted(learner.userId)
     expect((await billing.stripeWebhook(updated(id))).status).toBe(200)
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
     expect(stripe.refunded.has('pi_account_gone')).toBe(true)
@@ -347,6 +358,16 @@ describe('POST /v1/webhooks/stripe', () => {
       stripe.event('customer.subscription.deleted', { id, object: 'subscription' })
     )
     expect(refundsOf('pi_account_gone')).toHaveLength(1)
+  })
+
+  test('leaves a running subscription alone when its account is missing but was never deleted, as after a restore', async () => {
+    const { learner, id } = await subscribed('stripe-restored-away@example.com', {
+      paymentIntent: 'pi_restored_away'
+    })
+    await billing.rows(`delete from users where id = '${learner.userId}'`)
+    await billing.stripeWebhook(updated(id))
+    expect(stripe.subscriptions.get(id)?.status).toBe('active')
+    expect(refundsOf('pi_restored_away')).toEqual([])
   })
 
   test("refunds and cancels a second checkout that completes while the account's first subscription runs", async () => {
@@ -369,6 +390,9 @@ describe('POST /v1/webhooks/stripe', () => {
       })
     )
     expect(stripe.subscriptions.get(secondId)?.status).toBe('canceled')
+    await billing.stripeWebhook(
+      stripe.event('customer.subscription.deleted', { id: secondId, object: 'subscription' })
+    )
     expect(stripe.requests).toContainEqual(
       expect.objectContaining({ path: '/v1/refunds', idempotencyKey: 'refund-unwanted-pi_second' })
     )

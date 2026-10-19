@@ -7,7 +7,10 @@ export const noBillingStore: BillingStore = {
   account: async () => null,
   ensureCustomer: async () => null,
   subscriptionsOf: async () => [],
-  transaction: () => Promise.reject(new Error('the stand-in app has no database'))
+  eventRecorded: async () => false,
+  transaction: () => Promise.reject(new Error('the stand-in app has no database')),
+  claimOwedActions: async () => [],
+  settleOwedAction: async () => {}
 }
 
 export const standIns: AppOptions = {
@@ -24,8 +27,12 @@ export const standIns: AppOptions = {
     updateProfile: async () => null,
     sync: async () => ({ status: 'no_account' })
   },
-  deleteAccount: async () => 'no_account',
-  billing: createBilling(noBillingStore, { stripe: null, apple: null }, cloudIsFree),
+  deleteAccount: async () => ({ status: 'no_account', appStoreSubscriptionContinues: false }),
+  billing: createBilling(
+    noBillingStore,
+    { web: null, store: null },
+    { cloud: cloudIsFree, storeTesting: null }
+  ),
   verifyAccessToken: async () => null,
   allowedOrigins: [],
   devMailbox: null

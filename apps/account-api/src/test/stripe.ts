@@ -24,6 +24,7 @@ export interface SubscriptionFields {
   periodEnd?: number
   cancelAtPeriodEnd?: boolean
   paymentIntent?: string
+  firstPayment?: 'paid' | 'open'
 }
 
 type StripeObject = Record<string, unknown>
@@ -75,6 +76,9 @@ function subscriptionObject(fields: SubscriptionFields): StripeObject {
     latest_invoice: {
       id: `in_${id}`,
       object: 'invoice',
+      billing_reason: 'subscription_create',
+      status: fields.firstPayment ?? 'paid',
+      amount_due: 500,
       payments: {
         object: 'list',
         data: fields.paymentIntent
@@ -94,6 +98,8 @@ export function standInStripe() {
   const subscriptions = new Map<string, StripeObject>()
   const requests: Request[] = []
   const refunded = new Set<string>()
+  const charges = new Map<string, string>()
+  const payments = new Map<string, StripeObject>()
   const state: { down: boolean; refusingRefunds: { status: number; code: string } | null } = {
     down: false,
     refusingRefunds: null
@@ -131,13 +137,23 @@ export function standInStripe() {
       refunded.add(intent)
       return answer({ id: `re_${sessions++}`, object: 'refund', status: 'succeeded' })
     }
+    if (method === 'GET' && kind === 'charges' && id) {
+      return answer({ id, object: 'charge', customer: charges.get(id) ?? null })
+    }
+    if (method === 'GET' && path === '/v1/invoice_payments') {
+      const paid = payments.get(form.get('payment[payment_intent]') ?? '')
+      return answer({
+        object: 'list',
+        data: paid ? [{ object: 'invoice_payment', invoice: paid }] : []
+      })
+    }
     const subscription = kind === 'subscriptions' && id ? subscriptions.get(id) : undefined
     if (!subscription) return missing()
     if (method === 'DELETE') {
       Object.assign(subscription, { status: 'canceled', ended_at: nowS() })
     }
     const expanded = [...form.entries()].some(
-      ([key, value]) => key.startsWith('expand') && value === 'latest_invoice.payments'
+      ([key, value]) => key.startsWith('expand') && value.startsWith('latest_invoice')
     )
     const invoice = subscription.latest_invoice as { id: string }
     return answer(expanded ? subscription : { ...subscription, latest_invoice: invoice.id })
@@ -160,6 +176,9 @@ export function standInStripe() {
     return route(method, url.pathname, form)
   }
 
+  const thin = (type: string) =>
+    signed({ id: `evt_${randomUUID()}`, object: 'v2.core.event', type, related_object: {} })
+
   const signed = (event: StripeObject) => {
     const body = JSON.stringify(event)
     return {
@@ -175,6 +194,9 @@ export function standInStripe() {
     fetch,
     requests,
     refunded,
+    thin,
+    charges,
+    payments,
     state,
     subscriptions,
     subscription(fields: SubscriptionFields) {
@@ -193,13 +215,13 @@ export function standInStripe() {
       subscriptions.set(id, changed)
       return changed
     },
-    event(type: string, object: StripeObject, id = `evt_${randomUUID()}`) {
+    event(type: string, object: StripeObject, id = `evt_${randomUUID()}`, created = nowS()) {
       return signed({
         id,
         object: 'event',
         type,
         api_version: Stripe.API_VERSION,
-        created: nowS(),
+        created,
         livemode: false,
         pending_webhooks: 1,
         request: { id: null, idempotency_key: null },

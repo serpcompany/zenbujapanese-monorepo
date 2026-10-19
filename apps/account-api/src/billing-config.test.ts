@@ -63,7 +63,9 @@ describe('readBilling', () => {
     expect(readBilling(appStore, false).appStore).toEqual({
       appAppleId: 1_234_567_890,
       environments: ['Production', 'Sandbox'],
-      products: ['com.zenbujapanese.cloud.monthly']
+      products: ['com.zenbujapanese.cloud.monthly'],
+      apiKey: null,
+      sandboxAccounts: null
     })
     expect(refusal({ ...appStore, APP_STORE_APP_APPLE_ID: '' })).toMatch(/APP_STORE_APP_APPLE_ID/)
     expect(
@@ -105,5 +107,23 @@ describe('readBilling', () => {
     expect(refusal({ ACCOUNT_API_CLOUD_ACCESS: 'subscription' })).toMatch(/a way to subscribe/)
     expect(refusal({ ACCOUNT_API_CLOUD_ACCESS: 'paid' })).toMatch(/free or subscription/)
     expect(refusal({ ACCOUNT_API_CLOUD_FREE_UNTIL: 'next spring' })).toMatch(/ISO 8601/)
+  })
+
+  test("reads the App Store Server API's key, all of it or none, and the sandbox's testers", () => {
+    const key = {
+      APP_STORE_KEY_ID: 'KEY123',
+      APP_STORE_ISSUER_ID: '57246542-96fe-1a63-e053-0824d011072a',
+      APP_STORE_PRIVATE_KEY: '-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----'
+    }
+    expect(readBilling({ ...appStore, ...key }, false).appStore?.apiKey).toEqual({
+      keyId: 'KEY123',
+      issuerId: '57246542-96fe-1a63-e053-0824d011072a',
+      privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----'
+    })
+    expect(refusal({ ...appStore, APP_STORE_KEY_ID: 'KEY123' })).toMatch(/set together/)
+    expect(
+      readBilling({ ...appStore, APP_STORE_SANDBOX_ACCOUNTS: 'Review@Example.com, a@b.c' }, false)
+        .appStore?.sandboxAccounts
+    ).toEqual(['review@example.com', 'a@b.c'])
   })
 })

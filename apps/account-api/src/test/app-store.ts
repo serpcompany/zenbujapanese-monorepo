@@ -1,4 +1,5 @@
 import { generateKeyPairSync, type KeyObject, randomUUID, X509Certificate } from 'node:crypto'
+import { AppStoreServerAPIClient, type Environment } from '@apple/app-store-server-library'
 import { CompactSign } from 'jose'
 import { KJUR } from 'jsrsasign'
 import { appSellingTheSubscription, clientById } from '../domain/clients'
@@ -96,6 +97,7 @@ export interface TransactionFields {
 }
 
 export interface RenewalFields {
+  environment?: string
   autoRenewStatus?: number
   isInBillingRetryPeriod?: boolean
   gracePeriodExpiresDate?: number
@@ -173,6 +175,7 @@ export function standInAppStore() {
         ? {
             signedTransactionInfo: await transaction({ environment, ...fields.transaction }),
             signedRenewalInfo: await renewal(fields.transaction.originalTransactionId, {
+              environment,
               ...fields.renewal
             })
           }
@@ -193,12 +196,71 @@ export function standInAppStore() {
     return JSON.stringify({ signedPayload })
   }
 
+  const statuses = new Map<string, StoreStatus>()
+  const history: string[] = []
+  const apiKey = keyPair().privatePem
+  const answer = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { 'content-type': 'application/json' }
+    }) as unknown as ReturnType<AppStoreServerAPIClient['getAllSubscriptionStatuses']>
+
+  class StandInApi extends AppStoreServerAPIClient {
+    constructor(environment: Environment) {
+      super(apiKey, 'STANDINKEY', 'stand-in-issuer', appBundleIdentifier, environment)
+    }
+
+    protected override async makeFetchRequest(
+      path: string,
+      _query: URLSearchParams,
+      method: string
+    ) {
+      const id = path.split('/').at(-1) ?? ''
+      const known = method === 'GET' ? statuses.get(id) : undefined
+      if (method === 'POST' && path === '/inApps/v1/notifications/history') {
+        return answer({
+          notificationHistory: history.map(signedPayload => ({ signedPayload })),
+          hasMore: false
+        }) as never
+      }
+      if (!known) return answer({ errorCode: 4040010, errorMessage: 'not found' }, 404) as never
+      return answer({
+        environment: 'Sandbox',
+        bundleId: appBundleIdentifier,
+        data: [
+          {
+            subscriptionGroupIdentifier: '21000001',
+            lastTransactions: [
+              {
+                originalTransactionId: id,
+                status: known.status,
+                signedTransactionInfo: await transaction(known.transaction),
+                signedRenewalInfo: await renewal(id, known.renewal)
+              }
+            ]
+          }
+        ]
+      }) as never
+    }
+  }
+
   return {
     trust: { rootCertificates: [apple.root.raw], onlineChecks: false },
     stranger,
     transaction,
-    notification
+    notification,
+    api: {
+      statuses,
+      history,
+      clients: (environment: Environment) => new StandInApi(environment)
+    }
   }
+}
+
+interface StoreStatus {
+  status: number
+  transaction: TransactionFields
+  renewal?: RenewalFields
 }
 
 export type StandInAppStore = ReturnType<typeof standInAppStore>

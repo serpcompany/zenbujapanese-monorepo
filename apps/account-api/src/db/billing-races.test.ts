@@ -25,8 +25,8 @@ async function race(created: boolean) {
   const stripe = standInStripe()
   const billing = createBilling(
     billingStore(database.db),
-    { stripe: stripeBilling(stripeSettings, { fetch: stripe.fetch, retries: 0 }), apple: null },
-    cloudIsFree
+    { web: stripeBilling(stripeSettings, { fetch: stripe.fetch, retries: 0 }), store: null },
+    { cloud: cloudIsFree, storeTesting: null }
   )
   const customer = `cus_${userId}`
   const tabs = ['pi_tab_one', 'pi_tab_two'].map(paymentIntent =>
@@ -50,16 +50,12 @@ async function race(created: boolean) {
     })
   )
   const answers = await Promise.all(completed.map(deliver))
-  const kept = await raw.query<{ status: string }>(
-    'select status from subscriptions where user_id = $1 order by status',
-    [userId]
-  )
+  await billing.settleOwed()
   await raw.end()
   await database.close()
   return {
     answers,
     atStripe: tabs.map(id => stripe.subscriptions.get(id)?.status).sort(),
-    kept: kept.rows.map(row => row.status),
     refunds: stripe.requests.filter(each => each.path === '/v1/refunds').length
   }
 }
@@ -72,10 +68,64 @@ describe('two checkouts that complete at once for one account, on Postgres', () 
         expect(await race(created), `saved first: ${created}`).toEqual({
           answers: ['applied', 'applied'],
           atStripe: ['active', 'canceled'],
-          kept: ['active', 'expired'],
           refunds: 1
         })
       }
+    }
+  )
+})
+
+async function waiterOn(raw: pg.Client, name: string) {
+  for (let tries = 0; tries < 200; tries++) {
+    const { rows } = await raw.query<{ waiting: number }>(
+      `select count(*)::int as waiting from pg_locks
+        where locktype = 'advisory' and not granted
+          and classid = ((hashtextextended($1, 0) >> 32) & 4294967295)::bigint::oid
+          and objid = (hashtextextended($1, 0) & 4294967295)::bigint::oid`,
+      [name]
+    )
+    if ((rows[0]?.waiting ?? 0) > 0) return true
+    await new Promise(resolve => setImmediate(resolve))
+  }
+  return false
+}
+
+describe("a subscription's lock, on Postgres", () => {
+  test.skipIf(realPostgres === '')(
+    'holds a subscription while one transaction changes it, so a second waits for it',
+    async () => {
+      await migratePostgres(realPostgres, migrations)
+      const database = openPostgres(realPostgres)
+      const raw = new pg.Client({ connectionString: realPostgres })
+      await raw.connect()
+      const store = billingStore(database.db)
+      const key = { source: 'stripe', providerId: `sub_lock_${randomUUID()}` }
+      let holding = () => {}
+      let release = () => {}
+      const firstHolds = new Promise<void>(resolve => {
+        holding = resolve
+      })
+      const released = new Promise<void>(resolve => {
+        release = resolve
+      })
+      const first = store.transaction(async tx => {
+        await tx.lockSubscription(key)
+        holding()
+        await released
+      })
+      await firstHolds
+      let secondGotIt = false
+      const second = store.transaction(async tx => {
+        await tx.lockSubscription(key)
+        secondGotIt = true
+      })
+      expect(await waiterOn(raw, `${key.source}:${key.providerId}`)).toBe(true)
+      expect(secondGotIt).toBe(false)
+      release()
+      await Promise.all([first, second])
+      expect(secondGotIt).toBe(true)
+      await raw.end()
+      await database.close()
     }
   )
 })

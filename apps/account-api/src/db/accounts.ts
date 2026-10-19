@@ -1,5 +1,6 @@
 import { and, asc, eq, gt, lt, max, sql } from 'drizzle-orm'
 import type { AccountStore, LockedAccount } from '../domain/store'
+import { deletedAccounts } from './billing-schema'
 import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
 import { syncChanges, syncMutations, userIdentities, users, verifications } from './schema'
@@ -54,6 +55,7 @@ export function accountStore(db: Drizzle): AccountStore {
           .delete(verifications)
           .where(eq(verifications.identifier, `sign-in-otp-${email.toLowerCase()}`))
         await tx.delete(users).where(eq(users.id, userId))
+        await tx.insert(deletedAccounts).values({ userId }).onConflictDoNothing()
       })
     },
 

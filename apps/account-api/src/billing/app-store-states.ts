@@ -4,7 +4,6 @@ import {
   type JWSRenewalInfoDecodedPayload,
   type JWSTransactionDecodedPayload,
   NotificationTypeV2,
-  RevocationType,
   Status
 } from '@apple/app-store-server-library'
 import type { LedgerEntry, ProviderState } from '../domain/billing'
@@ -18,6 +17,7 @@ export interface AppleTransaction extends JWSTransactionDecodedPayload {
   environment: string
 }
 
+export const appStoreSource = 'apple'
 const autoRenewable = 'Auto-Renewable Subscription'
 const milliunits = 1000
 
@@ -92,7 +92,7 @@ export function appleState(input: AppleStateInput): ProviderState {
   const token = transaction.appAccountToken ?? renewal?.appAccountToken
   return {
     subscription: {
-      source: 'apple',
+      source: appStoreSource,
       providerId: transaction.originalTransactionId,
       productId: transaction.productId,
       status,
@@ -119,15 +119,21 @@ export function minorUnits(milli: number | undefined, currency: string | undefin
   }
 }
 
+const isRefund = (transaction: AppleTransaction) =>
+  transaction.revocationDate !== undefined &&
+  (transaction.revocationType === undefined || transaction.revocationType.startsWith('REFUND'))
+
 export function appleLedger(
   transaction: AppleTransaction,
   notificationType: string | undefined
 ): LedgerEntry[] {
   if (transaction.inAppOwnershipType === InAppOwnershipType.FAMILY_SHARED) return []
   const paid = minorUnits(transaction.price, transaction.currency)
+  const signedAt = new Date(transaction.signedDate ?? transaction.purchaseDate)
   const entry = {
-    source: 'apple' as const,
+    source: appStoreSource,
     subscriptionId: transaction.originalTransactionId,
+    paymentReference: null,
     currency: transaction.currency ?? null,
     environment: transaction.environment,
     reference: transaction.transactionId
@@ -138,12 +144,12 @@ export function appleLedger(
       kind: 'charge',
       outcome: 'succeeded',
       amountMinor: paid,
-      occurredAt: new Date(transaction.purchaseDate)
+      occurredAt: new Date(transaction.purchaseDate),
+      outcomeAt: new Date(transaction.purchaseDate)
     }
   ]
-  const refunded = transaction.revocationDate !== undefined
   const reversed = notificationType === NotificationTypeV2.REFUND_REVERSED
-  if ((refunded && transaction.revocationType !== RevocationType.FAMILY_REVOKE) || reversed) {
+  if (isRefund(transaction) || reversed) {
     const share = transaction.revocationPercentage
     entries.push({
       ...entry,
@@ -151,7 +157,8 @@ export function appleLedger(
       outcome: reversed ? 'reversed' : 'succeeded',
       amountMinor:
         paid === null || share === undefined ? paid : Math.round((paid * share) / 100_000),
-      occurredAt: new Date(transaction.revocationDate ?? transaction.signedDate ?? Date.now())
+      occurredAt: new Date(transaction.revocationDate ?? signedAt),
+      outcomeAt: signedAt
     })
   }
   return entries

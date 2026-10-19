@@ -49,7 +49,11 @@ const principalIn = (context: Context<AccountEnv>): Principal => ({
 
 const entitlementJson = (entitlement: Entitlement) => ({
   ...entitlement,
-  expiresAt: entitlement.expiresAt?.toISOString() ?? null
+  expiresAt: entitlement.expiresAt?.toISOString() ?? null,
+  running: entitlement.running.map(each => ({
+    ...each,
+    expiresAt: each.expiresAt?.toISOString() ?? null
+  }))
 })
 
 const viewJson = (view: SubscriptionView) => ({
@@ -130,10 +134,9 @@ const openPortal = createRoute({
   responses: {
     200: json(RedirectSchema, 'Open the URL.'),
     400: refusal({ bad_request: `${malformed.bad_request} Or: ${notOnTheWebsite}` }),
-    404: refusal({ no_subscription: 'The account has never subscribed on the website.' }),
-    409: refusal({
-      managed_in_app_store:
-        "The account's subscription was bought in the App Store, and is managed there."
+    404: refusal({
+      no_subscription:
+        'The account has never subscribed on the website. An App Store subscription is managed in the App Store.'
     }),
     413: tooLarge,
     503: refusal(billingUnavailable),
@@ -217,7 +220,7 @@ export function subscriptionRoutes(
     const refused = offTheWebsite(context, returnUrl)
     if (refused) return refused
     const language = languageOf(context.req.valid('header')[languageHeader])
-    const portal = await billing.portal(principalIn(context), returnUrl, language, new Date())
+    const portal = await billing.portal(principalIn(context), returnUrl, language)
     switch (portal.status) {
       case 'created':
         return context.json({ url: portal.url }, 200)
@@ -225,8 +228,6 @@ export function subscriptionRoutes(
         return refuse(context)
       case 'no_customer':
         return context.json(errorBody('no_subscription', 'Nothing was bought on the website.'), 404)
-      case 'managed_in_app_store':
-        return context.json(errorBody('managed_in_app_store', 'Manage it in the App Store.'), 409)
       default:
         return context.json(unavailableBody, 503)
     }

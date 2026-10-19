@@ -10,11 +10,18 @@ import {
 import { log } from '@zenbu/node-service/log'
 import { decodeJwt } from 'jose'
 import type { AppStoreEnvironment, AppStoreSettings } from '../billing-config'
-import type { ProviderEvent, StoreBilling, Verified } from '../domain/billing'
+import type { DeviceTransaction, ProviderEvent, StoreBilling, Verified } from '../domain/billing'
+import {
+  type AppStoreApiClients,
+  apiEnvironments,
+  appStoreApi,
+  appStoreApiClients
+} from './app-store-api'
 import {
   type AppleTransaction,
   appleLedger,
   appleState,
+  appStoreSource,
   isSubscriptionTransaction
 } from './app-store-states'
 import appleRoots from './apple-root-certificates.json'
@@ -26,6 +33,7 @@ export interface AppStoreConfig extends AppStoreSettings {
 export interface AppStoreTrust {
   rootCertificates: readonly Buffer[]
   onlineChecks: boolean
+  apiClients?: AppStoreApiClients
 }
 
 export const appleTrust: AppStoreTrust = {
@@ -98,6 +106,9 @@ export function appStoreBilling(
       )
     ])
   )
+  const clients =
+    trust.apiClients ?? (config.apiKey ? appStoreApiClients(config.apiKey, config.bundleId) : null)
+  const api = clients ? appStoreApi(clients) : null
 
   const verifierFor = (signed: string) => {
     const verifier = verifiers.get(claimedEnvironment(signed) ?? '')
@@ -111,13 +122,34 @@ export function appStoreBilling(
     return transaction
   }
 
+  async function storeState(
+    verifier: SignedDataVerifier,
+    signedTransactionInfo: string,
+    signedRenewalInfo: string | undefined,
+    reportedStatus: number | undefined,
+    stateAt: (transaction: AppleTransaction) => Date
+  ) {
+    const transaction = await subscriptionTransaction(verifier, signedTransactionInfo)
+    const renewal: JWSRenewalInfoDecodedPayload | null = signedRenewalInfo
+      ? await verifier.verifyAndDecodeRenewalInfo(signedRenewalInfo)
+      : null
+    const state = appleState({
+      transaction,
+      renewal,
+      reportedStatus,
+      stateAt: stateAt(transaction),
+      origin: 'provider'
+    })
+    return { transaction, state }
+  }
+
   async function notificationEvent(
     verifier: SignedDataVerifier,
     notification: ResponseBodyV2DecodedPayload
   ): Promise<ProviderEvent> {
     const type = notification.notificationType ?? 'UNKNOWN'
     const event: ProviderEvent = {
-      source: 'apple',
+      source: appStoreSource,
       id: notification.notificationUUID ?? '',
       type: notification.subtype ? `${type}.${notification.subtype}` : type,
       subscription: null,
@@ -127,20 +159,13 @@ export function appStoreBilling(
     }
     const data = notification.data
     if (type === NotificationTypeV2.TEST || !data?.signedTransactionInfo) return event
-    const transaction: AppleTransaction = await subscriptionTransaction(
+    const { transaction, state } = await storeState(
       verifier,
-      data.signedTransactionInfo
+      data.signedTransactionInfo,
+      data.signedRenewalInfo,
+      data.status,
+      () => new Date(notification.signedDate ?? Date.now())
     )
-    const renewal: JWSRenewalInfoDecodedPayload | null = data.signedRenewalInfo
-      ? await verifier.verifyAndDecodeRenewalInfo(data.signedRenewalInfo)
-      : null
-    const state = appleState({
-      transaction,
-      renewal,
-      reportedStatus: data.status,
-      stateAt: new Date(notification.signedDate ?? Date.now()),
-      origin: 'provider'
-    })
     return {
       ...event,
       subscription: { key: state.subscription, read: async () => state },
@@ -149,7 +174,30 @@ export function appStoreBilling(
     }
   }
 
+  async function fromTheStore(
+    verifier: SignedDataVerifier,
+    transaction: AppleTransaction
+  ): Promise<DeviceTransaction | null> {
+    const environment = apiEnvironments[transaction.environment]
+    if (!api || !environment) return null
+    const latest = await api.latest(environment, transaction.originalTransactionId)
+    if (!latest?.signedTransactionInfo) return null
+    const { transaction: current, state } = await storeState(
+      verifier,
+      latest.signedTransactionInfo,
+      latest.signedRenewalInfo,
+      latest.status,
+      each => new Date(each.signedDate ?? Date.now())
+    )
+    const token = transaction.appAccountToken
+    return {
+      state: { ...state, hints: token ? { appAccountToken: token } : state.hints },
+      ledger: [...appleLedger(transaction, undefined), ...appleLedger(current, undefined)]
+    }
+  }
+
   return {
+    source: appStoreSource,
     products: config.products,
 
     verifyNotification: body =>
@@ -163,17 +211,34 @@ export function appStoreBilling(
 
     verifyTransaction: signed =>
       verified(async () => {
-        const transaction = await subscriptionTransaction(verifierFor(signed), signed)
-        return {
-          state: appleState({
-            transaction,
-            renewal: null,
-            reportedStatus: undefined,
-            stateAt: new Date(transaction.signedDate ?? Date.now()),
-            origin: 'device'
-          }),
-          ledger: appleLedger(transaction, undefined)
+        const verifier = verifierFor(signed)
+        const transaction = await subscriptionTransaction(verifier, signed)
+        return (
+          (await fromTheStore(verifier, transaction)) ?? {
+            state: appleState({
+              transaction,
+              renewal: null,
+              reportedStatus: undefined,
+              stateAt: new Date(transaction.signedDate ?? Date.now()),
+              origin: 'device'
+            }),
+            ledger: appleLedger(transaction, undefined)
+          }
+        )
+      }),
+
+    async recentNotifications() {
+      if (!api) return []
+      const now = new Date()
+      const bodies: string[] = []
+      for (const name of config.environments) {
+        const environment = apiEnvironments[name]
+        if (!environment) continue
+        for (const signedPayload of await api.recent(environment, now)) {
+          bodies.push(JSON.stringify({ signedPayload }))
         }
-      })
+      }
+      return bodies
+    }
   }
 }

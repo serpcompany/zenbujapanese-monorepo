@@ -1278,11 +1278,6 @@
               "string",
               "null"
             ],
-            "enum": [
-              "apple",
-              "stripe",
-              null
-            ],
             "description": "Where it was bought: `apple`, in the App Store, or `stripe`, on the website."
           },
           "productId": {
@@ -1318,6 +1313,13 @@
               null
             ],
             "description": "Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs."
+          },
+          "running": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RunningSubscription"
+            },
+            "description": "Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought."
           },
           "canSubscribe": {
             "type": "boolean",
@@ -1370,11 +1372,64 @@
           "expiresAt",
           "willRenew",
           "managedIn",
+          "running",
           "canSubscribe",
           "cloudAccess",
           "appAccountToken",
           "offers"
         ]
+      },
+      "RunningSubscription": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "grace_period",
+              "billing_retry",
+              "pending",
+              "paused",
+              "expired",
+              "revoked"
+            ]
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "willRenew": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "managedIn": {
+            "type": "string",
+            "enum": [
+              "app_store",
+              "website"
+            ]
+          }
+        },
+        "required": [
+          "source",
+          "productId",
+          "status",
+          "expiresAt",
+          "willRenew",
+          "managedIn"
+        ],
+        "description": "A subscription still running at its store, and where it is managed."
       },
       "Redirect": {
         "type": "object",
@@ -2214,10 +2269,15 @@
                       "enum": [
                         "deleted"
                       ]
+                    },
+                    "appStoreSubscriptionContinues": {
+                      "type": "boolean",
+                      "description": "True when the account had an App Store subscription still running. The service can't end one: Apple keeps billing until the learner cancels it in the App Store, so the app tells them, and offers the App Store's subscription settings."
                     }
                   },
                   "required": [
-                    "status"
+                    "status",
+                    "appStoreSubscriptionContinues"
                   ]
                 }
               }
@@ -2426,7 +2486,7 @@
             }
           },
           "503": {
-            "description": "`apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again. `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code.",
+            "description": "`apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again. `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, since its code was used.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3340,7 +3400,7 @@
             }
           },
           "404": {
-            "description": "`no_subscription`: The account has never subscribed on the website.",
+            "description": "`no_subscription`: The account has never subscribed on the website. An App Store subscription is managed in the App Store.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3353,39 +3413,6 @@
                           "type": "string",
                           "enum": [
                             "no_subscription"
-                          ]
-                        },
-                        "message": {
-                          "type": "string"
-                        }
-                      },
-                      "required": [
-                        "code",
-                        "message"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "error"
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "`managed_in_app_store`: The account's subscription was bought in the App Store, and is managed there.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "object",
-                      "properties": {
-                        "code": {
-                          "type": "string",
-                          "enum": [
-                            "managed_in_app_store"
                           ]
                         },
                         "message": {
@@ -3879,7 +3906,7 @@
             }
           },
           "400": {
-            "description": "`invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded.",
+            "description": "`invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded. `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3891,7 +3918,8 @@
                         "code": {
                           "type": "string",
                           "enum": [
-                            "invalid_signature"
+                            "invalid_signature",
+                            "unreadable_event"
                           ]
                         },
                         "message": {
@@ -4072,7 +4100,7 @@
             }
           },
           "400": {
-            "description": "`invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded.",
+            "description": "`invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded. `unreadable_event`: Apple signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4084,7 +4112,8 @@
                         "code": {
                           "type": "string",
                           "enum": [
-                            "invalid_signature"
+                            "invalid_signature",
+                            "unreadable_event"
                           ]
                         },
                         "message": {

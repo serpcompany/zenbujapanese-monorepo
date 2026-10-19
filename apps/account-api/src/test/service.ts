@@ -50,31 +50,50 @@ async function appleSigningKey() {
 export interface BillingStandIns {
   stripe?: StandInStripe
   stripeTrialDays?: number
+  stripeGraceDays?: number
   appStore?: StandInAppStore
+  appStoreApi?: boolean
+  sandboxAccounts?: readonly string[]
   cloud?: CloudSettings
 }
 
-function billingProviders({ stripe, stripeTrialDays, appStore }: BillingStandIns) {
+function billingProviders(standIns: BillingStandIns) {
+  const { stripe, appStore } = standIns
   return {
-    stripe: stripe
+    web: stripe
       ? stripeBilling(
-          { ...stripeSettings, trialDays: stripeTrialDays ?? null },
+          {
+            ...stripeSettings,
+            trialDays: standIns.stripeTrialDays ?? null,
+            gracePeriodDays: standIns.stripeGraceDays ?? 0
+          },
           { fetch: stripe.fetch, retries: 0 }
         )
       : null,
-    apple: appStore
+    store: appStore
       ? appStoreBilling(
           {
             bundleId: appBundleIdentifier,
             appAppleId,
             environments: ['Production', 'Sandbox'],
-            products: [monthly, yearly]
+            products: [monthly, yearly],
+            apiKey: null,
+            sandboxAccounts: standIns.sandboxAccounts ?? null
           },
-          appStore.trust
+          standIns.appStoreApi
+            ? { ...appStore.trust, apiClients: appStore.api.clients }
+            : appStore.trust
         )
       : null
   }
 }
+
+const billingRules = (standIns: BillingStandIns) => ({
+  cloud: standIns.cloud ?? cloudIsFree,
+  storeTesting: standIns.sandboxAccounts
+    ? { environment: 'Sandbox', accounts: standIns.sandboxAccounts }
+    : null
+})
 
 export async function startService({
   emailSender = true,
@@ -112,7 +131,7 @@ export async function startService({
   const billing = createBilling(
     billingStore(db),
     billingProviders(standIns),
-    standIns.cloud ?? cloudIsFree
+    billingRules(standIns)
   )
   const app = createApp({
     release: 'test',
@@ -170,7 +189,7 @@ export async function startService({
     }
   }
   const rows = async (sql: string) => (await client.query<Record<string, unknown>>(sql)).rows
-  return { app, auth, client, mailbox, call, rows, close: () => client.close() }
+  return { app, auth, billing, client, mailbox, call, rows, close: () => client.close() }
 }
 
 export type Service = Awaited<ReturnType<typeof startService>>
