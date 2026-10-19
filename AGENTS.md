@@ -35,7 +35,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`docs/agents/api-servers.md`](docs/agents/api-servers.md) — the server the services run on: the deployer, its slots, its Slack alerts and tests, and setting the server up.
 - [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) — the shared TypeScript dictionary core: what it ports, its rules, and its checks.
 - [`docs/agents/ci.md`](docs/agents/ci.md) — every GitHub Actions workflow and what starts it, the checks a merge can wait for, and each workflow that checks a pull request: what it runs, and why.
-- [`docs/agents/ci-agents.md`](docs/agents/ci-agents.md) — the workflows Claude runs in: the review of every pull request, `@claude` requests, weekly maintenance, and the app and token they use.
+- [`docs/agents/ci-agents.md`](docs/agents/ci-agents.md) — the review, `@claude`, and weekly maintenance workflows, the app and token they use, and `serp-agent[bot]`, which agents act as.
 - [`docs/agents/ci-deploys.md`](docs/agents/ci-deploys.md) — the workflows that deploy the site, ship the services' images, and publish language data, and the actions pinned by commit.
 - [`language-data/README.md`](language-data/README.md) — the language data's sources, importers, and conformance suites, and its releases: the manifest, the build workflow, and publishing to R2.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.

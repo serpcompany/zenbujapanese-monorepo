@@ -88,9 +88,11 @@ No keyword volumes are measured yet.
 - `siteOpenGraph(locale)` names `og:locale`.
 - `localizedSitemapEntries(path, origin)`: a page's URL in each language, each with the same
   `xhtml:link` alternates. The pages, browse, and word sitemaps all use it. A word sitemap holds
-  `wordsPerSitemap` (25,000) words, so each of the service's 50,000-word files becomes two
+  `wordsPerSitemap` (20,000) words, so each of the service's 50,000-word files becomes three
   (`wordSitemapFiles` in `src/lib/dictionary/sitemaps.ts`, which `pnpm sitemaps` writes at each
-  deploy, ADR 0016). The tools sitemap lists each tools page in both languages too.
+  deploy, ADR 0016). The largest is about 21 MiB, under the 25 MiB a Workers asset may be, and
+  `pnpm sitemaps` refuses a larger one. The tools sitemap lists each tools page in both languages
+  too.
 - The header marks the current section from the public path: on the server, a page reads the
   rewritten `/en/…`, so `isCurrentSection` and `isCurrentPage` (`src/lib/site-menus.ts`) drop the
   prefix first, and the server's HTML and the browser's agree.

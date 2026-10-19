@@ -33,21 +33,24 @@ const words = [
   { entSeq: 1259291, slug: 'a&b' }
 ]
 
-const answers = (path: string, after: number) => {
+type Word = { entSeq: number; slug: string }
+
+const answers = (path: string, after: number, listed: readonly Word[]) => {
   if (path === '/v1/sitemaps/words') {
-    return [{ number: 1, firstEntSeq: 1259290, lastEntSeq: 1259291, urlCount: words.length }]
+    const [first, last] = [listed[0].entSeq, listed[listed.length - 1].entSeq]
+    return [{ number: 1, firstEntSeq: first, lastEntSeq: last, urlCount: listed.length }]
   }
-  if (path === '/v1/sitemaps/words/1') return words.filter(word => word.entSeq > after)
+  if (path === '/v1/sitemaps/words/1') return listed.filter(word => word.entSeq > after)
   if (path === '/v1/sitemaps/browse') {
     return { kana: [], categories: [], rankedLists: [], jlptLists: [], kanjiLists: [] }
   }
   return null
 }
 
-async function standInService(failing: string | null = null) {
+async function standInService(failing: string | null = null, listed: readonly Word[] = words) {
   const server = createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://localhost')
-    const answer = answers(url.pathname, Number(url.searchParams.get('after') ?? 0))
+    const answer = answers(url.pathname, Number(url.searchParams.get('after') ?? 0), listed)
     const status = url.pathname === failing ? 500 : answer === null ? 404 : 200
     response.writeHead(status, {
       'Content-Type': 'application/json',
@@ -67,9 +70,10 @@ async function writeSitemaps(folder: string, env: Record<string, string>) {
       cwd: site,
       env: { ...process.env, ...env }
     })
-    return 0
+    return { code: 0, stderr: '' }
   } catch (error) {
-    return (error as { code?: number }).code ?? 1
+    const { code, stderr } = error as { code?: number; stderr?: string }
+    return { code: code ?? 1, stderr: stderr ?? '' }
   }
 }
 
@@ -89,7 +93,7 @@ const service = (url: string) => ({
 describe('pnpm sitemaps', () => {
   test("writes every dictionary sitemap on the site's host and replaces the old ones", async () => {
     const folder = publicFolder()
-    expect(await writeSitemaps(folder, service(await standInService()))).toBe(0)
+    expect((await writeSitemaps(folder, service(await standInService()))).code).toBe(0)
     expect(readdirSync(folder).sort()).toEqual([
       'favicon.ico',
       'sitemap-categories.xml',
@@ -119,14 +123,26 @@ describe('pnpm sitemaps', () => {
   test('leaves the folder as it was when the service fails partway', async () => {
     const folder = publicFolder()
     const failing = await standInService('/v1/sitemaps/words/1')
-    expect(await writeSitemaps(folder, service(failing))).toBe(1)
+    expect((await writeSitemaps(folder, service(failing))).code).toBe(1)
+    expect(readdirSync(folder).sort()).toEqual(['favicon.ico', 'sitemap-words-9.xml'])
+  })
+
+  test('refuses a sitemap larger than a Cloudflare Workers asset may be, and leaves the folder as it was', async () => {
+    const folder = publicFolder()
+    const long = Array.from({ length: 900 }, (_, index) => ({
+      entSeq: index + 1,
+      slug: 'あ'.repeat(400)
+    }))
+    const failed = await writeSitemaps(folder, service(await standInService(null, long)))
+    expect(failed.code).toBe(1)
+    expect(failed.stderr).toMatch(/^\/sitemap-words\.xml is 2\d\.\d MiB, over the 25 MiB/)
     expect(readdirSync(folder).sort()).toEqual(['favicon.ico', 'sitemap-words-9.xml'])
   })
 
   test('refuses to write without a deployed environment to name the host', async () => {
     const folder = publicFolder()
     const url = await standInService()
-    expect(await writeSitemaps(folder, { ...service(url), SITE_ENV: '' })).toBe(1)
+    expect((await writeSitemaps(folder, { ...service(url), SITE_ENV: '' })).code).toBe(1)
     expect(readdirSync(folder).sort()).toEqual(['favicon.ico', 'sitemap-words-9.xml'])
   })
 })

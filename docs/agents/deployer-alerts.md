@@ -184,3 +184,10 @@ script. The script needs bash 4.4 or later, which a Mac doesn't ship (`/bin/bash
 the tests skip unless a newer `bash` is on `PATH`, and in CI they fail rather than skip. Run them
 with `pnpm --filter zenbujapanese-checks test`; `Repository` runs them on every pull request
 ([`ci.md`](ci.md), Repository).
+
+The stand-in for Docker writes its answer a line at a time, where the Docker CLI writes a short
+one at once, and the script depends on neither: it reads the whole of an answer it searches before
+`grep` looks in it (`lists`, and `digest_reference_of`). Piped straight into `grep --quiet` or
+`grep --max-count 1`, which stop reading at their match, Docker's next write would die of SIGPIPE,
+and `pipefail` would fail a check that found its line. A test gives it answers several times
+longer than a pipe holds, with the line it looks for first.

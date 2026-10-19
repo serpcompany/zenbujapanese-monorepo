@@ -1,5 +1,5 @@
 import { createWriteStream } from 'node:fs'
-import { copyFile, mkdtemp, readdir, rm } from 'node:fs/promises'
+import { copyFile, mkdtemp, readdir, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Readable } from 'node:stream'
@@ -29,9 +29,18 @@ async function readSitemaps(): Promise<SitemapFile[]> {
   )
 }
 
+const workersAssetBytes = 25 * 1024 * 1024
+
 async function writeAll(files: SitemapFile[], into: string) {
   for (const file of files) {
-    await pipeline(Readable.from(file.xml()), createWriteStream(join(into, file.path.slice(1))))
+    const path = join(into, file.path.slice(1))
+    await pipeline(Readable.from(file.xml()), createWriteStream(path))
+    const { size } = await stat(path)
+    if (size > workersAssetBytes) {
+      throw new Error(
+        `${file.path} is ${(size / 1024 / 1024).toFixed(1)} MiB, over the 25 MiB a Cloudflare Workers asset may be: lower wordsPerSitemap in src/lib/dictionary/sitemaps.ts`
+      )
+    }
   }
 }
 

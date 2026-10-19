@@ -253,19 +253,19 @@ describe('the dictionary sitemaps a deploy writes', () => {
     expect(locs(await text(files[1]))).toHaveLength(10_000)
   })
 
-  test('a service sitemap of more than 25,000 words takes two files, so none lists over 50,000 URLs', async () => {
-    expect(wordsPerSitemap).toBe(25_000)
+  test('a service sitemap of more than 20,000 words takes two files, so each stays under 50,000 URLs and a Workers asset’s 25 MiB', async () => {
+    expect(wordsPerSitemap).toBe(20_000)
     const files = await written(fakeService(30_000, 30_000))
     expect(files.map(file => [file.path, file.urls]).slice(0, 2)).toEqual([
-      ['/sitemap-words.xml', 50_000],
-      ['/sitemap-words-2.xml', 10_000]
+      ['/sitemap-words.xml', 40_000],
+      ['/sitemap-words-2.xml', 20_000]
     ])
     const first = locs(await text(files[0]))
     const second = locs(await text(files[1]))
-    expect(first).toHaveLength(50_000)
-    expect(first.at(-1)).toBe(`${local}/ja/dictionary/w&amp;25000-25000/`)
-    expect(second).toHaveLength(10_000)
-    expect(second[0]).toBe(`${local}/dictionary/w&amp;25001-25001/`)
+    expect(first).toHaveLength(40_000)
+    expect(first.at(-1)).toBe(`${local}/ja/dictionary/w&amp;20000-20000/`)
+    expect(second).toHaveLength(20_000)
+    expect(second[0]).toBe(`${local}/dictionary/w&amp;20001-20001/`)
   })
 
   test('fail, rather than write less, when the service is missing a sitemap', async () => {
