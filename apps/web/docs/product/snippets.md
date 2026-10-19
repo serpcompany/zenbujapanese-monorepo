@@ -35,7 +35,8 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - The kanji hub is "Kanji lists by grade, JLPT level, and stroke count".
 - A word page's title steps down as it would pass 70 characters. In English it is "Iru Meaning &
   Definition: 要る (いる) in English", then the same without the reading, then "Iru Meaning: 要る",
-  then "要る meaning", as 特定独立行政法人等の労働関係に関する法律 is. In Japanese it is
+  then "要る (いる) Meaning & Definition in English" (a word's title when it has no romaji), then
+  "要る (いる) meaning", then "要る meaning", as 特定独立行政法人等の労働関係に関する法律 is. In Japanese it is
   「要る」は英語で？to be needed｜意味・読み方・漢字・例文, then with 意味・読み方 alone, then
   「要る」の英語｜意味・読み方・漢字・例文 without the meaning, then 「要る」の英語・意味.
 - A search results page shortens its query, at its last space and with "…", when the title would
