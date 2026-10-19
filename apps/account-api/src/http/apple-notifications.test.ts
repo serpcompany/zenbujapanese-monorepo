@@ -271,6 +271,19 @@ describe('POST /v1/webhooks/apple', () => {
       ['charge', 'succeeded'],
       ['refund', 'reversed']
     ])
+    const signedBeforeTheReversal = await appStore.transaction({
+      ...refunded,
+      signedDate: Date.now() - 60_000
+    })
+    expect(
+      (
+        await billing.call('/v1/me/subscription/apple', {
+          token: learner.token,
+          body: { signedTransaction: signedBeforeTheReversal }
+        })
+      ).status
+    ).toBe(200)
+    expect((await statusOf(learner)).active).toBe(true)
   })
 
   test('a partial refund records its share', async () => {

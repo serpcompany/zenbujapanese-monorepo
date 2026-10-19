@@ -11,6 +11,19 @@ export type AppStoreApiClients = (environment: Environment) => AppStoreServerAPI
 const hour = 60 * 60 * 1000
 const historyWindowMs = 80 * hour
 const mostHistoryPages = 50
+const answerWithinMs = 10_000
+
+async function within<T>(ms: number, work: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const late = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`no answer within ${ms} ms`)), ms)
+  })
+  try {
+    return await Promise.race([work, late])
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 export function appStoreApiClients(key: AppStoreApiKey, bundleId: string): AppStoreApiClients {
   const clients = new Map<Environment, AppStoreServerAPIClient>()
@@ -29,15 +42,17 @@ export function appStoreApiClients(key: AppStoreApiKey, bundleId: string): AppSt
   }
 }
 
-export function appStoreApi(clients: AppStoreApiClients) {
+export function appStoreApi(clients: AppStoreApiClients, timeoutMs = answerWithinMs) {
   return {
     async latest(
       environment: Environment,
       originalTransactionId: string
     ): Promise<LastTransactionsItem | null> {
       try {
-        const statuses =
-          await clients(environment).getAllSubscriptionStatuses(originalTransactionId)
+        const statuses = await within(
+          timeoutMs,
+          clients(environment).getAllSubscriptionStatuses(originalTransactionId)
+        )
         const items = (statuses.data ?? []).flatMap(group => group.lastTransactions ?? [])
         return items.find(item => item.originalTransactionId === originalTransactionId) ?? null
       } catch (error) {
@@ -54,9 +69,9 @@ export function appStoreApi(clients: AppStoreApiClients) {
       let paginationToken: string | undefined
       try {
         for (let page = 0; page < mostHistoryPages; page++) {
-          const answer = await clients(environment).getNotificationHistory(
-            paginationToken ?? null,
-            request
+          const answer = await within(
+            timeoutMs,
+            clients(environment).getNotificationHistory(paginationToken ?? null, request)
           )
           for (const item of answer.notificationHistory ?? []) {
             if (item.signedPayload) payloads.push(item.signedPayload)

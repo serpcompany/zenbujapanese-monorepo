@@ -360,14 +360,16 @@ describe('POST /v1/webhooks/stripe', () => {
     expect(refundsOf('pi_account_gone')).toHaveLength(1)
   })
 
-  test('leaves a running subscription alone when its account is missing but was never deleted, as after a restore', async () => {
+  test('leaves a running subscription alone when its account is missing but was never deleted, as after a restore, and says so loudly', async () => {
     const { learner, id } = await subscribed('stripe-restored-away@example.com', {
       paymentIntent: 'pi_restored_away'
     })
     await billing.rows(`delete from users where id = '${learner.userId}'`)
+    const lines = logged()
     await billing.stripeWebhook(updated(id))
     expect(stripe.subscriptions.get(id)?.status).toBe('active')
     expect(refundsOf('pi_restored_away')).toEqual([])
+    expect(lines()).toContain('names an account this service never deleted, as after a restore')
   })
 
   test("refunds and cancels a second checkout that completes while the account's first subscription runs", async () => {

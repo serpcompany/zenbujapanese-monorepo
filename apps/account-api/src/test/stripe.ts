@@ -25,6 +25,7 @@ export interface SubscriptionFields {
   cancelAtPeriodEnd?: boolean
   paymentIntent?: string
   firstPayment?: 'paid' | 'open'
+  email?: string
 }
 
 type StripeObject = Record<string, unknown>
@@ -34,6 +35,7 @@ interface Request {
   path: string
   form: URLSearchParams
   idempotencyKey: string | null
+  duringATransaction: boolean
 }
 
 const answer = (body: unknown, status = 200) =>
@@ -79,6 +81,7 @@ function subscriptionObject(fields: SubscriptionFields): StripeObject {
       billing_reason: 'subscription_create',
       status: fields.firstPayment ?? 'paid',
       amount_due: 500,
+      customer_email: fields.email ?? null,
       payments: {
         object: 'list',
         data: fields.paymentIntent
@@ -100,9 +103,17 @@ export function standInStripe() {
   const refunded = new Set<string>()
   const charges = new Map<string, string>()
   const payments = new Map<string, StripeObject>()
-  const state: { down: boolean; refusingRefunds: { status: number; code: string } | null } = {
+  const konbini = new Set<string>()
+  const state: {
+    down: boolean
+    refusingRefunds: { status: number; code: string } | null
+    reads: Promise<void> | null
+    inATransaction: () => boolean
+  } = {
     down: false,
-    refusingRefunds: null
+    refusingRefunds: null,
+    reads: null,
+    inATransaction: () => false
   }
   let sessions = 1
 
@@ -124,6 +135,19 @@ export function standInStripe() {
     }
     if (method === 'POST' && path === '/v1/refunds') {
       const intent = form.get('payment_intent') ?? ''
+      if (konbini.has(intent) && !form.get('instructions_email')) {
+        return answer(
+          {
+            error: {
+              type: 'invalid_request_error',
+              code: 'parameter_missing',
+              param: 'instructions_email',
+              message: 'A konbini refund needs an email for its instructions.'
+            }
+          },
+          400
+        )
+      }
       const refusal = refunded.has(intent)
         ? { status: 400, code: 'charge_already_refunded' }
         : state.refusingRefunds
@@ -170,10 +194,17 @@ export function standInStripe() {
       method,
       path: url.pathname,
       form,
-      idempotencyKey: headers.get('idempotency-key')
+      idempotencyKey: headers.get('idempotency-key'),
+      duringATransaction: state.inATransaction()
     })
     if (state.down) return answer({ error: { type: 'api_error', message: 'Stripe is down' } }, 500)
-    return route(method, url.pathname, form)
+    const answered = route(method, url.pathname, form)
+    const held = method === 'GET' && url.pathname.startsWith('/v1/subscriptions/') && state.reads
+    if (held) {
+      state.reads = null
+      await held
+    }
+    return answered
   }
 
   const thin = (type: string) =>
@@ -194,7 +225,15 @@ export function standInStripe() {
     fetch,
     requests,
     refunded,
+    konbini,
     thin,
+    holdTheNextRead() {
+      let release = () => {}
+      state.reads = new Promise<void>(resolve => {
+        release = resolve
+      })
+      return () => release()
+    },
     charges,
     payments,
     state,

@@ -46,7 +46,7 @@ describe('cloud access', () => {
   })
 
   const billingWith = (cloud: CloudAccessRules, store: StoreBilling | null = null) =>
-    createBilling(noBillingStore, { web: null, store }, { cloud, storeTesting: null })
+    createBilling(noBillingStore, { web: null, store }, { cloud, storeTesting: null, stores: {} })
 
   test("refuses to leave it free for an app the service doesn't know", () => {
     expect(() => billingWith({ ...paid, freeClients: ['tomodachi', 'someone-elses-app'] })).toThrow(

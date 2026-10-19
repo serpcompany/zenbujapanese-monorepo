@@ -43,6 +43,15 @@ past every earlier one, even a second restore of the same backup:
   server reuses: it conflicts, and the app takes the profile as it is;
 - every app hears of each profile on its next sync, whatever cursor it holds.
 
+**Subscriptions after a restore.** A subscription bought after the backup names an account the
+restored database doesn't have and never deleted. The service charges nothing itself, but
+Stripe or Apple keeps billing it, so each of its events logs `billing: a running subscription
+names an account this service never deleted, as after a restore`. After a restore, watch the
+service's log for that line (`docker logs`, [`api-servers.md`](api-servers.md)) for as long as
+the stores retry: for each, in Stripe's dashboard, either cancel the subscription and refund it,
+or, once the learner signs up again, set its `zenbu_account` metadata to the new account's ID and
+resend the event. An App Store one is claimed again by the learner's app when they sign in.
+
 What changed after the backup is lost, as for any restore. The first time the service starts on
 any database, it fences it too, and logs `first start on this database`: a new one's journal starts
 at the time, and the accounts one already holds (on the first deploy of `sync_origin`, or from a

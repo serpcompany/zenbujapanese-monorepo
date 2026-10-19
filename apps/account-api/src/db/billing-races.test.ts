@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import pg from 'pg'
 import { describe, expect, test } from 'vitest'
+import { storeTraits } from '../billing/stores'
 import { stripeBilling } from '../billing/stripe'
 import { migrationsFolder as migrations } from '../config'
 import { cloudIsFree } from '../domain/cloud-access'
@@ -26,7 +27,7 @@ async function race(created: boolean) {
   const billing = createBilling(
     billingStore(database.db),
     { web: stripeBilling(stripeSettings, { fetch: stripe.fetch, retries: 0 }), store: null },
-    { cloud: cloudIsFree, storeTesting: null }
+    { cloud: cloudIsFree, storeTesting: null, stores: storeTraits }
   )
   const customer = `cus_${userId}`
   const tabs = ['pi_tab_one', 'pi_tab_two'].map(paymentIntent =>
