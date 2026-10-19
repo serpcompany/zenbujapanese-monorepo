@@ -5,15 +5,23 @@ import { exportPKCS8, generateKeyPair } from 'jose'
 import { accessTokenVerifier } from '../auth/access-tokens'
 import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
+import { appStoreBilling } from '../billing/app-store'
+import { stripeBilling } from '../billing/stripe'
+import type { CloudSettings } from '../billing-config'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
 import { accountStore } from '../db/accounts'
+import { billingStore } from '../db/billing'
 import { accountDeleter } from '../domain/account-deletion'
 import { createAccounts } from '../domain/accounts'
+import { cloudIsFree } from '../domain/cloud-access'
 import { cursorKey, cursors } from '../domain/cursor'
+import { createBilling } from '../domain/subscription-billing'
 import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
 import { createApp } from '../http/app'
+import { appAppleId, monthly, type StandInAppStore, yearly } from './app-store'
+import { type StandInStripe, stripeSettings } from './stripe'
 
 export const publicUrl = 'http://localhost:8789'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
@@ -39,12 +47,37 @@ async function appleSigningKey() {
   return { teamId: '847HR8U8D9', keyId: 'TESTKEY123', privateKey: await exportPKCS8(privateKey) }
 }
 
+export interface BillingStandIns {
+  stripe?: StandInStripe
+  appStore?: StandInAppStore
+  cloud?: CloudSettings
+}
+
+function billingProviders({ stripe, appStore }: BillingStandIns) {
+  return {
+    stripe: stripe ? stripeBilling(stripeSettings, { fetch: stripe.fetch, retries: 0 }) : null,
+    apple: appStore
+      ? appStoreBilling(
+          {
+            bundleId: appBundleIdentifier,
+            appAppleId,
+            environments: ['Production', 'Sandbox'],
+            products: [monthly, yearly]
+          },
+          appStore.trust
+        )
+      : null
+  }
+}
+
 export async function startService({
   emailSender = true,
-  appleKey = false
+  appleKey = false,
+  billing: standIns = {}
 }: {
   emailSender?: boolean
   appleKey?: boolean
+  billing?: BillingStandIns
 } = {}) {
   const config: AuthConfig = appleKey
     ? {
@@ -70,14 +103,26 @@ export async function startService({
   )
   const auth = await createAuth({ config, db, mailer })
   const store = accountStore(db)
+  const billing = createBilling(
+    billingStore(db),
+    billingProviders(standIns),
+    standIns.cloud ?? cloudIsFree
+  )
   const app = createApp({
     release: 'test',
     databaseReady: async () => true,
     auth,
     accounts: createAccounts(store, cursors(cursorKey(testSecret))),
-    deleteAccount: accountDeleter(store, appleRevoker(config.apple, config.publicUrl), {
-      accountDeleted: (email, language) => void mailer.send(accountDeletedMessage(email, language))
-    }),
+    deleteAccount: accountDeleter(
+      store,
+      appleRevoker(config.apple, config.publicUrl),
+      {
+        accountDeleted: (email, language) =>
+          void mailer.send(accountDeletedMessage(email, language))
+      },
+      billing
+    ),
+    billing,
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
     allowedOrigins: config.trustedOrigins,
     devMailbox: mailbox
@@ -109,7 +154,7 @@ export async function startService({
         ...(client ? { 'x-zenbu-client': client } : {}),
         ...headers
       },
-      body: body === undefined ? undefined : JSON.stringify(body)
+      body: body === undefined || typeof body === 'string' ? body : JSON.stringify(body)
     })
     const text = await response.text()
     return {

@@ -64,9 +64,14 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../billing",
+                      "../billing/**",
+                      "stripe",
+                      "stripe/**",
+                      "@apple/**"
                     ],
-                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the dev mailbox), and imports neither the database, sign-in, nor email (docs/agents/account-api.md, Code layout)."
+                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the billing rules, the dev mailbox), and imports neither the database, sign-in, email, nor the payment providers (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -104,9 +109,14 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../billing",
+                      "../billing/**",
+                      "stripe",
+                      "stripe/**",
+                      "@apple/**"
                     ],
-                    "message": "src/domain holds the account and sync rules, which the HTTP layer and the database layer both build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter."
+                    "message": "src/domain holds the account, sync, and billing rules, which the HTTP layer, the database layer, and the payment providers' adapters build on, so it imports none of them, nor Hono, nor a database driver, nor a provider's SDK (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter."
                   }
                 ]
               }
@@ -138,9 +148,14 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../billing",
+                      "../billing/**",
+                      "stripe",
+                      "stripe/**",
+                      "@apple/**"
                     ],
-                    "message": "src/db is the database layer: sign-in and the HTTP layer build on it, so it knows nothing of them (docs/agents/account-api.md, Code layout)."
+                    "message": "src/db is the database layer: sign-in, billing, and the HTTP layer build on it, so it knows nothing of them, nor of a payment provider (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -174,7 +189,12 @@
                       "drizzle-orm",
                       "drizzle-orm/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../billing",
+                      "../billing/**",
+                      "stripe",
+                      "stripe/**",
+                      "@apple/**"
                     ],
                     "message": "src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout)."
                   }
@@ -195,7 +215,19 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["../http", "../http/**", "../server", "hono", "hono/**", "@hono/**"],
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "../billing",
+                      "../billing/**",
+                      "stripe",
+                      "stripe/**",
+                      "@apple/**"
+                    ],
                     "message": "src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
                   }
                 ]
@@ -206,7 +238,45 @@
       }
     },
     {
-      "includes": ["src/config.ts", "src/failure.ts", "src/language.ts"],
+      "includes": ["src/billing/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../db",
+                      "../db/**",
+                      "../auth",
+                      "../auth/**",
+                      "../email",
+                      "../email/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**",
+                      "better-auth",
+                      "better-auth/**"
+                    ],
+                    "message": "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts hands them to the domain, so they know nothing of HTTP, the database, sign-in, or email (docs/agents/account-billing.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/config.ts", "src/billing-config.ts", "src/failure.ts", "src/language.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -227,9 +297,17 @@
                       "hono/**",
                       "pg",
                       "drizzle-orm",
-                      "drizzle-orm/**"
+                      "drizzle-orm/**",
+                      "./auth",
+                      "./auth/**",
+                      "./billing",
+                      "./billing/**",
+                      "./email",
+                      "./email/**",
+                      "stripe",
+                      "@apple/**"
                     ],
-                    "message": "src/config.ts reads the environment, src/failure.ts describes an error for the log, and src/language.ts names the language an email is in; all three sit below every layer, so they import none (docs/agents/account-api.md, Code layout)."
+                    "message": "src/config.ts and src/billing-config.ts read the environment, src/failure.ts describes an error for the log, and src/language.ts names the language an email is in; they sit below every layer, so they import none (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }

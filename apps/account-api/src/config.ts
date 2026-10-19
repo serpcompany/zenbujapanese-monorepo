@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url'
 import { readPort } from '@zenbu/node-service/config'
+import { type BillingConfig, readBilling } from './billing-config'
 
 export interface AppleSigningKey {
   teamId: string
@@ -46,6 +47,7 @@ export interface Config {
   release: string
   auth: AuthConfig
   email: EmailConfig
+  billing: BillingConfig
 }
 
 const supportAddress = 'support@zenbujapanese.com'
@@ -163,6 +165,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   const secret = required(env, 'ACCOUNT_API_SECRET', 'it signs sessions and encrypts keys')
   if (secret.length < 32) throw new Error('ACCOUNT_API_SECRET must be at least 32 characters')
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(publicUrl)
   return {
     port: readPort(env.PORT, 8789),
     databaseUrl,
@@ -174,10 +177,11 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       trustedOrigins: list(env.ACCOUNT_API_TRUSTED_ORIGINS),
       cookieDomain: env.ACCOUNT_API_COOKIE_DOMAIN?.trim() || undefined,
       cookiePrefix: env.ACCOUNT_API_COOKIE_PREFIX?.trim() || 'zenbu',
-      apple: readApple(env, /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(publicUrl)),
+      apple: readApple(env, local),
       google: readGoogle(env)
     },
-    email: readEmail(env)
+    email: readEmail(env),
+    billing: readBilling(env, local)
   }
 }
 

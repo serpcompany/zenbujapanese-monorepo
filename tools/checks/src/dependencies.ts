@@ -168,23 +168,26 @@ const account: Part = {
       name: 'account-http-never-reaches-the-database',
       severity: 'error',
       comment:
-        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
+        "src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database or a payment provider (docs/agents/account-api.md, Code layout). Put database code in src/db, and a provider's in src/billing.",
       from: { path: '^src/http/', pathNot: accountTestCode },
       to: {
-        path: ['^src/(db|auth|email)/', '(^|/)node_modules/(pg|drizzle-orm|better-auth)/']
+        path: [
+          '^src/(db|auth|email|billing)/',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|stripe|@apple)/'
+        ]
       }
     },
     {
       name: 'account-domain-builds-on-no-layer',
       severity: 'error',
       comment:
-        'src/domain holds the account and sync rules, which the HTTP and database layers build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.',
+        "src/domain holds the account, sync, and billing rules, which the HTTP layer, the database layer, and the payment providers' adapters build on, so it imports none of them, nor Hono, nor a database driver, nor a provider's SDK (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.",
       from: { path: '^src/domain/', pathNot: accountTestCode },
       to: {
         path: [
-          '^src/(http|db)/',
+          '^src/(http|db|billing)/',
           '^src/server\\.ts$',
-          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
+          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono|stripe|@apple)/'
         ]
       }
     },
@@ -214,9 +217,29 @@ const account: Part = {
       name: 'account-database-knows-no-http',
       severity: 'error',
       comment:
-        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP, nor of a payment provider (docs/agents/account-api.md, Code layout).',
       from: { path: '^src/db/', pathNot: accountTestCode },
-      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+      to: {
+        path: [
+          '^src/(http|billing)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(hono|@hono|stripe|@apple)/'
+        ]
+      }
+    },
+    {
+      name: 'account-billing-adapts-providers-and-nothing-more',
+      severity: 'error',
+      comment:
+        "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts hands them to the domain, so they know nothing of HTTP, the database, sign-in, or email (docs/agents/account-billing.md, Code layout).",
+      from: { path: '^src/billing/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|email)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
+        ]
+      }
     }
   ]
 }

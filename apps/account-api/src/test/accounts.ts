@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect } from 'vitest'
 import { cursorKey, cursors } from '../domain/cursor'
-import { testSecret } from './service'
+import { type BillingStandIns, testSecret } from './service'
 import { sessionToken, userIdOf, useSignInService } from './sign-in'
 
 export interface Learner {
@@ -33,7 +33,7 @@ export interface SyncedAnswer {
   hasMore: boolean
 }
 
-export function useAccountService(options: { appleKey?: boolean } = {}) {
+export function useAccountService(options: { appleKey?: boolean; billing?: BillingStandIns } = {}) {
   const running = useSignInService({ providers: true, ...options })
   const call = (path: string, options: Parameters<typeof running.service.call>[1]) =>
     running.service.call(path, options)

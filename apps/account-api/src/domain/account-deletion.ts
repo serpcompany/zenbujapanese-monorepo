@@ -25,6 +25,10 @@ export interface DeletionNotices {
   accountDeleted(email: string, language: Language): void
 }
 
+export interface SubscriptionEnder {
+  endSubscriptions(userId: string): Promise<'ended' | 'unavailable'>
+}
+
 export type Deletion =
   | 'deleted'
   | 'no_account'
@@ -33,8 +37,14 @@ export type Deletion =
   | 'apple_authorization_invalid'
   | 'apple_account_mismatch'
   | 'apple_unavailable'
+  | 'billing_unavailable'
 
-export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices: DeletionNotices) {
+export function accountDeleter(
+  store: AccountStore,
+  apple: AppleRevoker,
+  notices: DeletionNotices,
+  subscriptions: SubscriptionEnder
+) {
   return async (
     principal: Principal,
     authorization: AppleAuthorization = {},
@@ -60,6 +70,9 @@ export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices
       if (revoked === 'invalid') return 'apple_authorization_invalid'
       if (revoked === 'other_apple_id') return 'apple_account_mismatch'
       if (revoked === 'unavailable') return 'apple_unavailable'
+    }
+    if ((await subscriptions.endSubscriptions(principal.userId)) === 'unavailable') {
+      return 'billing_unavailable'
     }
     const language = emailLanguage(requestedLanguage, await store.language(principal.userId))
     await store.deleteAccount(principal.userId, profile.email)

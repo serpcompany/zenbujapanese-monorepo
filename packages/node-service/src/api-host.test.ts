@@ -7,8 +7,12 @@ test.each([
   ['/v1/me', true],
   ['/v1/sync', true],
   ['/v1/health', true],
+  ['/v1/me/subscription/checkout', true],
+  ['/v1/webhooks/stripe', true],
+  ['/v1/webhooks/apple', true],
   ['/v1/meaning', false],
   ['/v1/syncopation', false],
+  ['/v1/webhookshop', false],
   ['/v1/search/見る', false],
   ['/v1/words/1259290', false],
   ['/healthz', false]

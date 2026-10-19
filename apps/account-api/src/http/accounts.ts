@@ -22,27 +22,28 @@ import {
   SyncAnswerSchema,
   SyncRequestSchema
 } from './schemas'
+import { subscriptionRequired } from './subscription-schemas'
 import { syncFieldSchemas } from './sync-entities'
 
 export const bodyLimitKb = 64
 
-const needs = (...scopes: Scope[]) => [{ accessToken: scopes }]
+export const needs = (...scopes: Scope[]) => [{ accessToken: scopes }]
 
-const noScope = (scope: Scope) => ({
+export const noScope = (scope: Scope) => ({
   insufficient_scope: `This app's access to the account doesn't include \`${scope}\`.`
 })
 
-const unauthorized = refusal({
+export const unauthorized = refusal({
   unauthorized:
     'No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.'
 })
-const tooLarge = refusal({ too_large: `The body is over ${bodyLimitKb} KB.` })
-const malformed = { bad_request: 'The body is not JSON, or not this shape.' }
-const tooMany = (perMinute: number) =>
+export const tooLarge = refusal({ too_large: `The body is over ${bodyLimitKb} KB.` })
+export const malformed = { bad_request: 'The body is not JSON, or not this shape.' }
+export const tooMany = (perMinute: number) =>
   refusal({
     too_many_requests: `This account sent more than ${perMinute} requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds \`Retry-After\` says.`
   })
-const failed = refusal({
+export const failed = refusal({
   internal: 'The service failed, and nothing says why. Try again later, backing off.'
 })
 const failedSync = refusal({
@@ -55,7 +56,7 @@ const unauthorizedBody = errorBody(
   'Send an access token from GET /v1/auth/token as `Authorization: Bearer <token>`.'
 )
 
-function refuse(context: Context) {
+export function refuse(context: Context) {
   return context.json(unauthorizedBody, 401, { 'WWW-Authenticate': 'Bearer' })
 }
 
@@ -191,10 +192,15 @@ const deletionAnswers = {
     503,
     'apple_unavailable',
     "Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again."
+  ],
+  billing_unavailable: [
+    503,
+    'billing_unavailable',
+    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later."
   ]
 } as const
 
-const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
+export const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
   websiteOrigins.includes(new URL(uri).origin)
 
 const deletionRefusals = (status: number) =>
@@ -245,6 +251,7 @@ const sync = createRoute({
     200: json(SyncAnswerSchema, 'The results and the changes.'),
     400: refusal(malformed),
     401: unauthorized,
+    402: refusal(subscriptionRequired),
     410: refusal({
       invalid_cursor:
         "The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
