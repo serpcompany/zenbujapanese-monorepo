@@ -17,6 +17,7 @@ import {
   shortBandLabel,
   tierCutoffs
 } from './copy'
+import { rankPageRanks } from './rank-pages'
 
 const category = (slug: string) => {
   const found = browseCategory(slug)
@@ -139,11 +140,13 @@ describe('ranked list notes', () => {
     )
   })
 
-  test('a band is its ranks, written for each language', () => {
+  test('a band and each of its pages are their ranks, written for each language', () => {
     const [first, second] = allRankBands
     const last = allRankBands[allRankBands.length - 1]
-    expect(rankRange(2, 'en')).toBe('1,001–2,000')
-    expect(rankRange(2, 'ja')).toBe('1,001〜2,000位')
+    expect(rankRange(second, 'en')).toBe('1,001–2,000')
+    expect(rankRange(second, 'ja')).toBe('1,001〜2,000位')
+    expect(rankRange(rankPageRanks(2, 2), 'en')).toBe('1,201–1,400')
+    expect(rankRange(rankPageRanks(2, 2), 'ja')).toBe('1,201〜1,400位')
     expect([first, second, last].map(band => shortBandLabel(band, 'en'))).toEqual([
       '1–1k',
       '1k–2k',

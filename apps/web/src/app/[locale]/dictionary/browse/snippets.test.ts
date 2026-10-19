@@ -1,7 +1,8 @@
-import { allRankBands, rankedLists } from '@zenbu/dictionary-core/browse/lists'
+import { allRankBands, rankBand, rankedLists } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { describe, expect, test, vi } from 'vitest'
 import { rankBandTitle } from '@/lib/dictionary/browse/copy'
+import { rankPageRanks, rankPagesPerBand } from '@/lib/dictionary/browse/rank-pages'
 import { locales } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -57,17 +58,23 @@ describe('every kind of browse page fits search results', () => {
 
   test.each(
     locales
-  )('in %s, every ranked list’s every band is titled within 70 characters', locale => {
+  )('in %s, every ranked list’s every band page is titled within 70 characters', locale => {
     for (const list of rankedLists) {
       for (const { band } of allRankBands) {
-        const title = rankBandTitle(coreText(list.name, locale), band, locale)
-        expect(fitsTitle(title), siteTitle(title)).toBe(true)
+        for (let page = 1; page <= rankPagesPerBand; page += 1) {
+          const title = rankBandTitle(
+            coreText(list.name, locale),
+            rankPageRanks(band, page),
+            locale
+          )
+          expect(fitsTitle(title), siteTitle(title)).toBe(true)
+        }
       }
     }
   })
 
   test('the longest band title, and the kanji hub’s, are the ones the audit flagged, now fitting', () => {
-    expect(siteTitle(rankBandTitle('Visual novels', 10, 'en'))).toBe(
+    expect(siteTitle(rankBandTitle('Visual novels', rankBand(10), 'en'))).toBe(
       'Visual novels: most used Japanese words, 9,001–10,000 | Zenbu Japanese'
     )
     expect(characters(siteTitle(getDictionary('en').browse.kanji.hubTitle))).toBe(67)

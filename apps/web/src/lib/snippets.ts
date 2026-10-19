@@ -21,7 +21,7 @@ export function shortened(text: string, longest: number = descriptionLength.long
   const points = Array.from(text)
   if (points.length <= longest) return text
   const lastBreak = points.slice(0, longest).findLastIndex(point => breakCharacter.test(point))
-  const kept = lastBreak > 0 ? points.slice(0, lastBreak) : points.slice(0, longest - 1)
+  const kept = lastBreak > longest / 2 ? points.slice(0, lastBreak) : points.slice(0, longest - 1)
   return `${kept.join('').replace(trailingBreaks, '')}${ellipsis}`
 }
 

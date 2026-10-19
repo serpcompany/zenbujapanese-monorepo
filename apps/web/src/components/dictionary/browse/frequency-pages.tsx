@@ -33,7 +33,7 @@ import {
   tierCutoffs,
   tierName
 } from '@/lib/dictionary/browse/copy'
-import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
+import type { BrowseWordsPage, RankBandWords } from '@/lib/dictionary/browse/data'
 import {
   browsePath,
   frequencyDictionariesPath,
@@ -41,6 +41,7 @@ import {
   rankBandPath,
   rankedListPath
 } from '@/lib/dictionary/browse/paths'
+import { rankPageRanks } from '@/lib/dictionary/browse/rank-pages'
 import type { Linked } from '@/lib/dictionary/page-example'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
@@ -216,19 +217,22 @@ export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; 
 export function RankBandPage({
   list,
   band,
+  page,
   copy,
   words,
   locale
 }: {
   list: RankedList
   band: number
+  page: number
   copy: RankedListCopy
-  words: BrowseWordsPage
+  words: RankBandWords
   locale: Locale
 }) {
   const t = browseText(locale)
   const name = coreText(list.name, locale)
-  const range = rankRange(band, locale)
+  const range = rankRange(rankPageRanks(band, page), locale)
+  const path = rankBandPath(list.slug, band, page)
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
@@ -236,7 +240,7 @@ export function RankBandPage({
         pages={[
           ...frequencyCrumbs(locale),
           { label: name, path: rankedListPath(list.slug) },
-          ...(band > 1 ? [{ label: range, path: rankBandPath(list.slug, band) }] : [])
+          ...(path === rankedListPath(list.slug) ? [] : [{ label: range, path }])
         ]}
       />
       <BrowseHeading title={fill(t.frequency.bandHeading, { name })}>
@@ -251,6 +255,12 @@ export function RankBandPage({
       </BrowseHeading>
       <RankBands slug={list.slug} name={name} current={band} locale={locale} />
       <WordList words={words.words} section="words" locale={locale} />
+      <Pagination
+        page={page}
+        pages={words.pages}
+        pathFor={number => rankBandPath(list.slug, band, number)}
+        locale={locale}
+      />
       <SourceCredits sources={copy.sources} locale={locale} />
     </BrowsePage>
   )

@@ -39,8 +39,8 @@ const bandSegment = (band: number) => {
   return `${first}-${last}`
 }
 
-export const rankBandPath = (slug: string, band: number) =>
-  `${frequencyDictionariesPath}${slug}/${bandSegment(band)}/`
+export const rankBandPath = (slug: string, band: number, page = 1) =>
+  withPage(`${frequencyDictionariesPath}${slug}/${bandSegment(band)}/`, page)
 
 export const rankedListPath = (slug: string) => rankBandPath(slug, 1)
 

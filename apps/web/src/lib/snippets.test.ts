@@ -48,6 +48,10 @@ describe('shortened', () => {
   test('cuts mid-word when the text has nowhere better to break', () => {
     expect(shortened('x'.repeat(200))).toBe(`${'x'.repeat(159)}…`)
   })
+
+  test('cuts mid-word rather than at a break in the first half, which would drop most of the text', () => {
+    expect(shortened(`短く、${'長'.repeat(200)}`)).toBe(`短く、${'長'.repeat(156)}…`)
+  })
 })
 
 describe('joinedSentences', () => {
