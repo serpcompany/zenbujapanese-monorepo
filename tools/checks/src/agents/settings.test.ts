@@ -120,6 +120,15 @@ describe('.claude/settings.json', () => {
     'gh api graphql -f query="mutation { enablePullRequestAutoMerge(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
     'gh api graphql --input tmp/merge.json',
     'gh api graphql -F query=@tmp/merge.graphql',
+    'gh api -H "Accept: application/json" graphql --input tmp/merge.json',
+    'gh api --hostname github.com graphql -F query=@tmp/merge.graphql',
+    'gh api -X PATCH repos/{owner}/{repo} -f default_branch=staging',
+    'gh api repos/{owner}/{repo} -X PATCH -F private=true',
+    'gh api -X PATCH /repos/serpcompany/zenbujapanese-monorepo -F private=true',
+    'gh api -X PUT repos/serpcompany/zenbujapanese-monorepo/actions/permissions -F enabled=true',
+    'gh api -X POST repos/serpcompany/zenbujapanese-monorepo/pages -f build_type=workflow',
+    'gh api -X PUT repos/serpcompany/zenbujapanese-monorepo/vulnerability-alerts',
+    'gh api repos/serpcompany/zenbujapanese-monorepo/autolinks -f key_prefix=TICKET-',
     'gh secret set CLAUDE_CODE_OAUTH_TOKEN',
     'gh variable set DEPLOY_PRODUCTION --body false',
     'gh api -XPUT repos/serpcompany/zenbujapanese-monorepo/environments/production',
@@ -186,6 +195,8 @@ describe('.claude/settings.json', () => {
     'gh api repos/serpcompany/zenbujapanese-monorepo/pulls/7/comments/1/replies -f body=Fixed',
     'gh api --method PATCH repos/serpcompany/zenbujapanese-monorepo/issues/comments/99 -F body=@tmp/review-summary.md',
     'gh api -X POST repos/serpcompany/zenbujapanese-monorepo/actions/runs/1/cancel',
+    'gh api repos/{owner}/{repo}/pulls?per_page=100',
+    'gh api -X PATCH repos/{owner}/{repo}/issues/comments/99 -f body=Updated',
     'git push -u origin chore/agent-harness'
   ])('runs %s without asking', command => {
     for (const shell of shells) expect(decision(shell, command), shell).toBe('default')
