@@ -68,6 +68,7 @@ describe('GET /v1/me/subscription', () => {
       willRenew: null,
       managedIn: null,
       canSubscribe: true,
+      running: [],
       cloudAccess: 'free',
       appAccountToken: expect.stringMatching(/^[0-9a-f-]{36}$/),
       offers: { appStore: [monthly, yearly], website: ['price_monthly', 'price_yearly'] }
@@ -265,6 +266,20 @@ describe('POST /v1/me/subscription/checkout', () => {
     }
   })
 
+  test('lets a learner whose first payment never arrived check out again', async () => {
+    const learner = await billing.accounts.learner('sub-checkout-unpaid@example.com')
+    const subscription = stripe.subscription({ userId: learner.userId, firstPayment: 'open' })
+    await billing.stripeWebhook(
+      stripe.event('customer.subscription.created', { id: subscription.id, object: 'subscription' })
+    )
+    expect((await billing.subscription(learner)).status).toBe('pending')
+    expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
+    const created = stripe.requests.findLast(each => each.path === '/v1/checkout/sessions')
+    expect(Number(created?.form.get('expires_at'))).toBeLessThanOrEqual(
+      Math.floor(Date.now() / 1000) + 30 * 60
+    )
+  })
+
   test("refuses a price the website doesn't offer, none of several, and pages off the website", async () => {
     const learner = await billing.accounts.learner('sub-checkout-refused@example.com')
     expect(await checkout(learner, { price: 'price_other', ...pages })).toMatchObject({
@@ -304,11 +319,11 @@ describe('POST /v1/me/subscription/portal', () => {
     ).toBe(customer)
   })
 
-  test('says an App Store subscription is managed there, and that nothing was bought on the website', async () => {
+  test('opens nothing for an account that never bought on the website, an App Store subscriber included', async () => {
     const { learner } = await appleSubscriber('sub-portal-app@example.com')
     expect(await portal(learner)).toMatchObject({
-      status: 409,
-      body: { error: { code: 'managed_in_app_store' } }
+      status: 404,
+      body: { error: { code: 'no_subscription' } }
     })
     const nobody = await billing.accounts.learner('sub-portal-none@example.com')
     expect(await portal(nobody)).toMatchObject({
@@ -316,5 +331,23 @@ describe('POST /v1/me/subscription/portal', () => {
       body: { error: { code: 'no_subscription' } }
     })
     expect((await portal(nobody, 'https://evil.example/')).status).toBe(400)
+  })
+
+  test('shows both subscriptions of a learner who pays in both stores, each manageable where it was bought', async () => {
+    const { learner } = await stripeSubscriber('sub-both@example.com')
+    const token = (await billing.subscription(learner)).appAccountToken
+    const signed = await appStore.transaction({
+      originalTransactionId: randomUUID(),
+      appAccountToken: token,
+      expiresDate: Date.now() + 90 * dayMs
+    })
+    expect((await postTransaction(learner, signed)).status).toBe(200)
+    const both = await billing.subscription(learner)
+    expect(both).toMatchObject({ source: 'apple', managedIn: 'app_store', canSubscribe: false })
+    expect(both.running.map(each => [each.source, each.managedIn]).sort()).toEqual([
+      ['apple', 'app_store'],
+      ['stripe', 'website']
+    ])
+    expect((await portal(learner)).status).toBe(200)
   })
 })

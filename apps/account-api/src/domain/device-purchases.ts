@@ -14,8 +14,10 @@ export async function claimAppleTransaction(
   const owner = (token ? await tx.accountByToken(token) : null) ?? held?.userId ?? null
   if (owner !== null && owner !== userId) return 'another_account'
   const newer = supersedes(state.subscription, held)
-  if (held !== null && held.userId !== userId && !newer) return 'another_account'
+  if (held?.userId && held.userId !== userId && !newer) return 'another_account'
   if (newer) await tx.saveSubscription(userId, state.subscription)
+  else if (held !== null && held.userId !== userId)
+    await tx.assignSubscription(state.subscription, userId)
   for (const entry of ledger) await tx.record(entry, userId)
   return 'claimed'
 }

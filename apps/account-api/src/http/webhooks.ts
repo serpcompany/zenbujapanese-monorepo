@@ -18,7 +18,8 @@ const webhookBodyLimitKb = 256
 const answers = (signedBy: string) => ({
   200: json(ReceivedSchema, 'Taken, or a repeat of an event already taken, which changed nothing.'),
   400: refusal({
-    invalid_signature: `${signedBy} didn't sign the body, or it is for another app or environment. Nothing was recorded.`
+    invalid_signature: `${signedBy} didn't sign the body, or it is for another app or environment. Nothing was recorded.`,
+    unreadable_event: `${signedBy} signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.`
   }),
   404: refusal({ not_found: "This environment doesn't take this store's events." }),
   413: refusal({ too_large: `The body is over ${webhookBodyLimitKb} KB.` }),
@@ -59,6 +60,12 @@ const answered = (context: Context, outcome: WebhookAnswer, source: string) => {
   if (outcome === 'invalid') {
     log('warn', `${source}: refused an event that failed its signature check`)
     return context.json(errorBody('invalid_signature', 'The signature does not check out.'), 400)
+  }
+  if (outcome === 'unreadable') {
+    return context.json(
+      errorBody('unreadable_event', 'The event is signed, but not in a format this service reads.'),
+      400
+    )
   }
   if (outcome === 'retry') {
     return context.json(errorBody('try_again', 'Send the event again later.'), 503)

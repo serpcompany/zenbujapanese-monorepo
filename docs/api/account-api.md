@@ -127,7 +127,7 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 
 **Answers:**
 
-- **200**, { status: `"deleted"` }: Deleted.
+- **200**, { status: `"deleted"`, appStoreSubscriptionContinues: boolean }: Deleted.
 - **400** `bad_request`: The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins.
 - **400** `apple_authorization_needed`: This account signs in with Apple: send the authorization code from a fresh Sign in with Apple.
 - **400** `apple_authorization_invalid`: Apple refused that authorization code. Sign in with Apple again for a new one.
@@ -139,7 +139,7 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 - **429** `too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again.
-- **503** `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code.
+- **503** `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, since its code was used.
 
 ### `POST /v1/sync`
 
@@ -233,8 +233,7 @@ Manage a website subscription, in Stripe's customer portal.
 - **400** `bad_request`: The body is not JSON, or not this shape. Or: A URL is on none of the website's origins.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `subscription`.
-- **404** `no_subscription`: The account has never subscribed on the website.
-- **409** `managed_in_app_store`: The account's subscription was bought in the App Store, and is managed there.
+- **404** `no_subscription`: The account has never subscribed on the website. An App Store subscription is managed in the App Store.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
@@ -287,6 +286,7 @@ Stripe's webhook endpoint. The signature in `Stripe-Signature` is checked before
 
 - **200**, [`Received`](#received): Taken, or a repeat of an event already taken, which changed nothing.
 - **400** `invalid_signature`: Stripe didn't sign the body, or it is for another app or environment. Nothing was recorded.
+- **400** `unreadable_event`: Stripe signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.
 - **404** `not_found`: This environment doesn't take this store's events.
 - **413** `too_large`: The body is over 256 KB.
 - **500** `internal`: The event failed and was not recorded, so the store sends it again.
@@ -308,6 +308,7 @@ The App Store's notification URL. The signed payload is checked with Apple's App
 
 - **200**, [`Received`](#received): Taken, or a repeat of an event already taken, which changed nothing.
 - **400** `invalid_signature`: Apple didn't sign the body, or it is for another app or environment. Nothing was recorded.
+- **400** `unreadable_event`: Apple signed it, but it isn't in a format the service reads, such as a thin Stripe event. Nothing was recorded; the endpoint's settings need changing.
 - **404** `not_found`: This environment doesn't take this store's events.
 - **413** `too_large`: The body is over 256 KB.
 - **500** `internal`: The event failed and was not recorded, so the store sends it again.
@@ -939,7 +940,6 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `invalid_signature` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `invalid_token` | 401 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social) |
 | `invalid_transaction` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
-| `managed_in_app_store` | 409 | [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal) |
 | `no_subscription` | 404 | [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal) |
 | `nonce_required` | 400 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `not_found` | 404 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
@@ -960,6 +960,7 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `unknown_client` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `unknown_price` | 400 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `unknown_product` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
+| `unreadable_event` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `username_taken` | 409 | [`PATCH /v1/me`](#patch-v1me) |
 | `validation_error` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session) |
 | `version_conflict` | 409 | [`PATCH /v1/me`](#patch-v1me) |
@@ -1186,17 +1187,29 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
 
 - `status` (`"none"`, `"active"`, `"grace_period"`, `"billing_retry"`, `"pending"`, `"paused"`, `"expired"`, or `"revoked"`, required): `none`: The account has never had a subscription. `active`: Paid through `expiresAt`. It renews then unless `willRenew` is false. `grace_period`: A renewal's payment failed, and the store is retrying it. The subscription's features stay on until `expiresAt`. `billing_retry`: A renewal's payment failed, and the store is retrying it. The features are off until it's paid. `pending`: The first payment is still being made. The features are off until it is. `paused`: Paused where it was bought. The features are off until it resumes. `expired`: It ended: canceled, or never paid again. The features are off. `revoked`: Refunded, or revoked by the store. The features are off.
 - `active` (boolean, required): Whether the subscription's features are on now: `status` is `active`, or `grace_period`, and `expiresAt` hasn't passed.
-- `source` (`"apple"`, `"stripe"`, or `null`, required): Where it was bought: `apple`, in the App Store, or `stripe`, on the website.
+- `source` (string or null, required): Where it was bought: `apple`, in the App Store, or `stripe`, on the website.
 - `productId` (string or null, required): The App Store product's ID, or the Stripe price's.
 - `expiresAt` (string (date-time) or null, required): When the paid time, or the grace period, ends. A subscription set to renew keeps its features for a day past it while the renewal reaches the service.
 - `willRenew` (boolean or null, required): Whether it renews at `expiresAt`. `null` until the store has said.
 - `managedIn` (`"app_store"`, `"website"`, or `null`, required): Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs.
+- `running` (array of [`RunningSubscription`](#runningsubscription), required): Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought.
 - `canSubscribe` (boolean, required): Whether to offer a subscription. False while one runs anywhere, in a grace period, a billing retry, or a pause too, so a learner is never offered a second.
 - `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
 - `appAccountToken` (string (uuid), required): The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes.
 - `offers` (object, required): What to offer when `canSubscribe` is true.
   - `appStore` (array of string, required): The App Store product IDs the app offers. Empty where the App Store is off.
   - `website` (array of string, required): The Stripe price IDs the website offers. Empty where Stripe is off.
+
+### RunningSubscription
+
+A subscription still running at its store, and where it is managed.
+
+- `source` (string, required)
+- `productId` (string, required)
+- `status` (`"active"`, `"grace_period"`, `"billing_retry"`, `"pending"`, `"paused"`, `"expired"`, or `"revoked"`, required)
+- `expiresAt` (string (date-time) or null, required)
+- `willRenew` (boolean or null, required)
+- `managedIn` (`"app_store"` or `"website"`, required)
 
 ### Redirect
 

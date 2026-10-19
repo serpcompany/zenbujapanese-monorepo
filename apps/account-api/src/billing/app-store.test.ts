@@ -24,7 +24,9 @@ describe("the App Store's trust", () => {
         bundleId: 'com.zenbujapanese.dictionary',
         appAppleId: undefined,
         environments: ['Production'],
-        products: ['monthly']
+        products: ['monthly'],
+        apiKey: null,
+        sandboxAccounts: null
       })
     ).toThrow(/appAppleId/)
   })

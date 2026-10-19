@@ -13,27 +13,13 @@ afterEach(() => {
   stripe.state.down = false
 })
 
-const remove = (learner: Learner) =>
-  billing.call('/v1/me', { token: learner.token, body: { confirm: true }, method: 'DELETE' })
+const remove = (learner: Learner) => billing.deleteAccount(learner)
 
 const countIn = async (table: string, userId: string) =>
   (await billing.rows(`select count(*)::int as n from ${table} where user_id = '${userId}'`))[0]?.n
 
 async function websiteSubscriber(email: string) {
-  const learner = await billing.accounts.learner(email)
-  const customer = `cus_${learner.userId.slice(0, 10)}`
-  const subscription = stripe.subscription({ userId: learner.userId, customer })
-  const id = String(subscription.id)
-  await billing.stripeWebhook(
-    stripe.event('checkout.session.completed', {
-      id: `cs_${id}`,
-      object: 'checkout.session',
-      mode: 'subscription',
-      client_reference_id: learner.userId,
-      customer,
-      subscription: id
-    })
-  )
+  const { learner, customer, id } = await billing.subscribeOnTheWebsite(stripe, email)
   await billing.stripeWebhook(
     stripe.event('invoice.paid', {
       id: `in_${id}`,
@@ -52,7 +38,10 @@ async function websiteSubscriber(email: string) {
 describe('DELETE /v1/me, with a subscription', () => {
   test('cancels a website subscription at Stripe first, so a deleted account is never charged, and keeps the ledger without the account', async () => {
     const { learner, id } = await websiteSubscriber('delete-stripe@example.com')
-    expect(await remove(learner)).toMatchObject({ status: 200, body: { status: 'deleted' } })
+    expect(await remove(learner)).toMatchObject({
+      status: 200,
+      body: { status: 'deleted', appStoreSubscriptionContinues: false }
+    })
     expect(stripe.requests).toContainEqual(
       expect.objectContaining({ method: 'DELETE', path: `/v1/subscriptions/${id}` })
     )
@@ -73,11 +62,7 @@ describe('DELETE /v1/me, with a subscription', () => {
   test("deletes nothing while Stripe doesn't answer, and says to try again", async () => {
     const { learner } = await websiteSubscriber('delete-stripe-down@example.com')
     stripe.state.down = true
-    expect(await remove(learner)).toMatchObject({
-      status: 503,
-      body: { error: { code: 'billing_unavailable' } }
-    })
-    expect((await billing.accounts.me(learner.token)).status).toBe(200)
+    await billing.expectNothingDeleted(learner, await remove(learner))
     stripe.state.down = false
     expect((await remove(learner)).status).toBe(200)
   })
@@ -92,7 +77,10 @@ describe('DELETE /v1/me, with a subscription', () => {
       body: { signedTransaction }
     })
     const stripeCalls = stripe.requests.length
-    expect((await remove(learner)).status).toBe(200)
+    expect(await remove(learner)).toMatchObject({
+      status: 200,
+      body: { status: 'deleted', appStoreSubscriptionContinues: true }
+    })
     expect(stripe.requests).toHaveLength(stripeCalls)
     expect(await countIn('subscriptions', learner.userId)).toBe(0)
 
@@ -106,7 +94,7 @@ describe('DELETE /v1/me, with a subscription', () => {
       await billing.rows(
         `select user_id from subscriptions where provider_id = '${originalTransactionId}'`
       )
-    ).toEqual([])
+    ).toEqual([{ user_id: null }])
 
     const again = await billing.accounts.learner('delete-apple@example.com')
     expect(
@@ -118,5 +106,38 @@ describe('DELETE /v1/me, with a subscription', () => {
       ).status
     ).toBe(200)
     expect((await billing.subscription(again)).active).toBe(true)
+  })
+
+  test('never lets a refunded App Store purchase come back for a new account, from a copy signed before the refund', async () => {
+    const learner = await billing.accounts.learner('delete-refunded@example.com')
+    const appAccountToken = (await billing.subscription(learner)).appAccountToken
+    const originalTransactionId = randomUUID()
+    const purchase = {
+      originalTransactionId,
+      transactionId: originalTransactionId,
+      appAccountToken,
+      purchaseDate: Date.now() - 60_000
+    }
+    const beforeTheRefund = await appStore.transaction(purchase)
+    await billing.call('/v1/me/subscription/apple', {
+      token: learner.token,
+      body: { signedTransaction: beforeTheRefund }
+    })
+    await billing.appleWebhook(
+      await appStore.notification({
+        type: 'REFUND',
+        transaction: { ...purchase, revocationDate: Date.now(), revocationType: 'REFUND_FULL' },
+        status: 5,
+        signedDate: Date.now() + 1000
+      })
+    )
+    expect((await remove(learner)).status).toBe(200)
+    const again = await billing.accounts.learner('delete-refunded-again@example.com')
+    const claimed = await billing.call('/v1/me/subscription/apple', {
+      token: again.token,
+      body: { signedTransaction: beforeTheRefund }
+    })
+    expect(claimed.status).toBe(200)
+    expect(await billing.subscription(again)).toMatchObject({ status: 'revoked', active: false })
   })
 })

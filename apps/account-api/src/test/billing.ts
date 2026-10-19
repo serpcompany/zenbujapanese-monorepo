@@ -1,6 +1,7 @@
 import { expect } from 'vitest'
 import { type Learner, useAccountService } from './accounts'
 import type { BillingStandIns } from './service'
+import type { StandInStripe } from './stripe'
 
 export interface SubscriptionAnswer {
   status: string
@@ -11,10 +12,13 @@ export interface SubscriptionAnswer {
   willRenew: boolean | null
   managedIn: string | null
   canSubscribe: boolean
+  running: { source: string; status: string; managedIn: string }[]
   cloudAccess: string
   appAccountToken: string
   offers: { appStore: string[]; website: string[] }
 }
+
+type SubscriptionFields = Parameters<StandInStripe['subscription']>[0]
 
 export function useBillingService(billing: BillingStandIns) {
   const accounts = useAccountService({ billing })
@@ -22,26 +26,78 @@ export function useBillingService(billing: BillingStandIns) {
     accounts.running.service.call(path, options)
   const rows = (sql: string) => accounts.running.service.rows(sql)
 
+  const settled =
+    <Args extends unknown[], Answer>(send: (...args: Args) => Promise<Answer>) =>
+    async (...args: Args) => {
+      const answer = await send(...args)
+      await accounts.running.service.billing.settleOwed()
+      return answer
+    }
+
   async function subscription(learner: Learner): Promise<SubscriptionAnswer> {
     const answer = await call('/v1/me/subscription', { token: learner.token })
     expect(answer.status, JSON.stringify(answer.body)).toBe(200)
     return answer.body as unknown as SubscriptionAnswer
   }
 
+  const stripeWebhook = settled(({ body, signature }: { body: string; signature: string }) =>
+    call('/v1/webhooks/stripe', {
+      method: 'POST',
+      client: null,
+      headers: { 'stripe-signature': signature },
+      body
+    })
+  )
+
   return {
     accounts,
     call,
     rows,
     subscription,
-    stripeWebhook: ({ body, signature }: { body: string; signature: string }) =>
-      call('/v1/webhooks/stripe', {
-        method: 'POST',
-        client: null,
-        headers: { 'stripe-signature': signature },
-        body
-      }),
-    appleWebhook: (body: string) =>
-      call('/v1/webhooks/apple', { method: 'POST', client: null, body }),
+    stripeWebhook,
+
+    appleWebhook: settled((body: string) =>
+      call('/v1/webhooks/apple', { method: 'POST', client: null, body })
+    ),
+    deleted: async (userId: string) => {
+      await rows(`delete from users where id = '${userId}'`)
+      await rows(`insert into deleted_accounts (user_id) values ('${userId}')`)
+    },
+    deleteAccount: (learner: Learner) =>
+      call('/v1/me', { token: learner.token, body: { confirm: true }, method: 'DELETE' }),
+    expectNothingDeleted: async (learner: Learner, answer: { status: number; body: unknown }) => {
+      expect(answer).toMatchObject({
+        status: 503,
+        body: { error: { code: 'billing_unavailable' } }
+      })
+      expect((await accounts.me(learner.token)).status).toBe(200)
+    },
+    async subscribeOnTheWebsite(
+      stripe: StandInStripe,
+      email: string,
+      fields: SubscriptionFields = {}
+    ) {
+      const learner = await accounts.learner(email)
+      const customer = `cus_${learner.userId.slice(0, 10)}`
+      const id = String(stripe.subscription({ userId: learner.userId, customer, ...fields }).id)
+      await stripeWebhook(
+        stripe.event('checkout.session.completed', {
+          id: `cs_${id}`,
+          object: 'checkout.session',
+          mode: 'subscription',
+          client_reference_id: learner.userId,
+          customer,
+          subscription: id
+        })
+      )
+      return { learner, customer, id }
+    },
+    owedActions: () =>
+      rows('select subscription_id, attempts, done_at is not null as done from billing_actions'),
+    retryOwedNow: async () => {
+      await rows('update billing_actions set claimed_until = null where done_at is null')
+      await accounts.running.service.billing.settleOwed()
+    },
     events: (where: string) =>
       rows(`select source, event_id, type, outcome, user_id from billing_events where ${where}`),
     ledger: (userId: string) =>

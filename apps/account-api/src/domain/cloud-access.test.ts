@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { noBillingStore } from '../test/app'
+import type { StoreBilling } from './billing'
 import { type CloudAccessRules, cloudAccess, cloudIsFree } from './cloud-access'
 import { createBilling } from './subscription-billing'
 
@@ -44,9 +45,17 @@ describe('cloud access', () => {
     expect(cloudAccess(rules, account, now)).toBe('subscription_required')
   })
 
+  const billingWith = (cloud: CloudAccessRules, store: StoreBilling | null = null) =>
+    createBilling(noBillingStore, { web: null, store }, { cloud, storeTesting: null })
+
   test("refuses to leave it free for an app the service doesn't know", () => {
-    const rules = { ...paid, freeClients: ['tomodachi', 'someone-elses-app'] }
-    const providers = { stripe: null, apple: null }
-    expect(() => createBilling(noBillingStore, providers, rules)).toThrow(/someone-elses-app/)
+    expect(() => billingWith({ ...paid, freeClients: ['tomodachi', 'someone-elses-app'] })).toThrow(
+      /someone-elses-app/
+    )
+  })
+
+  test("refuses to need a subscription in the iOS app that the App Store can't sell", () => {
+    expect(() => billingWith(paid)).toThrow(/App Review 3.1.1/)
+    expect(() => billingWith({ ...paid, freeClients: ['zenbu-ios'] })).not.toThrow()
   })
 })

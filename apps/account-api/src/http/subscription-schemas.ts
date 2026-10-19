@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi'
-import { subscriptionSources, subscriptionStatuses } from '../domain/subscriptions'
+import { subscriptionStatuses } from '../domain/subscriptions'
 import { languageHeader } from '../language'
 
 export const subscriptionRequired = {
@@ -25,6 +25,19 @@ const describe = (meanings: Record<string, string>) =>
     .map(([value, meaning]) => `\`${value}\`: ${meaning}`)
     .join(' ')
 
+const RunningSchema = z
+  .object({
+    source: z.string(),
+    productId: z.string(),
+    status: z.enum(subscriptionStatuses),
+    expiresAt: z.iso.datetime().nullable(),
+    willRenew: z.boolean().nullable(),
+    managedIn: z.enum(['app_store', 'website'])
+  })
+  .openapi('RunningSubscription', {
+    description: 'A subscription still running at its store, and where it is managed.'
+  })
+
 export const SubscriptionSchema = z
   .object({
     status: z
@@ -34,7 +47,7 @@ export const SubscriptionSchema = z
       description:
         "Whether the subscription's features are on now: `status` is `active`, or `grace_period`, and `expiresAt` hasn't passed."
     }),
-    source: z.enum(subscriptionSources).nullable().openapi({
+    source: z.string().nullable().openapi({
       description: 'Where it was bought: `apple`, in the App Store, or `stripe`, on the website.'
     }),
     productId: z.string().nullable().openapi({
@@ -50,6 +63,10 @@ export const SubscriptionSchema = z
     managedIn: z.enum(['app_store', 'website']).nullable().openapi({
       description:
         "Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs."
+    }),
+    running: z.array(RunningSchema).openapi({
+      description:
+        'Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought.'
     }),
     canSubscribe: z.boolean().openapi({
       description:

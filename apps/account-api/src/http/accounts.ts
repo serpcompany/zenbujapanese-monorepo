@@ -196,7 +196,7 @@ const deletionAnswers = {
   billing_unavailable: [
     503,
     'billing_unavailable',
-    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code."
+    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, since its code was used."
   ]
 } as const
 
@@ -222,7 +222,16 @@ const removeAccount = createRoute({
     body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
   },
   responses: {
-    200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
+    200: json(
+      z.object({
+        status: z.literal('deleted'),
+        appStoreSubscriptionContinues: z.boolean().openapi({
+          description:
+            "True when the account had an App Store subscription still running. The service can't end one: Apple keeps billing until the learner cancels it in the App Store, so the app tells them, and offers the App Store's subscription settings."
+        })
+      }),
+      'Deleted.'
+    ),
     400: refusal({
       bad_request:
         "The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins.",
@@ -331,8 +340,16 @@ export function accountRoutes(
       { code: appleAuthorizationCode, redirectUri: appleRedirectUri },
       languageOf(context.req.valid('header')[languageHeader])
     )
-    if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
-    const [status, code, message] = deletionAnswers[deletion]
+    if (deletion.status === 'deleted') {
+      return context.json(
+        {
+          status: 'deleted' as const,
+          appStoreSubscriptionContinues: deletion.appStoreSubscriptionContinues
+        },
+        200
+      )
+    }
+    const [status, code, message] = deletionAnswers[deletion.status]
     return context.json(errorBody(code, message), status)
   })
 

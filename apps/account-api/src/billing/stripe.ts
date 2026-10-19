@@ -1,8 +1,18 @@
 import { log } from '@zenbu/node-service/log'
 import Stripe from 'stripe'
 import type { StripeSettings } from '../billing-config'
-import { type BillingProvider, BillingUnavailable } from '../domain/billing'
-import { accountMetadataKey, idOf, providerEvent, subscriptionState } from './stripe-events'
+import { type BillingProvider, BillingUnavailable, type ProviderEvent } from '../domain/billing'
+import {
+  accountMetadataKey,
+  customerHint,
+  disputeEntry,
+  idOf,
+  type PaymentLink,
+  providerEvent,
+  refundEntry,
+  stripeSource,
+  subscriptionState
+} from './stripe-events'
 
 export interface StripeConnection {
   fetch: typeof globalThis.fetch
@@ -10,7 +20,10 @@ export interface StripeConnection {
 }
 
 const timeoutMs = 10_000
+const checkoutMinutes = 30
 const ended = new Set<Stripe.Subscription.Status>(['canceled', 'incomplete_expired'])
+const disputeTypes = new Set(['charge.dispute.created', 'charge.dispute.closed'])
+const refundTypes = new Set(['refund.created', 'refund.updated', 'refund.failed'])
 
 export const stripeMode = (secretKey: string) =>
   /^(sk|rk)_live_/.test(secretKey) ? ('live' as const) : ('test' as const)
@@ -30,6 +43,12 @@ async function guarded<T>(what: string, work: () => Promise<T>): Promise<T> {
   }
 }
 
+function readable(event: Stripe.Event): boolean {
+  const object = (event as { object?: unknown }).object
+  const data = (event as { data?: { object?: unknown } }).data
+  return object === 'event' && typeof data?.object === 'object' && data.object !== null
+}
+
 export function stripeBilling(
   config: StripeSettings,
   connection: StripeConnection = { fetch: globalThis.fetch, retries: 2 }
@@ -43,13 +62,55 @@ export function stripeBilling(
   })
 
   const readSubscription = (subscriptionId: string) =>
-    guarded('read a subscription', async () =>
-      subscriptionState(
-        await stripe.subscriptions.retrieve(subscriptionId),
-        config.gracePeriodDays,
-        new Date()
-      )
-    )
+    guarded('read a subscription', async () => {
+      const readStartedAt = new Date()
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['latest_invoice']
+      })
+      return subscriptionState(subscription, readStartedAt)
+    })
+
+  const linkOf = (paymentIntent: string | null, charge: string | null) =>
+    guarded('find what a payment paid for', async (): Promise<PaymentLink> => {
+      const customer = charge ? idOf((await stripe.charges.retrieve(charge)).customer) : null
+      if (!paymentIntent) return { invoiceId: null, subscriptionId: null, customer }
+      const payments = await stripe.invoicePayments.list({
+        payment: { type: 'payment_intent', payment_intent: paymentIntent },
+        expand: ['data.invoice'],
+        limit: 1
+      })
+      const invoice = payments.data[0]?.invoice
+      const paid =
+        typeof invoice === 'object' && invoice !== null && !invoice.deleted ? invoice : null
+      return {
+        invoiceId: idOf(invoice),
+        subscriptionId: idOf(paid?.parent?.subscription_details?.subscription),
+        customer: customer ?? idOf(paid?.customer)
+      }
+    })
+
+  async function withPayments(event: Stripe.Event, base: ProviderEvent): Promise<ProviderEvent> {
+    const object = event.data.object as unknown as Record<string, unknown>
+    if (refundTypes.has(event.type)) {
+      const refund = object as unknown as Stripe.Refund
+      const link = await linkOf(idOf(refund.payment_intent), null)
+      return {
+        ...base,
+        hints: { ...customerHint(refund.customer ?? link.customer) },
+        ledger: [refundEntry(event, refund, link)]
+      }
+    }
+    if (disputeTypes.has(event.type) || event.type === 'radar.early_fraud_warning.created') {
+      const dispute = object as unknown as Stripe.Dispute | Stripe.Radar.EarlyFraudWarning
+      const link = await linkOf(idOf(dispute.payment_intent), idOf(dispute.charge))
+      return {
+        ...base,
+        hints: customerHint(link.customer),
+        ledger: [disputeEntry(event, dispute, link)]
+      }
+    }
+    return base
+  }
 
   async function refundOnce(paymentIntent: string) {
     try {
@@ -72,7 +133,9 @@ export function stripeBilling(
   }
 
   return {
+    source: stripeSource,
     prices: config.prices,
+    gracePeriodDays: config.gracePeriodDays,
 
     createCheckout: request =>
       guarded('start a checkout', async () => {
@@ -92,7 +155,8 @@ export function stripeBilling(
           },
           success_url: request.successUrl,
           cancel_url: request.cancelUrl,
-          locale: request.language ?? 'auto'
+          locale: request.language ?? 'auto',
+          expires_at: Math.floor(Date.now() / 1000) + checkoutMinutes * 60
         })
         if (!session.url) throw new Error('Checkout answered a session without a URL')
         return session.url
@@ -112,10 +176,32 @@ export function stripeBilling(
       let event: Stripe.Event
       try {
         event = stripe.webhooks.constructEvent(body, signature, config.webhookSecret)
-      } catch {
-        return 'invalid'
+      } catch (error) {
+        if (error instanceof Stripe.errors.StripeSignatureVerificationError) return 'invalid'
+        event = {} as Stripe.Event
       }
-      return providerEvent(event, readSubscription)
+      if (!readable(event)) {
+        log(
+          'error',
+          "stripe: an event the service can't read; the endpoint must send Snapshot events",
+          {
+            object: String((event as { object?: unknown }).object ?? 'none')
+          }
+        )
+        return 'unreadable'
+      }
+      if (event.api_version && event.api_version !== Stripe.API_VERSION) {
+        log('warn', "stripe: an event in another API version than the SDK's", {
+          version: event.api_version,
+          expected: Stripe.API_VERSION
+        })
+      }
+      try {
+        return await withPayments(event, providerEvent(event, readSubscription))
+      } catch (error) {
+        if (error instanceof BillingUnavailable) return 'retry'
+        throw error
+      }
     },
 
     cancel: subscriptionId =>

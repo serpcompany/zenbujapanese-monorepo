@@ -9,10 +9,18 @@ export interface StripeSettings {
   gracePeriodDays: number
 }
 
+export interface AppStoreApiKey {
+  keyId: string
+  issuerId: string
+  privateKey: string
+}
+
 export interface AppStoreSettings {
   appAppleId: number | undefined
   environments: readonly AppStoreEnvironment[]
   products: readonly string[]
+  apiKey: AppStoreApiKey | null
+  sandboxAccounts: readonly string[] | null
 }
 
 export interface CloudSettings {
@@ -124,11 +132,33 @@ function readAppStore(env: NodeJS.ProcessEnv, local: boolean): AppStoreSettings 
       "APP_STORE_APP_APPLE_ID must be the app's Apple ID, a number, to take Production purchases"
     )
   }
+  const sandboxAccounts = listIn(env.APP_STORE_SANDBOX_ACCOUNTS).map(email => email.toLowerCase())
   return {
     appAppleId: appleId === '' ? undefined : Number(appleId),
     environments,
-    products
+    products,
+    apiKey: readAppStoreKey(env),
+    sandboxAccounts: sandboxAccounts.length > 0 ? sandboxAccounts : null
   }
+}
+
+const appStoreKeyNames = [
+  'APP_STORE_KEY_ID',
+  'APP_STORE_ISSUER_ID',
+  'APP_STORE_PRIVATE_KEY'
+] as const
+
+function readAppStoreKey(env: NodeJS.ProcessEnv): AppStoreApiKey | null {
+  const [keyId = '', issuerId = '', privateKey = ''] = appStoreKeyNames.map(name =>
+    valueIn(env, name).replaceAll('\\n', '\n')
+  )
+  if (keyId === '' && issuerId === '' && privateKey === '') return null
+  if (keyId === '' || issuerId === '' || !privateKey.includes('PRIVATE KEY')) {
+    throw new Error(
+      "APP_STORE_KEY_ID, APP_STORE_ISSUER_ID, and APP_STORE_PRIVATE_KEY (the In-App Purchase key's .p8) are set together"
+    )
+  }
+  return { keyId, issuerId, privateKey }
 }
 
 export function readBilling(env: NodeJS.ProcessEnv, local: boolean): BillingConfig {

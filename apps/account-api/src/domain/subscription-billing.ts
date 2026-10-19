@@ -8,22 +8,28 @@ import {
   type Verified
 } from './billing'
 import { applyEvent, type EventAnswer, type EventRules } from './billing-events'
-import { clientById, type Principal } from './clients'
+import { appSellingTheSubscription, clientById, type Principal } from './clients'
 import { type CloudAccess, type CloudAccessRules, cloudAccess } from './cloud-access'
 import { claimAppleTransaction } from './device-purchases'
 import {
+  billingRetryWindowMs,
   type Entitlement,
   entitlementOf,
+  type ManagedIn,
+  type StoredSubscription,
   type Subscription,
   type SubscriptionKey,
   type SubscriptionStatus
 } from './subscriptions'
 
-const endedAtTheProvider = new Set<SubscriptionStatus>(['expired', 'revoked'])
-
 export interface BillingProviders {
-  stripe: BillingProvider | null
-  apple: StoreBilling | null
+  web: BillingProvider | null
+  store: StoreBilling | null
+}
+
+export interface BillingRules {
+  cloud: CloudAccessRules
+  storeTesting: { environment: string; accounts: readonly string[] | null } | null
 }
 
 export interface SubscriptionView {
@@ -39,15 +45,19 @@ export type Checkout =
   | { status: 'already_subscribed'; entitlement: Entitlement }
   | { status: 'unknown_price' | 'no_account' }
   | Unavailable
-export type Portal =
+type Portal =
   | { status: 'created'; url: string }
-  | { status: 'managed_in_app_store' | 'no_customer' | 'no_account' }
+  | { status: 'no_customer' | 'no_account' }
   | Unavailable
 export type AppleTransaction =
   | { status: 'claimed'; view: SubscriptionView }
   | { status: 'invalid' | 'unknown_product' | 'another_account' | 'no_account' }
   | Unavailable
-export type WebhookAnswer = EventAnswer | 'invalid' | 'retry' | 'off'
+export type WebhookAnswer = EventAnswer | 'invalid' | 'unreadable' | 'retry' | 'off'
+export interface Ended {
+  status: 'ended' | 'unavailable'
+  appStoreSubscriptionContinues: boolean
+}
 
 export interface CheckoutAsk {
   price?: string
@@ -55,6 +65,13 @@ export interface CheckoutAsk {
   cancelUrl: string
   language: Language | null
 }
+
+const owedPerRound = 20
+const endedAtTheStore = new Set<SubscriptionStatus>(['expired', 'revoked'])
+
+const mayStillBill = (subscription: Subscription, now: Date) =>
+  !endedAtTheStore.has(subscription.status) &&
+  (subscription.expiresAt ?? new Date(subscription.stateAt.getTime() + billingRetryWindowMs)) > now
 
 async function unlessUnavailable<T>(work: () => Promise<T>): Promise<T | Unavailable> {
   try {
@@ -65,89 +82,137 @@ async function unlessUnavailable<T>(work: () => Promise<T>): Promise<T | Unavail
   }
 }
 
-const offered = (providers: BillingProviders) => ({
-  appStore: providers.apple?.products ?? [],
-  website: providers.stripe?.prices ?? []
-})
+function checkedRules(providers: BillingProviders, rules: BillingRules) {
+  const unknownApps = rules.cloud.freeClients.filter(id => clientById(id) === null)
+  if (unknownApps.length > 0) {
+    throw new Error(`Cloud access is free for apps this service doesn't know: ${unknownApps}`)
+  }
+  const appPays =
+    rules.cloud.needsSubscription && !rules.cloud.freeClients.includes(appSellingTheSubscription)
+  if (appPays && providers.store === null) {
+    throw new Error(
+      `Cloud access can't need a subscription in ${appSellingTheSubscription} without the App Store: the app must sell it as an in-app purchase (App Review 3.1.1)`
+    )
+  }
+}
 
 export function createBilling(
   store: BillingStore,
   providers: BillingProviders,
-  rules: CloudAccessRules
+  rules: BillingRules
 ) {
-  const unknownApps = rules.freeClients.filter(id => clientById(id) === null)
-  if (unknownApps.length > 0) {
-    throw new Error(`Cloud access is free for apps this service doesn't know: ${unknownApps}`)
-  }
-  const { stripe, apple } = providers
+  checkedRules(providers, rules)
+  const { web, store: appStore } = providers
+  const managedIn = (source: string): ManagedIn =>
+    source === appStore?.source ? 'app_store' : 'website'
   const eventRules: EventRules = {
     grants: (subscription: Subscription) =>
-      (subscription.source === 'stripe'
-        ? (stripe?.prices ?? [])
-        : (apple?.products ?? [])
-      ).includes(subscription.productId),
-    refundAndCancel: async (key: SubscriptionKey) => {
-      if (key.source === 'stripe') await stripe?.refundAndCancel(key.providerId)
-    }
+      (subscription.source === web?.source ? web.prices : (appStore?.products ?? [])).includes(
+        subscription.productId
+      ),
+    gracePeriodDays: (subscription: Subscription) =>
+      subscription.source === web?.source ? web.gracePeriodDays : 0,
+    refundsAndCancels: (key: SubscriptionKey) => key.source === web?.source,
+    managedIn
   }
 
-  const entitlement = async (userId: string, now: Date) =>
-    entitlementOf(await store.subscriptionsOf(userId), now)
+  const counts = (subscription: StoredSubscription, email: string) => {
+    const testing = rules.storeTesting
+    if (testing === null || subscription.environment !== testing.environment) return true
+    return testing.accounts === null || testing.accounts.includes(email.toLowerCase())
+  }
+
+  async function entitlement(userId: string, email: string, now: Date) {
+    const subscriptions = (await store.subscriptionsOf(userId)).filter(each => counts(each, email))
+    return entitlementOf(subscriptions, now, managedIn)
+  }
 
   async function view(principal: Principal, now: Date): Promise<SubscriptionView | null> {
     const account = await store.account(principal.userId)
     const customer = await store.ensureCustomer(principal.userId)
     if (account === null || customer === null) return null
-    const held = await entitlement(principal.userId, now)
+    const held = await entitlement(principal.userId, account.email, now)
     return {
       entitlement: held,
       cloudAccess: cloudAccess(
-        rules,
+        rules.cloud,
         { clientId: principal.clientId, madeAt: account.madeAt, subscribed: held.active },
         now
       ),
       appAccountToken: customer.appAccountToken,
-      offers: offered(providers)
+      offers: { appStore: appStore?.products ?? [], website: web?.prices ?? [] }
     }
+  }
+
+  let settling: Promise<void> | null = null
+
+  async function settleRound(): Promise<number> {
+    const owed = await store.claimOwedActions(owedPerRound)
+    for (const action of owed) {
+      try {
+        if (action.source !== web?.source) throw new BillingUnavailable('no provider for it')
+        await web.refundAndCancel(action.subscriptionId)
+        await store.settleOwedAction(action.id, null)
+      } catch (error) {
+        await store.settleOwedAction(action.id, error instanceof Error ? error.message : 'failed')
+      }
+    }
+    return owed.length
+  }
+
+  function settleOwed(): Promise<void> {
+    settling ??= (async () => {
+      try {
+        while ((await settleRound()) === owedPerRound) {}
+      } finally {
+        settling = null
+      }
+    })()
+    return settling
   }
 
   async function webhook(verify: () => Promise<Verified<ProviderEvent>>): Promise<WebhookAnswer> {
     const event = await verify()
-    if (event === 'invalid' || event === 'retry') return event
-    const answered = await unlessUnavailable(() =>
-      store.transaction(tx => applyEvent(tx, event, eventRules))
-    )
-    return typeof answered === 'string' ? answered : 'retry'
+    if (typeof event === 'string') return event
+    if (await store.eventRecorded(event.source, event.id)) return 'duplicate'
+    const answered = await unlessUnavailable(async () => {
+      const state = event.subscription ? await event.subscription.read() : null
+      return store.transaction(tx => applyEvent(tx, event, state, eventRules))
+    })
+    if (typeof answered !== 'string') return 'retry'
+    void settleOwed()
+    return answered
   }
 
   return {
     view,
+    settleOwed,
 
     async cloudAccess(principal: Principal, now: Date): Promise<CloudAccess | 'no_account'> {
-      if (!rules.needsSubscription) return 'free'
+      if (!rules.cloud.needsSubscription) return 'free'
       const account = await store.account(principal.userId)
       if (account === null) return 'no_account'
-      const subscribed = (await entitlement(principal.userId, now)).active
+      const subscribed = (await entitlement(principal.userId, account.email, now)).active
       return cloudAccess(
-        rules,
+        rules.cloud,
         { clientId: principal.clientId, madeAt: account.madeAt, subscribed },
         now
       )
     },
 
     async checkout(principal: Principal, ask: CheckoutAsk, now: Date): Promise<Checkout> {
-      if (stripe === null) return { status: 'unavailable' }
-      const price = ask.price ?? (stripe.prices.length === 1 ? stripe.prices[0] : undefined)
-      if (price === undefined || !stripe.prices.includes(price)) return { status: 'unknown_price' }
+      if (web === null) return { status: 'unavailable' }
+      const price = ask.price ?? (web.prices.length === 1 ? web.prices[0] : undefined)
+      if (price === undefined || !web.prices.includes(price)) return { status: 'unknown_price' }
       const account = await store.account(principal.userId)
       const customer = await store.ensureCustomer(principal.userId)
       if (account === null || customer === null) return { status: 'no_account' }
       const subscriptions = await store.subscriptionsOf(principal.userId)
-      const held = entitlementOf(subscriptions, now)
+      const held = entitlementOf(subscriptions, now, managedIn)
       if (!held.canSubscribe) return { status: 'already_subscribed', entitlement: held }
       return unlessUnavailable(async () => ({
         status: 'created' as const,
-        url: await stripe.createCheckout({
+        url: await web.createCheckout({
           userId: principal.userId,
           email: account.email,
           customerId: customer.stripeCustomerId,
@@ -160,23 +225,15 @@ export function createBilling(
       }))
     },
 
-    async portal(
-      principal: Principal,
-      returnUrl: string,
-      language: Language | null,
-      now: Date
-    ): Promise<Portal> {
-      if (stripe === null) return { status: 'unavailable' }
+    async portal(principal: Principal, returnUrl: string, language: Language | null) {
+      if (web === null) return { status: 'unavailable' } satisfies Portal
       const customer = await store.ensureCustomer(principal.userId)
-      if (customer === null) return { status: 'no_account' }
-      if ((await entitlement(principal.userId, now)).managedIn === 'app_store') {
-        return { status: 'managed_in_app_store' }
-      }
+      if (customer === null) return { status: 'no_account' } satisfies Portal
       const customerId = customer.stripeCustomerId
-      if (customerId === null) return { status: 'no_customer' }
+      if (customerId === null) return { status: 'no_customer' } satisfies Portal
       return unlessUnavailable(async () => ({
         status: 'created' as const,
-        url: await stripe.createPortal(customerId, returnUrl, language)
+        url: await web.createPortal(customerId, returnUrl, language)
       }))
     },
 
@@ -185,11 +242,11 @@ export function createBilling(
       signedTransaction: string,
       now: Date
     ): Promise<AppleTransaction> {
-      if (apple === null) return { status: 'unavailable' }
-      const verified = await apple.verifyTransaction(signedTransaction)
-      if (verified === 'invalid') return { status: 'invalid' }
+      if (appStore === null) return { status: 'unavailable' }
+      const verified = await appStore.verifyTransaction(signedTransaction)
+      if (verified === 'invalid' || verified === 'unreadable') return { status: 'invalid' }
       if (verified === 'retry') return { status: 'unavailable' }
-      if (!apple.products.includes(verified.state.subscription.productId)) {
+      if (!appStore.products.includes(verified.state.subscription.productId)) {
         return { status: 'unknown_product' }
       }
       const claim = await store.transaction(tx =>
@@ -201,22 +258,46 @@ export function createBilling(
     },
 
     stripeEvent: (body: string, signature: string): Promise<WebhookAnswer> =>
-      stripe === null ? Promise.resolve('off') : webhook(() => stripe.verifyEvent(body, signature)),
+      web === null ? Promise.resolve('off') : webhook(() => web.verifyEvent(body, signature)),
 
     appleNotification: (body: string): Promise<WebhookAnswer> =>
-      apple === null ? Promise.resolve('off') : webhook(() => apple.verifyNotification(body)),
+      appStore === null ? Promise.resolve('off') : webhook(() => appStore.verifyNotification(body)),
 
-    async endSubscriptions(userId: string): Promise<'ended' | 'unavailable'> {
+    async catchUpOnStoreNotifications(): Promise<number> {
+      if (appStore === null) return 0
+      let applied = 0
+      for (const body of await appStore.recentNotifications()) {
+        if ((await webhook(() => appStore.verifyNotification(body))) === 'applied') applied += 1
+      }
+      return applied
+    },
+
+    async canEndSubscriptions(userId: string, now: Date): Promise<boolean> {
       const billing = (await store.subscriptionsOf(userId)).filter(
-        each => each.source === 'stripe' && !endedAtTheProvider.has(each.status)
+        each => managedIn(each.source) === 'website' && mayStillBill(each, now)
       )
-      if (billing.length === 0) return 'ended'
-      if (stripe === null) return 'unavailable'
+      return billing.every(each => each.source === web?.source)
+    },
+
+    async endSubscriptions(userId: string, now: Date): Promise<Ended> {
+      const subscriptions = await store.subscriptionsOf(userId)
+      const running = entitlementOf(subscriptions, now, managedIn).running
+      const appStoreSubscriptionContinues = running.some(each => each.managedIn === 'app_store')
+      const billing = subscriptions.filter(
+        each => managedIn(each.source) === 'website' && mayStillBill(each, now)
+      )
+      if (billing.length === 0) return { status: 'ended', appStoreSubscriptionContinues }
+      if (web === null || billing.some(each => each.source !== web.source)) {
+        return { status: 'unavailable', appStoreSubscriptionContinues }
+      }
       const ended = await unlessUnavailable(async () => {
-        for (const each of billing) await stripe.cancel(each.providerId)
+        for (const each of billing) await web.cancel(each.providerId)
         return 'ended' as const
       })
-      return ended === 'ended' ? ended : 'unavailable'
+      return {
+        status: ended === 'ended' ? 'ended' : 'unavailable',
+        appStoreSubscriptionContinues
+      }
     }
   }
 }
