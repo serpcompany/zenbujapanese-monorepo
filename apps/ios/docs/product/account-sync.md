@@ -126,7 +126,9 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   everywhere, and a word added to it elsewhere since is dropped. A file the account refuses (over
   12 MB, not an image it takes, or past 1,000 photos) stays on the phone with its words, without
   syncing, and Zenbu Account says how many and why; one past 1,000 goes again the next time the
-  app opens after a photo is deleted, here or on another device. While the account has no photo storage, photos and their words wait, Zenbu Account
+  app opens after a photo the account held is deleted, here or on another device. Removing a
+  photo's last word frees no place: the account keeps it for 30 days. While the account has no
+  photo storage, photos and their words wait, Zenbu Account
   says so, and the rest syncs. Files go up a few at a time beside everything else, and one cut off
   goes again without the ones before it. A file the account can't send, or won't while it isn't
   subscribed, never deletes the photo: it's tried again the next time the app opens. One cut off,
@@ -148,12 +150,16 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   removal; searching it after that brings it back. The account keeps the latest 50.
 - A device away longer than the account remembers a deletion (its latest 1,000 deleted notes or
   photos, or a photo's latest 500 removed words) reads everything again at its next sync, then
-  removes here what the account no longer has; what it changed meanwhile still goes.
+  removes here the notes, photos and their words, Recent videos, and searches the account no
+  longer has. A sign-in or a catch-up that reads from the start does the same. What the device
+  changed meanwhile still goes, a note or photo the account refused stays, and known words, lists,
+  bookmarks, settings, and the profile are never removed this way. If the account forgets more
+  while the device reads, the sync stops, Zenbu Account says it's reading the account again, and
+  it tries again after a wait.
 
 Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`,
 `AccountSyncBookmarkTests`, `AccountSyncProfileTests`, `AccountSyncKeptTests`,
-`AccountSyncPhotoTests`, and `AccountSyncRecoveryTests` (a device away past what the account
-forgot); UI
+`AccountSyncPhotoTests`, and `AccountSyncFullReadTests` (reading everything again); UI
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` (iPhone
 and iPad: a photo, Reading Aids' romaji, and a recent search from the stand-in account show after
 signing in).

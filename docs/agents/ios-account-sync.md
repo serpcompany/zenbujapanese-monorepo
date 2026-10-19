@@ -93,8 +93,12 @@ sync; what the learner sees is in the product docs'
     (`uploadedFiles`) until its change's result, so a sync cut off mid-way doesn't send it again. A
     file the account refuses (`409`, `413`, `415`) drops that change, and the photo stays on the
     device, named in `refusedPhotos` for Zenbu Account's message; one refused as too many goes
-    again, with its words, at the next launch after a photo is deleted on this device or comes
-    down deleted (`photoRoomFreed`), so a full account isn't sent the same files at every launch.
+    again, with its words, at the next launch after a place frees (`photoRoomFreed`): a photo
+    deletion from this device that the account applied at a new version, or one that comes down
+    without `emptied` and newer than the device's copy, outside a full read when the device had no
+    copy. An emptied photo keeps its place for 30 days, so it frees none, and a full account isn't
+    sent the same files at every launch. A refused note or photo is never removed by a copy that
+    comes down: a deletion the account still names, or the full read's drop below.
     `503` (no photo storage) holds every photo, photo word, and profile photo change for the rest
     of the sync (`filesWait`), and Zenbu Account says photos wait (`photosUnavailable`); so does `photo_not_uploaded`, which queues its change again for
     the next sync. A word rejected `unknown_photo` is queued again if its photo's change still is;
@@ -165,18 +169,22 @@ sync; what the learner sees is in the product docs'
   `current` replaces it, an applied result takes it only at the same version (the change changed
   nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't
   arrived is kept in the file until a sync reaches `hasMore: false`, even across a failed page or a
-  relaunch, then dropped if the list never came. A deleted list drops its words. `410` drops the
-  cursor and the held copies and words, and syncs again, still sending the queue. The keys that
-  read brings or sends are kept in the file (`rereadSeen`), across a failed page or a relaunch, and
-  once it reaches `hasMore: false`, each entity the device holds a version for that it didn't
-  bring, send, or have queued is removed on the device with its version, since the account forgot
-  it; the profile never is. A sync's answer is dropped if the learner signed out or in while it
-  was on the way.
+  relaunch, then dropped if the list never came. A deleted list drops its words. Every read from
+  no cursor (the first after signing in, a catch-up, or after a `410`) is a full read: the keys
+  it brings or sends are kept in the file (`rereadSeen`), across a failed page or a relaunch, and
+  once it reaches `hasMore: false`, each note, photo, photo word, watched video, and recent search
+  the device holds a version for that it didn't bring, send, or have queued is removed on the
+  device with its version, since the account forgot it (`SyncEntity.forgotten`). Kinds the
+  account never forgets are never dropped, so a restore and a later `410` can't take what was
+  added since. `410` drops the cursor and the held copies and words, and starts a full read,
+  still sending the queue; a `410` during a full read starts it again only after the network
+  backoff, with Zenbu Account saying the account is being read again, so it can't loop. A sync's
+  answer is dropped if the learner signed out or in while it was on the way.
 - **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once the
   files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
   `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
   to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
-  failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
+  failure, `5xx`, or a `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
   retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
   the sync. `402` (not subscribed), from the sync or a photo's upload, keeps every change queued
@@ -187,17 +195,17 @@ sync; what the learner sees is in the product docs'
   code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
 
 `AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
-`AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, `AccountSyncProfileTests`,
+`AccountSyncFullReadTests`, `AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, `AccountSyncProfileTests`,
 `AccountSyncKeptTests`, `AccountSyncPhotoTests`, and `AccountSignedOutTests` run the client
 against a stub server (`StubAccountServer`, a `URLProtocol`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
-failed page, the request size, `410` and the read after it dropping what the account forgot, even
-when cut off, `429` and backoff, and signing out and deleting, which keep
+failed page, the request size, `410` and full reads dropping only what the account forgets, even
+when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules (`FakeAccountService+Kept.swift` holds the six newer entities', with emptied
-photos, the search key, the two kinds of `404`, and `410` for a cursor from before what it
-forgot), so two installs can share one account: changes made while signed out going to
+photos and their `emptied` mark, the search key, the two kinds of `404`, pages, and `410` for a
+cursor from before what it forgot since the cursor's mark), so two installs can share one account: changes made while signed out going to
 the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a rejected
