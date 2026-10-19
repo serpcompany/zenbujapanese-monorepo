@@ -36,13 +36,19 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - A word page is titled with its headword and reading, "要る (いる) meaning", unless that would
   pass 70 characters; then it has the headword alone, as
   特定独立行政法人等の労働関係に関する法律 does.
+- A search results page shortens its query, at its last space and with "…", when the title would
+  pass 70 characters; a query can be 200 characters long.
 
-- Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70).
+- Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70); #882's
+  review (long search queries).
 - Check: `src/lib/dictionary/word-snippet.test.ts`, "leaves the reading out when the title with it
-  would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
-  list’s every band is titled within 70 characters, at its widest ranks" and each kind of browse
-  page; browse-lists spec, "a ranked list shows its first band’s words, …"; browse spec, "the JLPT
-  kanji lists are Waller’s, credited under CC BY".
+  would pass 70 characters"; `src/lib/snippets.test.ts`, "a title too long for its text shortens the
+  text, and marks the cut"; `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "a long query
+  is shortened in the title, to keep it within 70 characters";
+  `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked list’s every band is titled
+  within 70 characters, at its widest ranks" and each kind of browse page; browse-lists spec, "a
+  ranked list shows its first band’s words, …"; browse spec, "the JLPT kanji lists are Waller’s,
+  credited under CC BY".
 
 ## Descriptions
 

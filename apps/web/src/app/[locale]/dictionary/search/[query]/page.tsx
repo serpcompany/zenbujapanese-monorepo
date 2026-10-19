@@ -12,7 +12,7 @@ import { searchPath } from '@/lib/dictionary/urls'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber } from '@/lib/i18n/format'
 import { localeOf } from '@/lib/i18n/params'
-import { fittedDescription } from '@/lib/snippets'
+import { fittedDescription, fittedTitle } from '@/lib/snippets'
 import { searchQuery } from './query'
 
 type Props = PageProps<'/[locale]/dictionary/search/[query]'>
@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return dictionaryMetadata(
     searchPath(query),
     locale,
-    fill(english ? t.titleForEnglish : t.titleForJapanese, { query }),
+    fittedTitle(english ? t.titleForEnglish : t.titleForJapanese, 'query', query),
     fittedDescription(lead, found ? [t.more] : [], locale),
     { index: isIndexable(results) }
   )
