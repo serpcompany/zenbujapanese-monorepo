@@ -40,7 +40,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | --- | --- | --- |
 | `DATABASE_URL` | required | The Postgres database the service owns: `postgres://user:password@host:port/database`. It's never logged or repeated in an error. |
 | `ACCOUNT_API_URL` | required | The API host's origin, such as `https://api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
-| `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs session tokens and encrypts the codes and the token-signing keys in the database. Changing it signs everyone out, and needs `delete from signing_keys` too, or no access token can be made. |
+| `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs sessions, encrypts codes and signing keys, and makes search keys. Changing it signs everyone out, needs `delete from signing_keys` too, or no access token can be made, and changes every search key, so apps resend searches. |
 | `ACCOUNT_API_TRUSTED_ORIGINS` | none | The website origins, comma-separated, that may sign in with a cookie, such as `https://zenbujapanese.com`. |
 | `ACCOUNT_API_COOKIE_DOMAIN` | none | A domain to share the session cookie across, such as `zenbujapanese.com`. Leave it unset: the website's pages call the service from the browser (#468), so the cookie stays on the API host, and the website's Worker and pages never get it. |
 | `ACCOUNT_API_COOKIE_PREFIX` | `zenbu` | The start of the cookies' names. Staging sets `zenbu-staging`, so its cookies and production's could never overwrite each other, even on a shared domain. |

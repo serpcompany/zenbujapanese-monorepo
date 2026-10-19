@@ -112,14 +112,19 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
   added elsewhere since: when a photo is deleted, drop its words on the device.
-- **A word the service refuses:** `unknown_photo` means the photo was deleted elsewhere first, so
-  drop the word on the device, and the photo with it if no other word holds it; the photo's
-  `delete` comes down too. `photo_full` (500 words) keeps the word on the device without syncing.
+- **A word the service refuses:** `unknown_photo` means the account has no such photo. If its
+  photo's `add` is still queued, as after `photo_not_uploaded`, send the word again after it. If
+  your app had the photo from the account, it was deleted elsewhere first: drop the word on the
+  device, and the photo with it if no other word holds it; the photo's `delete` comes down too.
+  Otherwise, as when the photo's file was refused, keep the word on the device without syncing.
+  `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
   image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`).
 - **A download that answers `404`** never deletes anything: `not_found` means the account no
   longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
-  account lost the file, so upload it again if the device has it. Try again at a later sync.
+  account lost the file, which comes back when a device that holds the image uploads it, as one
+  signing in to the account for the first time does. Ask again at most once a launch, not at
+  every sync. Use the image a device already holds under the photo's ID rather than download it.
 - **`429`** on a photo route means the account is sending its share of files at once: wait the
   seconds `Retry-After` says.
 

@@ -6,16 +6,16 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
-  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
-  the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
-  the top, where they open into a sidebar; on the Mac the tabs sit in a bar at the top of the
-  window. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
-  goes to Search, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to ⌘4 switch tabs.
-  On the Mac, **Image** pastes an image in place of taking a photo, and a photo taken on your
-  iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
-  window to open them there. Right-click a list, a known word, a Recent video, or a frequency
-  dictionary on the Mac for what a swipe does on the iPhone.
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and sign
+  in to the same Zenbu account to keep your known words, lists, notes, photos, settings, recent
+  searches, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it turns every
+  way and runs beside other apps, with the tabs at the top, where they open into a sidebar; on the
+  Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,) holds your account
+  and preferences, ⌘F goes to Search, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to
+  ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of taking a photo, and a photo
+  taken on your iPhone with Continuity Camera opens in Image Search; on every device, drag images
+  onto the window to open them there. Right-click a list, a known word, a Recent video, or a
+  frequency dictionary on the Mac for what a swipe does on the iPhone.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency
   dictionary, most common first (JLPT by level), or your known words, known
   first. Your choice stays across launches and applies to Japanese, English, and romaji

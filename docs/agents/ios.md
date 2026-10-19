@@ -740,8 +740,8 @@ notes and photos an earlier version saved move to their word's Language Referenc
 ## Account and sync
 
 The app signs in to the account service as `zenbu-ios` and syncs known words, lists, watch history,
-Translate's bookmarked sentences, and the profile, as [`account-clients.md`](account-clients.md)
-says. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
+Translate's bookmarked sentences, the profile and its photo, word notes, the Media Library, settings,
+and recent searches, as [`account-clients.md`](account-clients.md) says. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes
 and their answers), `AccountTokens.swift`, `AccountSync.swift`, `AccountSyncState.swift`, and
 `ProfileSync.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift` and
@@ -791,112 +791,8 @@ but the profile, in TypeScript, and the service's tests prove that model against
   within a minute of its `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs
   out and keeps its data. The `URLSession` keeps no cookies. A session token in the Keychain without
   `account-sync.json` (a reinstall) is deleted.
-- **The queue.** `account-sync.json`, beside the stores, holds the account's ID and email, the
-  queue, the cursor, the last sync, each entity's server version, and list words waiting for their
-  list. A learner's change becomes a queued mutation with a new ID and, as `baseVersion`, the
-  entity's last server version (or the base of a change to it still queued). A change made before
-  the file loads is queued once it has.
-- **Signing in and out.** Signing out forgets the session token but keeps the queue, cursor,
-  versions, and waiting words under the account's user ID (`signedOutFrom`), and keeps queuing
-  changes with their base versions. While signed out (`signedOutQueueStart`), a change replaces an
-  earlier one to the same known word or list word from the same signed-out stretch, a list's renames
-  and moves merge into its earlier `create` or `update`, and its `delete` replaces an earlier
-  `update`, so the queue holds about one change per entity however long the learner stays signed
-  out. Nothing queued before signing out is merged, since it may have been sent. Signing in to the
-  same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops
-  them, moves Favorites to its shared ID (`WordLists.favoritesID`, from the oldest list if it's
-  still named Favorites), and queues the phone's marks, lists, list words, Recent videos, and
-  bookmarked sentences at version 0 before the first sync. Deleting the account drops everything.
-- **Entities added later.** `account-sync.json` names the entities the account's first upload
-  covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
-  that signed in before its app synced an entity, such as watch history, queues that entity's items
-  at version 0 on its launch's first sync, and syncs from no cursor, since its cursor passed that
-  entity's changes. A change the service rejects as `unknown_entity`, from a service older than the
-  app, isn't undone: its entity is marked not uploaded and its other queued changes are dropped, so
-  the phone stops sending them, and each launch's first sync uploads that entity again, from no
-  cursor, until the service knows it.
-- **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
-  `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
-  takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
-  by `watchedAt` either way, so a video dropped past 50 sends no `remove`: the account prunes its
-  own. A video saved before Recent kept a time is dated from 2000-01-01 when the history loads, a
-  second apart in its order, so it keeps its place on the phone and every video watched since,
-  anywhere, is newer. Each `record` queues the whole video as a `watch`, dated by the phone's
-  clock, and a newer change to a video replaces a queued one that isn't its first, the only one
-  that can be on its way, so a waiting watch is replaced rather than joined.
-  `WatchSessionView` records the video as it opens, as its captions, length, and comprehension
-  arrive, and as it closes. A pulled video whose ID isn't a YouTube video ID, or isn't the
-  change's, is left out. The file keeps a removed or pruned video's version for the latest 100
-  (`goneVideos`), as the account remembers its latest 100.
-- **Translate bookmarks.** `ConversationHistory.shared` (in `TranslatorCore`) reports each bookmark
-  and un-bookmark through `bookmarkObserver`, with the sentence's text, translation, language, and
-  `bookmarkedAt`, and never the conversation; deleting a conversation reports its bookmarks
-  removed. `AccountSync`, in `SearchExperience`, turns those into `bookmarkedSentence` changes, so
-  `TranslatorCore` still imports nothing of the app's (ADR 0011). The account's copies come in
-  through `applySynced` and `applySyncedRemoval(ofBookmark:)`: a sentence in a conversation on this
-  phone is marked there, and any other is kept in `Synced Bookmarks/bookmarks.json`, inside the
-  conversations folder, which `ConversationHistory.bookmarks` lists beside the conversations' own,
-  newest first, each sentence once. Its writes merge, so a pull of many writes the file about once.
-  Sync waits for the history to load, and stops, as for an unreadable lists file, while that file
-  can't be read (`bookmarksProblem`), for whatever reason, until the next launch reads it; Zenbu
-  Account says so, to update Zenbu when a newer version saved it (`SharedBookmarksProblem`,
-  `AccountMessage.syncPaused`) and to reopen it otherwise, and disables **Sync Now**
-  (`waitsForUnreadableBookmarks`). The cursor is
-  saved only after the history's writes finish.
-- **Favorites** has one ID in every app ([`account-client-rules.md`](account-client-rules.md),
-  Study data). A second phone's `create` of it is rejected `already_exists`, which the first upload
-  never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
-  down deleted (`accountHadFavorites`), the phone keeps its list under a new ID and uploads it with
-  its words. Any other list the account deleted is deleted on the phone. A list screen open on
-  the old ID follows the list: `WordLists.moveList` records each move, and `WordListView` reads
-  its list through `WordLists.currentID(of:)`.
-- **List order.** Lists sort by position, then by `createdAt`, then by ID, and a pulled list takes
-  the account's `createdAt`, so lists that share a position, as when a first upload sends one into
-  a place the account already used, show in the same order on every device.
-- **A sync** sends up to 50 queued changes, at most 48 KB of them (the service takes 64 KB), and at
-  most one per entity, so a second change to an entity goes after the first's result and is moved
-  onto its version. An answer lost on the way is sent again unchanged. `applied` keeps the version;
-  `conflict` takes `current`; `rejected` undoes the change with what it recorded (a word's earlier
-  status, a list's earlier name), unless a later change to the entity is queued, and never undoes
-  the first upload, so a list the account already has stays. A pulled copy of an entity with a
-  change still queued is held in the file (`deferred`) until that change's result: a conflict's
-  `current` replaces it, an applied result takes it only at the same version (the change changed
-  nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't
-  arrived is kept in the file until a sync reaches `hasMore: false`, even across a failed page or a
-  relaunch, then dropped if the list never came. A deleted list drops its words. `410` drops the
-  cursor and the held copies and words, and syncs again, still sending the queue. A sync's answer is
-  dropped if the learner signed out or in while it was on the way.
-- **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once the
-  files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
-  `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
-  to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
-  failure or `5xx` waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
-  retries by itself at most 10 times, only in the foreground; a local change or becoming active
-  waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
-  the sync.
-- **Deleting** signs in again first (Apple when `GET /v1/auth/list-accounts` lists it, keeping the
-  authorization code), refuses a sign-in to another account, and signs out the session the new
-  sign-in replaces. Then it calls `DELETE /v1/me` and signs out. Each attempt with Apple uses a new
-  code. If the answer is lost, the app asks `/v1/auth/token`: a `401` means the account is gone.
-
-`AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
-`AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, `AccountSyncProfileTests`, and
-`AccountSignedOutTests` run the client against a stub server (`StubAccountServer`, a `URLProtocol`):
-sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
-mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
-failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
-the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
-service's sync rules, so two installs can share one account: changes made while signed out going to
-the same account, another account starting over, and two phones ending with one Favorites.
-`AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
-pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a rejected
-watch, a phone catching up on watch history, a service that doesn't know watch history yet, old
-videos' dates, the kept versions' bound, bad pulled IDs, and two phones through
-`FakeAccountService`. `AccountSyncBookmarkTests` covers the first upload sending each bookmarked
-sentence and nothing else said, the queue, a bookmark from another device listed on its own and
-removed, an un-bookmark that lost to a newer bookmark, a rejected bookmark, deleting a conversation,
-an unreadable synced bookmarks file pausing sync, a pulled ID that isn't its change's, a service
-that doesn't know bookmarks yet, catching up, and two phones.
+- **How it syncs**, from the queue and the first upload to each entity's own handling, when it
+  syncs, deleting, and the tests: [`ios-account-sync.md`](ios-account-sync.md).
 
 ### Sign-in in the App Store build
 

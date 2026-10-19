@@ -16,6 +16,8 @@ note under an entry JMdict lists twice moves to the one the word's page shows. A
 the page is still loading its examples is kept like any other. If saved notes can't be read, a
 copy is kept on the device rather than written over, and every note that can be read stays, on
 its word or any other ([Saved data that can't be read](#saved-data-that-cant-be-read)).
+Signed in, notes, photos and the words each is on, and recent searches sync to the learner's other
+devices, by the rules in [Zenbu account and sync](account-sync.md).
 
 Tapping a note, or **Add Note** under a word's or kanji's notes, opens its field with the keyboard
 ready to type, on the Mac too, where a click on a note used to leave the keyboard with the page.
@@ -50,8 +52,8 @@ a note no word or kanji names while the dictionary can't be read.
 
 The group is drawn with the results, never after them. Writing, changing, or deleting a note
 changes it at once, on a Search screen already showing it too, and it is the same after a
-relaunch. Search reads the notes on the device: they don't sync to a Zenbu account, and nothing
-about them leaves the device.
+relaunch. Search reads the notes on the device; notes a signed-in learner wrote on another device
+are found once they've synced.
 
 Check: core `results/notes.test.ts` (matching any part of a note, the folding, the part shown and
 where it's cut, a Greek word's last Σ, the order, and one note on several words) and
@@ -116,11 +118,13 @@ association from one word, or delete the image and all of its word associations.
 Check: UI `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted` and
 `AccountUITests` (empty at first); package `EncounterMediaStorageTests`.
 
-These images are stored locally and participate in normal system-managed device backup. The
-Media Library is not currently a general file store, import system, analysis tool, sync service,
-or publishing destination.
+These images are stored locally and participate in normal system-managed device backup; signed
+in, each also goes to the learner's Zenbu account, as the app saved it, and down to their other
+devices ([Zenbu account and sync](account-sync.md)). The Media Library is not currently a general
+file store, import system, analysis tool, or publishing destination.
 
-Deleting a photo, or removing it from its last word, deletes its image at once, unless a copy of
+Deleting a photo, or removing it from its last word, here or on another signed-in device, deletes
+its image at once, unless a copy of
 the index kept aside (below) names the photo, or one can't be read. Then the image goes later,
 checked at most once a day as Zenbu opens or comes back, or as a word's photos or the Media
 Library load: once no kept copy names it, and once 30

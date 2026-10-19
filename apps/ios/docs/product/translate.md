@@ -104,7 +104,7 @@ Along the bottom are the conversation's controls:
   translations that arrive afterward, and Conversation plays each turn that ends afterward, all
   of it, including sentences of that turn heard while muted;
 - the speech speed, **−** and **+** in steps of 0.1 from 0.5× to 2.0×, remembered for the next
-  conversation;
+  conversation and, signed in, on the learner's other devices ([sync](account-sync.md));
 - the timer with a pause button. The timer is red while listening and gray while paused, and the
   button is a red pause while listening and a blue play while paused.
 

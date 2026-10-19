@@ -22,8 +22,9 @@ opens a version 2 file read-only. A word is keyed by its Language Reference ID a
 Marking a word unknown keeps its record, so a later sync can tell a removal from no status. List
 records are shaped to become database rows, and a membership keeps its headword so the word can
 still be found if its entry's ID changes. Each store reports a learner's change to the account
-sync (`changeObserver`), and takes the account's changes through `applySynced`, which reports
-nothing ([Account and sync](ios.md#account-and-sync)).
+sync (`changeObserver`, or for the actors that keep notes, the Media Library, and recent searches,
+a `KeptChangeRelay`), and takes the account's changes through `applySynced`, which reports nothing
+([How the iOS app syncs](ios-account-sync.md)).
 
 ## Recent, notes, the profile, and the Media Library
 
@@ -126,7 +127,8 @@ screen's request is, and answers `ShownNotes`, stamped with the revision it read
 waits for the first read, then asks for the notes after the results screen and sets both
 together, so the group is drawn with the results and never after (`search.notes.drawn` records
 each one drawn); a task keyed on both revisions asks again when they differ, so a Search screen
-already showing the group, in any window, draws the change. Notes never sync: nothing here
-reaches the account ([Account and sync](ios.md#account-and-sync)). `LearnerNotesTests` saves,
+already showing the group, in any window, draws the change, and a note synced from another device
+is drawn once `AccountSync` reloads `LearnerNotes` after applying it
+([How the iOS app syncs](ios-account-sync.md)). `LearnerNotesTests` saves,
 changes, and deletes a note through a page's `SavedItemNotes` and reads Search's answer after
 each save.

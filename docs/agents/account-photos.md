@@ -87,8 +87,9 @@ so it outlives the account it came from:
 
 Photo files aren't in the database's backups: they stay in R2. A database restored from a backup
 names the files it had then. A photo deleted since comes back in the account (Back up and
-restore, in [`account-api.md`](account-api.md)), its file answers `photo_file_missing`, and a
-device that still has the image uploads it again, which puts it back. A photo saved since the
+restore, in [`account-api.md`](account-api.md)), and its file answers `photo_file_missing`, which no
+app takes as a deletion, until a device that still has the image uploads it again, as one signing
+in to the account for the first time does. A photo saved since the
 backup is gone from the account, and its file stays in R2 with nothing naming it until the account
 is deleted, which the debt list records ([`harness-debt.md`](../harness-debt.md), Delivery).
 
