@@ -12,7 +12,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import committed_files
 import package
+import pinned_files
+import pinned_release
 import release_inputs
+import retired_entries
+import retirement
 from locations import REPO_ROOT as REPO
 
 
@@ -55,6 +59,7 @@ class RealInputsTests(unittest.TestCase):
             "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt",
             "JITEN-NOTICE.txt",
             "JLPT-KANJI-LEVELS-NOTICE.txt",
+            "RetiredEntries.json",
         ):
             self.assertIn(name, names)
         self.assertNotIn("LanguageTechnologyPackCatalog.json", names)
@@ -94,6 +99,28 @@ class RealInputsTests(unittest.TestCase):
         for path in paths:
             with self.subTest(path):
                 self.assertTrue(any(fnmatch.fnmatch(path, pattern) for pattern in filters), filters)
+
+    def test_the_app_and_the_service_image_hold_the_pinned_release(self):
+        self.assertEqual(
+            self.inputs.app_bundles, [self.inputs.roots["resources"]], "the app bundles resources"
+        )
+        self.assertEqual(self.inputs.images, ["apps/dictionary-api/Dockerfile"])
+        release = release_inputs.load_release(REPO / "language-data" / "release.json")["release"]
+        pinned = pinned_release.load_pinned(REPO / "language-data" / "releases", release)
+        counts = pinned_files.check_committed_pins(REPO, self.inputs, pinned)
+        self.assertEqual(counts["files"], len(self.inputs.files))
+        self.assertGreater(counts["copied"], 20)
+
+    def test_the_retired_entries_are_what_the_pinned_releases_entry_changes_make(self):
+        release = release_inputs.load_release(REPO / "language-data" / "release.json")["release"]
+        releases = REPO / "language-data" / "releases"
+        reference = retirement.language_reference(REPO, self.inputs)
+        oid = committed_files.committed(REPO, [reference["path"]])[reference["path"]].lfs_oid
+        retired = json.loads((REPO / self.inputs.retired_entries).read_text())
+        steps = retired_entries.release_steps(releases, release)
+        self.assertEqual(retired, retired_entries.retired_document(steps, oid))
+        second = dict(steps)["2026.10.2"]
+        self.assertEqual((second["dropped"], second["added"]), ([], []))
 
     def test_lfs_paths_prints_a_comma_separated_list(self):
         output = io.StringIO()

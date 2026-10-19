@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Locale } from '@/lib/i18n/config'
 import { linkTo, placeholderHref } from '@/lib/site'
 import { SiteHeader } from './site-header'
 
@@ -10,9 +11,9 @@ const sections = ['Dictionary', 'Tools', 'Products', 'Company']
 
 const productPage = linkTo('iphone-app')
 
-function header(pathname: string): string {
+function header(pathname: string, locale: Locale = 'en'): string {
   navigation.pathname = pathname
-  return renderToStaticMarkup(<SiteHeader />)
+  return renderToStaticMarkup(<SiteHeader locale={locale} />)
 }
 
 const attribute = (attributes: string, name: string) =>
@@ -57,7 +58,11 @@ describe('the header marks the section the page is in', () => {
     ['/dictionary/browse/kana/', 'Dictionary'],
     ['/about/', 'Company'],
     ['/sources/', 'Company'],
-    ['/legal/privacy/', 'Company']
+    ['/legal/privacy/', 'Company'],
+    ['/en/about/', 'Company'],
+    ['/en/dictionary/search/iru/', 'Dictionary'],
+    ['/tools/', 'Tools'],
+    ['/tools/hiragana-to-katakana/', 'Tools']
   ])('%s is in %s', (path, section) => {
     expect(triggers(header(path))).toEqual(
       sections.map(label => [label, label === section ? 'true' : null])
@@ -83,18 +88,21 @@ describe("the header's menus are in the page's HTML, with the current page marke
     ])
   })
 
-  test('the Tools menu leads to the reference pages, and its planned pages are placeholders', () => {
+  test('the Tools menu leads to the tools, the reference pages, and the converters, and Kanji to Furigana is a placeholder', () => {
     expect(menuLinks(header('/')).slice(8, 17)).toEqual([
-      placeholder('tools'),
+      listed('tools'),
       page('/dictionary/'),
       page('/dictionary/browse/kana/'),
       page('/dictionary/browse/kanji/'),
       page('/dictionary/browse/frequency-dictionaries/'),
-      placeholder('hiragana-to-katakana'),
-      placeholder('romaji-to-kana'),
+      listed('hiragana-to-katakana'),
+      listed('romaji-to-kana'),
       placeholder('kanji-to-furigana'),
-      placeholder('tools')
+      listed('tools')
     ])
+    expect(listed('tools')[0]).toBe('/tools/')
+    expect(listed('hiragana-to-katakana')[0]).toBe('/tools/hiragana-to-katakana/')
+    expect(listed('romaji-to-kana')[0]).toBe('/tools/romaji-to-kana/')
   })
 
   test('the Products menu leads to the products pages and the web dictionary, and its planned pages are placeholders', () => {
@@ -103,7 +111,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
       listed('iphone-app'),
       placeholder('browser-extension'),
       page('/dictionary/'),
-      placeholder('tools'),
+      listed('tools'),
       placeholder('reference-guides'),
       placeholder('courses'),
       listed('products')
@@ -164,7 +172,9 @@ test('from 1024 pixels Get the app and the account button end the header, Get th
   expect(attribute(getTheApp, 'href')).toBe('/products/zenbu-japanese-app/')
   expect(classesOf(getTheApp)).toContain('max-lg:hidden')
   const [, account = '', content = ''] =
-    html.match(/<button ([^>]*aria-haspopup="menu"[^>]*)>([\s\S]*?)<\/button>/) ?? []
+    html.match(
+      /<button ([^>]*aria-haspopup="menu"[^>]*)>(<svg [^>]*class="lucide lucide-user-round[\s\S]*?)<\/button>/
+    ) ?? []
   expect(classesOf(account)).toEqual(expect.arrayContaining(['rounded-full', 'max-lg:hidden']))
   expect(content).toMatch(/^<svg [^>]*class="lucide lucide-user-round[ "]/)
   expect(content).toContain('<span class="sr-only">Account</span>')
@@ -186,4 +196,68 @@ test('the Get the app button leads with a phone icon', () => {
   )
   expect(content).toMatch(/<svg [^>]*aria-hidden="true"/)
   expect(content.replace(/<svg[\s\S]*?<\/svg>/, '')).toBe('Get the app')
+})
+
+function languageTrigger(html: string): string {
+  return (
+    html.match(/<button [^>]*aria-label="[^"]*"[^>]*>(?=<svg [^>]*lucide-languages)/)?.[0] ?? ''
+  )
+}
+
+describe('from 1024 pixels the header has the language menu, named in the current language', () => {
+  test.each([
+    ['en', '/about/', 'English', 'English, change language'],
+    ['ja', '/ja/about/', '日本語', '日本語、表示言語を切り替える']
+  ] as const)('on a %s page it reads %s', (locale, path, name, label) => {
+    const html = header(path, locale)
+    const trigger = languageTrigger(html)
+    expect(attribute(trigger, 'aria-label')).toBe(label)
+    expect(attribute(trigger, 'aria-haspopup')).toBe('menu')
+    expect(classesOf(trigger)).toContain('max-lg:hidden')
+    expect(html).toContain(`</svg>${name}</button>`)
+  })
+
+  test('it comes before Get the app', () => {
+    const html = header('/')
+    const [getTheApp = ''] = headerButtons(html)[0] ?? []
+    expect(html.indexOf(languageTrigger(html))).toBeLessThan(html.indexOf(getTheApp))
+  })
+})
+
+describe("a Japanese page's header is in Japanese, and its links stay in Japanese", () => {
+  test('its sections are named in Japanese', () => {
+    expect(triggers(header('/ja/', 'ja')).map(([label]) => label)).toEqual([
+      '辞書',
+      'ツール',
+      '製品',
+      '会社情報'
+    ])
+  })
+
+  test('its section and page links start with /ja/, and planned pages stay placeholders', () => {
+    const links = menuLinks(header('/ja/support/', 'ja'))
+    for (const [href] of links) {
+      expect(href === placeholderHref || href?.startsWith('/ja/'), String(href)).toBe(true)
+    }
+    expect(links).toContainEqual(['/ja/support/', null, 'page'])
+    expect(links).toContainEqual(['/ja/products/zenbu-japanese-app/', 'iphone-app', null])
+  })
+
+  test.each([
+    ['/ja/dictionary/browse/kana/', '辞書'],
+    ['/ja/legal/privacy/', '会社情報']
+  ])('%s is in %s', (path, section) => {
+    expect(
+      triggers(header(path, 'ja'))
+        .filter(([, current]) => current === 'true')
+        .map(([label]) => label)
+    ).toEqual([section])
+  })
+
+  test('the brand links to the Japanese homepage and Get the app to the Japanese product page', () => {
+    const html = header('/ja/', 'ja')
+    expect(html).toMatch(/<a class="flex shrink-0[^"]*" href="\/ja\/">/)
+    expect(html).toContain('href="/ja/products/zenbu-japanese-app/"')
+    expect(html).toContain('アプリを入手</a>')
+  })
 })

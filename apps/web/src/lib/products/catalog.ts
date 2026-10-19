@@ -1,11 +1,12 @@
-import { appScreenshots } from '@/lib/app-screenshots'
 import {
   frequencyDictionariesPath,
   kanaChartsPath,
   kanjiListsPath
 } from '@/lib/dictionary/browse/paths'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
 import { linkTo, site } from '@/lib/site'
-import { iphoneAppTitle } from '@/lib/site-menus'
 
 export const productsPath = '/products/'
 export const productTypeParameter = 'type'
@@ -13,59 +14,24 @@ export const productTypeParameter = 'type'
 export type ProductType = 'apps' | 'extensions' | 'free-tools' | 'reference-guides' | 'courses'
 export type ProductFilter = 'all' | ProductType
 
-export const productFilters: readonly {
-  id: ProductFilter
-  label: string
-  title: string
-  description: string
-}[] = [
-  {
-    id: 'all',
-    label: 'All',
-    title: 'All products',
-    description: 'Apps, extensions, free tools, guides, and courses, all built on one dictionary.'
-  },
-  {
-    id: 'apps',
-    label: 'Apps',
-    title: 'Apps',
-    description: 'Everything Zenbu does, in your pocket.'
-  },
-  {
-    id: 'extensions',
-    label: 'Extensions',
-    title: 'Extensions',
-    description: 'Zenbu in your browser, on any page.'
-  },
-  {
-    id: 'free-tools',
-    label: 'Free tools',
-    title: 'Free tools',
-    description: 'The app’s dictionary and reference lists, free in your browser.'
-  },
-  {
-    id: 'reference-guides',
-    label: 'Reference guides',
-    title: 'Reference guides',
-    description: 'Printable sheets to keep beside you while you study.'
-  },
-  {
-    id: 'courses',
-    label: 'Courses',
-    title: 'Courses',
-    description: 'Short lessons built from real Japanese.'
-  }
+export const productFilters: readonly ProductFilter[] = [
+  'all',
+  'apps',
+  'extensions',
+  'free-tools',
+  'reference-guides',
+  'courses'
 ]
 
 export function productFilterFrom(value: string | null | undefined): ProductFilter {
-  return productFilters.find(filter => filter.id !== 'all' && filter.id === value)?.id ?? 'all'
+  return productFilters.find(filter => filter !== 'all' && filter === value) ?? 'all'
 }
 
-export const productFilterPath = (filter: ProductFilter) =>
-  filter === 'all' ? productsPath : `${productsPath}?${productTypeParameter}=${filter}`
-
-export const productFilterFor = (filter: ProductFilter) =>
-  productFilters.find(candidate => candidate.id === filter) ?? productFilters[0]
+export const productFilterPath = (filter: ProductFilter, locale: Locale) =>
+  localizedPath(
+    filter === 'all' ? productsPath : `${productsPath}?${productTypeParameter}=${filter}`,
+    locale
+  )
 
 export type ProductSymbol =
   | 'puzzle'
@@ -81,146 +47,100 @@ export type ProductSymbol =
 
 export type ProductMark = { glyph: string; solid?: true } | { symbol: ProductSymbol }
 
-export interface Product {
-  id: string
+type ProductsText = Dictionary['products']
+export type ProductId = keyof ProductsText['items']
+type ProductFact = keyof ProductsText['facts']
+
+export const productFactSymbols: Record<ProductFact, ProductSymbol> = {
+  web: 'globe',
+  pdf: 'file',
+  browsers: 'globe',
+  words: 'book',
+  kana: 'type',
+  kanji: 'grid',
+  frequency: 'chart',
+  video: 'tv'
+}
+
+interface ProductShape {
+  id: ProductId
   type: ProductType
-  title: string
-  description: string
   mark: ProductMark
-  facts: readonly { symbol: ProductSymbol; text: string }[]
+  facts: readonly ProductFact[]
   href?: string
 }
 
 export const featuredApp = {
   type: 'apps',
-  title: iphoneAppTitle,
-  tags: ['iPhone', 'Works offline'],
-  description:
-    'An offline Japanese dictionary with Image Search, handwriting, a live conversation translator, and YouTube with linked captions.',
-  includes: [
-    'Offline dictionary',
-    'Image Search',
-    'Handwriting',
-    'Translate',
-    'Player',
-    'Lists and Known Words'
-  ],
+  tags: ['platform', 'offline'],
+  includes: ['dictionary', 'imageSearch', 'handwriting', 'translate', 'player', 'lists'],
   icon: '/app-icon-192.webp',
-  page: linkTo('iphone-app'),
-  screenshots: [appScreenshots.imageSearch, appScreenshots.wordDetail]
-} as const
+  screenshots: ['imageSearch', 'wordDetail']
+} as const satisfies {
+  type: ProductType
+  tags: readonly (keyof ProductsText['featuredApp']['tags'])[]
+  includes: readonly (keyof ProductsText['featuredApp']['includes'])[]
+  icon: string
+  screenshots: readonly string[]
+}
 
-const web = { symbol: 'globe', text: 'Web' } as const
-const pdf = { symbol: 'file', text: 'PDF' } as const
-
-export const products: readonly Product[] = [
+export const products: readonly ProductShape[] = [
   {
     id: 'browser-extension',
     type: 'extensions',
-    title: 'Browser extension',
-    description: 'Look up any Japanese word on a web page without leaving it.',
     mark: { symbol: 'puzzle' },
-    facts: [{ symbol: 'globe', text: 'Browsers' }]
+    facts: ['browsers']
   },
   {
     id: 'dictionary',
     type: 'free-tools',
-    title: `${site.name} Dictionary`,
-    description: 'Search more than 200,000 words in Japanese, kana, romaji, or English.',
     mark: { glyph: site.mark, solid: true },
-    facts: [web, { symbol: 'book', text: '200,000+ words' }],
+    facts: ['web', 'words'],
     href: '/dictionary/'
   },
   {
     id: 'kana-charts',
     type: 'free-tools',
-    title: 'Kana charts',
-    description: 'Hiragana and katakana, with common words for every kana.',
     mark: { glyph: 'あ' },
-    facts: [web, { symbol: 'type', text: 'Hiragana and katakana' }],
+    facts: ['web', 'kana'],
     href: kanaChartsPath
   },
   {
     id: 'kanji-lists',
     type: 'free-tools',
-    title: 'Kanji lists',
-    description: 'Kanji by school grade, JLPT level, and jinmeiyō.',
     mark: { glyph: '漢' },
-    facts: [web, { symbol: 'grid', text: 'Grades, JLPT, jinmeiyō' }],
+    facts: ['web', 'kanji'],
     href: kanjiListsPath
   },
   {
     id: 'frequency-lists',
     type: 'free-tools',
-    title: 'Frequency lists',
-    description: 'The most common words, from JLPT N5 to YouTube and anime.',
     mark: { symbol: 'chart' },
-    facts: [web, { symbol: 'chart', text: 'JLPT, YouTube, anime' }],
+    facts: ['web', 'frequency'],
     href: frequencyDictionariesPath
   },
   {
     id: 'converters',
     type: 'free-tools',
-    title: 'Converters',
-    description: 'Switch between hiragana, katakana, romaji, and furigana.',
     mark: { symbol: 'swap' },
-    facts: [web]
+    facts: ['web'],
+    href: linkTo('tools').href
   },
-  {
-    id: 'kana-chart-pdf',
-    type: 'reference-guides',
-    title: 'Kana chart PDF',
-    description: 'Hiragana and katakana on one printable page, with romaji.',
-    mark: { symbol: 'file' },
-    facts: [pdf]
-  },
+  { id: 'kana-chart-pdf', type: 'reference-guides', mark: { symbol: 'file' }, facts: ['pdf'] },
   {
     id: 'verb-conjugations-pdf',
     type: 'reference-guides',
-    title: 'Verb conjugations PDF',
-    description: 'Every form of a verb, with what each one means.',
     mark: { symbol: 'file' },
-    facts: [pdf]
+    facts: ['pdf']
   },
   {
     id: 'jlpt-n5-kanji-pdf',
     type: 'reference-guides',
-    title: 'JLPT N5 kanji PDF',
-    description: 'The kanji on the N5 list, with readings and stroke counts.',
     mark: { symbol: 'file' },
-    facts: [pdf]
+    facts: ['pdf']
   },
-  {
-    id: 'real-clips-course',
-    type: 'courses',
-    title: 'Japanese from real clips',
-    description:
-      'Short video lessons built around phrases you’ll hear again, every word linked to the dictionary.',
-    mark: { symbol: 'play' },
-    facts: [{ symbol: 'tv', text: 'Video' }]
-  }
+  { id: 'real-clips-course', type: 'courses', mark: { symbol: 'play' }, facts: ['video'] }
 ]
-
-export function productById(id: string): Product {
-  const product = products.find(candidate => candidate.id === id)
-  if (!product) throw new Error(`Unknown product: ${id}`)
-  return product
-}
-
-export const productTypeLabel = (type: ProductType) => productFilterFor(type).label
-
-const searchText = (...parts: readonly string[]) => parts.join(' ').toLowerCase()
-
-export const featuredAppSearchText = searchText(
-  featuredApp.title,
-  featuredApp.description,
-  ...featuredApp.tags,
-  ...featuredApp.includes,
-  productTypeLabel(featuredApp.type)
-)
-
-export const productSearchText = (product: Product) =>
-  searchText(product.title, product.description, productTypeLabel(product.type))
 
 export function productShown(
   item: { type: ProductType; searchText: string },

@@ -1,7 +1,7 @@
 # Homepage
 
 The homepage, `/`, leads with the iPhone app and puts the free web dictionary right under it. It
-follows the #648 mockups' Home page (hero A, app first, chosen on 2026-10-08) in the site's stock
+follows the #844 mockups' Home page (hero A, app first, chosen on 2026-10-08) in the site's stock
 shadcn styles, and #651. Each behavior below says what the page does, where it comes from, and the
 automated check that enforces it (see [How behavior is verified](index.md#how-behavior-is-verified)).
 
@@ -22,14 +22,14 @@ for taberu and the word page for 大丈夫. Get the app is the header's button (
 opens the same link target in `linkTargets` (`src/lib/site.ts`): the iPhone app's page,
 `/products/zenbu-japanese-app/` ([Products pages](products.md)).
 
-- Source: #651; #648 decision and mockups (Home, hero A); #668 (Works offline only).
+- Source: #651; #844 decision and mockups (Home, hero A); #668 (Works offline only).
 - Check: Home spec, "the hero leads with the app, with Get the app and Search the dictionary".
 
 **Try the dictionary.** A card with the dictionary's search box, the same form as `/dictionary/`'s
 (`src/components/dictionary/search-form.tsx`), which opens the query's search page, and four
 example searches, each linking to its search page: 大丈夫, taberu, 峠, and to persevere.
 
-- Source: #651; #648 mockups.
+- Source: #651; #844 mockups.
 - Check: Home spec, "the Try the dictionary box opens the search page" and "each example search
   opens its search page".
 
@@ -69,7 +69,7 @@ hides the others, which keep their place, so the page doesn't move when the area
 showcase is one component, `src/components/area-showcase.tsx`, that takes a list of areas; the
 homepage's are in `src/lib/app-areas.ts`.
 
-- Source: #665; the owner's Clipy recording (1:47–4:12); #648 mockups v50, Showcase A; App docs
+- Source: #665; the owner's Clipy recording (1:47–4:12); #844 mockups v50, Showcase A; App docs
   (`dictionary.md`, `translate.md`, `player.md`, and `index.md`: Lists, Known Words, Frequency
   Dictionaries, Furigana kanji highlight).
 - Check: Showcase spec (`e2e/showcase.spec.ts`), "each tab shows its own area", "the tabs work by
@@ -89,12 +89,13 @@ homepage's are in `src/lib/app-areas.ts`.
 **Free on the web.** A line: no download, and every word has its own page. Then the web tools
 that exist today, each opening its page: the Tools menu's links that aren't placeholders, with
 the menu's descriptions and marks (`src/lib/site-menus.ts`), so a converter joins the list when
-its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists, and
-Frequency lists (under `/dictionary/browse/`). Then All free tools, the tools index's
-placeholder. Beside them is a browser drawn around the search page for taberu, with 食べる's word
+its page ships. Today they are Dictionary (`/dictionary/`), Kana charts, Kanji lists,
+Frequency lists (under `/dictionary/browse/`), and the Hiragana to Katakana and Romaji to Kana
+converters (under `/tools/`, [Tools pages](tools.md)). Then All free tools, which opens the tools
+index. Beside them is a browser drawn around the search page for taberu, with 食べる's word
 card in front of it.
 
-- Source: #651; #648 mockups and their notes (only pages that exist today); #668 (the line
+- Source: #651; #844 mockups and their notes (only pages that exist today); #668 (the line
   drops "and no account").
 - Check: Home spec, "the free web tools link to pages the site has, with no redirect".
 
@@ -119,9 +120,9 @@ with its offline, no-account, and open-data promises and its credits, is gone.
   footer" (Get the app inside the card at 768 and 1,280 pixels, its height from 768, the collage's
   place at both widths, no Sources disclosure, and Get the app's page).
 
-**Placeholders.** All free tools links to `#` through `linkTargets`, like the header's
-([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links). Get the app links to
-its page through the same entries.
+**Placeholders.** All free tools and Get the app link to their pages through `linkTargets`, like
+the header's ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links), so no
+link on the homepage is a placeholder of its own.
 
 - Source: the owner's decision on #650 (show planned items as placeholders); #652 (the products
   pages).
@@ -160,7 +161,7 @@ and Translator for iPhone", described by `/`'s entry in `src/lib/pages.ts`, and 
 URL, written as the origin with no slash (`https://zenbujapanese.com`, and
 `https://staging.zenbujapanese.com` on staging), as its `og:url` and the pages sitemap write it.
 Its Open Graph tags carry the same title and description, with the site's name, type, and
-locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page is in production.
+locale (`siteOpenGraph` in `src/lib/seo.ts`). It is indexed, as every page is in production.
 
 - Source: #651; #663 (the SERP URL trailing-slash standard's homepage rule).
 - Check: Home spec, "is titled, described, shared as the site, and its own canonical URL";
@@ -171,6 +172,6 @@ locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page 
 the Free on the web band and the page end's band running the window's full width. No width scrolls
 sideways.
 
-- Source: #648 mockups (Width switch).
+- Source: #844 mockups (Width switch).
 - Check: `e2e/layout.spec.ts`, "/ fits the window, with the site's header and footer". Desktop,
   tablet, and phone layouts: checked by hand with `verify-web`.

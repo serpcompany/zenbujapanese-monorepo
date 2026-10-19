@@ -1,16 +1,18 @@
 'use client'
 
-import {
-  type ConjugationMode,
-  type ConjugationRow,
-  type Conjugations,
-  sharedSpellingNote
-} from '@zenbu/dictionary-core/detail/conjugation'
+import type { ConjugationMode } from '@zenbu/dictionary-core/detail/conjugation'
 import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { ChevronRightIcon, EqualIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { PageExample } from '@/lib/dictionary/page-example'
+import type {
+  ConjugationsText,
+  ShownConjugationRow,
+  ShownConjugations
+} from '@/lib/dictionary/screen-text'
+import type { Locale } from '@/lib/i18n/config'
+import { fill } from '@/lib/i18n/format'
 import { accent } from './accent'
 import { Disclosure, DisclosureSection } from './disclosure'
 import { ExampleList } from './example-list'
@@ -33,16 +35,22 @@ function EndingText({ surface, ending }: { surface: string; ending: string }) {
   )
 }
 
-export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
+export function ConjugatedFormContent({
+  row,
+  unsupported
+}: {
+  row: ShownConjugationRow
+  unsupported: string
+}) {
   return (
     <div className="flex flex-col gap-4" data-conjugated-form={row.kind}>
       <p className="text-lg" data-conjugation-explanation>
         {row.explanation}
       </p>
-      {row.sharedSpellings.length > 0 ? (
+      {row.sharedSpelling ? (
         <p className="flex items-start gap-2 text-sm text-muted-foreground" data-shared-spelling>
           <EqualIcon aria-hidden className="mt-0.5 size-4 shrink-0" />
-          {sharedSpellingNote(row.sharedSpellings)}
+          {row.sharedSpelling}
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
@@ -51,23 +59,33 @@ export function ConjugatedFormContent({ row }: { row: ConjugationRow }) {
           highlightedEnding={row.ending}
           className="text-4xl font-medium leading-tight"
         />
-        <PronounceButton text={row.reading} label={row.pronounce} />
+        <PronounceButton text={row.reading} label={row.pronounce} unsupported={unsupported} />
       </div>
     </div>
   )
 }
 
-type FormExampleLabels = Conjugations['examples']
+type FormExampleLabels = ShownConjugations['examples']
 
 export function FormExampleList({
   examples,
-  labels
+  labels,
+  locale,
+  text
 }: {
   examples: PageExample[]
   labels: FormExampleLabels
+  locale: Locale
+  text: ConjugationsText
 }) {
   return examples.length > 0 ? (
-    <ExampleList initial={examples} listed={examples.length} path={null} />
+    <ExampleList
+      initial={examples}
+      listed={examples.length}
+      path={null}
+      locale={locale}
+      text={text}
+    />
   ) : (
     <p className="text-sm text-muted-foreground" data-no-form-examples>
       {labels.empty}
@@ -80,7 +98,17 @@ type LoadedExamples =
   | { state: 'loaded'; examples: PageExample[] }
   | { state: 'failed' }
 
-function FormExamples({ surface, labels }: { surface: string; labels: FormExampleLabels }) {
+function FormExamples({
+  surface,
+  labels,
+  locale,
+  text
+}: {
+  surface: string
+  labels: FormExampleLabels
+  locale: Locale
+  text: ConjugationsText
+}) {
   const [loaded, setLoaded] = useState<LoadedExamples>({ state: 'loading' })
   useEffect(() => {
     let current = true
@@ -102,11 +130,11 @@ function FormExamples({ surface, labels }: { surface: string; labels: FormExampl
     <section className="flex flex-col gap-3" data-conjugation-examples={loaded.state}>
       <h4 className="text-sm font-medium text-muted-foreground">{labels.title}</h4>
       {loaded.state === 'loading' ? (
-        <p className="text-sm text-muted-foreground">Loading examples</p>
+        <p className="text-sm text-muted-foreground">{text.conjugations.loading}</p>
       ) : loaded.state === 'failed' ? (
-        <p className="text-sm text-muted-foreground">Examples couldn’t load. Try again later.</p>
+        <p className="text-sm text-muted-foreground">{text.conjugations.failed}</p>
       ) : (
-        <FormExampleList examples={loaded.examples} labels={labels} />
+        <FormExampleList examples={loaded.examples} labels={labels} locale={locale} text={text} />
       )}
     </section>
   )
@@ -114,15 +142,23 @@ function FormExamples({ surface, labels }: { surface: string; labels: FormExampl
 
 function ConjugatedFormDisclosure({
   row,
-  labels
+  labels,
+  locale,
+  text
 }: {
-  row: ConjugationRow
+  row: ShownConjugationRow
   labels: FormExampleLabels
+  locale: Locale
+  text: ConjugationsText
 }) {
   return (
     <Disclosure
       data-conjugation-row={row.kind}
-      label={`${row.title}, ${row.surface}, ${row.reading}`}
+      label={fill(text.conjugations.rowLabel, {
+        title: row.title,
+        surface: row.surface,
+        reading: row.reading
+      })}
       buttonClassName="px-2 py-2"
       summary={
         <>
@@ -143,15 +179,25 @@ function ConjugatedFormDisclosure({
     >
       {opened => (
         <div className="flex flex-col gap-4 px-2 pt-2 pb-4">
-          <ConjugatedFormContent row={row} />
-          {opened ? <FormExamples surface={row.surface} labels={labels} /> : null}
+          <ConjugatedFormContent row={row} unsupported={text.pronounce.unsupported} />
+          {opened ? (
+            <FormExamples surface={row.surface} labels={labels} locale={locale} text={text} />
+          ) : null}
         </div>
       )}
     </Disclosure>
   )
 }
 
-export function ConjugationTableContent({ conjugations }: { conjugations: Conjugations }) {
+export function ConjugationTableContent({
+  conjugations,
+  locale,
+  text
+}: {
+  conjugations: ShownConjugations
+  locale: Locale
+  text: ConjugationsText
+}) {
   const [mode, setMode] = useState<ConjugationMode>('Plain')
   return (
     <div className="flex flex-col gap-4" data-conjugation-table>
@@ -163,16 +209,20 @@ export function ConjugationTableContent({ conjugations }: { conjugations: Conjug
       </p>
       {conjugations.modes.length > 1 ? (
         <Tabs value={mode} onValueChange={value => setMode(value as ConjugationMode)}>
-          <TabsList className="w-full" aria-label="Conjugation mode">
+          <TabsList className="w-full" aria-label={text.conjugations.modeLabel}>
             {conjugations.modes.map(option => (
-              <TabsTrigger key={option} value={option} data-conjugation-mode={option}>
-                {option}
+              <TabsTrigger
+                key={option.mode}
+                value={option.mode}
+                data-conjugation-mode={option.mode}
+              >
+                {option.label}
               </TabsTrigger>
             ))}
           </TabsList>
         </Tabs>
       ) : null}
-      {conjugations.modes.map(option => (
+      {conjugations.modes.map(({ mode: option }) => (
         <ul
           key={option}
           hidden={option !== mode}
@@ -181,7 +231,12 @@ export function ConjugationTableContent({ conjugations }: { conjugations: Conjug
         >
           {conjugations.rows[option].map(row => (
             <li key={row.kind}>
-              <ConjugatedFormDisclosure row={row} labels={conjugations.examples} />
+              <ConjugatedFormDisclosure
+                row={row}
+                labels={conjugations.examples}
+                locale={locale}
+                text={text}
+              />
             </li>
           ))}
         </ul>
@@ -191,20 +246,22 @@ export function ConjugationTableContent({ conjugations }: { conjugations: Conjug
 }
 
 export function ConjugationsSection({
-  title,
-  conjugations
+  conjugations,
+  locale,
+  text
 }: {
-  title: string
-  conjugations: Conjugations
+  conjugations: ShownConjugations
+  locale: Locale
+  text: ConjugationsText
 }) {
   return (
-    <DisclosureSection id={conjugationsAnchor} title={title}>
-      <ConjugationTableContent conjugations={conjugations} />
+    <DisclosureSection id={conjugationsAnchor} title={conjugations.title}>
+      <ConjugationTableContent conjugations={conjugations} locale={locale} text={text} />
     </DisclosureSection>
   )
 }
 
-export function ConjugationsLink({ label }: { label: string }) {
+export function ConjugationsLink({ label, opens }: { label: string; opens: string }) {
   const href = `#${conjugationsAnchor}`
   return (
     <a
@@ -216,7 +273,7 @@ export function ConjugationsLink({ label }: { label: string }) {
       }}
     >
       <span>{label}</span>
-      <span className="sr-only">, shows conjugations</span>
+      <span className="sr-only">{opens}</span>
       <ChevronRightIcon aria-hidden className="size-4 text-muted-foreground" />
     </a>
   )

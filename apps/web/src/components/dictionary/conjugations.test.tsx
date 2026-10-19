@@ -17,6 +17,7 @@ import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import { conjugationsIn, conjugationsText } from '@/lib/dictionary/screen-text'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { readConjugatedForm, readConjugationTable, readExamples } from '@/test/rendered-word'
 import {
@@ -29,8 +30,16 @@ import { WordHeader } from './word-header'
 
 const noReadings = new Map()
 
-const table = (data: Conjugations) =>
-  readConjugationTable(renderToStaticMarkup(<ConjugationTableContent conjugations={data} />))
+const english = conjugationsText('en')
+
+const shown = (data: Conjugations) => conjugationsIn(data, 'en')
+
+const tableHtml = (data: Conjugations) =>
+  renderToStaticMarkup(
+    <ConjugationTableContent conjugations={shown(data)} locale="en" text={english} />
+  )
+
+const table = (data: Conjugations) => readConjugationTable(tableHtml(data))
 
 const miru = conjugations(
   { headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb', 'transitive'] },
@@ -67,7 +76,7 @@ describe('the conjugation table', () => {
       { headword: '静か', reading: 'しずか', partsOfSpeech: ['naAdjective'] },
       noReadings
     ) as Conjugations
-    const html = renderToStaticMarkup(<ConjugationTableContent conjugations={shizuka} />)
+    const html = tableHtml(shizuka)
     expect(html).not.toContain('data-conjugation-mode')
     const drawn = readConjugationTable(html)
     expect(Object.keys(drawn.registers)).toEqual(['Plain'])
@@ -95,7 +104,7 @@ describe('the conjugation table', () => {
   })
 
   test('each form is a closed row, named for its form, holding what the form means', () => {
-    const html = renderToStaticMarkup(<ConjugationTableContent conjugations={miru} />)
+    const html = tableHtml(miru)
     const past = html.match(/data-conjugation-row="past"><button([^>]*)>/)?.[1] ?? ''
     expect(past).toContain('aria-expanded="false"')
     expect(past).toContain('aria-label="Past, 見た, みた"')
@@ -106,7 +115,15 @@ describe('the conjugation table', () => {
   })
 
   test('a form says what it means, and which forms share its spelling', () => {
-    const form = readConjugatedForm(renderToStaticMarkup(<ConjugatedFormContent row={potential} />))
+    const index = miru.rows.Plain.indexOf(potential)
+    const form = readConjugatedForm(
+      renderToStaticMarkup(
+        <ConjugatedFormContent
+          row={shown(miru).rows.Plain[index]}
+          unsupported={english.pronounce.unsupported}
+        />
+      )
+    )
     expect(form).toEqual({
       explanation:
         'Expresses ability or possibility: that someone can do the action or that the action is possible.',
@@ -114,7 +131,6 @@ describe('the conjugation table', () => {
       furigana: [{ base: '見', reading: 'み' }, { base: 'られる' }],
       ending: 'られる'
     })
-    const index = miru.rows.Plain.indexOf(potential)
     expect(table(miru).registers.Plain.forms[index]).toEqual(form)
   })
 
@@ -150,7 +166,9 @@ describe('the conjugation table', () => {
     const html = renderToStaticMarkup(
       <FormExampleList
         examples={[pageExample(formExample({ sentence, example }), links)]}
-        labels={miru.examples}
+        labels={shown(miru).examples}
+        locale="en"
+        text={english}
       />
     )
     expect(readExamples(html)).toEqual([
@@ -164,7 +182,9 @@ describe('the conjugation table', () => {
       }
     ])
     expect(html).not.toContain('Load more examples')
-    const none = renderToStaticMarkup(<FormExampleList examples={[]} labels={miru.examples} />)
+    const none = renderToStaticMarkup(
+      <FormExampleList examples={[]} labels={shown(miru).examples} locale="en" text={english} />
+    )
     expect(none).toContain(noFormExamplesMessage)
     expect(noFormExamplesMessage).toBe('No example sentences use this form yet.')
   })
@@ -185,7 +205,7 @@ describe('the conjugation table', () => {
 describe('the Conjugations section', () => {
   test('starts closed, at #conjugations, with the table inside', () => {
     const html = renderToStaticMarkup(
-      <ConjugationsSection title="Conjugations" conjugations={miru} />
+      <ConjugationsSection conjugations={shown(miru)} locale="en" text={english} />
     )
     expect(html).toMatch(/^<div[^>]* id="conjugations"/)
     expect(html).toMatch(/<h2[^>]*><button type="button" aria-expanded="false"[^>]*>Conjugations/)
@@ -205,12 +225,55 @@ describe('the Conjugations section', () => {
           pitch={null}
           partOfSpeechRow="Ichidan verb (transitive)"
           conjugations={data}
+          locale="en"
         />
       )
     expect(header(miru)).toMatch(/<a href="#conjugations" data-opens-conjugations="true"/)
     expect(header(miru)).toContain('Ichidan verb (transitive)')
     expect(header(null)).not.toContain('data-opens-conjugations')
     expect(header(null)).toContain('<p class="text-sm">Ichidan verb (transitive)</p>')
+  })
+})
+
+describe('the Conjugations section on a Japanese page', () => {
+  const japanese = conjugationsIn(miru, 'ja')
+  const html = renderToStaticMarkup(
+    <ConjugationsSection conjugations={japanese} locale="ja" text={conjugationsText('ja')} />
+  )
+
+  test('names the section, the rule, and the registers in Japanese, keeping their ids', () => {
+    expect(html).toMatch(/<h2[^>]*><button type="button" aria-expanded="false"[^>]*>活用/)
+    expect(readConjugationTable(html).rule).toBe('「る」を取り、語尾を付けます。')
+    expect(html).toMatch(/aria-label="活用の種類"/)
+    expect(html).toMatch(/data-conjugation-mode="Plain"[^>]*>普通形</)
+    expect(html).toMatch(/data-conjugation-mode="Polite"[^>]*>丁寧形</)
+  })
+
+  test('names each form and says which forms share its spelling in Japanese', () => {
+    expect(html).toContain('aria-label="過去形、見た、みた"')
+    const potentialForm = japanese.rows.Plain.find(row => row.kind === 'potential')
+    expect(potentialForm?.title).toBe('可能形')
+    expect(potentialForm?.sharedSpelling).toBe('「受身形」と同じ表記です。文脈で区別します。')
+    expect(potentialForm?.pronounce).toBe('みられるの発音を聞く')
+  })
+
+  test('the part-of-speech row says in Japanese that it opens the table', () => {
+    const header = renderToStaticMarkup(
+      <WordHeader
+        headword="見る"
+        ruby={rubySegments('見る', 'みる')}
+        reading="みる"
+        pronounce="Pronounce みる"
+        pitch={null}
+        partOfSpeechRow="Ichidan verb (transitive)"
+        conjugations={miru}
+        locale="ja"
+      />
+    )
+    expect(header).toContain(
+      '<span>一段動詞（他動詞）</span><span class="sr-only">、活用を表示</span>'
+    )
+    expect(header).toContain('aria-label="みるの発音を聞く"')
   })
 })
 
@@ -243,6 +306,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
         pitch={detail.pitch}
         partOfSpeechRow={detail.partOfSpeechRow}
         conjugations={detail.conjugations}
+        locale="en"
       />
     )
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
@@ -290,7 +354,9 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
         const html = renderToStaticMarkup(
           <FormExampleList
             examples={found.rows.map(rows => pageExample(formExample(rows), links))}
-            labels={data.examples}
+            labels={shown(data).examples}
+            locale="en"
+            text={english}
           />
         )
         const examples = readExamples(html)

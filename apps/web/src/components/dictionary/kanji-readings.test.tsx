@@ -25,7 +25,7 @@ interface KanjiCase {
 
 const suite: { cases: KanjiCase[] } = JSON.parse(
   readFileSync(
-    new URL('../../../../ios/LanguageData/Conformance/kanji-detail.json', import.meta.url),
+    new URL('../../../../../language-data/conformance/kanji-detail.json', import.meta.url),
     'utf8'
   )
 )
@@ -85,7 +85,7 @@ describe('the rendered kanji Readings rows match the app', () => {
   })
 
   test.each(withReadings.map(kanji => [kanji.character, kanji] as const))('%s', (_, kanji) => {
-    const html = renderToStaticMarkup(<KanjiReadings readings={readings(kanji)} />)
+    const html = renderToStaticMarkup(<KanjiReadings readings={readings(kanji)} locale="en" />)
     const expected: RenderedRow[] = (kanji.readings ?? []).map(reading => {
       const first = reading.words[0]
       const label = labels[reading.kind]

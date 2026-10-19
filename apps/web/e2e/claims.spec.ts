@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { iphoneAppPage } from '../src/lib/products/zenbu-japanese-for-iphone'
+import { iphoneAppPath } from '../src/lib/products/zenbu-japanese-for-iphone'
 import { expect, test } from './test'
 
 const droppedClaims = [
@@ -26,7 +26,7 @@ function expectNoDroppedClaim(texts: readonly string[]) {
 }
 
 test.describe('no account, local-only, or open-data claims', () => {
-  for (const path of ['/', iphoneAppPage.path, '/about/']) {
+  for (const path of ['/', iphoneAppPath, '/about/']) {
     test(`${path} makes none`, async ({ page }) => {
       await page.goto(path)
       const main = page.getByRole('main')

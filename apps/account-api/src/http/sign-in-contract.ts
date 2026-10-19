@@ -2,6 +2,7 @@ import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
 import { clients } from '../domain/clients'
 import type { AccountEnv } from './env'
 import { json, refusal } from './refusals'
+import { PageLanguageHeaders } from './schemas'
 
 const body = <T>(schema: T) => ({
   body: { content: { 'application/json': { schema } }, required: true }
@@ -99,7 +100,7 @@ const provider = z.enum(['apple', 'google'])
 const unknownClient =
   "No `X-Zenbu-Client`, or one the service doesn't list, from outside the website's origins."
 
-const appSigningIn = z.object({
+const appSigningIn = PageLanguageHeaders.extend({
   'x-zenbu-client': z
     .enum(clients.map(client => client.id) as [string, ...string[]])
     .optional()
@@ -144,7 +145,10 @@ export const signInRoutes = {
     summary: 'Email a sign-in code',
     description:
       'Answers the same whether or not the email has an account. Five codes per address in 10 minutes.',
-    request: body(z.object({ email: z.email(), type: z.literal('sign-in') })),
+    request: {
+      ...body(z.object({ email: z.email(), type: z.literal('sign-in') })),
+      headers: PageLanguageHeaders
+    },
     responses: {
       200: json(done('success'), 'Sent, or nothing to send.'),
       400: refusal({
@@ -258,7 +262,10 @@ export const signInRoutes = {
     description:
       "Needs a sign-in from the last 10 minutes. The account email is told. Without `idToken`, the website starts Google's sign-in, which comes back to `callbackURL` with the way added.",
     security: sessionToken('account'),
-    request: body(z.object({ provider, idToken: IdTokenSchema.optional(), ...webReturn })),
+    request: {
+      ...body(z.object({ provider, idToken: IdTokenSchema.optional(), ...webReturn })),
+      headers: PageLanguageHeaders
+    },
     responses: {
       200: json(
         z.union([z.looseObject({ status: z.literal(true) }), WebSignInSchema]),
@@ -277,14 +284,17 @@ export const signInRoutes = {
     description:
       "Needs a sign-in from the last 10 minutes. The last way never goes. The account's email is told.",
     security: sessionToken('account'),
-    request: body(
-      z.object({
-        accountId: z.string().openapi({
-          description:
-            "The way in's `id` from GET /v1/auth/list-accounts, not its provider's subject."
+    request: {
+      ...body(
+        z.object({
+          accountId: z.string().openapi({
+            description:
+              "The way in's `id` from GET /v1/auth/list-accounts, not its provider's subject."
+          })
         })
-      })
-    ),
+      ),
+      headers: PageLanguageHeaders
+    },
     responses: {
       200: json(done('status'), 'Removed.'),
       400: refusal({

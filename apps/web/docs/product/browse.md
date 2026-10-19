@@ -63,12 +63,12 @@ home. Each chart links to its script's page with how many words it lists.
 - Source: #614 mockup "/dictionary/browse/kana/".
 - Check: Browse spec, "the kana charts show each kana’s romaji and open its page".
 
-**Charts on a phone.** Every kana chart, here, on the hub, on the dictionary home, and on a
-script's page, reads down from 640 pixels, a column for each consonant (あいうえお down the first),
-as the mockups draw it. Narrower, it reads across, five kana to a row (あいうえお, then かきくけこ),
-so each tile stays wide enough to tap and read rather than squeezing 11 columns into a phone. A
-script's page shows each kana's count in full at every width, and the chart's Japanese name stays
-on one line.
+**Charts on a phone.** Every kana chart, here, on the hub, on the dictionary home, and on a script's
+page, reads down from 640 pixels, a column for each consonant (あいうえお down the first), as the mockups
+draw it. Narrower, it reads across, five kana to a row (あいうえお, then かきくけこ), so each tile stays wide
+enough to tap and read rather than squeezing 11 columns into a phone. Charts with romaji keep
+phone-size kana up to 1024 pixels, and larger kana above. A script's page shows each kana's count in
+full at every width, and the chart's Japanese name stays on one line.
 
 - Source: #682 (the owner flagged the gojūon chart's 11 columns at 390 pixels).
 - Check: Browse spec, "a chart reads あいうえお down a column, and across a row on a phone";
@@ -263,14 +263,14 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)"; #648 decision and mockups (the footer's
+- Source: #614 mockup "Footer + /sitemap/ (changed)"; #844 decision and mockups (the footer's
   columns).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
-  dictionary and its browse pages" and "the Tools menu leads to the reference pages, and its planned
-  pages are placeholders"; `e2e/site.spec.ts`, "the footer groups its links under Products, Tools,
-  Company, and Legal, then ends with the copyright and Sitemap" and "every link in the header menus
-  opens a page the site has, with no redirect".
+  dictionary and its browse pages" and "the Tools menu leads to the tools, the reference pages, and
+  the converters, and Kanji to Furigana is a placeholder"; `e2e/site.spec.ts`, "the footer groups
+  its links under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap" and
+  "every link in the header menus opens a page the site has, with no redirect".
 
 **Width.** A browse page is one column, at most 1,024 pixels wide (`max-w-5xl`), as the mockups
 are, so the kana charts and the kanji grids fit a row; on a phone it fills the screen's width.
@@ -278,8 +278,8 @@ are, so the kana charts and the kanji grids fit a row; on a phone it fills the s
 - Source: #614 mockups.
 - Check: Browse spec, "a browse page is one column, at most 1,024 pixels wide".
 
-**HTML sitemap.** `/sitemap/` lists the site's pages, then the dictionary and its browse pages: the
-kana pages, each kanji list, each frequency dictionary, and the category lists.
+**HTML sitemap.** `/sitemap/` lists the site's pages, the [tools pages](tools.md), then the
+dictionary and browse pages: kana pages, kanji lists, frequency dictionaries, and category lists.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)".
 - Check: Browse spec, "the sitemap page lists the browse pages".
@@ -296,10 +296,10 @@ motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana grou
 word stays a few links from the dictionary home.
 
 - Source: ADR 0010 (amended); #614 (the thin lists).
-- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks
-  is 404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
-  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read
-  when it's asked for, never at build time: `src/app/dictionary/browse/dynamic.test.ts`.
+- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks is
+  404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
+  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read when
+  it's asked for, never at build time: `src/app/[locale]/dictionary/browse/dynamic.test.ts`.
 
 **No link is a redirect.** Every link on a browse page goes straight to its page, never to a URL
 that redirects, which a site audit (Ahrefs, for #614) reports. So a kanji links to the search
@@ -317,8 +317,8 @@ URL.
 Each hub leads its kind's sitemap: the kana charts and both scripts lead the kana sitemap, the
 three category indexes the categories sitemap, the frequency dictionaries the frequency lists
 sitemap, and the kanji lists the kanji lists sitemap. The browse home is in `/sitemap-pages.xml`,
-beside `/dictionary/`. The sitemap index lists the four wherever the site has a dictionary
-service.
+beside `/dictionary/`. The sitemap index lists the four wherever a deploy wrote them: staging
+and production.
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)" (one `/sitemaps/browse.xml` in
   `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
@@ -329,4 +329,3 @@ service.
   pages sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four
   together stay under one file's 50,000 URLs, so each does); Browse categories service, "the
   categories under 10 words are the thin ones the sitemap leaves out".
-

@@ -51,6 +51,22 @@ expect_redirect /support /support/
 expect_redirect /robots.txt/ /robots.txt
 expect_redirect /sitemap-pages.xml/ /sitemap-pages.xml
 expect_redirect /sitemaps/pages.xml /sitemap-pages.xml
+for path in /ja/ /ja/about/ /ja/legal/privacy/; do expect "$path" 200; done
+expect_redirect /en/ /
+expect_redirect /en/about/ /about/
+expect_redirect /en/about /about/
+expect /ja/robots.txt 404
+expect /no-such-page/ 404
+pages_name_their_languages() {
+  local home ja about
+  home="$(body /)" ja="$(body /ja/)" about="$(body /ja/about/)"
+  grep -q '<html lang="en"' <<<"$home" && grep -q '<html lang="ja"' <<<"$ja" &&
+    grep -qF "hrefLang=\"ja\" href=\"$canonical/ja/\"" <<<"$home" &&
+    grep -qF "<link rel=\"canonical\" href=\"$canonical/ja/about/\"/>" <<<"$about" &&
+    grep -qF "hrefLang=\"en\" href=\"$canonical/about/\"" <<<"$about"
+}
+eventually "/ and /ja/ are English and Japanese, and pages name each other's language on $canonical" \
+  "a page's lang, canonical, or hreflang is wrong" pages_name_their_languages
 
 pages_list_pages() {
   local locs pages
@@ -114,6 +130,58 @@ expect_redirect "${miru_search}examples/" "$miru_search"
 expect /sitemaps/kanji.xml 404
 expect /sitemaps/conjugations.xml 404
 
+lists_word_sitemaps_only() {
+  local locs
+  locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
+  grep -qxF "<loc>$canonical/sitemap-words.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-pages.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-tools.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-kana.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-categories.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-frequency-lists.xml</loc>" <<<"$locs" &&
+    grep -qxF "<loc>$canonical/sitemap-kanji-lists.xml</loc>" <<<"$locs" &&
+    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|tools|kana|categories|frequency-lists|kanji-lists|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
+}
+index=/sitemap-index.xml
+eventually "$index lists the pages, tools, word, and browse sitemaps on $canonical, and no other" \
+  "$index is missing the pages, tools, word, or browse sitemaps, lists another, or names another host" \
+  lists_word_sitemaps_only
+expect_redirect /sitemap.xml /sitemap-index.xml
+index_lists_files() {
+  local locs
+  locs="$(body /sitemap-index.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  [ -n "$locs" ] && ! grep -vqE '\.xml</loc>$' <<<"$locs"
+}
+eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-canonical URL' \
+  index_lists_files
+expect /sitemap-words.xml 200
+expect /sitemap-words-2.xml 200
+for browse_sitemap_and_hubs in kana:3 categories:3 frequency-lists:1 kanji-lists:1; do
+  browse_sitemap="/sitemap-${browse_sitemap_and_hubs%:*}.xml"
+  browse_hubs="${browse_sitemap_and_hubs#*:}"
+  browse_sitemap_is_canonical() {
+    local locs
+    locs="$(body "$browse_sitemap" | grep -oE '<loc>[^<]+</loc>' || true)"
+    [ "$(grep -c . <<<"$locs" || true)" -gt "$browse_hubs" ] &&
+      ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}(/ja)?/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
+  }
+  eventually "$browse_sitemap lists browse pages on $canonical" \
+    "$browse_sitemap lists no list beyond its hubs, or another host or a non-canonical URL" \
+    browse_sitemap_is_canonical
+done
+expect /sitemap-browse.xml 404
+expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml
+word_count=0
+word_sitemap_is_canonical() {
+  local locs
+  locs="$(body /sitemap-words.xml | grep -oE '<loc>[^<]+</loc>' || true)"
+  word_count="$(grep -c . <<<"$locs" || true)"
+  [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
+    ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}(/ja)?/dictionary/[!-~]+-[0-9]+/</loc>$" <<<"$locs"
+}
+eventually 'word sitemap lists 1 to 50,000 canonical URLs' \
+  'word sitemap has no URLs, more than 50,000, or a non-canonical one' word_sitemap_is_canonical
+
 if grep -qE '"mitigated": *"challenge"' <<<"$(body /dictionary/service.json)"; then
   echo "::warning::Cloudflare's Bot Fight Mode challenges this machine's requests to the dictionary service, so the dictionary checks were skipped. Run apps/web/scripts/smoke.sh from a machine it doesn't challenge to check them."
 else
@@ -136,7 +204,7 @@ expect /dictionary/ 200
 expect "$word" 200
 expect "$kanji_search" 200
 iru=/dictionary/search/iru/
-suite="$(dirname "$0")/../../ios/LanguageData/Conformance/search-results.json"
+suite="$(dirname "$0")/../../../language-data/conformance/search-results.json"
 expect "$iru" 200
 iru_expected="$(python3 -c '
 import json, sys, urllib.parse
@@ -195,7 +263,7 @@ eventually "eat leads with '$eat_examples', linked to its Example Sentences on t
   shows_examples_row
 
 gakkou=/dictionary/%E5%AD%A6%E6%A0%A1-1206730/
-word_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/word-detail.json"
+word_suite="$(dirname "$0")/../../../language-data/conformance/word-detail.json"
 expect "$gakkou" 200
 word_expected="$(python3 -c '
 import json, sys
@@ -337,7 +405,7 @@ show_iru_listed() { echo "$(wc -w <<<"$iru_listed" | tr -d ' ') rows (want $(wc 
 eventually "iru lists all its words at once, in the app's order" \
   "iru's words differ from the app" iru_lists_as_the_app_does show_iru_listed
 
-examples_suite="$(dirname "$0")/../../ios/LanguageData/Conformance/example-search.json"
+examples_suite="$(dirname "$0")/../../../language-data/conformance/example-search.json"
 expect '/dictionary/search/t*/' 200
 eat_first_english="$(python3 -c '
 import json, sys
@@ -372,56 +440,6 @@ eventually 'eat lists its example sentences on its page as the app does, 25 at a
 expect_redirect /dictionary/1259290/ "$word"
 expect /dictionary/999999999/ 404
 
-lists_word_sitemaps_only() {
-  local locs
-  locs="$(body "$index" | grep -oE '<loc>[^<]+</loc>' || true)"
-  grep -qxF "<loc>$canonical/sitemap-words.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-pages.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-kana.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-categories.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-frequency-lists.xml</loc>" <<<"$locs" &&
-    grep -qxF "<loc>$canonical/sitemap-kanji-lists.xml</loc>" <<<"$locs" &&
-    ! grep -vqE "^<loc>${canonical//./\\.}/sitemap-(pages|kana|categories|frequency-lists|kanji-lists|words(-[0-9]+)?)\\.xml</loc>$" <<<"$locs"
-}
-index=/sitemap-index.xml
-eventually "$index lists the pages, word, and browse sitemaps on $canonical, and no other" \
-  "$index is missing the pages, word, or browse sitemaps, lists another, or names another host" \
-  lists_word_sitemaps_only
-expect_redirect /sitemap.xml /sitemap-index.xml
-index_lists_files() {
-  local locs
-  locs="$(body /sitemap-index.xml | grep -oE '<loc>[^<]+</loc>' || true)"
-  [ -n "$locs" ] && ! grep -vqE '\.xml</loc>$' <<<"$locs"
-}
-eventually 'sitemap index lists unslashed .xml files' 'sitemap index has a non-canonical URL' \
-  index_lists_files
-expect /sitemap-words.xml 200
-expect /sitemap-words-2.xml 200
-for browse_sitemap_and_hubs in kana:3 categories:3 frequency-lists:1 kanji-lists:1; do
-  browse_sitemap="/sitemap-${browse_sitemap_and_hubs%:*}.xml"
-  browse_hubs="${browse_sitemap_and_hubs#*:}"
-  browse_sitemap_is_canonical() {
-    local locs
-    locs="$(body "$browse_sitemap" | grep -oE '<loc>[^<]+</loc>' || true)"
-    [ "$(grep -c . <<<"$locs" || true)" -gt "$browse_hubs" ] &&
-      ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
-  }
-  eventually "$browse_sitemap lists browse pages on $canonical" \
-    "$browse_sitemap lists no list beyond its hubs, or another host or a non-canonical URL" \
-    browse_sitemap_is_canonical
-done
-expect /sitemap-browse.xml 404
-expect_redirect /sitemaps/dictionary/2.xml /sitemap-words-2.xml
-word_count=0
-word_sitemap_is_canonical() {
-  local locs
-  locs="$(body /sitemap-words.xml | grep -oE '<loc>[^<]+</loc>' || true)"
-  word_count="$(grep -c . <<<"$locs" || true)"
-  [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
-    ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/[!-~]+-[0-9]+/</loc>$" <<<"$locs"
-}
-eventually 'word sitemap lists 1 to 50,000 canonical URLs' \
-  'word sitemap has no URLs, more than 50,000, or a non-canonical one' word_sitemap_is_canonical
 noindex='<meta name="robots" content="noindex'
 search_indexing_follows_results() {
   grep -q "$noindex" <<<"$(body /dictionary/search/qzxvkj/)" &&
@@ -431,24 +449,9 @@ eventually "a search that finds nothing is noindex, and a kanji's search is inde
   'noindex is wrong on the searches for qzxvkj or 見' search_indexing_follows_results
 fi
 
-robots_tag() { curl -sI "${smoke[@]}" "$base$1" | tr -d '\r' | grep -i '^x-robots-tag:' || true; }
-robots() { body /robots.txt; }
-lists_index() { grep -qxF "Sitemap: $canonical/sitemap-index.xml" <<<"$(robots)"; }
-eventually 'robots.txt lists the sitemap index' 'robots.txt is missing the sitemap index' lists_index
-
-if [ "$env" = production ]; then
-  for path in / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemap-words.xml; do
-    has_no_robots_tag() { [ -z "$(robots_tag "$path")" ]; }
-    eventually "no X-Robots-Tag on $path" "unexpected X-Robots-Tag on $path" has_no_robots_tag
-  done
-  allows_crawling() { grep -q '^Allow: /$' <<<"$(robots)"; }
-  eventually 'robots.txt allows crawling' 'robots.txt does not allow crawling' allows_crawling
-else
-  disallows_crawling() { grep -q '^Disallow: /$' <<<"$(robots)"; }
-  eventually 'robots.txt disallows crawling' 'robots.txt allows crawling' disallows_crawling
-  sends_noindex() { grep -qi 'noindex' <<<"$(robots_tag /)"; }
-  eventually 'X-Robots-Tag noindex' 'missing X-Robots-Tag noindex' sends_noindex
-fi
+. "$(dirname "${BASH_SOURCE[0]}")/smoke-indexing.sh"
+check_indexing "$base" "$env" "$canonical" \
+  / "$word" "$kanji_search" "$eat" /sitemap-index.xml /sitemap-words.xml
 
 if [[ "$base" == *.workers.dev ]]; then
   for path in /legal/terms/ /legal/terms; do

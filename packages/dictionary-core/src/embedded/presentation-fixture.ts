@@ -122,5 +122,7 @@ export const eat: EmbeddedEntry = {
     { headword: '学校', reading: 'がっこう', summary: 'school', relation: 'See also' }
   ],
   pitch: { downstep: 2, moraCount: 3, sourceIdentity: 'unidic' },
-  compoundPitch: { downstep: 1, moraCount: 3, sourceIdentity: 'compound accent rule' }
+  compoundPitch: { downstep: 1, moraCount: 3, sourceIdentity: 'compound accent rule' },
+  sourceIdentity: 'edrdg.jmdict',
+  sourceRecordID: '1358280'
 }

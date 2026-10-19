@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { SavedItemActions } from './saved-item-actions'
 
 declare global {
@@ -42,6 +43,8 @@ function renderKanjiActions() {
         shareText={shareText}
         path="/dictionary/search/%E8%A6%81/"
         name="要"
+        locale="en"
+        text={getDictionary('en').learner}
       />
     )
   )
@@ -81,7 +84,16 @@ describe("a page's Share", () => {
   test('sends the page it is on', async () => {
     const share = vi.fn(async (_data: ShareData) => {})
     stubNavigator(share)
-    act(() => root.render(<SavedItemActions title="要る" shareText="要る【いる】" />))
+    act(() =>
+      root.render(
+        <SavedItemActions
+          title="要る"
+          shareText="要る【いる】"
+          locale="en"
+          text={getDictionary('en').learner}
+        />
+      )
+    )
     await act(async () => button('Share').click())
     expect(share).toHaveBeenCalledWith({ title: '要る', text: '要る【いる】', url: wordPage })
   })

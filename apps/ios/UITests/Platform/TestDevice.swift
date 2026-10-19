@@ -1,4 +1,5 @@
 import XCTest
+import notify
 
 #if os(macOS)
   import AppKit
@@ -72,9 +73,35 @@ enum TestDevice {
     #endif
   }
 
+  static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
+
+  static func linkEnvironment(_ link: URL) -> [String: String] {
+    #if os(macOS)
+      ["ZENBU_OPEN_LINK": link.absoluteString]
+    #else
+      [:]
+    #endif
+  }
+
+  @MainActor static func open(_ link: URL, in app: XCUIApplication) {
+    #if os(macOS)
+      notify_post(openLinkNotice)
+    #else
+      app.open(link)
+    #endif
+  }
+
   @MainActor static func movePointerAway(in app: XCUIApplication) {
     #if os(macOS)
       app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95)).hover()
+    #endif
+  }
+
+  @MainActor static func selectAllText(in field: XCUIElement) {
+    #if os(macOS)
+      field.typeKey("a", modifierFlags: .command)
+    #else
+      field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
     #endif
   }
 

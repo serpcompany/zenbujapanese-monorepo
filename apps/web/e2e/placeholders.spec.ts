@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
-import { sitePages } from '../src/lib/pages'
+import { sitePaths } from '../src/lib/pages'
 import { placeholderHref, placeholderLinks } from '../src/lib/site'
+import { converterPath, toolsPath } from '../src/lib/tools/paths'
 import {
   accountButton,
   accountMenu,
@@ -13,10 +14,14 @@ import {
 } from './test'
 
 const pagesToCheck = [
-  ...sitePages.map(page => page.path),
+  ...sitePaths,
+  toolsPath,
+  converterPath('hiragana-to-katakana'),
   '/dictionary/search/iru/',
   needed.path,
-  '/dictionary/browse/'
+  '/dictionary/browse/',
+  '/ja/',
+  '/ja/products/'
 ]
 
 const listedNames = new Map(placeholderLinks.map(link => [link.id, link.name]))
@@ -31,7 +36,9 @@ async function placeholdersOn(page: Page | Locator) {
 
 async function placeholdersInPhoneMenu(page: Page) {
   await menuButton(page).click()
-  const groups = phoneMenu(page).getByRole('navigation', { name: 'Sections' }).getByRole('button')
+  const groups = phoneMenu(page)
+    .getByRole('navigation', { name: /^(Sections|セクション)$/ })
+    .getByRole('button')
   await expect(groups.first()).toBeVisible()
   const links: string[] = []
   for (const group of await groups.all()) {

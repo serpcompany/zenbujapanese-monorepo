@@ -23,7 +23,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 ## Codebase
 
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — the repository's parts, how data moves between them, and each part's enforced layers. Start here for anything that crosses parts.
-- [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and current consumers.
+- [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch on iPhone, iPad, and the Mac, the platform adapters, installing on an iPhone, Simulator verification, and the current iOS test and CI boundary.
 - [`docs/agents/translate.md`](docs/agents/translate.md) — the iOS Translate tab: its engine target, the on-device speech and translation adapters, its tests, the Simulator harness, and device checks.
@@ -37,7 +37,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`docs/agents/ci.md`](docs/agents/ci.md) — every GitHub Actions workflow and what starts it, the checks a merge can wait for, and each workflow that checks a pull request: what it runs, and why.
 - [`docs/agents/ci-agents.md`](docs/agents/ci-agents.md) — the review, `@claude`, and weekly maintenance workflows, the app and token they use, and `serp-agent[bot]`, which agents act as.
 - [`docs/agents/ci-deploys.md`](docs/agents/ci-deploys.md) — the workflows that deploy the site, ship the services' images, and publish language data, and the actions pinned by commit.
-- [`language-data/README.md`](language-data/README.md) — language-data releases: the manifest, what a release packages, the build workflow, and publishing to R2.
+- [`language-data/README.md`](language-data/README.md) — the language data's sources, importers, and conformance suites, and its releases: the manifest, the build workflow, and publishing to R2.
 - [`apps/ios/docs/product/index.md`](apps/ios/docs/product/index.md) — durable current iOS behavior. Open only the relevant linked document. Update applicable product documentation and verification in the same PR as a behavior change.
 - [`apps/web/docs/product/index.md`](apps/web/docs/product/index.md) — durable current website behavior and the automated check for each. Open only the relevant page's section. Update the behavior and its check in the same PR as a behavior change.
 
@@ -62,6 +62,7 @@ SERP's [engineering standards](https://github.com/serpcompany/serp/tree/main/doc
 - **One pipeline from `main`,** staging and then production, with no `staging` branch ([`ci-deploys.md`](docs/agents/ci-deploys.md)).
 - **Review runs on every push, beside CI,** not once CI is green ([`ci-agents.md`](docs/agents/ci-agents.md), Code review).
 - **Only the root `README.md` is a map.** A component's `README.md` is a leaf, with a leaf's size budget ([`code.md`](docs/agents/code.md), Docs).
+- **Staging's password differs a little** ([`staging-access.md`](docs/agents/staging-access.md)).
 - **A Debug build keeps the release bundle identifier,** with no `.debug` suffix ([`verification.md`](docs/agents/verification.md), This checkout's Simulator and build folder).
 
 ## Evidence and research

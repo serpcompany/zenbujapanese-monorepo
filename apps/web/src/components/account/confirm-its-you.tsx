@@ -9,16 +9,18 @@ import type { AccountApi } from '@/lib/account/client'
 import { forgetConfirming, rememberConfirming } from '@/lib/account/confirming'
 import { afterSigningInAgain } from '@/lib/account/flows'
 import { appleUsersOf, type SignedInAccount, signsInWith } from '@/lib/account/load'
+import type { AccountText } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
+import { localizedPath } from '@/lib/i18n/paths'
 import { SignInOptions, type SignInWays } from './sign-in-options'
-
-const otherAppleId =
-  'That Apple ID is a different one from the one your account uses. Continue with the Apple ID your account uses.'
 
 interface ConfirmItsYouProps {
   api: AccountApi
   tokens: AccessTokens
+  locale: Locale
+  text: AccountText
   settings: AccountSettings
   account: SignedInAccount
   appleOnly: boolean
@@ -34,6 +36,8 @@ interface ConfirmItsYouProps {
 export function ConfirmItsYou({
   api,
   tokens,
+  locale,
+  text,
   settings,
   account,
   appleOnly,
@@ -54,6 +58,7 @@ export function ConfirmItsYou({
     ways.email
   const appleUsers = appleUsersOf(account)
   const wanted = useRef(true)
+  const back = localizedPath(accountPages.account.path, locale)
 
   useEffect(() => {
     const backFromGoogle = (event: PageTransitionEvent) => {
@@ -65,22 +70,25 @@ export function ConfirmItsYou({
 
   return (
     <section
-      aria-label="Confirm it’s you"
+      aria-label={text.confirm.heading}
       className="flex flex-col gap-3 rounded-lg border bg-muted/40 p-4"
     >
-      <h3 className="font-medium">Confirm it’s you</h3>
+      <h3 className="font-medium">{text.confirm.heading}</h3>
       <p className="text-sm text-muted-foreground">{why}</p>
       {offered ? (
         <SignInOptions
           api={api}
+          locale={locale}
+          text={text}
           settings={settings}
           ways={ways}
           email={account.profile.email}
-          verb="Continue"
-          emailLabels={{ send: 'Email me a code', signIn: 'Confirm' }}
-          googleReturn={{ done: accountPages.account.path, failed: accountPages.account.path }}
+          buttons={text.buttons.confirm}
+          googleReturn={{ done: back, failed: back }}
           refuseApple={authorization =>
-            appleUsers.includes(appleUserOf(authorization.idToken) ?? '') ? null : otherAppleId
+            appleUsers.includes(appleUserOf(authorization.idToken) ?? '')
+              ? null
+              : text.messages.refusals.appleAccountMismatch
           }
           beforeGoogle={() => {
             if (wanted.current) rememberConfirming(account.session)
@@ -93,10 +101,7 @@ export function ConfirmItsYou({
           }}
         />
       ) : (
-        <p className="text-sm">
-          This site can’t confirm it’s you the way your account signs in, so it can’t make this
-          change here yet.
-        </p>
+        <p className="text-sm">{text.confirm.cannot}</p>
       )}
       <Button
         type="button"
@@ -107,7 +112,7 @@ export function ConfirmItsYou({
           onCancel()
         }}
       >
-        Cancel
+        {text.confirm.cancel}
       </Button>
     </section>
   )

@@ -245,6 +245,7 @@ describe('the code gardening job', () => {
       'a deploy',
       'a language-data release or anything in R2',
       'a change under apps/ios or in Swift',
+      'change to a tool in language-data/tools',
       'the behavior or wording a product doc describes',
       'an ADR-level decision'
     ]) {

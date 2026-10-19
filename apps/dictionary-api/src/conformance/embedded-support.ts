@@ -166,12 +166,15 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
     relationships_json: string
     pitch: string | null
     compound_pitch: string | null
+    source_identity: string
+    source_record_id: string
   }>(
     `SELECT lower(hex(e.id)) AS id, e.headword, e.reading, e.summary, e.parts_of_speech_json,
        e.written_forms_json, e.reading_forms_json, e.senses_json, e.relationships_json,
        e.pitch_accent_json AS pitch,
        (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)
-         AS compound_pitch
+         AS compound_pitch,
+       e.source_identity, CAST(e.source_record_id AS TEXT) AS source_record_id
      FROM entries e WHERE e.id = unhex(?)`,
     [id]
   )
@@ -187,7 +190,9 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
     senses: JSON.parse(row.senses_json),
     relationships: JSON.parse(row.relationships_json),
     pitch: row.pitch ? JSON.parse(row.pitch) : null,
-    compoundPitch: row.compound_pitch ? JSON.parse(row.compound_pitch) : null
+    compoundPitch: row.compound_pitch ? JSON.parse(row.compound_pitch) : null,
+    sourceIdentity: row.source_identity,
+    sourceRecordID: row.source_record_id
   }
 }
 

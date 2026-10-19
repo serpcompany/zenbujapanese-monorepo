@@ -24,10 +24,10 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `LanguageReferenceData.sqlite3`.
 - `RankedLists.sqlite3` holds the Wikipedia and six Jiten lists' ranks, mapped to Language
   Reference IDs as the app maps them when a learner installs the pack, from their pinned sources
-  ([`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md), `build_ranked_lists.py`). The app
-  doesn't bundle it. With TUBELEX, which the app bundles, the service has all eight of the app's
-  ranked frequency dictionaries; `checkArtifact` refuses a file that lacks one the core lists
-  (`packages/dictionary-core/src/browse/lists.ts`).
+  ([`language-data/tools/README.md`](../../language-data/tools/README.md),
+  `build_ranked_lists.py`). The app doesn't bundle it. With TUBELEX, which the app bundles, the
+  service has all eight of the app's ranked frequency dictionaries; `checkArtifact` refuses a file
+  that lacks one the core lists (`packages/dictionary-core/src/browse/lists.ts`).
 - `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
 - The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
   for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
@@ -46,6 +46,7 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `SudachiJapaneseMorphologyAdapter` does. Without the dictionary the service won't start; set
   `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
   direct matches.
+- `language-data/release.json`, its pin in `language-data/releases/`, and its retired entries.
 
 ## Run it
 
@@ -72,6 +73,8 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 | `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
+| `LANGUAGE_DATA_RELEASES` | `language-data/releases` | The pins, beside it in the image. |
+| `LANGUAGE_DATA_DERIVED` | `language-data/derived` | Its `RetiredEntries.json`, in the image too. |
 | `ACCOUNT_API_URL` | none | The account service's public URL, such as `https://api.zenbujapanese.com`: an app token's `iss` and `aud` must be exactly this. Unset, the app routes answer 503. |
 | `ACCOUNT_JWKS_URL` | `<ACCOUNT_API_URL>/v1/auth/jwks` | Where the service reads the account service's signing keys. A slot reaches only nginx, so on the server this is a URL nginx answers with the account service's JWKS (Apps, below). It must answer `200` itself: the service follows no redirect. |
 | `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
@@ -106,7 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/kanji/<character>` | A kanji's rows for its details, the slugs of the words it lists, and which of its components and elements have details (`kanjiPages`). |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
-| `GET /v1/retired` | Retired entries and their replacements; empty until #463. |
+| `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
@@ -174,28 +177,29 @@ answers, headers, and error codes, and every field of a card and a token. An app
 
 ## How it runs
 
-The main thread hashes the artifact and Sudachi's dictionary once, checks Sudachi's pins, and serves
+The main thread hashes the artifact and Sudachi's dictionary once, refuses to start unless the files
+a word card is read from are the pinned language-data release's, checks Sudachi's pins, and serves
 HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
 process's environment, which only the main thread can set, so the main thread sets it
-(`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact
-read-only, checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one
-at a time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the
-thread with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent
-searches, word examples, a query's examples, kanji details, and word lookups in LRU caches, so a
-page's first request pays for a broad query and the rest don't. The browse routes don't scan the
-artifact for a request: before a thread reports ready, it builds the browse index
-(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana
-order by its first two kana and every category's words in both its orders, keeps the totals, the
-category counts, the kanji and ranked lists' summaries and counts, every kanji list, and the
-browse sitemaps' answer, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A
-browse page then reads only its own words, with statements already prepared. The index holds
-about 960,000 row IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this
-workstation (load average 5 over the last minute, falling from 180 over fifteen), each thread was
-ready about 9.4 seconds after it started, and every browse route's first request took at most 28
-ms (a JLPT level's first page); before the index, the totals took 1 second and the category counts
-2. Warming adds about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the
-pages it read; the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps
-answers for 10 minutes on top.
+(`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact read-only,
+checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one at a
+time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the thread
+with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches,
+word examples, a query's examples, kanji details, and word lookups in LRU caches, so a page's first
+request pays for a broad query and the rest don't. The browse routes don't scan the artifact for a
+request: before a thread reports ready, it builds the browse index
+(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana order
+by its first two kana and every category's words in both its orders, keeps the totals, the category
+counts, the kanji and ranked lists' summaries and counts, every kanji list, and the browse sitemaps'
+answer, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A browse page
+then reads only its own words, with statements already prepared. The index holds about 960,000 row
+IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this workstation (load
+average 5 over the last minute, falling from 180 over fifteen), each thread was ready about 9.4
+seconds after it started, and every browse route's first request took at most 28 ms (a JLPT level's
+first page); before the index, the totals took 1 second and the category counts 2. Warming adds
+about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the pages it read;
+the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps answers for 10
+minutes on top.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
@@ -228,8 +232,8 @@ says where the code belongs; tests may import anything.
 comes from `packages/node-service` (`@zenbu/node-service`): `log()`, which writes JSON lines (a
 level, a message naming the event, and fields) that the server's journal and Docker keep; the
 request log, which names a route by its pattern; and the server that stops cleanly on SIGTERM.
-Nothing else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests. The scripts in `apps/dictionary-api/scripts/` print
-progress to a person, so they may.
+Nothing else calls `console`, which Biome's `noRestrictedGlobals` enforces outside tests. The
+scripts in `apps/dictionary-api/scripts/` print progress to a person, so they may.
 
 ## Check it
 
@@ -238,7 +242,7 @@ pnpm check
 ```
 
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
-(`apps/ios/LanguageData/Conformance/`, ADR 0006) through the service's dictionary on the real
+(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real
 files: search retrieval, search results (every row, chip, and special row, the Example Sentences
 row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
 sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
@@ -273,7 +277,7 @@ Sudachi's dictionary cached, then the website's rendered-page gate against the b
 `Dictionary API deploy` workflow builds the Docker image and checks that it starts and answers
 (see Ship it).
 
-`pnpm tokenizer-suite` records `apps/ios/LanguageData/Conformance/tokenizer.json` again from the
+`pnpm tokenizer-suite` records `language-data/conformance/tokenizer.json` again from the
 tokenizer as it is: each text's tokens, the digest of its random sample, and the dictionary
 files' hashes. `src/conformance/tokenizer.conformance.test.ts` replays it. It was first recorded
 from kuromoji.js, so record it again only when the dictionary files change or the tokenizer is
@@ -311,17 +315,18 @@ docker run -p 8788:8788 -e DICTIONARY_API_TOKEN=<token> zenbujapanese-dictionary
 
 The image is about 1 GB, and uses about 750 MiB of memory with two worker threads. The kernel's
 cache of the files it reads comes on top; a container's memory reading, such as `docker stats`,
-counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on SIGTERM.
+counts it, but it can be reclaimed. It has a health check on `/healthz` and stops cleanly on
+SIGTERM.
 
 It holds one build of the data, so a new artifact is a new image. Its layers go from what changes
-least to what changes most: the tokenizer's dictionary, the language data, Sudachi's dictionary, the installed
-packages, the language-data release's name, and last the bundled code. A code change so makes only a new top layer of a few MB,
-which is all CI pushes and the server pulls; the language data's layers, about 1 GB, are built
-and moved only when the data changes. `scripts/build.mjs` bundles
-`src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's native module stays outside
-the bundle, among the production dependencies the image installs. The build
-context is the repository root, and `Dockerfile.dockerignore` lets in only what the `Dockerfile`
-copies, so a file the image needs goes in both.
+least to what changes most: the tokenizer's dictionary, the language data, Sudachi's dictionary, the
+installed packages, the language-data release's name and pins, and last the bundled code. A code
+change so makes only a new top layer of a few MB, which is all CI pushes and the server pulls; the
+language data's layers, about 1 GB, are built and moved only when the data changes.
+`scripts/build.mjs` bundles `src/server.ts` and `src/worker.ts`, with the core and Hono; Sudachi's
+native module stays outside the bundle, among the production dependencies the image installs. The
+build context is the repository root, and `Dockerfile.dockerignore` lets in only what the
+`Dockerfile` copies, so a file the image needs goes in both.
 
 ### How a deploy works
 
@@ -354,8 +359,8 @@ names this workflow and the branch it ran from. The `staging` environment only a
 an image a branch pushed never runs. A rollback signs its image again only after checking that
 main signed it before.
 
-- **Roll back** by running the workflow by hand with `tag` set to the version to go back to, such
-  as `sha-0123456789ab`: it moves the tags to that image without building.
+- **Roll back** by running the workflow by hand with `tag` set to the version, such as
+  `sha-0123456789ab` (it moves the tags without building), then `Web deploy` (ADR 0016).
 - **See what runs and retry a failed image** as [`api-servers.md`](api-servers.md) says, with
   `zenbujapanese.dictionary-api.slot`, `journalctl -t zenbujapanese-dictionary-api`, and
   `/var/lib/zenbujapanese-dictionary-api/`.

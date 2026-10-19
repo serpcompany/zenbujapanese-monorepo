@@ -38,6 +38,7 @@ export interface EmbeddedHost {
   kanjiEntry?(character: string): KanjiReferenceEntry | null
   kanjiStructure?(character: string): KanjiStructureEntry | null
   kanjiElement?(glyph: string): KanjiElementEntry | null
+  kanjiReference?(): unknown
   radicals?(): unknown
   frequencyLists?(): HostFrequencyLists | null
   frequencyListRows?(list: string, sql: string, parametersJSON: string): HostRows | null

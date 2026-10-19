@@ -1,0 +1,2005 @@
+{
+  "about": {
+    "body": "{name} helps learners understand the Japanese they meet: typed, photographed, handwritten, or heard in a video. Its dictionary works offline."
+  },
+  "account": {
+    "pages": {
+      "signIn": {
+        "title": "Sign in",
+        "description": "Sign in to your Zenbu account. There is no password.",
+        "intro": "Sign in to your Zenbu account. There’s no password."
+      },
+      "register": {
+        "title": "Create your account",
+        "description": "Make a Zenbu account. There is no password.",
+        "intro": "Make your Zenbu account. There’s no password: a new email gets a code that makes your account, and an email that has one signs you in to it."
+      },
+      "forgotPassword": {
+        "title": "No password needed",
+        "description": "Zenbu accounts have no password. Sign in with a code we email you.",
+        "intro": "Zenbu accounts have no password, so there’s nothing to reset. Enter your email and we’ll send you a code that signs you in."
+      },
+      "account": {
+        "title": "Your account",
+        "description": "Your Zenbu account: your profile, how you sign in, and deleting the account.",
+        "intro": "See your profile and how you sign in, change your profile, or delete your account."
+      }
+    },
+    "unavailable": "Signing in to a Zenbu account isn’t available on this site yet.",
+    "otherPages": {
+      "newHere": "New here? {link}",
+      "haveOne": "Already have an account? {link}",
+      "cantSignIn": "Can’t sign in?",
+      "privacy": "Read how we handle your account in the {link}.",
+      "madeWith": "Made your account with {ways}? {link}.",
+      "signInThatWay": "Sign in that way"
+    },
+    "signIn": "Sign in",
+    "createAnAccount": "Create an account",
+    "buttons": {
+      "signIn": {
+        "apple": "Sign in with Apple",
+        "google": "Sign in with Google",
+        "submit": "Sign in"
+      },
+      "register": {
+        "apple": "Sign up with Apple",
+        "google": "Sign up with Google",
+        "submit": "Create account"
+      },
+      "confirm": {
+        "apple": "Continue with Apple",
+        "google": "Continue with Google",
+        "submit": "Confirm"
+      }
+    },
+    "or": "or",
+    "alreadySignedIn": "You’re signed in. {link}.",
+    "goToAccount": "Go to your account",
+    "emailCode": {
+      "send": "Email me a code",
+      "willEmail": "We’ll email a code to {email}.",
+      "email": "Email",
+      "sent": "We sent a 6-digit code to {email}. It works for 10 minutes.",
+      "code": "Code",
+      "sendAgain": "Send a new code",
+      "anotherEmail": "Use another email"
+    },
+    "view": {
+      "notSignedIn": "You’re not signed in.",
+      "madeANewAccount": "That Google account had no Zenbu account, so it made a new one, {email}, and this browser is signed in to it now. To use your own account, sign out, then sign in to it again; Delete account below removes the new one.",
+      "inAnotherAccount": "That Google account signs in to another Zenbu account, so this browser is now signed in to {email}.",
+      "loading": "Loading your account…",
+      "tryAgain": "Try again",
+      "deleted": "Your account is deleted.",
+      "goneEverywhere": "It’s gone from every Zenbu app. Each device keeps its own data and works signed out.",
+      "home": "Back to the home page",
+      "signedInAs": "Signed in as {email}",
+      "signOut": "Sign out",
+      "signOutHere": "Sign out of this browser. Your other devices stay signed in.",
+      "signedOut": "You’re signed out."
+    },
+    "profile": {
+      "heading": "Profile",
+      "name": "Name",
+      "username": "Username",
+      "usernameRule": "3 to 30 letters a to z, digits, or underscores. Leave it empty for none.",
+      "save": "Save",
+      "nothingChanged": "Nothing has changed.",
+      "saved": "Saved.",
+      "memberSince": "Member since {date}."
+    },
+    "ways": {
+      "heading": "Ways to sign in",
+      "email": "A code we email you",
+      "emailInSentence": "a code we email you",
+      "emailSubject": " ({email})",
+      "remove": "Remove",
+      "removeWay": "Remove {way}",
+      "stopSigningIn": "Stop signing in with {way}? We’ll email you that it was removed.",
+      "removeIt": "Remove it",
+      "keepIt": "Keep it",
+      "add": "Add {way}",
+      "addEmail": "Add an email code",
+      "addIt": "Add it",
+      "whyFresh": "Changing how you sign in needs a sign-in from the last few minutes.",
+      "addAppleAgain": "Confirmed. Now choose Add Apple again."
+    },
+    "confirm": {
+      "heading": "Confirm it’s you",
+      "cannot": "This site can’t confirm it’s you the way your account signs in, so it can’t make this change here yet.",
+      "cancel": "Cancel"
+    },
+    "deletion": {
+      "heading": "Delete your account",
+      "explained": "Deleting your account removes it, its ways to sign in, and everything it synced, from every Zenbu app, at once. Each device keeps its own data and keeps working signed out. This can’t be undone.",
+      "deleteAccount": "Delete account",
+      "sure": "Delete {email} and everything it synced?",
+      "deleteMine": "Delete my account",
+      "keepMine": "Keep my account",
+      "appleConfirms": "Your account signs in with Apple, so Apple confirms it’s you and we stop its access to your Apple ID.",
+      "whyFresh": "Deleting needs a sign-in from the last few minutes.",
+      "appleElsewhere": "Your account signs in with Apple, which this site can’t confirm yet. Delete it in the Zenbu Japanese app or Tomodachi, where you sign in with Apple."
+    },
+    "messages": {
+      "refusals": {
+        "wrongCode": "That code isn’t right. Check it and try again, or send a new one.",
+        "codeExpired": "That code has expired. Send a new one.",
+        "tooManyWrongCodes": "Too many wrong codes. Send a new one.",
+        "linkedElsewhere": "An account already uses that email. Sign in the way you made it, then add this way on your account page.",
+        "unverified": "That Apple or Google account’s email isn’t verified, so it can’t make an account.",
+        "emailUnavailable": "Signing in with an email code isn’t available right now. Try again later.",
+        "tookTooLong": "That took too long. Try again.",
+        "anotherAccount": "That account already signs in to another Zenbu account.",
+        "confirmFirst": "For your security, confirm it’s you first.",
+        "onlyWay": "That’s your only way to sign in, so it stays.",
+        "usernameTaken": "That username is taken. Try another.",
+        "versionConflict": "Your profile changed in another app. Here it is now; make your change again if you still want it.",
+        "appleAuthorizationNeeded": "Your account signs in with Apple, so continue with Apple to delete it.",
+        "appleAuthorizationInvalid": "Apple didn’t accept that. Continue with Apple again.",
+        "appleAccountMismatch": "That Apple ID is a different one from the one your account uses. Continue with the Apple ID your account uses.",
+        "appleUnavailable": "Apple didn’t answer, so nothing was deleted. Continue with Apple again in a few minutes.",
+        "googleCancelled": "Signing in with Google was cancelled."
+      },
+      "signsInWithAProvider": {
+        "offered": "This email’s account signs in with Apple or Google. Sign in that way, then add your email on your account page.",
+        "neither": "This email’s account signs in with Apple or Google, which this site doesn’t offer yet, so you can’t sign in to it here for now.",
+        "oneOf": "This email’s account signs in with Apple or Google. If it’s {offered}, sign in with {offered}, then add your email on your account page. This site doesn’t offer {missing} yet."
+      },
+      "tooManyTries": {
+        "wait": "Too many tries. Wait a few minutes, then try again.",
+        "seconds": {
+          "one": "Too many tries. Try again in {count} second.",
+          "other": "Too many tries. Try again in {count} seconds."
+        },
+        "minutes": {
+          "one": "Too many tries. Try again in {count} minute.",
+          "other": "Too many tries. Try again in {count} minutes."
+        }
+      },
+      "offline": "We couldn’t reach your Zenbu account. Check your connection and try again.",
+      "somethingWentWrong": "Something went wrong on our side. Try again in a few minutes.",
+      "asTheServiceSays": "{message}",
+      "googleFailed": "Signing in with Google didn’t work. Try again.",
+      "apple": {
+        "blocked": "Your browser blocked Apple’s window. Allow pop-ups for this site, then try again.",
+        "failed": "Signing in with Apple didn’t work. Try again.",
+        "unloaded": "We couldn’t load Sign in with Apple. Check your connection, or use another way."
+      }
+    }
+  },
+  "affiliate": {
+    "links": "Some links on zenbujapanese.com may be affiliate links. If you buy through one, {name} may earn a commission at no extra cost to you. We disclose this under the U.S. Federal Trade Commission's Guides Concerning the Use of Endorsements and Testimonials in Advertising (16 CFR Part 255).",
+    "independence": "Commissions never change how {name} ranks dictionary results. We recommend products and resources only when we think they help Japanese learners, and our opinions are our own.",
+    "japaneseLaw": "Affiliate links are marked as advertising, in line with the stealth marketing rule of Japan’s Act against Unjustifiable Premiums and Misleading Representations, in force since October 2023."
+  },
+  "breadcrumbs": {
+    "label": "breadcrumb",
+    "home": "Home",
+    "dictionary": "Dictionary",
+    "search": "Search",
+    "searchQuery": "Search: {query}"
+  },
+  "browse": {
+    "sentences": "{first} {second}",
+    "titlePage": "{title}, page {page}",
+    "pageOf": "Page {page} of {pages}.",
+    "pagination": {
+      "label": "Pages",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "counts": {
+      "words": {
+        "one": "{count} word",
+        "other": "{count} words"
+      },
+      "kanji": {
+        "one": "{count} kanji",
+        "other": "{count} kanji"
+      },
+      "inKanaOrder": {
+        "one": "{count} word, in kana order.",
+        "other": "{count} words, in kana order."
+      },
+      "inKanaOrderPaged": {
+        "one": "{count} word, in kana order, page {page} of {pages}.",
+        "other": "{count} words, in kana order, page {page} of {pages}."
+      }
+    },
+    "names": {
+      "browse": "Browse",
+      "kana": "Kana",
+      "kanaCharts": "Kana charts",
+      "kanji": "Kanji",
+      "kanjiLists": "Kanji lists",
+      "byStrokeCount": "By stroke count",
+      "frequency": "Frequency dictionaries",
+      "jlptVocabulary": "JLPT vocabulary",
+      "commonWords": "Common words",
+      "hiragana": "Hiragana",
+      "katakana": "Katakana"
+    },
+    "hub": {
+      "title": "Browse the Japanese dictionary",
+      "description": "Every Japanese word and kanji in the dictionary, by kana, kanji list, frequency, and category.",
+      "intro": "All {count} entries, by how they’re written, by kanji, by how common they are, and by what kind of word they are.",
+      "scriptCard": {
+        "hiragana": {
+          "one": "{count} word, by the first kana of their reading",
+          "other": "{count} words, by the first kana of their reading"
+        },
+        "katakana": {
+          "one": "{count} word written in katakana, mostly loanwords",
+          "other": "{count} words written in katakana, mostly loanwords"
+        }
+      },
+      "allScript": {
+        "hiragana": "All hiragana",
+        "katakana": "All katakana"
+      },
+      "kanjiCard": "{count} jōyō kanji by school grade and stroke count, and kanji by JLPT level",
+      "allKanjiLists": "All kanji lists",
+      "frequencyCard": "Words ranked by how often they’re used, and the JLPT vocabulary lists",
+      "jlptChip": "N{level} · {count}",
+      "mostUsedOnYouTube": "Most used on YouTube",
+      "allFrequency": "All frequency dictionaries",
+      "commonCard": {
+        "one": "{count} word JMdict marks as common",
+        "other": "{count} words JMdict marks as common"
+      },
+      "browseCommon": "Browse common words →"
+    },
+    "home": {
+      "byKana": "Browse by kana",
+      "byKanaAside": "Every word, by the kana it starts with · {hiragana} · {katakana}",
+      "byGrade": "Kanji by school grade",
+      "allJoyo": "All {count} jōyō kanji",
+      "namesCard": "{name} (names)",
+      "firstGrade": "{name} · {count}",
+      "opensSearch": "Each opens that kanji’s search page",
+      "byCategory": "Browse by category",
+      "allCommon": {
+        "one": "All {count} common word",
+        "other": "All {count} common words"
+      }
+    },
+    "kana": {
+      "chartsTitle": "Hiragana and katakana charts",
+      "chartsDescription": "The hiragana and katakana charts with romaji, each kana opening every Japanese word that starts with it.",
+      "chartsIntro": "Japanese has two kana scripts with the same 46 sounds. Hiragana writes native words and grammar; katakana writes loanwords and emphasis. Pick a kana to see every word that starts with it.",
+      "noWords": ", no words start with it",
+      "chartOf": {
+        "gojuon": "{script} gojūon",
+        "dakuon": "{script} dakuon and handakuon"
+      },
+      "gojuon": "Gojūon",
+      "dakuon": "Dakuon and handakuon",
+      "scriptTabs": "Script",
+      "chartsWithRomaji": "Charts with romaji →",
+      "tile": {
+        "one": "{kana}, {count} word",
+        "other": "{kana}, {count} words"
+      },
+      "other": "Other",
+      "otherKana": "Other kana",
+      "strip": "Kana",
+      "scripts": {
+        "hiragana": {
+          "title": "Japanese words by hiragana",
+          "heading": "Japanese words by hiragana, from あ to ん",
+          "intro": {
+            "one": "{count} word, by the first kana of their reading, so 科学 (かがく) is under か. Each count opens that kana’s words.",
+            "other": "{count} words, by the first kana of their reading, so 科学 (かがく) is under か. Each count opens that kana’s words."
+          }
+        },
+        "katakana": {
+          "title": "Japanese katakana words",
+          "heading": "Japanese katakana words, from ア to ン",
+          "intro": {
+            "one": "{count} word written in katakana, mostly loanwords, names, and emphasis, by their first character. Each count opens that kana’s words.",
+            "other": "{count} words written in katakana, mostly loanwords, names, and emphasis, by their first character. Each count opens that kana’s words."
+          }
+        }
+      },
+      "scriptDescription": {
+        "one": "{count} Japanese word, by the first kana of their reading.",
+        "other": "{count} Japanese words, by the first kana of their reading."
+      },
+      "startingWith": "Japanese words starting with {kana}",
+      "prefixDescription": {
+        "one": "{count} Japanese word whose reading starts with {kana}, with their meanings.",
+        "other": "{count} Japanese words whose reading starts with {kana}, with their meanings."
+      },
+      "initialIntro": {
+        "one": "{count} word whose reading starts with {kana}.",
+        "other": "{count} words whose reading starts with {kana}."
+      },
+      "katakanaUnder": "Words written in katakana are under {link}.",
+      "pickNext": "Pick the next kana to see them.",
+      "groups": "Two-kana groups",
+      "groupPages": "{count} · {pages} pages",
+      "wordsRead": "Words read {kana}",
+      "neighboringKana": "Neighboring kana",
+      "neighboringGroups": "Neighboring groups"
+    },
+    "category": {
+      "heading": {
+        "partOfSpeech": "Japanese {lower}",
+        "usage": "Japanese {lower}",
+        "subject": "Japanese {bare} vocabulary",
+        "dialect": "{name} words",
+        "common": "Common Japanese words"
+      },
+      "headings": {
+        "onomatopoeia": "Japanese onomatopoeia and mimetic words",
+        "yojijukugo": "Yojijukugo: Japanese four-character idioms",
+        "proverbs": "Japanese proverbs",
+        "idioms": "Japanese idioms",
+        "honorific-language": "Japanese honorific language (sonkeigo)",
+        "humble-language": "Japanese humble language (kenjōgo)",
+        "polite-language": "Japanese polite language (teineigo)",
+        "kana-words": "Japanese words usually written in kana",
+        "no-adjectives": "Japanese no-adjectives",
+        "obsolete-words": "Japanese obsolete words",
+        "trademarks": "Japanese trademarks vocabulary"
+      },
+      "marks": {
+        "onomatopoeia": "onomatopoeic or mimetic",
+        "yojijukugo": "yojijukugo",
+        "proverbs": "proverbs",
+        "idioms": "idiomatic expressions",
+        "honorific-language": "honorific (sonkeigo)",
+        "humble-language": "humble (kenjōgo)",
+        "polite-language": "polite (teineigo)",
+        "kana-words": "usually written in kana alone"
+      },
+      "intro": {
+        "partOfSpeech": {
+          "used": {
+            "one": "{count} word JMdict lists as {lower}, most used on YouTube first, starting with those it marks in their first meaning.",
+            "other": "{count} words JMdict lists as {lower}, most used on YouTube first, starting with those it marks in their first meaning."
+          },
+          "kana": {
+            "one": "{count} word JMdict lists as {lower}, in kana order.",
+            "other": "{count} words JMdict lists as {lower}, in kana order."
+          }
+        },
+        "usage": {
+          "used": {
+            "one": "{count} word JMdict marks as {marks}, most used on YouTube first, starting with those it marks in their first meaning.",
+            "other": "{count} words JMdict marks as {marks}, most used on YouTube first, starting with those it marks in their first meaning."
+          },
+          "kana": {
+            "one": "{count} word JMdict marks as {marks}, in kana order.",
+            "other": "{count} words JMdict marks as {marks}, in kana order."
+          }
+        },
+        "subject": {
+          "used": {
+            "one": "{count} word JMdict marks as {lower} terms, most used on YouTube first, starting with those it marks in their first meaning.",
+            "other": "{count} words JMdict marks as {lower} terms, most used on YouTube first, starting with those it marks in their first meaning."
+          },
+          "kana": {
+            "one": "{count} word JMdict marks as {lower} terms, in kana order.",
+            "other": "{count} words JMdict marks as {lower} terms, in kana order."
+          }
+        },
+        "dialect": {
+          "used": {
+            "one": "{count} word JMdict marks as {name}, most used on YouTube first, starting with those it marks in their first meaning.",
+            "other": "{count} words JMdict marks as {name}, most used on YouTube first, starting with those it marks in their first meaning."
+          },
+          "kana": {
+            "one": "{count} word JMdict marks as {name}, in kana order.",
+            "other": "{count} words JMdict marks as {name}, in kana order."
+          }
+        },
+        "common": {
+          "used": {
+            "one": "{count} word JMdict marks as common, from its priority lists, most used on YouTube first.",
+            "other": "{count} words JMdict marks as common, from its priority lists, most used on YouTube first."
+          },
+          "kana": {
+            "one": "{count} word JMdict marks as common, from its priority lists, in kana order.",
+            "other": "{count} words JMdict marks as common, from its priority lists, in kana order."
+          }
+        }
+      },
+      "orders": {
+        "used": "Most used",
+        "kana": "Kana order"
+      },
+      "orderLabel": "Order",
+      "titleKana": "{title}, kana order",
+      "moreWays": "More ways to browse"
+    },
+    "categoryIndexes": {
+      "partOfSpeech": {
+        "name": "Parts of speech",
+        "heading": "Parts of speech",
+        "all": "All parts of speech",
+        "title": "Japanese words by part of speech",
+        "intro": "Japanese words by part of speech, as JMdict classes them, with how many each has."
+      },
+      "usage": {
+        "name": "Usage labels",
+        "heading": "Usage labels",
+        "all": "All usage labels",
+        "title": "Japanese words by usage and dialect",
+        "intro": "Japanese words by how they’re used, as JMdict labels them: register, style, and dialect."
+      },
+      "subject": {
+        "name": "Subjects",
+        "heading": "Subjects",
+        "all": "All subjects",
+        "title": "Japanese words by subject",
+        "intro": "Japanese words by the field they’re used in, as JMdict labels them."
+      },
+      "groups": {
+        "usage": "Usage",
+        "dialect": "Dialects"
+      }
+    },
+    "kanji": {
+      "hubTitle": "Kanji lists by school grade, JLPT level, and stroke count",
+      "hubDescription": "Every jōyō kanji by school grade and stroke count, the jinmeiyō kanji used in names, and the kanji of each JLPT level, each with its readings, stroke order, and words.",
+      "hubIntro": "The {joyo} jōyō kanji, and the {jinmeiyo} more used in names, by school grade, JLPT level, and stroke count. Each kanji opens its search page, with its readings, stroke order, and every word that uses it.",
+      "grades": "Grades",
+      "jumpToGrade": "Jump to a grade",
+      "byJlpt": "By JLPT level",
+      "wallersLists": "Jonathan Waller’s lists",
+      "bySchoolGrade": "By school grade",
+      "mostFrequentFirst": "Most frequent first",
+      "countAside": "· {count}",
+      "secondaryWithMeanings": "Secondary school kanji with their meanings",
+      "jinmeiyoLink": {
+        "one": "{name}: {count} more kanji used in names",
+        "other": "{name}: {count} more kanji used in names"
+      },
+      "openList": "Open the list →",
+      "strokeCounts": "Stroke counts",
+      "strokeTile": "{strokes} strokes, {count}",
+      "strokesNote": "Strokes, then how many jōyō kanji have that many.",
+      "heading": {
+        "grade": "{name} kanji",
+        "secondary": "{name} kanji",
+        "jinmeiyo": "{name} kanji",
+        "strokes": "{name} kanji",
+        "jlpt": "{name} kanji"
+      },
+      "intro": {
+        "grade": {
+          "1": "The {count} kanji Japanese schools teach in the first year of primary school, most frequent first.",
+          "2": "The {count} kanji Japanese schools teach in the second year of primary school, most frequent first.",
+          "3": "The {count} kanji Japanese schools teach in the third year of primary school, most frequent first.",
+          "4": "The {count} kanji Japanese schools teach in the fourth year of primary school, most frequent first.",
+          "5": "The {count} kanji Japanese schools teach in the fifth year of primary school, most frequent first.",
+          "6": "The {count} kanji Japanese schools teach in the sixth year of primary school, most frequent first."
+        },
+        "secondary": "The {count} jōyō kanji Japanese schools teach in secondary school, most frequent first.",
+        "jinmeiyo": "The {count} jinmeiyō kanji, approved for use in names, most frequent first.",
+        "strokes": {
+          "one": "The {count} jōyō kanji written with {strokes} stroke, most frequent first.",
+          "other": "The {count} jōyō kanji written with {strokes} strokes, most frequent first."
+        },
+        "jlpt": "The {count} kanji Jonathan Waller lists for JLPT N{level}, most frequent first."
+      },
+      "jlptEstimate": "The JLPT has published no kanji list since 2010, so these levels are estimates.",
+      "opensSearch": "Each opens its search page, with its readings, stroke order, and every word that uses it."
+    },
+    "frequency": {
+      "title": "Japanese frequency dictionaries",
+      "description": "The JLPT vocabulary lists, and Japanese words ranked by how often they’re used on YouTube, on Wikipedia, and in TV, anime, manga, novels, visual novels, and video games.",
+      "intro": "Which words to learn first: the JLPT vocabulary lists by level, and eight lists that rank words by how often they’re used on YouTube, on Wikipedia, and in TV, anime, manga, novels, visual novels, and video games. They’re the same dictionaries the app offers.",
+      "jlptAside": {
+        "one": "Jonathan Waller’s JLPT lists · {count} word",
+        "other": "Jonathan Waller’s JLPT lists · {count} words"
+      },
+      "rankedByUse": "Ranked by use",
+      "tiers": "Tiers",
+      "tierNames": {
+        "veryCommon": "Very common",
+        "common": "Common",
+        "moderate": "Less common",
+        "uncommon": "Uncommon"
+      },
+      "tierCutoffs": "The tiers are the ones the app’s chips use: {tiers}.",
+      "tierCutoff": "{tier} to rank {rank}",
+      "bandDot": "Each band’s dot is the tier of its first rank.",
+      "topWords": "Top words",
+      "ranksOf": "{name} ranks",
+      "rankRange": "{first}–{last}",
+      "bandShort": "{from}–{to}",
+      "bandHeading": "Most used Japanese words: {name}",
+      "bandTitle": "Most used Japanese words: {name}, ranks {range}",
+      "bandWords": {
+        "one": "Ranks {range}: {count} word.",
+        "other": "Ranks {range}: {count} words."
+      },
+      "bandRanks": "Ranks {range}.",
+      "ranked": {
+        "youtube": "Words ranked by how often they’re said in YouTube videos, from TUBELEX.",
+        "wikipedia": "Words ranked by how often they’re written in Japanese Wikipedia.",
+        "tv-and-movies": "Words ranked by how often they appear in Japanese TV dramas and films, from Jiten's frequency lists.",
+        "anime": "Words ranked by how often they appear in anime, from Jiten's frequency lists.",
+        "manga": "Words ranked by how often they appear in manga, from Jiten's frequency lists.",
+        "novels": "Words ranked by how often they appear in novels and light novels, from Jiten's frequency lists.",
+        "visual-novels": "Words ranked by how often they appear in visual novels, from Jiten's frequency lists.",
+        "video-games": "Words ranked by how often they appear in video game scripts, from Jiten's frequency lists."
+      },
+      "unranked": {
+        "jiten": "Jiten’s lists count a spelling and its reading, not which dictionary word it is, and the app ranks a pair only when it names one word. Pairs several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks.",
+        "wikipedia": "The Wikipedia list counts written forms, not which dictionary word each is, and the app ranks a form only when it names one word. Forms several words share, such as に, は, and が, aren’t ranked, so the list skips their ranks."
+      },
+      "jlptHeading": "{name} vocabulary",
+      "jlptDescription": "Words from Jonathan Waller's unofficial JLPT vocabulary lists. JLPT has published no official list since 2010, so levels are study estimates.",
+      "jlptMeta": {
+        "one": "{count} word Jonathan Waller lists for {name}, in kana order.",
+        "other": "{count} words Jonathan Waller lists for {name}, in kana order."
+      },
+      "jlptMetaPaged": {
+        "one": "{count} word Jonathan Waller lists for {name}, in kana order, page {page}.",
+        "other": "{count} words Jonathan Waller lists for {name}, in kana order, page {page}."
+      }
+    }
+  },
+  "categoryIntros": {
+    "nouns": "Nouns name people, things, places, and ideas. They never change form; particles such as が and を mark their role in a sentence.",
+    "pronouns": "Pronouns stand in for a noun, such as これ (this), それ (that), and 自分 (oneself). Japanese often leaves them out when the context is clear.",
+    "suru-verbs": "Nouns that become verbs with する, as 紹介 (introduction) becomes 紹介する (to introduce), and する itself.",
+    "godan-verbs": "Godan verbs change their last kana across the five vowel sounds as they conjugate, as 言う becomes 言わない and 言います.",
+    "ichidan-verbs": "Ichidan verbs end in る after an i or e sound and drop the る to conjugate, as 見る becomes 見ない and 見ます.",
+    "irregular-verbs": "Verbs that follow neither the godan nor the ichidan pattern: 来る (to come) and the verbs ending in ずる, such as 信ずる (to believe). する and its compounds are under suru verbs.",
+    "transitive-verbs": "Transitive verbs take a direct object, usually marked with を, as 使う (to use) does in 道具を使う (to use a tool).",
+    "intransitive-verbs": "Intransitive verbs take no direct object, such as 有る (to be) and 行く (to go). Many pair with a transitive verb, as 出る (to leave) does with 出す (to take out).",
+    "auxiliary-verbs": "Auxiliary verbs follow another verb to add tense, politeness, or the passive, as た, ます, and れる do.",
+    "i-adjectives": "I-adjectives end in い and conjugate on their own, as 高い (high) becomes 高くない and 高かった.",
+    "na-adjectives": "Na-adjectives take な before a noun, as in 必要な物 (something necessary), and conjugate with だ and です.",
+    "no-adjectives": "Nouns that describe another noun with の, as 本当 does in 本当の話 (a true story).",
+    "taru-adjectives": "Literary adjectives that take たる before a noun, or と as an adverb, as 堂々 does in 堂々と (with dignity).",
+    "pre-noun-adjectives": "Pre-noun adjectives (rentaishi) come only before a noun and never conjugate, as この (this), そんな (such), and 大きな (big) do.",
+    "adverbs": "Adverbs say how, when, or how much, such as もう (already), ちょっと (a little), and こう (like this).",
+    "expressions": "Phrases of more than one word that JMdict lists as one entry, such as 宜しく (please treat me well) and 世の中 (the world).",
+    "interjections": "Words that stand on their own as exclamations or replies, such as はい (yes), ああ (ah), and 有難う (thank you).",
+    "conjunctions": "Conjunctions join words, clauses, or sentences, such as そして (and then), けれど (but), and ながら (while).",
+    "particles": "Particles follow a word to mark its role in a sentence or add nuance, such as は (the topic), を (the object), and ね (seeking agreement).",
+    "counters": "Counters follow a number to count a kind of thing, such as 枚 for flat things, 個 for small things, and 回 for times.",
+    "prefixes": "Prefixes attach to the front of a word, such as 不 (un-), 超 (super-), and 第, which makes ordinal numbers.",
+    "suffixes": "Suffixes attach to the end of a word, such as 的 (-ical), くらい (about), and みたい (-like).",
+    "numbers": "Numerals, such as 十 (ten), 百 (hundred), 千 (thousand), 万 (ten thousand), and 億 (hundred million).",
+    "onomatopoeia": "Giongo imitate sounds, such as どんどん (banging), and gitaigo describe states and movements, such as ゆっくり (slowly) and しっかり (firmly).",
+    "yojijukugo": "Yojijukugo are idioms of four kanji, many from Chinese classics, such as 不可思議 (a mystery) and 有耶無耶 (vague).",
+    "proverbs": "Kotowaza are traditional sayings that give advice or state a truth, such as 愛は盲目 (love is blind).",
+    "idioms": "Expressions whose meaning isn’t the sum of their words, such as 奥の手 (an ace up one’s sleeve) and 瓜二つ (exactly alike).",
+    "honorific-language": "Sonkeigo raises the person spoken about, as いらっしゃる does for 行く and 来る, and なさる does for する.",
+    "humble-language": "Kenjōgo lowers the speaker and their side to show respect to others, as 参る does for 行く and 頂く does for もらう.",
+    "polite-language": "Teineigo is the everyday polite register, built on です and ます, with words such as ござる.",
+    "slang": "Informal words and senses used among friends or within groups, such as キモイ (gross).",
+    "internet-slang": "Words and senses used mostly online, on message boards and social media, such as ツイ (Twitter) and イッチ (the original poster).",
+    "manga-slang": "Words used mostly in or about manga and anime, such as 萌えキャラ (a cute character).",
+    "colloquialisms": "Casual spoken words and forms, such as じゃん (isn’t it?) and 色んな (various).",
+    "familiar-language": "Words used with friends, family, or people below the speaker, such as お前 (you) and こいつ (this guy).",
+    "formal-language": "Formal and literary words, used in writing and speeches rather than conversation, such as 昨年 (last year) and べし (should).",
+    "poetic-words": "Words used in poetry and lyrical writing, such as 今宵 (this evening) and 暁 (dawn).",
+    "childrens-language": "Words young children use, or that adults use with them, such as 抱っこ (being carried in someone’s arms) and ぽんぽん (tummy).",
+    "feminine-language": "Words and sentence endings used mostly by women, such as かしら (I wonder) and あら (oh!).",
+    "masculine-language": "Words and sentence endings used mostly by men, such as 俺 (I), お前 (you), and ぜ.",
+    "jocular-words": "Words used humorously or tongue in cheek, such as 社畜 (a corporate drone).",
+    "euphemisms": "Gentler words for death, the body, and other delicate subjects, such as 亡くなる (to pass away).",
+    "abbreviations": "Shortened words and phrases, such as スマホ (smartphone, from スマートフォン) and 高校 (high school, from 高等学校).",
+    "archaic-words": "Words and senses from older Japanese that are no longer in everyday use, such as ござる (to be).",
+    "obsolete-words": "Words and senses that have fallen out of use, such as 文房 (a study).",
+    "dated-words": "Words that sound old-fashioned today but are still understood, such as 婦人 (lady) and 吾輩 (I).",
+    "historical-terms": "Words for things of the past, such as 明治 (the Meiji era), 侍 (samurai), and ソ連 (the Soviet Union).",
+    "kana-words": "Words that have kanji but are usually written in kana, such as する (to do), 事 (thing), and 有る (to be).",
+    "kansai-dialect": "Words from the Kansai region around Osaka, Kyoto, and Kobe, such as ほんま (truth) and しんどい (tired).",
+    "osaka-dialect": "Words from Osaka, such as いちびり (a joker) and パチる (to steal).",
+    "kyoto-dialect": "Words from Kyoto, such as ぶぶ漬け (rice with tea poured over it).",
+    "tohoku-dialect": "Words from the Tōhoku region in the north of Honshu, such as べこ (cow) and めんこい (adorable).",
+    "kanto-dialect": "Words from the Kantō region around Tokyo, such as 落っこちる (to fall) and 落っことす (to drop).",
+    "kyushu-dialect": "Words from Kyūshū, such as ばってん (but) and 濃ゆい (deep, of a colour).",
+    "hokkaido-dialect": "Words from Hokkaidō, such as なまら (very) and ザンギ (deep-fried chicken).",
+    "ryukyu-dialect": "Words from the Ryūkyū Islands and Okinawa, such as ゴーヤ (bitter melon) and チャンプルー (an Okinawan stir-fry).",
+    "tosa-dialect": "Words from Tosa, today’s Kōchi Prefecture on Shikoku, such as いごっそう (a stubborn person).",
+    "tsugaru-dialect": "Words from Tsugaru, in the west of Aomori Prefecture, such as わや (very).",
+    "nagano-dialect": "Words from Nagano Prefecture, such as ずく (putting oneself into something).",
+    "brazilian-japanese": "Words used by Japanese communities in Brazil, such as 耕地 (a fazenda, a large estate) and 火酒 (cachaça).",
+    "agriculture": "Farming terms, such as 休耕 (leaving a field fallow) and 追熟 (ripening after harvest).",
+    "anatomy": "Words for the parts of the body, such as 脳 (brain), 関節 (joint), and 血管 (blood vessel).",
+    "archeology": "Terms from archeology, such as 勾玉 (magatama, comma-shaped beads) and 窯跡 (a kiln site).",
+    "architecture": "Building and carpentry terms, many from traditional Japanese houses, such as 敷居 (threshold) and 欄間 (transom).",
+    "art-and-aesthetics": "Terms from painting, ceramics, and aesthetics, such as 油絵 (oil painting).",
+    "astronomy": "Words for stars, planets, and space, such as 銀河 (the Milky Way) and 衛星 (satellite).",
+    "audiovisual": "Terms from audio and video equipment, such as 全高調波歪 (total harmonic distortion).",
+    "aviation": "Terms from flying and aircraft, such as 失速 (stall) and 翼端 (wingtip).",
+    "baseball": "Baseball terms, such as 投手 (pitcher), 三振 (strikeout), and 打点 (runs batted in).",
+    "biochemistry": "Terms from biochemistry, such as 酵素 (enzyme) and 核酸 (nucleic acid).",
+    "biology": "Terms from biology, such as 細胞 (cell), 進化 (evolution), and 抗体 (antibody).",
+    "botany": "Words for plants and how they grow, such as 葉脈 (leaf veins) and 雄しべ (stamen).",
+    "boxing": "Boxing terms, such as スパーリング (sparring) and フック (hook).",
+    "buddhism": "Buddhist terms, such as 菩薩 (bodhisattva), 浄土 (Pure Land), and 念仏 (nembutsu).",
+    "business": "Business terms, such as リスケ (rescheduling) and 値動き (price movement).",
+    "card-games": "Terms from card games, such as 切り札 (trump card) and ババ抜き (old maid).",
+    "chemistry": "Terms from chemistry, such as 原子 (atom), 酸化 (oxidation), and 濃度 (concentration).",
+    "chinese-mythology": "Places and creatures from Chinese mythology, such as 蓬莱 (Mount Penglai) and 鵬 (the peng, a giant bird).",
+    "christianity": "Christian terms, such as 聖書 (the Bible) and 洗礼 (baptism).",
+    "civil-engineering": "Civil engineering terms, such as 法面 (a slope face) and 水制 (a groyne).",
+    "clothing": "Words for clothes and how they’re cut, such as 前開き (front-opening) and ステテコ (long men’s underpants).",
+    "computing": "Computing terms, many of them abbreviations, such as ＣＰＵ, 変数 (variable), and 端末 (terminal).",
+    "crystallography": "Terms from crystallography, such as 空間格子 (space lattice).",
+    "dentistry": "Dentistry terms, such as 虫歯 (tooth decay) and 歯石 (tartar).",
+    "ecology": "Terms from ecology, such as 遷移 (succession) and ニッチ (niche).",
+    "economics": "Economics terms, such as 需要 (demand) and 寡占 (oligopoly).",
+    "electrical-engineering": "Electrical engineering terms, such as 回路 (circuit) and 接地 (grounding).",
+    "electronics": "Electronics terms, such as 基板 (circuit board) and インダクタ (inductor).",
+    "embryology": "Terms from embryology, such as 胞胚 (blastula) and 原腸胚 (gastrula).",
+    "engineering": "General engineering terms, such as 応力 (stress) and 張力 (tension).",
+    "entomology": "Words for insects and their life cycle, such as 蛹 (pupa) and 成虫 (adult insect).",
+    "figure-skating": "Figure skating terms, such as アクセル (Axel jump) and イナバウアー (Ina Bauer).",
+    "film": "Filmmaking terms, such as クランクイン (the start of filming) and フェードイン (fade-in).",
+    "finance": "Finance terms, such as 株 (stock), 金利 (interest rate), and 損切り (cutting one’s losses).",
+    "fishing": "Fishing terms, such as 投げ釣り (surf casting) and 根掛かり (a snagged hook).",
+    "food-and-cooking": "Words for food, dishes, and cooking, such as 寿司 (sushi), 出し (dashi), and 団子 (dango).",
+    "gardening": "Gardening terms, such as 取り木 (layering a plant) and 根腐れ (root rot).",
+    "genetics": "Terms from genetics, such as 顕性 (dominance) and 転座 (translocation).",
+    "geography": "Terms from geography, such as 砂嘴 (spit) and 陸橋 (land bridge).",
+    "geology": "Terms from geology, such as 断層 (fault) and 浸食 (erosion).",
+    "geometry": "Geometry terms, such as 頂点 (vertex), 円錐 (cone), and 斜辺 (hypotenuse).",
+    "go": "Terms from the board game go, such as 布石 (the opening strategy) and 天元 (the center point).",
+    "golf": "Golf terms, such as バーディー (birdie) and ドッグレッグ (dogleg).",
+    "grammar": "Grammar terms, such as 動詞 (verb), 名詞 (noun), and 助詞 (particle).",
+    "greek-mythology": "Gods and figures from Greek mythology, such as アテーナー (Athena) and パンドラ (Pandora).",
+    "hanafuda": "Terms from hanafuda, the Japanese flower cards, such as こいこい (koi-koi, a hanafuda game).",
+    "horse-racing": "Horse racing terms, such as 馬券 (betting ticket) and 逃げ馬 (front runner).",
+    "internet": "Words for the internet and its services, such as ＳＮＳ (social networking service) and ＵＲＬ.",
+    "japanese-mythology": "Figures and creatures from Japanese myth and folklore, such as 八咫烏 (Yatagarasu) and 猫又 (nekomata).",
+    "kabuki": "Kabuki theater terms, such as 花道 (the walkway through the audience) and 黒子 (stage assistants dressed in black).",
+    "law": "Legal terms, such as 被告 (defendant), 原告 (plaintiff), and 判例 (precedent).",
+    "linguistics": "Linguistics terms, such as 母音 (vowel), 子音 (consonant), and 敬語 (honorific language).",
+    "logic": "Terms from logic, such as 命題 (proposition) and 選言 (disjunction).",
+    "martial-arts": "Terms from judo, karate, kendo, and other martial arts, such as 竹刀 (bamboo sword) and 合気 (aiki).",
+    "mahjong": "Mahjong terms, such as ロン (winning on a discard) and 聴牌 (tenpai).",
+    "manga": "Terms from making manga, such as ネーム (storyboard) and 掛け網 (cross-hatching).",
+    "mathematics": "Mathematics terms, such as 関数 (function), 変数 (variable), and 微分 (differentiation).",
+    "mechanical-engineering": "Mechanical engineering terms, such as スパーギア (spur gear) and 連結棒 (coupling rod).",
+    "medicine": "Medical terms, such as 感染 (infection), 疾患 (disease), and 麻酔 (anesthesia).",
+    "meteorology": "Weather terms, such as 前線 (weather front) and ラニーニャ (La Niña).",
+    "military": "Military terms and ranks, such as 大将 (general), 大佐 (colonel), and 陣地 (position).",
+    "mineralogy": "Words for minerals, such as 石英 (quartz), 瑪瑙 (agate), and 長石 (feldspar).",
+    "mining": "Mining terms, such as 落盤 (cave-in) and 切羽 (working face).",
+    "motorsport": "Motorsport terms, such as ピットイン (entering the pits) and チェッカーフラッグ (checkered flag).",
+    "music": "Music terms, such as 楽譜 (sheet music), 拍子 (meter), and 音域 (range).",
+    "noh": "Noh theater terms, such as 仕手 (the lead role) and 狂言 (kyōgen, comic plays between noh plays).",
+    "ornithology": "Words for birds and their feathers, such as 綿羽 (down feather) and 鳴管 (syrinx).",
+    "paleontology": "Terms from paleontology, such as 示準化石 (index fossil).",
+    "pathology": "Terms from pathology, such as 封入体 (inclusion body).",
+    "pharmacology": "Words for medicines and their doses, such as 頓服 (medicine taken as needed) and 剤形 (dosage form).",
+    "philosophy": "Terms from philosophy, such as 自我 (ego), 命題 (proposition), and 唯物 (materialism).",
+    "photography": "Photography terms, such as 露光 (exposure) and ネガ (negative).",
+    "physics": "Physics terms, such as 電子 (electron), 重力 (gravity), and 圧力 (pressure).",
+    "physiology": "Terms for how the body works, such as 脈拍 (pulse) and 嚥下 (swallowing).",
+    "politics": "Political terms, such as 左翼 (the left wing) and 右派 (the right wing).",
+    "printing": "Printing terms, such as 活版 (letterpress) and 製版 (platemaking).",
+    "professional-wrestling": "Professional wrestling terms, such as 延髄斬り (enzuigiri) and 逆エビ固め (Boston crab).",
+    "psychiatry": "Psychiatry terms, such as 躁うつ病 (manic depression) and ＢＰＤ (borderline personality disorder).",
+    "psychoanalysis": "Terms from psychoanalysis, such as イド (id) and 欲動 (drive).",
+    "psychology": "Psychology terms, such as 錯覚 (illusion) and 強化 (reinforcement).",
+    "railways": "Railway terms, such as 客車 (passenger car) and 枕木 (railroad tie).",
+    "roman-mythology": "Gods from Roman mythology, such as ユノ (Juno) and マーキュリー (Mercury).",
+    "shinto": "Shinto terms, such as 絵馬 (votive tablet) and 神棚 (household shrine).",
+    "shogi": "Terms from shogi, Japanese chess, such as 飛車 (rook) and 桂馬 (knight).",
+    "skiing": "Skiing terms, such as モーグル (moguls) and 回転 (slalom).",
+    "sports": "General sports terms, such as ＭＶＰ (most valuable player) and 反則 (foul).",
+    "statistics": "Statistics terms, such as 分散 (variance) and 標本 (sample).",
+    "stock-market": "Stock market terms, such as 利確 (profit-taking) and 寄り付き (the opening session).",
+    "sumo": "Sumo terms, such as 力士 (sumo wrestler), 横綱 (yokozuna), and 土俵 (the ring).",
+    "surgery": "Surgical terms, such as 開頭 (craniotomy) and 開創器 (retractor).",
+    "telecommunications": "Telecommunications terms, many of them abbreviations, such as ＡＤＳＬ and ＭＶＮＯ (mobile virtual network operator).",
+    "trademarks": "Brand and product names, such as ポケモン (Pokémon) and ウォシュレット (Washlet, an electronic bidet).",
+    "television": "Television production terms, such as ＰＩＰ (picture-in-picture) and フェードイン (fade-in).",
+    "veterinary-medicine": "Terms from veterinary medicine, such as 狂牛病 (mad cow disease).",
+    "video-games": "Video game terms, such as ＮＰＣ (non-player character) and ＤＬＣ (downloadable content).",
+    "zoology": "Terms from zoology, such as 触手 (tentacle) and 複眼 (compound eye).",
+    "common-words": "JMdict marks a word common when it’s in one of its priority lists, which are drawn from newspapers and other everyday sources."
+  },
+  "chrome": {
+    "mainNav": "Main",
+    "menu": "Menu",
+    "close": "Close",
+    "sections": "Sections",
+    "getTheApp": "Get the app",
+    "logIn": "Log in",
+    "theme": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "account": {
+      "account": "Account",
+      "signedIn": "Account, signed in",
+      "yourAccount": "Your account",
+      "logIn": "Log in",
+      "register": "Create an account",
+      "signOut": "Sign out"
+    },
+    "switcher": {
+      "label": "{language}, change language",
+      "heading": "Language"
+    },
+    "social": {
+      "elsewhere": "{name} elsewhere",
+      "on": "{name} on {network}"
+    },
+    "notFound": {
+      "message": "This page could not be found."
+    }
+  },
+  "conjugations": {
+    "modeLabel": "Conjugation mode",
+    "loading": "Loading examples",
+    "failed": "Examples couldn’t load. Try again later.",
+    "showsConjugations": ", shows conjugations",
+    "rowLabel": "{title}, {surface}, {reading}"
+  },
+  "contact": {
+    "body": "Email {email}. We read every message."
+  },
+  "dictionary": {
+    "title": "Japanese dictionary",
+    "lead": "Words and kanji with readings, meanings, pitch accent, and examples. Search in Japanese, kana, romaji, or English."
+  },
+  "dmca": {
+    "intro": "{name} respects the intellectual property rights of others. Under the Digital Millennium Copyright Act (\"DMCA\"), we respond promptly to properly reported claims of copyright infringement on the Service.",
+    "agent": {
+      "heading": "1. Designated Copyright Agent",
+      "phone": "Phone: {phone}",
+      "email": "Email: {email}"
+    },
+    "notice": {
+      "heading": "2. Filing a notice",
+      "intro": "Under 17 U.S.C. § 512(c)(3), a notice must include:",
+      "signature": "a physical or electronic signature of the copyright owner or an authorized agent;",
+      "work": "identification of the copyrighted work claimed to be infringed;",
+      "material": "identification of the infringing material and its URL or location on the Service;",
+      "contact": "your contact information: address, telephone number, and email;",
+      "goodFaith": "a statement that you believe in good faith that the use is not authorized by the owner, its agent, or the law; and",
+      "accuracy": "a statement, under penalty of perjury, that the notice is accurate and that you are the owner or authorized to act for the owner.",
+      "misrepresentation": "Under 17 U.S.C. § 512(f), knowingly misrepresenting that material is infringing can make you liable for damages."
+    },
+    "counter": {
+      "heading": "3. Counter-notification",
+      "body": "If you believe material was removed by mistake or misidentification, send the agent a counter-notification that includes your signature; identification of the removed material and where it appeared; a statement under penalty of perjury that you believe in good faith it was removed by mistake; and your name, address, telephone number, and consent to the jurisdiction of the federal district court for your address (or, outside the United States, any judicial district where {name} may be found). We may restore the material 10 to 14 business days after forwarding it, unless the complainant tells us they have filed a court action."
+    },
+    "repeat": {
+      "heading": "4. Repeat infringers",
+      "body": "We may end access for users who repeatedly infringe copyrights."
+    }
+  },
+  "examples": {
+    "pronounce": "Pronounce sentence",
+    "possibleEntries": "{count} possible entries",
+    "more": "Load more examples",
+    "loading": "Loading examples…",
+    "stale": "These examples have been updated since the page loaded.",
+    "reload": "Reload for more examples",
+    "retry": "Try again",
+    "sentencesTitle": "Example Sentences"
+  },
+  "footer": {
+    "products": "Products",
+    "tools": "Tools",
+    "company": "Company",
+    "legal": "Legal",
+    "dictionary": "Dictionary",
+    "kanaCharts": "Kana charts",
+    "kanjiLists": "Kanji lists",
+    "frequencyLists": "Frequency lists",
+    "allTools": "All tools",
+    "dmca": "DMCA",
+    "sitemap": "Sitemap",
+    "copyright": "© {year} {name}",
+    "account": {
+      "account": "Account",
+      "signIn": "Sign in"
+    }
+  },
+  "frequency": {
+    "rank": "#{rank}",
+    "spokenTier": ", {tier}",
+    "detailsTitle": "Frequency Details",
+    "domain": "Domain",
+    "version": "Version",
+    "source": "Source",
+    "done": "Done"
+  },
+  "home": {
+    "title": "Zenbu Japanese: Japanese Dictionary and Translator for iPhone",
+    "hero": {
+      "badge": "For iPhone · Offline dictionary",
+      "title": "Understand the Japanese you meet",
+      "lead": "Look up any word offline. Point your camera at a menu, draw a kanji you can’t type, and talk through a conversation in Japanese and English, all on your iPhone.",
+      "searchDictionary": "Search the dictionary",
+      "worksOffline": "Works offline"
+    },
+    "try": {
+      "title": "Try the dictionary",
+      "description": "The app’s dictionary, free on the web. Search in Japanese, kana, romaji, or English.",
+      "examples": "Try"
+    },
+    "areas": {
+      "title": "One app for reading, watching, and talking",
+      "description": "Five areas, and one dictionary behind all of them.",
+      "label": "Areas of the app",
+      "previous": "Previous screens",
+      "next": "Next screens",
+      "slide": "{label}, {position} of {count}",
+      "tapKanji": "Tap a kanji to try it",
+      "dictionary": {
+        "name": "Dictionary",
+        "pitch": "Every word, fully explained, with no connection needed.",
+        "features": {
+          "search": "Search in Japanese, romaji, or English, conjugated forms included",
+          "draw": "Draw a kanji in any stroke order, or find it by its radicals",
+          "details": "Furigana and pitch accent, with every conjugation and what it means",
+          "kanji": "Each kanji’s readings and stroke order, plus real example sentences"
+        },
+        "media": {
+          "searchResults": "Search results",
+          "wordDetail": "Word page",
+          "conjugations": "Conjugations",
+          "kanjiDetail": "Kanji page",
+          "handwriting": "Handwriting"
+        }
+      },
+      "imageSearch": {
+        "name": "Image Search",
+        "pitch": "Point at Japanese, then tap any word.",
+        "features": {
+          "photo": "Take a photo, or choose one from your library or files",
+          "reads": "Reads text across or down the page, even with English around it",
+          "tap": "Tap a word to open it in the dictionary with the photo still in view",
+          "translate": "Switch to Translate for the whole passage"
+        },
+        "media": {
+          "photo": "Words on a photo",
+          "word": "A word from a photo",
+          "translated": "A photo translated"
+        }
+      },
+      "translate": {
+        "name": "Translate",
+        "pitch": "Talk it through, live, in Japanese and English.",
+        "features": {
+          "share": "Two people share one iPhone and speak either language in any order",
+          "live": "Speech appears as it’s spoken, and the translation is read aloud after a pause",
+          "listening": "Listening mode follows a TV, a guide, or announcements",
+          "offline": "It all runs on the iPhone, so after a one-time download it works offline"
+        },
+        "media": {
+          "conversation": "A conversation"
+        }
+      },
+      "player": {
+        "name": "Player",
+        "pitch": "Watch YouTube in Japanese, and tap any word in its captions.",
+        "features": {
+          "link": "Paste a link or search YouTube from the app",
+          "captions": "Japanese captions sit under the video and follow it",
+          "tap": "Tap a word to pause and open it in the dictionary",
+          "repeat": "Repeat a line, step line by line, or slow down to 0.5×"
+        },
+        "media": {
+          "player": "A video with its captions"
+        }
+      },
+      "lists": {
+        "name": "Lists",
+        "pitch": "Keep the words you meet, and mark the ones you know.",
+        "features": {
+          "save": "Save words and kanji to your own lists",
+          "known": "Hide the furigana on words you’ve marked known, in example sentences and captions",
+          "frequency": "Among equally good search matches, the frequency lists you choose set the order: JLPT, YouTube, anime, manga, novels, and more",
+          "furigana": "Tap a kanji to see which part of the reading belongs to it"
+        },
+        "media": {
+          "list": "A list with known words",
+          "frequency": "Frequency dictionaries",
+          "furigana": "Tap a kanji"
+        }
+      }
+    },
+    "webTools": {
+      "title": "Free on the web. {aside}",
+      "aside": "The app’s dictionary, in your browser.",
+      "body": "No download. Every word has its own page, with readings, pitch accent, conjugations, kanji, and example sentences.",
+      "list": "Free tools"
+    },
+    "webPreview": {
+      "results": "Results"
+    },
+    "closing": {
+      "title": "Everything you need to read Japanese, in one app.",
+      "line": "Dictionary, Image Search, Translate, and Player on your iPhone.",
+      "learnMore": "Learn more",
+      "parts": {
+        "dictionary": {
+          "name": "Dictionary",
+          "line": "Every word, fully explained"
+        },
+        "imageSearch": {
+          "name": "Image Search",
+          "line": "Point at Japanese, tap a word"
+        },
+        "translate": {
+          "name": "Translate",
+          "line": "Talk it through, live"
+        },
+        "conjugations": {
+          "name": "Conjugations",
+          "line": "Every form, and what it means"
+        },
+        "kanji": {
+          "name": "Kanji",
+          "line": "Readings and stroke order"
+        },
+        "pitchAccent": {
+          "name": "Pitch accent",
+          "line": "Hear how a word is said"
+        }
+      }
+    }
+  },
+  "learner": {
+    "share": "Share",
+    "shareNamed": "Share {name}",
+    "moreActions": "More actions",
+    "moreActionsNamed": "More actions for {name}",
+    "markKnown": "Mark as Known",
+    "addToList": "Add to List…",
+    "addNote": "Add Note",
+    "addPhoto": "Add Photo",
+    "openInApp": "Open in App",
+    "copyLink": "Copy Link",
+    "linkCopied": "Link copied",
+    "copyFailed": "Couldn't copy the link. Copy it from the address bar.",
+    "inApp": {
+      "markKnown": "Mark as Known works in the app",
+      "addToList": "Add to List works in the app",
+      "addNote": "Add Note works in the app",
+      "addPhoto": "Add Photo works in the app",
+      "openInApp": "Open in App works in the app"
+    },
+    "appDescription": "Save words to lists, mark them known, and add notes and photos in the Zenbu app. Saving lists and known words on this website comes later.",
+    "getTheApp": "Get the app",
+    "close": "Close",
+    "prompts": {
+      "lists": {
+        "title": "Add to List",
+        "description": "Save it to your lists in the Zenbu app."
+      },
+      "notes": {
+        "title": "Add Note",
+        "description": "Write notes and attach photos in the Zenbu app."
+      }
+    }
+  },
+  "menus": {
+    "iphoneApp": "Zenbu Japanese for iPhone",
+    "dictionary": {
+      "label": "Dictionary",
+      "link": {
+        "title": "Dictionary",
+        "description": "Words and kanji in any script"
+      },
+      "lead": {
+        "title": "Search",
+        "description": "Japanese, kana, romaji, or English"
+      },
+      "feature": {
+        "title": "Japanese dictionary",
+        "description": "More than 200,000 words, searched in Japanese, kana, romaji, or English.",
+        "action": "Open the dictionary"
+      },
+      "kana": "Kana",
+      "hiragana": {
+        "title": "Hiragana",
+        "description": "Words for every hiragana"
+      },
+      "katakana": {
+        "title": "Katakana",
+        "description": "Words for every katakana"
+      },
+      "wordLists": "Word lists",
+      "jlpt": {
+        "title": "JLPT vocabulary",
+        "description": "N5 to N1, most used first"
+      },
+      "frequency": {
+        "title": "Frequency lists",
+        "description": "YouTube, anime, manga, and more"
+      },
+      "kanjiAndGrammar": "Kanji and grammar",
+      "kanjiByGrade": {
+        "title": "Kanji by grade",
+        "description": "School grades 1 to 6, and more"
+      },
+      "partsOfSpeech": {
+        "title": "Parts of speech",
+        "description": "Verbs, adjectives, particles, and more"
+      },
+      "footer": {
+        "note": "Free on the web, the same entries as the app.",
+        "title": "Browse everything"
+      }
+    },
+    "tools": {
+      "label": "Tools",
+      "feature": {
+        "title": "Free Japanese tools",
+        "description": "Charts, lists, and converters in your browser. Nothing to install.",
+        "action": "See all tools"
+      },
+      "reference": "Reference",
+      "kanaCharts": {
+        "title": "Kana charts",
+        "description": "Hiragana and katakana"
+      },
+      "lists": "Lists",
+      "kanjiLists": {
+        "title": "Kanji lists",
+        "description": "Grades, JLPT, jinmeiyō"
+      },
+      "frequencyLists": {
+        "title": "Frequency lists",
+        "description": "JLPT, YouTube, anime"
+      },
+      "converters": "Converters",
+      "hiraganaToKatakana": {
+        "title": "Hiragana to Katakana",
+        "description": "Convert as you type"
+      },
+      "romajiToKana": {
+        "title": "Romaji to Kana",
+        "description": "Type kana on any keyboard"
+      },
+      "kanjiToFurigana": {
+        "title": "Kanji to Furigana",
+        "description": "Readings above any text"
+      },
+      "footer": {
+        "note": "Free, in your browser, from the app’s dictionary.",
+        "title": "All free tools"
+      }
+    },
+    "products": {
+      "label": "Products",
+      "feature": {
+        "description": "The dictionary, Image Search, Translate, and Player. Works offline.",
+        "action": "Get the app"
+      },
+      "apps": "Apps",
+      "iphoneApp": {
+        "description": "Dictionary, Image Search, Translate, Player"
+      },
+      "browserExtension": {
+        "title": "Browser extension",
+        "description": "Look up Japanese on any web page"
+      },
+      "free": "Free",
+      "dictionary": {
+        "title": "{name} Dictionary",
+        "description": "Free on the web"
+      },
+      "freeTools": {
+        "title": "Free tools",
+        "description": "Kana, kanji, and frequency lists"
+      },
+      "learn": "Learn",
+      "referenceGuides": {
+        "title": "Reference guides",
+        "description": "Printable sheets"
+      },
+      "courses": {
+        "title": "Courses",
+        "description": "Lessons built from real clips"
+      },
+      "footer": {
+        "note": "Apps, extensions, free tools, guides, and courses.",
+        "title": "All products"
+      }
+    },
+    "company": {
+      "label": "Company"
+    }
+  },
+  "pageShell": {
+    "effective": "Effective {date}",
+    "englishPrevails": "This page is a translation of the English original. If the two differ, the {english} prevails.",
+    "englishVersion": "English version"
+  },
+  "pages": {
+    "/": {
+      "title": "Home",
+      "description": "Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too."
+    },
+    "/dictionary/": {
+      "title": "Japanese dictionary",
+      "description": "Look up Japanese words and kanji in Japanese, kana, romaji, or English."
+    },
+    "/products/": {
+      "title": "Products",
+      "description": "Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary."
+    },
+    "/products/zenbu-japanese-app/": {
+      "title": "Zenbu Japanese for iPhone",
+      "description": "An offline Japanese dictionary for iPhone with Image Search, handwriting, a live conversation translator, and YouTube with linked captions."
+    },
+    "/about/": {
+      "title": "About",
+      "description": "About Zenbu Japanese."
+    },
+    "/support/": {
+      "title": "Support",
+      "description": "Get help with Zenbu Japanese and Tomodachi."
+    },
+    "/contact/": {
+      "title": "Contact",
+      "description": "Contact the Zenbu Japanese team."
+    },
+    "/legal/": {
+      "title": "Legal",
+      "description": "Zenbu Japanese legal policies."
+    },
+    "/legal/privacy/": {
+      "title": "Privacy Policy",
+      "description": "How Zenbu Japanese handles information in its apps, Tomodachi included, on this website, and in a Zenbu account."
+    },
+    "/legal/terms/": {
+      "title": "Terms of Use",
+      "description": "Terms for using Zenbu Japanese and this website."
+    },
+    "/legal/dmca/": {
+      "title": "DMCA Copyright Policy",
+      "description": "How to report claimed copyright infringement to Zenbu Japanese."
+    },
+    "/legal/affiliate-disclosure/": {
+      "title": "Affiliate Disclosure",
+      "description": "How Zenbu Japanese discloses affiliate relationships."
+    },
+    "/sources/": {
+      "title": "Sources",
+      "description": "The open data behind the Zenbu Japanese dictionary, with credits and licences."
+    },
+    "/sitemap/": {
+      "title": "Sitemap",
+      "description": "Every page on zenbujapanese.com."
+    }
+  },
+  "privacy": {
+    "intro": "This policy covers the {name} iPhone app, Tomodachi for iPhone and Mac, zenbujapanese.com, and your Zenbu account.",
+    "short": {
+      "heading": "The short version",
+      "works": "The app works without an account, and keeps what you do in it on your device.",
+      "account": "If you create a Zenbu account, we keep your email, how you sign in, and the study data you sync, so your devices stay in step.",
+      "noSale": "We don't sell or share your personal information, and the app has no ads, analytics, or tracking.",
+      "providers": "A few companies help us run the service, such as Cloudflare, which carries our traffic, and useSend, which sends our email.",
+      "rights": "You can see, export, correct, or delete your data, and delete your account any time."
+    },
+    "whoWeAre": {
+      "heading": "Who we are",
+      "body": "{name} is provided by {company}, doing business as {name} (\"we\"), {street}, {city}, {country}. For anything about your data, email {email}, or call {phone}."
+    },
+    "device": {
+      "heading": "On your device",
+      "storage": "You never need an account. The app keeps your profile, searches, notes, known words, lists, watch history, photos, and Translate conversations in its private storage on your device, and sends us none of it unless you sign in to a Zenbu account, which syncs only what's listed below. It stays until you delete it in the app or uninstall the app, which doesn't delete a Zenbu account. Your device's own backups, such as iCloud Backup, can include it, under Apple's terms.",
+      "onDevice": "Image Search, Translate, text recognition, and speech run on your device with Apple's frameworks. Translate uses the microphone only while a conversation or Listening is running, and hears whoever is speaking nearby, but keeps no audio and never sends a conversation to us. The app asks for the camera and microphone only when a feature needs them, and you can change that in iPhone Settings.",
+      "youtube": "Player plays and searches YouTube videos, and can show YouTube's caption translations, so YouTube (Google) receives those requests under its own privacy policy. Optional dictionaries you download are delivered by Cloudflare."
+    },
+    "account": {
+      "heading": "Your Zenbu account",
+      "intro": "While you're signed out, our apps send nothing to our account service. If you create or sign in to a Zenbu account where our apps or this website offer one, we keep:",
+      "removals": "When you remove a video, list, or bookmark, we keep only a record that it was removed, so your other devices follow. The iPhone app's profile syncs its name and username, which your account keeps anyway. The profile's photo and email, notes, photos, searches, settings, and whole Translate conversations don't sync. A sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. We'll update this policy before an app or this website syncs anything else.",
+      "emails": "Our account service emails you only to send sign-in codes, to tell you when a way to sign in is added or removed, and to confirm that your account was deleted.",
+      "website": "Where this website offers sign-in, your account there lets you change your name and username, manage how you sign in, sign out, and delete your account. It doesn't read your study data yet, and we'll update this policy before it does. Signing in uses cookies only to sign you in and keep you signed in, and the website remembers your theme and that you're signed in."
+    },
+    "keep": {
+      "what": "What we keep",
+      "why": "Why",
+      "account": {
+        "what": "Your account: your email, and a name, username, and profile picture link if you or the service you sign up with give one",
+        "why": "To sign you in and show your account"
+      },
+      "signIn": {
+        "what": "How you sign in: Apple, Google, or a code we email you, with your ID at Apple or Google",
+        "why": "To sign you in"
+      },
+      "sessions": {
+        "what": "Your sessions: each device or browser you sign in on, with its IP address and the app or browser and system it runs on",
+        "why": "To keep you signed in, and to keep the service secure"
+      },
+      "studyData": {
+        "what": "Your study data: known words and lists, and from the iPhone app, the 50 videos you most recently watched in Player and the Translate sentences you bookmark",
+        "why": "To keep your devices and apps in step"
+      },
+      "changes": {
+        "what": "A record of each change you sync",
+        "why": "So a change sent twice is applied once"
+      }
+    },
+    "tomodachi": {
+      "heading": "Tomodachi",
+      "progress": "Tomodachi, our companion app, works without an account or sign-in. It saves your progress (Tomo, its words, and your answers) on your device and syncs it through your own iCloud, in your private CloudKit database, under Apple's terms. We run no server for it and can't see that progress.",
+      "reminders": "Its reminders are notifications it schedules on your device, not push notifications from us. It has no ads, analytics, or tracking, and doesn't use the microphone or speech recognition. The Mac app works the same way, and opens when you log in to your Mac only if you turn that on.",
+      "account": "If you link your Zenbu account to it, it can read your lists and known words, mark words Known, and delete your account when you ask, and it looks words up in our dictionary service, which doesn't keep what it sends. Before another app can use your account, we'll update this policy."
+    },
+    "providers": {
+      "heading": "Who else handles your information",
+      "intro": "We don't sell or share your personal information. These companies handle it for us, under their own terms:",
+      "cloudflare": "{provider} hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address. It processes routine request details, such as IP addresses.",
+      "useSend": "{provider} sends our email, so it gets your email address and the messages we send you, and keeps copies of them.",
+      "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
+      "ahrefs": "{provider} counts visits to this website with Ahrefs Web Analytics, which uses no cookies.",
+      "google": "{provider} serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google.",
+      "apple": "{provider} signs you in if you choose Apple.",
+      "youtube": "{provider} receives your requests when you use Player.",
+      "where": "These companies may process information in the United States and other countries. If we add anything to Google Tag Manager that uses cookies, we'll update this policy and ask for consent where the law requires it."
+    },
+    "retention": {
+      "heading": "How long we keep it",
+      "what": "What",
+      "howLong": "How long",
+      "account": {
+        "what": "Your account and study data",
+        "howLong": "Until you delete your account"
+      },
+      "sessions": {
+        "what": "Sessions",
+        "howLong": "Until you sign out, or 60 days after you last use one"
+      },
+      "codes": {
+        "what": "Sign-in codes",
+        "howLong": "10 minutes"
+      },
+      "requestCounts": {
+        "what": "Request counts by IP address, to stop abuse",
+        "howLong": "A day after the last request"
+      },
+      "changes": {
+        "what": "Records of each change you sync",
+        "howLong": "30 days, and then until the next change you sync"
+      },
+      "backups": {
+        "what": "Backups of the account database",
+        "howLong": "30 days"
+      },
+      "supportEmail": {
+        "what": "Support email",
+        "howLong": "As long as we need it to help you"
+      },
+      "expired": "Expired sessions, sign-in codes, and request counts are deleted within an hour."
+    },
+    "bases": {
+      "heading": "Why we're allowed to use it",
+      "account": "Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for.",
+      "security": "Sessions, request counts, backups, running this website and our downloads, and counting visits: our legitimate interest in keeping the service secure, reliable, and working well.",
+      "support": "Support email: our legitimate interest in answering you."
+    },
+    "rights": {
+      "heading": "Your rights",
+      "export": {
+        "title": "See and export.",
+        "text": "{title} Email {email} for a copy of the data your account holds."
+      },
+      "correct": {
+        "title": "Correct.",
+        "text": "{title} Change your name and username on this website where it offers sign-in. For your email or anything else, email us and we'll correct it."
+      },
+      "delete": {
+        "title": "Delete.",
+        "text": "{title} Delete your account in any of our apps that lets you create one, or on this website wherever you can sign in to it. That deletes your account and the data you synced at once, and the backups that hold them within 30 days. Your devices keep their own data and keep working."
+      },
+      "object": {
+        "title": "Object or restrict.",
+        "text": "{title} Ask us to stop or limit a use of your information."
+      },
+      "fairness": "We won't treat you differently for using these rights. You can also complain to your data protection authority."
+    },
+    "children": {
+      "heading": "Children",
+      "body": "{name} is a general-audience reference and is not directed to children under 13. If we learn that an account belongs to a child under 13, we delete it."
+    },
+    "changes": {
+      "heading": "Changes and contact",
+      "body": "We update this policy when our apps, our services, or this website change how they handle information, and the date above marks the current version. Questions go to {email}. See also the {terms}."
+    }
+  },
+  "productPage": {
+    "title": "{name}: Japanese Dictionary & Translator",
+    "breadcrumb": "breadcrumb",
+    "subtitle": "Japanese dictionary and translator for iPhone",
+    "lead": "Look up any word offline, read Japanese from photos, draw kanji you can’t type, and talk through conversations in Japanese and English.",
+    "watchDemo": "Watch demo",
+    "carousel": {
+      "region": "carousel",
+      "slide": "slide",
+      "position": "{index} of {count}"
+    },
+    "demo": {
+      "heading": "Features",
+      "previous": "Previous feature",
+      "next": "Next feature"
+    },
+    "demos": {
+      "search": {
+        "label": "Search",
+        "title": "Search in any script",
+        "description": "Type Japanese, kana, romaji, or English. Among equally good matches, the most common words come first."
+      },
+      "imageSearch": {
+        "label": "Image Search",
+        "title": "Read Japanese from a photo",
+        "description": "Snap a menu or a sign, then tap any word to open it."
+      },
+      "handwriting": {
+        "label": "Handwriting",
+        "title": "Draw a kanji you can’t type",
+        "description": "Write it in any stroke order. Zenbu reads the finished shape."
+      },
+      "conjugations": {
+        "label": "Conjugations",
+        "title": "Every form of a verb",
+        "description": "Each form, with what it means and real example sentences."
+      },
+      "translate": {
+        "label": "Translate",
+        "title": "Talk it through, live",
+        "description": "Two people, one iPhone, Japanese and English in any order."
+      }
+    },
+    "screenshots": {
+      "heading": "See it in action.",
+      "previous": "Previous screenshots",
+      "next": "Next screenshots"
+    },
+    "captions": {
+      "searchResults": "Search in any script",
+      "wordDetail": "Pitch accent and meanings",
+      "imageSearch": "Read Japanese from a photo",
+      "handwriting": "Draw a kanji you can’t type",
+      "kanjiDetail": "See how each kanji is built",
+      "conjugations": "Every form of a verb",
+      "translate": "Talk it through, live"
+    },
+    "inside": {
+      "heading": "What’s inside. {aside}",
+      "aside": "Four tabs, one dictionary."
+    },
+    "features": {
+      "dictionary": {
+        "title": "Offline dictionary",
+        "description": "More than 200,000 words with furigana, pitch accent, conjugations, kanji, and example sentences."
+      },
+      "imageSearch": {
+        "title": "Image Search",
+        "description": "Read Japanese from a photo, across or down the page, and tap any word."
+      },
+      "handwriting": {
+        "title": "Handwriting",
+        "description": "Draw a kanji in any stroke order, or build it from its radicals."
+      },
+      "translate": {
+        "title": "Translate",
+        "description": "Two-way conversations and a listening mode, running on the iPhone."
+      },
+      "player": {
+        "title": "Player",
+        "description": "YouTube with linked Japanese captions. Tap a word to look it up."
+      },
+      "lists": {
+        "title": "Lists and Known Words",
+        "description": "Save words to your own lists and hide furigana on words you know."
+      },
+      "frequency": {
+        "title": "Frequency dictionaries",
+        "description": "JLPT and YouTube built in, plus anime, manga, novels, and more."
+      },
+      "furigana": {
+        "title": "Furigana kanji highlight",
+        "description": "Tap a kanji to see which part of the reading belongs to it."
+      }
+    },
+    "videos": {
+      "heading": "Watch it work.",
+      "previous": "Previous videos",
+      "next": "Next videos",
+      "seeAll": "See all videos",
+      "play": "Play {title}"
+    },
+    "questionsHeading": "Questions",
+    "questions": {
+      "offline": {
+        "question": "Does it work offline?",
+        "answer": "The dictionary always does. Translate downloads Apple’s Japanese and English speech recognition and translation once, then works without a connection. Player needs one for YouTube."
+      },
+      "frequency": {
+        "question": "Which frequency lists does it use?",
+        "answer": "JLPT levels and YouTube come built in. Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual Novels, and Video Games are optional downloads."
+      },
+      "web": {
+        "question": "Is the web dictionary the same?",
+        "answer": "It has the same entries as the app’s Search tab, free in your browser. Image Search, handwriting, Translate, and Player are in the app.",
+        "link": "Search the dictionary"
+      }
+    },
+    "facts": {
+      "platform": "Platform",
+      "requires": "Requires",
+      "minimumOs": "iOS {version} or later",
+      "version": "Version"
+    },
+    "more": {
+      "heading": "More from Zenbu",
+      "all": "All products"
+    }
+  },
+  "products": {
+    "lead": "Apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary.",
+    "filters": {
+      "all": {
+        "label": "All",
+        "title": "All products",
+        "description": "Apps, extensions, free tools, guides, and courses, all built on one dictionary."
+      },
+      "apps": {
+        "label": "Apps",
+        "title": "Apps",
+        "description": "Everything Zenbu does, in your pocket."
+      },
+      "extensions": {
+        "label": "Extensions",
+        "title": "Extensions",
+        "description": "Zenbu in your browser, on any page."
+      },
+      "free-tools": {
+        "label": "Free tools",
+        "title": "Free tools",
+        "description": "The app’s dictionary and reference lists, free in your browser."
+      },
+      "reference-guides": {
+        "label": "Reference guides",
+        "title": "Reference guides",
+        "description": "Printable sheets to keep beside you while you study."
+      },
+      "courses": {
+        "label": "Courses",
+        "title": "Courses",
+        "description": "Short lessons built from real Japanese."
+      }
+    },
+    "catalog": {
+      "types": "Product types",
+      "search": "Search products",
+      "searchPlaceholder": "Search products…",
+      "count": {
+        "one": "{count} product",
+        "other": "{count} products"
+      },
+      "noMatch": "No products match “{query}”.",
+      "clear": "Clear search",
+      "learnMore": "Learn more{about}",
+      "about": " about {title}"
+    },
+    "badges": {
+      "free": "Free",
+      "comingSoon": "Coming soon"
+    },
+    "featuredApp": {
+      "tags": {
+        "platform": "iPhone",
+        "offline": "Works offline"
+      },
+      "description": "An offline Japanese dictionary with Image Search, handwriting, a live conversation translator, and YouTube with linked captions.",
+      "includes": {
+        "dictionary": "Offline dictionary",
+        "imageSearch": "Image Search",
+        "handwriting": "Handwriting",
+        "translate": "Translate",
+        "player": "Player",
+        "lists": "Lists and Known Words"
+      }
+    },
+    "facts": {
+      "web": "Web",
+      "pdf": "PDF",
+      "browsers": "Browsers",
+      "words": "200,000+ words",
+      "kana": "Hiragana and katakana",
+      "kanji": "Grades, JLPT, jinmeiyō",
+      "frequency": "JLPT, YouTube, anime",
+      "video": "Video"
+    },
+    "items": {
+      "browser-extension": {
+        "title": "Browser extension",
+        "description": "Look up any Japanese word on a web page without leaving it."
+      },
+      "dictionary": {
+        "title": "{name} Dictionary",
+        "description": "Search more than 200,000 words in Japanese, kana, romaji, or English."
+      },
+      "kana-charts": {
+        "title": "Kana charts",
+        "description": "Hiragana and katakana, with common words for every kana."
+      },
+      "kanji-lists": {
+        "title": "Kanji lists",
+        "description": "Kanji by school grade, JLPT level, and jinmeiyō."
+      },
+      "frequency-lists": {
+        "title": "Frequency lists",
+        "description": "The most common words, from JLPT N5 to YouTube and anime."
+      },
+      "converters": {
+        "title": "Converters",
+        "description": "Switch between hiragana, katakana, and romaji, and fix half-width text."
+      },
+      "kana-chart-pdf": {
+        "title": "Kana chart PDF",
+        "description": "Hiragana and katakana on one printable page, with romaji."
+      },
+      "verb-conjugations-pdf": {
+        "title": "Verb conjugations PDF",
+        "description": "Every form of a verb, with what each one means."
+      },
+      "jlpt-n5-kanji-pdf": {
+        "title": "JLPT N5 kanji PDF",
+        "description": "The kanji on the N5 list, with readings and stroke counts."
+      },
+      "real-clips-course": {
+        "title": "Japanese from real clips",
+        "description": "Short video lessons built around phrases you’ll hear again, every word linked to the dictionary."
+      }
+    }
+  },
+  "pronounce": {
+    "unsupported": "This browser can't pronounce Japanese.",
+    "withPitch": "{pronounce}. {pitch}"
+  },
+  "screenshots": {
+    "searchResults": "Search results for taberu in the app: 食べる, to eat, then 食べるラー油",
+    "wordDetail": "The app’s word page for 大丈夫, with its pitch accent, meanings, and frequency",
+    "imageSearchPhoto": "Image Search in the app reading a shop’s note to its customers, with every word underlined",
+    "imageSearch": "Image Search reading a ramen menu in the app, with 醤油, soy sauce, open",
+    "imageSearchTranslate": "The shop’s note translated in the app paragraph by paragraph, with the idiom 急がば回れ explained",
+    "handwriting": "The kanji 峠 drawn by hand in the app, with the kanji it could be above it",
+    "kanjiDetail": "The app’s kanji details for 峠, mountain pass, with its strokes, school grade, and JLPT level",
+    "conjugations": "The app’s conjugation table for 頑張る, to persevere, with each ending highlighted",
+    "translate": "A conversation in the app’s Translate tab, asking the way to Tokyo Station in English and Japanese"
+  },
+  "search": {
+    "index": {
+      "title": "Search the dictionary",
+      "description": "Search Japanese words and kanji in Japanese, kana, romaji, or English.",
+      "noMatch": "No words match “{query}”."
+    },
+    "metadata": {
+      "titleForEnglish": "{query} in Japanese",
+      "titleForJapanese": "{query} in Japanese",
+      "descriptionForEnglish": "{count} Japanese words for “{query}”, with readings and meanings.",
+      "descriptionForJapanese": "{count} Japanese words for “{query}”, with readings and meanings.",
+      "noResults": "No Japanese words match “{query}”."
+    },
+    "wordsFor": {
+      "one": "{count} word for {query}",
+      "other": "{count} words for {query}"
+    },
+    "kanjiRowLabel": "{character}, kanji, {summary}, shows kanji details",
+    "readingRefinement": "Search for「{query}」"
+  },
+  "searchForm": {
+    "placeholder": "Search Japanese or English",
+    "submit": "Search"
+  },
+  "site": {
+    "description": "An offline-first Japanese dictionary, image-text reader, and translator for iPhone."
+  },
+  "sourceCredits": {
+    "title": "Sources",
+    "credit": "{name}: {credit} {license}.",
+    "creditWithNotice": "{name}: {credit} {license}. {notice}"
+  },
+  "sources": {
+    "intro": "{name}'s dictionary is built from open data. Thank you to the people and projects behind it. Each source is listed with its credit and licence."
+  },
+  "support": {
+    "app": "For help with {name}, email {email}. Include your iPhone model, iOS version, and what you were doing when the problem happened.",
+    "tomodachi": "For help with Tomodachi, email the same address. Read {link}.",
+    "tomodachiLink": "how Tomodachi handles your information",
+    "privacy": "Read how we handle information in the {link}."
+  },
+  "terms": {
+    "intro": "These terms apply to the {name} iPhone app and zenbujapanese.com (the \"Service\"), provided by {company}, doing business as {name} (\"we\"). By using the Service you agree to them. If you do not agree, do not use the Service.",
+    "service": {
+      "heading": "1. The Service",
+      "body": "{name} is a Japanese learning reference: a dictionary, text reader, and translator. Definitions, readings, frequency information, and translations may be incomplete or wrong. Do not rely on them where accuracy matters, such as legal, medical, or safety decisions."
+    },
+    "use": {
+      "heading": "2. Using the Service",
+      "intro": "Use the Service only for lawful purposes. Do not:",
+      "interfere": "interfere with or disrupt the Service, or try to gain unauthorized access to it;",
+      "scrape": "scrape or copy the website in bulk with automated tools beyond what robots.txt allows;",
+      "infringe": "use the Service to infringe anyone's intellectual property or other rights."
+    },
+    "thirdParty": {
+      "heading": "3. Third-party content and data",
+      "body": "The Service includes data from third parties under their own licenses, such as the JMdict dictionary (Creative Commons Attribution-ShareAlike). Those licenses govern that data. Video features use YouTube, whose terms apply to that content."
+    },
+    "ourContent": {
+      "heading": "4. Our content",
+      "body": "Apart from third-party data under its own license, the Service's software, design, and text belong to {name} and may not be copied or redistributed without permission."
+    },
+    "app": {
+      "heading": "5. The iPhone app",
+      "body": "The app is licensed, not sold, under Apple's standard Licensed Application End User License Agreement, alongside these terms. Apple is not responsible for the app or its support."
+    },
+    "disclaimer": {
+      "heading": "6. Disclaimer",
+      "body": "THE SERVICE IS PROVIDED \"AS IS\" AND \"AS AVAILABLE\" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. WE DO NOT WARRANT THAT IT WILL BE UNINTERRUPTED, ERROR-FREE, OR ACCURATE."
+    },
+    "liability": {
+      "heading": "7. Limitation of liability",
+      "body": "TO THE EXTENT THE LAW ALLOWS, ZENBU JAPANESE AND ITS OFFICERS, EMPLOYEES, AND AGENTS ARE NOT LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE SERVICE."
+    },
+    "changes": {
+      "heading": "8. Changes and termination",
+      "body": "We may change, suspend, or discontinue the Service, and may update these terms by posting a new version here with a new date. We may suspend access for anyone who breaks these terms."
+    },
+    "law": {
+      "heading": "9. Governing law",
+      "body": "These terms are governed by the laws of the State of Wyoming, United States, without regard to conflict-of-law principles."
+    },
+    "contact": {
+      "heading": "10. Contact",
+      "body": "Questions go to {email}. See also the {privacy}."
+    }
+  },
+  "tools": {
+    "index": {
+      "title": "Online tools for learning Japanese",
+      "description": "Convert between hiragana, katakana, and romaji, fix half-width text, and browse kana and kanji charts. Free, in your browser.",
+      "lead": "Convert between hiragana, katakana, and romaji, browse kana and kanji charts, and look up words. Free, in your browser, with nothing to install.",
+      "converters": "Converters",
+      "reference": "Dictionary and reference",
+      "appTitle": "Reading Japanese on paper or a screen?",
+      "appLine": "The iPhone app reads it from a photo."
+    },
+    "names": {
+      "name": "{from} to {to}",
+      "title": "{name} Converter"
+    },
+    "converters": {
+      "hiragana-to-katakana": {
+        "from": "Hiragana",
+        "to": "Katakana",
+        "description": "Convert hiragana to katakana as you type, free in your browser. Kanji, letters, and punctuation stay as they are.",
+        "lead": "Type or paste hiragana and get katakana as you type. Kanji, letters, and punctuation stay as they are.",
+        "card": "Turn hiragana into katakana as you type."
+      },
+      "katakana-to-hiragana": {
+        "from": "Katakana",
+        "to": "Hiragana",
+        "description": "Convert katakana to hiragana as you type, free in your browser. Kanji, letters, and punctuation stay as they are.",
+        "lead": "Type or paste katakana and get hiragana as you type. Kanji, letters, and punctuation stay as they are.",
+        "card": "Turn katakana back into hiragana."
+      },
+      "romaji-to-kana": {
+        "from": "Romaji",
+        "to": "Kana",
+        "description": "Type Japanese in romaji on any keyboard and get hiragana or katakana as you type, free in your browser.",
+        "lead": "Type Japanese in Latin letters on any keyboard and get hiragana or katakana as you type.",
+        "card": "Type romaji on any keyboard and get hiragana or katakana."
+      },
+      "kana-to-romaji": {
+        "from": "Kana",
+        "to": "Romaji",
+        "description": "Convert hiragana and katakana to romaji, spelled the Hepburn way, free in your browser.",
+        "lead": "Paste hiragana or katakana and read it in Latin letters, spelled the Hepburn way, as on signs and in most textbooks.",
+        "card": "Read kana in Latin letters, in Hepburn romanization."
+      },
+      "half-width-to-full-width": {
+        "from": "Half-width",
+        "to": "Full-width",
+        "description": "Convert half-width katakana, letters, and numbers to full-width, as many Japanese forms ask, free in your browser.",
+        "lead": "Turn half-width katakana, letters, and numbers into full-width, as many Japanese forms ask for.",
+        "card": "Fix half-width katakana and letters for Japanese forms."
+      },
+      "full-width-to-half-width": {
+        "from": "Full-width",
+        "to": "Half-width",
+        "description": "Convert full-width katakana, letters, and numbers to half-width, for systems that only take narrow characters, free in your browser.",
+        "lead": "Turn full-width katakana, letters, and numbers into half-width, for systems that only take narrow characters.",
+        "card": "Shrink full-width katakana, letters, and numbers."
+      }
+    },
+    "page": {
+      "section": "Tools",
+      "howItWorks": "How it works",
+      "questions": "Questions",
+      "related": "Related tools",
+      "allTools": "All tools",
+      "appTitle": "Found a word you don’t know?",
+      "appLine": "Search it in the dictionary, or read it from a photo with the app."
+    },
+    "appCard": {
+      "label": "The Zenbu app",
+      "dictionary": "Dictionary"
+    },
+    "card": {
+      "becomes": "becomes"
+    },
+    "converter": {
+      "heading": "Type in either box",
+      "line": "The other box converts as you type.",
+      "fromPlaceholder": "Type or paste here",
+      "toPlaceholder": "The result shows here, or type here to convert back",
+      "clear": "Clear",
+      "examples": "Try an example",
+      "try": "Try",
+      "copy": "Copy",
+      "copyLabel": "Copy {label}",
+      "copied": "Copied",
+      "selectToCopy": "Select the text to copy it",
+      "characters": {
+        "one": "{count} character",
+        "other": "{count} characters"
+      },
+      "writeIn": "Write in",
+      "change": "Change",
+      "scripts": {
+        "hiragana": "Hiragana",
+        "katakana": "Katakana"
+      },
+      "widths": {
+        "katakana": "Katakana",
+        "lettersAndNumbers": "Letters and numbers",
+        "symbolsAndSpaces": "Symbols and spaces"
+      }
+    },
+    "chart": {
+      "title": "Conversion chart",
+      "fullCharts": "Full kana charts, with common words",
+      "groupsLabel": "Kana groups",
+      "noHalfWidth": ", no half-width form",
+      "smallTsu": "double",
+      "lines": {
+        "kana": "Every kana in hiragana and katakana, with its romaji, {count} in all.",
+        "romaji": "Every kana with the romaji that spell it, {count} in all.",
+        "width": "Every katakana in both widths, {count} in all. Hiragana has no half-width form."
+      },
+      "tabs": {
+        "basic": "Basic",
+        "combinations": "Combos",
+        "extended": "Katakana"
+      },
+      "groups": {
+        "basic": "Basic",
+        "marks": "With marks",
+        "small": "Small kana",
+        "combinations": "Combinations",
+        "extended": "Katakana only"
+      },
+      "extendedKatakana": "Extended katakana"
+    },
+    "reference": {
+      "for": "For",
+      "howToType": "How to type it",
+      "howSpelled": "How it’s spelled",
+      "examples": "Examples",
+      "separator": ", ",
+      "typingTipsTitle": "Typing tips",
+      "spellingRulesTitle": "Spelling rules",
+      "widthsTitle": "What changes",
+      "widthsLine": "Each kind of character, in both widths.",
+      "character": "Character",
+      "halfWidth": "Half-width",
+      "fullWidth": "Full-width",
+      "typingTips": {
+        "n": {
+          "label": "ん",
+          "rule": "n before a consonant or at the end, where nn works too; n’ before a vowel or y"
+        },
+        "nBeforeLabial": {
+          "label": "ん before b or p",
+          "rule": "m works too"
+        },
+        "smallTsu": {
+          "label": "Small っ",
+          "rule": "Double the consonant"
+        },
+        "longMark": {
+          "label": "Long mark ー",
+          "rule": "A hyphen"
+        },
+        "smallKana": {
+          "label": "Small kana",
+          "rule": "x or l first"
+        },
+        "wo": {
+          "label": "を",
+          "rule": "wo",
+          "note": "the particle"
+        },
+        "punctuation": {
+          "label": "Punctuation",
+          "rule": "Type it as usual"
+        }
+      },
+      "spellingRules": {
+        "smallTsu": {
+          "label": "Small っ",
+          "rule": "Doubles the next consonant"
+        },
+        "nBeforeVowel": {
+          "label": "ん before a vowel or y",
+          "rule": "Gets an apostrophe"
+        },
+        "longVowels": {
+          "label": "Long vowels",
+          "rule": "Spelled as written"
+        },
+        "longMark": {
+          "label": "ー in katakana",
+          "rule": "Repeats the vowel"
+        },
+        "wo": {
+          "label": "を",
+          "rule": "Spelled o",
+          "note": "as Hepburn writes it"
+        },
+        "kanji": {
+          "label": "Kanji",
+          "rule": "Stay as they are",
+          "note": "only kana have a spelling"
+        }
+      },
+      "widthRows": {
+        "katakana": {
+          "kind": "Katakana"
+        },
+        "voiced": {
+          "kind": "Voiced kana",
+          "note": "Two half-width characters join into one."
+        },
+        "letters": {
+          "kind": "Letters"
+        },
+        "numbers": {
+          "kind": "Numbers"
+        },
+        "punctuation": {
+          "kind": "Punctuation"
+        },
+        "space": {
+          "kind": "Space",
+          "note": "A narrow space becomes a wide one."
+        },
+        "hiragana": {
+          "kind": "Hiragana",
+          "note": "It has no half-width form, so it stays as it is."
+        }
+      }
+    },
+    "howItWorks": {
+      "hiragana-to-katakana": {
+        "first": "Each hiragana has one katakana partner: <ja>か</ja> becomes <ja>カ</ja>, <ja>しゃ</ja> becomes <ja>シャ</ja>, and small kana stay small. The long-vowel mark <ja>ー</ja> belongs to both, so it carries over.",
+        "second": "Katakana mostly writes words from other languages, like <ja>コーヒー</ja> (coffee) and <ja>スマートフォン</ja> (smartphone), and names from outside Japan."
+      },
+      "katakana-to-hiragana": {
+        "first": "Each katakana has one hiragana partner: <ja>カ</ja> becomes <ja>か</ja>, <ja>シャ</ja> becomes <ja>しゃ</ja>, and small kana stay small. The long-vowel mark <ja>ー</ja> belongs to both, so it carries over. <ja>ヷ</ja> to <ja>ヺ</ja> have no hiragana, so they stay as they are.",
+        "second": "Hiragana is how a learner reads a word aloud, so turning <ja>コーヒー</ja> into <ja>こーひー</ja> shows its sounds in the script you learned first."
+      },
+      "romaji-to-kana": {
+        "first": "Type Japanese sounds in Latin letters and each syllable turns into kana as soon as it’s complete: <typed>ka</typed> becomes <ja>か</ja>, <typed>kya</typed> becomes <ja>きゃ</ja>. Letters that can’t start a syllable yet wait for the next one.",
+        "second": "Choose hiragana for Japanese words and katakana for words from other languages. A hyphen types the long mark, so <typed>ko-hi-</typed> becomes <ja>コーヒー</ja> in katakana."
+      },
+      "kana-to-romaji": {
+        "first": "Each kana becomes its Hepburn spelling, the one on signs and in most textbooks: <ja>し</ja> is <latin>shi</latin>, <ja>つ</ja> is <latin>tsu</latin>, and <ja>ふ</ja> is <latin>fu</latin>. Katakana works the same way.",
+        "second": "Long vowels are spelled as they’re written: <ja>とうきょう</ja> is <latin>toukyou</latin>, and <ja>ー</ja> repeats the vowel before it, so <ja>コーヒー</ja> is <latin>koohii</latin>. Kana has no spaces between words, so neither does the romaji, and kanji stay as they are."
+      },
+      "half-width-to-full-width": {
+        "first": "Half-width characters are narrow versions from early computers that showed one byte per character. Each becomes its standard full-width form: <ja>ｶ</ja> becomes <ja>カ</ja>, and <latin>A</latin> becomes <ja>Ａ</ja>.",
+        "second": "A voiced half-width kana is two characters, the kana and a separate mark (<ja>ｶﾞ</ja>). They join into one (<ja>ガ</ja>)."
+      },
+      "full-width-to-half-width": {
+        "first": "Each full-width character becomes its narrow form: <ja>カ</ja> becomes <ja>ｶ</ja>, and <ja>Ａ</ja> becomes <latin>A</latin>. A voiced kana splits into two characters, <ja>ガ</ja> into <ja>ｶﾞ</ja>.",
+        "second": "Hiragana and kanji have no half-width form, so they stay as they are."
+      }
+    },
+    "questions": {
+      "kana": {
+        "kanjiAndLetters": {
+          "question": "Does it change kanji or letters?",
+          "answer": "No. Only kana change. Kanji, Latin letters, numbers, and punctuation stay as they are, so you can paste a whole sentence."
+        },
+        "longMark": {
+          "question": "What happens to the long mark ー?",
+          "answer": "Hiragana and katakana share it, so it carries over unchanged. コーヒー becomes こーひー, which is how a learner would read it."
+        },
+        "katakana": {
+          "question": "When is katakana used?",
+          "answer": "Mostly for words borrowed from other languages, like コーヒー (coffee), for names from outside Japan, and for emphasis, as italics are in English."
+        }
+      },
+      "romaji": {
+        "n": {
+          "question": "How do I type ん?",
+          "answer": "Type n before a consonant or at the end of a word, where nn works too. Before a vowel or y, type n’ so it isn’t read as な or にゃ: kin’en gives きんえん, while kinen gives きねん."
+        },
+        "smallTsu": {
+          "question": "How do I type a small っ?",
+          "answer": "Double the consonant after it: kitte gives きって, and matcha gives まっちゃ."
+        },
+        "romanization": {
+          "question": "Which romanization does it use?",
+          "answer": "Hepburn, the spelling on signs, maps, and most textbooks: し is shi, つ is tsu, and ふ is fu. It also accepts the other common spellings when you type, such as si, tu, and hu."
+        }
+      },
+      "width": {
+        "halfWidthKatakana": {
+          "question": "What is half-width katakana?",
+          "answer": "A narrow form of katakana from early computers that could only show one byte per character. It still turns up on receipts, bank statements, and old systems."
+        },
+        "forms": {
+          "question": "Why do forms ask for full-width?",
+          "answer": "Many Japanese forms check for full-width (全角) characters, especially in name and address fields, and reject half-width ones."
+        },
+        "hiragana": {
+          "question": "Does it change hiragana?",
+          "answer": "No. Hiragana has no half-width form, so it stays as it is either way."
+        }
+      }
+    },
+    "referenceTools": {
+      "dictionary": {
+        "title": "Dictionary",
+        "line": "Words and kanji, searched in Japanese, kana, romaji, or English."
+      },
+      "hiragana": {
+        "title": "Hiragana chart",
+        "line": "Every hiragana, with common words for each."
+      },
+      "katakana": {
+        "title": "Katakana chart",
+        "line": "Every katakana, with common words for each."
+      },
+      "kanji": {
+        "title": "Kanji lists",
+        "line": "Kanji by school grade, JLPT level, and jinmeiyō."
+      },
+      "frequency": {
+        "title": "Frequency lists",
+        "line": "The most common words, from JLPT N5 to anime and YouTube."
+      },
+      "categories": {
+        "title": "Word categories",
+        "line": "Words by part of speech, usage label, and subject."
+      }
+    }
+  },
+  "word": {
+    "metadata": {
+      "word": "{headword} ({reading})",
+      "title": "{word} meaning",
+      "titleWithExamples": "{word} meaning",
+      "description": "{word}: {meaning}.",
+      "descriptionWithPartOfSpeech": "{word}: {meaning}. {partOfSpeech}."
+    },
+    "formLabels": "({labels})",
+    "labelSeparator": ", ",
+    "formSeparator": ", ",
+    "kanjiRowLabel": "{character}, {meaning}, shows kanji details",
+    "retired": "This word is no longer in the dictionary.\n"
+  }
+}

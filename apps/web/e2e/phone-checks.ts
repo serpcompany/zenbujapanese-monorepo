@@ -69,7 +69,7 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
   const meantToCut = (box: Element, style: CSSStyleDeclaration) =>
     style.textOverflow === 'ellipsis' ||
     style.webkitLineClamp !== 'none' ||
-    box.querySelector('[aria-roledescription="slide"]') !== null
+    box.querySelector('[data-slot="carousel-item"]') !== null
   const cutBy = (element: Element, boxes: DOMRect[]) => {
     for (const box of [element, ...ancestors(element)]) {
       const style = getComputedStyle(box)

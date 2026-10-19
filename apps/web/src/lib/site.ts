@@ -1,12 +1,11 @@
 import { accountPagesOpen } from './account/availability'
 import { accountPages } from './account/pages'
 import { productionOrigin, stagingOrigin } from './origins'
+import { converterPath, toolsPath } from './tools/paths'
 
 export const site = {
   name: 'Zenbu Japanese',
   mark: '全',
-  description:
-    'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
   supportEmail: 'support@zenbujapanese.com'
 } as const
 
@@ -20,14 +19,19 @@ type LinkTarget = {
 }
 
 const linkTargets = [
-  { id: 'tools', kind: 'page', name: 'Tools index, /tools/', href: placeholderHref },
+  { id: 'tools', kind: 'page', name: 'Tools index, /tools/', href: toolsPath },
   {
     id: 'hiragana-to-katakana',
     kind: 'page',
     name: 'Hiragana to Katakana converter',
-    href: placeholderHref
+    href: converterPath('hiragana-to-katakana')
   },
-  { id: 'romaji-to-kana', kind: 'page', name: 'Romaji to Kana converter', href: placeholderHref },
+  {
+    id: 'romaji-to-kana',
+    kind: 'page',
+    name: 'Romaji to Kana converter',
+    href: converterPath('romaji-to-kana')
+  },
   {
     id: 'kanji-to-furigana',
     kind: 'page',
@@ -63,16 +67,35 @@ const linkTargets = [
     href: accountPagesOpen() ? accountPages.register.path : placeholderHref
   },
   { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
-  { id: 'youtube', kind: 'social', name: 'YouTube', href: placeholderHref },
-  { id: 'x', kind: 'social', name: 'X', href: placeholderHref },
-  { id: 'instagram', kind: 'social', name: 'Instagram', href: placeholderHref },
-  { id: 'tiktok', kind: 'social', name: 'TikTok', href: placeholderHref },
-  { id: 'discord', kind: 'social', name: 'Discord', href: placeholderHref },
-  { id: 'reddit', kind: 'social', name: 'Reddit', href: placeholderHref },
-  { id: 'threads', kind: 'social', name: 'Threads', href: placeholderHref },
-  { id: 'bluesky', kind: 'social', name: 'Bluesky', href: placeholderHref },
-  { id: 'linkedin', kind: 'social', name: 'LinkedIn', href: placeholderHref },
-  { id: 'facebook', kind: 'social', name: 'Facebook', href: placeholderHref }
+  {
+    id: 'youtube',
+    kind: 'social',
+    name: 'YouTube',
+    href: 'https://www.youtube.com/@zenbu-japanese'
+  },
+  { id: 'github', kind: 'social', name: 'GitHub', href: 'https://github.com/zenbujapanese' },
+  { id: 'x', kind: 'social', name: 'X', href: 'https://x.com/zenbujapanese' },
+  {
+    id: 'facebook',
+    kind: 'social',
+    name: 'Facebook',
+    href: 'https://www.facebook.com/zenbujapanese/'
+  },
+  { id: 'reddit', kind: 'social', name: 'Reddit', href: 'https://www.reddit.com/r/ZenbuJapanese/' },
+  {
+    id: 'instagram',
+    kind: 'social',
+    name: 'Instagram',
+    href: 'https://www.instagram.com/zenbu_japanese'
+  },
+  { id: 'tiktok', kind: 'social', name: 'TikTok', href: 'https://www.tiktok.com/@zenbujapanese' },
+  {
+    id: 'linkedin',
+    kind: 'social',
+    name: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/zenbujapanese'
+  },
+  { id: 'medium', kind: 'social', name: 'Medium', href: 'https://medium.com/@zenbujapanese' }
 ] as const satisfies readonly LinkTarget[]
 
 export type LinkTargetId = (typeof linkTargets)[number]['id']
@@ -97,12 +120,16 @@ export function isProductionSite() {
   return process.env.SITE_ENV === 'production'
 }
 
+export function isStagingSite() {
+  return process.env.SITE_ENV === 'staging'
+}
+
 export function isDeployedSite() {
-  return process.env.SITE_ENV === 'staging' || process.env.SITE_ENV === 'production'
+  return isStagingSite() || isProductionSite()
 }
 
 export function siteOrigin(): string {
-  return process.env.SITE_ENV === 'staging' ? stagingOrigin : productionOrigin
+  return isStagingSite() ? stagingOrigin : productionOrigin
 }
 
 export function servedOrigin(request: Request) {

@@ -41,6 +41,7 @@ enum SyncEntity {
   static let listWord = "listWord"
   static let watchedVideo = "watchedVideo"
   static let bookmarkedSentence = "bookmarkedSentence"
+  static let profile = "profile"
 
   static let firstSynced = [knownWord, list, listWord]
   static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence]
@@ -137,6 +138,7 @@ struct SyncChange: Decodable, Sendable {
     case listWord(SyncedListWord)
     case watchedVideo(SyncedWatchedVideo)
     case bookmark(SyncedBookmark)
+    case profile(SyncedProfile)
     case gone
     case unsynced
   }
@@ -170,6 +172,8 @@ struct SyncChange: Decodable, Sendable {
       payload = .watchedVideo(try container.decode(SyncedWatchedVideo.self, forKey: .data))
     case SyncEntity.bookmarkedSentence:
       payload = .bookmark(try container.decode(SyncedBookmark.self, forKey: .data))
+    case SyncEntity.profile:
+      payload = .profile(try container.decode(SyncedProfile.self, forKey: .data))
     default:
       payload = .unsynced
     }

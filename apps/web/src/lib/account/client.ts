@@ -1,3 +1,4 @@
+import type { Locale } from '../i18n/config'
 import {
   type AccountSession,
   type Identity,
@@ -75,13 +76,17 @@ const unexpected = (status: number): Result<never> => ({
 const checked = <T>(value: T | null, status: number): Result<T> =>
   value === null ? unexpected(status) : accepted(value)
 
-export function accountApi(apiUrl: string, send: typeof fetch = (...args) => fetch(...args)) {
+export function accountApi(
+  apiUrl: string,
+  language: Locale,
+  send: typeof fetch = (...args) => fetch(...args)
+) {
   async function call<T>(
     path: string,
     { method = 'GET', body, accessToken, signsIn = false }: Call,
     read: (value: unknown, status: number) => Result<T>
   ): Promise<Result<T>> {
-    const headers: Record<string, string> = {}
+    const headers: Record<string, string> = { 'content-language': language }
     if (body !== undefined) headers['content-type'] = 'application/json'
     if (accessToken) headers.authorization = `Bearer ${accessToken}`
     if (signsIn) headers['x-zenbu-client'] = websiteClient

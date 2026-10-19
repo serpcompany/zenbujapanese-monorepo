@@ -52,6 +52,15 @@ class WorkflowTriggerTests(unittest.TestCase):
                         f"{name} doesn't trigger on {path}/** ({root}): {filters}",
                     )
 
+    def test_a_change_to_an_image_that_copies_language_data_checks_the_pins(self):
+        images = json.loads((locations.LANGUAGE_DATA / "release-inputs.json").read_text())["images"]
+        workflow = locations.REPO_ROOT / ".github" / "workflows" / "language-data-build.yml"
+        self.assertTrue(images)
+        for image in images:
+            with self.subTest(image):
+                self.assertIn(image, push_paths(workflow))
+                self.assertIn(image, pull_request_paths(workflow))
+
     def test_a_pull_request_that_changes_a_release_input_root_builds_the_release(self):
         roots = json.loads((locations.LANGUAGE_DATA / "release-inputs.json").read_text())["roots"]
         workflow = locations.REPO_ROOT / ".github" / "workflows" / "language-data-build.yml"

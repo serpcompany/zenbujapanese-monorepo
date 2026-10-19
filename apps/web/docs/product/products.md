@@ -2,7 +2,7 @@
 
 The products catalog, `/products/`, lists everything Zenbu makes or plans, and each product has a
 page under `/products/<name>/`. The first is the iPhone app's, `/products/zenbu-japanese-app/`.
-Both follow the #648 mockups (Products page and Product page), the owner's decision on #652 to
+Both follow the #844 mockups (Products page and Product page), the owner's decision on #652 to
 show planned products as Coming soon rather than hide them, and the owner's decision on #673 for
 the product page's address. Every claim about the app comes from the app's product docs
 ([`apps/ios/docs/product/`](../../../ios/docs/product/index.md)), and the screenshots are the App
@@ -24,20 +24,21 @@ on phones, two from 768 pixels. Zenbu Japanese for iPhone leads as a wide card a
 with the App Store's Image Search and word screenshots, its iPhone and Works offline tags, a
 two-column list of what it includes, Get the app, and Learn more.
 
-- Source: #648 mockups (Products page); #652.
+- Source: #844 mockups (Products page); #652.
 - Check: Products spec, "lists every product, the iPhone app first, with the All filter current";
   `e2e/layout.spec.ts`, "/products/ fits the window, with the site's header and footer".
 
 **Products.** After the iPhone app, the catalog lists the Browser extension; the free tools
 (Zenbu Japanese Dictionary, Kana charts, Kanji lists, Frequency lists, and Converters); the
 reference guides (Kana chart PDF, Verb conjugations PDF, and JLPT N5 kanji PDF); and the course,
-Japanese from real clips (#623). Each card shows its icon, name, a Free or Coming soon badge, a
+Japanese from real clips (#835). Each card shows its icon, name, a Free or Coming soon badge, a
 line about it, and its facts and type. A free tool's card opens its page: the dictionary home,
-and the kana, kanji, and frequency browse pages. A planned product is a Coming soon card that
+the kana, kanji, and frequency browse pages, and, for Converters, the tools index (`/tools/`,
+[Tools pages](tools.md)). A planned product is a Coming soon card that
 isn't a link, so it adds no `#` link (the owner's decision on #652). The iPhone app's Get the app
 is the App Store placeholder, and Learn more opens its page.
 
-- Source: #648 mockups (Products page) and its notes; the owner's decision on #652 (show planned
+- Source: #844 mockups (Products page) and its notes; the owner's decision on #652 (show planned
   products as Coming soon).
 - Check: `src/lib/products/catalog.test.ts`, "a product without a page of its own is coming
   soon, and the others link to the site"; Products spec, "a free tool’s card opens its page, and
@@ -53,7 +54,7 @@ link shows the catalog filtered. The server renders every product into the page 
 address says, and the filters only hide cards in the browser, so search engines see the whole
 list; a filtered address is canonical to `/products/`.
 
-- Source: #648 decision and mockups (Products page); #652.
+- Source: #844 decision and mockups (Products page); #652.
 - Check: `src/lib/products/catalog.test.ts`, "each filter has its own link, and All is the
   catalog itself" and "every filter shows at least one product, and All shows them all"; Products
   spec, "each filter shows only its products, under its own heading, at its own link", "the …
@@ -67,7 +68,7 @@ includes, hold every word typed, in any case. When none do, the page says No pro
 with Clear search, which empties the box and brings the cards back. ⌘K, or Ctrl+K, focuses the
 box from anywhere on the page; the box shows ⌘K except on touch screens.
 
-- Source: #648 mockups (Products page), after keybumps.app/plugins.
+- Source: #844 mockups (Products page), after keybumps.app/plugins.
 - Check: `src/lib/products/catalog.test.ts`, "matches every word of the query, in any case,
   within the filter"; Products spec, "search narrows the cards within the current filter", "a
   search that matches nothing says so, and Clear search brings the cards back", and "⌘K or Ctrl+K
@@ -84,7 +85,7 @@ which is the App Store placeholder. Get the app in the header and the phone menu
 prompt that the word page's app-only actions open, now opens this page instead (the mockup's
 note).
 
-- Source: #648 mockups (Product page, Hero: centered + demo) and their notes; #652.
+- Source: #844 mockups (Product page, Hero: centered + demo) and their notes; #652.
 - Check: Product page spec, "leads with the app, its Get the app button to the App Store
   placeholder, and the facts" and "the header’s Get the app opens this page";
   `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account button
@@ -99,7 +100,7 @@ is announced as it changes. Only the shown feature is in the accessibility tree,
 Features, for screen readers. It is the shadcn carousel (Embla), so a swipe moves it, and so do
 the arrow keys while one of its controls has focus.
 
-- Source: #648 mockups (Product page, Hero: centered + demo).
+- Source: #844 mockups (Product page, Hero: centered + demo).
 - Check: Product page spec, "the demo shows one feature at a time, and its arrows step through
   them" and "each of the demo’s dots opens its feature and marks itself current".
 
@@ -115,7 +116,7 @@ the app is on the store, those two facts are left out and the row shows Platform
 a failure logs `app_store_lookup_failed`, and is kept for 5 minutes, so the next views don't wait
 on Apple again.
 
-- Source: #648 decision; the owner's decision on #652 (cached for a day, left out when Apple can't
+- Source: #844 decision; the owner's decision on #652 (cached for a day, left out when Apple can't
   be reached or returns nothing); #668 (no Account fact).
 - Check: `src/lib/app-store.test.ts` ("reading the App Store lookup" and "asking Apple");
   `src/components/products/product-facts.test.tsx`, "the facts row adds the version and minimum
@@ -127,7 +128,7 @@ page with its pitch accent, Image Search, handwriting, kanji details, conjugatio
 Translate. Previous and next arrows by the heading scroll it, each turning off at its end, and the
 row fades at its right edge. It is the same shadcn carousel as the demo.
 
-- Source: #648 mockups (Product page).
+- Source: #844 mockups (Product page).
 - Check: Product page spec, "the screenshot carousel scrolls with its arrows, from the first
   screenshot to the last".
 
@@ -142,7 +143,7 @@ only its thumbnail and title, and nothing from YouTube loads (no player, thumbna
 until it's clicked; the click puts YouTube's privacy-enhanced player
 (`https://www.youtube-nocookie.com/embed/<id>`) in the card's place, playing.
 
-- Source: #648 mockups (Product page, Watch it work, after Raycast's video row); the owner's
+- Source: #844 mockups (Product page, Watch it work, after Raycast's video row); the owner's
   decision on #652 (the section appears only when there are videos, with none yet).
 - Check: `src/components/products/product-videos.test.tsx`, "there are no videos yet, so the page
   has no video section and no Watch demo" and "with videos, Watch it work lists them and links to
@@ -161,9 +162,10 @@ HTML while closed; the last says the web dictionary has the app's entries, and w
 only in the app, and links to the dictionary. The offline dictionary's "more than
 200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
 words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
-dictionary, the browser extension, and kana charts as catalog cards, with All products.
+dictionary, the browser extension, and kana charts as catalog cards, with All products. The
+questions are the stock accordion (`src/components/question-list.tsx`), as the tools pages' are.
 
-- Source: #648 mockups (Product page); the app's product docs for every claim.
+- Source: #844 mockups (Product page); the app's product docs for every claim.
 - Check: Product page spec, "lists what’s inside and the questions, the first one open" and "More
   from Zenbu leads to the other products and the catalog".
 
@@ -180,9 +182,9 @@ its description.
 iPhone app's page "Zenbu Japanese for iPhone: Japanese Dictionary & Translator", each with its
 description from `src/lib/pages.ts` and its own canonical URL. Their Open Graph tags carry the
 same title and description, with the site's name, type, and locale (`siteOpenGraph` in
-`src/lib/metadata.ts`, which `pageMetadata` adds to every page it describes). Both are in `src/lib/pages.ts`, so
+`src/lib/seo.ts`, which `pageMetadata` adds to every page it describes). Both are in `src/lib/pages.ts`, so
 `/sitemap-pages.xml` lists them, and the HTML sitemap lists them under Home
-(`homeTree` in `src/lib/dictionary/browse/site-tree.ts`).
+(`homeTreeIn` in `src/lib/dictionary/browse/site-tree.ts`).
 
 - Source: #652.
 - Check: Product page spec, "… has its title, description, and canonical URL" for each page;
@@ -192,7 +194,7 @@ same title and description, with the site's name, type, and locale (`siteOpenGra
 no platform, so an Android version can share the page, and `-app` keeps it apart from the brand,
 the web dictionary, and the extension. The header, footer, catalog, and every Get the app link to
 it through the `iphone-app` entry in `linkTargets` (`src/lib/site.ts`), and the HTML sitemap
-through `homeTree` (`src/lib/dictionary/browse/site-tree.ts`), whose paths must be pages in
+through `homeTreeIn` (`src/lib/dictionary/browse/site-tree.ts`), whose paths must be pages in
 `src/lib/pages.ts`. Its earlier address, `/products/zenbu-japanese-for-iphone/`, was only ever on
 staging, so it has no redirect: it is 404, and no page names it.
 

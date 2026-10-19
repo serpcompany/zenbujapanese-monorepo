@@ -99,11 +99,12 @@ struct UnreadableCopyTests {
   func keepsValuesThatArentData() async throws {
     let temporary = try TemporaryDefaults()
     let suite = temporary.suite
-    let keys = ["watch.recent-videos.v1", "lookup.word-notes.v4", "user-profile.v1"]
+    let keys = ["watch.recent-videos.v1", WordNoteStorage.storageKey, "user-profile.v1"]
     for key in keys { temporary.defaults.set("not data", forKey: key) }
 
-    let notes = WordNoteStorage(defaults: try #require(UserDefaults(suiteName: suite)))
-    #expect(await notes.load(WordNoteID(rawValue: "taberu-note")).isEmpty)
+    let notes = WordNoteStorage(
+      defaults: try #require(UserDefaults(suiteName: suite)), placing: SavedWords.lookup)
+    #expect(await notes.load(SavedWords.taberu).isEmpty)
     try await MainActor.run {
       let defaults = try #require(UserDefaults(suiteName: suite))
       #expect(WatchHistory(defaults: defaults).videos.isEmpty)

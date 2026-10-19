@@ -1,16 +1,19 @@
 'use client'
 
 import { type FormEvent, useId, useState } from 'react'
+import { Fill } from '@/components/fill'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { AccountApi, Failure } from '@/lib/account/client'
-import { failureMessage, type ProvidersHere } from '@/lib/account/messages'
+import { type AccountText, failureMessage, type ProvidersHere } from '@/lib/account/messages'
+import type { Locale } from '@/lib/i18n/config'
 import { FormMessage } from './form-message'
 
 interface EmailCodeFormProps {
   api: AccountApi
+  locale: Locale
+  text: AccountText
   email?: string
-  sendLabel: string
   signInLabel: string
   onSignedIn: () => void | Promise<void>
   mayVerify?: () => boolean
@@ -18,10 +21,13 @@ interface EmailCodeFormProps {
   providersHere?: ProvidersHere
 }
 
+const emphasized = (email: string) => <strong className="text-foreground">{email}</strong>
+
 export function EmailCodeForm({
   api,
+  locale,
+  text,
   email: fixedEmail,
-  sendLabel,
   signInLabel,
   onSignedIn,
   mayVerify,
@@ -34,6 +40,8 @@ export function EmailCodeForm({
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  const words = text.emailCode
+  const say = (failure: Failure) => failureMessage(failure, text.messages, locale, providersHere)
 
   async function send(event?: FormEvent) {
     event?.preventDefault()
@@ -43,7 +51,7 @@ export function EmailCodeForm({
     setProblem(null)
     const sent = await api.sendCode(to)
     setBusy(false)
-    if (!sent.ok) return setProblem(failureMessage(sent.failure, providersHere))
+    if (!sent.ok) return setProblem(say(sent.failure))
     setSentTo(to)
     setCode('')
   }
@@ -55,9 +63,7 @@ export function EmailCodeForm({
     setProblem(null)
     const signedIn = await api.signInWithCode(sentTo, code.trim())
     if (signedIn.ok) await onSignedIn()
-    else if (!onRefusal?.(signedIn.failure)) {
-      setProblem(failureMessage(signedIn.failure, providersHere))
-    }
+    else if (!onRefusal?.(signedIn.failure)) setProblem(say(signedIn.failure))
     setBusy(false)
   }
 
@@ -66,12 +72,12 @@ export function EmailCodeForm({
       <form className="flex flex-col gap-3" onSubmit={send}>
         {fixedEmail ? (
           <p className="text-sm text-muted-foreground">
-            We’ll email a code to <strong className="text-foreground">{fixedEmail}</strong>.
+            <Fill template={words.willEmail} values={{ email: emphasized(fixedEmail) }} />
           </p>
         ) : (
           <div className="flex flex-col gap-1.5">
             <label htmlFor={`${id}-email`} className="text-sm font-medium">
-              Email
+              {words.email}
             </label>
             <Input
               id={`${id}-email`}
@@ -85,7 +91,7 @@ export function EmailCodeForm({
         )}
         <FormMessage problem={problem} />
         <Button type="submit" size="lg" disabled={busy}>
-          {sendLabel}
+          {words.send}
         </Button>
       </form>
     )
@@ -94,12 +100,11 @@ export function EmailCodeForm({
   return (
     <form className="flex flex-col gap-3" onSubmit={verify}>
       <output className="block text-sm text-muted-foreground">
-        We sent a 6-digit code to <strong className="text-foreground">{sentTo}</strong>. It works
-        for 10 minutes.
+        <Fill template={words.sent} values={{ email: emphasized(sentTo) }} />
       </output>
       <div className="flex flex-col gap-1.5">
         <label htmlFor={`${id}-code`} className="text-sm font-medium">
-          Code
+          {words.code}
         </label>
         <Input
           id={`${id}-code`}
@@ -124,7 +129,7 @@ export function EmailCodeForm({
           disabled={busy}
           onClick={() => send()}
         >
-          Send a new code
+          {words.sendAgain}
         </Button>
         {fixedEmail ? null : (
           <Button
@@ -137,7 +142,7 @@ export function EmailCodeForm({
               setProblem(null)
             }}
           >
-            Use another email
+            {words.anotherEmail}
           </Button>
         )}
       </div>

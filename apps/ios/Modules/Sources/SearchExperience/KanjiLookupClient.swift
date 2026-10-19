@@ -91,6 +91,7 @@ struct KanjiPage: Hashable, Sendable {
   let elements: [Element]
   let words: [DictionaryEntry]
   let shareText: String
+  let shareURL: URL
   let savedReading: String
 }
 
@@ -139,6 +140,7 @@ extension KanjiPage {
     let elements: [Element]
     let words: [Word]
     let shareText: String
+    let shareURL: URL
     let savedReading: String
   }
 
@@ -170,6 +172,7 @@ extension KanjiPage {
       elements: answer.elements,
       words: answer.words.compactMap { entries[$0.id] },
       shareText: answer.shareText,
+      shareURL: answer.shareURL,
       savedReading: answer.savedReading
     )
   }

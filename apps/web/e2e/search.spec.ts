@@ -1,4 +1,11 @@
+import type { Locale } from '../src/lib/i18n/config'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { fill } from '../src/lib/i18n/format'
+import { localizedPath } from '../src/lib/i18n/paths'
 import { expect, needed, searchOrder, test } from './test'
+
+const inLanguage = (locale: Locale, title: string) =>
+  locale === 'en' ? title : `in Japanese, ${title}`
 
 test.describe('search', () => {
   test('the dictionary home searches and lands on the canonical results page', async ({ page }) => {
@@ -13,6 +20,40 @@ test.describe('search', () => {
       page.getByRole('main').getByRole('textbox', { name: 'Search Japanese or English' })
     ).toHaveValue('iru')
   })
+
+  for (const locale of ['en', 'ja'] as const) {
+    test(
+      inLanguage(
+        locale,
+        'the dictionary home centers its heading and box a little above the middle, the box focused'
+      ),
+      async ({ page }) => {
+        const form = getDictionary(locale).searchForm
+        await page.goto(localizedPath('/dictionary/', locale))
+        const box = page.getByRole('textbox', { name: form.placeholder })
+        await expect(box).toBeFocused()
+        const heading = await page.getByRole('heading', { level: 1 }).evaluate(element => {
+          const text = document.createRange()
+          text.selectNodeContents(element)
+          const { x, y, width, height } = text.getBoundingClientRect()
+          return { x, y, width, height }
+        })
+        const search = await page
+          .getByRole('button', { name: form.submit, exact: true })
+          .boundingBox()
+        const field = await box.boundingBox()
+        const main = await page.getByRole('main').boundingBox()
+        const viewport = page.viewportSize()
+        if (!heading || !search || !field || !main || !viewport) throw new Error('No hero')
+        const middle = (heading.y + search.y + search.height) / 2
+        expect(middle).toBeLessThan(viewport.height / 2)
+        expect(middle).toBeGreaterThan(viewport.height * 0.3)
+        const centerOfMain = main.x + main.width / 2
+        expect(heading.x + heading.width / 2).toBeCloseTo(centerOfMain, -1)
+        expect((field.x + search.x + search.width) / 2).toBeCloseTo(centerOfMain, -1)
+      }
+    )
+  }
 
   for (const query of ['iru', 'いる', '要']) {
     test(`lists ${query}'s words in the app's order`, async ({ page }) => {
@@ -68,5 +109,52 @@ for (const path of [
     const viewport = page.viewportSize()
     if (!main || !viewport) throw new Error('The page has no main column')
     expect(main.width).toBeCloseTo(Math.min(columnWidth, viewport.width), 0)
+  })
+}
+
+function trailsIn(locale: Locale) {
+  const text = getDictionary(locale).breadcrumbs
+  const at = (path: string) => localizedPath(path, locale)
+  const toDictionary = [
+    { name: text.home, path: at('/') },
+    { name: text.dictionary, path: at('/dictionary/') }
+  ]
+  const results = at('/dictionary/search/iru/')
+  return [
+    { path: at('/dictionary/'), trail: toDictionary },
+    {
+      path: results,
+      trail: [...toDictionary, { name: fill(text.searchQuery, { query: 'iru' }), path: results }]
+    },
+    {
+      path: at(needed.path),
+      trail: [...toDictionary, { name: needed.headword, path: at(needed.path) }]
+    }
+  ].map(page => ({ ...page, label: text.label }))
+}
+
+for (const { path, trail, label } of [...trailsIn('en'), ...trailsIn('ja')]) {
+  test(`${decodeURI(path)} carries its breadcrumb trail as BreadcrumbList structured data`, async ({
+    page
+  }) => {
+    await page.goto(path)
+    const breadcrumb = page.getByRole('navigation', { name: label })
+    await expect(breadcrumb.getByRole('listitem')).toHaveText(trail.map(crumb => crumb.name))
+    const canonical = await page.locator('head link[rel="canonical"]').getAttribute('href')
+    const origin = new URL(canonical ?? '').origin
+    const scripts = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll(found => found.map(script => JSON.parse(script.textContent ?? 'null')))
+    const lists = scripts.filter(data => data?.['@type'] === 'BreadcrumbList')
+    expect(lists).toHaveLength(1)
+    expect(lists[0]['@context']).toBe('https://schema.org')
+    expect(lists[0].itemListElement).toEqual(
+      trail.map((crumb, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: crumb.name,
+        item: crumb.path === '/' ? origin : new URL(crumb.path, origin).href
+      }))
+    )
   })
 }

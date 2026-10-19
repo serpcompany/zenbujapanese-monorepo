@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { DrawerAccountButton } from '@/components/account-menu'
+import { LanguageList } from '@/components/language-switcher'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GetAppButton } from '@/components/site-actions'
 import { SiteLogo } from '@/components/site-brand'
@@ -26,13 +27,15 @@ import {
   DrawerTrigger
 } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import type { Switcher } from '@/lib/i18n/switcher'
 import { site } from '@/lib/site'
 import {
   drawerLinks,
   isCurrentPage,
   isCurrentSection,
-  type SiteMenu as Menu,
-  siteMenus
+  type SiteMenu as Menu
 } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
@@ -84,14 +87,26 @@ function GroupLinks({
   )
 }
 
-export function SiteMenu() {
+export function SiteMenu({
+  locale,
+  menus,
+  text,
+  switcher
+}: {
+  locale: Locale
+  menus: readonly Menu[]
+  text: Dictionary['chrome']
+  switcher: Switcher
+}) {
   const [open, setOpen] = useMenuOpenOnThisPage()
   const pathname = usePathname()
-  const current = siteMenus.find(menu => isCurrentSection(menu, pathname))
+  const current = menus.find(menu => isCurrentSection(menu, pathname))
   return (
     <Drawer open={open} onOpenChange={setOpen} swipeDirection="right">
       <DrawerTrigger
-        render={<Button variant="ghost" size="icon-lg" className="lg:hidden" aria-label="Menu" />}
+        render={
+          <Button variant="ghost" size="icon-lg" className="lg:hidden" aria-label={text.menu} />
+        }
       >
         <MenuIcon aria-hidden="true" />
       </DrawerTrigger>
@@ -102,15 +117,15 @@ export function SiteMenu() {
             {site.name}
           </DrawerTitle>
           <div className="-mr-2 flex items-center gap-1">
-            <ModeToggle />
-            <DrawerClose render={<Button variant="ghost" size="icon-lg" aria-label="Close" />}>
+            <ModeToggle text={text.theme} />
+            <DrawerClose render={<Button variant="ghost" size="icon-lg" aria-label={text.close} />}>
               <XIcon aria-hidden="true" />
             </DrawerClose>
           </div>
         </DrawerHeader>
-        <nav aria-label="Sections" className="min-h-0 flex-1 overflow-y-auto px-4">
+        <nav aria-label={text.sections} className="min-h-0 flex-1 overflow-y-auto px-4">
           <Accordion key={current?.label} defaultValue={current ? [current.label] : []}>
-            {siteMenus.map(menu => (
+            {menus.map(menu => (
               <AccordionItem key={menu.label} value={menu.label}>
                 <AccordionTrigger className="py-3.5 text-base hover:no-underline">
                   {menu.label}
@@ -123,8 +138,20 @@ export function SiteMenu() {
           </Accordion>
         </nav>
         <DrawerFooter className="border-t">
-          <DrawerAccountButton onClick={() => setOpen(false)} />
-          <GetAppButton size="lg" className="w-full" onClick={() => setOpen(false)} />
+          <LanguageList {...switcher} />
+          <DrawerAccountButton
+            locale={locale}
+            text={text.account}
+            logIn={text.logIn}
+            onClick={() => setOpen(false)}
+          />
+          <GetAppButton
+            locale={locale}
+            label={text.getTheApp}
+            size="lg"
+            className="w-full"
+            onClick={() => setOpen(false)}
+          />
         </DrawerFooter>
       </DrawerContent>
     </Drawer>

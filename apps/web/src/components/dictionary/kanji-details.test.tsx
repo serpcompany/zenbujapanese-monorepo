@@ -4,7 +4,9 @@ import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
 import { visibleText } from '@/test/rendered'
 import { KanjiDetails } from './kanji-details'
 
-const html = renderToStaticMarkup(<KanjiDetails kanji={unlinkedKanjiDetails(fixtureKanji('要'))} />)
+const kaname = unlinkedKanjiDetails(fixtureKanji('要'))
+
+const html = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="en" />)
 
 describe("a kanji's details offer what the app's Kanji Detail has beside them", () => {
   test('Share and More actions, named for the kanji', () => {
@@ -22,5 +24,24 @@ describe("a kanji's details offer what the app's Kanji Detail has beside them", 
       visibleText(html.match(new RegExp(`<h3[^>]*>${title}</h3>([\\s\\S]*?)</section>`))?.[1] ?? '')
     expect(part('Lists')).toBe('Add to List Save it to your lists in the Zenbu app. Add to List')
     expect(part('Notes')).toBe('Add Note Write notes and attach photos in the Zenbu app. Add Note')
+  })
+})
+
+describe("a kanji's details on a Japanese page", () => {
+  const japanese = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="ja" />)
+
+  test('name their parts, stats, and actions in Japanese', () => {
+    const parts = [...japanese.matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map(([, title]) => title)
+    expect(parts).toEqual(['読み方', '構成要素', 'リスト', 'メモ', '単語'])
+    expect(japanese).toContain('aria-label="要を共有"')
+    expect(japanese).toContain('aria-label="要のその他の操作"')
+    expect(japanese).toContain('aria-label="要の書き順を見る"')
+    expect(japanese).toContain('<dt class="text-xs text-muted-foreground">画数</dt>')
+  })
+
+  test("keep KANJIDIC2's English meanings, marked as English", () => {
+    expect(japanese).toContain(
+      '<p class="text-lg font-medium" lang="en">need, main point, essence, pivot, key to</p>'
+    )
   })
 })

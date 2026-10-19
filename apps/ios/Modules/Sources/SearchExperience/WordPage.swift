@@ -85,6 +85,7 @@ struct WordPage: Decodable, Hashable, Sendable {
   let related: [Related]
   let noExamples: String
   let shareText: String
+  let shareURL: URL?
 }
 
 struct Conjugations: Decodable, Hashable, Sendable {
@@ -144,6 +145,8 @@ extension WordPage {
     let relationships: [DictionaryRelationship]
     let pitch: PitchAccent?
     let compoundPitch: PitchAccent?
+    let sourceIdentity: String
+    let sourceRecordID: String
 
     init(_ entry: DictionaryEntry) {
       id = entry.id.rawValue
@@ -157,6 +160,8 @@ extension WordPage {
       relationships = entry.relationships
       pitch = entry.pitch
       compoundPitch = entry.compoundPitch
+      sourceIdentity = entry.sourceRecord.sourceIdentity
+      sourceRecordID = entry.sourceRecord.sourceRecordID
     }
   }
 

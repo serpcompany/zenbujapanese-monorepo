@@ -1,17 +1,8 @@
 import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { idTokenFor } from '@/test/account-answers'
-import {
-  answer,
-  click,
-  fill,
-  refusal,
-  render,
-  settle,
-  shows,
-  submit,
-  unmount
-} from '@/test/account-page'
+import { answer, click, fill, refusal, settle, shows, submit, unmount } from '@/test/account-page'
+import { renderAccountView } from '@/test/account-view'
 import {
   appleAnswering,
   callTo,
@@ -25,7 +16,6 @@ import {
   someoneElse,
   thenSomeoneElse
 } from '@/test/signed-in-account'
-import { AccountView } from './account-view'
 
 afterEach(unmount)
 
@@ -38,7 +28,7 @@ function leavingForGoogle() {
 }
 
 async function codeTypedToAddEmail() {
-  const page = render(<AccountView settings={settings()} returnedError={null} />)
+  const page = renderAccountView()
   await shows(page, `Signed in as ${email}`)
   await click(page, 'Add an email code')
   await submit(page, 'Email me a code')
@@ -60,7 +50,7 @@ describe('the ways to sign in, on the account page', () => {
       ways: [emailWay, googleWay],
       more: { 'POST /v1/auth/unlink-account': answer({ status: true }) }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await removingGoogle(page)
     await confirmWithEmailCode(page)
     await settle()
@@ -73,7 +63,7 @@ describe('the ways to sign in, on the account page', () => {
   test('adds Google by sending the browser to Google, to come back to the account page', async () => {
     const assign = leavingForGoogle()
     const { calls } = signedIn({ more: { 'POST /v1/auth/link-social': googlePage() } })
-    const page = render(<AccountView settings={settings(false, true)} returnedError={null} />)
+    const page = renderAccountView(settings(false, true))
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Add Google')
     const back = `${window.location.origin}/account/`
@@ -85,9 +75,22 @@ describe('the ways to sign in, on the account page', () => {
     expect(assign).toHaveBeenCalledWith('https://accounts.google.com/x')
   })
 
+  test('comes back to the Japanese account page from adding Google on it', async () => {
+    leavingForGoogle()
+    const { calls } = signedIn({ more: { 'POST /v1/auth/link-social': googlePage() } })
+    const page = renderAccountView(settings(false, true), 'ja')
+    await shows(page, `${email}でログイン中`)
+    await click(page, 'Googleを追加')
+    const back = `${window.location.origin}/ja/account/`
+    expect(callTo(calls, 'POST /v1/auth/link-social')[0]?.body).toMatchObject({
+      callbackURL: back,
+      errorCallbackURL: back
+    })
+  })
+
   test("adds the account's own email as a way to sign in, with a code", async () => {
     const { calls } = signedIn({ ways: [googleWay] })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await shows(page, `Signed in as ${email}`)
     expect(page.textContent).not.toContain('Remove')
     await click(page, 'Add an email code')
@@ -110,7 +113,7 @@ describe('the ways to sign in, on the account page', () => {
         'POST /v1/auth/link-social': [refusal(401, 'invalid_nonce'), answer({ status: true })]
       }
     })
-    const page = render(<AccountView settings={settings(true)} returnedError={null} />)
+    const page = renderAccountView(settings(true))
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Add Apple')
     await shows(page, 'That took too long. Try again.')
@@ -129,7 +132,7 @@ describe('the ways to sign in, on the account page', () => {
   test('gets Apple ready when the learner tabs to Add Apple, before the click', async () => {
     appleAnswering('001.apple')
     const { routes } = signedIn()
-    const page = render(<AccountView settings={settings(true)} returnedError={null} />)
+    const page = renderAccountView(settings(true))
     await shows(page, `Signed in as ${email}`)
     const addApple = [...page.querySelectorAll('button')].find(
       button => button.textContent === 'Add Apple'
@@ -146,7 +149,7 @@ describe('the ways to sign in, on the account page', () => {
       later: { userId: 'u1', minutesAgo: 20 },
       more: { 'POST /v1/auth/link-social': answer({ status: true }) }
     })
-    const page = render(<AccountView settings={settings(true)} returnedError={null} />)
+    const page = renderAccountView(settings(true))
     await shows(page, `Signed in as ${email}`)
     await click(page, 'Add Apple')
     await confirmWithEmailCode(page)
@@ -162,7 +165,7 @@ describe('the ways to sign in, on the account page', () => {
       ways: [emailWay, googleWay],
       more: { 'POST /v1/auth/sign-in/social': googlePage() }
     })
-    const page = render(<AccountView settings={settings(false, true)} returnedError={null} />)
+    const page = renderAccountView(settings(false, true))
     await removingGoogle(page)
     await click(page, 'Continue with Google')
     expect(assign).toHaveBeenCalledWith('https://accounts.google.com/x')
@@ -207,7 +210,7 @@ describe('the ways to sign in, on the account page', () => {
         'POST /v1/auth/sign-in/social': () => new Promise<Response>(resolve => (start = resolve))
       }
     })
-    const page = render(<AccountView settings={settings(false, true)} returnedError={null} />)
+    const page = renderAccountView(settings(false, true))
     await removingGoogle(page)
     await click(page, 'Continue with Google')
     await click(page, 'Cancel')
@@ -223,7 +226,7 @@ describe('the ways to sign in, on the account page', () => {
       later: { userId: 'u9', minutesAgo: 0, email: someoneElse.email },
       more: { ...thenSomeoneElse, 'POST /v1/auth/unlink-account': answer({ status: true }) }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await removingGoogle(page)
     await shows(page, `Signed in as ${someoneElse.email}`)
     expect(page.querySelector<HTMLInputElement>('#profile-name')?.value).toBe('Someone')
@@ -239,7 +242,7 @@ describe('the ways to sign in, on the account page', () => {
         'GET /v1/auth/get-session': [sessionAnswer('u1', 'old-bare', 1), refusal(500, 'internal')]
       }
     })
-    const page = render(<AccountView settings={settings()} returnedError={null} />)
+    const page = renderAccountView()
     await removingGoogle(page)
     await shows(page, 'Something went wrong on our side')
     expect(page.textContent).toContain(`Signed in as ${email}`)

@@ -1,7 +1,19 @@
 import { defaultFrequencyPacks, frequencyChips } from '@zenbu/dictionary-core/detail/frequency'
 import { type RubySegment, rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { searchPath } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
+import { localizedPath } from '@/lib/i18n/paths'
 import { productionOrigin } from '@/lib/origins'
+
+export const appScreenText = {
+  player: 'Player',
+  meaning: 'Meaning',
+  wordsKnown: '{known} of {total} words known',
+  words: '{count} words',
+  known: 'Known',
+  enabled: 'Enabled',
+  available: 'Available: {names}'
+}
 
 const word = (headword: string, reading: string) => ({
   headword,
@@ -76,10 +88,13 @@ export const furiganaPreview: {
   highlighted: { segment: 0, kanji: 1 }
 }
 
+export const searchAddressIn = (locale: Locale) =>
+  `${new URL(productionOrigin).host}${localizedPath(searchPath(taberuQuery), locale)}`
+
 export const searchPreview = {
-  address: `${new URL(productionOrigin).host}${searchPath(taberuQuery)}`,
   query: taberuQuery,
   links: ['View 50+ Example Sentences', 'Search for「たべる」'],
+  meaningTitle: 'Meaning',
   results: [
     taberuResult,
     {

@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import publish_release
 import release_manifest
 from object_store import Head, PreconditionFailed
+from pinned_release import pinned_content
 
 COMMIT_A, COMMIT_B = "a" * 40, "b" * 40
 
@@ -112,6 +113,14 @@ def stage(directory: Path, release: str, files: dict[str, bytes], commit=COMMIT_
     return directory
 
 
+def pinned_of(staged: Path) -> dict:
+    return pinned_content(json.loads((staged / "manifest.json").read_text()))
+
+
+def publish(store, staged: Path, **options) -> dict:
+    return publish_release.publish(store, staged, pinned_of(staged), log=quiet, **options)
+
+
 FILES_1 = {"Data.json": b'{"a": 1}\n', "NOTICE.txt": b"notice\n"}
 FILES_2 = {"Data.json": b'{"a": 2}\n', "NOTICE.txt": b"notice\n"}
 
@@ -131,4 +140,4 @@ class PublishTestCase(unittest.TestCase):
         return stage(self.tmp / f"out{self.count}", release, files, commit)
 
     def publish(self, staged, when="2026-10-01T00:00:00Z"):
-        return publish_release.publish(self.store, staged, now=lambda: when, log=quiet)
+        return publish(self.store, staged, now=lambda: when)

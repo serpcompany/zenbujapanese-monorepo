@@ -6,27 +6,41 @@ import { Input } from '@/components/ui/input'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { Profile } from '@/lib/account/answers'
 import type { AccountApi, ProfileChange } from '@/lib/account/client'
-import { failureMessage, isSignedOut } from '@/lib/account/messages'
+import { type AccountText, failureMessage, isSignedOut } from '@/lib/account/messages'
+import type { Locale } from '@/lib/i18n/config'
+import { fill, formatDate } from '@/lib/i18n/format'
 import { FormMessage, Notice } from './form-message'
 
 interface ProfileFormProps {
   api: AccountApi
   tokens: AccessTokens
+  locale: Locale
+  text: AccountText
   profile: Profile
   onChanged: (profile: Profile) => void
   onSignedOut: () => void
 }
 
-const memberSince = (createdAt: string) =>
-  new Intl.DateTimeFormat('en', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(createdAt))
+const isoDateLength = 'yyyy-mm-dd'.length
 
-export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: ProfileFormProps) {
+const dayMadeOf = (createdAt: string) => new Date(createdAt).toISOString().slice(0, isoDateLength)
+
+export function ProfileForm({
+  api,
+  tokens,
+  locale,
+  text,
+  profile,
+  onChanged,
+  onSignedOut
+}: ProfileFormProps) {
   const [name, setName] = useState(profile.name)
   const [username, setUsername] = useState(profile.username ?? '')
   const [shownVersion, setShownVersion] = useState(profile.version)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const words = text.profile
 
   if (profile.version > shownVersion) {
     setShownVersion(profile.version)
@@ -47,7 +61,7 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
     const wantedUsername = username.trim() === '' ? null : username
     if (wantedUsername !== profile.username) change.username = wantedUsername
     if (change.name === undefined && change.username === undefined) {
-      return setNotice('Nothing has changed.')
+      return setNotice(words.nothingChanged)
     }
     setBusy(true)
     setProblem(null)
@@ -56,24 +70,24 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
     setBusy(false)
     if (saved.ok) {
       showProfile(saved.value)
-      return setNotice('Saved.')
+      return setNotice(words.saved)
     }
     if (isSignedOut(saved.failure)) return onSignedOut()
     if (saved.failure.kind === 'refused' && saved.failure.current) {
       showProfile(saved.failure.current)
     }
-    setProblem(failureMessage(saved.failure))
+    setProblem(failureMessage(saved.failure, text.messages, locale))
   }
 
   return (
     <section aria-labelledby="profile" className="flex flex-col gap-3">
       <h2 id="profile" className="text-lg font-medium">
-        Profile
+        {words.heading}
       </h2>
       <form className="flex flex-col gap-3" onSubmit={save}>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="profile-name" className="text-sm font-medium">
-            Name
+            {words.name}
           </label>
           <Input
             id="profile-name"
@@ -85,7 +99,7 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="profile-username" className="text-sm font-medium">
-            Username
+            {words.username}
           </label>
           <Input
             id="profile-username"
@@ -96,17 +110,17 @@ export function ProfileForm({ api, tokens, profile, onChanged, onSignedOut }: Pr
             onChange={event => setUsername(event.target.value)}
           />
           <p id="profile-username-rule" className="text-xs text-muted-foreground">
-            3 to 30 letters a to z, digits, or underscores. Leave it empty for none.
+            {words.usernameRule}
           </p>
         </div>
         <FormMessage problem={problem} />
         <Notice>{notice}</Notice>
         <Button type="submit" className="self-start" disabled={busy}>
-          Save
+          {words.save}
         </Button>
       </form>
       <p className="text-sm text-muted-foreground">
-        Member since {memberSince(profile.createdAt)}.
+        {fill(words.memberSince, { date: formatDate(dayMadeOf(profile.createdAt), locale) })}
       </p>
     </section>
   )

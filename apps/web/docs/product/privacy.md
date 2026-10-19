@@ -3,7 +3,7 @@
 `/legal/privacy/` is the privacy policy for the Zenbu Japanese iPhone app, Tomodachi for iPhone
 and Mac, the website, and the Zenbu account. The shipped apps and their App Store listings reach it
 through `/privacy` ([App links](dictionary.md#header-footer-and-site-wide)). Its text is
-`apps/web/src/app/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
+`apps/web/src/app/[locale]/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
 comes from, and the automated check that enforces it (see
 [How behavior is verified](index.md#how-behavior-is-verified)).
 
@@ -15,7 +15,7 @@ sign-in mechanics, field-by-field lists, per-timer retention, and Tomodachi's pe
 condensed into categories or one line each. The page never says whether an app or the website
 signs in today: everything in the app works without an account, and the page says what happens
 "if you create or sign in to a Zenbu account where our apps or this website offer one", so it held
-when production's website opened sign-in (#688), and holds before and after sign-in
+when production's website opened sign-in (#798), and holds before and after sign-in
 opens in the app (#573). When the service
 keeps something new, keeps it longer, sends email through another provider, or an app gets a new
 scope, change the page, its Effective date, this doc, and the
@@ -43,7 +43,7 @@ number, and `support@zenbujapanese.com` for anything about the learner's data. T
 details are `company` in `src/lib/company.ts`, which the DMCA page's designated agent uses too, so
 there's one copy. Neither page names an EU representative.
 
-- Source: the [Terms of Use](../../src/app/legal/terms/page.tsx); the DMCA page's company details,
+- Source: the [Terms of Use](../../src/app/[locale]/legal/terms/page.tsx); the DMCA page's company details,
   as the owner pointed to on #683; #681 (GDPR Article 13's identity and contact).
 - Check: Privacy spec, "says who we are and how to reach us".
 
@@ -72,8 +72,10 @@ browser, with its IP address and user agent), study data (known words and lists,
 iPhone app the 50 most recently watched Player videos and the bookmarked Translate sentences),
 and a record of each synced change, so a change sent twice applies once. Expired sessions, codes,
 and counts go within an hour (said under the second table), and a removed video, list, or bookmark
-leaves only a record that it was removed. The app's profile, notes, photos, searches, settings, and whole conversations don't
-sync; a bookmarked sentence may be someone else's words, so only bookmarked ones leave the device.
+leaves only a record that it was removed. The app's profile syncs its name and username, which the
+account keeps anyway; the profile's photo and email, notes, photos, searches, settings, and whole
+conversations don't sync; a bookmarked sentence may be someone else's words, so only bookmarked
+ones leave the device.
 The account service emails only sign-in codes, a way to sign in added or removed, and a deletion's
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, signs out, and deletes the account, and doesn't read study data
@@ -83,11 +85,11 @@ syncs anything else.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
   sync); [`account-clients.md`](../../../../docs/agents/account-clients.md) (The website); the app's
-  [Zenbu account and sync](../../../ios/docs/product/index.md#zenbu-account-and-sync) docs;
+  [Zenbu account and sync](../../../ios/docs/product/account-sync.md) docs;
   [Account pages](account.md).
 - Check: Privacy spec, "names each kind of data an account keeps, and why", and "says what stays on
   the device, and that the app works without an account" (nothing sent signed out, "where our apps
-  or this website offer one", what doesn't sync). The email's uses and the website's lines: No
+  or this website offer one", the app's profile, what doesn't sync). The email's uses and the website's lines: No
   automated check yet.
 
 **Tomodachi.** Its own section, `/legal/privacy/#tomodachi`, which the support page links to.
@@ -100,7 +102,7 @@ same way, and opens at login only if the learner turns that on. Linked to a Zenb
 read lists and known words, mark words Known, and delete the account when asked, and it looks
 words up in the dictionary service, which keeps none of it. The page says it will change before
 another app can use the account. The heading lands below the pinned header, since the page's root
-has a 64-pixel scroll padding (`scroll-pt-16` in `src/app/layout.tsx`).
+has a 64-pixel scroll padding (`scroll-pt-16` in `src/components/site-document.tsx`).
 
 The support page (`/support/`) says Tomodachi's help goes to the same support address and links
 this section, and both pages' descriptions name Tomodachi. Both fit a 320-pixel and a 390-pixel

@@ -1,14 +1,16 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { placeholderHref, site, socialLinks } from '@/lib/site'
 import { SiteFooter } from './site-footer'
 
-const footer = () => renderToStaticMarkup(<SiteFooter />)
+const footer = (locale: Locale = 'en') => renderToStaticMarkup(<SiteFooter locale={locale} />)
 
 type FooterLink = [text: string, href: string, target?: string]
 
-function columns(): [heading: string, links: FooterLink[]][] {
-  return [...footer().matchAll(/<nav [^>]*><h2 [^>]*>([^<]+)<\/h2>([\s\S]*?)<\/nav>/g)].map(
+function columns(locale: Locale = 'en'): [heading: string, links: FooterLink[]][] {
+  return [...footer(locale).matchAll(/<nav [^>]*><h2 [^>]*>([^<]+)<\/h2>([\s\S]*?)<\/nav>/g)].map(
     ([, heading, list]) => [
       heading,
       [...list.matchAll(/<a ([^>]*)>([^<]+)<\/a>/g)].map(([, attributes, text]) => {
@@ -40,7 +42,7 @@ test('the footer groups its links under Products, Tools, Company, and Legal', ()
         ['Kana charts', '/dictionary/browse/kana/'],
         ['Kanji lists', '/dictionary/browse/kanji/'],
         ['Frequency lists', '/dictionary/browse/frequency-dictionaries/'],
-        ['All tools', placeholderHref, 'tools']
+        ['All tools', '/tools/', 'tools']
       ]
     ],
     [
@@ -91,18 +93,18 @@ test('the footer leads with the brand linking home and its tagline', () => {
   const firstLink = html.match(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/)
   expect(firstLink?.[1]).toBe('/')
   expect(firstLink?.[2]).toContain(`>${site.name}</span>`)
-  expect(html).toContain(site.description)
+  expect(html).toContain(getDictionary('en').site.description)
 })
 
 const brandIcon =
   /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4.5 md:size-5"><path d="[^"]+"><\/path><\/svg>/
 
-test('one row of plain brand icons, all ten on phones, links each account in src/lib/site.ts', () => {
+test('one row of plain brand icons, all nine on phones, links each account in src/lib/site.ts', () => {
   const html = footer()
   const list = html.match(
     /<ul aria-label="Zenbu Japanese elsewhere" class="([^"]*)">([\s\S]*?)<\/ul>/
   )
-  expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-10']))
+  expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-9']))
   const links = [...(list?.[2] ?? '').matchAll(/<a ([^>]*)>([\s\S]*?)<\/a>/g)]
   expect(
     links.map(([, , content]) => content.match(/<span class="sr-only">([^<]+)</)?.[1])
@@ -114,8 +116,32 @@ test('one row of plain brand icons, all ten on phones, links each account in src
   }
 })
 
-test('the footer ends with the copyright and the Sitemap', () => {
-  const ending = footer().match(/<\/ul><div [^>]*>([\s\S]*)<\/div><\/div><\/footer>$/)?.[1] ?? ''
+const footerEnding = (locale: Locale = 'en') =>
+  footer(locale).match(/<\/ul><div [^>]*>([\s\S]*)<\/div><\/div><\/footer>$/)?.[1] ?? ''
+
+test('the footer ends with the copyright, the language menu, and the Sitemap', () => {
+  const ending = footerEnding()
   expect(ending).toContain(`© ${new Date().getFullYear()} ${site.name}`)
-  expect(ending).toMatch(/<a [^>]*href="\/sitemap\/"[^>]*>Sitemap<\/a>$/)
+  expect(ending).toMatch(
+    /<button [^>]*aria-label="English, change language"[^>]*><svg [^>]*lucide-languages[^>]*>[\s\S]*?<\/svg>English<\/button><a [^>]*href="\/sitemap\/"[^>]*>Sitemap<\/a><\/div>$/
+  )
+})
+
+test('a Japanese page’s footer is in Japanese, and its links stay in Japanese', () => {
+  const [products, tools, company, legal] = columns('ja')
+  expect([products[0], tools[0], company[0], legal[0]]).toEqual([
+    '製品',
+    'ツール',
+    '会社情報',
+    '規約'
+  ])
+  for (const [, links] of columns('ja')) {
+    for (const [, href] of links) {
+      expect(href === placeholderHref || href.startsWith('/ja/'), href).toBe(true)
+    }
+  }
+  expect(footer('ja')).toContain(getDictionary('ja').site.description)
+  const ending = footerEnding('ja')
+  expect(ending).toContain('aria-label="日本語、表示言語を切り替える"')
+  expect(ending).toMatch(/<a [^>]*href="\/ja\/sitemap\/"[^>]*>サイトマップ<\/a><\/div>$/)
 })

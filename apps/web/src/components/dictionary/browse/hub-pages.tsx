@@ -28,7 +28,7 @@ import { CategoryChipCards } from '@/components/dictionary/browse/category-links
 import { KanaChart, type KanaTile } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
-import { formatCount, plural, rankRange } from '@/lib/dictionary/browse/copy'
+import { browseText, counted, kanjiListName, rankRange } from '@/lib/dictionary/browse/copy'
 import {
   browsePath,
   categoryPath,
@@ -42,45 +42,51 @@ import {
   scriptPath,
   strokeCountsPath
 } from '@/lib/dictionary/browse/paths'
+import type { Locale } from '@/lib/i18n/config'
+import { fill, formatNumber } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 
-const scriptNames: Record<KanaScript, { name: string; native: string }> = {
-  hiragana: { name: 'Hiragana', native: 'ひらがな' },
-  katakana: { name: 'Katakana', native: 'カタカナ' }
-}
+const nativeNames: Record<KanaScript, string> = { hiragana: 'ひらがな', katakana: 'カタカナ' }
 
 const kanaTile =
-  (script: KanaScript, initials: ReadonlySet<string>, withRomaji: boolean) =>
+  (script: KanaScript, initials: ReadonlySet<string>, withRomaji: boolean, noWords: string) =>
   (cell: { kana: string; romaji: string }): KanaTile => {
     const note = withRomaji ? cell.romaji : undefined
     return initials.has(cell.kana)
       ? { href: kanaPath(script, cell.kana), note }
-      : { href: null, note, label: 'no words start with it' }
+      : { href: null, note, label: noWords, muted: true }
   }
 
 export function KanaCharts({
   script,
   initials,
-  withRomaji = false
+  withRomaji = false,
+  locale
 }: {
   script: KanaScript
   initials: ReadonlySet<string>
   withRomaji?: boolean
+  locale: Locale
 }) {
-  const tile = kanaTile(script, initials, withRomaji)
+  const t = browseText(locale)
+  const tile = kanaTile(script, initials, withRomaji, t.kana.noWords)
+  const name = t.names[script]
   return (
     <>
       <KanaChart
         rows={inScript(gojuonRows, script)}
         tile={tile}
         large={withRomaji}
-        label={`${scriptNames[script].name} gojūon`}
+        label={fill(t.kana.chartOf.gojuon, { script: name })}
+        locale={locale}
       />
       <KanaChart
         rows={inScript(dakuonRows, script)}
         tile={tile}
         large={withRomaji}
         className="sm:max-w-[46%]"
-        label={`${scriptNames[script].name} dakuon and handakuon`}
+        label={fill(t.kana.chartOf.dakuon, { script: name })}
+        locale={locale}
       />
     </>
   )
@@ -89,154 +95,172 @@ export function KanaCharts({
 function ScriptCard({
   script,
   count,
-  initials
+  initials,
+  locale
 }: {
   script: KanaScript
   count: number
   initials: ReadonlySet<string>
+  locale: Locale
 }) {
+  const t = browseText(locale)
   return (
-    <Panel label={scriptNames[script].name}>
-      <PanelHeading title={scriptNames[script].name} href={scriptPath(script)} />
+    <Panel label={t.names[script]}>
+      <PanelHeading title={t.names[script]} href={scriptPath(script)} locale={locale} />
       <p className="text-sm text-muted-foreground">
-        {script === 'hiragana'
-          ? `${plural(count, 'word')}, by the first kana of their reading`
-          : `${plural(count, 'word')} written in katakana, mostly loanwords`}
+        {counted(t.hub.scriptCard[script], count, locale)}
       </p>
-      <KanaCharts script={script} initials={initials} />
-      <MoreLink href={scriptPath(script)}>All {scriptNames[script].name.toLowerCase()}</MoreLink>
+      <KanaCharts script={script} initials={initials} locale={locale} />
+      <MoreLink href={scriptPath(script)} locale={locale}>
+        {t.hub.allScript[script]}
+      </MoreLink>
     </Panel>
   )
 }
 
-export type ScriptInitials = Record<KanaScript, ReadonlySet<string>>
+type ScriptInitials = Record<KanaScript, ReadonlySet<string>>
 
-export function BrowseHub({
-  summary,
-  initials
-}: {
+type HubProps = {
   summary: BrowseSummaryResponse
   initials: ScriptInitials
-}) {
+  locale: Locale
+}
+
+const browseHubCrumb = (locale: Locale) => ({
+  label: browseText(locale).names.browse,
+  path: browsePath
+})
+
+function KanjiPanel({ summary, locale }: { summary: BrowseSummaryResponse; locale: Locale }) {
+  const t = browseText(locale)
+  return (
+    <Panel label={t.names.kanji}>
+      <PanelHeading title={t.names.kanji} href={kanjiListsPath} locale={locale} />
+      <p className="text-sm text-muted-foreground">
+        {fill(t.hub.kanjiCard, { count: formatNumber(summary.kanji.joyo, locale) })}
+      </p>
+      <Chips label={t.names.kanjiLists}>
+        {[...gradeLists.slice(0, 3), secondarySchool, ...jlptKanjiLists.slice(0, 2)].map(list => (
+          <Chip key={list.slug} href={kanjiListPath(list.slug)} locale={locale}>
+            {kanjiListName(list, locale)}
+          </Chip>
+        ))}
+        <Chip href={strokeCountsPath} locale={locale}>
+          {t.names.byStrokeCount}
+        </Chip>
+      </Chips>
+      <MoreLink href={kanjiListsPath} locale={locale}>
+        {t.hub.allKanjiLists}
+      </MoreLink>
+    </Panel>
+  )
+}
+
+function FrequencyPanel({ summary, locale }: { summary: BrowseSummaryResponse; locale: Locale }) {
+  const t = browseText(locale)
+  return (
+    <Panel label={t.names.frequency}>
+      <PanelHeading title={t.names.frequency} href={frequencyDictionariesPath} locale={locale} />
+      <p className="text-sm text-muted-foreground">{t.hub.frequencyCard}</p>
+      <p className="text-sm font-medium">{t.names.jlptVocabulary}</p>
+      <Chips label={t.names.jlptVocabulary}>
+        {jlptLists.map(list => {
+          const count = summary.jlpt.find(each => each.slug === list.slug)?.count ?? 0
+          return (
+            <Chip key={list.slug} href={jlptVocabularyPath(list.level)} locale={locale}>
+              {fill(t.hub.jlptChip, { level: list.level, count: formatNumber(count, locale) })}
+            </Chip>
+          )
+        })}
+      </Chips>
+      <p className="text-sm font-medium">{t.hub.mostUsedOnYouTube}</p>
+      <Chips label={t.hub.mostUsedOnYouTube}>
+        {allRankBands.map(({ band }) => (
+          <Chip key={band} href={rankBandPath('youtube', band)} locale={locale}>
+            {rankRange(band, locale)}
+          </Chip>
+        ))}
+      </Chips>
+      <MoreLink href={frequencyDictionariesPath} locale={locale}>
+        {t.hub.allFrequency}
+      </MoreLink>
+    </Panel>
+  )
+}
+
+export function BrowseHub({ summary, initials, locale }: HubProps) {
+  const t = browseText(locale)
   return (
     <BrowsePage>
-      <DictionaryBreadcrumbs pages={[{ label: 'Browse', path: browsePath }]} />
-      <BrowseHeading title="Browse the Japanese dictionary">
-        All {formatCount(summary.entries)} entries, by how they’re written, by kanji, by how common
-        they are, and by what kind of word they are.
+      <DictionaryBreadcrumbs locale={locale} pages={[browseHubCrumb(locale)]} />
+      <BrowseHeading title={t.hub.title}>
+        {fill(t.hub.intro, { count: formatNumber(summary.entries, locale) })}
       </BrowseHeading>
-      <ScriptCard script="hiragana" count={summary.scripts.hiragana} initials={initials.hiragana} />
-      <ScriptCard script="katakana" count={summary.scripts.katakana} initials={initials.katakana} />
+      {(['hiragana', 'katakana'] as const).map(script => (
+        <ScriptCard
+          key={script}
+          script={script}
+          count={summary.scripts[script]}
+          initials={initials[script]}
+          locale={locale}
+        />
+      ))}
       <div className="grid gap-4 md:grid-cols-2">
-        <Panel label="Kanji">
-          <PanelHeading title="Kanji" href={kanjiListsPath} />
-          <p className="text-sm text-muted-foreground">
-            {formatCount(summary.kanji.joyo)} jōyō kanji by school grade and stroke count, and kanji
-            by JLPT level
-          </p>
-          <Chips label="Kanji lists">
-            {gradeLists.slice(0, 3).map(list => (
-              <Chip key={list.slug} href={kanjiListPath(list.slug)}>
-                {list.name}
-              </Chip>
-            ))}
-            <Chip href={kanjiListPath(secondarySchool.slug)}>{secondarySchool.name}</Chip>
-            {jlptKanjiLists.slice(0, 2).map(list => (
-              <Chip key={list.slug} href={kanjiListPath(list.slug)}>
-                {list.name}
-              </Chip>
-            ))}
-            <Chip href={strokeCountsPath}>By stroke count</Chip>
-          </Chips>
-          <MoreLink href={kanjiListsPath}>All kanji lists</MoreLink>
-        </Panel>
-        <Panel label="Frequency dictionaries">
-          <PanelHeading title="Frequency dictionaries" href={frequencyDictionariesPath} />
-          <p className="text-sm text-muted-foreground">
-            Words ranked by how often they’re used, and the JLPT vocabulary lists
-          </p>
-          <p className="text-sm font-medium">JLPT vocabulary</p>
-          <Chips label="JLPT vocabulary">
-            {jlptLists.map(list => {
-              const count = summary.jlpt.find(each => each.slug === list.slug)?.count ?? 0
-              return (
-                <Chip key={list.slug} href={jlptVocabularyPath(list.level)}>
-                  N{list.level} · {formatCount(count)}
-                </Chip>
-              )
-            })}
-          </Chips>
-          <p className="text-sm font-medium">Most used on YouTube</p>
-          <Chips label="Most used on YouTube">
-            {allRankBands.map(({ band }) => (
-              <Chip key={band} href={rankBandPath('youtube', band)}>
-                {rankRange(band)}
-              </Chip>
-            ))}
-          </Chips>
-          <MoreLink href={frequencyDictionariesPath}>All frequency dictionaries</MoreLink>
-        </Panel>
+        <KanjiPanel summary={summary} locale={locale} />
+        <FrequencyPanel summary={summary} locale={locale} />
       </div>
-      <CategoryChipCards />
-      <Panel label="Common words" className="sm:flex-row sm:items-center sm:justify-between">
+      <CategoryChipCards locale={locale} />
+      <Panel label={t.names.commonWords} className="sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Common words</h2>
+          <h2 className="text-lg font-semibold">{t.names.commonWords}</h2>
           <p className="text-sm text-muted-foreground">
-            {plural(summary.common, 'word')} JMdict marks as common
+            {counted(t.hub.commonCard, summary.common, locale)}
           </p>
         </div>
         <Link
-          href={categoryPath(commonWords.slug)}
+          href={localizedPath(categoryPath(commonWords.slug), locale)}
           className="inline-flex min-h-11 items-center self-start rounded-lg border px-4 hover:bg-muted"
         >
-          Browse common words →
+          {t.hub.browseCommon}
         </Link>
       </Panel>
-      <SourceCredits sources={[sourceCredits.jmdict, sourceCredits.kanjidic2]} />
+      <SourceCredits sources={[sourceCredits.jmdict, sourceCredits.kanjidic2]} locale={locale} />
     </BrowsePage>
   )
 }
 
-export function KanaChartsPage({
-  summary,
-  initials
-}: {
-  summary: BrowseSummaryResponse
-  initials: ScriptInitials
-}) {
+export function KanaChartsPage({ summary, initials, locale }: HubProps) {
+  const t = browseText(locale)
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
-        pages={[
-          { label: 'Browse', path: browsePath },
-          { label: 'Kana', path: kanaChartsPath }
-        ]}
+        locale={locale}
+        pages={[browseHubCrumb(locale), { label: t.names.kana, path: kanaChartsPath }]}
       />
-      <BrowseHeading title="Hiragana and katakana charts">
-        Japanese has two kana scripts with the same 46 sounds. Hiragana writes native words and
-        grammar; katakana writes loanwords and emphasis. Pick a kana to see every word that starts
-        with it.
-      </BrowseHeading>
+      <BrowseHeading title={t.kana.chartsTitle}>{t.kana.chartsIntro}</BrowseHeading>
       {(['hiragana', 'katakana'] as const).map(script => (
-        <Panel key={script} label={scriptNames[script].name}>
+        <Panel key={script} label={t.names[script]}>
           <PanelHeading
-            title={scriptNames[script].name}
+            title={t.names[script]}
+            locale={locale}
             aside={
               <Link
-                href={scriptPath(script)}
+                href={localizedPath(scriptPath(script), locale)}
                 className="underline underline-offset-4 hover:text-foreground"
               >
-                {plural(summary.scripts[script], 'word')}
+                {counted(t.counts.words, summary.scripts[script], locale)}
               </Link>
             }
           />
-          <p lang="ja" className="-mt-2 text-muted-foreground">
-            {scriptNames[script].native}
-          </p>
-          <KanaCharts script={script} initials={initials[script]} withRomaji />
+          {nativeNames[script] === t.names[script] ? null : (
+            <p lang="ja" className="-mt-2 text-muted-foreground">
+              {nativeNames[script]}
+            </p>
+          )}
+          <KanaCharts script={script} initials={initials[script]} withRomaji locale={locale} />
         </Panel>
       ))}
-      <SourceCredits sources={[sourceCredits.jmdict]} />
+      <SourceCredits sources={[sourceCredits.jmdict]} locale={locale} />
     </BrowsePage>
   )
 }

@@ -6,9 +6,8 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-import publish_release
 import verify_release
-from publish_fixtures import FILES_1, FILES_2, FakeStore, quiet, sha256, stage
+from publish_fixtures import FILES_1, FILES_2, FakeStore, pinned_of, publish, quiet, sha256, stage
 from refusal import Refusal
 
 
@@ -17,15 +16,24 @@ class VerifyTests(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.tmp = Path(self._tmp.name)
         self.store = FakeStore()
-        publish_release.publish(self.store, stage(self.tmp / "a", "2026.10.1", FILES_1), log=quiet)
-        publish_release.publish(self.store, stage(self.tmp / "b", "2026.11.1", FILES_2), log=quiet)
+        self.pinned = {
+            "2026.10.1": pinned_of(stage(self.tmp / "a", "2026.10.1", FILES_1)),
+            "2026.11.1": pinned_of(stage(self.tmp / "b", "2026.11.1", FILES_2)),
+        }
+        publish(self.store, self.tmp / "a")
+        publish(self.store, self.tmp / "b")
 
     def tearDown(self):
         self._tmp.cleanup()
 
     def verify(self, release="2026.11.1", hash_files=True):
         return verify_release.verify(
-            self.store, release, hash_files=hash_files, workdir=self.tmp, log=quiet
+            self.store,
+            release,
+            self.pinned.get(release),
+            hash_files=hash_files,
+            workdir=self.tmp,
+            log=quiet,
         )
 
     def test_a_published_release_verifies(self):
@@ -59,6 +67,11 @@ class VerifyTests(unittest.TestCase):
         body = self.store.objects[key]["body"].replace(b"2026.10.1", b"2026.09.1")
         self.store.objects[key].update(body=body, sha256=sha256(body))
         with self.assertRaisesRegex(Refusal, "isn't the"):
+            self.verify()
+
+    def test_a_published_manifest_that_differs_from_the_pinned_one_fails(self):
+        self.pinned["2026.11.1"]["files"][0]["sha256"] = "0" * 64
+        with self.assertRaisesRegex(Refusal, r"pinned manifest in files: Data\.json \(sha256\)"):
             self.verify()
 
     def test_no_releases_json_fails(self):

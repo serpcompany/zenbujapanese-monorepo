@@ -1,29 +1,20 @@
-import type { FrequencyResult, FrequencyTier } from '@zenbu/dictionary-core/detail/frequency'
+import type { FrequencyResult } from '@zenbu/dictionary-core/detail/frequency'
 import { Badge } from '@/components/ui/badge'
+import type { Locale } from '@/lib/i18n/config'
+import { coreText } from '@/lib/i18n/core-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { FrequencyDot, SpokenTier } from './frequency-dot'
 
-const tierColor: Record<FrequencyTier, string> = {
-  veryCommon: 'bg-green-500',
-  common: 'bg-yellow-500',
-  moderate: 'bg-orange-500',
-  uncommon: 'bg-red-500',
-  rare: 'bg-neutral-400'
-}
-
-export function FrequencyDot({ tier }: { tier: FrequencyTier | null }) {
-  return (
-    <span
-      aria-hidden
-      className={`size-1.5 shrink-0 rounded-full ${tier ? tierColor[tier] : 'bg-muted-foreground'}`}
-    />
-  )
-}
-
-export function SpokenTier({ result }: { result: FrequencyResult }) {
-  return result.spokenTier ? <span className="sr-only">, {result.spokenTier}</span> : null
-}
-
-export function FrequencyBadges({ frequency }: { frequency: FrequencyResult[] }) {
+export function FrequencyBadges({
+  frequency,
+  locale
+}: {
+  frequency: FrequencyResult[]
+  locale: Locale
+}) {
   if (frequency.length === 0) return null
+  const t = getDictionary(locale).frequency
   return (
     <div className="flex flex-wrap gap-1.5">
       {frequency.map(rank => (
@@ -34,10 +25,16 @@ export function FrequencyBadges({ frequency }: { frequency: FrequencyResult[] })
           data-chip={rank.source}
         >
           <FrequencyDot tier={rank.tier} />
-          {rank.source}{' '}
+          {coreText(rank.source, locale)}{' '}
           <span className="text-foreground tabular-nums">
-            {rank.value}
-            <SpokenTier result={rank} />
+            {coreText(rank.value, locale)}
+            <SpokenTier
+              text={
+                rank.spokenTier
+                  ? fill(t.spokenTier, { tier: coreText(rank.spokenTier, locale) })
+                  : null
+              }
+            />
           </span>
         </Badge>
       ))}

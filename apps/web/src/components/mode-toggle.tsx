@@ -12,11 +12,14 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+
+export type ThemeText = Dictionary['chrome']['theme']
 
 const themeChoices = [
-  { theme: 'light', label: 'Light', icon: SunIcon },
-  { theme: 'dark', label: 'Dark', icon: MoonIcon },
-  { theme: 'system', label: 'System', icon: MonitorIcon }
+  { theme: 'light', icon: SunIcon },
+  { theme: 'dark', icon: MoonIcon },
+  { theme: 'system', icon: MonitorIcon }
 ] as const
 
 function ThemeIcon() {
@@ -34,20 +37,20 @@ function ThemeIcon() {
   )
 }
 
-export function ModeToggle() {
+export function ModeToggle({ text }: { text: ThemeText }) {
   const { theme, setTheme } = useTheme()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" size="icon-lg" />}>
         <ThemeIcon />
-        <span className="sr-only">Theme</span>
+        <span className="sr-only">{text.label}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-36">
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-          {themeChoices.map(({ theme: value, label, icon: Icon }) => (
+          {themeChoices.map(({ theme: value, icon: Icon }) => (
             <DropdownMenuRadioItem key={value} value={value} closeOnClick>
               <Icon aria-hidden="true" />
-              {label}
+              {text[value]}
             </DropdownMenuRadioItem>
           ))}
         </DropdownMenuRadioGroup>
@@ -56,28 +59,28 @@ export function ModeToggle() {
   )
 }
 
-export function ThemeMenuRow() {
+export function ThemeMenuRow({ text }: { text: ThemeText }) {
   const { theme, setTheme } = useTheme()
   return (
     <DropdownMenuGroup className="flex items-center justify-between gap-3 py-0.5 pr-0.5 pl-1.5">
       <DropdownMenuLabel className="relative flex items-center gap-1.5 p-0 text-sm font-normal text-foreground [&_svg]:size-4 [&_svg]:text-muted-foreground">
         <ThemeIcon />
-        Theme
+        {text.label}
       </DropdownMenuLabel>
       <DropdownMenuRadioGroup
         value={theme}
         onValueChange={setTheme}
         className="flex gap-px rounded-full p-0.5 ring-1 ring-border"
       >
-        {themeChoices.map(({ theme: value, label, icon: Icon }) => (
+        {themeChoices.map(({ theme: value, icon: Icon }) => (
           <DropdownMenuRadioItem
             key={value}
             value={value}
-            label={label}
+            label={text[value]}
             className="size-7 justify-center rounded-full p-0 text-muted-foreground *:data-[slot=dropdown-menu-radio-item-indicator]:hidden focus:text-foreground data-checked:bg-muted data-checked:text-foreground data-checked:ring-1 data-checked:ring-foreground/10 [&_svg:not([class*='size-'])]:size-3.5"
           >
             <Icon aria-hidden="true" />
-            <span className="sr-only">{label}</span>
+            <span className="sr-only">{text[value]}</span>
           </DropdownMenuRadioItem>
         ))}
       </DropdownMenuRadioGroup>

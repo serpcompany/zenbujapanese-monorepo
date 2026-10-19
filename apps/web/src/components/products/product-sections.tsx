@@ -4,14 +4,13 @@ import type { ReactNode } from 'react'
 import { ProductCard } from '@/components/products/product-card'
 import { productSymbols } from '@/components/products/product-symbols'
 import { sectionTitleClassName } from '@/components/products/section-title'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion'
-import type { Product } from '@/lib/products/catalog'
-import type { ProductPoint, ProductQuestion } from '@/lib/products/product-page'
+import { QuestionList } from '@/components/question-list'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
+import type { CatalogProduct } from '@/lib/products/localized-catalog'
+import type { ProductPoint } from '@/lib/products/product-page'
+import type { Question } from '@/lib/questions'
 import { linkTo } from '@/lib/site'
 
 export function ProductPoints({ points }: { points: readonly ProductPoint[] }) {
@@ -36,46 +35,42 @@ export function ProductPoints({ points }: { points: readonly ProductPoint[] }) {
   )
 }
 
-export function ProductQuestions({ questions }: { questions: readonly ProductQuestion[] }) {
+export function ProductQuestions({
+  questions,
+  locale
+}: {
+  questions: readonly Question[]
+  locale: Locale
+}) {
   return (
     <div className="flex flex-col items-center gap-6">
-      <h2 className={sectionTitleClassName}>Questions</h2>
-      <Accordion
-        defaultValue={[questions[0]?.question]}
-        className="w-full max-w-2xl border-y text-left"
-      >
-        {questions.map(item => (
-          <AccordionItem key={item.question} value={item.question}>
-            <AccordionTrigger className="py-3.5 text-base hover:no-underline">
-              {item.question}
-            </AccordionTrigger>
-            <AccordionContent keepMounted className="pb-4 text-[15px] text-muted-foreground">
-              <p>{item.answer}</p>
-              {item.link ? (
-                <p>
-                  <Link href={item.link.href}>{item.link.title}</Link>
-                </p>
-              ) : null}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+      <h2 className={sectionTitleClassName}>
+        {getDictionary(locale).productPage.questionsHeading}
+      </h2>
+      <QuestionList questions={questions} openFirst className="max-w-2xl text-left" />
     </div>
   )
 }
 
-export function MoreProducts({ products }: { products: readonly Product[] }) {
+export function MoreProducts({
+  products,
+  locale
+}: {
+  products: readonly CatalogProduct[]
+  locale: Locale
+}) {
+  const text = getDictionary(locale).productPage.more
   const allProducts = linkTo('products')
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <h2 className="text-lg font-semibold tracking-tight">More from Zenbu</h2>
+        <h2 className="text-lg font-semibold tracking-tight">{text.heading}</h2>
         <Link
-          href={allProducts.href}
+          href={localizedPath(allProducts.href, locale)}
           data-link-target={allProducts.target}
           className="inline-flex items-center gap-1 text-sm font-medium hover:underline"
         >
-          All products
+          {text.all}
           <ArrowRightIcon aria-hidden="true" className="size-4" />
         </Link>
       </div>

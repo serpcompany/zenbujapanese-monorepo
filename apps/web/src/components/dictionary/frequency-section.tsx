@@ -1,30 +1,37 @@
 'use client'
 
-import type { FrequencyDetails, FrequencyRowDetail } from '@zenbu/dictionary-core/detail/frequency'
 import { useState } from 'react'
-import { FrequencyDot, SpokenTier } from './frequency'
+import type { ShownFrequencyRow } from '@/lib/dictionary/screen-text'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { FrequencyDot, SpokenTier } from './frequency-dot'
 import { Sheet } from './sheet'
 
-export function FrequencyDetailsContent({ details }: { details: FrequencyDetails }) {
+export function FrequencyDetailsContent({
+  details,
+  text
+}: {
+  details: ShownFrequencyRow['details']
+  text: Dictionary['frequency']
+}) {
   const { pack } = details
   return (
     <div className="flex flex-col gap-4" data-frequency-details>
       <section className="flex flex-col gap-2" data-details-section="pack">
         <h3 className="font-medium">{pack.name}</h3>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
-          <dt className="text-muted-foreground">Domain</dt>
+          <dt className="text-muted-foreground">{text.domain}</dt>
           <dd>{pack.domain}</dd>
         </dl>
         <p>{pack.description}</p>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
-          <dt className="text-muted-foreground">Version</dt>
+          <dt className="text-muted-foreground">{text.version}</dt>
           <dd>{pack.version}</dd>
-          <dt className="text-muted-foreground">Source</dt>
+          <dt className="text-muted-foreground">{text.source}</dt>
           <dd>{pack.source}</dd>
         </dl>
       </section>
       <section className="flex flex-col gap-2" data-details-section={details.section}>
-        <h3 className="font-medium">{details.section}</h3>
+        <h3 className="font-medium">{details.shownSection}</h3>
         {details.rows.length > 0 ? (
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
             {details.rows.map(row => (
@@ -41,9 +48,15 @@ export function FrequencyDetailsContent({ details }: { details: FrequencyDetails
   )
 }
 
-export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
-  const [open, setOpen] = useState<FrequencyRowDetail | null>(null)
-  const [lastOpened, setLastOpened] = useState<FrequencyRowDetail | null>(null)
+export function FrequencySection({
+  rows,
+  text
+}: {
+  rows: ShownFrequencyRow[]
+  text: Dictionary['frequency']
+}) {
+  const [open, setOpen] = useState<ShownFrequencyRow | null>(null)
+  const [lastOpened, setLastOpened] = useState<ShownFrequencyRow | null>(null)
   return (
     <>
       <ul className="-mx-2 flex flex-col">
@@ -61,10 +74,10 @@ export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
               }}
             >
               <FrequencyDot tier={row.tier} />
-              {row.source}
+              {row.shownSource}
               <span className="ml-auto text-muted-foreground tabular-nums">
                 {row.value}
-                <SpokenTier result={row} />
+                <SpokenTier text={row.spokenTier} />
               </span>
             </button>
           </li>
@@ -75,9 +88,10 @@ export function FrequencySection({ rows }: { rows: FrequencyRowDetail[] }) {
         onOpenChange={next => {
           if (!next) setOpen(null)
         }}
-        title="Frequency Details"
+        title={text.detailsTitle}
+        done={text.done}
       >
-        {lastOpened ? <FrequencyDetailsContent details={lastOpened.details} /> : null}
+        {lastOpened ? <FrequencyDetailsContent details={lastOpened.details} text={text} /> : null}
       </Sheet>
     </>
   )

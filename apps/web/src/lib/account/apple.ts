@@ -1,8 +1,11 @@
+import { defaultLocale, isLocale, languageOf } from '../i18n/config'
 import { isFields, jwtClaims } from './answers'
 import type { Failure, Result } from './client'
 
-const appleScriptUrl =
-  'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js'
+export function appleScriptUrl(pageLanguage: string): string {
+  const locale = isLocale(pageLanguage) ? pageLanguage : defaultLocale
+  return `https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/${languageOf(locale).ogLocale}/appleid.auth.js`
+}
 
 interface AppleConfig {
   clientId: string
@@ -101,7 +104,7 @@ function loadAppleAuth(): Promise<AppleAuth | null> {
   if (loaded) return Promise.resolve(loaded)
   loading ??= new Promise(resolve => {
     const script = document.createElement('script')
-    script.src = appleScriptUrl
+    script.src = appleScriptUrl(document.documentElement.lang)
     script.async = true
     script.onload = () => resolve(appleAuthOnThePage())
     script.onerror = () => {

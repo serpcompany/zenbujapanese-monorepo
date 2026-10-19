@@ -97,7 +97,7 @@ struct WordDetailView: View {
     .navigationTitle(entry.headword)
     .inlineNavigationTitle()
     .savedItemActions(
-      for: item, identifierPrefix: "word-detail", shareText: page?.shareText ?? entry.headword,
+      for: item, identifierPrefix: "word-detail", share: SharedPage(word: entry, page: page),
       notes: notes,
       photos: photos, showsListPicker: $showsListPicker)
     .sheet(item: $frequencyDisclosure) { row in
@@ -113,7 +113,7 @@ struct WordDetailView: View {
       notes.finishEditing()
     }
     .task(id: entry.id) {
-      await notes.load(entry.noteID)
+      await notes.load(item)
       await photos.load(item, saving: initialEncounterMedia)
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
