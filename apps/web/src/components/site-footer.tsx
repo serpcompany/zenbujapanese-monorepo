@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { AccountFooterLink } from '@/components/account/account-footer-link'
 import { LanguageMenu } from '@/components/language-switcher'
 import { SiteBrand } from '@/components/site-brand'
-import { SocialLinks } from '@/components/social-links'
+import { SocialIcons, SocialsMenu } from '@/components/social-links'
+import { Separator } from '@/components/ui/separator'
 import { accountPagesOpen } from '@/lib/account/availability'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -52,10 +53,15 @@ export function SiteFooter({ locale }: { locale: Locale }) {
             </nav>
           ))}
         </div>
-        <SocialLinks locale={locale} />
-        <div className="-mt-2 flex flex-wrap items-center justify-between gap-2 text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-5 text-muted-foreground md:gap-x-3">
           <p>{fill(t.footer.copyright, { year: new Date().getFullYear(), name: site.name })}</p>
+          <SocialIcons locale={locale} className="hidden md:ml-auto md:flex md:flex-wrap" />
+          <Separator
+            orientation="vertical"
+            className="hidden h-4 data-vertical:self-center md:block"
+          />
           <div className="flex flex-wrap items-center gap-2">
+            <SocialsMenu locale={locale} className="-my-2 md:hidden" />
             <LanguageMenu {...switcherFor(locale)} side="top" className="-my-2" />
             <Link href={localizedPath('/sitemap/', locale)} className="hover:text-foreground">
               {t.footer.sitemap}
