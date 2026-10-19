@@ -195,10 +195,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
-  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open
-  the share sheet ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_ONLY_SECTION` draws a
-  page with only the sections it names ([`ios-accessibility.md`](ios-accessibility.md)).
+  Simulator harness); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open the share sheet, or its card
+  in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
+  test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
+  draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's

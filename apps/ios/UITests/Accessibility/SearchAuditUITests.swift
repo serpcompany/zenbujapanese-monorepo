@@ -72,7 +72,7 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     audit("A frequency rank's details", in: app)
     tap(app.buttons["Done"].firstMatch)
     tap(find("word-detail.more-menu", in: app))
-    tap(find("word-detail.add-to-list", in: app))
+    tap(menuChoice("Add to List…", in: app))
     waitForSheet("word-list-picker.screen", in: app)
     audit("Add to List", in: app)
     tap(find("word-list-picker.done", in: app))

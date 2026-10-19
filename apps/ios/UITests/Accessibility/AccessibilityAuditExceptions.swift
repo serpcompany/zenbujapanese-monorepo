@@ -177,6 +177,7 @@ private let textThatScales = [
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
+  allow(.dynamicType, .identifier("word-detail.alternative.驛"), on: ["A caption's word"], because: Why.scales),
   allow(.textClipped, .label("Add Note"), on: ["A word's note, alone"], because: Why.scales),
   allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
   allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),

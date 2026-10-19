@@ -65,6 +65,12 @@ top, and the walk audits them there (`AuditPart.textSizes`). The page scrolled t
 keeps every other audit (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
 caption's word sheet at full height, so the Player page isn't showing behind it.
 
+The share sheet's card is drawn by the share extension, in a process of its own, and the audit
+reads only the app's: in the share sheet it finds nothing on the card, not even the contrast
+findings every screen of the app has. So `ShareSheetAuditUITests` opens the same card, the
+extension's `ShareCardScene`, full screen inside the app (`ZENBU_SHARE_CARD_IN_APP=1`,
+[`ios-share-sheet.md`](ios-share-sheet.md), Tests).
+
 ## Allowed findings
 
 Every finding a test lets pass is an entry in `AllowedFinding.list`
@@ -90,4 +96,5 @@ that no device's run uses.
 
 The audits read the accessibility tree and the screen; they don't use VoiceOver. VoiceOver's
 order and announcements, and the largest text size on a real device, are checked by a person on
-an iPhone, from the checklist in the pull request that changes them.
+an iPhone, from the checklist in the pull request that changes them. They read only the app's own
+process, so the share sheet's card is audited inside the app rather than in the sheet.

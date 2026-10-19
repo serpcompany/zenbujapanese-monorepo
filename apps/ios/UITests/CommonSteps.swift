@@ -15,17 +15,6 @@ extension ZenbuUITestCase {
     return app
   }
 
-  func skipWithoutTheShareCard() throws {
-    try XCTSkipIf(device == .mac, "the share sheet's card is on iPhone and iPad")
-  }
-
-  func chooseZenbuInTheShareSheet(in app: XCUIApplication) {
-    tap(
-      app.descendants(matching: .any)
-        .matching(NSPredicate(format: "label == 'Zenbu Japanese' AND NOT identifier BEGINSWITH 'share-card'"))
-        .firstMatch)
-  }
-
   @discardableResult
   func markJapanKnownFromItsResult(in app: XCUIApplication) -> XCUIElement {
     search("japan", in: app)

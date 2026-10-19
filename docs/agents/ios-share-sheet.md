@@ -132,12 +132,17 @@ copies of the app's files in the App Group `group.com.zenbujapanese.dictionary<s
   dictionary and Vision), `ShareCardTranslationTests`, `SharedItemTests` (reading what the sheet
   hands over), `TokenizerFilesTests`, `SharedChangesTests`, `SharedCopyTests`, and
   `BundledDataTests`.
-- **UI:** `ShareSheetUITests`, and `ShareSheetAuditUITests`, the accessibility audit of a word's,
-  a sentence's, and a photo's card, on iPhone and iPad (skipped on the Mac). A Debug harness opens the
+- **UI:** `ShareSheetUITests`, on iPhone and iPad (skipped on the Mac). A Debug harness opens the
   system share sheet over the app at launch, with `ZENBU_SHARE_TEXT=<text>` or
   `ZENBU_SHARE_IMAGE=<path>` (`ShareSheetHarness`); the test taps **Zenbu Japanese** in it, and
   the extension's card is reached through the app's accessibility tree. An app's own share sheet
   lists its extensions, so this is the real share sheet and extension. Only one Zenbu build with
   the extension may be installed on the Simulator: two show two **Zenbu Japanese** rows.
+- **Accessibility:** `ShareSheetAuditUITests` audits a sentence's, a word's, and a photo's card
+  ([`ios-accessibility.md`](ios-accessibility.md)). Apple's audit reads only the app's own
+  process, and the extension draws the card in its own, so in the share sheet it finds nothing on
+  the card, not even contrast. With `ZENBU_SHARE_CARD_IN_APP=1` as well, the harness opens the same
+  card, `ShareCardScene` on the extension's reader, full screen inside the app, where the audit
+  reaches it.
 - **On a device:** the product docs' Checked by hand, in a Zenbu Dev build
   ([`ios.md`](ios.md#beside-the-testflight-app)), then the memory log above.

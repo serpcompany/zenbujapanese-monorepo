@@ -17,6 +17,7 @@ enum LaunchHarness {
   static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
   static let shareTextKey = "ZENBU_SHARE_TEXT"
   static let shareImageKey = "ZENBU_SHARE_IMAGE"
+  static let shareCardInAppKey = "ZENBU_SHARE_CARD_IN_APP"
   static let onlySectionKey = "ZENBU_ONLY_SECTION"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
