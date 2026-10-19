@@ -180,7 +180,7 @@ private let textThatScales = [
   allow(
     .textClipped,
     .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
-    on: ["Account", "Account, at its end", "Account, its rows"], because: Why.scales),
+    on: ["Account", "Account, at its end"], because: Why.scales),
   allow(
     .dynamicType,
     .label(
