@@ -1,3 +1,5 @@
+import { log } from '@zenbu/node-service/log'
+import { failureFields } from '../failure'
 import type { Language } from '../language'
 import {
   type BillingProvider,
@@ -18,8 +20,11 @@ import {
   entitlementOf,
   type ManagedIn,
   type StoredSubscription,
+  type StoreTraits,
+  type StoreTraitsOf,
   type Subscription,
   type SubscriptionKey,
+  type SubscriptionSource,
   type SubscriptionStatus
 } from './subscriptions'
 
@@ -31,6 +36,7 @@ export interface BillingProviders {
 export interface BillingRules {
   cloud: CloudAccessRules
   storeTesting: { environment: string; accounts: readonly string[] | null } | null
+  stores: Readonly<Record<SubscriptionSource, StoreTraits>>
 }
 
 export interface SubscriptionView {
@@ -68,7 +74,7 @@ export interface CheckoutAsk {
   language: Language | null
 }
 
-const owedPerRound = 20
+const unknownStore: StoreTraits = { managedIn: 'website', retryWindowMs: billingRetryWindowMs }
 const endedAtTheStore = new Set<SubscriptionStatus>(['expired', 'revoked'])
 
 const mayStillBill = (subscription: Subscription, now: Date) =>
@@ -105,8 +111,15 @@ export function createBilling(
 ) {
   checkedRules(providers, rules)
   const { web, store: appStore } = providers
-  const managedIn = (source: string): ManagedIn =>
-    source === appStore?.source ? 'app_store' : 'website'
+  const stores: StoreTraitsOf = source => rules.stores[source] ?? unknownStore
+  const managedIn = (source: string): ManagedIn => stores(source).managedIn
+
+  const counts = (subscription: StoredSubscription, email: string) => {
+    const testing = rules.storeTesting
+    if (testing === null || subscription.environment !== testing.environment) return true
+    return testing.accounts === null || testing.accounts.includes(email.toLowerCase())
+  }
+
   const eventRules: EventRules = {
     grants: (subscription: Subscription) =>
       (subscription.source === web?.source ? web.prices : (appStore?.products ?? [])).includes(
@@ -115,18 +128,13 @@ export function createBilling(
     gracePeriodDays: (subscription: Subscription) =>
       subscription.source === web?.source ? web.gracePeriodDays : 0,
     refundsAndCancels: (key: SubscriptionKey) => key.source === web?.source,
-    managedIn
-  }
-
-  const counts = (subscription: StoredSubscription, email: string) => {
-    const testing = rules.storeTesting
-    if (testing === null || subscription.environment !== testing.environment) return true
-    return testing.accounts === null || testing.accounts.includes(email.toLowerCase())
+    stores,
+    counts
   }
 
   async function entitlement(userId: string, email: string, now: Date) {
     const subscriptions = (await store.subscriptionsOf(userId)).filter(each => counts(each, email))
-    return entitlementOf(subscriptions, now, managedIn)
+    return entitlementOf(subscriptions, now, stores)
   }
 
   async function view(principal: Principal, now: Date): Promise<SubscriptionView | null> {
@@ -148,30 +156,41 @@ export function createBilling(
 
   let settling: Promise<void> | null = null
 
-  async function settleRound(): Promise<number> {
-    const owed = await store.claimOwedActions(owedPerRound)
-    for (const action of owed) {
-      try {
-        if (action.source !== web?.source) throw new BillingUnavailable('no provider for it')
-        await web.refundAndCancel(action.subscriptionId)
-        await store.settleOwedAction(action.id, null)
-      } catch (error) {
-        await store.settleOwedAction(action.id, error instanceof Error ? error.message : 'failed')
+  async function settleOne(): Promise<boolean> {
+    const action = await store.claimOwedAction()
+    if (action === null) return false
+    try {
+      if (action.source !== web?.source) throw new BillingUnavailable('no provider for it')
+      await web.refundAndCancel(action.subscriptionId)
+      await store.settleOwedAction(action.id, null)
+    } catch (error) {
+      const failure = error instanceof Error ? error.message : 'failed'
+      const settled = await store.settleOwedAction(action.id, failure)
+      const fields = { subscription: action.subscriptionId, attempts: action.attempts, failure }
+      if (settled === 'gave_up') {
+        log('error', 'billing: gave up on an owed refund and cancel; end it by hand', fields)
+      } else {
+        log('warn', "billing: an owed refund and cancel failed; it's tried again", fields)
       }
     }
-    return owed.length
+    return true
   }
 
   function settleOwed(): Promise<void> {
     settling ??= (async () => {
       try {
-        while ((await settleRound()) === owedPerRound) {}
+        while (await settleOne()) {}
       } finally {
         settling = null
       }
     })()
     return settling
   }
+
+  const settleInTheBackground = () =>
+    void settleOwed().catch(error =>
+      log('error', 'billing: settling owed refunds failed', failureFields(error))
+    )
 
   async function webhook(verify: () => Promise<Verified<ProviderEvent>>): Promise<WebhookAnswer> {
     const event = await verify()
@@ -182,7 +201,7 @@ export function createBilling(
       return store.transaction(tx => applyEvent(tx, event, state, eventRules))
     })
     if (typeof answered !== 'string') return 'retry'
-    void settleOwed()
+    settleInTheBackground()
     return answered
   }
 
@@ -210,7 +229,11 @@ export function createBilling(
       const customer = await store.ensureCustomer(principal.userId)
       if (account === null || customer === null) return { status: 'no_account' }
       const subscriptions = await store.subscriptionsOf(principal.userId)
-      const held = entitlementOf(subscriptions, now, managedIn)
+      const held = entitlementOf(
+        subscriptions.filter(each => counts(each, account.email)),
+        now,
+        stores
+      )
       if (!held.canSubscribe) return { status: 'already_subscribed', entitlement: held }
       return unlessUnavailable(async () => ({
         status: 'created' as const,
@@ -279,7 +302,11 @@ export function createBilling(
       if (appStore === null) return 0
       let applied = 0
       for (const body of await appStore.recentNotifications()) {
-        if ((await webhook(() => appStore.verifyNotification(body))) === 'applied') applied += 1
+        try {
+          if ((await webhook(() => appStore.verifyNotification(body))) === 'applied') applied += 1
+        } catch (error) {
+          log('error', "apple: couldn't apply a notification it caught up on", failureFields(error))
+        }
       }
       return applied
     },
@@ -293,8 +320,10 @@ export function createBilling(
 
     async endSubscriptions(userId: string, now: Date): Promise<Ended> {
       const subscriptions = await store.subscriptionsOf(userId)
-      const running = entitlementOf(subscriptions, now, managedIn).running
-      const appStoreSubscriptionContinues = running.some(each => each.managedIn === 'app_store')
+      const running = entitlementOf(subscriptions, now, stores).running
+      const appStoreSubscriptionContinues = running.some(
+        each => each.managedIn === 'app_store' && each.willRenew !== false
+      )
       const billing = subscriptions.filter(
         each => managedIn(each.source) === 'website' && mayStillBill(each, now)
       )

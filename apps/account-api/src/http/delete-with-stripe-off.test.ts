@@ -11,10 +11,7 @@ const remove = (learner: Learner) => billing.deleteAccount(learner)
 
 async function websiteSubscriber(email: string, expiresAt: Date) {
   const learner = await billing.accounts.learner(email)
-  await billing.rows(
-    `insert into subscriptions (source, provider_id, user_id, product_id, status, expires_at, will_renew, environment, period_started_at, state_at, origin)
-      values ('stripe', 'sub_${learner.userId}', '${learner.userId}', 'price_monthly', 'active', '${expiresAt.toISOString()}', true, 'test', now() - interval '30 days', now(), 'provider')`
-  )
+  await billing.holds(learner, { source: 'stripe', expiresAt })
   return learner
 }
 

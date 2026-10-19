@@ -198,6 +198,7 @@ export function standInAppStore() {
 
   const statuses = new Map<string, StoreStatus>()
   const history: string[] = []
+  const api = { stalls: false }
   const apiKey = keyPair().privatePem
   const answer = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -215,6 +216,7 @@ export function standInAppStore() {
       _query: URLSearchParams,
       method: string
     ) {
+      if (api.stalls) return new Promise<never>(() => {})
       const id = path.split('/').at(-1) ?? ''
       const known = method === 'GET' ? statuses.get(id) : undefined
       if (method === 'POST' && path === '/inApps/v1/notifications/history') {
@@ -252,6 +254,7 @@ export function standInAppStore() {
     api: {
       statuses,
       history,
+      state: api,
       clients: (environment: Environment) => new StandInApi(environment)
     }
   }

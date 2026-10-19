@@ -114,11 +114,18 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
       '/v1/webhooks/apple',
       '/v1/webhooks/stripe'
     ]
-    const document = createApp(standIns).getOpenAPI31Document({
+    const app = createApp(standIns)
+    const document = app.getOpenAPI31Document({
       openapi: '3.1.0',
       info: { title: 'gate', version: '1' }
     })
-    const paths = Object.keys(document.paths ?? {}).filter(path => !path.startsWith('/v1/auth/'))
+    const routed = app.routes
+      .filter(route => route.method !== 'ALL' && !route.path.includes('*'))
+      .map(route => route.path)
+    const paths = [...new Set([...Object.keys(document.paths ?? {}), ...routed])].filter(
+      path => path.startsWith('/v1/') && !path.startsWith('/v1/auth/')
+    )
+    expect(paths).toContain('/v1/sync')
     const gated: readonly string[] = cloudDataPaths
     expect(paths.filter(path => !gated.includes(path) && !freeOfTheGate.includes(path))).toEqual([])
     expect(freeOfTheGate.filter(path => gated.includes(path))).toEqual([])

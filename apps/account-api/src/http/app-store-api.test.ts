@@ -3,12 +3,20 @@ import { describe, expect, test } from 'vitest'
 import type { Learner } from '../test/accounts'
 import { standInAppStore } from '../test/app-store'
 import { useBillingService } from '../test/billing'
+import { websiteOrigin } from '../test/service'
+import { standInStripe } from '../test/stripe'
 
 const appStore = standInAppStore()
+const stripe = standInStripe()
 const billing = useBillingService({
   appStore,
+  stripe,
   appStoreApi: true,
-  sandboxAccounts: ['app-review@example.com']
+  sandboxAccounts: [
+    'app-review@example.com',
+    'app-review-first@example.com',
+    'app-review-second@example.com'
+  ]
 })
 
 const dayMs = 24 * 60 * 60 * 1000
@@ -54,6 +62,34 @@ describe('the App Store Server API, when its key is set', () => {
     })
   })
 
+  test("claims a purchase for the account Apple's latest transaction names, so an old copy can't move it back", async () => {
+    const { learner: first, token: firstToken } = await learnerWithToken(
+      'app-review-first@example.com'
+    )
+    const { learner: second, token: secondToken } = await learnerWithToken(
+      'app-review-second@example.com'
+    )
+    const originalTransactionId = randomUUID()
+    const bought = { originalTransactionId, appAccountToken: firstToken }
+    appStore.api.statuses.set(originalTransactionId, { status: 1, transaction: bought })
+    const oldCopy = await appStore.transaction(bought)
+    expect((await post(first, oldCopy)).status).toBe(200)
+    const resubscribed = {
+      originalTransactionId,
+      transactionId: randomUUID(),
+      appAccountToken: secondToken,
+      purchaseDate: Date.now()
+    }
+    appStore.api.statuses.set(originalTransactionId, { status: 1, transaction: resubscribed })
+    expect((await post(second, await appStore.transaction(resubscribed))).status).toBe(200)
+    expect(await post(first, oldCopy)).toMatchObject({
+      status: 409,
+      body: { error: { code: 'subscription_belongs_to_another_account' } }
+    })
+    expect((await billing.subscription(second)).active).toBe(true)
+    expect((await billing.subscription(first)).active).toBe(false)
+  })
+
   test('catches up on a notification that never reached the service, once', async () => {
     const { learner, token } = await learnerWithToken('app-review-missed@example.com')
     const originalTransactionId = randomUUID()
@@ -81,7 +117,20 @@ describe('a sandbox purchase in production', () => {
       environment: 'Sandbox'
     })
     expect((await post(tester, signed)).status).toBe(200)
-    expect(await billing.subscription(tester)).toMatchObject({ status: 'none', active: false })
+    expect(await billing.subscription(tester)).toMatchObject({
+      status: 'none',
+      active: false,
+      canSubscribe: true
+    })
+    const checkout = await billing.call('/v1/me/subscription/checkout', {
+      token: tester.token,
+      body: {
+        price: 'price_monthly',
+        successUrl: `${websiteOrigin}/account/`,
+        cancelUrl: `${websiteOrigin}/account/`
+      }
+    })
+    expect(checkout.status).toBe(200)
   })
 })
 

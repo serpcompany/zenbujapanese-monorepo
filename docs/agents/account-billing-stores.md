@@ -42,8 +42,10 @@ to version 22.
   is decided, so two checkouts that complete at once keep exactly one. The refund is owed
   (`account-billing.md`, The model): the cancel comes first, the refund follows with a Stripe
   idempotency key, retried until Stripe takes it, and one Stripe refuses for good, such as a
-  disputed charge, is logged and leaves the cancel standing. An App Store purchase can't be
-  refunded by the service; the app offers none while a subscription runs.
+  disputed charge, is logged and leaves the cancel standing. A payment with no card to refund to,
+  such as konbini's, gets its refund instructions at the invoice's email, when Stripe asks for
+  one. An App Store purchase can't be refunded by the service; the app offers none while a
+  subscription runs.
 - **Stripe down:** Checkout and the portal answer `503 billing_unavailable`; the webhook answers
   `503` and records nothing, so Stripe sends the event again. Each failure is logged as
   `stripe: <what> failed`, with Stripe's error type, code, and request ID, never a key.
@@ -75,16 +77,19 @@ with online revocation checks, then the bundle ID (`appSellingTheSubscription` i
 - **Environments** (`APP_STORE_ENVIRONMENTS`): staging takes `Sandbox`; production takes
   `Production` and `Sandbox`, since App Review and TestFlight buy in the sandbox. With
   `APP_STORE_SANDBOX_ACCOUNTS` set, production counts a Sandbox subscription only for those
-  accounts' emails, such as App Review's demo account; unset, every TestFlight tester's counts.
+  accounts' emails, such as App Review's demo account, in what the account sees, the gate,
+  Checkout, and the check for a second subscription alike; unset, every TestFlight tester's counts.
   `Xcode`, for a StoreKit configuration file's purchases, which Apple doesn't sign, is refused but
   at localhost.
 - **The App Store Server API**, when its key is set: a purchase the app sends is answered with
   Apple's current status for it (Get All Subscription Statuses), which also ends a billing retry
-  whose last notification was lost, and every hour the service reads the last 80 hours of
-  notifications (Get Notification History) and applies any it missed. Without the key, every state
-  still comes signed from Apple, but a notification that never arrived (the sandbox sends each
-  once; production retries for about three days) is caught up only when the learner's app next
-  sends what `Transaction.updates` hands it.
+  whose last notification was lost, claimed for the account the latest transaction's
+  `appAccountToken` names, so an old copy can't move it back; and every hour the service reads the
+  last 80 hours of notifications (Get Notification History) and applies any it missed, each on its
+  own. A call that takes over 10 seconds is given up, as if the key weren't set. Without the key,
+  every state still comes signed from Apple, but a notification that never arrived (the sandbox
+  sends each once; production retries for about three days) is caught up only when the learner's app
+  next sends what `Transaction.updates` hands it.
 
 ## Settings
 

@@ -4,6 +4,7 @@ import {
   entitlementOf,
   hasAccess,
   renewalLeewayMs,
+  type StoreTraits,
   type Subscription,
   supersedes,
   withRetryStart
@@ -13,8 +14,11 @@ const now = new Date('2027-03-01T12:00:00Z')
 const at = (offsetMs: number) => new Date(now.getTime() + offsetMs)
 const hour = 60 * 60 * 1000
 const day = 24 * hour
-const managedIn = (source: string) => (source === 'apple' ? 'app_store' : 'website')
-const entitlement = (subscriptions: Subscription[]) => entitlementOf(subscriptions, now, managedIn)
+const stores = (source: string): StoreTraits =>
+  source === 'apple'
+    ? { managedIn: 'app_store', retryWindowMs: billingRetryWindowMs }
+    : { managedIn: 'website', retryWindowMs: Number.POSITIVE_INFINITY }
+const entitlement = (subscriptions: Subscription[]) => entitlementOf(subscriptions, now, stores)
 
 const subscription = (fields: Partial<Subscription> = {}): Subscription => ({
   source: 'stripe',
@@ -120,8 +124,12 @@ describe("the account's entitlement", () => {
 })
 
 describe('a payment that keeps failing', () => {
-  test('stops counting as running once the store would have given up retrying, so the learner may subscribe again', () => {
-    const retrying = subscription({ status: 'billing_retry', retryStartedAt: at(-59 * day) })
+  test('stops counting an App Store one as running once Apple would have given up retrying, so the learner may subscribe again', () => {
+    const retrying = subscription({
+      source: 'apple',
+      status: 'billing_retry',
+      retryStartedAt: at(-59 * day)
+    })
     expect(entitlement([retrying])).toMatchObject({ status: 'billing_retry', canSubscribe: false })
     const forgotten = {
       ...retrying,
@@ -131,6 +139,29 @@ describe('a payment that keeps failing', () => {
       status: 'expired',
       canSubscribe: true,
       running: []
+    })
+  })
+
+  test('counts a website one as running until Stripe ends it, since Stripe can retry or revive it later', () => {
+    const unpaid = subscription({
+      status: 'billing_retry',
+      retryStartedAt: new Date(now.getTime() - 3 * billingRetryWindowMs)
+    })
+    expect(entitlement([unpaid])).toMatchObject({
+      status: 'billing_retry',
+      canSubscribe: false,
+      running: [{ managedIn: 'website', status: 'billing_retry' }]
+    })
+  })
+
+  test('counts a pause as running for at most the App Store window, and a website pause until Stripe ends it', () => {
+    const paused = subscription({ source: 'apple', status: 'paused', stateAt: at(-59 * day) })
+    expect(entitlement([paused])).toMatchObject({ status: 'paused', canSubscribe: false })
+    const longAgo = { ...paused, stateAt: new Date(now.getTime() - billingRetryWindowMs - 1) }
+    expect(entitlement([longAgo])).toMatchObject({ status: 'expired', canSubscribe: true })
+    expect(entitlement([{ ...longAgo, source: 'stripe' }])).toMatchObject({
+      status: 'paused',
+      canSubscribe: false
     })
   })
 

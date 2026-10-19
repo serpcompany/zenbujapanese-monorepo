@@ -36,7 +36,13 @@ export interface StoredSubscription extends Subscription {
 }
 
 export type ManagedIn = 'app_store' | 'website'
-export type ManagedInOf = (source: SubscriptionSource) => ManagedIn
+
+export interface StoreTraits {
+  managedIn: ManagedIn
+  retryWindowMs: number
+}
+
+export type StoreTraitsOf = (source: SubscriptionSource) => StoreTraits
 
 interface RunningSubscription {
   source: SubscriptionSource
@@ -75,24 +81,25 @@ export function hasAccess(subscription: Subscription, now: Date): boolean {
   return false
 }
 
-const retryEnds = (subscription: Subscription) =>
+const retryEnds = (subscription: Subscription, windowMs: number) =>
   (subscription.retryStartedAt ?? subscription.expiresAt ?? subscription.stateAt).getTime() +
-  billingRetryWindowMs
+  windowMs
 
-const stillRetrying = (subscription: Subscription, now: Date) =>
-  now.getTime() < retryEnds(subscription)
+const stillRetrying = (subscription: Subscription, now: Date, windowMs: number) =>
+  now.getTime() < retryEnds(subscription, windowMs)
 
-function effectiveStatus(subscription: Subscription, now: Date): SubscriptionStatus {
+function effectiveStatus(
+  subscription: Subscription,
+  now: Date,
+  windowMs: number
+): SubscriptionStatus {
   const { status } = subscription
   if (status === 'active' && !hasAccess(subscription, now)) return 'expired'
   if (status === 'grace_period' && !hasAccess(subscription, now)) {
-    return stillRetrying(subscription, now) ? 'billing_retry' : 'expired'
+    return stillRetrying(subscription, now, windowMs) ? 'billing_retry' : 'expired'
   }
-  if (status === 'billing_retry' && !stillRetrying(subscription, now)) return 'expired'
-  if (
-    status === 'paused' &&
-    now.getTime() >= subscription.stateAt.getTime() + billingRetryWindowMs
-  ) {
+  if (status === 'billing_retry' && !stillRetrying(subscription, now, windowMs)) return 'expired'
+  if (status === 'paused' && now.getTime() >= subscription.stateAt.getTime() + windowMs) {
     return 'expired'
   }
   return status
@@ -101,8 +108,8 @@ function effectiveStatus(subscription: Subscription, now: Date): SubscriptionSta
 const stillAtTheStore = new Set<SubscriptionStatus>(['billing_retry', 'paused'])
 const retrying = new Set<SubscriptionStatus>(['billing_retry', 'grace_period'])
 
-const isRunning = (subscription: Subscription, now: Date) =>
-  hasAccess(subscription, now) || stillAtTheStore.has(effectiveStatus(subscription, now))
+const isRunning = (subscription: Subscription, now: Date, windowMs: number) =>
+  hasAccess(subscription, now) || stillAtTheStore.has(effectiveStatus(subscription, now, windowMs))
 
 export function supersedes(next: Subscription, current: Subscription | null): boolean {
   if (current === null) return true
@@ -133,12 +140,15 @@ export function withRetryStart(
 const latest = (one: Date | null, other: Date | null) =>
   (one?.getTime() ?? 0) - (other?.getTime() ?? 0)
 
-function rank(subscriptions: readonly Subscription[], now: Date): Subscription | null {
+function rank(
+  subscriptions: readonly Subscription[],
+  now: Date,
+  running: readonly Subscription[]
+): Subscription | null {
   const granting = subscriptions.filter(each => hasAccess(each, now))
   if (granting.length > 0) {
     return granting.toSorted((one, other) => latest(other.expiresAt, one.expiresAt))[0] ?? null
   }
-  const running = subscriptions.filter(each => isRunning(each, now))
   const pool = running.length > 0 ? running : subscriptions
   return pool.toSorted((one, other) => latest(other.stateAt, one.stateAt))[0] ?? null
 }
@@ -158,28 +168,28 @@ const noEntitlement: Entitlement = {
 export function entitlementOf(
   subscriptions: readonly Subscription[],
   now: Date,
-  managedIn: ManagedInOf
+  stores: StoreTraitsOf
 ): Entitlement {
-  const chosen = rank(subscriptions, now)
+  const windowOf = (each: Subscription) => stores(each.source).retryWindowMs
+  const runningOnes = subscriptions.filter(each => isRunning(each, now, windowOf(each)))
+  const chosen = rank(subscriptions, now, runningOnes)
   if (chosen === null) return noEntitlement
-  const running = subscriptions
-    .filter(each => isRunning(each, now))
-    .map(each => ({
-      source: each.source,
-      productId: each.productId,
-      status: effectiveStatus(each, now),
-      expiresAt: each.expiresAt,
-      willRenew: each.willRenew,
-      managedIn: managedIn(each.source)
-    }))
+  const running = runningOnes.map(each => ({
+    source: each.source,
+    productId: each.productId,
+    status: effectiveStatus(each, now, windowOf(each)),
+    expiresAt: each.expiresAt,
+    willRenew: each.willRenew,
+    managedIn: stores(each.source).managedIn
+  }))
   return {
-    status: effectiveStatus(chosen, now),
+    status: effectiveStatus(chosen, now, windowOf(chosen)),
     active: hasAccess(chosen, now),
     source: chosen.source,
     productId: chosen.productId,
     expiresAt: chosen.expiresAt,
     willRenew: chosen.willRenew,
-    managedIn: isRunning(chosen, now) ? managedIn(chosen.source) : null,
+    managedIn: runningOnes.includes(chosen) ? stores(chosen.source).managedIn : null,
     canSubscribe: running.length === 0,
     running
   }
