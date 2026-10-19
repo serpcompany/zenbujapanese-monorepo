@@ -31,7 +31,7 @@ whether an email has an account.
 
 ## The reader's language
 
-Each email is in English or Japanese (#666). SERP's
+Each email is in English or Japanese (#847). SERP's
 [localization standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/web-stack/localization.md)
 (Strings) says emails use the recipient's language, stored on the user record from the page they
 signed up on, because `/api` requests carry no language prefix.

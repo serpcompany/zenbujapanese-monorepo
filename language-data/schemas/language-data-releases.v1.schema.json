@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:zenbu:schema:language-data-releases:v1",
   "title": "zenbu.language-data-releases.v1",
-  "description": "The bucket's releases.json: every published language-data release, oldest first (issue 463). Written by language-data/pipeline/publish.py after a release's files and manifest are uploaded. Entries are only ever appended. Release IDs increasing in order is checked by publish.py.",
+  "description": "The bucket's releases.json: every published language-data release, oldest first (issue 828). Written by language-data/pipeline/publish.py after a release's files and manifest are uploaded. Entries are only ever appended. Release IDs increasing in order is checked by publish.py.",
   "type": "object",
   "additionalProperties": false,
   "required": ["index_schema", "releases"],

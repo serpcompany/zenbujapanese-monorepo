@@ -1,6 +1,6 @@
 # Languages
 
-zenbujapanese.com is in English and Japanese (#666), as SERP's
+zenbujapanese.com is in English and Japanese (#847), as SERP's
 [localization](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/web-stack/localization.md)
 and [language switcher](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/language-switcher.md)
 standards describe. Every page has both: the English page at its bare URL, as before, and the
@@ -18,7 +18,7 @@ adding Japanese changed no URL. Each Japanese page is its English page's path un
 the same slug (`/ja/about/`, `/ja/dictionary/見る-1259290/`). The Japanese homepage is `/ja/`.
 
 - Source: SERP localization standard, URLs; ADR 0007 (a locale's prefix in front of every path,
-  English with none); #666.
+  English with none); #847.
 - Check: `src/lib/i18n/routing.test.ts`, "bare URLs are rewritten to the English pages, and
   nothing else is" and "no language code is the first segment of an existing page, so adding one
   changes no URL"; `src/app/routes.test.ts`; URLs spec, "… answers 200 in ja"; smoke `200 /ja/`.
@@ -81,7 +81,7 @@ differ, linking the English page. The Japanese affiliate disclosure also says af
 marked as advertising, in line with 景品表示法's stealth-marketing rule (in force since October
 2023). Support and Contact say nothing about the language replies come in.
 
-- Source: the owner's decisions of 2026-10-16 on #666.
+- Source: the owner's decisions of 2026-10-16 on #847.
 - Check: `src/app/[locale]/company-pages.test.tsx`, "… in Japanese says first that the English
   version prevails, and links it" and "the Japanese affiliate disclosure says its links are marked
   as advertising under 景品表示法".
@@ -93,7 +93,7 @@ language from the page it signed up on (#816,
 [`account-email.md`](../../../../docs/agents/account-email.md)).
 
 - Source: SERP localization standard, Strings (emails in the recipient's language); the owner's
-  decision on #666.
+  decision on #847.
 - Check: `src/lib/account/client.test.ts`, "names the page’s language on every request, so the
   service writes its emails in it".
 
@@ -103,7 +103,7 @@ language from the page it signed up on (#816,
 the English it was written from, so a changed English string fails the check until its Japanese
 is updated.
 
-- Source: the owner's decision on #666 (the Japanese pages are built and reviewed on staging);
+- Source: the owner's decision on #847 (the Japanese pages are built and reviewed on staging);
   SERP International SEO guide, Translating.
 - Check: `src/lib/i18n/dictionaries.test.ts`, "no Japanese string is stale: …" and "the review
   record names no reviewer until a native speaker has reviewed the Japanese".
@@ -139,7 +139,7 @@ words take twice the files they did; the index lists them all.
 below 1024 pixels the phone menu lists the languages above its account and Get the app buttons.
 The footer has the same menu, beside the Sitemap link, at every width.
 
-- Source: SERP language switcher standard, Behavior; #666 (the header, the drawer below 1024
+- Source: SERP language switcher standard, Behavior; #847 (the header, the drawer below 1024
   pixels, and the footer).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels the header has the language
   menu, …"; `src/components/site-footer.test.tsx`, "the footer ends with the copyright, the

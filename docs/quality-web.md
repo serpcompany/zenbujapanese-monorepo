@@ -28,7 +28,7 @@ A change is checked by hand in a browser with the `verify-web` skill
   Every behavior but the logo and icons has an automated check, each part of it included
   (Header and footer, below, checks those by hand). Main gap: the browser tests see only the
   fixtures' 12 words and the browse answers exported beside them, and some app behaviors aren't
-  built yet (#511).
+  built yet (#831).
 - **Account pages, B.** Every behavior names its check, the components run against a stand-in
   for the service, and a learner goes from registering to deleting against the real service before
   merge. Main gap: Sign in with Apple and Google run only against stand-ins before merge, since
@@ -56,7 +56,7 @@ A change is checked by hand in a browser with the `verify-web` skill
   against the owner's examples, every reference example and other spelling against the converters,
   the pages' HTML, and each control, typing in either box included, in a browser at
   both widths. Main gap: the look of the converter, the cards, the tables, and the chart, in light and dark,
-  is checked only by hand and by the UI review, and the How it works copy has no check while #690 rewrites it.
+  is checked only by hand and by the UI review, and the How it works copy has no check while #848 rewrites it.
 - **Phone layout, B.** Every page type, homepage area, and phone menu group is checked at a
   phone's width for small text, overflow, cut-off text, squeezed grids, and tap targets before
   merge, and the gallery shows each in light and dark for a person to review. Main gap: spacing,

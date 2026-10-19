@@ -350,7 +350,7 @@ is split across two lines (#682).
 - Source: `LinkedJapaneseText.swift` and `JapaneseExampleRowContent`'s `.dedicated` presentation
   in `ExampleSentencesView.swift`; the core's `accentedPositions` (which words are accented);
   `JapaneseTextAnalysisClient.swift`; #462 design (inline links in example sentences; the owner's
-  decision on #511 keeps them here).
+  decision on #831 keeps them here).
 - Check: ES `shown[].tokens` (`surface`, `entry`, `candidates`, `queryMatch`) for the first 5
   sentences of each query; `search-examples.test.tsx` (each word, its mark, and furigana over
   linked kanji, in the ES cases, and "sits at #examples, titled with its count, and shows each
@@ -392,7 +392,7 @@ is titled with the query, which the results page already shows.
 
 **No sentences.** A search without example sentences has no section, as it has no row.
 
-- Source: the owner's decision on #511 (no empty Example Sentences screen).
+- Source: the owner's decision on #831 (no empty Example Sentences screen).
 - Check: `data.test.ts`, "a search without examples, or without a service, has none"; ES cases
   without sentences in `search-examples.test.tsx`.
 
@@ -406,7 +406,7 @@ learner actions and Open in App open the get-the-app prompt, a dialog on wide sc
 on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
 lists and known words on this website comes later, which holds whether or not the site's account
 pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
-on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#467). Copy Link copies the page URL and shows
+on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies the page URL and shows
 "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
@@ -477,7 +477,7 @@ reading over the whole word.
 
 **Per-kanji furigana highlight.** In the headword, each kanji of a run whose kanji readings split
 its furigana exactly one way is a toggle: selecting it colors the kanji and its part of the furigana
-in the app's blue accent color, not the site's primary (肉 and にく in 弱肉強食; #511 review). Selecting it
+in the app's blue accent color, not the site's primary (肉 and にく in 弱肉強食; #831 review). Selecting it
 again clears the highlight; selecting another kanji moves it. The split uses each kanji's KANJIDIC2
 on and kun readings with the sound changes compounds make (学校 is がっ・こう, 人々 is ひと・びと, 発表 is はっ・ぴょう).
 A single kanji and a word read as a whole, such as 大人 or 今日, have no highlight. Other furigana on
@@ -500,7 +500,7 @@ draws it: the reading in katakana, one mora wide each (one and a half for a comb
 キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and a
 hollow dot for the following particle. The capsule is one button that pronounces the word; screen
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
-say it: M is the source's mora count, even where it differs from the morae drawn (#511 review).
+say it: M is the source's mora count, even where it differs from the morae drawn (#831 review).
 
 - Source: App docs, Dictionary and kanji details; `pitchGraph` in the core's `detail/pitch.ts`,
   which the app's `PitchAccentBadge.swift` draws; #462 design.
@@ -876,7 +876,7 @@ whose box searches (#561). It stays pinned to the top of the window while the pa
 page's background with its bottom rule, and a link to a heading on the page (such as a word's
 `#conjugations`) stops below it.
 
-- Source: #648 decision and mockups (Header switch); #650; #561 (no search in the header); #664
+- Source: #844 decision and mockups (Header switch); #650; #561 (no search in the header); #664
   and its mockups (v50, Header actions A: pinned, two items).
 - Check: `src/components/site-header.test.tsx`, "below 1024 pixels the header has a menu button,
   and from 1024 the menus", "the header on %s has no search and no email address", and "the header
@@ -969,7 +969,7 @@ Every menu link is in the page's HTML while the menu is closed, so search engine
 menus sit under their buttons, as shadcn's navigation menu places them, and slide to stay inside the
 window.
 
-- Source: #648 decision and mockups (Header switch); #650.
+- Source: #844 decision and mockups (Header switch); #650.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
   browse pages", "the Tools menu leads to the tools, the reference pages, and the converters, and
   Kanji to Furigana is a placeholder", "the Products menu leads to the products pages and the web
@@ -980,7 +980,7 @@ window.
   a page the site has, with no redirect" and "the Dictionary menu leads to the search box".
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
-yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#691),
+yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#849),
 Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
 (`/register/`) in a build whose account pages are closed, the App Store (the Get the app on the
 product page and on the catalog's iPhone app card), and See all videos
@@ -991,13 +991,13 @@ tools (`/tools/`) and the Hiragana to Katakana and Romaji to Kana converters
 ([Tools pages](tools.md)); so do Log in and Create an account where the account pages are open, as
 on staging and in production ([Account pages](account.md#pages)), the build choosing their addresses
 as it does the footer's Sign in. #650 asked for menu items to appear only once their page exists;
-the owner chose to show them now as `#` placeholders instead (#648). Every one is in one list,
+the owner chose to show them now as `#` placeholders instead (#844). Every one is in one list,
 `linkTargets` in `src/lib/site.ts`, named for what it stands for, and its links carry
 `data-link-target` with its id. A browser test lists every `#` link the site renders and fails on
 one that isn't in that list, so none reaches production unnoticed; replacing a placeholder means
 giving its entry the real address, or linking the page directly once it exists.
 
-- Source: #648 decision (placeholder links), and the owner's decision on #650 (show planned items
+- Source: #844 decision (placeholder links), and the owner's decision on #650 (show planned items
   as placeholders).
 - Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
   in src/lib/site.ts", which visits every page in `src/lib/pages.ts`, the tools index, a converter,
@@ -1031,7 +1031,7 @@ led by Search. A group opens and closes with a click, Enter, or Space. Following
 button (lucide `X`), Escape, going back or forward, or widening the window to 1024 pixels closes the
 sheet; choosing a theme keeps it open.
 
-- Source: #648 decision and mockups (Phone width); #650; #561 (the phone menu); #664 (the theme
+- Source: #844 decision and mockups (Phone width); #650; #561 (the phone menu); #664 (the theme
   beside Close, and the profile in Log in's place).
 - Check: `apps/web/e2e/site.spec.ts`, "the drawer has the theme beside Close, then the menus as
   groups, then Log in and Get the app", "a drawer group opens and closes with a click, and its link
@@ -1052,9 +1052,9 @@ or the prompt. Log in, in the account menu from 1024 pixels and in the phone men
 login page, `/login/`, where the account pages are open, as on staging and in production, and is
 a `#` placeholder in a build where they're closed ([Account pages](account.md#pages)).
 
-- Source: #648 decision and the Product page mockup's note (Get the app opens the product page);
-  #650; #652; #511 (the phone icon); #468 (the login page); #664 (Log in moves into the account
-  menu); #688 (production's account pages open).
+- Source: #844 decision and the Product page mockup's note (Get the app opens the product page);
+  #650; #652; #831 (the phone icon); #468 (the login page); #664 (Log in moves into the account
+  menu); #798 (production's account pages open).
 - Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
   button end the header, Get the app opening the iPhone app’s page" and "the Get the app button
   leads with a phone icon"; `src/lib/site.test.ts`, "%s opens its page in a build whose account
@@ -1083,7 +1083,7 @@ target. Each is the brand's own mark, drawn as inline SVG in the text color: Sim
 brand downloads (`components/social-links.tsx`). The copyright line, the language menu, and
 Sitemap end it. The legal index (`/legal/`) is in the Company menu rather than the footer.
 
-- Source: #648 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
+- Source: #844 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
   and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
   place of the mockup's two rows of five).
 - Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, on every page in both themes);
@@ -1152,7 +1152,7 @@ number past any JMdict entry.
 replacement in one hop when the dictionary holds the replacement. Each language-data release
 records the entries it drops (`language-data/retired-entries.md`).
 
-- Source: ADR 0007; #465; #463.
+- Source: ADR 0007; #465; #828.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
 
 **Removed URLs.** The kanji, conjugation, and Example Sentences pages that came before ADR 0010
@@ -1180,7 +1180,7 @@ to the search for its normalized form (U+5ECA), as every search's query is. A se
 **Locales.** Every dictionary page is also in Japanese, under `/ja/` ([Languages](languages.md)).
 Every result is Japanese, whatever language the search is in, and its meanings are JMdict's English.
 
-- Source: ADR 0007; ADR 0010; the owner's decisions on #544 and #666.
+- Source: ADR 0007; ADR 0010; the owner's decisions on #544 and #847.
 - Check: [Languages](languages.md), URLs and What each language shows.
 
 **Search URLs.** A search lives at `/dictionary/search/<query>/`, at the query the core searches:
@@ -1268,7 +1268,7 @@ team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims the site's links b
   "/.well-known/apple-app-site-association is JSON where Apple asks, claiming dictionary links for
   the app", on the production build. That iOS then opens the app is checked on a device.
 
-## Required, not built yet (#511)
+## Required, not built yet (#831)
 
-The #511 inventory's differences and the app features the owner's decision on #511 requires, each
+The #831 inventory's differences and the app features the owner's decision on #831 requires, each
 with its app source and the check it will get, are in [Required, not built yet](not-built-yet.md).

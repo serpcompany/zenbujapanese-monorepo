@@ -263,7 +263,7 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
 ([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
 
-- Source: #614 mockup "Footer + /sitemap/ (changed)"; #648 decision and mockups (the footer's
+- Source: #614 mockup "Footer + /sitemap/ (changed)"; #844 decision and mockups (the footer's
   columns).
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the

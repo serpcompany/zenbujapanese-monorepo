@@ -1,6 +1,6 @@
 # The website's languages
 
-How zenbujapanese.com serves English and Japanese (#666). What a reader sees, and the check for
+How zenbujapanese.com serves English and Japanese (#847). What a reader sees, and the check for
 each behavior, is in [Languages](../../apps/web/docs/product/languages.md). It follows SERP's
 [localization](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/web-stack/localization.md)
 standard, its [language switcher](https://github.com/serpcompany/serp/blob/main/docs/engineering/websites/features/language-switcher.md),
@@ -63,7 +63,7 @@ command from `apps/web`.
 ## Review
 
 The Japanese is a draft, built and live so a native speaker can review it on staging (the owner's
-decision on #666). `apps/web/content/reviews/ja.json` is its review record: `reviewedBy` and
+decision on #847). `apps/web/content/reviews/ja.json` is its review record: `reviewedBy` and
 `reviewedAt`, empty until the reviewer, or the owner on the reviewer's word, sets them (an agent
 never does), and `sourceChecksums`, the SHA-256 prefix of each key's English that its Japanese was
 written from. When an English string changes, the stale check in `dictionaries.test.ts` names its
@@ -108,7 +108,7 @@ page load.
 ## Where this site differs from the standards
 
 - **Unreviewed Japanese is built.** The standard builds a translation only once it's reviewed;
-  the owner chose to publish the drafts so they're reviewed on staging (#666). Production deploys
+  the owner chose to publish the drafts so they're reviewed on staging (#847). Production deploys
   only by hand, so the review comes before a production deploy.
 - **One hop for `/en` without a slash comes from `worker.ts`,** not `skipTrailingSlashRedirect`
   and hand-written slash rules: the site's slash redirects stay as they were, so no existing URL
@@ -116,4 +116,4 @@ page load.
 - **The core's labels are translated in the website,** since the core writes them in English for
   the app (debt in `docs/tech-debt.md`).
 - **Every page is published in both languages,** the legal and account pages included, by the
-  owner's decision on #666; the dictionary's pages in every language by ADR 0007.
+  owner's decision on #847; the dictionary's pages in every language by ADR 0007.

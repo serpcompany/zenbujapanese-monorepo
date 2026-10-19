@@ -71,10 +71,10 @@ them, answer on every host, since they never reach the Worker; their URLs name t
 The app's product documentation, [`apps/ios/docs/product/`](../../../ios/docs/product/index.md),
 and the Swift views it describes define what the website shows. The website differs only where a
 decision on file says so: the #462 designs, and the decisions on #464, #465, #466, #485, #499, and
-#511. Each difference names its decision. A difference without one is a bug, listed under
+#831. Each difference names its decision. A difference without one is a bug, listed under
 [Required, not built yet](not-built-yet.md).
 
-The owner's decision on #511 makes every app dictionary feature the #511 inventory found missing
+The owner's decision on #831 makes every app dictionary feature the #831 inventory found missing
 a requirement for the website, and sets the order of work: a behavior is written here first, with
 its app source and planned check, and is then built with its check in the same PR.
 

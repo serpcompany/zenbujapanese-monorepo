@@ -5,7 +5,7 @@ Zenbu account (#468), against the account service ([`account-api.md`](../../../.
 Signing in is passwordless: a code we email, and Apple and Google where the site has them set up
 (`ACCOUNT_APPLE_SERVICES_ID` and `ACCOUNT_GOOGLE_SIGN_IN`; staging and production have both).
 The pages are open only where the environment names an account service: locally, on staging, and
-in production (#688; Configuration, below). The pages call the service from
+in production (#798; Configuration, below). The pages call the service from
 the learner's browser, never from the Worker ([`web.md`](../../../../docs/agents/web.md), Account
 pages). The website doesn't sync known words or lists yet, and the word page's learner actions
 still open the get-the-app prompt ([Dictionary](dictionary.md#word-page), Toolbar, and Lists and
@@ -35,7 +35,7 @@ no other account page, and asks the account service nothing. Every environment n
 
 - Source: #468, whose #402 sitemap sheet lists the four pages. Closed without an account service,
   since a sign-in that can't work shouldn't show; production's were closed until its account
-  service answered, and opened then (#688;
+  service answered, and opened then (#798;
   [`account-api.md`](../../../../docs/agents/account-api.md), Set up the server).
 - Check: Account spec, "/login/ is noindex, with the site's header and footer" (and each other
   page), "no sitemap lists them"; `src/app/[locale]/account-pages.test.tsx`, "/login/ says signing
@@ -322,7 +322,7 @@ and footer, whichever Worker vars it then runs with.
 
 - Source: each environment's account service
   ([`account-api.md`](../../../../docs/agents/account-api.md), Set up the server); production's
-  answers on `https://api.zenbujapanese.com` (#688).
+  answers on `https://api.zenbujapanese.com` (#798).
 - Check: `src/lib/account/settings.test.ts`, "name staging's and production's account services, so
   both open their pages" and "close the footer, as the pages, for a value that is no origin"; the
   `Web` workflow's checks that staging's and production's builds have the footer's Sign in,

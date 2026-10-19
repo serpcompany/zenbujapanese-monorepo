@@ -2,7 +2,7 @@
 
 Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
-[issue 463](https://github.com/serpcompany/zenbujapanese-monorepo/issues/463)). This folder
+[issue 828](https://github.com/serpcompany/zenbujapanese-monorepo/issues/828)). This folder
 holds the pipeline that packages a release and publishes it to the `zenbujapanese-language-data`
 R2 bucket, and each release's pinned manifest. No app reads the bucket: what the app bundles, and
 what ADR 0009's dictionary service copies into its image, are files of the release `release.json`

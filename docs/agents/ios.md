@@ -901,7 +901,7 @@ that doesn't know bookmarks yet, catching up, and two phones.
 ### Sign-in in the App Store build
 
 Release builds sign in to production's account service with Apple, Google, and emailed codes, from
-2.0.0 (#616). That needs production's service holding TSMC LLC's Sign in with Apple key
+2.0.0 (#797). That needs production's service holding TSMC LLC's Sign in with Apple key
 ([`account-api.md`](account-api.md), Set up the server, Moving from the backup team): with
 another team's key, Apple refuses the client secret it makes for `com.zenbujapanese.dictionary`,
 so deleting an account made with Apple answers `503 apple_unavailable`, and App Review requires
@@ -929,7 +929,7 @@ What a person sets up first, once, in Apple Developer on the team that holds the
 
 The app is TSMC LLC's App Store record "Zenbu Japanese" (Apple ID 6800229215, bundle ID
 `com.zenbujapanese.dictionary`, team `847HR8U8D9`), the record 1.0 shipped on, so 2.0.0 is an
-update to 1.0 (#616). The project sets that team and bundle ID in
+update to 1.0 (#797). The project sets that team and bundle ID in
 both configurations, and `apps/ios/Tools/tests/test_account_service_settings.py` pins them. The
 rebuilt app went to review first from a backup account (team `W3GXL2NQQP`, bundle ID
 `com.zenbujapanese.app`, record 6819885342, never released), while TSMC LLC's account was being

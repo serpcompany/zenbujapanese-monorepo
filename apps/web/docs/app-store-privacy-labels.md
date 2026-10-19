@@ -4,7 +4,7 @@ The answers to enter under App Privacy in App Store Connect for the Zenbu Japane
 Tomodachi, once each can sign in to a Zenbu account. They follow what the
 [Privacy Policy](product/privacy.md) says a Zenbu account keeps, and change with it.
 
-Enter them with the first build that signs in: the Zenbu app's 2.0.0 (#573, #616), and
+Enter them with the first build that signs in: the Zenbu app's 2.0.0 (#573, #797), and
 Tomodachi's linking ([tomodachi-app#28](https://github.com/serpcompany/tomodachi-app/issues/28)).
 Until then, an app's current answer, Data Not Collected, stays true.
 
