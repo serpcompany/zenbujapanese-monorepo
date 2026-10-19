@@ -81,9 +81,7 @@ test.describe('frequency dictionaries', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       'Most used Japanese words: Anime'
     )
-    await expect(page).toHaveTitle(
-      'Most used Japanese words: Anime, ranks 1–1,000 | Zenbu Japanese'
-    )
+    await expect(page).toHaveTitle('Anime: most used Japanese words, 1–1,000 | Zenbu Japanese')
     const main = page.getByRole('main')
     await expect(main).toContainText('Ranks 1–1,000')
     await expect(main).toContainText('such as に, は, and が, aren’t ranked')

@@ -43,6 +43,9 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 are `noindex` and in no sitemap, and where they're closed, in a build whose environment names no
 account service, nothing links to them.
 
+Every page's title and description fit a search result, and a shared link shows the site's image;
+[Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
+
 Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
 in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
 each language shows, the search-engine tags, and the switcher.

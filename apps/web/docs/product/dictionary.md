@@ -1193,8 +1193,8 @@ other form redirects (308) to it. Dots are encoded, so a query never looks like 
   core searches"; `src/lib/dictionary/urls.test.ts`, "search URLs"; `apps/web/e2e/urls.spec.ts`,
   "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one hop".
 
-**Titles and descriptions.** A word page is titled "要る (いる) meaning" and a results page
-"«query» in Japanese", each followed by "| Zenbu Japanese". Each page is its own canonical URL.
+**Titles and descriptions.** Each page is its own canonical URL. Its title and description are
+in [Titles, descriptions, and sharing](snippets.md).
 
 - Source: #465 (metadata).
 - Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning", and

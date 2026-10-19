@@ -6,7 +6,6 @@ import { JlptListPage, RankBandPage } from '@/components/dictionary/browse/frequ
 import {
   counted,
   jlptCopy,
-  joinSentences,
   pagedTitle,
   rankBandTitle,
   rankedListCopy,
@@ -27,6 +26,7 @@ import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber } from '@/lib/i18n/format'
 import { localeOf } from '@/lib/i18n/params'
 import { localizedPath } from '@/lib/i18n/paths'
+import { fittedDescription, joinedSentences } from '@/lib/snippets'
 
 type BandParams = Promise<{ locale: string; list: string; band: string }>
 type BandPageParams = Promise<{ locale: string; list: string; band: string; page: string }>
@@ -68,7 +68,11 @@ function bandMetadata({ list, band, page, copy, words, locale }: LoadedBand): Me
     rankBandPath(list.slug, band, page),
     locale,
     rankBandTitle(coreText(list.name, locale), ranks, locale),
-    joinSentences([copy.description, fill(frequencyText(locale).bandRanks, { range })], locale),
+    fittedDescription(
+      joinedSentences([copy.description, fill(frequencyText(locale).bandRanks, { range })], locale),
+      [frequencyText(locale).bandMetaMore],
+      locale
+    ),
     { index: words.total >= minimumIndexedWords }
   )
 }
@@ -113,7 +117,7 @@ function levelMetadata({ level, words, page, locale }: LoadedLevel): Metadata {
     jlptVocabularyPath(level.level, page),
     locale,
     pagedTitle(fill(t.jlptHeading, { name: level.name }), page, locale),
-    joinSentences([described, jlptCopy(locale).description], locale),
+    fittedDescription(described, [[jlptCopy(locale).description, t.jlptMetaMore]], locale),
     { index: words.total >= minimumIndexedWords }
   )
 }

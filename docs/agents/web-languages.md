@@ -85,7 +85,8 @@ No keyword volumes are measured yet.
 - The homepages leave `alternates` unset and write their canonical, `og:url`, and hreflang links
   themselves (`src/components/origin-canonical.tsx`, `homeHeadLinks`), so the English homepage is
   the bare origin.
-- `siteOpenGraph(locale)` names `og:locale`.
+- `siteOpenGraph(locale)` names `og:locale`, with the site's name, type, and image, which every
+  page's Open Graph keeps ([Titles, descriptions, and sharing](../../apps/web/docs/product/snippets.md)).
 - `localizedSitemapEntries(path, origin)`: a page's URL in each language, each with the same
   `xhtml:link` alternates. The pages, browse, and word sitemaps all use it. A word sitemap holds
   `wordsPerSitemap` (20,000) words, so each of the service's 50,000-word files becomes three
