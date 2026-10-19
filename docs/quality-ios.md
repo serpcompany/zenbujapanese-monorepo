@@ -54,7 +54,9 @@ manual checks named below are in `ios.md`.
   Automation Mode turned on once per Mac. On hold since 2026-10-18: tests added since, such as
   `GradeInputUITests`, have run only on iPhone. Nothing compares screenshots: a screen that works
   but is drawn wrong, as the Mac's forms and row icons were, is found only by looking at it.
-- **Accessibility, C.** Every screen is audited on each device. Main gap: no CI, contrast not held.
+- **Accessibility, C.** Every screen is audited on the iPhone, iPad, and Mac, within the limits its
+  product doc names: the iPad skips two audits, dark runs at the default size only, and linked
+  words are exempt from the target size. Main gap: no CI, and contrast isn't held to a ratio.
 - **Image Search, C.** Recognition runs on real images, and UI tests open an image from a stand-in
   camera, and pasted on the Mac, through the real import and recognition. The flash kept for the
   camera is tested as a rule; the camera itself only runs on a device. Main gap: Apple Translation
