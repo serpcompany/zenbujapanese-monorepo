@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { imageTypeOf } from '../domain/photo-files'
 import { useAccountService } from '../test/accounts'
 import { standIns } from '../test/app'
+import { gate } from '../test/gate'
+import { logged } from '../test/logged'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { websiteOrigin } from '../test/service'
 import { createApp } from './app'
@@ -150,38 +152,86 @@ describe('photo files', () => {
     }
   })
 
-  test.each([
-    ['uploads', 'PUT', atOnce.uploads],
-    ['downloads', 'GET', atOnce.downloads]
-  ] as const)('takes a few %s at once from each account, and asks the next to wait a second', async (_, method, most) => {
-    let release = () => {}
-    const held = new Promise<void>(resolve => {
-      release = resolve
+  test.each(
+    turnTaking
+  )('takes %s from one account up to its share while the service has room, and asks the next to wait a second', async (_, method, most) => {
+    const turns = heldTurns(method)
+    const waiting = Array.from({ length: most.account }, () => turns.send('first'))
+    await vi.waitFor(() => expect(turns.started()).toBe(most.account))
+    let answer: Response | null = null
+    const extra = turns.send('first').then(answered => {
+      answer = answered
+      return answered
     })
-    let started = 0
-    const waitThenRefuse = async () => {
-      started++
-      await held
-      return { status: 'unavailable' } as const
-    }
-    const app = standInApp({ upload: waitThenRefuse, download: waitThenRefuse })
-    const bytes = aJpeg()
-    const accounts = Array.from({ length: most.service / most.account }, (_, n) => `account-${n}`)
-    const waiting = accounts.flatMap(account =>
-      Array.from({ length: most.account }, () => standInRequest(app, method, bytes, account))
+    await vi.waitFor(() => expect(answer !== null || turns.started() > most.account).toBe(true))
+    turns.open()
+    const turnedAway = await extra
+    expect(turnedAway.status).toBe(429)
+    expect(turnedAway.headers.get('retry-after')).toBe('1')
+    expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+    expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
+      Array(most.account).fill(503)
     )
-    await vi.waitFor(() => expect(started).toBe(most.service))
-    for (const account of [accounts[0] ?? '', 'one-more-account']) {
-      const turnedAway = await standInRequest(app, method, bytes, account)
-      expect(turnedAway.status, account).toBe(429)
-      expect(turnedAway.headers.get('retry-after')).toBe('1')
-      expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
-    }
-    release()
+  })
+
+  test.each(
+    turnTaking
+  )('takes %s from every account together up to the service share', async (_, method, most) => {
+    const turns = heldTurns(method)
+    const waiting = Array.from({ length: most.service }, (_, n) =>
+      turns.send(`account-${Math.floor(n / most.account)}`)
+    )
+    await vi.waitFor(() => expect(turns.started()).toBe(most.service))
+    expect((await turns.send('one-more-account')).status).toBe(429)
+    turns.open()
     expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
       Array(most.service).fill(503)
     )
-    expect((await standInRequest(app, method, bytes)).status).toBe(503)
+    expect((await turns.send('someone')).status).toBe(503)
+  })
+
+  test("holds a download's turn until its file is sent, cancelled, or cut, and logs a cut one", async () => {
+    const sources: ReadableStreamDefaultController<Uint8Array>[] = []
+    const streaming = async () => ({
+      status: 'found' as const,
+      file: {
+        id: 'a'.repeat(64),
+        contentType: 'image/jpeg',
+        byteSize: 3,
+        storageKey: 'k',
+        uploadedAt: new Date()
+      },
+      photo: {
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            sources.push(controller)
+            controller.enqueue(Uint8Array.from([0xff, 0xd8, 0xff]))
+          }
+        }),
+        size: null
+      }
+    })
+    const app = standInApp({ ...standIns.photoFiles, download: streaming })
+    const bytes = aJpeg()
+    const download = () => standInRequest(app, 'GET', bytes)
+    const share = atOnce.downloads.account
+    const sending = await Promise.all(Array.from({ length: share }, download))
+    expect([...sending.map(answer => answer.status), (await download()).status]).toEqual([
+      ...Array(share).fill(200),
+      429
+    ])
+    sources[0]?.close()
+    expect(new Uint8Array(await (sending[0] ?? new Response()).arrayBuffer())).toEqual(
+      Uint8Array.from([0xff, 0xd8, 0xff])
+    )
+    await sending[1]?.body?.cancel()
+    const lines = logged()
+    sources[2]?.error(new Error('R2 closed the connection'))
+    await expect(sending[2]?.arrayBuffer()).rejects.toThrow('R2 closed the connection')
+    expect(lines()).toContain('a photo download was cut')
+    vi.restoreAllMocks()
+    const again = await Promise.all(Array.from({ length: 4 }, download))
+    expect(again.map(answer => answer.status)).toEqual([200, 200, 200, 429])
   })
 
   test("puts back a file its storage lost when it's uploaded again, and says a lost file is missing, not gone", async () => {
@@ -234,3 +284,25 @@ const standInRequest = (
     headers: { authorization: `Bearer ${account}` },
     body: method === 'PUT' ? bytes : undefined
   })
+
+const turnTaking = [
+  ['uploads', 'PUT', atOnce.uploads],
+  ['downloads', 'GET', atOnce.downloads]
+] as const
+
+function heldTurns(method: string) {
+  const turn = gate()
+  let started = 0
+  const waitThenRefuse = async () => {
+    started++
+    await turn.opened
+    return { status: 'unavailable' } as const
+  }
+  const app = standInApp({ upload: waitThenRefuse, download: waitThenRefuse })
+  const bytes = aJpeg()
+  return {
+    send: async (account: string) => standInRequest(app, method, bytes, account),
+    started: () => started,
+    open: turn.open
+  }
+}

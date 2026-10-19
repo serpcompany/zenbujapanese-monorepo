@@ -138,7 +138,7 @@ export async function startService({
       headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
       body: method === 'PUT' ? bytes : undefined
     })
-    return response
+    return new Response(await response.arrayBuffer(), response)
   }
   return {
     app,

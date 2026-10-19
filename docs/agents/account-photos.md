@@ -23,7 +23,9 @@ max-age=31536000, immutable` (a file never changes under its ID), `Content-Dispo
 and `X-Content-Type-Options: nosniff`. A `404` is `not_found` when the account names no such file
 for this app, and `photo_file_missing` when it names the file but storage hasn't it; a client
 never deletes a photo for either, since a real deletion comes down in sync. Storage that fails in
-any other way, a missing bucket included, is a `500`, never a missing file. The website may call
+any other way, a missing bucket included, is a `500`, never a missing file. Each call to R2 gives
+up when R2 hasn't answered in 30 seconds; once it has, a download's bytes stream for as long as
+they take, and a stream cut partway is logged (`a photo download was cut`). The website may call
 both routes from its own origins (CORS).
 
 **Who may.** Uploading needs `photos:write` or `profile`; downloading `photos:read`, or `profile`
@@ -52,8 +54,9 @@ would change the hash the photo is named by.
 - **4 uploads at once in each slot, 2 from one account; 16 downloads, 4 from one account** (`atOnce`,
   `src/http/rate-limit.ts`). The next answers `429` with `Retry-After: 1`. A slot has 512 MB
   ([`api-servers.md`](api-servers.md), The deployer): an upload holds its file, up to 12 MB, while
-  it hashes and sends it, and a download streams from R2 without holding the file, so one account
-  can neither fill a slot's memory nor take every turn.
+  it hashes and sends it, and a download streams from R2 without holding the file, keeping its
+  turn until the last byte is sent or the connection closes, so one account can neither fill a
+  slot's memory nor take every turn.
 
 What R2 costs at these sizes is the owner's call (#867); the limits are in `photoLimits`
 (`src/domain/photo-files.ts`).
@@ -128,8 +131,9 @@ skill; the image refuses it.
 stand-in: a file kept under a new key and answered with its type and headers, a second upload
 changing nothing, another account's file and an unknown one answering `404`, a lost file answered
 `photo_file_missing` and put back by an upload, each refused upload, each image type read from its
-bytes, the 1,000-file cap, `503` with no storage, the slots for each account and the service, and
-CORS for the website. `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo
+bytes, the 1,000-file cap, `503` with no storage, the slots for one account while the service has
+room and for the service, a download keeping its slot until its body is sent, cancelled, or cut,
+and a cut one logged, and CORS for the website. `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo
 entities to their rules, and show a file swept from storage after the sync that deleted its photo,
 an emptied photo keeping its file, housekeeping emptying and deleting, a file shared by the profile
 photo and a Media Library photo kept while either names it, an unnamed file released after 24
@@ -140,4 +144,5 @@ six times at once: one file is kept, and the other copies are swept; and it dele
 of an upload saving its row while its account is being deleted. `src/storage/r2.test.ts` runs
 the R2 adapter against a stand-in S3 server: each request signed with SigV4 and the body's SHA-256,
 an object put, streamed, checked, deleted, and missing, a folder deleted page by page, a missing
-bucket never taken for a missing object, and a refusal thrown with only its status.
+bucket never taken for a missing object, a refusal thrown with only its status, a download whose
+body outlasts the 30 seconds streamed whole, and a request R2 never answers given up on.
