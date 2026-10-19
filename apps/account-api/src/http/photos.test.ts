@@ -1,32 +1,17 @@
 import { describe, expect, test, vi } from 'vitest'
 import { appliedAt, deleted, type Learner, outcomesOf, useAccountService } from '../test/accounts'
-import { aJpeg, uploaded } from '../test/photos'
+import {
+  aJpeg,
+  photoChanges,
+  photoSavedAt as savedAt,
+  uploaded,
+  wordItem as word
+} from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
 
-const word = (n: number) => n.toString(16).padStart(32, '0')
-const savedAt = '2026-10-01T12:00:00.000Z'
-
-const add = (photoId: string, name = 'Menu.jpg') => ({
-  entity: 'photo',
-  operation: 'add',
-  entityId: photoId,
-  fields: { name, savedAt }
-})
-const drop = (photoId: string) => ({ entity: 'photo', operation: 'delete', entityId: photoId })
-const onWord = (photoId: string, n: number) => ({
-  entity: 'photoWord',
-  operation: 'add',
-  entityId: `${photoId}/${word(n)}`,
-  fields: { headword: '見る', reading: 'みる', savedAt }
-})
-const offWord = (photoId: string, n: number, baseVersion: number) => ({
-  entity: 'photoWord',
-  operation: 'remove',
-  entityId: `${photoId}/${word(n)}`,
-  baseVersion
-})
+const { add, drop, onWord, offWord } = photoChanges
 
 const results = accounts.results
 const changes = async (learner: Learner) =>

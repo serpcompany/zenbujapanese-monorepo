@@ -1,36 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { photoLimits } from '../domain/photo-limits'
 import { appliedAt, type Learner, useAccountService } from '../test/accounts'
-import { uploaded } from '../test/photos'
+import { photoWordFields as fields, photoChanges, uploaded, wordItem as word } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
 
-const word = (n: number) => n.toString(16).padStart(32, '0')
-const savedAt = '2026-10-01T12:00:00.000Z'
-const fields = { headword: '見る', reading: 'みる', savedAt }
 const results = accounts.results
 const rows = (sql: string) => accounts.running.service.rows(sql)
-
-const add = (photoId: string) => ({
-  entity: 'photo',
-  operation: 'add',
-  entityId: photoId,
-  fields: { name: 'Menu.jpg', savedAt }
-})
-const drop = (photoId: string) => ({ entity: 'photo', operation: 'delete', entityId: photoId })
-const onWord = (photoId: string, n: number) => ({
-  entity: 'photoWord',
-  operation: 'add',
-  entityId: `${photoId}/${word(n)}`,
-  fields
-})
-const offWord = (photoId: string, n: number, baseVersion: number) => ({
-  entity: 'photoWord',
-  operation: 'remove',
-  entityId: `${photoId}/${word(n)}`,
-  baseVersion
-})
+const { add, drop, onWord, offWord } = photoChanges
 
 const removedWords = (learner: Learner, photoId: string, from: number, count: number) =>
   rows(

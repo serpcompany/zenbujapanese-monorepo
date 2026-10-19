@@ -9,6 +9,32 @@ export const examplePhotoFiles = {
 
 export const photoIdOf = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
+export const wordItem = (n: number) => n.toString(16).padStart(32, '0')
+export const photoSavedAt = '2026-10-01T12:00:00.000Z'
+export const photoWordFields = { headword: '見る', reading: 'みる', savedAt: photoSavedAt }
+
+export const photoChanges = {
+  add: (photoId: string, name = 'Menu.jpg') => ({
+    entity: 'photo',
+    operation: 'add',
+    entityId: photoId,
+    fields: { name, savedAt: photoSavedAt }
+  }),
+  drop: (photoId: string) => ({ entity: 'photo', operation: 'delete', entityId: photoId }),
+  onWord: (photoId: string, n: number) => ({
+    entity: 'photoWord',
+    operation: 'add',
+    entityId: `${photoId}/${wordItem(n)}`,
+    fields: photoWordFields
+  }),
+  offWord: (photoId: string, n: number, baseVersion: number) => ({
+    entity: 'photoWord',
+    operation: 'remove',
+    entityId: `${photoId}/${wordItem(n)}`,
+    baseVersion
+  })
+}
+
 let made = 0
 
 export function aJpeg(size = 64): Uint8Array {
