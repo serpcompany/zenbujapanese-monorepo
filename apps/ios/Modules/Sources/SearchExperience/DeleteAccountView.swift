@@ -99,7 +99,7 @@ struct DeleteAccountView: View {
           .foregroundStyle(.secondary)
       }
     }
-    if subscription?.runsInTheAppStore == true {
+    if subscription?.renewsInTheAppStore == true {
       appStoreSubscription(
         "Deleting your account doesn't cancel your App Store subscription. Cancel it in the App Store first, or Apple keeps billing for it."
       )

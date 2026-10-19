@@ -123,7 +123,8 @@ final class AccountFixture {
     subscription: @escaping @Sendable (StubRequest) -> StubReply = { _ in
       .error(404, "not_found")
     },
-    deletion: StubReply = .json(200, ["status": "deleted"])
+    deletion: StubReply = .json(200, ["status": "deleted"]),
+    patched: StubReply = .json(200, AccountFixture.profile(name: "Kana Fan", version: 2))
   ) {
     let accessToken = StubTokens.access(expiresAt: now + tokenLifetime)
     server.respond { request in
@@ -144,6 +145,8 @@ final class AccountFixture {
         .json(200, [["providerId": "email", "accountId": Self.email]])
       case "GET /v1/me":
         profile
+      case "PATCH /v1/me":
+        patched
       case "DELETE /v1/me":
         deletion
       case "GET /v1/me/subscription", "POST /v1/me/subscription/apple":

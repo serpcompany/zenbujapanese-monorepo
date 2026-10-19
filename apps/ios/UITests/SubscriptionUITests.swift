@@ -46,6 +46,7 @@ final class SubscriptionUITests: ZenbuUITestCase {
     signInWithApple(in: app)
     tap(find("account.zenbu-account", in: app))
     waitFor(find("subscription.manage", in: app))
+    waitUntil(find("subscription.detail", in: app), mentions: "Renews on")
     tap(find("zenbu-account.delete", in: app))
     waitUntil(
       find("delete-account.app-store-subscription", in: app),
@@ -55,6 +56,53 @@ final class SubscriptionUITests: ZenbuUITestCase {
     waitUntil(
       find("delete-account.app-store-subscription", in: app),
       mentions: "Apple keeps billing for it until you cancel it")
+  }
+
+  func testAWebsitePaymentThatFailedSaysSoWithoutSendingTheLearnerAnywhere() {
+    let app = launch(
+      Self.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe:grace_period"]))
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app))
+    waitUntil(find("subscription.status", in: app), mentions: "Active, payment failed")
+    waitUntil(
+      find("subscription.detail", in: app),
+      mentions: "Payment failed for your zenbujapanese.com subscription.")
+    XCTAssertFalse(find("subscription.subscribe", in: app).exists)
+  }
+
+  func testSyncWaitsWhileAnAppStorePaymentIsRetried() {
+    let app = launch(
+      Self.standIns([
+        "ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1",
+        "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple:billing_retry",
+      ]))
+    signInWithApple(in: app)
+    let row = find("account.zenbu-account", in: app)
+    waitUntil(row, mentions: "Syncing waits for a payment")
+    tap(row)
+    waitUntil(find("subscription.status", in: app), mentions: "Payment failed")
+    waitUntil(find("subscription.detail", in: app), mentions: "in your App Store account")
+    XCTAssertFalse(find("subscription.subscribe", in: app).exists)
+  }
+
+  func testPayingInBothStoresShowsBothAndSaysSo() {
+    let app = launch(Self.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple,stripe"]))
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app))
+    waitFor(find("subscription.manage", in: app))
+    waitFor(find("subscription.managed-on-website", in: app))
+    waitFor(find("subscription.paying-twice", in: app))
+    XCTAssertEqual(
+      app.descendants(matching: .any).matching(identifier: "subscription.status").count, 2)
+  }
+
+  func testManagingOpensTheAppStoresSubscriptionsAndAnEndingOneSaysWhen() {
+    let app = launch(Self.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple:ending"]))
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app))
+    waitUntil(find("subscription.detail", in: app), mentions: "Ends on")
+    tap(find("subscription.manage", in: app))
+    waitFor(find("app-store-subscriptions.stand-in", in: app))
   }
 
   private static func standIns(_ more: [String: String]) -> [String: String] {

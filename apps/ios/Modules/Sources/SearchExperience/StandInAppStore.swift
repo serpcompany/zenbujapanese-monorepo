@@ -1,4 +1,6 @@
 import Foundation
+import StoreKit
+import SwiftUI
 
 #if DEBUG
   actor StandInAppStore: AppStorePurchases {
@@ -12,15 +14,19 @@ import Foundation
     }
 
     @MainActor
-    func purchase(_ productID: String, for appAccountToken: UUID) async throws -> StorePurchase {
+    func purchase(
+      _ productID: String, for appAccountToken: UUID, confirmingWith action: PurchaseAction?
+    ) async throws -> StorePurchase {
+      let signed = "stand-in-transaction.\(productID).\(appAccountToken.uuidString)"
       let transaction = StoreTransaction(
-        signedTransaction: "stand-in-transaction.\(productID).\(appAccountToken.uuidString)",
-        finish: {})
+        id: signed, productID: productID, signedTransaction: signed, finish: {})
       await keep(transaction)
       return .purchased(transaction)
     }
 
     func currentTransactions() async -> [StoreTransaction] { purchased }
+
+    nonisolated func unfinishedTransactions() async -> [StoreTransaction] { [] }
 
     nonisolated func syncWithAppStore() async throws {}
 
@@ -53,58 +59,60 @@ import Foundation
     static let paywallKey = "ZENBU_ACCOUNT_STAND_IN_PAYWALL"
     static let subscriptionKey = "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION"
     static let appAccountToken = "6f1c3c3e-0b5d-4c4e-9a51-7d0c2f1e8a01"
+    private static let paidThrough = "2030-01-01T00:00:00.000Z"
 
     private let lock = NSLock()
     private let paywall: Bool
-    private var source: String?
+    private var held: [String]
 
     init(_ environment: [String: String]) {
       paywall = environment[Self.paywallKey] == "1"
-      source = environment[Self.subscriptionKey]
+      held = (environment[Self.subscriptionKey] ?? "").split(separator: ",").map(String.init)
     }
 
-    var refusesSync: Bool { lock.withLock { paywall && source == nil } }
+    var refusesSync: Bool { lock.withLock { paywall && !Self.syncs(held) } }
 
-    var runsInTheAppStore: Bool { lock.withLock { source == "apple" } }
+    var runsInTheAppStore: Bool {
+      lock.withLock { held.contains { $0.hasPrefix("apple") && !$0.hasSuffix(":ending") } }
+    }
 
-    var answer: [String: Any] { lock.withLock { Self.answer(source: source, paywall: paywall) } }
+    var answer: [String: Any] { lock.withLock { Self.answer(held, paywall: paywall) } }
 
     func buy(_ body: Data) -> [String: Any] {
       lock.withLock {
         let sent = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
-        if (sent?["signedTransaction"] as? String)?.isEmpty == false { source = "apple" }
-        return Self.answer(source: source, paywall: paywall)
+        if (sent?["signedTransaction"] as? String)?.isEmpty == false { held = ["apple"] }
+        return Self.answer(held, paywall: paywall)
       }
     }
 
-    private static func answer(source: String?, paywall: Bool) -> [String: Any] {
-      let subscribed = source != nil
-      let product: Any =
-        switch source {
-        case "apple": StandInAppStore.monthly
-        case "stripe": "price_monthly"
-        default: NSNull()
-        }
-      let managedIn: Any =
-        switch source {
-        case "apple": "app_store"
-        case "stripe": "website"
-        default: NSNull()
-        }
-      let running: [[String: Any]] =
-        subscribed
-        ? [
-          [
-            "source": source ?? "", "productId": product, "status": "active",
-            "expiresAt": "2030-01-01T00:00:00.000Z", "willRenew": true, "managedIn": managedIn,
-          ]
-        ] : []
+    private static func syncs(_ held: [String]) -> Bool {
+      held.contains { !$0.hasSuffix(":billing_retry") && !$0.hasSuffix(":paused") }
+    }
+
+    private static func running(_ entry: String) -> [String: Any] {
+      let parts = entry.split(separator: ":").map(String.init)
+      let apple = parts[0] == "apple"
+      let state = parts.count > 1 ? parts[1] : "active"
       return [
-        "status": subscribed ? "active" : "none", "active": subscribed,
-        "source": source ?? NSNull(), "productId": product,
-        "expiresAt": subscribed ? "2030-01-01T00:00:00.000Z" : NSNull(),
-        "willRenew": subscribed ? true : NSNull(), "managedIn": managedIn, "running": running,
-        "canSubscribe": !subscribed,
+        "source": apple ? "apple" : "stripe",
+        "productId": apple ? StandInAppStore.monthly : "price_monthly",
+        "status": state == "ending" ? "active" : state,
+        "expiresAt": paidThrough, "willRenew": state != "ending",
+        "managedIn": apple ? "app_store" : "website",
+      ]
+    }
+
+    private static func answer(_ held: [String], paywall: Bool) -> [String: Any] {
+      let running = held.map(running)
+      let first = running.first
+      let subscribed = syncs(held)
+      return [
+        "status": first?["status"] ?? "none", "active": subscribed,
+        "source": first?["source"] ?? NSNull(), "productId": first?["productId"] ?? NSNull(),
+        "expiresAt": first == nil ? NSNull() : paidThrough,
+        "willRenew": first?["willRenew"] ?? NSNull(), "managedIn": first?["managedIn"] ?? NSNull(),
+        "running": running, "canSubscribe": running.isEmpty,
         "cloudAccess": subscribed ? "subscribed" : paywall ? "subscription_required" : "free",
         "appAccountToken": appAccountToken,
         "offers": [

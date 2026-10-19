@@ -31,6 +31,8 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var onLocalChange: (() -> Void)?
+  @ObservationIgnored var onRefusedForSubscription: (() -> Void)?
+  @ObservationIgnored var waitsForSubscription: @MainActor () -> Bool = { false }
   @ObservationIgnored private var session = 0
   @ObservationIgnored private var caughtUpThisLaunch = false
   @ObservationIgnored private var changesBeforeLoad: [SavedItemChange] = []
@@ -151,6 +153,7 @@ final class AccountSync: LocalFileStore {
   func sync() async throws {
     await ready()
     guard canSync, !isSyncing else { return }
+    if waitsForSubscription() { return try await sendProfileAlone() }
     isSyncing = true
     defer { isSyncing = false }
     let session = session
@@ -165,8 +168,51 @@ final class AccountSync: LocalFileStore {
       throw AccountServiceError.sessionEnded
     } catch let failure as AccountServiceError {
       lastFailure = failure
+      if case .refused(402, _, _, _) = failure { onRefusedForSubscription?() }
       throw failure
     }
+  }
+
+  private func sendProfileAlone() async throws {
+    isSyncing = true
+    defer { isSyncing = false }
+    let session = session
+    try await readProfileIfNew(in: session)
+    while let change = state.queue.first(where: {
+      $0.key == state.profileKey && !state.holds($0.key)
+    }) {
+      let outcome: SyncResult.Outcome
+      do {
+        outcome = .applied(
+          version: try await tokens.withAccessToken { [api] token in
+            try await api.changeProfile(
+              change.fields ?? [:], baseVersion: change.baseVersion, accessToken: token
+            ).version
+          })
+      } catch AccountServiceError.refused(409, "version_conflict", _, _) {
+        let current = try await tokens.withAccessToken { [api] in
+          try await api.profile(accessToken: $0)
+        }
+        outcome = .conflict(
+          current: SyncChange(
+            key: change.key, version: current.version, payload: .profile(current)))
+      } catch AccountServiceError.refused(let status, let code, _, _)
+        where (400..<500).contains(status) && status != 401 && status != 429
+      {
+        outcome = .rejected(code: code)
+      } catch AccountServiceError.sessionEnded {
+        guard self.session == session else { return }
+        endSession(onItsOwn: true)
+        throw AccountServiceError.sessionEnded
+      } catch let failure as AccountServiceError {
+        lastFailure = failure
+        throw failure
+      }
+      guard self.session == session else { return }
+      resolve([change], with: [SyncResult(id: change.id, outcome: outcome)])
+      persist()
+    }
+    lastFailure = nil
   }
 
   func persist() {

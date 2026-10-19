@@ -64,6 +64,9 @@ final class ZenbuAccount {
       fileURL: fileURL.deletingLastPathComponent().appending(path: AccountSubscription.fileName),
       signedInAs: { [sync] in sync.account?.userID })
     subscription.onActive = { [scheduler] in scheduler.syncNow() }
+    subscription.onSyncAllowed = { [scheduler] in scheduler.syncNow() }
+    sync.waitsForSubscription = { [subscription] in subscription.syncNeedsSubscription }
+    sync.onRefusedForSubscription = { [weak self] in self?.refreshSubscription() }
   }
 
   var account: SignedInAccount? { sync.account }
@@ -98,6 +101,7 @@ final class ZenbuAccount {
     }
     scheduler.stop()
     sync.endSession()
+    subscription.signedOut()
   }
 
   func signInMethods() async throws -> Set<String> {
@@ -126,7 +130,7 @@ final class ZenbuAccount {
 
   @discardableResult
   func deleteAccount(appleAuthorizationCode: String?) async throws -> Bool {
-    var appStoreSubscriptionContinues = subscription.current?.runsInTheAppStore ?? false
+    var appStoreSubscriptionContinues = subscription.current?.renewsInTheAppStore ?? false
     do {
       appStoreSubscriptionContinues = try await sync.tokens.withAccessToken { [api] token in
         try await api.deleteAccount(
@@ -146,7 +150,15 @@ final class ZenbuAccount {
 
   func appBecameActive() {
     scheduler.appBecameActive()
-    Task { await subscription.refresh() }
+    refreshSubscription()
+  }
+
+  private func refreshSubscription() {
+    let earlier = subscriptionWork
+    subscriptionWork = Task { [subscription] in
+      await earlier?.value
+      await subscription.refresh()
+    }
   }
 
   func startSubscription() {

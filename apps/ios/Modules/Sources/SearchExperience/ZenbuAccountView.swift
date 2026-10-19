@@ -38,7 +38,7 @@ struct ZenbuAccountRow: View {
 
   private var signedInNote: String? {
     zenbuAccount.syncNeedsSubscription
-      ? String(localized: "Syncing needs a subscription") : nil
+      ? SubscriptionText.syncWaitsShort(zenbuAccount.subscription.current) : nil
   }
 
   private var signedOutNote: String {
@@ -126,6 +126,10 @@ struct ZenbuAccountView: View {
         Text(AccountMessage.syncPaused(by: problem))
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("zenbu-account.bookmarks-unreadable")
+      } else if zenbuAccount.syncNeedsSubscription {
+        Text(SubscriptionText.syncWaits(zenbuAccount.subscription.current, on: ThisDevice.name))
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.sync-waits")
       } else if let failure = zenbuAccount.sync.lastFailure,
         let message = AccountMessage.text(for: failure)
       {

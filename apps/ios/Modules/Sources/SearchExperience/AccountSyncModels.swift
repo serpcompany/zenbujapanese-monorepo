@@ -151,6 +151,12 @@ struct SyncChange: Decodable, Sendable {
     case entity, entityId, operation, version, data
   }
 
+  init(key: SyncEntityKey, version: Int, payload: Payload) {
+    self.key = key
+    self.version = version
+    self.payload = payload
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let entity = try container.decode(String.self, forKey: .entity)
@@ -196,6 +202,11 @@ struct SyncResult: Decodable, Sendable {
 
   private struct Rejection: Decodable {
     let code: String
+  }
+
+  init(id: String, outcome: Outcome) {
+    self.id = id
+    self.outcome = outcome
   }
 
   init(from decoder: Decoder) throws {

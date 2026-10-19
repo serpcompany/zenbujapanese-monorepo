@@ -113,12 +113,12 @@ struct AccountRootView: View {
       }
 
       Section {
-        AccountExternalLink(destination: AccountLinks.support) {
+        AccountExternalLink(destination: ZenbuLinks.support) {
           SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
         }
         .accessibilityIdentifier("account.support")
 
-        AccountExternalLink(destination: AccountLinks.privacyPolicy) {
+        AccountExternalLink(destination: ZenbuLinks.privacyPolicy) {
           SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
         }
         .accessibilityIdentifier("account.privacy-policy")
@@ -213,11 +213,6 @@ private struct AccountAboutHeader: View {
     .accessibilityElement(children: .combine)
     .accessibilityIdentifier("account.about")
   }
-}
-
-private enum AccountLinks {
-  static let support = URL(string: "https://zenbujapanese.com/support")!
-  static let privacyPolicy = URL(string: "https://zenbujapanese.com/privacy")!
 }
 
 private enum AppBundleInfo {

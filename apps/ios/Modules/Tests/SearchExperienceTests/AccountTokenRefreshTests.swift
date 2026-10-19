@@ -1,0 +1,64 @@
+import Foundation
+import Testing
+
+@testable import SearchExperience
+
+@MainActor
+@Suite("Access token refreshes shared between requests", .timeLimit(.minutes(1)))
+struct AccountTokenRefreshTests {
+  private static let fresh = StubReply.json(
+    200, ["token": StubTokens.access(expiresAt: Date().addingTimeInterval(15 * 60))])
+
+  private static func heldRefresh() -> (StubAccountServer, LaterReply, AccountTokens) {
+    let server = StubAccountServer()
+    let later = LaterReply()
+    server.respond { request in
+      request.route == "GET /v1/auth/token" ? .later(later) : .error(404, "not_found")
+    }
+    let tokens = AccountTokens(
+      api: AccountAPI(baseURL: server.baseURL, session: server.session),
+      storage: MemorySessionTokenStorage("first.signed"))
+    return (server, later, tokens)
+  }
+
+  private static func asked(_ later: LaterReply) async throws {
+    while !later.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+  }
+
+  @Test("two requests at once with no access token make one refresh")
+  func twoRequestsShareOneRefresh() async throws {
+    let (server, later, tokens) = Self.heldRefresh()
+    let one = Task { try await tokens.withAccessToken { $0 } }
+    let two = Task { try await tokens.withAccessToken { $0 } }
+    try await Self.asked(later)
+    later.send(Self.fresh)
+    let first = try await one.value
+    let second = try await two.value
+    #expect(first == second)
+    #expect(server.requests(to: "GET /v1/auth/token").count == 1)
+  }
+
+  @Test("a refresh joined across a sign-out ends the session for every request waiting on it")
+  func joinedRefreshAcrossASignOut() async throws {
+    let (_, later, tokens) = Self.heldRefresh()
+    let one = Task { try await tokens.withAccessToken { $0 } }
+    let two = Task { try await tokens.withAccessToken { $0 } }
+    try await Self.asked(later)
+    tokens.forgetSession()
+    later.send(Self.fresh)
+    await #expect(throws: AccountServiceError.sessionEnded) { try await one.value }
+    await #expect(throws: AccountServiceError.sessionEnded) { try await two.value }
+  }
+
+  @Test("a request cancelled while it waits for the shared refresh stops waiting")
+  func cancelledWaiterStops() async throws {
+    let (_, later, tokens) = Self.heldRefresh()
+    let waiting = Task { try await tokens.withAccessToken { $0 } }
+    let other = Task { try await tokens.withAccessToken { $0 } }
+    try await Self.asked(later)
+    waiting.cancel()
+    await #expect(throws: CancellationError.self) { try await waiting.value }
+    later.send(Self.fresh)
+    #expect(try await other.value.isEmpty == false)
+  }
+}

@@ -148,6 +148,15 @@ struct AccountAPI: Sendable {
     try decoded(SyncedProfile.self, from: await send("GET", "v1/me", bearer: accessToken))
   }
 
+  func changeProfile(
+    _ fields: [String: SyncFieldValue], baseVersion: Int, accessToken: String
+  ) async throws -> SyncedProfile {
+    let body = fields.merging(["baseVersion": .number(baseVersion)]) { _, base in base }
+    return try decoded(
+      SyncedProfile.self,
+      from: await send("PATCH", "v1/me", body: json(body), bearer: accessToken))
+  }
+
   func subscription(accessToken: String) async throws -> KnownSubscription {
     try decoded(
       KnownSubscription.self, from: await send("GET", "v1/me/subscription", bearer: accessToken))

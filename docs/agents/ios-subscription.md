@@ -61,54 +61,83 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **Reading.** `GET /v1/me/subscription` after signing in, at launch once the account's file has
   loaded, on becoming active, and on opening Zenbu Account. The answer is kept in
   `account-subscription.json` beside `account-sync.json`, for that account only, and shown offline.
-  An answer that comes after the learner signed out or switched accounts is dropped. Sync and the
-  subscription asking at once share one access token refresh (`AccountTokens`).
-- **Offering.** **Subscribe to Sync…** shows only when `canSubscribe` is true and the App Store
-  offers products, so no learner is offered a second subscription, and buying refuses otherwise.
+  An answer that comes after the learner signed out or switched accounts is dropped, and so is one
+  asked before an answer the app already has, so a slow read can't undo a purchase. Sync and the
+  subscription asking at once share one access token refresh (`AccountTokens`), which a request
+  can stop waiting for, and a `401` refreshes through the same one.
+- **Offering.** **Subscribe to Sync…** shows only when the service says sync needs a subscription
+  (`cloudAccess: subscription_required`), `canSubscribe` is true, the App Store offers products,
+  the Apple Account has no subscription of its own running, and no `409` is waiting, so no learner
+  is offered a second subscription or one sync doesn't need. Opening the paywall and buying read the
+  subscription again first, and buying refuses when it's no longer offered (a website purchase that
+  just landed). An App Store that sells none of the plans says so.
   The products are the service's `offers.appStore`, in its order, read from StoreKit; the app names
   none itself. A plan's introductory offer, a free trial or a lower first price, shows with its
   terms when StoreKit says the Apple Account may have it (`isEligibleForIntroOffer`).
-- **Buying.** `Product.purchase(options: [.appAccountToken(token)])`, with the account's token,
-  then the verified transaction's `jwsRepresentation` goes to `POST /v1/me/subscription/apple`. The
+- **Buying.** The paywall buys through SwiftUI's `PurchaseAction` (`@Environment(\.purchase)`),
+  so StoreKit's sheet belongs to the paywall's scene, with `.appAccountToken(token)` set to the
+  account's token; then the verified transaction's `jwsRepresentation` goes to
+  `POST /v1/me/subscription/apple`. The
   transaction is finished after a `200` or a `4xx` (except `401` and `429`), and left unfinished after a
-  `5xx` or no network, so StoreKit hands it over again. Ask to Buy says it's waiting; a `409` says
-  the Apple Account's subscription is another Zenbu account's.
-- **Listening.** From launch, once the account's file has loaded, `Transaction.updates` and
-  `Transaction.unfinished` are sent the same way: a renewal, an approval, an offer code, a refund. A
-  signed-out app sends and finishes nothing, so they wait for the next sign-in.
+  `5xx` or no network, so StoreKit hands it over again. Ask to Buy says it's waiting, across a
+  relaunch, until the approved purchase arrives; a `409` says the Apple Account's subscription is
+  another Zenbu account's, until the learner signs out or a purchase goes through.
+- **Listening.** From launch, once the account's file has loaded, `Transaction.updates` are sent
+  the same way: a renewal, an approval, an offer code, a refund. `Transaction.unfinished` is sent
+  after each read of the subscription (at launch, on becoming active, and after signing in), so a
+  purchase left unfinished by a `5xx` goes again. A transaction is sent once at a time and, once
+  answered, not again until the next sign-in. A signed-out app sends and finishes nothing, so they
+  wait for the next sign-in.
 - **Signing in and restoring.** Signing in sends `Transaction.currentEntitlements`, so the Apple
   Account's subscription unlocks the account or says it's another's. **Restore Purchases** calls
-  `AppStore.sync()` first.
+  `AppStore.sync()` first, and says so when the Apple Account has nothing to restore.
 - **Managing.** Each subscription in `running` where it was bought: an App Store one with StoreKit's
   `manageSubscriptionsSheet` on iPhone and iPad, and on the Mac, which has no such sheet, the App
   Store's page `https://apps.apple.com/account/subscriptions` (`appStoreSubscriptionSettings`, the
-  one place `pnpm verify layers` lets code name the sheet). A website one is a plain statement.
-- **Sync.** A `402 subscription_required` keeps the queue; the Account row and Zenbu Account say
-  syncing needs a subscription. A subscription that turns active syncs at once.
+  one place `pnpm verify layers` lets code name the sheet). It says the Apple Account that bought it
+  manages it. A website one is a plain statement, and a failed website payment says only that it
+  failed, with no step to take there. Paying in both stores shows both, and says to cancel one.
+- **Sync.** While the answer says sync needs a subscription, the app sends no `POST /v1/sync`,
+  which the service would refuse; the queue waits, and the profile, which stays free, goes alone
+  through `PATCH /v1/me`. A `402 subscription_required` keeps the queue and reads the subscription
+  again. The Account row and Zenbu Account say why sync waits: no subscription, a payment being
+  retried, a paused subscription, or a first payment still to come. A subscription that turns
+  active, or an answer that lets sync go, syncs at once.
 - **Deleting.** The sheet warns while an App Store subscription runs, and afterwards when
   `DELETE /v1/me` answers `appStoreSubscriptionContinues`; it says a website one is canceled.
 
 ## Test it
 
-- **Package tests**, on iPhone, iPad, and the Mac (`ios.md`, Tests on every platform):
-  `AccountSubscriptionTests` runs the client against `StubAccountServer` and `FakeAppStore`.
+- **Package tests**, on iPhone, iPad, and the Mac (`ios.md`, Tests on every platform), against
+  `StubAccountServer` and `FakeAppStore`: `AccountSubscriptionTests` (buying, refusals, Ask to Buy,
+  restoring, listening, and offering nothing while sync is free, the website or the Apple Account
+  already has one, or the store sells none), `AccountSubscriptionStateTests` (switching accounts,
+  late and out-of-order answers, a relaunch, sync and the profile while sync waits, decoding, and
+  deleting), `SubscriptionTextTests` (each state's words), and `AccountTokenRefreshTests` (the
+  shared refresh). A reply the test sends later is a `LaterReply`, which holds no thread.
 - **StoreKit tests**, `ZenbuJapaneseStoreKitTests` (`apps/ios/StoreKitTests/`), on iPhone, iPad,
   and the Mac: `StoreKitPurchasesTests` runs `StoreKitPurchases` against StoreKit itself, through
   `SKTestSession` and the StoreKit configuration file `apps/ios/App/ZenbuSync.storekit` (a monthly
   and a yearly plan with a free week, in one group): the products, their prices, and the free week
   only for an Apple Account that hasn't had the plan, a purchase whose signed transaction carries
   the account's token, the Apple Account's current purchases, a purchase made outside the app and
-  not finished, Ask to Buy, and a product StoreKit doesn't sell. StoreKit
+  not finished and handed over once, Ask to Buy and its approval, a refund, a renewal, an expiry,
+  `AppStore.sync()`, and a product StoreKit doesn't sell. StoreKit
   Testing needs an app to host it, which the package's tests don't have, so this target runs inside
   the app, with its other two source files compiled in, and the scheme runs it with the UI tests
   (the same `xcodebuild … test` command, `ios.md`, Tests on every platform). `xcodebuild` doesn't
   apply a scheme's StoreKit configuration to the UI tests' app, so they don't use one.
 - **UI tests**, `SubscriptionUITests`, on iPhone and iPad (skipped on the Mac, which can't keep a
   session in a build signed to run locally): buying unlocks sync and offers no second
-  subscription, a website subscription, and deleting with an App Store one, with Debug-only
+  subscription, a website subscription, a website payment that failed, sync waiting while an App
+  Store payment is retried, paying in both stores, an ending subscription with **Manage in the App
+  Store** opening the App Store's subscriptions (a stand-in sheet), and deleting with an App Store
+  one that renews, with Debug-only
   stand-ins: `ZENBU_APP_STORE_STAND_IN=1` (`StandInAppStore`: the same plans, and a purchase that
   completes at once), `ZENBU_ACCOUNT_STAND_IN_PAYWALL=1` (sync refused until subscribed), and
-  `ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION=apple` or `stripe` (already subscribed in that store).
+  `ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION`, a comma-separated list of `apple` or `stripe`, each with
+  an optional `:grace_period`, `:billing_retry`, `:paused`, or `:ending` (already subscribed in
+  that store, in that state).
 - **By hand, with the StoreKit configuration file:** in Xcode, Product → Scheme → Edit Scheme → Run
   → Options → StoreKit Configuration: `ZenbuSync.storekit`, against a service on this Mac whose
   `APP_STORE_ENVIRONMENTS` includes `Xcode` (taken only at localhost) and whose
@@ -129,4 +158,16 @@ Besides the service's setup ([`account-billing-stores.md`](account-billing-store
   in the review notes; and the App Privacy answers in
   [`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md), which now
   include Purchase History.
+- **App Review's demo account** must be one the gate applies to, so the reviewer sees **Subscribe
+  to Sync…**: with the gate on, an account with no subscription, and its email in
+  `APP_STORE_SANDBOX_ACCOUNTS` so the reviewer's sandbox purchase counts. The app offers nothing
+  while sync is free.
+- **Don't promote the subscription on the App Store:** in App Store Connect, give its products no
+  App Store promotion (no promotional image, so the product page doesn't list them). The app doesn't take a purchase started on the product page (StoreKit's
+  `PurchaseIntent`), since that purchase would have no Zenbu account's token and might come before
+  the learner signs in.
+- **The listing:** keep the current one (`apps/ios/metadata/version/1.0/`) until the version that
+  turns the gate on; that version's description, What's New, and promotional text are drafted in
+  `apps/ios/metadata/drafts/subscription/en-US.json`, with the Terms of Use and the Privacy
+  Policy's links at the end of the description.
 - **Nothing in the project:** in-app purchase needs no entitlement, and the App ID has it already.

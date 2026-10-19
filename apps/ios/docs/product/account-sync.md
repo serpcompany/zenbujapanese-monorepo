@@ -134,29 +134,41 @@ it on at the service, every account syncs as before, and the app shows no subscr
 - **Zenbu Account → Subscription** shows each subscription still running, with where it was bought
   (App Store or zenbujapanese.com), its status (active, ends or renews on a date, payment failed,
   paused, waiting for payment), and how to manage it: **Manage in the App Store** opens the App
-  Store's subscription settings (a sheet on iPhone and iPad, the App Store's page on the Mac); one
-  bought on the website says it's managed there, with no link. Paying in both shows both, and says
-  so. An ended or refunded one shows its status.
-- **Subscribe to Sync…** appears only when the account has no subscription running anywhere, so no
-  one is offered a second. The paywall says what syncs and that the rest stays free, lists each
+  Store's subscription settings (a sheet on iPhone and iPad, the App Store's page on the Mac), and
+  says the Apple Account that bought it manages it; one bought on the website says it's managed
+  there, with no link, and a failed website payment says only that it failed. Paying in both shows
+  both, and says to cancel one. An ended or refunded one shows its status.
+- **Subscribe to Sync…** appears only when sync needs a subscription and the account has none
+  running anywhere, nor the Apple Account, so no one is offered a second or one sync doesn't need.
+  Opening the paywall and buying check again first. The paywall says what syncs and that the rest
+  stays free, lists each
   plan with its name, price, and period from the App Store, with a free trial or introductory price
   when the Apple Account may have one, and has the renewal terms, **Restore Purchases**, **Terms of
   Use**, and **Privacy Policy**. A purchase belongs to the signed-in account; one waiting for Ask to
-  Buy says so, and unlocks once approved. If the Apple Account's subscription belongs to another
-  Zenbu account, the app says to sign in to that one.
+  Buy says so, across a relaunch, and unlocks once approved. If the Apple Account's subscription
+  belongs to another Zenbu account, the app says to sign in to that one until the learner signs
+  out. An App Store that doesn't sell the plans, or an Apple Account with nothing to restore, says
+  so; VoiceOver reads each of these notes as it appears.
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
-  on the device and sync once the learner subscribes, and nothing queued is lost. Subscribing syncs
-  at once.
+  on the device and sync once the learner subscribes, and nothing queued is lost; a payment being
+  retried, a paused subscription, and a first payment still to come each say that instead. The app
+  sends no sync the service would refuse, but the profile, which stays free, still syncs.
+  Subscribing syncs at once.
 - **Restore Purchases** asks the App Store for the Apple Account's purchases and sends them; signing
   in sends them too, so an earlier subscription unlocks the account.
 
-Check: package `AccountSubscriptionTests` (the answer kept per account, the purchase and its token,
-no second offer, a service that's down, another account's purchase, Ask to Buy, restoring, signing
-in, signed out, a refused sync, unknown values, and deletion's answer); `StoreKitPurchasesTests`
-(iPhone, iPad, and the Mac, against StoreKit with the StoreKit configuration file: the plans and an
-introductory offer, a purchase carrying the account's token, current purchases, one made outside
-the app, Ask to Buy); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks sync and offers no
-second, a website subscription, and deleting with an App Store one).
+Check: package `AccountSubscriptionTests` (the purchase and its token, no offer while sync is free
+or another subscription runs, reading again before buying, a service that's down, another
+account's purchase, Ask to Buy, a store that sells none, restoring with and without a purchase,
+signing in, and a purchase handed over twice), `AccountSubscriptionStateTests` (the answer kept per
+account, switching accounts, late answers, a relaunch, signed out, no refused sync but the profile,
+a refused sync, unknown values, and deletion's answer), and `SubscriptionTextTests` (each state's
+words); `StoreKitPurchasesTests` (iPhone, iPad, and the Mac, against StoreKit with the StoreKit
+configuration file: the plans and an introductory offer, a purchase carrying the account's token,
+current purchases, one made outside the app, Ask to Buy and its approval, a refund, a renewal, an
+expiry, and syncing with the App Store); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks
+sync and offers no second, a website subscription and a failed website payment, sync waiting for an
+App Store payment, paying in both, an ending one and Manage, and deleting with an App Store one).
 
 ## Deleting the account
 

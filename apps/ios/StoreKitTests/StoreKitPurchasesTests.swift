@@ -4,14 +4,14 @@ import StoreKitTest
 import Testing
 
 @MainActor
-@Suite(.serialized)
+@Suite(.serialized, .timeLimit(.minutes(1)))
 struct StoreKitPurchasesTests {
   static let monthly = "com.zenbujapanese.sync.monthly"
   static let yearly = "com.zenbujapanese.sync.yearly"
   static let retired = "com.zenbujapanese.sync.retired"
 
   @Test func offersTheServicesProductsInItsOrderWithTheirPricesAndPeriods() async throws {
-    let session = try Self.session()
+    let session = try await Self.session()
     let offers = try await StoreKitPurchases().offers(
       for: [Self.yearly, Self.retired, Self.monthly])
     #expect(offers.map(\.id) == [Self.yearly, Self.monthly])
@@ -23,18 +23,23 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func offersNoIntroductoryOfferToAnAppleAccountThatHadThePlan() async throws {
-    let session = try Self.session()
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
+    let store = StoreKitPurchases()
     try await session.buyProduct(identifier: Self.yearly)
-    let offers = try await StoreKitPurchases().offers(for: [Self.yearly])
-    #expect(offers.map(\.introduction) == [nil])
-    session.clearTransactions()
+    try await Self.until("the purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [Self.yearly]
+    }
+    try await Self.until("no introductory offer") {
+      (try? await store.offers(for: [Self.yearly]).map(\.introduction)) == [nil]
+    }
   }
 
   @Test func buysForTheAccountsTokenAndHandsOverTheSignedTransaction() async throws {
-    let session = try Self.session()
+    let session = try await Self.session()
     let store = StoreKitPurchases()
     let token = UUID()
-    let purchase = try await store.purchase(Self.monthly, for: token)
+    let purchase = try await store.purchase(Self.monthly, for: token, confirmingWith: nil)
     guard case .purchased(let bought) = purchase else {
       Issue.record("The purchase didn't complete: \(purchase)")
       return
@@ -48,51 +53,130 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func listsTheAppleAccountsCurrentPurchases() async throws {
-    let session = try Self.session()
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
+    let store = StoreKitPurchases()
     try await session.buyProduct(identifier: Self.yearly)
-    let current = try await StoreKitPurchases().currentTransactions().map {
+    try await Self.until("the purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [Self.yearly]
+    }
+    let current = try await store.currentTransactions().map {
       try Self.payload(of: $0.signedTransaction)["productId"] as? String
     }
     #expect(current == [Self.yearly])
-    session.clearTransactions()
   }
 
-  @Test func handsOverAPurchaseMadeOutsideTheAppThatIsNotFinished() async throws {
-    let session = try Self.session()
+  @Test func handsOverAPurchaseMadeOutsideTheAppThatIsNotFinishedOnceOnly() async throws {
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
+    let store = StoreKitPurchases()
     try await session.buyProduct(identifier: Self.yearly)
-    var updates = StoreKitPurchases().transactionUpdates().makeAsyncIterator()
-    let update = try #require(await updates.next())
-    #expect(try Self.payload(of: update.signedTransaction)["productId"] as? String == Self.yearly)
-    await update.finish()
-    session.clearTransactions()
+    try await Self.until("the purchase among unfinished transactions") {
+      await Self.products(store.unfinishedTransactions()) == [Self.yearly]
+    }
+    for transaction in await store.unfinishedTransactions() { await transaction.finish() }
+    try await Self.until("no unfinished transaction") {
+      await store.unfinishedTransactions().isEmpty
+    }
   }
 
-  @Test func waitsForAskToBuy() async throws {
-    let session = try Self.session()
+  @Test func waitsForAskToBuyThenHandsOverTheApprovedPurchase() async throws {
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
     session.askToBuyEnabled = true
-    let purchase = try await StoreKitPurchases().purchase(Self.monthly, for: UUID())
+    let store = StoreKitPurchases()
+    let purchase = try await store.purchase(Self.monthly, for: UUID(), confirmingWith: nil)
     guard case .pending = purchase else {
       Issue.record("Ask to Buy didn't wait: \(purchase)")
       return
     }
+    #expect(await store.currentTransactions().isEmpty)
+    let asked = try #require(session.allTransactions().last)
+    try session.approveAskToBuyTransaction(identifier: asked.identifier)
+    try await Self.until("the approved purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [Self.monthly]
+    }
+    try await Self.until("the approved purchase among unfinished transactions") {
+      await Self.products(store.unfinishedTransactions()) == [Self.monthly]
+    }
+    for transaction in await store.unfinishedTransactions() { await transaction.finish() }
+  }
+
+  @Test func handsOverARenewalAndDropsAnExpiredSubscription() async throws {
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
+    let store = StoreKitPurchases()
+    try await session.buyProduct(identifier: Self.monthly)
+    try await Self.until("the purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [Self.monthly]
+    }
+    let first = await store.currentTransactions().map(\.id)
+    try session.forceRenewalOfSubscription(productIdentifier: Self.monthly)
+    try await Self.until("the renewal among current entitlements") {
+      let renewed = await store.currentTransactions().map(\.id)
+      return renewed.count == 1 && renewed != first
+    }
+    try session.expireSubscription(productIdentifier: Self.monthly)
+    try await Self.until("no current entitlement after the expiry") {
+      await store.currentTransactions().isEmpty
+    }
+  }
+
+  @Test func dropsARefundedPurchase() async throws {
+    let session = try await Self.session()
+    defer { session.clearTransactions() }
+    let store = StoreKitPurchases()
+    try await session.buyProduct(identifier: Self.yearly)
+    try await Self.until("the purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [Self.yearly]
+    }
+    let bought = try #require(await store.currentTransactions().first.flatMap { UInt($0.id) })
+    try session.refundTransaction(identifier: bought)
+    try await Self.until("no current entitlement after the refund") {
+      await store.currentTransactions().isEmpty
+    }
+  }
+
+  @Test func syncsWithTheAppStoreToRestore() async throws {
+    let session = try await Self.session()
+    try await StoreKitPurchases().syncWithAppStore()
     session.clearTransactions()
   }
 
   @Test func refusesAProductTheStoreDoesNotSell() async throws {
-    let session = try Self.session()
+    let session = try await Self.session()
     await #expect(throws: StorePurchaseError.notOffered) {
-      try await StoreKitPurchases().purchase(Self.retired, for: UUID())
+      try await StoreKitPurchases().purchase(Self.retired, for: UUID(), confirmingWith: nil)
     }
     session.clearTransactions()
   }
 
-  private static func session() throws -> SKTestSession {
+  private static func products(_ transactions: [StoreTransaction]) -> [String] {
+    transactions.map(\.productID)
+  }
+
+  private static func until(_ what: String, _ holds: () async -> Bool) async throws {
+    for _ in 0..<500 {
+      if await holds() { return }
+      try await Task.sleep(for: .milliseconds(20))
+    }
+    Issue.record("StoreKit never showed \(what)")
+    throw CancellationError()
+  }
+
+  private static func session() async throws -> SKTestSession {
     let configuration = URL(filePath: #filePath).deletingLastPathComponent()
       .deletingLastPathComponent().appending(path: "App/ZenbuSync.storekit")
     let session = try SKTestSession(contentsOf: configuration)
     session.disableDialogs = true
     session.askToBuyEnabled = false
     session.clearTransactions()
+    let store = StoreKitPurchases()
+    try await until("a cleared store") {
+      let current = await store.currentTransactions()
+      let unfinished = await store.unfinishedTransactions()
+      return current.isEmpty && unfinished.isEmpty
+    }
     return session
   }
 

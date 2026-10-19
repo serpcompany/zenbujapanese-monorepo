@@ -1,4 +1,6 @@
 import Foundation
+import StoreKit
+import SwiftUI
 
 @testable import SearchExperience
 
@@ -15,10 +17,14 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
     let appAccountToken: UUID
   }
 
+  static let monthly = "com.zenbujapanese.sync.monthly"
+
   private let lock = NSLock()
   private var outcome = Outcome.buys
   private var bought: [Purchase] = []
   private var current: [String] = []
+  private var waiting: [String] = []
+  private var sells: Set<String>?
   private var finishedTransactions: [String] = []
   private var syncs = 0
   private let (updates, sendUpdate) = AsyncStream.makeStream(of: StoreTransaction.self)
@@ -36,6 +42,14 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
     lock.withLock { current = signedTransactions }
   }
 
+  func leavesUnfinished(_ signedTransactions: [String]) {
+    lock.withLock { waiting = signedTransactions }
+  }
+
+  func sellsOnly(_ productIDs: Set<String>) {
+    lock.withLock { sells = productIDs }
+  }
+
   func update(_ signedTransaction: String) {
     sendUpdate.yield(transaction(signedTransaction))
   }
@@ -50,13 +64,16 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
   }
 
   func offers(for productIDs: [String]) async throws -> [SubscriptionOffer] {
-    productIDs.map {
+    let sold = lock.withLock { sells }
+    return productIDs.filter { sold?.contains($0) ?? true }.map {
       SubscriptionOffer(id: $0, name: "Zenbu Sync", summary: "Sync", price: "$4.99", period: "a month")
     }
   }
 
   @MainActor
-  func purchase(_ productID: String, for appAccountToken: UUID) async throws -> StorePurchase {
+  func purchase(
+    _ productID: String, for appAccountToken: UUID, confirmingWith action: PurchaseAction?
+  ) async throws -> StorePurchase {
     let outcome = lock.withLock {
       bought.append(Purchase(productID: productID, appAccountToken: appAccountToken))
       return self.outcome
@@ -73,6 +90,10 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
     lock.withLock { current }.map(transaction)
   }
 
+  func unfinishedTransactions() async -> [StoreTransaction] {
+    lock.withLock { waiting }.map(transaction)
+  }
+
   func syncWithAppStore() async throws {
     lock.withLock { syncs += 1 }
   }
@@ -80,7 +101,7 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
   func transactionUpdates() -> AsyncStream<StoreTransaction> { updates }
 
   private func transaction(_ signed: String) -> StoreTransaction {
-    StoreTransaction(signedTransaction: signed) { [self] in
+    StoreTransaction(id: signed, productID: Self.monthly, signedTransaction: signed) { [self] in
       lock.withLock { finishedTransactions.append(signed) }
       sendFinish.yield(signed)
     }

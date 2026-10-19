@@ -6,12 +6,33 @@ enum AppStoreSubscriptionSettings {
 }
 
 extension View {
+  @ViewBuilder
   func appStoreSubscriptionSettings(isPresented: Binding<Bool>) -> some View {
-    #if os(macOS)
-      modifier(OpensSubscriptionSettings(isPresented: isPresented))
-    #else
-      manageSubscriptionsSheet(isPresented: isPresented)
-    #endif
+    if LaunchHarness.standsInForTheAppStore {
+      sheet(isPresented: isPresented) { StandInSubscriptionSettings() }
+    } else {
+      #if os(macOS)
+        modifier(OpensSubscriptionSettings(isPresented: isPresented))
+      #else
+        manageSubscriptionsSheet(isPresented: isPresented)
+      #endif
+    }
+  }
+}
+
+private struct StandInSubscriptionSettings: View {
+  @Environment(\.dismiss) private var dismiss
+
+  var body: some View {
+    NavigationStack {
+      Text("The App Store's subscriptions")
+        .accessibilityIdentifier("app-store-subscriptions.stand-in")
+        .toolbar {
+          ToolbarItem(placement: .cancellationAction) {
+            Button("Done") { dismiss() }
+          }
+        }
+    }
   }
 }
 

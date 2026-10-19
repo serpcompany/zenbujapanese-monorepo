@@ -1,5 +1,6 @@
 import Foundation
 import StoreKit
+import SwiftUI
 
 enum StorePurchaseError: Error, Equatable {
   case notOffered
@@ -21,9 +22,16 @@ actor StoreKitPurchases: AppStorePurchases {
   }
 
   @MainActor
-  func purchase(_ productID: String, for appAccountToken: UUID) async throws -> StorePurchase {
+  func purchase(
+    _ productID: String, for appAccountToken: UUID, confirmingWith action: PurchaseAction?
+  ) async throws -> StorePurchase {
     guard let product = await product(productID) else { throw StorePurchaseError.notOffered }
-    switch try await product.purchase(options: [.appAccountToken(appAccountToken)]) {
+    let options: Set<Product.PurchaseOption> = [.appAccountToken(appAccountToken)]
+    let result =
+      if let action { try await action(product, options: options) } else {
+        try await product.purchase(options: options)
+      }
+    switch result {
     case .success(let verification):
       guard let transaction = Self.verified(verification) else {
         throw StorePurchaseError.unverified
@@ -40,8 +48,16 @@ actor StoreKitPurchases: AppStorePurchases {
 
   nonisolated func currentTransactions() async -> [StoreTransaction] {
     var transactions: [StoreTransaction] = []
-    for await entitlement in Transaction.currentEntitlements {
+    for await entitlement in StoreKit.Transaction.currentEntitlements {
       if let transaction = Self.verified(entitlement) { transactions.append(transaction) }
+    }
+    return transactions
+  }
+
+  nonisolated func unfinishedTransactions() async -> [StoreTransaction] {
+    var transactions: [StoreTransaction] = []
+    for await waiting in StoreKit.Transaction.unfinished {
+      if let transaction = Self.verified(waiting) { transactions.append(transaction) }
     }
     return transactions
   }
@@ -57,20 +73,12 @@ actor StoreKitPurchases: AppStorePurchases {
   nonisolated func transactionUpdates() -> AsyncStream<StoreTransaction> {
     AsyncStream { continuation in
       let listening = Task {
-        for await update in Transaction.updates {
+        for await update in StoreKit.Transaction.updates {
           if let transaction = Self.verified(update) { continuation.yield(transaction) }
         }
         continuation.finish()
       }
-      let unfinished = Task {
-        for await waiting in Transaction.unfinished {
-          if let transaction = Self.verified(waiting) { continuation.yield(transaction) }
-        }
-      }
-      continuation.onTermination = { _ in
-        listening.cancel()
-        unfinished.cancel()
-      }
+      continuation.onTermination = { _ in listening.cancel() }
     }
   }
 
@@ -82,10 +90,11 @@ actor StoreKitPurchases: AppStorePurchases {
   }
 
   private nonisolated static func verified(
-    _ result: VerificationResult<Transaction>
+    _ result: VerificationResult<StoreKit.Transaction>
   ) -> StoreTransaction? {
     guard case .verified(let transaction) = result else { return nil }
     return StoreTransaction(
+      id: String(transaction.id), productID: transaction.productID,
       signedTransaction: result.jwsRepresentation, finish: { await transaction.finish() })
   }
 
@@ -100,7 +109,7 @@ actor StoreKitPurchases: AppStorePurchases {
   }
 
   private nonisolated static func introduction(_ offer: Product.SubscriptionOffer) -> String {
-    let length = Self.length(of: offer.period, times: offer.periodCount)
+    let length = Self.length(offer.period.unit, offer.period.value * offer.periodCount)
     return switch offer.paymentMode {
     case .freeTrial: String(localized: "\(length) free")
     case .payAsYouGo:
@@ -109,12 +118,11 @@ actor StoreKitPurchases: AppStorePurchases {
     }
   }
 
-  private nonisolated static func length(
-    of period: Product.SubscriptionPeriod, times count: Int
+  nonisolated static func length(
+    _ unit: Product.SubscriptionPeriod.Unit, _ value: Int
   ) -> String {
-    let value = period.value * count
     var components = DateComponents()
-    switch period.unit {
+    switch unit {
     case .day: components.day = value
     case .week: components.weekOfMonth = value
     case .month: components.month = value
@@ -128,12 +136,18 @@ actor StoreKitPurchases: AppStorePurchases {
   }
 
   private nonisolated static func period(_ period: Product.SubscriptionPeriod) -> String {
-    switch (period.unit, period.value) {
+    Self.period(period.unit, period.value)
+  }
+
+  nonisolated static func period(
+    _ unit: Product.SubscriptionPeriod.Unit, _ value: Int
+  ) -> String {
+    switch (unit, value) {
     case (.month, 1): String(localized: "a month")
     case (.year, 1): String(localized: "a year")
     case (.week, 1): String(localized: "a week")
-    default:
-      period.formatted(Date.ComponentsFormatStyle(style: .wide, fields: [.day, .week, .month, .year]))
+    case (.day, 1): String(localized: "a day")
+    default: String(localized: "every \(Self.length(unit, value))")
     }
   }
 }

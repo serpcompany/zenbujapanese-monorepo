@@ -122,9 +122,17 @@ enum LaunchHarness {
     #endif
   }
 
+  static var standsInForTheAppStore: Bool {
+    #if DEBUG
+      ProcessInfo.processInfo.environment[appStoreStandInKey] == "1"
+    #else
+      false
+    #endif
+  }
+
   static var appStorePurchases: (any AppStorePurchases)? {
     #if DEBUG
-      ProcessInfo.processInfo.environment[appStoreStandInKey] == "1" ? StandInAppStore() : nil
+      standsInForTheAppStore ? StandInAppStore() : nil
     #else
       nil
     #endif

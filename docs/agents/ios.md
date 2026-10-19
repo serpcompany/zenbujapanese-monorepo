@@ -937,11 +937,11 @@ rebuilt app went to review first from a backup account (team `W3GXL2NQQP`, bundl
 converted to a business account; nothing ships from it.
 
 The listing is `apps/ios/metadata/` (the name and subtitle in `app-info/`, the description, What's
-New, keywords, and promotional text in `version/1.0/`), and its screenshots are
-`apps/ios/screenshots/app-store/en-US/iphone-63-marketing-v2/`, made with koubou from
-`koubou-v2.yaml`, and the same shots at 6.9" in `iphone-69-marketing-v2/`, which App Store
-Connect requires: each scaled to 1320 × 2870 with Lanczos and cropped a pixel at the top and
-bottom to 1320 × 2868.
+New, keywords, and promotional text in `version/1.0/`, and the subscription's in `drafts/`), and its
+screenshots are `apps/ios/screenshots/app-store/en-US/iphone-63-marketing-v2/`, made with koubou
+from `koubou-v2.yaml`, and the same shots at 6.9" in `iphone-69-marketing-v2/`, which App Store
+Connect requires: each scaled to 1320 × 2870 with Lanczos and cropped a pixel at the top and bottom
+to 1320 × 2868.
 
 **A TestFlight build:**
 
@@ -1084,8 +1084,8 @@ YouTube can change: check the live page by hand.
   animated stroke, and the pitch downstep, each a light and a dark Display P3 color
   (`Color.adaptive`). Everything else uses SwiftUI's system styles, or `SystemColor` for the
   UIKit and AppKit backgrounds and fills.
-- Account's support and privacy URLs (`AccountAndMediaLibraryView.swift`) match the App Store
-  listing's in `apps/ios/metadata/`; change both together.
+- The website addresses in `ZenbuLinks` (`SubscriptionText.swift`) match the App Store listing's
+  in `apps/ios/metadata/`; change both together.
 - The privacy manifest (`apps/ios/App/PrivacyInfo.xcprivacy`) declares what the Zenbu account
   collects: email, name, user IDs, synced user content, session data and a profile picture's
   address, watch history, and where each video was stopped with the share of its words known. The

@@ -1,4 +1,6 @@
 import Foundation
+import StoreKit
+import SwiftUI
 
 struct KnownSubscription: Codable, Equatable, Sendable {
   enum Status: String, Codable, Sendable {
@@ -86,8 +88,14 @@ struct KnownSubscription: Codable, Equatable, Sendable {
   }
 
   var syncNeedsSubscription: Bool { cloudAccess == .subscriptionRequired }
-  var offersAppStorePurchase: Bool { canSubscribe && !offers.appStore.isEmpty }
+  var offersAppStorePurchase: Bool {
+    canSubscribe && syncNeedsSubscription && !offers.appStore.isEmpty
+  }
   var runsInTheAppStore: Bool { running.contains { $0.managedIn == .appStore } }
+  var renewsInTheAppStore: Bool {
+    running.contains { $0.managedIn == .appStore && $0.willRenew != false }
+  }
+  var paysTwice: Bool { running.count > 1 }
 
   var shown: [Running] {
     if !running.isEmpty { return running }
@@ -108,6 +116,8 @@ struct SubscriptionOffer: Identifiable, Equatable, Sendable {
 }
 
 struct StoreTransaction: Sendable {
+  let id: String
+  let productID: String
   let signedTransaction: String
   let finish: @Sendable () async -> Void
 }
@@ -120,18 +130,22 @@ enum StorePurchase: Sendable {
 
 protocol AppStorePurchases: Sendable {
   func offers(for productIDs: [String]) async throws -> [SubscriptionOffer]
-  @MainActor func purchase(_ productID: String, for appAccountToken: UUID) async throws
-    -> StorePurchase
+  @MainActor func purchase(
+    _ productID: String, for appAccountToken: UUID, confirmingWith action: PurchaseAction?
+  ) async throws -> StorePurchase
   func currentTransactions() async -> [StoreTransaction]
+  func unfinishedTransactions() async -> [StoreTransaction]
   func syncWithAppStore() async throws
   func transactionUpdates() -> AsyncStream<StoreTransaction>
 }
 
-enum SubscriptionProblem: Equatable, Sendable {
+enum SubscriptionProblem: String, Codable, Equatable, Sendable {
   case anotherAccount
   case unreachable
   case storeUnavailable
+  case notAvailableHere
   case pendingApproval
+  case nothingToRestore
   case notOffered
 }
 

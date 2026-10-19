@@ -1,81 +1,19 @@
 import SwiftUI
 
-enum SubscriptionText {
-  static let termsOfUse = URL(string: "https://zenbujapanese.com/legal/terms/")!
-  static let privacyPolicy = URL(string: "https://zenbujapanese.com/legal/privacy/")!
-
-  static func place(_ managedIn: KnownSubscription.ManagedIn?) -> String {
-    switch managedIn {
-    case .appStore: String(localized: "App Store")
-    case .website: String(localized: "zenbujapanese.com")
-    case nil: String(localized: "Subscription")
-    }
-  }
-
-  static func status(_ subscription: KnownSubscription.Running) -> String {
-    switch subscription.status {
-    case .active: String(localized: "Active")
-    case .gracePeriod: String(localized: "Active, payment failed")
-    case .billingRetry: String(localized: "Payment failed")
-    case .pending: String(localized: "Waiting for payment")
-    case .paused: String(localized: "Paused")
-    case .expired: String(localized: "Ended")
-    case .revoked: String(localized: "Refunded")
-    case .none: String(localized: "None")
-    }
-  }
-
-  static func detail(_ subscription: KnownSubscription.Running) -> String? {
-    switch subscription.status {
-    case .gracePeriod, .billingRetry:
-      return subscription.managedIn == .website
-        ? String(localized: "Update your payment method on zenbujapanese.com to keep syncing.")
-        : String(localized: "Update your payment method in your App Store account to keep syncing.")
-    case .active:
-      guard let date = subscription.expiresAt?.formatted(date: .long, time: .omitted) else {
-        return nil
-      }
-      return subscription.willRenew == false
-        ? String(localized: "Ends on \(date).") : String(localized: "Renews on \(date).")
-    default:
-      return nil
-    }
-  }
-
-  static func problem(_ problem: SubscriptionProblem) -> String {
-    switch problem {
-    case .anotherAccount:
-      String(
-        localized:
-          "This Apple Account's subscription belongs to another Zenbu account. Sign in to that account to use it."
-      )
-    case .unreachable:
-      String(localized: "Couldn't reach Zenbu. Check your connection and try again.")
-    case .storeUnavailable:
-      String(localized: "The App Store didn't answer. Try again later.")
-    case .pendingApproval:
-      String(localized: "The purchase is waiting for approval. Syncing starts once it's approved.")
-    case .notOffered:
-      String(localized: "This account already has a subscription.")
-    }
-  }
-}
-
 struct SubscriptionSection: View {
   @Environment(ZenbuAccount.self) private var zenbuAccount
   @Binding var showsPaywall: Bool
   @Binding var managesInAppStore: Bool
 
   var body: some View {
-    if let known = zenbuAccount.subscription.current,
-      !known.shown.isEmpty || !known.offers.appStore.isEmpty
-    {
+    let subscription = zenbuAccount.subscription
+    if let known = subscription.current, !known.shown.isEmpty || known.offersAppStorePurchase {
       Section {
         rows(for: known)
       } header: {
         Text("Subscription")
       } footer: {
-        if known.running.count > 1 {
+        if known.paysTwice {
           Text(
             "You're paying for two subscriptions. Cancel the one you don't need where you bought it."
           )
@@ -96,25 +34,22 @@ struct SubscriptionSection: View {
       if let detail = SubscriptionText.detail(running) {
         Text(detail)
           .foregroundStyle(.secondary)
+          .accessibilityIdentifier("subscription.detail")
       }
       if known.running.contains(running) {
         manage(running)
       }
     }
-    if known.offersAppStorePurchase {
+    if subscription.offering {
       Button("Subscribe to Sync…") { showsPaywall = true }
         .accessibilityIdentifier("subscription.subscribe")
     }
-    if !known.offers.appStore.isEmpty {
+    if known.offersAppStorePurchase {
       Button("Restore Purchases") { Task { await subscription.restore() } }
         .disabled(subscription.isWorking)
         .accessibilityIdentifier("subscription.restore")
     }
-    if let problem = subscription.problem {
-      Text(SubscriptionText.problem(problem))
-        .foregroundStyle(.secondary)
-        .accessibilityIdentifier("subscription.problem")
-    }
+    SubscriptionProblemText(problem: subscription.problem, identifier: "subscription.problem")
   }
 
   @ViewBuilder
@@ -123,6 +58,8 @@ struct SubscriptionSection: View {
     case .appStore:
       Button("Manage in the App Store") { managesInAppStore = true }
         .accessibilityIdentifier("subscription.manage")
+      Text("Managed by the Apple Account that bought it.")
+        .foregroundStyle(.secondary)
     case .website:
       Text("You subscribed on zenbujapanese.com, so it's managed there, in your account.")
         .foregroundStyle(.secondary)
@@ -133,9 +70,29 @@ struct SubscriptionSection: View {
   }
 }
 
+struct SubscriptionProblemText: View {
+  let problem: SubscriptionProblem?
+  let identifier: String
+
+  var body: some View {
+    if let problem {
+      Text(SubscriptionText.problem(problem))
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier(identifier)
+        .onAppear {
+          AccessibilityNotification.Announcement(SubscriptionText.problem(problem)).post()
+        }
+        .onChange(of: problem) { _, now in
+          AccessibilityNotification.Announcement(SubscriptionText.problem(now)).post()
+        }
+    }
+  }
+}
+
 struct SubscriptionPaywall: View {
   @Environment(ZenbuAccount.self) private var zenbuAccount
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.purchase) private var purchase
 
   var body: some View {
     let subscription = zenbuAccount.subscription
@@ -145,7 +102,7 @@ struct SubscriptionPaywall: View {
           Text("Sync with a Zenbu subscription")
             .font(.headline)
           Text(
-            "Your known words, lists, watch history, bookmarked translations, and profile, on every device you sign in to. Everything else in Zenbu stays free, and works on this \(ThisDevice.name) without one."
+            "Your known words, lists, watch history, and bookmarked translations, on every device you sign in to. Your profile and everything else in Zenbu stay free, and work on this \(ThisDevice.name) without one."
           )
           .foregroundStyle(.secondary)
         }
@@ -155,7 +112,7 @@ struct SubscriptionPaywall: View {
           }
           ForEach(subscription.offers) { offer in
             Button {
-              Task { await subscription.subscribe(to: offer.id) }
+              Task { await subscription.subscribe(to: offer.id, confirmingWith: purchase) }
             } label: {
               LabeledContent {
                 if let introduction = offer.introduction {
@@ -170,11 +127,7 @@ struct SubscriptionPaywall: View {
             }
             .accessibilityIdentifier("paywall.offer.\(offer.id)")
           }
-          if let problem = subscription.problem {
-            Text(SubscriptionText.problem(problem))
-              .foregroundStyle(.secondary)
-              .accessibilityIdentifier("paywall.problem")
-          }
+          SubscriptionProblemText(problem: subscription.problem, identifier: "paywall.problem")
         } footer: {
           VStack(alignment: .leading, spacing: 8) {
             Text(
@@ -190,8 +143,8 @@ struct SubscriptionPaywall: View {
         Section {
           Button("Restore Purchases") { Task { await subscription.restore() } }
             .accessibilityIdentifier("paywall.restore")
-          Link("Terms of Use", destination: SubscriptionText.termsOfUse)
-          Link("Privacy Policy", destination: SubscriptionText.privacyPolicy)
+          Link("Terms of Use", destination: ZenbuLinks.termsOfUse)
+          Link("Privacy Policy", destination: ZenbuLinks.privacyPolicy)
         }
       }
       .formStyle(.grouped)
