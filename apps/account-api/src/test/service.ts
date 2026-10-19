@@ -49,13 +49,19 @@ async function appleSigningKey() {
 
 export interface BillingStandIns {
   stripe?: StandInStripe
+  stripeTrialDays?: number
   appStore?: StandInAppStore
   cloud?: CloudSettings
 }
 
-function billingProviders({ stripe, appStore }: BillingStandIns) {
+function billingProviders({ stripe, stripeTrialDays, appStore }: BillingStandIns) {
   return {
-    stripe: stripe ? stripeBilling(stripeSettings, { fetch: stripe.fetch, retries: 0 }) : null,
+    stripe: stripe
+      ? stripeBilling(
+          { ...stripeSettings, trialDays: stripeTrialDays ?? null },
+          { fetch: stripe.fetch, retries: 0 }
+        )
+      : null,
     apple: appStore
       ? appStoreBilling(
           {

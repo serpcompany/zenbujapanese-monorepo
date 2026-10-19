@@ -196,7 +196,7 @@ const deletionAnswers = {
   billing_unavailable: [
     503,
     'billing_unavailable',
-    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later."
+    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code."
   ]
 } as const
 

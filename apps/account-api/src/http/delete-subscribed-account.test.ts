@@ -66,9 +66,7 @@ describe('DELETE /v1/me, with a subscription', () => {
       expect(await countIn(table, learner.userId), table).toBe(0)
     }
     expect(
-      await billing.rows(
-        `select user_id, outcome from billing_ledger where reference = 'in_${id}:1'`
-      )
+      await billing.rows(`select user_id, outcome from billing_ledger where reference = 'in_${id}'`)
     ).toEqual([{ user_id: null, outcome: 'succeeded' }])
   })
 

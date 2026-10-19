@@ -309,6 +309,35 @@ describe('POST /v1/webhooks/apple', () => {
     expect((await statusOf(learner)).active).toBe(true)
   })
 
+  test("a resubscription bought from another account moves the subscription there, and a late notice of the old one doesn't move it back", async () => {
+    const { learner: before, first } = await subscribed('apple-moved-from@example.com')
+    await send({ type: 'EXPIRED', subtype: 'VOLUNTARY', transaction: first, status: expired })
+    const { learner: after, token } = await learnerWithToken('apple-moved-to@example.com')
+    const resubscribed = {
+      originalTransactionId: first.originalTransactionId,
+      transactionId: `${first.transactionId}-again`,
+      appAccountToken: token,
+      purchaseDate: Date.now()
+    }
+    await send({
+      type: 'SUBSCRIBED',
+      subtype: 'RESUBSCRIBE',
+      transaction: resubscribed,
+      status: active
+    })
+    expect((await statusOf(after)).active).toBe(true)
+    expect((await statusOf(before)).status).toBe('none')
+    await send({
+      type: 'DID_CHANGE_RENEWAL_STATUS',
+      transaction: first,
+      renewal: { autoRenewStatus: 0 },
+      status: expired,
+      signedDate: Date.now() + 1000
+    })
+    expect((await statusOf(after)).active).toBe(true)
+    expect((await statusOf(before)).status).toBe('none')
+  })
+
   test("records but applies nothing for a purchase no account claims, and Apple's test notification", async () => {
     const orphan = randomUUID()
     const testing = randomUUID()

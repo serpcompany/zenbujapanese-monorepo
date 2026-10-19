@@ -52,6 +52,7 @@ interface CheckoutRequest {
   successUrl: string
   cancelUrl: string
   language: Language | null
+  firstSubscription: boolean
 }
 
 export interface BillingProvider {
@@ -91,6 +92,7 @@ export interface BillingTransaction {
   ): Promise<void>
   lockSubscription(key: SubscriptionKey): Promise<StoredSubscription | null>
   subscriptionsOf(userId: string): Promise<StoredSubscription[]>
+  lockAccount(userId: string): Promise<void>
   saveSubscription(userId: string, subscription: Subscription): Promise<void>
   accountExists(userId: string): Promise<boolean>
   accountByToken(appAccountToken: string): Promise<string | null>

@@ -2426,7 +2426,7 @@
             }
           },
           "503": {
-            "description": "`apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again. `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later.",
+            "description": "`apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again. `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code.",
             "content": {
               "application/json": {
                 "schema": {

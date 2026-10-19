@@ -139,7 +139,7 @@ Deletes the account, its ways to sign in, its sessions, and everything it synced
 - **429** `too_many_requests`: This account sent more than 60 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `apple_unavailable`: Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again.
-- **503** `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later.
+- **503** `billing_unavailable`: Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, for a new code.
 
 ### `POST /v1/sync`
 

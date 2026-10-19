@@ -11,6 +11,8 @@ const nowS = () => Math.floor(Date.now() / 1000)
 
 afterEach(() => {
   stripe.state.down = false
+  stripe.state.refusingRefunds = null
+  vi.restoreAllMocks()
 })
 
 async function subscribed(email: string, fields: Parameters<typeof stripe.subscription>[0] = {}) {
@@ -140,7 +142,7 @@ describe('POST /v1/webhooks/stripe', () => {
         source: 'stripe',
         kind: 'charge',
         outcome: 'succeeded',
-        reference: `in_${id}_1:1`,
+        reference: `in_${id}_1`,
         amount: 500,
         currency: 'usd',
         subscription_id: id
@@ -187,9 +189,22 @@ describe('POST /v1/webhooks/stripe', () => {
     expect(
       (await billing.ledger(learner.userId)).map(each => [each.reference, each.outcome])
     ).toEqual([
-      [`in_${id}_1:1`, 'failed'],
-      [`in_${id}_2:2`, 'failed'],
-      [`in_${id}_3:3`, 'succeeded']
+      [expect.stringMatching(new RegExp(`^in_${id}_1:evt_`)), 'failed'],
+      [expect.stringMatching(new RegExp(`^in_${id}_2:evt_`)), 'failed'],
+      [`in_${id}_3`, 'succeeded']
+    ])
+  })
+
+  test('keeps a paid invoice paid, though a failed attempt on it arrives after', async () => {
+    const { learner, customer, id } = await subscribed('stripe-paid-late@example.com')
+    const failed = invoice(id, customer, 'invoice.payment_failed', 1)
+    await billing.stripeWebhook(invoice(id, customer, 'invoice.paid', 1))
+    await billing.stripeWebhook(failed)
+    expect(
+      (await billing.ledger(learner.userId)).map(each => [each.reference, each.outcome])
+    ).toEqual([
+      [`in_${id}_1`, 'succeeded'],
+      [`in_${id}_1:${JSON.parse(failed.body).id}`, 'failed']
     ])
   })
 
@@ -248,18 +263,21 @@ describe('POST /v1/webhooks/stripe', () => {
     const subscription = stripe.subscription({ userId: learner.userId, paymentIntent })
     await billing.rows(`delete from users where id = '${learner.userId}'`)
     const id = String(subscription.id)
-    const answer = await billing.stripeWebhook(
-      stripe.event('checkout.session.completed', {
-        id: `cs_${id}`,
-        object: 'checkout.session',
-        mode: 'subscription',
-        client_reference_id: learner.userId,
-        customer: `cus_${id}`,
-        subscription: id
-      })
-    )
-    return { id, answer }
+    const event = stripe.event('checkout.session.completed', {
+      id: `cs_${id}`,
+      object: 'checkout.session',
+      mode: 'subscription',
+      client_reference_id: learner.userId,
+      customer: `cus_${id}`,
+      subscription: id
+    })
+    return { id, event, answer: await billing.stripeWebhook(event) }
   }
+
+  const refundsOf = (paymentIntent: string) =>
+    stripe.requests.filter(
+      each => each.path === '/v1/refunds' && each.form.get('payment_intent') === paymentIntent
+    )
 
   test('refunds and cancels a checkout that completes after its account was deleted', async () => {
     const { id, answer } = await orphanedCheckout('stripe-orphan@example.com', 'pi_orphan')
@@ -277,7 +295,7 @@ describe('POST /v1/webhooks/stripe', () => {
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
   })
 
-  test('refunds an orphaned checkout once, though Stripe sends its event again after a day', async () => {
+  test('takes a refund Stripe already made, when the event comes again after its idempotency key expired', async () => {
     stripe.refunded.add('pi_refunded_already')
     const { id, answer } = await orphanedCheckout(
       'stripe-orphan-again@example.com',
@@ -285,6 +303,50 @@ describe('POST /v1/webhooks/stripe', () => {
     )
     expect(answer.status).toBe(200)
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+  })
+
+  test('cancels an orphaned checkout first, and refunds it when Stripe sends the event again', async () => {
+    stripe.state.refusingRefunds = { status: 500, code: 'api_error' }
+    logged()
+    const { id, event, answer } = await orphanedCheckout(
+      'stripe-orphan-retry@example.com',
+      'pi_retry'
+    )
+    expect(answer.status).toBe(503)
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+    stripe.state.refusingRefunds = null
+    expect((await billing.stripeWebhook(event)).status).toBe(200)
+    expect(stripe.refunded.has('pi_retry')).toBe(true)
+    expect(refundsOf('pi_retry').map(each => each.idempotencyKey)).toEqual([
+      'refund-unwanted-pi_retry',
+      'refund-unwanted-pi_retry'
+    ])
+  })
+
+  test('still cancels an orphaned checkout whose refund Stripe refuses for good, and logs it', async () => {
+    stripe.state.refusingRefunds = { status: 400, code: 'charge_disputed' }
+    const output = logged()
+    const { id, answer } = await orphanedCheckout(
+      'stripe-orphan-disputed@example.com',
+      'pi_disputed'
+    )
+    expect(answer.status).toBe(200)
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+    expect(output()).toContain("stripe: couldn't refund an unwanted subscription's payment")
+  })
+
+  test('refunds and cancels a running subscription whose account is gone, from any of its events', async () => {
+    const { learner, id } = await subscribed('stripe-account-gone@example.com', {
+      paymentIntent: 'pi_account_gone'
+    })
+    await billing.rows(`delete from users where id = '${learner.userId}'`)
+    expect((await billing.stripeWebhook(updated(id))).status).toBe(200)
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+    expect(stripe.refunded.has('pi_account_gone')).toBe(true)
+    await billing.stripeWebhook(
+      stripe.event('customer.subscription.deleted', { id, object: 'subscription' })
+    )
+    expect(refundsOf('pi_account_gone')).toHaveLength(1)
   })
 
   test("refunds and cancels a second checkout that completes while the account's first subscription runs", async () => {

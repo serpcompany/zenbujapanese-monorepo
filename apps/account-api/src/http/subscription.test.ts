@@ -8,7 +8,7 @@ import { standInStripe } from '../test/stripe'
 
 const stripe = standInStripe()
 const appStore = standInAppStore()
-const billing = useBillingService({ stripe, appStore })
+const billing = useBillingService({ stripe, appStore, stripeTrialDays: 7 })
 
 const dayMs = 24 * 60 * 60 * 1000
 const pages = {
@@ -142,6 +142,22 @@ describe('POST /v1/me/subscription/apple', () => {
     expect((await billing.subscription(learner)).active).toBe(true)
   })
 
+  test('moves a resubscription the device sends to the account its token names', async () => {
+    const { learner: before, originalTransactionId } = await appleSubscriber(
+      'sub-apple-moved-from@example.com'
+    )
+    const after = await billing.accounts.learner('sub-apple-moved-to@example.com')
+    const appAccountToken = (await billing.subscription(after)).appAccountToken
+    const resubscribed = await appStore.transaction({
+      originalTransactionId,
+      appAccountToken,
+      purchaseDate: Date.now() + dayMs
+    })
+    expect((await postTransaction(after, resubscribed)).status).toBe(200)
+    expect((await billing.subscription(after)).active).toBe(true)
+    expect((await billing.subscription(before)).status).toBe('none')
+  })
+
   test('advances to a later renewal the device saw first, and never back to an older one', async () => {
     const { learner, token, originalTransactionId } = await appleSubscriber(
       'sub-apple-advance@example.com'
@@ -220,11 +236,12 @@ describe('POST /v1/me/subscription/checkout', () => {
       'subscription_data[metadata][zenbu_account]': learner.userId,
       success_url: pages.successUrl,
       cancel_url: pages.cancelUrl,
-      locale: 'ja'
+      locale: 'ja',
+      'subscription_data[trial_period_days]': '7'
     })
   })
 
-  test("reuses the account's Stripe customer on a second checkout, after the first ended", async () => {
+  test("reuses the account's Stripe customer on a second checkout, after the first ended, with no second trial", async () => {
     const { learner, customer, id } = await stripeSubscriber('sub-checkout-again@example.com')
     stripe.change(id, { status: 'canceled' })
     await billing.stripeWebhook(
@@ -234,6 +251,7 @@ describe('POST /v1/me/subscription/checkout', () => {
     const created = stripe.requests.findLast(each => each.path === '/v1/checkout/sessions')
     expect(created?.form.get('customer')).toBe(customer)
     expect(created?.form.has('customer_email')).toBe(false)
+    expect(created?.form.has('subscription_data[trial_period_days]')).toBe(false)
   })
 
   test('never offers a second subscription, wherever the first was bought', async () => {

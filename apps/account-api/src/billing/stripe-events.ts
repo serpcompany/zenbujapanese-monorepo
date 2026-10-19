@@ -155,7 +155,7 @@ export function providerEvent(event: Stripe.Event, read: Read): ProviderEvent {
             source: 'stripe',
             kind: 'charge',
             outcome: paid ? 'succeeded' : 'failed',
-            reference: `${invoice.id}:${invoice.attempt_count}`,
+            reference: paid ? invoice.id : `${invoice.id}:${event.id}`,
             subscriptionId,
             amountMinor: paid ? invoice.amount_paid : invoice.amount_due,
             currency: invoice.currency,

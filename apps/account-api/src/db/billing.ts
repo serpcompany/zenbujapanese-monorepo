@@ -39,6 +39,10 @@ async function userWhere(
   return row?.userId ?? null
 }
 
+const lockFor = async (tx: Drizzle, name: string) => {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${name}, 0))`)
+}
+
 const subscriptionsOn = (db: Drizzle, userId: string): Promise<StoredSubscription[]> =>
   db.select(subscriptionColumns).from(subscriptions).where(eq(subscriptions.userId, userId))
 
@@ -66,14 +70,14 @@ function transactionOn(tx: Drizzle): BillingTransaction {
     },
 
     async lockSubscription(key) {
-      await tx.execute(
-        sql`select pg_advisory_xact_lock(hashtextextended(${`${key.source}:${key.providerId}`}, 0))`
-      )
+      await lockFor(tx, `${key.source}:${key.providerId}`)
       const [row] = await tx.select(subscriptionColumns).from(subscriptions).where(isKey(key))
       return (row as StoredSubscription | undefined) ?? null
     },
 
     subscriptionsOf: userId => subscriptionsOn(tx, userId),
+
+    lockAccount: userId => lockFor(tx, `account:${userId}`),
 
     async saveSubscription(userId, subscription) {
       const fields = subscriptionFields(subscription)
@@ -117,7 +121,7 @@ function transactionOn(tx: Drizzle): BillingTransaction {
         .onConflictDoUpdate({
           target: [billingLedger.source, billingLedger.kind, billingLedger.reference],
           set: {
-            outcome: sql`case when excluded.outcome = 'pending' then ${billingLedger.outcome} else excluded.outcome end`,
+            outcome: sql`case when excluded.outcome = 'pending' or (${billingLedger.kind} = 'charge' and ${billingLedger.outcome} = 'succeeded') then ${billingLedger.outcome} else excluded.outcome end`,
             userId: sql`coalesce(${billingLedger.userId}, excluded.user_id)`,
             updatedAt: sql`now()`
           }

@@ -142,7 +142,8 @@ export function createBilling(
       const account = await store.account(principal.userId)
       const customer = await store.ensureCustomer(principal.userId)
       if (account === null || customer === null) return { status: 'no_account' }
-      const held = await entitlement(principal.userId, now)
+      const subscriptions = await store.subscriptionsOf(principal.userId)
+      const held = entitlementOf(subscriptions, now)
       if (!held.canSubscribe) return { status: 'already_subscribed', entitlement: held }
       return unlessUnavailable(async () => ({
         status: 'created' as const,
@@ -153,7 +154,8 @@ export function createBilling(
           price,
           successUrl: ask.successUrl,
           cancelUrl: ask.cancelUrl,
-          language: ask.language
+          language: ask.language,
+          firstSubscription: subscriptions.length === 0
         })
       }))
     },

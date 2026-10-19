@@ -94,7 +94,10 @@ export function standInStripe() {
   const subscriptions = new Map<string, StripeObject>()
   const requests: Request[] = []
   const refunded = new Set<string>()
-  const state = { down: false }
+  const state: { down: boolean; refusingRefunds: { status: number; code: string } | null } = {
+    down: false,
+    refusingRefunds: null
+  }
   let sessions = 1
 
   const route = (method: string, path: string, form: URLSearchParams): Response => {
@@ -115,16 +118,14 @@ export function standInStripe() {
     }
     if (method === 'POST' && path === '/v1/refunds') {
       const intent = form.get('payment_intent') ?? ''
-      if (refunded.has(intent)) {
+      const refusal = refunded.has(intent)
+        ? { status: 400, code: 'charge_already_refunded' }
+        : state.refusingRefunds
+      if (refusal) {
+        const type = refusal.status >= 500 ? 'api_error' : 'invalid_request_error'
         return answer(
-          {
-            error: {
-              type: 'invalid_request_error',
-              code: 'charge_already_refunded',
-              message: 'Charge has already been refunded.'
-            }
-          },
-          400
+          { error: { type, code: refusal.code, message: 'The refund was refused.' } },
+          refusal.status
         )
       }
       refunded.add(intent)
@@ -135,7 +136,11 @@ export function standInStripe() {
     if (method === 'DELETE') {
       Object.assign(subscription, { status: 'canceled', ended_at: nowS() })
     }
-    return answer(subscription)
+    const expanded = [...form.entries()].some(
+      ([key, value]) => key.startsWith('expand') && value === 'latest_invoice.payments'
+    )
+    const invoice = subscription.latest_invoice as { id: string }
+    return answer(expanded ? subscription : { ...subscription, latest_invoice: invoice.id })
   }
 
   const fetch: typeof globalThis.fetch = async (input, init) => {

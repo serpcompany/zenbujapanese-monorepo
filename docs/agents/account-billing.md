@@ -37,10 +37,11 @@ every account syncs as before, and the stores are off until their settings are s
 - **`billing_customers`** gives each account its `appAccountToken`, a random UUID made the first
   time the account asks for its subscription, and its Stripe customer once it has one.
 - **The ledger**, `billing_ledger`, holds every charge attempt and refund, once each by store and
-  reference: a Stripe invoice and its attempt number, or a refund's ID; an App Store transaction
-  ID. Amounts are in the currency's smallest unit (Apple's thousandths converted). A refund's
-  outcome moves on (`pending` to `succeeded` or `failed`, an App Store refund to `reversed`), and a
-  `pending` never replaces an outcome already known.
+  reference: a paid Stripe invoice by its ID, each failed attempt on it by its event, a refund by
+  its ID; an App Store transaction by its ID. Amounts are in the currency's smallest unit (Apple's
+  thousandths converted). A refund's outcome moves on (`pending` to `succeeded` or `failed`, an App
+  Store refund to `reversed`); a `pending` never replaces an outcome already known, and nothing
+  replaces a charge that succeeded.
 - **Events.** `billing_events` records each store event once, by its ID (Stripe's event ID, Apple's
   `notificationUUID`), with what it did: `applied`, or `ignored` when it names no account here or a
   product not sold here. A repeat answers `200` and changes nothing. The event is recorded in the
@@ -121,6 +122,7 @@ to version 22.
 - **Checkout** is Stripe's hosted page, in subscription mode, for one price, with the account's ID
   as `client_reference_id` and in the subscription's metadata (`zenbu_account`). An account's
   second checkout reuses its Stripe customer. The page is in the request's `Content-Language`.
+  `STRIPE_TRIAL_DAYS` applies only to an account that has never subscribed, in either store.
 - **The webhook** verifies `Stripe-Signature` with `STRIPE_WEBHOOK_SECRET` before reading the body,
   then, for `checkout.session.completed`, `customer.subscription.created`, `.updated`, `.deleted`,
   `.paused`, and `.resumed`, `invoice.paid`, and `invoice.payment_failed`, reads the subscription
@@ -134,10 +136,14 @@ to version 22.
   is `pending`; `canceled` and `incomplete_expired` are `expired`.
 - **A refund** is recorded and changes no access: ending the subscription does, so refund and
   cancel together in Stripe's dashboard.
-- **A checkout that completes for a deleted account**, or while the account's other subscription
-  still runs (two checkout tabs, or the app's purchase first), is refunded and canceled at once,
-  with Stripe idempotency keys, so a retried event refunds once. An App Store purchase can't be
-  refunded by the service; the app offers none while a subscription runs.
+- **Unwanted subscriptions are refunded and canceled:** a checkout that completes while the
+  account's other subscription still runs (two checkout tabs, or the app's purchase first), and
+  any event of a running subscription whose account is gone (a checkout that completes after its
+  account was deleted, or one that slipped past the deletion). The account is locked while that is
+  decided (`pg_advisory_xact_lock` again), so two checkouts that complete at once keep exactly one.
+  The cancel comes first; the refund follows with a Stripe idempotency key, and a refund Stripe
+  refuses for good, such as a disputed charge, is logged and leaves the cancel standing. An App
+  Store purchase can't be refunded by the service; the app offers none while a subscription runs.
 - **Stripe down:** Checkout and the portal answer `503 billing_unavailable`; the webhook answers
   `503` and records nothing, so Stripe sends the event again. Each failure is logged as
   `stripe: <what> failed`, with Stripe's error type, code, and request ID, never a key.
@@ -155,11 +161,12 @@ with online revocation checks, then the bundle ID (`appSellingTheSubscription` i
   `expired`, `3` `billing_retry`, `4` `grace_period` (until the renewal's
   `gracePeriodExpiresDate`), and `5`, or a transaction with a `revocationDate`, `revoked`.
 - **The app's transactions** apply a purchase or restore at once, before its notification arrives.
-- **Whose purchase:** the account that holds its original transaction ID; else the account its
-  `appAccountToken` names, and the route refuses any other account's
-  (`409 subscription_belongs_to_another_account`); else, with no token or a token of an account
-  since deleted, the first account the app sends it from, so an offer code redeemed in the App
-  Store, or a subscription that outlived its account, still unlocks. A notification for a purchase
+- **Whose purchase:** the account its `appAccountToken` names, so a resubscription bought from
+  another account, which keeps the original transaction ID, moves the subscription there; the
+  route refuses any other account's (`409 subscription_belongs_to_another_account`). With no token,
+  or a token of an account since deleted, it's the account that holds its original transaction
+  ID, else the first account the app sends it from, so an offer code redeemed in the App Store, or
+  a subscription that outlived its account, still unlocks. An older period never moves it back. A notification for a purchase
   no account holds is recorded and ignored, and the app's post claims it later.
 - **The ledger** has each transaction as a charge, but a family member's, and each refund, with a
   partial refund's share.
@@ -256,10 +263,14 @@ renewals, and notifications with them, which the service trusts in place of Appl
 
 - `src/http/stripe-webhook.test.ts`: a checkout, a bad signature and a changed body, a repeat, a
   renewal, a cancellation, a lapse and its recovery, a refund, events out of order, other
-  products, a checkout for a deleted account or a second subscription, and Stripe down.
+  products, a checkout for a deleted account or a second subscription, a running subscription
+  whose account is gone, a refund that fails for now or for good, a paid invoice whose failed
+  attempt arrives late, and Stripe down. `src/db/billing-races.test.ts`, on a real Postgres
+  (`ACCOUNT_API_TEST_DATABASE_URL`, as in CI), completes two checkouts for one account at once.
 - `src/http/apple-notifications.test.ts`: a purchase, a forged or changed payload, another app or
   environment, a repeat, a renewal, auto-renew off and expiry, a billing retry and a grace period,
-  a refund and its reversal, a partial refund, a late notification, and one no account holds.
+  a refund and its reversal, a partial refund, a late notification, a resubscription bought from
+  another account, and one no account holds.
 - `src/http/subscription.test.ts`: the entitlement, the app's transactions and whose they are,
   Checkout, and the portal.
 - `src/http/cloud-access.test.ts`: the gate on, applying nothing, and lifting with a subscription.

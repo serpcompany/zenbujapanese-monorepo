@@ -58,10 +58,12 @@ export function stripeBilling(
         { idempotencyKey: `refund-unwanted-${paymentIntent}` }
       )
     } catch (error) {
-      const refunded =
-        error instanceof Stripe.errors.StripeInvalidRequestError &&
-        error.code === 'charge_already_refunded'
-      if (!refunded) throw error
+      if (!(error instanceof Stripe.errors.StripeInvalidRequestError)) throw error
+      if (error.code === 'charge_already_refunded') return
+      log('error', "stripe: couldn't refund an unwanted subscription's payment", {
+        code: error.code ?? null,
+        requestId: error.requestId ?? null
+      })
     }
   }
 
@@ -84,7 +86,9 @@ export function stripeBilling(
           metadata: { [accountMetadataKey]: request.userId },
           subscription_data: {
             metadata: { [accountMetadataKey]: request.userId },
-            ...(config.trialDays ? { trial_period_days: config.trialDays } : {})
+            ...(config.trialDays && request.firstSubscription
+              ? { trial_period_days: config.trialDays }
+              : {})
           },
           success_url: request.successUrl,
           cancel_url: request.cancelUrl,
@@ -124,13 +128,13 @@ export function stripeBilling(
         const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
           expand: ['latest_invoice.payments']
         })
+        await cancelUnlessEnded(subscription)
         const invoice = subscription.latest_invoice
         const payments = typeof invoice === 'object' && invoice ? invoice.payments?.data : []
         for (const payment of payments ?? []) {
           const intent = idOf(payment.payment.payment_intent)
           if (intent && payment.status === 'paid') await refundOnce(intent)
         }
-        await cancelUnlessEnded(subscription)
       })
   }
 }
