@@ -68,6 +68,7 @@ struct AccountSignInView: View {
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
           Button("Cancel") { dismiss() }
+            .accessibilityIdentifier("account.sign-in.cancel")
         }
       }
     }

@@ -6,7 +6,8 @@ dictionary sheet Image Search uses.
 
 ## Opening a video
 
-- The tab has a search bar like a browser's address bar. Pasting a YouTube link (`watch?v=`,
+- The tab has a search bar like a browser's address bar, with the prompt **Search YouTube or paste a
+  link** (**Search** at the largest text sizes, as in Search). Pasting a YouTube link (`watch?v=`,
   `youtu.be/`, `shorts/`, `embed/`, or `live/`) opens the video directly. Anything else searches
   YouTube and shows its results in the app; choosing a video from them opens it in Player. The
   results are YouTube's mobile results page on every device, without YouTube's own header (its
@@ -121,7 +122,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   when the line changes. The rest of the screen isn't redrawn, so the speed and **•••** menus open
   and stay still while a line plays or repeats. VoiceOver reads the scrubber as "Playback position,
   0:02 of 0:12", the elapsed and total time, on every device, and skips the time text beside it, so
-  it says the position and the length once.
+  it says the position and the length once. At the accessibility text sizes the bar stays at the
+  largest standard size, so it keeps to one line, and pressing and holding a button shows it larger,
+  as the conversation's controls do; each button can be tapped across 44 by 44 points. A **Video
+  Unavailable** message longer than the video's frame scrolls inside it.
 - **Repeat line.** The repeat button beside the speed menu plays the current line over and over
   until it's turned off. While repeating, the previous and next line buttons, tapping a card, or
   dragging the scrubber move the repeat to that line.

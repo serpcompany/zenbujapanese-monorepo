@@ -60,6 +60,7 @@ struct DeleteAccountView: View {
               .accessibilityIdentifier("delete-account.done")
           } else {
             Button("Cancel") { dismiss() }
+              .accessibilityIdentifier("delete-account.cancel")
           }
         }
       }

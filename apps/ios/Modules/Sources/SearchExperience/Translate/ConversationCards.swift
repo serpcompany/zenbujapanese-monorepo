@@ -78,6 +78,7 @@ struct SentenceCard: View {
         Button("Play Translation", systemImage: "speaker.wave.2", action: replay)
           .disabled(sentence.translation == nil)
           .accessibilityIdentifier("translate.sentence.\(sentence.id).replay")
+          .outsetHitTarget()
       }
       if let bookmark {
         Button(
@@ -87,9 +88,9 @@ struct SentenceCard: View {
         .foregroundStyle(bookmark.wrappedValue ? AnyShapeStyle(.tint) : AnyShapeStyle(.secondary))
         .accessibilityAddTraits(bookmark.wrappedValue ? .isSelected : [])
         .accessibilityIdentifier("translate.sentence.\(sentence.id).bookmark")
+        .outsetHitTarget()
       }
     }
-    .labelStyle(.iconOnly)
     .buttonStyle(.borderless)
     .foregroundStyle(.secondary)
   }
