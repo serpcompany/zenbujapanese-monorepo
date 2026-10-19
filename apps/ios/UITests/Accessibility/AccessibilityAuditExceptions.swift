@@ -195,7 +195,6 @@ private let textThatScales = [
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
   allow(.textClipped, .labels(["Add Note", "Add to List"]), on: ["A word's note"], because: Why.scales),
   allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
-  allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet"], because: Why.scales),
   allow(.textClipped, .label("MEANING"), on: ["The word sheet", "A caption's word"], because: Why.scales),
   allow(.textClipped, .unnamed(1), on: ["A caption's word"], because: Why.scrolls),
