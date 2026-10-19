@@ -20,6 +20,8 @@ const howLongWeKeepIt = [
   'codes',
   'requestCounts',
   'changes',
+  'photos',
+  'removed',
   'backups',
   'supportEmail'
 ] as const
@@ -73,7 +75,7 @@ export default async function PrivacyPage({ params }: PageProps<'/[locale]/legal
   const t = getDictionary(locale).privacy
   const named = { name: site.name }
   return (
-    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-18" englishPrevails>
+    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-19" englishPrevails>
       <p>{fill(t.intro, named)}</p>
 
       <h2>{t.short.heading}</h2>

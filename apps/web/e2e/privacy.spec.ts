@@ -83,10 +83,19 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your Zenbu account', [
       "While you're signed out, our apps send nothing to our account service",
       'where our apps or this website offer one',
-      "The iPhone app's profile syncs its name and username",
-      "notes, photos, searches, settings, and whole Translate conversations don't sync",
-      'only the sentences you bookmark leave your device'
+      "the iPhone app syncs its profile's name, username, and photo",
+      "a removed search keeps only a code that can't be turned back into it",
+      "We keep your photos' files in Cloudflare R2",
+      "The profile's email and whole Translate conversations don't sync",
+      'only the sentences you bookmark leave your device',
+      "Deleting your account deletes everything it synced, your photos' files included"
     ])
+  })
+
+  test('names what the iPhone app syncs besides known words and lists', async ({ page }) => {
+    await expect(tableRows(page, 'Why').filter({ hasText: /^Your study data/ })).toHaveText(
+      /your notes, the photos in your Media Library with the words they're on, your settings, .*the frequency dictionaries you chose, and your 50 most recent searches/
+    )
   })
 
   test('names each kind of data an account keeps, and why', async ({ page }) => {
@@ -102,7 +111,7 @@ test.describe('privacy policy', () => {
 
   test('names who else handles the information', async ({ page }) => {
     await expect(listAfter(page, 'Who else handles your information')).toHaveText([
-      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address/,
+      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups and your photos' files, and forwards email sent to our support address/,
       /^useSend sends our email, so it gets your email address and the messages we send you, and keeps copies of them/,
       /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
       /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
@@ -124,6 +133,8 @@ test.describe('privacy policy', () => {
       /^Sign-in codes.*10 minutes$/,
       /^Request counts.*A day after the last request$/,
       /^Records of each change you sync.*30 days/,
+      /^Your photos' files.*30 days after you remove it from its last word$/,
+      /^Records of what you removed.*The latest 1,000 notes, 1,000 photos, and 1,000 words on photos, and 100 videos and 100 searches; the rest until you delete your account$/,
       /^Backups.*30 days$/,
       /^Support email.*As long as we need it/
     ])
