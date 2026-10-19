@@ -59,7 +59,7 @@ const coreByName = {
 
 const webTestCode = '(\\.test\\.tsx?$|^e2e/|^src/test/)'
 const nextRouteFiles =
-  '^src/app/(|.*/)(page|layout|route|not-found|error|global-error|loading|template|default|sitemap|robots|manifest|icon|opengraph-image)\\.tsx?$'
+  '^src/app/(|.*/)(page|layout|route|not-found|global-not-found|error|global-error|loading|template|default|sitemap|robots|manifest|icon|opengraph-image)\\.tsx?$'
 
 const webScripts = '^scripts/[^/]+\\.ts$'
 

@@ -1,19 +1,25 @@
 import type { AppStoreRelease } from '@/lib/app-store'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
 export function ProductFacts({
   platform,
-  release
+  release,
+  locale
 }: {
   platform: string
   release: AppStoreRelease | null
+  locale: Locale
 }) {
+  const t = getDictionary(locale).productPage.facts
   const facts = [
-    { term: 'Platform', detail: platform },
+    { term: t.platform, detail: platform },
     ...(release
       ? [
-          { term: 'Requires', detail: `iOS ${release.minimumOsVersion} or later` },
-          { term: 'Version', detail: release.version }
+          { term: t.requires, detail: fill(t.minimumOs, { version: release.minimumOsVersion }) },
+          { term: t.version, detail: release.version }
         ]
       : [])
   ]

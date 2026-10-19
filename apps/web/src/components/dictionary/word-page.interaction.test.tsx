@@ -8,6 +8,9 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { pageExample } from '@/lib/dictionary/page-example'
+import { conjugationsIn, conjugationsText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
+import { coreText } from '@/lib/i18n/core-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { ConjugationsLink, ConjugationsSection } from './conjugations'
 import { FrequencySection } from './frequency-section'
 import { HeadwordRuby } from './headword-ruby'
@@ -97,7 +100,11 @@ describe('the Frequency section', () => {
       { pack: 'jlpt', level: 5 },
       { pack: 'tubelex', rank: 949 }
     ])
-    act(() => root.render(<FrequencySection rows={rows} />))
+    act(() =>
+      root.render(
+        <FrequencySection rows={frequencyRowsIn(rows, 'en')} text={getDictionary('en').frequency} />
+      )
+    )
     expect(document.body.textContent).not.toContain('Frequency Details')
     const youtube = container.querySelector<HTMLButtonElement>('[data-frequency-row="YouTube"]')
     await act(async () => youtube?.click())
@@ -129,13 +136,14 @@ describe('pronouncing the word', () => {
 
   afterEach(() => vi.unstubAllGlobals())
 
+  const capsule = pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: 'unidic' })
+
   test.each([
-    [
-      'the pitch capsule',
-      pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: 'unidic' })
-    ],
-    ['the speaker of a word without pitch', null]
-  ])('%s says the reading in the browser’s Japanese voice', (_, pitch) => {
+    ['the pitch capsule', capsule, 'en'],
+    ['the speaker of a word without pitch', null, 'en'],
+    ['on a Japanese page, the pitch capsule', capsule, 'ja'],
+    ['on a Japanese page, the speaker of a word without pitch', null, 'ja']
+  ] as const)('%s says the reading in the browser’s Japanese voice', (_, pitch, locale) => {
     act(() =>
       root.render(
         <WordHeader
@@ -146,12 +154,15 @@ describe('pronouncing the word', () => {
           pitch={pitch}
           partOfSpeechRow="Noun"
           conjugations={null}
+          locale={locale}
         />
       )
     )
+    const label = coreText(pronounceLabel('きょう'), locale)
     const speaker = [...container.querySelectorAll('button')].find(button =>
-      (button.getAttribute('aria-label') ?? button.textContent ?? '').startsWith('Pronounce')
+      (button.getAttribute('aria-label') ?? button.textContent ?? '').startsWith(label)
     )
+    expect(speaker).toBeDefined()
     expect(said).toEqual([])
     act(() => speaker?.click())
     expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP' }])
@@ -170,8 +181,15 @@ describe('the Conjugations section', () => {
     act(() =>
       root.render(
         <>
-          <ConjugationsLink label="Ichidan verb (transitive)" />
-          <ConjugationsSection title="Conjugations" conjugations={miru} />
+          <ConjugationsLink
+            label="Ichidan verb (transitive)"
+            opens={getDictionary('en').conjugations.showsConjugations}
+          />
+          <ConjugationsSection
+            conjugations={conjugationsIn(miru, 'en')}
+            locale="en"
+            text={conjugationsText('en')}
+          />
         </>
       )
     )

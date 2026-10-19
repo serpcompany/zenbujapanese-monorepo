@@ -10,19 +10,20 @@ then.
 
 The converters run entirely in the browser: nothing typed is sent anywhere.
 
+Every tools page is also in Japanese, at `/ja/tools/` and `/ja/tools/<name>/`, with the same
+converter, chart, and examples and its interface, copy, questions, and structured data in Japanese
+([Languages](languages.md)). Its keywords are in `content/briefs/ja/tools.md`.
+
 Abbreviations: Web paths are under `apps/web/`. **Tools spec** is `e2e/tools.spec.ts`, the browser
 tests of these pages at a desktop and a phone width. **Page test** is
 `src/components/tools/converter-page.test.tsx`, which renders each converter page to HTML, and
 **Converter test** is `src/components/tools/converter.interaction.test.tsx`. The converters' logic
-is in `src/lib/tools/`, each with its unit tests beside it. The copy is mostly in
-`src/lib/tools/converters.ts` (names, leads, descriptions, cards, samples, and Try examples) and
-`src/lib/tools/content.ts` (How it works, questions, typing tips, spelling rules, and the width
-table); the rest is in the components that show it: the index's headings and app card
-(`src/app/tools/page.tsx`), the app card under each converter
-(`src/components/tools/converter-page.tsx`), the option labels
-(`src/components/tools/converter-settings.tsx`), the converter's title and the boxes' placeholders
-and Copy statuses (`src/components/tools/converter.tsx` and `converter-box.tsx`), and the tables'
-headings (`src/components/tools/tool-reference.tsx`).
+is in `src/lib/tools/`, each with its unit tests beside it. The copy, in each language, is the
+`tools` namespace of the dictionaries (`src/lib/i18n/dictionaries/`): names, leads, descriptions,
+cards, How it works (its Japanese and romaji examples marked `<ja>`, `<latin>`, and `<typed>`),
+questions, the reference tables, the chart, and the converter's labels.
+`src/lib/tools/converters.ts` holds the samples and Try examples, `src/lib/tools/content.ts` the
+reference tables' examples, and `src/lib/tools/tool-pages.ts` puts each page together.
 
 ## Tools index
 
@@ -218,17 +219,34 @@ and the same questions as FAQ structured data (`FAQPage` JSON-LD).
 
 **Titles, descriptions, canonical URLs, and indexing.** The index is "Online tools for learning
 Japanese | Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese", each with its own
-description and canonical URL, from `src/lib/tools/converters.ts`. All are indexed: no page carries
-a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them, as does the
-HTML sitemap (`/sitemap/`), under the tools index. A converter name the site doesn't have is 404,
+description and canonical URL, from the dictionaries' `tools` namespace, in each language. All are
+indexed: no page carries
+a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them in English and
+Japanese, as does the HTML sitemap (`/sitemap/`, and `/ja/sitemap/` in Japanese), under the tools
+index. A converter name the site doesn't have is 404,
 and not indexed.
 
 - Source: the owner's decision on #579 (all pages indexed and in the sitemap); the SERP XML
   sitemaps standard (`sitemap-tools.xml` for tool pages).
 - Check: Tools spec, "… has its title, description, canonical URL, and structured data" for each
-  page, "a converter name the site doesn’t have is 404", and "the HTML sitemap lists the tools
-  index and every converter"; `e2e/sitemaps.spec.ts`, "the tools sitemap lists the tools index and
-  every converter, each with its slash"; `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`.
+  page in each language, "a converter name the site doesn’t have is 404", and "the HTML sitemap
+  lists the tools index and every converter"; `e2e/sitemaps.spec.ts`, "the tools sitemap lists the
+  tools index and every converter, each with its slash, in English and Japanese";
+  `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`; `src/lib/tools/converters.test.ts`, "the
+  tools pages in %s are the index and the six converters, …"; `e2e/hreflang.spec.ts`, "every page
+  in the tools sitemap, both tools indexes included, names its languages as its sitemap entry
+  does, and they name it back".
+
+**In Japanese.** `/ja/tools/` and each `/ja/tools/<name>/` read in Japanese, from the cards and the
+converter's boxes, count, options, and Copy to the chart, the questions, and their FAQ data, and
+every link they write stays under `/ja/`.
+
+- Source: the owner's decision on #847 (every page in Japanese); SERP localization standard.
+- Check: Tools spec, "in Japanese, at /ja/tools/, its cards read in Japanese and lead to Japanese
+  pages" and "in Japanese, its boxes, count, options, and links are in Japanese"; Page test, "a
+  Japanese page is in Japanese, …"; Converter test, "on a Japanese page, its boxes, count, and
+  buttons are in Japanese"; `src/lib/tools/chart.test.ts`, "reads in Japanese on a Japanese page,
+  with the count in its line".
 
 **Links to the tools.** The header's Tools menu (All free tools, and its Hiragana to Katakana and
 Romaji to Kana), the Products menu's Free tools, the footer's All tools, the homepage's All free

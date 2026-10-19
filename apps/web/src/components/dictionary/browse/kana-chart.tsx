@@ -1,10 +1,13 @@
 import type { KanaCell, KanaRow } from '@zenbu/dictionary-core/browse/kana'
 import { cn } from 'cn'
 import Link from 'next/link'
+import type { Locale } from '@/lib/i18n/config'
+import { localizedPath } from '@/lib/i18n/paths'
 
 export interface KanaTile {
   href: string | null
   note?: string
+  noteLang?: string
   label?: string
   muted?: true
 }
@@ -20,7 +23,8 @@ export function KanaChart({
   label,
   large = false,
   sounds = 5,
-  className
+  className,
+  locale
 }: {
   rows: readonly KanaRow[]
   tile: (cell: KanaCell) => KanaTile | null
@@ -28,6 +32,7 @@ export function KanaChart({
   large?: boolean
   sounds?: keyof typeof soundGrids
   className?: string
+  locale: Locale
 }) {
   const cells = rows.flatMap(({ consonant, cells: row }) =>
     row.map((cell, index) => ({ key: `${consonant}${index}${cell?.kana ?? ''}`, cell }))
@@ -57,7 +62,10 @@ export function KanaChart({
               {cell.kana}
             </span>
             {shown.note ? (
-              <span lang="en" className="text-xs text-muted-foreground tabular-nums">
+              <span
+                lang={shown.noteLang ?? 'en'}
+                className="text-xs text-muted-foreground tabular-nums"
+              >
                 {shown.note}
               </span>
             ) : null}
@@ -66,13 +74,17 @@ export function KanaChart({
         return (
           <li key={key}>
             {shown.href ? (
-              <Link href={shown.href} aria-label={shown.label} className={tileClass}>
+              <Link
+                href={localizedPath(shown.href, locale)}
+                aria-label={shown.label}
+                className={tileClass}
+              >
                 {contents}
               </Link>
             ) : (
               <span className={tileClass}>
                 {contents}
-                {shown.label ? <span className="sr-only">, {shown.label}</span> : null}
+                {shown.label ? <span className="sr-only">{shown.label}</span> : null}
               </span>
             )}
           </li>

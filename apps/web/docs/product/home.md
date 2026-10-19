@@ -161,7 +161,7 @@ and Translator for iPhone", described by `/`'s entry in `src/lib/pages.ts`, and 
 URL, written as the origin with no slash (`https://zenbujapanese.com`, and
 `https://staging.zenbujapanese.com` on staging), as its `og:url` and the pages sitemap write it.
 Its Open Graph tags carry the same title and description, with the site's name, type, and
-locale (`siteOpenGraph` in `src/lib/metadata.ts`). It is indexed, as every page is in production.
+locale (`siteOpenGraph` in `src/lib/seo.ts`). It is indexed, as every page is in production.
 
 - Source: #651; #663 (the SERP URL trailing-slash standard's homepage rule).
 - Check: Home spec, "is titled, described, shared as the site, and its own canonical URL";

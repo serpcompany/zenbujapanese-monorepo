@@ -1,8 +1,15 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { sampleVideo } from '@/test/sample-video'
 import { ProductVideos } from './product-videos'
+
+const text = getDictionary('en').productPage
+
+const sampleVideos = (
+  <ProductVideos videos={[sampleVideo]} locale="en" text={text.videos} carousel={text.carousel} />
+)
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -54,7 +61,7 @@ const youtubeAddresses = () =>
     .filter(address => /youtube|ytimg/.test(address))
 
 test('a video shows our own thumbnail and asks YouTube for nothing until it is played', async () => {
-  act(() => root.render(<ProductVideos videos={[sampleVideo]} />))
+  act(() => root.render(sampleVideos))
   await happyDOM.waitUntilComplete()
   expect(requested).toEqual([])
   expect(container.querySelector('iframe')).toBeNull()
@@ -64,7 +71,7 @@ test('a video shows our own thumbnail and asks YouTube for nothing until it is p
 })
 
 test('playing a video loads the privacy-enhanced YouTube player in its place', async () => {
-  act(() => root.render(<ProductVideos videos={[sampleVideo]} />))
+  act(() => root.render(sampleVideos))
   const play = container.querySelector<HTMLButtonElement>(
     'button[aria-label="Play A sample video"]'
   )

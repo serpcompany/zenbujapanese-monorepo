@@ -1,6 +1,13 @@
+import { localizedSitemapEntries } from './seo'
 import { absoluteUrl, servedOrigin } from './site'
 
-export type SitemapEntry = { url: string; lastModified?: Date }
+type SitemapAlternate = { hreflang: string; url: string }
+
+export type SitemapEntry = {
+  url: string
+  lastModified?: Date
+  alternates?: readonly SitemapAlternate[]
+}
 
 function escapeXml(value: string) {
   return value
@@ -36,12 +43,24 @@ export function sitemapIndexXml(paths: readonly string[], origin: string) {
 }
 
 const urlSetOpen =
-  '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
 const urlSetClose = '</urlset>'
+
+function alternateLinks(alternates: readonly SitemapAlternate[] = []) {
+  return alternates
+    .map(
+      alternate =>
+        `<xhtml:link rel="alternate" hreflang="${escapeXml(alternate.hreflang)}" href="${escapeXml(alternate.url)}"/>`
+    )
+    .join('')
+}
 
 function urlItems(entries: readonly SitemapEntry[]) {
   return entries
-    .map(entry => `<url><loc>${escapeXml(entry.url)}</loc>${lastmod(entry.lastModified)}</url>`)
+    .map(
+      entry =>
+        `<url><loc>${escapeXml(entry.url)}</loc>${lastmod(entry.lastModified)}${alternateLinks(entry.alternates)}</url>`
+    )
     .join('')
 }
 
@@ -66,5 +85,5 @@ export function xmlResponse(body: BodyInit) {
 
 export function pathsSitemapResponse(paths: readonly string[], request: Request) {
   const origin = servedOrigin(request)
-  return xmlResponse(urlSetXml(paths.map(path => ({ url: absoluteUrl(path, origin) }))))
+  return xmlResponse(urlSetXml(paths.flatMap(path => localizedSitemapEntries(path, origin))))
 }

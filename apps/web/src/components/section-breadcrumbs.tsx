@@ -12,14 +12,16 @@ import type { LinkTo } from '@/lib/site'
 export function SectionBreadcrumbs({
   section,
   page,
+  label,
   className
 }: {
   section: LinkTo & { title: string }
   page: string
+  label: string
   className?: string
 }) {
   return (
-    <Breadcrumb>
+    <Breadcrumb aria-label={label}>
       <BreadcrumbList className={className}>
         <BreadcrumbItem>
           <BreadcrumbLink render={<Link href={section.href} data-link-target={section.target} />}>

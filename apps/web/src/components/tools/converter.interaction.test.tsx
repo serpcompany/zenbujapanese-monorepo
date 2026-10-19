@@ -1,12 +1,25 @@
 import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import type { ConverterSlug } from '@/lib/tools/paths'
+import { converterPageIn } from '@/lib/tools/tool-pages'
 import { click, fill, render, settle, unmount } from '@/test/account-page'
 import { Converter } from './converter'
 
 afterEach(unmount)
 
-const converter = (slug: ConverterSlug) => render(<Converter slug={slug} />)
+const converter = (slug: ConverterSlug) => {
+  const { from, to } = converterPageIn(slug, 'en')
+  return render(
+    <Converter
+      slug={slug}
+      from={from}
+      to={to}
+      text={getDictionary('en').tools.converter}
+      locale="en"
+    />
+  )
+}
 
 function box(container: HTMLElement, label: string) {
   const labelled = [...container.querySelectorAll('label')].find(
@@ -95,5 +108,18 @@ describe('a converter', () => {
     const container = converter('kana-to-romaji')
     await click(container, 'Copy Romaji')
     expect(container.textContent).toContain('Select the text to copy it')
+  })
+
+  test('on a Japanese page, its boxes, count, and buttons are in Japanese', async () => {
+    const text = getDictionary('ja').tools.converter
+    const { from, to } = converterPageIn('hiragana-to-katakana', 'ja')
+    const container = render(
+      <Converter slug="hiragana-to-katakana" from={from} to={to} text={text} locale="ja" />
+    )
+    await fill(container, from, 'すし')
+    expect(box(container, to).value).toBe('スシ')
+    expect(container.textContent).toContain(text.characters.other.replace('{count}', '2'))
+    await click(container, text.clear)
+    expect(box(container, from).value).toBe('')
   })
 })

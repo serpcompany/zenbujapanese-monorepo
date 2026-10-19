@@ -1,11 +1,13 @@
 import type { Page } from '@playwright/test'
 import {
-  featuredApp,
-  productFilterPath,
-  productFilters,
-  products
+  productFilterPath as localizedFilterPath,
+  type ProductFilter
 } from '../src/lib/products/catalog'
+import { catalogIn } from '../src/lib/products/localized-catalog'
 import { expect, test } from './test'
+
+const { featuredApp, filters: productFilters, products } = catalogIn('en')
+const productFilterPath = (filter: ProductFilter) => localizedFilterPath(filter, 'en')
 
 const everyProduct = [featuredApp.title, ...products.map(product => product.title)]
 

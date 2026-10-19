@@ -9,21 +9,21 @@ import {
   signInWithApplePopup
 } from '@/lib/account/apple'
 import type { AccountApi } from '@/lib/account/client'
-import { failureMessage } from '@/lib/account/messages'
+import { type AccountMessages, failureMessage } from '@/lib/account/messages'
+import type { Locale } from '@/lib/i18n/config'
 
 export type AppleOutcome =
   | { ok: true; authorization: AppleAuthorization; nonce: string; returnUrl: string }
   | { ok: false; message: string | null }
 
-const popupMessages = {
-  cancelled: null,
-  blocked: 'Your browser blocked Apple’s window. Allow pop-ups for this site, then try again.',
-  failed: 'Signing in with Apple didn’t work. Try again.'
-} as const
-
 const nonceGoodForMs = 9 * 60_000
 
-export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
+export function useAppleSignIn(
+  api: AccountApi,
+  servicesId: string | null,
+  messages: AccountMessages,
+  locale: Locale
+) {
   const preparing = useRef<{ since: number; preparation: Promise<ApplePreparation> } | null>(null)
 
   const prepare = useCallback(() => {
@@ -38,6 +38,7 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
   }, [api])
 
   const signIn = useCallback(async (): Promise<AppleOutcome> => {
+    const popupMessages = { cancelled: null, ...messages.apple }
     if (!servicesId) return { ok: false, message: popupMessages.failed }
     const preparation = await prepare()
     preparing.current = null
@@ -45,8 +46,8 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
       return {
         ok: false,
         message: preparation.failure
-          ? failureMessage(preparation.failure)
-          : 'We couldn’t load Sign in with Apple. Check your connection, or use another way.'
+          ? failureMessage(preparation.failure, messages, locale)
+          : popupMessages.unloaded
       }
     }
     const { auth, nonce, nonceHash } = preparation.prepared
@@ -59,7 +60,7 @@ export function useAppleSignIn(api: AccountApi, servicesId: string | null) {
     void prepare()
     if (!popup.ok) return { ok: false, message: popupMessages[popup.reason] }
     return { ok: true, authorization: popup.authorization, nonce, returnUrl }
-  }, [prepare, servicesId])
+  }, [prepare, servicesId, messages, locale])
 
   return { prepare, signIn }
 }

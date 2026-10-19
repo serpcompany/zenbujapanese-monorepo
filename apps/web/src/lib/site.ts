@@ -6,8 +6,6 @@ import { converterPath, toolsPath } from './tools/paths'
 export const site = {
   name: 'Zenbu Japanese',
   mark: '全',
-  description:
-    'An offline-first Japanese dictionary, image-text reader, and translator for iPhone.',
   supportEmail: 'support@zenbujapanese.com'
 } as const
 

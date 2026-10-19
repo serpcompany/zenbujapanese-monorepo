@@ -2,6 +2,8 @@
 
 import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
 import { Volume2Icon } from 'lucide-react'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
 import { speakJapanese } from './pronounce-button'
 
 const moraWidthEm = 1.25
@@ -13,11 +15,15 @@ const dotInsetFromEdge = dotRadius + 5
 export function PitchAccent({
   pitch,
   reading,
-  pronounce
+  pronounce,
+  spoken,
+  text
 }: {
   pitch: PitchAccentData
   reading: string
   pronounce: string
+  spoken: string
+  text: Dictionary['pronounce']
 }) {
   const { graph } = pitch
   const viewHeight = (contourHeightEm / moraWidthEm) * svgUnitsPerMora
@@ -39,13 +45,11 @@ export function PitchAccent({
   return (
     <button
       type="button"
-      onClick={() => speakJapanese(reading)}
+      onClick={() => speakJapanese(reading, text.unsupported)}
       className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full bg-muted px-4 py-1.5 outline-none transition-colors hover:bg-muted/70 focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
     >
       <Volume2Icon aria-hidden className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-      <span className="sr-only">
-        {pronounce}. {pitch.spoken}
-      </span>
+      <span className="sr-only">{fill(text.withPitch, { pronounce, pitch: spoken })}</span>
       <span
         aria-hidden
         lang="ja"

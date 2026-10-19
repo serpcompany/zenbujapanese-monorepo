@@ -1,9 +1,11 @@
 import Image from 'next/image'
 import { callToAction } from '@/components/home/home-styles'
 import { GetAppButton } from '@/components/site-actions'
-import { type AppPart, collageColumns, pageEnd } from '@/lib/app-parts'
+import { type AppPart, collageColumnsIn } from '@/lib/app-parts'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 
-function PartCard({ part }: { part: AppPart }) {
+function PartCard({ part, learnMore }: { part: AppPart; learnMore: string }) {
   return (
     <div className="flex w-48 flex-col gap-1 rounded-xl bg-card p-2 pb-3 shadow-[0_18px_36px_-20px_rgb(0_0_0/0.35)] ring-1 ring-foreground/10">
       <div className="mb-1.5 flex h-30 justify-center overflow-hidden rounded-lg bg-muted">
@@ -20,13 +22,13 @@ function PartCard({ part }: { part: AppPart }) {
       <span className="px-1 text-sm font-semibold">{part.name}</span>
       <span className="px-1 text-xs text-muted-foreground">{part.line}</span>
       <span className="mt-2 grid h-7 place-items-center rounded-md bg-muted text-xs font-medium">
-        Learn more
+        {learnMore}
       </span>
     </div>
   )
 }
 
-function AppCollage() {
+function AppCollage({ locale, learnMore }: { locale: Locale; learnMore: string }) {
   return (
     <div
       aria-hidden="true"
@@ -34,13 +36,13 @@ function AppCollage() {
       className="relative order-first h-36 overflow-hidden border-b bg-muted/40 md:order-none md:-my-10 md:-mr-12 md:h-auto md:border-b-0 md:bg-transparent"
     >
       <div className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-[48%] scale-60 rotate-12 gap-4 md:-translate-x-[45%] md:-translate-y-1/2 md:scale-100">
-        {collageColumns.map((column, columnIndex) => (
+        {collageColumnsIn(locale).map((column, columnIndex) => (
           <div
             key={column[0]?.name}
             className={columnIndex ? 'mt-20 flex flex-col gap-4' : 'flex flex-col gap-4'}
           >
             {column.map((part, index) => (
-              <PartCard key={`${part.name}-${index}`} part={part} />
+              <PartCard key={`${part.name}-${index}`} part={part} learnMore={learnMore} />
             ))}
           </div>
         ))}
@@ -49,7 +51,9 @@ function AppCollage() {
   )
 }
 
-export function HomeClosing() {
+export function HomeClosing({ locale }: { locale: Locale }) {
+  const t = getDictionary(locale)
+  const text = t.home.closing
   return (
     <section aria-labelledby="page-end-title" className="border-t bg-muted/50 dark:bg-muted/30">
       <div className="mx-auto w-full max-w-5xl px-4 py-14 md:px-5 md:py-20">
@@ -59,12 +63,17 @@ export function HomeClosing() {
               id="page-end-title"
               className="max-w-120 text-[1.625rem] leading-tight font-semibold tracking-tight text-balance md:text-[2rem]"
             >
-              {pageEnd.title}
+              {text.title}
             </h2>
-            <p className="text-muted-foreground">{pageEnd.line}</p>
-            <GetAppButton size="lg" className={callToAction} />
+            <p className="text-muted-foreground">{text.line}</p>
+            <GetAppButton
+              locale={locale}
+              label={t.chrome.getTheApp}
+              size="lg"
+              className={callToAction}
+            />
           </div>
-          <AppCollage />
+          <AppCollage locale={locale} learnMore={text.learnMore} />
         </div>
       </div>
     </section>

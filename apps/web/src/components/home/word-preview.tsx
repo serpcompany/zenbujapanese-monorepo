@@ -5,9 +5,13 @@ import { cn } from '@/lib/utils'
 
 export function WordPreview({
   word,
+  meaningLabel,
+  meaningsLang,
   className
 }: {
   word: { ruby: RubySegment[]; partOfSpeech: string; meanings: string[] }
+  meaningLabel: string
+  meaningsLang?: string
   className?: string
 }) {
   return (
@@ -16,8 +20,8 @@ export function WordPreview({
         <RubyText segments={word.ruby} className="text-2xl leading-[1.7] font-medium" />
         <span className="text-xs text-muted-foreground">{word.partOfSpeech}</span>
       </div>
-      <p className={previewLabel}>Meaning</p>
-      <ol className="flex list-decimal flex-col gap-1 pl-4.5 text-[0.8125rem]">
+      <p className={previewLabel}>{meaningLabel}</p>
+      <ol lang={meaningsLang} className="flex list-decimal flex-col gap-1 pl-4.5 text-[0.8125rem]">
         {word.meanings.map(meaning => (
           <li key={meaning}>{meaning}</li>
         ))}

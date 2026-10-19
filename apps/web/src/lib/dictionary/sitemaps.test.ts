@@ -1,7 +1,13 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { sitemapIndexResponse } from '../sitemap-index'
 import { type BrowseSitemapGroup, browseSitemapGroups } from './sitemap-files'
-import { dictionarySitemaps, type SitemapFile, type SitemapSource, wordUrl } from './sitemaps'
+import {
+  dictionarySitemaps,
+  type SitemapFile,
+  type SitemapSource,
+  wordsPerSitemap,
+  wordUrl
+} from './sitemaps'
 
 function fakeService(count: number, perSitemap: number) {
   const build = 'abc123'
@@ -91,14 +97,15 @@ const browseGroupFiles = [
 ]
 
 const site = `${local}/dictionary/browse`
+const inEitherLanguage = `${local}(?:/ja)?/dictionary/browse`
 
 const browsePagesByGroup: Record<BrowseSitemapGroup, RegExp> = {
-  kana: new RegExp(`^${site}/(kana|hiragana|katakana)/([^/]+/)?(\\d+/)?$`),
+  kana: new RegExp(`^${inEitherLanguage}/(kana|hiragana|katakana)/([^/]+/)?(\\d+/)?$`),
   categories: new RegExp(
-    `^${site}/(?!kana/|hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
+    `^${inEitherLanguage}/(?!kana/|hiragana/|katakana/|kanji/|frequency-dictionaries/)[a-z-]+/(\\d+/)?$`
   ),
-  'frequency-lists': new RegExp(`^${site}/frequency-dictionaries/(.+/)?$`),
-  'kanji-lists': new RegExp(`^${site}/kanji/([^/]+/)?$`)
+  'frequency-lists': new RegExp(`^${inEitherLanguage}/frequency-dictionaries/(.+/)?$`),
+  'kanji-lists': new RegExp(`^${inEitherLanguage}/kanji/([^/]+/)?$`)
 }
 
 const browseUrls = (group: BrowseSitemapGroup) => urls(`/sitemap-${group}.xml`)
@@ -148,7 +155,7 @@ describe('the dictionary sitemaps a deploy writes', () => {
       '/sitemap-words-3.xml',
       ...browseGroupFiles
     ])
-    expect(files.map(file => file.urls)).toEqual([2, 2, 1, 7, 10, 7, 2])
+    expect(files.map(file => file.urls)).toEqual([4, 4, 2, 14, 20, 14, 4])
   })
 
   test('list URLs on the origin they are given', async () => {
@@ -159,7 +166,9 @@ describe('the dictionary sitemaps a deploy writes', () => {
     )
     expect(await urls('/sitemap-kanji-lists.xml', service, origin)).toEqual([
       `${origin}/dictionary/browse/kanji/`,
-      `${origin}/dictionary/browse/kanji/grade-1/`
+      `${origin}/ja/dictionary/browse/kanji/`,
+      `${origin}/dictionary/browse/kanji/grade-1/`,
+      `${origin}/ja/dictionary/browse/kanji/grade-1/`
     ])
   })
 
@@ -171,7 +180,7 @@ describe('the dictionary sitemaps a deploy writes', () => {
     expect(listed.filter(url => !browsePagesByGroup[group].test(url))).toEqual([])
   })
 
-  test('the browse sitemaps list every browse page with 10 words or more, each once', async () => {
+  test('the browse sitemaps list every browse page with 10 words or more, each once in each language', async () => {
     const listed = (await Promise.all(browseSitemapGroups.map(browseUrls))).flat()
     expect(listed).toEqual(
       expect.arrayContaining([
@@ -196,7 +205,12 @@ describe('the dictionary sitemaps a deploy writes', () => {
         `${site}/kanji/grade-1/`
       ])
     )
-    expect(listed).toHaveLength(26)
+    expect(listed).toHaveLength(52)
+    expect(listed.filter(url => url.startsWith(`${local}/ja/`))).toEqual(
+      listed
+        .filter(url => !url.startsWith(`${local}/ja/`))
+        .map(url => url.replace(local, `${local}/ja`))
+    )
     expect(new Set(listed).size).toBe(listed.length)
     for (const thin of [
       'kana-order',
@@ -213,20 +227,45 @@ describe('the dictionary sitemaps a deploy writes', () => {
     }
   })
 
-  test('a word sitemap writes its range of canonical, percent-encoded, escaped URLs', async () => {
+  test('a word sitemap writes its range of canonical, percent-encoded, escaped URLs, each word in English and Japanese', async () => {
     const service = fakeService(25_000, 20_000)
     const files = await written(service)
     const xml = await text(files[0])
-    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?><urlset')).toBe(true)
+    expect(
+      xml.startsWith(
+        '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">'
+      )
+    ).toBe(true)
     expect(xml.endsWith('</urlset>')).toBe(true)
     const listed = locs(xml)
-    expect(listed).toHaveLength(20_000)
-    expect(listed[0]).toBe(`${local}/dictionary/%E8%A6%8B%E3%82%8B-1/`)
-    expect(listed[1]).toBe(`${local}/dictionary/w&amp;2-2/`)
-    expect(listed.at(-1)).toBe(`${local}/dictionary/w&amp;20000-20000/`)
+    expect(listed).toHaveLength(40_000)
+    expect(listed.slice(0, 3)).toEqual([
+      `${local}/dictionary/%E8%A6%8B%E3%82%8B-1/`,
+      `${local}/ja/dictionary/%E8%A6%8B%E3%82%8B-1/`,
+      `${local}/dictionary/w&amp;2-2/`
+    ])
+    expect(listed.at(-1)).toBe(`${local}/ja/dictionary/w&amp;20000-20000/`)
+    expect(xml).toContain(
+      `<url><loc>${local}/dictionary/%E8%A6%8B%E3%82%8B-1/</loc><xhtml:link rel="alternate" hreflang="en" href="${local}/dictionary/%E8%A6%8B%E3%82%8B-1/"/><xhtml:link rel="alternate" hreflang="ja" href="${local}/ja/dictionary/%E8%A6%8B%E3%82%8B-1/"/><xhtml:link rel="alternate" hreflang="x-default" href="${local}/dictionary/%E8%A6%8B%E3%82%8B-1/"/></url>`
+    )
     expect(service.sitemapWords).toHaveBeenCalledTimes(3)
     expect(service.sitemapWords).toHaveBeenNthCalledWith(2, 1, 10_000, 10_000)
-    expect(locs(await text(files[1]))).toHaveLength(5_000)
+    expect(locs(await text(files[1]))).toHaveLength(10_000)
+  })
+
+  test('a service sitemap of more than 25,000 words takes two files, so none lists over 50,000 URLs', async () => {
+    expect(wordsPerSitemap).toBe(25_000)
+    const files = await written(fakeService(30_000, 30_000))
+    expect(files.map(file => [file.path, file.urls]).slice(0, 2)).toEqual([
+      ['/sitemap-words.xml', 50_000],
+      ['/sitemap-words-2.xml', 10_000]
+    ])
+    const first = locs(await text(files[0]))
+    const second = locs(await text(files[1]))
+    expect(first).toHaveLength(50_000)
+    expect(first.at(-1)).toBe(`${local}/ja/dictionary/w&amp;25000-25000/`)
+    expect(second).toHaveLength(10_000)
+    expect(second[0]).toBe(`${local}/dictionary/w&amp;25001-25001/`)
   })
 
   test('fail, rather than write less, when the service is missing a sitemap', async () => {

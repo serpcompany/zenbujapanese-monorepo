@@ -1,15 +1,14 @@
+import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 export function SectionHeading({
   id,
   title,
-  aside,
   description,
   className
 }: {
   id: string
-  title: string
-  aside?: string
+  title: ReactNode
   description?: string
   className?: string
 }) {
@@ -20,12 +19,6 @@ export function SectionHeading({
         className="text-[1.625rem] leading-tight font-semibold tracking-tight text-balance md:text-[2rem]"
       >
         {title}
-        {aside ? (
-          <>
-            {' '}
-            <span className="text-muted-foreground">{aside}</span>
-          </>
-        ) : null}
       </h2>
       {description ? <p className="text-muted-foreground">{description}</p> : null}
     </div>

@@ -7,6 +7,7 @@ import {
   movedDictionarySitemaps,
   writtenDictionarySitemaps
 } from './src/lib/dictionary/sitemap-files'
+import { defaultLocaleRedirects, defaultLocaleRewrites } from './src/lib/i18n/routing'
 import { movedPages, removedDictionaryPages } from './src/lib/moved-pages'
 import { isDeployedSite } from './src/lib/site'
 import { movedSitemaps } from './src/lib/sitemap'
@@ -26,10 +27,12 @@ const nextConfig: NextConfig = {
     ZENBU_DICTIONARY_SITEMAPS: dictionarySitemaps.join(' ')
   },
   trailingSlash: true,
+  experimental: { globalNotFound: true },
   transpilePackages: ['@zenbu/dictionary-core'],
   turbopack: { root: join(process.cwd(), '../..') },
   async redirects() {
     return [
+      ...defaultLocaleRedirects.map(rule => ({ ...rule, permanent: true })),
       ...[...movedSitemaps, ...movedDictionarySitemaps].map(rule => ({ ...rule, permanent: true })),
       {
         source: '/:file([^/]+\\.\\w+)/',
@@ -48,6 +51,9 @@ const nextConfig: NextConfig = {
       })),
       ...removedDictionaryPages.map(rule => ({ ...rule, permanent: true }))
     ]
+  },
+  async rewrites() {
+    return { beforeFiles: [], afterFiles: [...defaultLocaleRewrites], fallback: [] }
   },
   async headers() {
     if (isDeployedSite()) return []

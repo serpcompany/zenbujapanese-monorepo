@@ -296,10 +296,10 @@ motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana grou
 word stays a few links from the dictionary home.
 
 - Source: ADR 0010 (amended); #614 (the thin lists).
-- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks
-  is 404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
-  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read
-  when it's asked for, never at build time: `src/app/dictionary/browse/dynamic.test.ts`.
+- Check: Browse spec, "a list’s first page has no number, and a page or list the dictionary lacks is
+  404"; Browse lists spec, "a list of under 10 words isn’t indexed, but stays linked";
+  `src/lib/dictionary/browse/paths.test.ts`; that each browse page without parameters is read when
+  it's asked for, never at build time: `src/app/[locale]/dictionary/browse/dynamic.test.ts`.
 
 **No link is a redirect.** Every link on a browse page goes straight to its page, never to a URL
 that redirects, which a site audit (Ahrefs, for #614) reports. So a kanji links to the search
@@ -329,4 +329,3 @@ and production.
   pages sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four
   together stay under one file's 50,000 URLs, so each does); Browse categories service, "the
   categories under 10 words are the thin ones the sitemap leaves out".
-

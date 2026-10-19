@@ -5,9 +5,9 @@ database of its own. It reads the dictionary from the dictionary service (`apps/
 0009; see [`dictionary-api.md`](dictionary-api.md)). It builds with pnpm in the repository's
 workspace (the root `pnpm-workspace.yaml` and lockfile), which it shares with the dictionary core
 (`packages/dictionary-core`) and the service, and still owns its build, tests, and deploys (ADR
-0005). Run every command below from `apps/web`. Decisions and scope live in issue #402. What the
-dictionary pages show, and the check that enforces each behavior, is in
-[`apps/web/docs/product/`](../../apps/web/docs/product/index.md).
+0005). Run every command below from `apps/web`. Decisions and scope live in issue #402. What each
+page shows, and its checks, is in [`apps/web/docs/product/`](../../apps/web/docs/product/index.md);
+English and Japanese, in [`web-languages.md`](web-languages.md).
 
 The website follows these SERP engineering standards:
 
@@ -140,7 +140,7 @@ drawing's furigana keeps its drawn size.
   changes.
 - The theme ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
   Theme): `next-themes`' `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and
-  placed in `src/app/layout.tsx`, puts `light` or `dark` on `<html>` (which carries
+  placed in `src/components/site-document.tsx`, puts `light` or `dark` on `<html>` (which has
   `suppressHydrationWarning`, since its script changes the class before React hydrates), from the
   choice in local storage (`theme`) or the system's, and its inline script does that before the
   page paints. The wrapper gives the script `type="text/plain"` once in the browser, as the Next.js
@@ -398,11 +398,11 @@ its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category
 page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
 katakana routes, and each category's four, are one line each over the route helpers beside them
 (`kana-routes.tsx`, `category-routes.tsx`, `frequency-dictionaries/list-routes.tsx`). Pages without
-parameters that read the service are `force-dynamic`, as `/dictionary/` now is, so a build never
-reads it (`src/app/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out when
-the service can't answer (`getHomeBrowse`), as when the site deploys a few minutes ahead of a
-service without the browse routes, rather than failing the search box with them. The words show as
-search results' rows do (`components/dictionary/word-row.tsx`).
+parameters that read the service are `force-dynamic`, as `/dictionary/` is, so a build never reads
+it (`src/app/[locale]/dictionary/browse/dynamic.test.ts`). The home leaves its browse sections out
+when the service can't answer (`getHomeBrowse`), as when the site deploys ahead of a service
+without the browse routes, rather than fail the search box with them. The words show as search
+results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
@@ -503,8 +503,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
 - **Google** goes through the service: `POST /v1/auth/sign-in/social` (or `link-social`) names the
   page to come back to, and the browser goes to Google, then to the service's
   `/v1/auth/callback/google`, then back, with `?error=` on a failure.
-- **Code:** the routes in `src/app/login/`, `src/app/register/`, `src/app/forgot-password/`, and
-  `src/app/account/`; the components in `src/components/account/`; the hooks
+- **Code:** the routes in `src/app/[locale]/` (`login/`, `register/`, `forgot-password/`, and
+  `account/`); the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
   browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
   the local-storage notes behind the footer's Sign in or Account and the account button's initials
@@ -729,11 +729,11 @@ is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse hom
 (`src/lib/pages-sitemap.ts`), a section landing page as `/dictionary/` is. The files:
 
 - `/sitemap-words.xml`, `/sitemap-words-2.xml`, and so on: every word page's canonical URL under
-  its slug, percent-encoded, 50,000 to a file in `ent_seq` order (five files for 218,382 words).
-  The service works out each file's `ent_seq` range, and the writer streams its words to the file
-  10,000 at a time, so a file never sits whole in memory.
+  its slug, percent-encoded, in English and Japanese, 25,000 words (50,000 URLs) to a file in
+  `ent_seq` order (nine files for 218,382 words). The service works out each file's `ent_seq`
+  range, and the writer streams its words 10,000 at a time, so a file never sits whole in memory.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
-  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 URLs in all:
+  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 pages in all, each in both languages:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
   (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
   `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both

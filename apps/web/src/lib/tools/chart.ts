@@ -1,5 +1,8 @@
 import type { KanaRow } from '@zenbu/dictionary-core/browse/kana'
-import { type ConverterPair, converterFor } from './converters'
+import type { Locale } from '@/lib/i18n/config'
+import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
+import { fill, formatNumber } from '@/lib/i18n/format'
+import { converterFor } from './converters'
 import { toKatakana } from './kana'
 import type { ConverterSlug } from './paths'
 import {
@@ -26,10 +29,12 @@ interface ChartTab {
   groups: readonly ChartGroup[]
 }
 
-const tabs: readonly { id: KanaGroupId; tab: string; groups: readonly KanaGroupId[] }[] = [
-  { id: 'basic', tab: 'Basic', groups: ['basic', 'marks', 'small'] },
-  { id: 'combinations', tab: 'Combos', groups: ['combinations'] },
-  { id: 'extended', tab: 'Katakana', groups: ['extended'] }
+type ChartText = Dictionary['tools']['chart']
+
+const tabs: readonly { id: keyof ChartText['tabs']; groups: readonly KanaGroupId[] }[] = [
+  { id: 'basic', groups: ['basic', 'marks', 'small'] },
+  { id: 'combinations', groups: ['combinations'] },
+  { id: 'extended', groups: ['extended'] }
 ]
 
 const katakanaOnly: WidthOptions = {
@@ -51,26 +56,22 @@ const pairs: Record<ConverterSlug, readonly ((entry: KanaEntry) => string)[]> = 
   'full-width-to-half-width': [katakana, halfWidth]
 }
 
-const spellings = (slug: ConverterSlug, entry: KanaEntry) =>
+const spellings = (slug: ConverterSlug, entry: KanaEntry, text: ChartText) =>
   slug === 'romaji-to-kana'
     ? [entry.typed, ...entry.alsoTyped]
     : slug === 'kana-to-romaji'
       ? [...(entry.romajiInWords ? [] : [entry.romaji]), ...entry.otherSpellings]
-      : [entry.romaji]
+      : [entry.romajiInWords ? text.smallTsu : entry.romaji]
 
 export const chartKanaCount = kanaGroups.reduce(
   (count, group) => count + entriesIn(group).length,
   0
 )
 
-const lines: Record<ConverterPair, string> = {
-  kana: `Every kana in hiragana and katakana, with its romaji, ${chartKanaCount} in all.`,
-  romaji: `Every kana with the romaji that spell it, ${chartKanaCount} in all.`,
-  width: `Every katakana in both widths, ${chartKanaCount} in all. Hiragana has no half-width form.`
-}
-
-const groupLabel = (pair: ConverterPair, group: KanaGroup) =>
-  pair === 'width' && group.id === 'extended' ? 'Extended katakana' : group.label
+const groupLabel = (slug: ConverterSlug, group: KanaGroup, text: ChartText) =>
+  converterFor(slug).pair === 'width' && group.id === 'extended'
+    ? text.extendedKatakana
+    : text.groups[group.id]
 
 const pairOf = (slug: ConverterSlug, entry: KanaEntry) =>
   pairs[slug].map(script => script(entry)).join(entry.kana.length > 1 ? '\n' : ' ')
@@ -78,17 +79,18 @@ const pairOf = (slug: ConverterSlug, entry: KanaEntry) =>
 const isUnchanged = (slug: ConverterSlug, entry: KanaEntry) =>
   new Set(pairs[slug].map(script => script(entry))).size === 1
 
-function chartGroup(slug: ConverterSlug, group: KanaGroup): ChartGroup {
-  const { pair } = converterFor(slug)
+function chartGroup(slug: ConverterSlug, group: KanaGroup, text: ChartText): ChartGroup {
   return {
     id: group.id,
-    label: groupLabel(pair, group),
+    label: groupLabel(slug, group, text),
     count: entriesIn(group).length,
     sounds: group.sounds,
     rows: group.rows.map(row => ({
       consonant: row.consonant,
       cells: row.cells.map(entry =>
-        entry ? { kana: pairOf(slug, entry), romaji: spellings(slug, entry).join(', ') } : null
+        entry
+          ? { kana: pairOf(slug, entry), romaji: spellings(slug, entry, text).join(', ') }
+          : null
       )
     })),
     unchanged: entriesIn(group)
@@ -97,13 +99,19 @@ function chartGroup(slug: ConverterSlug, group: KanaGroup): ChartGroup {
   }
 }
 
-export function conversionChart(slug: ConverterSlug): { line: string; tabs: ChartTab[] } {
-  const groups = new Map(kanaGroups.map(group => [group.id, chartGroup(slug, group)]))
+export function conversionChart(
+  slug: ConverterSlug,
+  locale: Locale
+): { line: string; tabs: ChartTab[] } {
+  const text = getDictionary(locale).tools.chart
+  const groups = new Map(kanaGroups.map(group => [group.id, chartGroup(slug, group, text)]))
   return {
-    line: lines[converterFor(slug).pair],
-    tabs: tabs.map(({ id, tab, groups: ids }) => ({
+    line: fill(text.lines[converterFor(slug).pair], {
+      count: formatNumber(chartKanaCount, locale)
+    }),
+    tabs: tabs.map(({ id, groups: ids }) => ({
       id,
-      tab,
+      tab: text.tabs[id],
       groups: ids.flatMap(each => groups.get(each) ?? [])
     }))
   }

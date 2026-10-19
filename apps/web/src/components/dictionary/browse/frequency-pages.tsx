@@ -2,9 +2,7 @@ import {
   allRankBands,
   type JlptList,
   jlptLists,
-  type RankBand,
   type RankedList,
-  rankBandSize,
   rankedList
 } from '@zenbu/dictionary-core/browse/lists'
 import { tierForRank } from '@zenbu/dictionary-core/detail/frequency'
@@ -19,18 +17,22 @@ import {
   PanelHeading
 } from '@/components/dictionary/browse/browse-ui'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { FrequencyDot } from '@/components/dictionary/frequency'
+import { FrequencyDot } from '@/components/dictionary/frequency-dot'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
 import {
+  browseText,
+  counted,
+  inKanaOrder,
   jlptCopy,
+  joinSentences,
   legendTiers,
-  plural,
   type RankedListCopy,
   rankedListCopy,
   rankRange,
+  shortBandLabel,
   tierCutoffs,
-  tierNames
+  tierName
 } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
 import {
@@ -42,6 +44,10 @@ import {
 } from '@/lib/dictionary/browse/paths'
 import type { Linked } from '@/lib/dictionary/page-example'
 import { pageSources } from '@/lib/dictionary/sources'
+import type { Locale } from '@/lib/i18n/config'
+import { coreText } from '@/lib/i18n/core-text'
+import { fill } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 
 type Word = Linked<{ entSeq: number; headword: string; reading: string }>
 
@@ -50,19 +56,16 @@ interface RankedListsData {
   jlpt: { slug: string; count: number; first: Word[] }[]
 }
 
-const thousands = (rank: number) => `${rank / rankBandSize}k`
+const frequencyCrumbs = (locale: Locale) => [
+  { label: browseText(locale).names.browse, path: browsePath },
+  { label: browseText(locale).names.frequency, path: frequencyDictionariesPath }
+]
 
-const shortBandLabel = (band: RankBand) =>
-  `${band.first === 1 ? '1' : thousands(band.first - 1)}–${thousands(band.last)}`
-
-const browseCrumb = { label: 'Browse', path: browsePath }
-const frequencyCrumb = { label: 'Frequency dictionaries', path: frequencyDictionariesPath }
-
-function WordChip({ word }: { word: Word }) {
+function WordChip({ word, locale }: { word: Word; locale: Locale }) {
   const className =
     'inline-flex min-h-9 items-center rounded-lg border px-2.5 text-base hover:bg-muted'
   return word.path ? (
-    <Link href={word.path} lang="ja" className={className}>
+    <Link href={localizedPath(word.path, locale)} lang="ja" className={className}>
       {word.headword}
     </Link>
   ) : (
@@ -72,27 +75,37 @@ function WordChip({ word }: { word: Word }) {
   )
 }
 
-function TierLegend() {
+function TierLegend({ locale }: { locale: Locale }) {
   return (
     <ul
-      aria-label="Tiers"
+      aria-label={browseText(locale).frequency.tiers}
       className="flex flex-wrap gap-x-3.5 gap-y-1 text-sm text-muted-foreground"
     >
       {legendTiers.map(tier => (
         <li key={tier} className="inline-flex items-center gap-1.5">
           <FrequencyDot tier={tier} />
-          {tierNames[tier]}
+          {tierName(tier, locale)}
         </li>
       ))}
     </ul>
   )
 }
 
-function RankBands({ slug, name, current }: { slug: string; name: string; current?: number }) {
+function RankBands({
+  slug,
+  name,
+  current,
+  locale
+}: {
+  slug: string
+  name: string
+  current?: number
+  locale: Locale
+}) {
   const box =
     'flex min-h-10 items-center justify-center gap-1.5 rounded-lg border px-1 text-xs tabular-nums'
   return (
-    <nav aria-label={`${name} ranks`}>
+    <nav aria-label={fill(browseText(locale).frequency.ranksOf, { name })}>
       <ul className="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
         {allRankBands.map(band => (
           <li key={band.band}>
@@ -102,12 +115,15 @@ function RankBands({ slug, name, current }: { slug: string; name: string; curren
                 className={cn(box, 'border-primary bg-primary text-primary-foreground')}
               >
                 <FrequencyDot tier={tierForRank(band.first)} />
-                {shortBandLabel(band)}
+                {shortBandLabel(band, locale)}
               </span>
             ) : (
-              <Link href={rankBandPath(slug, band.band)} className={cn(box, 'hover:bg-muted')}>
+              <Link
+                href={localizedPath(rankBandPath(slug, band.band), locale)}
+                className={cn(box, 'hover:bg-muted')}
+              >
                 <FrequencyDot tier={tierForRank(band.first)} />
-                {shortBandLabel(band)}
+                {shortBandLabel(band, locale)}
               </Link>
             )}
           </li>
@@ -117,72 +133,82 @@ function RankBands({ slug, name, current }: { slug: string; name: string; curren
   )
 }
 
-function RankedPanel({ list }: { list: RankedListsData['lists'][number] }) {
+function RankedPanel({ list, locale }: { list: RankedListsData['lists'][number]; locale: Locale }) {
   const definition = rankedList(list.slug)
-  const copy = rankedListCopy[list.slug]
+  const copy = rankedListCopy(list.slug, locale)
   if (!definition || !copy || list.listed === 0) return null
   const [, source] = copy.sources
+  const name = coreText(definition.name, locale)
   return (
-    <Panel label={definition.name}>
+    <Panel label={name}>
       <PanelHeading
-        title={definition.name}
+        title={name}
         href={rankedListPath(list.slug)}
         aside={`${source.name} · ${source.license.name}`}
+        locale={locale}
       />
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-sm text-muted-foreground">Top words</span>
+        <span className="mr-1 text-sm text-muted-foreground">
+          {browseText(locale).frequency.topWords}
+        </span>
         {list.top.map(word => (
-          <WordChip key={word.entSeq} word={word} />
+          <WordChip key={word.entSeq} word={word} locale={locale} />
         ))}
       </div>
-      <RankBands slug={list.slug} name={definition.name} />
+      <RankBands slug={list.slug} name={name} locale={locale} />
     </Panel>
   )
 }
 
-export function FrequencyHubPage({ ranked }: { ranked: RankedListsData }) {
+function JlptPanel({ ranked, locale }: { ranked: RankedListsData; locale: Locale }) {
+  const t = browseText(locale)
   const jlptWords = ranked.jlpt.reduce((sum, list) => sum + list.count, 0)
   return (
+    <Panel label={t.names.jlptVocabulary}>
+      <PanelHeading
+        title={t.names.jlptVocabulary}
+        aside={counted(t.frequency.jlptAside, jlptWords, locale)}
+        locale={locale}
+      />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        {jlptLists.map(level => {
+          const list = ranked.jlpt.find(each => each.slug === level.slug)
+          return list ? (
+            <LevelCard
+              key={level.slug}
+              href={jlptVocabularyPath(level.level)}
+              title={`N${level.level}`}
+              preview={list.first.map(word => word.headword).join(' ')}
+              count={counted(t.counts.words, list.count, locale)}
+              locale={locale}
+            />
+          ) : null
+        })}
+      </div>
+    </Panel>
+  )
+}
+
+export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; locale: Locale }) {
+  const t = browseText(locale)
+  return (
     <BrowsePage>
-      <DictionaryBreadcrumbs pages={[browseCrumb, frequencyCrumb]} />
-      <BrowseHeading title="Japanese frequency dictionaries">
-        Which words to learn first: the JLPT vocabulary lists by level, and eight lists that rank
-        words by how often they’re used on YouTube, on Wikipedia, and in TV, anime, manga, novels,
-        visual novels, and video games. They’re the same dictionaries the app offers.
-      </BrowseHeading>
-      <Panel label="JLPT vocabulary">
-        <PanelHeading
-          title="JLPT vocabulary"
-          aside={`Jonathan Waller’s JLPT lists · ${plural(jlptWords, 'word')}`}
-        />
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-          {jlptLists.map(level => {
-            const list = ranked.jlpt.find(each => each.slug === level.slug)
-            return list ? (
-              <LevelCard
-                key={level.slug}
-                href={jlptVocabularyPath(level.level)}
-                title={`N${level.level}`}
-                preview={list.first.map(word => word.headword).join(' ')}
-                count={plural(list.count, 'word')}
-              />
-            ) : null
-          })}
-        </div>
-      </Panel>
+      <DictionaryBreadcrumbs locale={locale} pages={frequencyCrumbs(locale)} />
+      <BrowseHeading title={t.frequency.title}>{t.frequency.intro}</BrowseHeading>
+      <JlptPanel ranked={ranked} locale={locale} />
       <section className="flex flex-col gap-4">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-2xl font-semibold">Ranked by use</h2>
-          <TierLegend />
+          <h2 className="text-2xl font-semibold">{t.frequency.rankedByUse}</h2>
+          <TierLegend locale={locale} />
         </div>
         <p className="text-sm text-muted-foreground">
-          {tierCutoffs} Each band’s dot is the tier of its first rank.
+          {joinSentences([tierCutoffs(locale), t.frequency.bandDot], locale)}
         </p>
         {ranked.lists.map(list => (
-          <RankedPanel key={list.slug} list={list} />
+          <RankedPanel key={list.slug} list={list} locale={locale} />
         ))}
       </section>
-      <SourceCredits sources={pageSources.frequency} />
+      <SourceCredits sources={pageSources.frequency} locale={locale} />
     </BrowsePage>
   )
 }
@@ -191,30 +217,41 @@ export function RankBandPage({
   list,
   band,
   copy,
-  words
+  words,
+  locale
 }: {
   list: RankedList
   band: number
   copy: RankedListCopy
   words: BrowseWordsPage
+  locale: Locale
 }) {
+  const t = browseText(locale)
+  const name = coreText(list.name, locale)
+  const range = rankRange(band, locale)
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
+        locale={locale}
         pages={[
-          browseCrumb,
-          frequencyCrumb,
-          { label: list.name, path: rankedListPath(list.slug) },
-          ...(band > 1 ? [{ label: rankRange(band), path: rankBandPath(list.slug, band) }] : [])
+          ...frequencyCrumbs(locale),
+          { label: name, path: rankedListPath(list.slug) },
+          ...(band > 1 ? [{ label: range, path: rankBandPath(list.slug, band) }] : [])
         ]}
       />
-      <BrowseHeading title={`Most used Japanese words: ${list.name}`}>
-        {copy.description} Ranks {rankRange(band)}: {plural(words.words.length, 'word')}.
-        {copy.unranked ? ` ${copy.unranked}` : ''}
+      <BrowseHeading title={fill(t.frequency.bandHeading, { name })}>
+        {joinSentences(
+          [
+            copy.description,
+            counted(t.frequency.bandWords, words.words.length, locale, { range }),
+            copy.unranked
+          ],
+          locale
+        )}
       </BrowseHeading>
-      <RankBands slug={list.slug} name={list.name} current={band} />
-      <WordList words={words.words} section="words" />
-      <SourceCredits sources={copy.sources} />
+      <RankBands slug={list.slug} name={name} current={band} locale={locale} />
+      <WordList words={words.words} section="words" locale={locale} />
+      <SourceCredits sources={copy.sources} locale={locale} />
     </BrowsePage>
   )
 }
@@ -222,32 +259,39 @@ export function RankBandPage({
 export function JlptListPage({
   level,
   words,
-  page
+  page,
+  locale
 }: {
   level: JlptList
   words: BrowseWordsPage
   page: number
+  locale: Locale
 }) {
-  const paged = words.pages > 1 ? `, page ${page} of ${words.pages}` : ''
+  const t = browseText(locale)
+  const copy = jlptCopy(locale)
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
+        locale={locale}
         pages={[
-          browseCrumb,
-          frequencyCrumb,
+          ...frequencyCrumbs(locale),
           { label: level.name, path: jlptVocabularyPath(level.level) }
         ]}
       />
-      <BrowseHeading title={`${level.name} vocabulary`}>
-        {jlptCopy.description} {plural(words.total, 'word')}, in kana order{paged}.
+      <BrowseHeading title={fill(t.frequency.jlptHeading, { name: level.name })}>
+        {joinSentences(
+          [copy.description, inKanaOrder(words.total, page, words.pages, locale)],
+          locale
+        )}
       </BrowseHeading>
-      <WordList words={words.words} section="words" />
+      <WordList words={words.words} section="words" locale={locale} />
       <Pagination
         page={page}
         pages={words.pages}
         pathFor={number => jlptVocabularyPath(level.level, number)}
+        locale={locale}
       />
-      <SourceCredits sources={jlptCopy.sources} />
+      <SourceCredits sources={copy.sources} locale={locale} />
     </BrowsePage>
   )
 }

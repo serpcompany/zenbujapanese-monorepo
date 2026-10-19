@@ -3,7 +3,7 @@
 `/legal/privacy/` is the privacy policy for the Zenbu Japanese iPhone app, Tomodachi for iPhone
 and Mac, the website, and the Zenbu account. The shipped apps and their App Store listings reach it
 through `/privacy` ([App links](dictionary.md#header-footer-and-site-wide)). Its text is
-`apps/web/src/app/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
+`apps/web/src/app/[locale]/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
 comes from, and the automated check that enforces it (see
 [How behavior is verified](index.md#how-behavior-is-verified)).
 
@@ -43,7 +43,7 @@ number, and `support@zenbujapanese.com` for anything about the learner's data. T
 details are `company` in `src/lib/company.ts`, which the DMCA page's designated agent uses too, so
 there's one copy. Neither page names an EU representative.
 
-- Source: the [Terms of Use](../../src/app/legal/terms/page.tsx); the DMCA page's company details,
+- Source: the [Terms of Use](../../src/app/[locale]/legal/terms/page.tsx); the DMCA page's company details,
   as the owner pointed to on #683; #681 (GDPR Article 13's identity and contact).
 - Check: Privacy spec, "says who we are and how to reach us".
 
@@ -102,7 +102,7 @@ same way, and opens at login only if the learner turns that on. Linked to a Zenb
 read lists and known words, mark words Known, and delete the account when asked, and it looks
 words up in the dictionary service, which keeps none of it. The page says it will change before
 another app can use the account. The heading lands below the pinned header, since the page's root
-has a 64-pixel scroll padding (`scroll-pt-16` in `src/app/layout.tsx`).
+has a 64-pixel scroll padding (`scroll-pt-16` in `src/components/site-document.tsx`).
 
 The support page (`/support/`) says Tomodachi's help goes to the same support address and links
 this section, and both pages' descriptions name Tomodachi. Both fit a 320-pixel and a 390-pixel

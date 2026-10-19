@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { axeFailures } from './axe'
-import { checkEachView, testEachPageType } from './page-types'
+import { checkEachView, japanesePageTypes, pageTypes, testEachPageType } from './page-types'
 import { phoneLayoutProblems, phoneLimits } from './phone-checks'
 import { expect, test } from './test'
 
@@ -34,6 +34,7 @@ test.describe('phone layout', () => {
   testEachPageType(
     pageType =>
       `${pageType.name}, ${decodeURI(pageType.path)}, fits a ${narrowestPhone.width}px phone`,
-    (page, pageType) => checkEachView(page, pageType, view => expectToFitAPhone(page, view))
+    (page, pageType) => checkEachView(page, pageType, view => expectToFitAPhone(page, view)),
+    [...pageTypes, ...japanesePageTypes]
   )
 })

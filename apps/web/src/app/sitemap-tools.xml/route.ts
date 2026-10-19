@@ -1,11 +1,8 @@
 import { pathsSitemapResponse } from '@/lib/sitemap'
-import { toolPages } from '@/lib/tools/converters'
+import { toolPaths } from '@/lib/tools/paths'
 
 export const dynamic = 'force-dynamic'
 
 export function GET(request: Request) {
-  return pathsSitemapResponse(
-    toolPages.map(page => page.path),
-    request
-  )
+  return pathsSitemapResponse(toolPaths, request)
 }

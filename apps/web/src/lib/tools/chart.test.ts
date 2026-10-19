@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { type ChartGroup, chartKanaCount, conversionChart } from './chart'
 import type { ConverterSlug } from './paths'
 import { entriesIn, kanaGroups } from './reference'
 import { romajiToKana } from './romaji-to-kana'
 
-const groupsOf = (slug: ConverterSlug) => conversionChart(slug).tabs.flatMap(tab => tab.groups)
+const groupsOf = (slug: ConverterSlug) =>
+  conversionChart(slug, 'en').tabs.flatMap(tab => tab.groups)
 
 const group = (slug: ConverterSlug, id: ChartGroup['id']) => {
   const found = groupsOf(slug).find(candidate => candidate.id === id)
@@ -21,7 +23,7 @@ const tilesOf = (chartGroup: ChartGroup) =>
 describe('the conversion chart', () => {
   test('has every one of the 131 kana, in three tabs with short names', () => {
     expect(chartKanaCount).toBe(131)
-    const { tabs } = conversionChart('hiragana-to-katakana')
+    const { tabs } = conversionChart('hiragana-to-katakana', 'en')
     expect(
       tabs.map(tab => [
         tab.tab,
@@ -102,5 +104,17 @@ describe('the conversion chart', () => {
 
   test('the width pages call the last group extended katakana', () => {
     expect(group('full-width-to-half-width', 'extended').label).toBe('Extended katakana')
+  })
+
+  test('reads in Japanese on a Japanese page, with the count in its line', () => {
+    const chart = conversionChart('half-width-to-full-width', 'ja')
+    const text = getDictionary('ja').tools.chart
+    expect(chart.line).toContain('131')
+    expect(chart.tabs.map(tab => tab.tab)).toEqual(Object.values(text.tabs))
+    expect(chart.tabs.at(-1)?.groups[0].label).toBe(text.extendedKatakana)
+    const smallTsu = chart.tabs[0].groups
+      .flatMap(each => each.rows.flatMap(row => row.cells))
+      .find(cell => cell?.kana.startsWith('ｯ'))
+    expect(smallTsu?.romaji).toBe(text.smallTsu)
   })
 })

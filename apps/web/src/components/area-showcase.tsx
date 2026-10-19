@@ -2,7 +2,7 @@
 
 import { CheckIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
-import { type ShowcaseMedia, ShowcaseStage } from '@/components/showcase-stage'
+import { type ShowcaseMedia, ShowcaseStage, type StageText } from '@/components/showcase-stage'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 
@@ -38,7 +38,15 @@ function AreaCaption({ area }: { area: ShowcaseArea }) {
   )
 }
 
-export function AreaShowcase({ label, areas }: { label: string; areas: readonly ShowcaseArea[] }) {
+export function AreaShowcase({
+  label,
+  text,
+  areas
+}: {
+  label: string
+  text: StageText
+  areas: readonly ShowcaseArea[]
+}) {
   const [selected, setSelected] = useState(areas[0]?.id)
   return (
     <Tabs value={selected} onValueChange={setSelected} className="gap-5">
@@ -49,6 +57,7 @@ export function AreaShowcase({ label, areas }: { label: string; areas: readonly 
             name={area.name}
             media={area.media}
             shown={area.id === selected}
+            text={text}
           />
         ))}
       </div>

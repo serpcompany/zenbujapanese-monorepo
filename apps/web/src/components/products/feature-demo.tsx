@@ -11,6 +11,8 @@ import {
   CarouselNext,
   CarouselPrevious
 } from '@/components/ui/carousel'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
 import type { ProductDemo } from '@/lib/products/product-page'
 import { cn } from '@/lib/utils'
 
@@ -51,24 +53,34 @@ function DemoSlide({ demo, first }: { demo: ProductDemo; first: boolean }) {
   )
 }
 
-export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
+export function FeatureDemo({
+  demos,
+  text,
+  carousel
+}: {
+  demos: readonly ProductDemo[]
+  text: Dictionary['productPage']['demo']
+  carousel: Dictionary['productPage']['carousel']
+}) {
   const [api, setApi] = useState<CarouselApi>()
   const selected = useSelectedSlide(api)
   return (
     <Carousel
       setApi={setApi}
       opts={{ loop: true }}
+      aria-roledescription={carousel.region}
       aria-labelledby="features-heading"
       className="flex w-full min-w-0 flex-col gap-4"
     >
       <h2 id="features-heading" className="sr-only">
-        Features
+        {text.heading}
       </h2>
       <CarouselContent>
         {demos.map((demo, index) => (
           <CarouselItem
             key={demo.label}
-            aria-label={`${index + 1} of ${demos.length}`}
+            aria-roledescription={carousel.slide}
+            aria-label={fill(carousel.position, { index: index + 1, count: demos.length })}
             inert={index !== selected}
             aria-hidden={index !== selected}
           >
@@ -80,7 +92,7 @@ export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
         <CarouselPrevious
           size="icon-lg"
           className="static translate-none rounded-lg"
-          aria-label="Previous feature"
+          aria-label={text.previous}
         />
         <div className="flex items-center">
           {demos.map((demo, index) => (
@@ -110,7 +122,7 @@ export function FeatureDemo({ demos }: { demos: readonly ProductDemo[] }) {
         <CarouselNext
           size="icon-lg"
           className="static translate-none rounded-lg"
-          aria-label="Next feature"
+          aria-label={text.next}
         />
       </div>
     </Carousel>

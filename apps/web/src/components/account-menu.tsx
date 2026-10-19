@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { ThemeMenuRow } from '@/components/mode-toggle'
+import { ThemeMenuRow, type ThemeText } from '@/components/mode-toggle'
 import { LogInButton } from '@/components/site-actions'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,8 +22,11 @@ import {
 import { useSignedInInitials } from '@/hooks/use-seems-signed-in'
 import { builtAccountService } from '@/lib/account/availability'
 import { signOutFromTheAccountMenu } from '@/lib/account/flows'
-import { failureMessage } from '@/lib/account/messages'
+import { type AccountMessages, failureMessage } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
 import { type LinkTo, linkTo } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
@@ -32,14 +35,28 @@ function useSignedInHere(): string | null {
   return builtAccountService() ? initials : null
 }
 
-async function signOut() {
-  const problem = await signOutFromTheAccountMenu()
-  if (problem) toast.error(failureMessage(problem))
+async function signOut(messages: AccountMessages, locale: Locale) {
+  const problem = await signOutFromTheAccountMenu(locale)
+  if (problem) toast.error(failureMessage(problem, messages, locale))
 }
 
-function MenuLink({ to, icon: Icon, title }: { to: LinkTo; icon: LucideIcon; title: string }) {
+type AccountText = Dictionary['chrome']['account']
+
+function MenuLink({
+  to,
+  locale,
+  icon: Icon,
+  title
+}: {
+  to: LinkTo
+  locale: Locale
+  icon: LucideIcon
+  title: string
+}) {
   return (
-    <DropdownMenuItem render={<Link href={to.href} data-link-target={to.target} />}>
+    <DropdownMenuItem
+      render={<Link href={localizedPath(to.href, locale)} data-link-target={to.target} />}
+    >
       <Icon aria-hidden="true" />
       {title}
     </DropdownMenuItem>
@@ -56,7 +73,19 @@ function AccountMark({ initials }: { initials: string | null }) {
   )
 }
 
-export function AccountMenu({ className }: { className?: string }) {
+export function AccountMenu({
+  locale,
+  text,
+  theme,
+  messages,
+  className
+}: {
+  locale: Locale
+  text: AccountText
+  theme: ThemeText
+  messages: AccountMessages
+  className?: string
+}) {
   const initials = useSignedInHere()
   const signedIn = initials !== null
   return (
@@ -67,29 +96,35 @@ export function AccountMenu({ className }: { className?: string }) {
         }
       >
         <AccountMark initials={initials} />
-        <span className="sr-only">{signedIn ? 'Account, signed in' : 'Account'}</span>
+        <span className="sr-only">{signedIn ? text.signedIn : text.account}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         {signedIn ? (
           <MenuLink
             to={{ href: accountPages.account.path }}
+            locale={locale}
             icon={UserRoundIcon}
-            title="Your account"
+            title={text.yourAccount}
           />
         ) : (
           <>
-            <MenuLink to={linkTo('login')} icon={LogInIcon} title="Log in" />
-            <MenuLink to={linkTo('register')} icon={UserRoundPlusIcon} title="Create an account" />
+            <MenuLink to={linkTo('login')} locale={locale} icon={LogInIcon} title={text.logIn} />
+            <MenuLink
+              to={linkTo('register')}
+              locale={locale}
+              icon={UserRoundPlusIcon}
+              title={text.register}
+            />
           </>
         )}
         <DropdownMenuSeparator />
-        <ThemeMenuRow />
+        <ThemeMenuRow text={theme} />
         {signedIn ? (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => void signOut()}>
+            <DropdownMenuItem onClick={() => void signOut(messages, locale)}>
               <LogOutIcon aria-hidden="true" />
-              Sign out
+              {text.signOut}
             </DropdownMenuItem>
           </>
         ) : null}
@@ -98,10 +133,29 @@ export function AccountMenu({ className }: { className?: string }) {
   )
 }
 
-export function DrawerAccountButton({ onClick }: { onClick: () => void }) {
+export function DrawerAccountButton({
+  locale,
+  text,
+  logIn,
+  onClick
+}: {
+  locale: Locale
+  text: AccountText
+  logIn: string
+  onClick: () => void
+}) {
   const initials = useSignedInHere()
   if (initials === null) {
-    return <LogInButton variant="outline" size="lg" className="w-full" onClick={onClick} />
+    return (
+      <LogInButton
+        locale={locale}
+        label={logIn}
+        variant="outline"
+        size="lg"
+        className="w-full"
+        onClick={onClick}
+      />
+    )
   }
   return (
     <Button
@@ -109,10 +163,10 @@ export function DrawerAccountButton({ onClick }: { onClick: () => void }) {
       size="lg"
       className="w-full"
       nativeButton={false}
-      render={<Link href={accountPages.account.path} onClick={onClick} />}
+      render={<Link href={localizedPath(accountPages.account.path, locale)} onClick={onClick} />}
     >
       <AccountMark initials={initials} />
-      Your account
+      {text.yourAccount}
     </Button>
   )
 }

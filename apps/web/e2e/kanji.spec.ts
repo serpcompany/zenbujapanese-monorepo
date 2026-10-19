@@ -1,4 +1,9 @@
 import type { Page } from '@playwright/test'
+import type { Locale } from '../src/lib/i18n/config'
+import { coreText } from '../src/lib/i18n/core-text'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { fill } from '../src/lib/i18n/format'
+import { localizedPath } from '../src/lib/i18n/paths'
 import { linesOfText } from './phone-checks'
 import { expect, needed, sourcesToggle, test, word } from './test'
 
@@ -27,6 +32,48 @@ async function expectKanjiDetails(page: Page) {
 async function openKanji(page: Page, { path, row }: (typeof rows)[number]) {
   await page.goto(path)
   await page.getByRole('button', { name: row, exact: true }).click()
+}
+
+async function stepThroughStrokes(page: Page, locale: Locale, row: string) {
+  const say = (text: string) => coreText(text, locale)
+  const shaped = (sample: string, digit: string, whole: boolean) =>
+    new RegExp(`^${say(sample).replace(digit, '\\d')}${whole ? '$' : ''}`)
+  await page.clock.install()
+  await page.goto(localizedPath(kanjiSearch, locale))
+  await page.getByRole('button', { name: row, exact: true }).click()
+  const show = page.getByRole('button', { name: say('Show stroke order for 要') })
+  await show.click()
+  const strokeOrder = page.getByRole('dialog', { name: say('Stroke Order') })
+  const position = strokeOrder.getByText(shaped('Stroke 1 of 9', '1', true))
+  const drawn = strokeOrder.getByText(shaped('0 strokes complete', '0', false))
+  const button = (name: string) => strokeOrder.getByRole('button', { name: say(name) })
+  await expect(position).toHaveText(say('Stroke 1 of 9'))
+
+  await button('Next stroke').click()
+  await page.clock.runFor(2_000)
+  await expect(drawn).toHaveText(say('1 strokes complete'))
+  await expect(position).toHaveText(say('Stroke 2 of 9'))
+  await button('Previous stroke').click()
+  await expect(drawn).toHaveText(say('0 strokes complete'))
+  await expect(button('Previous stroke')).toBeDisabled()
+
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1_000))
+  await button('Play stroke order').click()
+  await button('Pause stroke order').click()
+  await page.clock.runFor(10_000)
+  await expect(drawn).toHaveText(say('0 strokes complete'))
+  await button('Play stroke order').click()
+  await page.clock.runFor(10_000)
+  await expect(drawn).toHaveText(say('9 strokes complete'))
+  await expect(button('Next stroke')).toBeDisabled()
+  await expect(button('Play stroke order')).toBeVisible()
+
+  await page.clock.resume()
+  await page.keyboard.press('Escape')
+  await expect(strokeOrder).toHaveCount(0)
+  await show.click()
+  await expect(drawn).toHaveText(say('0 strokes complete'))
+  await expect(position).toHaveText(say('Stroke 1 of 9'))
 }
 
 test.describe('kanji details', () => {
@@ -66,42 +113,15 @@ test.describe('kanji details', () => {
   test('steps, plays, and pauses the strokes, from the first each time it opens', async ({
     page
   }) => {
-    await page.clock.install()
-    await page.goto(kanjiSearch)
-    await page.getByRole('button', { name: rows[0].row, exact: true }).click()
-    const show = page.getByRole('button', { name: 'Show stroke order for 要' })
-    await show.click()
-    const strokeOrder = page.getByRole('dialog', { name: 'Stroke Order' })
-    const position = strokeOrder.getByText(/^Stroke \d of 9$/)
-    const drawn = strokeOrder.getByText(/^\d strokes complete/)
-    const button = (name: string) => strokeOrder.getByRole('button', { name })
-    await expect(position).toHaveText('Stroke 1 of 9')
+    await stepThroughStrokes(page, 'en', rows[0].row)
+  })
 
-    await button('Next stroke').click()
-    await page.clock.runFor(2_000)
-    await expect(drawn).toHaveText('1 strokes complete')
-    await expect(position).toHaveText('Stroke 2 of 9')
-    await button('Previous stroke').click()
-    await expect(drawn).toHaveText('0 strokes complete')
-    await expect(button('Previous stroke')).toBeDisabled()
-
-    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1_000))
-    await button('Play stroke order').click()
-    await button('Pause stroke order').click()
-    await page.clock.runFor(10_000)
-    await expect(drawn).toHaveText('0 strokes complete')
-    await button('Play stroke order').click()
-    await page.clock.runFor(10_000)
-    await expect(drawn).toHaveText('9 strokes complete')
-    await expect(button('Next stroke')).toBeDisabled()
-    await expect(button('Play stroke order')).toBeVisible()
-
-    await page.clock.resume()
-    await page.keyboard.press('Escape')
-    await expect(strokeOrder).toHaveCount(0)
-    await show.click()
-    await expect(drawn).toHaveText('0 strokes complete')
-    await expect(position).toHaveText('Stroke 1 of 9')
+  test('on a Japanese page, steps, plays, and pauses the strokes in Japanese', async ({ page }) => {
+    const row = fill(getDictionary('ja').search.kanjiRowLabel, {
+      character: '要',
+      summary: 'pivot'
+    })
+    await stepThroughStrokes(page, 'ja', row)
   })
 
   for (const { on, path } of rows) {

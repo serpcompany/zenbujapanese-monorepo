@@ -21,14 +21,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { GetAppDialog } from './get-app-dialog'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill } from '@/lib/i18n/format'
+import { type AppAction, GetAppDialog } from './get-app-dialog'
 
 const learnerActions = [
-  { label: 'Mark as Known', icon: CheckCircle2Icon },
-  { label: 'Add to List…', icon: ListPlusIcon },
-  { label: 'Add Note', icon: PencilIcon },
-  { label: 'Add Photo', icon: ImagePlusIcon }
-]
+  { action: 'markKnown', icon: CheckCircle2Icon },
+  { action: 'addToList', icon: ListPlusIcon },
+  { action: 'addNote', icon: PencilIcon },
+  { action: 'addPhoto', icon: ImagePlusIcon }
+] as const satisfies readonly { action: AppAction; icon: typeof ShareIcon }[]
 
 const ignoreClosedShareSheet = () => undefined
 
@@ -36,22 +39,26 @@ export function SavedItemActions({
   title,
   shareText,
   path,
-  name
+  name,
+  locale,
+  text
 }: {
   title: string
   shareText: string
   path?: string
   name?: string
+  locale: Locale
+  text: Dictionary['learner']
 }) {
-  const [action, setAction] = useState<string | null>(null)
+  const [action, setAction] = useState<AppAction | null>(null)
   const link = () => (path ? new URL(path, window.location.href).href : window.location.href)
 
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(link())
-      toast.success('Link copied')
+      toast.success(text.linkCopied)
     } catch {
-      toast.error("Couldn't copy the link. Copy it from the address bar.")
+      toast.error(text.copyFailed)
     }
   }
 
@@ -69,7 +76,7 @@ export function SavedItemActions({
         <Button
           variant="outline"
           size="icon"
-          aria-label={name ? `Share ${name}` : 'Share'}
+          aria-label={name ? fill(text.shareNamed, { name }) : text.share}
           onClick={share}
         >
           <ShareIcon />
@@ -80,32 +87,37 @@ export function SavedItemActions({
               <Button
                 variant="outline"
                 size="icon"
-                aria-label={name ? `More actions for ${name}` : 'More actions'}
+                aria-label={name ? fill(text.moreActionsNamed, { name }) : text.moreActions}
               />
             }
           >
             <MoreHorizontalIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
-            {learnerActions.map(({ label, icon: Icon }) => (
-              <DropdownMenuItem key={label} onClick={() => setAction(label.replace('…', ''))}>
+            {learnerActions.map(({ action: shown, icon: Icon }) => (
+              <DropdownMenuItem key={shown} onClick={() => setAction(shown)}>
                 <Icon />
-                {label}
+                {text[shown]}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setAction('Open in App')}>
+            <DropdownMenuItem onClick={() => setAction('openInApp')}>
               <SmartphoneIcon />
-              Open in App
+              {text.openInApp}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={copyLink}>
               <LinkIcon />
-              Copy Link
+              {text.copyLink}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </ButtonGroup>
-      <GetAppDialog action={action} onOpenChange={open => !open && setAction(null)} />
+      <GetAppDialog
+        action={action}
+        locale={locale}
+        text={text}
+        onOpenChange={open => !open && setAction(null)}
+      />
     </>
   )
 }
