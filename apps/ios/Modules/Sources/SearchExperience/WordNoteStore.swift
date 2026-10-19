@@ -5,11 +5,20 @@ struct WordNoteStore: Sendable {
   var save: @Sendable (LearnerWordNote, SavedItemID) async -> Void
   var withoutAWord: @Sendable () async -> [NoteWithoutAWord] = { [] }
 
-  static let live = WordNoteStore(
-    load: { id in await WordNoteStorage.shared.load(id) },
-    save: { note, id in await WordNoteStorage.shared.save(note, for: id) },
-    withoutAWord: { await WordNoteStorage.shared.withoutAWord() }
-  )
+  static let live = kept(in: .shared, searchedBy: { await LearnerNotes.shared })
+
+  static func kept(
+    in storage: WordNoteStorage, searchedBy search: @escaping @Sendable () async -> LearnerNotes
+  ) -> WordNoteStore {
+    WordNoteStore(
+      load: { id in await storage.load(id) },
+      save: { note, id in
+        await storage.save(note, for: id)
+        await search().reload()
+      },
+      withoutAWord: { await storage.withoutAWord() }
+    )
+  }
 }
 
 struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
@@ -94,11 +103,24 @@ actor WordNoteStorage {
 
   func withoutAWord() async -> [NoteWithoutAWord] {
     await placeEarlierNotes()
-    return notes(under: Self.storageKey)
-      .map { (key: SavedItemID(rawValue: $0.key), notes: $0.value) }
-      .filter { keysWithoutAWord.contains($0.key) }
-      .sorted { $0.key < $1.key }
+    return words { keysWithoutAWord.contains($0) }
       .flatMap { word in word.notes.map { NoteWithoutAWord(key: word.key, note: $0) } }
+  }
+
+  func onTheirWords() async -> [SearchableNote] {
+    await placeEarlierNotes()
+    return words { !$0.isNoteIdentity && !keysWithoutAWord.contains($0) }
+      .flatMap { word in word.notes.map { SearchableNote(key: word.key, note: $0) } }
+      .filter { !$0.headword.isEmpty }
+  }
+
+  private func words(where kept: (SavedItemID) -> Bool)
+    -> [(key: SavedItemID, notes: [LearnerWordNote])]
+  {
+    notes(under: Self.storageKey)
+      .map { (key: SavedItemID(rawValue: $0.key), notes: $0.value) }
+      .filter { kept($0.key) }
+      .sorted { $0.key < $1.key }
   }
 
   private func placeEarlierNotes() async {

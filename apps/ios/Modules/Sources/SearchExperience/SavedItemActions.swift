@@ -377,6 +377,7 @@ struct SavedItemNotesSection: View {
     TextField("Add Note", text: $notes.draft, axis: .vertical)
       .italic()
       .focused(editorFocused)
+      .focusedOnceTheClickIsHandled(editorFocused)
       .accessibilityIdentifier("word-note.editor")
   }
 }

@@ -2,9 +2,9 @@
 
 What a learner keeps on a word or kanji besides marking it known and adding it to lists: notes,
 photos, and the Media Library that holds the photos, which a word's or kanji's **•••** menu adds
-([Dictionary](dictionary.md#dictionary-and-kanji-details)); what happens to the notes and photos
-an earlier version saved; and what the app does with saved data it can't read. Known Words and
-Lists are under [Account](index.md#account).
+([Dictionary](dictionary.md#dictionary-and-kanji-details)); how Search finds a word by its notes;
+what happens to the notes and photos an earlier version saved; and what the app does with saved
+data it can't read. Known Words and Lists are under [Account](index.md#account).
 
 ## Notes and photos
 
@@ -17,11 +17,54 @@ the page is still loading its examples is kept like any other. If saved notes ca
 copy is kept on the device rather than written over, and every note that can be read stays, on
 its word or any other ([Saved data that can't be read](#saved-data-that-cant-be-read)).
 
-Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
+Tapping a note, or **Add Note** under a word's or kanji's notes, opens its field with the keyboard
+ready to type, on the Mac too, where a click on a note used to leave the keyboard with the page.
+
+Check: UI `NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce`
+(the note written from **Add Note**, then opened, changed, and cleared);
+`WordDetailUITests.testANoteIsKeptOnTheWord` and
 `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
 `WordNoteStorageTests`, `EncounterMediaStorageTests`, and `EarlierWordKeysTests` (a word's key is
 its Language Reference ID, which an edit to its meanings doesn't change, and a note under the
 other entry of 閻魔 moves to the one its page shows).
+
+## Notes in Search
+
+[Search](dictionary.md#search) also looks through the learner's notes. A note with the query
+anywhere in its text lists its word, or its kanji, in a group of its own, **In your notes**, after
+the Dictionary Matches. The note is read as Search reads a query: width, case, and a halfwidth
+kana with its voiced mark are folded, and white space of any kind is one space, so `squish` finds
+"To ＳＱＵＩＳＨ". Hiragana and katakana are not folded together, just as Search doesn't fold them
+in a query: `がっこう` doesn't find a note that says ガッコウ. Each row shows the
+word with its reading and the part of the note that matched, in bold, with up to 20 characters
+before it and the note cut to 80 around it, at a space where there is one; where how a letter
+folds depends on its word (a Greek word's last Σ), the whole word is in bold. A note that is the
+query comes first, then one that starts with it, then the rest, each by headword; a note on
+several words lists each of them. Tapping a row opens the word's or the kanji's page.
+
+A note never adds a row to the Dictionary Matches, takes one away, or moves one, and the **Sorted
+by** row's order and filter leave the group alone. When the dictionary has no matches, Search
+still says **No Dictionary Matches**, with the notes listed under it. A note under
+[Notes Without a Word](#notes-without-a-word) isn't listed, since its word has no page, nor is
+a note no word or kanji names while the dictionary can't be read.
+
+The group is drawn with the results, never after them. Writing, changing, or deleting a note
+changes it at once, on a Search screen already showing it too, and it is the same after a
+relaunch. Search reads the notes on the device: they don't sync to a Zenbu account, and nothing
+about them leaves the device.
+
+Check: core `results/notes.test.ts` (matching any part of a note, the folding, the part shown and
+where it's cut, a Greek word's last Σ, the order, and one note on several words) and
+`embedded/dictionary.test.ts`; package `LearnerNotesTests` (a note in Search as soon as it's
+written, changed, or deleted on its page, after a relaunch, a kanji's note, none of the Notes
+Without a Word, and none with no name while the dictionary can't be read); UI
+`NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce` (written
+from **Add Note**, found, then changed and deleted),
+`NotesInSearchUITests.testOneNoteOnTwoWordsListsBothThenAndAfterARelaunch` (drawn once with
+the results, after the relaunch), and
+`NotesInSearchUITests.testNotesListedAfterTheDictionaryMatchesLeaveThemAsTheyWere` (two notes on
+食べる's last match and on 日本, which 食べる doesn't match, leave 食べる's matches as they were,
+and follow them).
 
 ## Notes and photos an earlier version saved
 

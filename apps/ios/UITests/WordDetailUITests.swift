@@ -47,11 +47,7 @@ final class WordDetailUITests: ZenbuUITestCase {
 
   func testANoteIsKeptOnTheWord() {
     let app = openJapan()
-    tap(find("word-detail.more-menu", in: app))
-    tap(menuChoice("Add Note", in: app))
-    type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
-    tap(find("word-note.done", in: app))
-    waitFor(labeled("the country, not the language", in: app))
+    addNote("the country, not the language", in: app)
     tap(find("word-detail.more-menu", in: app))
     tap(menuChoice("Add Note", in: app))
     type("left by going back", into: waitFor(find("word-note.editor", in: app)))

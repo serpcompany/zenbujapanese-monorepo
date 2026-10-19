@@ -53,15 +53,21 @@ enum SavedWords {
   )
 
   static func observed(_ storage: WordNoteStorage) -> (WordNoteStore, AsyncStream<String>) {
+    observed(
+      WordNoteStore(
+        load: { await storage.load($0) },
+        save: { note, id in await storage.save(note, for: id) },
+        withoutAWord: { await storage.withoutAWord() }))
+  }
+
+  static func observed(_ store: WordNoteStore) -> (WordNoteStore, AsyncStream<String>) {
     let (saves, saved) = AsyncStream<String>.makeStream()
-    let store = WordNoteStore(
-      load: { await storage.load($0) },
-      save: { note, id in
-        await storage.save(note, for: id)
-        saved.yield(note.id)
-      },
-      withoutAWord: { await storage.withoutAWord() })
-    return (store, saves)
+    var observed = store
+    observed.save = { note, id in
+      await store.save(note, id)
+      saved.yield(note.id)
+    }
+    return (observed, saves)
   }
 
   static func earlierNotes(_ notes: [String: [LearnerWordNote]]) throws -> Data {

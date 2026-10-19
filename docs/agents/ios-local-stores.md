@@ -109,3 +109,24 @@ would give it a new one; `test_note_identity_contract.py` pins every entry's ID 
 such a rebuild until the importer writes each existing entry's value from the previous database
 ([`language-data/tools/README.md`](../../language-data/tools/README.md), Refresh a source snapshot).
 `EarlierWordKeysTests` reads the bundled database, so it fails without the column.
+
+## Notes in Search
+
+Search lists the notes whose words the dictionary has
+([product docs](../../apps/ios/docs/product/saved-data.md#notes-in-search)). `LearnerNotes`
+(`LearnerNotes.swift`), in the app's environment, holds them as `WordNoteStorage.onTheirWords`
+reads them: after the move above, every note under a Language Reference ID or a kanji, and none
+under a note identity or a key `withoutAWord`. It reads them once at launch, and again after each
+save through `WordNoteStore` (`kept(in:searchedBy:)`, which `live` is), once the note is written,
+and its `revision` goes up when they change. A note with no headword to show, which only a
+launch that couldn't read the dictionary leaves, isn't listed. Which notes match, their order,
+and the part shown are the core's (`notesInSearch`, [`dictionary-core.md`](dictionary-core.md)):
+`LearnerNotes.inSearch` hands it the query and every note off the main thread, as the results
+screen's request is, and answers `ShownNotes`, stamped with the revision it read. `SearchView`
+waits for the first read, then asks for the notes after the results screen and sets both
+together, so the group is drawn with the results and never after (`search.notes.drawn` records
+each one drawn); a task keyed on both revisions asks again when they differ, so a Search screen
+already showing the group, in any window, draws the change. Notes never sync: nothing here
+reaches the account ([Account and sync](ios.md#account-and-sync)). `LearnerNotesTests` saves,
+changes, and deletes a note through a page's `SavedItemNotes` and reads Search's answer after
+each save.

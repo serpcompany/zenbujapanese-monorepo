@@ -1,6 +1,7 @@
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
+import { notesInSearch } from '../results/notes'
 import {
   japaneseCandidates,
   japaneseTextRuns,
@@ -69,6 +70,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
+    notesInSearch: request => notesInSearch(JSON.parse(request)),
     ruby: pair => presentation().ruby(JSON.parse(pair)),
     wordPage: entry => presentation().wordPage(JSON.parse(entry)),
     wordPageWithoutContent: reading => presentation().wordPageWithoutContent(reading),
