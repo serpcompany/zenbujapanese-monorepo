@@ -24,12 +24,15 @@ now), `HIT`, or `STALE`.
 **Fresh for 10 minutes, then served stale while it renders again.** A kept page is fresh for 10
 minutes, as long as the site keeps the service's answers, so a new dictionary build shows within
 that. After that it is still answered at once (`STALE`) for up to 7 days, while the Worker renders
-it again for the next request. A list that loads more from an older build offers a reload, which
-gets the new page (Dictionary, Word page).
+it again for the next request, once however many requests find it stale at the same time. A list
+that loads more from an older build offers a reload, which gets the new page (Dictionary, Word
+page).
 
 - Source: #873.
 - Check: `src/lib/page-cache.test.ts`, "keeps a page for its fresh time and the stale time after
-  it" and "answers a page past its fresh time at once, and renders it again for the next request".
+  it", "answers a page past its fresh time at once, and renders it again for the next request",
+  "renders a stale page once however many requests ask for it at the same time", and "keeps serving
+  the earlier copy, stale, when its refresh answers 500" and the other failed refreshes.
 
 **Each deploy starts its own cache.** The cache's key names the deployed Worker version
 (`CF_VERSION_METADATA`), so a page never names the scripts and styles of an earlier deploy, which
@@ -53,12 +56,13 @@ never kept, so an outage is never served later.
 
 **What is never kept.** The account pages (`/login/`, `/register/`, `/forgot-password/`,
 `/account/`, and their Japanese pages), navigations inside the site (requests with Next.js' `RSC`
-header or `_rsc` parameter, which answer data rather than HTML), files, and anything but GET.
+header, which answer data rather than HTML), any URL with a query string (so a tracking parameter
+can't fill the cache with copies of one page), files, and anything but GET.
 
 - Source: #873.
 - Check: `src/lib/page-cache.test.ts`, "leaves a sign-in page to the page itself" and the other
-  "leaves …" cases; Page cache spec, "an account page is never kept" and "a navigation inside the
-  site is left to Next.js".
+  "leaves …" cases; Page cache spec, "an account page is never kept", "a page asked for with a query
+  string is rendered, never kept", and "a navigation inside the site is left to Next.js".
 
 **The browser is told what the page said.** A kept page answers with the `Cache-Control` it was
 rendered with, so browsers keep pages no longer than before; the cache's own headers never leave
@@ -67,6 +71,14 @@ the Worker.
 - Source: #873.
 - Check: `src/lib/page-cache.test.ts`, "sends the browser the Cache-Control the page was rendered
   with, and no internal header".
+
+**A failing cache never fails a page.** When the Cache API can't read or keep a page, the page
+renders as it would without the cache, and the Worker logs `page_cache_failed` with the step that
+failed (`read`, `keep`, or `refresh`).
+
+- Source: #880's review.
+- Check: `src/lib/page-cache.test.ts`, "renders the page when the edge cache fails, and logs each
+  failure".
 
 **Staging still asks for its password first.** The cache sits behind staging's password and its
 `noindex`, and the moved and retired-word redirects, which answer before it. On a workers.dev

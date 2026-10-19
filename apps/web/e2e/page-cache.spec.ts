@@ -11,15 +11,24 @@ test.describe('The page cache', () => {
   test('a word page asked for again comes from the edge, as the browser was first sent it', async ({
     request
   }) => {
-    const path = `${needed.path}?asked=${Date.now()}`
-    const first = await request.get(path)
+    const first = await request.get(needed.path)
     expect(first.status()).toBe(200)
-    expect(first.headers()['x-page-cache']).toBe('MISS')
+    expect(['MISS', 'HIT']).toContain(first.headers()['x-page-cache'])
     const body = await first.text()
-    await expect.poll(async () => (await request.get(path)).headers()['x-page-cache']).toBe('HIT')
-    const again = await request.get(path)
+    await expect
+      .poll(async () => (await request.get(needed.path)).headers()['x-page-cache'])
+      .toBe('HIT')
+    const again = await request.get(needed.path)
     expect(await again.text()).toBe(body)
     expect(again.headers()['cache-control']).toBe(first.headers()['cache-control'])
+  })
+
+  test('a page asked for with a query string is rendered, never kept', async ({ request }) => {
+    for (const _ of [1, 2]) {
+      const response = await request.get(`${needed.path}?utm_source=test`)
+      expect(response.status()).toBe(200)
+      expect(response.headers()['x-page-cache']).toBeUndefined()
+    }
   })
 
   test('an account page is never kept', async ({ request }) => {

@@ -43,8 +43,15 @@ function site(version = 'version-1') {
   const wait = (seconds: number) => {
     clock += seconds * 1000
   }
-  return { get, render, wait, context }
+  return { get, render, wait, context, waiting }
 }
+
+const failedRefreshes = [
+  ['answers 500', renderedPage('Error', { status: 500 })],
+  ['redirects', new Response(null, { status: 308, headers: { Location: '/about/' } })],
+  ['sets a cookie', renderedPage(undefined, { headers: { 'Set-Cookie': 'a=b' } })],
+  ['falls back to rendering in the browser', renderedPage('<html id="__next_error__"></html>')]
+] as const
 
 describe('the page cache', () => {
   afterEach(() => {
@@ -120,6 +127,38 @@ describe('the page cache', () => {
     expect(await next.text()).not.toBe(first)
   })
 
+  test.each(
+    failedRefreshes
+  )('keeps serving the earlier copy, stale, when its refresh %s', async (_, failure) => {
+    keptAnswers()
+    const { get, render, wait } = site()
+    const first = await (await get()).text()
+    render.mockImplementation(async () => failure.clone())
+    wait(pageFreshSeconds + 1)
+    for (const _ of [1, 2]) {
+      const answered = await get()
+      expect(answered.headers.get(pageCacheHeader)).toBe('STALE')
+      expect(await answered.text()).toBe(first)
+    }
+  })
+
+  test('renders a stale page once however many requests ask for it at the same time', async () => {
+    keptAnswers()
+    const { get, render, wait, context, waiting } = site()
+    await get()
+    wait(pageFreshSeconds + 1)
+    const asked = await Promise.all(
+      [1, 2, 3].map(() => cachedPage(new Request(wordPage), new URL(wordPage), context, render))
+    )
+    await Promise.all(waiting.splice(0))
+    expect(asked.map(response => response.headers.get(pageCacheHeader))).toEqual([
+      'STALE',
+      'STALE',
+      'STALE'
+    ])
+    expect(render).toHaveBeenCalledTimes(2)
+  })
+
   test("doesn't read a copy another deploy kept, whose page names that deploy's scripts", async () => {
     keptAnswers()
     await site('version-1').get()
@@ -145,14 +184,20 @@ describe('the page cache', () => {
     expect(kept.size).toBe(0)
   })
 
-  test('renders the page when the edge cache fails', async () => {
+  test('renders the page when the edge cache fails, and logs each failure', async () => {
     const broken = async () => {
       throw new Error('cache unavailable')
     }
     vi.stubGlobal('caches', { default: { match: broken, put: broken } })
+    const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const { get, render } = site()
     expect((await get()).status).toBe(200)
     expect(render).toHaveBeenCalledTimes(1)
+    expect(logged.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      expect.objectContaining({ level: 'warn', message: 'page_cache_failed', step: 'read' }),
+      expect.objectContaining({ level: 'warn', message: 'page_cache_failed', step: 'keep' })
+    ])
+    logged.mockRestore()
   })
 
   test('renders every request where there is no edge cache, as in local development', async () => {
@@ -182,7 +227,8 @@ describe('which requests the page cache answers', () => {
     ['the account page in Japanese', 'https://zenbujapanese.com/ja/account/'],
     ['a file', 'https://zenbujapanese.com/sitemap-index.xml'],
     ['a list that loads more', 'https://zenbujapanese.com/dictionary/examples/1.json?from=25'],
-    ['a navigation inside the site', `${wordPage}?_rsc=abc`]
+    ['a navigation inside the site', `${wordPage}?_rsc=abc`],
+    ['a page asked for with a query string', `${wordPage}?utm_source=x`]
   ])('leaves %s to the page itself', (_, url) => {
     expect(asked(url)).toBe(false)
   })

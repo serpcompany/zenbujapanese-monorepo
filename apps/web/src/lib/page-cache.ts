@@ -1,6 +1,7 @@
 import { accountPages } from './account/pages'
 import { edgeCache } from './edge-cache'
 import { pathLocale } from './i18n/paths'
+import { errorFields, log } from './log'
 
 export const pageCacheHeader = 'X-Page-Cache'
 export const pageFreshSeconds = 600
@@ -25,8 +26,7 @@ const accountPaths: ReadonlySet<string> = new Set(
 type PageCacheState = 'HIT' | 'STALE' | 'MISS'
 
 export function isCachedPageRequest(request: Request, url: URL): boolean {
-  if (request.method !== 'GET' || !url.pathname.endsWith('/')) return false
-  if (url.searchParams.has('_rsc')) return false
+  if (request.method !== 'GET' || !url.pathname.endsWith('/') || url.search !== '') return false
   if (accountPaths.has(pathLocale(url.pathname).path)) return false
   return !routerRequestHeaders.some(header => request.headers.has(header))
 }
@@ -75,6 +75,15 @@ function served(kept: Response, state: PageCacheState): Response {
   return copy
 }
 
+const refreshing = new Set<string>()
+
+function failed(step: 'read' | 'keep' | 'refresh') {
+  return (error: unknown) => {
+    log('warn', 'page_cache_failed', { step, ...errorFields(error) })
+    return undefined
+  }
+}
+
 function storedAge(response: Response, now: number): number {
   const storedAt = Number(response.headers.get(storedAtHeader))
   return Number.isFinite(storedAt) ? (now - storedAt) / 1000 : Number.POSITIVE_INFINITY
@@ -101,18 +110,25 @@ export async function cachedPage(
     if (!isWholePage(html)) return
     await cache.put(key, stored(new Response(html, response), now()))
   }
-  const hit = await cache.match(key).catch(() => undefined)
+  const refresh = async () => {
+    const response = await render()
+    if (isCachedPageResponse(response)) await keep(response)
+  }
+  const hit = await cache.match(key).catch(failed('read'))
   if (hit) {
     if (storedAge(hit, now()) <= pageFreshSeconds) return served(hit, 'HIT')
-    context.waitUntil(
-      render()
-        .then(response => (isCachedPageResponse(response) ? keep(response) : undefined))
-        .catch(() => undefined)
-    )
+    if (!refreshing.has(key.url)) {
+      refreshing.add(key.url)
+      context.waitUntil(
+        refresh()
+          .catch(failed('refresh'))
+          .finally(() => refreshing.delete(key.url))
+      )
+    }
     return served(hit, 'STALE')
   }
   const response = await render()
   if (!isCachedPageResponse(response)) return response
-  context.waitUntil(keep(response.clone()).catch(() => undefined))
+  context.waitUntil(keep(response.clone()).catch(failed('keep')))
   return marked(response, 'MISS')
 }

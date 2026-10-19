@@ -250,16 +250,18 @@ it. Pages read the service only through `src/lib/dictionary/data.ts`, which runs
 functions over the rows the service answers with and adds only the site's URLs. Its page functions
 are memoized per request (React's `cache`), so a page and its metadata ask the service once.
 
-`src/lib/dictionary/api.ts` is the service's client. It sends the `DICTIONARY_API_TOKEN` secret as
-a bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edge cache (the Cache
+`src/lib/dictionary/api.ts` is the service's client. It sends the `DICTIONARY_API_TOKEN` secret as a
+bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edge cache (the Cache
 API) for 10 minutes, keyed without the token, since that cache is the Worker's own, not a shared
 HTTP cache; `pnpm dev` has no such cache. The service names the build that answered
-(`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that
-load more of a page's list carry it, so a page open across a new build never mixes two builds'
-lists. Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from
-the number it shows, so none repeats or is skipped; a route that no longer knows the page's build
-answers 404, and the list offers a reload. Since those URLs name their build, browsers and the
-edge keep their answers for a day.
+(`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that load
+more of a page's list carry it, so a page open across a new build never mixes two builds' lists.
+Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from the number
+it shows, so none repeats or is skipped; a route that no longer knows the page's build answers 404,
+and the list offers a reload. Since those URLs name their build, browsers and the edge keep their
+answers for a day. `worker.ts` keeps each rendered page at the edge too (`src/lib/page-cache.ts`),
+fresh for 10 minutes, then stale for up to 7 days, keyed by the deployed version
+([Speed](../../apps/web/docs/product/speed.md)).
 
 The service names its contract too (`X-Dictionary-Contract`), the number of its answers' shapes
 ([`dictionary-core.md`](dictionary-core.md), Rules). The site and the service deploy separately,
@@ -636,17 +638,15 @@ added there, or the Cloudflare beacon turned on, changes the policy in the same 
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
 build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
-Static pages, the footer's Sign in among them, and the account menu's links (Account pages, above), come
-from the build's `SITE_ENV`, so a build without it would show the local site's header and footer
-beside production's pages.
-Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
-service, above), and with it every page answers 500, so name no dictionary service
-(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
-local `ACCOUNT_API_URL` there points production's account pages at another account service, so
-move it aside first, or serve the build with `wrangler dev --env production --env-file /dev/null`.
-`scripts/smoke.sh <url> <staging|production>` asserts the
-search-engine rules for each environment, so CI fails if production is hidden or staging is
-exposed.
+Static pages, the footer's Sign in among them, and the account menu's links (Account pages, above),
+come from the build's `SITE_ENV`, so a build without it would show the local site's header and
+footer beside production's pages. Production's `DICTIONARY_API_URL` is a placeholder until `Web
+deploy` writes it (Dictionary service, above), and with it every page answers 500, so name no
+dictionary service (`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads
+`.dev.vars`, and a local `ACCOUNT_API_URL` there points production's account pages at another
+account service, so move it aside first, or serve the build with `wrangler dev --env production
+--env-file /dev/null`. `scripts/smoke.sh <url> <staging|production>` asserts the search-engine rules
+for each environment, so CI fails if production is hidden or staging is exposed.
 
 ### Canonical hosts
 
