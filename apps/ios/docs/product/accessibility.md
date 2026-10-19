@@ -9,5 +9,6 @@ but not yet held to a ratio.
 Check: UI `SearchAuditUITests`, `TranslateAuditUITests`, `PlayerAuditUITests`, and
 `AccountAuditUITests` audit every screen at the default text size, in light and in dark, and at
 the largest size in light. The Mac has no largest size. The iPad doesn't run the Dynamic Type and
-text-clipped audits, which hang its tab bar, so those two are checked on the iPhone. VoiceOver is
-by hand, on a device.
+text-clipped audits, which hang its tab bar, so those two are checked on the iPhone; it also leaves
+element detection out of the screens that show a sheet, and the iPhone leaves the Dynamic Type
+audit out of Apple's Image alert. VoiceOver is by hand, on a device.
