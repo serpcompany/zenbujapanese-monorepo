@@ -31,23 +31,24 @@ before the native review.
 
 | Role | Keyword | Volume | Why |
 | --- | --- | --- | --- |
-| Primary | 和英辞典 | Not measured | The term list's name for the website's dictionary, and how Japanese readers name a dictionary that explains Japanese in English |
-| Secondary | 和英辞典 無料 | Not measured | The web dictionary is free; app and site results lead with 無料 |
+| Primary | 英和辞典 | 14,000 (Ahrefs, difficulty 8) | The most searched name for an English–Japanese dictionary, which this one is in both directions (#886) |
+| Primary | 和英辞典 | 3,900 (difficulty 5) | The term list's name for the website's dictionary, and how Japanese readers name a dictionary that explains Japanese in English |
+| Secondary | 英語辞書 | 10,000 (difficulty 11) | The plain name, with 英語辞典 (5,200) and 辞書 英語 (5,000) |
+| Secondary | 和英辞典 無料 | 450 (difficulty 0) | The web dictionary is free; app and site results lead with 無料 |
 | Secondary | 日本語 英語 意味 調べる | Not measured | The task in the searcher's own words |
 | Secondary | 漢字 英語 意味 | Not measured | Kanji details open from a one-kanji search |
 | Secondary | ローマ字 検索 | Not measured | Search takes romaji as well as kana and kanji |
 
 | Field | Text |
 | --- | --- |
-| Title | 和英辞典 (the layout adds ` \| Zenbu Japanese`) |
-| H1 | 和英辞典 |
+| Title | 英和辞典・和英辞典｜無料の英語辞書 (the layout adds ` \| Zenbu Japanese`) |
+| H1 | 英和・和英辞典 |
 | Lead | 日本語の単語や漢字の英語の意味を、読み方・アクセント・例文と一緒に調べられます。漢字・かな・ローマ字・英語のどれでも検索できます。 |
-| Meta description | 日本語の単語や漢字の英語の意味を、読み方・アクセント・例文と一緒に調べられる無料の和英辞典。漢字・かな・ローマ字・英語のどれでも検索できます。 |
+| Meta description | 英単語を日本語で、日本語を英語で引ける無料の英和辞典・和英辞典です。漢字・かな・ローマ字・英語のどれでも検索でき、漢字検索にも対応。読み方・アクセント・例文もすぐに確認でき、五十音や品詞、漢字一覧などからも言葉を探せます。 |
 
-The title and H1 are the primary keyword alone, as the English page's are its own (Japanese
-dictionary). The lead and the
-description carry the secondary keywords: 英語の意味, 読み方, アクセント, 例文, 無料, and the four
-ways to search.
+The title leads with both primary keywords, then 無料 and 英語辞書, as Ahrefs measured them on
+2026-10-19 (#886). The lead and the description carry the secondary keywords: 英語の意味, 読み方,
+アクセント, 例文, 漢字検索, and the four ways to search.
 
 ## Search results, `/ja/dictionary/search/<query>/`
 
@@ -62,11 +63,14 @@ query rules, as the Example Sentences row already decides):
 
 | Field | Japanese query | English query |
 | --- | --- | --- |
-| Title | 〈query〉の英語・意味 | 〈query〉の日本語・意味 |
-| H1 | none: the search box holds the query, as on the English page | the same |
-| Meta description | 「〈query〉」の英語の意味を、一致する〈n〉語の読み方と一緒に紹介します。 | 英語の「〈query〉」にあたる日本語〈n〉語を、読み方と英語の意味付きで紹介します。 |
+| Title | 〈query〉の英語・意味 | 「〈query〉」の意味・和訳：〈top word〉（〈reading〉）, with ・例文 when the page shows sentences |
+| H1 | the title, under the search box | 「〈query〉」の意味と日本語訳 |
+| Meta description | 「〈query〉」の英語の意味を、一致する〈n〉語の読み方と一緒に紹介します。 | 英語「〈query〉」の意味・和訳は「〈top word〉（〈reading〉）」。ほか〈n〉語の日本語訳も、読み方と英語の意味付きで紹介します。 |
 | No matches | 「〈query〉」に一致する言葉は見つかりませんでした。 | the same |
 
+An English query's title names its top word because 「〈word〉 意味」 is how these searches are typed
+(3,700 a month over eight sample words, #886), as Weblio and ALC title the same pages. A romaji
+query (iru) is a Japanese query. A long query is shortened, with …, to keep the title within 70.
 A search page is indexed only when it lists a word or its kanji row has details, as in English.
 The breadcrumb reads 検索：〈query〉, and the count above the results 「〈query〉」の検索結果：〈n〉語.
 

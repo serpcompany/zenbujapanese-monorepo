@@ -50,6 +50,33 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
   ranked list shows its first band’s words, …"; browse spec, "the JLPT kanji lists are Waller’s,
   credited under CC BY".
 
+**A search for an English word says how to say it in Japanese.** Its title is "How to Say Cat in
+Japanese: 猫 (neko)", its `h1`, under the search box, "Japanese Word for Cat: 猫 (ねこ, neko)", and its
+description opens "Cat in Japanese is 猫 (ねこ, neko).", naming the top result. In Japanese they are
+「cat」の意味・和訳：猫（ねこ）, with ・例文 when the search shows example sentences, and 「cat」の意味と日本語訳. These are
+the phrases searched most in October 2026: "{word} in Japanese" (53,700 a month over eight sample
+words), "how to say" (13,590), "Japanese word for" (5,630), and in Japan "{word} 意味" (3,700). The
+romaji is the shared core's without macrons (コーヒー, kohi). A reading ending in は or へ shows its kana
+instead, since the core can't tell a particle (こんにちは would read "konnichiha"). Past 70 characters
+the title drops the romaji, then the word, then "How to Say", then shortens the query. A query that
+spells its top result's reading, such as `iru` or `arigato`, is romaji, not English, and keeps the
+plain title, "iru in Japanese", as a Japanese query does.
+
+- Source: #886 (Ahrefs Keywords Explorer, 2026-10-19; the results page had no `h1`).
+- Check: `src/lib/dictionary/search-snippet.test.ts`, "an English search’s title, heading, and
+  description" and "a search that isn’t an English word keeps its plain title";
+  `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "… is headed with its title".
+
+**The dictionary home names both directions and kanji lookup.** It is "Japanese Dictionary:
+English, Romaji & Kanji Lookup", headed "Japanese–English Dictionary"; in Japanese
+英和辞典・和英辞典｜無料の英語辞書, headed 英和・和英辞典. "kanji meaning", "kanji lookup", and
+"kanji search" (4,100 a month) rank more easily than "japanese dictionary" (3,800), and 英和辞典,
+英語辞書, and 和英辞典 total about 28,000 a month in Japan.
+
+- Source: #886.
+- Check: `src/lib/pages.test.ts`, "describes every page and tool in 110 to 160 characters, in every
+  language"; search spec, "the dictionary home searches and lands on the canonical results page".
+
 ## Descriptions
 
 **A description is 110 to 160 characters.** A page's description starts from what the page says
@@ -70,7 +97,8 @@ or 、 in the second half of the limit (otherwise where the limit falls), with "
 | Page | Starts from | Then adds |
 | --- | --- | --- |
 | Word | Its meaning and part of speech | What the page has: its reading, every meaning, pitch accent, kanji, conjugations, and how many example sentences, as the word has them |
-| Search results | How many words it found | That each word opens to its pitch accent, kanji, conjugations, and examples |
+| Search for an English word | Its answer, "Cat in Japanese is 猫 (ねこ, neko)." | How many other words it found (or that it is the only one), and that each opens to its pitch accent, kanji, and examples |
+| Other search results | How many words it found | That each word opens to its pitch accent, kanji, conjugations, and examples |
 | Kana list | How many words start with the kana | That they're in kana order, with furigana, meaning, and how common each is |
 | Category list | How many words JMdict marks so | The category's explanation, as the page shows it |
 | JLPT list | How many words Waller lists for the level | That the levels are unofficial estimates, the long or the short way |
