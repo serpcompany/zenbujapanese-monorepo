@@ -39,7 +39,8 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
 @MainActor
 @Observable
 final class WordKnowledge: LocalFileStore {
-  static let shared = WordKnowledge()
+  static let shared = WordKnowledge(
+    sharedCopy: SharedContainer.copy(named: SharedContainer.wordKnowledge))
 
   private(set) var isLoaded = false
   private(set) var readOnlyReason: LocalFileReadOnlyReason?
@@ -51,8 +52,8 @@ final class WordKnowledge: LocalFileStore {
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
   var canChange: Bool { isLoaded && !isReadOnly }
 
-  init(fileURL: URL = WordKnowledge.defaultFileURL) {
-    let writer = WordKnowledgeWriter(fileURL: fileURL)
+  init(fileURL: URL = WordKnowledge.defaultFileURL, sharedCopy: URL? = nil) {
+    let writer = WordKnowledgeWriter(fileURL: fileURL, sharedCopy: sharedCopy)
     self.writer = writer
     writes.load { [self] in
       let (loaded, needsRewrite, readOnlyReason) = await writer.load()
@@ -167,9 +168,9 @@ private actor WordKnowledgeWriter {
 
   private let file: LocalJSONFile
 
-  init(fileURL: URL) {
+  init(fileURL: URL, sharedCopy: URL?) {
     file = LocalJSONFile(
-      fileURL: fileURL, currentVersion: StoredFile.currentVersion,
+      fileURL: fileURL, sharedCopy: sharedCopy, currentVersion: StoredFile.currentVersion,
       description: "known words", logCategory: "WordKnowledge")
   }
 

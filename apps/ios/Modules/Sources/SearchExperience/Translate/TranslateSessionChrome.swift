@@ -111,6 +111,7 @@ private struct TranslationDownloadTask: View {
 }
 
 private struct StillThereCard: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   let timeLeft: () -> TimeInterval
   let timing: ConversationTiming
   let keepListening: () -> Void
@@ -122,44 +123,63 @@ private struct StillThereCard: View {
         .ignoresSafeArea()
         .accessibilityHidden(true)
       TimelineView(.periodic(from: .now, by: 0.25)) { _ in
-        let remaining = timeLeft()
-        let seconds = Int(remaining.rounded(.up))
-        VStack(spacing: 14) {
-          Gauge(value: remaining, in: 0...timing.promptCountdown) {
-            EmptyView()
-          } currentValueLabel: {
-            Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
-          }
-          .gaugeStyle(.accessoryCircularCapacity)
-          .accessibilityIdentifier("translate.still-there.countdown")
-          .tint(.accentColor)
-          .scaleEffect(1.3)
-          .padding(8)
-          Text("Are you still there?")
-            .font(.headline)
-          Text(
-            "No one has spoken for \(timing.silenceBeforePromptLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
-          )
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.center)
-          HStack(spacing: 12) {
-            Button("Pause", action: pause)
-              .buttonStyle(.glass)
-              .accessibilityIdentifier("translate.still-there.pause")
-            Button("Keep Listening", action: keepListening)
-              .buttonStyle(.glassProminent)
-              .accessibilityIdentifier("translate.still-there.keep")
-          }
-          .controlSize(.large)
-        }
-        .padding(24)
-        .frame(maxWidth: 330)
-        .glassEffect(.regular, in: .rect(cornerRadius: 30))
+        ScrollView { card(remaining: timeLeft()) }
+          .defaultScrollAnchor(.center, for: .alignment)
+          .scrollBounceBehavior(.basedOnSize)
       }
     }
     .accessibilityElement(children: .contain)
     .accessibilityAddTraits(.isModal)
     .accessibilityIdentifier("translate.still-there")
   }
+
+  private func card(remaining: TimeInterval) -> some View {
+    let seconds = Int(remaining.rounded(.up))
+    return VStack(spacing: 14) {
+      Gauge(value: remaining, in: 0...timing.promptCountdown) {
+        EmptyView()
+      } currentValueLabel: {
+        Text("\(seconds)").font(.title2.weight(.bold).monospacedDigit())
+      }
+      .gaugeStyle(.accessoryCircularCapacity)
+      .accessibilityIdentifier("translate.still-there.countdown")
+      .tint(.accentColor)
+      .scaleEffect(1.3)
+      .padding(8)
+      Text("Are you still there?")
+        .font(.headline)
+        .accessibilityIdentifier("translate.still-there.title")
+      Text(
+        "No one has spoken for \(timing.silenceBeforePromptLength). The conversation pauses in ^[\(seconds) second](inflect: true) so the microphone doesn't keep listening."
+      )
+      .font(.subheadline)
+      .foregroundStyle(.secondary)
+      .multilineTextAlignment(.center)
+      .fixedSize(horizontal: false, vertical: true)
+      .accessibilityIdentifier("translate.still-there.message")
+      buttons
+    }
+    .padding(24)
+    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : Self.width)
+    .glassEffect(.regular, in: .rect(cornerRadius: 30))
+    .padding(.horizontal, Self.margin)
+  }
+
+  private var buttons: some View {
+    let layout =
+      dynamicTypeSize.isAccessibilitySize
+      ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))
+    return layout {
+      Button("Pause", action: pause)
+        .buttonStyle(.glass)
+        .accessibilityIdentifier("translate.still-there.pause")
+      Button("Keep Listening", action: keepListening)
+        .buttonStyle(.glassProminent)
+        .accessibilityIdentifier("translate.still-there.keep")
+    }
+    .controlSize(.large)
+  }
+
+  private static let width: CGFloat = 330
+  private static let margin: CGFloat = 16
 }

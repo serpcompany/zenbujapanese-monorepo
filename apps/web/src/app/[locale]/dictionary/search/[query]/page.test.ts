@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest'
 import { searchDictionary } from '@/lib/dictionary/data'
 import { searchPath } from '@/lib/dictionary/urls'
 import { coreText } from '@/lib/i18n/core-text'
+import { fitsTitle } from '@/lib/snippets'
 import { listedInJapanese, listedWithLicence, pageSourcesList } from '@/test/credits'
 import { pageProps } from '@/test/page-props'
 import { redirectOf } from '@/test/redirect'
@@ -86,9 +87,16 @@ describe('a search lives at the query the core searches', () => {
     const japanese = await generateMetadata(decodedSegment('いる', 'ja'))
     expect(japanese.title).toBe('いるの英語・意味')
     expect(japanese.description).toBe(
-      '「いる」の英語の意味を、一致する6語の読み方と一緒に紹介します。'
+      '「いる」の英語の意味を、一致する6語の読み方と一緒に紹介します。一覧の言葉を開くと、それぞれのアクセント、漢字、活用、例文まで確認できます。Zenbu Japaneseの和英辞典は、ウェブでもiPhoneアプリでも無料で使えます。'
     )
     expect((await generateMetadata(decodedSegment('いる'))).title).toBe('いる in Japanese')
+  })
+
+  test('a long query is shortened in the title, to keep it within 70 characters', async () => {
+    const query = Array.from({ length: 30 }, () => 'persevere').join(' ')
+    const { title } = await generateMetadata(decodedSegment(query))
+    expect(fitsTitle(String(title)), String(title)).toBe(true)
+    expect(title).toMatch(/^persevere .*… in Japanese$/)
   })
 
   test('a query of nothing but separators is no search', async () => {
@@ -96,6 +104,18 @@ describe('a search lives at the query the core searches', () => {
     expect(await redirectOf(SearchResultsPage(encodedSegment('\u{FEFF} \u{85}')))).toBe(
       '/dictionary/search/'
     )
+  })
+})
+
+describe('the results page’s heading', () => {
+  test.each([
+    ['iru', 'en', 'iru in Japanese'],
+    ['いる', 'ja', 'いるの英語・意味'],
+    ['qzxvkj', 'en', 'qzxvkj in Japanese']
+  ])('%s (%s) is headed with its title', async (query, locale, heading) => {
+    const html = renderToStaticMarkup(await SearchResultsPage(decodedSegment(query, locale)))
+    expect(html).toMatch(new RegExp(`<h1 [^>]*>${heading}</h1>`))
+    expect((await generateMetadata(decodedSegment(query, locale))).title).toBe(heading)
   })
 })
 

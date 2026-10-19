@@ -46,11 +46,12 @@ test.describe('privacy policy', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Privacy Policy' })).toBeVisible()
   })
 
-  test('opens with a short version in five points', async ({ page }) => {
+  test('opens with a short version in six points', async ({ page }) => {
     await expect(listAfter(page, 'The short version')).toHaveText([
       /works without an account/,
+      /crashes or freezes, it sends us a report without anything you read, type, say, or photograph, unless you turn crash reports off\. If you report a problem, we get what you write\.$/,
       /we keep your email, how you sign in, and the study data you sync/,
-      /^We don't sell or share your personal information, and the app has no ads, analytics, or tracking\.$/,
+      /^We don't sell or share your personal information, and the app has no ads, usage analytics, or tracking\.$/,
       /companies help us run the service/,
       /see, export, correct, or delete your data, and delete your account/
     ])
@@ -98,6 +99,33 @@ test.describe('privacy policy', () => {
     )
   })
 
+  test('says what crash and problem reports send, what they never send, and how to turn crash reports off', async ({
+    page
+  }) => {
+    await expectNamed(page, 'Crash and problem reports', [
+      'crashes, freezes, or is closed by iOS',
+      'sends a crash report to Sentry',
+      "a code for the step and how it failed, never the error's own message",
+      'Crash reports are on by default',
+      "turn them off at any time with Send crash reports in the app's Settings",
+      "where in the app's code the problem happened, the app's version and build, the iOS version, your device's model",
+      'a random identifier the app creates on your device',
+      "A crash report doesn't link that identifier to your Zenbu account",
+      'never includes what you read, type, say, or photograph',
+      "your location, your device's name, or its language, region, and time zone",
+      'removes the file paths and names, links, email addresses, and quoted text',
+      "Report a Problem… in the app's Settings",
+      "the email address in the form for a reply, if there is one, and the details the form lists under Included with your report: the app's version and build, the iOS version, your device's model, whether you're signed in, whether crash reports are on, which optional dictionaries you've installed, and whether the microphone and camera are allowed",
+      "If you're signed in, the form fills in your Zenbu account's email, which you can change or clear; if you're signed out, it sends an email only if you add one",
+      'alongside the other reports from the same copy of the app',
+      "your account's email links those reports to your Zenbu account",
+      'sent even when crash reports are off',
+      'it can hold anything you type',
+      'no screenshots, photos, searches, lists, or conversations',
+      'not to store the address or the location it suggests'
+    ])
+  })
+
   test('names each kind of data an account keeps, and why', async ({ page }) => {
     const rows = tableRows(page, 'Why')
     await expect(rows).toHaveText([
@@ -114,6 +142,7 @@ test.describe('privacy policy', () => {
       /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups and your photos' files, and forwards email sent to our support address/,
       /^useSend sends our email, so it gets your email address and the messages we send you, and keeps copies of them/,
       /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
+      /^Sentry \(Functional Software, Inc\.\), in the United States, collects and stores the app's crash reports and the problem reports you send/,
       /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
       /^Google serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google/,
       /^Apple signs you in if you choose Apple/,
@@ -136,6 +165,7 @@ test.describe('privacy policy', () => {
       /^Your photos' files.*30 days after you remove it from its last word$/,
       /^Records of what you removed.*The latest 1,000 notes and 1,000 photos, the latest 500 words removed from each photo, and 100 videos and 100 searches; the rest until you delete your account$/,
       /^Backups.*30 days$/,
+      /^Crash and problem reports.*Up to 90 days$/,
       /^Support email.*As long as we need it/
     ])
   })
@@ -143,8 +173,8 @@ test.describe('privacy policy', () => {
   test('gives the legal basis for each use', async ({ page }) => {
     await expect(listAfter(page, "Why we're allowed to use it")).toHaveText([
       /^Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for/,
-      /^Sessions, request counts, backups, running this website and our downloads, and counting visits: our legitimate interest/,
-      /^Support email: our legitimate interest/
+      /^Sessions, request counts, backups, crash reports, running this website and our downloads, and counting visits: our legitimate interest/,
+      /^Support email and problem reports: our legitimate interest in answering you and fixing what you report/
     ])
   })
 
@@ -154,7 +184,7 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'Your rights')).toHaveText([
       /^See and export\. Email support@zenbujapanese\.com for a copy of the data your account holds/,
       /^Correct\. Change your name and username/,
-      /^Delete\. Delete your account.*within 30 days/,
+      /^Delete\. Delete your account.*within 30 days.*To delete a problem report you sent, email us\.$/,
       /^Object or restrict\. Ask us to stop or limit/
     ])
     await expectNamed(page, 'Your rights', [
@@ -180,8 +210,8 @@ const tomodachiSection = '/legal/privacy/#tomodachi'
 
 const description = (page: Page) => page.locator('meta[name="description"]')
 
-async function expectTomodachiBelowTheHeader(page: Page) {
-  const heading = sectionHeading(page, 'Tomodachi')
+async function expectBelowTheHeader(page: Page, name: string) {
+  const heading = sectionHeading(page, name)
   await expect(heading).toBeInViewport()
   const gapBelowTheHeader = async () => {
     const [header, title] = await Promise.all([
@@ -191,16 +221,23 @@ async function expectTomodachiBelowTheHeader(page: Page) {
     return header && title ? title.y - (header.y + header.height) : Number.NEGATIVE_INFINITY
   }
   await expect
-    .poll(gapBelowTheHeader, { message: 'The pinned header covers the Tomodachi heading' })
+    .poll(gapBelowTheHeader, { message: `The pinned header covers the ${name} heading` })
     .toBeGreaterThanOrEqual(0)
 }
+
+test('/legal/privacy/#reports opens on the crash and problem reports, below the header', async ({
+  page
+}) => {
+  await page.goto('/legal/privacy/#reports')
+  await expectBelowTheHeader(page, 'Crash and problem reports')
+})
 
 test.describe('Tomodachi in the privacy policy and on the support page', () => {
   test('/legal/privacy/#tomodachi opens on what the policy says about Tomodachi', async ({
     page
   }) => {
     await page.goto(tomodachiSection)
-    await expectTomodachiBelowTheHeader(page)
+    await expectBelowTheHeader(page, 'Tomodachi')
     await expectNamed(page, 'Tomodachi', [
       'works without an account or sign-in',
       'Tomo, its words, and your answers',
@@ -227,7 +264,7 @@ test.describe('Tomodachi in the privacy policy and on the support page', () => {
     await expect(main.getByText(/^For help with Tomodachi, email the same address\./)).toBeVisible()
     await main.getByRole('link', { name: 'how Tomodachi handles your information' }).click()
     await expect(page).toHaveURL(/\/legal\/privacy\/#tomodachi$/)
-    await expectTomodachiBelowTheHeader(page)
+    await expectBelowTheHeader(page, 'Tomodachi')
   })
 
   test.describe('on the narrowest phones', () => {

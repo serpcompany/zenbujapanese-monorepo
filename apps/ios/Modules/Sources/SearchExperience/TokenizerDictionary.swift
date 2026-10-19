@@ -19,10 +19,10 @@ enum TokenizerDictionary {
   static func resourceURL(_ filename: String) -> URL? {
     let name = (filename as NSString).deletingPathExtension
     let ext = (filename as NSString).pathExtension
-    return Bundle.module.url(
+    return BundledData.bundle.url(
       forResource: name,
       withExtension: ext.isEmpty ? nil : ext,
       subdirectory: "Kuromoji"
-    ) ?? Bundle.module.url(forResource: name, withExtension: ext.isEmpty ? nil : ext)
+    ) ?? BundledData.bundle.url(forResource: name, withExtension: ext.isEmpty ? nil : ext)
   }
 }

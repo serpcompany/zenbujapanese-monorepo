@@ -1,7 +1,8 @@
 'use client'
 
-import { CheckIcon, LanguagesIcon } from 'lucide-react'
+import { CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { type ComponentProps, useState } from 'react'
+import { Flag } from '@/components/flag'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,8 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import type { Switcher, SwitcherLanguage } from '@/lib/i18n/switcher'
-import { cn } from '@/lib/utils'
+import type { Switcher } from '@/lib/i18n/switcher'
 
 const xDefault = 'x-default'
 
@@ -28,30 +28,31 @@ function alternatePaths(): ReadonlyMap<string, string> {
   return paths
 }
 
-function useLanguageLinks(languages: readonly SwitcherLanguage[]) {
-  const [paths] = useState(alternatePaths)
-  return languages.map(language => ({
-    ...language,
-    href: paths.get(language.code) ?? language.home
-  }))
-}
-
 function LanguageLink(props: ComponentProps<'a'>) {
   return <a {...props} />
 }
 
 function LanguageItems({ current, languages }: Pick<Switcher, 'current' | 'languages'>) {
-  return useLanguageLinks(languages).map(language =>
+  const [paths] = useState(alternatePaths)
+  return languages.map(language =>
     language.code === current ? (
       <DropdownMenuItem key={language.code} lang={language.code} aria-current="true">
+        <Flag region={language.region} />
         {language.name}
         <CheckIcon aria-hidden="true" className="ml-auto" />
       </DropdownMenuItem>
     ) : (
       <DropdownMenuItem
         key={language.code}
-        render={<LanguageLink href={language.href} hrefLang={language.code} lang={language.code} />}
+        render={
+          <LanguageLink
+            href={paths.get(language.code) ?? language.home}
+            hrefLang={language.code}
+            lang={language.code}
+          />
+        }
       >
+        <Flag region={language.region} />
         {language.name}
       </DropdownMenuItem>
     )
@@ -65,60 +66,26 @@ export function LanguageMenu({
   className,
   side = 'bottom'
 }: Switcher & { className?: string; side?: 'bottom' | 'top' }) {
-  const name = languages.find(language => language.code === current)?.name
+  const shown = languages.find(language => language.code === current)
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant="ghost" size="lg" className={className} aria-label={label} />}
+        render={
+          <Button
+            variant="ghost"
+            size="lg"
+            className={className}
+            aria-label={shown ? `${shown.short}, ${label}` : label}
+          />
+        }
       >
-        <LanguagesIcon data-icon="inline-start" aria-hidden="true" />
-        {name}
+        {shown ? <Flag region={shown.region} /> : null}
+        {shown?.short}
+        <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" side={side} className="w-40">
         <LanguageItems current={current} languages={languages} />
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-export function LanguageList({
-  current,
-  languages,
-  heading,
-  className
-}: Switcher & { className?: string }) {
-  const links = useLanguageLinks(languages)
-  return (
-    <nav aria-label={heading} className={cn('flex flex-col gap-1', className)}>
-      <p className="flex items-center gap-2 px-2 text-sm font-medium text-muted-foreground">
-        <LanguagesIcon aria-hidden="true" className="size-4" />
-        {heading}
-      </p>
-      <ul className="flex flex-wrap gap-1">
-        {links.map(language => (
-          <li key={language.code}>
-            {language.code === current ? (
-              <span
-                lang={language.code}
-                aria-current="true"
-                className="flex items-center gap-1.5 rounded-lg bg-muted p-2 text-sm"
-              >
-                {language.name}
-                <CheckIcon aria-hidden="true" className="size-4" />
-              </span>
-            ) : (
-              <a
-                href={language.href}
-                hrefLang={language.code}
-                lang={language.code}
-                className="flex rounded-lg p-2 text-sm hover:bg-muted"
-              >
-                {language.name}
-              </a>
-            )}
-          </li>
-        ))}
-      </ul>
-    </nav>
   )
 }

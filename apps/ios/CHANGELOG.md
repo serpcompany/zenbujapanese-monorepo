@@ -16,19 +16,21 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
   window to open them there. Right-click a list, a known word, a Recent video, or a frequency
   dictionary on the Mac for what a swipe does on the iPhone.
-- Sort search results from the **Sorted by** row at the top of the results: a frequency
-  dictionary, most common first (JLPT by level), or your known words, known
-  first. Your choice stays across launches and applies to Japanese, English, and romaji
-  searches.
+- Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
+  most common first (JLPT by level), or your known words, known first. Your choice stays across
+  launches and applies to Japanese, English, and romaji searches.
 - Filter search results to known or unknown words from the same **Sorted by** row. The row shows
   when a filter is on, and your filter stays across launches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
   first 100 of more than 100 examples".
-- Look up and translate from Shortcuts, Siri, and Spotlight. **Look Up in Zenbu** opens Zenbu on
-  the word or its search results, and **Translate with Zenbu** on Translate's Text with the text;
-  Siri runs them from "Look up in Zenbu" and "Translate with Zenbu".
+- Look up and translate from Shortcuts, Siri, and Spotlight: **Look Up in Zenbu** opens the word
+  or its results, from "Zenbu look up" or "Look up in Zenbu", and **Translate with Zenbu** opens
+  Translate's Text with the text, from "Zenbu translate" or "Translate with Zenbu".
+- Share a word, a sentence, or a photo to Zenbu from any app's share sheet to see its card there,
+  without leaving the app: a word's reading, pitch, meanings, and JLPT level, or a sentence's or
+  photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Search finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
@@ -41,17 +43,15 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
   **Document** opens PDFs and text files.
 - Image Search can open up to 8 photos from your library at once.
-- Search's top bar matches Player's: a small title and the same search field, which slides up
-  while you type and keeps your query after a search, with **X** to go back to your recent
-  searches.
+- Search's top bar matches Player's: a small title and the same search field, which slides up while
+  you type and keeps your query after a search, with **X** to go back to your recent searches.
 - Search has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
   slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
   you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
   have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
-- Player works out how many of a video's words you know more than twice as fast, so
-  **Counting known words…** gives way to the percentage sooner on a long video, and a video you
-  go back to while Zenbu stays open usually shows it at once. Translate counts a conversation's
-  words the same way.
+- Player works out how many of a video's words you know more than twice as fast, so **Counting known
+  words…** gives way to the percentage sooner on a long video, and a video you go back to while
+  Zenbu stays open usually shows it at once. Translate counts a conversation's words the same way.
 
 ### Removed
 
