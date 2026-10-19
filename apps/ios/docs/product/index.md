@@ -86,9 +86,9 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
-  the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings; a change to Frequency Dictionaries shows in Search, an
-  open word, and the word sheet at once.
+  the profile, the Zenbu account, Send Crash Reports, Reading Aids, and Frequency Dictionaries.
+  They stay in Account too, and both show the same settings; a change to Frequency Dictionaries
+  shows in Search, an open word, and the word sheet at once.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
   window), and `FrequencyPackLifecycleTests` and `FrequencyListsTests` (each change published).
@@ -182,10 +182,9 @@ compact furigana; nothing is spaced apart.
 
 Check: UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading`.
 
-The split comes from each kanji's own readings, including the sound changes compounds make
-(学校 is がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's
-reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
-per-kanji highlight.
+The split comes from each kanji's own readings, including the sound changes compounds make (学校 is
+がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's reading exactly one way.
+Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no per-kanji highlight.
 
 Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the recorded
 `WordDetailConformanceTests`.
@@ -221,7 +220,8 @@ It provides:
   kanji in Search's Grade panel); and Sentence Translations, with a translation language (English
   so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
   Reading Aids offers to download;
-- management of optional frequency dictionaries; and
+- management of optional frequency dictionaries;
+- [**Send Crash Reports**](crash-reports.md), on until the learner turns it off; and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
   open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
   link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with

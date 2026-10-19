@@ -198,9 +198,13 @@ actor LanguageTechnologyPackManager {
       bundledDefault = (manifest, url)
     } else {
       bundledDefault = nil
-      if bundledManifest != nil {
+      if let bundledManifest {
         failureMessage = "The included Japanese analysis resources could not be verified."
-        failurePackID = bundledManifest?.packID
+        failurePackID = bundledManifest.packID
+        CrashReporter.record(
+          HandledProblem(
+            area: .languagePack, code: "bundled_pack_unverified",
+            details: ["pack": bundledManifest.packID.rawValue]))
       }
     }
 
@@ -235,6 +239,9 @@ actor LanguageTechnologyPackManager {
             failureMessage =
               "The included Japanese analysis is active, but an older verified pack could not be removed."
             failurePackID = manifest.packID
+            CrashReporter.record(
+              error, in: .languagePack,
+              details: ["pack": manifest.packID.rawValue, "stage": "remove_older_pack"])
           }
         } else if manifest.distribution == .optionalDownload {
           installedOverride = record
@@ -243,6 +250,10 @@ actor LanguageTechnologyPackManager {
         failureMessage =
           "An optional Japanese analysis pack could not be verified. Zenbu is using the included pack."
         failurePackID = record.packID
+        CrashReporter.record(
+          HandledProblem(
+            area: .languagePack, code: "installed_pack_unverified",
+            details: ["pack": record.packID.rawValue]))
       }
     }
   }
@@ -357,6 +368,7 @@ actor LanguageTechnologyPackManager {
         error is CancellationError
         ? nil : "Download or validation failed. Your last verified pack was kept."
       failurePackID = error is CancellationError ? nil : packID
+      CrashReporter.record(error, in: .languagePack, details: ["pack": packID.rawValue])
       throw error
     }
   }

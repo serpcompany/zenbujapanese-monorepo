@@ -14,10 +14,10 @@ enum ConversationLayout: String, CaseIterable {
   case twoPanes
 }
 
-enum TranslateStartProblem: Equatable {
-  case microphoneDenied
-  case speechUnavailable
-  case translationUnavailable
+enum TranslateStartProblem: String, Equatable {
+  case microphoneDenied = "microphone_denied"
+  case speechUnavailable = "speech_unavailable"
+  case translationUnavailable = "translation_unavailable"
 }
 
 @MainActor
@@ -171,6 +171,7 @@ final class TranslateExperience {
   }
 
   private func finishPreparing(with problem: TranslateStartProblem) {
+    CrashReporter.record(HandledProblem(area: .translateStart, code: problem.rawValue))
     preparation = nil
     startProblem = problem
   }

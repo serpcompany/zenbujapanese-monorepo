@@ -297,16 +297,15 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
-   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
-   the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
-   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and the
+   bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record, below).
+   With any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
+   **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
-   either, so also remove those capabilities
-   ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
-   Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
-   Google in a build given its client ID. Don't commit the team, the bundle ID change, or the
-   removed capabilities.
+   either, so also remove those capabilities ([Links from the website](#links-from-the-website),
+   [Account and sync](#account-and-sync)). Such a build still shows the Apple button, which fails;
+   sign in with an emailed code, or with Google in a build given its client ID. Don't commit the
+   team, the bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -332,7 +331,7 @@ xcrun devicectl device install app --device <device-udid> \
 ```
 
 Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
-below).
+below). Built for Release, it reports crashes as `qa` ([crash reports](ios-crash-reports.md)).
 
 ### From a Mac the iPhone can't reach
 
@@ -957,7 +956,8 @@ above), and say so in What's New.
 2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of
    `main`, open `apps/ios/ZenbuJapanese.xcodeproj`, pick the `ZenbuJapanese` scheme and **Any iOS
    Device (arm64)**, then Product → Archive.
-3. In the Organizer: Distribute App → App Store Connect → Upload.
+3. In the Organizer: Distribute App → App Store Connect → Upload. Then send the archive's debug
+   symbols to Sentry ([`ios-crash-reports.md`](ios-crash-reports.md#debug-symbols)).
 4. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
