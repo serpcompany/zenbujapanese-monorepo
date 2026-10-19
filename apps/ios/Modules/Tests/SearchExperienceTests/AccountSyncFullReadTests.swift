@@ -9,8 +9,16 @@ struct AccountSyncFullReadTests {
   private typealias Fixture = AccountFixture
   private let taberu = SavedItemID(rawValue: AccountFixture.taberu)
   private let ramen = "ramenVideo1"
-  private let sushi = "sushiVideo2"
   private let watched = "2026-10-19T09:00:00.000Z"
+
+  nonisolated private static func note(_ id: String, _ text: String) -> [String: Any] {
+    StubSync.put(
+      SyncEntity.wordNote, id, 1,
+      [
+        "id": id, "itemId": AccountFixture.taberu, "text": text, "headword": NSNull(),
+        "reading": NSNull(),
+      ])
+  }
 
   private func forgetANoteDeletion(by fixture: Fixture, in service: FakeAccountService) async throws {
     let deleted = UUID().uuidString.lowercased()
@@ -82,28 +90,28 @@ struct AccountSyncFullReadTests {
     #expect(pad.sync.state.versions["wordNote:\(deleted)"] == nil)
   }
 
-  @Test("a read after a 410 that stops partway drops nothing until it reaches its end, across a relaunch, and never drops a kind the account never forgets")
+  @Test("a read after a 410 that stops partway drops nothing until it reaches its end, across a relaunch, and drops only notes, photos, and photo words")
   func rereadCutOff() async throws {
     let fixture = Fixture()
-    fixture.serve { [ramen, sushi, watched] request in
+    let (gone, kept) = (UUID().uuidString.lowercased(), UUID().uuidString.lowercased())
+    fixture.serve { [ramen, watched] request in
       StubSync.answer(
         results: StubSync.applied(request),
         changes: [
           StubSync.knownWord(Fixture.taberu, known: true, version: 1),
-          StubSync.watchedVideo(ramen, at: watched, version: 1),
-          StubSync.watchedVideo(sushi, at: watched, version: 1),
+          StubSync.watchedVideo(ramen, at: watched, version: 1), Self.note(gone, "朝"),
+          Self.note(kept, "夜"),
         ], cursor: "cursor-1")
     }
     await fixture.launch()
     try await fixture.signIn()
     let calls = CallCount()
-    fixture.serve { [sushi, watched] request in
+    fixture.serve { request in
       switch request.cursor {
       case "cursor-1": .error(410, "invalid_cursor")
       case nil:
         StubSync.answer(
-          results: StubSync.applied(request),
-          changes: [StubSync.watchedVideo(sushi, at: watched, version: 1)], cursor: "page-1",
+          results: StubSync.applied(request), changes: [Self.note(kept, "夜")], cursor: "page-1",
           hasMore: true)
       default: calls.next() == 1 ? .offline : StubSync.answer(cursor: "page-2")
       }
@@ -111,15 +119,15 @@ struct AccountSyncFullReadTests {
 
     await #expect(throws: (any Error).self) { try await fixture.syncNow() }
     #expect(fixture.sync.state.cursor == "page-1")
-    #expect(fixture.watchHistory.videos.count == 2)
+    #expect(Set(await fixture.notes.load(taberu).map(\.text)) == ["朝", "夜"])
     fixture.account.scheduler.stop()
     await fixture.launch()
     try await fixture.syncNow()
 
-    #expect(fixture.watchHistory.videos.map(\.videoID) == [sushi])
+    #expect(await fixture.notes.load(taberu).map(\.text) == ["夜"])
+    #expect(fixture.sync.state.versions["wordNote:\(gone)"] == nil)
     #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
-    #expect(fixture.sync.state.versions["watchedVideo:\(ramen)"] == nil)
-    #expect(fixture.sync.state.versions["knownWord:\(Fixture.taberu)"] == 1)
+    #expect(fixture.watchHistory.videos.map(\.videoID) == [ramen])
     #expect(fixture.sync.state.rereadSeen == nil)
   }
 

@@ -35,8 +35,6 @@ extension AccountSync {
         !state.hasQueuedChange(to: key)
       else { continue }
       state.versions[stored] = nil
-      state.goneVideos.removeAll { $0 == stored }
-      state.goneSearches.removeAll { $0 == stored }
       removeLocally(key)
     }
   }

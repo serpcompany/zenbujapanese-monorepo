@@ -172,11 +172,11 @@ sync; what the learner sees is in the product docs'
   relaunch, then dropped if the list never came. A deleted list drops its words. Every read from
   no cursor (the first after signing in, a catch-up, or after a `410`) is a full read: the keys
   it brings or sends are kept in the file (`rereadSeen`), across a failed page or a relaunch, and
-  once it reaches `hasMore: false`, each note, photo, photo word, watched video, and recent search
-  the device holds a version for that it didn't bring, send, or have queued is removed on the
-  device with its version, since the account forgot it (`SyncEntity.forgotten`). Kinds the
-  account never forgets are never dropped, so a restore and a later `410` can't take what was
-  added since. `410` drops the cursor and the held copies and words, and starts a full read,
+  once it reaches `hasMore: false`, each note, photo, and photo word the device holds a version
+  for that it didn't bring, send, or have queued is removed on the device with its version, since
+  the account forgot it (`SyncEntity.forgotten`, as the client guide's step 5 says). Nothing else
+  is dropped, so a restore and a later `410` can't take known words, lists, or bookmarks added
+  since. `410` drops the cursor and the held copies and words, and starts a full read,
   still sending the queue; a `410` during a full read starts it again only after the network
   backoff, with Zenbu Account saying the account is being read again, so it can't loop. A sync's
   answer is dropped if the learner signed out or in while it was on the way.

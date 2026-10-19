@@ -150,10 +150,10 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   removal; searching it after that brings it back. The account keeps the latest 50.
 - A device away longer than the account remembers a deletion (its latest 1,000 deleted notes or
   photos, or a photo's latest 500 removed words) reads everything again at its next sync, then
-  removes here the notes, photos and their words, Recent videos, and searches the account no
-  longer has. A sign-in or a catch-up that reads from the start does the same. What the device
-  changed meanwhile still goes, a note or photo the account refused stays, and known words, lists,
-  bookmarks, settings, and the profile are never removed this way. If the account forgets more
+  removes here the notes, photos, and their words the account no longer has. A sign-in or a
+  catch-up that reads from the start does the same. What the device changed meanwhile still goes,
+  a note or photo the account refused stays, and nothing else is removed this way: not known
+  words, lists, Recent, bookmarks, searches, settings, or the profile. If the account forgets more
   while the device reads, the sync stops, Zenbu Account says it's reading the account again, and
   it tries again after a wait.
 

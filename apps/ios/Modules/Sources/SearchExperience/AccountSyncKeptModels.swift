@@ -11,7 +11,7 @@ extension SyncEntity {
   static let kept = [wordNote, photo, photoWord, profilePhoto, setting, recentSearch]
   static let replacedWhileUnsent: Set<String> = [watchedVideo, wordNote, setting, recentSearch]
   static let needFiles: Set<String> = [photo, photoWord, profilePhoto]
-  static let forgotten: Set<String> = [wordNote, photo, photoWord, watchedVideo, recentSearch]
+  static let forgotten: Set<String> = [wordNote, photo, photoWord]
 }
 
 struct KeptNote: Codable, Hashable, Sendable {
