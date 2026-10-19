@@ -3,8 +3,8 @@ import Foundation
 final class KanjiFiles: Sendable {
   static let bundled: KanjiFiles? = {
     guard
-      let reference = Bundle.module.url(forResource: "KanjiReferenceData", withExtension: "json"),
-      let elements = Bundle.module.url(
+      let reference = BundledData.bundle.url(forResource: "KanjiReferenceData", withExtension: "json"),
+      let elements = BundledData.bundle.url(
         forResource: "KanjiElementReferenceData", withExtension: "json")
     else { return nil }
     return KanjiFiles(reference: reference, elements: elements)

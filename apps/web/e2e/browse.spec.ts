@@ -194,7 +194,7 @@ test.describe('browse pages', () => {
   test('the JLPT kanji lists are Waller’s, credited under CC BY', async ({ page }) => {
     await page.goto(browse('kanji/'))
     await expect(page).toHaveTitle(
-      'Kanji lists by school grade, JLPT level, and stroke count | Zenbu Japanese'
+      'Kanji lists by grade, JLPT level, and stroke count | Zenbu Japanese'
     )
     const levels = page.getByRole('region', { name: 'By JLPT level' })
     await expect(levels.getByRole('link')).toHaveCount(5)
@@ -281,11 +281,16 @@ test.describe('browse URLs', () => {
     for (const [from, to] of [
       ['ichidan-verbs/1/', 'ichidan-verbs/'],
       ['ichidan-verbs/kana-order/1/', 'ichidan-verbs/kana-order/'],
-      ['frequency-dictionaries/jlpt/n5/1/', 'frequency-dictionaries/jlpt/n5/']
+      ['frequency-dictionaries/jlpt/n5/1/', 'frequency-dictionaries/jlpt/n5/'],
+      ['frequency-dictionaries/anime/1-1000/1/', 'frequency-dictionaries/anime/1-1000/']
     ]) {
-      const response = await request.get(browse(from), { maxRedirects: 0 })
-      expect(response.status(), from).toBe(308)
-      expect(new URL(response.headers().location, baseURL).pathname).toBe(browse(to))
+      for (const language of ['', '/ja']) {
+        const response = await request.get(`${language}${browse(from)}`, { maxRedirects: 0 })
+        expect(response.status(), `${language}${from}`).toBe(308)
+        expect(new URL(response.headers().location, baseURL).pathname).toBe(
+          `${language}${browse(to)}`
+        )
+      }
     }
     for (const path of [
       browse('ichidan-verbs/9999/'),
@@ -302,6 +307,10 @@ test.describe('browse URLs', () => {
       browse('frequency-dictionaries/anime/2/'),
       browse('frequency-dictionaries/anime/1001-1999/'),
       browse('frequency-dictionaries/anime/10001-11000/'),
+      browse('frequency-dictionaries/anime/1-1000/2/'),
+      browse('frequency-dictionaries/anime/1-1000/6/'),
+      browse('frequency-dictionaries/anime/1001-1999/1/'),
+      browse('frequency-dictionaries/no-such-list/1-1000/1/'),
       browse('frequency-dictionaries/jlpt-n5/'),
       browse('frequency-dictionaries/jlpt/'),
       browse('frequency-dictionaries/jlpt/n6/')

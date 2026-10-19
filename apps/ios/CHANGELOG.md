@@ -6,9 +6,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- When syncing needs a Zenbu subscription, Zenbu Account says so and sells one through the App
-  Store: subscribe, restore purchases, and manage it where you bought it. Your changes wait on your
-  device until you subscribe, and everything on your device stays free.
+- Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
 - Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
   sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
   the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
@@ -28,9 +26,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
   first 100 of more than 100 examples".
-- Look up and translate from Shortcuts, Siri, and Spotlight. **Look Up in Zenbu** opens Zenbu on
-  the word or its search results, and **Translate with Zenbu** on Translate's Text with the text;
-  Siri runs them from "Look up in Zenbu" and "Translate with Zenbu".
+- Look up and translate from Shortcuts, Siri, and Spotlight: **Look Up in Zenbu** opens the word
+  or its results, from "Zenbu look up" or "Look up in Zenbu", and **Translate with Zenbu** opens
+  Translate's Text with the text, from "Zenbu translate" or "Translate with Zenbu".
+- Share a word, a sentence, or a photo to Zenbu from any app's share sheet to see its card there,
+  without leaving the app: a word's reading, pitch, meanings, and JLPT level, or a sentence's or
+  photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Search finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
@@ -114,12 +115,12 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code
-  sent by email, to keep your known words and lists the same on all your devices and Zenbu apps.
-  Zenbu syncs after each change, when it opens, and when you tap **Sync Now**. Everything still
-  works signed out and offline, and signing out keeps everything on your iPhone; changes you make
-  while signed out sync when you sign back in to the same account. **Favorites** is one list on all your devices.
-  A new account made with Apple takes the name you share with Apple.
+- Sign in to a Zenbu account from **Account → Sign In to Sync**, with Apple, Google, or a code sent
+  by email, to keep your known words and lists the same on all your devices and Zenbu apps. Zenbu
+  syncs after each change, when it opens, and when you tap **Sync Now**. Everything still works
+  signed out and offline, and signing out keeps everything on your iPhone; changes you make while
+  signed out sync when you sign back in to the same account. **Favorites** is one list on all your
+  devices. A new account made with Apple takes the name you share with Apple.
 - Signed in, Player's **Recent** videos are the same on all your devices: a video you watch on one
   appears on the others with how far you got, and one you remove is removed everywhere.
 - Signed in, the sentences you bookmark in **Translations** are the same on all your devices, each

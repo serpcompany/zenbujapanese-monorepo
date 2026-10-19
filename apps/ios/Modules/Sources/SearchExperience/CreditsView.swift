@@ -143,12 +143,12 @@ private struct BundledLicenseTextView: View {
 
   private var text: String {
     let url =
-      Bundle.module.url(
+      BundledData.bundle.url(
         forResource: file.resource,
         withExtension: file.resourceExtension,
         subdirectory: file.subdirectory
       )
-      ?? Bundle.module.url(
+      ?? BundledData.bundle.url(
         forResource: file.resource,
         withExtension: file.resourceExtension
       )

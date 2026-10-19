@@ -117,6 +117,6 @@ final class SQLiteStatements {
 
 extension Bundle {
   static var languageReferenceDataURL: URL? {
-    Bundle.module.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
+    BundledData.bundle.url(forResource: "LanguageReferenceData", withExtension: "sqlite3")
   }
 }

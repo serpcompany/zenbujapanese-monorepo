@@ -181,8 +181,8 @@
     "searchQuery": "Search: {query}"
   },
   "browse": {
-    "sentences": "{first} {second}",
     "titlePage": "{title}, page {page}",
+    "metaMore": "Every list links each word to its page, with its reading and meaning.",
     "pageOf": "Page {page} of {pages}.",
     "pagination": {
       "label": "Pages",
@@ -311,6 +311,7 @@
         "one": "{count} Japanese word whose reading starts with {kana}, with their meanings.",
         "other": "{count} Japanese words whose reading starts with {kana}, with their meanings."
       },
+      "metaMore": "Listed in kana order, each with furigana, its English meaning, and how common it is.",
       "initialIntro": {
         "one": "{count} word whose reading starts with {kana}.",
         "other": "{count} words whose reading starts with {kana}."
@@ -442,8 +443,8 @@
       }
     },
     "kanji": {
-      "hubTitle": "Kanji lists by school grade, JLPT level, and stroke count",
-      "hubDescription": "Every jōyō kanji by school grade and stroke count, the jinmeiyō kanji used in names, and the kanji of each JLPT level, each with its readings, stroke order, and words.",
+      "hubTitle": "Kanji lists by grade, JLPT level, and stroke count",
+      "hubDescription": "Every jōyō kanji by school grade and stroke count, the jinmeiyō kanji used in names, and each JLPT level’s kanji, with readings, stroke order, and words.",
       "hubIntro": "The {joyo} jōyō kanji, and the {jinmeiyo} more used in names, by school grade, JLPT level, and stroke count. Each kanji opens its search page, with its readings, stroke order, and every word that uses it.",
       "grades": "Grades",
       "jumpToGrade": "Jump to a grade",
@@ -490,7 +491,7 @@
     },
     "frequency": {
       "title": "Japanese frequency dictionaries",
-      "description": "The JLPT vocabulary lists, and Japanese words ranked by how often they’re used on YouTube, on Wikipedia, and in TV, anime, manga, novels, visual novels, and video games.",
+      "description": "The JLPT vocabulary lists, and Japanese words ranked by use on YouTube, on Wikipedia, and in TV, anime, manga, novels, visual novels, and video games.",
       "intro": "Which words to learn first: the JLPT vocabulary lists by level, and eight lists that rank words by how often they’re used on YouTube, on Wikipedia, and in TV, anime, manga, novels, visual novels, and video games. They’re the same dictionaries the app offers.",
       "jlptAside": {
         "one": "Jonathan Waller’s JLPT lists · {count} word",
@@ -512,12 +513,13 @@
       "rankRange": "{first}–{last}",
       "bandShort": "{from}–{to}",
       "bandHeading": "Most used Japanese words: {name}",
-      "bandTitle": "Most used Japanese words: {name}, ranks {range}",
+      "bandTitle": "{name}: most used Japanese words, {range}",
       "bandWords": {
         "one": "Ranks {range}: {count} word.",
         "other": "Ranks {range}: {count} words."
       },
       "bandRanks": "Ranks {range}.",
+      "bandMetaMore": "Each word comes with its reading, its meaning, and its rank in the other lists.",
       "ranked": {
         "youtube": "Words ranked by how often they’re said in YouTube videos, from TUBELEX.",
         "wikipedia": "Words ranked by how often they’re written in Japanese Wikipedia.",
@@ -541,7 +543,8 @@
       "jlptMetaPaged": {
         "one": "{count} word Jonathan Waller lists for {name}, in kana order, page {page}.",
         "other": "{count} words Jonathan Waller lists for {name}, in kana order, page {page}."
-      }
+      },
+      "jlptMetaMore": "They’re unofficial study estimates: the JLPT has published no list since 2010."
     }
   },
   "categoryIntros": {
@@ -725,8 +728,7 @@
       "signOut": "Sign out"
     },
     "switcher": {
-      "label": "{language}, change language",
-      "heading": "Language"
+      "label": "{language}, change language"
     },
     "social": {
       "elsewhere": "{name} elsewhere",
@@ -747,7 +749,7 @@
     "body": "Email {email}. We read every message."
   },
   "dictionary": {
-    "title": "Japanese dictionary",
+    "title": "Japanese–English Dictionary",
     "lead": "Words and kanji with readings, meanings, pitch accent, and examples. Search in Japanese, kana, romaji, or English."
   },
   "dmca": {
@@ -1125,12 +1127,12 @@
       "description": "Look up Japanese words offline, read menus and signs with your camera, draw kanji you can’t type, and translate conversations on iPhone. Free on the web too."
     },
     "/dictionary/": {
-      "title": "Japanese dictionary",
-      "description": "Look up Japanese words and kanji in Japanese, kana, romaji, or English."
+      "title": "Japanese Dictionary: English, Romaji & Kanji Lookup",
+      "description": "Free Japanese dictionary: search English to Japanese or Japanese to English in romaji, kana or kanji, with readings, meanings and example sentences."
     },
     "/products/": {
       "title": "Products",
-      "description": "Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary."
+      "description": "Zenbu Japanese apps and free tools for reading, writing, and speaking Japanese, all built on one dictionary, from the iPhone app to kana and kanji charts."
     },
     "/products/zenbu-japanese-app/": {
       "title": "Zenbu Japanese for iPhone",
@@ -1138,19 +1140,19 @@
     },
     "/about/": {
       "title": "About",
-      "description": "About Zenbu Japanese."
+      "description": "Zenbu Japanese helps learners understand the Japanese they meet, whether typed, photographed, handwritten, or heard in a video. Its dictionary works offline."
     },
     "/support/": {
       "title": "Support",
-      "description": "Get help with Zenbu Japanese and Tomodachi."
+      "description": "Get help with Zenbu Japanese and Tomodachi by email, and see what to include: your iPhone model, your iOS version, and what you were doing when it happened."
     },
     "/contact/": {
       "title": "Contact",
-      "description": "Contact the Zenbu Japanese team."
+      "description": "How to reach the Zenbu Japanese team: email us with a question, a problem, or feedback about the iPhone app or this website. We read every message."
     },
     "/legal/": {
       "title": "Legal",
-      "description": "Zenbu Japanese legal policies."
+      "description": "The legal policies of Zenbu Japanese and zenbujapanese.com: the Privacy Policy, the Terms of Use, the DMCA Copyright Policy, and the Affiliate Disclosure."
     },
     "/legal/privacy/": {
       "title": "Privacy Policy",
@@ -1158,23 +1160,23 @@
     },
     "/legal/terms/": {
       "title": "Terms of Use",
-      "description": "Terms for using Zenbu Japanese and this website."
+      "description": "The terms for using the Zenbu Japanese iPhone app and this website: what the service is, how you may use it, whose content it holds, and its disclaimers."
     },
     "/legal/dmca/": {
       "title": "DMCA Copyright Policy",
-      "description": "How to report claimed copyright infringement to Zenbu Japanese."
+      "description": "How to report claimed copyright infringement to Zenbu Japanese under the DMCA: its agent, what a notice must include, and how to send a counter-notice."
     },
     "/legal/affiliate-disclosure/": {
       "title": "Affiliate Disclosure",
-      "description": "How Zenbu Japanese discloses affiliate relationships."
+      "description": "How Zenbu Japanese discloses affiliate links on zenbujapanese.com, why commissions never change how dictionary results rank, and how those links are marked."
     },
     "/sources/": {
       "title": "Sources",
-      "description": "The open data behind the Zenbu Japanese dictionary, with credits and licences."
+      "description": "The sources behind the Zenbu Japanese dictionary, such as JMdict, KANJIDIC2, KanjiVG, Kanjium, and Tatoeba, each listed with its credit and licence."
     },
     "/sitemap/": {
       "title": "Sitemap",
-      "description": "Every page on zenbujapanese.com."
+      "description": "Every page on zenbujapanese.com in one place: the company and legal pages, the free tools and converters, and the dictionary’s browse pages and kanji lists."
     }
   },
   "privacy": {
@@ -1589,7 +1591,20 @@
       "titleForJapanese": "{query} in Japanese",
       "descriptionForEnglish": "{count} Japanese words for “{query}”, with readings and meanings.",
       "descriptionForJapanese": "{count} Japanese words for “{query}”, with readings and meanings.",
-      "noResults": "No Japanese words match “{query}”."
+      "noResults": "No Japanese words match “{query}”.",
+      "more": "Open any word for its pitch accent, kanji, conjugations, and example sentences.",
+      "howToSay": "How to Say {query} in Japanese",
+      "answered": "{title}: {word}",
+      "withExamples": "{title}",
+      "spelled": "{headword} ({spelling})",
+      "wordFor": "Japanese Word for {query}: {word}",
+      "answer": "{query} in Japanese is {word}.",
+      "otherWords": {
+        "one": "See {count} more Japanese word for “{query}”, with its reading and meaning.",
+        "other": "See {count} more Japanese words for “{query}”, with readings and meanings."
+      },
+      "onlyWord": "It’s the only Japanese word found for “{query}”.",
+      "moreShort": "Each word opens to its pitch accent, kanji, and examples."
     },
     "wordsFor": {
       "one": "{count} word for {query}",
@@ -1603,7 +1618,9 @@
     "submit": "Search"
   },
   "site": {
-    "description": "An offline-first Japanese dictionary, image-text reader, and translator for iPhone."
+    "description": "An offline-first Japanese dictionary, image-text reader, and translator for iPhone.",
+    "sentences": "{first} {second}",
+    "closing": "Free on the web and in the iPhone app."
   },
   "sourceCredits": {
     "title": "Sources",
@@ -1697,14 +1714,14 @@
       "romaji-to-kana": {
         "from": "Romaji",
         "to": "Kana",
-        "description": "Type Japanese in romaji on any keyboard and get hiragana or katakana as you type, free in your browser.",
+        "description": "Type Japanese in romaji on any keyboard and get hiragana or katakana as you type, free in your browser. Spellings such as si and tu work too.",
         "lead": "Type Japanese in Latin letters on any keyboard and get hiragana or katakana as you type.",
         "card": "Type romaji on any keyboard and get hiragana or katakana."
       },
       "kana-to-romaji": {
         "from": "Kana",
         "to": "Romaji",
-        "description": "Convert hiragana and katakana to romaji, spelled the Hepburn way, free in your browser.",
+        "description": "Convert hiragana and katakana to romaji, spelled the Hepburn way, free in your browser. Long vowels are spelled as written, so とうきょう is toukyou.",
         "lead": "Paste hiragana or katakana and read it in Latin letters, spelled the Hepburn way, as on signs and in most textbooks.",
         "card": "Read kana in Latin letters, in Hepburn romanization."
       },
@@ -1993,8 +2010,32 @@
       "word": "{headword} ({reading})",
       "title": "{word} meaning",
       "titleWithExamples": "{word} meaning",
-      "description": "{word}: {meaning}.",
-      "descriptionWithPartOfSpeech": "{word}: {meaning}. {partOfSpeech}."
+      "titles": {
+        "first": "{romaji} Meaning & Definition: {word} in English",
+        "second": "{romaji} Meaning & Definition: {headword} in English",
+        "third": "{romaji} Meaning: {headword}",
+        "fourth": "{word} Meaning & Definition in English"
+      },
+      "titleFeatures": {
+        "meaning": "meaning, reading",
+        "kanji": ", kanji",
+        "examples": ", examples"
+      },
+      "description": "{word} means “{meaning}” in English.",
+      "descriptionWithPartOfSpeech": "{word} means “{meaning}” in English. {partOfSpeech}.",
+      "asked": "What does {romaji} mean? {lead}",
+      "features": "See its {features} in the {name} dictionary.",
+      "featureNames": {
+        "reading": "reading",
+        "meanings": "every meaning",
+        "pitch": "pronunciation",
+        "kanji": "kanji",
+        "conjugations": "conjugations",
+        "examples": {
+          "one": "{count} example sentence",
+          "other": "{count} example sentences"
+        }
+      }
     },
     "formLabels": "({labels})",
     "labelSeparator": ", ",

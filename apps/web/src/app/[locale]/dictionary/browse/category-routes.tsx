@@ -3,7 +3,12 @@ import { minimumIndexedWords } from '@zenbu/dictionary-core/browse/lists'
 import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { CategoryWords } from '@/components/dictionary/browse/category-pages'
-import { categoryHeading, categoryIntro, pagedTitle } from '@/lib/dictionary/browse/copy'
+import {
+  categoryCount,
+  categoryDescription,
+  categoryHeading,
+  pagedTitle
+} from '@/lib/dictionary/browse/copy'
 import { getCategoryWords } from '@/lib/dictionary/browse/data'
 import { categoryPath, pageNumber } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
@@ -12,6 +17,7 @@ import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
 import { localeOf } from '@/lib/i18n/params'
 import { localizedPath } from '@/lib/i18n/paths'
+import { fittedDescription } from '@/lib/snippets'
 
 type CategoryParams = { params: Promise<{ locale: string; category: string }> }
 type PagedParams = { params: Promise<{ locale: string; category: string; page: string }> }
@@ -35,7 +41,11 @@ function metadata({ category, words, order, page, locale }: Loaded): Metadata {
     categoryPath(category.slug, order, page),
     locale,
     pagedTitle(ordered, page, locale),
-    categoryIntro(category, words.total, order, locale),
+    fittedDescription(
+      categoryCount(category, words.total, order, locale),
+      [categoryDescription(category.slug, locale)],
+      locale
+    ),
     { index: order === 'used' && words.total >= minimumIndexedWords }
   )
 }

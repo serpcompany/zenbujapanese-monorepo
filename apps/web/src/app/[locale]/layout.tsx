@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { SiteDocument } from '@/components/site-document'
+import { iosAppStoreId } from '@/lib/app-links'
 import { locales } from '@/lib/i18n/config'
 import { localeOf } from '@/lib/i18n/params'
 import { siteMetadata } from '@/lib/metadata'
@@ -11,7 +12,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: LayoutProps<'/[locale]'>): Promise<Metadata> {
-  return siteMetadata(await localeOf(params))
+  return { ...siteMetadata(await localeOf(params)), itunes: { appId: iosAppStoreId } }
 }
 
 export default async function RootLayout({ children, params }: LayoutProps<'/[locale]'>) {

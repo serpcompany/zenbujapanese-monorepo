@@ -50,11 +50,17 @@ struct ZenbuShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
       intent: LookUpIntent(),
-      phrases: ["Look up in \(.applicationName)", "Look up a word in \(.applicationName)"],
+      phrases: [
+        "\(.applicationName)", "\(.applicationName) look up", "\(.applicationName) lookup",
+        "Look up in \(.applicationName)", "Look up a word in \(.applicationName)",
+      ],
       shortTitle: "Look Up", systemImageName: "character.book.closed")
     AppShortcut(
       intent: TranslateIntent(),
-      phrases: ["Translate with \(.applicationName)", "Translate text in \(.applicationName)"],
+      phrases: [
+        "\(.applicationName) translate", "Translate with \(.applicationName)",
+        "Translate text in \(.applicationName)",
+      ],
       shortTitle: "Translate", systemImageName: "translate")
   }
 }
