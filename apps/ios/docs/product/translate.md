@@ -120,11 +120,11 @@ Check: UI `ConversationUITests.testTheControlsMutePauseAndResume`,
 `LiveConversationTests` (pausing and the timer), `ConversationMutingTests`, and
 `SystemSpeechPlayerTests` (the speed).
 
-Translate shows Japanese without furigana unless **Furigana** is on. One setting covers
-conversations, transcripts, and typed or document translations, and each of those screens has it
-in its **•••** menu. Translate keeps its own
-reading aids: the rest of the app's Reading Aids (furigana, romaji, word meanings) don't apply on
-the tab. Conversation text is one Dynamic Type size larger than the rest of the app.
+Translate shows Japanese without furigana unless **Furigana** is on. One setting, which syncs,
+covers conversations, transcripts, and typed or document translations, and each of those screens
+has it in its **•••** menu. Translate keeps its own reading aids: the rest of the app's Reading
+Aids (furigana, romaji, word meanings) don't apply on the tab. Conversation text is one Dynamic
+Type size larger than the rest of the app.
 
 Check: package `PlayerReadingAidTests` (Translate's furigana is its own setting, off at first).
 
@@ -278,7 +278,7 @@ by typed text's rule ([Typing to translate](#typing-to-translate)): 々, ｶﾀ�
 
 Check: package `ImageTextRecognitionTests` and `WrittenLanguageTests`.
 
-A segmented control switches between four views, and Image Search remembers the last one
+A segmented control switches between four views, and Image Search remembers the last one, synced
 (**Both** at first). The toolbar is the same in every view: a close button and a **•••** menu
 with **Copy Text**, **Share Image**, and **Show Words on Image**, which shows or hides the word
 marks on the image.

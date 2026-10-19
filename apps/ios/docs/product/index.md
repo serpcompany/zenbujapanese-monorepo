@@ -262,18 +262,18 @@ reload; an earlier username kept; an unreadable profile; the first sync), `Accou
 `PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
 (the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
 
-Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
-seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
-and Video Games built from Jiten's CC BY-SA 4.0 lists. Every pack's source is openly licensed.
-Optional packs are downloaded on request and mapped locally into Zenbu's dictionary; Jiten packs
-match words by reading as well as spelling. YouTube counts words by spelling, so a spelling
-shared by several dictionary words (時 is とき and じ) ranks the one UniDic's reading for it
-names (とき); a spelling UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube
-rank. A pack removed from the catalog in an update is
-deleted from the device on the next launch. A learner can enable any number of installed packs,
-including none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can
-be disabled but not removed, and removing an optional pack also disables it. A new install
-enables JLPT Levels first and YouTube second. JLPT Levels marks words with an estimated N5–N1
+Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers seven
+optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels, and
+Video Games built from Jiten's CC BY-SA 4.0 lists. Every pack's source is openly licensed. Optional
+packs download on request, or on their own when chosen on another signed-in device
+([sync](account-sync.md)), and are mapped locally into Zenbu's dictionary; Jiten packs match words
+by reading as well as spelling. YouTube counts words by spelling, so a spelling shared by several
+dictionary words (時 is とき and じ) ranks the one UniDic's reading for it names (とき); a spelling
+UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube rank. A pack an update drops
+from the catalog is deleted on the next launch. A learner can enable any number of installed packs,
+or none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled
+but not removed, and removing an optional pack also disables it. A new install enables JLPT Levels
+first and YouTube second. JLPT Levels marks words with an estimated N5–N1
 level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
 presents levels as unofficial study estimates.
 

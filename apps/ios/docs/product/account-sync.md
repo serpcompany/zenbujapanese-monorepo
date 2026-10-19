@@ -6,14 +6,14 @@ this app (#867): Player's Recent videos and Translate's bookmarked sentences
 ([Player](player.md#opening-a-video), [Translate](translate.md#translations)), word notes, Notes
 Without a Word included, the Media Library's photos and the words each is on, settings, the
 frequency dictionaries chosen, and recent searches ([Saved data](saved-data.md)). The profile's
-name, username, and photo are the same as the account's page on the website shows
-([Account](index.md#account)). Zenbu works the same signed out and offline: everything stays on
+name and username are the same as the account's page on the website shows, and its photo the same
+on every device running this app ([Account](index.md#account)). Zenbu works the same signed out and offline: everything stays on
 the phone, and the phone's copy is what the app shows.
 
 Check: package `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
 `AccountSignedOutTests`, `AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`,
-`AccountSyncProfileTests`, `AccountSyncKeptTests`, and `AccountSyncPhotoTests`, against a stand-in
-account service; `SyncedSettingsTests` and `FrequencyPackLifecycleTests` (a synced setting or
+`AccountSyncProfileTests`, `AccountSyncKeptTests`, `AccountSyncPhotoTests`, `AccountSyncNoteTests`,
+`AccountSyncFileTests`, and `AccountSyncRulesTests`, against a stand-in account service; `SyncedSettingsTests` and `FrequencyPackLifecycleTests` (a synced setting or
 choice reaching what shows it); UI `AccountUITests` (offline).
 
 What stays on each device on purpose:
@@ -24,6 +24,8 @@ What stays on each device on purpose:
 - **Downloaded dictionaries and language packs**: each device downloads its own. The frequency
   dictionaries the learner chose sync, and a device downloads the ones it lacks.
 - **The email typed while signed out**, which is this phone's own.
+- **How each screen is left**: the camera's flash, and which sections of the grade and radical
+  pickers are closed, which suit each device.
 
 **Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
 Google** (in builds given a Google client ID, which every build is), and an emailed code: the learner enters their
@@ -46,9 +48,12 @@ of, the app sends the account everything on the phone: every known word, every l
 words, Recent's videos, bookmarked sentences, notes, photos with their words (each photo's file
 first), the profile photo, each setting changed from its standard, and the frequency dictionaries
 chosen if they aren't the standard ones, then brings down everything the account already has.
-Recent searches go up once the account's first answer brings the key their IDs are made with. A
-phone that signed in before the app synced any of these sends them once, after updating. The same
-Apple ID, Google account, or email reaches the same account in every app.
+Recent searches go up once the account's first answer brings the key their IDs are made with, and
+a search removed before then is removed from the account too. The first sync gathers all of it,
+so the sign-in sheet closes at once, and a phone that's closed or signed out before that sync
+sends it at the next one. A phone that signed in before the app synced any of these sends them
+once, after updating. The same Apple ID, Google account, or email reaches the same account in
+every app.
 
 **The profile at sign-in.** Each time the phone signs in, it reads the account's name and username,
 and the account's wins over the phone's for each it has. One the account has empty is filled from
@@ -71,7 +76,8 @@ as a new list.
 Check: package `AccountSignedOutTests`.
 
 **When it syncs.** After each change to a known word, a list, Recent, a bookmark, a note, a photo or
-its words, a setting, a search, or the profile, when the app opens or returns to
+its words, a setting, or the profile (a search goes with the next sync, rather than starting
+one), when the app opens or returns to
 the foreground with changes waiting or a last sync over 15 minutes ago, when iOS gives it time in
 the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
 changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
@@ -108,22 +114,35 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   app's edit gives way, and the profile shows as the website has it. One the account refuses, such
   as a username someone else has, goes back on the phone, and Profile says why until the next edit.
 - A note edited on two devices keeps both: the edit that syncs second becomes a new note on the
-  same word. A note deleted on one device stays on another that edited it since. A note the account
-  refuses, such as one over 10,000 characters, stays on the phone, untouched, without syncing.
+  same word, and a note edited twice before it synced becomes one new note, its latest text. An
+  edit made on a page that was open while a sync changed the note becomes a note of its own beside
+  the newer text, and an open page shows what arrived. A note deleted on one device stays on another
+  that edited it since. A note the account refuses, such as one over 10,000 characters, stays on
+  the phone untouched, even when the account's copy of it comes down, until the learner changes it.
 - A photo goes up with its file before the change that names it, and another device downloads
   the file once; a device that already holds the same image shows it without downloading. Removing
   a photo's last word removes it everywhere, but a word added on a device that hadn't seen that
   brings it back to every device. Deleting a photo in the Media Library deletes it and its words
   everywhere, and a word added to it elsewhere since is dropped. A file the account refuses (over
   12 MB, not an image it takes, or past 1,000 photos) stays on the phone with its words, without
-  syncing; while the account has no photo storage, photos and their words wait, and the rest
-  syncs. A file the account can't send, or won't while it isn't subscribed, never deletes the
-  photo: it's tried again the next time the app opens.
+  syncing, and Zenbu Account says how many and why; one past 1,000 goes again the next time the
+  app opens. While the account has no photo storage, photos and their words wait, Zenbu Account
+  says so, and the rest syncs. Files go up a few at a time beside everything else, and one cut off
+  goes again without the ones before it. A file the account can't send, or won't while it isn't
+  subscribed, never deletes the photo: it's tried again the next time the app opens. One cut off,
+  answered 5xx, or that the phone can't save yet is tried at the next sync, and one answered 429
+  after the seconds it says. The Media Library says how many photos are on their way, and shows
+  each as it arrives.
 - The profile photo set or removed on one device shows the same on the others; of two changes,
-  the one that syncs second gives way.
+  the one that syncs second gives way. A first sync fills an account whose photo was removed from
+  the phone's, and signing in to a different account never gives it the last account's photo.
 - A setting changed on two devices takes the first to sync, and the other device shows it. Each
   setting is its own, so changing furigana on one device never undoes the speech speed set on
-  another.
+  another. One the account refuses stays on the phone and goes again the next time the app
+  opens. A sort by a frequency dictionary this phone hasn't downloaded yet shows as Default and
+  keeps the choice. Frequency dictionaries chosen on another device download on their own, with
+  their progress in Frequency Dictionaries, never on cellular or in Low Data Mode, and are tried
+  again the next time the app opens if they couldn't.
 - A search on two devices is one search, kept at its later time. A search removed on one device is
   removed everywhere, even from a device that searched it again without having heard of the
   removal; searching it after that brings it back. The account keeps the latest 50.

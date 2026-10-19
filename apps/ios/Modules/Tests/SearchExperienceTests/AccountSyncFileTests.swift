@@ -163,15 +163,7 @@ struct AccountSyncFileTests {
           ], cursor: "c2")
       },
       files: { _ in held.after(.answer(status: 200, headers: [:], body: file)) })
-    let sync = Task { try await fixture.sync.sync() }
-    while fixture.server.requests(to: "GET /v1/photos/\(file.sha256)").isEmpty {
-      try await Task.sleep(for: .milliseconds(5))
-    }
-    fixture.sync.endSession()
-    await fixture.sync.begin(
-      AccountSignIn(sessionToken: "session-2.signed", userID: "learner-2", email: "second@example.com"))
-    held.letGo()
-    try await sync.value
+    try await fixture.syncAcrossAnotherSignIn(letting: held, once: "GET /v1/photos/\(file.sha256)")
 
     #expect(!held.wasNeverLetGo, "the held download was never let go")
     #expect(await shown(in: fixture) == 0)

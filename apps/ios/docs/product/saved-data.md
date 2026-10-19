@@ -123,6 +123,9 @@ in, each also goes to the learner's Zenbu account, as the app saved it, and down
 devices ([Zenbu account and sync](account-sync.md)). The Media Library is not currently a general
 file store, import system, analysis tool, or publishing destination.
 
+A photo from Files or a drop loses where and how it was taken (its GPS, camera, and other metadata)
+when it's saved, keeping which way is up; the camera's and the photo library's copies never had it.
+
 Deleting a photo, or removing it from its last word, here or on another signed-in device, deletes
 its image at once, unless a copy of
 the index kept aside (below) names the photo, or one can't be read. Then the image goes later,
