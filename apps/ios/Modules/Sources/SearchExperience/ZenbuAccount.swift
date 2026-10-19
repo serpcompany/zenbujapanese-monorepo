@@ -15,15 +15,20 @@ struct SignInProviders: Sendable {
 @Observable
 final class ZenbuAccount {
   static let shared: ZenbuAccount? = AccountServiceConfiguration.resolve().map {
-    ZenbuAccount(
+    let account = ZenbuAccount(
       configuration: $0, session: LaunchHarness.accountSession ?? AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
       watchHistory: .shared, translations: .shared, profile: .shared,
+      store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
+    account.subscription.listen()
+    account.catchUpOnTheSubscription()
+    return account
   }
 
   let configuration: AccountServiceConfiguration
   let sync: AccountSync
+  let subscription: AccountSubscription
   @ObservationIgnored let scheduler: AccountSyncScheduler
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let session: URLSession
@@ -38,6 +43,7 @@ final class ZenbuAccount {
     watchHistory: WatchHistory,
     translations: ConversationHistory,
     profile: UserProfile,
+    store: any AppStorePurchases,
     fileURL: URL = AccountSync.defaultFileURL,
     providers: SignInProviders = .system,
     now: @escaping @MainActor () -> Date = Date.init,
@@ -53,9 +59,20 @@ final class ZenbuAccount {
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
       translations: translations, profile: profile, fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now, clock: retryClock)
+    subscription = AccountSubscription(
+      api: api, tokens: sync.tokens, store: store,
+      fileURL: fileURL.deletingLastPathComponent().appending(path: AccountSubscription.fileName),
+      signedInAs: { [sync] in sync.account?.userID })
+    subscription.onActive = { [scheduler] in scheduler.syncNow() }
   }
 
   var account: SignedInAccount? { sync.account }
+
+  var syncNeedsSubscription: Bool {
+    guard account != nil else { return false }
+    if case .refused(402, _, _, _) = sync.lastFailure { return true }
+    return subscription.syncNeedsSubscription
+  }
   var offersGoogle: Bool { configuration.googleClientID != nil }
   var offersApple: Bool { configuration.offersApple }
 
@@ -121,6 +138,14 @@ final class ZenbuAccount {
     }
     scheduler.stop()
     sync.forgetAccount()
+    subscription.forget()
+  }
+
+  func catchUpOnTheSubscription() {
+    Task {
+      await sync.ready()
+      if account != nil { await subscription.signedIn() }
+    }
   }
 
   private func accountIsGone() async throws -> Bool {
@@ -137,6 +162,7 @@ final class ZenbuAccount {
     await sync.begin(signIn)
     scheduler.stop()
     scheduler.syncNow()
+    await subscription.signedIn()
   }
 
   private func reauthenticate(_ signIn: AccountSignIn) async throws {

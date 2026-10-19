@@ -90,6 +90,10 @@ struct AccountAPI: Sendable {
     let appleAuthorizationCode: String?
   }
 
+  private struct AppleTransaction: Encodable {
+    let signedTransaction: String
+  }
+
   func signInNonce() async throws -> String {
     try await decoded(Nonce.self, from: send("POST", "v1/auth/sign-in/nonce", body: json(Empty())))
       .nonce
@@ -142,6 +146,20 @@ struct AccountAPI: Sendable {
 
   func profile(accessToken: String) async throws -> SyncedProfile {
     try decoded(SyncedProfile.self, from: await send("GET", "v1/me", bearer: accessToken))
+  }
+
+  func subscription(accessToken: String) async throws -> KnownSubscription {
+    try decoded(
+      KnownSubscription.self, from: await send("GET", "v1/me/subscription", bearer: accessToken))
+  }
+
+  func sendAppleTransaction(_ signedTransaction: String, accessToken: String) async throws
+    -> KnownSubscription
+  {
+    let body = AppleTransaction(signedTransaction: signedTransaction)
+    return try decoded(
+      KnownSubscription.self,
+      from: await send("POST", "v1/me/subscription/apple", body: json(body), bearer: accessToken))
   }
 
   func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws {

@@ -26,6 +26,12 @@ import Foundation
 
     private static func answer(_ route: String, body: Data) -> (Int, Any, [String: String]) {
       switch route {
+      case "GET /v1/me/subscription":
+        (200, StandInSubscription.shared.answer, [:])
+      case "POST /v1/me/subscription/apple":
+        (200, StandInSubscription.shared.buy(body), [:])
+      case "POST /v1/sync" where StandInSubscription.shared.refusesSync:
+        (402, ["error": ["code": "subscription_required", "message": "Subscribe to sync"]], [:])
       case "POST /v1/auth/sign-in/nonce":
         (200, ["nonce": "stand-in-nonce"], [:])
       case "POST /v1/auth/sign-in/social", "POST /v1/auth/sign-in/email-otp":
