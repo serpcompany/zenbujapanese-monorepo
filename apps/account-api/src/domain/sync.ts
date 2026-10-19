@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { bookmarks } from './bookmarks'
 import type { Scope } from './clients'
-import type { Cursors } from './cursor'
+import type { Cursors, Position } from './cursor'
 import {
   type Change,
   type ClientMutation,
@@ -230,23 +230,33 @@ async function changesIn(
   return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
+const fromTheStart: Position = { sequence: 0, forgotten: 0 }
+
+const missedWhatWasForgotten = (from: Position, forgotten: number) =>
+  from.sequence > 0 && forgotten > from.forgotten && from.sequence < forgotten
+
+const readingEverything = (request: SyncRequest, from: Position) =>
+  !request.cursor || from.sequence < from.forgotten
+
 export function syncer(
   store: AccountStore,
   cursors: Cursors,
   searchKeys: (userId: string) => string,
   afterChanges: () => void
 ) {
-  return async (
+  return async function sync(
     userId: string,
     request: SyncRequest,
     granted: ReadonlySet<Scope>
-  ): Promise<SyncAnswer> => {
+  ): Promise<SyncAnswer> {
     if (!(await store.profile(userId))) return { status: 'no_account' }
-    const after = request.cursor ? cursors.decode(userId, request.cursor) : 0
-    if (after === null || after > (await store.journalHead())) return { status: 'invalid_cursor' }
-    if (after > 0 && after < (await store.forgottenThrough(userId))) {
+    const from = request.cursor ? cursors.decode(userId, request.cursor) : fromTheStart
+    if (from === null || from.sequence > (await store.journalHead())) {
       return { status: 'invalid_cursor' }
     }
+    const forgotten = await store.forgottenThrough(userId)
+    if (missedWhatWasForgotten(from, forgotten)) return { status: 'invalid_cursor' }
+    const after = from.sequence
     const results: MutationResult[] = []
     const context = { granted, searchKey: searchKeys(userId) }
     for (const mutation of request.mutations ?? []) {
@@ -255,19 +265,20 @@ export function syncer(
       results.push(result)
     }
     if (results.some(result => result.status === 'applied')) afterChanges()
+    const mark = readingEverything(request, from) ? await store.forgottenThrough(userId) : forgotten
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)
     const changes = await changesIn(store.reader(userId), page, granted)
     if (!changes) return { status: 'no_account' }
     const last = page.at(-1)
+    const same = !last && mark === from.forgotten ? request.cursor : null
     return {
       status: 'synced',
       results,
       changes,
-      cursor: last
-        ? cursors.encode(userId, last.sequence)
-        : (request.cursor ?? cursors.encode(userId, after)),
+      cursor:
+        same || cursors.encode(userId, { sequence: last?.sequence ?? after, forgotten: mark }),
       hasMore: entries.length > limit,
       ...(granted.has('searches:read') ? { searchKey: context.searchKey } : {})
     }

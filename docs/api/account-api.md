@@ -155,7 +155,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 - **200**, [`SyncAnswer`](#syncanswer): The results and the changes.
 - **400** `bad_request`: The body is not JSON, or not this shape.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
-- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or is older than a note, photo, or photo word's deletion the account has since forgotten. Nothing was applied. Sync again with no cursor, keep what comes back, and drop what your app holds from the account that doesn't.
+- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.

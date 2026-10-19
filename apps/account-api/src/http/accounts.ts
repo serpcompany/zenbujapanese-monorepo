@@ -196,7 +196,7 @@ const sync = createRoute({
     401: unauthorized,
     410: refusal({
       invalid_cursor:
-        "The cursor isn't one this service gave this account, is past what it holds, as after a restore, or is older than a note, photo, or photo word's deletion the account has since forgotten. Nothing was applied. Sync again with no cursor, keep what comes back, and drop what your app holds from the account that doesn't."
+        "The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once."
     }),
     413: tooLarge,
     429: tooMany(requestsPerMinute.sync),

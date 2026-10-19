@@ -25,6 +25,7 @@ interface Queued {
 
 const listOf = (key: string) => key.slice('listWord:'.length).split('/')[0]
 const wordsOf: Record<string, string> = { list: 'listWord', photo: 'photoWord' }
+const forgettableKinds = new Set(['wordNote', 'photo', 'photoWord'])
 
 export class SyncClient {
   readonly local = new Map<string, Entity>()
@@ -78,7 +79,8 @@ export class SyncClient {
 
   private dropAllBut(seen: ReadonlySet<string>) {
     for (const [key, entity] of [...this.local]) {
-      if (entity.version > 0 && !seen.has(key)) this.local.delete(key)
+      const forgettable = forgettableKinds.has(key.slice(0, key.indexOf(':')))
+      if (forgettable && entity.version > 0 && !seen.has(key)) this.local.delete(key)
     }
   }
 
@@ -95,6 +97,9 @@ export class SyncClient {
           ...(fields ? { fields } : {})
         }))
       })
+      if (answer.status === 410 && rereading) {
+        throw new Error(`a read from no cursor was refused: ${JSON.stringify(answer.body)}`)
+      }
       if (answer.status === 410 && this.cursor !== null) {
         this.queue = queue
         this.cursor = null
