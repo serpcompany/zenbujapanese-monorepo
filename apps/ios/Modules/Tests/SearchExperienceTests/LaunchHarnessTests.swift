@@ -91,4 +91,15 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkToOpen([LaunchHarness.openLinkKey: link])?.absoluteString == link)
     #expect(LaunchHarness.linkToOpen([:]) == nil)
   }
+
+  @Test("a Zenbu Dev launch sets how many words Siri hears, and Siri's own launches keep it")
+  func siriWordLimit() throws {
+    let suite = "LaunchHarnessTests-\(UUID().uuidString)"
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    #expect(LaunchHarness.siriWordLimit([:], keptIn: defaults) == nil)
+    #expect(LaunchHarness.siriWordLimit([LaunchHarness.siriWordLimitKey: "300"], keptIn: defaults) == 300)
+    #expect(LaunchHarness.siriWordLimit([:], keptIn: defaults) == 300)
+    #expect(LaunchHarness.siriWordLimit([LaunchHarness.siriWordLimitKey: "0"], keptIn: defaults) == nil)
+  }
 }

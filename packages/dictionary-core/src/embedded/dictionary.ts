@@ -9,9 +9,10 @@ import {
   writtenLanguage
 } from '../search/query'
 import { creditsShownBy } from '../sources/credits'
-import type { EmbeddedHost } from './host'
+import { type EmbeddedHost, hostDatabase } from './host'
 import { canonicalEntries, EmbeddedLookup } from './lookup'
 import { EmbeddedPresentation } from './presentation'
+import { siriWords } from './siri-words'
 import { type AnalyzeText, EmbeddedText, type HostWord } from './text'
 
 type Outcome = { value: unknown } | { error: string } | { analyze: string }
@@ -59,6 +60,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     isKanji: isKanjiCharacter,
     romaji,
     sentenceRomaji: words => sentenceRomaji(JSON.parse(words)),
+    siriWords: request => siriWords(hostDatabase(host), JSON.parse(request)),
     checkExamples: () => text().checkExamples(),
     tokenizerReady: () => text().tokenizerReady(),
     exampleCount: query => text().exampleCount(query),

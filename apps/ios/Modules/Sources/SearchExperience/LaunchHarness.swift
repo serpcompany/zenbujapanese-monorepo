@@ -13,6 +13,7 @@ enum LaunchHarness {
   static let openLinkKey = "ZENBU_OPEN_LINK"
   static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
   static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
+  static let siriWordLimitKey = "ZENBU_SIRI_WORD_LIMIT"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -74,6 +75,18 @@ enum LaunchHarness {
   static func linkToOpen(_ environment: [String: String]) -> URL? {
     #if DEBUG
       environment[openLinkKey].flatMap(URL.init(string:))
+    #else
+      nil
+    #endif
+  }
+
+  static func siriWordLimit(_ environment: [String: String], keptIn defaults: UserDefaults) -> Int? {
+    #if DEBUG
+      if let given = environment[siriWordLimitKey].flatMap(Int.init) {
+        defaults.set(given, forKey: siriWordLimitKey)
+      }
+      let kept = defaults.integer(forKey: siriWordLimitKey)
+      return kept > 0 ? kept : nil
     #else
       nil
     #endif

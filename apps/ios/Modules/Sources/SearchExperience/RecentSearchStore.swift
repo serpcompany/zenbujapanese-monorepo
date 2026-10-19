@@ -8,9 +8,18 @@ struct RecentSearchStore: Sendable {
 
   static let live = RecentSearchStore(
     load: { await RecentSearchHistory.shared.load() },
-    record: { query in await RecentSearchHistory.shared.record(query) },
-    remove: { query in await RecentSearchHistory.shared.remove(query) },
-    removeAll: { await RecentSearchHistory.shared.removeAll() }
+    record: { query in
+      await RecentSearchHistory.shared.record(query)
+      SiriWordList.learnerWordsChanged()
+    },
+    remove: { query in
+      await RecentSearchHistory.shared.remove(query)
+      SiriWordList.learnerWordsChanged()
+    },
+    removeAll: {
+      await RecentSearchHistory.shared.removeAll()
+      SiriWordList.learnerWordsChanged()
+    }
   )
 }
 

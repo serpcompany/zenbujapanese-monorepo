@@ -800,6 +800,228 @@
     };
   }
 
+  // src/detail/frequency.ts
+  function tierForRank(rank) {
+    if (rank <= 1500) return "veryCommon";
+    if (rank <= 5e3) return "common";
+    if (rank <= 15e3) return "moderate";
+    if (rank <= 3e4) return "uncommon";
+    return "rare";
+  }
+  function tierForLevel(level) {
+    if (level >= 4) return "veryCommon";
+    if (level >= 2) return "common";
+    return "moderate";
+  }
+  var defaultFrequencyPacks = [
+    {
+      pack: "jlpt",
+      id: "zenbu.jlpt.waller.levels",
+      kind: "level",
+      name: "JLPT Levels",
+      domain: "JLPT study levels (unofficial)",
+      description: "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+      version: "2025-08-26",
+      source: "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+      coveredSourceRows: 8293
+    },
+    {
+      pack: "tubelex",
+      id: "zenbu.tubelex.youtube.ja.unidic-3.1",
+      kind: "rank",
+      name: "YouTube",
+      domain: "Everyday YouTube Japanese · TUBELEX",
+      description: "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+      version: "2025.1",
+      source: "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+      coveredSourceRows: 351453
+    }
+  ];
+  function defaultValue(pack, rows) {
+    const row = rows.find((candidate) => candidate.pack === pack);
+    return !row ? null : row.pack === "jlpt" ? row.level : row.rank;
+  }
+  function defaultFrequencyLookups(rows) {
+    return defaultFrequencyPacks.map((dictionary) => ({
+      dictionary,
+      value: defaultValue(dictionary.pack, rows)
+    }));
+  }
+  var familyShortNames = /* @__PURE__ */ new Map([
+    ["zenbu.tubelex.youtube", "YouTube"],
+    ["zenbu.wikipedia.written", "Wikipedia"],
+    ["zenbu.jlpt.waller", "JLPT"],
+    ["zenbu.jiten.video-games", "Games"]
+  ]);
+  function frequencyFamily(id) {
+    return id.split(".").filter((part) => part !== "").slice(0, 3).join(".");
+  }
+  function frequencyShortName(dictionary) {
+    return familyShortNames.get(frequencyFamily(dictionary.id)) ?? dictionary.name;
+  }
+  function frequencySortName(dictionary) {
+    return dictionary.kind === "level" ? frequencyShortName(dictionary) : dictionary.name;
+  }
+  var listed = (lookup) => "unavailable" in lookup || lookup.value === null ? null : { dictionary: lookup.dictionary, value: lookup.value };
+  function frequencySortValue(lookup) {
+    const found = listed(lookup);
+    if (!found) return null;
+    return found.dictionary.kind === "level" ? 6 - found.value : found.value;
+  }
+  function frequencyTier(lookup) {
+    const found = listed(lookup);
+    if (!found) return null;
+    return found.dictionary.kind === "level" ? tierForLevel(found.value) : tierForRank(found.value);
+  }
+  var levelExplanation = "JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.";
+  var tierLabels = {
+    veryCommon: "very common",
+    common: "common",
+    moderate: "moderately common",
+    uncommon: "uncommon",
+    rare: "rare"
+  };
+  var formatRank = new Intl.NumberFormat("en-US");
+  function levelResult(source, level) {
+    return { source, value: `N${level}`, tier: tierForLevel(level), spokenTier: null };
+  }
+  function rankResult(source, rank) {
+    const tier = tierForRank(rank);
+    return { source, value: formatRank.format(rank), tier, spokenTier: tierLabels[tier] };
+  }
+  function topPercent(rank, coveredSourceRows) {
+    return `Top ${(rank / coveredSourceRows * 100).toFixed(2)}%`;
+  }
+  var packDetails = ({
+    name: name2,
+    domain,
+    description,
+    version,
+    source
+  }) => ({ name: name2, domain, description, version, source });
+  function listedRow(dictionary, value) {
+    const source = frequencyShortName(dictionary);
+    const pack = packDetails(dictionary);
+    if (value === null) {
+      const isLevel = dictionary.kind === "level";
+      return {
+        pack: dictionary.id,
+        source,
+        value: isLevel ? "Not listed" : "No rank",
+        tier: null,
+        spokenTier: null,
+        label: isLevel ? `${source} does not list this entry` : `${source} has no rank for this entry`,
+        details: {
+          pack,
+          section: "Frequency",
+          rows: [],
+          explanation: isLevel ? `${dictionary.name} does not list this entry. ${levelExplanation}` : `${dictionary.name} has no mapped frequency rank for this entry.`
+        }
+      };
+    }
+    if (dictionary.kind === "level") {
+      const result4 = levelResult(source, value);
+      return {
+        pack: dictionary.id,
+        ...result4,
+        label: `${source} level ${result4.value}`,
+        details: {
+          pack,
+          section: "Level",
+          rows: [{ label: "JLPT Level", value: result4.value }],
+          explanation: null
+        }
+      };
+    }
+    const result3 = rankResult(source, value);
+    return {
+      pack: dictionary.id,
+      ...result3,
+      label: `${source} frequency rank ${value}, ${result3.spokenTier}`,
+      details: {
+        pack,
+        section: "Frequency",
+        rows: [
+          { label: "Rank", value: `#${result3.value}` },
+          { label: "Percentile", value: topPercent(value, dictionary.coveredSourceRows) }
+        ],
+        explanation: null
+      }
+    };
+  }
+  function frequencyLookupRow(lookup) {
+    if (!("unavailable" in lookup)) return listedRow(lookup.dictionary, lookup.value);
+    const source = lookup.dictionary ? frequencyShortName(lookup.dictionary) : "Frequency";
+    return {
+      pack: lookup.dictionary?.id ?? null,
+      source,
+      value: "Unavailable",
+      tier: null,
+      spokenTier: null,
+      label: `${source} rank unavailable`,
+      details: {
+        pack: lookup.dictionary ? packDetails(lookup.dictionary) : null,
+        section: "Frequency",
+        rows: [],
+        explanation: lookup.unavailable
+      }
+    };
+  }
+  function frequencyRowDetails(rows) {
+    return defaultFrequencyPacks.map(
+      (dictionary) => listedRow(dictionary, defaultValue(dictionary.pack, rows))
+    );
+  }
+  function frequencyLookupChips(lookups, leadingFamily = null) {
+    if (lookups === null) return { chips: [], spoken: "Frequency rank loading" };
+    if (lookups.length === 0) return { chips: [], spoken: "No frequency dictionary enabled" };
+    const leads = (lookup) => leadingFamily !== null && lookup.dictionary !== null && frequencyFamily(lookup.dictionary.id) === leadingFamily;
+    const inOrder2 = [...lookups.filter(leads), ...lookups.filter((lookup) => !leads(lookup))];
+    const shown = inOrder2.filter((lookup, offset) => {
+      if (listed(lookup)) return true;
+      if (!("unavailable" in lookup) && lookup.dictionary.kind === "level") return false;
+      return offset === 0;
+    });
+    if (shown.length === 0) return { chips: [], spoken: "No frequency rank" };
+    const rows = shown.map(frequencyLookupRow);
+    return {
+      chips: rows.map(({ pack, source, value, tier, spokenTier }) => ({
+        pack,
+        source,
+        value: tier === null ? "—" : value,
+        tier,
+        spokenTier
+      })),
+      spoken: rows.map((row) => row.label).join(", ")
+    };
+  }
+  function frequencyChips(rows) {
+    return frequencyLookupChips(defaultFrequencyLookups(rows)).chips.map(
+      ({ source, value, tier, spokenTier }) => ({ source, value, tier, spokenTier })
+    );
+  }
+  function frequencyUnavailableNotice(entries) {
+    const dictionaryCount = Math.max(0, ...entries.map((lookups) => lookups.length));
+    const unavailable = [];
+    for (let position = 0; position < dictionaryCount; position++) {
+      for (const lookups of entries) {
+        const lookup = lookups[position];
+        if (lookup && "unavailable" in lookup) {
+          unavailable.push(lookup);
+          break;
+        }
+      }
+    }
+    if (unavailable.length === 0) return null;
+    if (unavailable.length === dictionaryCount) {
+      return `Frequency ordering unavailable. Showing dictionary relevance order. ${unavailable[0].unavailable}`;
+    }
+    const names = unavailable.map(
+      ({ dictionary }) => dictionary ? frequencyShortName(dictionary) : "A frequency dictionary"
+    );
+    return `${listedWithAnd(names)} unavailable. Search is ordered by the other enabled dictionaries.`;
+  }
+
   // src/browse/lists.ts
   var rankedListLimit = 1e4;
   var rankBandSize = 1e3;
@@ -975,6 +1197,55 @@
     checkAttached(db, "word_index");
   }
 
+  // src/artifact/frequency.ts
+  var unreadableFrequency = "Frequency data unavailable";
+  var evidenceTables = {
+    level: { table: "level_evidence", value: "level" },
+    rank: { table: "frequency_evidence", value: "rank" }
+  };
+  function valuesById(rows) {
+    if (!rows) return null;
+    const values = /* @__PURE__ */ new Map();
+    for (const { id, value } of rows) {
+      if (typeof id !== "string" || typeof value !== "number" || !Number.isInteger(value)) return null;
+      values.set(id, value);
+    }
+    return values;
+  }
+  function readFrequency(lists, ids) {
+    const asked = [...new Set(ids)];
+    const listed3 = [JSON.stringify(asked)];
+    const dictionaries = [];
+    const lookups = asked.map(() => []);
+    for (const list of lists) {
+      if ("unavailable" in list) {
+        const dictionary2 = list.dictionary ? dictionaries.push(list.dictionary) - 1 : null;
+        for (const entry of lookups) entry.push({ dictionary: dictionary2, unavailable: list.unavailable });
+        continue;
+      }
+      const dictionary = dictionaries.push(list.dictionary) - 1;
+      if (asked.length === 0) continue;
+      const { table, value } = evidenceTables[list.dictionary.kind];
+      const values = valuesById(
+        list.rows(
+          `SELECT lower(hex(language_reference_id)) AS id, ${value} AS value
+         FROM ${list.schema ? `${list.schema}.` : ""}${table}
+         WHERE language_reference_id IN (${listedIds})`,
+          listed3
+        )
+      );
+      for (let index = 0; index < asked.length; index++) {
+        lookups[index].push(
+          values ? { dictionary, value: values.get(asked[index]) ?? null } : { dictionary, unavailable: unreadableFrequency }
+        );
+      }
+    }
+    return {
+      dictionaries,
+      entries: Object.fromEntries(asked.map((id, index) => [id, lookups[index]]))
+    };
+  }
+
   // src/search/database.ts
   var interruptedSearch = "The search was interrupted";
   function stopIfInterrupted(client, step) {
@@ -1010,6 +1281,49 @@
       secondaryMask: row.secondary_mask ?? 0,
       newsFrequencyBand: row.news_frequency_band
     };
+  }
+
+  // src/embedded/host.ts
+  function bytes(hex) {
+    const decoded = new Uint8Array(hex.length / 2);
+    for (let index = 0; index < decoded.length; index++) {
+      decoded[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
+    }
+    return decoded;
+  }
+  function hostDatabase(host) {
+    return {
+      all(sql, params = []) {
+        if (!host.all) throw new Error("The host has no dictionary to read");
+        const answer = host.all(sql, JSON.stringify(params));
+        if (!answer?.rows) throw new Error(answer?.error ?? "The host returned no rows");
+        stopIfInterrupted(host, 0);
+        for (const column of answer.blobs ?? []) {
+          for (const row of answer.rows) {
+            const value = row[column];
+            if (typeof value === "string") row[column] = bytes(value);
+          }
+        }
+        return answer.rows;
+      },
+      interrupted: () => host.interrupted?.() ?? false
+    };
+  }
+  function hostFrequencyLists(host) {
+    if (!host.frequencyLists) return [];
+    const enabled = host.frequencyLists();
+    if (!enabled) return null;
+    if ("unavailable" in enabled) return [{ dictionary: null, unavailable: enabled.unavailable }];
+    return enabled.lists.map(
+      ({ dictionary, unavailable }) => unavailable === void 0 ? {
+        dictionary,
+        rows: (sql, params) => host.frequencyListRows?.(dictionary.id, sql, JSON.stringify(params))?.rows ?? null
+      } : { dictionary, unavailable }
+    );
+  }
+  function hostFrequency(host, ids) {
+    const lists = hostFrequencyLists(host);
+    return lists && readFrequency(lists, ids);
   }
 
   // src/search/rank.ts
@@ -1516,277 +1830,6 @@
   function wordSlug(headword, reading) {
     const slug = headword.normalize("NFC").replace(/[/?#%\\\s]+/gu, "-").replace(/^-+|-+$/g, "");
     return slug || reading;
-  }
-
-  // src/detail/frequency.ts
-  function tierForRank(rank) {
-    if (rank <= 1500) return "veryCommon";
-    if (rank <= 5e3) return "common";
-    if (rank <= 15e3) return "moderate";
-    if (rank <= 3e4) return "uncommon";
-    return "rare";
-  }
-  function tierForLevel(level) {
-    if (level >= 4) return "veryCommon";
-    if (level >= 2) return "common";
-    return "moderate";
-  }
-  var defaultFrequencyPacks = [
-    {
-      pack: "jlpt",
-      id: "zenbu.jlpt.waller.levels",
-      kind: "level",
-      name: "JLPT Levels",
-      domain: "JLPT study levels (unofficial)",
-      description: "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
-      version: "2025-08-26",
-      source: "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
-      coveredSourceRows: 8293
-    },
-    {
-      pack: "tubelex",
-      id: "zenbu.tubelex.youtube.ja.unidic-3.1",
-      kind: "rank",
-      name: "YouTube",
-      domain: "Everyday YouTube Japanese · TUBELEX",
-      description: "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
-      version: "2025.1",
-      source: "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
-      coveredSourceRows: 351453
-    }
-  ];
-  function defaultValue(pack, rows) {
-    const row = rows.find((candidate) => candidate.pack === pack);
-    return !row ? null : row.pack === "jlpt" ? row.level : row.rank;
-  }
-  function defaultFrequencyLookups(rows) {
-    return defaultFrequencyPacks.map((dictionary) => ({
-      dictionary,
-      value: defaultValue(dictionary.pack, rows)
-    }));
-  }
-  var familyShortNames = /* @__PURE__ */ new Map([
-    ["zenbu.tubelex.youtube", "YouTube"],
-    ["zenbu.wikipedia.written", "Wikipedia"],
-    ["zenbu.jlpt.waller", "JLPT"],
-    ["zenbu.jiten.video-games", "Games"]
-  ]);
-  function frequencyFamily(id) {
-    return id.split(".").filter((part) => part !== "").slice(0, 3).join(".");
-  }
-  function frequencyShortName(dictionary) {
-    return familyShortNames.get(frequencyFamily(dictionary.id)) ?? dictionary.name;
-  }
-  function frequencySortName(dictionary) {
-    return dictionary.kind === "level" ? frequencyShortName(dictionary) : dictionary.name;
-  }
-  var listed = (lookup) => "unavailable" in lookup || lookup.value === null ? null : { dictionary: lookup.dictionary, value: lookup.value };
-  function frequencySortValue(lookup) {
-    const found = listed(lookup);
-    if (!found) return null;
-    return found.dictionary.kind === "level" ? 6 - found.value : found.value;
-  }
-  function frequencyTier(lookup) {
-    const found = listed(lookup);
-    if (!found) return null;
-    return found.dictionary.kind === "level" ? tierForLevel(found.value) : tierForRank(found.value);
-  }
-  var levelExplanation = "JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.";
-  var tierLabels = {
-    veryCommon: "very common",
-    common: "common",
-    moderate: "moderately common",
-    uncommon: "uncommon",
-    rare: "rare"
-  };
-  var formatRank = new Intl.NumberFormat("en-US");
-  function levelResult(source, level) {
-    return { source, value: `N${level}`, tier: tierForLevel(level), spokenTier: null };
-  }
-  function rankResult(source, rank) {
-    const tier = tierForRank(rank);
-    return { source, value: formatRank.format(rank), tier, spokenTier: tierLabels[tier] };
-  }
-  function topPercent(rank, coveredSourceRows) {
-    return `Top ${(rank / coveredSourceRows * 100).toFixed(2)}%`;
-  }
-  var packDetails = ({
-    name: name2,
-    domain,
-    description,
-    version,
-    source
-  }) => ({ name: name2, domain, description, version, source });
-  function listedRow(dictionary, value) {
-    const source = frequencyShortName(dictionary);
-    const pack = packDetails(dictionary);
-    if (value === null) {
-      const isLevel = dictionary.kind === "level";
-      return {
-        pack: dictionary.id,
-        source,
-        value: isLevel ? "Not listed" : "No rank",
-        tier: null,
-        spokenTier: null,
-        label: isLevel ? `${source} does not list this entry` : `${source} has no rank for this entry`,
-        details: {
-          pack,
-          section: "Frequency",
-          rows: [],
-          explanation: isLevel ? `${dictionary.name} does not list this entry. ${levelExplanation}` : `${dictionary.name} has no mapped frequency rank for this entry.`
-        }
-      };
-    }
-    if (dictionary.kind === "level") {
-      const result4 = levelResult(source, value);
-      return {
-        pack: dictionary.id,
-        ...result4,
-        label: `${source} level ${result4.value}`,
-        details: {
-          pack,
-          section: "Level",
-          rows: [{ label: "JLPT Level", value: result4.value }],
-          explanation: null
-        }
-      };
-    }
-    const result3 = rankResult(source, value);
-    return {
-      pack: dictionary.id,
-      ...result3,
-      label: `${source} frequency rank ${value}, ${result3.spokenTier}`,
-      details: {
-        pack,
-        section: "Frequency",
-        rows: [
-          { label: "Rank", value: `#${result3.value}` },
-          { label: "Percentile", value: topPercent(value, dictionary.coveredSourceRows) }
-        ],
-        explanation: null
-      }
-    };
-  }
-  function frequencyLookupRow(lookup) {
-    if (!("unavailable" in lookup)) return listedRow(lookup.dictionary, lookup.value);
-    const source = lookup.dictionary ? frequencyShortName(lookup.dictionary) : "Frequency";
-    return {
-      pack: lookup.dictionary?.id ?? null,
-      source,
-      value: "Unavailable",
-      tier: null,
-      spokenTier: null,
-      label: `${source} rank unavailable`,
-      details: {
-        pack: lookup.dictionary ? packDetails(lookup.dictionary) : null,
-        section: "Frequency",
-        rows: [],
-        explanation: lookup.unavailable
-      }
-    };
-  }
-  function frequencyRowDetails(rows) {
-    return defaultFrequencyPacks.map(
-      (dictionary) => listedRow(dictionary, defaultValue(dictionary.pack, rows))
-    );
-  }
-  function frequencyLookupChips(lookups, leadingFamily = null) {
-    if (lookups === null) return { chips: [], spoken: "Frequency rank loading" };
-    if (lookups.length === 0) return { chips: [], spoken: "No frequency dictionary enabled" };
-    const leads = (lookup) => leadingFamily !== null && lookup.dictionary !== null && frequencyFamily(lookup.dictionary.id) === leadingFamily;
-    const inOrder2 = [...lookups.filter(leads), ...lookups.filter((lookup) => !leads(lookup))];
-    const shown = inOrder2.filter((lookup, offset) => {
-      if (listed(lookup)) return true;
-      if (!("unavailable" in lookup) && lookup.dictionary.kind === "level") return false;
-      return offset === 0;
-    });
-    if (shown.length === 0) return { chips: [], spoken: "No frequency rank" };
-    const rows = shown.map(frequencyLookupRow);
-    return {
-      chips: rows.map(({ pack, source, value, tier, spokenTier }) => ({
-        pack,
-        source,
-        value: tier === null ? "—" : value,
-        tier,
-        spokenTier
-      })),
-      spoken: rows.map((row) => row.label).join(", ")
-    };
-  }
-  function frequencyChips(rows) {
-    return frequencyLookupChips(defaultFrequencyLookups(rows)).chips.map(
-      ({ source, value, tier, spokenTier }) => ({ source, value, tier, spokenTier })
-    );
-  }
-  function frequencyUnavailableNotice(entries) {
-    const dictionaryCount = Math.max(0, ...entries.map((lookups) => lookups.length));
-    const unavailable = [];
-    for (let position = 0; position < dictionaryCount; position++) {
-      for (const lookups of entries) {
-        const lookup = lookups[position];
-        if (lookup && "unavailable" in lookup) {
-          unavailable.push(lookup);
-          break;
-        }
-      }
-    }
-    if (unavailable.length === 0) return null;
-    if (unavailable.length === dictionaryCount) {
-      return `Frequency ordering unavailable. Showing dictionary relevance order. ${unavailable[0].unavailable}`;
-    }
-    const names = unavailable.map(
-      ({ dictionary }) => dictionary ? frequencyShortName(dictionary) : "A frequency dictionary"
-    );
-    return `${listedWithAnd(names)} unavailable. Search is ordered by the other enabled dictionaries.`;
-  }
-
-  // src/artifact/frequency.ts
-  var unreadableFrequency = "Frequency data unavailable";
-  var evidenceTables = {
-    level: { table: "level_evidence", value: "level" },
-    rank: { table: "frequency_evidence", value: "rank" }
-  };
-  function valuesById(rows) {
-    if (!rows) return null;
-    const values = /* @__PURE__ */ new Map();
-    for (const { id, value } of rows) {
-      if (typeof id !== "string" || typeof value !== "number" || !Number.isInteger(value)) return null;
-      values.set(id, value);
-    }
-    return values;
-  }
-  function readFrequency(lists, ids) {
-    const asked = [...new Set(ids)];
-    const listed3 = [JSON.stringify(asked)];
-    const dictionaries = [];
-    const lookups = asked.map(() => []);
-    for (const list of lists) {
-      if ("unavailable" in list) {
-        const dictionary2 = list.dictionary ? dictionaries.push(list.dictionary) - 1 : null;
-        for (const entry of lookups) entry.push({ dictionary: dictionary2, unavailable: list.unavailable });
-        continue;
-      }
-      const dictionary = dictionaries.push(list.dictionary) - 1;
-      if (asked.length === 0) continue;
-      const { table, value } = evidenceTables[list.dictionary.kind];
-      const values = valuesById(
-        list.rows(
-          `SELECT lower(hex(language_reference_id)) AS id, ${value} AS value
-         FROM ${list.schema ? `${list.schema}.` : ""}${table}
-         WHERE language_reference_id IN (${listedIds})`,
-          listed3
-        )
-      );
-      for (let index = 0; index < asked.length; index++) {
-        lookups[index].push(
-          values ? { dictionary, value: values.get(asked[index]) ?? null } : { dictionary, unavailable: unreadableFrequency }
-        );
-      }
-    }
-    return {
-      dictionaries,
-      entries: Object.fromEntries(asked.map((id, index) => [id, lookups[index]]))
-    };
   }
 
   // src/artifact/words.ts
@@ -2850,49 +2893,6 @@
       return [...sourcesByDepth.keys()].sort((lhs, rhs) => lhs - rhs).map((depth) => resultItems(sourcesByDepth.get(depth) ?? []));
     }
   };
-
-  // src/embedded/host.ts
-  function bytes(hex) {
-    const decoded = new Uint8Array(hex.length / 2);
-    for (let index = 0; index < decoded.length; index++) {
-      decoded[index] = Number.parseInt(hex.slice(index * 2, index * 2 + 2), 16);
-    }
-    return decoded;
-  }
-  function hostDatabase(host) {
-    return {
-      all(sql, params = []) {
-        if (!host.all) throw new Error("The host has no dictionary to read");
-        const answer = host.all(sql, JSON.stringify(params));
-        if (!answer?.rows) throw new Error(answer?.error ?? "The host returned no rows");
-        stopIfInterrupted(host, 0);
-        for (const column of answer.blobs ?? []) {
-          for (const row of answer.rows) {
-            const value = row[column];
-            if (typeof value === "string") row[column] = bytes(value);
-          }
-        }
-        return answer.rows;
-      },
-      interrupted: () => host.interrupted?.() ?? false
-    };
-  }
-  function hostFrequencyLists(host) {
-    if (!host.frequencyLists) return [];
-    const enabled = host.frequencyLists();
-    if (!enabled) return null;
-    if ("unavailable" in enabled) return [{ dictionary: null, unavailable: enabled.unavailable }];
-    return enabled.lists.map(
-      ({ dictionary, unavailable }) => unavailable === void 0 ? {
-        dictionary,
-        rows: (sql, params) => host.frequencyListRows?.(dictionary.id, sql, JSON.stringify(params))?.rows ?? null
-      } : { dictionary, unavailable }
-    );
-  }
-  function hostFrequency(host, ids) {
-    const lists = hostFrequencyLists(host);
-    return lists && readFrequency(lists, ids);
-  }
 
   // src/embedded/lookup.ts
   var sameText = (left, right) => left.normalize("NFC") === right.normalize("NFC");
@@ -4507,6 +4507,68 @@
     }
   };
 
+  // src/embedded/siri-words.ts
+  var easiestCommonLevel = 3;
+  var longestSpokenForm = 32;
+  var mostSpokenWords = 3;
+  var spokenLetters = /^[a-z]+(?:[ '-][a-z]+)*$/;
+  function plainLatin(text) {
+    return text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().trim().replace(/\s+/g, " ");
+  }
+  function romanized(text) {
+    const typed = plainLatin(text);
+    if (spokenLetters.test(typed)) return typed;
+    const reading = romaji(text);
+    return reading === null ? null : plainLatin(reading.replaceAll("'", ""));
+  }
+  function spokenForm(text) {
+    const spoken = romanized(text);
+    if (spoken === null || spoken.length > longestSpokenForm) return null;
+    return spokenLetters.test(spoken) && spoken.split(" ").length <= mostSpokenWords ? spoken : null;
+  }
+  function onlyReading(db, written3) {
+    const readings = db.all(
+      `SELECT DISTINCT e.reading FROM forms f JOIN entries e ON e.id = f.entry_id
+     WHERE f.form = ? AND f.kind = 0 LIMIT 2`,
+      [written3]
+    );
+    return readings.length === 1 ? readings[0].reading : null;
+  }
+  function learnerSpokenForm(db, { written: written3, reading = null }) {
+    const spoken = spokenForm(reading ?? written3);
+    if (spoken !== null || reading !== null) return spoken;
+    const only = onlyReading(db, written3);
+    return only === null ? null : spokenForm(only);
+  }
+  function commonWords(db) {
+    return db.all(
+      `SELECT e.headword, e.reading FROM jlpt.level_evidence l
+     JOIN entries e ON e.id = l.language_reference_id
+     LEFT JOIN tubelex.frequency_evidence t ON t.language_reference_id = l.language_reference_id
+     WHERE l.level >= ?
+     ORDER BY l.level DESC, t.rank IS NULL, t.rank, e.id`,
+      [easiestCommonLevel]
+    );
+  }
+  function siriWords(db, { learner: learner2, limit }) {
+    const words2 = [];
+    const spokenSoFar = /* @__PURE__ */ new Set();
+    const add = (written3, spoken) => {
+      if (spoken === null || spokenSoFar.has(spoken)) return;
+      spokenSoFar.add(spoken);
+      words2.push({ spoken, written: written3 });
+    };
+    for (const word of learner2) {
+      if (words2.length >= limit) return words2;
+      add(word.written, learnerSpokenForm(db, word));
+    }
+    for (const { headword, reading } of commonWords(db)) {
+      if (words2.length >= limit) return words2;
+      add(headword, spokenForm(reading));
+    }
+    return words2;
+  }
+
   // src/artifact/example-retrieval.ts
   var sentenceColumns = "e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english";
   var storedForm = normalizeQuery;
@@ -6011,6 +6073,7 @@
       isKanji: isKanjiCharacter,
       romaji,
       sentenceRomaji: (words2) => sentenceRomaji(JSON.parse(words2)),
+      siriWords: (request) => siriWords(hostDatabase(host), JSON.parse(request)),
       checkExamples: () => text().checkExamples(),
       tokenizerReady: () => text().tokenizerReady(),
       exampleCount: (query) => text().exampleCount(query),
