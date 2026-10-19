@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { VideoCard } from '@/components/products/product-videos'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { sampleVideo } from '@/test/sample-video'
 import { AreaShowcase, type ShowcaseArea } from './area-showcase'
 
@@ -34,7 +35,7 @@ const areas = [
       key: sampleVideo.youtubeId,
       label: sampleVideo.title,
       shape: 'card',
-      content: <VideoCard video={sampleVideo} />
+      content: <VideoCard video={sampleVideo} play={getDictionary('en').productPage.videos.play} />
     }
   ]),
   area('lists', 'Lists', [])
@@ -63,7 +64,9 @@ const button = (selector: string) => {
 }
 
 test('a video playing in an area stops when another area is chosen', () => {
-  act(() => root.render(<AreaShowcase label="Areas" areas={areas} />))
+  act(() =>
+    root.render(<AreaShowcase label="Areas" text={getDictionary('en').home.areas} areas={areas} />)
+  )
   act(() => button('button[aria-label="Play A sample video"]').click())
   expect(container.querySelector('iframe')?.getAttribute('title')).toBe(sampleVideo.title)
   act(() => button('[role="tab"]:not([aria-selected="true"])').click())

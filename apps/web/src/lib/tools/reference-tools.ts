@@ -4,6 +4,8 @@ import {
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
+import type { Locale } from '@/lib/i18n/config'
+import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
 import type { ProductMark } from '@/lib/products/catalog'
 import { site } from '@/lib/site'
 
@@ -14,41 +16,20 @@ export interface ReferenceTool {
   mark: ProductMark
 }
 
-export const referenceTools: readonly ReferenceTool[] = [
-  {
-    title: 'Dictionary',
-    line: 'Words and kanji, searched in Japanese, kana, romaji, or English.',
-    href: '/dictionary/',
-    mark: { glyph: site.mark, solid: true }
-  },
-  {
-    title: 'Hiragana chart',
-    line: 'Every hiragana, with common words for each.',
-    href: scriptPath('hiragana'),
-    mark: { glyph: 'ひ' }
-  },
-  {
-    title: 'Katakana chart',
-    line: 'Every katakana, with common words for each.',
-    href: scriptPath('katakana'),
-    mark: { glyph: 'ヒ' }
-  },
-  {
-    title: 'Kanji lists',
-    line: 'Kanji by school grade, JLPT level, and jinmeiyō.',
-    href: kanjiListsPath,
-    mark: { glyph: '漢' }
-  },
-  {
-    title: 'Frequency lists',
-    line: 'The most common words, from JLPT N5 to anime and YouTube.',
-    href: frequencyDictionariesPath,
-    mark: { symbol: 'chart' }
-  },
-  {
-    title: 'Word categories',
-    line: 'Words by part of speech, usage label, and subject.',
-    href: browsePath,
-    mark: { symbol: 'book' }
-  }
+const referenceTools: readonly {
+  id: keyof Dictionary['tools']['referenceTools']
+  href: string
+  mark: ProductMark
+}[] = [
+  { id: 'dictionary', href: '/dictionary/', mark: { glyph: site.mark, solid: true } },
+  { id: 'hiragana', href: scriptPath('hiragana'), mark: { glyph: 'ひ' } },
+  { id: 'katakana', href: scriptPath('katakana'), mark: { glyph: 'ヒ' } },
+  { id: 'kanji', href: kanjiListsPath, mark: { glyph: '漢' } },
+  { id: 'frequency', href: frequencyDictionariesPath, mark: { symbol: 'chart' } },
+  { id: 'categories', href: browsePath, mark: { symbol: 'book' } }
 ]
+
+export function referenceToolsIn(locale: Locale): ReferenceTool[] {
+  const text = getDictionary(locale).tools.referenceTools
+  return referenceTools.map(({ id, href, mark }) => ({ ...text[id], href, mark }))
+}

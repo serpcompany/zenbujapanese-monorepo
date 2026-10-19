@@ -1,9 +1,8 @@
 'use client'
 
-import {
-  type StrokeOrder as StrokeOrderData,
-  type StrokeOrderLabels,
-  strokeOrderLabels
+import type {
+  StrokeOrder as StrokeOrderData,
+  StrokeOrderLabels
 } from '@zenbu/dictionary-core/detail/strokes'
 import {
   ChevronLeftIcon,
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { DialogCloseButton } from './dialog-close-button'
 
 const strokeDurationMs = { play: 8 * 60, step: 12 * 80 } as const
 const appGridPoints = 350
@@ -29,11 +29,18 @@ interface Progress {
   active: number
 }
 
-export function StrokeOrder({ character, order }: { character: string; order: StrokeOrderData }) {
+export function StrokeOrder({
+  order,
+  labels,
+  close
+}: {
+  order: StrokeOrderData
+  labels: StrokeOrderLabels
+  close: string
+}) {
   const [open, setOpen] = useState(false)
   const [opening, setOpening] = useState(0)
   const wide = useMediaQuery('(min-width: 768px)')
-  const labels = strokeOrderLabels(character, order.strokes.length)
   const trigger = (
     <Button
       variant="outline"
@@ -53,11 +60,12 @@ export function StrokeOrder({ character, order }: { character: string; order: St
       <>
         {trigger}
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent showCloseButton={false}>
             <DialogHeader>
               <DialogTitle>{labels.title}</DialogTitle>
             </DialogHeader>
             {content}
+            <DialogCloseButton label={close} />
           </DialogContent>
         </Dialog>
       </>

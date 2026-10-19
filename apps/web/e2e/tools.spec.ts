@@ -1,8 +1,21 @@
 import type { Page } from '@playwright/test'
-import { questions } from '../src/lib/tools/content'
-import { converterFor, converters, toolPages, toolsIndex } from '../src/lib/tools/converters'
-import { referenceTools } from '../src/lib/tools/reference-tools'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { localizedPath } from '../src/lib/i18n/paths'
+import { converterFor } from '../src/lib/tools/converters'
+import { toolsPath } from '../src/lib/tools/paths'
+import { referenceToolsIn } from '../src/lib/tools/reference-tools'
+import {
+  converterPageIn,
+  converterPagesIn,
+  questionsIn,
+  toolPagesIn,
+  toolsIndexIn
+} from '../src/lib/tools/tool-pages'
 import { expect, onPhone, test } from './test'
+
+const converters = converterPagesIn('en')
+const referenceTools = referenceToolsIn('en')
+const toolsIndex = toolsIndexIn('en')
 
 const main = (page: Page) => page.getByRole('main')
 const box = (page: Page, name: string) => main(page).getByRole('textbox', { name, exact: true })
@@ -18,6 +31,18 @@ async function typeAndSee(
     await box(page, typedIn).fill(text)
     await expect(box(page, other)).toHaveValue(expected, { timeout: 1_000 })
   }).toPass({ timeout: 15_000 })
+}
+
+async function expectCardsLeadToTheirPages(
+  page: Page,
+  request: Page['request'],
+  cards: readonly { title: string; href: string }[]
+) {
+  for (const card of cards) {
+    const link = main(page).getByRole('link', { name: card.title, exact: true })
+    await expect(link).toHaveAttribute('href', card.href)
+    expect((await request.get(card.href, { maxRedirects: 0 })).status(), card.href).toBe(200)
+  }
 }
 
 const desktopOnly = () =>
@@ -48,17 +73,40 @@ test.describe('the tools index', () => {
 
   test('each card leads to its page, with no redirect', async ({ page, request }) => {
     await page.goto('/tools/')
-    for (const card of [
+    await expectCardsLeadToTheirPages(page, request, [
       ...converters.map(c => ({ title: c.name, href: c.path })),
       ...referenceTools
-    ]) {
-      const link = main(page).getByRole('link', { name: card.title, exact: true })
-      await expect(link).toHaveAttribute('href', card.href)
-      expect((await request.get(card.href, { maxRedirects: 0 })).status(), card.href).toBe(200)
-    }
+    ])
     await main(page).getByRole('link', { name: 'Romaji to Kana', exact: true }).click()
     await expect(page).toHaveURL('/tools/romaji-to-kana/')
     await expect(main(page).getByRole('heading', { level: 1 })).toHaveText('Romaji to Kana')
+  })
+
+  test('in Japanese, at /ja/tools/, its cards read in Japanese and lead to Japanese pages', async ({
+    page,
+    request
+  }) => {
+    const text = getDictionary('ja').tools
+    await page.goto('/ja/tools/')
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+    await expect(main(page).getByRole('heading', { level: 1 })).toHaveText(text.index.title)
+    const cards = [
+      ...converterPagesIn('ja').map(c => ({ title: c.name, href: localizedPath(c.path, 'ja') })),
+      ...referenceToolsIn('ja').map(tool => ({ ...tool, href: localizedPath(tool.href, 'ja') }))
+    ]
+    await expect(
+      main(page)
+        .getByRole('list', { name: text.index.converters })
+        .getByRole('heading', { level: 3 })
+    ).toHaveText(converterPagesIn('ja').map(converter => converter.name))
+    await expectCardsLeadToTheirPages(page, request, cards)
+    await expect(
+      main(page)
+        .getByRole('region', { name: text.appCard.label })
+        .getByRole('button', {
+          name: getDictionary('ja').chrome.getTheApp
+        })
+    ).toHaveAttribute('href', '/ja/products/zenbu-japanese-app/')
   })
 })
 
@@ -68,6 +116,14 @@ test('the HTML sitemap lists the tools index and every converter', async ({ page
     await expect(main(page).getByRole('link', { name: tool.name, exact: true })).toHaveAttribute(
       'href',
       tool.path
+    )
+  }
+  await page.goto('/ja/sitemap/')
+  const japanese = toolsIndexIn('ja')
+  for (const tool of [{ name: japanese.title, path: japanese.path }, ...converterPagesIn('ja')]) {
+    await expect(main(page).getByRole('link', { name: tool.name, exact: true })).toHaveAttribute(
+      'href',
+      localizedPath(tool.path, 'ja')
     )
   }
 })
@@ -83,6 +139,27 @@ test.describe('a converter page', () => {
     await expect(box(page, 'Hiragana')).toHaveValue('')
     await expect(box(page, 'Katakana')).toHaveValue('')
     await expect(box(page, 'Hiragana')).toBeFocused()
+  })
+
+  test('in Japanese, its boxes, count, options, and links are in Japanese', async ({ page }) => {
+    const text = getDictionary('ja').tools
+    const converter = converterPageIn('half-width-to-full-width', 'ja')
+    await page.goto('/ja/tools/half-width-to-full-width/')
+    await expect(main(page).getByRole('heading', { level: 1 })).toHaveText(converter.name)
+    await typeAndSee(page, converter.from, converter.to, 'ﾊﾟﾝ ABC', 'パン　ＡＢＣ')
+    await expect(
+      main(page).getByText(text.converter.characters.other.replace('{count}', '7'), { exact: true })
+    ).toHaveCount(1)
+    await main(page).getByText(text.converter.widths.lettersAndNumbers, { exact: true }).click()
+    await expect(box(page, converter.to)).toHaveValue('パン　ABC')
+    const counterpart = converterPageIn(converter.reverse, 'ja')
+    await expect(
+      main(page).getByRole('link', { name: counterpart.name, exact: true })
+    ).toHaveAttribute('href', localizedPath(counterpart.path, 'ja'))
+    await expect(main(page).getByRole('link', { name: text.page.allTools })).toHaveAttribute(
+      'href',
+      localizedPath(toolsPath, 'ja')
+    )
   })
 
   test('typing in the bottom box fills the top one, and the bottom keeps exactly what was typed', async ({
@@ -183,7 +260,7 @@ test.describe('a converter page', () => {
 
   test('a question opens to its answer', async ({ page }) => {
     await page.goto('/tools/romaji-to-kana/')
-    const [first] = questions.romaji
+    const [first] = questionsIn('romaji', 'en')
     const answer = main(page).getByText(first.answer)
     const question = main(page).getByRole('button', { name: first.question })
     await expect(answer).toBeHidden()
@@ -198,7 +275,7 @@ test.describe('a converter page', () => {
     await page.goto('/tools/half-width-to-full-width/')
     const related = main(page).getByRole('list', { name: 'Related tools' })
     for (const slug of converterFor('half-width-to-full-width').related) {
-      const converter = converterFor(slug)
+      const converter = converterPageIn(slug, 'en')
       await expect(related.getByRole('link', { name: converter.name })).toHaveAttribute(
         'href',
         converter.path
@@ -223,11 +300,16 @@ test.describe('tools addresses', () => {
 test.describe('the tools pages’ metadata', () => {
   test.beforeEach(desktopOnly)
 
-  for (const tool of toolPages) {
+  for (const [locale, tool] of (['en', 'ja'] as const).flatMap(locale =>
+    toolPagesIn(locale).map(
+      page => [locale, { ...page, path: localizedPath(page.path, locale) }] as const
+    )
+  )) {
     test(`${tool.path} has its title, description, canonical URL, and structured data`, async ({
       page
     }) => {
       await page.goto(tool.path)
+      await expect(page.locator('html')).toHaveAttribute('lang', locale)
       await expect(page).toHaveTitle(`${tool.title} | Zenbu Japanese`)
       await expect(page.locator('meta[name="description"]')).toHaveAttribute(
         'content',
@@ -239,7 +321,7 @@ test.describe('the tools pages’ metadata', () => {
       )
       const structured = await page.locator('script[type="application/ld+json"]').allTextContents()
       const types = structured.map(json => JSON.parse(json)['@type'])
-      expect(types).toEqual(tool.path === toolsIndex.path ? [] : ['FAQPage'])
+      expect(types).toEqual(tool.path === localizedPath(toolsPath, locale) ? [] : ['FAQPage'])
       await expect(page.locator('meta[name="robots"]')).toHaveCount(0)
     })
   }

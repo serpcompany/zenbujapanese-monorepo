@@ -1,3 +1,4 @@
+import type { Locale } from '../i18n/config'
 import type { AccessTokens } from './access-tokens'
 import type { AccountSession } from './answers'
 import type { AppleCode } from './apple'
@@ -17,10 +18,10 @@ export async function signOutOfThisBrowser(api: AccountApi): Promise<Failure | n
   return signedOut.ok || isSignedOut(signedOut.failure) ? null : signedOut.failure
 }
 
-export async function signOutFromTheAccountMenu(): Promise<Failure | null> {
+export async function signOutFromTheAccountMenu(language: Locale): Promise<Failure | null> {
   const service = builtAccountService()
   if (!service) return null
-  const problem = await signOutOfThisBrowser(accountApi(service))
+  const problem = await signOutOfThisBrowser(accountApi(service, language))
   if (problem === null) rememberSignedIn(false)
   return problem
 }

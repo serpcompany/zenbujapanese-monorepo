@@ -11,24 +11,27 @@ import {
   ItemMedia,
   ItemTitle
 } from '@/components/ui/item'
-import { GetAppDialog } from './get-app-dialog'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { type AppAction, GetAppDialog } from './get-app-dialog'
 
 const prompts = {
-  lists: {
-    title: 'Add to List',
-    description: 'Save it to your lists in the Zenbu app.',
-    icon: ListPlusIcon
-  },
-  notes: {
-    title: 'Add Note',
-    description: 'Write notes and attach photos in the Zenbu app.',
-    icon: PencilIcon
-  }
-}
+  lists: { action: 'addToList', icon: ListPlusIcon },
+  notes: { action: 'addNote', icon: PencilIcon }
+} as const satisfies Record<string, { action: AppAction; icon: typeof PencilIcon }>
 
-export function LearnerPrompt({ kind }: { kind: keyof typeof prompts }) {
-  const [action, setAction] = useState<string | null>(null)
-  const { title, description, icon: Icon } = prompts[kind]
+export function LearnerPrompt({
+  kind,
+  locale,
+  text
+}: {
+  kind: keyof typeof prompts
+  locale: Locale
+  text: Dictionary['learner']
+}) {
+  const [action, setAction] = useState<AppAction | null>(null)
+  const { action: opens, icon: Icon } = prompts[kind]
+  const { title, description } = text.prompts[kind]
   return (
     <>
       <Item className="px-0 py-0">
@@ -40,12 +43,17 @@ export function LearnerPrompt({ kind }: { kind: keyof typeof prompts }) {
           <ItemDescription>{description}</ItemDescription>
         </ItemContent>
         <ItemActions>
-          <Button variant="outline" size="sm" onClick={() => setAction(title)}>
+          <Button variant="outline" size="sm" onClick={() => setAction(opens)}>
             {title}
           </Button>
         </ItemActions>
       </Item>
-      <GetAppDialog action={action} onOpenChange={open => !open && setAction(null)} />
+      <GetAppDialog
+        action={action}
+        locale={locale}
+        text={text}
+        onOpenChange={open => !open && setAction(null)}
+      />
     </>
   )
 }

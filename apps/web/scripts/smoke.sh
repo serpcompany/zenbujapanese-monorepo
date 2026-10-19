@@ -51,6 +51,22 @@ expect_redirect /support /support/
 expect_redirect /robots.txt/ /robots.txt
 expect_redirect /sitemap-pages.xml/ /sitemap-pages.xml
 expect_redirect /sitemaps/pages.xml /sitemap-pages.xml
+for path in /ja/ /ja/about/ /ja/legal/privacy/; do expect "$path" 200; done
+expect_redirect /en/ /
+expect_redirect /en/about/ /about/
+expect_redirect /en/about /about/
+expect /ja/robots.txt 404
+expect /no-such-page/ 404
+pages_name_their_languages() {
+  local home ja about
+  home="$(body /)" ja="$(body /ja/)" about="$(body /ja/about/)"
+  grep -q '<html lang="en"' <<<"$home" && grep -q '<html lang="ja"' <<<"$ja" &&
+    grep -qF "hrefLang=\"ja\" href=\"$canonical/ja/\"" <<<"$home" &&
+    grep -qF "<link rel=\"canonical\" href=\"$canonical/ja/about/\"/>" <<<"$about" &&
+    grep -qF "hrefLang=\"en\" href=\"$canonical/about/\"" <<<"$about"
+}
+eventually "/ and /ja/ are English and Japanese, and pages name each other's language on $canonical" \
+  "a page's lang, canonical, or hreflang is wrong" pages_name_their_languages
 
 pages_list_pages() {
   local locs pages
@@ -147,7 +163,7 @@ for browse_sitemap_and_hubs in kana:3 categories:3 frequency-lists:1 kanji-lists
     local locs
     locs="$(body "$browse_sitemap" | grep -oE '<loc>[^<]+</loc>' || true)"
     [ "$(grep -c . <<<"$locs" || true)" -gt "$browse_hubs" ] &&
-      ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
+      ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}(/ja)?/dictionary/browse/[!-~]+/</loc>$" <<<"$locs"
   }
   eventually "$browse_sitemap lists browse pages on $canonical" \
     "$browse_sitemap lists no list beyond its hubs, or another host or a non-canonical URL" \
@@ -161,7 +177,7 @@ word_sitemap_is_canonical() {
   locs="$(body /sitemap-words.xml | grep -oE '<loc>[^<]+</loc>' || true)"
   word_count="$(grep -c . <<<"$locs" || true)"
   [ "$word_count" -ge 1 ] && [ "$word_count" -le 50000 ] &&
-    ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}/dictionary/[!-~]+-[0-9]+/</loc>$" <<<"$locs"
+    ! LC_ALL=C grep -vqE "^<loc>${canonical//./\\.}(/ja)?/dictionary/[!-~]+-[0-9]+/</loc>$" <<<"$locs"
 }
 eventually 'word sitemap lists 1 to 50,000 canonical URLs' \
   'word sitemap has no URLs, more than 50,000, or a non-canonical one' word_sitemap_is_canonical

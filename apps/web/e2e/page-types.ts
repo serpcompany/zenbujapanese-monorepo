@@ -1,10 +1,12 @@
 import type { Locator, Page } from '@playwright/test'
-import { appAreas } from '../src/lib/app-areas'
-import { sitePages } from '../src/lib/pages'
-import { siteMenus } from '../src/lib/site-menus'
-import { toolPages } from '../src/lib/tools/converters'
+import { appAreasIn } from '../src/lib/app-areas'
+import type { Locale } from '../src/lib/i18n/config'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { sitePagesIn } from '../src/lib/pages'
+import { siteMenusIn } from '../src/lib/site-menus'
+import { toolPagesIn } from '../src/lib/tools/tool-pages'
 import { signedOutService, standInForTheAccountService } from './account-stand-in'
-import { accountPages, expect, menuButton, needed, phoneMenu, sourcesToggle, test } from './test'
+import { accountPages, expect, needed, phoneMenu, sourcesToggle, test } from './test'
 
 export interface PageView {
   name: string
@@ -73,36 +75,44 @@ const showcaseArea = (name: string): PageView => ({
   }
 })
 
-const phoneMenuViews: PageView[] = [
-  {
-    name: 'Phone menu',
-    overlay: true,
-    show: async page => {
-      await expect(async () => {
-        if (!(await phoneMenu(page).isVisible())) await menuButton(page).click()
-        await expect(phoneMenu(page)).toBeVisible(clickBeforeHydrationIsLost)
-      }).toPass(untilItTakes)
-      await settle(page)
-    }
-  },
-  ...siteMenus.map(({ label }) => ({
-    name: `Phone menu, ${label}`,
-    overlay: true,
-    show: (page: Page) => expandMenuSection(page, label)
-  }))
-]
-
-const viewsOf: Record<string, PageView[]> = {
-  '/': appAreas.slice(1).map(({ name }) => showcaseArea(name)),
-  '/about/': phoneMenuViews
+function phoneMenuViews(locale: Locale): PageView[] {
+  const menu = getDictionary(locale).chrome.menu
+  return [
+    {
+      name: 'Phone menu',
+      overlay: true,
+      show: async page => {
+        const button = page.getByRole('banner').getByRole('button', { name: menu })
+        await expect(async () => {
+          if (!(await phoneMenu(page).isVisible())) await button.click()
+          await expect(phoneMenu(page)).toBeVisible(clickBeforeHydrationIsLost)
+        }).toPass(untilItTakes)
+        await settle(page)
+      }
+    },
+    ...siteMenusIn(locale).map(({ label }) => ({
+      name: `Phone menu, ${label}`,
+      overlay: true,
+      show: (page: Page) => expandMenuSection(page, label)
+    }))
+  ]
 }
+
+const viewsIn = (locale: Locale): Record<string, PageView[]> => ({
+  '/': appAreasIn(locale)
+    .slice(1)
+    .map(({ name }) => showcaseArea(name)),
+  '/about/': phoneMenuViews(locale)
+})
+
+const viewsOf = viewsIn('en')
 
 export const missingPage: PageType = { name: 'Page not found', path: '/no-such-page/' }
 
 export const pageTypes: PageType[] = [
-  ...sitePages.map(({ title, path }) => ({ name: title, path, views: viewsOf[path] })),
+  ...sitePagesIn('en').map(({ title, path }) => ({ name: title, path, views: viewsOf[path] })),
   ...accountPages.map(({ title, path }) => ({ name: title, path })),
-  ...toolPages.map(({ title, path }) => ({ name: title, path })),
+  ...toolPagesIn('en').map(({ title, path }) => ({ name: title, path })),
   { name: 'Search', path: '/dictionary/search/' },
   { name: 'Search results', path: '/dictionary/search/iru/' },
   {
@@ -136,11 +146,20 @@ export const pageTypes: PageType[] = [
   { name: 'Jinmeiyō kanji', path: browse('kanji/jinmeiyo/') }
 ]
 
+const japaneseViews = viewsIn('ja')
+
+export const japanesePageTypes: PageType[] = pageTypes.map(({ name, path }) => {
+  const page = path.replace(/#.*$/, '')
+  return { name: `${name} (日本語)`, path: `/ja${page}`, views: japaneseViews[page] }
+})
+
+const stillLoading = /^Loading (examples|your account)|読み込み中/
+
 export async function openPageType(page: Page, { path, open = [] }: PageType) {
   await standInForTheAccountService(page, signedOutService)
   await page.goto(path)
   for (const name of open) await expand(page, name)
-  await expect(page.getByText(/^Loading (examples|your account)/)).toHaveCount(0)
+  await expect(page.getByText(stillLoading)).toHaveCount(0)
   await settle(page)
 }
 
@@ -161,9 +180,10 @@ export async function checkEachView(
 
 export function testEachPageType(
   title: (pageType: PageType) => string,
-  body: (page: Page, pageType: PageType) => Promise<void>
+  body: (page: Page, pageType: PageType) => Promise<void>,
+  types: readonly PageType[] = pageTypes
 ) {
-  for (const pageType of pageTypes) test(title(pageType), ({ page }) => body(page, pageType))
+  for (const pageType of types) test(title(pageType), ({ page }) => body(page, pageType))
   test.describe('a missing page', () => {
     test.use({ allowedConsoleErrors: [/status of 404/] })
     test(title(missingPage), ({ page }) => body(page, missingPage))

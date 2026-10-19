@@ -18,7 +18,7 @@ function answering(body: unknown, init: ResponseInit = {}) {
     async (_url: string | URL | Request, _init?: RequestInit) =>
       new Response(typeof body === 'string' ? body : JSON.stringify(body), init)
   )
-  return { api: accountApi(apiUrl, send as unknown as typeof fetch), send }
+  return { api: accountApi(apiUrl, 'en', send as unknown as typeof fetch), send }
 }
 
 const sent = (send: ReturnType<typeof answering>['send']) => {
@@ -43,7 +43,11 @@ describe("the website's account service client", () => {
       url: `${apiUrl}/v1/auth/sign-in/email-otp`,
       method: 'POST',
       credentials: 'include',
-      headers: { 'content-type': 'application/json', 'x-zenbu-client': 'zenbu-web' },
+      headers: {
+        'content-language': 'en',
+        'content-type': 'application/json',
+        'x-zenbu-client': 'zenbu-web'
+      },
       body: { email: 'kana@example.com', otp: '123456' }
     })
   })
@@ -98,8 +102,15 @@ describe("the website's account service client", () => {
       url: `${apiUrl}/v1/me`,
       method: 'GET',
       credentials: 'omit',
-      headers: { authorization: 'Bearer access.jwt' }
+      headers: { 'content-language': 'en', authorization: 'Bearer access.jwt' }
     })
+  })
+
+  test('names the page’s language on every request, so the service writes its emails in it', async () => {
+    const send = vi.fn(async () => new Response(JSON.stringify({ success: true })))
+    await accountApi(apiUrl, 'ja', send as unknown as typeof fetch).sendCode('kana@example.com')
+    const [, init] = (send.mock.calls[0] ?? []) as unknown as [string, RequestInit]
+    expect((init.headers as Record<string, string>)['content-language']).toBe('ja')
   })
 
   test('hands back the profile as it is now when a change conflicts', async () => {
@@ -139,7 +150,7 @@ describe("the website's account service client", () => {
   })
 
   test('tells a network failure from a refusal, and an answer of another shape from both', async () => {
-    const offline = accountApi(apiUrl, (async () => {
+    const offline = accountApi(apiUrl, 'en', (async () => {
       throw new TypeError('Failed to fetch')
     }) as unknown as typeof fetch)
     expect(await offline.accessToken()).toEqual({ ok: false, failure: { kind: 'offline' } })

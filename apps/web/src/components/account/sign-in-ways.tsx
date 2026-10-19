@@ -6,29 +6,33 @@ import { useAppleSignIn } from '@/hooks/use-apple-sign-in'
 import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession, Identity, Provider } from '@/lib/account/answers'
-import type { AccountApi, Result } from '@/lib/account/client'
+import type { AccountApi, Failure, Result } from '@/lib/account/client'
 import { afterSigningInAgain, signedInAs } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
-import { failureMessage, isSignedOut, needsFreshSignIn } from '@/lib/account/messages'
+import {
+  type AccountText,
+  failureMessage,
+  isSignedOut,
+  needsFreshSignIn
+} from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
+import { fill } from '@/lib/i18n/format'
+import { localizedPath } from '@/lib/i18n/paths'
 import { ConfirmItsYou } from './confirm-its-you'
 import { EmailCodeForm } from './email-code-form'
 import { FormMessage, Notice } from './form-message'
 
 type Pending = { kind: 'remove'; identity: Identity } | { kind: 'add'; provider: Provider } | null
 
-const providerNames: Record<Provider, string> = {
-  apple: 'Apple',
-  google: 'Google',
-  email: 'A code we email you'
-}
-
-const inSentence: Record<Provider, string> = { ...providerNames, email: 'a code we email you' }
+const providerNames = { apple: 'Apple', google: 'Google' } as const
 
 interface SignInWaysProps {
   api: AccountApi
   tokens: AccessTokens
+  locale: Locale
+  text: AccountText
   settings: AccountSettings
   account: SignedInAccount
   freshNow: () => boolean
@@ -40,6 +44,8 @@ interface SignInWaysProps {
 export function SignInWaysSection({
   api,
   tokens,
+  locale,
+  text,
   settings,
   account,
   freshNow,
@@ -47,12 +53,13 @@ export function SignInWaysSection({
   onChanged,
   onSignedOut
 }: SignInWaysProps) {
-  const apple = useAppleSignIn(api, settings.appleServicesId)
+  const apple = useAppleSignIn(api, settings.appleServicesId, text.messages, locale)
   const [pending, setPending] = useState<Pending>(null)
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useBusy()
   const [problem, setProblem] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const words = text.ways
   const onlyOne = account.identities.length === 1
   const addable: Provider[] = (['apple', 'google', 'email'] as const).filter(
     provider =>
@@ -60,6 +67,11 @@ export function SignInWaysSection({
       (provider === 'email' ||
         (provider === 'apple' ? settings.appleServicesId !== null : settings.google))
   )
+  const nameOf = (provider: Provider) =>
+    provider === 'email' ? words.email : providerNames[provider]
+  const inSentence = (provider: Provider) =>
+    provider === 'email' ? words.emailInSentence : providerNames[provider]
+  const say = (failure: Failure) => setProblem(failureMessage(failure, text.messages, locale))
 
   function settle(result: Result<unknown>) {
     setBusy(false)
@@ -69,7 +81,7 @@ export function SignInWaysSection({
     }
     if (isSignedOut(result.failure)) return onSignedOut()
     if (needsFreshSignIn(result.failure)) return setConfirming(true)
-    setProblem(failureMessage(result.failure))
+    say(result.failure)
   }
 
   async function signedInElsewhere() {
@@ -77,7 +89,7 @@ export function SignInWaysSection({
     if (signedIn.kind === 'this-account') return false
     setBusy(false)
     if (signedIn.kind === 'failed') {
-      setProblem(failureMessage(signedIn.failure))
+      say(signedIn.failure)
       return true
     }
     setPending(null)
@@ -99,7 +111,7 @@ export function SignInWaysSection({
     if (action.provider === 'google') {
       setBusy(true)
       if (await signedInElsewhere()) return
-      const back = `${window.location.origin}${accountPages.account.path}`
+      const back = `${window.location.origin}${localizedPath(accountPages.account.path, locale)}`
       const started = await api.startLinkingGoogle({ callbackURL: back, errorCallbackURL: back })
       if (started.ok) return window.location.assign(started.value)
       return settle(started)
@@ -125,15 +137,17 @@ export function SignInWaysSection({
   return (
     <section aria-labelledby="sign-in-ways" className="flex flex-col gap-3">
       <h2 id="sign-in-ways" className="text-lg font-medium">
-        Ways to sign in
+        {words.heading}
       </h2>
       <ul className="flex flex-col divide-y rounded-lg border">
         {account.identities.map(identity => (
           <li key={identity.id} className="flex flex-wrap items-center gap-2 px-3 py-2.5 text-sm">
             <span className="flex-1">
-              {providerNames[identity.provider]}
+              {nameOf(identity.provider)}
               {identity.provider === 'email' ? (
-                <span className="text-muted-foreground"> ({identity.subject})</span>
+                <span className="text-muted-foreground">
+                  {fill(words.emailSubject, { email: identity.subject })}
+                </span>
               ) : null}
             </span>
             {onlyOne ? null : (
@@ -142,13 +156,13 @@ export function SignInWaysSection({
                 variant="outline"
                 size="sm"
                 disabled={busy}
-                aria-label={`Remove ${providerNames[identity.provider]}`}
+                aria-label={fill(words.removeWay, { way: nameOf(identity.provider) })}
                 onClick={() => {
                   setProblem(null)
                   setPending({ kind: 'remove', identity })
                 }}
               >
-                Remove
+                {words.remove}
               </Button>
             )}
           </li>
@@ -156,10 +170,7 @@ export function SignInWaysSection({
       </ul>
       {pending?.kind === 'remove' && !confirming ? (
         <div className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
-          <p>
-            Stop signing in with {inSentence[pending.identity.provider]}? We’ll email you that it
-            was removed.
-          </p>
+          <p>{fill(words.stopSigningIn, { way: inSentence(pending.identity.provider) })}</p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -168,10 +179,10 @@ export function SignInWaysSection({
               disabled={busy}
               onClick={() => void act(pending, freshNow())}
             >
-              Remove it
+              {words.removeIt}
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => setPending(null)}>
-              Keep it
+              {words.keepIt}
             </Button>
           </div>
         </div>
@@ -189,7 +200,9 @@ export function SignInWaysSection({
               onTouchStart={provider === 'apple' ? () => void apple.prepare() : undefined}
               onClick={() => void act({ kind: 'add', provider }, freshNow())}
             >
-              {provider === 'email' ? 'Add an email code' : `Add ${providerNames[provider]}`}
+              {provider === 'email'
+                ? words.addEmail
+                : fill(words.add, { way: providerNames[provider] })}
             </Button>
           ))}
         </div>
@@ -199,9 +212,10 @@ export function SignInWaysSection({
       {pending?.kind === 'add' && pending.provider === 'email' && !confirming ? (
         <EmailCodeForm
           api={api}
+          locale={locale}
+          text={text}
           email={account.profile.email}
-          sendLabel="Email me a code"
-          signInLabel="Add it"
+          signInLabel={words.addIt}
           mayVerify={() => {
             if (freshNow()) return true
             setConfirming(true)
@@ -223,16 +237,18 @@ export function SignInWaysSection({
         <ConfirmItsYou
           api={api}
           tokens={tokens}
+          locale={locale}
+          text={text}
           settings={settings}
           account={account}
           appleOnly={false}
-          why="Changing how you sign in needs a sign-in from the last few minutes."
+          why={words.whyFresh}
           onConfirmed={(session, _apple, stillWanted) => {
             setConfirming(false)
             onConfirmed(session)
             if (!stillWanted) return
             if (pending?.kind === 'add' && pending.provider === 'apple') {
-              return setNotice('Confirmed. Now choose Add Apple again.')
+              return setNotice(words.addAppleAgain)
             }
             void act(pending, true)
           }}

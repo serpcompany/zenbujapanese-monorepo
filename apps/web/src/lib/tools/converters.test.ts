@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { bothSides, convert, defaultConverterOptions } from './convert'
-import { converterFor, converters, toolPages } from './converters'
-import { converterSlugs } from './paths'
+import { converterFor, converters } from './converters'
+import { converterSlugs, toolPaths } from './paths'
+import { converterPageIn, converterPagesIn, toolPagesIn } from './tool-pages'
 
 describe('the converters', () => {
   test('are the six directions, each at /tools/<name>/ and titled from and to', () => {
-    expect(converters.map(converter => [converter.path, converter.name])).toEqual([
+    expect(converterPagesIn('en').map(converter => [converter.path, converter.name])).toEqual([
       ['/tools/hiragana-to-katakana/', 'Hiragana to Katakana'],
       ['/tools/katakana-to-hiragana/', 'Katakana to Hiragana'],
       ['/tools/romaji-to-kana/', 'Romaji to Kana'],
@@ -21,7 +22,11 @@ describe('the converters', () => {
       const other = converterFor(converter.reverse)
       expect(other.reverse).toBe(converter.slug)
       expect(other.pair).toBe(converter.pair)
-      expect(other.from).toBe(converter.to)
+      for (const locale of ['en', 'ja'] as const) {
+        expect(converterPageIn(other.slug, locale).from).toBe(
+          converterPageIn(converter.slug, locale).to
+        )
+      }
     }
   })
 
@@ -34,13 +39,23 @@ describe('the converters', () => {
     }
   })
 
-  test('the tools pages are the index and the six converters, each with its own title and description', () => {
-    expect(toolPages.map(page => page.path)).toEqual([
-      '/tools/',
-      ...converters.map(converter => converter.path)
-    ])
+  test.each([
+    'en',
+    'ja'
+  ] as const)('the tools pages in %s are the index and the six converters, each with its own title and description', locale => {
+    const toolPages = toolPagesIn(locale)
+    expect(toolPages.map(page => page.path)).toEqual([...toolPaths])
+    expect(toolPaths).toEqual(['/tools/', ...converterSlugs.map(slug => `/tools/${slug}/`)])
     expect(new Set(toolPages.map(page => page.title)).size).toBe(toolPages.length)
     expect(new Set(toolPages.map(page => page.description)).size).toBe(toolPages.length)
+  })
+
+  test('a converter’s Japanese name and title come from its own two scripts', () => {
+    const page = converterPageIn('half-width-to-full-width', 'ja')
+    expect([page.from, page.to]).toEqual(['半角', '全角'])
+    expect(page.name).toContain('半角')
+    expect(page.title).toContain(page.name)
+    expect(page.name).not.toMatch(/[A-Za-z]/)
   })
 })
 

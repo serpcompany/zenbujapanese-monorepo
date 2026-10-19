@@ -109,17 +109,16 @@ export type KanaGroupId = 'basic' | 'marks' | 'combinations' | 'small' | 'extend
 
 export interface KanaGroup {
   id: KanaGroupId
-  label: string
   sounds: 3 | 5
   rows: readonly KanaChartRow[]
 }
 
 export const kanaGroups: readonly KanaGroup[] = [
-  { id: 'basic', label: 'Basic', sounds: 5, rows: fromCore(gojuonRows) },
-  { id: 'marks', label: 'With marks', sounds: 5, rows: fromCore(dakuonRows) },
-  { id: 'small', label: 'Small kana', sounds: 5, rows: smallRows },
-  { id: 'combinations', label: 'Combinations', sounds: 3, rows: combinationRows },
-  { id: 'extended', label: 'Katakana only', sounds: 5, rows: extendedRows }
+  { id: 'basic', sounds: 5, rows: fromCore(gojuonRows) },
+  { id: 'marks', sounds: 5, rows: fromCore(dakuonRows) },
+  { id: 'small', sounds: 5, rows: smallRows },
+  { id: 'combinations', sounds: 3, rows: combinationRows },
+  { id: 'extended', sounds: 5, rows: extendedRows }
 ]
 
 export const entriesIn = (group: KanaGroup): KanaEntry[] =>

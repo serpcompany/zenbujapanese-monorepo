@@ -6,13 +6,16 @@ the [Tools pages](../../apps/web/docs/product/tools.md) product doc; the rest of
 
 ## Pages
 
-`/tools/` and the six converters, `src/app/tools/[tool]/page.tsx`, are static:
+`/tools/` and the six converters, `src/app/[locale]/tools/[tool]/page.tsx`, in English and in
+Japanese under `/ja/` ([`web-languages.md`](web-languages.md)), are static:
 `generateStaticParams` lists the converters, and the page answers any other name with `notFound()`.
 It leaves `dynamicParams` on: the site's OpenNext build has no incremental cache, so with
 `dynamicParams = false` the Worker answers 404 even for the prerendered converters (`next dev`
-serves them, so only the production build shows it). The converters' logic and copy are in
+serves them, so only the production build shows it). The converters' logic is in
 `src/lib/tools/`, pure functions with tests beside them, which the browser runs, so nothing typed
-leaves it. Each converter keeps its two boxes as one edit, the box last typed in and its text
+leaves it. Their copy is the dictionaries' `tools` namespace; `src/lib/tools/tool-pages.ts` puts it
+together with each converter's samples (`converters.ts`, which imports no dictionary, so the
+converter's client bundle carries none) and the server passes the converter its labels. Each converter keeps its two boxes as one edit, the box last typed in and its text
 (`bothSides` in `src/lib/tools/convert.ts`), and works out the other box from it, so the box being
 typed in is never rewritten. The pages are stock shadcn components, as the owner's UI rules ask
 (#696): `card`, `table`, `tabs`, `checkbox` with `label`, `textarea`, `toggle-group`, `kbd`, and
@@ -24,6 +27,8 @@ whose panels stay mounted, so all 131 kana are in the HTML. A `Kbd` on the muted
 
 ## Listing the pages
 
-The tools pages aren't in `src/lib/pages.ts`. `toolPages` (`src/lib/tools/converters.ts`) lists
-them: it feeds `/sitemap-tools.xml`, a child of the sitemap index ([`web.md`](web.md), Sitemaps),
-and the HTML sitemap reads them through `toolsTree` (`src/lib/dictionary/browse/site-tree.ts`).
+The tools pages aren't in `src/lib/pages.ts`. `toolPaths` (`src/lib/tools/paths.ts`) lists them:
+it feeds `/sitemap-tools.xml`, a child of the sitemap index ([`web.md`](web.md), Sitemaps), which
+lists each in English and Japanese; `toolPagesIn` (`src/lib/tools/tool-pages.ts`) gives their
+titles in a language, and the HTML sitemap reads them through `toolsTreeIn`
+(`src/lib/dictionary/browse/site-tree.ts`).

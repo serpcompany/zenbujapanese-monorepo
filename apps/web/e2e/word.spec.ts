@@ -1,12 +1,47 @@
 import type { Page } from '@playwright/test'
+import type { Locale } from '../src/lib/i18n/config'
+import { getDictionary } from '../src/lib/i18n/dictionary'
 import { linesOfText } from './phone-checks'
 import { expect, needed, sourcesToggle, test } from './test'
 
-const examples = (page: Page) =>
+const examples = (page: Page, locale: Locale = 'en') =>
   page
     .getByRole('main')
     .getByRole('listitem')
-    .filter({ has: page.getByRole('button', { name: 'Pronounce sentence' }) })
+    .filter({
+      has: page.getByRole('button', { name: getDictionary(locale).examples.pronounce })
+    })
+
+async function opensTheAppPrompts(page: Page, locale: Locale) {
+  const t = getDictionary(locale)
+  for (const [action, prompt] of [
+    [t.learner.prompts.lists.title, t.learner.inApp.addToList],
+    [t.learner.prompts.notes.title, t.learner.inApp.addNote]
+  ]) {
+    await page.getByRole('main').getByRole('button', { name: action, exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: prompt })
+    await expect(dialog.getByRole('button', { name: t.chrome.getTheApp })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+  }
+}
+
+async function underlineWidths(page: Page, locale: Locale) {
+  await expect(examples(page, locale)).toHaveCount(25)
+  const underlines = await examples(page, locale)
+    .locator('p[lang="ja"] [lang="ja"]')
+    .evaluateAll(words =>
+      words
+        .map(word => ({
+          pageWord: word.hasAttribute('data-page-word'),
+          width: Number.parseFloat(getComputedStyle(word).borderBottomWidth)
+        }))
+        .filter(word => word.width > 0)
+    )
+  const widths = (pageWord: boolean) =>
+    new Set(underlines.filter(word => word.pageWord === pageWord).map(word => word.width))
+  return { pageWord: [...widths(true)], others: [...widths(false)] }
+}
 
 test.describe('word page', () => {
   test.beforeEach(async ({ page }) => {
@@ -135,33 +170,13 @@ test.describe('word page', () => {
   })
 
   test('Lists and Notes each open the get-the-app prompt', async ({ page }) => {
-    for (const action of ['Add to List', 'Add Note']) {
-      await page.getByRole('main').getByRole('button', { name: action, exact: true }).click()
-      const prompt = page.getByRole('dialog', { name: `${action} works in the app` })
-      await expect(prompt.getByRole('button', { name: 'Get the app' })).toBeVisible()
-      await page.keyboard.press('Escape')
-      await expect(prompt).toHaveCount(0)
-    }
+    await opensTheAppPrompts(page, 'en')
   })
 
   test("an example underlines the page's word more thickly than its other words", async ({
     page
   }) => {
-    await expect(examples(page)).toHaveCount(25)
-    const underlines = await examples(page)
-      .locator('p[lang="ja"] [lang="ja"]')
-      .evaluateAll(words =>
-        words
-          .map(word => ({
-            pageWord: word.hasAttribute('data-page-word'),
-            width: Number.parseFloat(getComputedStyle(word).borderBottomWidth)
-          }))
-          .filter(word => word.width > 0)
-      )
-    const widths = (pageWord: boolean) =>
-      new Set(underlines.filter(word => word.pageWord === pageWord).map(word => word.width))
-    expect([...widths(true)]).toEqual([2])
-    expect([...widths(false)]).toEqual([1])
+    expect(await underlineWidths(page, 'en')).toEqual({ pageWord: [2], others: [1] })
   })
 
   test('opens and closes a kanji in the Kanji section', async ({ page }) => {
@@ -179,4 +194,20 @@ test.describe('word page', () => {
 test("a word's #examples opens the page at its Examples section", async ({ page }) => {
   await page.goto(`${needed.path}#examples`)
   await expect(examples(page).first()).toBeInViewport()
+})
+
+test.describe('word page in Japanese', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`/ja${needed.path}`)
+  })
+
+  test('Lists and Notes each open the get-the-app prompt, in Japanese', async ({ page }) => {
+    await opensTheAppPrompts(page, 'ja')
+  })
+
+  test("an example underlines the page's word more thickly than its other words", async ({
+    page
+  }) => {
+    expect(await underlineWidths(page, 'ja')).toEqual({ pageWord: [2], others: [1] })
+  })
 })

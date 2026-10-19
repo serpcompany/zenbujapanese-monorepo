@@ -66,13 +66,17 @@ jobs:
         run: SITE_ENV=staging pnpm build
       - name: Staging's footer links signing in
         working-directory: apps/web
-        run: grep -q 'href="/login/">Sign in<' .next/server/app/about.html
+        run: |
+          grep -q 'href="/login/">Sign in<' .next/server/app/en/about.html
+          grep -q 'href="/ja/login/">ログイン<' .next/server/app/ja/about.html
       - name: Build for production
         working-directory: apps/web
         run: SITE_ENV=production pnpm build
       - name: Production's footer links signing in
         working-directory: apps/web
-        run: grep -q 'href="/login/">Sign in<' .next/server/app/about.html
+        run: |
+          grep -q 'href="/login/">Sign in<' .next/server/app/en/about.html
+          grep -q 'href="/ja/login/">ログイン<' .next/server/app/ja/about.html
 
   e2e:
     needs: [changes, check]

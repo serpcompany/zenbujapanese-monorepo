@@ -22,7 +22,7 @@ import {
   type LinkMenu,
   type MegaMenu,
   type MenuLink,
-  siteMenus
+  type SiteMenu
 } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
@@ -151,12 +151,12 @@ function LinkMenuPanel({ menu }: { menu: LinkMenu }) {
   )
 }
 
-export function SiteNav() {
+export function SiteNav({ menus, label }: { menus: readonly SiteMenu[]; label: string }) {
   const pathname = usePathname()
   return (
-    <NavigationMenu aria-label="Main" className="max-lg:hidden">
+    <NavigationMenu aria-label={label} className="max-lg:hidden">
       <NavigationMenuList className="gap-1">
-        {siteMenus.map(menu => (
+        {menus.map(menu => (
           <NavigationMenuItem key={menu.label}>
             <NavigationMenuTrigger
               aria-current={isCurrentSection(menu, pathname) ? 'true' : undefined}

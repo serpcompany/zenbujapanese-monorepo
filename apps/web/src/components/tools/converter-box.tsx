@@ -5,15 +5,23 @@ import { type ReactNode, type Ref, useEffect, useId, useRef, useState } from 're
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import type { Locale } from '@/lib/i18n/config'
+import type { Dictionary } from '@/lib/i18n/dictionary'
+import { fill, pluralOf } from '@/lib/i18n/format'
 
 const copyStatusShown = 2_000
 
-const characterCount = (text: string) => {
+type BoxText = Pick<
+  Dictionary['tools']['converter'],
+  'copy' | 'copyLabel' | 'copied' | 'selectToCopy' | 'characters'
+>
+
+const characterCount = (text: string, words: BoxText, locale: Locale) => {
   const count = Array.from(text).length
-  return count === 1 ? '1 character' : `${count} characters`
+  return fill(pluralOf(words.characters, count, locale), { count })
 }
 
-function useCopy() {
+function useCopy(words: BoxText) {
   const [status, setStatus] = useState('')
   const clearing = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => () => clearTimeout(clearing.current), [])
@@ -21,9 +29,9 @@ function useCopy() {
     clearTimeout(clearing.current)
     try {
       await navigator.clipboard.writeText(text)
-      setStatus('Copied')
+      setStatus(words.copied)
     } catch {
-      setStatus('Select the text to copy it')
+      setStatus(words.selectToCopy)
     }
     clearing.current = setTimeout(() => setStatus(''), copyStatusShown)
   }
@@ -36,6 +44,8 @@ export function ConverterBox({
   text,
   onType,
   placeholder,
+  words,
+  locale,
   fieldRef,
   actions
 }: {
@@ -44,11 +54,13 @@ export function ConverterBox({
   text: string
   onType: (text: string) => void
   placeholder: string
+  words: BoxText
+  locale: Locale
   fieldRef?: Ref<HTMLTextAreaElement>
   actions?: ReactNode
 }) {
   const id = useId()
-  const { status, copy } = useCopy()
+  const { status, copy } = useCopy(words)
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
@@ -65,7 +77,7 @@ export function ConverterBox({
         autoComplete="off"
       />
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="text-muted-foreground">{characterCount(text)}</span>
+        <span className="text-muted-foreground">{characterCount(text, words, locale)}</span>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <output>{status}</output>
           {actions}
@@ -73,10 +85,10 @@ export function ConverterBox({
             variant="outline"
             onClick={() => copy(text)}
             disabled={!text}
-            aria-label={`Copy ${label}`}
+            aria-label={fill(words.copyLabel, { label })}
           >
             <CopyIcon data-icon="inline-start" aria-hidden="true" />
-            Copy
+            {words.copy}
           </Button>
         </div>
       </div>

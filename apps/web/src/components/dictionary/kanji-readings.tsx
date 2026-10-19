@@ -3,13 +3,25 @@ import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Item } from '@/components/ui/item'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
+import type { Locale } from '@/lib/i18n/config'
+import { coreText } from '@/lib/i18n/core-text'
+import { localizedPath } from '@/lib/i18n/paths'
+import { SourceText } from './source-text'
 
 type Reading = KanjiDetailsData['readings'][number]
 
-function ReadingContent({ reading, opens }: { reading: Reading; opens: boolean }) {
+function ReadingContent({
+  reading,
+  opens,
+  locale
+}: {
+  reading: Reading
+  opens: boolean
+  locale: Locale
+}) {
   return (
     <>
-      <span className="font-medium">{reading.label}</span>
+      <span className="font-medium">{coreText(reading.label, locale)}</span>
       <span lang="ja" className="text-right text-lg">
         {reading.value}
       </span>
@@ -22,7 +34,7 @@ function ReadingContent({ reading, opens }: { reading: Reading; opens: boolean }
             <span key={word.entSeq}>
               <span lang="ja">{word.headword}</span>
               {glossSeparator}
-              {word.summary}
+              <SourceText text={word.summary} locale={locale} />
             </span>
           ))}
         </span>
@@ -31,12 +43,12 @@ function ReadingContent({ reading, opens }: { reading: Reading; opens: boolean }
   )
 }
 
-export function KanjiReadings({ readings }: { readings: Reading[] }) {
+export function KanjiReadings({ readings, locale }: { readings: Reading[]; locale: Locale }) {
   return (
     <div className="-mx-3 flex flex-col divide-y">
       {readings.map(reading => {
         const path = reading.words[0]?.path ?? null
-        const label = reading.spoken
+        const label = reading.spoken ? coreText(reading.spoken, locale) : null
         const className = 'grid grid-cols-[3.5rem_minmax(0,1fr)_auto] gap-x-3 gap-y-1 text-base'
         const id = `${reading.kind}.${reading.value}`
         return path && label ? (
@@ -44,13 +56,13 @@ export function KanjiReadings({ readings }: { readings: Reading[] }) {
             key={id}
             className={className}
             data-kanji-reading={id}
-            render={<Link href={path} aria-label={label} />}
+            render={<Link href={localizedPath(path, locale)} aria-label={label} />}
           >
-            <ReadingContent reading={reading} opens />
+            <ReadingContent reading={reading} opens locale={locale} />
           </Item>
         ) : (
           <Item key={id} className={className} data-kanji-reading={id}>
-            <ReadingContent reading={reading} opens={false} />
+            <ReadingContent reading={reading} opens={false} locale={locale} />
           </Item>
         )
       })}

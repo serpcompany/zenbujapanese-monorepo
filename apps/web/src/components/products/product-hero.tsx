@@ -5,6 +5,11 @@ import { FeatureDemo } from '@/components/products/feature-demo'
 import { SectionBreadcrumbs } from '@/components/section-breadcrumbs'
 import { AppStoreButton } from '@/components/site-actions'
 import { buttonVariants } from '@/components/ui/button'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
+import { pageFor } from '@/lib/pages'
+import { productsPath } from '@/lib/products/catalog'
 import type { ProductDemo } from '@/lib/products/product-page'
 import { linkTo } from '@/lib/site'
 import { cn } from '@/lib/utils'
@@ -24,17 +29,26 @@ const heroButtonClassName = 'h-11 px-4.5 text-[15px]'
 export function ProductHero({
   product,
   facts,
-  hasVideos
+  hasVideos,
+  locale
 }: {
   product: ProductHeroContent
   facts: ReactNode
   hasVideos: boolean
+  locale: Locale
 }) {
+  const t = getDictionary(locale)
+  const text = t.productPage
   return (
     <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4.5 px-4 pt-8 pb-12 text-center md:px-5 md:pt-10 md:pb-16">
       <SectionBreadcrumbs
-        section={{ title: 'Products', ...linkTo('products') }}
+        section={{
+          title: pageFor(productsPath, locale).title,
+          ...linkTo('products'),
+          href: localizedPath(linkTo('products').href, locale)
+        }}
         page={product.title}
+        label={text.breadcrumb}
         className="justify-center"
       />
       <Image
@@ -54,19 +68,24 @@ export function ProductHero({
         {product.lead}
       </p>
       <div className="flex flex-wrap justify-center gap-2">
-        <AppStoreButton size="lg" className={heroButtonClassName} />
+        <AppStoreButton
+          locale={locale}
+          label={t.chrome.getTheApp}
+          size="lg"
+          className={heroButtonClassName}
+        />
         {hasVideos ? (
           <a
             href={`#${videosSectionId}`}
             className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), heroButtonClassName)}
           >
             <PlayIcon data-icon="inline-start" aria-hidden="true" />
-            Watch demo
+            {text.watchDemo}
           </a>
         ) : null}
       </div>
       <div className="mt-6 w-full max-w-3xl">
-        <FeatureDemo demos={product.demos} />
+        <FeatureDemo demos={product.demos} text={text.demo} carousel={text.carousel} />
       </div>
       {facts}
     </section>

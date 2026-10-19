@@ -81,6 +81,15 @@ export const getKanaInitials = cache(
     new Set((await getKanaIndex(script)).initials.map(({ kana }) => kana))
 )
 
+export async function getBrowseHub() {
+  const [summary, hiragana, katakana] = await Promise.all([
+    getBrowseSummary(),
+    getKanaInitials('hiragana'),
+    getKanaInitials('katakana')
+  ])
+  return { summary, initials: { hiragana, katakana } }
+}
+
 export const getKanaInitial = cache(
   async (script: KanaScript, initial: string): Promise<KanaInitialPage | null> => {
     const found = await answer(browseService.kanaInitial(script, initial))

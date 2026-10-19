@@ -1,8 +1,14 @@
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
+import { defaultLocale } from '@/lib/i18n/config'
+import { withoutDefaultLocale } from '@/lib/i18n/routing'
 import type { PageExample } from './data'
 import { decodeSegment } from './urls'
+
+export function servesFilesIn(locale: string): boolean {
+  return locale === defaultLocale
+}
 
 export function morePosition(value: string | null): number | null {
   const from = Number(value ?? examplesPerPage)
@@ -17,7 +23,7 @@ export function pathText(pathname: string, pattern: RegExp): string | null {
 }
 
 export function pathSpelling(pathname: string, pattern: RegExp): string | null {
-  const match = pattern.exec(pathname)
+  const match = pattern.exec(withoutDefaultLocale(pathname) ?? pathname)
   if (!match) return null
   const text = decodeSegment(match[1])
   return text || null

@@ -1,34 +1,20 @@
 import { describe, expect, test } from 'vitest'
-import { sitePages } from '@/lib/pages'
+import { sitePaths } from '@/lib/pages'
 import { linkTo } from '@/lib/site'
-import {
-  featuredApp,
-  featuredAppSearchText,
-  productById,
-  productFilterFrom,
-  productFilterPath,
-  productFilters,
-  productSearchText,
-  productShown,
-  products
-} from './catalog'
-import { iphoneAppPage } from './zenbu-japanese-for-iphone'
+import { type ProductFilter, productFilterFrom, productFilterPath, productShown } from './catalog'
+import { catalogIn } from './localized-catalog'
+import { iphoneAppPageIn, iphoneAppPath } from './zenbu-japanese-for-iphone'
 
-const items = [
-  { title: featuredApp.title, type: featuredApp.type, searchText: featuredAppSearchText },
-  ...products.map(product => ({
-    title: product.title,
-    type: product.type,
-    searchText: productSearchText(product)
-  }))
-]
+const { featuredApp, filters, products } = catalogIn('en')
 
-const shownFor = (filter: Parameters<typeof productShown>[1], query = '') =>
-  items.filter(item => productShown(item, filter, query)).map(item => item.title)
+const items = [featuredApp, ...products]
+
+const shownFor = (filter: ProductFilter, query = '', shown = items) =>
+  shown.filter(item => productShown(item, filter, query)).map(item => item.title)
 
 describe('product filters', () => {
   test('each filter has its own link, and All is the catalog itself', () => {
-    expect(productFilters.map(filter => productFilterPath(filter.id))).toEqual([
+    expect(filters.map(filter => productFilterPath(filter.id, 'en'))).toEqual([
       '/products/',
       '/products/?type=apps',
       '/products/?type=extensions',
@@ -36,6 +22,8 @@ describe('product filters', () => {
       '/products/?type=reference-guides',
       '/products/?type=courses'
     ])
+    expect(productFilterPath('apps', 'ja')).toBe('/ja/products/?type=apps')
+    expect(productFilterPath('all', 'ja')).toBe('/ja/products/')
   })
 
   test.each([
@@ -50,7 +38,7 @@ describe('product filters', () => {
   })
 
   test('every filter shows at least one product, and All shows them all', () => {
-    for (const filter of productFilters) expect(shownFor(filter.id).length).toBeGreaterThan(0)
+    for (const filter of filters) expect(shownFor(filter.id).length).toBeGreaterThan(0)
     expect(shownFor('all')).toHaveLength(items.length)
     expect(shownFor('apps')).toEqual([featuredApp.title])
   })
@@ -69,14 +57,21 @@ describe('product search', () => {
     expect(shownFor('all', 'reference guides')).toHaveLength(3)
     expect(shownFor('all', 'zzz')).toEqual([])
   })
+
+  test('the Japanese catalog searches its Japanese text', () => {
+    const japanese = catalogIn('ja')
+    const shown = [japanese.featuredApp, ...japanese.products]
+    expect(shownFor('all', '翻訳', shown)).toEqual([japanese.featuredApp.title])
+    expect(shownFor('free-tools', '漢字リスト', shown)).toEqual(['漢字リスト'])
+    expect(shownFor('all', 'pdf', shown)).toHaveLength(3)
+  })
 })
 
 test('the iPhone app’s page is a site page, and the menus, footer, and catalog link to it', () => {
-  expect(sitePages.map(page => page.path)).toEqual(
-    expect.arrayContaining(['/products/', iphoneAppPage.path])
-  )
-  expect(linkTo('iphone-app').href).toBe(iphoneAppPage.path)
-  expect(featuredApp.page.href).toBe(iphoneAppPage.path)
+  expect(sitePaths).toEqual(expect.arrayContaining(['/products/', iphoneAppPath]))
+  expect(linkTo('iphone-app').href).toBe(iphoneAppPath)
+  expect(featuredApp.page.href).toBe(iphoneAppPath)
+  expect(catalogIn('ja').featuredApp.page.href).toBe(`/ja${iphoneAppPath}`)
   expect(linkTo('products').href).toBe('/products/')
 })
 
@@ -88,8 +83,28 @@ test('a product without a page of its own is coming soon, and the others link to
     'jlpt-n5-kanji-pdf',
     'real-clips-course'
   ])
+  for (const product of products) {
+    expect(product.badge).toBe(product.href ? 'Free' : 'Coming soon')
+  }
   for (const product of products.filter(product => product.href)) {
     expect(product.href).toMatch(/^\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
   }
-  expect(productById('converters').href).toBe('/tools/')
+  for (const product of catalogIn('ja').products.filter(product => product.href)) {
+    expect(product.href).toMatch(/^\/ja\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
+  }
+  expect(products.find(product => product.id === 'converters')?.href).toBe('/tools/')
+})
+
+test('the iPhone app’s page links its question and related products in its own language', () => {
+  const english = iphoneAppPageIn('en')
+  const japanese = iphoneAppPageIn('ja')
+  expect(english.questions.at(-1)?.link).toEqual({
+    title: 'Search the dictionary',
+    href: '/dictionary/'
+  })
+  expect(japanese.questions.at(-1)?.link?.href).toBe('/ja/dictionary/')
+  expect(japanese.related.map(product => product.id)).toEqual(
+    english.related.map(product => product.id)
+  )
+  expect(japanese.related[0]?.href).toBe('/ja/dictionary/')
 })

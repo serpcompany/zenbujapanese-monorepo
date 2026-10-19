@@ -1,8 +1,11 @@
 import type { Locator, Page } from '@playwright/test'
-import { pageFor } from '../src/lib/pages'
+import { pageFor as localizedPageFor, type SitePath } from '../src/lib/pages'
 import { pagesSitemapPaths } from '../src/lib/pages-sitemap'
-import { iphoneAppPage } from '../src/lib/products/zenbu-japanese-for-iphone'
+import { iphoneAppPageIn } from '../src/lib/products/zenbu-japanese-for-iphone'
 import { expect, needed, test } from './test'
+
+const iphoneAppPage = iphoneAppPageIn('en')
+const pageFor = (path: SitePath) => localizedPageFor(path, 'en')
 
 const path = iphoneAppPage.path
 const demos = iphoneAppPage.demos

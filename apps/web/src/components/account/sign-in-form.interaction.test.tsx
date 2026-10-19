@@ -1,6 +1,8 @@
-import { act } from 'react'
+import { act, type ComponentProps } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccountSettings } from '@/lib/account/settings'
+import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { idTokenFor } from '@/test/account-answers'
 import {
   answer,
@@ -33,6 +35,30 @@ const everything: AccountSettings = {
 }
 const emailOnly: AccountSettings = { apiUrl, appleServicesId: null, google: false }
 
+const signInForm = (
+  shown: AccountSettings,
+  purpose: ComponentProps<typeof SignInForm>['purpose'],
+  { returnedError = null, locale = 'en' }: { returnedError?: string | null; locale?: Locale } = {}
+) =>
+  render(
+    <SignInForm
+      locale={locale}
+      text={getDictionary(locale).account}
+      settings={shown}
+      purpose={purpose}
+      returnedError={returnedError}
+    />
+  )
+
+function leavingForGoogle() {
+  const assign = vi.fn()
+  vi.stubGlobal('location', { ...window.location, origin: window.location.origin, assign })
+  const { calls } = stubAccountService({
+    'POST /v1/auth/sign-in/social': answer({ url: 'https://accounts.google.com/x', redirect: true })
+  })
+  return { assign, calls }
+}
+
 describe('signing in on the website', () => {
   test('emails a code, signs in with it, and goes to the account page', async () => {
     window.localStorage.setItem('zenbu-initials', 'XY')
@@ -40,7 +66,7 @@ describe('signing in on the website', () => {
       'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
       'POST /v1/auth/sign-in/email-otp': answer({ token: 'bare', user: { id: 'u1' } })
     })
-    const page = render(<SignInForm settings={emailOnly} purpose="register" returnedError={null} />)
+    const page = signInForm(emailOnly, 'register')
     expect(page.textContent).not.toContain('with Apple')
     expect(page.textContent).not.toContain('with Google')
     await fill(page, 'Email', email)
@@ -56,7 +82,7 @@ describe('signing in on the website', () => {
 
   test('tells a browser that already signed in where its account is', async () => {
     window.localStorage.setItem('zenbu-signed-in', 'yes')
-    const page = render(<SignInForm settings={emailOnly} purpose="sign-in" returnedError={null} />)
+    const page = signInForm(emailOnly, 'sign-in')
     await shows(page, 'You’re signed in. Go to your account.')
     expect(page.querySelector('a[href="/account/"]')?.textContent).toBe('Go to your account')
   })
@@ -74,9 +100,7 @@ describe('signing in on the website', () => {
         'POST /v1/auth/email-otp/send-verification-otp': answer({ success: true }),
         'POST /v1/auth/sign-in/email-otp': refusal(403, 'account_not_linked')
       })
-      const page = render(
-        <SignInForm settings={settings} purpose="email-only" returnedError={null} />
-      )
+      const page = signInForm(settings, 'email-only')
       await fill(page, 'Email', email)
       await submit(page, 'Email me a code')
       await fill(page, 'Code', '123456')
@@ -95,7 +119,7 @@ describe('signing in on the website', () => {
       ],
       'POST /v1/auth/sign-in/email-otp': refusal(400, 'invalid_otp')
     })
-    const page = render(<SignInForm settings={emailOnly} purpose="sign-in" returnedError={null} />)
+    const page = signInForm(emailOnly, 'sign-in')
     await fill(page, 'Email', email)
     await submit(page, 'Email me a code')
     await fill(page, 'Code', '000000')
@@ -125,7 +149,7 @@ describe('signing in on the website', () => {
       'POST /v1/auth/sign-in/nonce': answer({ nonce: 'n1', expiresIn: 600 }),
       'POST /v1/auth/sign-in/social': answer({ token: 'bare', user: { id: 'u1' } })
     })
-    const page = render(<SignInForm settings={everything} purpose="sign-in" returnedError={null} />)
+    const page = signInForm(everything, 'sign-in')
     await click(page, 'Sign in with Apple')
     await vi.waitFor(() => expect(push).toHaveBeenCalledWith('/account/'))
     expect(calls.at(-1)?.body).toEqual({
@@ -139,17 +163,8 @@ describe('signing in on the website', () => {
   })
 
   test('sends the browser to Google, to come back to the account page, or here on a failure', async () => {
-    const assign = vi.fn()
-    vi.stubGlobal('location', { ...window.location, origin: window.location.origin, assign })
-    const { calls } = stubAccountService({
-      'POST /v1/auth/sign-in/social': answer({
-        url: 'https://accounts.google.com/x',
-        redirect: true
-      })
-    })
-    const page = render(
-      <SignInForm settings={everything} purpose="register" returnedError={null} />
-    )
+    const { assign, calls } = leavingForGoogle()
+    const page = signInForm(everything, 'register')
     await click(page, 'Sign up with Google')
     expect(calls[0]?.body).toEqual({
       provider: 'google',
@@ -164,11 +179,27 @@ describe('signing in on the website', () => {
     expect(google()?.disabled).toBe(false)
   })
 
+  test('speaks Japanese on a Japanese page, and comes back to the Japanese pages from Google', async () => {
+    window.localStorage.setItem('zenbu-signed-in', 'yes')
+    const { calls } = leavingForGoogle()
+    const page = signInForm(everything, 'register', {
+      returnedError: 'access_denied',
+      locale: 'ja'
+    })
+    await shows(page, 'Googleでのログインはキャンセルされました。')
+    expect(page.querySelector('a[href="/ja/account/"]')?.textContent).toBe('アカウントページへ')
+    expect(page.textContent).toContain('Appleで登録')
+    await click(page, 'Googleで登録')
+    expect(calls[0]?.body).toEqual({
+      provider: 'google',
+      callbackURL: `${window.location.origin}/ja/account/`,
+      errorCallbackURL: `${window.location.origin}/ja/register/`
+    })
+  })
+
   test("says what went wrong when Google's sign-in comes back with an error", async () => {
     stubAccountService({})
-    const page = render(
-      <SignInForm settings={everything} purpose="sign-in" returnedError="account_not_linked" />
-    )
+    const page = signInForm(everything, 'sign-in', { returnedError: 'account_not_linked' })
     await shows(page, 'An account already uses that email')
   })
 })

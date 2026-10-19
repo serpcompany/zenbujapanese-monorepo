@@ -88,6 +88,16 @@ describe('behindStagingAccess', () => {
     }
   })
 
+  test('asks for the password on the Japanese pages and the /en/ addresses as on any other', async () => {
+    for (const path of ['/ja/', '/ja/tools/hiragana-to-katakana/', '/en/about/']) {
+      const refused = ask(path)
+      expect((await refused.response).status, path).toBe(401)
+      expect(refused.serve).not.toHaveBeenCalled()
+      const passed = ask(path, { headers: { Authorization: basic('staging:stagingpassword') } })
+      expect((await passed.response).status, path).toBe(200)
+    }
+  })
+
   test('serves the password with any username, without its Authorization and with no noindex', async () => {
     for (const credentials of ['staging:stagingpassword', ':stagingpassword']) {
       const { response, serve } = ask('/dictionary/', {

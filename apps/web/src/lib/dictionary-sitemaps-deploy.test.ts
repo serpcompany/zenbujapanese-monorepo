@@ -98,10 +98,21 @@ describe('pnpm sitemaps', () => {
       'sitemap-kanji-lists.xml',
       'sitemap-words.xml'
     ])
+    const inBothLanguages = (path: string) => {
+      const [english, japanese] = [path, `/ja${path}`].map(
+        each => `https://zenbujapanese.com${each}`
+      )
+      const alternates =
+        `<xhtml:link rel="alternate" hreflang="en" href="${english}"/>` +
+        `<xhtml:link rel="alternate" hreflang="ja" href="${japanese}"/>` +
+        `<xhtml:link rel="alternate" hreflang="x-default" href="${english}"/>`
+      return `<url><loc>${english}</loc>${alternates}</url><url><loc>${japanese}</loc>${alternates}</url>`
+    }
     expect(readFileSync(join(folder, 'sitemap-words.xml'), 'utf8')).toBe(
-      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-        '<url><loc>https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/</loc></url>' +
-        '<url><loc>https://zenbujapanese.com/dictionary/a&amp;b-1259291/</loc></url></urlset>'
+      '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">' +
+        inBothLanguages('/dictionary/%E8%A6%8B%E3%82%8B-1259290/') +
+        inBothLanguages('/dictionary/a&amp;b-1259291/') +
+        '</urlset>'
     )
   })
 
