@@ -39,6 +39,15 @@ export interface AuthConfig {
   google: GoogleConfig | null
 }
 
+export interface R2Config {
+  endpoint: string
+  bucket: string
+  accessKeyId: string
+  secretAccessKey: string
+}
+
+export type PhotoStore = { kind: 'r2'; r2: R2Config } | { kind: 'dev-memory' }
+
 export interface Config {
   port: number
   databaseUrl: string
@@ -46,6 +55,7 @@ export interface Config {
   release: string
   auth: AuthConfig
   email: EmailConfig
+  photos: PhotoStore | null
 }
 
 const supportAddress = 'support@zenbujapanese.com'
@@ -177,7 +187,37 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): Config {
       apple: readApple(env, /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(publicUrl)),
       google: readGoogle(env)
     },
-    email: readEmail(env)
+    email: readEmail(env),
+    photos: readPhotos(env)
+  }
+}
+
+function readPhotos(env: NodeJS.ProcessEnv): PhotoStore | null {
+  const kind = env.ACCOUNT_API_PHOTOS?.trim() ?? ''
+  if (kind === '') return null
+  if (kind === 'dev-memory') {
+    if (env.NODE_ENV === 'production') {
+      throw new Error('ACCOUNT_API_PHOTOS=dev-memory is for local runs; the image never uses it')
+    }
+    return { kind }
+  }
+  if (kind !== 'r2') {
+    throw new Error(`ACCOUNT_API_PHOTOS is ${kind}; it can be r2 or dev-memory`)
+  }
+  const endpoint = required(env, 'R2_ENDPOINT', "R2's S3 endpoint for the account")
+  if (!/^https?:\/\/[^/]+$/.test(endpoint)) {
+    throw new Error(
+      'R2_ENDPOINT must be an origin with no path, such as https://<account id>.r2.cloudflarestorage.com'
+    )
+  }
+  return {
+    kind,
+    r2: {
+      endpoint,
+      bucket: required(env, 'R2_PHOTOS_BUCKET', "the environment's photo bucket"),
+      accessKeyId: required(env, 'R2_ACCESS_KEY_ID', 'an R2 token for that bucket alone'),
+      secretAccessKey: required(env, 'R2_SECRET_ACCESS_KEY', "that token's secret")
+    }
   }
 }
 

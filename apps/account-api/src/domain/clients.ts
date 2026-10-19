@@ -11,6 +11,14 @@ export const scopes = [
   'watch:write',
   'translations:read',
   'translations:write',
+  'notes:read',
+  'notes:write',
+  'photos:read',
+  'photos:write',
+  'settings:read',
+  'settings:write',
+  'searches:read',
+  'searches:write',
   'dictionary:read'
 ] as const
 
@@ -39,7 +47,15 @@ const appOnly: readonly Scope[] = [
   'watch:read',
   'watch:write',
   'translations:read',
-  'translations:write'
+  'translations:write',
+  'notes:read',
+  'notes:write',
+  'photos:read',
+  'photos:write',
+  'settings:read',
+  'settings:write',
+  'searches:read',
+  'searches:write'
 ]
 
 export const clients: readonly Client[] = [

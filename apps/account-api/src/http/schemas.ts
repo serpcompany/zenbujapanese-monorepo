@@ -11,6 +11,15 @@ import {
   syncEntitiesExtension,
   syncedEntityNames
 } from './sync-entities'
+import {
+  keptDeletes,
+  PhotoSchema,
+  PhotoWordSchema,
+  ProfilePhotoSchema,
+  RecentSearchSchema,
+  SettingSchema,
+  WordNoteSchema
+} from './sync-kept-data'
 
 const { min, max } = profileLimits.usernameLength
 
@@ -254,8 +263,21 @@ const ChangeSchema = z
     put('listWord', ListWordSchema),
     put('watchedVideo', WatchedVideoSchema),
     put('bookmarkedSentence', BookmarkSchema),
+    put('wordNote', WordNoteSchema),
+    put('photo', PhotoSchema),
+    put('photoWord', PhotoWordSchema),
+    put('profilePhoto', ProfilePhotoSchema),
+    put('setting', SettingSchema),
+    put('recentSearch', RecentSearchSchema),
     z.object({
-      entity: z.enum(['knownWord', 'list', 'listWord', 'watchedVideo', 'bookmarkedSentence']),
+      entity: z.enum([
+        'knownWord',
+        'list',
+        'listWord',
+        'watchedVideo',
+        'bookmarkedSentence',
+        ...keptDeletes
+      ]),
       entityId: z.string(),
       operation: z.literal('delete'),
       version: z.int(),
@@ -264,7 +286,7 @@ const ChangeSchema = z
   ])
   .openapi('Change', {
     description:
-      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`.'
+      "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`."
   })
 
 const resultBase = { id: z.string() }
@@ -294,7 +316,7 @@ export const SyncAnswerSchema = z
     results: z.array(MutationResultSchema).openapi({ description: 'One per mutation, in order.' }),
     changes: z.array(ChangeSchema).openapi({
       description:
-        'The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists come before their words, but a word can come on an earlier page than its list: hold it until the sync reaches `hasMore: false`.'
+        'The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists and photos come before their words, but a word can come on an earlier page than its list or photo: hold it until the sync reaches `hasMore: false`.'
     }),
     cursor: z.string().openapi({
       description:

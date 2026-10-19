@@ -5,7 +5,7 @@ import { errorBody } from './errors'
 
 const windowMs = 60_000
 
-export const requestsPerMinute = { profile: 60, sync: 120 } as const
+export const requestsPerMinute = { profile: 60, sync: 120, photos: 300 } as const
 
 type Limited = Context<AccountEnv>
 

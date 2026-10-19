@@ -10,10 +10,12 @@ import { accountStore } from '../db/accounts'
 import { accountDeleter } from '../domain/account-deletion'
 import { createAccounts } from '../domain/accounts'
 import { cursorKey, cursors } from '../domain/cursor'
+import { photoFiles } from '../domain/photo-files'
 import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
 import { createApp } from '../http/app'
+import { MemoryPhotoStorage } from '../storage/memory'
 
 export const publicUrl = 'http://localhost:8789'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
@@ -70,14 +72,23 @@ export async function startService({
   )
   const auth = await createAuth({ config, db, mailer })
   const store = accountStore(db)
+  const photoStorage = new MemoryPhotoStorage()
+  const files = photoFiles(store, photoStorage)
   const app = createApp({
     release: 'test',
     databaseReady: async () => true,
     auth,
     accounts: createAccounts(store, cursors(cursorKey(testSecret))),
-    deleteAccount: accountDeleter(store, appleRevoker(config.apple, config.publicUrl), {
-      accountDeleted: (email, language) => void mailer.send(accountDeletedMessage(email, language))
-    }),
+    deleteAccount: accountDeleter(
+      store,
+      appleRevoker(config.apple, config.publicUrl),
+      {
+        accountDeleted: (email, language) =>
+          void mailer.send(accountDeletedMessage(email, language))
+      },
+      () => void files.sweep()
+    ),
+    photoFiles: files,
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
     allowedOrigins: config.trustedOrigins,
     devMailbox: mailbox
@@ -119,7 +130,26 @@ export async function startService({
     }
   }
   const rows = async (sql: string) => (await client.query<Record<string, unknown>>(sql)).rows
-  return { app, auth, client, mailbox, call, rows, close: () => client.close() }
+  const sendPhoto = async (token: string, photoId: string, bytes: Uint8Array, method = 'PUT') => {
+    const response = await app.request(`${publicUrl}/v1/photos/${photoId}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+      body: method === 'PUT' ? bytes : undefined
+    })
+    return response
+  }
+  return {
+    app,
+    auth,
+    client,
+    mailbox,
+    call,
+    rows,
+    sendPhoto,
+    files,
+    photoStorage,
+    close: () => client.close()
+  }
 }
 
 export type Service = Awaited<ReturnType<typeof startService>>

@@ -1,3 +1,4 @@
+import type { KeptReader, KeptWriter, PhotoDeletions } from './kept-store'
 import type { EditableProfile, Profile, RejectionCode } from './profile'
 
 export type EntityType =
@@ -7,6 +8,12 @@ export type EntityType =
   | 'listWord'
   | 'watchedVideo'
   | 'bookmarkedSentence'
+  | 'wordNote'
+  | 'photo'
+  | 'photoWord'
+  | 'profilePhoto'
+  | 'setting'
+  | 'recentSearch'
 
 export interface JournalEntry {
   sequence: number
@@ -90,7 +97,7 @@ export type RecordedMutation = Omit<MutationRecord, 'outcome' | 'errorCode'> & {
   errorCode: string | null
 }
 
-export interface EntityReader {
+export interface EntityReader extends KeptReader {
   currentProfile(): Promise<Profile | null>
   knownWord(itemId: string): Promise<KnownWord | null>
   wordList(listId: string): Promise<WordList | null>
@@ -99,7 +106,7 @@ export interface EntityReader {
   bookmark(id: string): Promise<Bookmark | null>
 }
 
-export interface LockedAccount extends EntityReader {
+export interface LockedAccount extends EntityReader, KeptWriter {
   readonly profile: Profile
   saveProfile(next: EditableProfile, version: number): Promise<Profile | 'username_taken'>
   saveKnownWord(word: Omit<KnownWord, 'updatedAt'>): Promise<void>
@@ -133,4 +140,5 @@ export interface AccountStore {
   ): Promise<T | null>
   changesAfter(userId: string, sequence: number, limit: number): Promise<JournalEntry[]>
   journalHead(): Promise<number>
+  photoDeletions: PhotoDeletions
 }

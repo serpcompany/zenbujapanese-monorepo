@@ -1,9 +1,6 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
-import type { Context } from 'hono'
-import { createMiddleware } from 'hono/factory'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
-import type { Principal, Scope } from '../domain/clients'
 import type { Change } from '../domain/entities'
 import type { Profile } from '../domain/profile'
 import type { MutationResult } from '../domain/sync'
@@ -12,6 +9,17 @@ import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
 import { json, meaningsText, refusal, refusalSchema } from './refusals'
+import {
+  failed,
+  failedSync,
+  malformed,
+  needs,
+  noScope,
+  refuse,
+  tooLarge,
+  tooMany,
+  unauthorized
+} from './route-answers'
 import {
   DeleteAccountSchema,
   ErrorSchema,
@@ -23,65 +31,6 @@ import {
   SyncRequestSchema
 } from './schemas'
 import { syncFieldSchemas } from './sync-entities'
-
-export const bodyLimitKb = 64
-
-const needs = (...scopes: Scope[]) => [{ accessToken: scopes }]
-
-const noScope = (scope: Scope) => ({
-  insufficient_scope: `This app's access to the account doesn't include \`${scope}\`.`
-})
-
-const unauthorized = refusal({
-  unauthorized:
-    'No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.'
-})
-const tooLarge = refusal({ too_large: `The body is over ${bodyLimitKb} KB.` })
-const malformed = { bad_request: 'The body is not JSON, or not this shape.' }
-const tooMany = (perMinute: number) =>
-  refusal({
-    too_many_requests: `This account sent more than ${perMinute} requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds \`Retry-After\` says.`
-  })
-const failed = refusal({
-  internal: 'The service failed, and nothing says why. Try again later, backing off.'
-})
-const failedSync = refusal({
-  internal:
-    'The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.'
-})
-
-const unauthorizedBody = errorBody(
-  'unauthorized',
-  'Send an access token from GET /v1/auth/token as `Authorization: Bearer <token>`.'
-)
-
-function refuse(context: Context) {
-  return context.json(unauthorizedBody, 401, { 'WWW-Authenticate': 'Bearer' })
-}
-
-export function requireAccount(verifyAccessToken: (token: string) => Promise<Principal | null>) {
-  return createMiddleware<AccountEnv>(async (context, next) => {
-    const token = /^bearer\s+(\S+)$/i.exec(context.req.header('authorization') ?? '')?.[1]
-    const principal = token ? await verifyAccessToken(token) : null
-    if (!principal) return refuse(context)
-    context.set('userId', principal.userId)
-    context.set('clientId', principal.clientId)
-    context.set('scopes', principal.scopes)
-    context.set('signedInAt', principal.signedInAt)
-    await next()
-  })
-}
-
-export function requireScope(scope: Scope) {
-  return createMiddleware<AccountEnv>(async (context, next) => {
-    if (context.get('scopes').has(scope)) return next()
-    return context.json(
-      errorBody('insufficient_scope', `This app's access to the account doesn't include ${scope}.`),
-      403,
-      { 'WWW-Authenticate': `Bearer error="insufficient_scope", scope="${scope}"` }
-    )
-  })
-}
 
 const profileJson = (profile: Profile) => ({
   ...profile,

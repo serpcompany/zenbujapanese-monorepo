@@ -168,4 +168,37 @@ describe('readConfig', () => {
       'support@zenbujapanese.com'
     )
   })
+
+  test('keeps photos nowhere unless told R2, with its bucket and token, or memory on a local run', () => {
+    expect(readConfig(base).photos).toBeNull()
+    const r2 = {
+      ACCOUNT_API_PHOTOS: 'r2',
+      R2_ENDPOINT: 'https://acct.r2.cloudflarestorage.com',
+      R2_PHOTOS_BUCKET: 'zenbujapanese-account-photos-staging',
+      R2_ACCESS_KEY_ID: 'key',
+      R2_SECRET_ACCESS_KEY: 'secret'
+    }
+    expect(readConfig({ ...base, ...r2 }).photos).toEqual({
+      kind: 'r2',
+      r2: {
+        endpoint: 'https://acct.r2.cloudflarestorage.com',
+        bucket: 'zenbujapanese-account-photos-staging',
+        accessKeyId: 'key',
+        secretAccessKey: 'secret'
+      }
+    })
+    for (const name of Object.keys(r2).filter(key => key.startsWith('R2_'))) {
+      expect(refusal({ ...base, ...r2, [name]: '' }), name).toMatch(`${name} must be set`)
+    }
+    expect(refusal({ ...base, ...r2, R2_ENDPOINT: 'https://acct.example/bucket' })).toMatch(
+      /origin/
+    )
+    expect(refusal({ ...base, ACCOUNT_API_PHOTOS: 's3' })).toMatch(/r2 or dev-memory/)
+    expect(readConfig({ ...base, ACCOUNT_API_PHOTOS: 'dev-memory' }).photos).toEqual({
+      kind: 'dev-memory'
+    })
+    expect(refusal({ ...base, ACCOUNT_API_PHOTOS: 'dev-memory', NODE_ENV: 'production' })).toMatch(
+      /for local runs/
+    )
+  })
 })

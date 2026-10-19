@@ -4,9 +4,13 @@ import type { Scope } from './clients'
 import type { Cursors } from './cursor'
 import { type Change, type ClientMutation, type Entity, type Outcome, rejected } from './entities'
 import { knownWords } from './known-words'
+import { photos, photoWords } from './photos'
 import { type Rejection, type RejectionCode, rejection } from './profile'
+import { profilePhotos } from './profile-photo'
 import { profiles } from './profile-sync'
 import { usernameTaken } from './profile-update'
+import { recentSearches } from './recent-searches'
+import { settings } from './settings'
 import type {
   AccountStore,
   EntityReader,
@@ -18,6 +22,7 @@ import type {
 } from './store'
 import { watchHistory } from './watch-history'
 import { listWords, wordLists } from './word-lists'
+import { wordNotes } from './word-notes'
 
 export const syncLimits = {
   mutations: 50,
@@ -53,7 +58,13 @@ export const syncedEntities: Readonly<Record<EntityType, Entity>> = {
   list: wordLists,
   listWord: listWords,
   watchedVideo: watchHistory,
-  bookmarkedSentence: bookmarks
+  bookmarkedSentence: bookmarks,
+  wordNote: wordNotes,
+  photo: photos,
+  photoWord: photoWords,
+  profilePhoto: profilePhotos,
+  setting: settings,
+  recentSearch: recentSearches
 }
 
 const unknownEntity = rejection('unknown_entity', 'This service syncs no entity of that type.')
@@ -75,6 +86,11 @@ const replayedMessages: Record<RejectionCode, string> = {
   too_many_lists: 'The account had too many lists.',
   list_full: 'The list was full.',
   too_many_bookmarks: 'The account had too many bookmarked sentences.',
+  too_many_notes: 'The account had too many notes.',
+  unknown_photo: 'That photo is not in this account, or was removed.',
+  photo_not_uploaded: 'The account had no file for that photo.',
+  photo_full: 'The photo was on too many words.',
+  unknown_setting: 'This service syncs no setting of that name.',
   not_allowed: 'This app may not make that change.'
 }
 
@@ -184,7 +200,8 @@ function applyMutation(
   })
 }
 
-const listsFirst = (change: Change) => (change.entity === 'listWord' ? 1 : 0)
+const childEntities = new Set<Change['entity']>(['listWord', 'photoWord'])
+const parentsFirst = (change: Change) => (childEntities.has(change.entity) ? 1 : 0)
 
 async function changesIn(
   reader: EntityReader,
@@ -202,10 +219,10 @@ async function changesIn(
     if (!change) return null
     changes.push(change)
   }
-  return changes.sort((one, other) => listsFirst(one) - listsFirst(other))
+  return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-export function syncer(store: AccountStore, cursors: Cursors) {
+export function syncer(store: AccountStore, cursors: Cursors, afterChanges: () => void) {
   return async (
     userId: string,
     request: SyncRequest,
@@ -220,6 +237,7 @@ export function syncer(store: AccountStore, cursors: Cursors) {
       if (!result) return { status: 'no_account' }
       results.push(result)
     }
+    if (results.some(result => result.status === 'applied')) afterChanges()
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)

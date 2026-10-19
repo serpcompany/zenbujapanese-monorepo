@@ -108,6 +108,12 @@ function errorCodes(document: ApiDocument, schema: Schema | undefined): string[]
 
 const jsonSchema = (body: Body | undefined) => body?.content?.['application/json']?.schema
 
+const otherTypes = (body: Body | undefined) =>
+  Object.keys(body?.content ?? {})
+    .filter(type => type !== 'application/json')
+    .map(code)
+    .join(' or ')
+
 function auth(operation: Operation): string {
   if (!operation.security?.length) return 'none'
   return operation.security
@@ -140,8 +146,13 @@ function parameters(operation: Operation): string[] {
 
 function requestBody(document: ApiDocument, operation: Operation): string[] {
   const schema = jsonSchema(operation.requestBody)
-  if (!schema) return []
   const required = operation.requestBody?.required ? 'required' : 'optional'
+  const raw = otherTypes(operation.requestBody)
+  if (!schema) {
+    if (!raw) return []
+    const said = operation.requestBody?.description ?? ''
+    return [`**Body** (${raw}, ${required}):${said ? ` ${said}` : ''}`, '']
+  }
   const named = schema.$ref ? `, ${schemaLink(schema.$ref)}` : ''
   const fields = fieldList(resolved(document, schema) ?? {})
   const empty = fields.length ? [] : ['An empty object, `{}`.', '']
@@ -172,7 +183,8 @@ function answer(document: ApiDocument, status: string, body: Body): string[] {
   const description = cell(body.description ?? '')
   const codes = errorCodes(document, schema)
   if (!codes?.length) {
-    const shown = schema ? `, ${shape(schema)}` : ''
+    const raw = otherTypes(body)
+    const shown = schema ? `, ${shape(schema)}` : raw ? `, ${raw}` : ''
     return [`- **${status}**${shown}: ${description}`]
   }
   const meanings = meaningsOf(description, codes)

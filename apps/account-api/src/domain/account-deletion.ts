@@ -34,7 +34,12 @@ export type Deletion =
   | 'apple_account_mismatch'
   | 'apple_unavailable'
 
-export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices: DeletionNotices) {
+export function accountDeleter(
+  store: AccountStore,
+  apple: AppleRevoker,
+  notices: DeletionNotices,
+  afterDeletion: () => void = () => {}
+) {
   return async (
     principal: Principal,
     authorization: AppleAuthorization = {},
@@ -63,6 +68,7 @@ export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices
     }
     const language = emailLanguage(requestedLanguage, await store.language(principal.userId))
     await store.deleteAccount(principal.userId, profile.email)
+    afterDeletion()
     notices.accountDeleted(profile.email, language)
     return 'deleted'
   }

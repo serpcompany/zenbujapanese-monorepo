@@ -8,11 +8,14 @@ import { routePath } from 'hono/route'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
 import { clientById, type Principal } from '../domain/clients'
+import type { PhotoFiles } from '../domain/photo-files'
 import { failureFields } from '../failure'
-import { accountRoutes, bodyLimitKb, requireAccount, requireScope } from './accounts'
+import { accountRoutes } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
+import { photoBodyLimit, photoRoutes } from './photos'
 import { perAccountLimit, perClientLimit, requestsPerMinute } from './rate-limit'
+import { bodyLimitKb, requireAccount, requireScope } from './route-answers'
 import { signInContract } from './sign-in-contract'
 
 interface AuthHandler {
@@ -29,6 +32,7 @@ export interface AppOptions {
   auth: AuthHandler
   accounts: Accounts
   deleteAccount: DeleteAccount
+  photoFiles: PhotoFiles
   verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null
@@ -40,7 +44,7 @@ function isLocal(url: string): boolean {
   return localHosts.has(new URL(url).hostname)
 }
 
-const accountPaths = ['/v1/me', '/v1/sync'] as const
+const accountPaths = ['/v1/me', '/v1/sync', '/v1/photos/*'] as const
 
 function forTheWebsite(response: Response): Response {
   const headers = new Headers(response.headers)
@@ -74,7 +78,9 @@ export function createApp(options: AppOptions) {
     exposeHeaders: ['retry-after', 'x-retry-after'],
     maxAge: 600
   })
-  for (const path of ['/v1/auth/*', '/v1/health', ...accountPaths]) app.use(path, crossOrigin)
+  for (const path of ['/v1/auth/*', '/v1/health', '/v1/me', '/v1/sync']) {
+    app.use(path, crossOrigin)
+  }
   const appLimit = perClientLimit(id => clientById(id)?.requestsPerMinute ?? 0)
   for (const path of accountPaths) {
     app.use(path, requireAccount(options.verifyAccessToken))
@@ -84,12 +90,23 @@ export function createApp(options: AppOptions) {
   app.delete('/v1/me', requireScope('account:delete'))
   app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
   app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
+  app.put('/v1/photos/*', requireScope('photos:write', 'profile'))
+  app.get('/v1/photos/*', requireScope('photos:read', 'profile'))
+  app.use('/v1/photos/*', perAccountLimit(requestsPerMinute.photos))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>
       context.json(errorBody('too_large', `The body is over ${bodyLimitKb} KB.`), 413)
   })
-  for (const path of ['/v1/auth/*', ...accountPaths]) app.use(path, limitedBody)
+  for (const path of ['/v1/auth/*', '/v1/me', '/v1/sync']) app.use(path, limitedBody)
+  app.use(
+    '/v1/photos/*',
+    bodyLimit({
+      maxSize: photoBodyLimit,
+      onError: context =>
+        context.json(errorBody('too_large', 'The photo is over its size limit.'), 413)
+    })
+  )
 
   app.get('/healthz', async context =>
     (await databaseReady())
@@ -98,6 +115,7 @@ export function createApp(options: AppOptions) {
   )
 
   accountRoutes(app, options.accounts, options.deleteAccount, databaseReady, options.allowedOrigins)
+  photoRoutes(app, options.photoFiles)
   signInContract(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {

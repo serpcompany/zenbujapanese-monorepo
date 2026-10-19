@@ -64,9 +64,11 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../storage",
+                      "../storage/**"
                     ],
-                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the dev mailbox), and imports neither the database, sign-in, nor email (docs/agents/account-api.md, Code layout)."
+                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the photo files, the dev mailbox), and imports neither the database, sign-in, photo storage, nor email (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -104,7 +106,9 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../storage",
+                      "../storage/**"
                     ],
                     "message": "src/domain holds the account and sync rules, which the HTTP layer and the database layer both build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter."
                   }
@@ -138,7 +142,9 @@
                       "../email",
                       "../email/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../storage",
+                      "../storage/**"
                     ],
                     "message": "src/db is the database layer: sign-in and the HTTP layer build on it, so it knows nothing of them (docs/agents/account-api.md, Code layout)."
                   }
@@ -174,7 +180,9 @@
                       "drizzle-orm",
                       "drizzle-orm/**",
                       "better-auth",
-                      "better-auth/**"
+                      "better-auth/**",
+                      "../storage",
+                      "../storage/**"
                     ],
                     "message": "src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout)."
                   }
@@ -195,8 +203,55 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["../http", "../http/**", "../server", "hono", "hono/**", "@hono/**"],
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "../storage",
+                      "../storage/**"
+                    ],
                     "message": "src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/storage/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "../http",
+                      "../http/**",
+                      "../db",
+                      "../db/**",
+                      "../auth",
+                      "../auth/**",
+                      "../email",
+                      "../email/**",
+                      "../server",
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "pg",
+                      "drizzle-orm",
+                      "drizzle-orm/**",
+                      "better-auth",
+                      "better-auth/**"
+                    ],
+                    "message": "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts hands it to the domain, so it imports neither HTTP, the database, sign-in, nor email (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -227,7 +282,9 @@
                       "hono/**",
                       "pg",
                       "drizzle-orm",
-                      "drizzle-orm/**"
+                      "drizzle-orm/**",
+                      "./storage",
+                      "./storage/**"
                     ],
                     "message": "src/config.ts reads the environment, src/failure.ts describes an error for the log, and src/language.ts names the language an email is in; all three sit below every layer, so they import none (docs/agents/account-api.md, Code layout)."
                   }

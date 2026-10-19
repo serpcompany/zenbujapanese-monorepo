@@ -3,11 +3,11 @@ import {
   type Change,
   type ClientMutation,
   conflict,
+  cutText,
   type Entity,
   gone,
   momentOf,
   needsBaseVersion,
-  plainText,
   rejected,
   uuidOf
 } from './entities'
@@ -54,8 +54,6 @@ const asChange = (bookmark: Bookmark): Change =>
       }
     : gone('bookmarkedSentence', bookmark.id, bookmark.version)
 
-const cut = (raw: string, most: number) => [...plainText(raw)].slice(0, most).join('').trim()
-
 function bookmarkFields(
   fields: Record<string, unknown>
 ): Pick<Bookmark, 'text' | 'translation' | 'language' | 'bookmarkedAt'> | Rejection {
@@ -66,9 +64,10 @@ function bookmarkFields(
     return badFields
   }
   if (typeof language !== 'string' || !languages.has(language) || !bookmarkedAt) return badFields
-  const kept = cut(text, bookmarkLimits.textLength)
+  const kept = cutText(text, bookmarkLimits.textLength)
   if (kept === '') return badFields
-  const translated = translation === null ? '' : cut(translation, bookmarkLimits.translationLength)
+  const translated =
+    translation === null ? '' : cutText(translation, bookmarkLimits.translationLength)
   return {
     text: kept,
     translation: translated === '' ? null : translated,

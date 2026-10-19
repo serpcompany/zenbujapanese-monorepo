@@ -1,5 +1,7 @@
 import type { AppOptions } from '../http/app'
 
+const noPhotos = { status: 'unavailable' } as const
+
 export const standIns: AppOptions = {
   release: 'abc123def456',
   databaseReady: async () => true,
@@ -15,6 +17,12 @@ export const standIns: AppOptions = {
     sync: async () => ({ status: 'no_account' })
   },
   deleteAccount: async () => 'no_account',
+  photoFiles: {
+    available: false,
+    upload: async () => noPhotos,
+    download: async () => noPhotos,
+    sweep: async () => 0
+  },
   verifyAccessToken: async () => null,
   allowedOrigins: [],
   devMailbox: null

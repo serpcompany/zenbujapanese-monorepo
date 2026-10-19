@@ -3,7 +3,9 @@ import { describe, expect, test } from 'vitest'
 import type { EntityType } from '../domain/store'
 import { syncedEntities } from '../domain/sync'
 import { useAccountService } from '../test/accounts'
+import { examplePhotoFiles, photoIdOf, uploaded } from '../test/photos'
 import { syncEntitiesExtension, syncEntityRules } from './sync-entities'
+import { examplePhotoIds } from './sync-kept-rules'
 
 const accounts = useAccountService()
 
@@ -19,6 +21,7 @@ const deletesLast = (examples: Example[]) => [
 
 async function sendAs(email: string, examples: Example[]) {
   const learner = await accounts.learner(email)
+  for (const bytes of Object.values(examplePhotoFiles)) await uploaded(accounts, learner, bytes)
   const answer = await accounts.sync(learner.token, {
     mutations: examples.map(example => ({ ...example, id: randomUUID() }))
   })
@@ -34,6 +37,11 @@ describe("sync's documented entities", () => {
       const syncs = syncedEntities[entity as EntityType].operations
       expect(Object.keys(rule.operations).sort(), entity).toEqual(Object.keys(syncs).sort())
     }
+  })
+
+  test("name example photos by their files' SHA-256", () => {
+    expect(photoIdOf(examplePhotoFiles.library)).toBe(examplePhotoIds.library)
+    expect(photoIdOf(examplePhotoFiles.profile)).toBe(examplePhotoIds.profile)
   })
 
   test('apply each example as written, sending baseVersion only where it is read', async () => {

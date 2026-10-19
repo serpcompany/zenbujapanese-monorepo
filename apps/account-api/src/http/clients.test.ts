@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { decodeJwt } from 'jose'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useAccountService } from '../test/accounts'
+import { oneOfEachKept } from '../test/kept'
+import { aJpeg } from '../test/photos'
 import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
 const accounts = useAccountService()
@@ -125,6 +127,40 @@ describe("each app's access to an account", () => {
       const entities = answer.changes.map(change => change.entity)
       expect(entities, client).not.toContain('watchedVideo')
       expect(entities, client).not.toContain('bookmarkedSentence')
+    }
+  })
+
+  test('only the iOS app reads and changes notes, photos, settings, and recent searches; Tomodachi gets no profile photo', async () => {
+    const email = 'kept-scopes@example.com'
+    const zenbu = await accounts.learner(email)
+    const { photoId, appOnly: kept, profilePhoto } = await oneOfEachKept(accounts, zenbu)
+    expect((await send(zenbu.token, ...kept, profilePhoto)).results).toMatchObject(
+      [...kept, profilePhoto].map(() => ({ status: 'applied' }))
+    )
+    expect(decodeJwt(zenbu.token).scope).toContain(
+      'notes:read notes:write photos:read photos:write settings:read settings:write searches:read searches:write'
+    )
+    const keptEntities = ['wordNote', 'photo', 'photoWord', 'setting', 'recentSearch']
+    for (const client of ['tomodachi', 'zenbu-web']) {
+      const other = await accounts.learner(email, client)
+      expect(String(decodeJwt(other.token).scope)).not.toMatch(/notes:|photos:|settings:|searches:/)
+      const answer = await send(other.token, ...kept)
+      expect(
+        answer.results.map(result => result.error?.code),
+        client
+      ).toEqual(kept.map(() => 'not_allowed'))
+      const entities = answer.changes.map(change => change.entity)
+      for (const entity of keptEntities) expect(entities, client).not.toContain(entity)
+      expect(entities.includes('profilePhoto'), client).toBe(client === 'zenbu-web')
+      const upload = await accounts.running.service.sendPhoto(other.token, photoId, aJpeg())
+      expect(upload.status, client).toBe(client === 'zenbu-web' ? 400 : 403)
+      const download = await accounts.running.service.sendPhoto(
+        other.token,
+        photoId,
+        new Uint8Array(),
+        'GET'
+      )
+      expect(download.status, client).toBe(client === 'zenbu-web' ? 404 : 403)
     }
   })
 

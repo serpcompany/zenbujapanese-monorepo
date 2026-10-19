@@ -168,10 +168,13 @@ const account: Part = {
       name: 'account-http-never-reaches-the-database',
       severity: 'error',
       comment:
-        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
+        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database or photo storage (docs/agents/account-api.md, Code layout). Put database code in src/db, and storage code in src/storage.',
       from: { path: '^src/http/', pathNot: accountTestCode },
       to: {
-        path: ['^src/(db|auth|email)/', '(^|/)node_modules/(pg|drizzle-orm|better-auth)/']
+        path: [
+          '^src/(db|auth|email|storage)/',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|aws4fetch)/'
+        ]
       }
     },
     {
@@ -182,9 +185,23 @@ const account: Part = {
       from: { path: '^src/domain/', pathNot: accountTestCode },
       to: {
         path: [
-          '^src/(http|db)/',
+          '^src/(http|db|storage)/',
           '^src/server\\.ts$',
-          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
+          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono|aws4fetch)/'
+        ]
+      }
+    },
+    {
+      name: 'account-storage-keeps-files-and-nothing-more',
+      severity: 'error',
+      comment:
+        "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts hands it to the domain, so it imports neither HTTP, the database, sign-in, nor email (docs/agents/account-api.md, Code layout).",
+      from: { path: '^src/storage/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|email)/',
+          '^src/server\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
         ]
       }
     },
