@@ -97,4 +97,9 @@ that no device's run uses.
 The audits read the accessibility tree and the screen; they don't use VoiceOver. VoiceOver's
 order and announcements, and the largest text size on a real device, are checked by a person on
 an iPhone, from the checklist in the pull request that changes them. They read only the app's own
-process, so the share sheet's card is audited inside the app rather than in the sheet.
+process, so the share sheet's card is audited inside the app rather than in the sheet. A headword
+too long to keep its reading beside the pitch accent, such as 食べる, shrinks one size as the text
+grows (product docs, the word's page), and the Dynamic Type sweep from the default size loses its
+furigana, kanji, and pitch kana without naming them, though it names them from the largest size.
+The walks' word pages, 日本 and 駅, keep theirs beside it, and a conjugated form's headword, which
+the sweep names, is allowed as a design choice.

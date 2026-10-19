@@ -20,7 +20,7 @@ final class ShareSheetAuditUITests: AccessibilityAuditCase {
     waitFor(find("share-card.text", in: text))
     waitFor(firstElement(identifiedBy: "share-card.translation", in: text))
     audit("A shared sentence's card", in: text)
-    let word = share(pass, ["ZENBU_SHARE_TEXT": "食べた"])
+    let word = share(pass, ["ZENBU_SHARE_TEXT": "駅"])
     waitFor(find("share-card.word", in: word))
     audit("A shared word's card", in: word)
     let photo = share(pass, ["ZENBU_SHARE_IMAGE": fixtures.appending(path: "horizontal-japanese.png").path])
