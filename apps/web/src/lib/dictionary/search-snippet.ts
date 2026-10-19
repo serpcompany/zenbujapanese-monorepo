@@ -53,11 +53,10 @@ function englishSpellings(
   return [word.reading, ...(latin ? [latin] : [])]
 }
 
-const firstFitting = (titles: string[]) => titles.find(fitsTitle) ?? titles[titles.length - 1]
-
 function answeredTitle(search: SnippetSearch, locale: Locale) {
   const t = searchText(locale)
   const [word] = search.words
+  const named = (title: string) => (search.hasExamples ? fill(t.withExamples, { title }) : title)
   const asked = fill(t.howToSay, { query: queryIn(locale, search.query, 'title') })
   const titles = [
     fill(t.answered, {
@@ -65,12 +64,9 @@ function answeredTitle(search: SnippetSearch, locale: Locale) {
       word: spelled(word, locale, englishSpellings(word, locale, false))
     }),
     fill(t.answered, { title: asked, word: word.headword }),
-    asked,
-    fittedTitle(t.titleForEnglish, 'query', search.query)
-  ]
-  return firstFitting(
-    search.hasExamples ? titles.map(title => fill(t.withExamples, { title })) : titles
-  )
+    asked
+  ].map(named)
+  return titles.find(fitsTitle) ?? fittedTitle(named(t.titleForEnglish), 'query', search.query)
 }
 
 function answeredSnippet(search: SnippetSearch, locale: Locale): SearchSnippet {

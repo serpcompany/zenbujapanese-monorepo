@@ -98,6 +98,13 @@ describe('a search that isn’t an English word keeps its plain title', () => {
     expect(snippet.heading).toBe(snippet.title)
   })
 
+  test('a long query with example sentences keeps its Japanese title within 70 characters', () => {
+    const query = Array.from({ length: 8 }, () => 'persevere').join(' ')
+    const title = searchSnippet(english(query, [word('頑張る', 'がんばる')], true), 'ja').title
+    expect(fitsTitle(title), title).toBe(true)
+    expect(title).toMatch(/…の日本語・意味・例文$/)
+  })
+
   test('a long query is shortened in the title, and written whole in the heading', () => {
     const query = Array.from({ length: 30 }, () => 'persevere').join(' ')
     const snippet = searchSnippet(english(query, []), 'en')
