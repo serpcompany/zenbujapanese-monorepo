@@ -23,13 +23,8 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func offersNoIntroductoryOfferToAnAppleAccountThatHadThePlan() async throws {
-    let session = try await Self.session()
+    let (session, store) = try await Self.holding(Self.yearly)
     defer { session.clearTransactions() }
-    let store = StoreKitPurchases()
-    try await session.buyProduct(identifier: Self.yearly)
-    try await Self.until("the purchase among current entitlements") {
-      await Self.products(store.currentTransactions()) == [Self.yearly]
-    }
     try await Self.until("no introductory offer") {
       (try? await store.offers(for: [Self.yearly]).map(\.introduction)) == [nil]
     }
@@ -53,13 +48,8 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func listsTheAppleAccountsCurrentPurchases() async throws {
-    let session = try await Self.session()
+    let (session, store) = try await Self.holding(Self.yearly)
     defer { session.clearTransactions() }
-    let store = StoreKitPurchases()
-    try await session.buyProduct(identifier: Self.yearly)
-    try await Self.until("the purchase among current entitlements") {
-      await Self.products(store.currentTransactions()) == [Self.yearly]
-    }
     let current = try await store.currentTransactions().map {
       try Self.payload(of: $0.signedTransaction)["productId"] as? String
     }
@@ -103,13 +93,8 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func handsOverARenewalAndDropsAnExpiredSubscription() async throws {
-    let session = try await Self.session()
+    let (session, store) = try await Self.holding(Self.monthly)
     defer { session.clearTransactions() }
-    let store = StoreKitPurchases()
-    try await session.buyProduct(identifier: Self.monthly)
-    try await Self.until("the purchase among current entitlements") {
-      await Self.products(store.currentTransactions()) == [Self.monthly]
-    }
     let first = await store.currentTransactions().map(\.id)
     try session.forceRenewalOfSubscription(productIdentifier: Self.monthly)
     try await Self.until("the renewal among current entitlements") {
@@ -123,13 +108,8 @@ struct StoreKitPurchasesTests {
   }
 
   @Test func dropsARefundedPurchase() async throws {
-    let session = try await Self.session()
+    let (session, store) = try await Self.holding(Self.yearly)
     defer { session.clearTransactions() }
-    let store = StoreKitPurchases()
-    try await session.buyProduct(identifier: Self.yearly)
-    try await Self.until("the purchase among current entitlements") {
-      await Self.products(store.currentTransactions()) == [Self.yearly]
-    }
     let bought = try #require(await store.currentTransactions().first.flatMap { UInt($0.id) })
     try session.refundTransaction(identifier: bought)
     try await Self.until("no current entitlement after the refund") {
@@ -149,6 +129,18 @@ struct StoreKitPurchasesTests {
       try await StoreKitPurchases().purchase(Self.retired, for: UUID(), confirmingWith: nil)
     }
     session.clearTransactions()
+  }
+
+  private static func holding(_ product: String) async throws
+    -> (SKTestSession, StoreKitPurchases)
+  {
+    let session = try await Self.session()
+    let store = StoreKitPurchases()
+    try await session.buyProduct(identifier: product)
+    try await Self.until("the purchase among current entitlements") {
+      await Self.products(store.currentTransactions()) == [product]
+    }
+    return (session, store)
   }
 
   private static func products(_ transactions: [StoreTransaction]) -> [String] {
