@@ -21,8 +21,9 @@ every account syncs as before, and the stores are off until their settings are s
   change only its own rows, so an App Store notification can't end a website subscription.
 - **The entitlement** is the account's one answer, made from its subscriptions: the one giving
   access, else one still running at its store, else the latest. It names its source, product,
-  status, expiry, and where it's managed, and lists every subscription still running (`running`),
-  so a learner who pays in both stores sees both and can manage each where it was bought.
+  status, expiry, and where it was bought (`managedIn`, kept for one that no longer runs), and
+  lists every subscription still running (`running`), so a learner who pays in both stores sees
+  both and can manage each where it was bought.
 - **Statuses:** `active` (paid through `expiresAt`), `grace_period` (a renewal failed and the store
   retries, features on until `expiresAt`), `billing_retry` (the same, features off), `pending` (a
   first payment not yet made), `paused`, `expired`, and `revoked` (refunded, or revoked by Apple).

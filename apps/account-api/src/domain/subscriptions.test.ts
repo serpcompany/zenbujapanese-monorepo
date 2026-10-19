@@ -109,7 +109,8 @@ describe("the account's entitlement", () => {
     expect(entitlement([subscription({ expiresAt: at(-2 * renewalLeewayMs) })])).toMatchObject({
       status: 'expired',
       active: false,
-      managedIn: null,
+      managedIn: 'website',
+      running: [],
       canSubscribe: true
     })
   })

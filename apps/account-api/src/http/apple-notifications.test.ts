@@ -198,7 +198,7 @@ describe('POST /v1/webhooks/apple', () => {
       status: 'expired',
       active: false,
       willRenew: false,
-      managedIn: null,
+      managedIn: 'app_store',
       canSubscribe: true
     })
   })
