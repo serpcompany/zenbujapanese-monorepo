@@ -843,8 +843,8 @@ but the profile, in TypeScript, and the service's tests prove that model against
   `AccountMessage.syncPaused`) and to reopen it otherwise, and disables **Sync Now**
   (`waitsForUnreadableBookmarks`). The cursor is
   saved only after the history's writes finish.
-- **Favorites** has one ID in every app ([`account-clients.md`](account-clients.md), The rules, from
-  your side). A second phone's `create` of it is rejected `already_exists`, which the first upload
+- **Favorites** has one ID in every app ([`account-client-rules.md`](account-client-rules.md),
+  Study data). A second phone's `create` of it is rejected `already_exists`, which the first upload
   never undoes: the account's copy comes down, and the phone's words still add. If that copy comes
   down deleted (`accountHadFavorites`), the phone keeps its list under a new ID and uploads it with
   its words. Any other list the account deleted is deleted on the phone. A list screen open on

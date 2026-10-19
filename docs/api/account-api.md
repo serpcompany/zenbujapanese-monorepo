@@ -185,7 +185,7 @@ The file of a Media Library photo or the profile photo, before the sync change t
 - **409** `too_many_photos`: The account holds 1,000 files. Remove a photo first.
 - **413** `too_large`: The file is over 12 MB.
 - **415** `unsupported_photo`: The file isn't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image.
-- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
+- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads already. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 - **503** `photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.
 

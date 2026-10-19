@@ -74,7 +74,7 @@ again a few times, waiting longer each time, only while the app is open.
 Check: package `AccountSyncTests` and `AccountSyncRecoveryTests`.
 
 **When the same thing changed elsewhere.** Each kind of change follows the account's rule
-([`docs/agents/account-clients.md`](../../../../docs/agents/account-clients.md), The rules):
+([`docs/agents/account-client-rules.md`](../../../../docs/agents/account-client-rules.md)):
 
 - A known word marked or un-marked on another device first shows as it is there, for the learner
   to change again: an un-mark made before this phone saw a newer mark shows the word Known again.

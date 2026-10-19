@@ -16,8 +16,8 @@ setting up the server. Each service's doc covers its image, its workflow, and it
 Clients reach both services at one host, `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com`
 for staging (ADR 0013). nginx sends a request by its path:
 
-- `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, and anything under them, to the account
-  service;
+- `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/photos`, and `/v1/health`, and anything under them, to
+  the account service;
 - every other path to the dictionary service, including `/healthz`.
 
 The list is `accountServicePaths` in `packages/node-service/src/api-host.ts`. Each service's tests
@@ -56,7 +56,8 @@ server {
         set $account "zenbujapanese-account-api-staging";
         set $dictionary "zenbujapanese-dictionary-api-staging";
 
-        location ~ ^/v1/(auth|me|sync|health)(/|$) {
+        location ~ ^/v1/(auth|me|sync|photos|health)(/|$) {
+                client_max_body_size 13m;
                 proxy_http_version 1.1;
                 proxy_set_header Connection "";
                 proxy_set_header Host $host;
@@ -86,7 +87,8 @@ server {
 
 - `ssl_client_certificate` and `ssl_verify_client on` take only Cloudflare's client certificate
   (Authenticated Origin Pulls), so a request that skips Cloudflare gets `400` from nginx, and the
-  `CF-Connecting-IP` the account service counts by is always Cloudflare's.
+  `CF-Connecting-IP` the account service counts by is always Cloudflare's. `client_max_body_size`
+  lets a 12 MB photo through, past nginx's 1 MB default.
 - `resolver … valid=5s` with the alias in a variable makes nginx look the alias up every 5
   seconds, so it finds the new slot after a deploy without a reload, and
   `proxy_next_upstream … http_502 http_503` with two tries sends a request a slot can't answer to
@@ -170,14 +172,12 @@ A few details keep a deploy safe:
   containers it starts there, and removes it when the run ends.
 - **Stopped slots first.** A deploy removes the environment's stopped slot containers, freeing
   their slots, and treats any container with a slot's name as taking it.
-- **The verified digest.** It runs the new container by its image's digest, the one cosign
-  verified.
+- **The verified digest.** It runs the new container by its image's digest, which cosign verified.
 - **A restart policy only once it answers,** so a crash shows at once rather than as a restart
   loop. The old slot gets SIGTERM and 30 seconds to finish its requests.
 - **A deploy cut short is finished.** A run that finds the tag's image in a slot finishes the
   deploy: once it answers as the tag's release, it gets the alias and the restart policy, and the
-  other slot stops. One that doesn't answer is removed, unless it has the alias, since it's
-  serving.
+  other slot stops. One that doesn't answer is removed, unless it has the alias, since it's serving.
 - **Old images are pruned.** After a deploy, the deployer removes the service's images that no slot
   uses, except the ones the deploy replaced, which a rollback deploys again, and the ones the tags
   name. It removes an image by its references in this repository, so an image another repository
