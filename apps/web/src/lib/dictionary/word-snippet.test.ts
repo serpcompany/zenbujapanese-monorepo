@@ -55,36 +55,38 @@ const laborRelationsAct: SnippetWord = {
 const realWords = [ego, iku, rotouNiMayou, laborRelationsAct]
 
 describe('a word page’s description', () => {
-  test('a short word says what it means, what its page has, and that the dictionary is free', () => {
+  test('a short word asks what its romaji means, answers, and says what its page has', () => {
     expect(wordDescription(ego, 'en')).toBe(
-      'エゴ: ego. Noun. See its reading, every meaning, pitch accent, and 2 example sentences in the Zenbu Japanese dictionary.'
+      'What does ego mean? エゴ means “ego” in English. Noun. See its reading, every meaning, pronunciation, and 2 example sentences in the Zenbu Japanese dictionary.'
     )
     expect(wordDescription(ego, 'ja')).toBe(
       '「エゴ」は英語で「ego」という意味です。品詞は名詞。このページでは、この言葉の読み方、すべての意味、アクセント、例文2件を確認できます。Zenbu Japaneseの和英辞典は、ウェブでもiPhoneアプリでも無料で使えます。'
     )
   })
 
-  test('a word with many features names the ones that fit, dropping every meaning first and conjugations last', () => {
+  test('a word whose meaning fills the description adds nothing; in Japanese it names every feature that fits', () => {
     expect(wordDescription(iku, 'en')).toBe(
-      '行く (いく): to go, to move (towards), to head (towards), to leave (for). Godan verb (intransitive). See its 100 example sentences in the Zenbu Japanese dictionary.'
+      'What does iku mean? 行く (いく) means “to go, to move (towards), to head (towards), to leave (for)” in English. Godan verb (intransitive).'
     )
     expect(wordDescription(iku, 'ja')).toBe(
       '「行く（いく）」は英語で「to go, to move (towards), to head (towards), to leave (for)」という意味です。品詞は五段動詞（自動詞）。このページでは、この言葉の読み方、すべての意味、アクセント、漢字、活用、例文100件を確認できます。'
     )
   })
 
-  test('a long meaning loses glosses from its end until it fits, never splitting one in parentheses', () => {
+  test('a long meaning loses glosses from its end, then the question, then the reading, never splitting a gloss in parentheses', () => {
     expect(wordDescription(rotouNiMayou, 'en')).toBe(
-      '路頭に迷う (ろとうにまよう): to be left without means of sustenance, to be turned adrift in the streets, to be rendered homeless. Expression · Godan verb.'
+      'What does rotounimayou mean? 路頭に迷う (ろとうにまよう) means “to be left without means of sustenance” in English. Expression · Godan verb.'
     )
     expect(wordDescription(laborRelationsAct, 'en')).toBe(
-      '特定独立行政法人等の労働関係に関する法律 (とくていどくりつぎょうせいほうじんとうのろうどうかんけいにかんするほうりつ): Act on Labor Relationship of Specified Independent Administrative Agency. Expression · Noun.'
+      '特定独立行政法人等の労働関係に関する法律 means “Act on Labor Relationship of Specified Independent Administrative Agency, etc. (2002)” in English. Expression · Noun.'
     )
     const parenthesized = {
       ...rotouNiMayou,
       summary: `${'to wander (lost, homeless), '.repeat(6)}to roam`
     }
-    expect(wordDescription(parenthesized, 'en')).toMatch(/\(lost, homeless\)\. Expression/)
+    expect(wordDescription(parenthesized, 'en')).toMatch(
+      /\(lost, homeless\)” in English\. Expression/
+    )
   })
 
   test.each(locales)('in %s, every real case is 110–160 characters', locale => {
@@ -97,24 +99,33 @@ describe('a word page’s description', () => {
 })
 
 describe('a word page’s title', () => {
-  test('names the word and its reading when they fit', () => {
-    expect(wordTitle(iku, 'en')).toBe('行く (いく) meaning')
-    expect(wordTitle(iku, 'ja')).toBe('行く（いく）の英語・意味・例文')
-    expect(wordTitle(ego, 'en')).toBe('エゴ meaning')
-    expect(wordTitle(rotouNiMayou, 'ja')).toBe('路頭に迷う（ろとうにまよう）の英語・意味')
+  test('leads with the romaji, the word, and its reading in English, and the first meaning in Japanese', () => {
+    expect(wordTitle(iku, 'en')).toBe('Iku Meaning & Definition: 行く (いく) in English')
+    expect(wordTitle(iku, 'ja')).toBe('「行く」は英語で？to go｜意味・読み方・漢字・例文')
+    expect(wordTitle(ego, 'en')).toBe('Ego Meaning & Definition: エゴ in English')
+    expect(wordTitle(ego, 'ja')).toBe('「エゴ」は英語で？ego｜意味・読み方・例文')
+    expect(wordTitle(rotouNiMayou, 'ja')).toBe('「路頭に迷う」の英語｜意味・読み方・漢字')
   })
 
-  test('leaves the reading out when the title with it would pass 70 characters', () => {
+  test('gives up the romaji, the reading, and the meaning when the title would pass 70 characters', () => {
     expect(wordTitle(laborRelationsAct, 'en')).toBe(
       '特定独立行政法人等の労働関係に関する法律 meaning'
     )
     expect(wordTitle(laborRelationsAct, 'ja')).toBe(
-      '特定独立行政法人等の労働関係に関する法律の英語・意味'
+      '「特定独立行政法人等の労働関係に関する法律」の英語｜意味・読み方・漢字'
     )
     for (const locale of locales) {
       for (const word of realWords) {
         expect(fitsTitle(wordTitle(word, locale)), siteTitle(wordTitle(word, locale))).toBe(true)
       }
     }
+  })
+
+  test('has no romaji where the reading ends in a particle it could misread, and none with macrons', () => {
+    const konnichiwa = { ...ego, headword: '今日は', reading: 'こんにちは', kanji: ['今', '日'] }
+    expect(wordTitle(konnichiwa, 'en')).toBe('今日は (こんにちは) Meaning & Definition in English')
+    expect(wordDescription(konnichiwa, 'en')).toMatch(/^今日は \(こんにちは\) means “ego”/)
+    const coffee = { ...ego, headword: 'コーヒー', reading: 'コーヒー' }
+    expect(wordTitle(coffee, 'en')).toBe('Kohi Meaning & Definition: コーヒー in English')
   })
 })

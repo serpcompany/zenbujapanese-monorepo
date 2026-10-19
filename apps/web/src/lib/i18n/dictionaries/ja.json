@@ -2011,8 +2011,20 @@
       "word": "{headword}（{reading}）",
       "title": "{word}の英語・意味",
       "titleWithExamples": "{word}の英語・意味・例文",
+      "titles": {
+        "first": "「{headword}」は英語で？{gloss}｜{features}",
+        "second": "「{headword}」は英語で？{gloss}｜意味・読み方",
+        "third": "「{headword}」の英語｜{features}",
+        "fourth": "「{headword}」の英語・意味"
+      },
+      "titleFeatures": {
+        "meaning": "意味・読み方",
+        "kanji": "・漢字",
+        "examples": "・例文"
+      },
       "description": "「{word}」は英語で「{meaning}」という意味です。",
       "descriptionWithPartOfSpeech": "「{word}」は英語で「{meaning}」という意味です。品詞は{partOfSpeech}。",
+      "asked": "{lead}",
       "features": "このページでは、この言葉の{features}を確認できます。",
       "featureNames": {
         "reading": "読み方",

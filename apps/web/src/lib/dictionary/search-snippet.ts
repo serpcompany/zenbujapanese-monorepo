@@ -1,8 +1,8 @@
-import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, pluralOf } from '@/lib/i18n/format'
-import { fitsTitle, fittedDescription } from '@/lib/snippets'
+import { capitalized, fitsTitle, fittedDescription } from '@/lib/snippets'
+import { plainRomaji, spellsReading } from './plain-romaji'
 
 export interface SnippetSearch {
   query: string
@@ -17,36 +17,9 @@ export interface SearchSnippet {
   description: string
 }
 
-const combiningMark = /\p{Mn}/gu
-const particleEnding = /[はへ]$/u
-const plainLatin = /^[a-z][a-z' -]*$/u
 const smallWords = new Set('a an and as at by for in of on or the to with'.split(' '))
 
 const searchText = (locale: Locale) => getDictionary(locale).search.metadata
-
-const unmarked = (reading: string) =>
-  romaji(reading)?.normalize('NFD').replace(combiningMark, '').normalize('NFC') ?? null
-
-export function plainRomaji(reading: string): string | null {
-  if (particleEnding.test(reading)) return null
-  const written = unmarked(reading)
-  return written && plainLatin.test(written) ? written : null
-}
-
-const loosely = (latin: string) =>
-  latin
-    .toLowerCase()
-    .replace(/[^a-z]/g, '')
-    .replace(/ha$/, 'wa')
-    .replace(/ou/g, 'o')
-    .replace(/([aeiou])\1/g, '$1')
-
-export function spellsReading(query: string, reading: string): boolean {
-  const written = unmarked(reading)
-  return written !== null && loosely(written) === loosely(query)
-}
-
-const capitalized = (word: string) => word.charAt(0).toUpperCase() + word.slice(1)
 
 const titleCased = (query: string) =>
   query

@@ -33,13 +33,12 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - A frequency band is "«list»: most used Japanese words, «ranks»", such as "Visual novels: most
   used Japanese words, 9,001–10,000", the longest, at 70.
 - The kanji hub is "Kanji lists by grade, JLPT level, and stroke count".
-- A word page is titled with its headword and reading, "要る (いる) meaning", unless that would
-  pass 70 characters; then it has the headword alone, as
-  特定独立行政法人等の労働関係に関する法律 does.
+- A word page gives up its romaji, then its reading, then its meaning as its title passes 70
+  characters, down to "«headword» meaning", as 特定独立行政法人等の労働関係に関する法律 does.
 
 - Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70).
-- Check: `src/lib/dictionary/word-snippet.test.ts`, "leaves the reading out when the title with it
-  would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
+- Check: `src/lib/dictionary/word-snippet.test.ts`, "gives up the romaji, the reading, and the
+  meaning when the title would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
   list’s every band is titled within 70 characters, at its widest ranks" and each kind of browse
   page; browse-lists spec, "a ranked list shows its first band’s words, …"; browse spec, "the JLPT
   kanji lists are Waller’s, credited under CC BY".
@@ -71,6 +70,22 @@ English, Romaji & Kanji Lookup", headed "Japanese–English Dictionary"; in Japa
 - Check: `src/lib/pages.test.ts`, "describes every page and tool in 110 to 160 characters, in every
   language"; search spec, "the dictionary home searches and lands on the canonical results page".
 
+**A word page leads with the romaji people search.** Its English title is "Iru Meaning &
+Definition: 要る (いる) in English", and its description opens "What does iru mean? 要る (いる)
+means “…” in English."; its Japanese title is 「要る」は英語で？to be needed｜意味・読み方・漢字・例文,
+naming 漢字 and 例文 only as the word has them. In the US the romaji comes first ("senpai
+meaning" 24,000 a month, "what does baka mean" 12,000, "senpai definition" 900), and almost
+nobody searches the kanji with "meaning"; in Japan, "{word} 英語" leads (ありがとう 英語
+24,000). The romaji is the shared core's without macrons, with long vowels spelled as written
+(ありがとう is arigatou, though most search "arigato"); a reading ending in は or へ has none,
+and the title is "今日は (こんにちは) Meaning & Definition in English". The `h1` is still the
+headword.
+
+- Source: #888 (Ahrefs Keywords Explorer, 2026-10-19).
+- Check: `src/lib/dictionary/word-snippet.test.ts`, "a word page’s title";
+  `src/app/[locale]/dictionary/[word]/page.test.tsx`, "a word page is titled with its romaji in
+  English, …"; word spec, "shows the word, its breadcrumb, and its meaning".
+
 ## Descriptions
 
 **A description is 110 to 160 characters.** A page's description starts from what the page says
@@ -90,7 +105,7 @@ or 、 in the second half of the limit (otherwise where the limit falls), with "
 
 | Page | Starts from | Then adds |
 | --- | --- | --- |
-| Word | Its meaning and part of speech | What the page has: its reading, every meaning, pitch accent, kanji, conjugations, and how many example sentences, as the word has them |
+| Word | What its romaji means, in English, then its meaning and part of speech | What the page has: its reading, every meaning, pitch accent, kanji, conjugations, and how many example sentences, as the word has them |
 | Search for an English word | Its answer, "Cat in Japanese is 猫 (ねこ, neko)." | How many other words it found (or that it is the only one), and that each opens to its pitch accent, kanji, and examples |
 | Other search results | How many words it found | That each word opens to its pitch accent, kanji, conjugations, and examples |
 | Kana list | How many words start with the kana | That they're in kana order, with furigana, meaning, and how common each is |
@@ -103,12 +118,13 @@ or 、 in the second half of the limit (otherwise where the limit falls), with "
 
 **A word's description says what the page has, as far as it fits.** When the features sentence
 doesn't fit, it drops a feature at a time, in this order: every meaning, the reading, kanji, pitch
-accent, and conjugations, so a word with many features names its examples last of all ("See its
-100 example sentences in the Zenbu Japanese dictionary."). When the meaning alone takes the
-description past 160 characters, it loses glosses from its end, never splitting one in
-parentheses, before anything is cut: 路頭に迷う keeps its first three meanings.
+accent (named "pronunciation" in English), and conjugations, so a word with many features names
+its examples last of all. When the meaning alone takes the description past 160 characters, it
+loses glosses from its end, never splitting one in parentheses, then the question, then the
+reading, before anything is cut: 路頭に迷う keeps its first meaning beside its question, and
+特定独立行政法人等の労働関係に関する法律 keeps every meaning without its reading.
 
-- Source: #876.
+- Source: #876; #888.
 - Check: `src/lib/dictionary/word-snippet.test.ts`, "a word page’s description", with エゴ,
   行く, 路頭に迷う, and 特定独立行政法人等の労働関係に関する法律 in both languages.
 
