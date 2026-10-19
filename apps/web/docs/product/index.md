@@ -50,6 +50,9 @@ Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a
 in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
 each language shows, the search-engine tags, and the switcher.
 
+Pages are kept at Cloudflare's edge after they render, so a page asked for again answers without
+waiting on the dictionary service; [Speed](speed.md) describes what is kept, and for how long.
+
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
 support page says about Tomodachi.

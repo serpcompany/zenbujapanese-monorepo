@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { keptAnswers } from '@/test/edge-cache'
 import { appStoreLookupUrl, appStoreRelease, readAppStoreLookup } from './app-store'
 
 const liveApp = {
@@ -34,19 +35,6 @@ describe('reading the App Store lookup', () => {
 })
 
 type Fetcher = (request: Request) => Promise<Response>
-
-function keptAnswers() {
-  const kept = new Map<string, Response>()
-  vi.stubGlobal('caches', {
-    default: {
-      match: async (key: Request) => kept.get(key.url)?.clone(),
-      put: async (key: Request, response: Response) => {
-        kept.set(key.url, response)
-      }
-    }
-  })
-  return kept
-}
 
 describe('asking Apple', () => {
   beforeEach(() => {

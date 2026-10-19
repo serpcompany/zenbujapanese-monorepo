@@ -9,11 +9,11 @@ in [`quality.md`](quality.md).
 Add a row, with its Size, in the pull request that knowingly leaves debt, and remove it in the one
 that pays it off. A row without an issue says "No issue yet"; open one before starting the work.
 
-Size is `small` (an hour or two, with no migration, deploy, or decision), `medium` (one focused
-pull request), or `large` (a plan of its own, or several pull requests). An item that needs a
-person's decision is never `small`. The weekly maintenance report counts both files' rows by Size
-and names the first small one, from the top of this file and then of that one, which the weekly
-code gardener takes unless it must pass it over ([`ci-agents.md`](agents/ci-agents.md), Weekly maintenance).
+Size is `small` (an hour or two, with no migration, deploy, or decision), `medium` (one focused pull
+request), or `large` (a plan of its own, or several pull requests). An item that needs a person's
+decision is never `small`. The weekly maintenance report counts both files' rows by Size and names
+the first small one, from the top of this file and then of that one, which the weekly code gardener
+takes unless it must pass it over ([`ci-agents.md`](agents/ci-agents.md), Weekly maintenance).
 
 ## Code
 
@@ -51,6 +51,7 @@ code gardener takes unless it must pass it over ([`ci-agents.md`](agents/ci-agen
 
 | Debt | Why it matters | Issue | Size |
 | --- | --- | --- | --- |
+| Each page's first render waits on the dictionary service. | Crawlers still wait. | #871 | medium |
 | The logo and icons (`apps/web/docs/product/dictionary.md`, Header, footer, and site-wide) are the one behavior there with no automated check; `verify-web` checks them by hand. | A change that breaks the mark, the favicon, or the manifest passes CI. | #831 | small |
 | The website lacks app behaviors that the product docs require, under Required, not built yet: Reading Aids, handwriting and radical input (#832), kanji element detail, and more. | The website is meant to show what the app shows; each difference without a decision on file is a bug. | #831 | large |
 | The website's Sign in with Apple and Google run only against stand-ins before merge: Apple takes no `localhost` return URL, and Google's web client returns only to the deployed account services. Staging and production offer both. Deleting an Apple account from the website, where the service takes the popup's code with its return URL, is first exercised on staging. | A mistake in Apple's popup, its return URL, or Google's redirect shows up only on staging. A browser test on staging would sign in with a test Apple ID and Google account. | No issue yet | medium |
