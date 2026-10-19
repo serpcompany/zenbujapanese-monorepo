@@ -42,8 +42,13 @@ app target's own sources; what they call is in the package, where it's tested.
 - Not `OpenIntent`: its target must be an `AppEntity` or `AppEnum`, and these take any text. Not
   `URLRepresentableIntent` or `OpenURLIntent`: they open a universal link, which Debug and UI test
   builds don't have.
-- A phrase can't hold a text parameter, so Siri asks for the text (`requestValueDialog`).
+- A phrase can't hold a text parameter, so Siri asks for the text (`requestValueDialog`). App
+  Shortcut phrases take only an `AppEntity` or `AppEnum` value, never free text.
   `INAlternativeAppNames` in `Info.plist` lets Siri hear "Zenbu" for the app.
+- Phrases that start with the app's name ("Zenbu look up", "Zenbu translate") are the owner's
+  (2026-10-19), and the app's name on its own runs Look Up. The metadata processor accepts a
+  phrase that is only `\(.applicationName)`; whether Siri prefers it to opening the app is checked
+  on a device.
 - They need no entitlement, App Group, or App ID beyond the app's own.
 
 ## Tests

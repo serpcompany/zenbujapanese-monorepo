@@ -26,9 +26,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   translated cards keep coming.
 - Example Sentences says how many sentences it lists, under its title: "3 examples", or "The
   first 100 of more than 100 examples".
-- Look up and translate from Shortcuts, Siri, and Spotlight. **Look Up in Zenbu** opens Zenbu on
-  the word or its search results, and **Translate with Zenbu** on Translate's Text with the text;
-  Siri runs them from "Look up in Zenbu" and "Translate with Zenbu".
+- Look up and translate from Shortcuts, Siri, and Spotlight: **Look Up in Zenbu** opens the word
+  or its results, from "Zenbu look up" or "Look up in Zenbu", and **Translate with Zenbu** opens
+  Translate's Text with the text, from "Zenbu translate" or "Translate with Zenbu".
 - Search finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
