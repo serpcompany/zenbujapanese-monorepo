@@ -5,6 +5,7 @@ import { Fill } from '@/components/fill'
 import { browseText } from '@/lib/dictionary/browse/copy'
 import { type PageNumber, pageNumbers } from '@/lib/dictionary/browse/pagination'
 import type { Locale } from '@/lib/i18n/config'
+import { getDictionary } from '@/lib/i18n/dictionary'
 import { formatNumber } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
 
@@ -38,7 +39,7 @@ export function Sentences({
   if (rest.length === 0) return first
   return (
     <Fill
-      template={browseText(locale).sentences}
+      template={getDictionary(locale).site.sentences}
       values={{ first, second: <Sentences locale={locale} sentences={rest} /> }}
     />
   )

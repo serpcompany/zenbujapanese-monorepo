@@ -21,8 +21,21 @@ export function localizedAlternates(path: string, locale: Locale) {
   return { canonical: localizedPath(path, locale), languages: hreflangPaths(path) }
 }
 
+const openGraphImage = {
+  url: '/og-image.png',
+  width: 1200,
+  height: 630,
+  type: 'image/png',
+  alt: site.name
+} as const
+
 export function siteOpenGraph(locale: Locale) {
-  return { siteName: site.name, type: 'website', locale: languageOf(locale).ogLocale } as const
+  return {
+    siteName: site.name,
+    type: 'website' as const,
+    locale: languageOf(locale).ogLocale,
+    images: [openGraphImage]
+  }
 }
 
 export type HeadLink = { rel: 'canonical' | 'alternate'; href: string; hrefLang?: string }

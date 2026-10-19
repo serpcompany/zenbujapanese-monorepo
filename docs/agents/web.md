@@ -250,16 +250,18 @@ it. Pages read the service only through `src/lib/dictionary/data.ts`, which runs
 functions over the rows the service answers with and adds only the site's URLs. Its page functions
 are memoized per request (React's `cache`), so a page and its metadata ask the service once.
 
-`src/lib/dictionary/api.ts` is the service's client. It sends the `DICTIONARY_API_TOKEN` secret as
-a bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edge cache (the Cache
+`src/lib/dictionary/api.ts` is the service's client. It sends the `DICTIONARY_API_TOKEN` secret as a
+bearer token to `DICTIONARY_API_URL` and keeps each answer in the Worker's edge cache (the Cache
 API) for 10 minutes, keyed without the token, since that cache is the Worker's own, not a shared
 HTTP cache; `pnpm dev` has no such cache. The service names the build that answered
-(`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that
-load more of a page's list carry it, so a page open across a new build never mixes two builds'
-lists. Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from
-the number it shows, so none repeats or is skipped; a route that no longer knows the page's build
-answers 404, and the list offers a reload. Since those URLs name their build, browsers and the
-edge keep their answers for a day.
+(`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that load
+more of a page's list carry it, so a page open across a new build never mixes two builds' lists.
+Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from the number
+it shows, so none repeats or is skipped; a route that no longer knows the page's build answers 404,
+and the list offers a reload. Since those URLs name their build, browsers and the edge keep their
+answers for a day. `worker.ts` keeps each rendered page at the edge too (`src/lib/page-cache.ts`),
+fresh for 10 minutes, then stale for up to 7 days, keyed by the deployed version
+([Speed](../../apps/web/docs/product/speed.md)).
 
 The service names its contract too (`X-Dictionary-Contract`), the number of its answers' shapes
 ([`dictionary-core.md`](dictionary-core.md), Rules). The site and the service deploy separately,
@@ -391,8 +393,8 @@ lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility ka
 is cut to its first 20 words. Any other browse page is a 404 there.
 
 `src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
-`…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`), and
-its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`…/1/` redirects to it; a ranked list's band of 1,000 ranks (`…/anime/1001-2000/`) is pages of
+200 words, its name links to its first band, a JLPT level is `…/jlpt/n5/`, and a kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
 `noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
 page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
@@ -636,17 +638,15 @@ added there, or the Cloudflare beacon turned on, changes the policy in the same 
 Before merging a change to environment configuration, build the site as the target environment
 deploys and run the Worker with its `vars` (`SITE_ENV=production pnpm exec opennextjs-cloudflare
 build`, then `pnpm exec opennextjs-cloudflare preview --env production`), then check the output.
-Static pages, the footer's Sign in among them, and the account menu's links (Account pages, above), come
-from the build's `SITE_ENV`, so a build without it would show the local site's header and footer
-beside production's pages.
-Production's `DICTIONARY_API_URL` is a placeholder until `Web deploy` writes it (Dictionary
-service, above), and with it every page answers 500, so name no dictionary service
-(`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads `.dev.vars`, and a
-local `ACCOUNT_API_URL` there points production's account pages at another account service, so
-move it aside first, or serve the build with `wrangler dev --env production --env-file /dev/null`.
-`scripts/smoke.sh <url> <staging|production>` asserts the
-search-engine rules for each environment, so CI fails if production is hidden or staging is
-exposed.
+Static pages, the footer's Sign in among them, and the account menu's links (Account pages, above),
+come from the build's `SITE_ENV`, so a build without it would show the local site's header and
+footer beside production's pages. Production's `DICTIONARY_API_URL` is a placeholder until `Web
+deploy` writes it (Dictionary service, above), and with it every page answers 500, so name no
+dictionary service (`--var DICTIONARY_API_URL: --var DICTIONARY_API_TOKEN:`). `preview` also reads
+`.dev.vars`, and a local `ACCOUNT_API_URL` there points production's account pages at another
+account service, so move it aside first, or serve the build with `wrangler dev --env production
+--env-file /dev/null`. `scripts/smoke.sh <url> <staging|production>` asserts the search-engine rules
+for each environment, so CI fails if production is hidden or staging is exposed.
 
 ### Canonical hosts
 
@@ -733,9 +733,9 @@ is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse hom
   the `ent_seq` ranges the service works out, three to each of its 50,000-word sitemaps. The writer
   streams 10,000 words at a time, never a whole file, and refuses one over Workers' 25 MiB.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
-  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 pages in all, each in both languages:
+  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,600 pages in all, each in both languages:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
-  (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
+  (about 1,900), `/sitemap-frequency-lists.xml` (bands' pages and JLPT vocabulary, about 440), and
   `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both
   scripts, the category indexes, the frequency dictionaries, the kanji lists). Each is far under
   50,000, so none has a second file.
