@@ -2,7 +2,7 @@ import type { SearchData } from '@/lib/dictionary/data'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, pluralOf } from '@/lib/i18n/format'
-import { capitalized, fitsTitle, fittedDescription } from '@/lib/snippets'
+import { capitalized, fitsTitle, fittedDescription, fittedTitle } from '@/lib/snippets'
 import { plainRomaji, spellsReading } from './plain-romaji'
 
 export interface SnippetSearch {
@@ -66,7 +66,7 @@ function answeredTitle(search: SnippetSearch, locale: Locale) {
     }),
     fill(t.answered, { title: asked, word: word.headword }),
     asked,
-    fill(t.titleForEnglish, { query: search.query })
+    fittedTitle(t.titleForEnglish, 'query', search.query)
   ]
   return firstFitting(
     search.hasExamples ? titles.map(title => fill(t.withExamples, { title })) : titles
@@ -98,9 +98,7 @@ export function searchSnippet(search: SnippetSearch, locale: Locale): SearchSnip
     return answeredSnippet(search, locale)
   }
   const t = searchText(locale)
-  const title = fill(search.english ? t.titleForEnglish : t.titleForJapanese, {
-    query: search.query
-  })
+  const template = search.english ? t.titleForEnglish : t.titleForJapanese
   const found = search.words.length > 0
   const lead = found
     ? fill(search.english ? t.descriptionForEnglish : t.descriptionForJapanese, {
@@ -109,8 +107,8 @@ export function searchSnippet(search: SnippetSearch, locale: Locale): SearchSnip
       })
     : fill(t.noResults, { query: search.query })
   return {
-    title,
-    heading: title,
+    title: fittedTitle(template, 'query', search.query),
+    heading: fill(template, { query: search.query }),
     description: fittedDescription(lead, found ? [t.more] : [], locale)
   }
 }

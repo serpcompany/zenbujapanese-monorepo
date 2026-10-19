@@ -27,6 +27,11 @@ export function shortened(text: string, longest: number = descriptionLength.long
   return `${kept.join('').replace(trailingBreaks, '')}${ellipsis}`
 }
 
+export function fittedTitle(template: string, name: string, text: string): string {
+  const room = longestTitle - characters(siteTitle(fill(template, { [name]: '' })))
+  return fill(template, { [name]: shortened(text, room) })
+}
+
 export function joinedSentences(
   sentences: readonly (string | null | undefined)[],
   locale: Locale

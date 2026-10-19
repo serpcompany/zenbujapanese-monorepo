@@ -107,7 +107,37 @@ describe('a word page’s title', () => {
     expect(wordTitle(rotouNiMayou, 'ja')).toBe('「路頭に迷う」の英語｜意味・読み方・漢字')
   })
 
-  test('gives up the romaji, the reading, and the meaning when the title would pass 70 characters', () => {
+  test('steps down in order as the title would pass 70 characters', () => {
+    const phrase = { ...ego, partOfSpeech: 'Expression', exampleCount: { listed: 3 } }
+    const otsukaresama = {
+      ...phrase,
+      headword: 'お疲れ様',
+      reading: 'おつかれさま',
+      summary: 'thank you (for your hard work), good work',
+      kanji: ['疲', '様']
+    }
+    const nanakorobiYaoki = {
+      ...phrase,
+      headword: '七転び八起き',
+      reading: 'ななころびやおき',
+      summary: 'always rising after a fall, never giving up',
+      kanji: ['七', '転', '八', '起']
+    }
+    const ichigoIchie = {
+      ...phrase,
+      headword: '一期一会',
+      reading: 'いちごいちえ',
+      summary: 'once-in-a-lifetime encounter (often used in the context of the tea ceremony)',
+      kanji: ['一', '期', '会']
+    }
+    expect(wordTitle(otsukaresama, 'en')).toBe(
+      'Otsukaresama Meaning & Definition: お疲れ様 in English'
+    )
+    expect(wordTitle(nanakorobiYaoki, 'en')).toBe('Nanakorobiyaoki Meaning: 七転び八起き')
+    expect(wordTitle(otsukaresama, 'ja')).toBe(
+      '「お疲れ様」は英語で？thank you (for your hard work)｜意味・読み方'
+    )
+    expect(wordTitle(ichigoIchie, 'ja')).toBe('「一期一会」の英語｜意味・読み方・漢字・例文')
     expect(wordTitle(laborRelationsAct, 'en')).toBe(
       '特定独立行政法人等の労働関係に関する法律 meaning'
     )

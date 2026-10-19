@@ -98,6 +98,14 @@ describe('a search that isn’t an English word keeps its plain title', () => {
     expect(snippet.heading).toBe(snippet.title)
   })
 
+  test('a long query is shortened in the title, and written whole in the heading', () => {
+    const query = Array.from({ length: 30 }, () => 'persevere').join(' ')
+    const snippet = searchSnippet(english(query, []), 'en')
+    expect(fitsTitle(snippet.title), snippet.title).toBe(true)
+    expect(snippet.title).toMatch(/… in Japanese$/)
+    expect(snippet.heading).toBe(`${query} in Japanese`)
+  })
+
   test('a Japanese search and a search that finds nothing are titled with the query', () => {
     const japanese = {
       query: 'いる',

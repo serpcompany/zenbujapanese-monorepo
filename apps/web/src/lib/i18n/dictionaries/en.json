@@ -2014,8 +2014,8 @@
       "titles": {
         "first": "{romaji} Meaning & Definition: {word} in English",
         "second": "{romaji} Meaning & Definition: {headword} in English",
-        "third": "{word} Meaning & Definition in English",
-        "fourth": "{romaji} Meaning: {headword}"
+        "third": "{romaji} Meaning: {headword}",
+        "fourth": "{word} Meaning & Definition in English"
       },
       "titleFeatures": {
         "meaning": "meaning, reading",
