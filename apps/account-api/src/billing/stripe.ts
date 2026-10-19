@@ -1,7 +1,12 @@
 import { log } from '@zenbu/node-service/log'
 import Stripe from 'stripe'
 import type { StripeSettings } from '../billing-config'
-import { type BillingProvider, BillingUnavailable, type ProviderEvent } from '../domain/billing'
+import {
+  type BillingProvider,
+  BillingUnavailable,
+  type CheckoutSession,
+  type ProviderEvent
+} from '../domain/billing'
 import {
   accountMetadataKey,
   customerHint,
@@ -170,7 +175,28 @@ export function stripeBilling(
           expires_at: Math.floor(Date.now() / 1000) + checkoutMinutes * 60
         })
         if (!session.url) throw new Error('Checkout answered a session without a URL')
-        return session.url
+        return { id: session.id, url: session.url }
+      }),
+
+    checkoutSession: id =>
+      guarded('read a checkout', async (): Promise<CheckoutSession> => {
+        const session = await stripe.checkout.sessions.retrieve(id)
+        const status =
+          session.status === 'open'
+            ? 'open'
+            : session.status === 'complete'
+              ? 'complete'
+              : 'expired'
+        return {
+          status,
+          subscriptionId: idOf(session.subscription),
+          createdAt: new Date(session.created * 1000)
+        }
+      }),
+
+    expireCheckout: id =>
+      guarded('expire a checkout', async () => {
+        await stripe.checkout.sessions.expire(id)
       }),
 
     createPortal: (customerId, returnUrl, language) =>

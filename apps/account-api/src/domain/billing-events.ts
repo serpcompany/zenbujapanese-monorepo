@@ -19,6 +19,12 @@ import {
 
 export type EventAnswer = EventOutcome | 'duplicate'
 
+export class ReadAgain extends Error {
+  constructor() {
+    super("the store's state was read before the account was deleted")
+  }
+}
+
 export interface EventRules {
   grants(subscription: Subscription): boolean
   gracePeriodDays(subscription: Subscription): number
@@ -94,7 +100,8 @@ async function unwanted(
       }
       return false
     }
-    return deletedAt <= subscription.stateAt
+    if (deletedAt > subscription.stateAt) throw new ReadAgain()
+    return true
   }
   if (!event.startsSubscription || endedAtTheStore.has(subscription.status)) return false
   await tx.lockAccount(userId)

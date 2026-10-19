@@ -36,6 +36,16 @@ async function websiteSubscriber(email: string) {
 }
 
 describe('DELETE /v1/me, with a subscription', () => {
+  test('cancels a website subscription Stripe still retries past its paid time, as the entitlement counts it', async () => {
+    const learner = await billing.accounts.learner('delete-retrying@example.com')
+    const { userId } = learner
+    const id = String(stripe.subscription({ userId, status: 'past_due' }).id)
+    await billing.rows(`insert into subscriptions (source, provider_id, user_id, product_id, status, expires_at, will_renew, environment, period_started_at, state_at, origin, retry_started_at)
+        values ('stripe', '${id}', '${userId}', 'price_monthly', 'billing_retry', now() - interval '90 days', true, 'test', now() - interval '120 days', now() - interval '89 days', 'provider', now() - interval '90 days')`)
+    expect((await remove(learner)).status).toBe(200)
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+  })
+
   test('cancels a website subscription at Stripe first, so a deleted account is never charged, and keeps the ledger without the account', async () => {
     const { learner, id } = await websiteSubscriber('delete-stripe@example.com')
     expect(await remove(learner)).toMatchObject({

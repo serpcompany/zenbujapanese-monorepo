@@ -192,11 +192,15 @@ describe('a payment that keeps failing', () => {
 })
 
 describe('a first payment still on its way', () => {
-  test("doesn't stop the learner subscribing again", () => {
-    expect(entitlement([subscription({ status: 'pending', expiresAt: null })])).toMatchObject({
+  test('gives no access, and runs until its store ends it, so no second one is sold meanwhile', () => {
+    const pending = subscription({ status: 'pending', expiresAt: null, stateAt: at(-90 * day) })
+    expect(entitlement([pending])).toMatchObject({
       status: 'pending',
       active: false,
-      canSubscribe: true
+      canSubscribe: false,
+      running: [{ status: 'pending', managedIn: 'website' }]
     })
+    const inTheAppStore = { ...pending, source: 'apple' }
+    expect(entitlement([inTheAppStore])).toMatchObject({ status: 'expired', canSubscribe: true })
   })
 })

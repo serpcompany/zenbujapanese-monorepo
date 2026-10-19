@@ -99,16 +99,15 @@ function effectiveStatus(
     return stillRetrying(subscription, now, windowMs) ? 'billing_retry' : 'expired'
   }
   if (status === 'billing_retry' && !stillRetrying(subscription, now, windowMs)) return 'expired'
-  if (status === 'paused' && now.getTime() >= subscription.stateAt.getTime() + windowMs) {
-    return 'expired'
-  }
+  const waits = status === 'paused' || status === 'pending'
+  if (waits && now.getTime() >= subscription.stateAt.getTime() + windowMs) return 'expired'
   return status
 }
 
-const stillAtTheStore = new Set<SubscriptionStatus>(['billing_retry', 'paused'])
+const stillAtTheStore = new Set<SubscriptionStatus>(['billing_retry', 'paused', 'pending'])
 const retrying = new Set<SubscriptionStatus>(['billing_retry', 'grace_period'])
 
-const isRunning = (subscription: Subscription, now: Date, windowMs: number) =>
+export const isRunning = (subscription: Subscription, now: Date, windowMs: number) =>
   hasAccess(subscription, now) || stillAtTheStore.has(effectiveStatus(subscription, now, windowMs))
 
 export function supersedes(next: Subscription, current: Subscription | null): boolean {

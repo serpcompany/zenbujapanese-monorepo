@@ -55,7 +55,10 @@ export function accountStore(db: Drizzle): AccountStore {
           .delete(verifications)
           .where(eq(verifications.identifier, `sign-in-otp-${email.toLowerCase()}`))
         await tx.delete(users).where(eq(users.id, userId))
-        await tx.insert(deletedAccounts).values({ userId }).onConflictDoNothing()
+        await tx
+          .insert(deletedAccounts)
+          .values({ userId, deletedAt: new Date() })
+          .onConflictDoNothing()
       })
     },
 

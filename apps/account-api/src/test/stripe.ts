@@ -116,17 +116,37 @@ export function standInStripe() {
     inATransaction: () => false
   }
   let sessions = 1
+  const checkouts = new Map<string, StripeObject>()
 
   const route = (method: string, path: string, form: URLSearchParams): Response => {
     const [, , kind, id] = path.split('/')
     if (method === 'POST' && path === '/v1/checkout/sessions') {
       const session = `cs_test_${sessions++}`
-      return answer({
+      const created = {
         id: session,
         object: 'checkout.session',
+        status: 'open',
+        subscription: null,
+        created: nowS(),
         url: `https://checkout.stripe.com/c/pay/${session}`
-      })
+      }
+      checkouts.set(session, created)
+      return answer(created)
     }
+    const [, , , , sessionId, step] = path.split('/')
+    const checkout = kind === 'checkout' && sessionId ? checkouts.get(sessionId) : undefined
+    if (kind === 'checkout' && !checkout) return missing()
+    if (checkout && method === 'POST' && step === 'expire') {
+      if (checkout.status !== 'open') {
+        return answer(
+          { error: { type: 'invalid_request_error', message: 'Only an open session expires.' } },
+          400
+        )
+      }
+      checkout.status = 'expired'
+      return answer(checkout)
+    }
+    if (checkout) return answer(checkout)
     if (method === 'POST' && path === '/v1/billing_portal/sessions') {
       return answer({
         id: `bps_${sessions}`,
@@ -238,6 +258,13 @@ export function standInStripe() {
     payments,
     state,
     subscriptions,
+    checkouts,
+    completeCheckout(sessionId: string, subscriptionId: string) {
+      Object.assign(checkouts.get(sessionId) ?? {}, {
+        status: 'complete',
+        subscription: subscriptionId
+      })
+    },
     subscription(fields: SubscriptionFields) {
       const subscription = subscriptionObject(fields)
       subscriptions.set(String(subscription.id), subscription)
