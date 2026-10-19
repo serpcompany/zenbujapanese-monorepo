@@ -112,7 +112,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
     tap(find("zenbu-account.delete", in: app))
-    waitFor(find("delete-account.start", in: app))
+    waitUntilStill(waitForSheet("delete-account.cancel", in: app))
     audit("Delete Account", in: app)
   }
 
