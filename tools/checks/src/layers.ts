@@ -38,6 +38,7 @@ export const swiftPlatforms: SwiftPlatforms = {
     'apps/ios/Modules/Sources/',
     'apps/ios/Modules/Tests/',
     'apps/ios/App/',
+    'apps/ios/ShareExtension/',
     'apps/ios/UITests/'
   ],
   apis: [

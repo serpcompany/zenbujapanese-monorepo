@@ -51,30 +51,24 @@ struct LookupClient: Sendable {
     self.lookUp = lookUp
   }
 
-  static let live: LookupClient = {
+  static let live = LookupClient.reading(.shared)
+
+  static func reading(_ data: LanguageReferenceData) -> LookupClient {
     LookupClient(
-      search: { query in
-        return try await LanguageReferenceData.shared.search(query)
-      },
-      entry: { id in try await LanguageReferenceData.shared.entry(id) },
-      entries: { ids in try await LanguageReferenceData.shared.entries(equivalentTo: ids) },
-      entryMatchingForm: { form in try await LanguageReferenceData.shared.entry(matchingForm: form)
-      },
-      entriesMatchingForm: { form in
-        try await LanguageReferenceData.shared.entries(matchingForm: form)
-      },
-      entriesContainingKanji: { character in
-        try await LanguageReferenceData.shared.entries(containingKanji: character)
-      },
-      relatedWord: { try await LanguageReferenceData.shared.word(related: $0) },
+      search: { query in try await data.search(query) },
+      entry: { id in try await data.entry(id) },
+      entries: { ids in try await data.entries(equivalentTo: ids) },
+      entryMatchingForm: { form in try await data.entry(matchingForm: form) },
+      entriesMatchingForm: { form in try await data.entries(matchingForm: form) },
+      entriesContainingKanji: { character in try await data.entries(containingKanji: character) },
+      relatedWord: { try await data.word(related: $0) },
       savedWord: { id, headword, reading in
-        try await LanguageReferenceData.shared.route(
-          openingSaved: SavedWord(id: id, headword: headword, reading: reading))
+        try await data.route(openingSaved: SavedWord(id: id, headword: headword, reading: reading))
       },
-      websiteRoute: { await LanguageReferenceData.shared.route(openingWebsite: $0) },
-      lookUp: { await LanguageReferenceData.shared.route(lookingUp: $0) }
+      websiteRoute: { await data.route(openingWebsite: $0) },
+      lookUp: { await data.route(lookingUp: $0) }
     )
-  }()
+  }
 }
 
 actor LanguageReferenceData {

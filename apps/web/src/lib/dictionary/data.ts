@@ -27,6 +27,7 @@ import {
 import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
+import { markRenderIncomplete } from '@/lib/render-health'
 import { isDeployedSite } from '@/lib/site'
 import { type Answer, type DictionaryApi, dictionaryApi } from './api'
 import type { KanjiDetailsData } from './kanji-details'
@@ -161,6 +162,7 @@ async function detailsIfAvailable(character: string): Promise<KanjiDetailsData |
     return await getKanjiDetails(character)
   } catch (error) {
     log('warn', 'kanji_details_unavailable', { character, ...errorFields(error) })
+    markRenderIncomplete()
     return null
   }
 }

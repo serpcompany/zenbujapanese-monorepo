@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
-import { defaultLocale, type Locale, languageOf } from '@/lib/i18n/config'
-import { localizedPath } from '@/lib/i18n/paths'
-import { localizedAlternates } from '@/lib/seo'
+import type { Locale } from '@/lib/i18n/config'
+import { sitePageMetadata } from '@/lib/metadata'
 
 export function dictionaryMetadata(
   encodedPath: string,
@@ -11,15 +10,7 @@ export function dictionaryMetadata(
   options: { index?: boolean } = {}
 ): Metadata {
   return {
-    title,
-    description,
-    alternates: localizedAlternates(encodedPath, locale),
-    openGraph: {
-      title,
-      description,
-      url: localizedPath(encodedPath, locale),
-      ...(locale === defaultLocale ? {} : { locale: languageOf(locale).ogLocale })
-    },
+    ...sitePageMetadata({ path: encodedPath, title, description }, locale),
     ...(options.index === false ? { robots: { index: false, follow: true } } : {})
   }
 }

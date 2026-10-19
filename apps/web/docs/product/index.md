@@ -44,9 +44,15 @@ learner in to their Zenbu account and manage it; [Account pages](account.md) des
 Portal, and one bought in the App Store. They are `noindex` and in no sitemap, and where they're
 closed, in a build whose environment names no account service, nothing links to them.
 
+Every page's title and description fit a search result, and a shared link shows the site's image;
+[Titles, descriptions, and sharing](snippets.md) says how each kind of page builds them.
+
 Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
-in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
-each language shows, the search-engine tags, and the switcher.
+in the footer; [Languages](languages.md) describes the URLs, what each language shows, the
+search-engine tags, and the switcher.
+
+Pages are kept at Cloudflare's edge after they render, so a page asked for again answers without
+waiting on the dictionary service; [Speed](speed.md) describes what is kept, and for how long.
 
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
@@ -66,6 +72,16 @@ them, answer on every host, since they never reach the Worker; their URLs name t
 - Check: `src/lib/other-hosts.test.ts`; `apps/web/e2e/urls.spec.ts`, "… reaches … in one hop"
   and "a workers.dev request that carries the smoke test header is served there" (on the
   production build); smoke `workers.dev/legal/terms redirects to … in one hop`.
+
+## App Store banner
+
+Every page, English and Japanese, names the iPhone app (App Store ID `6800229215`) in an
+`apple-itunes-app` tag, so Safari on an iPhone shows its banner at the top: Open where the app is
+installed, Get where it isn't. The site draws no banner or pop-up of its own.
+
+- Source: #829 (word pages offer "open in app" and "get the app"); the owner's choice on
+  2026-10-19.
+- Check: `apps/web/e2e/app-banner.spec.ts`, "… names the iPhone app once, for Safari's banner".
 
 ## What defines the website's behavior
 

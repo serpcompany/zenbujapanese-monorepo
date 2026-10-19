@@ -119,7 +119,7 @@ private actor KanjiStrokeData {
 
   private func openDatabase() throws -> OpaquePointer {
     if let connection { return connection.pointer }
-    guard let url = Bundle.module.url(forResource: "KanjiStrokeData", withExtension: "sqlite3") else {
+    guard let url = BundledData.bundle.url(forResource: "KanjiStrokeData", withExtension: "sqlite3") else {
       throw KanjiStrokeDataError.missingBundledData
     }
     var opened: OpaquePointer?

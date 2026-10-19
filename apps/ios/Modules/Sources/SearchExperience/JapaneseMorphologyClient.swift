@@ -97,6 +97,10 @@ struct JapaneseMorphologyClient: Sendable {
     self.availability = availability
   }
 
+  static let unavailable = JapaneseMorphologyClient(availability: { .reduced }) { _ in
+    throw JapaneseMorphologyError.packUnavailable
+  }
+
   static let live = JapaneseMorphologyClient(
     availability: {
       await LanguageTechnologyPackStore.shared.installedDictionaryURL() == nil ? .reduced : .full
@@ -238,8 +242,8 @@ enum JapaneseMorphologyProviderContract {
 
 enum SudachiRuntimeResources {
   static func dictionary(at dictionaryURL: URL) throws -> SudachiDictionary {
-    guard let charURL = Bundle.module.url(forResource: "char", withExtension: "def"),
-      let unknownURL = Bundle.module.url(forResource: "unk", withExtension: "def"),
+    guard let charURL = BundledData.bundle.url(forResource: "char", withExtension: "def"),
+      let unknownURL = BundledData.bundle.url(forResource: "unk", withExtension: "def"),
       try fileSHA256(charURL) == SudachiCoreContract.characterDefinitionSHA256,
       try fileSHA256(unknownURL) == SudachiCoreContract.unknownDefinitionSHA256
     else { throw JapaneseMorphologyError.providerContractMismatch }

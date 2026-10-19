@@ -56,7 +56,9 @@ test.describe('homepage', () => {
     await expect(hero.getByText('Works offline', { exact: true })).toBeVisible()
     await hero.getByRole('link', { name: 'Search the dictionary' }).click()
     await expect(page).toHaveURL('/dictionary/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Japanese dictionary' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Japanese–English Dictionary' })
+    ).toBeVisible()
   })
 
   test('the Try the dictionary box opens the search page', async ({ page }) => {
