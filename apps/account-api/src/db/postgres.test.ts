@@ -241,4 +241,50 @@ describe('Postgres, through the driver the service runs', () => {
       await done()
     }
   )
+
+  test('refuses the next sync after another device makes the account forget a deletion between a sync check and its page', async () => {
+    const { database, raw, id, done } = await anAccount('forgotten-mid-sync')
+    const store = accountStore(database.db)
+    const accountsOn = (on: AccountStore) =>
+      createAccounts(on, cursors(cursorKey('test')), searchKeys('test'))
+    const plain = accountsOn(store)
+    const note = (entityId: string, operation: string, baseVersion: number) => ({
+      id: randomUUID(),
+      entity: 'wordNote',
+      operation,
+      entityId,
+      baseVersion,
+      ...(operation === 'write' ? { fields: { item: 'kanji:見', text: '見る。' } } : {})
+    })
+    const sync = async (on: typeof plain, body: Record<string, unknown>) => {
+      const answer = await on.sync(id, body, everyScope)
+      if (answer.status !== 'synced') throw new Error(`the sync answered ${answer.status}`)
+      return answer
+    }
+    const [missed, other] = [randomUUID(), randomUUID()]
+    await sync(plain, { mutations: [note(missed, 'write', 0), note(other, 'write', 0)] })
+    const padAt = (await sync(plain, {})).cursor
+    await sync(plain, { mutations: [note(missed, 'delete', 1)] })
+    await raw.query(
+      'insert into word_notes (user_id, id, present, version) select $1, gen_random_uuid()::text, false, 2 from generate_series(1, 999) as n',
+      [id]
+    )
+    let raced = false
+    const racing = accountsOn({
+      ...store,
+      async changesAfter(userId, sequence, limit) {
+        if (!raced) {
+          raced = true
+          await sync(plain, { mutations: [note(other, 'delete', 1)] })
+        }
+        return store.changesAfter(userId, sequence, limit)
+      }
+    })
+    const during = await sync(racing, { cursor: padAt })
+    expect(during.changes.map(change => change.entityId)).not.toContain(missed)
+    expect(await plain.sync(id, { cursor: during.cursor }, everyScope)).toEqual({
+      status: 'invalid_cursor'
+    })
+    await done()
+  })
 })

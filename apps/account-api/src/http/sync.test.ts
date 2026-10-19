@@ -236,7 +236,10 @@ describe('POST /v1/sync', () => {
     const one = await accounts.learner('cursor-1@example.com')
     const other = await accounts.learner('cursor-2@example.com')
     const othersCursor = (await synced(other)).cursor
-    const pastTheJournal = accounts.cursors.encode(one.userId, { sequence: 10 ** 12, forgotten: 0 })
+    const pastTheJournal = accounts.cursors.encode(one.userId, {
+      sequence: 10 ** 12,
+      floor: 10 ** 12
+    })
     for (const cursor of [othersCursor, pastTheJournal, 'made-up-cursor', `${othersCursor}x`]) {
       const refused = await accounts.sync(one.token, {
         cursor,

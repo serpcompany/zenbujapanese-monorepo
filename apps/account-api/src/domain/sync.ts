@@ -230,13 +230,8 @@ async function changesIn(
   return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-const fromTheStart: Position = { sequence: 0, forgotten: 0 }
-
-const missedWhatWasForgotten = (from: Position, forgotten: number) =>
-  from.sequence > 0 && forgotten > from.forgotten && from.sequence < forgotten
-
-const readingEverything = (request: SyncRequest, from: Position) =>
-  !request.cursor || from.sequence < from.forgotten
+const floorFor = async (store: AccountStore, from: Position | undefined) =>
+  from ? Math.max(from.floor, from.sequence) : store.journalHead()
 
 export function syncer(
   store: AccountStore,
@@ -250,13 +245,13 @@ export function syncer(
     granted: ReadonlySet<Scope>
   ): Promise<SyncAnswer> {
     if (!(await store.profile(userId))) return { status: 'no_account' }
-    const from = request.cursor ? cursors.decode(userId, request.cursor) : fromTheStart
-    if (from === null || from.sequence > (await store.journalHead())) {
+    const from = request.cursor ? cursors.decode(userId, request.cursor) : undefined
+    if (from === null) return { status: 'invalid_cursor' }
+    if (from && from.sequence > (await store.journalHead())) return { status: 'invalid_cursor' }
+    if (from && (await store.forgottenThrough(userId)) > from.floor) {
       return { status: 'invalid_cursor' }
     }
-    const forgotten = await store.forgottenThrough(userId)
-    if (missedWhatWasForgotten(from, forgotten)) return { status: 'invalid_cursor' }
-    const after = from.sequence
+    const after = from?.sequence ?? 0
     const results: MutationResult[] = []
     const context = { granted, searchKey: searchKeys(userId) }
     for (const mutation of request.mutations ?? []) {
@@ -265,20 +260,19 @@ export function syncer(
       results.push(result)
     }
     if (results.some(result => result.status === 'applied')) afterChanges()
-    const mark = readingEverything(request, from) ? await store.forgottenThrough(userId) : forgotten
+    const floor = await floorFor(store, from)
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)
     const changes = await changesIn(store.reader(userId), page, granted)
     if (!changes) return { status: 'no_account' }
     const last = page.at(-1)
-    const same = !last && mark === from.forgotten ? request.cursor : null
+    const same = !last && floor === from?.floor ? request.cursor : null
     return {
       status: 'synced',
       results,
       changes,
-      cursor:
-        same || cursors.encode(userId, { sequence: last?.sequence ?? after, forgotten: mark }),
+      cursor: same || cursors.encode(userId, { sequence: last?.sequence ?? after, floor }),
       hasMore: entries.length > limit,
       ...(granted.has('searches:read') ? { searchKey: context.searchKey } : {})
     }
