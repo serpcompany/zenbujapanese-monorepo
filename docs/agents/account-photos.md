@@ -76,9 +76,9 @@ so it outlives the account it came from:
   An emptied photo keeps its file until it's deleted, 30 days on. A file no photo names 24 hours
   after its upload goes the same way, in the hourly housekeeping (`src/db/housekeeping.ts`), which
   works through at most 10,000 files, and 10,000 photos of each kind, an hour.
-- **Deleting an account** locks the account, then queues its whole folder, `<account ID>/`, and
-  each of its keys, in the transaction that deletes it, so an upload finishing at the same moment,
-  or a file a restore left behind, goes too.
+- **Deleting an account** queues its whole folder, `<account ID>/`, in the transaction that
+  deletes it, so every key under it goes: one an upload is saving at the same moment, or a file a
+  restore left behind, too.
 - **The sweep** deletes each queued key that's due from R2, and every object under a queued
   folder, then the row: right after a deletion or a sync that changed something, and every hour,
   so a key R2 didn't take is tried again. Deleting a key R2 hasn't is fine.
@@ -137,7 +137,7 @@ hours, and an app with only `profile` kept to its own files. `src/http/delete-ac
 deletes an account's folder from storage with it, a file no row names included, and then refuses
 its token at both routes (`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo
 six times at once: one file is kept, and the other copies are swept; and it deletes the file
-of an upload that finishes while its account is being deleted. `src/storage/r2.test.ts` runs
+of an upload saving its row while its account is being deleted. `src/storage/r2.test.ts` runs
 the R2 adapter against a stand-in S3 server: each request signed with SigV4 and the body's SHA-256,
 an object put, streamed, checked, deleted, and missing, a folder deleted page by page, a missing
 bucket never taken for a missing object, and a refusal thrown with only its status.

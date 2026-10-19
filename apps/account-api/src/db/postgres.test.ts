@@ -2,13 +2,15 @@ import { createHash, randomUUID } from 'node:crypto'
 import { PGlite } from '@electric-sql/pglite'
 import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
 import pg from 'pg'
-import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
 import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { photoFiles } from '../domain/photo-files'
+import type { AccountStore } from '../domain/store'
 import { MemoryPhotoStorage } from '../storage/memory'
+import { gate } from '../test/gate'
 import { accountStore } from './accounts'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
@@ -198,34 +200,42 @@ describe('Postgres, through the driver the service runs', () => {
   )
 
   test.skipIf(realPostgres === '')(
-    'deletes the file of an upload that finishes while its account is being deleted',
+    'deletes the file of an upload saving its row while its account is being deleted',
     async () => {
-      const { database, id, done } = await anAccount('photo-deleted-mid-upload')
+      const { database, raw, id, done } = await anAccount('photo-deleted-mid-save')
       const storage = new MemoryPhotoStorage()
-      let letPutFinish = () => {}
-      const putHeld = new Promise<void>(resolve => {
-        letPutFinish = resolve
-      })
-      let putStarted = () => {}
-      const started = new Promise<void>(resolve => {
-        putStarted = resolve
-      })
-      const heldStorage = Object.assign(Object.create(storage), {
-        put: async (key: string, bytes: Uint8Array, type: string) => {
-          putStarted()
-          await putHeld
-          await storage.put(key, bytes, type)
-        }
-      })
       const store = accountStore(database.db)
-      const files = photoFiles(store, heldStorage)
+      const saving = gate()
+      const finish = gate()
+      const holding: AccountStore = {
+        ...store,
+        withLockedAccount: (userId, work) =>
+          store.withLockedAccount(userId, account =>
+            work({
+              ...account,
+              async cancelPhotoDeletion(storageKey) {
+                await account.cancelPhotoDeletion(storageKey)
+                saving.open()
+                await finish.opened
+              }
+            })
+          )
+      }
+      const files = photoFiles(holding, storage)
       const bytes = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, ...Buffer.from(id)])
       const photoId = createHash('sha256').update(bytes).digest('hex')
       const upload = files.upload(id, photoId, bytes, everyScope)
-      await started
-      await store.deleteAccount(id, `${id}@example.com`)
-      letPutFinish()
-      expect(await upload).toEqual({ status: 'no_account' })
+      await saving.opened
+      const deletion = store.deleteAccount(id, `${id}@example.com`)
+      await vi.waitFor(async () => {
+        const waiting = await raw.query(
+          "select count(*)::int as n from pg_stat_activity where wait_event_type = 'Lock' and datname = current_database()"
+        )
+        expect(waiting.rows).toEqual([{ n: 1 }])
+      })
+      finish.open()
+      expect((await upload).status).toBe('stored')
+      await deletion
       await files.sweep()
       expect([...storage.objects.keys()]).toEqual([])
       await done()
