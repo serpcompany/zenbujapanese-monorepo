@@ -18,6 +18,8 @@
 		<dict>
 			<key>INAlternativeAppName</key>
 			<string>Zenbu</string>
+			<key>INAlternativeAppNamePronunciationHint</key>
+			<string>zen boo</string>
 		</dict>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>

@@ -5,6 +5,7 @@ import { localizedPath } from './i18n/paths'
 import { pageFor, type SitePage, type SitePath } from './pages'
 import { localizedAlternates, siteOpenGraph } from './seo'
 import { site, siteOrigin } from './site'
+import { siteTitle } from './snippets'
 
 const siteIcons = {
   icon: [
@@ -21,9 +22,10 @@ const siteManifest = '/site.webmanifest'
 export function siteMetadata(locale: Locale): Metadata {
   return {
     metadataBase: new URL(siteOrigin()),
-    title: { default: site.name, template: `%s | ${site.name}` },
+    title: { default: site.name, template: siteTitle('%s') },
     description: getDictionary(locale).site.description,
     openGraph: siteOpenGraph(locale),
+    twitter: { card: 'summary_large_image' },
     icons: siteIcons,
     manifest: siteManifest
   }

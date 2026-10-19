@@ -31,12 +31,17 @@ actor LocalJSONFile {
   }
 
   private let fileURL: URL
+  private let sharedCopy: URL?
   private let currentVersion: Int
   private let description: String
   private let logger: Logger
 
-  init(fileURL: URL, currentVersion: Int, description: String, logCategory: String) {
+  init(
+    fileURL: URL, sharedCopy: URL? = nil, currentVersion: Int, description: String,
+    logCategory: String
+  ) {
     self.fileURL = fileURL
+    self.sharedCopy = sharedCopy
     self.currentVersion = currentVersion
     self.description = description
     logger = Logger(
@@ -49,27 +54,45 @@ actor LocalJSONFile {
     do {
       data = try Data(contentsOf: fileURL)
     } catch CocoaError.fileReadNoSuchFile {
+      if let sharedCopy { try? FileManager.default.removeItem(at: sharedCopy) }
       return .missing
     } catch {
       logger.error("Couldn't read the \(self.description) file: \(error.localizedDescription)")
       return .unreadable
     }
     let version = (try? JSONDecoder().decode(VersionProbe.self, from: data))?.version
-    guard let version, version > currentVersion else { return .current(data) }
+    guard let version, version > currentVersion else {
+      share(data)
+      return .current(data)
+    }
     logger.error("The \(self.description) file is from a newer version; not saving over it")
     return .newerVersion(data)
   }
 
   func write(_ data: Data) -> Bool {
     do {
-      try FileManager.default.createDirectory(
-        at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-      try data.write(to: fileURL, options: .atomic)
+      try Self.write(data, to: fileURL)
+      share(data)
       return true
     } catch {
       logger.error("Couldn't save \(self.description): \(error.localizedDescription)")
       return false
     }
+  }
+
+  private func share(_ data: Data) {
+    guard let sharedCopy else { return }
+    do {
+      try Self.write(data, to: sharedCopy)
+    } catch {
+      logger.error("Couldn't share \(self.description): \(error.localizedDescription)")
+    }
+  }
+
+  private static func write(_ data: Data, to file: URL) throws {
+    try FileManager.default.createDirectory(
+      at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+    try data.write(to: file, options: .atomic)
   }
 
   func keepUnreadableCopy() -> Bool {

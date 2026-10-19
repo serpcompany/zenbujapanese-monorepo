@@ -93,7 +93,7 @@ struct DictionaryRankingArtifactContract: Decodable, Equatable {
   }
 
   static func bundled() throws -> Self {
-    guard let url = Bundle.module.url(
+    guard let url = BundledData.bundle.url(
       forResource: "DictionaryRankingArtifactContract",
       withExtension: "json"
     ) else {

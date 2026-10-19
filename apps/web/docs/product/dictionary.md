@@ -868,8 +868,8 @@ Detail in the app, so its row doesn't open.
 ## Header, footer, and site-wide
 
 **Header.** The logo and the site name link home. From 1024 pixels the header shows the logo and
-name, the Dictionary, Tools, Products, and Company menus, then the language menu
-([Languages](languages.md)), Get the app, and the round account button (Account menu, below). Below
+name, the Dictionary, Tools, Products, and Company menus, then Get the app and the round account
+button (Account menu, below); the languages are in the footer ([Languages](languages.md)). Below
 1024 pixels it shows the logo, the name left to screen readers, and a menu button (lucide `Menu`).
 The header has no search and no email address: the Dictionary menu leads to the dictionary home,
 whose box searches (#561). It stays pinned to the top of the window while the page scrolls, on the
@@ -982,20 +982,19 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#849),
 Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
-(`/register/`) in a build whose account pages are closed, the App Store (the Get the app on the
-product page and on the catalog's iPhone app card), and See all videos
-(`/videos/`), which shows only once the product page has videos. Zenbu Japanese for iPhone and All
-products now open their pages, `/products/zenbu-japanese-app/` and `/products/`
-([Products pages](products.md)), from the same entries, as do All free tools, Free tools, and All
-tools (`/tools/`) and the Hiragana to Katakana and Romaji to Kana converters
-([Tools pages](tools.md)); so do Log in and Create an account where the account pages are open, as
-on staging and in production ([Account pages](account.md#pages)), the build choosing their addresses
-as it does the footer's Sign in. #650 asked for menu items to appear only once their page exists;
-the owner chose to show them now as `#` placeholders instead (#844). Every one is in one list,
-`linkTargets` in `src/lib/site.ts`, named for what it stands for, and its links carry
-`data-link-target` with its id. A browser test lists every `#` link the site renders and fails on
-one that isn't in that list, so none reaches production unnoticed; replacing a placeholder means
-giving its entry the real address, or linking the page directly once it exists.
+(`/register/`) in a build whose account pages are closed, and See all videos (`/videos/`), which
+shows only once the product page has videos. Zenbu Japanese for iPhone and All products now open
+their pages, `/products/zenbu-japanese-app/` and `/products/` ([Products pages](products.md)), from
+the same entries, as do All free tools, Free tools, and All tools (`/tools/`) and the Hiragana to
+Katakana and Romaji to Kana converters ([Tools pages](tools.md)); so do Log in and Create an account
+where the account pages are open, as on staging and in production ([Account
+pages](account.md#pages)), the build choosing their addresses as it does the footer's Sign in. #650
+asked for menu items to appear only once their page exists; the owner chose to show them now as `#`
+placeholders instead (#844). Every one is in one list, `linkTargets` in `src/lib/site.ts`, named for
+what it stands for, and its links carry `data-link-target` with its id. A browser test lists every
+`#` link the site renders and fails on one that isn't in that list, so none reaches production
+unnoticed; replacing a placeholder means giving its entry the real address, or linking the page
+directly once it exists.
 
 - Source: #844 decision (placeholder links), and the owner's decision on #650 (show planned items
   as placeholders).
@@ -1025,7 +1024,7 @@ marked as the current page (`aria-current="page"`).
 screen's width and at most 384 pixels (#682: at three-quarters, a 360-pixel phone left its items'
 lines a word or two long), titled with the logo and the site name, with the Theme button beside its
 close button (Theme, above). It holds the four menus as groups that open and close (one at a time),
-the current section's group open, then the languages, Log in, or Your account in a browser that
+the current section's group open, then Log in, or Your account in a browser that
 signed in, and Get the app. A mega menu's group lists its columns' links, with the Dictionary group
 led by Search. A group opens and closes with a click, Enter, or Space. Following a link, its close
 button (lucide `X`), Escape, going back or forward, or widening the window to 1024 pixels closes the
@@ -1045,8 +1044,8 @@ sheet; choosing a theme keeps it open.
   is 384 wide".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
-Store link, a placeholder until that address is known. It is the same button in the header, the
+iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the app's App
+Store listing. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
 or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
 login page, `/login/`, where the account pages are open, as on staging and in production, and is
@@ -1193,8 +1192,8 @@ other form redirects (308) to it. Dots are encoded, so a query never looks like 
   core searches"; `src/lib/dictionary/urls.test.ts`, "search URLs"; `apps/web/e2e/urls.spec.ts`,
   "/dictionary/search/IRU/ redirects to /dictionary/search/iru/ in one hop".
 
-**Titles and descriptions.** A word page is titled "要る (いる) meaning" and a results page
-"«query» in Japanese", each followed by "| Zenbu Japanese". Each page is its own canonical URL.
+**Titles and descriptions.** Each page is its own canonical URL. Its title and description are
+in [Titles, descriptions, and sharing](snippets.md).
 
 - Source: #465 (metadata).
 - Check: `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning", and

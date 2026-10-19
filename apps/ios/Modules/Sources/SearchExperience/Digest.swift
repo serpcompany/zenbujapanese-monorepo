@@ -13,15 +13,20 @@ extension Data {
   }
 }
 
+let fileDigestChunk = 4 * 1_024 * 1_024
+
 func fileSHA256(_ url: URL, cancellable: Bool = false) throws -> String {
   let handle = try FileHandle(forReadingFrom: url)
   defer { try? handle.close() }
   var digest = SHA256()
-  while true {
+  var finished = false
+  while !finished {
     if cancellable { try Task.checkCancellation() }
-    let chunk = try handle.read(upToCount: 4 * 1_024 * 1_024) ?? Data()
-    if chunk.isEmpty { break }
-    digest.update(data: chunk)
+    try autoreleasepool {
+      let chunk = try handle.read(upToCount: fileDigestChunk) ?? Data()
+      digest.update(data: chunk)
+      finished = chunk.isEmpty
+    }
   }
   return digest.finalize().hexString
 }

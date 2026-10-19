@@ -25,7 +25,7 @@ struct TokenizerDictionaryTests {
     ])
   func unpacksADictionaryFile(filename: String, count: Int, sha256: String) throws {
     let unpacked = try #require(Gunzip.inflated(try Self.packed(filename)))
-    defer { free(unpacked.pointer) }
+    defer { unpacked.release() }
     let bytes = UnsafeRawBufferPointer(start: unpacked.pointer, count: unpacked.count)
     #expect(unpacked.count == count)
     #expect(SHA256.hash(data: bytes).map { String(format: "%02x", $0) }.joined() == sha256)
@@ -51,7 +51,7 @@ struct TokenizerDictionaryTests {
   @Test("hands the core each file it tokenizes with, unpacked, and no other file")
   func handsOverTheTokenizersFiles() throws {
     let unpacked = try #require(TokenizerDictionary.unpacked("unk_char"))
-    defer { free(unpacked.pointer) }
+    defer { unpacked.release() }
     #expect(unpacked.count == 65_536)
     #expect(TokenizerDictionary.unpacked("kuromoji") == nil)
     #expect(TokenizerDictionary.unpacked("../LanguageReferenceData") == nil)

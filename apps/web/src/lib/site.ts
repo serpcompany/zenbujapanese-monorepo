@@ -1,5 +1,6 @@
 import { accountPagesOpen } from './account/availability'
 import { accountPages } from './account/pages'
+import { iosAppStoreUrl } from './app-links'
 import { productionOrigin, stagingOrigin } from './origins'
 import { converterPath, toolsPath } from './tools/paths'
 
@@ -66,7 +67,7 @@ const linkTargets = [
     name: 'Create an account page, /register/',
     href: accountPagesOpen() ? accountPages.register.path : placeholderHref
   },
-  { id: 'app-store', kind: 'store', name: 'App Store listing', href: placeholderHref },
+  { id: 'app-store', kind: 'store', name: 'App Store listing', href: iosAppStoreUrl },
   {
     id: 'youtube',
     kind: 'social',

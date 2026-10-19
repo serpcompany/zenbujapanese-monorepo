@@ -13,6 +13,8 @@ enum LaunchHarness {
   static let openLinkKey = "ZENBU_OPEN_LINK"
   static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
   static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
+  static let shareTextKey = "ZENBU_SHARE_TEXT"
+  static let shareImageKey = "ZENBU_SHARE_IMAGE"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -258,6 +260,7 @@ enum LaunchHarness {
         try? FileManager.default.removeItem(
           at: URL.applicationSupportDirectory.appending(path: folder, directoryHint: .isDirectory))
       }
+      if let shared = SharedContainer.folder { try? FileManager.default.removeItem(at: shared) }
       if let earlierNotes = environment[earlierNotesKey] {
         UserDefaults.standard.set(
           Data(earlierNotes.utf8), forKey: WordNoteStorage.earlierStorageKey)

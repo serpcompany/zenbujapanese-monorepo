@@ -5,6 +5,7 @@ import {
   CategoryIndexPage
 } from '@/components/dictionary/browse/category-pages'
 import { categorySortName } from '@/lib/dictionary/browse/category-names'
+import { browseHubDescription } from '@/lib/dictionary/browse/copy'
 import { getCategoryCounts } from '@/lib/dictionary/browse/data'
 import { type CategoryIndex, categoryIndexes } from '@/lib/dictionary/browse/paths'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
@@ -55,7 +56,12 @@ export function categoryIndexRoute(index: CategoryIndex) {
     async generateMetadata({ params }: LocaleParams): Promise<Metadata> {
       const locale = await localeOf(params)
       const { title, intro } = getDictionary(locale).browse.categoryIndexes[index]
-      return dictionaryMetadata(categoryIndexes[index].path, locale, title, intro)
+      return dictionaryMetadata(
+        categoryIndexes[index].path,
+        locale,
+        title,
+        browseHubDescription(intro, locale)
+      )
     },
     async Page({ params }: LocaleParams) {
       const locale = await localeOf(params)

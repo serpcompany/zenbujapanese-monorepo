@@ -50,7 +50,7 @@ test.describe('word page', () => {
 
   test('shows the word, its breadcrumb, and its meaning', async ({ page }) => {
     await expect(page).toHaveTitle(
-      `${needed.headword} (${needed.reading}) meaning | Zenbu Japanese`
+      `Iru Meaning & Definition: ${needed.headword} (${needed.reading}) in English | Zenbu Japanese`
     )
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toHaveCount(1)
@@ -110,7 +110,7 @@ test.describe('word page', () => {
     await expect(tatoeba).toBeHidden()
     await sourcesToggle(page).click()
     await expect(tatoeba).toBeVisible()
-    await expect(tatoeba).toHaveAttribute('href', 'https://tatoeba.org/')
+    await expect(tatoeba).toHaveAttribute('href', 'https://tatoeba.org/en/')
   })
 
   test('the part of speech opens the Conjugations section, again after it closes', async ({
