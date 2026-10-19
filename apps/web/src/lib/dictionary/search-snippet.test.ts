@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest'
+import type { SearchData } from '@/lib/dictionary/data'
 import { locales } from '@/lib/i18n/config'
 import { characters, descriptionLength, fitsTitle } from '@/lib/snippets'
 import { plainRomaji, spellsReading } from './plain-romaji'
-import { type SnippetSearch, searchSnippet } from './search-snippet'
+import { type SnippetSearch, searchSnippet, showsExampleSentences } from './search-snippet'
 
 const word = (headword: string, reading: string) => ({ headword, reading })
 
@@ -106,5 +107,20 @@ describe('a search that isn’t an English word keeps its plain title', () => {
     }
     expect(searchSnippet(japanese, 'ja').title).toBe('いるの英語・意味')
     expect(searchSnippet(english('qzxvkj', []), 'en').heading).toBe('qzxvkj in Japanese')
+  })
+})
+
+describe('a search names example sentences only when it shows them', () => {
+  const searched = (examples: unknown) => ({ state: 'results', examples }) as SearchData
+
+  test('shown on the page, they are named', () => {
+    expect(showsExampleSentences(searched({ target: { kind: 'inline' } }))).toBe(true)
+  })
+
+  test('linked on a word’s page, or not found, they are not', () => {
+    const linked = { target: { kind: 'word', path: '/dictionary/要る-1546640/#examples' } }
+    expect(showsExampleSentences(searched(linked))).toBe(false)
+    expect(showsExampleSentences(searched(null))).toBe(false)
+    expect(showsExampleSentences({ state: 'noResults', query: 'qzxvkj' } as SearchData)).toBe(false)
   })
 })

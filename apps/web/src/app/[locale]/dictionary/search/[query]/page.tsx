@@ -7,7 +7,7 @@ import { SourceCredits } from '@/components/dictionary/source-credits'
 import { getSearchExamples, type SearchData, searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { isIndexable } from '@/lib/dictionary/results/links'
-import { searchSnippet } from '@/lib/dictionary/search-snippet'
+import { searchSnippet, showsExampleSentences } from '@/lib/dictionary/search-snippet'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { searchPath } from '@/lib/dictionary/urls'
 import type { Locale } from '@/lib/i18n/config'
@@ -30,7 +30,7 @@ function snippetOf(data: SearchData, locale: Locale) {
       query: data.query,
       english: isASCII(data.query),
       words: data.state === 'results' ? data.rows : [],
-      hasExamples: data.state === 'results' && data.examples !== null
+      hasExamples: showsExampleSentences(data)
     },
     locale
   )
@@ -47,10 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SearchResultsPage({ params }: Props) {
   const { locale, data } = await load(params, false)
   const t = getDictionary(locale)
-  const examples =
-    data.state === 'results' && data.examples?.target.kind === 'inline'
-      ? await getSearchExamples(data.query)
-      : null
+  const examples = showsExampleSentences(data) ? await getSearchExamples(data.query) : null
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
       <DictionaryBreadcrumbs
