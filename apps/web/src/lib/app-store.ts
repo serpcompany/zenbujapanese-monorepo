@@ -56,7 +56,11 @@ export async function appStoreRelease(
   const cache = edgeCache()
   try {
     const hit = await cache?.match(key)
-    if (hit) return readAppStoreLookup(await hit.json())
+    if (hit) {
+      const answer: unknown = await hit.json()
+      if (answer === null) markRenderIncomplete()
+      return readAppStoreLookup(answer)
+    }
     const text = await askApple(fetcher)
     const answer: unknown = JSON.parse(text)
     await cache?.put(key, kept(text, lookupCacheSeconds))

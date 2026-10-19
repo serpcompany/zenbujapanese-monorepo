@@ -47,10 +47,11 @@ and rendered on the server in full: never Next.js' fallback that renders in the 
 id="__next_error__">`), which Ahrefs once read as twelve word pages with no heading and no links
 (#871 F8), nor a page that lost a part to an error. A page that renders without a part it couldn't
 get is never kept either: a word whose kanji details the service failed to give, the product page
-without Apple's lookup, the homepage without its browse sections, or a page from a service that
-answered another contract. Each of those marks its render incomplete (`markRenderIncomplete` in
-`src/lib/render-health.ts`), and the next request renders it again. Missing pages, failures, and
-redirects are never kept, so an outage is never served later.
+without Apple's lookup (when it fails, and while that failure is kept), the homepage without its
+browse sections, or a page from a service that answered another contract. Each of those marks its
+render incomplete (`markRenderIncomplete` in `src/lib/render-health.ts`), and the next request
+renders it again. Missing pages, failures, and redirects are never kept, so an outage is never
+served later.
 
 - Source: #873; #871 F8; #880's review.
 - Check: `src/lib/page-cache.test.ts`, "doesn't keep a missing page", "… a failure", "… a page that
