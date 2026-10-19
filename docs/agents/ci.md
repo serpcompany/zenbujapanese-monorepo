@@ -266,7 +266,7 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
 ## Language data build
 
 `.github/workflows/language-data-build.yml` packages the next language-data release from the
-committed files (issue 463, step 2). It runs on pull requests and pushes to `main` that change
+committed files (issue 828, step 2). It runs on pull requests and pushes to `main` that change
 `language-data/**` (the sources and suites among it), the app's resources, the dictionary service's
 Dockerfile, the shared action, or the workflow (and, on pull requests, the release workflow). Tests
 in `language-data/pipeline/tests/` fail when a release input or the Dockerfile doesn't start it.

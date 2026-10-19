@@ -21,7 +21,7 @@ decoded one path segment at a time, with the parser the website uses, and finds 
 entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
 the host `zenbujapanese.com` routes the same way.
 
-**Share** on a word or kanji sends one of these links with its text (#467). `WordPage.Entry` hands
+**Share** on a word or kanji sends one of these links with its text (#829). `WordPage.Entry` hands
 the core the record the entry was read from (`DictionaryEntry.sourceRecord`; for an entry JMdict
 lists twice, the one whose Language Reference ID stands for both, as the website's search picks),
 and the core's `wordPage` answers `shareURL`, the word page's canonical URL, from `wordSlug` and

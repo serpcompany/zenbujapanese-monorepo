@@ -4,8 +4,8 @@ The tools index, `/tools/`, and six converters, each at `/tools/<name>/`: Hiraga
 Katakana to Hiragana, Romaji to Kana, Kana to Romaji, Half-width to Full-width, and Full-width to
 Half-width. They follow the owner's decisions on #579 (2026-10-09), the prototype linked there,
 and the owner's later changes: both boxes of a converter are editable, in place of the swap
-button, and the pages are built from stock shadcn components, as the owner's UI rules ask (#696). The copy is a first draft that #690 dials in.
-Kanji to Furigana, which needs the dictionary service, is #691, and stays a placeholder until
+button, and the pages are built from stock shadcn components, as the owner's UI rules ask (#696). The copy is a first draft that #848 dials in.
+Kanji to Furigana, which needs the dictionary service, is #849, and stays a placeholder until
 then.
 
 The converters run entirely in the browser: nothing typed is sent anywhere.
@@ -156,7 +156,7 @@ two. Hiragana and kanji have no half-width form, and kana without one (ヮ, ヵ,
 
 **How it works.** Two short paragraphs about the conversion, with examples.
 
-- Check: No automated check yet; the copy is #690's.
+- Check: No automated check yet; the copy is #848's.
 
 **Reference.** Romaji to Kana adds Typing tips and Kana to Romaji Spelling rules, each a stock
 table (For, How to type it or How it’s spelled, and Examples), with each spelling to type shown as a
@@ -234,7 +234,7 @@ and not indexed.
 Romaji to Kana), the Products menu's Free tools, the footer's All tools, the homepage's All free
 tools and its free web tools list, and the products catalog's Converters card open these pages,
 through the `tools`, `hiragana-to-katakana`, and `romaji-to-kana` entries in `linkTargets`
-(`src/lib/site.ts`). Kanji to Furigana stays a placeholder (#691). Pages under `/tools/` are in
+(`src/lib/site.ts`). Kanji to Furigana stays a placeholder (#849). Pages under `/tools/` are in
 the header's Tools section.
 
 - Source: the owner's decision on #579.

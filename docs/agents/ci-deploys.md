@@ -137,7 +137,7 @@ in [`account-api.md`](account-api.md), How a deploy works.
 ## Language data release
 
 `.github/workflows/language-data-release.yml` publishes the release `language-data/release.json`
-names to the `zenbujapanese-language-data` R2 bucket (issue 463, step 3). It runs on a push to
+names to the `zenbujapanese-language-data` R2 bucket (issue 828, step 3). It runs on a push to
 `main` that changes any input of a release (the same inputs as the build, which the same tests
 check), so changed content can't sit unpublished: it publishes, or fails until `release.json` is
 bumped. It also runs by hand. One publish runs at a time, and none is cancelled halfway.
