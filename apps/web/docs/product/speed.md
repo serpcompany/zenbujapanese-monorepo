@@ -23,7 +23,7 @@ now), `HIT`, or `STALE`.
 
 **Fresh for 10 minutes, then served stale while it renders again.** A kept page is fresh for 10
 minutes, as long as the site keeps the service's answers, so a new dictionary build shows within
-that. After that it is still answered at once (`STALE`) for up to 7 days, while the Worker renders
+about 20 minutes: a page's 10, then its answers' 10. After that it is still answered at once (`STALE`) for up to 7 days, while the Worker renders
 it again for the next request, once however many requests find it stale at the same time. A list
 that loads more from an older build offers a reload, which gets the new page (Dictionary, Word
 page).
@@ -45,14 +45,21 @@ are gone. The first request for each page after a deploy renders it.
 **Only whole pages are kept.** A page is kept only when it answers 200 with HTML, sets no cookie,
 and rendered on the server in full: never Next.js' fallback that renders in the browser (`<html
 id="__next_error__">`), which Ahrefs once read as twelve word pages with no heading and no links
-(#871 F8), nor a page that lost a part to an error. Missing pages, failures, and redirects are
-never kept, so an outage is never served later.
+(#871 F8), nor a page that lost a part to an error. A page that renders without a part it couldn't
+get is never kept either: a word whose kanji details the service failed to give, the product page
+without Apple's lookup, the homepage without its browse sections, or a page from a service that
+answered another contract. Each of those marks its render incomplete (`markRenderIncomplete` in
+`src/lib/render-health.ts`), and the next request renders it again. Missing pages, failures, and
+redirects are never kept, so an outage is never served later.
 
-- Source: #873; #871 F8.
+- Source: #873; #871 F8; #880's review.
 - Check: `src/lib/page-cache.test.ts`, "doesn't keep a missing page", "… a failure", "… a page that
   sets a cookie", "doesn't keep a page whose server render fell back to rendering in the browser, so
-  the next request renders it again", and "keeps a page with a part Next.js renders only in the
-  browser by design".
+  the next request renders it again", "keeps a page with a part Next.js renders only in the browser
+  by design", "doesn’t keep a page whose render left out a part the service failed to give", and
+  "keeps serving the earlier copy, stale, when its refresh left out a part";
+  `src/lib/render-health.test.ts`; `src/lib/dictionary/data.test.ts`, "a word page whose kanji
+  details fail still shows, with that kanji closed, logs it, and marks its render incomplete".
 
 **What is never kept.** The account pages (`/login/`, `/register/`, `/forgot-password/`,
 `/account/`, and their Japanese pages), navigations inside the site (requests with Next.js' `RSC`

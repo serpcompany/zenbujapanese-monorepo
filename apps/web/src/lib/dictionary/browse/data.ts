@@ -15,6 +15,7 @@ import {
 import { fixtureBrowseAnswers } from '@zenbu/dictionary-core/fixtures'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
+import { markRenderIncomplete } from '@/lib/render-health'
 import { dictionaryService } from '../data'
 import type { Linked } from '../page-example'
 import { linkedWordPath } from '../results/links'
@@ -71,6 +72,7 @@ export async function getHomeBrowse() {
     return { summary, hiragana }
   } catch (error) {
     log('warn', 'browse_summary_unavailable', errorFields(error))
+    markRenderIncomplete()
     return null
   }
 }

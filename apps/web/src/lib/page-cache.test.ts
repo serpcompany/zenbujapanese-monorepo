@@ -8,6 +8,7 @@ import {
   pageFreshSeconds,
   pageStaleSeconds
 } from './page-cache'
+import { markRenderIncomplete } from './render-health'
 
 const wordPage = 'https://zenbujapanese.com/dictionary/%E7%89%A2%E5%B1%8B-1560930/'
 const nextDynamicCacheControl = 'private, no-cache, no-store, max-age=0, must-revalidate'
@@ -140,6 +141,38 @@ describe('the page cache', () => {
       expect(answered.headers.get(pageCacheHeader)).toBe('STALE')
       expect(await answered.text()).toBe(first)
     }
+  })
+
+  test('doesn’t keep a page whose render left out a part the service failed to give', async () => {
+    const kept = keptAnswers()
+    const { context } = site()
+    const answered = await cachedPage(
+      new Request(wordPage),
+      new URL(wordPage),
+      context,
+      async () => {
+        await Promise.resolve()
+        markRenderIncomplete()
+        return renderedPage()
+      }
+    )
+    expect(answered.headers.get(pageCacheHeader)).toBe('MISS')
+    expect(kept.size).toBe(0)
+  })
+
+  test('keeps serving the earlier copy, stale, when its refresh left out a part', async () => {
+    keptAnswers()
+    const { get, render, wait } = site()
+    const first = await (await get()).text()
+    render.mockImplementation(async () => {
+      markRenderIncomplete()
+      return renderedPage('<!DOCTYPE html><p>without kanji details</p>')
+    })
+    wait(pageFreshSeconds + 1)
+    await get()
+    const again = await get()
+    expect(again.headers.get(pageCacheHeader)).toBe('STALE')
+    expect(await again.text()).toBe(first)
   })
 
   test('renders a stale page once however many requests ask for it at the same time', async () => {
