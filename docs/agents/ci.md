@@ -240,28 +240,28 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
   settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
   strings, and entitlements), and test the Simulator script (`test_simulator.py`). Its LFS cache is
   keyed on the pointers of the LFS patterns it fetches.
-- `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after
-  another: `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro
-  Max Simulator and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`,
-  the script agents use ([`verification.md`](verification.md)), and on the Mac; then, after
-  filling the Sudachi build cache (cached by the catalog's hash), the app's UI tests
-  (`ZenbuJapaneseUITests`), which build the app as `com.zenbujapanese.dictionary.uitests` and
-  drive it on the same iPhone and iPad Simulators and on the Mac, each signed to run locally (no
-  team needed), after turning on Automation Mode for the Mac, which its UI tests need
-  (`automationmodetool`). So a change that breaks the app on one of them fails
-  ([`ios.md`](ios.md), Tests on every platform). Last come the recorded-audio check's scoring
-  tests with `swift test` (the replay itself needs the Mac's speech models, which the runner
-  doesn't have, so it stays a local check, [`translate.md`](translate.md)), on `macos-26` with
-  the Xcode `.xcode-version` pins, which it selects first (arm64, which the `sudachi-swift`
-  binary needs), with up to 4 hours for all of it. It runs only when the
-  repository variable `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it
-  on is the owners' decision. It was first kept off for the runner's cost: on a private
-  repository a macOS minute counts ten times a Linux one. This repository is public, where
-  GitHub's standard runners, `macos-26` among them, are free, so what turning it on costs is the
-  time a run takes. Asked on 2026-10-11, Francis chose to keep it off for now. Until it is on,
-  nothing tests the app on iPad or the Mac before merge.
-  `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every pull request,
-  `swift` only when it's turned on, and that it runs every suite on every platform.
+- `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
+  `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
+  and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents
+  use ([`verification.md`](verification.md)), and on the Mac; then, after filling the Sudachi build
+  cache (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`) and StoreKit
+  tests (`ZenbuJapaneseStoreKitTests`, run inside the app;
+  [`ios-subscription.md`](ios-subscription.md)), which build the app as
+  `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators and on
+  the Mac, each signed to run locally (no team needed), after turning on Automation Mode for the
+  Mac, which its UI tests need (`automationmodetool`). So a change that breaks the app on one of
+  them fails ([`ios.md`](ios.md), Tests on every platform). Last come the recorded-audio check's
+  scoring tests with `swift test` (the replay itself needs the Mac's speech models, which the runner
+  doesn't have, so it stays a local check, [`translate.md`](translate.md)), on `macos-26` with the
+  Xcode `.xcode-version` pins, which it selects first (arm64, which the `sudachi-swift` binary
+  needs), with up to 4 hours for all of it. It runs only when the repository variable
+  `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it on is the owners'
+  decision. It was first kept off for the runner's cost: on a private repository a macOS minute
+  counts ten times a Linux one. This repository is public, where GitHub's standard runners,
+  `macos-26` among them, are free, so what turning it on costs is the time a run takes. Asked on
+  2026-10-11, Francis chose to keep it off for now. Until it is on, nothing tests the app on iPad or
+  the Mac before merge. `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every
+  pull request, `swift` only when it's turned on, and that it runs every suite on every platform.
 
 ## Language data build
 

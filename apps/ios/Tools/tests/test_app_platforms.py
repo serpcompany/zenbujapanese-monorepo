@@ -114,6 +114,23 @@ class AppPlatformTests(unittest.TestCase):
         scheme = SCHEME.read_text(encoding="utf-8")
         self.assertIn('BuildableName = "ZenbuJapaneseUITests.xctest"', scheme)
 
+    def test_the_storekit_tests_run_in_the_app_on_iphone_ipad_and_the_mac(self) -> None:
+        project = PROJECT.read_text(encoding="utf-8")
+        configurations = [
+            found["settings"]
+            for found in BUILD_CONFIGURATION.finditer(project)
+            if "TEST_HOST = " in found["settings"]
+        ]
+        self.assertEqual(len(configurations), 2)
+        for settings in configurations:
+            self.assertIn("Zenbu Japanese.app", build_setting(settings, "TEST_HOST"))
+            self.assertEqual(
+                build_setting(settings, "SUPPORTED_PLATFORMS"), "iphoneos iphonesimulator macosx"
+            )
+        self.assertIn('productType = "com.apple.product-type.bundle.unit-test";', project)
+        scheme = SCHEME.read_text(encoding="utf-8")
+        self.assertIn('BuildableName = "ZenbuJapaneseStoreKitTests.xctest"', scheme)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -64,6 +64,7 @@ final class AccountFixture {
   var providers = SignInProviders.system
   var googleClientID: String?
   let retries = HeldRetries()
+  let store = FakeAppStore()
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
@@ -100,8 +101,8 @@ final class AccountFixture {
         serviceURL: server.baseURL, googleClientID: googleClientID),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
-      profile: profile, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
-      now: { [unowned self] in now }, retryClock: retries.clock)
+      profile: profile, store: store, fileURL: directory.appending(path: "account-sync.json"),
+      providers: providers, now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
   }
@@ -118,7 +119,11 @@ final class AccountFixture {
     profile: StubReply = .json(200, AccountFixture.profile()),
     sync: @escaping @Sendable (StubSyncRequest) -> StubReply = { request in
       StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
-    }
+    },
+    subscription: @escaping @Sendable (StubRequest) -> StubReply = { _ in
+      .error(404, "not_found")
+    },
+    deletion: StubReply = .json(200, ["status": "deleted"])
   ) {
     let accessToken = StubTokens.access(expiresAt: now + tokenLifetime)
     server.respond { request in
@@ -140,7 +145,9 @@ final class AccountFixture {
       case "GET /v1/me":
         profile
       case "DELETE /v1/me":
-        .json(200, ["status": "deleted"])
+        deletion
+      case "GET /v1/me/subscription", "POST /v1/me/subscription/apple":
+        subscription(request)
       default:
         .error(404, "not_found")
       }

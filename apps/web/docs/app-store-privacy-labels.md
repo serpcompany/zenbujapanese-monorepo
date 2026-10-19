@@ -52,30 +52,32 @@ Every other type is not collected. The ones a reviewer may ask about:
 
 ## The Zenbu Japanese app
 
-All five types above, and two more for the watch history it syncs from its Player, which only it
-reads and changes (`watch:read` and `watch:write`):
+All five types above, two more for the watch history it syncs from its Player, which only it
+reads and changes (`watch:read` and `watch:write`), and one for the subscription it sells (#868):
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
 | Browsing History | The 50 YouTube videos the learner most recently watched in the app: each video's ID, title, channel, and length, and when they last watched it; the IDs of up to 100 they removed or that fell past the 50, with when; and, for 30 days, the result of each change the app sent, naming the video and when. | App Functionality | Yes | No |
 | Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know. | App Functionality | Yes | No |
+| Purchases → Purchase History | The App Store subscription the app sends after a purchase or a restore: its product, status, renewal, and the transactions and refunds Apple reports, so it unlocks syncing on every device. | App Functionality | Yes | No |
 
-The App Store then also shows Browsing History and Usage Data under Data Linked to You. Its Other
+The App Store then also shows Browsing History, Usage Data, and Purchases under Data Linked to
+You. Its Other
 User Content is the known words and lists it syncs, and the Translate sentences the learner
 bookmarks: each one's text and translation, its language, and when it was bookmarked (or said, for
 one bookmarked before the app synced bookmarks), which may be
 what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
 and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
 
-Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same seven types, and the
+Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same eight types, and the
 listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
 with the labels:
 
 - **The privacy manifest**: one dictionary per type in the `NSPrivacyCollectedDataTypes` array. Each has the keys `NSPrivacyCollectedDataType` (the
   type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
   `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`,
-  `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`, or
-  `NSPrivacyCollectedDataTypeProductInteraction`), `NSPrivacyCollectedDataTypeLinked` (true),
+  `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`,
+  `NSPrivacyCollectedDataTypeProductInteraction`, or `NSPrivacyCollectedDataTypePurchaseHistory`), `NSPrivacyCollectedDataTypeLinked` (true),
   `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
   holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
 - **The listing's description**, which names what the account syncs.

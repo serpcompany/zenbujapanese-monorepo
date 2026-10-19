@@ -4,7 +4,15 @@ enum SubscriptionText {
   static let termsOfUse = URL(string: "https://zenbujapanese.com/legal/terms/")!
   static let privacyPolicy = URL(string: "https://zenbujapanese.com/legal/privacy/")!
 
-  static func status(_ subscription: KnownSubscription) -> String {
+  static func place(_ managedIn: KnownSubscription.ManagedIn?) -> String {
+    switch managedIn {
+    case .appStore: String(localized: "App Store")
+    case .website: String(localized: "zenbujapanese.com")
+    case nil: String(localized: "Subscription")
+    }
+  }
+
+  static func status(_ subscription: KnownSubscription.Running) -> String {
     switch subscription.status {
     case .active: String(localized: "Active")
     case .gracePeriod: String(localized: "Active, payment failed")
@@ -17,7 +25,7 @@ enum SubscriptionText {
     }
   }
 
-  static func detail(_ subscription: KnownSubscription) -> String? {
+  static func detail(_ subscription: KnownSubscription.Running) -> String? {
     switch subscription.status {
     case .gracePeriod, .billingRetry:
       return subscription.managedIn == .website
@@ -55,51 +63,49 @@ enum SubscriptionText {
 
 struct SubscriptionSection: View {
   @Environment(ZenbuAccount.self) private var zenbuAccount
-  @State private var showsPaywall = false
-  @State private var managesInAppStore = false
+  @Binding var showsPaywall: Bool
+  @Binding var managesInAppStore: Bool
 
   var body: some View {
-    Group {
-      if let known = zenbuAccount.subscription.current,
-        known.status != .none || !known.offers.appStore.isEmpty
-      {
-        Section("Subscription") {
-          rows(for: known)
+    if let known = zenbuAccount.subscription.current,
+      !known.shown.isEmpty || !known.offers.appStore.isEmpty
+    {
+      Section {
+        rows(for: known)
+      } header: {
+        Text("Subscription")
+      } footer: {
+        if known.running.count > 1 {
+          Text(
+            "You're paying for two subscriptions. Cancel the one you don't need where you bought it."
+          )
+          .accessibilityIdentifier("subscription.paying-twice")
         }
       }
     }
-    .sheet(isPresented: $showsPaywall) { SubscriptionPaywall() }
-    .appStoreSubscriptionSettings(isPresented: $managesInAppStore)
-    .task { await zenbuAccount.subscription.refresh() }
   }
 
   @ViewBuilder
   private func rows(for known: KnownSubscription) -> some View {
     let subscription = zenbuAccount.subscription
-    if known.status != .none {
-      LabeledContent("Status", value: SubscriptionText.status(known))
-        .accessibilityIdentifier("subscription.status")
-      if let detail = SubscriptionText.detail(known) {
+    ForEach(Array(known.shown.enumerated()), id: \.offset) { _, running in
+      LabeledContent(
+        SubscriptionText.place(running.managedIn), value: SubscriptionText.status(running)
+      )
+      .accessibilityIdentifier("subscription.status")
+      if let detail = SubscriptionText.detail(running) {
         Text(detail)
           .foregroundStyle(.secondary)
       }
-    }
-    switch known.managedIn {
-    case .appStore:
-      Button("Manage Subscription") { managesInAppStore = true }
-        .accessibilityIdentifier("subscription.manage")
-    case .website:
-      Text("You subscribed on zenbujapanese.com, so it's managed there, in your account.")
-        .foregroundStyle(.secondary)
-        .accessibilityIdentifier("subscription.managed-on-website")
-    case nil:
-      EmptyView()
+      if known.running.contains(running) {
+        manage(running)
+      }
     }
     if known.offersAppStorePurchase {
       Button("Subscribe to Sync…") { showsPaywall = true }
         .accessibilityIdentifier("subscription.subscribe")
     }
-    if !known.offers.appStore.isEmpty, known.managedIn != .website {
+    if !known.offers.appStore.isEmpty {
       Button("Restore Purchases") { Task { await subscription.restore() } }
         .disabled(subscription.isWorking)
         .accessibilityIdentifier("subscription.restore")
@@ -108,6 +114,21 @@ struct SubscriptionSection: View {
       Text(SubscriptionText.problem(problem))
         .foregroundStyle(.secondary)
         .accessibilityIdentifier("subscription.problem")
+    }
+  }
+
+  @ViewBuilder
+  private func manage(_ running: KnownSubscription.Running) -> some View {
+    switch running.managedIn {
+    case .appStore:
+      Button("Manage in the App Store") { managesInAppStore = true }
+        .accessibilityIdentifier("subscription.manage")
+    case .website:
+      Text("You subscribed on zenbujapanese.com, so it's managed there, in your account.")
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("subscription.managed-on-website")
+    case nil:
+      EmptyView()
     }
   }
 }

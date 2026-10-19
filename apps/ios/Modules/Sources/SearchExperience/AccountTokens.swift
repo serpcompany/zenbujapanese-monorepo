@@ -74,6 +74,7 @@ final class AccountTokens {
   private let storage: any SessionTokenStorage
   private let now: @MainActor () -> Date
   private var accessToken: (token: String, expiresAt: Date)?
+  private var refreshing: (signIn: Int, task: Task<String, Error>)?
   private var signIns = 0
 
   init(
@@ -108,7 +109,11 @@ final class AccountTokens {
     if let accessToken, accessToken.expiresAt.timeIntervalSince(now()) > Self.refreshMargin {
       return accessToken.token
     }
-    return try await refreshedAccessToken()
+    if let refreshing, refreshing.signIn == signIns { return try await refreshing.task.value }
+    let task = Task { try await refreshedAccessToken() }
+    refreshing = (signIns, task)
+    defer { if refreshing?.task == task { refreshing = nil } }
+    return try await task.value
   }
 
   func withAccessToken<Value: Sendable>(

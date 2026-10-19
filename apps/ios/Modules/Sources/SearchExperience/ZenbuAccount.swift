@@ -21,8 +21,7 @@ final class ZenbuAccount {
       watchHistory: .shared, translations: .shared, profile: .shared,
       store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
-    account.subscription.listen()
-    account.catchUpOnTheSubscription()
+    account.startSubscription()
     return account
   }
 
@@ -30,6 +29,7 @@ final class ZenbuAccount {
   let sync: AccountSync
   let subscription: AccountSubscription
   @ObservationIgnored let scheduler: AccountSyncScheduler
+  @ObservationIgnored private(set) var subscriptionWork: Task<Void, Never>?
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let session: URLSession
   @ObservationIgnored private let providers: SignInProviders
@@ -124,12 +124,14 @@ final class ZenbuAccount {
     try await reauthenticate(try await emailSignIn(email: email, code: code))
   }
 
-  func deleteAccount(appleAuthorizationCode: String?) async throws {
+  @discardableResult
+  func deleteAccount(appleAuthorizationCode: String?) async throws -> Bool {
+    var appStoreSubscriptionContinues = subscription.current?.runsInTheAppStore ?? false
     do {
-      try await sync.tokens.withAccessToken { [api] token in
+      appStoreSubscriptionContinues = try await sync.tokens.withAccessToken { [api] token in
         try await api.deleteAccount(
           accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
-      }
+      }.appStoreSubscriptionContinues
     } catch AccountServiceError.unreachable {
       guard try await accountIsGone() else { throw AccountServiceError.unreachable }
     } catch AccountServiceError.sessionEnded {
@@ -139,12 +141,19 @@ final class ZenbuAccount {
     scheduler.stop()
     sync.forgetAccount()
     subscription.forget()
+    return appStoreSubscriptionContinues
   }
 
-  func catchUpOnTheSubscription() {
-    Task {
+  func appBecameActive() {
+    scheduler.appBecameActive()
+    Task { await subscription.refresh() }
+  }
+
+  func startSubscription() {
+    subscriptionWork = Task {
       await sync.ready()
-      if account != nil { await subscription.signedIn() }
+      subscription.listen()
+      await subscription.refresh()
     }
   }
 
@@ -162,7 +171,7 @@ final class ZenbuAccount {
     await sync.begin(signIn)
     scheduler.stop()
     scheduler.syncNow()
-    await subscription.signedIn()
+    subscriptionWork = Task { await subscription.signedIn() }
   }
 
   private func reauthenticate(_ signIn: AccountSignIn) async throws {

@@ -62,10 +62,13 @@ final class AccountSubscription: LocalFileStore {
   }
 
   func refresh() async {
-    guard signedInAs() != nil else { return }
+    guard let account = signedInAs() else { return }
     do {
-      take(try await tokens.withAccessToken { [api] in try await api.subscription(accessToken: $0) })
-      problem = nil
+      let answer = try await tokens.withAccessToken { [api] in
+        try await api.subscription(accessToken: $0)
+      }
+      take(answer, for: account)
+      if problem == .unreachable { problem = nil }
     } catch AccountServiceError.unreachable {
       problem = .unreachable
     } catch {
@@ -74,6 +77,7 @@ final class AccountSubscription: LocalFileStore {
   }
 
   func loadOffers() async {
+    problem = nil
     guard let productIDs = current?.offers.appStore, !productIDs.isEmpty else {
       offers = []
       return
@@ -92,6 +96,7 @@ final class AccountSubscription: LocalFileStore {
       return
     }
     isWorking = true
+    problem = nil
     defer { isWorking = false }
     do {
       switch try await store.purchase(productID, for: current.appAccountToken) {
@@ -106,14 +111,14 @@ final class AccountSubscription: LocalFileStore {
 
   func restore() async {
     isWorking = true
+    problem = nil
     defer { isWorking = false }
     do {
       try await store.syncWithAppStore()
     } catch {
       problem = .storeUnavailable
     }
-    await sendCurrentTransactions()
-    await refresh()
+    if await !sendCurrentTransactions() { await refresh() }
   }
 
   func listen() {
@@ -129,40 +134,42 @@ final class AccountSubscription: LocalFileStore {
     storedFor = nil
     offers = []
     problem = nil
-    let file = file
-    writes.save { await file.write(Data("{}".utf8)) }
+    persist()
   }
 
   func persist() {
-    guard let known, let userID = storedFor else { return }
-    let file = file
-    let stored = Stored(version: Self.fileVersion, userID: userID, subscription: known)
-    writes.save {
+    writes.save { [self] in
+      guard let known, let userID = storedFor else { return await file.write(Data("{}".utf8)) }
+      let stored = Stored(version: Self.fileVersion, userID: userID, subscription: known)
       guard let data = try? JSONEncoder.localStore.encode(stored) else { return false }
       return await file.write(data)
     }
   }
 
-  private func sendCurrentTransactions() async {
-    guard current?.offers.appStore.isEmpty == false else { return }
-    for transaction in await store.currentTransactions() { await deliver(transaction) }
+  @discardableResult
+  private func sendCurrentTransactions() async -> Bool {
+    guard current?.offers.appStore.isEmpty == false else { return false }
+    let transactions = await store.currentTransactions()
+    for transaction in transactions { await deliver(transaction) }
+    return !transactions.isEmpty
   }
 
-  private func take(_ subscription: KnownSubscription) {
+  private func take(_ subscription: KnownSubscription, for account: String) {
+    guard signedInAs() == account else { return }
     let wasActive = current?.active ?? false
     known = subscription
-    storedFor = signedInAs()
+    storedFor = account
     persist()
     if subscription.active, !wasActive { onActive?() }
   }
 
   private func deliver(_ transaction: StoreTransaction) async {
-    guard signedInAs() != nil else { return }
+    guard let account = signedInAs() else { return }
     do {
-      take(
-        try await tokens.withAccessToken { [api] in
-          try await api.sendAppleTransaction(transaction.signedTransaction, accessToken: $0)
-        })
+      let answer = try await tokens.withAccessToken { [api] in
+        try await api.sendAppleTransaction(transaction.signedTransaction, accessToken: $0)
+      }
+      take(answer, for: account)
       problem = nil
       await transaction.finish()
     } catch AccountServiceError.refused(409, _, _, _) {
@@ -172,6 +179,8 @@ final class AccountSubscription: LocalFileStore {
       where (400..<500).contains(status) && status != 401 && status != 429
     {
       await transaction.finish()
+    } catch AccountServiceError.sessionEnded {
+      return
     } catch {
       problem = .unreachable
     }

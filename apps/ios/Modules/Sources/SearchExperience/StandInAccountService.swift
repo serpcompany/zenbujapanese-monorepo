@@ -47,7 +47,13 @@ import Foundation
       case "GET /v1/me":
         (200, profile, [:])
       case "DELETE /v1/me":
-        (200, ["status": "deleted"], [:])
+        (
+          200,
+          [
+            "status": "deleted",
+            "appStoreSubscriptionContinues": StandInSubscription.shared.runsInTheAppStore,
+          ], [:]
+        )
       default:
         (404, ["error": ["code": "not_found", "message": route]], [:])
       }

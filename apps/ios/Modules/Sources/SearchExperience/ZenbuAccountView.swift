@@ -13,7 +13,8 @@ struct ZenbuAccountRow: View {
               .lineLimit(1)
           } label: {
             SettingsRowLabel(
-              "Zenbu Account", systemImage: "arrow.triangle.2.circlepath", tint: .purple)
+              "Zenbu Account", subtitle: signedInNote, systemImage: "arrow.triangle.2.circlepath",
+              tint: .purple)
           }
         }
         .accessibilityIdentifier("account.zenbu-account")
@@ -35,6 +36,11 @@ struct ZenbuAccountRow: View {
     }
   }
 
+  private var signedInNote: String? {
+    zenbuAccount.syncNeedsSubscription
+      ? String(localized: "Syncing needs a subscription") : nil
+  }
+
   private var signedOutNote: String {
     zenbuAccount.sync.sessionEndedOnItsOwn
       ? String(localized: "You were signed out. Sign in again to keep syncing.")
@@ -47,6 +53,8 @@ struct ZenbuAccountView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var confirmsSignOut = false
   @State private var deletes = false
+  @State private var showsPaywall = false
+  @State private var managesInAppStore = false
 
   var body: some View {
     Form {
@@ -55,6 +63,7 @@ struct ZenbuAccountView: View {
           LabeledContent("Email", value: account.email)
             .accessibilityIdentifier("zenbu-account.email")
         }
+        SubscriptionSection(showsPaywall: $showsPaywall, managesInAppStore: $managesInAppStore)
         syncSection
         Section {
           Button("Sign Out") { confirmsSignOut = true }
@@ -74,6 +83,7 @@ struct ZenbuAccountView: View {
     }
     .formStyle(.grouped)
     .navigationTitle("Zenbu Account")
+    .task { await zenbuAccount.subscription.refresh() }
     .confirmationDialog(
       "Sign out of Zenbu?", isPresented: $confirmsSignOut, titleVisibility: .visible
     ) {
@@ -91,6 +101,8 @@ struct ZenbuAccountView: View {
     .sheet(isPresented: $deletes) {
       DeleteAccountView { dismiss() }
     }
+    .sheet(isPresented: $showsPaywall) { SubscriptionPaywall() }
+    .appStoreSubscriptionSettings(isPresented: $managesInAppStore)
   }
 
   private var syncSection: some View {

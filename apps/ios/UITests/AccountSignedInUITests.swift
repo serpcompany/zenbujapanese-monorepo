@@ -50,10 +50,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitFor(
       app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Deleting your Zenbu account'"))
         .firstMatch)
-    tap(find("delete-account.start", in: app))
-    tap(find("delete-account.confirm", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
-    waitFor(find("delete-account.done-note", in: app))
+    deleteSigningInWithApple(in: app)
     tap(find("delete-account.done", in: app))
     waitFor(find("account.sign-in", in: app))
   }
@@ -85,12 +82,5 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(name, "value == 'Kana Fan'")
     goBack(in: app)
     waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Kana Fan'")
-  }
-
-  private func signInWithApple(in app: XCUIApplication) {
-    open(.account, in: app)
-    tap(find("account.sign-in", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
-    waitFor(find("account.zenbu-account", in: app))
   }
 }

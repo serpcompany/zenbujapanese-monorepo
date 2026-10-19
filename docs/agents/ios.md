@@ -81,11 +81,11 @@ word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()
 beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
 the title was drawn over it.
 
-`pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
-knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
-and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
-every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
-encodes and draws without UIKit).
+`pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
+anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
+names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on every
+platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or
+`CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
 (`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)). `ZenbuJapaneseScenes`
@@ -193,7 +193,8 @@ don't contain them), so they need no network, account, camera, or microphone:
   on the account's own `URLSession`): sign-in, tokens, the profile (Kana Fan), sync, signing out,
   and deleting, so the signed-in screens run without a service. The session token goes to the real
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
-  keychain access group; a build signed with the team keeps it.
+  keychain access group; a build signed with the team keeps it. The subscription's stand-ins, and
+  the StoreKit tests the scheme runs too, are in [`ios-subscription.md`](ios-subscription.md).
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
   ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
@@ -749,6 +750,7 @@ and their answers), `AccountTokens.swift`, `AccountSync.swift`, `AccountSyncStat
 `AccountSignInControls.swift`, `AccountSignInView.swift`, `ZenbuAccountView.swift`, and
 `DeleteAccountView.swift`. `apps/account-api/src/test/sync-client.ts` models the same client, all
 but the profile, in TypeScript, and the service's tests prove that model against the real service.
+The subscription that unlocks syncing is in [`ios-subscription.md`](ios-subscription.md).
 
 - **Which service.** The build setting `ZENBU_ACCOUNT_API_URL` fills `ZenbuAccountServiceURL` in
   `apps/ios/App/Info.plist`: staging (`https://api-staging.zenbujapanese.com`) in Debug, Zenbu Dev
@@ -817,17 +819,16 @@ but the profile, in TypeScript, and the service's tests prove that model against
   cursor, until the service knows it.
 - **Watch history.** `WatchHistory` (`WatchHistory.swift`, in `UserDefaults` under
   `watch.recent-videos.v1`) reports each `record` and swipe removal through `changeObserver`, and
-  takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest
-  by `watchedAt` either way, so a video dropped past 50 sends no `remove`: the account prunes its
-  own. A video saved before Recent kept a time is dated from 2000-01-01 when the history loads, a
-  second apart in its order, so it keeps its place on the phone and every video watched since,
-  anywhere, is newer. Each `record` queues the whole video as a `watch`, dated by the phone's
-  clock, and a newer change to a video replaces a queued one that isn't its first, the only one
-  that can be on its way, so a waiting watch is replaced rather than joined.
-  `WatchSessionView` records the video as it opens, as its captions, length, and comprehension
-  arrive, and as it closes. A pulled video whose ID isn't a YouTube video ID, or isn't the
-  change's, is left out. The file keeps a removed or pruned video's version for the latest 100
-  (`goneVideos`), as the account remembers its latest 100.
+  takes the account's copies through `applySynced`, which report nothing. It keeps the 50 newest by
+  `watchedAt` either way, so a video dropped past 50 sends no `remove`: the account prunes its own.
+  A video saved before Recent kept a time is dated from 2000-01-01 when the history loads, a second
+  apart in its order, so it keeps its place on the phone and every video watched since, anywhere, is
+  newer. Each `record` queues the whole video as a `watch`, dated by the phone's clock, and a newer
+  change to a video replaces a queued one that isn't its first, the only one that can be on its way,
+  so a waiting watch is replaced rather than joined. `WatchSessionView` records the video as it
+  opens, as its captions, length, and comprehension arrive, and as it closes. A pulled video whose
+  ID isn't a YouTube video ID, or isn't the change's, is left out. The file keeps a removed or
+  pruned video's version for the latest 100 (`goneVideos`), as the account remembers its latest 100.
 - **Translate bookmarks.** `ConversationHistory.shared` (in `TranslatorCore`) reports each bookmark
   and un-bookmark through `bookmarkObserver`, with the sentence's text, translation, language, and
   `bookmarkedAt`, and never the conversation; deleting a conversation reports its bookmarks

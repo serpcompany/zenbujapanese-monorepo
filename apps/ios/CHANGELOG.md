@@ -6,6 +6,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- When syncing needs a Zenbu subscription, Zenbu Account says so and sells one through the App
+  Store: subscribe, restore purchases, and manage it where you bought it. Your changes wait on your
+  device until you subscribe, and everything on your device stays free.
 - Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
   sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
   the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
@@ -16,10 +19,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
   window to open them there. Right-click a list, a known word, a Recent video, or a frequency
   dictionary on the Mac for what a swipe does on the iPhone.
-- Sort search results from the **Sorted by** row at the top of the results: a frequency
-  dictionary, most common first (JLPT by level), or your known words, known
-  first. Your choice stays across launches and applies to Japanese, English, and romaji
-  searches.
+- Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
+  most common first (JLPT by level), or your known words, known first. Your choice stays across
+  launches and applies to Japanese, English, and romaji searches.
 - Filter search results to known or unknown words from the same **Sorted by** row. The row shows
   when a filter is on, and your filter stays across launches.
 - Translate's **Listen** has the speaker button too: mute spoken translations while the
@@ -41,17 +43,15 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
   **Document** opens PDFs and text files.
 - Image Search can open up to 8 photos from your library at once.
-- Search's top bar matches Player's: a small title and the same search field, which slides up
-  while you type and keeps your query after a search, with **X** to go back to your recent
-  searches.
+- Search's top bar matches Player's: a small title and the same search field, which slides up while
+  you type and keeps your query after a search, with **X** to go back to your recent searches.
 - Search has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
   slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
   you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
   have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
-- Player works out how many of a video's words you know more than twice as fast, so
-  **Counting known words…** gives way to the percentage sooner on a long video, and a video you
-  go back to while Zenbu stays open usually shows it at once. Translate counts a conversation's
-  words the same way.
+- Player works out how many of a video's words you know more than twice as fast, so **Counting known
+  words…** gives way to the percentage sooner on a long video, and a video you go back to while
+  Zenbu stays open usually shows it at once. Translate counts a conversation's words the same way.
 
 ### Removed
 

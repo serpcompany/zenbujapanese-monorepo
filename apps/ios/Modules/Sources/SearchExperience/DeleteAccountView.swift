@@ -4,7 +4,7 @@ struct DeleteAccountView: View {
   private enum Step: Equatable {
     case explain
     case signIn(methods: Set<String>)
-    case deleted
+    case deleted(appStoreSubscriptionContinues: Bool)
   }
 
   @Environment(ZenbuAccount.self) private var zenbuAccount
@@ -15,6 +15,7 @@ struct DeleteAccountView: View {
   @State private var isWorking = false
   @State private var message: String?
   @State private var email = ""
+  @State private var managesInAppStore = false
 
   var body: some View {
     NavigationStack {
@@ -28,7 +29,7 @@ struct DeleteAccountView: View {
           }
         case .signIn(let methods):
           signIn(methods)
-        case .deleted:
+        case .deleted(let appStoreSubscriptionContinues):
           Section {
             Text("Your Zenbu account is deleted.")
               .font(.headline)
@@ -36,6 +37,11 @@ struct DeleteAccountView: View {
               "You're signed out. Your known words, lists, watch history, translations, notes, and media are still on this \(ThisDevice.name), and Zenbu works as before."
             )
             .accessibilityIdentifier("delete-account.done-note")
+          }
+          if appStoreSubscriptionContinues {
+            appStoreSubscription(
+              "Your App Store subscription is still running, and Apple keeps billing for it until you cancel it."
+            )
           }
         }
         if let message {
@@ -55,7 +61,7 @@ struct DeleteAccountView: View {
       .inlineNavigationTitle()
       .toolbar {
         ToolbarItem(placement: .cancellationAction) {
-          if step == .deleted {
+          if isDeleted {
             Button("Done") { finish() }
               .accessibilityIdentifier("delete-account.done")
           } else {
@@ -72,11 +78,13 @@ struct DeleteAccountView: View {
         Text("This deletes the account and everything it synced. It can't be undone.")
       }
     }
+    .appStoreSubscriptionSettings(isPresented: $managesInAppStore)
     .sheetSize(onMac: AppWindow.sheetSize)
-    .interactiveDismissDisabled(step == .deleted)
+    .interactiveDismissDisabled(isDeleted)
     .onAppear { email = zenbuAccount.account?.email ?? "" }
   }
 
+  @ViewBuilder
   private var explanation: some View {
     Section {
       Text(
@@ -86,6 +94,31 @@ struct DeleteAccountView: View {
         "This \(ThisDevice.name) keeps your known words, lists, watch history, translations, notes, and media, and Zenbu keeps working signed out."
       )
       .foregroundStyle(.secondary)
+      if subscription?.running.contains(where: { $0.managedIn == .website }) == true {
+        Text("Your subscription from zenbujapanese.com is canceled with the account.")
+          .foregroundStyle(.secondary)
+      }
+    }
+    if subscription?.runsInTheAppStore == true {
+      appStoreSubscription(
+        "Deleting your account doesn't cancel your App Store subscription. Cancel it in the App Store first, or Apple keeps billing for it."
+      )
+    }
+  }
+
+  private var subscription: KnownSubscription? { zenbuAccount.subscription.current }
+
+  private var isDeleted: Bool {
+    if case .deleted = step { return true }
+    return false
+  }
+
+  private func appStoreSubscription(_ note: LocalizedStringKey) -> some View {
+    Section {
+      Text(note)
+        .accessibilityIdentifier("delete-account.app-store-subscription")
+      Button("Manage in the App Store") { managesInAppStore = true }
+        .accessibilityIdentifier("delete-account.manage-subscription")
     }
   }
 
@@ -144,8 +177,9 @@ struct DeleteAccountView: View {
   }
 
   private func deleteAccount(appleAuthorizationCode: String?) async throws {
-    try await zenbuAccount.deleteAccount(appleAuthorizationCode: appleAuthorizationCode)
-    step = .deleted
+    let continues = try await zenbuAccount.deleteAccount(
+      appleAuthorizationCode: appleAuthorizationCode)
+    step = .deleted(appStoreSubscriptionContinues: continues)
   }
 
   private func finish() {

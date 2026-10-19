@@ -82,6 +82,15 @@ enum AccountMessage {
       String(
         localized:
           "Apple didn't finish, so nothing was deleted. Sign in with Apple again to try again.")
+    case "subscription_required":
+      String(
+        localized:
+          "Syncing needs a Zenbu subscription. Your changes stay on this \(ThisDevice.name), and sync once you subscribe."
+      )
+    case "billing_unavailable":
+      String(
+        localized:
+          "Nothing was deleted: Zenbu couldn't end your subscription just now. Try again later.")
     default: nil
     }
   }

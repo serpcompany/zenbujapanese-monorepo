@@ -2,8 +2,8 @@ import Foundation
 
 #if DEBUG
   actor StandInAppStore: AppStorePurchases {
-    static let monthly = "com.zenbujapanese.cloud.monthly"
-    static let yearly = "com.zenbujapanese.cloud.yearly"
+    static let monthly = "com.zenbujapanese.sync.monthly"
+    static let yearly = "com.zenbujapanese.sync.yearly"
 
     private var purchased: [StoreTransaction] = []
 
@@ -65,14 +65,14 @@ import Foundation
 
     var refusesSync: Bool { lock.withLock { paywall && source == nil } }
 
+    var runsInTheAppStore: Bool { lock.withLock { source == "apple" } }
+
     var answer: [String: Any] { lock.withLock { Self.answer(source: source, paywall: paywall) } }
 
     func buy(_ body: Data) -> [String: Any] {
       lock.withLock {
         let sent = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any]
-        if (sent?["signedTransaction"] as? String)?.hasPrefix("stand-in-transaction.") == true {
-          source = "apple"
-        }
+        if (sent?["signedTransaction"] as? String)?.isEmpty == false { source = "apple" }
         return Self.answer(source: source, paywall: paywall)
       }
     }
@@ -91,11 +91,19 @@ import Foundation
         case "stripe": "website"
         default: NSNull()
         }
+      let running: [[String: Any]] =
+        subscribed
+        ? [
+          [
+            "source": source ?? "", "productId": product, "status": "active",
+            "expiresAt": "2030-01-01T00:00:00.000Z", "willRenew": true, "managedIn": managedIn,
+          ]
+        ] : []
       return [
         "status": subscribed ? "active" : "none", "active": subscribed,
         "source": source ?? NSNull(), "productId": product,
         "expiresAt": subscribed ? "2030-01-01T00:00:00.000Z" : NSNull(),
-        "willRenew": subscribed ? true : NSNull(), "managedIn": managedIn,
+        "willRenew": subscribed ? true : NSNull(), "managedIn": managedIn, "running": running,
         "canSubscribe": !subscribed,
         "cloudAccess": subscribed ? "subscribed" : paywall ? "subscription_required" : "free",
         "appAccountToken": appAccountToken,

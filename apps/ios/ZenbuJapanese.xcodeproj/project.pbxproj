@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C5730C0000000000000000CE /* StoreKitPurchases.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5730C0000000000000000CC /* StoreKitPurchases.swift */; };
+		C5730C0000000000000000CF /* AccountSubscriptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5730C0000000000000000CD /* AccountSubscriptionModels.swift */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
@@ -15,6 +17,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C5730C0000000000000000C1 /* ZenbuJapaneseStoreKitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ZenbuJapaneseStoreKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C5730C0000000000000000CC /* StoreKitPurchases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modules/Sources/SearchExperience/StoreKitPurchases.swift; sourceTree = SOURCE_ROOT; };
+		C5730C0000000000000000CD /* AccountSubscriptionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Modules/Sources/SearchExperience/AccountSubscriptionModels.swift; sourceTree = SOURCE_ROOT; };
 		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
 		48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -27,6 +32,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXContainerItemProxy section */
+		C5730C0000000000000000C6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
+			remoteInfo = ZenbuJapanese;
+		};
 		C5730B0000000000000000B6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
@@ -37,6 +49,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		C5730C0000000000000000C2 /* StoreKitTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = StoreKitTests;
+			sourceTree = "<group>";
+		};
 		C5730B0000000000000000B2 /* UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = UITests;
@@ -45,6 +62,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		C5730C0000000000000000C4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		F38B6861CA6A9754CF93F50B /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -63,6 +87,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C5730C0000000000000000D0 /* Subscription sources */ = {
+			isa = PBXGroup;
+			children = (
+				C5730C0000000000000000CD /* AccountSubscriptionModels.swift */,
+				C5730C0000000000000000CC /* StoreKitPurchases.swift */,
+			);
+			name = "Subscription sources";
+			sourceTree = "<group>";
+		};
 		0D9EF723FB60C0407E450D3E /* Packages */ = {
 			isa = PBXGroup;
 			children = (
@@ -76,6 +109,7 @@
 			children = (
 				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
 				C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */,
+				C5730C0000000000000000C1 /* ZenbuJapaneseStoreKitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,6 +121,8 @@
 				0D9EF723FB60C0407E450D3E /* Packages */,
 				4A0C8C2271C037859685316D /* Products */,
 				C5730B0000000000000000B2 /* UITests */,
+				C5730C0000000000000000C2 /* StoreKitTests */,
+				C5730C0000000000000000D0 /* Subscription sources */,
 			);
 			sourceTree = "<group>";
 		};
@@ -148,6 +184,27 @@
 			productReference = C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C5730C0000000000000000C8 /* ZenbuJapaneseStoreKitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C5730C0000000000000000CB /* Build configuration list for PBXNativeTarget "ZenbuJapaneseStoreKitTests" */;
+			buildPhases = (
+				C5730C0000000000000000C3 /* Sources */,
+				C5730C0000000000000000C4 /* Frameworks */,
+				C5730C0000000000000000C5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C5730C0000000000000000C7 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C5730C0000000000000000C2 /* StoreKitTests */,
+			);
+			name = ZenbuJapaneseStoreKitTests;
+			productName = ZenbuJapaneseStoreKitTests;
+			productReference = C5730C0000000000000000C1 /* ZenbuJapaneseStoreKitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -158,6 +215,9 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					C5730B0000000000000000B8 = {
+						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
+					};
+					C5730C0000000000000000C8 = {
 						TestTargetID = 5CD4552D207F8AC0D2D15CD6;
 					};
 				};
@@ -181,11 +241,19 @@
 			targets = (
 				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
 				C5730B0000000000000000B8 /* ZenbuJapaneseUITests */,
+				C5730C0000000000000000C8 /* ZenbuJapaneseStoreKitTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		C5730C0000000000000000C5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		C3E26B21F5C96FAD04F5E803 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -225,6 +293,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		C5730C0000000000000000C3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C5730C0000000000000000CE /* StoreKitPurchases.swift in Sources */,
+				C5730C0000000000000000CF /* AccountSubscriptionModels.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E0343DFD8725F6F5A7D4FFEB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -244,6 +321,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		C5730C0000000000000000C7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
+			targetProxy = C5730C0000000000000000C6 /* PBXContainerItemProxy */;
+		};
 		C5730B0000000000000000B7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
@@ -252,6 +334,60 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		C5730C0000000000000000C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.storekittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenbu Japanese.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zenbu Japanese";
+				"ARCHS[sdk=macosx*]" = arm64;
+			};
+			name = Debug;
+		};
+		C5730C0000000000000000CA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.zenbujapanese.dictionary.storekittests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Zenbu Japanese.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Zenbu Japanese";
+				"ARCHS[sdk=macosx*]" = arm64;
+			};
+			name = Release;
+		};
 		25190180A86666276E995B60 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -526,6 +662,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		C5730C0000000000000000CB /* Build configuration list for PBXNativeTarget "ZenbuJapaneseStoreKitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C5730C0000000000000000C9 /* Debug */,
+				C5730C0000000000000000CA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		376F81E60ED620D541A9BF80 /* Build configuration list for PBXNativeTarget "ZenbuJapanese" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -162,9 +162,13 @@ struct AccountAPI: Sendable {
       from: await send("POST", "v1/me/subscription/apple", body: json(body), bearer: accessToken))
   }
 
-  func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws {
+  func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws
+    -> AccountDeletion
+  {
     let body = Deletion(appleAuthorizationCode: appleAuthorizationCode)
-    _ = try await send("DELETE", "v1/me", body: json(body), bearer: accessToken)
+    let answer = try await send("DELETE", "v1/me", body: json(body), bearer: accessToken)
+    return (try? JSONDecoder.accountService.decode(AccountDeletion.self, from: answer.0))
+      ?? AccountDeletion(appStoreSubscriptionContinues: false)
   }
 
   private func signedIn(_ answer: (Data, HTTPURLResponse)) throws -> AccountSignIn {

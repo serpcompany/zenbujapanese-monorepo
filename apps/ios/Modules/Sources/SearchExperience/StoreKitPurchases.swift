@@ -44,7 +44,11 @@ actor StoreKitPurchases: AppStorePurchases {
   }
 
   nonisolated func syncWithAppStore() async throws {
-    try await AppStore.sync()
+    do {
+      try await AppStore.sync()
+    } catch StoreKitError.userCancelled {
+      return
+    }
   }
 
   nonisolated func transactionUpdates() -> AsyncStream<StoreTransaction> {
@@ -55,7 +59,15 @@ actor StoreKitPurchases: AppStorePurchases {
         }
         continuation.finish()
       }
-      continuation.onTermination = { _ in listening.cancel() }
+      let unfinished = Task {
+        for await waiting in Transaction.unfinished {
+          if let transaction = Self.verified(waiting) { continuation.yield(transaction) }
+        }
+      }
+      continuation.onTermination = { _ in
+        listening.cancel()
+        unfinished.cancel()
+      }
     }
   }
 

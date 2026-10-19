@@ -42,6 +42,17 @@
                ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "C5730C0000000000000000C8"
+               BuildableName = "ZenbuJapaneseStoreKitTests.xctest"
+               BlueprintName = "ZenbuJapaneseStoreKitTests"
+               ReferencedContainer = "container:ZenbuJapanese.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

@@ -17,11 +17,6 @@ struct KnownSubscription: Codable, Equatable, Sendable {
     }
   }
 
-  enum Source: String, Codable, Sendable {
-    case apple
-    case stripe
-  }
-
   enum ManagedIn: String, Codable, Sendable {
     case appStore = "app_store"
     case website
@@ -38,6 +33,28 @@ struct KnownSubscription: Codable, Equatable, Sendable {
     }
   }
 
+  struct Running: Codable, Equatable, Sendable {
+    let status: Status
+    let expiresAt: Date?
+    let willRenew: Bool?
+    let managedIn: ManagedIn?
+
+    init(status: Status, expiresAt: Date?, willRenew: Bool?, managedIn: ManagedIn?) {
+      self.status = status
+      self.expiresAt = expiresAt
+      self.willRenew = willRenew
+      self.managedIn = managedIn
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      status = try container.decode(Status.self, forKey: .status)
+      expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
+      willRenew = try container.decodeIfPresent(Bool.self, forKey: .willRenew)
+      managedIn = try? container.decodeIfPresent(ManagedIn.self, forKey: .managedIn)
+    }
+  }
+
   struct Offers: Codable, Equatable, Sendable {
     let appStore: [String]
     let website: [String]
@@ -45,11 +62,10 @@ struct KnownSubscription: Codable, Equatable, Sendable {
 
   let status: Status
   let active: Bool
-  let source: Source?
-  let productId: String?
   let expiresAt: Date?
   let willRenew: Bool?
   let managedIn: ManagedIn?
+  let running: [Running]
   let canSubscribe: Bool
   let cloudAccess: CloudAccess
   let appAccountToken: UUID
@@ -59,11 +75,10 @@ struct KnownSubscription: Codable, Equatable, Sendable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     status = try container.decode(Status.self, forKey: .status)
     active = try container.decode(Bool.self, forKey: .active)
-    source = try? container.decodeIfPresent(Source.self, forKey: .source)
-    productId = try container.decodeIfPresent(String.self, forKey: .productId)
     expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
     willRenew = try container.decodeIfPresent(Bool.self, forKey: .willRenew)
     managedIn = try? container.decodeIfPresent(ManagedIn.self, forKey: .managedIn)
+    running = try container.decodeIfPresent([Running].self, forKey: .running) ?? []
     canSubscribe = try container.decode(Bool.self, forKey: .canSubscribe)
     cloudAccess = try container.decode(CloudAccess.self, forKey: .cloudAccess)
     appAccountToken = try container.decode(UUID.self, forKey: .appAccountToken)
@@ -72,6 +87,15 @@ struct KnownSubscription: Codable, Equatable, Sendable {
 
   var syncNeedsSubscription: Bool { cloudAccess == .subscriptionRequired }
   var offersAppStorePurchase: Bool { canSubscribe && !offers.appStore.isEmpty }
+  var runsInTheAppStore: Bool { running.contains { $0.managedIn == .appStore } }
+
+  var shown: [Running] {
+    if !running.isEmpty { return running }
+    guard status != .none else { return [] }
+    return [
+      Running(status: status, expiresAt: expiresAt, willRenew: willRenew, managedIn: managedIn)
+    ]
+  }
 }
 
 struct SubscriptionOffer: Identifiable, Equatable, Sendable {
@@ -108,4 +132,20 @@ enum SubscriptionProblem: Equatable, Sendable {
   case storeUnavailable
   case pendingApproval
   case notOffered
+}
+
+struct AccountDeletion: Decodable, Sendable {
+  private enum CodingKeys: String, CodingKey { case appStoreSubscriptionContinues }
+
+  let appStoreSubscriptionContinues: Bool
+
+  init(appStoreSubscriptionContinues: Bool) {
+    self.appStoreSubscriptionContinues = appStoreSubscriptionContinues
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    appStoreSubscriptionContinues =
+      try container.decodeIfPresent(Bool.self, forKey: .appStoreSubscriptionContinues) ?? false
+  }
 }
