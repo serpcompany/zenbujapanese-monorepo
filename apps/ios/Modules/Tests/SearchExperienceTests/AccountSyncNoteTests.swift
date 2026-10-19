@@ -188,7 +188,7 @@ final class CountingDefaults: UserDefaults {
   }
 
   deinit {
-    removePersistentDomain(forName: suite)
+    UserDefaults().removePersistentDomain(forName: suite)
   }
 
   override func set(_ value: Any?, forKey key: String) {
