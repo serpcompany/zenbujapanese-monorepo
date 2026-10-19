@@ -51,6 +51,20 @@ export function stripeBilling(
       )
     )
 
+  async function refundOnce(paymentIntent: string) {
+    try {
+      await stripe.refunds.create(
+        { payment_intent: paymentIntent },
+        { idempotencyKey: `refund-orphaned-${paymentIntent}` }
+      )
+    } catch (error) {
+      const refunded =
+        error instanceof Stripe.errors.StripeInvalidRequestError &&
+        error.code === 'charge_already_refunded'
+      if (!refunded) throw error
+    }
+  }
+
   async function cancelUnlessEnded(subscription: Stripe.Subscription) {
     if (!ended.has(subscription.status)) await stripe.subscriptions.cancel(subscription.id)
   }
@@ -114,12 +128,7 @@ export function stripeBilling(
         const payments = typeof invoice === 'object' && invoice ? invoice.payments?.data : []
         for (const payment of payments ?? []) {
           const intent = idOf(payment.payment.payment_intent)
-          if (intent && payment.status === 'paid') {
-            await stripe.refunds.create(
-              { payment_intent: intent },
-              { idempotencyKey: `refund-orphaned-${intent}` }
-            )
-          }
+          if (intent && payment.status === 'paid') await refundOnce(intent)
         }
         await cancelUnlessEnded(subscription)
       })

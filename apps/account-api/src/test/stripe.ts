@@ -93,10 +93,11 @@ function subscriptionObject(fields: SubscriptionFields): StripeObject {
 export function standInStripe() {
   const subscriptions = new Map<string, StripeObject>()
   const requests: Request[] = []
+  const refunded = new Set<string>()
   const state = { down: false }
   let sessions = 1
 
-  const route = (method: string, path: string): Response => {
+  const route = (method: string, path: string, form: URLSearchParams): Response => {
     const [, , kind, id] = path.split('/')
     if (method === 'POST' && path === '/v1/checkout/sessions') {
       const session = `cs_test_${sessions++}`
@@ -113,6 +114,20 @@ export function standInStripe() {
       })
     }
     if (method === 'POST' && path === '/v1/refunds') {
+      const intent = form.get('payment_intent') ?? ''
+      if (refunded.has(intent)) {
+        return answer(
+          {
+            error: {
+              type: 'invalid_request_error',
+              code: 'charge_already_refunded',
+              message: 'Charge has already been refunded.'
+            }
+          },
+          400
+        )
+      }
+      refunded.add(intent)
       return answer({ id: `re_${sessions++}`, object: 'refund', status: 'succeeded' })
     }
     const subscription = kind === 'subscriptions' && id ? subscriptions.get(id) : undefined
@@ -129,14 +144,15 @@ export function standInStripe() {
       throw new Error(`the stand-in got a request for ${url.host}`)
     const method = init?.method ?? 'GET'
     const headers = new Headers(init?.headers)
+    const form = new URLSearchParams(method === 'GET' ? url.search : String(init?.body ?? ''))
     requests.push({
       method,
       path: url.pathname,
-      form: new URLSearchParams(method === 'GET' ? url.search : String(init?.body ?? '')),
+      form,
       idempotencyKey: headers.get('idempotency-key')
     })
     if (state.down) return answer({ error: { type: 'api_error', message: 'Stripe is down' } }, 500)
-    return route(method, url.pathname)
+    return route(method, url.pathname, form)
   }
 
   const signed = (event: StripeObject) => {
@@ -153,6 +169,7 @@ export function standInStripe() {
   return {
     fetch,
     requests,
+    refunded,
     state,
     subscriptions,
     subscription(fields: SubscriptionFields) {

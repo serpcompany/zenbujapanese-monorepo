@@ -243,21 +243,27 @@ describe('POST /v1/webhooks/stripe', () => {
     expect((await billing.subscription(learner)).status).toBe('none')
   })
 
-  test('refunds and cancels a checkout that completes after its account was deleted', async () => {
-    const learner = await billing.accounts.learner('stripe-orphan@example.com')
-    const subscription = stripe.subscription({ userId: learner.userId, paymentIntent: 'pi_orphan' })
+  async function orphanedCheckout(email: string, paymentIntent: string) {
+    const learner = await billing.accounts.learner(email)
+    const subscription = stripe.subscription({ userId: learner.userId, paymentIntent })
     await billing.rows(`delete from users where id = '${learner.userId}'`)
     const id = String(subscription.id)
-    await billing.stripeWebhook(
+    const answer = await billing.stripeWebhook(
       stripe.event('checkout.session.completed', {
-        id: 'cs_orphan',
+        id: `cs_${id}`,
         object: 'checkout.session',
         mode: 'subscription',
         client_reference_id: learner.userId,
-        customer: 'cus_orphan',
+        customer: `cus_${id}`,
         subscription: id
       })
     )
+    return { id, answer }
+  }
+
+  test('refunds and cancels a checkout that completes after its account was deleted', async () => {
+    const { id, answer } = await orphanedCheckout('stripe-orphan@example.com', 'pi_orphan')
+    expect(answer.status).toBe(200)
     expect(stripe.requests.filter(each => each.method !== 'GET')).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -268,6 +274,16 @@ describe('POST /v1/webhooks/stripe', () => {
         expect.objectContaining({ method: 'DELETE', path: `/v1/subscriptions/${id}` })
       ])
     )
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+  })
+
+  test('refunds an orphaned checkout once, though Stripe sends its event again after a day', async () => {
+    stripe.refunded.add('pi_refunded_already')
+    const { id, answer } = await orphanedCheckout(
+      'stripe-orphan-again@example.com',
+      'pi_refunded_already'
+    )
+    expect(answer.status).toBe(200)
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
   })
 
