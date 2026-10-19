@@ -28,7 +28,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   first 100 of more than 100 examples".
 - Look up and translate from Shortcuts, Siri, and Spotlight. **Look Up in Zenbu** opens Zenbu on
   the word or its search results, and **Translate with Zenbu** on Translate's Text with the text;
-  Siri runs them from "Look up in Zenbu" and "Translate with Zenbu".
+  Siri runs them from "Zenbu", "Zenbu look up", "Zenbu translate", or "Look up in Zenbu".
 - Search finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
