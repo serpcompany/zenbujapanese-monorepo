@@ -33,6 +33,7 @@ import {
 } from '@/lib/dictionary/screen-text'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
 import { decodeSegment, parseWordSegment } from '@/lib/dictionary/urls'
+import { wordDescription, wordTitle } from '@/lib/dictionary/word-snippet'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -55,26 +56,13 @@ async function load(params: Props['params']) {
   return { locale, word }
 }
 
-const hasExamples = (word: WordPageWithKanji) =>
-  word.exampleCount !== null && word.exampleCount.listed > 0 && word.examples.length > 0
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, word } = await load(params)
-  const t = getDictionary(locale).word.metadata
-  const name =
-    word.reading === word.headword
-      ? word.headword
-      : fill(t.word, { headword: word.headword, reading: word.reading })
-  const partOfSpeech = coreText(word.partOfSpeech, locale)
   return dictionaryMetadata(
     encodeURI(word.path),
     locale,
-    fill(hasExamples(word) ? t.titleWithExamples : t.title, { word: name }),
-    fill(partOfSpeech ? t.descriptionWithPartOfSpeech : t.description, {
-      word: name,
-      meaning: word.summary,
-      partOfSpeech
-    })
+    wordTitle(word, locale),
+    wordDescription(word, locale)
   )
 }
 

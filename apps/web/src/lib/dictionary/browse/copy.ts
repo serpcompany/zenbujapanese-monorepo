@@ -3,19 +3,16 @@ import {
   type CategoryOrder,
   commonWords
 } from '@zenbu/dictionary-core/browse/categories'
-import {
-  type KanjiList,
-  type RankBand,
-  rankBand,
-  rankBandSize
-} from '@zenbu/dictionary-core/browse/lists'
+import { type KanjiList, type RankBand, rankBandSize } from '@zenbu/dictionary-core/browse/lists'
 import { type FrequencyTier, tierForRank } from '@zenbu/dictionary-core/detail/frequency'
 import { type SourceCredit, sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, type Plural, pluralOf } from '@/lib/i18n/format'
+import { fittedDescription, joinedSentences } from '@/lib/snippets'
 import { categoryName } from './category-names'
+import type { Ranks } from './rank-pages'
 
 type Values = Readonly<Record<string, string | number>>
 
@@ -23,16 +20,6 @@ export const browseText = (locale: Locale) => getDictionary(locale).browse
 
 export function counted(forms: Plural, count: number, locale: Locale, values: Values = {}) {
   return fill(pluralOf(forms, count, locale), { ...values, count: formatNumber(count, locale) })
-}
-
-export function joinSentences(
-  sentences: readonly (string | null | undefined)[],
-  locale: Locale
-): string {
-  const template = browseText(locale).sentences
-  return sentences
-    .filter((sentence): sentence is string => Boolean(sentence))
-    .reduce((first, second) => fill(template, { first, second }))
 }
 
 export const pagedTitle = (title: string, page: number, locale: Locale) =>
@@ -67,7 +54,7 @@ export function categoryHeading(category: BrowseCategory, locale: Locale): strin
 export const categoryDescription = (slug: string, locale: Locale): string | undefined =>
   bySlug(getDictionary(locale).categoryIntros)[slug]
 
-export function categoryIntro(
+export function categoryCount(
   category: BrowseCategory,
   total: number,
   order: CategoryOrder,
@@ -75,11 +62,22 @@ export function categoryIntro(
 ): string {
   const { intro, marks } = browseText(locale).category
   const forms = nameForms(category, locale)
-  const first = counted(intro[category.kind][order], total, locale, {
+  return counted(intro[category.kind][order], total, locale, {
     ...forms,
     marks: bySlug(marks)[category.slug] ?? forms.lower
   })
-  return joinSentences([first, categoryDescription(category.slug, locale)], locale)
+}
+
+export function categoryIntro(
+  category: BrowseCategory,
+  total: number,
+  order: CategoryOrder,
+  locale: Locale
+): string {
+  return joinedSentences(
+    [categoryCount(category, total, order, locale), categoryDescription(category.slug, locale)],
+    locale
+  )
 }
 
 export const orderName = (order: CategoryOrder, locale: Locale) =>
@@ -166,17 +164,23 @@ function kanjiListFirstSentence(list: KanjiList, total: number, locale: Locale):
   return fill(kind === 'secondary' ? intro.secondary : intro.jinmeiyo, { count })
 }
 
-export function kanjiListIntro(list: KanjiList, total: number, locale: Locale): string {
+function kanjiListSentences(list: KanjiList, locale: Locale) {
   const { jlptEstimate, opensSearch } = browseText(locale).kanji
-  return joinSentences(
-    [
-      kanjiListFirstSentence(list, total, locale),
-      list.jlptLevel === undefined ? null : jlptEstimate,
-      opensSearch
-    ],
+  return [list.jlptLevel === undefined ? null : jlptEstimate, opensSearch]
+}
+
+export const kanjiListIntro = (list: KanjiList, total: number, locale: Locale) =>
+  joinedSentences(
+    [kanjiListFirstSentence(list, total, locale), ...kanjiListSentences(list, locale)],
     locale
   )
-}
+
+export const kanjiListDescription = (list: KanjiList, total: number, locale: Locale) =>
+  fittedDescription(
+    kanjiListFirstSentence(list, total, locale),
+    kanjiListSentences(list, locale),
+    locale
+  )
 
 export const featuredCategories = {
   partOfSpeech: [
@@ -208,16 +212,15 @@ export const moreWaysToBrowse: readonly string[] = [
   commonWords.slug
 ]
 
-export function rankRange(band: number, locale: Locale): string {
-  const { first, last } = rankBand(band)
+export function rankRange({ first, last }: Ranks, locale: Locale): string {
   return fill(browseText(locale).frequency.rankRange, {
     first: formatNumber(first, locale),
     last: formatNumber(last, locale)
   })
 }
 
-export const rankBandTitle = (name: string, band: number, locale: Locale) =>
-  fill(browseText(locale).frequency.bandTitle, { name, range: rankRange(band, locale) })
+export const rankBandTitle = (name: string, ranks: Ranks, locale: Locale) =>
+  fill(browseText(locale).frequency.bandTitle, { name, range: rankRange(ranks, locale) })
 
 const thousands = (rank: number) => `${rank / rankBandSize}k`
 
@@ -277,3 +280,6 @@ export const jlptCopy = (locale: Locale): RankedListCopy => ({
   description: browseText(locale).frequency.jlptDescription,
   sources: [sourceCredits.jmdict, sourceCredits.jlpt]
 })
+
+export const browseHubDescription = (description: string, locale: Locale) =>
+  fittedDescription(description, [browseText(locale).metaMore], locale)

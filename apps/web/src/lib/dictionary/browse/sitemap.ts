@@ -47,7 +47,9 @@ export function browseSitemapPaths(
     'frequency-lists': [
       frequencyDictionariesPath,
       ...sitemap.rankedLists.flatMap(({ slug, bands }) =>
-        bands.flatMap((count, index) => (indexed({ count }) ? [rankBandPath(slug, index + 1)] : []))
+        bands.flatMap((count, index) =>
+          indexed({ count }) ? pages(count, page => rankBandPath(slug, index + 1, page)) : []
+        )
       ),
       ...sitemap.jlptLists.filter(indexed).flatMap(({ slug, count }) => {
         const level = jlptList(slug)?.level

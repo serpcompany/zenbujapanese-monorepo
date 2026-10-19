@@ -89,6 +89,10 @@ describe('the source credits', () => {
     expect(sourceCredits.jlptKanji.name).toBe('JLPT kanji lists')
   })
 
+  test('link Tatoeba at its English page, since its home page redirects there', () => {
+    expect(sourceCredits.tatoeba.url).toBe('https://tatoeba.org/en/')
+  })
+
   test('are each named once, under their own key, with a credit, a licence, and a link', () => {
     expect(Object.keys(sourceCredits)).toEqual(everyCredit.map(credit => credit.id))
     expect(new Set(names(everyCredit)).size).toBe(everyCredit.length)
