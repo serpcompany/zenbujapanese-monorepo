@@ -10,10 +10,13 @@ translating run on it, as they do inside the app. How it's built is in
 
 ## Look Up in Zenbu
 
-**Look Up in Zenbu** is a Shortcuts action that takes text and opens Zenbu on it. Siri runs it
-from "Look up in Zenbu Japanese" or "Look up in Zenbu", and asks what to look up; Spotlight lists
-it with the app's other shortcuts. In Shortcuts it takes the text the step before it hands on, so
-a shortcut shown in the share sheet can pass it the shared text.
+**Look Up in Zenbu** is a Shortcuts action that takes text and opens Zenbu on it. Siri runs it from
+"Zenbu look up", "Zenbu lookup", "Look up in Zenbu", or "Look up a word in Zenbu", each also with
+"Zenbu Japanese", and asks what to look up; Spotlight lists it with the app's other shortcuts.
+"Zenbu" on its own is a phrase for it too, but whether Siri runs it rather than opening the app
+isn't checked yet (Checked by hand, below). A phrase can't carry the word itself, so "Zenbu look up
+見る" in one breath isn't a phrase Siri knows. In Shortcuts it takes the text the step before it hands
+on, so a shortcut shown in the share sheet can pass it the shared text.
 
 From any tab, Translate included, Zenbu switches to Search and closes an open word sheet. A running
 Translate conversation keeps going. Then:
@@ -32,8 +35,9 @@ the window its link, once); UI `AppLinkUITests.testLookUpOpensTheWordsPageFromAn
 
 ## Translate with Zenbu
 
-**Translate with Zenbu** is a Shortcuts action that takes text, which Siri runs from "Translate
-with Zenbu Japanese". From any tab it opens Translate's typed translation
+**Translate with Zenbu** is a Shortcuts action that takes text, which Siri runs from "Zenbu
+translate", "Translate with Zenbu", or "Translate text in Zenbu", each also with "Zenbu
+Japanese", and asks what to translate. From any tab it opens Translate's typed translation
 ([Typing to translate](translate.md#typing-to-translate)) with that text, translated as if it had
 been typed. A running conversation keeps going under it, and Back returns to what Translate was
 showing.
@@ -62,7 +66,7 @@ check that comes closest:
 
 | By hand | Closest automated check |
 | --- | --- |
-| Siri: "Look up in Zenbu", then 見る, opens 見る's Word Detail; "Translate with Zenbu", then a sentence, opens Text with it | `AppLinkTests.inbox`; the UI tests open the link the action hands the window |
+| Siri: "Zenbu", "Zenbu look up", and "Look up in Zenbu", each then 見る, open 見る's Word Detail; "Zenbu translate" and "Translate with Zenbu", each then a sentence, open Text with it | `AppLinkTests.inbox`; the UI tests open the link the action hands the window |
 | Spotlight lists Look Up and Translate under Zenbu, and each asks for its text | None: the build's `Metadata.appintents` names both, read after building |
 | Shortcuts lists both actions under Zenbu Japanese; a shortcut shown in the share sheet that runs Look Up in Zenbu on its input opens the word | The same |
 | The Mac: Look Up in Zenbu from Shortcuts, with Zenbu open, opens the word in the window already open | `AppLinkUITests` on the Mac, from the link on |

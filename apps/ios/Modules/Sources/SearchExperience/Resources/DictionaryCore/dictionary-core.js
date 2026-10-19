@@ -776,7 +776,7 @@
     tatoeba: {
       id: "tatoeba",
       name: "Tatoeba",
-      url: "https://tatoeba.org/",
+      url: "https://tatoeba.org/en/",
       credit: "Example sentences by Tatoeba contributors.",
       license: { name: "CC BY 2.0 FR", url: "https://creativecommons.org/licenses/by/2.0/fr/" },
       clients: everyClient
