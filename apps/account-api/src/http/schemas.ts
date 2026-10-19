@@ -282,6 +282,17 @@ const ChangeSchema = z
       operation: z.literal('delete'),
       version: z.int(),
       data: z.null()
+    }),
+    z.object({
+      entity: z.literal('photo'),
+      entityId: z.string(),
+      operation: z.literal('delete'),
+      version: z.int(),
+      data: z.null(),
+      emptied: z.literal(true).openapi({
+        description:
+          "The photo was emptied, its last word removed, not deleted. Drop it and its words as for any delete, but no place among the account's files was freed: it keeps its file for 30 days, and a word added from elsewhere brings it back. Any other delete leaves this out."
+      })
     })
   ])
   .openapi('Change', {

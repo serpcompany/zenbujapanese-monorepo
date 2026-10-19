@@ -55,8 +55,9 @@ would change the hash the photo is named by.
   a learner builds by hand, while bounding what one account can store at 12 GB. A typical photo
   of a few MB puts a full library near 3 GB. An emptied photo holds its place for its 30 days:
   the service can't tell whether a device has a word queued that brings it back, so it never
-  deletes one early. An app with only `profile` isn't held to the 1,000, only to its own two, so
-  the library's count tells it nothing.
+  deletes one early. Its `delete` comes marked `emptied: true`, and the one 30 days on comes plain,
+  so a device knows when a place is freed. An app with only `profile` isn't held to the 1,000, only
+  to its own two, so the library's count tells it nothing.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
   library takes a few minutes, bound by the device's connection rather than the limit.

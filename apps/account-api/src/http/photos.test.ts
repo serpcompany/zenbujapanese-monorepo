@@ -24,6 +24,10 @@ const fileCount = async (learner: Learner) =>
     ?.n
 const photoStatus = async (photoId: string) =>
   (await rows(`select status from photos where id = '${photoId}'`))[0]?.status
+const emptied = (photoId: string, version: number) => ({
+  ...deleted('photo', photoId, version),
+  emptied: true
+})
 
 describe('Media Library photos', () => {
   test('a photo needs its file first, then an add puts it in the account, and adding it again changes nothing', async () => {
@@ -87,14 +91,14 @@ describe('Media Library photos', () => {
     ])
   })
 
-  test("removing a photo's last word empties it: it syncs as a delete and keeps its file, and a word added elsewhere brings it back", async () => {
+  test("removing a photo's last word empties it: it syncs as a delete marked emptied and keeps its file, and a word added elsewhere brings it back", async () => {
     const learner = await accounts.learner('photo-last-word@example.com')
     const photoId = await uploaded(accounts, learner)
     await results(learner, add(photoId), onWord(photoId, 1))
     expect(await results(learner, offWord(photoId, 1, 1))).toMatchObject(appliedAt(2))
     expect(await changes(learner)).toEqual(
       expect.arrayContaining([
-        deleted('photo', photoId, 2),
+        emptied(photoId, 2),
         deleted('photoWord', `${photoId}/${word(1)}`, 2)
       ])
     )
@@ -180,12 +184,13 @@ describe('Media Library photos', () => {
     await rows(`update photos set updated_at = now() - interval '25 hours' where id = '${photoId}'`)
     await housekeep()
     expect(await photoStatus(photoId)).toBe('emptied')
-    expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
+    expect(await changes(learner)).toEqual([emptied(photoId, 2)])
     expect(await fileCount(learner)).toBe(1)
     expect(stored()).toHaveLength(1)
     await rows(`update photos set updated_at = now() - interval '31 days' where id = '${photoId}'`)
     await housekeep()
     expect(await photoStatus(photoId)).toBe('deleted')
+    expect(await changes(learner)).toEqual([deleted('photo', photoId, 3)])
     expect(await fileCount(learner)).toBe(0)
     expect(stored()).toEqual([])
   })

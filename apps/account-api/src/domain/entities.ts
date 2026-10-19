@@ -116,6 +116,7 @@ export type Change =
       operation: 'delete'
       version: number
       data: null
+      emptied?: true
     }
 
 export type Outcome =
