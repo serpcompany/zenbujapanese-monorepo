@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test'
+import { getDictionary } from '../src/lib/i18n/dictionary'
 import { expect, menuButton, needed, onPhone, phoneMenu, test } from './test'
 
 type Language = 'en' | 'ja'
@@ -6,6 +7,11 @@ type Language = 'en' | 'ja'
 const labels = {
   en: { trigger: 'English, change language', list: 'Language', menu: 'Menu' },
   ja: { trigger: '日本語、表示言語を切り替える', list: '言語', menu: 'メニュー' }
+} as const
+
+const notFound = {
+  en: getDictionary('en').chrome.notFound.message,
+  ja: getDictionary('ja').chrome.notFound.message
 } as const
 
 type Item = { name: string; href: string | null; current: boolean }
@@ -97,9 +103,19 @@ test.describe('the language switcher', () => {
       expect(await switcherItems(page, 'en')).toEqual([current('English'), link('日本語', '/ja/')])
     })
 
-    test('a missing Japanese page links English to its homepage', async ({ page }) => {
+    test('a missing Japanese page says so in Japanese, and links English to its homepage', async ({
+      page
+    }) => {
       expect((await page.goto('/ja/dictionary/999999999/'))?.status()).toBe(404)
+      await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
+      await expect(page.getByText(notFound.ja)).toBeVisible()
       expect(await switcherItems(page, 'ja')).toEqual([link('English', '/'), current('日本語')])
+    })
+
+    test('a URL under /ja/ that matches no page shows the English 404', async ({ page }) => {
+      expect((await page.goto('/ja/no-such-page/'))?.status()).toBe(404)
+      await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+      await expect(page.getByText(notFound.en)).toBeVisible()
     })
   })
 

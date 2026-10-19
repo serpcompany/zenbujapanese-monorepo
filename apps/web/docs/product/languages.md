@@ -45,6 +45,16 @@ with no prefix: `/ja/robots.txt` and `/ja/dictionary/examples/<n>.json` are 404.
 - Source: SERP localization standard, Links.
 - Check: URLs spec, "adding Japanese changed no file: …"; smoke `404 /ja/robots.txt`.
 
+**Missing pages.** A Japanese page that answers 404, such as a word that doesn't exist
+(`/ja/dictionary/999999999/`), says so in Japanese on a `lang="ja"` page, from
+`src/app/[locale]/not-found.tsx`. A URL that matches no page, `/ja/no-such-page/` included,
+shows the English 404 (`src/app/global-not-found.tsx`), whose switcher links each homepage.
+
+- Source: SERP localization standard, Strings; #847. The English 404 for an unmatched `/ja/` URL
+  is a debt row: a catch-all route under `[locale]` needs an owner decision.
+- Check: Languages spec, "a missing Japanese page says so in Japanese, and links English to its
+  homepage" and "a URL under /ja/ that matches no page shows the English 404".
+
 **No automatic redirect.** The site never picks a language from the address, the browser's
 languages, or a cookie: the URL is the language.
 

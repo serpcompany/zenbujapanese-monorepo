@@ -1,6 +1,6 @@
 import { defaultLocale, isLocale, type Locale } from './config'
 
-const neverPrefixed = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
+export const neverPrefixed = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 const file = /\/[^/]+\.\w+$/
 
 function isPagePath(pathname: string): boolean {

@@ -1,9 +1,9 @@
 import { defaultLocale, locales } from './config'
+import { neverPrefixed } from './paths'
 
 type PathRule = { source: string; destination: string }
 
 const filePattern = '[^/]+\\.\\w+'
-const servedAsAsked = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 const file = /\/[^/]+\.\w+\/?$/
 const defaultLocalePrefix = new RegExp(`^/${defaultLocale}(?=/|$)/*`)
 
@@ -22,10 +22,13 @@ export const defaultLocaleRewrites: readonly PathRule[] = [
   { source: `/:first(${firstSegment})/:rest+`, destination: `/${defaultLocale}/:first/:rest+` }
 ]
 
-export function withoutDefaultLocale(pathname: string): string | undefined {
-  if (!defaultLocalePrefix.test(pathname)) return undefined
-  const path = `/${pathname.replace(defaultLocalePrefix, '')}`
-  if (servedAsAsked.test(path)) return path
+export function servedPath(path: string): string {
+  if (neverPrefixed.test(path)) return path
   if (file.test(path)) return path.replace(/\/$/, '')
   return path.endsWith('/') ? path : `${path}/`
+}
+
+export function withoutDefaultLocale(pathname: string): string | undefined {
+  if (!defaultLocalePrefix.test(pathname)) return undefined
+  return servedPath(`/${pathname.replace(defaultLocalePrefix, '')}`)
 }

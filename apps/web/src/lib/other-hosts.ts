@@ -1,3 +1,4 @@
+import { servedPath } from './i18n/routing'
 import { movedPath } from './moved-pages'
 import { productionOrigin, stagingOrigin } from './origins'
 
@@ -5,15 +6,9 @@ export const smokeTestHeader = 'x-zenbu-smoke-test'
 
 const wwwHost = 'www.zenbujapanese.com'
 const workersDevHost = /\.workers\.dev$/
-const file = /\/[^/]+\.\w+\/?$/
-const servedAsAsked = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 
 function canonicalPath(pathname: string): string {
-  if (servedAsAsked.test(pathname)) return pathname
-  const moved = movedPath(pathname)
-  if (moved) return moved
-  if (file.test(pathname)) return pathname.replace(/\/$/, '')
-  return pathname.endsWith('/') ? pathname : `${pathname}/`
+  return movedPath(pathname) ?? servedPath(pathname)
 }
 
 function canonicalOrigin(request: Request, hostname: string, siteEnv: string | undefined) {
