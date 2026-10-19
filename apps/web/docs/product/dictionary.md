@@ -982,20 +982,19 @@ window.
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
 yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#849),
 Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
-(`/register/`) in a build whose account pages are closed, the App Store (the Get the app on the
-product page and on the catalog's iPhone app card), and See all videos
-(`/videos/`), which shows only once the product page has videos. Zenbu Japanese for iPhone and All
-products now open their pages, `/products/zenbu-japanese-app/` and `/products/`
-([Products pages](products.md)), from the same entries, as do All free tools, Free tools, and All
-tools (`/tools/`) and the Hiragana to Katakana and Romaji to Kana converters
-([Tools pages](tools.md)); so do Log in and Create an account where the account pages are open, as
-on staging and in production ([Account pages](account.md#pages)), the build choosing their addresses
-as it does the footer's Sign in. #650 asked for menu items to appear only once their page exists;
-the owner chose to show them now as `#` placeholders instead (#844). Every one is in one list,
-`linkTargets` in `src/lib/site.ts`, named for what it stands for, and its links carry
-`data-link-target` with its id. A browser test lists every `#` link the site renders and fails on
-one that isn't in that list, so none reaches production unnoticed; replacing a placeholder means
-giving its entry the real address, or linking the page directly once it exists.
+(`/register/`) in a build whose account pages are closed, and See all videos (`/videos/`), which
+shows only once the product page has videos. Zenbu Japanese for iPhone and All products now open
+their pages, `/products/zenbu-japanese-app/` and `/products/` ([Products pages](products.md)), from
+the same entries, as do All free tools, Free tools, and All tools (`/tools/`) and the Hiragana to
+Katakana and Romaji to Kana converters ([Tools pages](tools.md)); so do Log in and Create an account
+where the account pages are open, as on staging and in production ([Account
+pages](account.md#pages)), the build choosing their addresses as it does the footer's Sign in. #650
+asked for menu items to appear only once their page exists; the owner chose to show them now as `#`
+placeholders instead (#844). Every one is in one list, `linkTargets` in `src/lib/site.ts`, named for
+what it stands for, and its links carry `data-link-target` with its id. A browser test lists every
+`#` link the site renders and fails on one that isn't in that list, so none reaches production
+unnoticed; replacing a placeholder means giving its entry the real address, or linking the page
+directly once it exists.
 
 - Source: #844 decision (placeholder links), and the owner's decision on #650 (show planned items
   as placeholders).
@@ -1045,8 +1044,8 @@ sheet; choosing a theme keeps it open.
   is 384 wide".
 
 **Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the App
-Store link, a placeholder until that address is known. It is the same button in the header, the
+iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the app's App
+Store listing. It is the same button in the header, the
 phone menu, and the prompt that actions needing the app open; following it closes the phone menu
 or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
 login page, `/login/`, where the account pages are open, as on staging and in production, and is
