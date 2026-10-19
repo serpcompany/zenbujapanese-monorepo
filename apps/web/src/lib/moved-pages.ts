@@ -21,7 +21,7 @@ export function movedPath(pathname: string): string | undefined {
 export function movedPageResponse(url: URL): Response | null {
   const destination = movedPath(url.pathname)
   if (!destination) return null
-  const location = new URL(destination, url)
-  location.search = url.search
+  const location = new URL(url)
+  location.pathname = destination
   return Response.redirect(location.href, 308)
 }

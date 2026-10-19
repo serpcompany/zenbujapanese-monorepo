@@ -53,6 +53,15 @@ test.describe('URLs', () => {
     })
   }
 
+  for (const path of ['/en//evil.com', '/en//evil.com/x', '/en/%5Cevil.com']) {
+    test(`${path} redirects only within the site`, async ({ request, baseURL }) => {
+      const response = await request.get(path, { maxRedirects: 0 })
+      const site = new URL(`${baseURL}`)
+      expect(response.status()).toBe(308)
+      expect(new URL(response.headers().location, site).host).toBe(site.host)
+    })
+  }
+
   for (const [path, lang] of [
     ['/', 'en'],
     ['/ja/', 'ja'],

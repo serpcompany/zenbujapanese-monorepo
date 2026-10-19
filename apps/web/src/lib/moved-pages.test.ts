@@ -14,7 +14,10 @@ describe('movedPageResponse', () => {
     ['https://zenbujapanese.com/en/', 'https://zenbujapanese.com/'],
     ['https://zenbujapanese.com/en/about', 'https://zenbujapanese.com/about/'],
     ['https://zenbujapanese.com/en/about/?from=app', 'https://zenbujapanese.com/about/?from=app'],
-    ['https://zenbujapanese.com/en/privacy', 'https://zenbujapanese.com/legal/privacy/']
+    ['https://zenbujapanese.com/en/privacy', 'https://zenbujapanese.com/legal/privacy/'],
+    ['https://zenbujapanese.com/en//evil.com', 'https://zenbujapanese.com/evil.com'],
+    ['https://zenbujapanese.com/en//evil.com/x', 'https://zenbujapanese.com/evil.com/x/'],
+    ['https://zenbujapanese.com/en/\\evil.com', 'https://zenbujapanese.com/evil.com']
   ])('sends %s to %s in one 308', (from, to) => {
     const response = movedPageResponse(new URL(from))
     expect(response?.status).toBe(308)

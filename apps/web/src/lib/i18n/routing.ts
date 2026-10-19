@@ -5,7 +5,7 @@ type PathRule = { source: string; destination: string }
 const filePattern = '[^/]+\\.\\w+'
 const servedAsAsked = /^\/(?:_|api(?:\/|$)|\.well-known\/)/i
 const file = /\/[^/]+\.\w+\/?$/
-const defaultLocalePrefix = new RegExp(`^/${defaultLocale}(?=/|$)`)
+const defaultLocalePrefix = new RegExp(`^/${defaultLocale}(?=/|$)/*`)
 
 export const defaultLocaleRedirects: readonly PathRule[] = [
   { source: `/${defaultLocale}`, destination: '/' },
@@ -24,7 +24,7 @@ export const defaultLocaleRewrites: readonly PathRule[] = [
 
 export function withoutDefaultLocale(pathname: string): string | undefined {
   if (!defaultLocalePrefix.test(pathname)) return undefined
-  const path = pathname.replace(defaultLocalePrefix, '') || '/'
+  const path = `/${pathname.replace(defaultLocalePrefix, '')}`
   if (servedAsAsked.test(path)) return path
   if (file.test(path)) return path.replace(/\/$/, '')
   return path.endsWith('/') ? path : `${path}/`

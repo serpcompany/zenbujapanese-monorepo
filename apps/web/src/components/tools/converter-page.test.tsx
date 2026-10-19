@@ -20,6 +20,12 @@ const kanaInTheChart = (html: string) =>
     .map(([, list]) => list.match(/<li>/g)?.length ?? 0)
     .reduce((total, tiles) => total + tiles, 0)
 
+const hiddenTileLabels = (html: string) =>
+  [...html.matchAll(/<ul aria-label="[^"]*" lang="ja"[^>]*>([\s\S]*?)<\/ul>/g)].flatMap(
+    ([, list]) =>
+      [...list.matchAll(/<span class="sr-only">([^<]*)<\/span>/g)].map(([, label]) => label)
+  )
+
 const tableRows = (html: string) =>
   [...html.matchAll(/<tbody[^>]*>([\s\S]*?)<\/tbody>/g)]
     .map(([, body]) => body.match(/<tr /g)?.length ?? 0)
@@ -51,6 +57,15 @@ describe('a converter page’s HTML', () => {
     expect(kanaInTheChart(html)).toBe(131)
     expect(tableRows(html)).toBe(referenceRows[pair](slug))
     expect(hiddenPanels(html)).toEqual([false, true, true])
+  })
+
+  test.each([
+    ['en', /^, /],
+    ['ja', /^（.+）$/]
+  ] as const)('in %s, a kana with no half-width form says so apart from its romaji, to a screen reader', (locale, apart) => {
+    const labels = hiddenTileLabels(page('full-width-to-half-width', locale))
+    expect(labels).not.toHaveLength(0)
+    for (const label of labels) expect(label).toMatch(apart)
   })
 
   test('the questions are in the page with their answers, and as FAQ structured data', () => {

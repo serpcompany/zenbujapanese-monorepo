@@ -1771,7 +1771,7 @@
       "title": "Conversion chart",
       "fullCharts": "Full kana charts, with common words",
       "groupsLabel": "Kana groups",
-      "noHalfWidth": "no half-width form",
+      "noHalfWidth": ", no half-width form",
       "smallTsu": "double",
       "lines": {
         "kana": "Every kana in hiragana and katakana, with its romaji, {count} in all.",

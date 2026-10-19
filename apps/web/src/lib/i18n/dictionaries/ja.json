@@ -1771,7 +1771,7 @@
       "title": "変換表",
       "fullCharts": "よく使う言葉つきの五十音表",
       "groupsLabel": "かなの種類",
-      "noHalfWidth": "半角なし",
+      "noHalfWidth": "（半角なし）",
       "smallTsu": "促音",
       "lines": {
         "kana": "すべてのかな（全{count}種類）を、ひらがなとカタカナで並べ、ローマ字を添えています。",

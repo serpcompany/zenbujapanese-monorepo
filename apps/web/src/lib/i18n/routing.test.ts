@@ -60,6 +60,9 @@ describe('/en/ is never a public URL: it redirects to the bare path in one hop',
     ['/en/robots.txt', '/robots.txt'],
     ['/en/sitemap-pages.xml/', '/sitemap-pages.xml'],
     ['/en/api/x', '/api/x'],
+    ['/en//evil.com', '/evil.com'],
+    ['/en//evil.com/x', '/evil.com/x/'],
+    ['/en///about/', '/about/'],
     ['/english/', undefined],
     ['/ja/about/', undefined]
   ])('the Worker writes %s as %s', (from, to) => {
