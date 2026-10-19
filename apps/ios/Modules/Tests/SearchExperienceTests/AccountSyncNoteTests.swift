@@ -27,12 +27,16 @@ struct AccountSyncNoteTests {
     -> (SavedItemNotes, WordNoteStorage, TemporaryDefaults)
   {
     let temporary = try TemporaryDefaults()
-    let storage = WordNoteStorage(defaults: temporary.defaults, placing: SavedWords.lookup)
+    let storage = Self.storage(in: temporary.suite)
     let page = SavedItemNotes(store: SavedWords.observed(storage).0)
     await storage.save(note, for: SavedWords.taberu)
     await page.load(SavedWords.taberuItem)
     await synced(text, to: storage)
     return (page, storage, temporary)
+  }
+
+  nonisolated private static func storage(in suite: String) -> WordNoteStorage {
+    WordNoteStorage(defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup)
   }
 
   private func synced(_ text: String, to storage: WordNoteStorage) async {
