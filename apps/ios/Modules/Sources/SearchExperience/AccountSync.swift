@@ -233,6 +233,7 @@ final class AccountSync: LocalFileStore {
     var hasMore = true
     while hasMore || state.queue.contains(where: isSendable) {
       try Task.checkCancellation()
+      if state.cursor == nil, state.rereadSeen == nil { state.rereadSeen = [] }
       let batch = try await uploadFiles(for: nextBatch())
       guard self.session == session else { return }
       let request = SyncRequestBody(cursor: state.cursor, mutations: batch.map(\.payload))
@@ -241,22 +242,19 @@ final class AccountSync: LocalFileStore {
         answer = try await tokens.withAccessToken { [api] token in
           try await api.sync(request, accessToken: token)
         }
-      } catch AccountServiceError.refused(status: 410, _, _, _) where request.cursor != nil {
+      } catch let refusal as AccountServiceError where refusal.isInvalidCursor && request.cursor != nil {
         guard self.session == session else { return }
-        state.cursor = nil
-        state.heldWords = []
-        state.deferred = [:]
-        state.rereadSeen = []
-        persist()
+        try readEverythingAgain(after: refusal)
         continue
       }
       guard self.session == session else { return }
       resolve(batch, with: answer.results)
       await takeSearchKey(answer.searchKey)
       guard self.session == session else { return }
+      notePhotoPlacesFreed(by: answer.changes)
       for change in answer.changes { apply(change) }
       state.rereadSeen?.formUnion(batch.map(\.key.stored) + answer.changes.map(\.key.stored))
-      if !answer.hasMore { dropWhatTheRereadDidntBring() }
+      if !answer.hasMore { dropWhatTheFullReadDidntBring() }
       await drainKept(in: session)
       await wordKnowledge.flush()
       await wordLists.flush()
@@ -288,6 +286,11 @@ final class AccountSync: LocalFileStore {
       if let photoID = Self.fileUploaded(by: change) { state.uploadedFiles.removeAll { $0 == photoID } }
       switch outcomes[change.id] {
       case .applied(let version):
+        if change.key.entity == SyncEntity.photo, change.operation == "delete",
+          version != change.baseVersion
+        {
+          state.photoRoomFreed = true
+        }
         state.setVersion(version, of: change.key, gone: change.operation == "remove")
         state.rebase(change.key, from: change.baseVersion, to: version)
         if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
@@ -360,20 +363,6 @@ final class AccountSync: LocalFileStore {
     state.setVersion(copy.version, of: copy.key, gone: copy.value == .gone)
   }
 
-  private func dropWhatTheRereadDidntBring() {
-    guard let seen = state.rereadSeen else { return }
-    state.rereadSeen = nil
-    for stored in Array(state.versions.keys) where !seen.contains(stored) {
-      guard state.versions[stored] != nil, let key = SyncEntityKey(stored: stored),
-        key.entity != SyncEntity.profile, !state.hasQueuedChange(to: key)
-      else { continue }
-      state.versions[stored] = nil
-      state.goneVideos.removeAll { $0 == stored }
-      state.goneSearches.removeAll { $0 == stored }
-      removeLocally(key)
-    }
-  }
-
   private func placeHeldWords() {
     let held = state.heldWords
     state.heldWords = []
@@ -384,7 +373,7 @@ final class AccountSync: LocalFileStore {
     }
   }
 
-  private func removeLocally(_ key: SyncEntityKey) {
+  func removeLocally(_ key: SyncEntityKey) {
     switch key.entity {
     case SyncEntity.knownWord:
       let record = wordKnowledge.records[key.entityID]

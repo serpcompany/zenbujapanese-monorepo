@@ -49,7 +49,6 @@ extension AccountSync {
     if batch.touchesSearches, let key = state.searchKey {
       await kept.searches.applySynced(batch.searches, removing: batch.goneSearches, under: key)
     }
-    if !batch.gonePhotos.isEmpty { state.photoRoomFreed = true }
     for photoID in batch.gonePhotos {
       state.heldPhotoWords.removeAll { $0.key.entityID.hasPrefix("\(photoID)/") }
       await kept.media.applySyncedRemoval(ofPhoto: photoID)
@@ -85,9 +84,10 @@ extension AccountSync {
     for copy in copies {
       state.waitingFiles.removeAll { $0.key == copy.key }
       state.missingFiles.removeAll { $0.key == copy.key }
-      let refused = state.refusedNotes.contains(copy.key.entityID)
+      let refused = state.keepsRefused(copy.key)
       switch (copy.key.entity, copy.value) {
-      case (SyncEntity.wordNote, _) where refused:
+      case (SyncEntity.wordNote, _) where refused, (SyncEntity.photo, .gone) where refused,
+        (SyncEntity.photoWord, .gone) where refused:
         continue
       case (_, .kept(.note(let note))):
         batch.notes.append(note)

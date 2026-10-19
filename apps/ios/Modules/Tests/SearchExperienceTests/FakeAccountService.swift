@@ -16,6 +16,8 @@ final class FakeAccountService: @unchecked Sendable {
   var photosUnavailable = false
   var fileRefusals: [String: StubReply] = [:]
   var droppedUploads: Set<String> = []
+  var pageSize = 100
+  private(set) var invalidCursors = 0
   private var forgottenThrough: [String: Int] = [:]
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
@@ -41,6 +43,10 @@ final class FakeAccountService: @unchecked Sendable {
 
   func change(for email: String, _ mutation: StubSyncRequest.Mutation) {
     lock.withLock { _ = apply(mutation, for: userID(for: email)) }
+  }
+
+  func setPageSize(_ size: Int) {
+    lock.withLock { pageSize = size }
   }
 
   func forget(_ key: String, for email: String) {
@@ -102,17 +108,34 @@ final class FakeAccountService: @unchecked Sendable {
   }
 
   private func sync(_ request: StubSyncRequest, for user: String) -> StubReply {
-    let after = Int(request.cursor ?? "") ?? 0
-    if after > 0, after < forgottenThrough[user] ?? 0 { return .error(410, "invalid_cursor") }
+    let position = (request.cursor ?? "").split(separator: ".").compactMap { Int($0) }
+    let after = position.first ?? 0
+    let mark = position.dropFirst().first ?? 0
+    let forgotten = forgottenThrough[user] ?? 0
+    if after > 0, forgotten > mark, after < forgotten {
+      invalidCursors += 1
+      return .error(410, "invalid_cursor")
+    }
     let results = request.mutations.map { apply($0, for: user) }
-    let changes = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
+    let pending = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
       .sorted { $0.value.sequence < $1.value.sequence }
-    let last = changes.last?.value.sequence ?? after
+    let page = pending.prefix(pageSize)
+    let last = page.last?.value.sequence ?? after
     let isChild = { (key: String) in key.hasPrefix("listWord:") || key.hasPrefix("photoWord:") }
-    let ordered = changes.filter { !isChild($0.key) } + changes.filter { isChild($0.key) }
+    let ordered = page.filter { !isChild($0.key) } + page.filter { isChild($0.key) }
     return StubSync.answer(
-      results: results, changes: ordered.map { change(key: $0.key, $0.value) }, cursor: "\(last)",
+      results: results, changes: ordered.map { syncedChange(key: $0.key, $0.value, of: user) },
+      cursor: "\(last).\(forgotten)", hasMore: pending.count > page.count,
       searchKey: searchKey(of: user).hexString)
+  }
+
+  private func syncedChange(key: String, _ entity: Entity, of user: String) -> [String: Any] {
+    var synced = change(key: key, entity)
+    let photoID = String(key.dropFirst("photo:".count))
+    if key.hasPrefix("photo:"), entity.data == nil, emptiedPhotos[user]?[photoID] != nil {
+      synced["emptied"] = true
+    }
+    return synced
   }
 
   func change(key: String, _ entity: Entity) -> [String: Any] {

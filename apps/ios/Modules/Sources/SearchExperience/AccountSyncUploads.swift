@@ -166,9 +166,7 @@ extension AccountSyncState {
     guard case .kept(let kept) = change else { return }
     switch kept.key.entity {
     case SyncEntity.wordNote: refusedNotes.removeAll { $0 == kept.key.entityID }
-    case SyncEntity.photo where kept.operation == "delete":
-      refusedPhotos[kept.key.entityID] = nil
-      photoRoomFreed = true
+    case SyncEntity.photo where kept.operation == "delete": refusedPhotos[kept.key.entityID] = nil
     default: return
     }
   }

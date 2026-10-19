@@ -41,24 +41,39 @@ struct AccountSyncFileTests {
   }
 
   @Test(
-    "a file the account refuses stays on the device and says why; one refused as too many goes again only once space is freed, at the next launch",
+    "a file the account refuses stays on the device and says why; one refused as too many goes again at the next launch after a photo the account held is deleted, not one emptied or never synced",
     arguments: [(409, "too_many_photos", true), (413, "too_large", false), (415, "unsupported_photo", false)])
   func refusedFiles(status: Int, code: String, retries: Bool) async throws {
-    let (service, phone, _) = await Fixture.twoPhones()
-    service.refuseFiles(.error(status, code))
+    let (service, phone, pad) = await Fixture.twoPhones()
     await save(2, in: phone)
     try await phone.signIn()
-    #expect(phone.sync.state.refusedPhotos == [photo(0).sha256: code, photo(1).sha256: code])
+    try await pad.signIn()
+    service.refuseFiles(.error(status, code))
+    for number in 2..<4 {
+      await phone.media.save(
+        EncounterMediaAttachment(name: "\(number).jpg", data: photo(number)), for: taberu)
+    }
+    try await phone.syncNow()
+    #expect(phone.sync.state.refusedPhotos == [photo(2).sha256: code, photo(3).sha256: code])
     #expect(AccountMessage.refusedPhotos(phone.sync.state.refusedPhotos).count == 1)
-
     service.refuseFiles(nil)
+
+    await phone.media.deleteMedia(photo(3).sha256)
+    await pad.media.remove(taberu, mediaID: photo(0).sha256)
+    try await pad.syncNow()
+    try await phone.syncNow()
+    #expect(!phone.sync.state.photoRoomFreed)
     await phone.launch()
     try await phone.syncNow()
-    #expect(uploads(of: photo(0), on: phone) == 1)
-    await phone.media.deleteMedia(photo(1).sha256)
+    #expect(uploads(of: photo(2), on: phone) == 1)
+
+    await pad.media.deleteMedia(photo(1).sha256)
+    try await pad.syncNow()
+    try await phone.syncNow()
+    #expect(phone.sync.state.photoRoomFreed)
     await phone.launch()
     try await phone.syncNow()
-    #expect(uploads(of: photo(0), on: phone) == (retries ? 2 : 1))
+    #expect(uploads(of: photo(2), on: phone) == (retries ? 2 : 1))
     #expect(service.liveKeys(for: Fixture.email, entity: "photo").count == (retries ? 1 : 0))
     #expect(service.liveKeys(for: Fixture.email, entity: "photoWord").count == (retries ? 1 : 0))
   }

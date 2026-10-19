@@ -255,7 +255,7 @@ final class AccountFixture {
     return (fixture, fixture.server.requests(to: "POST /v1/sync").last?.sync ?? StubSyncRequest())
   }
 
-  private func storeSyncedEntities(_ entities: [String]?) async throws {
+  func storeSyncedEntities(_ entities: [String]?) async throws {
     await settle()
     let file = directory.appending(path: "account-sync.json")
     var stored = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any]

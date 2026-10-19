@@ -85,6 +85,10 @@ enum AccountMessage {
     case "otp_expired": String(localized: "That code has expired. Ask for a new one.")
     case "too_many_attempts": String(localized: "Too many tries. Ask for a new code.")
     case "too_many_requests": String(localized: "Too many tries. Wait a few minutes and try again.")
+    case "invalid_cursor":
+      String(
+        localized:
+          "Sync is reading everything in your account again, and tries again on its own soon.")
     case "account_not_linked":
       String(localized: "This email's account signs in with Apple or Google. Sign in that way.")
     case "oauth_link_error":

@@ -15,7 +15,7 @@ enum SyncRetry {
       return backoff(failures: failures, jitter: jitter)
     case .refused(let status, _, _, let retryAfter) where status == 429:
       return retryAfter ?? backoff(failures: failures, jitter: jitter)
-    case .refused(let status, _, _, _) where status >= 500:
+    case .refused(let status, _, _, _) where status >= 500 || status == 410:
       return backoff(failures: failures, jitter: jitter)
     default:
       return nil

@@ -155,9 +155,10 @@ struct SyncChange: Decodable, Sendable {
   let key: SyncEntityKey
   let version: Int
   let payload: Payload
+  let emptied: Bool
 
   private enum CodingKeys: String, CodingKey {
-    case entity, entityId, operation, version, data
+    case entity, entityId, operation, version, data, emptied
   }
 
   init(from decoder: Decoder) throws {
@@ -167,6 +168,7 @@ struct SyncChange: Decodable, Sendable {
     key = SyncEntityKey(
       entity: entity, entityID: entity == SyncEntity.profilePhoto ? "" : entityID)
     version = try container.decode(Int.self, forKey: .version)
+    emptied = try container.decodeIfPresent(Bool.self, forKey: .emptied) ?? false
     guard try container.decode(String.self, forKey: .operation) == "put" else {
       payload = .gone
       return
