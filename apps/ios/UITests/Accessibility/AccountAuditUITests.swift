@@ -111,7 +111,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
     tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
-    tap(find("zenbu-account.delete", in: app))
+    tap(reveal(find("zenbu-account.delete", in: app), in: app))
     waitUntilStill(waitForSheet("delete-account.cancel", in: app))
     audit("Delete Account", in: app)
   }
