@@ -26,7 +26,7 @@ export type Upload =
 
 export type Download =
   | { status: 'found'; file: PhotoFile; bytes: Uint8Array<ArrayBuffer> }
-  | Refused<'missing' | 'unavailable'>
+  | Refused<'missing' | 'no_account' | 'unavailable'>
 
 const startsWith = (bytes: Uint8Array, at: number, ascii: string) =>
   [...ascii].every((letter, index) => bytes[at + index] === letter.charCodeAt(0))
@@ -128,6 +128,7 @@ export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
       const readable =
         granted.has('photos:read') ||
         (granted.has('profile') && (await reader.profilePhoto())?.photoId === photoId)
+      if (!file && !(await store.profile(userId))) return { status: 'no_account' }
       if (!file || !readable) return { status: 'missing' }
       const bytes = await storage.get(file.storageKey)
       return bytes ? { status: 'found', file, bytes } : { status: 'missing' }

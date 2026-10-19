@@ -5,7 +5,7 @@ import type { PhotoFile } from '../domain/kept-store'
 import { type PhotoFiles, photoLimits } from '../domain/photo-files'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
-import { requestsPerMinute } from './rate-limit'
+import { requestsPerMinute, uploadsAtOnce } from './rate-limit'
 import { json, refusal } from './refusals'
 import { failed, needsOneOf, refuse, tooMany, unauthorized } from './route-answers'
 
@@ -75,7 +75,9 @@ const uploadPhoto = createRoute({
     }),
     413: refusal({ too_large: `The file is over ${megabytes} MB.` }),
     415: refusal({ unsupported_photo: `The file isn't a ${imageTypes} image.` }),
-    429: tooMany(requestsPerMinute.photos),
+    429: refusal({
+      too_many_requests: `This account sent more than ${requestsPerMinute.photos} requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking ${uploadsAtOnce} uploads already. Wait the seconds \`Retry-After\` says.`
+    }),
     500: failed,
     503: unavailable
   }
@@ -163,6 +165,7 @@ export function photoRoutes(app: OpenAPIHono<AccountEnv>, files: PhotoFiles) {
     if (found.status === 'unavailable') {
       return refused(context, 503, 'photos_unavailable', 'Photos are not kept here now.')
     }
+    if (found.status === 'no_account') return refuse(context)
     if (found.status === 'missing') {
       return context.json(errorBody('not_found', 'The account holds no such photo.'), 404)
     }

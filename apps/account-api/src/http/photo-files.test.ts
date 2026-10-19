@@ -1,9 +1,10 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { imageTypeOf } from '../domain/photo-files'
 import { useAccountService } from '../test/accounts'
 import { standIns } from '../test/app'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { createApp } from './app'
+import { uploadsAtOnce } from './rate-limit'
 
 const accounts = useAccountService()
 
@@ -137,24 +138,59 @@ describe('photo files', () => {
   })
 
   test('answers 503 where the service keeps no photos', async () => {
-    const app = createApp({
-      ...standIns,
-      verifyAccessToken: async () => ({
-        userId: 'someone',
-        clientId: 'zenbu-ios',
-        scopes: new Set(['photos:read', 'photos:write'] as const),
-        signedInAt: new Date()
-      })
-    })
     const bytes = aJpeg()
     for (const method of ['PUT', 'GET']) {
-      const answer = await app.request(`/v1/photos/${photoIdOf(bytes)}`, {
-        method,
-        headers: { authorization: 'Bearer token' },
-        body: method === 'PUT' ? bytes : undefined
-      })
+      const answer = await standInRequest(standInApp(), method, bytes)
       expect(answer.status, method).toBe(503)
       expect(await answer.json()).toMatchObject({ error: { code: 'photos_unavailable' } })
     }
   })
+
+  test(`takes ${uploadsAtOnce} uploads at once, and asks the next to wait a second`, async () => {
+    let release = () => {}
+    const held = new Promise<void>(resolve => {
+      release = resolve
+    })
+    let started = 0
+    const app = standInApp({
+      ...standIns.photoFiles,
+      upload: async () => {
+        started++
+        await held
+        return { status: 'unavailable' }
+      }
+    })
+    const bytes = aJpeg()
+    const waiting = Array.from({ length: uploadsAtOnce }, () => standInRequest(app, 'PUT', bytes))
+    await vi.waitFor(() => expect(started).toBe(uploadsAtOnce))
+    const turnedAway = await standInRequest(app, 'PUT', bytes)
+    expect(turnedAway.status).toBe(429)
+    expect(turnedAway.headers.get('retry-after')).toBe('1')
+    expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+    release()
+    expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
+      Array(uploadsAtOnce).fill(503)
+    )
+    expect((await standInRequest(app, 'PUT', bytes)).status).toBe(503)
+  })
 })
+
+function standInApp(photoFiles = standIns.photoFiles) {
+  return createApp({
+    ...standIns,
+    photoFiles,
+    verifyAccessToken: async () => ({
+      userId: 'someone',
+      clientId: 'zenbu-ios',
+      scopes: new Set(['photos:read', 'photos:write'] as const),
+      signedInAt: new Date()
+    })
+  })
+}
+
+const standInRequest = (app: ReturnType<typeof createApp>, method: string, bytes: Uint8Array) =>
+  app.request(`/v1/photos/${photoIdOf(bytes)}`, {
+    method,
+    headers: { authorization: 'Bearer token' },
+    body: method === 'PUT' ? bytes : undefined
+  })

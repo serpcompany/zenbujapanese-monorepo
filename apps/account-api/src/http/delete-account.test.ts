@@ -9,7 +9,7 @@ import {
 } from '../test/identity-provider'
 import { keptTables, oneOfEachKept } from '../test/kept'
 import { logged } from '../test/logged'
-import { uploaded } from '../test/photos'
+import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { appBundleIdentifier, publicUrl, websiteOrigin, websiteServicesId } from '../test/service'
 import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
@@ -141,6 +141,16 @@ describe('DELETE /v1/me', () => {
     expect(stored()).toHaveLength(3)
     expect(await remove(learner)).toMatchObject({ status: 200 })
     await vi.waitFor(() => expect(stored()).toEqual([]))
+    const { sendPhoto } = accounts.running.service
+    const bytes = aJpeg()
+    for (const [method, sent] of [
+      ['GET', new Uint8Array()],
+      ['PUT', bytes]
+    ] as const) {
+      expect((await sendPhoto(learner.token, photoIdOf(bytes), sent, method)).status, method).toBe(
+        401
+      )
+    }
     await files.sweep()
     expect(await rows('select count(*)::int as n from photo_file_deletions')).toEqual([{ n: 0 }])
     for (const table of keptTables) {

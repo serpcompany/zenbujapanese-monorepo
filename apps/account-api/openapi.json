@@ -3483,7 +3483,7 @@
             }
           },
           "429": {
-            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads already. Wait the seconds `Retry-After` says.",
             "content": {
               "application/json": {
                 "schema": {

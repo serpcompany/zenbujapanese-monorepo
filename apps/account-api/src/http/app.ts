@@ -14,7 +14,13 @@ import { accountRoutes } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
 import { photoBodyLimit, photoRoutes } from './photos'
-import { perAccountLimit, perClientLimit, requestsPerMinute } from './rate-limit'
+import {
+  atMostAtOnce,
+  perAccountLimit,
+  perClientLimit,
+  requestsPerMinute,
+  uploadsAtOnce
+} from './rate-limit'
 import { bodyLimitKb, requireAccount, requireScope } from './route-answers'
 import { signInContract } from './sign-in-contract'
 
@@ -93,6 +99,7 @@ export function createApp(options: AppOptions) {
   app.put('/v1/photos/*', requireScope('photos:write', 'profile'))
   app.get('/v1/photos/*', requireScope('photos:read', 'profile'))
   app.use('/v1/photos/*', perAccountLimit(requestsPerMinute.photos))
+  app.put('/v1/photos/*', atMostAtOnce(uploadsAtOnce))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>

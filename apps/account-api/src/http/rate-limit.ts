@@ -51,3 +51,24 @@ export const perClientLimit = (limitOf: (clientId: string) => number) =>
     context => limitOf(context.get('clientId')),
     most => `This app sent more than ${most} requests a minute, from every account together.`
   )
+
+export const uploadsAtOnce = 4
+
+export function atMostAtOnce(most: number) {
+  let running = 0
+  return createMiddleware<AccountEnv>(async (context, next) => {
+    if (running >= most) {
+      return context.json(
+        errorBody('too_many_requests', `The service takes ${most} uploads at once. Try again.`),
+        429,
+        { 'Retry-After': '1' }
+      )
+    }
+    running++
+    try {
+      await next()
+    } finally {
+      running--
+    }
+  })
+}
