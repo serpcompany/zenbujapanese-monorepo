@@ -134,7 +134,7 @@ test.describe('privacy policy', () => {
       /^Request counts.*A day after the last request$/,
       /^Records of each change you sync.*30 days/,
       /^Your photos' files.*30 days after you remove it from its last word$/,
-      /^Records of what you removed.*The latest 1,000 notes, 1,000 photos, and 1,000 words on photos, and 100 videos and 100 searches; the rest until you delete your account$/,
+      /^Records of what you removed.*The latest 1,000 notes and 1,000 photos, the latest 500 words removed from each photo, and 100 videos and 100 searches; the rest until you delete your account$/,
       /^Backups.*30 days$/,
       /^Support email.*As long as we need it/
     ])

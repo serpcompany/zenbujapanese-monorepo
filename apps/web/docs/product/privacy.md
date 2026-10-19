@@ -152,9 +152,9 @@ that uses cookies means updating the page and asking for consent where the law r
 until sign-out, or 60 days after their last use; sign-in codes 10 minutes; request counts by IP
 address a day after the last request; each synced change's record 30 days, and then until the next
 change synced; a photo's file until the photo is deleted, or 30 days after its last word is
-removed; the records of what was removed, the latest 1,000 notes, 1,000 photos, and 1,000 words on
-photos, and 100 videos and 100 searches, and the rest until the account is deleted; backups 30
-days; support email as long as it's needed.
+removed; the records of what was removed, the latest 1,000 notes and 1,000 photos, the latest 500
+words removed from each photo, and 100 videos and 100 searches, and the rest until the account is
+deleted; backups 30 days; support email as long as it's needed.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Profiles and sync,
   Deleting an account, Back up and restore); #574 (the hourly purge of what has expired); #867

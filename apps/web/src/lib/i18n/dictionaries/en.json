@@ -1276,7 +1276,7 @@
       },
       "removed": {
         "what": "Records of what you removed",
-        "howLong": "The latest 1,000 notes, 1,000 photos, and 1,000 words on photos, and 100 videos and 100 searches; the rest until you delete your account"
+        "howLong": "The latest 1,000 notes and 1,000 photos, the latest 500 words removed from each photo, and 100 videos and 100 searches; the rest until you delete your account"
       },
       "backups": {
         "what": "Backups of the account database",
