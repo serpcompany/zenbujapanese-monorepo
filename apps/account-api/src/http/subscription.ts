@@ -129,7 +129,9 @@ const startCheckout = createRoute({
     }),
     409: refusal({
       already_subscribed:
-        'The account has a subscription that is still running, here or in the App Store. Nothing was started.'
+        'The account has a subscription that is still running, or a first payment still pending, here or in the App Store. Nothing was started.',
+      payment_confirming:
+        "The account's last checkout was paid and Stripe hasn't confirmed it to the service yet. Nothing was started; read GET /v1/me/subscription again shortly."
     }),
     413: tooLarge,
     503: refusal(billingUnavailable),
@@ -230,6 +232,11 @@ export function subscriptionRoutes(
             'already_subscribed',
             `The account's subscription is managed in ${checkout.entitlement.managedIn === 'app_store' ? 'the App Store' : 'the website'}.`
           ),
+          409
+        )
+      case 'confirming':
+        return context.json(
+          errorBody('payment_confirming', 'Stripe is still confirming the last checkout.'),
           409
         )
       default:

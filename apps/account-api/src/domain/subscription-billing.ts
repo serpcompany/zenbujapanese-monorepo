@@ -10,7 +10,7 @@ import {
   type Verified,
   type WebsitePlan
 } from './billing'
-import { applyEvent, type EventAnswer, type EventRules } from './billing-events'
+import { applyEvent, type EventAnswer, type EventRules, ReadAgain } from './billing-events'
 import { appSellingTheSubscription, clientById, type Principal } from './clients'
 import { type CloudAccess, type CloudAccessRules, cloudAccess } from './cloud-access'
 import { claimAppleTransaction } from './device-purchases'
@@ -18,14 +18,14 @@ import {
   billingRetryWindowMs,
   type Entitlement,
   entitlementOf,
+  isRunning,
   type ManagedIn,
   type StoredSubscription,
   type StoreTraits,
   type StoreTraitsOf,
   type Subscription,
   type SubscriptionKey,
-  type SubscriptionSource,
-  type SubscriptionStatus
+  type SubscriptionSource
 } from './subscriptions'
 
 export interface BillingProviders {
@@ -42,7 +42,7 @@ export interface BillingRules {
 export interface SubscriptionView {
   entitlement: Entitlement
   cloudAccess: CloudAccess
-  appAccountToken: string
+  appAccountToken: string | null
   offers: { appStore: readonly string[]; website: readonly string[] }
 }
 
@@ -50,7 +50,7 @@ export type Unavailable = { status: 'unavailable' }
 export type Checkout =
   | { status: 'created'; url: string }
   | { status: 'already_subscribed'; entitlement: Entitlement }
-  | { status: 'unknown_price' | 'no_account' }
+  | { status: 'unknown_price' | 'no_account' | 'confirming' }
   | Unavailable
 type Plans = { status: 'listed'; plans: WebsitePlan[]; trialDays: number | null } | Unavailable
 type Portal =
@@ -75,11 +75,8 @@ export interface CheckoutAsk {
 }
 
 const unknownStore: StoreTraits = { managedIn: 'website', retryWindowMs: billingRetryWindowMs }
-const endedAtTheStore = new Set<SubscriptionStatus>(['expired', 'revoked'])
-
-const mayStillBill = (subscription: Subscription, now: Date) =>
-  !endedAtTheStore.has(subscription.status) &&
-  (subscription.expiresAt ?? new Date(subscription.stateAt.getTime() + billingRetryWindowMs)) > now
+const mostReads = 3
+const confirmingForMs = 24 * 60 * 60 * 1000
 
 async function unlessUnavailable<T>(work: () => Promise<T>): Promise<T | Unavailable> {
   try {
@@ -113,6 +110,8 @@ export function createBilling(
   const { web, store: appStore } = providers
   const stores: StoreTraitsOf = source => rules.stores[source] ?? unknownStore
   const managedIn = (source: string): ManagedIn => stores(source).managedIn
+  const mayStillBill = (subscription: Subscription, now: Date) =>
+    isRunning(subscription, now, stores(subscription.source).retryWindowMs)
 
   const counts = (subscription: StoredSubscription, email: string) => {
     const testing = rules.storeTesting
@@ -139,8 +138,12 @@ export function createBilling(
 
   async function view(principal: Principal, now: Date): Promise<SubscriptionView | null> {
     const account = await store.account(principal.userId)
-    const customer = await store.ensureCustomer(principal.userId)
-    if (account === null || customer === null) return null
+    if (account === null) return null
+    const sells = principal.clientId === appSellingTheSubscription
+    const customer = sells
+      ? await store.ensureCustomer(principal.userId)
+      : await store.customerOf(principal.userId)
+    if (sells && customer === null) return null
     const held = await entitlement(principal.userId, account.email, now)
     return {
       entitlement: held,
@@ -149,7 +152,7 @@ export function createBilling(
         { clientId: principal.clientId, madeAt: account.madeAt, subscribed: held.active },
         now
       ),
-      appAccountToken: customer.appAccountToken,
+      appAccountToken: customer?.appAccountToken ?? null,
       offers: { appStore: appStore?.products ?? [], website: web?.prices ?? [] }
     }
   }
@@ -157,23 +160,40 @@ export function createBilling(
   let settling: Promise<void> | null = null
 
   async function settleOne(): Promise<boolean> {
-    const action = await store.claimOwedAction()
+    if (web === null) return false
+    const action = await store.claimOwedAction([web.source])
     if (action === null) return false
     try {
-      if (action.source !== web?.source) throw new BillingUnavailable('no provider for it')
       await web.refundAndCancel(action.subscriptionId)
-      await store.settleOwedAction(action.id, null)
+      await store.settleOwedAction(action, null)
     } catch (error) {
       const failure = error instanceof Error ? error.message : 'failed'
-      const settled = await store.settleOwedAction(action.id, failure)
+      const settled = await store.settleOwedAction(action, failure)
       const fields = { subscription: action.subscriptionId, attempts: action.attempts, failure }
       if (settled === 'gave_up') {
         log('error', 'billing: gave up on an owed refund and cancel; end it by hand', fields)
-      } else {
+      } else if (settled === 'retry') {
         log('warn', "billing: an owed refund and cancel failed; it's tried again", fields)
       }
     }
     return true
+  }
+
+  async function lastCheckoutWaits(
+    provider: BillingProvider,
+    sessionId: string | null,
+    subscriptions: readonly StoredSubscription[],
+    now: Date
+  ): Promise<boolean> {
+    if (sessionId === null) return false
+    const session = await provider.checkoutSession(sessionId)
+    if (session.status === 'open') {
+      await provider.expireCheckout(sessionId)
+      return false
+    }
+    if (session.status !== 'complete' || session.subscriptionId === null) return false
+    const recorded = subscriptions.some(each => each.providerId === session.subscriptionId)
+    return !recorded && now.getTime() < session.createdAt.getTime() + confirmingForMs
   }
 
   function settleOwed(): Promise<void> {
@@ -197,10 +217,17 @@ export function createBilling(
     if (typeof event === 'string') return event
     if (await store.eventRecorded(event.source, event.id)) return 'duplicate'
     const answered = await unlessUnavailable(async () => {
-      const state = event.subscription ? await event.subscription.read() : null
-      return store.transaction(tx => applyEvent(tx, event, state, eventRules))
+      for (let read = 1; read <= mostReads; read += 1) {
+        const state = event.subscription ? await event.subscription.read() : null
+        try {
+          return await store.transaction(tx => applyEvent(tx, event, state, eventRules))
+        } catch (error) {
+          if (!(error instanceof ReadAgain)) throw error
+        }
+      }
+      return 'stale' as const
     })
-    if (typeof answered !== 'string') return 'retry'
+    if (typeof answered !== 'string' || answered === 'stale') return 'retry'
     settleInTheBackground()
     return answered
   }
@@ -235,9 +262,11 @@ export function createBilling(
         stores
       )
       if (!held.canSubscribe) return { status: 'already_subscribed', entitlement: held }
-      return unlessUnavailable(async () => ({
-        status: 'created' as const,
-        url: await web.createCheckout({
+      return unlessUnavailable(async (): Promise<Checkout> => {
+        if (await lastCheckoutWaits(web, customer.checkoutSessionId, subscriptions, now)) {
+          return { status: 'confirming' }
+        }
+        const session = await web.createCheckout({
           userId: principal.userId,
           email: account.email,
           customerId: customer.stripeCustomerId,
@@ -247,7 +276,9 @@ export function createBilling(
           language: ask.language,
           firstSubscription: subscriptions.length === 0
         })
-      }))
+        await store.rememberCheckout(principal.userId, session.id)
+        return { status: 'created', url: session.url }
+      })
     },
 
     async plans(principal: Principal): Promise<Plans> {
@@ -262,9 +293,10 @@ export function createBilling(
 
     async portal(principal: Principal, returnUrl: string, language: Language | null) {
       if (web === null) return { status: 'unavailable' } satisfies Portal
-      const customer = await store.ensureCustomer(principal.userId)
-      if (customer === null) return { status: 'no_account' } satisfies Portal
-      const customerId = customer.stripeCustomerId
+      if ((await store.account(principal.userId)) === null) {
+        return { status: 'no_account' } satisfies Portal
+      }
+      const customerId = (await store.customerOf(principal.userId))?.stripeCustomerId ?? null
       if (customerId === null) return { status: 'no_customer' } satisfies Portal
       return unlessUnavailable(async () => ({
         status: 'created' as const,

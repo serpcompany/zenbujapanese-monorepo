@@ -33,7 +33,8 @@ const subscriptionColumns = {
 
 const customerColumns = {
   appAccountToken: billingCustomers.appAccountToken,
-  stripeCustomerId: billingCustomers.stripeCustomerId
+  stripeCustomerId: billingCustomers.stripeCustomerId,
+  checkoutSessionId: billingCustomers.checkoutSessionId
 }
 
 const isKey = ({ source, providerId }: SubscriptionKey) =>
@@ -194,6 +195,14 @@ function transactionOn(tx: Drizzle): BillingTransaction {
 }
 
 export function billingStore(db: Drizzle): BillingStore {
+  const customerOf = async (userId: string) => {
+    const [row] = await db
+      .select(customerColumns)
+      .from(billingCustomers)
+      .where(eq(billingCustomers.userId, userId))
+    return row ?? null
+  }
+
   return {
     async account(userId) {
       const [row] = await db
@@ -207,11 +216,16 @@ export function billingStore(db: Drizzle): BillingStore {
       await db.execute(
         sql`insert into ${billingCustomers} (user_id) select ${users.id} from ${users} where ${users.id} = ${userId} on conflict do nothing`
       )
-      const [row] = await db
-        .select(customerColumns)
-        .from(billingCustomers)
+      return customerOf(userId)
+    },
+
+    customerOf,
+
+    async rememberCheckout(userId, sessionId) {
+      await db
+        .update(billingCustomers)
+        .set({ checkoutSessionId: sessionId })
         .where(eq(billingCustomers.userId, userId))
-      return row ?? null
     },
 
     subscriptionsOf: userId => subscriptionsOn(db, userId),
@@ -226,13 +240,15 @@ export function billingStore(db: Drizzle): BillingStore {
 
     transaction: work => db.transaction(tx => work(transactionOn(tx))),
 
-    async claimOwedAction() {
+    async claimOwedAction(sources) {
+      if (sources.length === 0) return null
       const owed = db
         .select({ id: billingActions.id })
         .from(billingActions)
         .where(
           and(
             isNull(billingActions.doneAt),
+            inArray(billingActions.source, [...sources]),
             or(isNull(billingActions.claimedUntil), lt(billingActions.claimedUntil, sql`now()`))
           )
         )
@@ -255,13 +271,19 @@ export function billingStore(db: Drizzle): BillingStore {
       return claimed ?? null
     },
 
-    async settleOwedAction(id, failure) {
+    async settleOwedAction(action, failure) {
+      const stillClaimed = and(
+        eq(billingActions.id, action.id),
+        eq(billingActions.attempts, action.attempts),
+        isNull(billingActions.doneAt)
+      )
       if (failure === null) {
-        await db
+        const [settled] = await db
           .update(billingActions)
           .set({ doneAt: sql`now()`, claimedUntil: null, lastFailure: null })
-          .where(eq(billingActions.id, id))
-        return 'settled'
+          .where(stillClaimed)
+          .returning({ id: billingActions.id })
+        return settled ? 'settled' : 'lost'
       }
       const givesUp = sql`${billingActions.attempts} >= ${mostOwedAttempts}`
       const [settled] = await db
@@ -271,9 +293,10 @@ export function billingStore(db: Drizzle): BillingStore {
           claimedUntil: sql`case when ${givesUp} then null else now() + make_interval(mins => ${retryMinutes}) end`,
           doneAt: sql`case when ${givesUp} then now() end`
         })
-        .where(eq(billingActions.id, id))
+        .where(stillClaimed)
         .returning({ doneAt: billingActions.doneAt })
-      return settled?.doneAt ? 'gave_up' : 'retry'
+      if (!settled) return 'lost'
+      return settled.doneAt ? 'gave_up' : 'retry'
     }
   }
 }

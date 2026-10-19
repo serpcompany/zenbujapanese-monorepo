@@ -78,6 +78,30 @@ describe('GET /v1/me/subscription', () => {
     expect((await billing.subscription(other)).appAccountToken).not.toBe(first.appAccountToken)
   })
 
+  test('makes no record for an account the website reads, until it checks out', async () => {
+    const learner = await billing.accounts.learner('sub-web-read@example.com', 'zenbu-web')
+    expect((await billing.subscription(learner)).appAccountToken).toBeNull()
+    const customerOf = () =>
+      billing.rows(
+        `select checkout_session_id is not null as remembered from billing_customers where user_id = '${learner.userId}'`
+      )
+    expect(await customerOf()).toEqual([])
+    expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
+    expect(await customerOf()).toEqual([{ remembered: true }])
+  })
+
+  test("counts a website payment Stripe still retries past the App Store's 60 days as running", async () => {
+    const learner = await billing.accounts.learner('sub-retrying@example.com')
+    const { userId } = learner
+    const id = 'sub_retrying_long'
+    await billing.rows(`insert into subscriptions (source, provider_id, user_id, product_id, status, expires_at, will_renew, environment, period_started_at, state_at, origin, retry_started_at)
+        values ('stripe', '${id}', '${userId}', 'price_monthly', 'billing_retry', now() - interval '90 days', true, 'test', now() - interval '120 days', now() - interval '89 days', 'provider', now() - interval '90 days')`)
+    expect(await billing.subscription(learner)).toMatchObject({
+      canSubscribe: false,
+      running: [{ source: 'stripe', status: 'billing_retry', managedIn: 'website' }]
+    })
+  })
+
   test("needs the subscription scope, which Tomodachi's tokens don't carry", async () => {
     const tomodachi = await billing.accounts.learner('sub-tomodachi@example.com', 'tomodachi')
     expect(await billing.call('/v1/me/subscription', { token: tomodachi.token })).toMatchObject({
@@ -270,18 +294,55 @@ describe('POST /v1/me/subscription/checkout', () => {
     }
   })
 
-  test('lets a learner whose first payment never arrived check out again', async () => {
+  test('waits while a first payment is pending, and lets the learner check out again once Stripe ends it', async () => {
     const learner = await billing.accounts.learner('sub-checkout-unpaid@example.com')
     const subscription = stripe.subscription({ userId: learner.userId, firstPayment: 'open' })
+    const id = String(subscription.id)
     await billing.stripeWebhook(
-      stripe.event('customer.subscription.created', { id: subscription.id, object: 'subscription' })
+      stripe.event('customer.subscription.created', { id, object: 'subscription' })
     )
     expect((await billing.subscription(learner)).status).toBe('pending')
+    expect(await checkout(learner, { price: 'price_monthly', ...pages })).toMatchObject({
+      status: 409,
+      body: { error: { code: 'already_subscribed' } }
+    })
+    stripe.change(id, { status: 'incomplete_expired', firstPayment: 'open' })
+    await billing.stripeWebhook(
+      stripe.event('customer.subscription.updated', { id, object: 'subscription' })
+    )
     expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
     const created = stripe.requests.findLast(each => each.path === '/v1/checkout/sessions')
     const expiresAt = Number(created?.form.get('expires_at'))
     expect(expiresAt).toBeGreaterThan(Date.now() / 1000 + 29 * 60)
     expect(expiresAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 30 * 60)
+  })
+
+  test('expires an open checkout before starting another, so only one can be paid', async () => {
+    const learner = await billing.accounts.learner('sub-checkout-twice@example.com', 'zenbu-web')
+    expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
+    const first = [...stripe.checkouts.keys()].at(-1) ?? ''
+    expect((await checkout(learner, { price: 'price_yearly', ...pages })).status).toBe(200)
+    expect(stripe.checkouts.get(first)?.status).toBe('expired')
+    expect(stripe.requests).toContainEqual(
+      expect.objectContaining({ method: 'POST', path: `/v1/checkout/sessions/${first}/expire` })
+    )
+  })
+
+  test("answers payment_confirming while a paid checkout waits for Stripe's event, for a day at most", async () => {
+    const learner = await billing.accounts.learner('sub-checkout-paid@example.com', 'zenbu-web')
+    expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
+    const paid = [...stripe.checkouts.keys()].at(-1) ?? ''
+    stripe.completeCheckout(paid, 'sub_paid_not_landed')
+    const sessions = stripe.checkouts.size
+    expect(await checkout(learner, { price: 'price_monthly', ...pages })).toMatchObject({
+      status: 409,
+      body: { error: { code: 'payment_confirming' } }
+    })
+    expect(stripe.checkouts.size).toBe(sessions)
+    Object.assign(stripe.checkouts.get(paid) ?? {}, {
+      created: Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60
+    })
+    expect((await checkout(learner, { price: 'price_monthly', ...pages })).status).toBe(200)
   })
 
   test("refuses a price the website doesn't offer, none of several, and pages off the website", async () => {

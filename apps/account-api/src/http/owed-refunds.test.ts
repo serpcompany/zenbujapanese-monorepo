@@ -145,4 +145,27 @@ describe('a deleted account, and a read of Stripe from before the deletion', () 
     expect(refundsOf('pi_owed_stale')).toEqual([])
     expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
   })
+
+  test("reads Stripe again for a checkout read just before the deletion, so it's refunded and canceled", async () => {
+    const learner = await billing.accounts.learner('owed-mid-deletion@example.com')
+    const customer = `cus_${learner.userId.slice(0, 10)}`
+    const id = String(
+      stripe.subscription({ userId: learner.userId, customer, paymentIntent: 'pi_owed_mid' }).id
+    )
+    const release = stripe.holdTheNextRead()
+    const completed = billing.stripeWebhook(checkoutCompleted(learner.userId, customer, id))
+    await vi.waitFor(() => expect(stripe.requests.at(-1)?.path).toBe(`/v1/subscriptions/${id}`))
+    expect((await billing.deleteAccount(learner)).status).toBe(200)
+    release()
+    expect((await completed).status).toBe(200)
+    const reads = stripe.requests.filter(each => each.path === `/v1/subscriptions/${id}`)
+    expect(reads.length).toBeGreaterThanOrEqual(2)
+    expect(stripe.subscriptions.get(id)?.status).toBe('canceled')
+    expect(refundsOf('pi_owed_mid')).toHaveLength(1)
+    expect(await billing.owedActions()).toContainEqual({
+      subscription_id: id,
+      attempts: 1,
+      done: true
+    })
+  })
 })

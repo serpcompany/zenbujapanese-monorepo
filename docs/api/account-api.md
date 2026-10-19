@@ -225,7 +225,8 @@ Answers the URL of Stripe's hosted Checkout page for one of `offers.website`. Th
 - **400** `unknown_price`: That price isn't one the website offers, or none was named and it offers several.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `subscription`.
-- **409** `already_subscribed`: The account has a subscription that is still running, here or in the App Store. Nothing was started.
+- **409** `already_subscribed`: The account has a subscription that is still running, or a first payment still pending, here or in the App Store. Nothing was started.
+- **409** `payment_confirming`: The account's last checkout was paid and Stripe hasn't confirmed it to the service yet. Nothing was started; read GET /v1/me/subscription again shortly.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
@@ -962,6 +963,7 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `not_found` | 404 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `oauth_link_error` | 401 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `otp_expired` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
+| `payment_confirming` | 409 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `provider_not_found` | 404 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `session_not_fresh` | 403 | [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account) |
 | `sign_in_again` | 403 | [`DELETE /v1/me`](#delete-v1me) |
@@ -1208,11 +1210,11 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
 - `productId` (string or null, required): The App Store product's ID, or the Stripe price's.
 - `expiresAt` (string (date-time) or null, required): When the paid time, or the grace period, ends. A subscription set to renew keeps its features for a day past it while the renewal reaches the service.
 - `willRenew` (boolean or null, required): Whether it renews at `expiresAt`. `null` until the store has said.
-- `managedIn` (`"app_store"`, `"website"`, or `null`, required): Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs.
+- `managedIn` (`"app_store"`, `"website"`, or `null`, required): Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one.
 - `running` (array of [`RunningSubscription`](#runningsubscription), required): Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought.
 - `canSubscribe` (boolean, required): Whether to offer a subscription. False while one runs anywhere, in a grace period, a billing retry, or a pause too, so a learner is never offered a second.
 - `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
-- `appAccountToken` (string (uuid), required): The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes.
+- `appAccountToken` (string (uuid) or null, required): The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes. The app that sells the subscription always gets one; another app gets null until the account first buys or is answered for that app, so no record is made for an account that never subscribes.
 - `offers` (object, required): What to offer when `canSubscribe` is true.
   - `appStore` (array of string, required): The App Store product IDs the app offers. Empty where the App Store is off.
   - `website` (array of string, required): The Stripe price IDs the website offers. Empty where Stripe is off.

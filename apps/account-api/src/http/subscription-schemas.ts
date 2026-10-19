@@ -62,7 +62,7 @@ export const SubscriptionSchema = z
     }),
     managedIn: z.enum(['app_store', 'website']).nullable().openapi({
       description:
-        "Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs."
+        "Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one."
     }),
     running: z.array(RunningSchema).openapi({
       description:
@@ -76,9 +76,9 @@ export const SubscriptionSchema = z
       description:
         "What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
     }),
-    appAccountToken: z.uuid().openapi({
+    appAccountToken: z.uuid().nullable().openapi({
       description:
-        "The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes."
+        "The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes. The app that sells the subscription always gets one; another app gets null until the account first buys or is answered for that app, so no record is made for an account that never subscribes."
     }),
     offers: z
       .object({

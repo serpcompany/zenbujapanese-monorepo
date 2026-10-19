@@ -1312,7 +1312,7 @@
               "website",
               null
             ],
-            "description": "Where the learner changes, cancels, or fixes the payment of a subscription that is still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. `null` when nothing runs."
+            "description": "Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one."
           },
           "running": {
             "type": "array",
@@ -1335,9 +1335,12 @@
             "description": "What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
           },
           "appAccountToken": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "uuid",
-            "description": "The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes."
+            "description": "The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes. The app that sells the subscription always gets one; another app gets null until the account first buys or is answered for that app, so no record is made for an account that never subscribes."
           },
           "offers": {
             "type": "object",
@@ -3344,7 +3347,7 @@
             }
           },
           "409": {
-            "description": "`already_subscribed`: The account has a subscription that is still running, here or in the App Store. Nothing was started.",
+            "description": "`already_subscribed`: The account has a subscription that is still running, or a first payment still pending, here or in the App Store. Nothing was started. `payment_confirming`: The account's last checkout was paid and Stripe hasn't confirmed it to the service yet. Nothing was started; read GET /v1/me/subscription again shortly.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3356,7 +3359,8 @@
                         "code": {
                           "type": "string",
                           "enum": [
-                            "already_subscribed"
+                            "already_subscribed",
+                            "payment_confirming"
                           ]
                         },
                         "message": {
