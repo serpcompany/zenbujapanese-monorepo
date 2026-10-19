@@ -1,3 +1,5 @@
+import { removeUntilNoneRemain } from './rendered'
+
 const namesAndIdentifiers = [
   'Wikipedia Word Frequency Clean',
   'EDRDG licence',
@@ -79,6 +81,8 @@ export function withoutEnglishSource(html: string): string {
   return skipping === 0 ? kept + html.slice(last) : kept
 }
 
+const script = /<script\b[^>]*>[\s\S]*?<\/script[^>]*>/gi
+
 export function withoutScripts(html: string): string {
-  return html.replace(/<script\b[\s\S]*?<\/script>/g, '')
+  return removeUntilNoneRemain(html, script)
 }
