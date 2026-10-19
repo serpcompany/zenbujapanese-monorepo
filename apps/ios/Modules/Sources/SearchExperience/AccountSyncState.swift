@@ -148,7 +148,9 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var goneVideos: [String] = []
   var takesAccountProfile = false
   var waitingFiles: [AccountCopy] = []
+  var missingFiles: [AccountCopy] = []
   var heldPhotoWords: [AccountCopy] = []
+  var searchKey: String?
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -175,8 +177,10 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     takesAccountProfile =
       try container.decodeIfPresent(Bool.self, forKey: .takesAccountProfile) ?? false
     waitingFiles = try container.decodeIfPresent([AccountCopy].self, forKey: .waitingFiles) ?? []
+    missingFiles = try container.decodeIfPresent([AccountCopy].self, forKey: .missingFiles) ?? []
     heldPhotoWords =
       try container.decodeIfPresent([AccountCopy].self, forKey: .heldPhotoWords) ?? []
+    searchKey = try container.decodeIfPresent(String.self, forKey: .searchKey)
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }

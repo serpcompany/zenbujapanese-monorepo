@@ -12,7 +12,9 @@ final class FakeAccountService: @unchecked Sendable {
   let lock = NSLock()
   var accounts: [String: [String: Entity]] = [:]
   var files: [String: [String: Data]] = [:]
+  var emptiedPhotos: [String: [String: [String: Any]]] = [:]
   var photosUnavailable = false
+  var fileRefusals: [String: StubReply] = [:]
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
   private var sequence = 0
@@ -98,7 +100,8 @@ final class FakeAccountService: @unchecked Sendable {
     let isChild = { (key: String) in key.hasPrefix("listWord:") || key.hasPrefix("photoWord:") }
     let ordered = changes.filter { !isChild($0.key) } + changes.filter { isChild($0.key) }
     return StubSync.answer(
-      results: results, changes: ordered.map { change(key: $0.key, $0.value) }, cursor: "\(last)")
+      results: results, changes: ordered.map { change(key: $0.key, $0.value) }, cursor: "\(last)",
+      searchKey: searchKey(of: user).hexString)
   }
 
   func change(key: String, _ entity: Entity) -> [String: Any] {

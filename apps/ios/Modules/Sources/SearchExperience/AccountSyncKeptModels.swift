@@ -78,9 +78,7 @@ enum KeptValue: Codable, Hashable, Sendable {
       guard data.name == entityID, let value = data.value else { return nil }
       self = .setting(name: entityID, value: value)
     case SyncEntity.recentSearch:
-      guard let query = data.query, let searchedAt = data.searchedAt,
-        KeptChanges.searchID(query) == entityID
-      else { return nil }
+      guard let query = data.query, let searchedAt = data.searchedAt else { return nil }
       self = .recentSearch(KeptSearch(query: query, searchedAt: searchedAt))
     default:
       return nil
@@ -112,8 +110,15 @@ struct KeptLocalChange: Sendable, Equatable {
 enum KeptChanges {
   static func photoWordID(_ photoID: String, _ item: String) -> String { "\(photoID)/\(item)" }
 
-  static func searchID(_ query: String) -> String {
-    Data(query.precomposedStringWithCanonicalMapping.utf8).sha256
+  static func searchID(_ query: String, under key: String) -> String? {
+    Data(hexString: key).map { Data(query.precomposedStringWithCanonicalMapping.utf8).hmacSHA256(under: $0) }
+  }
+
+  static func search(_ change: KeptLocalChange, under key: String) -> KeptLocalChange? {
+    guard let id = searchID(change.key.entityID, under: key) else { return nil }
+    return KeptLocalChange(
+      key: SyncEntityKey(entity: SyncEntity.recentSearch, entityID: id),
+      operation: change.operation, fields: change.fields)
   }
 
   static func noteWritten(_ note: KeptNote, startedFrom: String?) -> KeptLocalChange {
@@ -169,15 +174,14 @@ enum KeptChanges {
 
   static func searched(_ search: KeptSearch) -> KeptLocalChange {
     KeptLocalChange(
-      key: SyncEntityKey(entity: SyncEntity.recentSearch, entityID: searchID(search.query)),
+      key: SyncEntityKey(entity: SyncEntity.recentSearch, entityID: search.query),
       operation: "search",
       fields: ["query": .string(search.query), "searchedAt": moment(search.searchedAt)])
   }
 
   static func searchRemoved(_ query: String) -> KeptLocalChange {
     KeptLocalChange(
-      key: SyncEntityKey(entity: SyncEntity.recentSearch, entityID: searchID(query)),
-      operation: "remove")
+      key: SyncEntityKey(entity: SyncEntity.recentSearch, entityID: query), operation: "remove")
   }
 
   static let profilePhotoKey = SyncEntityKey(entity: SyncEntity.profilePhoto, entityID: "")

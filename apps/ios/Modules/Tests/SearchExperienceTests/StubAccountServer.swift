@@ -208,9 +208,13 @@ enum StubTokens {
 enum StubSync {
   static func answer(
     results: [[String: Any]] = [], changes: [[String: Any]] = [], cursor: String,
-    hasMore: Bool = false
+    hasMore: Bool = false, searchKey: String? = nil
   ) -> StubReply {
-    .json(200, ["results": results, "changes": changes, "cursor": cursor, "hasMore": hasMore])
+    var answer: [String: Any] = [
+      "results": results, "changes": changes, "cursor": cursor, "hasMore": hasMore,
+    ]
+    if let searchKey { answer["searchKey"] = searchKey }
+    return .json(200, answer)
   }
 
   static func applied(_ request: StubSyncRequest, version: Int = 1) -> [[String: Any]] {

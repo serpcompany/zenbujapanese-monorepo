@@ -43,9 +43,17 @@ extension FrequencyLists {
   static let live = FrequencyLists(opening: { await FrequencyPackStore.shared.opened() })
 }
 
+extension FrequencyChoice {
+  static let live = FrequencyChoice(
+    relay: FrequencyPackStore.relay,
+    changedFromStandard: { await FrequencyPackStore.shared.manager?.changedFromStandard() },
+    apply: { await FrequencyPackStore.shared.manager?.applySynced($0) })
+}
+
 private actor FrequencyPackStore {
   static let shared = FrequencyPackStore()
-  private let manager: FrequencyPackManager?
+  static let relay = KeptChangeRelay()
+  let manager: FrequencyPackManager?
 
   init() {
     manager = Self.opened(publishingTo: .live)
@@ -69,6 +77,7 @@ private actor FrequencyPackStore {
       languageDataURL: languageDataURL,
       storageDirectory: support.appendingPathComponent("FrequencyPacks", isDirectory: true),
       lists: lists,
+      relay: relay,
       download: { url, progress in
         let (data, response) = try await URLSession.shared.data(
           from: url, delegate: FrequencyPackDownloadProgress(report: progress))

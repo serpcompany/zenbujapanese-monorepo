@@ -192,7 +192,7 @@ final class AccountSync: LocalFileStore {
       changesBeforeLoad.append(change)
       return
     }
-    guard !isUnavailable, state.keepsChanges else { return }
+    guard !isUnavailable, state.keepsChanges, let change = identifyingSearch(change) else { return }
     state.enqueue(change.queued(in: state))
     persist()
     if account != nil { onLocalChange?() }
@@ -219,9 +219,11 @@ final class AccountSync: LocalFileStore {
   private func catchUpOnNewEntities() async {
     guard !caughtUpThisLaunch else { return }
     caughtUpThisLaunch = true
-    let missing = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
-    guard !missing.isEmpty else { return }
-    state.queue += await uploads().map(\.upload).filter { missing.contains($0.key.entity) }
+    state.waitingFiles += state.missingFiles
+    state.missingFiles = []
+    let entities = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
+    guard !entities.isEmpty else { return }
+    state.queue += await uploads().map(\.upload).filter { entities.contains($0.key.entity) }
     state.syncedEntities = SyncEntity.uploaded
     state.cursor = nil
     state.heldWords = []
@@ -282,6 +284,8 @@ final class AccountSync: LocalFileStore {
       }
       guard self.session == session else { return }
       resolve(batch, with: answer.results)
+      await takeSearchKey(answer.searchKey)
+      guard self.session == session else { return }
       for change in answer.changes { apply(change) }
       await drainKept()
       await wordKnowledge.flush()

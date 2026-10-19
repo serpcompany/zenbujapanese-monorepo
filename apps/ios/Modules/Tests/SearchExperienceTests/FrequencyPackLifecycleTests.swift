@@ -243,6 +243,38 @@ final class FrequencyPackLifecycleTests {
     #expect(try listed(relaunched) == [tubelex.packID])
   }
 
+  @Test("a choice from another device is shown in its order, downloading the packs it needs, and only the learner's own changes are told")
+  func syncedChoice() async throws {
+    let catalog = try FrequencyPackCatalog.bundled()
+    let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
+    let optional = try animePack(in: catalog)
+    let source = try animeSource()
+    let relay = KeptChangeRelay()
+    let told = ToldChoices()
+    relay.observe { told.add($0) }
+    let manager = try FrequencyPackManager.bundled(
+      catalog, storageDirectory: storage, relay: relay, download: { _, _ in source })
+    #expect(await manager.changedFromStandard() == nil)
+
+    let choice = "\(optional.packID.rawValue),\(bundled.packID.rawValue),unknown.pack"
+    await manager.applySynced(.string(choice))?.value
+    #expect(try await manager.snapshot().enabledPackIDs == [optional.packID, bundled.packID])
+    #expect(try listed(manager) == [optional.packID, bundled.packID])
+    #expect(told.changes.isEmpty)
+    #expect(
+      await manager.changedFromStandard()
+        == KeptChanges.settingSet(
+          FrequencyChoice.setting, .string("\(optional.packID.rawValue),\(bundled.packID.rawValue)")))
+
+    try await manager.disable(bundled.packID)
+    #expect(
+      told.changes == [
+        KeptChanges.settingSet(FrequencyChoice.setting, .string(optional.packID.rawValue))
+      ])
+    await manager.applySynced(.string(""))?.value
+    #expect(try listed(manager) == [])
+  }
+
   private func jmdictID(_ sequence: Int) -> LanguageReferenceID? {
     let digest = Data("edrdg.jmdict\0\(sequence)".utf8).sha256
     return LanguageReferenceID(rawValue: String(digest.prefix(32)))
@@ -282,6 +314,15 @@ final class FrequencyPackLifecycleTests {
     try FileManager.default.contentsOfDirectory(at: storage, includingPropertiesForKeys: nil)
       .filter { $0.pathExtension == "staged" }
   }
+}
+
+private final class ToldChoices: @unchecked Sendable {
+  private let lock = NSLock()
+  private var told: [KeptLocalChange] = []
+
+  var changes: [KeptLocalChange] { lock.withLock { told } }
+
+  func add(_ change: KeptLocalChange) { lock.withLock { told.append(change) } }
 }
 
 extension FrequencyPackManifest {

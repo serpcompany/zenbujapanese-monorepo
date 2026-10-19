@@ -73,6 +73,7 @@ final class AccountFixture {
   private(set) var media: EncounterMediaStorage!
   private(set) var searches: RecentSearchHistory!
   private(set) var settings: SyncedSettings!
+  var frequency = FrequencyChoice()
   private(set) var account: ZenbuAccount!
   lazy var defaults = UserDefaults(suiteName: defaultsSuite) ?? .standard
 
@@ -97,11 +98,9 @@ final class AccountFixture {
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
     profile = UserProfile(defaults: defaults, photoURL: directory.appending(path: "photo.jpg"))
-    notes = WordNoteStorage(
-      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, placing: SavedWords.lookup)
+    (notes, searches) = Self.stores(in: defaultsSuite)
     media = EncounterMediaStorage(
       directory: directory.appending(path: "Encounter Media"), placing: SavedWords.lookup)
-    searches = RecentSearchHistory(defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard)
     settings = SyncedSettings(defaults: defaults)
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(
@@ -109,11 +108,20 @@ final class AccountFixture {
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
       profile: profile,
-      kept: KeptStores(notes: notes, media: media, searches: searches, settings: settings),
+      kept: KeptStores(
+        notes: notes, media: media, searches: searches, settings: settings, frequency: frequency),
       fileURL: directory.appending(path: "account-sync.json"), providers: providers,
       now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
+  }
+
+  nonisolated private static func stores(in suite: String) -> (WordNoteStorage, RecentSearchHistory) {
+    (
+      WordNoteStorage(
+        defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup),
+      RecentSearchHistory(defaults: UserDefaults(suiteName: suite) ?? UserDefaults())
+    )
   }
 
   func settle() async {
@@ -128,7 +136,8 @@ final class AccountFixture {
     profile: StubReply = .json(200, AccountFixture.profile()),
     sync: @escaping @Sendable (StubSyncRequest) -> StubReply = { request in
       StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
-    }
+    },
+    files: @escaping @Sendable (StubRequest) -> StubReply = { _ in .error(404, "not_found") }
   ) {
     let accessToken = StubTokens.access(expiresAt: now + tokenLifetime)
     server.respond { request in
@@ -152,7 +161,7 @@ final class AccountFixture {
       case "DELETE /v1/me":
         .json(200, ["status": "deleted"])
       default:
-        .error(404, "not_found")
+        request.path.hasPrefix("/v1/photos/") ? files(request) : .error(404, "not_found")
       }
     }
   }

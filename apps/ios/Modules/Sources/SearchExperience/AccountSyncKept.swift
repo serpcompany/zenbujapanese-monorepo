@@ -6,13 +6,22 @@ struct KeptStores {
   let media: EncounterMediaStorage
   let searches: RecentSearchHistory
   let settings: SyncedSettings
+  var frequency = FrequencyChoice()
   var notesChanged: @MainActor @Sendable () async -> Void = {}
 
   static var shared: KeptStores {
     KeptStores(
-      notes: .shared, media: .shared, searches: .shared, settings: .shared,
+      notes: .shared, media: .shared, searches: .shared, settings: .shared, frequency: .live,
       notesChanged: { await LearnerNotes.shared.reload() })
   }
+}
+
+struct FrequencyChoice: Sendable {
+  static let setting = "frequencyDictionaries.chosen"
+
+  var relay = KeptChangeRelay()
+  var changedFromStandard: @Sendable () async -> KeptLocalChange? = { nil }
+  var apply: @Sendable (SyncFieldValue) async -> Void = { _ in }
 }
 
 extension AccountCopy {
@@ -25,6 +34,7 @@ extension AccountCopy {
 
 extension AccountSync {
   nonisolated static let photoNotUploaded = "photo_not_uploaded"
+  nonisolated static let unknownPhoto = "unknown_photo"
 
   func observeKeptChanges() {
     let record: @MainActor @Sendable (KeptLocalChange) -> Void = { [weak self] change in
@@ -33,6 +43,7 @@ extension AccountSync {
     kept.notes.relay.observe(record)
     kept.media.relay.observe(record)
     kept.searches.relay.observe(record)
+    kept.frequency.relay.observe(record)
     kept.settings.changeObserver = { [weak self] change in self?.recordKept(change) }
   }
 
@@ -40,11 +51,32 @@ extension AccountSync {
     let notes = await kept.notes.keptNotes().map { KeptChanges.noteWritten($0, startedFrom: nil) }
     let media = await kept.media.keptPhotos()
     let profilePhoto = userProfile.photoData.map { [KeptChanges.profilePhotoSet($0.sha256)] } ?? []
-    let searches = await kept.searches.searches().reversed().map(KeptChanges.searched)
+    let frequency = await kept.frequency.changedFromStandard().map { [$0] } ?? []
     let changes =
       notes + media.photos.map(KeptChanges.photoAdded) + media.words.map(KeptChanges.photoWordAdded)
-      + profilePhoto + kept.settings.changedFromStandard + searches
+      + profilePhoto + kept.settings.changedFromStandard + frequency
     return changes.map(SavedItemChange.kept)
+  }
+
+  func identifyingSearch(_ change: SavedItemChange) -> SavedItemChange? {
+    guard case .kept(let kept) = change, kept.key.entity == SyncEntity.recentSearch else {
+      return change
+    }
+    return state.searchKey.flatMap { KeptChanges.search(kept, under: $0) }.map(SavedItemChange.kept)
+  }
+
+  func takeSearchKey(_ key: String?) async {
+    guard let key, key != state.searchKey, Data(hexString: key) != nil else { return }
+    let earlier = state.searchKey
+    state.searchKey = key
+    let searches = await kept.searches.searches()
+    let removed = earlier.map { old in
+      searches.compactMap { KeptChanges.search(KeptChanges.searchRemoved($0.query), under: old) }
+    }
+    let searched = searches.reversed().compactMap {
+      KeptChanges.search(KeptChanges.searched($0), under: key)
+    }
+    state.queue += ((removed ?? []) + searched).map { SavedItemChange.kept($0).upload }
   }
 
   func isSendable(_ change: QueuedSyncChange) -> Bool {
@@ -59,7 +91,7 @@ extension AccountSync {
         sendable.append(change)
         continue
       }
-      guard let data = await fileData(photoID, for: change.key) else {
+      guard let data = await heldFile(photoID) else {
         state.queue.removeAll { $0.id == change.id }
         continue
       }
@@ -85,11 +117,9 @@ extension AccountSync {
     }
   }
 
-  private func fileData(_ photoID: String, for key: SyncEntityKey) async -> Data? {
-    let data =
-      key.entity == SyncEntity.profilePhoto
-      ? userProfile.photoData : await kept.media.fileData(photoID)
-    return data?.sha256 == photoID ? data : nil
+  private func heldFile(_ photoID: String) async -> Data? {
+    if let data = await kept.media.fileData(photoID), data.sha256 == photoID { return data }
+    return userProfile.photoData?.sha256 == photoID ? userProfile.photoData : nil
   }
 
   func keptConflict(_ change: QueuedSyncChange, current: SyncChange) -> Bool {
@@ -112,7 +142,24 @@ extension AccountSync {
   }
 
   func keptRejected(_ change: QueuedSyncChange, code: String) {
-    guard code == Self.photoNotUploaded else { return }
+    switch code {
+    case Self.photoNotUploaded:
+      filesWait = true
+      requeue(change)
+    case Self.unknownPhoto:
+      let photo = SyncEntityKey(
+        entity: SyncEntity.photo, entityID: String(change.key.entityID.prefix { $0 != "/" }))
+      if state.hasQueuedChange(to: photo) {
+        requeue(change)
+      } else if state.versions[photo.stored] != nil {
+        keptToApply.append(AccountCopy(key: change.key, version: 0, value: .gone))
+      }
+    default:
+      return
+    }
+  }
+
+  private func requeue(_ change: QueuedSyncChange) {
     state.enqueue(
       QueuedSyncChange(
         id: UUID().uuidString.lowercased(), key: change.key, operation: change.operation,
@@ -149,8 +196,15 @@ extension AccountSync {
     case .kept(.profilePhoto(let photoID)):
       await fetch(copy, photoID: photoID)
     case .kept(.setting(let name, let value)):
-      kept.settings.applySynced(name, value)
+      if name == FrequencyChoice.setting {
+        await kept.frequency.apply(value)
+      } else {
+        kept.settings.applySynced(name, value)
+      }
     case .kept(.recentSearch(let search)):
+      guard let key = state.searchKey,
+        KeptChanges.searchID(search.query, under: key) == copy.key.entityID
+      else { return }
       await kept.searches.applySynced(search)
     case .gone:
       await removeKept(copy.key)
@@ -161,6 +215,7 @@ extension AccountSync {
 
   private func removeKept(_ key: SyncEntityKey) async {
     state.waitingFiles.removeAll { $0.key == key }
+    state.missingFiles.removeAll { $0.key == key }
     switch key.entity {
     case SyncEntity.wordNote:
       await kept.notes.applySyncedRemoval(ofNote: key.entityID)
@@ -177,7 +232,8 @@ extension AccountSync {
     case SyncEntity.profilePhoto:
       userProfile.applySyncedPhotoRemoval()
     case SyncEntity.recentSearch:
-      await kept.searches.applySyncedRemoval(ofSearch: key.entityID)
+      guard let searchKey = state.searchKey else { return }
+      await kept.searches.applySyncedRemoval(ofSearch: key.entityID, under: searchKey)
     default:
       return
     }
@@ -185,20 +241,10 @@ extension AccountSync {
 
   private func fetch(_ copy: AccountCopy, photoID: String) async {
     state.waitingFiles.removeAll { $0.key == copy.key }
-    let data: Data
-    do {
-      data = try await tokens.withAccessToken { [api] token in
-        try await api.photo(photoID, accessToken: token)
-      }
-    } catch AccountServiceError.refused(status: 404, _, _, _) {
-      let gone =
-        copy.key.entity == SyncEntity.photo
-        ? KeptChanges.photoDeleted(photoID) : KeptChanges.profilePhotoRemoved
-      return state.enqueue(SavedItemChange.kept(gone).queued(in: state))
-    } catch {
-      return state.waitingFiles.append(copy)
-    }
-    guard data.sha256 == photoID else { return state.waitingFiles.append(copy) }
+    state.missingFiles.removeAll { $0.key == copy.key }
+    var file = await heldFile(photoID)
+    if file == nil { file = await downloaded(copy, photoID: photoID) }
+    guard let data = file else { return }
     switch copy.value {
     case .kept(.photo(let photo)):
       await kept.media.applySynced(photo, data: data)
@@ -207,5 +253,21 @@ extension AccountSync {
     default:
       userProfile.applySyncedPhoto(data)
     }
+  }
+
+  private func downloaded(_ copy: AccountCopy, photoID: String) async -> Data? {
+    do {
+      let data = try await tokens.withAccessToken { [api] token in
+        try await api.photo(photoID, accessToken: token)
+      }
+      if data.sha256 == photoID { return data }
+    } catch AccountServiceError.refused(let status, _, _, _)
+      where (400..<500).contains(status) && status != 429
+    {
+      state.missingFiles.append(copy)
+      return nil
+    } catch {}
+    state.waitingFiles.append(copy)
+    return nil
   }
 }

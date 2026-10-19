@@ -4,13 +4,15 @@ import Foundation
 
 extension FrequencyPackManager {
   static func bundled(
-    _ catalog: FrequencyPackCatalog, storageDirectory: URL, download: @escaping Download
+    _ catalog: FrequencyPackCatalog, storageDirectory: URL,
+    relay: KeptChangeRelay = KeptChangeRelay(), download: @escaping Download
   ) throws -> FrequencyPackManager {
     try FrequencyPackManager(
       catalog: catalog,
       bundledArtifactURLs: try catalog.bundledArtifactURLs(),
       languageDataURL: try FrequencyPackCatalog.languageDataURL(),
       storageDirectory: storageDirectory,
+      relay: relay,
       download: download
     )
   }

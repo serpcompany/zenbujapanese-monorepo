@@ -7,6 +7,7 @@ enum LaunchHarness {
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
   static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
+  static let accountKeptStandInKey = "ZENBU_ACCOUNT_STAND_IN_KEPT"
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"

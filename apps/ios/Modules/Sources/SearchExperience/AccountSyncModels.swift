@@ -224,6 +224,7 @@ struct SyncAnswer: Decodable, Sendable {
   let changes: [SyncChange]
   let cursor: String
   let hasMore: Bool
+  let searchKey: String?
 }
 
 extension JSONDecoder {

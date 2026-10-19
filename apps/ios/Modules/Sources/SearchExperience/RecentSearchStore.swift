@@ -68,8 +68,8 @@ actor RecentSearchHistory {
     write(placing(search, in: searches()))
   }
 
-  func applySyncedRemoval(ofSearch id: String) {
-    write(searches().filter { KeptChanges.searchID($0.query) != id })
+  func applySyncedRemoval(ofSearch id: String, under key: String) {
+    write(searches().filter { KeptChanges.searchID($0.query, under: key) != id })
   }
 
   private func placing(_ search: KeptSearch, in searches: [KeptSearch]) -> [KeptSearch] {

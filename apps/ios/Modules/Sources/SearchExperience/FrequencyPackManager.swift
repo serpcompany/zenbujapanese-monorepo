@@ -7,6 +7,7 @@ actor FrequencyPackManager {
   static let unverifiedList = "Frequency data unavailable"
 
   nonisolated let lists: FrequencyLists
+  nonisolated let relay: KeptChangeRelay
   private let catalog: FrequencyPackCatalog
   private let bundledArtifactURLs: [FrequencyPackID: URL]
   private let languageDataURL: URL
@@ -16,6 +17,7 @@ actor FrequencyPackManager {
   private var installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord]
   private var failures: [FrequencyPackID: String] = [:]
   private var verifiedArtifacts: [FrequencyPackID: FrequencyPackArtifact] = [:]
+  private var syncedChoice: [FrequencyPackID]?
 
   init(
     catalog: FrequencyPackCatalog,
@@ -23,6 +25,7 @@ actor FrequencyPackManager {
     languageDataURL: URL,
     storageDirectory: URL,
     lists: FrequencyLists = FrequencyLists(),
+    relay: KeptChangeRelay = KeptChangeRelay(),
     download: @escaping Download
   ) throws {
     let bundledPacks = catalog.packs.filter(\.bundled)
@@ -30,6 +33,7 @@ actor FrequencyPackManager {
       throw FrequencyPackError.invalidCatalog
     }
     self.lists = lists
+    self.relay = relay
     self.catalog = catalog
     self.bundledArtifactURLs = bundledArtifactURLs
     self.languageDataURL = languageDataURL
@@ -146,9 +150,12 @@ actor FrequencyPackManager {
     )
   }
 
-  func download(_ packID: FrequencyPackID, progress: @escaping Progress = { _ in }) async throws {
+  func download(
+    _ packID: FrequencyPackID, progress: @escaping Progress = { _ in }, tells: Bool = true
+  ) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), !manifest.bundled
     else { throw FrequencyPackError.invalidPack }
+    let before = enabledPackIDs
     failures[packID] = nil
     do {
       let source = try await downloadSource(manifest.downloadURL, progress)
@@ -181,6 +188,7 @@ actor FrequencyPackManager {
         }
       }
       try persist()
+      if tells { await tell(after: before) }
     } catch {
       guard !Self.isCancellation(error) else { throw error }
       failures[packID] =
@@ -195,7 +203,7 @@ actor FrequencyPackManager {
     error is CancellationError || (error as? URLError)?.code == .cancelled
   }
 
-  func enable(_ packID: FrequencyPackID) throws {
+  func enable(_ packID: FrequencyPackID) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }) else {
       throw FrequencyPackError.packNotInstalled
     }
@@ -215,29 +223,75 @@ actor FrequencyPackManager {
     try artifact.validateSmokeTest()
     verifiedArtifacts[packID] = artifact
     guard !enabledPackIDs.contains(packID) else { return }
-    enabledPackIDs.append(packID)
-    publishLists()
-    try persist()
+    try await choose(enabledPackIDs + [packID])
   }
 
-  func disable(_ packID: FrequencyPackID) throws {
-    enabledPackIDs.removeAll { $0 == packID }
-    publishLists()
-    try persist()
+  func disable(_ packID: FrequencyPackID) async throws {
+    try await choose(enabledPackIDs.filter { $0 != packID })
   }
 
-  func reorderEnabled(_ packIDs: [FrequencyPackID]) throws {
+  func reorderEnabled(_ packIDs: [FrequencyPackID]) async throws {
     guard packIDs.count == enabledPackIDs.count, Set(packIDs) == Set(enabledPackIDs) else {
       throw FrequencyPackError.invalidPack
     }
+    try await choose(packIDs)
+  }
+
+  private func choose(_ packIDs: [FrequencyPackID]) async throws {
+    let before = enabledPackIDs
     enabledPackIDs = packIDs
     publishLists()
     try persist()
+    await tell(after: before)
   }
 
-  func remove(_ packID: FrequencyPackID) throws {
+  private func tell(after before: [FrequencyPackID]) async {
+    guard enabledPackIDs != before else { return }
+    syncedChoice = nil
+    await relay.post(Self.chosen(enabledPackIDs))
+  }
+
+  private static func chosen(_ packIDs: [FrequencyPackID]) -> KeptLocalChange {
+    KeptChanges.settingSet(
+      FrequencyChoice.setting, .string(packIDs.map(\.rawValue).joined(separator: ",")))
+  }
+
+  func changedFromStandard() -> KeptLocalChange? {
+    enabledPackIDs == catalog.packs.filter(\.bundled).map(\.packID)
+      ? nil : Self.chosen(enabledPackIDs)
+  }
+
+  @discardableResult
+  func applySynced(_ value: SyncFieldValue) -> Task<Void, Never>? {
+    guard case .string(let text) = value else { return nil }
+    let chosen = text.split(separator: ",").map { FrequencyPackID(rawValue: String($0)) }
+      .filter { packID in catalog.packs.contains { $0.packID == packID } }
+    syncedChoice = chosen
+    showSyncedChoice()
+    let missing = chosen.filter { !isUsable($0) }
+    guard !missing.isEmpty else { return nil }
+    return Task {
+      for packID in missing { try? await download(packID, tells: false) }
+      showSyncedChoice()
+    }
+  }
+
+  private func isUsable(_ packID: FrequencyPackID) -> Bool {
+    installedRecords[packID] != nil
+      || catalog.packs.contains { $0.packID == packID && $0.bundled }
+  }
+
+  private func showSyncedChoice() {
+    guard let shown = syncedChoice?.filter(isUsable), shown != enabledPackIDs else { return }
+    enabledPackIDs = shown
+    publishLists()
+    try? persist()
+  }
+
+  func remove(_ packID: FrequencyPackID) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), manifest.removable
     else { throw FrequencyPackError.packNotRemovable }
+    let before = enabledPackIDs
     var changed = packs
     changed.enabled.removeAll { $0 == packID }
     changed.installed[packID] = nil
@@ -249,6 +303,7 @@ actor FrequencyPackManager {
     }
     failures[packID] = nil
     try persist()
+    await tell(after: before)
   }
 
   private func publishLists() {
