@@ -194,6 +194,16 @@ struct DictionaryCoreTests {
     #expect(normalized == "ab")
   }
 
+  @Test("cores made at once on several threads each answer, as the lookup's and the screens' are at launch")
+  func coresMadeAtOnce() {
+    let answers = OSAllocatedUnfairLock(initialState: [String?]())
+    DispatchQueue.concurrentPerform(iterations: 8) { _ in
+      let answer: String? = try? DictionaryCore().answer("normalizeQuery", " ＡＢ ")
+      answers.withLock { $0.append(answer) }
+    }
+    #expect(answers.withLock { $0 } == Array(repeating: "ab", count: 8))
+  }
+
   @Test("rows reach the core as JSON, with each SQLite type and its blob columns named")
   func rowsAsJSON() throws {
     let rows = SQLiteJSONRows(statements: try Self.memoryDatabase())

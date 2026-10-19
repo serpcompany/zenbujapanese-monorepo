@@ -30,53 +30,56 @@ its SHA-256; later builds reuse it.
 
 ## iPad and Mac
 
-One target builds the app for iPhone, iPad, and the Mac ([ADR 0015](../adr/0015-build-iphone-ipad-and-mac-from-one-native-swiftui-app.md));
-what differs for a learner is in the product docs' [iPad and Mac](../../apps/ios/docs/product/index.md#ipad-and-mac).
+One target builds the app for iPhone, iPad, and the Mac ([ADR
+0015](../adr/0015-build-iphone-ipad-and-mac-from-one-native-swiftui-app.md)); what differs for a
+learner is in the product docs' [iPad and Mac](../../apps/ios/docs/product/index.md#ipad-and-mac).
 
 ### Where the platforms differ in the code
 
-Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives
-in `apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view
-extension that feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
-`SystemColor`, `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`,
-`WebViewRepresentable`, `PagedView`, `CameraCapture` and `ImageCameraPicker`,
-`ImagePhotoLibraryPicker`, `importsImagesFromDevices`, `BackgroundRefresh`,
-`keyWindowAnchor`, `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and
-the modifiers in `PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`,
-`.textEntry(_:)`, `.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
-`.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`, `.sheetClose`, `SheetCloseAndAction`,
-`.barTrailingItems`, `.tileIconLabel()`, `.backButtonHidden()`, `.listedInItsMenu()`,
-`.tabShell()`, and the rest). The tab shell (`.tabShell()`) is
-the sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26
-the sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps
-the first tab's stack: only pages registered on the first tab open (another tab's route shows
-SwiftUI's warning triangle, and its value links do nothing), and pushing onto another tab's
-`NavigationPath` while the first tab's path is a typed array crashes in
-`NavigationColumnState.boundPathChange`. The tab-bar-only style gives each tab its own stack, as
-on iPhone and iPad, so the Mac has a tab bar and no sidebar; `pnpm verify layers` refuses
-`sidebarAdaptable` outside `Platform/`. A sheet that iPhone and iPad close by dragging,
-as Search's Handwriting and Radicals panel does, uses `.dragToCloseSheet(sizeOnMac:)`: a Mac
-can't drag a sheet away, and sizes one from its content, so there it gets a fixed size
-(`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one platform has lives in
+`apps/ios/Modules/Sources/SearchExperience/Platform/`, behind a small adapter or view extension that
+feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and `SystemColor`,
+`Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`, `WebViewRepresentable`,
+`PagedView`, `CameraCapture` and `ImageCameraPicker`, `ImagePhotoLibraryPicker`,
+`importsImagesFromDevices`, `BackgroundRefresh`, `keyWindowAnchor`, `AppleSignInButton`,
+`ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in `PlatformModifiers.swift`
+(`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`, `.barLeading` and `.barTrailing`,
+`.bottomAccessory`, `.rowActions`, `.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`,
+`.sheetClose`, `SheetCloseAndAction`, `.barTrailingItems`, `.tileIconLabel()`,
+`.backButtonHidden()`, `.listedInItsMenu()`, `.tabShell()`, and the rest), and
+`.focusedOnceTheClickIsHandled(_:)` in `ListFieldFocus.swift`. The tab shell (`.tabShell()`) is the
+sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26 the
+sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps the
+first tab's stack: only pages registered on the first tab open (another tab's route shows SwiftUI's
+warning triangle, and its value links do nothing), and pushing onto another tab's `NavigationPath`
+while the first tab's path is a typed array crashes in `NavigationColumnState.boundPathChange`. The
+tab-bar-only style gives each tab its own stack, as on iPhone and iPad, so the Mac has a tab bar and
+no sidebar; `pnpm verify layers` refuses `sidebarAdaptable` outside `Platform/`. A sheet that iPhone
+and iPad close by dragging, as Search's Handwriting and Radicals panel does, uses
+`.dragToCloseSheet(sizeOnMac:)`: a Mac can't drag a sheet away, and sizes one from its content, so
+there it gets a fixed size (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+On the Mac a click on a `List` row leaves the keyboard with the list, so a field that the click
+shows, such as a note's editor after a click on the note or on **Add Note**, never got it, and
+clicks on the field didn't move it either; the editor takes `.focusedOnceTheClickIsHandled(_:)`,
+which asks for focus again once the click has been handled (`NotesInSearchUITests`).
 
 Every other sheet's root takes `.sheetSize(onMac: AppWindow.sheetSize)`, but the photo library's
-picker, which reports its own size (`AppWindow.photoPickerSize`). A Mac sizes a sheet from
-its content, and a `List`, a grouped `Form`, or a `ScrollView` has no height of its own, so
-without it the word sheet opened 80 points tall. A Mac sheet also has no toolbar. Of a
-`NavigationStack`'s toolbar it shows the title, one `cancellationAction` item and one
-`confirmationAction` item as buttons along its bottom, and a `destructiveAction` item at the
-bottom's leading edge; an item placed anywhere else (`.barLeading`, `.barTrailing`) isn't shown,
-and a second item in the same placement isn't either. So a sheet's close button goes in
-`.sheetClose` (the bar's leading edge on iPhone and iPad, the cancel button on the Mac, which
-Escape presses), the word sheet's **Close** and **Open Full Entry** in `SheetCloseAndAction`
-(one leading group on iPhone and iPad; side by side in the cancel slot on the Mac, because the
-confirm slot's button is the sheet's default, and Return in a note typed in the sheet would open
-the full entry), and a
-page's trailing bar items in `.barTrailingItems`, which puts them in a row above the page when
-the page is inside a Mac sheet (`sheetSize(onMac:)` says so through the environment) and in the
-bar everywhere else. That's how a word's **Share** and **•••** reach the Mac's word sheet.
-`.tileIconLabel()` lays a row's icon tile beside its title on the Mac, where a `List` gives a
-label's icon a slot too narrow for the tile and the title was drawn over it.
+picker, which reports its own size (`AppWindow.photoPickerSize`). A Mac sizes a sheet from its
+content, and a `List`, a grouped `Form`, or a `ScrollView` has no height of its own, so without it
+the word sheet opened 80 points tall. A Mac sheet also has no toolbar. Of a `NavigationStack`'s
+toolbar it shows the title, one `cancellationAction` item and one `confirmationAction` item as
+buttons along its bottom, and a `destructiveAction` item at the bottom's leading edge; an item
+placed anywhere else (`.barLeading`, `.barTrailing`) isn't shown, and a second item in the same
+placement isn't either. So a sheet's close button goes in `.sheetClose` (the bar's leading edge on
+iPhone and iPad, the cancel button on the Mac, which Escape presses), the word sheet's **Close** and
+**Open Full Entry** in `SheetCloseAndAction` (one leading group on iPhone and iPad; side by side in
+the cancel slot on the Mac, because the confirm slot's button is the sheet's default, and Return in
+a note typed in the sheet would open the full entry), and a page's trailing bar items in
+`.barTrailingItems`, which puts them in a row above the page when the page is inside a Mac sheet
+(`sheetSize(onMac:)` says so through the environment) and in the bar everywhere else. That's how a
+word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()` lays a row's icon tile
+beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
+the title was drawn over it.
 
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
 knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
@@ -84,7 +87,8 @@ and names the adapter to use (`tools/checks/src/layers.ts`), so feature code sta
 every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
 encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line: `ZenbuJapaneseScenes`
+The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
+(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
@@ -191,7 +195,12 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness).
+  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
+  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
+- `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
+  `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
+  `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
+  (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
 - `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
   or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
   arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
@@ -203,12 +212,12 @@ don't contain them), so they need no network, account, camera, or microphone:
   laid out like YouTube's mobile results, by YouTube's element names, whose results change the
   page's address without loading it, as YouTube's do.
 - `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
-  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
-  Search and a kanji page record each list or page they drew (`search.results.drawn`,
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`). Search
+  and a kanji page record each list or page they drew (`search.results.drawn`, `search.notes.drawn`,
   `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
-  again (`SearchResultsUITests`), a kanji page's facts come before its words
-  (`WordDetailUITests`), or nothing is recorded. Each is a clear text (`DrawCountProbe`) read
-  with `text(of:)`: the Mac gives a test no plain view's value.
+  again (`SearchResultsUITests`), Search's notes come after its results (`NotesInSearchUITests`), a
+  kanji page's facts come before its words (`WordDetailUITests`), or nothing is recorded. Each is a
+  clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -241,7 +250,9 @@ the same on every device:
   XCUITest's own tap looks the item up again and fails when the menu is redrawing just then, about
   one run in three. A submenu's choice is typed as one string of keys (`chooseFromSubmenu`): Down
   to the row, Right, Down to the choice, Return. Between separate clicks or keys, an open submenu
-  sometimes shut or lost its highlight while XCUITest looked the app over before its next step.
+  sometimes shut or lost its highlight while XCUITest looked the app over before its next step. A
+  click on **Add Note** in a word's **•••** once left it highlighted in a menu that stayed open, so
+  `addNote` presses Return when the note's field hasn't appeared and the choice is still there.
 - A sheet, and an alert that takes a name, are `app.sheets` (`sheet(_:in:)`, `prompt(in:)`).
   `waitForSheet` also checks that a Mac sheet has room for its content and stays in the window.
 - A row's label starts with its title and goes on with its detail (`showing`); a static text's
@@ -300,14 +311,13 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 ### Beside the TestFlight app
 
-To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The
-target's bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
+To try unreleased work without replacing the TestFlight app, build it as **Zenbu Dev**. The target's
+bundle ID ends in `ZENBU_BUNDLE_ID_SUFFIX` and its name is `ZENBU_DISPLAY_NAME` (empty and
 `Zenbu Japanese` by default), so overriding them installs a separate app with its own data and
 leaves `project.pbxproj` alone. Its icon is the blue `AppIcon-Dev` (in
 `apps/ios/App/Assets.xcassets`), chosen by `ASSETCATALOG_COMPILER_APPICON_NAME`, so it's easy to
-tell from the red TestFlight app; it has the same Mac sizes as `AppIcon`, for a Zenbu Dev built
-for the Mac. From `apps/ios`, with the phone's UDID from
-`xcrun devicectl list devices`:
+tell from the red TestFlight app; it has the same Mac sizes as `AppIcon`, for a Zenbu Dev built for
+the Mac. From `apps/ios`, with the phone's UDID from `xcrun devicectl list devices`:
 
 ```sh
 xcodebuild -project ZenbuJapanese.xcodeproj -scheme ZenbuJapanese -configuration Debug \
@@ -354,42 +364,9 @@ installed; install it again to renew it.
 
 ## Links from the website
 
-The app opens zenbujapanese.com's search and word URLs, and the kanji URLs the website removed,
-as universal links (#568; what each opens is in the [product docs](../../apps/ios/docs/product/dictionary.md#links-from-zenbujapanesecom)).
-`apps/ios/App/ZenbuJapanese.entitlements` claims `applinks:zenbujapanese.com`, and iOS opens a
-link in the app only once it has fetched the site's association file, through Apple's CDN, and
-found the app's ID in it ([`web.md`](web.md), Links that open the app). That takes two things
-only a person can do: enable Associated Domains for the App ID `com.zenbujapanese.dictionary` in
-the Apple Developer team that holds it, TSMC LLC's, and set the website's `APPLE_TEAM_ID` to that
-team, `847HR8U8D9`.
-
-SwiftUI hands a universal link to `onOpenURL` in `WebsiteLinkOpening` (`WebsiteLinkOpening.swift`),
-which `SearchExperienceRootView` applies. It switches to Search from any tab, Translate included,
-and `WebsiteLinkRoute.apply` puts the route on Search's stack. `LookupClient.websiteRoute`
-hands the link's host and path to the core (`websiteRoute`,
-[`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
-decoded one path segment at a time, with the parser the website uses, and finds a word URL's
-entry by its JMdict entry number. Only the host and path are read, so a URL with any scheme and
-the host `zenbujapanese.com` routes the same way.
-
-Check it with `WebsiteLinkTests`. The Simulator sends an `https` link to Safari until the
-association file is live, which would also load the site, so to see a link land in the app
-before then, build without the entitlements and with a URL scheme that is never committed, added
-to a copy of the app's `Info.plist` so the account service's settings stay, and open the same URL
-under that scheme:
-
-```sh
-cp apps/ios/App/Info.plist /tmp/link-check.plist
-plutil -insert CFBundleURLTypes -json '[{"CFBundleURLSchemes":["zenbu-check"]}]' /tmp/link-check.plist
-xcodebuild -project apps/ios/ZenbuJapanese.xcodeproj -scheme ZenbuJapanese \
-  -destination 'platform=iOS Simulator,id=<udid>' ONLY_ACTIVE_ARCH=YES ARCHS=arm64 \
-  INFOPLIST_FILE=/tmp/link-check.plist CODE_SIGN_ENTITLEMENTS= build
-xcrun simctl openurl <udid> 'zenbu-check://zenbujapanese.com/dictionary/見る-1259290/'
-```
-
-Once the file is live, check it on a device: tapping
-`https://zenbujapanese.com/dictionary/見る-1259290/` in Notes or Messages opens 見る's Word
-Detail, and the same link opens the website on a device without the app.
+The app opens zenbujapanese.com's links as universal links, and its **Share** sends them:
+[`ios-website-links.md`](ios-website-links.md) has how, the entitlement and association file
+they need, and their checks.
 
 ## Interactive parsing comparison harness
 
@@ -440,7 +417,7 @@ The Translate tab has its own test target, `TranslatorCoreTests`, and its own gu
 app's UI tests on all three ([Tests on every platform](#tests-on-every-platform)).
 
 `SearchConformanceTests` checks Search against the shared conformance suite in
-`apps/ios/LanguageData/Conformance/search-retrieval.json` (see ADR 0006). Only each result's
+`language-data/conformance/search-retrieval.json` (see ADR 0006). Only each result's
 Language Reference ID and position are the contract; its headword and reading are there to make the
 file and failures readable. After an intended change to Search results or a dictionary rebuild,
 record it again by adding `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above,
@@ -520,13 +497,14 @@ does isn't recorded yet: sentence search (Discovered Words, above). The service 
 own test (`sentence-search.test.ts`) until a suite records it.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
-that change `apps/ios`, and, on a macOS runner, `SearchExperienceTests` and `TranslatorCoreTests`
-on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on all three, and the
-recorded-audio check's scoring tests, only once the owners turn that on. Until then, run them on a
-Mac ([Tests on every platform](#tests-on-every-platform)).
+that change `apps/ios` or the language data, and, on a macOS runner, `SearchExperienceTests` and
+`TranslatorCoreTests` on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on
+all three, and the recorded-audio check's scoring tests, only once the owners turn that on. Until
+then, run them on a Mac ([Tests on every platform](#tests-on-every-platform)).
 
-Frequency-pack selection has one repo-local Python contract test. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_frequency_pack_runtime_contract.py` to verify
+The data tools' contract tests are in `language-data/tools/tests/`; run one with
+`python3 -m unittest discover -s language-data/tools/tests -p <file>`. Frequency-pack selection
+has one, `test_frequency_pack_runtime_contract.py`. It verifies
 that every selectable manifest pins a known evidence row and rank, each ordered source agrees
 with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
 the bundled JLPT level pack matches its pinned source files and import report. It also checks
@@ -534,35 +512,35 @@ that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict fi
 entries, carry their rank on the one entry their UniDic lemma reading names (#440).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
-bundled `LanguageReferenceData.sqlite3`. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_example_word_index_contract.py` to
-verify that it matches that database, its pinned source, and its import report. Without the index,
+bundled `LanguageReferenceData.sqlite3`. `test_example_word_index_contract.py` verifies
+that it matches that database, its pinned source, and its import report. Without the index,
 as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
 index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
 Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
-`CompoundPitch.sqlite3`, also built against that database. Run
-`python3 -m unittest discover -s apps/ios/Tools/tests -p test_compound_pitch_contract.py` to verify it.
+`CompoundPitch.sqlite3`, also built against that database; `test_compound_pitch_contract.py`
+verifies it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so
 the language data is rebuilt as a whole, with one command on the pinned Python:
 
 ```sh
-uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.py --download
+uv run --no-project --python 3.14.8 python language-data/tools/rebuild_language_data.py --download
 ```
 
 It runs every importer in order, copies each pack's import report into its catalog manifest,
 moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
 learner already installed stay trusted, and runs the contract tests. Then re-record the six
-suites above and review their diffs. [`apps/ios/Tools/README.md`](../../apps/ios/Tools/README.md)
-says what each tool builds, why the Python is pinned, and how to move to a newer source snapshot.
+suites above and review their diffs. Its README says what each tool builds, why the Python is
+pinned, how to move to a newer source snapshot, and which two tools the next rebuild first points
+at the new folders ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
 `zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
 at `https://cdn.zenbujapanese.com/frequency-packs/<packID>/<sourceSHA256>.<ext>`, then upload the
 verified source file with
-`CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 apps/ios/Tools/publish_frequency_pack_sources.py <file>…`.
+`CLOUDFLARE_ACCOUNT_ID=<SERP account> python3 language-data/tools/publish_frequency_pack_sources.py <file>…`.
 The tool matches files by size and SHA-256 and re-downloads each public URL to verify it. Never
 overwrite or delete an object: trusted historical manifests still reference it.
 
@@ -594,7 +572,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, and which entry stands for its equivalents |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Search's notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -606,7 +584,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   autorelease pool, since the Objective-C wrappers JavaScriptCore hands back otherwise pile up
   on a thread that never drains them, each pinning what it wraps. Don't release a context to
   give memory back: in testing, a context dropped after a broad search kept its whole heap, and
-  memory climbed with every such search.
+  memory climbed with every such search. Contexts are made one at a time (`contextCreation`): a
+  link that launched the app made the lookup's while the warm-up made another, and JavaScriptCore
+  crashed building both.
 - **Calls settle at once.** Every read is synchronous, so a call settles before `begin` returns
   and nothing waits on a callback; `begin` and `outcome` are two calls into the engine because
   JavaScriptCore runs a promise's reactions only when the outermost call returns.
@@ -752,62 +732,10 @@ dictionaries are in [`frequency.md`](frequency.md).
 
 ## Local stores
 
-Known words (`WordKnowledge.swift`) and word lists (`WordLists.swift`) each keep one versioned
-JSON file through `LocalJSONFile`, loaded once off the main actor and rewritten in full, with
-dates in milliseconds since 1970. `LocalFileWriteQueue` runs the load and then each write in
-order, so a write never races the load. A file this version can't read in full is copied aside
-(`UnreadableCopy`) before its readable records replace it, and records decode one at a time
-(`LossyDecodable`), so one bad record doesn't lose the rest. A file from a newer version, or one
-that can't be read at launch (before the device's first unlock), is never written over; the store
-is read-only instead.
-
-The stores in `UserDefaults` that hold records, Player's Recent (`WatchHistory`), word notes
-(`WordNoteStorage`, under `lookup.word-notes.v4`), and the profile (`UserProfile`), and the Media
-Library's `index.json` (`EncounterMediaStorage`) follow the same rule without a version: what
-doesn't decode is copied aside, a value under `<key>.unreadable-<time>-<id>` or a file beside it
-(`UnreadableCopy`, which keeps the copy it just made and the newest 2 before it, and makes no
-copy of bytes a copy already holds; a value that isn't data at all is kept aside the same way,
-`storedData(forKey:)`), and the store carries on, still writable, from the records
-it could read (each video, note, and Media Library record; the profile is one record, so it
-starts empty). A Media Library index that can't be opened or copied aside is neither read nor
-written until it can be. Word notes are saved one note at a time (`WordNoteStorage.save`), so two
-pages open on one word, in two windows on iPad or the Mac, can't drop each other's new notes, and
-a page saves a note only when its text changed while it was being edited (when both pages change
-the same note, the last save wins); likewise Profile saves a field only when its
-text changed while it had focus, shows the newest saved value whenever the field doesn't have
-focus or is left unchanged, and keeps a rejected email as typed until it's focused again
-(`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write over each other.
-
-The Media Library deletes only images the learner deleted. When a kept copy of the index names
-the photo, or a copy can't be read, `deleteImage` records its ID and when in
-`deferred-deletions.json` (`DeferredImageDeletions`), as it does an image it couldn't remove.
-At most once a day, after the index reads (for a word's photos, the Media Library, or
-`deleteImagesDue`, which `AppLifecycle` calls when the app becomes active; on the Mac that's
-seldom, since the app stays active while any window is in front), `retryDeferredDeletions` drops
-the IDs the index names
-again, by a media record or an encounter, without deleting their images, and deletes each other
-recorded image that no kept copy names, or that has waited 30 days (`longestWait`) whatever a
-kept copy names, so a deleted photo is gone within 30 days (the
-[Privacy Policy](../../apps/web/docs/product/privacy.md) keeps data until it's deleted in the
-app). It does nothing while a kept copy can't be read, and writes the list only when
-it changed. `save` takes a photo saved again off the list once the index is written. A kept copy
-or a damaged list names an ID only as a whole run of 64 lowercase hex digits in its bytes
-(`DeferredImageDeletions.mediaIDs`), and a list's names that aren't such an ID are dropped as it
-loads, so no name reaches a file outside the folder. Only a missing list reads as empty: a damaged one is copied
-aside and its IDs recovered, dated again (so their 30 days start over), and one that can't be read or written records and
-retries nothing until the next launch, so a photo deleted then keeps its image, and its ID is
-logged. The store takes its copy step as `keepCopy` and its clock as `now`, so
-`EncounterMediaStorageTests` and `DeferredImageDeletionsTests` can make a copy fail and move the
-days on.
-
-Both files are at version 2, which added kanji; a version 1 app would read kanji as words, so it
-opens a version 2 file read-only. A word is keyed by its Language Reference ID and a kanji by
-`kanji:` and the character (`SavedItem.storedID`), which can't collide with the hexadecimal ID.
-Marking a word unknown keeps its record, so a later sync can tell a removal from no status. List
-records are shaped to become database rows, and a membership keeps its headword so the word can
-still be found if its entry's ID changes. Each store reports a learner's change to the account
-sync (`changeObserver`), and takes the account's changes through `applySynced`, which reports
-nothing (Account and sync, below).
+How known words, lists, word notes, the Media Library, Player's Recent, and the profile are kept
+on the device, what each does with what it can't read, how a deleted photo's image goes, and how
+notes and photos an earlier version saved move to their word's Language Reference ID are in
+[`ios-local-stores.md`](ios-local-stores.md).
 
 ## Account and sync
 
@@ -859,11 +787,10 @@ but the profile, in TypeScript, and the service's tests prove that model against
 - **Tokens.** The signed session token (`set-auth-token`) is kept in the Keychain (service
   `com.zenbujapanese.dictionary.account`, readable after the first unlock, on this device only; on
   the Mac, the data protection keychain, as on iPhone and iPad, which only a build signed with a
-  team can use), and sent
-  only to `/v1/auth`. The 15-minute access token stays in memory, refreshed within a minute of its
-  `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs out and keeps its data.
-  The `URLSession` keeps no cookies. A session token in the Keychain without `account-sync.json`
-  (a reinstall) is deleted.
+  team can use), and sent only to `/v1/auth`. The 15-minute access token stays in memory, refreshed
+  within a minute of its `exp` or after a `401`; when `/v1/auth/token` answers `401`, the app signs
+  out and keeps its data. The `URLSession` keeps no cookies. A session token in the Keychain without
+  `account-sync.json` (a reinstall) is deleted.
 - **The queue.** `account-sync.json`, beside the stores, holds the account's ID and email, the
   queue, the cursor, the last sync, each entity's server version, and list words waiting for their
   list. A learner's change becomes a queued mutation with a new ID and, as `baseVersion`, the
@@ -996,8 +923,7 @@ What a person sets up first, once, in Apple Developer on the team that holds the
 - **Google:** the iOS OAuth client for `com.zenbujapanese.dictionary`
   ([`account-api.md`](account-api.md), Set up the server, step 3). Its client ID is Debug's
   `ZENBU_GOOGLE_IOS_CLIENT_ID` in `apps/ios/ZenbuJapanese.xcodeproj/project.pbxproj` and in the
-  service's `GOOGLE_CLIENT_IDS`, and Release's too. Without it the app offers Apple and a code
-  only.
+  service's `GOOGLE_CLIENT_IDS`, and Release's too. Without it the app offers Apple and a code only.
 
 ### The App Store record
 
@@ -1038,9 +964,9 @@ above), and say so in What's New.
 
 Before submitting a version, open it in App Store Connect and check **Version Release**: choose
 **Manually release this version** unless it should go live on approval.
-`asc versions create --release-type MANUAL` left 2.0.0 on automatic release, so it went live as
-soon as App Review approved it; `asc versions list --app 6800229215 --output json` shows each
-version's `releaseType`.
+`asc versions create --release-type MANUAL` left 2.0.0 on automatic release, so it went live as soon
+as App Review approved it; `asc versions list --app 6800229215 --output json` shows each version's
+`releaseType`.
 
 Check it on a device from TestFlight: signing in with Apple, Google, and a code reaches
 production's service, a change syncs to a second device, and deleting the account works.
@@ -1109,13 +1035,12 @@ YouTube can change: check the live page by hand.
   own form style right-aligns labels against the window's edge, centers the form in the page,
   and draws a `LabeledContent`'s label and its field's label side by side; the profile's fields
   hide their own labels for the same reason.
-- A page that hides its Back button for a button of its own (Image Search's close, a
-  conversation's Back, which asks before leaving) uses `.backButtonHidden()`, which does nothing
-  on the Mac. There, a page that hides Back also leaves every page pushed over it without one:
-  a kanji opened from Image Search's word sheet had no way back. So on the Mac Image Search has
-  the window's Back beside its close; both leave it, and its session is dropped when Translate's
-  stack empties. `pnpm verify layers` refuses `navigationBarBackButtonHidden` outside
-  `Platform/`.
+- A page that hides its Back button for a button of its own (Image Search's close, a conversation's
+  Back, which asks before leaving) uses `.backButtonHidden()`, which does nothing on the Mac. There,
+  a page that hides Back also leaves every page pushed over it without one: a kanji opened from
+  Image Search's word sheet had no way back. So on the Mac Image Search has the window's Back beside
+  its close; both leave it, and its session is dropped when Translate's stack empties.
+  `pnpm verify layers` refuses `navigationBarBackButtonHidden` outside `Platform/`.
 - The Mac's `PagedView` lays its pages out in an `HStack`. In a `LazyHStack`, a page whose
   content changed kept what it first drew: Image Search finished recognizing and still showed
   **Recognizing Japanese text…** on the Mac.
@@ -1172,10 +1097,11 @@ YouTube can change: check the live page by hand.
 
 Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`. The
 UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By and
-Filter, and the Handwriting and Radicals panel on an iPhone Simulator, an iPad Simulator, and the
-Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`), and Grade's steps there and in
-`GradeInputUITests` on iPhone only (iPad and Mac on hold); the lists below are what to look at
-beyond them. When changing Search results or frequency dictionaries, also check in the Simulator:
+Filter, the Handwriting and Radicals panel, and In your notes on an iPhone Simulator, an iPad
+Simulator, and the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`,
+`NotesInSearchUITests`), and Grade's steps there and in `GradeInputUITests` on iPhone only (iPad
+and Mac on hold); the lists below are what to look at beyond them. When changing Search results or
+frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
   dictionaries under **Account → Frequency Dictionaries** re-sorts the visible results without

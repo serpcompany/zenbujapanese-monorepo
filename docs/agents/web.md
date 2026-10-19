@@ -406,7 +406,7 @@ search results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
-The service's own tests replay the app-recorded suites (`apps/ios/LanguageData/Conformance/`)
+The service's own tests replay the app-recorded suites (`language-data/conformance/`)
 through the core on the real artifact: search retrieval, search results, example search, word
 detail, and kanji detail, every example field included (see
 [`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service
@@ -766,8 +766,8 @@ the app, which answers 404, or fails while the service fails. `worker.ts` bundle
 and what it imports (`api.ts`, `urls.ts`, `src/lib/edge-cache.ts`, and `src/lib/log.ts`) outside
 Next.js, so they import no Next.js module and no `@/` path, which a Biome rule in
 `apps/web/biome.json` enforces.
-`pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists none
-until #463 records retired entries.
+`pnpm dev` runs Next.js alone, so check retired URLs in `pnpm preview`. The service lists the
+entries its language-data release retires (`language-data/retired-entries.md`).
 
 ## Links that open the app
 

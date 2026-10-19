@@ -49,12 +49,21 @@ extension ZenbuUITestCase {
     return kind
   }
 
-  func addNote(_ note: String, in app: XCUIApplication) {
-    tap(find("word-detail.more-menu", in: app))
-    tap(menuChoice("Add Note", in: app))
-    type(note, into: waitFor(find("word-note.editor", in: app)))
+  func addNote(_ text: String, fromItsRow: Bool = false, in app: XCUIApplication) {
+    let editor = find("word-note.editor", in: app)
+    if fromItsRow {
+      tap(reveal(find("word-detail.add-note", in: app), in: app))
+    } else {
+      tap(find("word-detail.more-menu", in: app))
+      let choice = menuChoice("Add Note", in: app)
+      tap(choice)
+      if device == .mac, !appears(editor, within: Self.patience / 3), choice.exists {
+        app.typeKey(XCUIKeyboardKey.return.rawValue, modifierFlags: [])
+      }
+    }
+    type(text, into: waitFor(editor))
     tap(find("word-note.done", in: app))
-    waitFor(labeled(note, in: app))
+    waitFor(labeled(text, in: app))
   }
 
   func menuChoices(in app: XCUIApplication) -> XCUIElementQuery {
@@ -88,6 +97,21 @@ extension ZenbuUITestCase {
   static let besideTheSortedByText: CGFloat = 0.85
 
   static var countingDraws: [String: String] { ["ZENBU_COUNT_DRAWS": "1"] }
+
+  func earlierNotes(_ words: [String: [String: String]], headwords: [String: String] = [:]) throws
+    -> [String: String]
+  {
+    var notes: [String: [[String: String]]] = [:]
+    for (key, texts) in words {
+      notes[key] = texts.map { id, text in
+        var note = ["id": id, "text": text]
+        note["headword"] = headwords[key]
+        return note
+      }
+    }
+    let json = try JSONSerialization.data(withJSONObject: notes)
+    return ["ZENBU_EARLIER_NOTES": String(decoding: json, as: UTF8.self)]
+  }
 
   func draws(
     recordedBy identifier: String, labeled labels: Set<String>, in app: XCUIApplication,

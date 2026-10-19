@@ -12,7 +12,7 @@ import { loadTokenizer } from '../src/tokenizer'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../..')
 const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
-const path = join(repository, 'apps/ios/LanguageData/Conformance/tokenizer.json')
+const path = join(repository, 'language-data/conformance/tokenizer.json')
 const suite = JSON.parse(readFileSync(path, 'utf8')) as {
   artifacts: { name: string }[]
   sample: { pieces: string[]; texts: number; seed: number }

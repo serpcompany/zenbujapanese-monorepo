@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import ranking_contract
 import release_build
 import release_inputs
+import release_manifest
 from refusal import Refusal
 
 
@@ -60,7 +61,7 @@ SEARCH_INDEX = {
 TOOLS = {key: f"{i}" * 64 for i, key in enumerate(ranking_contract.TOOL_KEYS)}
 
 
-def language_database() -> bytes:
+def language_database(entries: dict[int, tuple[str, str]] | None = None) -> bytes:
     metadata = {
         "dictionary_ranking_policy": "dictionary-best-match-v1",
         "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
@@ -77,10 +78,11 @@ def language_database() -> bytes:
                 for k, v in metadata.items()
             ],
             "CREATE TABLE entries (id BLOB PRIMARY KEY, source_identity TEXT, "
-            "source_record_id INTEGER, semantic_fingerprint BLOB)",
+            "source_record_id INTEGER, headword TEXT, reading TEXT, semantic_fingerprint BLOB)",
             *[
-                f"INSERT INTO entries VALUES (x'{i:02x}', 'edrdg.jmdict', {seq}, x'{min(i, 1):02x}')"
-                for i, seq in enumerate(Scratch.ENT_SEQS)
+                f"INSERT INTO entries VALUES (x'{i:02x}', 'edrdg.jmdict', {seq}, "
+                f"{sql_text(headword)}, {sql_text(reading)}, x'{min(i, 1):02x}')"
+                for i, (seq, (headword, reading)) in enumerate((entries or Scratch.ENTRIES).items())
             ],
             "CREATE TABLE forms (form TEXT)",
             "INSERT INTO forms VALUES ('a'), ('b')",
@@ -116,8 +118,23 @@ def pack_database(language_sha: str, mapping_sha: str) -> bytes:
     )
 
 
+DOCKERFILE = """FROM node AS build
+COPY service/Dockerfile ./
+FROM node
+COPY --from=build /out /service
+COPY data/res/Language.sqlite3 \\
+  data/res/Pack.sqlite3 \\
+  data/res/Elements.json \\
+  /service/resources/
+COPY --chown=node data/res/Model /service/resources/Model
+COPY language-data/release.json /service/language-data/
+"""
+
+
 class Scratch:
-    ENT_SEQS = [1000220, 1000000, 2830705]
+    ENTRIES = {1000220: ("食べる", "たべる"), 1000000: ("ヽ", "くりかえし"), 2830705: ("生", "なま")}
+    ENT_SEQS = list(ENTRIES)
+    RETIRED = "data/derived/RetiredEntries.json"
 
     def __init__(self, root: Path):
         self.root = root
@@ -185,12 +202,25 @@ class Scratch:
                     "artifact": {"name": "Language.sqlite3", "sha256": self.language_sha},
                 }
             ).encode(),
+            "data/res/Model/weights.bin": b"not language data\n",
+            "data/res/Core/core.js": b"export const core = 1\n",
+            "packages/core/package.json": b'{"name": "core"}\n',
+            "packages/core/src/index.ts": b"export const core = 1\n",
+            "data/src/README.md": b"sources\n",
+            "service/Dockerfile": DOCKERFILE.encode(),
+            "language-data/release.json": b'{"release": "2026.10.1"}\n',
         }
         self.set_contract()
         self.set_catalog()
         self.set_suite_two()
+        self.set_retired()
         self.inputs = {
-            "roots": {"res": "data/res", "src": "data/src", "conf": "data/conf"},
+            "roots": {
+                "res": "data/res",
+                "src": "data/src",
+                "conf": "data/conf",
+                "derived": "data/derived",
+            },
             "files": [
                 {
                     "name": "Language.sqlite3",
@@ -212,10 +242,19 @@ class Scratch:
                 {"name": "Catalog.json", "path": "res/Catalog.json"},
                 {"name": "Mapping.sql", "path": "res/Mapping.sql"},
                 {"name": "Notices/NOTICE.txt", "path": "res/NOTICE.txt"},
+                {"name": "RetiredEntries.json", "path": "derived/RetiredEntries.json"},
             ],
             "frequency_pack_catalog": "res/Catalog.json",
             "source_archives": {"zenbu.wiki": "src/Wiki.tsv.xz"},
             "conformance": ["conf/one.json", "conf/two.json"],
+            "app_bundles": ["res"],
+            "images": ["service/Dockerfile"],
+            "not_released": [
+                {"path": "res/Model", "why": "a model, not language data"},
+                {"path": "res/Core", "why": "the core's bundle"},
+            ],
+            "retired_entries": "derived/RetiredEntries.json",
+            "core": {"source": "packages/core", "bundle": "res/Core/core.js"},
         }
         self.release = {"release": "2026.10.1"}
         self.root.mkdir(parents=True)
@@ -227,6 +266,32 @@ class Scratch:
 
     def set_contract(self) -> None:
         self.plain["data/res/Contract.json"] = json.dumps(self.contract).encode()
+
+    def set_retired(self) -> None:
+        self.plain[self.RETIRED] = release_manifest.manifest_bytes(
+            {
+                "schema": "zenbu.retired-entries.v1",
+                "language_data_sha256": self.language_sha,
+                "entries": [],
+            }
+        )
+
+    def set_language(self, language: bytes) -> None:
+        self.lfs["data/res/Language.sqlite3"] = language
+        self.language_sha = sha256(language)
+        self.contract.update(databaseSHA256=self.language_sha, databaseBytes=len(language))
+        self.set_contract()
+        for pack in self.catalog["packs"]:
+            pack["languageDataSHA256"] = self.language_sha
+        self.bundle_pack(self.language_sha)
+        self.plain["data/conf/one.json"] = json.dumps(
+            {"suite": "one", "artifact": {"name": "Language.sqlite3", "sha256": self.language_sha}}
+        ).encode()
+        self.set_suite_two()
+        self.set_retired()
+
+    def keep(self, path: str) -> None:
+        self.plain[path] = (self.root / path).read_bytes()
 
     def set_catalog(self) -> None:
         self.plain["data/res/Catalog.json"] = json.dumps(self.catalog).encode()
@@ -255,8 +320,10 @@ class Scratch:
     def drop(self, name: str) -> None:
         self.inputs["files"] = [f for f in self.inputs["files"] if f["name"] != name]
 
-    def git(self, *args: str) -> None:
-        subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True)
+    def git(self, *args: str) -> str:
+        return subprocess.run(
+            ["git", "-C", str(self.root), *args], check=True, capture_output=True, text=True
+        ).stdout.strip()
 
     def write(self, path: str, data: bytes) -> None:
         target = self.root / path
@@ -278,9 +345,17 @@ class Scratch:
         path.write_text(json.dumps(self.inputs))
         return path
 
+    def loaded_inputs(self) -> release_inputs.Inputs:
+        return release_inputs.load_inputs(self.inputs_path())
+
     def build(self, out: Path) -> dict:
-        inputs = release_inputs.load_inputs(self.inputs_path())
-        return release_build.build(self.root, inputs, self.release, out, log=quiet)
+        return release_build.build(
+            self.root, self.loaded_inputs(), self.release, out, log=quiet, releases=self.releases
+        )
+
+    @property
+    def releases(self) -> Path:
+        return self.root / "language-data" / "releases"
 
 
 class ScratchBuildTestCase(unittest.TestCase):

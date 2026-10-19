@@ -9,7 +9,7 @@ final class SavedItemNotes {
   private(set) var notes: [LearnerWordNote] = []
   private(set) var editingNoteID: String?
   var draft = ""
-  @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var item: SavedItem?
   @ObservationIgnored private var writtenBeforeLoading: [LearnerWordNote] = []
   @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
@@ -21,16 +21,17 @@ final class SavedItemNotes {
 
   var isEditing: Bool { editingNoteID != nil }
 
-  func load(_ noteID: WordNoteID) async {
-    let loaded = await store.load(noteID)
+  func load(_ item: SavedItem) async {
+    let loaded = await store.load(item.id)
     guard !Task.isCancelled else { return }
-    let hadLoaded = self.noteID != nil
-    self.noteID = noteID
+    let hadLoaded = self.item != nil
+    self.item = item
     notes = loaded
     guard hadLoaded else {
-      for note in writtenBeforeLoading {
+      for written in writtenBeforeLoading {
+        let note = written.on(item.headword, reading: item.reading)
         notes.apply(note)
-        save(note, to: noteID)
+        save(note, to: item.id)
       }
       writtenBeforeLoading = []
       return
@@ -63,21 +64,22 @@ final class SavedItemNotes {
   private func saveDraft(of editingNoteID: String) {
     let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
     guard trimmed(draft) != trimmed(textWhenEditingBegan) else { return }
-    let note = LearnerWordNote(id: editingNoteID, text: draft)
+    let note = LearnerWordNote(
+      id: editingNoteID, text: draft, headword: item?.headword, reading: item?.reading)
     notes.apply(note)
-    guard let noteID else {
+    guard let item else {
       writtenBeforeLoading.append(note)
       return
     }
-    save(note, to: noteID)
+    save(note, to: item.id)
   }
 
-  private func save(_ note: LearnerWordNote, to noteID: WordNoteID) {
+  private func save(_ note: LearnerWordNote, to itemID: SavedItemID) {
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(note, noteID)
+      await store.save(note, itemID)
     }
   }
 }
@@ -186,7 +188,7 @@ extension View {
   func savedItemActions(
     for item: SavedItem,
     identifierPrefix: String,
-    shareText: String,
+    share: SharedPage,
     notes: SavedItemNotes,
     photos: SavedItemPhotos,
     showsListPicker: Binding<Bool>
@@ -197,10 +199,8 @@ extension View {
           .font(.body.weight(.semibold))
           .accessibilityIdentifier("word-note.done")
       } else {
-        ShareLink(item: shareText) {
-          Label("Share", systemImage: "square.and.arrow.up")
-        }
-        .accessibilityIdentifier("\(identifierPrefix).share")
+        ShareButton(page: share)
+          .accessibilityIdentifier("\(identifierPrefix).share")
         SavedItemMenu(
           item: item,
           identifierPrefix: identifierPrefix,
@@ -214,6 +214,39 @@ extension View {
     .sheet(isPresented: showsListPicker) {
       WordListPickerView(item: item)
     }
+  }
+}
+
+struct SharedPage: Hashable, Sendable {
+  let title: String
+  let text: String
+  let url: URL?
+}
+
+extension SharedPage {
+  init(word entry: DictionaryEntry, page: WordPage?) {
+    self.init(title: entry.headword, text: page?.shareText ?? entry.headword, url: page?.shareURL)
+  }
+
+  init(kanji character: KanjiCharacter, page: KanjiPage?) {
+    self.init(
+      title: character.rawValue, text: page?.shareText ?? character.rawValue, url: page?.shareURL)
+  }
+}
+
+private struct ShareButton: View {
+  let page: SharedPage
+
+  var body: some View {
+    if let url = page.url {
+      ShareLink(item: url, message: Text(page.text), preview: SharePreview(page.title)) { label }
+    } else {
+      ShareLink(item: page.text) { label }
+    }
+  }
+
+  private var label: some View {
+    Label("Share", systemImage: "square.and.arrow.up")
   }
 }
 
@@ -344,6 +377,7 @@ struct SavedItemNotesSection: View {
     TextField("Add Note", text: $notes.draft, axis: .vertical)
       .italic()
       .focused(editorFocused)
+      .focusedOnceTheClickIsHandled(editorFocused)
       .accessibilityIdentifier("word-note.editor")
   }
 }

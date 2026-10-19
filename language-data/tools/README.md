@@ -1,20 +1,35 @@
-# iOS data tools
+# Language-data tools
 
 The Python tools here build the app's bundled language data, in
-`apps/ios/Modules/Sources/SearchExperience/Resources/`, and the import reports beside it, in
-`apps/ios/LanguageData/Generated/`, from the pinned sources in `apps/ios/LanguageData/Sources/`
-([its README](../LanguageData/Sources/README.md)). The website's dictionary service reads the same
-files ([`dictionary-api.md`](../../../docs/agents/dictionary-api.md)).
-
-`TranslateReplay/` is a separate Swift package, not a data tool: it replays recorded iPhone audio
-through the Translate tab's recognizer on a Mac
-([`translate.md`](../../../docs/agents/translate.md), Recorded-audio check).
+`apps/ios/Modules/Sources/SearchExperience/Resources/`, and the import reports, in
+`language-data/generated/`, from the pinned sources in `language-data/sources/`
+([its README](../sources/README.md)). The website's dictionary service reads the same files
+([`dictionary-api.md`](../../docs/agents/dictionary-api.md)). The app's own tools stay in
+`apps/ios/Tools/`: `simulator.py` ([`verification.md`](../../docs/agents/verification.md)),
+`prepare_sudachi_core.py` ([`ios.md`](../../docs/agents/ios.md), Build and inspect), and the
+recorded-audio check, `TranslateReplay/` ([`translate.md`](../../docs/agents/translate.md)).
 
 ## Rebuild everything
 
 ```sh
-uv run --no-project --python 3.14.8 python apps/ios/Tools/rebuild_language_data.py --download
+uv run --no-project --python 3.14.8 python language-data/tools/rebuild_language_data.py --download
 ```
+
+The tools whose SHA-256 the data records moved here from `apps/ios/Tools/` unchanged, so those
+records stay true, and two of them still look for their inputs beside the old folder:
+`import_frequency_pack.py` for the mapping SQL (`RESOURCES`), and `build_jiten_frequency_packs.py`
+for every file it reads and writes. Neither takes those paths on the command line, so
+`rebuild_language_data.py` refuses to start, naming each missing path, until the next rebuild's
+pull request points them at `apps/ios/Modules/Sources/SearchExperience/Resources/`,
+`language-data/sources/`, and `language-data/generated/`. Each records its own SHA-256, so the edit
+belongs to that rebuild, which records the new ones and updates `tools_built_in_paths` in
+`rebuild_language_data.py` to match, or drops it once the tools take the paths as arguments
+([`tech-debt.md`](../../docs/tech-debt.md), Language data).
+
+A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
+app's old `LanguageData/Sources/` folder, which `apps/ios/.gitignore` still ignores so none is
+committed by mistake. Move them into `language-data/sources/` to use them rather than download
+them again.
 
 `rebuild_language_data.py` runs every importer in dependency order: the radicals, KANJIDIC2, kanji
 elements, and stroke diagrams; then `LanguageReferenceData.sqlite3` and its ranking contract; then
@@ -22,7 +37,7 @@ everything that pins that database's SHA-256: the example word index, compound p
 Wikipedia, JLPT, and Jiten packs, and the website's ranked lists. It copies each pack's import report into its manifest in
 `FrequencyPackCatalog.json`, moves a downloadable pack's previous manifest into
 `trustedHistoricalManifests` so packs a learner already installed stay trusted, and runs the
-contract tests in `apps/ios/Tools/tests/`. `--download` fetches the sources that are fixed upstream
+contract tests in `language-data/tools/tests/`. `--download` fetches the sources that are fixed upstream
 releases and too large to commit (UniDic 3.1.0, KanjiVG r20250816, and Kanjium at a pinned commit),
 checking each against its record.
 
@@ -34,7 +49,7 @@ same sources gives the same files on any Mac.
 The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so a rebuild must not
 change them: the script compares them with the catalog where the branch left `origin/main`. If one
 changes, it fails; run it again with `--jiten-sources <dir>` and publish them
-([`ios.md`](../../../docs/agents/ios.md), the frequency packs) before merging. Until the branch
+([`ios.md`](../../docs/agents/ios.md), the frequency packs) before merging. Until the branch
 merges, a rebuild still reports them, published or not. A new TUBELEX,
 Wikipedia, or JLPT source fails it too, until its manifest describes the source: `sourceSHA256`,
 `sourceBytes`, `sourceSnapshot`, `downloadURL` (for Wikipedia, published first), the corpus counts,
@@ -44,9 +59,9 @@ against an artifact (pack version, covered rows, token total, and policy version
 packs' artifacts; JLPT's smoke test comes from its report.
 
 After a rebuild, re-record the six conformance suites and review their diffs, then run
-`SearchExperienceTests` ([`ios.md`](../../../docs/agents/ios.md), Current verification boundary),
+`SearchExperienceTests` ([`ios.md`](../../docs/agents/ios.md), Current verification boundary),
 the dictionary service's checks with `ZENBU_REQUIRE_ARTIFACT=1`, and the language-data pipeline
-([`language-data/README.md`](../../../language-data/README.md)).
+([`language-data/README.md`](../README.md)).
 
 ## Refresh a source snapshot
 
@@ -61,10 +76,19 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
    Tatoeba's `aggregate_sha256` is the SHA-256 of its seven files' SHA-256s, each followed by LF.
 2. Delete the previous record and folder. The rebuild refuses a kind with two records, and
    replaces the previous snapshot's import report.
-3. Name the new records in `apps/ios/LanguageData/Sources/README.md` and, for EDRDG's files,
+3. Name the new records in `language-data/sources/README.md` and, for EDRDG's files,
    `EDRDG-ATTRIBUTION.md`, which ships in the language-data release. For a new JMdict, also update
    the evidence counts in `jmdict_entries.py` to the new export's.
-4. Rebuild everything, re-record the suites, and list in the pull request what changed for
+4. For a new JMdict, keep every existing entry's `note_identity`: the app moves the notes earlier
+   versions saved under it to their word (`docs/agents/ios-local-stores.md`), and
+   `test_note_identity_contract.py` fails on any changed value. The importer computes it from the
+   entry today, so it first has to write each entry the previous database has with that
+   database's value. Pin the test again once, after `ATTACH '<previous>.sqlite3' AS old`,
+   `SELECT count(*) FROM old.entries o JOIN entries e USING (id) WHERE e.note_identity <>
+   o.note_identity` answers 0, and list in the pull request the entries the new JMdict drops
+   (`SELECT o.id FROM old.entries o LEFT JOIN entries e USING (id) WHERE e.id IS NULL`), whose
+   notes go to Notes Without a Word.
+5. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
 ## Provenance
@@ -94,7 +118,9 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
 - `jmdict_normalization.py`: every JMdict part-of-speech entity code maps to stable app-owned
   category identifiers; the wording belongs to the app's part-of-speech formatter, so stored
   identifiers never carry display text. The retired description-substring labels are reproduced
-  only for durable-note identity, since saved notes are keyed by it; nothing displays them.
+  only for the note identity, which keyed notes and photos before Language Reference IDs did; the
+  app reads it to move those to their word (`docs/agents/ios-local-stores.md`), and nothing
+  displays them.
   Cross-references keep JMdict's form, optional reading, and optional target sense. A Language
   Reference ID is the SHA-256 of the source identity and record ID, so a provider's key is never
   exposed, and a note identity hashes an app-owned semantic signature, never provider coordinates.
@@ -148,12 +174,13 @@ so a lemma's reading names the word it counted even where JMdict files the spell
 readings; lemmas UniDic files under several readings, such as 家, get none. JMdict writes katakana
 words' readings in katakana and the rest in hiragana. A row gets a reading only where mapping V1
 can't place it, so no entry V1 ranks loses its rank or gets a worse one. The content digest is
-described in [`frequency.md`](../../../docs/agents/frequency.md), Trust.
+described in [`frequency.md`](../../docs/agents/frequency.md), Trust.
 
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at
 several levels keeps the easiest. Its mapping digest is each ID's 16 bytes, then its level as a
-64-bit big-endian integer, in ID order.
+64-bit big-endian integer, in ID order. Its defaults for `--record`, `--language-data`, and
+`--output` still name the old folders, so pass all three, as the rebuild does.
 
 **`build_jiten_frequency_packs.py`** builds the downloadable Jiten pack sources: a ZIP, with a fixed
 timestamp, of one JSON array of `[dictionary form, reading]` pairs in rank order. Each list's
@@ -169,12 +196,14 @@ pack's evidence must hash to the `mappingSHA256` its manifest pins, which the ap
 installs the pack, so the service ranks words exactly as the app does. The file sits in the app's
 `Resources` beside the other artifacts but `Package.swift` leaves it out of the app. The
 language-data release carries it, with Jiten's notice and Wikipedia's license
-([`language-data/README.md`](../../../language-data/README.md));
+([`language-data/README.md`](../README.md));
 `tests/test_ranked_lists_contract.py` checks it against the catalog and the language data.
 
 **`analyze_frequency_candidates.py`** (#376) and **`analyze_ordered_json_frequency_lists.py`**
-(#351) are the analyses behind the current packs' choice, recorded in their `Generated/` reports
-([`FREQUENCY_SOURCE_DECISIONS.md`](../LanguageData/FREQUENCY_SOURCE_DECISIONS.md)).
+(#351) are the analyses behind the current packs' choice, recorded in their `generated/` reports
+([`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md)). The #376 analysis reads the
+old folders, through `analyze_frequency_candidates.py`'s TUBELEX path and its plan's Jiten paths,
+so re-running it needs both pointed at `language-data/sources/` first.
 
 **`import_kanjivg.py`** encodes KanjiVG's stroke paths as numeric instructions: opcode 0 is
 move(x, y) and opcode 1 is cubic(control1, control2, end). r20250816 uses only the M, C, and S
@@ -194,11 +223,3 @@ nothing reads it.
 matches each file to manifests by byte count and SHA-256, never by name, uploads it to the key its
 manifest's `downloadURL` names, which contains its SHA-256, so objects are immutable and every
 trusted historical manifest stays downloadable, and then downloads each public URL to verify it.
-
-**`prepare_sudachi_core.py`** fills the Sudachi Core cache the app's build reads
-([`ios.md`](../../../docs/agents/ios.md), Build and inspect).
-
-**`simulator.py`** isn't a data tool either: it prints the UDID of the Simulator this checkout
-uses, making it when it's missing, and the checkout's build folder, and removes both when the
-work is finished ([`verification.md`](../../../docs/agents/verification.md), This checkout's
-Simulator and build folder).

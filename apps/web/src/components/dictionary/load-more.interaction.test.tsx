@@ -33,6 +33,7 @@ afterEach(() => {
   act(() => root.unmount())
   document.body.replaceChildren()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   scrollListIntoView = null
 })
 
@@ -77,5 +78,27 @@ describe('a paged list', () => {
     })
     expect(shown()).toEqual(Array.from({ length: 30 }, (_, index) => index))
     expect(container.textContent).not.toContain('Load more examples')
+  })
+
+  test('a page from another dictionary build says its examples were updated, and reloads', async () => {
+    vi.stubGlobal('fetch', async () => Response.json({ error: 'not found' }, { status: 404 }))
+    const reload = vi.fn()
+    vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, reload })
+    const initial = Array.from({ length: 25 }, (_, index) => example(index))
+    act(() => root.render(<ExampleList initial={initial} listed={30} path="/e.json?build=old" />))
+    const more = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Load more examples'
+    )
+    await act(async () => more?.click())
+    expect(container.textContent).toContain(
+      'These examples have been updated since the page loaded.'
+    )
+    expect(shown()).toHaveLength(25)
+    const reloadButton = [...container.querySelectorAll('button')].find(
+      button => button.textContent === 'Reload for more examples'
+    )
+    expect(reload).not.toHaveBeenCalled()
+    act(() => reloadButton?.click())
+    expect(reload).toHaveBeenCalledOnce()
   })
 })

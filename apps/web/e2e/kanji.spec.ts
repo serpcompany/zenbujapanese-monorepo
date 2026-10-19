@@ -63,6 +63,47 @@ test.describe('kanji details', () => {
     await expect(strokeOrder.getByRole('button', { name: 'Next stroke' })).toBeVisible()
   })
 
+  test('steps, plays, and pauses the strokes, from the first each time it opens', async ({
+    page
+  }) => {
+    await page.clock.install()
+    await page.goto(kanjiSearch)
+    await page.getByRole('button', { name: rows[0].row, exact: true }).click()
+    const show = page.getByRole('button', { name: 'Show stroke order for 要' })
+    await show.click()
+    const strokeOrder = page.getByRole('dialog', { name: 'Stroke Order' })
+    const position = strokeOrder.getByText(/^Stroke \d of 9$/)
+    const drawn = strokeOrder.getByText(/^\d strokes complete/)
+    const button = (name: string) => strokeOrder.getByRole('button', { name })
+    await expect(position).toHaveText('Stroke 1 of 9')
+
+    await button('Next stroke').click()
+    await page.clock.runFor(2_000)
+    await expect(drawn).toHaveText('1 strokes complete')
+    await expect(position).toHaveText('Stroke 2 of 9')
+    await button('Previous stroke').click()
+    await expect(drawn).toHaveText('0 strokes complete')
+    await expect(button('Previous stroke')).toBeDisabled()
+
+    await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1_000))
+    await button('Play stroke order').click()
+    await button('Pause stroke order').click()
+    await page.clock.runFor(10_000)
+    await expect(drawn).toHaveText('0 strokes complete')
+    await button('Play stroke order').click()
+    await page.clock.runFor(10_000)
+    await expect(drawn).toHaveText('9 strokes complete')
+    await expect(button('Next stroke')).toBeDisabled()
+    await expect(button('Play stroke order')).toBeVisible()
+
+    await page.clock.resume()
+    await page.keyboard.press('Escape')
+    await expect(strokeOrder).toHaveCount(0)
+    await show.click()
+    await expect(drawn).toHaveText('0 strokes complete')
+    await expect(position).toHaveText('Stroke 1 of 9')
+  })
+
   for (const { on, path } of rows) {
     test(`${on} credits KanjiVG and Kanjium for the kanji details`, async ({ page }) => {
       await page.goto(path)

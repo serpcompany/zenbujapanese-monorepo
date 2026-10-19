@@ -140,11 +140,11 @@ compatibility kanji).
 
 ### Results
 
-Japanese, English, and romaji searches show one **Results** list. Stronger matches come first;
-among equally good matches, the enabled frequency dictionaries decide the order, in the
-learner's priority order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a
-result the query did not match or lifts an incidental match above a direct one. English rows
-show the meaning that matched.
+Japanese, English, and romaji searches show one **Results** list. Stronger matches come first; among
+equally good matches, the enabled frequency dictionaries decide the order, in the learner's priority
+order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a result the query did
+not match or lifts an incidental match above a direct one. English rows show the meaning that
+matched. Matching notes follow ([Notes in Search](saved-data.md#notes-in-search)).
 
 Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
 `SearchResultOrderingTests`.
@@ -318,14 +318,20 @@ analysis as Image Search. Selecting a linked word continues into its normal dict
 Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
-meanings as text, and a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
+meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
+website gives it (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The
+link goes as a web link beside the text, on every device. With Zenbu it
+opens the word in Zenbu ([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), else the
+website. Beside Share is a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
 Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
 shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner
 marks it, and known words persist on the device, keyed by the dictionary entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
 without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what
-**Share** sends).
+**Share** sends: the text, and the link, which opens the same word again); UI
+`WordDetailUITests.testShareOffersTheWordsWebLink` (iPhone and iPad: a web link, titled with the
+word).
 
 **Add to List…** opens a sheet listing every word list, with a checkmark on the lists that
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
@@ -336,15 +342,8 @@ Notes names every list holding the word, each opening that list in Account, foll
 Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (the sheet, New List,
 the Lists section, and a list opening in Account); package `WordListsTests`.
 
-A learner can write notes for a word and associate photos with it. Notes and associated
-photos persist on the device. A note written while the page is still loading its examples is
-kept like any other. If saved notes can't be read, a copy is kept on the device rather
-than written over, and every note that can be read stays, on its word or any other
-([Saved data that can't be read](index.md#saved-data-that-cant-be-read)).
-
-Check: UI `WordDetailUITests.testANoteIsKeptOnTheWord` and
-`SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
-`WordNoteStorageTests` and `EncounterMediaStorageTests`.
+A learner can write notes for a word and associate photos with it, which stay on the word
+([Notes and photos](saved-data.md#notes-and-photos)).
 
 A kanji detail presents readings, meanings, stroke order, components, elements, and words that
 contain the kanji, in the core's order: an empty one is left out, but not Lists, Notes, or a listed
@@ -372,37 +371,20 @@ no JLPT level, including 172 jōyō kanji, such as 分, that no modern list give
 Check: package `KanjiStatTests`; the recorded `KanjiDetailConformanceTests`.
 
 A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
-kanji, its readings, and its meanings as text. The menu marks the kanji known, adds it to lists,
+kanji, its readings, and its meanings as text, with the link to the kanji's search on
+zenbujapanese.com, such as `https://zenbujapanese.com/dictionary/search/%E6%97%A5/` for 日, which
+the website opens with the kanji's details and Zenbu with its search. The website has no kanji
+pages, and shares a kanji at the same search; a compatibility kanji's is its normalized form's.
+Before the page has loaded, Share sends the kanji alone. The menu marks the kanji known, adds it to lists,
 and adds notes and photos, which work as they do for a word. Lists and Notes sections appear
 above the words containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji
 is saved as itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
 
-Check: package `SavedKanjiTests`; UI `SavedWordsUITests.testAKanjiIsMarkedKnownFromItsMenu`.
+Check: package `SavedKanjiTests`; `WordDetailShareTests` (the kanji's text and link, which
+searches the kanji again); UI `SavedWordsUITests.testAKanjiIsMarkedKnownFromItsMenu` and
+`WordDetailUITests.testShareOffersTheKanjisWebLink`.
 
 ## Links from zenbujapanese.com
 
-Tapping a zenbujapanese.com dictionary link in another app, such as Tomodachi's **Open in
-Zenbu**, opens it in Zenbu rather than the browser. From any tab, Translate included, Zenbu
-switches to the Search tab and closes an open word sheet. A running Translate conversation keeps
-going, and the bar above the tab bar returns to it. Then:
-
-- a word, `/dictionary/<slug>-<number>/` such as `/dictionary/見る-1259290/`, opens that word's
-  Word Detail on top of what Search was showing. The number is JMdict's entry number, which
-  decides the word whatever the slug says. A word the app's dictionary doesn't have searches the
-  slug's text instead, or returns to the Search screen when the URL has no slug;
-- a search, `/dictionary/search/<query>/`, returns to the Search screen and searches the query;
-- a kanji, `/dictionary/kanji/<kanji>/`, opens the detail of that exact character. The website
-  removed these pages and redirects them to the kanji's search, but the app has a kanji detail to
-  open; and
-- any other zenbujapanese.com URL returns to the Search screen.
-
-A word's old conjugation pages open the word, and a search's old Example Sentences page the search,
-as the website redirects them. iOS opens Zenbu only for the URLs the website's association file
-claims ([website product docs](../../../web/docs/product/dictionary.md#urls-seo-and-indexing));
-until the website has Zenbu's Apple team ID, links open the website.
-
-- Source: #568, part of #563.
-- Check: package `WebsiteLinkTests` (`apps/ios/Modules/Tests/SearchExperienceTests/WebsiteLinkTests.swift`)
-  for what each URL opens, against the bundled dictionary; core `detail/links.test.ts` for how
-  each URL reads, with the parser the website reads its own word URLs with. That iOS hands a
-  tapped link to Zenbu is by hand, on a device.
+A zenbujapanese.com dictionary link opens its word, kanji, or search in Zenbu, and **Share** sends
+such links: [Links from zenbujapanese.com](website-links.md).

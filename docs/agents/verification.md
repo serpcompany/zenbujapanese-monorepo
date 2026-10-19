@@ -22,7 +22,8 @@ The inner loop, by part:
 | The checks | `pnpm verify <checks> <paths>` runs some checks on some paths, such as `pnpm verify sizes,comments apps/web/src`. |
 | The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -only-testing:SearchExperienceTests/<Suite> test` |
 | The app's screens | The UI tests that cover the change: the `verify-app` skill. |
-| The iOS data tools | `python3 -m unittest discover -s apps/ios/Tools/tests -p '<test file>'` |
+| The language-data tools | `python3 -m unittest discover -s language-data/tools/tests -p '<test file>'` |
+| The app's Python tests (its project settings and Simulator script) | `python3 -m unittest discover -s apps/ios/Tools/tests -p '<test file>'` |
 
 - **Never use the finish gate as the inner loop.** The root `pnpm check` builds the site and runs
   every package's tests.

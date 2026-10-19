@@ -535,6 +535,128 @@
     return literalReplacements[value] ?? value;
   }
 
+  // src/results/notes.ts
+  var notesInSearchTitle = "In your notes";
+  var contextBeforeMatch = 20;
+  var excerptLength = 80;
+  var ellipsis = "…";
+  var separatorRun = /[\p{White_Space}\u{FEFF}]+/gu;
+  var separatorOnly = /^[\p{White_Space}\u{FEFF}]+$/u;
+  function foldedPieces(pieces, until = Number.POSITIVE_INFINITY) {
+    let text = "";
+    const piece = [];
+    let separator = -1;
+    for (let index = 0; index < pieces.length && text.length < until; index++) {
+      const folded = normalizeQuery(pieces[index]);
+      if (folded === "") {
+        if (text !== "" && separator < 0) separator = index;
+        continue;
+      }
+      if (separator >= 0) {
+        text += " ";
+        piece.push(separator);
+        separator = -1;
+      }
+      text += folded;
+      for (let unit = 0; unit < folded.length; unit++) piece.push(index);
+    }
+    return { text, piece };
+  }
+  var nothingMatched = { first: 0, end: 0 };
+  function piecesAt(byPiece, at, length2) {
+    return { first: byPiece.piece[at], end: byPiece.piece[at + length2 - 1] + 1 };
+  }
+  function matchedPieces(pieces, folded, query) {
+    const at = folded.indexOf(query);
+    const end = at + query.length;
+    const throughTheMatch = foldedPieces(pieces, end);
+    const lineUp = throughTheMatch.text.length >= end && folded.startsWith(throughTheMatch.text);
+    if (lineUp) return piecesAt(throughTheMatch, at, query.length);
+    const whole = foldedPieces(pieces);
+    const inWhole = whole.text.indexOf(query);
+    if (inWhole >= 0) return piecesAt(whole, inWhole, query.length);
+    return matchedWords(pieces, query);
+  }
+  function matchedWords(pieces, query) {
+    const words2 = [];
+    const starts = [];
+    let separates;
+    for (let index = 0; index < pieces.length; index++) {
+      const separator = separatorOnly.test(pieces[index]);
+      if (separator !== separates) {
+        words2.push("");
+        starts.push(index);
+        separates = separator;
+      }
+      words2[words2.length - 1] += pieces[index];
+    }
+    starts.push(pieces.length);
+    const byWord = foldedPieces(words2);
+    const at = byWord.text.indexOf(query);
+    if (at < 0) return nothingMatched;
+    const matched = piecesAt(byWord, at, query.length);
+    return { first: starts[matched.first], end: starts[matched.end] };
+  }
+  var spaced = (text) => text.replace(separatorRun, " ");
+  function startOfAWord(pieces, from, to) {
+    for (let index = from; index < to; index++) {
+      if (separatorOnly.test(pieces[index])) return index + 1;
+    }
+    return from;
+  }
+  function endOfAWord(pieces, from, to) {
+    for (let index = to - 1; index > from; index--) {
+      if (separatorOnly.test(pieces[index])) return index;
+    }
+    return to;
+  }
+  function noteExcerpt(pieces, matched) {
+    const { first, end } = matched;
+    const windowStart = Math.max(0, first - contextBeforeMatch);
+    const start = windowStart > 0 ? startOfAWord(pieces, windowStart, first) : 0;
+    const windowStop = Math.min(pieces.length, end + Math.max(0, excerptLength - (end - start)));
+    const stop = windowStop < pieces.length ? endOfAWord(pieces, end, windowStop) : windowStop;
+    const before = spaced(pieces.slice(start, first).join("")).trimStart();
+    const after = spaced(pieces.slice(end, stop).join("")).trimEnd();
+    return {
+      before: start > 0 ? ellipsis + before : before,
+      match: spaced(pieces.slice(first, end).join("")),
+      after: stop < pieces.length ? after + ellipsis : after
+    };
+  }
+  function closeness(folded, query) {
+    if (folded === query) return 0;
+    return folded.startsWith(query) ? 1 : 2;
+  }
+  function compareFound(lhs, rhs) {
+    return lhs.closeness - rhs.closeness || compareStrings(lhs.note.headword, rhs.note.headword) || compareStrings(lhs.note.reading, rhs.note.reading) || compareStrings(lhs.note.text, rhs.note.text) || compareStrings(lhs.note.key, rhs.note.key) || compareStrings(lhs.note.id, rhs.note.id);
+  }
+  function notesInSearch(request) {
+    const query = normalizeQuery(request.query);
+    if (query === "") return null;
+    const found = [];
+    for (const note of request.notes) {
+      const folded = normalizeQuery(note.text);
+      if (!folded.includes(query)) continue;
+      const pieces = graphemes2(note.text);
+      const matched = matchedPieces(pieces, folded, query);
+      found.push({
+        note,
+        closeness: closeness(folded, query),
+        row: {
+          key: note.key,
+          id: note.id,
+          headword: note.headword,
+          reading: note.reading,
+          ...noteExcerpt(pieces, matched)
+        }
+      });
+    }
+    if (found.length === 0) return null;
+    found.sort(compareFound);
+    return { title: notesInSearchTitle, rows: found.map((each) => each.row) };
+  }
+
   // src/sources/credits.ts
   var creditClients = ["app", "website"];
   var everyClient = creditClients;
@@ -1390,6 +1512,12 @@
     }));
   }
 
+  // src/detail/slug.ts
+  function wordSlug(headword, reading) {
+    const slug = headword.normalize("NFC").replace(/[/?#%\\\s]+/gu, "-").replace(/^-+|-+$/g, "");
+    return slug || reading;
+  }
+
   // src/detail/frequency.ts
   function tierForRank(rank) {
     if (rank <= 1500) return "veryCommon";
@@ -1666,6 +1794,22 @@
 
   // src/detail/links.ts
   var websiteHost = "zenbujapanese.com";
+  var websiteOrigin = `https://${websiteHost}`;
+  function wordPath(entry) {
+    return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`;
+  }
+  function searchPath(query) {
+    return `/dictionary/search/${encodeURIComponent(query).replaceAll(".", "%2E")}/`;
+  }
+  function kanjiSearchPath(character) {
+    return searchPath(normalizeQuery(character));
+  }
+  function wordURL(entry) {
+    return `${websiteOrigin}${encodeURI(wordPath(entry))}`;
+  }
+  function kanjiSearchURL(character) {
+    return `${websiteOrigin}${kanjiSearchPath(character)}`;
+  }
   function decodeSegment(segment) {
     try {
       return decodeURIComponent(segment);
@@ -1933,6 +2077,59 @@
       primary: found,
       presented,
       isDiscovered
+    };
+  }
+
+  // src/search/composition.ts
+  var searchResultLimit = 60;
+  function noResults() {
+    return {
+      items: [],
+      leadingLexicalEntryCount: 0,
+      presentation: "ranked",
+      resolution: "direct",
+      readingRefinement: null,
+      usesPrimaryEntryExamples: false,
+      hasExactOrPrefixMatch: false
+    };
+  }
+  function resultItems(ranked) {
+    return ranked.map((entry, fallbackOrder) => ({
+      entry: entry.entry,
+      sourceOrder: 0,
+      matchRank: entry.presentationRank,
+      fallbackOrder,
+      matchedSummary: entry.matchedSummary
+    }));
+  }
+  function leadingExactFormCount(items) {
+    let count = 0;
+    for (const item of items) {
+      if (item.matchRank.kind !== "japanese") break;
+      if (item.matchRank.relation > FormRelation.readingExact) break;
+      count++;
+    }
+    return count;
+  }
+  function composing(sources, options) {
+    const limit = options.limit ?? searchResultLimit;
+    const items = [];
+    const seen = /* @__PURE__ */ new Set();
+    compose: for (const [sourceOrder, source] of sources.entries()) {
+      for (const item of source) {
+        if (seen.has(item.entry.id)) continue;
+        seen.add(item.entry.id);
+        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
+        if (items.length === limit) break compose;
+      }
+    }
+    return {
+      ...noResults(),
+      items,
+      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
+      resolution: options.resolution ?? "direct",
+      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
+      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
     };
   }
 
@@ -2258,59 +2455,6 @@
          AND ${readingRestrictionFilter}`,
       params
     );
-  }
-
-  // src/search/composition.ts
-  var searchResultLimit = 60;
-  function noResults() {
-    return {
-      items: [],
-      leadingLexicalEntryCount: 0,
-      presentation: "ranked",
-      resolution: "direct",
-      readingRefinement: null,
-      usesPrimaryEntryExamples: false,
-      hasExactOrPrefixMatch: false
-    };
-  }
-  function resultItems(ranked) {
-    return ranked.map((entry, fallbackOrder) => ({
-      entry: entry.entry,
-      sourceOrder: 0,
-      matchRank: entry.presentationRank,
-      fallbackOrder,
-      matchedSummary: entry.matchedSummary
-    }));
-  }
-  function leadingExactFormCount(items) {
-    let count = 0;
-    for (const item of items) {
-      if (item.matchRank.kind !== "japanese") break;
-      if (item.matchRank.relation > FormRelation.readingExact) break;
-      count++;
-    }
-    return count;
-  }
-  function composing(sources, options) {
-    const limit = options.limit ?? searchResultLimit;
-    const items = [];
-    const seen = /* @__PURE__ */ new Set();
-    compose: for (const [sourceOrder, source] of sources.entries()) {
-      for (const item of source) {
-        if (seen.has(item.entry.id)) continue;
-        seen.add(item.entry.id);
-        items.push({ ...item, sourceOrder, fallbackOrder: items.length });
-        if (items.length === limit) break compose;
-      }
-    }
-    return {
-      ...noResults(),
-      items,
-      leadingLexicalEntryCount: Math.min(options.leadingLexicalEntryCount, items.length),
-      resolution: options.resolution ?? "direct",
-      usesPrimaryEntryExamples: options.usesPrimaryEntryExamples,
-      hasExactOrPrefixMatch: options.hasExactOrPrefixMatch ?? true
-    };
   }
 
   // src/search/deinflect.ts
@@ -2752,6 +2896,14 @@
 
   // src/embedded/lookup.ts
   var sameText = (left, right) => left.normalize("NFC") === right.normalize("NFC");
+  function onlyEntry(results, query) {
+    if (isASCII(query) || isKanjiCharacter(query) || results.presentation !== "ranked") return null;
+    const [first] = results.items;
+    const exact = leadingExactFormCount(results.items);
+    if (exact > 0) return exact === 1 ? first.entry.id : null;
+    const ofOneEntry = results.resolution === "deinflected" && results.leadingLexicalEntryCount === 1;
+    return ofOneEntry ? first.entry.id : null;
+  }
   function canonicalEntries(groups) {
     return groups.map((ids) => canonicalEntry(ids.map((id) => ({ id })))?.id ?? null);
   }
@@ -2814,6 +2966,13 @@
       );
       if (entry) return { kind: "word", id: entry.id };
       return page.slug === "" ? { kind: "home" } : { kind: "search", query: page.slug };
+    }
+    async lookUp(text, morphology) {
+      const query = normalizeQuery(text);
+      if (query === "") return { kind: "home" };
+      const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
+      const id = onlyEntry(results, query);
+      return id === null ? { kind: "search", query } : { kind: "word", id };
     }
     async found(query, word, morphology) {
       const { items } = await new DictionarySearch(this.searchDb, { morphology }).search(query);
@@ -4150,6 +4309,11 @@
 
   // src/embedded/presentation.ts
   var rememberedKanji = 4e3;
+  function wordPageURL(entry) {
+    if (entry.sourceIdentity !== jmdictSource) return null;
+    const { headword, reading } = entry;
+    return wordURL({ headword, reading, entSeq: Number(entry.sourceRecordID) });
+  }
   var EmbeddedPresentation = class {
     constructor(host) {
       this.host = host;
@@ -4265,7 +4429,8 @@
         frequency,
         related: detail.related,
         noExamples: noExamplesMessage,
-        shareText: detail.shareText
+        shareText: detail.shareText,
+        shareURL: wordPageURL(entry)
       };
     }
     wordPageWithoutContent(reading) {
@@ -4306,7 +4471,8 @@
         hasReference: kanji2 !== null,
         savedReading: savedKanjiReading(detail),
         stats: kanji2 ? detail.stats : [],
-        words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)]
+        words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)],
+        shareURL: kanjiSearchURL(character)
       };
     }
     candidateMeanings(candidates) {
@@ -5834,6 +6000,7 @@
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
+      lookUp: (text2, analyze) => lookup().lookUp(text2, { analyze }),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
@@ -5855,6 +6022,7 @@
       countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
+      notesInSearch: (request) => notesInSearch(JSON.parse(request)),
       ruby: (pair) => presentation().ruby(JSON.parse(pair)),
       wordPage: (entry) => presentation().wordPage(JSON.parse(entry)),
       wordPageWithoutContent: (reading) => presentation().wordPageWithoutContent(reading),

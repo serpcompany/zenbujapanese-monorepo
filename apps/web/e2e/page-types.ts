@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { appAreas } from '../src/lib/app-areas'
 import { sitePages } from '../src/lib/pages'
 import { siteMenus } from '../src/lib/site-menus'
@@ -35,18 +35,31 @@ const runningFiniteAnimations = (page: Page) =>
   )
 
 async function settle(page: Page) {
+  await expect(page.locator('[data-starting-style], [data-ending-style]')).toHaveCount(0)
   await expect.poll(() => runningFiniteAnimations(page)).toBe(0)
 }
 
 const clickBeforeHydrationIsLost = { timeout: 1_000 }
 const untilItTakes = { timeout: 15_000 }
 
-async function expand(page: Page, name: string) {
-  const button = page.getByRole('button', { name, exact: true })
+async function pressToExpand(button: Locator) {
   await expect(async () => {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
   }).toPass(untilItTakes)
+}
+
+async function expand(page: Page, name: string) {
+  await pressToExpand(page.getByRole('button', { name, exact: true }))
+  await settle(page)
+}
+
+async function expandMenuSection(page: Page, name: string) {
+  const menu = phoneMenu(page)
+  const button = menu.getByRole('button', { name, exact: true })
+  await pressToExpand(button)
+  await expect(menu.locator(`[id="${await button.getAttribute('aria-controls')}"]`)).toBeVisible()
+  await expect(menu.locator('[data-slot="accordion-content"]:visible')).toHaveCount(1)
   await settle(page)
 }
 
@@ -75,7 +88,7 @@ const phoneMenuViews: PageView[] = [
   ...siteMenus.map(({ label }) => ({
     name: `Phone menu, ${label}`,
     overlay: true,
-    show: (page: Page) => expand(page, label)
+    show: (page: Page) => expandMenuSection(page, label)
   }))
 ]
 

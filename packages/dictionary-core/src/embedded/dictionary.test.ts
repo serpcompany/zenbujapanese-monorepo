@@ -105,6 +105,32 @@ describe('the embedded dictionary', () => {
     expect(await route('/dictionary/日本-1582710/', 'example.com')).toEqual({ kind: 'home' })
   })
 
+  test('looks up Japanese written or read as one entry, or a form of one, as that word, and else searches', async () => {
+    const lookUp = (text: string, target = host()) => ask(target, 'lookUp', text)
+    expect(await lookUp(' 日本 ')).toEqual({ kind: 'word', id: 'a1' })
+    expect(await lookUp('にほん')).toEqual({ kind: 'word', id: 'a1' })
+    expect(await lookUp('日本語')).toEqual({ kind: 'word', id: 'b2' })
+    expect(await lookUp('ほんじ')).toEqual({ kind: 'search', query: 'ほんじ' })
+    expect(await lookUp('本')).toEqual({ kind: 'search', query: '本' })
+    expect(await lookUp(' \n')).toEqual({ kind: 'home' })
+    const twoReadAlike = fakeHost([...entries, { id: 'd4', headword: '二本', reading: 'にほん' }])
+    expect(await lookUp('にほん', twoReadAlike)).toEqual({ kind: 'search', query: 'にほん' })
+    const verbs = (...headwords: string[]) =>
+      fakeHost(
+        headwords.map((headword, index) => ({
+          id: `v${index}`,
+          headword,
+          reading: headword,
+          partsOfSpeech: ['ichidanVerb']
+        }))
+      )
+    expect(await lookUp('たべた', verbs('たべる'))).toEqual({ kind: 'word', id: 'v0' })
+    const english = begin(host(), 'lookUp', 'japan')
+    await settled(english)
+    english.analyzed('{"words":[]}')
+    expect(await settled(english)).toEqual({ value: { kind: 'search', query: 'japan' } })
+  })
+
   test('opens a related word by its entry, or by searching for how it is written', async () => {
     const related = (word: object) => ask(host(), 'relatedWord', JSON.stringify(word))
     const written = { query: '日本', headword: '日本語', reading: 'にほんご' }
@@ -236,6 +262,29 @@ describe('the embedded dictionary', () => {
       )
     expect(note('背水の陣')).toBe('"last stand; b; c"')
     expect(note('背水')).toBe('null')
+  })
+
+  test('answers at once the notes Search lists for a query, or nothing', () => {
+    const endpoint = embeddedEndpoint(host())
+    const notes = [
+      { key: 'a1', id: '1', text: 'to squish flat', headword: '潰す', reading: 'つぶす' }
+    ]
+    const asked = (query: string) => JSON.stringify({ query, notes })
+    expect(endpoint.answer('notesInSearch', asked('ＳＱＵＩＳＨ'))).toEqual({
+      title: 'In your notes',
+      rows: [
+        {
+          key: 'a1',
+          id: '1',
+          headword: '潰す',
+          reading: 'つぶす',
+          before: 'to ',
+          match: 'squish',
+          after: ' flat'
+        }
+      ]
+    })
+    expect(endpoint.answerJSON('notesInSearch', asked('mochi'))).toBe('null')
   })
 
   test('answers a client’s source credits at once, and refuses a client it does not know', () => {
