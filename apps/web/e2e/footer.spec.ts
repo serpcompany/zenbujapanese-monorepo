@@ -13,6 +13,8 @@ const footerIcons = (page: Page) =>
   page.getByRole('contentinfo').getByRole('link', { name: /^Zenbu Japanese on / })
 const socialsTrigger = (page: Page) =>
   page.getByRole('contentinfo').getByRole('button', { name: 'Socials, Zenbu Japanese elsewhere' })
+const socialsMenu = (page: Page) =>
+  page.getByRole('menu', { name: 'Socials, Zenbu Japanese elsewhere' })
 const footerLanguageTrigger = (page: Page) =>
   page.getByRole('contentinfo').getByRole('button', { name: 'EN, English, change language' })
 
@@ -106,7 +108,7 @@ test.describe('site footer', () => {
         `The page scrolls sideways at ${width}`
       ).toBeLessThanOrEqual(0)
     }
-    const menu = page.getByRole('menu', { name: 'Socials, Zenbu Japanese elsewhere' })
+    const menu = socialsMenu(page)
     await expect(async () => {
       if (!(await menu.isVisible())) await socialsTrigger(page).click()
       await expect(menu).toBeVisible({ timeout: 1_000 })
@@ -130,7 +132,7 @@ test.describe('site footer', () => {
   }) => {
     await page.setViewportSize({ width: 375, height: 740 })
     await page.goto('/')
-    const menu = page.getByRole('menu', { name: 'Socials, Zenbu Japanese elsewhere' })
+    const menu = socialsMenu(page)
     const lastLink = page
       .getByRole('contentinfo')
       .getByRole('link', { name: 'Affiliate Disclosure' })
