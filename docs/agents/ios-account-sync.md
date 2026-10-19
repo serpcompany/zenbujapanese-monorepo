@@ -204,8 +204,8 @@ failed page, the request size, `410` and full reads dropping only what the accou
 when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules (`FakeAccountService+Kept.swift` holds the six newer entities', with emptied
-photos and their `emptied` mark, the search key, the two kinds of `404`, pages, and `410` for a
-cursor from before what it forgot since the cursor's mark), so two installs can share one account: changes made while signed out going to
+photos and their `emptied` mark, the search key, the two kinds of `404`, pages, and `410` once it
+forgets above a cursor's floor, as the service does), so two installs can share one account: changes made while signed out going to
 the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a rejected

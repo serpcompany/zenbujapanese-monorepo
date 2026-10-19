@@ -110,13 +110,13 @@ final class FakeAccountService: @unchecked Sendable {
   private func sync(_ request: StubSyncRequest, for user: String) -> StubReply {
     let position = (request.cursor ?? "").split(separator: ".").compactMap { Int($0) }
     let after = position.first ?? 0
-    let mark = position.dropFirst().first ?? 0
-    let forgotten = forgottenThrough[user] ?? 0
-    if after > 0, forgotten > mark, after < forgotten {
+    let floor = position.dropFirst().first ?? after
+    if request.cursor != nil, forgottenThrough[user] ?? 0 > floor {
       invalidCursors += 1
       return .error(410, "invalid_cursor")
     }
     let results = request.mutations.map { apply($0, for: user) }
+    let nextFloor = request.cursor == nil ? sequence : max(floor, after)
     let pending = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
       .sorted { $0.value.sequence < $1.value.sequence }
     let page = pending.prefix(pageSize)
@@ -125,7 +125,7 @@ final class FakeAccountService: @unchecked Sendable {
     let ordered = page.filter { !isChild($0.key) } + page.filter { isChild($0.key) }
     return StubSync.answer(
       results: results, changes: ordered.map { syncedChange(key: $0.key, $0.value, of: user) },
-      cursor: "\(last).\(forgotten)", hasMore: pending.count > page.count,
+      cursor: "\(last).\(nextFloor)", hasMore: pending.count > page.count,
       searchKey: searchKey(of: user).hexString)
   }
 
