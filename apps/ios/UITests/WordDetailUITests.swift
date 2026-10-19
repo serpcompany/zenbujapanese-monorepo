@@ -181,6 +181,35 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(find("word-detail.screen", in: app))
   }
 
+  func testShareOffersTheWordsWebLink() throws {
+    try skipTheMacsSharingPicker()
+    let app = openJapan()
+    assertShareOffersAWebLink(titled: "日本", from: find("word-detail.share", in: app), in: app)
+  }
+
+  func testShareOffersTheKanjisWebLink() throws {
+    try skipTheMacsSharingPicker()
+    let app = openJapan()
+    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app))
+    waitFor(find("kanji-detail.strokes", in: app))
+    assertShareOffersAWebLink(titled: "日", from: find("kanji-detail.share", in: app), in: app)
+  }
+
+  private func skipTheMacsSharingPicker() throws {
+    try XCTSkipIf(
+      device == .mac,
+      "The Mac's sharing picker draws outside the app, where XCUITest can't see it "
+        + "(docs/agents/ios-website-links.md)")
+  }
+
+  private func assertShareOffersAWebLink(
+    titled title: String, from share: XCUIElement, in app: XCUIApplication
+  ) {
+    tap(share)
+    waitFor(app.cells["Add to Reading List"])
+    waitUntil(app.otherElements["LP.CaptionBar.TopCaption"], mentions: title)
+  }
+
   private func openJapan(_ environment: [String: String] = [:]) -> XCUIApplication {
     let app = launch(environment)
     search("japan", in: app)

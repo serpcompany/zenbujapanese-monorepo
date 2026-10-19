@@ -1512,6 +1512,12 @@
     }));
   }
 
+  // src/detail/slug.ts
+  function wordSlug(headword, reading) {
+    const slug = headword.normalize("NFC").replace(/[/?#%\\\s]+/gu, "-").replace(/^-+|-+$/g, "");
+    return slug || reading;
+  }
+
   // src/detail/frequency.ts
   function tierForRank(rank) {
     if (rank <= 1500) return "veryCommon";
@@ -1788,6 +1794,22 @@
 
   // src/detail/links.ts
   var websiteHost = "zenbujapanese.com";
+  var websiteOrigin = `https://${websiteHost}`;
+  function wordPath(entry) {
+    return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`;
+  }
+  function searchPath(query) {
+    return `/dictionary/search/${encodeURIComponent(query).replaceAll(".", "%2E")}/`;
+  }
+  function kanjiSearchPath(character) {
+    return searchPath(normalizeQuery(character));
+  }
+  function wordURL(entry) {
+    return `${websiteOrigin}${encodeURI(wordPath(entry))}`;
+  }
+  function kanjiSearchURL(character) {
+    return `${websiteOrigin}${kanjiSearchPath(character)}`;
+  }
   function decodeSegment(segment) {
     try {
       return decodeURIComponent(segment);
@@ -4287,6 +4309,11 @@
 
   // src/embedded/presentation.ts
   var rememberedKanji = 4e3;
+  function wordPageURL(entry) {
+    if (entry.sourceIdentity !== jmdictSource) return null;
+    const { headword, reading } = entry;
+    return wordURL({ headword, reading, entSeq: Number(entry.sourceRecordID) });
+  }
   var EmbeddedPresentation = class {
     constructor(host) {
       this.host = host;
@@ -4402,7 +4429,8 @@
         frequency,
         related: detail.related,
         noExamples: noExamplesMessage,
-        shareText: detail.shareText
+        shareText: detail.shareText,
+        shareURL: wordPageURL(entry)
       };
     }
     wordPageWithoutContent(reading) {
@@ -4443,7 +4471,8 @@
         hasReference: kanji2 !== null,
         savedReading: savedKanjiReading(detail),
         stats: kanji2 ? detail.stats : [],
-        words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)]
+        words: [...leading, ...detail.words.filter((word) => word.id !== request.leadingWord)],
+        shareURL: kanjiSearchURL(character)
       };
     }
     candidateMeanings(candidates) {

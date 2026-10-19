@@ -181,14 +181,14 @@ extension LanguageReferenceData {
     let relationships: [DictionaryRelationship] = try Self.decode(column: 11, statement: statement)
     let pitch: PitchAccent? = try Self.decodeIfPresent(column: 12, statement: statement)
     let compoundPitch: PitchAccent? = try Self.decodeIfPresent(column: 15, statement: statement)
+    let record = LanguageReferenceProvenance(
+      sourceIdentity: sqliteText(statement, 1),
+      sourceRecordID: sqliteText(statement, 2)
+    )
     return DictionaryEntry(
       id: LanguageReferenceID(rawValue: sqliteText(statement, 0)),
-      sourceProvenances: [
-        LanguageReferenceProvenance(
-          sourceIdentity: sqliteText(statement, 1),
-          sourceRecordID: sqliteText(statement, 2)
-        )
-      ],
+      sourceRecord: record,
+      sourceProvenances: [record],
       reading: sqliteText(statement, 4),
       headword: sqliteText(statement, 3),
       summary: sqliteText(statement, 5),

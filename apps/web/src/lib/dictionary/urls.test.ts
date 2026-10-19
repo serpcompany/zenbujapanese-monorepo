@@ -1,4 +1,6 @@
+import { kanjiSearchURL, wordURL } from '@zenbu/dictionary-core/detail/links'
 import { describe, expect, test } from 'vitest'
+import { productionOrigin } from '../origins'
 import { hasSearchPath, kanjiSearchPath, searchPath, wordPath, wordSlug } from './urls'
 
 describe('word URLs (ADR 0007)', () => {
@@ -42,5 +44,13 @@ describe('kanji links', () => {
   test('a kanji links to the search page of its normalized form', () => {
     expect(kanjiSearchPath('\u{FA45}')).toBe(kanjiSearchPath('海'))
     expect(kanjiSearchPath('\u{F91D}')).toBe(kanjiSearchPath('欄'))
+  })
+})
+
+describe('the links the app shares', () => {
+  test('are the canonical URLs production gives the pages', () => {
+    const needed = { headword: '要る', reading: 'いる', entSeq: 1546640 }
+    expect(wordURL(needed)).toBe(new URL(encodeURI(wordPath(needed)), productionOrigin).href)
+    expect(kanjiSearchURL('\u{FA45}')).toBe(new URL(kanjiSearchPath('海'), productionOrigin).href)
   })
 })
