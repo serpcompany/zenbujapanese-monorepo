@@ -44,7 +44,7 @@ enum SyncEntity {
   static let profile = "profile"
 
   static let firstSynced = [knownWord, list, listWord]
-  static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence]
+  static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence] + kept
 }
 
 struct SyncEntityKey: Codable, Hashable, Sendable {
@@ -72,7 +72,7 @@ struct SyncMutationPayload: Encodable, Sendable {
   let id: String
   let entity: String
   let operation: String
-  let entityId: String
+  let entityId: String?
   let baseVersion: Int
   let fields: [String: SyncFieldValue]?
 }
@@ -139,6 +139,7 @@ struct SyncChange: Decodable, Sendable {
     case watchedVideo(SyncedWatchedVideo)
     case bookmark(SyncedBookmark)
     case profile(SyncedProfile)
+    case kept(KeptValue)
     case gone
     case unsynced
   }
@@ -154,8 +155,9 @@ struct SyncChange: Decodable, Sendable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let entity = try container.decode(String.self, forKey: .entity)
+    let entityID = try container.decode(String.self, forKey: .entityId)
     key = SyncEntityKey(
-      entity: entity, entityID: try container.decode(String.self, forKey: .entityId))
+      entity: entity, entityID: entity == SyncEntity.profilePhoto ? "" : entityID)
     version = try container.decode(Int.self, forKey: .version)
     guard try container.decode(String.self, forKey: .operation) == "put" else {
       payload = .gone
@@ -175,7 +177,11 @@ struct SyncChange: Decodable, Sendable {
     case SyncEntity.profile:
       payload = .profile(try container.decode(SyncedProfile.self, forKey: .data))
     default:
-      payload = .unsynced
+      payload =
+        KeptValue(
+          entity: entity, entityID: entityID,
+          data: try container.decode(KeptData.self, forKey: .data)
+        ).map(Payload.kept) ?? .unsynced
     }
   }
 }

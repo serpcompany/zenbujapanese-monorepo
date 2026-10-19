@@ -140,6 +140,16 @@ struct AccountAPI: Sendable {
     )
   }
 
+  func uploadPhoto(_ photoID: String, data: Data, accessToken: String) async throws {
+    _ = try await send(
+      "PUT", "v1/photos/\(photoID)", body: data, contentType: "application/octet-stream",
+      bearer: accessToken)
+  }
+
+  func photo(_ photoID: String, accessToken: String) async throws -> Data {
+    try await send("GET", "v1/photos/\(photoID)", bearer: accessToken).0
+  }
+
   func profile(accessToken: String) async throws -> SyncedProfile {
     try decoded(SyncedProfile.self, from: await send("GET", "v1/me", bearer: accessToken))
   }
@@ -172,7 +182,8 @@ struct AccountAPI: Sendable {
   }
 
   private func send(
-    _ method: String, _ path: String, body: Data? = nil, bearer: String? = nil
+    _ method: String, _ path: String, body: Data? = nil,
+    contentType: String = "application/json", bearer: String? = nil
   ) async throws -> (Data, HTTPURLResponse) {
     var request = URLRequest(url: baseURL.appending(path: path))
     request.httpMethod = method
@@ -180,7 +191,7 @@ struct AccountAPI: Sendable {
     request.setValue(AccountServiceConfiguration.clientID, forHTTPHeaderField: "X-Zenbu-Client")
     if let bearer { request.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
     if let body {
-      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.setValue(contentType, forHTTPHeaderField: "Content-Type")
       request.httpBody = body
     }
     let data: Data

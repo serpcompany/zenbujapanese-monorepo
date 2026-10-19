@@ -14,30 +14,77 @@ struct RecentSearchStore: Sendable {
   )
 }
 
-private actor RecentSearchHistory {
+actor RecentSearchHistory {
   static let shared = RecentSearchHistory()
+  static let kept = 50
+  static let beforeTimesWereKept = Date(timeIntervalSince1970: 946_771_200)
 
-  private let defaults = UserDefaults.standard
+  private let defaults: UserDefaults
+  private let now: @Sendable () -> Date
   private let storageKey = "lookup.recent-searches.v1"
+  private let timesKey = "lookup.recent-search-times.v1"
+  nonisolated let relay = KeptChangeRelay()
+
+  init(defaults: UserDefaults = .standard, now: @escaping @Sendable () -> Date = Date.init) {
+    self.defaults = defaults
+    self.now = now
+  }
 
   func load() -> [SearchQuery] {
-    return (defaults.stringArray(forKey: storageKey) ?? []).map(SearchQuery.init)
+    (defaults.stringArray(forKey: storageKey) ?? []).map(SearchQuery.init)
   }
 
-  func record(_ query: SearchQuery) {
+  func record(_ query: SearchQuery) async {
     guard !query.isEmpty else { return }
-    var searches = defaults.stringArray(forKey: storageKey) ?? []
-    searches.removeAll { $0 == query.value }
-    searches.insert(query.value, at: 0)
-    defaults.set(Array(searches.prefix(50)), forKey: storageKey)
+    let search = KeptSearch(query: query.value, searchedAt: now())
+    write(placing(search, in: searches()))
+    await relay.post(KeptChanges.searched(search))
   }
 
-  func remove(_ query: SearchQuery) {
-    let searches = (defaults.stringArray(forKey: storageKey) ?? []).filter { $0 != query.value }
-    defaults.set(searches, forKey: storageKey)
+  func remove(_ query: SearchQuery) async {
+    let searches = searches()
+    guard searches.contains(where: { $0.query == query.value }) else { return }
+    write(searches.filter { $0.query != query.value })
+    await relay.post(KeptChanges.searchRemoved(query.value))
   }
 
-  func removeAll() {
-    defaults.removeObject(forKey: storageKey)
+  func removeAll() async {
+    let searches = searches()
+    write([])
+    for search in searches { await relay.post(KeptChanges.searchRemoved(search.query)) }
+  }
+
+  func searches() -> [KeptSearch] {
+    let times = defaults.dictionary(forKey: timesKey) as? [String: Date] ?? [:]
+    let queries = defaults.stringArray(forKey: storageKey) ?? []
+    return queries.enumerated().map { index, query in
+      KeptSearch(
+        query: query,
+        searchedAt: times[query] ?? Self.beforeTimesWereKept + TimeInterval(queries.count - index))
+    }
+  }
+
+  func applySynced(_ search: KeptSearch) {
+    write(placing(search, in: searches()))
+  }
+
+  func applySyncedRemoval(ofSearch id: String) {
+    write(searches().filter { KeptChanges.searchID($0.query) != id })
+  }
+
+  private func placing(_ search: KeptSearch, in searches: [KeptSearch]) -> [KeptSearch] {
+    let earlier = searches.first { $0.query == search.query }
+    let latest = max(search.searchedAt, earlier?.searchedAt ?? search.searchedAt)
+    let others = searches.filter { $0.query != search.query }
+    return Array(
+      (others + [KeptSearch(query: search.query, searchedAt: latest)])
+        .sorted { $0.searchedAt > $1.searchedAt }
+        .prefix(Self.kept))
+  }
+
+  private func write(_ searches: [KeptSearch]) {
+    defaults.set(searches.map(\.query), forKey: storageKey)
+    defaults.set(
+      Dictionary(searches.map { ($0.query, $0.searchedAt) }) { first, _ in first }, forKey: timesKey)
   }
 }

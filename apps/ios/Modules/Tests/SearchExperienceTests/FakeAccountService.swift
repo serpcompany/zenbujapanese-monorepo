@@ -3,14 +3,16 @@ import Foundation
 @testable import SearchExperience
 
 final class FakeAccountService: @unchecked Sendable {
-  private struct Entity {
+  struct Entity {
     var version: Int
     var data: [String: Any]?
     var sequence: Int
   }
 
-  private let lock = NSLock()
-  private var accounts: [String: [String: Entity]] = [:]
+  let lock = NSLock()
+  var accounts: [String: [String: Entity]] = [:]
+  var files: [String: [String: Data]] = [:]
+  var photosUnavailable = false
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
   private var sequence = 0
@@ -77,7 +79,9 @@ final class FakeAccountService: @unchecked Sendable {
       sessions[bearer(of: request)] = nil
       return .json(200, ["success": true])
     default:
-      return .error(404, "not_found")
+      guard request.path.hasPrefix("/v1/photos/") else { return .error(404, "not_found") }
+      guard let user = accessTokens[bearer(of: request)] else { return .error(401, "unauthorized") }
+      return photoFile(request, for: user)
     }
   }
 
@@ -91,14 +95,13 @@ final class FakeAccountService: @unchecked Sendable {
     let changes = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
       .sorted { $0.value.sequence < $1.value.sequence }
     let last = changes.last?.value.sequence ?? after
-    let ordered =
-      changes.filter { !$0.key.hasPrefix("listWord:") }
-      + changes.filter { $0.key.hasPrefix("listWord:") }
+    let isChild = { (key: String) in key.hasPrefix("listWord:") || key.hasPrefix("photoWord:") }
+    let ordered = changes.filter { !isChild($0.key) } + changes.filter { isChild($0.key) }
     return StubSync.answer(
       results: results, changes: ordered.map { change(key: $0.key, $0.value) }, cursor: "\(last)")
   }
 
-  private func change(key: String, _ entity: Entity) -> [String: Any] {
+  func change(key: String, _ entity: Entity) -> [String: Any] {
     let entityID = String(key.drop { $0 != ":" }.dropFirst())
     let kind = String(key.prefix { $0 != ":" })
     guard let data = entity.data else {
@@ -120,6 +123,7 @@ final class FakeAccountService: @unchecked Sendable {
 
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {
     if mutation.entity == "profile" { _ = profile(of: user) }
+    if SyncEntity.kept.contains(mutation.entity) { return applyKept(mutation, for: user) }
     let key = "\(mutation.entity):\(mutation.entityId)"
     let current = accounts[user]?[key]
     let version = current?.version ?? 0
@@ -248,7 +252,7 @@ final class FakeAccountService: @unchecked Sendable {
     }
   }
 
-  private static func json(_ value: SyncFieldValue) -> Any {
+  static func json(_ value: SyncFieldValue) -> Any {
     switch value {
     case .string(let text): text
     case .number(let number): number
@@ -258,7 +262,7 @@ final class FakeAccountService: @unchecked Sendable {
     }
   }
 
-  private func save(
+  func save(
     _ user: String, _ key: String, _ data: [String: Any]?, _ version: Int,
     _ applied: (Int) -> [String: Any]
   ) -> [String: Any] {

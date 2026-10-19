@@ -31,6 +31,32 @@ struct StubSyncRequest: Decodable, Sendable {
     let entityId: String
     let baseVersion: Int?
     let fields: [String: SyncFieldValue]?
+
+    private enum CodingKeys: String, CodingKey {
+      case id, entity, operation, entityId, baseVersion, fields
+    }
+
+    init(
+      id: String, entity: String, operation: String, entityId: String, baseVersion: Int?,
+      fields: [String: SyncFieldValue]?
+    ) {
+      self.id = id
+      self.entity = entity
+      self.operation = operation
+      self.entityId = entityId
+      self.baseVersion = baseVersion
+      self.fields = fields
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      id = try container.decode(String.self, forKey: .id)
+      entity = try container.decode(String.self, forKey: .entity)
+      operation = try container.decode(String.self, forKey: .operation)
+      entityId = try container.decodeIfPresent(String.self, forKey: .entityId) ?? ""
+      baseVersion = try container.decodeIfPresent(Int.self, forKey: .baseVersion)
+      fields = try container.decodeIfPresent([String: SyncFieldValue].self, forKey: .fields)
+    }
   }
 
   var cursor: String?

@@ -13,6 +13,7 @@ enum SavedItemChange: Sendable {
   case bookmarkAdded(SharedBookmark)
   case bookmarkRemoved(SharedBookmark)
   case profileEdited(ProfileFields, previous: ProfileFields)
+  case kept(KeptLocalChange)
 }
 
 struct KnownWordChange: Codable, Hashable, Sendable {
@@ -42,6 +43,7 @@ struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
   var baseVersion: Int
   let fields: [String: SyncFieldValue]?
   var undo: SyncUndo?
+  var startedFrom: String?
 
   func merging(_ later: QueuedSyncChange) -> QueuedSyncChange {
     QueuedSyncChange(
@@ -51,9 +53,12 @@ struct QueuedSyncChange: Codable, Hashable, Sendable, Identifiable {
 
   var payload: SyncMutationPayload {
     SyncMutationPayload(
-      id: id, entity: key.entity, operation: operation, entityId: key.entityID,
+      id: id, entity: key.entity, operation: operation,
+      entityId: key.entity == SyncEntity.profilePhoto ? nil : key.entityID,
       baseVersion: baseVersion, fields: fields)
   }
+
+  var needsFile: Bool { SyncEntity.needFiles.contains(key.entity) }
 }
 
 struct SignedInAccount: Codable, Hashable, Sendable {
@@ -69,6 +74,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case watchedVideo(WatchedVideo)
     case bookmark(SharedBookmark)
     case profile(ProfileFields)
+    case kept(KeptValue)
     case gone
   }
 
@@ -112,6 +118,8 @@ struct AccountCopy: Codable, Hashable, Sendable {
     case .profile(let profile):
       guard profile.id == change.key.entityID else { return nil }
       value = .profile(profile.fields)
+    case .kept(let kept):
+      value = .kept(kept)
     case .gone:
       value = .gone
     case .unsynced:
@@ -139,6 +147,8 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var syncedEntities = SyncEntity.uploaded
   var goneVideos: [String] = []
   var takesAccountProfile = false
+  var waitingFiles: [AccountCopy] = []
+  var heldPhotoWords: [AccountCopy] = []
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -164,6 +174,9 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     goneVideos = try container.decodeIfPresent([String].self, forKey: .goneVideos) ?? []
     takesAccountProfile =
       try container.decodeIfPresent(Bool.self, forKey: .takesAccountProfile) ?? false
+    waitingFiles = try container.decodeIfPresent([AccountCopy].self, forKey: .waitingFiles) ?? []
+    heldPhotoWords =
+      try container.decodeIfPresent([AccountCopy].self, forKey: .heldPhotoWords) ?? []
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }
@@ -185,7 +198,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   }
 
   mutating func enqueue(_ change: QueuedSyncChange) {
-    if change.key.entity == SyncEntity.watchedVideo {
+    if SyncEntity.replacedWhileUnsent.contains(change.key.entity) {
       return enqueueReplacingUnsent(change)
     }
     guard let start = signedOutQueueStart,
@@ -344,6 +357,10 @@ extension SavedItemChange {
       return Self.queued(
         state.profileKey, "update", state, fields: fields.syncFields,
         undo: .restoreProfile(previous))
+    case .kept(let change):
+      var queued = Self.queued(change.key, change.operation, state, fields: change.fields, undo: nil)
+      queued.startedFrom = change.startedFrom
+      return queued
     }
   }
 
@@ -351,7 +368,7 @@ extension SavedItemChange {
     let queued = queued(in: AccountSyncState())
     return QueuedSyncChange(
       id: queued.id, key: queued.key, operation: queued.operation, baseVersion: 0,
-      fields: queued.fields, undo: nil)
+      fields: queued.fields, undo: nil, startedFrom: queued.startedFrom)
   }
 
   private static func key(_ listID: UUID) -> SyncEntityKey {

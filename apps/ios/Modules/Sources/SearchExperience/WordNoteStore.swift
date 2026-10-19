@@ -39,6 +39,11 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   func on(_ headword: String, reading: String) -> LearnerWordNote {
     LearnerWordNote(id: id, text: text, headword: headword, reading: reading)
   }
+
+  func kept(on key: SavedItemID) -> KeptNote {
+    KeptNote(
+      id: id.lowercased(), item: key.rawValue, text: text, headword: headword, reading: reading)
+  }
 }
 
 struct NoteWithoutAWord: Identifiable, Hashable, Sendable {
@@ -81,6 +86,7 @@ actor WordNoteStorage {
   private let placing: SavedKeyLookup
   private var earlierNotesPlaced: Task<Void, Never>?
   private var keysWithoutAWord: Set<SavedItemID> = []
+  nonisolated let relay = KeptChangeRelay()
 
   init(defaults: UserDefaults = .standard, placing: SavedKeyLookup) {
     self.defaults = defaults
@@ -96,9 +102,42 @@ actor WordNoteStorage {
     await placeEarlierNotes()
     var stored = notes(under: Self.storageKey)
     var word = stored[id.rawValue] ?? []
+    let before = word.first { $0.id == note.id }
     word.apply(note)
     stored[id.rawValue] = word.isEmpty ? nil : word
     write(stored, under: Self.storageKey)
+    if let after = word.first(where: { $0.id == note.id }) {
+      guard after != before else { return }
+      await relay.post(
+        KeptChanges.noteWritten(after.kept(on: id), startedFrom: before?.text))
+    } else if before != nil {
+      await relay.post(KeptChanges.noteDeleted(note.id))
+    }
+  }
+
+  func keptNotes() async -> [KeptNote] {
+    await placeEarlierNotes()
+    return notes(under: Self.storageKey).sorted { $0.key < $1.key }
+      .flatMap { key, notes in notes.map { $0.kept(on: SavedItemID(rawValue: key)) } }
+  }
+
+  func applySynced(_ note: KeptNote) async {
+    await placeEarlierNotes()
+    var stored = withoutNote(note.id)
+    stored[note.item, default: []].append(
+      LearnerWordNote(id: note.id, text: note.text, headword: note.headword, reading: note.reading))
+    write(stored, under: Self.storageKey)
+  }
+
+  func applySyncedRemoval(ofNote id: String) async {
+    await placeEarlierNotes()
+    write(withoutNote(id), under: Self.storageKey)
+  }
+
+  private func withoutNote(_ id: String) -> [String: [LearnerWordNote]] {
+    notes(under: Self.storageKey)
+      .mapValues { $0.filter { $0.id.lowercased() != id.lowercased() } }
+      .filter { !$0.value.isEmpty }
   }
 
   func withoutAWord() async -> [NoteWithoutAWord] {

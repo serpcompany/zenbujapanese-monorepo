@@ -69,7 +69,12 @@ final class AccountFixture {
   private(set) var watchHistory: WatchHistory!
   private(set) var translations: ConversationHistory!
   private(set) var profile: UserProfile!
+  private(set) var notes: WordNoteStorage!
+  private(set) var media: EncounterMediaStorage!
+  private(set) var searches: RecentSearchHistory!
+  private(set) var settings: SyncedSettings!
   private(set) var account: ZenbuAccount!
+  lazy var defaults = UserDefaults(suiteName: defaultsSuite) ?? .standard
 
   var sync: AccountSync { account.sync }
 
@@ -87,20 +92,25 @@ final class AccountFixture {
     if account != nil { await settle() }
     wordKnowledge = WordKnowledge(fileURL: directory.appending(path: "word-knowledge.json"))
     wordLists = WordLists(fileURL: directory.appending(path: "word-lists.json"))
-    watchHistory = WatchHistory(
-      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, now: { [unowned self] in now })
+    watchHistory = WatchHistory(defaults: defaults, now: { [unowned self] in now })
     translations = ConversationHistory(
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
-    profile = UserProfile(
-      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard,
-      photoURL: directory.appending(path: "photo.jpg"))
+    profile = UserProfile(defaults: defaults, photoURL: directory.appending(path: "photo.jpg"))
+    notes = WordNoteStorage(
+      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, placing: SavedWords.lookup)
+    media = EncounterMediaStorage(
+      directory: directory.appending(path: "Encounter Media"), placing: SavedWords.lookup)
+    searches = RecentSearchHistory(defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard)
+    settings = SyncedSettings(defaults: defaults)
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(
         serviceURL: server.baseURL, googleClientID: googleClientID),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
-      profile: profile, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
+      profile: profile,
+      kept: KeptStores(notes: notes, media: media, searches: searches, settings: settings),
+      fileURL: directory.appending(path: "account-sync.json"), providers: providers,
       now: { [unowned self] in now }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
