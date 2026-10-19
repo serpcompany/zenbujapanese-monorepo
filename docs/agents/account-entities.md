@@ -119,7 +119,8 @@ and the email typed while signed out.
     again after it's forgotten starts past that version, so a change from before conflicts rather
     than applying, and a device whose cursor the account has since forgotten a deletion past is
     refused `410 invalid_cursor`: it reads everything again and drops the notes, photos, and words
-    it had from the account that didn't come. A read from no cursor is never refused for them.
+    it had from the account that didn't come. A read from no cursor is refused only for a deletion
+    made after it began and forgotten before it reached it.
 - **Photo word** (`photoWord`, `<photo>/<item>`): a word or kanji the photo is on, by the same rule
   as a list word (`add` always applies to a photo the account has, `unknown_photo` otherwise;
   `remove` only at its version), with at most 500 a photo (`photo_full`). A removed word keeps its

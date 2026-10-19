@@ -1,7 +1,7 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:crypto'
 
 const positionOnly = 1
-const withForgotten = 2
+const withFloor = 2
 const nonceBytes = 12
 const numberBytes = 8
 const tagBytes = 16
@@ -9,7 +9,7 @@ const cipher = 'aes-256-gcm'
 
 export interface Position {
   sequence: number
-  forgotten: number
+  floor: number
 }
 
 export interface Cursors {
@@ -29,7 +29,7 @@ export function searchKeys(secret: string): (userId: string) => string {
 const boundTo = (format: number, userId: string) =>
   Buffer.concat([Buffer.of(format), Buffer.from(userId)])
 
-const numbersIn = { [positionOnly]: 1, [withForgotten]: 2 } as const
+const numbersIn = { [positionOnly]: 1, [withFloor]: 2 } as const
 
 const lengthOf = (format: keyof typeof numbersIn) =>
   1 + nonceBytes + numbersIn[format] * numberBytes + tagBytes
@@ -41,26 +41,23 @@ function readNumber(bytes: Buffer, at: number): number | null {
 
 export function cursors(key: Buffer): Cursors {
   return {
-    encode(userId, { sequence, forgotten }) {
+    encode(userId, { sequence, floor }) {
       const nonce = randomBytes(nonceBytes)
       const sealing = createCipheriv(cipher, key, nonce, { authTagLength: tagBytes })
-      sealing.setAAD(boundTo(withForgotten, userId))
+      sealing.setAAD(boundTo(withFloor, userId))
       const numbers = Buffer.alloc(2 * numberBytes)
       numbers.writeBigUInt64BE(BigInt(sequence))
-      numbers.writeBigUInt64BE(BigInt(forgotten), numberBytes)
+      numbers.writeBigUInt64BE(BigInt(floor), numberBytes)
       const sealed = Buffer.concat([sealing.update(numbers), sealing.final()])
-      return Buffer.concat([
-        Buffer.of(withForgotten),
-        nonce,
-        sealed,
-        sealing.getAuthTag()
-      ]).toString('base64url')
+      return Buffer.concat([Buffer.of(withFloor), nonce, sealed, sealing.getAuthTag()]).toString(
+        'base64url'
+      )
     },
     decode(userId, cursor) {
       if (!/^[A-Za-z0-9_-]+$/.test(cursor)) return null
       const bytes = Buffer.from(cursor, 'base64url')
       const format = bytes[0]
-      if (format !== positionOnly && format !== withForgotten) return null
+      if (format !== positionOnly && format !== withFloor) return null
       if (bytes.length !== lengthOf(format)) return null
       const nonce = bytes.subarray(1, 1 + nonceBytes)
       const sealed = bytes.subarray(1 + nonceBytes, bytes.length - tagBytes)
@@ -70,8 +67,8 @@ export function cursors(key: Buffer): Cursors {
       try {
         const numbers = Buffer.concat([opening.update(sealed), opening.final()])
         const sequence = readNumber(numbers, 0)
-        const forgotten = format === withForgotten ? readNumber(numbers, numberBytes) : 0
-        return sequence === null || forgotten === null ? null : { sequence, forgotten }
+        const floor = format === withFloor ? readNumber(numbers, numberBytes) : sequence
+        return sequence === null || floor === null ? null : { sequence, floor }
       } catch {
         return null
       }

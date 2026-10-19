@@ -246,14 +246,14 @@ profile's). `PATCH /v1/me` and a sync mutation change the profile through the sa
   and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
   older service can answer a newer app.
-- **The cursor** is opaque: a journal position and the forgotten mark it was checked against
-  (`forgotten_versions`' highest sequence), encrypted and authenticated (AES-256-GCM) with a key
-  from `ACCOUNT_API_SECRET`, so a new secret refuses every cursor once; one from before marks reads
-  as marked 0, and a sync that reads nothing new answers the cursor it was sent. A cursor another
-  account was given, one past the journal's end (as after going back to an older database), or one
-  the account has since forgotten a deletion past, beyond its mark and position, is refused `410
-  invalid_cursor` before anything applies, and the client reads again from no cursor. Such a full
-  read is never refused for what was forgotten before it began or by its own changes.
+- **The cursor** is opaque: a journal position and a floor, sealed with AES-256-GCM under a key from
+  `ACCOUNT_API_SECRET`, so a new secret refuses every cursor once; one from before floors has its
+  position as its floor. A cursor another account was given, one past the journal's end (as after
+  going back to an older database), or one whose floor is below the highest sequence the account
+  forgot (`forgotten_versions`) is refused `410 invalid_cursor` before anything applies, and the
+  client reads again from no cursor. An answer's floor is, after a cursor, the higher of its floor
+  and its position; from no cursor, the journal head after the request's own changes. So a full
+  read is refused only if a deletion made after it began is forgotten before it's read.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Deleting an account
@@ -419,8 +419,8 @@ way and call the routes with their access tokens. They show:
   conflict, again on a retry; unknown entities and operations, and a reused ID, rejected while the
   rest apply; and a result forgotten after 30 days.
 - **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged, too-new,
-  or forgotten-past cursor refused before anything applies, once, and a full read never refused
-  (`sync-forgotten.test.ts`); request bounds; nested or control-character fields; and safe logs.
+  or forgotten-past cursor refused before anything applies, once, a full read refused only for a
+  deletion forgotten after it began (`sync-forgotten.test.ts`); request bounds; fields; safe logs.
 - **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.

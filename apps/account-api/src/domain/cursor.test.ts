@@ -2,24 +2,24 @@ import { describe, expect, test } from 'vitest'
 import { cursorKey, cursors } from './cursor'
 
 const ours = cursors(cursorKey('one secret'))
-const at = (sequence: number, forgotten = 0) => ({ sequence, forgotten })
+const at = (sequence: number, floor = 0) => ({ sequence, floor })
 
-const beforeMarks = 'AZlSRuTwTUf7rCCRLmP65_497F4EuQSrkWgFrj8BRMUj-cSaMg'
+const beforeFloors = 'AZlSRuTwTUf7rCCRLmP65_497F4EuQSrkWgFrj8BRMUj-cSaMg'
 
 describe('a sync cursor', () => {
-  test('comes back as the journal position and forgotten mark it was made from, for the same account', () => {
+  test('comes back as the journal position and floor it was made from, for the same account', () => {
     for (const sequence of [0, 1, 42, Number.MAX_SAFE_INTEGER]) {
-      for (const forgotten of [0, 7, Number.MAX_SAFE_INTEGER]) {
-        const cursor = ours.encode('user-a', at(sequence, forgotten))
+      for (const floor of [0, 7, Number.MAX_SAFE_INTEGER]) {
+        const cursor = ours.encode('user-a', at(sequence, floor))
         expect(cursor).toMatch(/^[A-Za-z0-9_-]{1,200}$/)
-        expect(ours.decode('user-a', cursor)).toEqual(at(sequence, forgotten))
+        expect(ours.decode('user-a', cursor)).toEqual(at(sequence, floor))
       }
     }
   })
 
-  test('still reads a cursor given before cursors carried a mark, as one marked 0', () => {
-    expect(ours.decode('user-a', beforeMarks)).toEqual(at(42))
-    expect(ours.decode('user-b', beforeMarks)).toBeNull()
+  test('still reads a cursor given before cursors carried a floor, as one whose floor is its position', () => {
+    expect(ours.decode('user-a', beforeFloors)).toEqual(at(42, 42))
+    expect(ours.decode('user-b', beforeFloors)).toBeNull()
   })
 
   test('hides the position it holds: two cursors for one position differ, and neither shows it', () => {
@@ -42,7 +42,7 @@ describe('a sync cursor', () => {
   })
 
   test('is refused when any byte of it changes', () => {
-    for (const cursor of [ours.encode('user-a', at(42, 9)), beforeMarks]) {
+    for (const cursor of [ours.encode('user-a', at(42, 9)), beforeFloors]) {
       const bytes = Buffer.from(cursor, 'base64url')
       for (let index = 0; index < bytes.length; index++) {
         const changed = Buffer.from(bytes)

@@ -24,17 +24,33 @@ const remove = (id: string) => ({
   entityId: id,
   baseVersion: 1
 })
+const withIds = (...mutations: Record<string, unknown>[]) =>
+  mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
 const rows = (sql: string) => accounts.running.service.rows(sql)
 
-async function notesPastAPage(learner: Learner) {
-  for (let batch = 0; batch < 3; batch++) {
-    await accounts.results(learner, ...Array.from({ length: 40 }, () => write(randomUUID())))
+const deletedNotes = async (learner: Learner, count: number, journaled = false) => {
+  const ids = await rows(
+    `insert into word_notes (user_id, id, present, version) select '${learner.userId}', gen_random_uuid()::text, false, 2 from generate_series(1, ${count}) as n returning id`
+  )
+  if (!journaled) return
+  await rows(
+    `insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) values ${ids.map(row => `('${learner.userId}', 'wordNote', '${row.id}', 2, 'delete')`).join(', ')}`
+  )
+}
+
+const writeNotes = async (learner: Learner, count: number) => {
+  const ids = Array.from({ length: count }, () => randomUUID())
+  for (let at = 0; at < ids.length; at += 50) {
+    await accounts.results(learner, ...ids.slice(at, at + 50).map(write))
   }
+  return ids
+}
+
+async function notesPastAPage(learner: Learner) {
+  await writeNotes(learner, 120)
   const deletedEarly = randomUUID()
   await accounts.results(learner, write(deletedEarly), remove(deletedEarly))
-  await rows(
-    `insert into word_notes (user_id, id, present, version) select '${learner.userId}', gen_random_uuid()::text, false, 2 from generate_series(1, 1000) as n`
-  )
+  await deletedNotes(learner, 1000)
   return deletedEarly
 }
 
@@ -43,16 +59,45 @@ const forgetTheOldestDeletion = (learner: Learner) => {
   return accounts.results(learner, write(last), remove(last))
 }
 
-async function pagesFromNoCursor(learner: Learner, first: Record<string, unknown> = {}) {
+async function pagesFromNoCursor(
+  learner: Learner,
+  first: Record<string, unknown> = {},
+  betweenPages: (page: number) => Promise<Record<string, unknown>[]> = async () => []
+) {
   const statuses: number[] = []
   let request = first
-  for (;;) {
+  for (let page = 1; ; page++) {
     const answer = await accounts.sync(learner.token, request)
     statuses.push(answer.status)
     const body = answer.body as { cursor: string; hasMore: boolean } | null
     if (answer.status !== 200 || !body?.hasMore) return statuses
-    request = { cursor: body.cursor }
+    request = { cursor: body.cursor, mutations: withIds(...(await betweenPages(page))) }
   }
+}
+
+async function devicesWithNotes(learner: Learner, ids: string[]) {
+  const phone = new SyncClient(accounts, learner.token)
+  const pad = new SyncClient(accounts, learner.token)
+  for (const id of ids) phone.change('wordNote', 'write', id, noted)
+  await phone.sync()
+  await pad.sync()
+  return { phone, pad }
+}
+
+async function statusesOf(work: () => Promise<void>) {
+  const statuses: number[] = []
+  const sent = accounts.sync
+  const counted = vi.spyOn(accounts, 'sync').mockImplementation(async (token, body) => {
+    const answer = await sent(token, body)
+    statuses.push(answer.status)
+    return answer
+  })
+  try {
+    await work()
+  } finally {
+    counted.mockRestore()
+  }
+  return statuses
 }
 
 describe('a sync past what the account forgot', () => {
@@ -72,20 +117,56 @@ describe('a sync past what the account forgot', () => {
     await notesPastAPage(learner)
     const last = randomUUID()
     expect(
-      await pagesFromNoCursor(learner, {
-        mutations: [write(last), remove(last)].map(mutation => ({ id: randomUUID(), ...mutation }))
-      })
+      await pagesFromNoCursor(learner, { mutations: withIds(write(last), remove(last)) })
     ).toEqual([200, 200])
+  })
+
+  test("a full read whose later page's change forgets deletions older than the read isn't refused for them", async () => {
+    const learner = await accounts.learner('full-read-later-page-forgets@example.com')
+    const [mine] = await writeNotes(learner, 300)
+    await deletedNotes(learner, 1000, true)
+    const statuses = await pagesFromNoCursor(learner, {}, async page =>
+      page === 1 && mine ? [remove(mine)] : []
+    )
+    expect(statuses.every(status => status === 200)).toBe(true)
+    expect(statuses.length).toBeGreaterThan(2)
+  })
+
+  test('a full read is refused once a note it brought is deleted, then forgotten before the read reaches the deletion', async () => {
+    const learner = await accounts.learner('full-read-forgets-what-it-brought@example.com')
+    const [brought, ...rest] = await writeNotes(learner, 250)
+    const statuses = await pagesFromNoCursor(learner, {}, async page => {
+      if (page !== 1 || !brought) return []
+      await accounts.results(learner, remove(brought))
+      await deletedNotes(learner, 999)
+      return [remove(rest.at(-1) ?? '')]
+    })
+    expect(statuses).toEqual([200, 200, 410])
+  })
+
+  test('a device whose own deletion makes the account forget one past its cursor is refused once, then drops it', async () => {
+    const learner = await accounts.learner('own-deletion-forgets-past-it@example.com')
+    const [missed, mine] = [randomUUID(), randomUUID()]
+    const { phone, pad } = await devicesWithNotes(learner, [missed, mine])
+    phone.change('wordNote', 'delete', missed)
+    await phone.sync()
+    await deletedNotes(learner, 999)
+    pad.change('wordNote', 'delete', mine)
+    const statuses = await statusesOf(async () => {
+      await pad.sync()
+      await pad.sync()
+      await pad.sync()
+    })
+    expect(statuses.filter(status => status === 410)).toEqual([410])
+    expect(pad.dataOf('wordNote', missed)).toBeNull()
+    await phone.sync()
+    expect(pad.state()).toEqual(phone.state())
   })
 
   test('a device away while the account forgets a deletion past it is refused once, then reads everything and catches up', async () => {
     const learner = await accounts.learner('away-past-forgotten@example.com')
-    const phone = new SyncClient(accounts, learner.token)
-    const pad = new SyncClient(accounts, learner.token)
     const [kept, deleted] = [randomUUID(), randomUUID()]
-    for (const id of [kept, deleted]) phone.change('wordNote', 'write', id, noted)
-    await phone.sync()
-    await pad.sync()
+    const { phone, pad } = await devicesWithNotes(learner, [kept, deleted])
     const headBefore = Number(
       (
         await rows(
@@ -95,22 +176,14 @@ describe('a sync past what the account forgot', () => {
     )
     phone.change('wordNote', 'delete', deleted)
     await phone.sync()
-    await rows(
-      `insert into word_notes (user_id, id, present, version) select '${learner.userId}', gen_random_uuid()::text, false, 2 from generate_series(1, 1000) as n`
-    )
+    await deletedNotes(learner, 1000)
     await forgetTheOldestDeletion(learner)
-    const unmarked = (sequence: number) =>
-      accounts.cursors.encode(learner.userId, { sequence, forgotten: 0 })
-    expect((await accounts.sync(learner.token, { cursor: unmarked(headBefore) })).status).toBe(410)
-    const statuses: number[] = []
-    const sent = accounts.sync
-    const counted = vi.spyOn(accounts, 'sync').mockImplementation(async (token, body) => {
-      const answer = await sent(token, body)
-      statuses.push(answer.status)
-      return answer
-    })
-    await pad.sync()
-    counted.mockRestore()
+    const asBeforeFloors = (sequence: number) =>
+      accounts.cursors.encode(learner.userId, { sequence, floor: sequence })
+    expect(
+      (await accounts.sync(learner.token, { cursor: asBeforeFloors(headBefore) })).status
+    ).toBe(410)
+    const statuses = await statusesOf(() => pad.sync())
     expect(statuses.filter(status => status === 410)).toEqual([410])
     expect(pad.dataOf('wordNote', deleted)).toBeNull()
     expect(pad.state()).toEqual(phone.state())
