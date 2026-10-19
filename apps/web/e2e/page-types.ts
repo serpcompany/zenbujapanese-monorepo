@@ -37,6 +37,7 @@ const runningFiniteAnimations = (page: Page) =>
   )
 
 async function settle(page: Page) {
+  await expect(page.locator('[data-starting-style], [data-ending-style]')).toHaveCount(0)
   await expect.poll(() => runningFiniteAnimations(page)).toBe(0)
 }
 
@@ -49,6 +50,9 @@ async function expand(page: Page, name: string) {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
   }).toPass(untilItTakes)
+  const menu = phoneMenu(page)
+  await expect(menu.locator(`[id="${await button.getAttribute('aria-controls')}"]`)).toBeVisible()
+  await expect(menu.locator('[data-slot="accordion-content"]:visible')).toHaveCount(1)
   await settle(page)
 }
 
