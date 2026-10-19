@@ -55,6 +55,54 @@ enum SubscriptionAnswers {
     return fixture
   }
 
+  static let anothers = StubReply.error(409, "subscription_belongs_to_another_account")
+
+  static func noneButAnothers(_ request: StubRequest) -> StubReply {
+    request.method == "GET" ? .json(200, answer()) : anothers
+  }
+
+  @MainActor
+  static func signedIn(
+    holding purchases: [String],
+    subscription: @escaping @Sendable (StubRequest) -> StubReply = noneButAnothers
+  ) async throws -> AccountFixture {
+    let fixture = AccountFixture()
+    fixture.serve(subscription: subscription)
+    await fixture.launch()
+    fixture.store.holds(purchases)
+    try await fixture.signIn()
+    await fixture.account.subscriptionWork?.value
+    return fixture
+  }
+
+  @MainActor
+  static func holdingAnotherAccountsPurchase() async throws -> AccountFixture {
+    try await signedIn(holding: [FakeAppStore.signed(monthly, for: UUID())])
+  }
+
+  @MainActor
+  static func waitingForApproval() async throws -> AccountFixture {
+    let fixture = try await signedIn(answeringPurchases: .json(200, subscribed()))
+    fixture.store.willAnswer(.waitsForApproval)
+    await fixture.account.subscription.subscribe(to: monthly)
+    return fixture
+  }
+
+  @MainActor
+  static func standing(
+    on server: StubAccountServer, as signedInAs: @escaping @MainActor () -> String?,
+    announce: @escaping @MainActor (String) -> Void = { _ in }
+  ) async -> AccountSubscription {
+    let api = AccountAPI(baseURL: server.baseURL, session: server.session)
+    let subscription = AccountSubscription(
+      api: api, tokens: AccountTokens(api: api, storage: MemorySessionTokenStorage("s.signed")),
+      store: FakeAppStore(),
+      fileURL: FileManager.default.temporaryDirectory.appending(path: "\(UUID()).json"),
+      signedInAs: signedInAs, announce: announce)
+    await subscription.flush()
+    return subscription
+  }
+
   @MainActor
   static func signedIn(answeringPurchases purchases: StubReply, reading: StubReply? = nil)
     async throws -> AccountFixture

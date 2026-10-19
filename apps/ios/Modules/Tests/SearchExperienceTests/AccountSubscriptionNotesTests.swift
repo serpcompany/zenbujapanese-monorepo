@@ -9,10 +9,8 @@ struct AccountSubscriptionNotesTests {
   typealias Answers = SubscriptionAnswers
 
   @Test func letsAskToBuysNoteGoAfterADayOrWhenTheLearnerTriesAgain() async throws {
-    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
+    let fixture = try await Answers.waitingForApproval()
     let subscription = fixture.account.subscription
-    fixture.store.willAnswer(.waitsForApproval)
-    await subscription.subscribe(to: Answers.monthly)
     #expect(subscription.problem == .pendingApproval)
     fixture.now += AccountSubscription.approvalWaitsFor + 60
     #expect(subscription.problem == nil)
@@ -25,14 +23,7 @@ struct AccountSubscriptionNotesTests {
   }
 
   @Test func letsAnotherAccountsNoteGoOnceTheAppleAccountHasNoSubscription() async throws {
-    let fixture = AccountFixture()
-    let none = StubReply.json(200, Answers.answer())
-    let anothers = StubReply.error(409, "subscription_belongs_to_another_account")
-    fixture.serve(subscription: { $0.method == "GET" ? none : anothers })
-    await fixture.launch()
-    fixture.store.holds([FakeAppStore.signed(Answers.monthly, for: UUID())])
-    try await fixture.signIn()
-    await fixture.account.subscriptionWork?.value
+    let fixture = try await Answers.holdingAnotherAccountsPurchase()
     let subscription = fixture.account.subscription
     #expect(subscription.problem == .anotherAccount)
 
@@ -45,9 +36,7 @@ struct AccountSubscriptionNotesTests {
   }
 
   @Test func forgetsAKeptNoteOnSigningOutAcrossARelaunch() async throws {
-    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
-    fixture.store.willAnswer(.waitsForApproval)
-    await fixture.account.subscription.subscribe(to: Answers.monthly)
+    let fixture = try await Answers.waitingForApproval()
     await fixture.account.signOut()
     await fixture.account.subscription.flush()
 
@@ -68,13 +57,9 @@ struct AccountSubscriptionNotesTests {
     await waiting.account.subscription.loadOffers()
     #expect(waiting.account.subscription.problem == .paymentPending)
 
-    let fixture = AccountFixture()
     let none = StubReply.json(200, Answers.answer())
-    fixture.serve(subscription: { _ in none })
-    await fixture.launch()
-    fixture.store.holds([FakeAppStore.signed(Answers.monthly, for: UUID())])
-    try await fixture.signIn()
-    await fixture.account.subscriptionWork?.value
+    let fixture = try await Answers.signedIn(
+      holding: [FakeAppStore.signed(Answers.monthly, for: UUID())], subscription: { _ in none })
     await fixture.account.subscription.loadOffers()
     #expect(fixture.account.subscription.problem == .appleAccountSubscribed)
     #expect(fixture.account.subscription.offers.isEmpty)
@@ -86,14 +71,9 @@ struct AccountSubscriptionNotesTests {
     server.respond { request in
       request.route == "GET /v1/auth/token" ? .json(200, ["token": token]) : .offline
     }
-    let api = AccountAPI(baseURL: server.baseURL, session: server.session)
     let said = Said()
-    let subscription = AccountSubscription(
-      api: api, tokens: AccountTokens(api: api, storage: MemorySessionTokenStorage("s.signed")),
-      store: FakeAppStore(),
-      fileURL: FileManager.default.temporaryDirectory.appending(path: "\(UUID()).json"),
-      signedInAs: { "learner-1" }, announce: { said.say($0) })
-    await subscription.flush()
+    let subscription = await Answers.standing(
+      on: server, as: { "learner-1" }, announce: { said.say($0) })
 
     await subscription.refresh()
     await subscription.refresh()
@@ -102,17 +82,10 @@ struct AccountSubscriptionNotesTests {
   }
 
   @Test func sendsTheAppleAccountsPurchaseAgainForTheNextAccountSignedIn() async throws {
-    let fixture = AccountFixture()
-    let none = StubReply.json(200, Answers.answer())
-    let anothers = StubReply.error(409, "subscription_belongs_to_another_account")
-    fixture.serve(subscription: { $0.method == "GET" ? none : anothers })
-    await fixture.launch()
-    fixture.store.holds([FakeAppStore.signed(Answers.monthly, for: UUID())])
-    try await fixture.signIn()
-    await fixture.account.subscriptionWork?.value
+    let fixture = try await Answers.holdingAnotherAccountsPurchase()
     await fixture.account.signOut()
 
-    fixture.serve(subscription: { $0.method == "GET" ? none : anothers }, signsInAs: "learner-2")
+    fixture.serve(subscription: Answers.noneButAnothers, signsInAs: "learner-2")
     try await fixture.signIn(as: "second@example.com")
     await fixture.account.subscriptionWork?.value
 

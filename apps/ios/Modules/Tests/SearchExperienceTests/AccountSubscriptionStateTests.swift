@@ -41,9 +41,7 @@ struct AccountSubscriptionStateTests {
   }
 
   @Test func keepsAskToBuysNoteAcrossARelaunch() async throws {
-    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
-    fixture.store.willAnswer(.waitsForApproval)
-    await fixture.account.subscription.subscribe(to: Answers.monthly)
+    let fixture = try await Answers.waitingForApproval()
     await fixture.account.subscription.flush()
 
     await fixture.launch()
@@ -66,13 +64,7 @@ struct AccountSubscriptionStateTests {
       default: return .error(404, "not_found")
       }
     }
-    let api = AccountAPI(baseURL: server.baseURL, session: server.session)
-    let subscription = AccountSubscription(
-      api: api, tokens: AccountTokens(api: api, storage: MemorySessionTokenStorage("s.signed")),
-      store: FakeAppStore(),
-      fileURL: FileManager.default.temporaryDirectory.appending(path: "\(UUID()).json"),
-      signedInAs: { signedIn.current })
-    await subscription.flush()
+    let subscription = await Answers.standing(on: server, as: { signedIn.current })
 
     await subscription.refresh()
 

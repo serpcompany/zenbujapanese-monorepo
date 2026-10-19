@@ -73,15 +73,7 @@ struct AccountSubscriptionTests {
   @Test func offersNothingWhileTheAppleAccountHasTheSubscriptionAndKeepsAnotherAccountsNote()
     async throws
   {
-    let fixture = AccountFixture()
-    let none = StubReply.json(200, Answers.answer())
-    let anothers = StubReply.error(409, "subscription_belongs_to_another_account")
-    fixture.serve(subscription: { $0.method == "GET" ? none : anothers })
-    await fixture.launch()
-    let theirs = FakeAppStore.signed(Answers.monthly, for: UUID())
-    fixture.store.holds([theirs])
-    try await fixture.signIn()
-    await fixture.account.subscriptionWork?.value
+    let fixture = try await Answers.holdingAnotherAccountsPurchase()
     let subscription = fixture.account.subscription
     #expect(subscription.problem == .anotherAccount)
 
@@ -143,11 +135,8 @@ struct AccountSubscriptionTests {
   }
 
   @Test func waitsForAskToBuyAndSendsTheApprovedPurchaseWhenStoreKitHandsItOver() async throws {
-    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
+    let fixture = try await Answers.waitingForApproval()
     let subscription = fixture.account.subscription
-    fixture.store.willAnswer(.waitsForApproval)
-
-    await subscription.subscribe(to: Answers.monthly)
     #expect(subscription.problem == .pendingApproval)
 
     subscription.listen()
