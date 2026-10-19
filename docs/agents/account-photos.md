@@ -54,7 +54,8 @@ they came: re-encoding or resizing would change the hash the photo is named by.
 - **1,000 files an account**, the profile photo's included: room for a Media Library far larger than
   a learner builds by hand, while bounding what one account can store at 12 GB. A typical photo
   of a few MB puts a full library near 3 GB. An emptied photo, already gone from every device,
-  never holds a place: an upload past 1,000 deletes the one emptied longest ago.
+  never holds a place: an upload past 1,000 deletes the one emptied longest ago. An app with only
+  `profile` isn't held to the 1,000, only to its own two, so the library's count tells it nothing.
 - **500 words a photo** (`photo_full`), as a list holds 5,000: a photo is on a few words.
 - **300 requests a minute** from each account and app to `/v1/photos`, so a first upload of a full
   library takes a few minutes, bound by the device's connection rather than the limit.
