@@ -182,8 +182,7 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_UI_TEST_FRESH=1` erases the app's saved state before anything loads (its defaults, its
   session token in the Keychain, and its `Zenbu Japanese`, `FrequencyPacks`, and `Profile`
   folders, and its App Group's), only in a `.uitests` build.
-- `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, for the
-  offline states.
+- `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, so it's offline.
 - `ZENBU_CAMERA_IMAGE=<path>` stands in for the camera: **Take Photo** returns that image, which
   goes through the camera picker's own conversion, the import checks, recognition, and Image
   Search, as a photo would.
@@ -240,10 +239,11 @@ and the rules a test keeps, are in [`ios-ui-tests.md`](ios-ui-tests.md). A query
 every element's value, such as `value CONTAINS`, times out on the Mac on a long page; ask for the
 element by its identifier and read it with `waitUntil(_:mentions:)`. An iPad Simulator that had
 run the suites for hours once stopped turning at all, though XCUITest confirmed each turn;
-`xcrun simctl shutdown` and `boot` brought it back.
+`xcrun simctl shutdown` and `boot` brought it back. A menu's choice is found by its label
+(`menuChoice`): iOS 27 drops the identifier of an item in a `Menu`'s `Section`, but not of one in a
+`.contextMenu` or a row's swipe actions.
 
-On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference so a test reads
-the same on every device:
+On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference:
 
 - A menu's choice is a menu item found by its title, and only among the window's menus
   (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry the

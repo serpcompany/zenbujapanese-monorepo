@@ -57,8 +57,8 @@ final class SavedWordsUITests: ZenbuUITestCase {
     tap(find("result.japan", in: app))
     tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
     tap(find("kanji-detail.more-menu", in: app))
-    tap(find("kanji-detail.mark-known", in: app))
+    tap(menuChoice("Mark as Known", in: app))
     tap(find("kanji-detail.more-menu", in: app))
-    waitFor(find("kanji-detail.mark-unknown", in: app))
+    waitFor(menuChoice("Mark as Unknown", in: app))
   }
 }
