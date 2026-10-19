@@ -76,6 +76,7 @@ final class TranslateAuditUITests: AccessibilityAuditCase {
     audit("Image Search", in: app)
     choose("Text", in: find("image-text.mode", in: app))
     waitFor(find("image-text.reader", in: app))
+    waitFor(firstElement(identifiedBy: "image-text.paragraph.1.", in: app))
     audit("Image Search's text", in: app)
     choose("Photo", in: find("image-text.mode", in: app))
     tap(firstElement(identifiedBy: "image-text.region.", in: app))
