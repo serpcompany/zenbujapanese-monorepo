@@ -6,6 +6,7 @@ struct WordDetailView: View {
   @State private var photos: SavedItemPhotos
   @State private var examples = LoadedExamples()
   @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var showsListPicker = false
   @State private var frequencyDisclosure: FrequencyRow?
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
@@ -111,6 +112,12 @@ struct WordDetailView: View {
     }
     .onDisappear {
       notes.finishEditing()
+    }
+    .onChange(of: zenbuAccount?.sync.keptRevision) {
+      Task {
+        await notes.refresh()
+        await photos.refresh()
+      }
     }
     .task(id: entry.id) {
       await notes.load(item)

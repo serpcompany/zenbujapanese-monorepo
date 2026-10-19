@@ -46,7 +46,7 @@ struct LaunchHarnessTests {
   func drawnResults() {
     let chip = FrequencyChip(pack: "list", source: "List", value: "1", tier: .veryCommon)
     let list = ResultsList(
-      query: "q", sections: [.results], menu: nil, forgetsSort: false, examples: nil,
+      query: "q", sections: [.results], menu: nil, examples: nil,
       readingRefinement: nil, heading: nil, kanji: nil,
       rows: [
         ListedWord(id: "a", summary: "", chips: [chip], spoken: ""),

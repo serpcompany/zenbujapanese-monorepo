@@ -15,6 +15,7 @@ final class FakeAccountService: @unchecked Sendable {
   var emptiedPhotos: [String: [String: [String: Any]]] = [:]
   var photosUnavailable = false
   var fileRefusals: [String: StubReply] = [:]
+  var droppedUploads: Set<String> = []
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
   private var sequence = 0

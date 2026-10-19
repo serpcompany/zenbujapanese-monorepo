@@ -24,6 +24,10 @@ extension FakeAccountService {
     lock.withLock { fileRefusals[method] = refusal }
   }
 
+  func dropUpload(of photoID: String) {
+    lock.withLock { _ = droppedUploads.insert(photoID) }
+  }
+
   func searchKey(of user: String) -> SHA256.Digest {
     SHA256.hash(data: Data("search key of \(user)".utf8))
   }
@@ -45,6 +49,7 @@ extension FakeAccountService {
     case "PUT":
       guard !photosUnavailable else { return .error(503, "photos_unavailable") }
       if let refusal = fileRefusals[request.method] { return refusal }
+      if droppedUploads.remove(photoID) != nil { return .offline }
       guard request.body.sha256 == photoID else { return .error(400, "photo_digest_mismatch") }
       let kept = files[user]?[photoID] != nil
       files[user, default: [:]][photoID] = request.body
@@ -81,6 +86,9 @@ extension FakeAccountService {
     let photoID = String(entityID.prefix { $0 != "/" })
     switch (mutation.entity, mutation.operation) {
     case (SyncEntity.wordNote, "write"):
+      guard (fields["text"] as? String ?? "").count <= Self.noteLength else {
+        return StubSync.rejected(mutation.id, "invalid_fields")
+      }
       let data: [String: Any] = [
         "id": entityID, "itemId": fields["item"] ?? "", "text": fields["text"] ?? "",
         "headword": fields["headword"] ?? NSNull(), "reading": fields["reading"] ?? NSNull(),
@@ -157,12 +165,25 @@ extension FakeAccountService {
       let kept = current?.data?["searchedAt"] as? String ?? ""
       let data: [String: Any] = ["id": entityID, "query": query, "searchedAt": max(sent, kept)]
       if same(data) { return applied(version) }
-      return save(user, key, data, version + 1, applied)
+      let result = save(user, key, data, version + 1, applied)
+      pruneSearches(of: user)
+      return result
     case (SyncEntity.recentSearch, "remove"):
       guard current?.data != nil else { return applied(version) }
       return save(user, key, nil, version + 1, applied)
     default:
       return StubSync.rejected(mutation.id, "unknown_operation")
+    }
+  }
+
+  static let noteLength = 10_000
+  static let searchesKept = 50
+
+  private func pruneSearches(of user: String) {
+    let live = (accounts[user] ?? [:]).filter { $0.key.hasPrefix("recentSearch:") && $0.value.data != nil }
+      .sorted { ($0.value.data?["searchedAt"] as? String ?? "") > ($1.value.data?["searchedAt"] as? String ?? "") }
+    for (key, search) in live.dropFirst(Self.searchesKept) {
+      _ = save(user, key, nil, search.version + 1) { _ in [:] }
     }
   }
 

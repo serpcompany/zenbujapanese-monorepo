@@ -13,6 +13,7 @@ actor FrequencyPackManager {
   private let languageDataURL: URL
   private let storageDirectory: URL
   private let downloadSource: Download
+  private let quietSource: Download
   private var enabledPackIDs: [FrequencyPackID]
   private var installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord]
   private var failures: [FrequencyPackID: String] = [:]
@@ -26,7 +27,8 @@ actor FrequencyPackManager {
     storageDirectory: URL,
     lists: FrequencyLists = FrequencyLists(),
     relay: KeptChangeRelay = KeptChangeRelay(),
-    download: @escaping Download
+    download: @escaping Download,
+    quietDownload: Download? = nil
   ) throws {
     let bundledPacks = catalog.packs.filter(\.bundled)
     guard !bundledPacks.isEmpty, bundledPacks.allSatisfy({ !$0.removable }) else {
@@ -39,6 +41,7 @@ actor FrequencyPackManager {
     self.languageDataURL = languageDataURL
     self.storageDirectory = storageDirectory
     downloadSource = download
+    quietSource = quietDownload ?? download
     try FileManager.default.createDirectory(
       at: storageDirectory, withIntermediateDirectories: true)
     let kept = try FileManager.default.contentsOfDirectory(
@@ -108,7 +111,9 @@ actor FrequencyPackManager {
         && (bundledIDs.contains(id) || validatedRecords[id] != nil)
         && seen.insert(id).inserted
     }
-    try Self.persist(enabledPackIDs, installedRecords, bundledIDs, in: storageDirectory)
+    syncedChoice = saved?.syncedChoice?.filter { id in catalog.packs.contains { $0.packID == id } }
+    try Self.persist(
+      enabledPackIDs, installedRecords, bundledIDs, syncedChoice, in: storageDirectory)
     lists.publish(
       Self.enabledLists(
         enabledPackIDs, of: catalog, installed: validatedRecords, verified: verifiedArtifacts))
@@ -151,14 +156,14 @@ actor FrequencyPackManager {
   }
 
   func download(
-    _ packID: FrequencyPackID, progress: @escaping Progress = { _ in }, tells: Bool = true
+    _ packID: FrequencyPackID, progress: @escaping Progress = { _ in }, synced: Bool = false
   ) async throws {
     guard let manifest = catalog.packs.first(where: { $0.packID == packID }), !manifest.bundled
     else { throw FrequencyPackError.invalidPack }
     let before = enabledPackIDs
     failures[packID] = nil
     do {
-      let source = try await downloadSource(manifest.downloadURL, progress)
+      let source = try await (synced ? quietSource : downloadSource)(manifest.downloadURL, progress)
       try Task.checkCancellation()
       progress(1)
       guard source.count == manifest.sourceBytes, source.sha256 == manifest.sourceSHA256 else {
@@ -188,9 +193,9 @@ actor FrequencyPackManager {
         }
       }
       try persist()
-      if tells { await tell(after: before) }
+      if synced { showSyncedChoice() } else { await tell(after: before) }
     } catch {
-      guard !Self.isCancellation(error) else { throw error }
+      guard !Self.isCancellation(error), !synced else { throw error }
       failures[packID] =
         error as? FrequencyPackError == .checksumMismatch
         ? "Downloaded file failed checksum validation."
@@ -247,8 +252,20 @@ actor FrequencyPackManager {
 
   private func tell(after before: [FrequencyPackID]) async {
     guard enabledPackIDs != before else { return }
-    syncedChoice = nil
-    await relay.post(Self.chosen(enabledPackIDs))
+    let told = intended()
+    syncedChoice = pendingSyncedPacks().isEmpty ? nil : told
+    try? persist()
+    await relay.post(Self.chosen(told))
+  }
+
+  private func intended() -> [FrequencyPackID] {
+    guard let synced = syncedChoice else { return enabledPackIDs }
+    var told = enabledPackIDs
+    for (index, packID) in synced.enumerated() where !isUsable(packID) && !told.contains(packID) {
+      let after = synced[..<index].last { told.contains($0) }.flatMap { told.firstIndex(of: $0) }
+      told.insert(packID, at: after.map { $0 + 1 } ?? 0)
+    }
+    return told
   }
 
   private static func chosen(_ packIDs: [FrequencyPackID]) -> KeptLocalChange {
@@ -261,19 +278,17 @@ actor FrequencyPackManager {
       ? nil : Self.chosen(enabledPackIDs)
   }
 
-  @discardableResult
-  func applySynced(_ value: SyncFieldValue) -> Task<Void, Never>? {
-    guard case .string(let text) = value else { return nil }
-    let chosen = text.split(separator: ",").map { FrequencyPackID(rawValue: String($0)) }
+  func applySynced(_ value: SyncFieldValue) -> [FrequencyPackID] {
+    guard case .string(let text) = value else { return [] }
+    syncedChoice = text.split(separator: ",").map { FrequencyPackID(rawValue: String($0)) }
       .filter { packID in catalog.packs.contains { $0.packID == packID } }
-    syncedChoice = chosen
     showSyncedChoice()
-    let missing = chosen.filter { !isUsable($0) }
-    guard !missing.isEmpty else { return nil }
-    return Task {
-      for packID in missing { try? await download(packID, tells: false) }
-      showSyncedChoice()
-    }
+    try? persist()
+    return pendingSyncedPacks()
+  }
+
+  func pendingSyncedPacks() -> [FrequencyPackID] {
+    syncedChoice?.filter { !isUsable($0) } ?? []
   }
 
   private func isUsable(_ packID: FrequencyPackID) -> Bool {
@@ -379,13 +394,14 @@ actor FrequencyPackManager {
   private func persist() throws {
     try Self.persist(
       enabledPackIDs, installedRecords, catalog.packs.filter(\.bundled).map(\.packID),
-      in: storageDirectory)
+      syncedChoice, in: storageDirectory)
   }
 
   private static func persist(
     _ enabledPackIDs: [FrequencyPackID],
     _ installedRecords: [FrequencyPackID: InstalledFrequencyPackRecord],
     _ knownBundledPackIDs: [FrequencyPackID],
+    _ syncedChoice: [FrequencyPackID]?,
     in storageDirectory: URL
   ) throws {
     let data = try JSONEncoder().encode(
@@ -395,7 +411,8 @@ actor FrequencyPackManager {
         knownBundledPackIDs: knownBundledPackIDs,
         installedRecords: installedRecords.values.sorted {
           $0.packID.rawValue < $1.packID.rawValue
-        }
+        },
+        syncedChoice: syncedChoice
       ))
     try data.write(
       to: storageDirectory.appendingPathComponent("state.json"), options: .atomic)
@@ -445,4 +462,5 @@ private struct PersistedFrequencyPackState: Codable {
   let activePackID: FrequencyPackID?
   let knownBundledPackIDs: [FrequencyPackID]?
   let installedRecords: [InstalledFrequencyPackRecord]
+  var syncedChoice: [FrequencyPackID]?
 }

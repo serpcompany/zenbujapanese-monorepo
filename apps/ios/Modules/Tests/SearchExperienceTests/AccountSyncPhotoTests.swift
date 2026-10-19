@@ -199,4 +199,78 @@ struct AccountSyncPhotoTests {
     #expect(phone.profile.photo == nil)
     #expect(service.data(of: key, for: Fixture.email) == nil)
   }
+
+  @Test("a first upload fills an account whose profile photo was removed, rather than taking the device's away")
+  func firstUploadFillsARemovedPhoto() async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    try await phone.signIn()
+    await phone.profile.setPhoto(try ProfilePhotoImage.png())
+    try await phone.syncNow()
+    phone.profile.removePhoto()
+    try await phone.syncNow()
+
+    await pad.profile.setPhoto(try ProfilePhotoImage.png(red: 0.1))
+    let jpeg = try #require(pad.profile.photoData)
+    try await pad.signIn()
+    #expect(pad.profile.photoData == jpeg)
+    let key = "profilePhoto:\(service.userID(for: Fixture.email))"
+    #expect(service.data(of: key, for: Fixture.email)?["photoId"] as? String == jpeg.sha256)
+  }
+
+  @Test("signing in to another account doesn't give it the last account's profile photo")
+  func anotherAccountKeepsItsOwnPhoto() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    try await phone.signIn()
+    await phone.profile.setPhoto(try ProfilePhotoImage.png())
+    try await phone.syncNow()
+    await phone.account.signOut()
+
+    try await phone.signIn(as: "other@example.com")
+    let other = service.userID(for: "other@example.com")
+    #expect(service.data(of: "profilePhoto:\(other)", for: "other@example.com") == nil)
+    let sets = phone.server.requests(to: "POST /v1/sync").flatMap(\.sync.mutations).filter {
+      $0.entity == "profilePhoto"
+    }
+    #expect(sets.count == 1)
+    #expect(phone.profile.photo != nil)
+  }
+
+  @Test(
+    "of two profile photo changes, the one that syncs second takes the first, in either order",
+    arguments: [true, false])
+  func profilePhotoConflict(phoneFirst: Bool) async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    try await phone.signIn()
+    try await pad.signIn()
+    await phone.profile.setPhoto(try ProfilePhotoImage.png())
+    await pad.profile.setPhoto(try ProfilePhotoImage.png(red: 0.1))
+    let (first, second) = phoneFirst ? (phone, pad) : (pad, phone)
+    let kept = try #require(first.profile.photoData)
+    try await first.syncNow()
+    try await second.syncNow()
+
+    #expect(second.profile.photoData == kept)
+    let key = "profilePhoto:\(service.userID(for: Fixture.email))"
+    #expect(service.data(of: key, for: Fixture.email)?["photoId"] as? String == kept.sha256)
+  }
+
+  @Test("a word the account refuses for a full photo stays on the device without syncing")
+  func fullPhoto() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    fixture.serve(
+      sync: { request in
+        StubSync.answer(
+          results: request.mutations.map {
+            $0.entity == "photoWord"
+              ? StubSync.rejected($0.id, "photo_full")
+              : ["id": $0.id, "status": "applied", "version": 1]
+          }, cursor: "c2")
+      },
+      files: { _ in .json(201, ["id": "photo"]) })
+    await save(on: taberu, in: fixture)
+    try await fixture.syncNow()
+
+    #expect(await words(in: fixture) == ["食べる"])
+    #expect(fixture.sync.state.queue.isEmpty)
+  }
 }

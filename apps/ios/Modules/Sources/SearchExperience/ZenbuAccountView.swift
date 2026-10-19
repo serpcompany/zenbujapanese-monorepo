@@ -85,7 +85,7 @@ struct ZenbuAccountView: View {
       }
     } message: {
       Text(
-        "Your known words, lists, watch history, and translations stay on this \(ThisDevice.name). Changes you make while signed out sync when you sign in to this account again."
+        "Your known words, lists, notes, photos, watch history, and translations stay on this \(ThisDevice.name). Changes you make while signed out sync when you sign in to this account again."
       )
     }
     .sheet(isPresented: $deletes) {
@@ -110,6 +110,15 @@ struct ZenbuAccountView: View {
           Text(zenbuAccount.sync.queuedChangeCount, format: .number)
         }
       }
+      if zenbuAccount.sync.photosUnavailable {
+        Text(AccountMessage.photosWaitForStorage)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.photos-wait")
+      }
+      ForEach(AccountMessage.refusedPhotos(zenbuAccount.sync.state.refusedPhotos), id: \.self) {
+        Text($0)
+          .foregroundStyle(.secondary)
+      }
       if let problem = zenbuAccount.sync.bookmarksProblem {
         Text(AccountMessage.syncPaused(by: problem))
           .foregroundStyle(.secondary)
@@ -127,7 +136,7 @@ struct ZenbuAccountView: View {
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your name and username, known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
+        "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent searches, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
       )
     }
   }

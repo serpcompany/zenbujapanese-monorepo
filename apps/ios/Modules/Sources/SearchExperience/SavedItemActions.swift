@@ -49,7 +49,7 @@ final class SavedItemNotes {
 
   func beginAdding() {
     if let editingNoteID { saveDraft(of: editingNoteID) }
-    editingNoteID = UUID().uuidString
+    editingNoteID = UUID().uuidString.lowercased()
     draft = ""
     textWhenEditingBegan = ""
   }
@@ -71,15 +71,23 @@ final class SavedItemNotes {
       writtenBeforeLoading.append(note)
       return
     }
-    save(note, to: item.id)
+    save(note, to: item.id, startedFrom: textWhenEditingBegan)
   }
 
-  private func save(_ note: LearnerWordNote, to itemID: SavedItemID) {
+  func refresh() async {
+    guard let item else { return }
+    await saveTask?.value
+    let loaded = await store.load(item.id)
+    guard !Task.isCancelled else { return }
+    notes = loaded
+  }
+
+  private func save(_ note: LearnerWordNote, to itemID: SavedItemID, startedFrom: String? = nil) {
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(note, itemID)
+      await store.save(note, itemID, startedFrom)
     }
   }
 }
@@ -120,6 +128,13 @@ final class SavedItemPhotos {
     guard let reference else { return }
     await store.remove(reference, mediaID)
     media = await store.encounters(reference)
+  }
+
+  func refresh() async {
+    guard let reference else { return }
+    let stored = await store.encounters(reference)
+    guard !Task.isCancelled else { return }
+    media = stored
   }
 
   func presentCamera() {

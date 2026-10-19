@@ -255,10 +255,10 @@ actor HandedChoices {
 }
 
 enum ProfilePhotoImage {
-  static func png() throws -> Data {
+  static func png(red: Double = 0.8) throws -> Data {
     let image = try #require(
       ImageCoding.drawing(width: 8, height: 8) { context in
-        context.setFillColor(CGColor(red: 0.8, green: 0.3, blue: 0.2, alpha: 1))
+        context.setFillColor(CGColor(red: red, green: 0.3, blue: 0.2, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: 8, height: 8))
       })
     return try #require(ImageCoding.pngData(image))

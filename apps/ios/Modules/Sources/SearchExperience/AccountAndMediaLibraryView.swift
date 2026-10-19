@@ -335,12 +335,20 @@ extension ReadingAidSettingsView {
 }
 
 struct MediaLibraryView: View {
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var items: [EncounterMediaSummary] = []
   let store: EncounterMediaStore
 
+  private var onTheirWay: Int { zenbuAccount?.sync.photosOnTheirWay ?? 0 }
+
   var body: some View {
     Group {
-      if items.isEmpty {
+      if items.isEmpty, onTheirWay > 0 {
+        ContentUnavailableView(
+          "Photos on Their Way", systemImage: "icloud.and.arrow.down",
+          description: Text(AccountMessage.photosOnTheirWay(onTheirWay)))
+          .accessibilityIdentifier("media-library.on-their-way")
+      } else if items.isEmpty {
         ContentUnavailableView(
           "No Saved Images",
           systemImage: "photo.on.rectangle.angled",
@@ -349,6 +357,11 @@ struct MediaLibraryView: View {
         .accessibilityIdentifier("media-library.empty")
       } else {
         List {
+          if onTheirWay > 0 {
+            Label(AccountMessage.photosOnTheirWay(onTheirWay), systemImage: "icloud.and.arrow.down")
+              .foregroundStyle(.secondary)
+              .accessibilityIdentifier("media-library.on-their-way")
+          }
           ForEach(items) { item in
             NavigationLink {
               EncounterMediaDetail(item: item, store: store)
@@ -367,7 +380,7 @@ struct MediaLibraryView: View {
       }
     }
     .navigationTitle("Media Library")
-    .task { items = await store.library() }
+    .task(id: zenbuAccount?.sync.keptRevision) { items = await store.library() }
   }
 
   private func delete(_ mediaID: String) {

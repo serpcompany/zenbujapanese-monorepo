@@ -10,6 +10,7 @@ struct KanjiDetailView: View {
   let openList: (UUID) -> Void
 
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @FocusState private var noteEditorFocused: Bool
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
@@ -134,6 +135,12 @@ struct KanjiDetailView: View {
     }
     .onDisappear {
       notes.finishEditing()
+    }
+    .onChange(of: zenbuAccount?.sync.keptRevision) {
+      Task {
+        await notes.refresh()
+        await photos.refresh()
+      }
     }
     .task(id: character) {
       let item = SavedItem.kanji(character, reading: "")

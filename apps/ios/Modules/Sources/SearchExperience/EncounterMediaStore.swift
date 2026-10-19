@@ -176,13 +176,22 @@ actor EncounterMediaStorage {
   }
 
   private func removing(_ wordID: SavedItemID, from mediaID: String) -> Bool {
+    removing([(wordID, mediaID)])
+  }
+
+  private func removing(_ words: [(id: SavedItemID, mediaID: String)]) -> Bool {
     guard var current = index() else { return false }
-    let wasOnWord = current.encounters.contains { $0.word.id == wordID && $0.mediaID == mediaID }
-    current.encounters.removeAll { $0.word.id == wordID && $0.mediaID == mediaID }
-    let removesMedia = !current.encounters.contains { $0.mediaID == mediaID }
-    if removesMedia { current.media[mediaID] = nil }
+    let matches = { (encounter: EncounterRecord) in
+      words.contains { $0.id == encounter.word.id && $0.mediaID == encounter.mediaID }
+    }
+    let wasOnWord = current.encounters.contains(where: matches)
+    current.encounters.removeAll(where: matches)
+    let emptied = Set(words.map(\.mediaID)).filter { mediaID in
+      current.media[mediaID] != nil && !current.encounters.contains { $0.mediaID == mediaID }
+    }
+    for mediaID in emptied { current.media[mediaID] = nil }
     guard write(current) else { return false }
-    if removesMedia { deleteImage(mediaID) }
+    emptied.forEach(deleteImage)
     return wasOnWord
   }
 
@@ -205,38 +214,42 @@ actor EncounterMediaStorage {
     return try? Data(contentsOf: blobURL(mediaID))
   }
 
-  func hasPhoto(_ mediaID: String) async -> Bool {
+  func applySynced(_ photo: KeptPhoto, data: Data) async -> Bool {
     await prepared()
-    return index()?.media[mediaID] != nil && blobExists(mediaID)
-  }
-
-  func applySynced(_ photo: KeptPhoto, data: Data) async {
-    await prepared()
-    guard var current = index(), data.sha256 == photo.id else { return }
+    guard var current = index(), data.sha256 == photo.id else { return false }
     let destination = blobURL(photo.id)
     if !blobExists(photo.id) { try? data.write(to: destination, options: .atomic) }
-    guard blobExists(photo.id) else { return }
+    guard blobExists(photo.id) else { return false }
     current.media[photo.id] = MediaRecord(name: photo.name, savedAt: photo.savedAt)
-    guard write(current) else { return }
+    guard write(current) else { return false }
     deferredDeletions.remove(photo.id)
+    return true
   }
 
-  func applySynced(_ word: KeptPhotoWord) async {
+  func applySynced(words: [KeptPhotoWord]) async -> [KeptPhotoWord] {
     await prepared()
-    guard var current = index(), current.media[word.photoID] != nil else { return }
-    let id = SavedItemID(rawValue: word.item)
-    guard !current.encounters.contains(where: { $0.word.id == id && $0.mediaID == word.photoID })
-    else { return }
-    current.encounters.append(
-      EncounterRecord(
-        word: EncounterWordReference(id: id, headword: word.headword, reading: word.reading),
-        mediaID: word.photoID, savedAt: word.savedAt))
-    _ = write(current)
+    guard var current = index() else { return words }
+    var unplaced: [KeptPhotoWord] = []
+    for word in words {
+      guard current.media[word.photoID] != nil, blobExists(word.photoID) else {
+        unplaced.append(word)
+        continue
+      }
+      let id = SavedItemID(rawValue: word.item)
+      guard !current.encounters.contains(where: { $0.word.id == id && $0.mediaID == word.photoID })
+      else { continue }
+      current.encounters.append(
+        EncounterRecord(
+          word: EncounterWordReference(id: id, headword: word.headword, reading: word.reading),
+          mediaID: word.photoID, savedAt: word.savedAt))
+    }
+    return write(current) ? unplaced : words
   }
 
-  func applySyncedRemoval(ofWord item: String, from mediaID: String) async {
+  func applySyncedRemoval(ofWords words: [(item: String, mediaID: String)]) async {
+    guard !words.isEmpty else { return }
     await prepared()
-    _ = removing(SavedItemID(rawValue: item), from: mediaID)
+    _ = removing(words.map { (SavedItemID(rawValue: $0.item), $0.mediaID) })
   }
 
   func applySyncedRemoval(ofPhoto mediaID: String) async {

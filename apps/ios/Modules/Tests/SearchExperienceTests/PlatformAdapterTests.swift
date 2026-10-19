@@ -72,8 +72,39 @@ struct PlatformAdapterTests {
     let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
     let assets = await droppedOnTheMainActor([signProvider, bannerProvider])
     let asset = try #require(assets[0])
-    #expect(asset.data == (try Data(contentsOf: sign)))
+    let stored = try #require(ImageCoding.image(from: asset.data))
+    #expect((stored.width, stored.height) == (300, 200))
     #expect(assets[1] == nil)
+  }
+
+  @Test("a photo from Files or a drop loses where and how it was taken, and keeps which way is up")
+  func importedPhotoLosesItsMetadata() throws {
+    let image = try #require(solidImage(width: 60, height: 20))
+    let data = NSMutableData()
+    let destination = try #require(
+      CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
+    let properties: [CFString: Any] = [
+      kCGImagePropertyOrientation: CGImagePropertyOrientation.right.rawValue,
+      kCGImagePropertyGPSDictionary: [
+        kCGImagePropertyGPSLatitude: 35.68, kCGImagePropertyGPSLatitudeRef: "N",
+        kCGImagePropertyGPSLongitude: 139.76, kCGImagePropertyGPSLongitudeRef: "E",
+      ],
+      kCGImagePropertyExifDictionary: [kCGImagePropertyExifUserComment: "Tokyo Station"],
+    ]
+    CGImageDestinationAddImage(destination, image, properties as CFDictionary)
+    #expect(CGImageDestinationFinalize(destination))
+    let file = FileManager.default.temporaryDirectory.appending(path: "photo-\(UUID().uuidString).jpg")
+    defer { try? FileManager.default.removeItem(at: file) }
+    try (data as Data).write(to: file)
+
+    let asset = try ImageTextAsset.readCopy(from: file)
+    let source = try #require(CGImageSourceCreateWithData(asset.data as CFData, nil))
+    let kept = try #require(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
+    #expect(kept[kCGImagePropertyGPSDictionary] == nil)
+    let exif = kept[kCGImagePropertyExifDictionary] as? [CFString: Any]
+    #expect(exif?[kCGImagePropertyExifUserComment] == nil)
+    let decoded = try #require(ImageCoding.image(from: asset.data))
+    #expect((decoded.width, decoded.height) == (20, 60))
   }
 
   @MainActor

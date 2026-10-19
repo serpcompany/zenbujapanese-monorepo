@@ -68,6 +68,7 @@ final class AccountSyncScheduler {
     self.now = now
     self.clock = clock
     sync.onLocalChange = { [weak self] in self?.syncSoon(after: Self.afterLocalChange) }
+    sync.onRetryFiles = { [weak self] seconds in self?.syncSoon(after: seconds) }
   }
 
   func appBecameActive() {

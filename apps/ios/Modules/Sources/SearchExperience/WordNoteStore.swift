@@ -2,7 +2,7 @@ import Foundation
 
 struct WordNoteStore: Sendable {
   var load: @Sendable (SavedItemID) async -> [LearnerWordNote]
-  var save: @Sendable (LearnerWordNote, SavedItemID) async -> Void
+  var save: @Sendable (LearnerWordNote, SavedItemID, String?) async -> Void
   var withoutAWord: @Sendable () async -> [NoteWithoutAWord] = { [] }
 
   static let live = kept(in: .shared, searchedBy: { await LearnerNotes.shared })
@@ -12,8 +12,8 @@ struct WordNoteStore: Sendable {
   ) -> WordNoteStore {
     WordNoteStore(
       load: { id in await storage.load(id) },
-      save: { note, id in
-        await storage.save(note, for: id)
+      save: { note, id, startedFrom in
+        await storage.save(note, for: id, startedFrom: startedFrom)
         await search().reload()
       },
       withoutAWord: { await storage.withoutAWord() }
@@ -28,7 +28,8 @@ struct LearnerWordNote: Codable, Hashable, Identifiable, Sendable {
   var reading: String?
 
   init(
-    id: String = UUID().uuidString, text: String, headword: String? = nil, reading: String? = nil
+    id: String = UUID().uuidString.lowercased(), text: String, headword: String? = nil,
+    reading: String? = nil
   ) {
     self.id = id
     self.text = text
@@ -56,9 +57,13 @@ struct NoteWithoutAWord: Identifiable, Hashable, Sendable {
 }
 
 extension [LearnerWordNote] {
+  func note(_ id: String) -> LearnerWordNote? {
+    first { $0.id.lowercased() == id.lowercased() }
+  }
+
   mutating func apply(_ note: LearnerWordNote) {
     let text = note.text.trimmingCharacters(in: .whitespacesAndNewlines)
-    if let index = firstIndex(where: { $0.id == note.id }) {
+    if let index = firstIndex(where: { $0.id.lowercased() == note.id.lowercased() }) {
       if text.isEmpty {
         remove(at: index)
       } else {
@@ -72,7 +77,7 @@ extension [LearnerWordNote] {
   }
 
   mutating func keep(_ others: [LearnerWordNote]) {
-    for note in others where !contains(where: { $0.id == note.id }) {
+    for note in others where self.note(note.id) == nil {
       append(note)
     }
   }
@@ -98,15 +103,21 @@ actor WordNoteStorage {
     return notes(under: Self.storageKey)[id.rawValue] ?? []
   }
 
-  func save(_ note: LearnerWordNote, for id: SavedItemID) async {
+  func save(_ note: LearnerWordNote, for id: SavedItemID, startedFrom: String? = nil) async {
     await placeEarlierNotes()
     var stored = notes(under: Self.storageKey)
     var word = stored[id.rawValue] ?? []
-    let before = word.first { $0.id == note.id }
+    let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
+    var note = note
+    if let startedFrom, let underneath = word.note(note.id), trimmed(underneath.text) != trimmed(startedFrom) {
+      guard !trimmed(note.text).isEmpty else { return }
+      note = LearnerWordNote(text: note.text, headword: note.headword, reading: note.reading)
+    }
+    let before = word.note(note.id)
     word.apply(note)
     stored[id.rawValue] = word.isEmpty ? nil : word
     write(stored, under: Self.storageKey)
-    if let after = word.first(where: { $0.id == note.id }) {
+    if let after = word.note(note.id) {
       guard after != before else { return }
       await relay.post(
         KeptChanges.noteWritten(after.kept(on: id), startedFrom: before?.text))
@@ -121,23 +132,19 @@ actor WordNoteStorage {
       .flatMap { key, notes in notes.map { $0.kept(on: SavedItemID(rawValue: key)) } }
   }
 
-  func applySynced(_ note: KeptNote) async {
+  func applySynced(_ synced: [KeptNote], removing gone: [String]) async {
     await placeEarlierNotes()
-    var stored = withoutNote(note.id)
-    stored[note.item, default: []].append(
-      LearnerWordNote(id: note.id, text: note.text, headword: note.headword, reading: note.reading))
-    write(stored, under: Self.storageKey)
-  }
-
-  func applySyncedRemoval(ofNote id: String) async {
-    await placeEarlierNotes()
-    write(withoutNote(id), under: Self.storageKey)
-  }
-
-  private func withoutNote(_ id: String) -> [String: [LearnerWordNote]] {
-    notes(under: Self.storageKey)
-      .mapValues { $0.filter { $0.id.lowercased() != id.lowercased() } }
+    let replaced = Set((synced.map(\.id) + gone).map { $0.lowercased() })
+    var stored = notes(under: Self.storageKey)
+      .mapValues { $0.filter { !replaced.contains($0.id.lowercased()) } }
       .filter { !$0.value.isEmpty }
+    for note in synced {
+      stored[note.item, default: []].append(
+        LearnerWordNote(
+          id: note.id.lowercased(), text: note.text, headword: note.headword,
+          reading: note.reading))
+    }
+    write(stored, under: Self.storageKey)
   }
 
   func withoutAWord() async -> [NoteWithoutAWord] {

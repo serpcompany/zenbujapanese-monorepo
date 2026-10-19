@@ -47,7 +47,23 @@ extension FrequencyChoice {
   static let live = FrequencyChoice(
     relay: FrequencyPackStore.relay,
     changedFromStandard: { await FrequencyPackStore.shared.manager?.changedFromStandard() },
-    apply: { await FrequencyPackStore.shared.manager?.applySynced($0) })
+    apply: { value in
+      guard let manager = FrequencyPackStore.shared.manager else { return }
+      await downloadQuietly(await manager.applySynced(value), with: manager)
+    },
+    resume: {
+      guard let manager = FrequencyPackStore.shared.manager else { return }
+      await downloadQuietly(await manager.pendingSyncedPacks(), with: manager)
+    })
+
+  @MainActor
+  static func downloadQuietly(_ packIDs: [FrequencyPackID], with manager: FrequencyPackManager) {
+    for packID in packIDs {
+      FrequencyPackDownloads.shared.start(packID) { progress in
+        try await manager.download(packID, progress: progress, synced: true)
+      }
+    }
+  }
 }
 
 private actor FrequencyPackStore {
@@ -78,15 +94,25 @@ private actor FrequencyPackStore {
       storageDirectory: support.appendingPathComponent("FrequencyPacks", isDirectory: true),
       lists: lists,
       relay: relay,
-      download: { url, progress in
-        let (data, response) = try await URLSession.shared.data(
-          from: url, delegate: FrequencyPackDownloadProgress(report: progress))
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-          throw FrequencyPackError.invalidSource
-        }
-        return data
+      download: { url, progress in try await fetched(URLRequest(url: url), progress) },
+      quietDownload: { url, progress in
+        var request = URLRequest(url: url)
+        request.allowsConstrainedNetworkAccess = false
+        request.allowsExpensiveNetworkAccess = false
+        return try await fetched(request, progress)
       }
     )
+  }
+
+  private static func fetched(
+    _ request: URLRequest, _ progress: @escaping FrequencyPackManager.Progress
+  ) async throws -> Data {
+    let (data, response) = try await URLSession.shared.data(
+      for: request, delegate: FrequencyPackDownloadProgress(report: progress))
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+      throw FrequencyPackError.invalidSource
+    }
+    return data
   }
 
   func opened() {}

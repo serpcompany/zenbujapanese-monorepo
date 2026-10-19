@@ -129,7 +129,7 @@ struct AccountCopy: Codable, Hashable, Sendable {
 }
 
 struct AccountSyncState: Codable, Sendable, Equatable {
-  static let goneVideosKept = 100
+  static let goneKept = 100
   static let favoritesKey = SyncEntityKey(
     entity: SyncEntity.list, entityID: SyncEntityKey.listID(WordLists.favoritesID))
 
@@ -151,6 +151,12 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var missingFiles: [AccountCopy] = []
   var heldPhotoWords: [AccountCopy] = []
   var searchKey: String?
+  var searchRemovalsBeforeKey: [String] = []
+  var goneSearches: [String] = []
+  var uploadedFiles: [String] = []
+  var refusedPhotos: [String: String] = [:]
+  var refusedNotes: [String] = []
+  var retryNextLaunch: [QueuedSyncChange] = []
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -181,6 +187,15 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     heldPhotoWords =
       try container.decodeIfPresent([AccountCopy].self, forKey: .heldPhotoWords) ?? []
     searchKey = try container.decodeIfPresent(String.self, forKey: .searchKey)
+    searchRemovalsBeforeKey =
+      try container.decodeIfPresent([String].self, forKey: .searchRemovalsBeforeKey) ?? []
+    goneSearches = try container.decodeIfPresent([String].self, forKey: .goneSearches) ?? []
+    uploadedFiles = try container.decodeIfPresent([String].self, forKey: .uploadedFiles) ?? []
+    refusedPhotos =
+      try container.decodeIfPresent([String: String].self, forKey: .refusedPhotos) ?? [:]
+    refusedNotes = try container.decodeIfPresent([String].self, forKey: .refusedNotes) ?? []
+    retryNextLaunch =
+      try container.decodeIfPresent([QueuedSyncChange].self, forKey: .retryNextLaunch) ?? []
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }
@@ -232,11 +247,21 @@ struct AccountSyncState: Codable, Sendable, Equatable {
 
   mutating func setVersion(_ version: Int, of key: SyncEntityKey, gone: Bool) {
     versions[key.stored] = version
-    guard key.entity == SyncEntity.watchedVideo else { return }
-    goneVideos.removeAll { $0 == key.stored }
-    guard gone else { return }
-    goneVideos.append(key.stored)
-    while goneVideos.count > Self.goneVideosKept { versions[goneVideos.removeFirst()] = nil }
+    switch key.entity {
+    case SyncEntity.watchedVideo: goneVideos = bounded(goneVideos, adding: key, gone: gone)
+    case SyncEntity.recentSearch: goneSearches = bounded(goneSearches, adding: key, gone: gone)
+    default: return
+    }
+  }
+
+  private mutating func bounded(_ gone: [String], adding key: SyncEntityKey, gone isGone: Bool)
+    -> [String]
+  {
+    var kept = gone.filter { $0 != key.stored }
+    guard isGone else { return kept }
+    kept.append(key.stored)
+    while kept.count > Self.goneKept { versions[kept.removeFirst()] = nil }
+    return kept
   }
 
   func version(of key: SyncEntityKey) -> Int {
