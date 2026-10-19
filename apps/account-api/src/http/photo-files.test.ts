@@ -270,7 +270,7 @@ describe('photo files', () => {
     expect((await turns.send('someone')).status).toBe(503)
   })
 
-  test("holds a download's turn until its file is sent, cancelled, or cut, logs a cut one, and gives a HEAD's back at once", async () => {
+  test("holds a download's turn until its file is sent, cancelled, or cut or its client goes, logs a cut one, and gives a HEAD's back at once", async () => {
     const sources: ReadableStreamDefaultController<Uint8Array>[] = []
     const streaming = async () => ({
       status: 'found' as const,
@@ -317,6 +317,13 @@ describe('photo files', () => {
     const heads = []
     for (let n = 0; n <= share; n++) heads.push((await standInRequest(app, 'HEAD', bytes)).status)
     expect(heads).toEqual(Array(share + 1).fill(200))
+    const going = Array.from({ length: share }, () => new AbortController())
+    const left = await Promise.all(
+      going.map(client => standInRequest(app, 'GET', bytes, 'someone', client.signal))
+    )
+    expect(left.map(answer => answer.status)).toEqual(Array(share).fill(200))
+    for (const client of going) client.abort()
+    expect((await download()).status).toBe(200)
   })
 
   test("puts back a file its storage lost when it's uploaded again, and says a lost file is missing, not gone", async () => {
@@ -362,12 +369,14 @@ const standInRequest = (
   app: ReturnType<typeof createApp>,
   method: string,
   bytes: Uint8Array,
-  account = 'someone'
+  account = 'someone',
+  signal?: AbortSignal
 ) =>
   app.request(`/v1/photos/${photoIdOf(bytes)}`, {
     method,
     headers: { authorization: `Bearer ${account}` },
-    body: method === 'PUT' ? bytes : undefined
+    body: method === 'PUT' ? bytes : undefined,
+    signal
   })
 
 const turnTaking = [

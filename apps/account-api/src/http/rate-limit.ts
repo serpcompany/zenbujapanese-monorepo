@@ -59,25 +59,48 @@ export const atOnce = {
   downloads: { service: 16, account: 4 }
 } as const
 
-function heldUntilSent(response: Response, body: ReadableStream<Uint8Array>, done: () => void) {
+function heldUntilSent(
+  response: Response,
+  body: ReadableStream<Uint8Array>,
+  closed: AbortSignal,
+  done: () => void
+) {
   const reader = body.getReader()
+  let sending: ReadableStreamDefaultController<Uint8Array> | null = null
+  let stopped = false
+  const stop = (reason: unknown) => {
+    if (stopped) return
+    stopped = true
+    done()
+    reader.cancel(reason).catch(() => {})
+  }
+  closed.addEventListener(
+    'abort',
+    () => {
+      stop(closed.reason)
+      sending?.error(closed.reason)
+    },
+    { once: true }
+  )
   const sent = new ReadableStream<Uint8Array>({
+    start(controller) {
+      sending = controller
+    },
     async pull(controller) {
       try {
         const read = await reader.read()
+        if (stopped) return
         if (!read.done) return controller.enqueue(read.value)
         done()
         controller.close()
       } catch (error) {
-        done()
+        if (stopped) return
+        stop(error)
         log('warn', 'a photo download was cut', failureFields(error))
         controller.error(error)
       }
     },
-    cancel(reason) {
-      done()
-      return reader.cancel(reason)
-    }
+    cancel: reason => stop(reason)
   })
   return new Response(sent, response)
 }
@@ -113,12 +136,13 @@ export function atMostAtOnce(most: { service: number; account: number }, untilSe
     try {
       await next()
       const body = context.res.body
+      const closed = context.req.raw.signal
       if (untilSent && context.res.status === 200 && body) {
-        if (context.req.method === 'HEAD') {
+        if (context.req.method === 'HEAD' || closed.aborted) {
           context.res = new Response(null, context.res)
           await body.cancel()
         } else {
-          context.res = heldUntilSent(context.res, body, release)
+          context.res = heldUntilSent(context.res, body, closed, release)
           sending = true
         }
       }

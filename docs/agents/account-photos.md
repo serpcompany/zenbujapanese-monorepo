@@ -63,8 +63,8 @@ they came: re-encoding or resizing would change the hash the photo is named by.
   `src/http/rate-limit.ts`). The next answers `429` with `Retry-After: 1`. A slot has 512 MB
   ([`api-servers.md`](api-servers.md), The deployer): an upload holds its file, up to 12 MB, while
   it hashes and sends it, and a download streams from R2 without holding the file, keeping its
-  turn until the last byte is sent or the connection closes, so one account can neither fill a
-  slot's memory nor take every turn.
+  turn until the last byte is sent or the connection closes, even before the answer starts (the
+  request's abort signal), so one account can neither fill a slot's memory nor take every turn.
 
 What R2 costs at these sizes is the owner's call (#867); the limits are in `photoLimits`
 (`src/domain/photo-limits.ts`).
@@ -147,8 +147,9 @@ changing nothing, another account's file and an unknown one answering `404`, a l
 stray object, each refused upload, each image type read from its bytes, the 1,000-file cap and an
 upload past it deleting the photo emptied longest ago, `503` with no storage, the slots for one
 account while the service has room and for the service, a download keeping its slot until its
-body is sent, cancelled, or cut, a cut one logged, a `HEAD` giving its slot back at once, and CORS
-for the website.
+body is sent, cancelled, or cut or its client goes, a cut one logged, a `HEAD` giving its slot back
+at once, and CORS for the website. `src/http/download-disconnect.test.ts` runs the real Node
+adapter: downloads whose clients leave before the answer starts give their slots back.
 `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo entities to their
 rules, and show a file swept from storage after the sync that deleted its photo, an emptied photo
 keeping its file, the hour's housekeeping emptying and deleting a photo and sweeping its file, a
