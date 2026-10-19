@@ -111,8 +111,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
   again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
-  added elsewhere since: when a photo is deleted, drop its words on the device, since they don't
-  come down one by one.
+  added elsewhere since: when a photo is deleted, drop its words on the device. Each word's removal
+  comes down too, so a device that sees only the photo saved again still drops the old words.
 - **A word the service refuses:** `unknown_photo` means the account has no such photo. If its
   photo's `add` is still queued, as after `photo_not_uploaded`, send the word again after it. If
   your app had the photo from the account, it was deleted elsewhere first: drop the word on the
@@ -120,8 +120,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   Otherwise, as when the photo's file was refused, keep the word on the device without syncing.
   `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
-  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), which
-  comes only once no emptied photo is left for the account to delete in its place.
+  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), where a
+  photo emptied in the last 30 days still holds its place: send it again once one is deleted.
 - **A download that answers `404`** never deletes anything: `not_found` means the account no
   longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
   account lost the file, which comes back when a device that holds the image uploads it, as one

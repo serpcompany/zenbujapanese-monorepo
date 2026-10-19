@@ -367,8 +367,8 @@ first time:
    change's result. A conflict's `current` replaces it. If the change is applied at a newer
    version, the account's copy of that comes in `changes`; if it's applied at the held copy's
    version (it changed nothing), or rejected, take the held copy.
-5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
-   queued changes still go.
+5. **On `410 invalid_cursor`**, sync again with no cursor, take what comes back over your copy, and
+   drop each entity you hold a version for that the whole read didn't bring. Queued changes go.
 
 A request and its answer:
 
@@ -459,7 +459,7 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
-| `410 invalid_cursor` | Sync again with no cursor. |
+| `410 invalid_cursor` | Sync again with no cursor; drop what you had that didn't come back. |
 | `413 too_large` | The body is over 64 KB: send fewer mutations at a time. A photo's file is over 12 MB: keep the photo on the device only. |
 | `400 photo_digest_mismatch` | The bytes sent aren't the file the ID names: read the file again, and upload it once more. |
 | `409 too_many_photos`, `415 unsupported_photo` | The account can't keep this file: keep the photo on the device only. |

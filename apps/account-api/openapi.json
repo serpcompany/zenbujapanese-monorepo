@@ -1772,7 +1772,7 @@
             }
           },
           "photo": {
-            "description": "A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo never stops an upload: past the account's 1,000 files, the one emptied longest ago is deleted to make room.",
+            "description": "A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's 1,000 for its 30 days, so the word that brings it back always finds it.",
             "entityId": "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
             "read": "photos:read",
             "data": {
@@ -1804,7 +1804,7 @@
                   "photos:write"
                 ],
                 "baseVersion": false,
-                "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes its words and its file, unless the profile photo is the same file. Drop the photo and its words on the device: the words come down with it, not one by one. A word added later is rejected `unknown_photo`.",
+                "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.",
                 "example": {
                   "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
                   "entity": "photo",
@@ -1815,7 +1815,7 @@
             }
           },
           "photoWord": {
-            "description": "A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones. A word the account forgets, with its photo's deletion or past those, comes back past every version it had, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.",
+            "description": "A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones; a deleted photo's words go when the account forgets the photo. A word the account forgets comes back past every version it had, so a remove from before can't take a later add, and a cursor from before its removal is refused `410 invalid_cursor`, so the device reads everything again. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.",
             "entityId": "The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.",
             "read": "photos:read",
             "data": {
@@ -3091,7 +3091,7 @@
             }
           },
           "410": {
-            "description": "`invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.",
+            "description": "`invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or is older than a note, photo, or photo word's deletion the account has since forgotten. Nothing was applied. Sync again with no cursor, keep what comes back, and drop what your app holds from the account that doesn't.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3228,7 +3228,7 @@
     "/v1/photos/{photoId}": {
       "put": {
         "summary": "Upload a photo's file",
-        "description": "The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included; past that, an upload deletes the photo emptied longest ago to make room. An app with only `profile` holds at most 2 files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, `201` or `409`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.",
+        "description": "The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's and an emptied photo's for its 30 days included. An app with only `profile` holds at most 2 files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, `201` or `409`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.",
         "security": [
           {
             "accessToken": [
@@ -3388,7 +3388,7 @@
             }
           },
           "409": {
-            "description": "`too_many_photos`: The account holds 1,000 files, none of them an emptied photo's, or an app with only `profile` holds the 2 it may. Remove a photo first, or set the profile photo to one of the two.",
+            "description": "`too_many_photos`: The account holds 1,000 files, or an app with only `profile` holds the 2 it may. Keep the photo on the device; send it again once a photo is deleted, or set the profile photo to one of the two.",
             "content": {
               "application/json": {
                 "schema": {

@@ -140,5 +140,6 @@ export interface AccountStore {
   ): Promise<T | null>
   changesAfter(userId: string, sequence: number, limit: number): Promise<JournalEntry[]>
   journalHead(): Promise<number>
+  forgottenThrough(userId: string): Promise<number>
   photoDeletions: PhotoDeletions
 }

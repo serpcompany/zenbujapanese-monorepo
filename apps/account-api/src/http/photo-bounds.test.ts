@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { photoLimits } from '../domain/photo-limits'
 import { appliedAt, type Learner, useAccountService } from '../test/accounts'
-import { photoWordFields as fields, photoChanges, uploaded, wordItem as word } from '../test/photos'
+import {
+  aJpeg,
+  photoWordFields as fields,
+  photoChanges,
+  uploaded,
+  wordItem as word
+} from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
@@ -21,24 +27,82 @@ const journaled = async (learner: Learner, entityId: string) =>
     )
   )[0]?.n
 
+const devicesWithPhoto = async (learner: Learner, bytes: Uint8Array, words: number[]) => {
+  const photoId = await uploaded(accounts, learner, bytes)
+  const phone = new SyncClient(accounts, learner.token)
+  const pad = new SyncClient(accounts, learner.token)
+  phone.change('photo', 'add', photoId, add(photoId).fields)
+  for (const n of words) phone.change('photoWord', 'add', `${photoId}/${word(n)}`, fields)
+  await phone.sync()
+  await pad.sync()
+  return { photoId, phone, pad }
+}
+
+interface Filler {
+  photo: (photoId: string) => string
+  from: number
+  count: number
+}
+
+const removedWhileAway = async (learner: Learner, filler: Filler, thenRemoved: number) => {
+  const { photoId, phone, pad } = await devicesWithPhoto(learner, aJpeg(), [1, 2, 3])
+  const before = (await accounts.mutate(learner.token)).cursor
+  phone.change('photoWord', 'remove', `${photoId}/${word(1)}`)
+  await phone.sync()
+  await removedWords(learner, filler.photo(photoId), filler.from, filler.count)
+  phone.change('photoWord', 'remove', `${photoId}/${word(thenRemoved)}`)
+  await phone.sync()
+  return { photoId, phone, pad, before }
+}
+
+const expectCaughtUp = async (away: Awaited<ReturnType<typeof removedWhileAway>>) => {
+  await away.pad.sync()
+  expect(away.pad.dataOf('photoWord', `${away.photoId}/${word(1)}`)).toBeNull()
+  expect(away.pad.state()).toEqual(away.phone.state())
+}
+
 describe('what the account remembers of removed photos and words', () => {
+  test('a device away while a photo is deleted and the same image saved again drops the deleted words', async () => {
+    const learner = await accounts.learner('photo-away-saved-again@example.com')
+    const bytes = aJpeg()
+    const { photoId, phone, pad } = await devicesWithPhoto(learner, bytes, [1, 2])
+    phone.change('photo', 'delete', photoId)
+    await phone.sync()
+    await uploaded(accounts, learner, bytes)
+    phone.change('photo', 'add', photoId, add(photoId).fields)
+    phone.change('photoWord', 'add', `${photoId}/${word(3)}`, fields)
+    await phone.sync()
+    await pad.sync()
+    const fresh = new SyncClient(accounts, learner.token)
+    await fresh.sync()
+    expect(pad.state()).toEqual(phone.state())
+    expect(fresh.state()).toEqual(phone.state())
+  })
+
+  test('a device whose cursor is older than a removal the account forgot reads everything again, and drops what the account no longer has', async () => {
+    const learner = await accounts.learner('photo-word-forgotten-away@example.com')
+    const onTheSamePhoto = {
+      photo: (photoId: string) => `'${photoId}'`,
+      from: 0x100,
+      count: photoLimits.removedWordsPerPhoto - 1
+    }
+    const away = await removedWhileAway(learner, onTheSamePhoto, 3)
+    expect(await journaled(learner, `${away.photoId}/${word(1)}`)).toBe(0)
+    expect(await accounts.sync(learner.token, { cursor: away.before })).toMatchObject({
+      status: 410,
+      body: { error: { code: 'invalid_cursor' } }
+    })
+    await expectCaughtUp(away)
+  })
+
   test('a device away while a thousand words are removed from other photos still hears of the one removed before them', async () => {
     const learner = await accounts.learner('photo-word-away@example.com')
-    const photoId = await uploaded(accounts, learner)
-    const phone = new SyncClient(accounts, learner.token)
-    const pad = new SyncClient(accounts, learner.token)
-    phone.change('photo', 'add', photoId, add(photoId).fields)
-    for (const n of [1, 2, 3]) phone.change('photoWord', 'add', `${photoId}/${word(n)}`, fields)
-    await phone.sync()
-    await pad.sync()
-    phone.change('photoWord', 'remove', `${photoId}/${word(1)}`)
-    await phone.sync()
-    await removedWords(learner, 'md5(n::text) || md5(n::text)', 1, photoLimits.goneKept)
-    phone.change('photoWord', 'remove', `${photoId}/${word(2)}`)
-    await phone.sync()
-    await pad.sync()
-    expect(pad.dataOf('photoWord', `${photoId}/${word(1)}`)).toBeNull()
-    expect(pad.state()).toEqual(phone.state())
+    const onOtherPhotos = {
+      photo: () => 'md5(n::text) || md5(n::text)',
+      from: 1,
+      count: photoLimits.goneKept
+    }
+    await expectCaughtUp(await removedWhileAway(learner, onOtherPhotos, 2))
   })
 
   test('a photo remembers its latest removed words, and a word it forgot comes back past every version it had', async () => {
@@ -69,17 +133,21 @@ describe('what the account remembers of removed photos and words', () => {
     const learner = await accounts.learner('photo-bound@example.com')
     const bytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 7, 7, 7])
     const forgotten = await uploaded(accounts, learner, bytes)
-    await results(learner, add(forgotten), drop(forgotten))
+    await results(learner, add(forgotten), onWord(forgotten, 1), drop(forgotten))
     await rows(
       `insert into photos (user_id, id, status, version) select '${learner.userId}', md5(n::text) || md5(n::text), 'deleted', 2 from generate_series(1, ${photoLimits.goneKept}) as n`
     )
     const next = await uploaded(accounts, learner)
     await results(learner, add(next))
     expect(await journaled(learner, forgotten)).toBe(0)
-    expect(await rows(`select count(*)::int as n from photos where id = '${forgotten}'`)).toEqual([
-      { n: 0 }
-    ])
+    expect(
+      await rows(
+        `select (select count(*)::int from photos where id = '${forgotten}') as photos, (select count(*)::int from photo_words where photo_id = '${forgotten}') as words`
+      )
+    ).toEqual([{ photos: 0, words: 0 }])
     await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(forgotten))).toMatchObject(appliedAt(3))
+    expect(await results(learner, add(forgotten), onWord(forgotten, 1))).toMatchObject(
+      appliedAt(3, 3)
+    )
   })
 })

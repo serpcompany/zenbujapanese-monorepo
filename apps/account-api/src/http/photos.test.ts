@@ -120,7 +120,7 @@ describe('Media Library photos', () => {
     ).toEqual([photoId, `${photoId}/${word(2)}`])
   })
 
-  test('a delete wins over words added since, takes its words and file, and the same photo saved again starts its words past theirs', async () => {
+  test('a delete wins over words added since, marks them removed, takes the file, and the same photo saved again starts past them', async () => {
     const learner = await accounts.learner('photo-delete@example.com')
     const bytes = aJpeg()
     const photoId = await uploaded(accounts, learner, bytes)
@@ -129,23 +129,30 @@ describe('Media Library photos', () => {
     expect(
       await results(learner, drop(photoId), drop(photoId), drop('d'.repeat(64)))
     ).toMatchObject(appliedAt(2, 2, 0))
-    expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
+    const after = await changes(learner)
+    expect(after).toHaveLength(3)
+    expect(after).toEqual(
+      expect.arrayContaining([
+        deleted('photo', photoId, 2),
+        deleted('photoWord', `${photoId}/${word(1)}`, 4),
+        deleted('photoWord', `${photoId}/${word(2)}`, 2)
+      ])
+    )
     expect(
-      await rows(`select count(*)::int as n from photo_words where user_id = '${learner.userId}'`)
-    ).toEqual([{ n: 0 }])
+      await rows(
+        `select count(*)::int as n from photo_words where user_id = '${learner.userId}' and not present`
+      )
+    ).toEqual([{ n: 2 }])
     expect(await fileCount(learner)).toBe(0)
     expect(outcomesOf(await results(learner, onWord(photoId, 3), add(photoId)))).toEqual([
       'unknown_photo',
       'photo_not_uploaded'
     ])
     await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 4))
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 5))
     expect(await results(learner, offWord(photoId, 1, 3))).toMatchObject([
-      { status: 'conflict', version: 4, current: { operation: 'put' } }
+      { status: 'conflict', version: 5, current: { operation: 'put' } }
     ])
-    await results(learner, drop(photoId))
-    await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(5, 5))
   })
 
   test("a delete's file leaves storage after the sync, with nothing else to start it", async () => {

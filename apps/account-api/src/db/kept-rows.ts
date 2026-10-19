@@ -2,7 +2,7 @@ import { and, count, desc, eq, inArray, not, type SQL, sql } from 'drizzle-orm'
 import type { PgColumn, PgTable } from 'drizzle-orm/pg-core'
 import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
-import { syncChanges } from './schema'
+import { forgottenVersions, syncChanges } from './schema'
 
 interface KeptRows {
   table: PgTable
@@ -12,17 +12,33 @@ interface KeptRows {
   updatedAt: PgColumn
   version: PgColumn
   entity: EntityType
+  remembered?: boolean
 }
+
+const highest = (values: unknown[]) => Math.max(0, ...values.map(Number))
 
 export function keptRows(db: Drizzle, userId: string, rows: KeptRows) {
   const ofTheAccount = eq(rows.userId, userId)
   const live = and(ofTheAccount, rows.live)
   const found = () => db.select({ id: rows.id, version: rows.version }).from(rows.table)
 
+  async function remember(version: number, sequence: number) {
+    await db
+      .insert(forgottenVersions)
+      .values({ userId, entityType: rows.entity, version, sequence })
+      .onConflictDoUpdate({
+        target: [forgottenVersions.userId, forgottenVersions.entityType],
+        set: {
+          version: sql`greatest(${forgottenVersions.version}, excluded.version)`,
+          sequence: sql`greatest(${forgottenVersions.sequence}, excluded.sequence)`
+        }
+      })
+  }
+
   async function forget(forgotten: { id: unknown; version: unknown }[]) {
     const ids = forgotten.map(row => String(row.id))
-    if (ids.length === 0) return 0
-    await db
+    if (ids.length === 0) return ids
+    const journal = await db
       .delete(syncChanges)
       .where(
         and(
@@ -31,8 +47,15 @@ export function keptRows(db: Drizzle, userId: string, rows: KeptRows) {
           inArray(syncChanges.entityId, ids)
         )
       )
+      .returning({ sequence: syncChanges.sequence })
     await db.delete(rows.table).where(and(ofTheAccount, inArray(sql`${rows.id}`, ids)))
-    return Math.max(...forgotten.map(row => Number(row.version)))
+    if (rows.remembered) {
+      await remember(
+        highest(forgotten.map(row => row.version)),
+        highest(journal.map(row => row.sequence))
+      )
+    }
+    return ids
   }
 
   return {

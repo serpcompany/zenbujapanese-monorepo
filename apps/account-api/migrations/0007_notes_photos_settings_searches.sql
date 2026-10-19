@@ -2,6 +2,7 @@ CREATE TABLE "forgotten_versions" (
 	"user_id" text NOT NULL,
 	"entity_type" text NOT NULL,
 	"version" bigint NOT NULL,
+	"sequence" bigint NOT NULL,
 	CONSTRAINT "forgotten_versions_user_id_entity_type_pk" PRIMARY KEY("user_id","entity_type")
 );
 --> statement-breakpoint

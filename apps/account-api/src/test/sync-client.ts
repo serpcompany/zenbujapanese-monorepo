@@ -76,8 +76,15 @@ export class SyncClient {
     if (change.data === null) this.dropWordsOf(change.entity, change.entityId)
   }
 
+  private dropAllBut(seen: ReadonlySet<string>) {
+    for (const [key, entity] of [...this.local]) {
+      if (entity.version > 0 && !seen.has(key)) this.local.delete(key)
+    }
+  }
+
   async sync() {
     const waiting: Change[] = []
+    let rereading = this.cursor === null ? new Set<string>() : null
     for (;;) {
       const { queue } = this
       this.queue = []
@@ -88,6 +95,12 @@ export class SyncClient {
           ...(fields ? { fields } : {})
         }))
       })
+      if (answer.status === 410 && this.cursor !== null) {
+        this.queue = queue
+        this.cursor = null
+        rereading = new Set()
+        continue
+      }
       expect(answer.status, JSON.stringify(answer.body)).toBe(200)
       const body = answer.body as unknown as {
         results: {
@@ -113,13 +126,17 @@ export class SyncClient {
         if (result.current) this.apply(result.current, waiting)
         else if (entity && result.version !== undefined) entity.version = result.version
       })
-      for (const change of body.changes) this.apply(change, waiting)
+      for (const change of body.changes) {
+        rereading?.add(this.key(change.entity, change.entityId))
+        this.apply(change, waiting)
+      }
       this.cursor = body.cursor
       if (!body.hasMore) break
     }
     for (const change of waiting) {
       if (this.dataOf('list', change.entityId.split('/')[0] ?? '')) this.apply(change, [])
     }
+    if (rereading) this.dropAllBut(rereading)
   }
 
   state() {

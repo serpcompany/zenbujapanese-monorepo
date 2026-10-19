@@ -89,8 +89,9 @@ and the email typed while signed out.
   `current`'s text differs from the one its change started from. A note's text is 1 to 10,000
   characters, line breaks and tabs kept, and never cut: the learner wrote it. A deleted note keeps
   only its ID and version, and the account remembers the latest 1,000 deleted notes: an older
-  delete is forgotten with its journal row, which a write would have overridden anyway. At most
-  10,000 notes an account (`too_many_notes`).
+  delete is forgotten with its journal row, and a device whose cursor is from before it is
+  answered `410 invalid_cursor`, reads everything again, and drops the note. At most 10,000 notes
+  an account (`too_many_notes`).
 - **Photo** (`photo`, by the SHA-256 of its file, `src/domain/photos.ts`): the Media Library's
   photos, whose files [`account-photos.md`](account-photos.md) keeps. The ID is the file's hash
   because the iOS app already names each photo so: two devices that save the same image hold one
@@ -102,25 +103,27 @@ and the email typed while signed out.
     and name for 30 days, and a word added from a device that never saw the removal brings it back.
     So a word removed on one device and another added offline elsewhere end the same whichever
     syncs first, and no add is lost.
-  - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it takes
-    its words, which devices drop with the photo rather than one by one, and its file. A word
-    added later is rejected `unknown_photo`.
+  - `delete` is the learner deleting it in the Media Library, and wins as a list's does: it marks
+    every word on it removed, at a new version each, and takes the file. A word added later is
+    rejected `unknown_photo`. A device away meanwhile hears of each word's removal even if the
+    same image is saved again before it syncs.
   - Housekeeping empties a photo left with no word for a day, as when its words' adds failed, so
-    the account shows no photo that no word shows, and deletes an emptied photo after 30 days, or
-    sooner when an upload past the 1,000 files needs its place.
-  - The account remembers its latest 1,000 deleted photos, as it does notes: a device that missed
-    an older deletion keeps that photo.
-  - **Nothing comes back under a version it had.** The account keeps the highest version it
-    forgot of a photo and of a photo word (`forgotten_versions`), and one saved again after it's
-    forgotten starts past that, so a change from before conflicts rather than applying.
+    the account shows no photo that no word shows, and deletes an emptied photo after 30 days,
+    never sooner, since a word queued on a device may still bring it back.
+  - The account remembers its latest 1,000 deleted photos, as it does notes, and forgets an older
+    one with its words.
+  - **What the account forgets, no device keeps.** The account keeps the highest version and
+    journal sequence it forgot of each kind (`forgotten_versions`). A note, photo, or word saved
+    again after it's forgotten starts past that version, so a change from before conflicts rather
+    than applying, and a cursor from before that sequence is refused `410 invalid_cursor`: the
+    device reads everything again and drops what it had from the account that didn't come.
 - **Photo word** (`photoWord`, `<photo>/<item>`): a word or kanji the photo is on, by the same rule
   as a list word (`add` always applies to a photo the account has, `unknown_photo` otherwise;
   `remove` only at its version), with at most 500 a photo (`photo_full`). A removed word keeps its
   row and version, and each photo remembers its latest 500 removed words, so one photo's words
-  never push out another's: a device away while they change hears of every removal but on a photo
-  that lost over 500 words meanwhile, far past the few a photo is on. A deleted photo's words go
-  with it. Adding a word journals its photo again, so a device that dropped the photo when its own
-  last word went gets it back.
+  never push out another's, and a device rereads only after one photo loses over 500 words while
+  it's away, far past the few a photo is on. Adding a word journals its photo again, so a device
+  that dropped the photo when its own last word went gets it back.
 - **Profile photo** (`profilePhoto`, by the account's ID, or none, `src/domain/profile-photo.ts`):
   `set` with a file's SHA-256, and `remove`, each only at the profile photo's own version, as a
   profile's name is changed, so the second of two changes gets the photo as it is. It has a version

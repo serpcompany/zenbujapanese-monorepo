@@ -1,5 +1,5 @@
 {
-  "id": "04d7a1bd-d184-4bfc-85b2-d2fd7b212859",
+  "id": "807f2cbc-30ca-4213-be7a-3088bddf233a",
   "prevId": "642481a1-5d13-4f6b-bb9d-15c59a170146",
   "version": "7",
   "dialect": "postgresql",
@@ -22,6 +22,12 @@
         },
         "version": {
           "name": "version",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence": {
+          "name": "sequence",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true

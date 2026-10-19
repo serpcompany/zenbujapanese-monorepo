@@ -267,7 +267,8 @@ export const forgottenVersions = pgTable(
   {
     userId: owner(),
     entityType: text('entity_type').notNull(),
-    version: bigint('version', { mode: 'number' }).notNull()
+    version: bigint('version', { mode: 'number' }).notNull(),
+    sequence: bigint('sequence', { mode: 'number' }).notNull()
   },
   table => [primaryKey({ columns: [table.userId, table.entityType] })]
 )
