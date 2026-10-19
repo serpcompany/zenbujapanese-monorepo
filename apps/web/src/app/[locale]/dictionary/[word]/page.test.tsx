@@ -1,12 +1,28 @@
+import {
+  dictionaryContract,
+  dictionaryContractHeader
+} from '@zenbu/dictionary-core/artifact/contract'
+import { noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
+import { fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { getWordPage } from '@/lib/dictionary/data'
+import { kanjiSearchPath } from '@/lib/dictionary/urls'
+import type { Locale } from '@/lib/i18n/config'
+import { coreText } from '@/lib/i18n/core-text'
+import { getDictionary } from '@/lib/i18n/dictionary'
+import { localizedPath } from '@/lib/i18n/paths'
+import { listedInJapanese, listedWithLicence, pageSourcesList } from '@/test/credits'
 import { pageProps } from '@/test/page-props'
 import { Redirect } from '@/test/redirect'
-import { visibleText } from '@/test/rendered'
+import { htmlText, visibleText } from '@/test/rendered'
 import WordPage, { generateMetadata } from './page'
 
-vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))
+const serviceEnv: { DICTIONARY_API_URL?: string; DICTIONARY_API_TOKEN?: string } = {}
+vi.mock('@opennextjs/cloudflare', () => ({
+  getCloudflareContext: async () => ({ env: serviceEnv })
+}))
 vi.mock('next/navigation', async original =>
   (await import('@/test/redirect')).redirectingNavigation(original)
 )
@@ -21,6 +37,21 @@ const credited = (html: string) =>
   [...html.matchAll(/<li><a href="[^"]*" class="underline[^"]*">([^<]+)<\/a>/g)].map(
     ([, name]) => name
   )
+
+const sectionHTML = (html: string, title: string) => {
+  const start = html.search(new RegExp(`<div data-slot="card-title"[^>]*>${title}</div>`))
+  const end = html.indexOf('data-slot="card"', start)
+  return start === -1 ? '' : html.slice(start, end === -1 ? html.indexOf('<footer') : end)
+}
+
+const sentencesOf = (entSeq: number) =>
+  new Map(
+    fixtureWordRows
+      .find(rows => rows.entry.entSeq === entSeq)
+      ?.examples.map(({ sentence }) => [sentence.pairId, sentence])
+  )
+
+const prompts = getDictionary('ja').learner.prompts
 
 describe('the word page, read from the fixtures', () => {
   test('a kanji the dictionary has details for opens to them; one without is a plain row', async () => {
@@ -57,6 +88,21 @@ describe('the word page, read from the fixtures', () => {
       'TUBELEX',
       'Tatoeba'
     ])
+  })
+
+  test('credits JMdict, UniDic, KANJIDIC2, the JLPT lists, TUBELEX, and Tatoeba, each with its licence', async () => {
+    const base = [
+      sourceCredits.jmdict,
+      sourceCredits.unidic,
+      sourceCredits.kanjidic2,
+      sourceCredits.jlpt,
+      sourceCredits.tubelex,
+      sourceCredits.tatoeba
+    ]
+    expect(pageSourcesList(await renderWord('いる-1577980'))).toEqual(base.map(listedWithLicence))
+    expect(pageSourcesList(await renderWord('いる-1577980', 'ja'))).toEqual(
+      base.map(listedInJapanese)
+    )
   })
 
   test('keeps its Sources closed, with every credit in the HTML', async () => {
@@ -141,6 +187,101 @@ describe('the word page, read from the fixtures', () => {
       )
     expect(await redirect('en')).toBe(encodeURI('/dictionary/要る-1546640/'))
     expect(await redirect('ja')).toBe(encodeURI('/ja/dictionary/要る-1546640/'))
+  })
+
+  async function alternativeLinks(locale: Locale) {
+    const rows = fixtureWordRows.find(word => word.entry.entSeq === 1391500)
+    const answer = { rows, slug: '炒る', slugs: {}, kanjiPages: ['煎', '熬'] }
+    const headers = { [dictionaryContractHeader]: String(dictionaryContract) }
+    vi.stubGlobal('fetch', async (request: Request) =>
+      new URL(request.url).pathname === '/v1/words/1391500'
+        ? Response.json(answer, { headers })
+        : Response.json({ error: 'not found' }, { status: 404, headers })
+    )
+    Object.assign(serviceEnv, {
+      DICTIONARY_API_URL: 'https://dictionary.test',
+      DICTIONARY_API_TOKEN: 'test-token'
+    })
+    const alternatives = await renderWord('炒る-1391500', locale)
+      .then(html => sectionHTML(html, coreText('Alternatives', locale)))
+      .finally(() => {
+        delete serviceEnv.DICTIONARY_API_URL
+        delete serviceEnv.DICTIONARY_API_TOKEN
+        vi.unstubAllGlobals()
+      })
+    return [...alternatives.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g)].map(
+      ([, href, form]) => ({ href, form: htmlText(form) })
+    )
+  }
+
+  test('a written form with a kanji links to the search for its first kanji', async () => {
+    expect(await alternativeLinks('en')).toEqual([
+      { href: kanjiSearchPath('煎'), form: '煎る' },
+      { href: kanjiSearchPath('熬'), form: '熬る (Rare)' }
+    ])
+  })
+
+  test('on a Japanese page, a written form with a kanji links to the Japanese search for it', async () => {
+    const links = await alternativeLinks('ja')
+    expect(links.map(link => link.href)).toEqual(
+      ['煎', '熬'].map(kanji => localizedPath(kanjiSearchPath(kanji), 'ja'))
+    )
+    expect(links.map(link => link.form)).toEqual([
+      '煎る',
+      expect.stringMatching(new RegExp(`^熬る.*${coreText('Rare', 'ja')}`))
+    ])
+  })
+
+  test.each([
+    ['en', 'Add to List', 'Add Note'],
+    ['ja', prompts.lists.title, prompts.notes.title]
+  ] as const)('Lists and Notes each offer the action the app has, as a prompt (%s)', async (locale, addToList, addNote) => {
+    const html = await renderWord('要る-1546640', locale)
+    for (const [title, action] of [
+      [coreText('Lists', locale), addToList],
+      [coreText('Notes', locale), addNote]
+    ]) {
+      const section = sectionHTML(html, title)
+      expect(section, title).toMatch(new RegExp(`<button[^>]*>${action}</button>`))
+      expect(visibleText(section), title).toMatch(new RegExp(`^${title} ${action} `))
+    }
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('a word without examples says so, in place of a list (%s)', async locale => {
+    const title = coreText('Examples', locale)
+    const examples = sectionHTML(await renderWord('要所-1612150', locale), title)
+    expect(visibleText(examples)).toBe(`${title} ${coreText(noExamplesMessage, locale)}`)
+    expect(examples).not.toContain('data-example')
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('shows the Reading Aids the app has on by default, and none of those it has off (%s)', async locale => {
+    const html = await renderWord('要る-1546640', locale)
+    expect(html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)?.[0]).toContain('data-reading="い"')
+    const sentences = sentencesOf(1546640)
+    const examples = [
+      ...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)
+    ].map(([, pairId, example]) => ({
+      sentence: sentences.get(pairId),
+      paragraphs: [...example.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(([, p]) => p)
+    }))
+    expect(examples).toHaveLength(25)
+    for (const { sentence, paragraphs } of examples) {
+      expect(paragraphs.map(paragraph => htmlText(paragraph))).toEqual([
+        sentence?.japanese,
+        sentence?.english
+      ])
+      const furigana = [...paragraphs[0].matchAll(/<rt[^>]*>([^<]*)<\/rt>/g)].map(
+        ([, kana]) => kana
+      )
+      expect(furigana.filter(reading => !/^\p{scx=Hiragana}+$/u.test(reading))).toEqual([])
+    }
+    expect(examples.filter(({ paragraphs }) => paragraphs[0].includes('<rt'))).not.toHaveLength(0)
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {

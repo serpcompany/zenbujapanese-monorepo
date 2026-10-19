@@ -85,7 +85,7 @@ jobs:
                remove what no longer exists. Keep the doc's structure and its plain, specific
                style. If a doc is still accurate, change nothing in it.
             3. Re-grade each row listed under "Scores to re-grade" in docs/quality.md,
-               docs/quality-ios.md, or docs/quality-web.md. Read the
+               docs/quality-ios.md, docs/quality-ios-account.md, or docs/quality-web.md. Read the
                code in its Code column, with its tests, CI, and docs, and grade it again on the
                scale at the top of docs/quality.md. Rewrite the row and its line under the table (the
                evidence and the main gap) to match the code as it is now, and link each gap to its
@@ -276,7 +276,9 @@ jobs:
                b. one file under "Files near the size limit" in the report, split by
                   responsibility so it stays well under the limit.
                Pass over an item that needs a deploy, a language-data release or anything in R2,
-               a change under apps/ios or in Swift (this runner can't build or test it), a change
+               a change under apps/ios or in Swift (this runner can't build or test it), a
+               change to a tool in language-data/tools (the importers record their own SHA-256 in
+               the data they built, so changing one means rebuilding that data), a change
                to the behavior or wording a product doc describes, an ADR-level decision
                (docs/agents/domain.md), or another decision AGENTS.md leaves to a person, and
                take the next one. If nothing qualifies, stop and say "Nothing to garden".

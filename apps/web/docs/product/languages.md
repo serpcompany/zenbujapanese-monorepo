@@ -89,9 +89,8 @@ marked as advertising, in line with 景品表示法's stealth-marketing rule (in
 **Account emails.** Every request the account pages and the account menu send the account service
 names the page's language (`Content-Language: en` or `ja`), so the service writes a sign-in code
 or an account notice in the language of the page that asked for it, and stores a new account's
-language from the page it signed up on. The service's side is its own pull request, from
-`feat/666-account-emails-in-japanese`; until it merges, the service ignores the header and writes
-English.
+language from the page it signed up on (#816,
+[`account-email.md`](../../../../docs/agents/account-email.md)).
 
 - Source: SERP localization standard, Strings (emails in the recipient's language); the owner's
   decision on #666.

@@ -29,7 +29,7 @@ Internet have no licensed replacement; they can return only if their authors gra
 Jiten (jiten.moe) publishes JMdict-linked frequency lists per media type under CC BY-SA 4.0 as
 `Word,Form,Rank` CSVs (dictionary form, kana reading, competition rank; no counts or POS).
 Downloads are unversioned, so the snapshots used are pinned in
-`Sources/Jiten-2026-09-27.source.json` and `Sources/Jiten-2026-09-27/`.
+`sources/Jiten-2026-09-27.source.json` and `sources/Jiten-2026-09-27/`.
 
 `build_jiten_frequency_packs.py` builds each pack:
 
@@ -76,8 +76,8 @@ skipped top-5,000 rows are kana (ある, いる, もの), where a reading can't 
 
 ## #376 candidate results
 
-From `Generated/Frequency-candidates-376.analysis.json` (`analyze_frequency_candidates.py`,
-plan `Candidates/Frequency-candidates-376.plan.json`). Top-1k is the Jaccard index of the top
+From `generated/Frequency-candidates-376.analysis.json` (`analyze_frequency_candidates.py`,
+plan `candidates/Frequency-candidates-376.plan.json`). Top-1k is the Jaccard index of the top
 1,000 mapped entries.
 
 | Pack | Rows | Mapped | Ambiguous | Pack it replaced (mapped) | Top-1k vs replaced | Top-1k vs YouTube |
@@ -106,13 +106,13 @@ unconfirmed); manythings.org news list and Wiktionary's unsourced "5000 Most Fre
 ## Historical: public-catalog packs (#351)
 
 The candidate catalog record at
-`Candidates/Migaku-public-catalog-ja-frequency-lists-2026-09-25.json` preserves
+`candidates/Migaku-public-catalog-ja-frequency-lists-2026-09-25.json` preserves
 the exact relevant public-catalog names, descriptions, and archive paths. Its
-SHA-256 is pinned by `Candidates/Migaku-public-catalog-ja-ordered-json-v1.json`,
+SHA-256 is pinned by `candidates/Migaku-public-catalog-ja-ordered-json-v1.json`,
 which also pins every archive URL, byte count, entry name, row count and
 SHA-256. The analyzer rejects snapshot hash, identity, URL, and candidate-count
 mismatches. The generated analysis at
-`Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json` pins its
+`generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json` pins its
 inputs, analysis-tool, mapping-policy, TUBELEX, and Wikipedia artifact hashes.
 
 ## Ordered-JSON mapping results
@@ -191,19 +191,19 @@ optional Wikipedia artifact is 8,884,224 bytes.
 Reproduce the analysis from a checkout that has the separately held archives:
 
 ```sh
-python3 apps/ios/Tools/analyze_ordered_json_frequency_lists.py \
-  --catalog apps/ios/LanguageData/Candidates/Migaku-public-catalog-ja-ordered-json-v1.json \
+python3 language-data/tools/analyze_ordered_json_frequency_lists.py \
+  --catalog language-data/candidates/Migaku-public-catalog-ja-ordered-json-v1.json \
   --archives /path/to/japanese-frequency-word-lists \
   --language-data apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.sqlite3 \
   --tubelex apps/ios/Modules/Sources/SearchExperience/Resources/TUBELEXFrequencyPack.sqlite3 \
   --wikipedia /path/to/pinned-wikipedia-frequency.sqlite3 \
-  --wikipedia-import-report apps/ios/LanguageData/Generated/Wikipedia-ja-20221020-310-nfkc.import.json \
-  --output apps/ios/LanguageData/Generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json
+  --wikipedia-import-report language-data/generated/Wikipedia-ja-20221020-310-nfkc.import.json \
+  --output language-data/generated/Migaku-public-catalog-ja-ordered-json-v1.analysis.json
 ```
 
 Generate the Wikipedia comparison artifact with `import_frequency_pack.py`
 from the source URL and manifest pinned in
-`Sources/Wikipedia-ja-20221020-310-nfkc.source.json`. The analyzer requires its
+`sources/Wikipedia-ja-20221020-310-nfkc.source.json`. The analyzer requires its
 SHA-256 to match the committed Wikipedia import report; regeneration during
 this review produced a byte-identical report and artifact SHA-256
 `d3dba5c4902b9323799d5c0ac53af2dd84a0c1bd208d047176a4a6a703f31eea`.

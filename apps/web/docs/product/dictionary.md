@@ -45,8 +45,9 @@ opens that query's results page.
 - Source: #462 (the dictionary page is only a search box); #484 (the hero layout, the description,
   and the `Input` and `Button` form, which replaced #462's `InputGroup`).
 - Check: smoke `200 /dictionary/`; `apps/web/e2e/search.spec.ts`, "the dictionary home searches
-  and lands on the canonical results page" (the heading, the box, and submitting it). The layout: No
-  automated check yet (#511).
+  and lands on the canonical results page" (the heading, the box, and submitting it); the layout,
+  at a desktop and a phone width: `apps/web/e2e/search.spec.ts`, "the dictionary home centers its
+  heading and box a little above the middle, the box focused".
 
 **Browse sections.** Below the search box, the home leads into the browse pages: by kana, kanji by
 school grade, categories, and common words ([Browse pages](browse.md#dictionary-home)).
@@ -81,8 +82,10 @@ types; the website searches on Enter so that each search is its own page.
 - Check: `src/app/[locale]/dictionary/search/[query]/page.test.ts` checks the query the box
   redirects to (Search URLs, below); `apps/web/e2e/search.spec.ts`, "the dictionary home searches
   and lands on the canonical results page", submits `  IRU ` and checks the redirect to
-  `/dictionary/search/iru/` and the prefilled box. That typing doesn't search: No automated check
-  yet (#511).
+  `/dictionary/search/iru/` and the prefilled box. That typing doesn't search:
+  `src/components/dictionary/search-form.interaction.test.tsx`, "typing in the box searches nothing;
+  the form submits it to the search page" (no request, navigation, or history entry however long it
+  waits, and a plain `GET` form).
 
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
 the app's own queries and full-text indexes, on the app's own data in the dictionary service. It
@@ -284,8 +287,10 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
   page for 要 credits KanjiVG and Kanjium for the kanji details". What a kanji's details and the
   sentences add: `src/lib/dictionary/sources.test.ts` ("withShownData, the credits for what a page
   shows"); `apps/web/e2e/kanji.spec.ts`, that test and "/dictionary/search/iru/, without kanji
-  details, credits neither". The base list: No automated check yet (#511). The Sources page:
-  `src/app/[locale]/sources/page.test.tsx` and `apps/web/e2e/sources.spec.ts`; the list:
+  details, credits neither". The base list, with each licence, and none on a search that finds
+  nothing: `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "the results page’s Sources".
+  The Sources page: `src/app/[locale]/sources/page.test.tsx` and `apps/web/e2e/sources.spec.ts`; the
+  list:
   `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
@@ -433,7 +438,9 @@ with a conjugation table the row links to the page's Conjugations section (see C
   `src/components/dictionary/word-page.test.tsx`, "is the page heading, named for the headword
   whatever its furigana" and "shows a standalone speaker for a word without pitch";
   `apps/web/e2e/word.spec.ts`, "shows the word, its breadcrumb, and its meaning" (one `h1`, its
-  name, its text, and its reading drawn by `::before`). Speaking: No automated check yet (#511).
+  name, its text, and its reading drawn by `::before`). Speaking:
+  `src/components/dictionary/word-page.interaction.test.tsx`, "pronouncing the word" (the pitch
+  capsule and the standalone speaker each say the reading, in `ja-JP`).
 
 **Conjugations.** A verb or adjective the app conjugates (ichidan, godan, する, 来る, i- and
 na-adjectives, but not いい) has a [Conjugations section](#conjugations-section) after Frequency,
@@ -557,7 +564,8 @@ opens that kanji.
 - Check: WD `alternativeForms`; `packages/dictionary-core/src/detail/word.test.ts`, "leaves out
   Search only forms and repeats from the alternatives"; where a kanji links:
   `src/lib/dictionary/urls.test.ts`, "open the kanji’s search, which leads with its KANJI row". The
-  link on the page: No automated check yet (#511).
+  link on the page: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "a written form with a kanji
+  links to the search for its first kanji".
 
 **Kanji and Alternative kanji.** Kanji lists each kanji of the headword once; Alternative kanji
 lists kanji from the other written forms that the headword lacks. Each row shows the kanji and its
@@ -591,7 +599,9 @@ get-the-app prompt. The app's ✓ Known capsule and encounter photo aren't shown
 
 - Source: #462 (learner sections as get-the-app prompts until #468); #468 leaves them, since
   signing in on the web doesn't make them work yet ([Account pages](account.md)).
-- Check: No automated check yet (#511).
+- Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "Lists and Notes each offer the action
+  the app has, as a prompt"; `apps/web/e2e/word.spec.ts`, "Lists and Notes each open the get-the-app
+  prompt", at a desktop and a phone width.
 
 **Examples.** A word lists the same examples, in the same order, as the app's Word Detail, up to
 the app's 100. The page renders the first 25 and loads 25 more at a time as the learner scrolls,
@@ -611,8 +621,9 @@ Example Sentences row opens it. A sentence counts in either width, Ｔシャツ 
   reaches its end, then has no more"; `#examples`:
   `src/app/[locale]/dictionary/[word]/page.test.tsx`, "the Examples section sits at #examples, where
   search results send their sentences", and `apps/web/e2e/word.spec.ts`, "a word's #examples opens
-  the page at its Examples section". The empty message: No automated check yet (#511). Either
-  width: WD's Ｔシャツ, Ｈ, and ＮＧ, and
+  the page at its Examples section". The empty message:
+  `src/app/[locale]/dictionary/[word]/page.test.tsx`, "a word without examples says so, in place of
+  a list" (要所). Either width: WD's Ｔシャツ, Ｈ, and ＮＧ, and
   `packages/dictionary-core/src/artifact/example-retrieval.test.ts`.
 
 **Example words.** Each sentence shows each word underlined, as the app splits it; an inflected
@@ -626,7 +637,8 @@ thicker underline; the app accents it in color. Split compounds such as 一日 h
 - Check: WD `examples.shown[].tokens` (`surface`, `entry`, `candidates`, `pageWord`);
   `packages/dictionary-core/src/examples/linking.test.ts`;
   `packages/dictionary-core/src/detail/examples.test.ts`, "links each word, with furigana over
-  linked kanji only". The underline style: No automated check yet (#511).
+  linked kanji only". The underline style: `apps/web/e2e/word.spec.ts`, "an example underlines
+  the page's word more thickly than its other words" (2 pixels against 1).
 
 **Example translation, speaker, and credits.** Each example shows its English translation and a
 speaker that reads the sentence. Like the app, it doesn't credit each sentence: the page's Sources
@@ -643,7 +655,9 @@ updated since the page loaded." and offers a reload.
 - Source: website design (#464).
 - Check: `src/lib/dictionary/data.test.ts`, "a page from another build doesn't load this build's
   examples"; `src/app/[locale]/dictionary/examples/[file]/route.test.ts`, "is not found for an
-  unknown word or another build". The message: No automated check yet (#511).
+  unknown word or another build". The message and its reload:
+  `src/components/dictionary/load-more.interaction.test.tsx`, "a page from another dictionary build
+  says its examples were updated, and reloads".
 
 **Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT vocabulary lists,
 TUBELEX, and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them
@@ -656,7 +670,8 @@ and links in the page's HTML.
   "credits no single example, and keeps its Sources closed until opened";
   `src/lib/dictionary/sources.test.ts`; `apps/web/e2e/kanji.spec.ts`, "the word page credits KanjiVG
   and Kanjium for the kanji details" and "/dictionary/いる-1577980/, without kanji details, credits
-  neither". The base list: No automated check yet (#511).
+  neither". The base list, with each licence: `src/app/[locale]/dictionary/[word]/page.test.tsx`,
+  "credits JMdict, UniDic, KANJIDIC2, the JLPT lists, TUBELEX, and Tatoeba, each with its licence".
 
 ## Conjugations section
 
@@ -791,7 +806,9 @@ A kanji without a diagram has no button.
 - Source: `KanjiStrokeOrderView.swift`; `components/dictionary/stroke-order.tsx`.
 - Check: KD `hasStrokeOrder`, `strokeOrderStrokes`;
   `packages/dictionary-core/src/detail/strokes.test.ts`; `apps/web/e2e/kanji.spec.ts`, "shows the
-  kanji's stroke order" (the dialog opens). Playing and stepping: No automated check yet (#511).
+  kanji's stroke order" (the dialog opens). Playing, pausing, and stepping, and starting again
+  from the first stroke: `apps/web/e2e/kanji.spec.ts`, "steps, plays, and pauses the strokes, from
+  the first each time it opens", on a browser clock the test pauses and moves on.
 
 **Readings.** On, Kun, and Name readings, each with up to three of the kanji's words whose reading
 starts with it, as "headword · summary". A row with words opens its first word's page, with a
@@ -813,7 +830,7 @@ as in the app.
 or Sound pattern) and up to three meanings, or its linked on-readings when it has none. Components
 appear only for a kanji without elements. An element or component that is a kanji links to that
 kanji's search, which leads with its row and details. The app also opens an element detail
-screen; see [Required, not built yet](#required-not-built-yet-511).
+screen; see [Required, not built yet](not-built-yet.md).
 
 - Source: `kanjiElements` in the core's `detail/kanji.ts`, which the app's `KanjiElementsSection`
   (`KanjiDetailSections.swift`) draws.
@@ -1083,10 +1100,12 @@ Sitemap end it. The legal index (`/legal/`) is in the Company menu rather than t
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
 and there is no romaji and no word meanings under example words. The settings are required; see
-[Required, not built yet](#required-not-built-yet-511).
+[Required, not built yet](not-built-yet.md).
 
 - Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
-- Check: No automated check yet (#511).
+- Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "shows the Reading Aids the app has on
+  by default, and none of those it has off" (the headword's furigana; each example's furigana in
+  kana, its sentence and translation as the dictionary has them, and nothing else).
 
 **Phone layout.** Every page fits a 360-pixel phone. No text is smaller than 12 pixels: furigana
 is 0.45 of its word's size, as in the app, but never under 12 pixels, so it spreads a short word
@@ -1130,10 +1149,10 @@ number past any JMdict entry.
   it answers, so a page and its links always agree.
 
 **Retired word URLs.** A word whose entry was retired returns 410 Gone, or redirects (308) to its
-replacement in one hop when the dictionary holds the replacement. No entry is recorded as retired
-until #463 records retired entries in the app's data.
+replacement in one hop when the dictionary holds the replacement. Each language-data release
+records the entries it drops (`language-data/retired-entries.md`).
 
-- Source: ADR 0007; #465.
+- Source: ADR 0007; #465; #463.
 - Check: `src/lib/dictionary/retired.test.ts`, "retiredWordResponse".
 
 **Removed URLs.** The kanji, conjugation, and Example Sentences pages that came before ADR 0010
@@ -1228,7 +1247,9 @@ only dictionary sitemaps (ADR 0010, amended for #614). Search pages aren't in an
 **Structured data.** Each dictionary page carries `BreadcrumbList` structured data for its trail.
 
 - Source: #484.
-- Check: No automated check yet (#511).
+- Check: `apps/web/e2e/search.spec.ts`, "… carries its breadcrumb trail as BreadcrumbList
+  structured data", on the dictionary home, a results page, and a word page: one list, with each
+  crumb's name and URL, on the page's canonical host.
 
 **Opening a link in the app.** On an iPhone with the Zenbu app installed, a search or word URL,
 or a removed kanji URL, opens in the app (the [app's product docs](../../../ios/docs/product/dictionary.md#links-from-zenbujapanesecom)
@@ -1249,82 +1270,5 @@ team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims the site's links b
 
 ## Required, not built yet (#511)
 
-These are the #511 inventory's rows marked differs or missing, and the app features the owner's
-decision on #511 makes required. Each is written as the behavior the website must have, with the
-app source it must match and the check it will get. When one is built, its entry moves into the
-page's section above, with its check, in the same PR.
-
-### Search results
-
-**Handwriting and radical input.** The search box offers handwriting and radical selection, as the
-app does.
-
-- App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`,
-  `RadicalInputView.swift`, `RadicalLookupClient.swift`. The radical panel's kanji and radicals are
-  already the core's (`RadicalLookup` in `packages/dictionary-core/src/search/radicals.ts`), and
-  so is which handwriting candidates are kept (`japaneseCandidates`); recognizing the strokes is
-  the app's.
-- Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
-  handwriting samples and their candidates, replayed against the website.
-
-**Radical searches keep the strongest matches.** A search started from radical input lists only
-its leading group of equally strong matches, as the app limits it (`rankedEntryLimit`).
-
-- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchResultsView.swift`.
-- Check it will get: radical-origin cases in the planned search results suite, recording the rows
-  the app lists.
-
-### Kanji details
-
-**Kanji element detail.** An element opens its element detail screen, as in the app.
-
-- App source: `KanjiElementDetailView.swift`, which draws the core's `kanjiElementDetail`
-  (`detail/kanji-element.ts`).
-- Check it will get: the app-recorded element suite (`kanji-element.json`, which the service
-  already replays through the entry point the app calls), and a rendered-page check.
-
-### Site-wide
-
-**Reading Aids.** The website offers the app's Reading Aids settings and applies them wherever the
-app does:
-
-- **Furigana** over headwords and linked words. With it off, a word page shows the reading under
-  the headword instead, as in the app.
-- **Romaji** alongside the Japanese on word pages, kanji details, and example sentences.
-- **Word Meanings:** a short meaning under each linked word the learner hasn't marked known.
-- **Sentence Translations:** whether examples show their English.
-- **Hide Furigana on Known Words:** known words in examples lose their furigana.
-
-The defaults are the app's: Furigana and Sentence Translations on, Romaji, Word Meanings, and Hide
-Furigana on Known Words off. The app keeps the settings on the device; the website keeps them in
-the browser until accounts exist.
-
-Hide Furigana on Known Words depends on which words the learner knows, so it needs accounts (#468)
-and ships with them. Furigana, Romaji, Word Meanings, and Sentence Translations can ship before
-then: without an account every word counts as unknown, as it does in the app until the learner
-marks it, so Word Meanings shows under every linked word.
-
-- App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
-  (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
-  `ReadingAidPresentation.swift`. Romaji itself is the core's (`romaji` and `sentenceRomaji` in
-  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in
-  `romaji.json`.
-- Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
-  rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
-  reading under the headword, romaji, meanings under example words, and translations. Hide Furigana
-  on Known Words gets its check with #468.
-
-### URLs and SEO
-
-**Search sitemaps.** Child sitemaps list the canonical search URLs of a chosen query set (ADR
-0007), and the sitemap index lists them.
-
-- Source: #466, whose last open item this was; the route audit (#544) now decides which search
-  pages stay indexable at all, and so whether any belong in a sitemap. #463 no longer supplies the
-  query set (it dropped the precomputed search-sitemap queries with ADR 0009).
-- Check it will get: a `sitemaps.test.ts` case and a smoke check.
-
-**Structured data.** Word pages carry structured data beyond `BreadcrumbList`.
-
-- Source: #465 (metadata and structured data).
-- Check it will get: a rendered-HTML check of each page's JSON-LD.
+The #511 inventory's differences and the app features the owner's decision on #511 requires, each
+with its app source and the check it will get, are in [Required, not built yet](not-built-yet.md).

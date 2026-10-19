@@ -34,6 +34,7 @@ afterEach(() => {
   act(() => root.unmount())
   document.body.replaceChildren()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
   scrollListIntoView = null
 })
 
@@ -49,6 +50,8 @@ const shown = () =>
   [...container.querySelectorAll('[data-example]')].map(row =>
     Number(row.getAttribute('data-example'))
   )
+
+const japanese = exampleListText('ja').examples
 
 describe('a paged list', () => {
   test('a click and scrolling into view at once load the next page once', async () => {
@@ -88,5 +91,43 @@ describe('a paged list', () => {
     })
     expect(shown()).toEqual(Array.from({ length: 30 }, (_, index) => index))
     expect(container.textContent).not.toContain('Load more examples')
+  })
+
+  test.each([
+    [
+      'en',
+      'Load more examples',
+      'These examples have been updated since the page loaded.',
+      'Reload for more examples'
+    ],
+    ['ja', japanese.more, japanese.stale, japanese.reload]
+  ] as const)('a page from another dictionary build says its examples were updated, and reloads (%s)', async (locale, more, stale, reload) => {
+    vi.stubGlobal('fetch', async () => Response.json({ error: 'not found' }, { status: 404 }))
+    const reloaded = vi.fn()
+    vi.spyOn(window, 'location', 'get').mockReturnValue({ ...window.location, reload: reloaded })
+    const initial = Array.from({ length: 25 }, (_, index) => example(index))
+    act(() =>
+      root.render(
+        <ExampleList
+          initial={initial}
+          listed={30}
+          path="/e.json?build=old"
+          locale={locale}
+          text={exampleListText(locale)}
+        />
+      )
+    )
+    const moreButton = [...container.querySelectorAll('button')].find(
+      button => button.textContent === more
+    )
+    await act(async () => moreButton?.click())
+    expect(container.textContent).toContain(stale)
+    expect(shown()).toHaveLength(25)
+    const reloadButton = [...container.querySelectorAll('button')].find(
+      button => button.textContent === reload
+    )
+    expect(reloaded).not.toHaveBeenCalled()
+    act(() => reloadButton?.click())
+    expect(reloaded).toHaveBeenCalledOnce()
   })
 })

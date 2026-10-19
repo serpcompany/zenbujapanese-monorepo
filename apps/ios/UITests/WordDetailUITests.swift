@@ -47,11 +47,7 @@ final class WordDetailUITests: ZenbuUITestCase {
 
   func testANoteIsKeptOnTheWord() {
     let app = openJapan()
-    tap(find("word-detail.more-menu", in: app))
-    tap(menuChoice("Add Note", in: app))
-    type("the country, not the language", into: waitFor(find("word-note.editor", in: app)))
-    tap(find("word-note.done", in: app))
-    waitFor(labeled("the country, not the language", in: app))
+    addNote("the country, not the language", in: app)
     tap(find("word-detail.more-menu", in: app))
     tap(menuChoice("Add Note", in: app))
     type("left by going back", into: waitFor(find("word-note.editor", in: app)))
@@ -59,6 +55,14 @@ final class WordDetailUITests: ZenbuUITestCase {
     tap(find("result.japan", in: app))
     reveal(labeled("left by going back", in: app), in: app)
   }
+
+  func testANoteAnEarlierVersionSavedIsOnItsWord() throws {
+    let app = openJapan(try earlierNotes([Self.japanNoteIdentity: ["earlier": "saved by 2.0.0"]]))
+    reveal(labeled("saved by 2.0.0", in: app), in: app)
+  }
+
+  private static let japanNoteIdentity =
+    "wn1:45a54eddcad276de58be8b74fa87cfcbdab181ee8a14a6ac910f337758519de2"
 
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
     let app = launch()

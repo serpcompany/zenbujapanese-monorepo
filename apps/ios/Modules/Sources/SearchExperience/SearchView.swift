@@ -11,9 +11,12 @@ struct SearchView: View {
   let schoolKanjiClient: SchoolKanjiClient
   let exampleSentenceClient: ExampleSentenceClient
   let focusRequest: Int
+  let openNote: (NotesInSearch.Row) -> Void
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(LearnerNotes.self) private var learnerNotes
   @State private var results = LookupSearchResults.empty
   @State private var shown: ShownResults?
+  @State private var shownNotes: ShownNotes?
   @State private var presentationState = SearchPresentationState.idle
   @State private var retryID = 0
   @State private var settledSearchTaskID: SearchTaskID?
@@ -89,11 +92,16 @@ struct SearchView: View {
       settledSearchTaskID = nil
       results = .empty
       shown = nil
+      shownNotes = nil
       presentationState = .idle
     }
     .task(id: taskID) {
       await search(taskID)
     }
+    .task(id: NotesRevisions(read: learnerNotes.revision, shown: shownNotes?.revision)) {
+      await refreshNotes()
+    }
+    .modifier(DrawRecorder(shownNotes, as: "search.notes.drawn", summary: ShownNotes.drawnSummary))
     .onChange(of: focusRequest) { selectInputMode(.keyboard) }
   }
 
@@ -119,7 +127,9 @@ struct SearchView: View {
           results: results,
           first: shown,
           fromRadicals: pickedKanjiQuery == searchQuery,
-          selectRefinement: selectRefinement
+          notes: shownNotes?.notes,
+          selectRefinement: selectRefinement,
+          openNote: openNote
         )
         .id(
           SearchResultsIdentity(
@@ -148,13 +158,29 @@ struct SearchView: View {
       .accessibilityIdentifier("search.failure")
 
     case .noResults(let noMatches):
-      ContentUnavailableView {
-        Label(noMatches.title, systemImage: "magnifyingglass")
-      } description: {
-        Text(noMatches.message)
+      if let notes = shownNotes?.notes {
+        List {
+          Section {
+            noDictionaryMatches(noMatches)
+              .listRowSeparator(.hidden)
+          }
+          NotesInSearchSection(notes: notes, open: openNote)
+        }
+        .listStyle(.plain)
+        .accessibilityIdentifier("search.notes")
+      } else {
+        noDictionaryMatches(noMatches)
       }
-      .accessibilityIdentifier("search.no-results")
     }
+  }
+
+  private func noDictionaryMatches(_ noMatches: NoMatches) -> some View {
+    ContentUnavailableView {
+      Label(noMatches.title, systemImage: "magnifyingglass")
+    } description: {
+      Text(noMatches.message)
+    }
+    .accessibilityIdentifier("search.no-results")
   }
 
   private var inputPanelPresentation: Binding<Bool> {
@@ -205,6 +231,7 @@ struct SearchView: View {
       guard !taskQuery.isEmpty else {
         results = .empty
         shown = nil
+        shownNotes = nil
         return
       }
       presentationState = .loading
@@ -219,6 +246,7 @@ struct SearchView: View {
         try Task.checkCancellation()
         let exampleCount = await exampleSentenceClient.count(taskQuery, foundResults)
         await FrequencyLists.live.ready()
+        await learnerNotes.ready()
         let request = ResultsScreenRequest(
           query: taskQuery,
           results: foundResults.listed,
@@ -234,10 +262,12 @@ struct SearchView: View {
           lists: FrequencyLists.live.version)
         try Task.checkCancellation()
         let screen = try await request.screen()
+        let notes = await learnerNotes.inSearch(for: taskQuery)
         try Task.checkCancellation()
         guard searchTaskID == taskID, settledSearchTaskID != taskID else { continue }
         settledSearchTaskID = taskID
         results = foundResults
+        shownNotes = notes
         switch screen {
         case .noResults(let noMatches):
           shown = nil
@@ -255,9 +285,17 @@ struct SearchView: View {
         settledSearchTaskID = taskID
         results = .empty
         shown = nil
+        shownNotes = nil
         presentationState = .failure
       }
     }
+  }
+
+  private func refreshNotes() async {
+    guard let shownNotes, shownNotes.revision != learnerNotes.revision else { return }
+    let refreshed = await learnerNotes.inSearch(for: shownNotes.query)
+    guard !Task.isCancelled, self.shownNotes?.query == shownNotes.query else { return }
+    self.shownNotes = refreshed
   }
 
   private var inputModeScope: Binding<SearchInputMode> {
@@ -340,6 +378,11 @@ struct SearchView: View {
       inputMode = .inactive
     }
   }
+}
+
+private struct NotesRevisions: Hashable {
+  let read: Int
+  let shown: Int?
 }
 
 private struct SearchTaskID: Hashable {

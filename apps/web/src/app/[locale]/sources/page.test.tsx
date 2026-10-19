@@ -1,7 +1,8 @@
-import { creditsShownBy, type SourceCredit } from '@zenbu/dictionary-core/sources/credits'
+import { creditsShownBy } from '@zenbu/dictionary-core/sources/credits'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { coreText } from '@/lib/i18n/core-text'
+import { creditLine } from '@/test/credits'
 import { visibleText } from '@/test/rendered'
 import SourcesPage from './page'
 
@@ -13,9 +14,6 @@ const rendered = async (locale: string) =>
 const html = await rendered('en')
 const text = visibleText(html)
 const { conversionNotice, credits } = creditsShownBy('website')
-
-const creditLine = ({ name, credit, license, notice }: SourceCredit) =>
-  `${name}: ${credit} ${license.name}.${notice ? ` ${notice}` : ''}`
 
 describe('the Sources page', () => {
   test('lists every credit the core gives the website, in its order, with its licence and notice', () => {

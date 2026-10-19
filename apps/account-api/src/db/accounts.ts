@@ -25,6 +25,14 @@ export function accountStore(db: Drizzle): AccountStore {
   return {
     profile: userId => readerOn(db, userId).currentProfile(),
 
+    async language(userId) {
+      const [row] = await db
+        .select({ language: users.language })
+        .from(users)
+        .where(eq(users.id, userId))
+      return row?.language ?? null
+    },
+
     identities: userId =>
       db
         .select({ provider: userIdentities.providerId, subject: userIdentities.accountId })

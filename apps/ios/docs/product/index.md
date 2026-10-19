@@ -5,9 +5,9 @@ It is updated with the implementation and is not a roadmap or an ideas backlog. 
 is [Required, not built yet](#required-not-built-yet-563), which lists behavior the owners have
 decided the app must have but doesn't yet.
 
-The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on
-Macs with Apple silicon and macOS 26, as one app with one App Store record
-([iPad and Mac](#ipad-and-mac)). It has four tabs:
+The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on Macs
+with Apple silicon and macOS 26, as one app with one App Store record ([iPad and
+Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) open it from other apps. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
@@ -41,8 +41,8 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
   Google's sign-in, the Translate harness's script for the microphone, a local player, fixture
   captions, and a results page for YouTube, and a closed port for the offline account
   ([`ios.md`](../../../../docs/agents/ios.md#tests-on-every-platform)).
-- **Contract tests** (`apps/ios/Tools/tests/`), which check the project settings and the bundled
-  data, the same for every platform.
+- **Contract tests** (`apps/ios/Tools/tests/` and `language-data/tools/tests/`), which check the
+  project settings and the bundled data, the same for every platform.
 - **The recorded-audio check** (`translate-replay`), which plays recorded speech through the real
   recognizers and Apple Translation on a Mac with Apple's speech models
   ([`translate.md`](../../../../docs/agents/translate.md#recorded-audio-check)).
@@ -53,7 +53,7 @@ iPhone and iPad and **Paste Image** on the Mac, runs on all three. **By hand** m
 can drive, with the automated check that comes closest: a real Apple or Google sign-in, a real
 camera, live speech into a microphone, YouTube's own player and results page, the system's photo
 and file pickers, and what iOS or macOS does outside the app (Split View, dragging from another
-app, Continuity Camera, opening a link from another app).
+app, Continuity Camera, opening a link from another app, Siri, Spotlight, and Shortcuts).
 
 ## iPad and Mac
 
@@ -209,11 +209,12 @@ It provides:
 - the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
   ([Zenbu account and sync](account-sync.md)), against production's account service in
   TestFlight and App Store builds and staging's in Debug builds;
-- the Media Library;
+- the [Media Library](saved-data.md#media-library);
 - Known Words;
 - Lists;
 - **Translations**, with how many conversations Translate has saved, which opens the same
   **Translations** screen as the Translate tab;
+- [**Notes Without a Word**](saved-data.md#notes-without-a-word), only while there are any;
 - Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
   meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
   kanji in Search's Grade panel); and Sentence Translations, with a translation language (English
@@ -231,11 +232,13 @@ Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small t
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
-first credit, Jiten's notice, and a license text); contract `test_account_service_settings.py`
-(production in TestFlight and App Store builds, staging in Debug); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits, and
-none it can't read), and the recorded `RomajiConformanceTests` with core `detail/romaji.test.ts`
-(how a reading and a sentence are written in romaji).
+first credit, Jiten's notice, and a license text), and
+`SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a Word); contract
+`test_account_service_settings.py` (production in TestFlight and App Store builds, staging in
+Debug); package `PlayerReadingAidTests` and `WordMeaningTests` (the Reading Aids preferences),
+`SourceCreditsTests` (the core's credits, and none it can't read), and the recorded
+`RomajiConformanceTests` with core `detail/romaji.test.ts` (how a reading and a sentence are written
+in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -252,7 +255,7 @@ account's, filling its empty ones from the phone ([The profile at sign-in](accou
 shows the account's, read-only (Apple's relay address for Hide My Email), the name can't be emptied,
 and a change the account refuses, such as a taken username, goes back and says why. Signed out,
 edits stay on the phone, and the photo always does. One this version can't read is kept aside
-([Saved data that can't be read](#saved-data-that-cant-be-read)).
+([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
 Check: package `UserProfileTests` (the field rules, the username's from the cases the account
 service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
@@ -358,44 +361,6 @@ launch is left untouched, Favorites is not created over it, and Lists asks the l
 Zenbu.
 
 Check: package `WordListsTests` (newer, damaged, and unreadable files).
-
-### Media Library
-
-The current Media Library works like a small saved-photo album. It contains images associated
-with words through Image Search or Word Detail. Each image appears once with all of its
-associated words, even when several words share it. A learner can view an image, remove its
-association from one word, or delete the image and all of its word associations.
-
-Check: UI `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted` and
-`AccountUITests` (empty at first); package `EncounterMediaStorageTests`.
-
-These images are stored locally and participate in normal system-managed device backup. The
-Media Library is not currently a general file store, import system, analysis tool, sync service,
-or publishing destination.
-
-Deleting a photo, or removing it from its last word, deletes its image at once, unless a copy of
-the index kept aside (below) names the photo, or one can't be read. Then the image goes later,
-checked at most once a day as Zenbu opens or comes back, or as a word's photos or the Media
-Library load: once no kept copy names it, and once 30
-days have passed since it was deleted even if one still does; while a kept copy can't be read,
-such as before the device's first unlock, it waits.
-If Zenbu can't record the deletion, as on a full device, that image stays. Zenbu deletes an image
-only after the learner deletes its photo, or removes the photo from the last word the Media
-Library shows it with.
-
-Check: package `DeferredImageDeletionsTests` and `EncounterMediaStorageTests`.
-
-### Saved data that can't be read
-
-Player's Recent, word notes, the Media Library's index, and the profile keep what a learner saved
-when this version of Zenbu can't read it, as Known Words and Lists do: the saved data is copied
-aside on the device (the newest three copies of each are kept) rather than written over, each
-keeps every video, note, or photo it can read, and new changes save as before. A profile that
-can't be read starts empty. If the Media Library's index can't be opened or copied aside, the
-Media Library shows nothing and saves nothing until it can, rather than write over it.
-
-Check: package `UnreadableCopyTests`, `WordNoteStorageTests`, `UserProfileTests`,
-`EncounterMediaStorageTests`, and `AccountSyncWatchHistoryTests`.
 
 ### Zenbu account and sync
 

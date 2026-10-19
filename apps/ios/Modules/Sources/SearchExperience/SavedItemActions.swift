@@ -9,7 +9,7 @@ final class SavedItemNotes {
   private(set) var notes: [LearnerWordNote] = []
   private(set) var editingNoteID: String?
   var draft = ""
-  @ObservationIgnored private var noteID: WordNoteID?
+  @ObservationIgnored private var item: SavedItem?
   @ObservationIgnored private var writtenBeforeLoading: [LearnerWordNote] = []
   @ObservationIgnored private var textWhenEditingBegan = ""
   @ObservationIgnored private var saveTask: Task<Void, Never>?
@@ -21,16 +21,17 @@ final class SavedItemNotes {
 
   var isEditing: Bool { editingNoteID != nil }
 
-  func load(_ noteID: WordNoteID) async {
-    let loaded = await store.load(noteID)
+  func load(_ item: SavedItem) async {
+    let loaded = await store.load(item.id)
     guard !Task.isCancelled else { return }
-    let hadLoaded = self.noteID != nil
-    self.noteID = noteID
+    let hadLoaded = self.item != nil
+    self.item = item
     notes = loaded
     guard hadLoaded else {
-      for note in writtenBeforeLoading {
+      for written in writtenBeforeLoading {
+        let note = written.on(item.headword, reading: item.reading)
         notes.apply(note)
-        save(note, to: noteID)
+        save(note, to: item.id)
       }
       writtenBeforeLoading = []
       return
@@ -63,21 +64,22 @@ final class SavedItemNotes {
   private func saveDraft(of editingNoteID: String) {
     let trimmed = { (text: String) in text.trimmingCharacters(in: .whitespacesAndNewlines) }
     guard trimmed(draft) != trimmed(textWhenEditingBegan) else { return }
-    let note = LearnerWordNote(id: editingNoteID, text: draft)
+    let note = LearnerWordNote(
+      id: editingNoteID, text: draft, headword: item?.headword, reading: item?.reading)
     notes.apply(note)
-    guard let noteID else {
+    guard let item else {
       writtenBeforeLoading.append(note)
       return
     }
-    save(note, to: noteID)
+    save(note, to: item.id)
   }
 
-  private func save(_ note: LearnerWordNote, to noteID: WordNoteID) {
+  private func save(_ note: LearnerWordNote, to itemID: SavedItemID) {
     let store = store
     let precedingSave = saveTask
     saveTask = Task {
       await precedingSave?.value
-      await store.save(note, noteID)
+      await store.save(note, itemID)
     }
   }
 }
@@ -344,6 +346,7 @@ struct SavedItemNotesSection: View {
     TextField("Add Note", text: $notes.draft, axis: .vertical)
       .italic()
       .focused(editorFocused)
+      .focusedOnceTheClickIsHandled(editorFocused)
       .accessibilityIdentifier("word-note.editor")
   }
 }

@@ -1,6 +1,10 @@
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { searchDictionary } from '@/lib/dictionary/data'
 import { searchPath } from '@/lib/dictionary/urls'
+import { coreText } from '@/lib/i18n/core-text'
+import { listedInJapanese, listedWithLicence, pageSourcesList } from '@/test/credits'
 import { pageProps } from '@/test/page-props'
 import { redirectOf } from '@/test/redirect'
 import SearchIndexPage from '../page'
@@ -92,5 +96,30 @@ describe('a search lives at the query the core searches', () => {
     expect(await redirectOf(SearchResultsPage(encodedSegment('\u{FEFF} \u{85}')))).toBe(
       '/dictionary/search/'
     )
+  })
+})
+
+describe('the results page’s Sources', () => {
+  const rendered = async (query: string, locale = 'en') =>
+    renderToStaticMarkup(await SearchResultsPage(decodedSegment(query, locale)))
+
+  test('credit JMdict, KANJIDIC2, the JLPT lists, and TUBELEX, each with its licence', async () => {
+    const base = [
+      sourceCredits.jmdict,
+      sourceCredits.kanjidic2,
+      sourceCredits.jlpt,
+      sourceCredits.tubelex
+    ]
+    expect(pageSourcesList(await rendered('iru'))).toEqual(base.map(listedWithLicence))
+    expect(pageSourcesList(await rendered('iru', 'ja'))).toEqual(base.map(listedInJapanese))
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('are left out of a search that finds nothing (%s)', async locale => {
+    const html = await rendered('qzxvkj', locale)
+    expect(html).toContain(coreText('No Dictionary Matches', locale))
+    expect(html).not.toContain('<footer')
   })
 })

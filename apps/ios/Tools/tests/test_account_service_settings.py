@@ -2,9 +2,9 @@ import plistlib
 import re
 import unittest
 
-from contract_checks import ROOT
-from contract_checks import app_build_settings as app_settings
-from contract_checks import build_setting as setting
+from project_settings import ROOT
+from project_settings import app_build_settings as app_settings
+from project_settings import build_setting as setting
 
 INFO_PLIST = ROOT / "apps/ios/App/Info.plist"
 BACKGROUND_SYNC = ROOT / "apps/ios/Modules/Sources/SearchExperience/AccountBackgroundSync.swift"
