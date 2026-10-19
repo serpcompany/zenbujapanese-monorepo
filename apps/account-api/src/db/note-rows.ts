@@ -49,7 +49,8 @@ export function noteWriter(db: Drizzle, userId: string) {
     live: eq(wordNotes.present, true),
     updatedAt: wordNotes.updatedAt,
     version: wordNotes.version,
-    entity: 'wordNote'
+    entity: 'wordNote',
+    remembered: true
   })
   return {
     async forgetGoneNotes(kept: number) {

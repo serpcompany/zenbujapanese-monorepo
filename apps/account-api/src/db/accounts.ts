@@ -5,6 +5,7 @@ import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
 import { deletionDueAt } from './photo-rows'
 import {
+  forgottenVersions,
   photoFileDeletions,
   syncChanges,
   syncMutations,
@@ -151,6 +152,14 @@ export function accountStore(db: Drizzle): AccountStore {
     async journalHead() {
       const [row] = await db.select({ head: max(syncChanges.sequence) }).from(syncChanges)
       return Number(row?.head ?? 0)
+    },
+
+    async forgottenThrough(userId) {
+      const [row] = await db
+        .select({ through: max(forgottenVersions.sequence) })
+        .from(forgottenVersions)
+        .where(eq(forgottenVersions.userId, userId))
+      return Number(row?.through ?? 0)
     },
 
     photoDeletions: {

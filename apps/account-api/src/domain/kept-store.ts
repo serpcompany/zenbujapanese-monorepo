@@ -88,7 +88,7 @@ export interface KeptWriter {
   photoWordCount(photoId: string): Promise<number>
   savePhotoWord(word: Omit<PhotoWord, 'updatedAt'>): Promise<void>
   forgetRemovedPhotoWords(photoId: string, kept: number): Promise<void>
-  forgetPhotoWords(photoId: string): Promise<void>
+  photoWordsOn(photoId: string): Promise<PhotoWord[]>
   saveProfilePhoto(photo: Omit<ProfilePhoto, 'updatedAt'>): Promise<void>
   photoFileCount(): Promise<number>
   profileUploadCount(): Promise<number>

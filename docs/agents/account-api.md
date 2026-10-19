@@ -226,9 +226,9 @@ through the same rule:
 - **The journal**, `sync_changes`, holds each entity's latest change: a change replaces the
   entity's row, and a new account gets one from a trigger on `users`, so an account Better Auth
   makes is in it too. A sync answers each entity as it is now, so the older rows were never
-  needed, and the journal grows with an account's entities, not its changes. The trigger names the profile
-  in SQL, and the first-sync test fails if it and the domain disagree. Every write to an account's
-  journal holds that account's `users` row locked, so its entries commit in the order of their
+  needed, and the journal grows with an account's entities, not its changes. The trigger names
+  the profile in SQL, and the first-sync test fails if it and the domain disagree. Every write to
+  an account's journal holds its `users` row locked, so its entries commit in the order of their
   sequence, which the cursor relies on.
 - **A sync** applies its mutations in order, each in its own transaction. Then it reads up to
   `limit` of the account's journal entries after the cursor (100 unless the request says, at most
@@ -250,9 +250,10 @@ through the same rule:
 - **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
   account with a key derived from `ACCOUNT_API_SECRET`, so it shows nothing of the journal, and a
   sync that reads nothing new answers the cursor it was sent. A cursor another account was given,
-  or one past the end of the journal, as when an environment goes back to a database it left, is
-  refused with `410 invalid_cursor` before anything applies. The client then syncs from no cursor
-  and keeps what comes back. Changing the secret makes every client do that once.
+  one past the end of the journal, as when an environment goes back to a database it left, or one
+  older than a deletion the account has since forgotten (`forgotten_versions`), is refused with
+  `410 invalid_cursor` before anything applies. The client then syncs from no cursor, keeps what
+  comes back, and drops what it had from the account that doesn't. A new secret does that once.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Deleting an account
@@ -351,9 +352,9 @@ are in `src/db/schema.ts`:
   removed, or pruned;
 - `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
 - `word_notes`, `photos` (shown, emptied, or deleted), `photo_words`, `profile_photos`,
-  `learner_settings`, and `recent_searches`: #867's entities, each with its version, and
-  `forgotten_versions`, the highest one forgotten of a photo and a photo word; `photo_files`: each
-  file an account holds, by SHA-256, with its R2 key and when an app with only `profile` sent it;
+  `learner_settings`, and `recent_searches`: #867's entities, each with its version;
+  `forgotten_versions`: the highest version and journal sequence forgotten of each; `photo_files`:
+  each file an account holds, by SHA-256, its R2 key, and when an app with only `profile` sent it;
   `photo_file_deletions`: the keys to delete ([`account-photos.md`](account-photos.md));
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;

@@ -111,8 +111,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
   again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
-  added elsewhere since: when a photo is deleted, drop its words on the device, since they don't
-  come down one by one.
+  added elsewhere since: when a photo is deleted, drop its words on the device. Each word's removal
+  comes down too, so a device that sees only the photo saved again still drops the old words.
 - **A word the service refuses:** `unknown_photo` means the account has no such photo. If its
   photo's `add` is still queued, as after `photo_not_uploaded`, send the word again after it. If
   your app had the photo from the account, it was deleted elsewhere first: drop the word on the

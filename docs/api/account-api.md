@@ -155,7 +155,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 - **200**, [`SyncAnswer`](#syncanswer): The results and the changes.
 - **400** `bad_request`: The body is not JSON, or not this shape.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
-- **410** `invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.
+- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or is older than a note, photo, or photo word's deletion the account has since forgotten. Nothing was applied. Sync again with no cursor, keep what comes back, and drop what your app holds from the account that doesn't.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.
@@ -871,7 +871,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 }
 ```
 
-**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes its words and its file, unless the profile photo is the same file. Drop the photo and its words on the device: the words come down with it, not one by one. A word added later is rejected `unknown_photo`.
+**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.
 
 ```json
 {
@@ -884,7 +884,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 
 ### Entity `photoWord`
 
-A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones. A word the account forgets, with its photo's deletion or past those, comes back past every version it had, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
+A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones; a deleted photo's words go when the account forgets the photo. A word the account forgets comes back past every version it had, so a remove from before can't take a later add, and a cursor from before its removal is refused `410 invalid_cursor`, so the device reads everything again. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
 
 - **ID** (`entityId`): The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
 - **Read with:** `photos:read`

@@ -1,4 +1,4 @@
-import { and, count, eq, isNotNull, ne, sql } from 'drizzle-orm'
+import { and, count, eq, inArray, isNotNull, ne, sql } from 'drizzle-orm'
 import { listWordSeparator } from '../domain/entities'
 import type { NewPhotoFile, Photo, PhotoFile, PhotoWord, ProfilePhoto } from '../domain/kept-store'
 import type { Drizzle } from './database'
@@ -157,7 +157,8 @@ export function photoWriter(db: Drizzle, userId: string) {
     live: ne(photos.status, 'deleted'),
     updatedAt: photos.updatedAt,
     version: photos.version,
-    entity: 'photo'
+    entity: 'photo',
+    remembered: true
   })
   const wordRows = keptRows(db, userId, {
     table: photoWords,
@@ -166,18 +167,9 @@ export function photoWriter(db: Drizzle, userId: string) {
     live: eq(photoWords.present, true),
     updatedAt: photoWords.updatedAt,
     version: photoWords.version,
-    entity: 'photoWord'
+    entity: 'photoWord',
+    remembered: true
   })
-  async function remember(entityType: 'photo' | 'photoWord', version: number) {
-    if (version === 0) return
-    await db
-      .insert(forgottenVersions)
-      .values({ userId, entityType, version })
-      .onConflictDoUpdate({
-        target: [forgottenVersions.userId, forgottenVersions.entityType],
-        set: { version: sql`greatest(${forgottenVersions.version}, excluded.version)` }
-      })
-  }
   return {
     ...photoFileWriter(db, userId),
     async savePhoto(photo: Omit<Photo, 'updatedAt'>) {
@@ -190,7 +182,8 @@ export function photoWriter(db: Drizzle, userId: string) {
         })
     },
     async forgetGonePhotos(kept: number) {
-      await remember('photo', await photoRows.forgetGone(kept))
+      const forgotten = await photoRows.forgetGone(kept)
+      if (forgotten.length > 0) await wordRows.forgetAll(inArray(photoWords.photoId, forgotten))
     },
     async forgottenVersion(entityType: 'photo' | 'photoWord') {
       const [row] = await db
@@ -224,10 +217,19 @@ export function photoWriter(db: Drizzle, userId: string) {
         })
     },
     async forgetRemovedPhotoWords(photoId: string, kept: number) {
-      await remember('photoWord', await wordRows.forgetGone(kept, eq(photoWords.photoId, photoId)))
+      await wordRows.forgetGone(kept, eq(photoWords.photoId, photoId))
     },
-    async forgetPhotoWords(photoId: string) {
-      await remember('photoWord', await wordRows.forgetAll(eq(photoWords.photoId, photoId)))
+    async photoWordsOn(photoId: string): Promise<PhotoWord[]> {
+      return db
+        .select(photoWordColumns)
+        .from(photoWords)
+        .where(
+          and(
+            eq(photoWords.userId, userId),
+            eq(photoWords.photoId, photoId),
+            eq(photoWords.present, true)
+          )
+        )
     },
     async saveProfilePhoto(photo: Omit<ProfilePhoto, 'updatedAt'>) {
       await db

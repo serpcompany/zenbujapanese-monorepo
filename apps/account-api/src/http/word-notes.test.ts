@@ -145,6 +145,25 @@ describe('word notes', () => {
     ).toEqual([{ n: 1000, latest: 1 }])
   })
 
+  test('refuses a cursor from before a deletion the account forgot, so the device reads everything again', async () => {
+    const learner = await accounts.learner('note-forgotten-cursor@example.com')
+    const first = randomUUID()
+    await results(learner, write(first, 0))
+    const before = (await accounts.mutate(learner.token)).cursor
+    await results(learner, remove(first, 1))
+    await rows(
+      `insert into word_notes (user_id, id, present, version) select '${learner.userId}', gen_random_uuid()::text, false, 2 from generate_series(1, 1000) as n`
+    )
+    const last = randomUUID()
+    await results(learner, write(last, 0), remove(last, 1))
+    expect(await accounts.sync(learner.token, { cursor: before })).toMatchObject({
+      status: 410,
+      body: { error: { code: 'invalid_cursor' } }
+    })
+    const again = (await accounts.mutate(learner.token)).cursor
+    expect((await accounts.sync(learner.token, { cursor: again })).status).toBe(200)
+  })
+
   test('holds at most 10,000 notes to an account, and still takes a change to one it has', async () => {
     const learner = await accounts.learner('note-cap@example.com')
     const kept = randomUUID()

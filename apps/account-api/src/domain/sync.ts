@@ -244,6 +244,9 @@ export function syncer(
     if (!(await store.profile(userId))) return { status: 'no_account' }
     const after = request.cursor ? cursors.decode(userId, request.cursor) : 0
     if (after === null || after > (await store.journalHead())) return { status: 'invalid_cursor' }
+    if (after > 0 && after < (await store.forgottenThrough(userId))) {
+      return { status: 'invalid_cursor' }
+    }
     const results: MutationResult[] = []
     const context = { granted, searchKey: searchKeys(userId) }
     for (const mutation of request.mutations ?? []) {

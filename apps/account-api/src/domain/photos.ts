@@ -120,7 +120,9 @@ export async function emptyPhoto(account: LockedAccount, photo: Photo) {
 }
 
 export async function deletePhoto(account: LockedAccount, current: Photo) {
-  await account.forgetPhotoWords(current.id)
+  for (const word of await account.photoWordsOn(current.id)) {
+    await saveWord(account, { ...word, present: false, version: word.version + 1 }, 'remove')
+  }
   const deleted = { id: current.id, name: null, savedAt: null, status: 'deleted' as const }
   const outcome = await savePhoto(account, { ...deleted, version: current.version + 1 }, 'delete')
   await account.releasePhotoFile(current.id)

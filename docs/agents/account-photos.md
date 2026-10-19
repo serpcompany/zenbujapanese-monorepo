@@ -159,8 +159,10 @@ file released after 24 hours, housekeeping past one batch, and an app with only 
 same answers and R2 puts whether or not the library holds an image, kept to two files of its own
 whatever other apps upload, setting a library photo once it uploads the image, and freed of a file
 the profile photo moved off or it never set. `src/http/photo-bounds.test.ts` shows a device away
-during a thousand word removals from other photos still told of one before them, and a photo word
-or photo the account forgot coming back past its versions. `src/http/delete-account.test.ts`
+during a thousand word removals from other photos still told of one before them, one away while a
+photo is deleted and saved again dropping its old words, one whose cursor predates a forgotten
+removal refused `410`, rereading, and dropping the word, and a photo word or photo the account
+forgot coming back past its versions. `src/http/delete-account.test.ts`
 deletes an account's folder from storage with it, a file no row names included, and then refuses
 its token at both routes (`401`). `src/db/postgres.test.ts`, on a real Postgres, uploads one photo
 six times at once: one file is kept, and the other copies are swept; and it deletes the file
