@@ -42,7 +42,6 @@ import {
   rankBandPath,
   rankedListPath
 } from '@/lib/dictionary/browse/paths'
-import { rankPageRanks } from '@/lib/dictionary/browse/rank-pages'
 import type { Linked } from '@/lib/dictionary/page-example'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
@@ -231,7 +230,7 @@ export function RankBandPage({
 }) {
   const t = browseText(locale)
   const name = coreText(list.name, locale)
-  const range = rankRange(rankPageRanks(band, page), locale)
+  const range = rankRange(words.ranks, locale)
   const path = rankBandPath(list.slug, band, page)
   return (
     <BrowsePage>

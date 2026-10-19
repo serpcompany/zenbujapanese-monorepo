@@ -18,14 +18,11 @@ import { errorFields, log } from '@/lib/log'
 import { dictionaryService } from '../data'
 import type { Linked } from '../page-example'
 import { linkedWordPath } from '../results/links'
-import { rankBandPage } from './rank-pages'
+import { type RankBandPage, rankBandPage } from './rank-pages'
 
 export type BrowseWordsPage = Omit<BrowseWordsResponse, 'words'> & { words: Linked<BrowseWord>[] }
 
-export interface RankBandWords {
-  words: Linked<BrowseWord>[]
-  pages: number
-}
+export type RankBandWords = RankBandPage<Linked<BrowseWord>>
 
 export type KanaInitialPage = Omit<KanaInitialResponse, 'words'> & {
   words: Linked<BrowseWord>[]

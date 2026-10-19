@@ -169,10 +169,10 @@ the chips beside each word use the same tiers.
   chips use"; Browse service, "the %s list ranks words from 1, a band of 1,000 ranks at a time".
 
 **A ranked list.** A band of 1,000 ranks (`/dictionary/browse/frequency-dictionaries/anime/1-1000/`
-to `…/anime/9001-10000/`) shows 200 ranks a page, so no page passes the 2 MB a crawler reads:
-`…/anime/1001-2000/` lists the words ranked 1,001 to 1,200, each with its rank, and `…/2/` to `…/5/`
-the rest. The list's name links to its first band, the bands to each other, and a band's pages as
-other lists' do. A rank no word holds is skipped, and a band ends at its last ranked word.
+to `…/anime/9001-10000/`) shows 200 words a page, as other lists do, so no page passes the 2 MB a
+crawler reads: `…/anime/1001-2000/` lists the band's first 200 words with their ranks, `…/2/` on
+the rest, each page naming the ranks it covers. The list's name links to its first band, the bands
+to each other, and a band's pages as other lists' do. A rank no word holds is skipped.
 Wikipedia's and Jiten's pages say which words that leaves out and why: the lists count spellings
 (Jiten's with their readings), and the app ranks one only when it names a single dictionary word, so
 ones several words share, such as に, は, and が, aren't ranked. The app's mapping does this on purpose
@@ -180,7 +180,7 @@ ones several words share, such as に, は, and が, aren't ranked. The app's ma
 installed pack pins), and the site keeps it, so it ranks words as the app does.
 
 - Source: #614 mockup's bands and their URLs; the decision on #614; decision D1 on #871 (#878).
-- Check: Browse lists spec, "a ranked list shows a band’s first 200 ranks, says which words it
+- Check: Browse lists spec, "a ranked list shows its first band’s words, says which words it
   skips, and credits Jiten"; `src/lib/dictionary/browse/paths.test.ts` and `rank-pages.test.ts`;
   `src/app/[locale]/dictionary/browse/frequency-dictionaries/list-routes.test.tsx`;
   `src/lib/dictionary/browse/copy.test.ts`, "the Wikipedia and Jiten lists say which words aren’t
@@ -198,7 +198,7 @@ rankings are shared under the same licence. Wikipedia's and TUBELEX's lists are 
 BSD-3-Clause, and the JLPT lists as the word pages credit them.
 
 - Source: the decision on #614.
-- Check: Browse lists spec, "a ranked list shows a band’s first 200 ranks, says which words it
+- Check: Browse lists spec, "a ranked list shows its first band’s words, says which words it
   skips, and credits Jiten"; `src/lib/dictionary/browse/copy.test.ts`, "each ranked list credits its
   source".
 
@@ -324,8 +324,8 @@ wrote them: staging and production.
   `/sitemap-index.xml`); #663 moved the sitemaps to the root and split this one by kind, as the
   SERP XML sitemaps standard asks.
 - Check: `src/lib/dictionary/sitemaps.test.ts`, "the browse sitemaps list every browse page with 10
-  words or more, each once", "a band of 10 words or more is listed as its five pages of 200 ranks,
-  its first as the band’s URL", and "the … sitemap lists only its own kind of browse page";
+  words or more, each once", "a band of 10 words or more is listed as its pages of 200 words, its
+  first as the band’s URL", and "the … sitemap lists only its own kind of browse page";
   `src/lib/sitemap.test.ts`, "the … browse sitemap is …"; `apps/web/e2e/sitemaps.spec.ts`, the pages
   sitemap's browse home; Browse service, "the browse sitemap fits in one file" (all four together
   stay under one file's 50,000 URLs, so each does); Browse categories service, "the categories under

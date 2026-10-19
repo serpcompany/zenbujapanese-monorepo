@@ -22,18 +22,15 @@ const notFound = { digest: 'NEXT_HTTP_ERROR_FALLBACK;404' }
 
 const animeFirstBand = fixtureBrowseAnswers['/v1/browse/ranked/anime?page=1'] as BrowseWordsResponse
 
-const ranksOnBandTwo = [
-  ...Array.from({ length: 12 }, (_, index) => 1_001 + index * 15),
-  ...Array.from({ length: 5 }, (_, index) => 1_201 + index * 40),
-  1_650,
-  1_700,
-  1_800
-]
+const wordsOnBandTwo = 409
 
 const bandTwo: BrowseWordsResponse = {
   ...animeFirstBand,
   page: 2,
-  words: animeFirstBand.words.map((word, index) => ({ ...word, rank: ranksOnBandTwo[index] }))
+  words: Array.from({ length: wordsOnBandTwo }, (_, index) => {
+    const word = animeFirstBand.words[index % animeFirstBand.words.length]
+    return { ...word, entSeq: word.entSeq + index * 10_000_000, rank: 1_003 + index * 2 }
+  })
 }
 
 function serveBandTwo() {
@@ -59,31 +56,30 @@ afterEach(() => {
   vi.mocked(dictionaryService).mockReset()
 })
 
-describe('a rank band, a page of 200 ranks at a time', () => {
-  test('the band’s URL shows its first 200 ranks, links its later pages, and names its ranks', async () => {
+describe('a rank band, 200 words a page', () => {
+  test('the band’s URL shows its first 200 words, links its later pages, and names its ranks', async () => {
     serveBandTwo()
     const html = await rendered(BandPage(band('1001-2000')))
-    expect(rows(html)).toBe(12)
-    expect(lastCrumb(html)).toBe('1,001–1,200')
-    expect(html).toContain('Ranks 1,001–1,200: 12 words.')
+    expect(rows(html)).toBe(200)
+    expect(lastCrumb(html)).toBe('1,001–1,401')
+    expect(html).toContain('Ranks 1,001–1,401: 200 words.')
     expect(new Set(linkedPages(html))).toEqual(
-      new Set(['2/', '3/', '4/'].map(page => `${animePath}1001-2000/${page}`))
+      new Set(['2/', '3/'].map(page => `${animePath}1001-2000/${page}`))
     )
     const metadata = await generateMetadata(band('1001-2000'))
-    expect(metadata.title).toContain('1,001–1,200')
+    expect(metadata.title).toContain('1,001–1,401')
     expect(metadata.alternates?.canonical).toBe(`${animePath}1001-2000/`)
     expect(metadata.robots).toBeUndefined()
   })
 
-  test('a later page shows its own 200 ranks, under its own URL in each language', async () => {
+  test('a later page shows its own words and their ranks, under its own URL in each language', async () => {
     serveBandTwo()
     const html = await rendered(LaterBandPage(bandPage('1001-2000', '2')))
-    expect(rows(html)).toBe(5)
-    expect(lastCrumb(html)).toBe('1,201–1,400')
-    expect(html).toContain('Ranks 1,201–1,400: 5 words.')
+    expect(rows(html)).toBe(200)
+    expect(lastCrumb(html)).toBe('1,403–1,801')
     const metadata = await laterPageMetadata(bandPage('1001-2000', '2'))
-    expect(metadata.title).toContain('1,201–1,400')
-    expect(metadata.description).toContain('Ranks 1,201–1,400.')
+    expect(metadata.title).toContain('1,403–1,801')
+    expect(metadata.description).toContain('Ranks 1,403–1,801.')
     expect(metadata.alternates).toEqual({
       canonical: `${animePath}1001-2000/2/`,
       languages: {
@@ -93,17 +89,16 @@ describe('a rank band, a page of 200 ranks at a time', () => {
       }
     })
     const japanese = await laterPageMetadata(bandPage('1001-2000', '2', 'ja'))
-    expect(japanese.title).toContain('1,201〜1,400位')
+    expect(japanese.title).toContain('1,403〜1,801位')
     expect(japanese.alternates?.canonical).toBe(`/ja${animePath}1001-2000/2/`)
   })
 
-  test('a page of fewer than 10 words isn’t indexed', async () => {
+  test('the last page ends at the band’s last rank, and is indexed as its band is, however few its words', async () => {
     serveBandTwo()
-    expect((await laterPageMetadata(bandPage('1001-2000', '2'))).robots).toEqual({
-      index: false,
-      follow: true
-    })
-    expect(rows(await rendered(LaterBandPage(bandPage('1001-2000', '4'))))).toBe(3)
+    const html = await rendered(LaterBandPage(bandPage('1001-2000', '3')))
+    expect(rows(html)).toBe(9)
+    expect(lastCrumb(html)).toBe('1,803–2,000')
+    expect((await laterPageMetadata(bandPage('1001-2000', '3'))).robots).toBeUndefined()
   })
 
   test('page 1 redirects to the band’s URL, in the same language', async () => {
@@ -117,8 +112,7 @@ describe('a rank band, a page of 200 ranks at a time', () => {
   })
 
   test.each([
-    ['a page past the band’s last ranked word', bandPage('1001-2000', '5')],
-    ['a page past a band’s five', bandPage('1001-2000', '6')],
+    ['a page past the band’s last word', bandPage('1001-2000', '4')],
     ['page 0', bandPage('1001-2000', '0')],
     ['a band that isn’t one', bandPage('1001-1999', '1')],
     ['a list the site doesn’t have', bandPage('1001-2000', '1', 'en', 'no-such-list')]

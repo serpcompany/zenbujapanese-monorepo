@@ -14,13 +14,9 @@ import {
   rankBandPath,
   scriptPath
 } from './paths'
-import { rankPagesPerBand } from './rank-pages'
-
-const numbered = (length: number, pathFor: (page: number) => string) =>
-  Array.from({ length }, (_, index) => pathFor(index + 1))
 
 const pages = (count: number, pathFor: (page: number) => string) =>
-  numbered(pageCount(count), pathFor)
+  Array.from({ length: pageCount(count) }, (_, index) => pathFor(index + 1))
 
 const indexed = ({ count }: { count: number }) => count >= minimumIndexedWords
 
@@ -52,9 +48,7 @@ export function browseSitemapPaths(
       frequencyDictionariesPath,
       ...sitemap.rankedLists.flatMap(({ slug, bands }) =>
         bands.flatMap((count, index) =>
-          indexed({ count })
-            ? numbered(rankPagesPerBand, page => rankBandPath(slug, index + 1, page))
-            : []
+          indexed({ count }) ? pages(count, page => rankBandPath(slug, index + 1, page)) : []
         )
       ),
       ...sitemap.jlptLists.filter(indexed).flatMap(({ slug, count }) => {

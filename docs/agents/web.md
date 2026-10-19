@@ -391,8 +391,8 @@ lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility ka
 is cut to its first 20 words. Any other browse page is a 404 there.
 
 `src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
-`…/1/` redirects to it; a ranked list's band of 1,000 ranks (`…/anime/1001-2000/`) is five pages
-of 200 ranks, its name links to its first band, a JLPT level is `…/jlpt/n5/`, and a kana order is
+`…/1/` redirects to it; a ranked list's band of 1,000 ranks (`…/anime/1001-2000/`) is pages of
+200 words, its name links to its first band, a JLPT level is `…/jlpt/n5/`, and a kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
 `noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
 page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
