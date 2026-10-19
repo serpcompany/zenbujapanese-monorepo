@@ -36,25 +36,31 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - A word page is titled with its headword and reading, "要る (いる) meaning", unless that would
   pass 70 characters; then it has the headword alone, as
   特定独立行政法人等の労働関係に関する法律 does.
+- A search results page shortens its query, at its last space and with "…", when the title would
+  pass 70 characters; a query can be 200 characters long.
 
-- Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70).
+- Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70); #882's
+  review (long search queries).
 - Check: `src/lib/dictionary/word-snippet.test.ts`, "leaves the reading out when the title with it
-  would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
-  list’s every band is titled within 70 characters, at its widest ranks" and each kind of browse
-  page; browse-lists spec, "a ranked list shows its first band’s words, …"; browse spec, "the JLPT
-  kanji lists are Waller’s, credited under CC BY".
+  would pass 70 characters"; `src/lib/snippets.test.ts`, "a title too long for its text shortens the
+  text, and marks the cut"; `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "a long query
+  is shortened in the title, to keep it within 70 characters";
+  `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked list’s every band is titled
+  within 70 characters, at its widest ranks" and each kind of browse page; browse-lists spec, "a
+  ranked list shows its first band’s words, …"; browse spec, "the JLPT kanji lists are Waller’s,
+  credited under CC BY".
 
 **A search for an English word says how to say it in Japanese.** Its title is "How to Say Cat in
-Japanese: 猫 (neko)", its `h1`, under the search box, "Japanese Word for Cat: 猫 (ねこ, neko)",
-and its description opens "Cat in Japanese is 猫 (ねこ, neko).", naming the top result. In Japanese they are
-「cat」の意味・和訳：猫（ねこ）, with ・例文 when the search shows example sentences, and
-「cat」の意味と日本語訳. These are the phrases searched most in October 2026: "{word} in Japanese"
-(53,700 a month over eight sample words), "how to say" (13,590), "Japanese word for" (5,630), and
-in Japan "{word} 意味" (3,700). The romaji is the shared core's without macrons (コーヒー, kohi). A
-reading ending in は or へ shows its kana instead, since the core can't tell a particle
-(こんにちは would read "konnichiha"). Past 70 characters the title drops the romaji, then the word,
-then "How to Say". A query that spells its top result's reading, such as `iru` or `arigato`, is
-romaji, not English, and keeps the plain title, "iru in Japanese", as a Japanese query does.
+Japanese: 猫 (neko)", its `h1`, under the search box, "Japanese Word for Cat: 猫 (ねこ, neko)", and its
+description opens "Cat in Japanese is 猫 (ねこ, neko).", naming the top result. In Japanese they are
+「cat」の意味・和訳：猫（ねこ）, with ・例文 when the search shows example sentences, and 「cat」の意味と日本語訳. These are
+the phrases searched most in October 2026: "{word} in Japanese" (53,700 a month over eight sample
+words), "how to say" (13,590), "Japanese word for" (5,630), and in Japan "{word} 意味" (3,700). The
+romaji is the shared core's without macrons (コーヒー, kohi). A reading ending in は or へ shows its kana
+instead, since the core can't tell a particle (こんにちは would read "konnichiha"). Past 70 characters
+the title drops the romaji, then the word, then "How to Say", then shortens the query. A query that
+spells its top result's reading, such as `iru` or `arigato`, is romaji, not English, and keeps the
+plain title, "iru in Japanese", as a Japanese query does.
 
 - Source: #886 (Ahrefs Keywords Explorer, 2026-10-19; the results page had no `h1`).
 - Check: `src/lib/dictionary/search-snippet.test.ts`, "an English search’s title, heading, and

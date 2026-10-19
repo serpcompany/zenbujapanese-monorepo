@@ -5,6 +5,7 @@ import {
   descriptionLength,
   fitsTitle,
   fittedDescription,
+  fittedTitle,
   joinedSentences,
   longestTitle,
   shortened,
@@ -23,6 +24,13 @@ describe('titles fit search results with the site name after them', () => {
     expect(fitsTitle('x'.repeat(room))).toBe(true)
     expect(fitsTitle('x'.repeat(room + 1))).toBe(false)
     expect(fitsTitle('漢'.repeat(room))).toBe(true)
+  })
+
+  test('a title too long for its text shortens the text, and marks the cut', () => {
+    expect(fittedTitle('{query} in Japanese', 'query', 'cat')).toBe('cat in Japanese')
+    const title = fittedTitle('{query} in Japanese', 'query', words(30))
+    expect(fitsTitle(title), title).toBe(true)
+    expect(title).toMatch(/^word word .*word… in Japanese$/)
   })
 
   test('characters are counted as code points, as Ahrefs counts them', () => {
