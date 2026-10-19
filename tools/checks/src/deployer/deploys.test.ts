@@ -21,6 +21,8 @@ import {
 import { bash } from './stand-ins'
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex')
+const aPipeHolds = 64 * 1024
+const answerLine = 128
 
 test.runIf(Boolean(process.env.CI))('CI has a bash new enough to run the deployer', () => {
   expect(bash).toBeDefined()
@@ -116,6 +118,26 @@ describeDeployer('the deployer', () => {
     await server.run()
     expect([...server.docker.images.keys()]).toEqual([second.id, third.id])
     expect(server.messages()).toHaveLength(3)
+  })
+
+  test('finds what it looks for first in an answer from Docker longer than a pipe holds', async () => {
+    const server = await serverWith()
+    const others = Array.from({ length: (4 * aPipeHolds) / answerLine }, (_, index) =>
+      `other-${index}`.padEnd(answerLine - 1, '-')
+    )
+    const otherDigests = others.map(
+      (_, index) => `ghcr.io/serpcompany/other@sha256:${index.toString(16).padStart(64, '0')}`
+    )
+    server.docker.networks.get(network)?.members.push(...others)
+    const image = server.docker.publish(dictionary, 'staging', { otherDigests })
+    expect((await server.run()).status).toBe(0)
+    const [slot] = server.slots(dictionary)
+    slot.networks.set(network, [alias, ...others])
+    for (const other of others) slot.networks.set(other, [])
+    expect((await server.run()).status).toBe(0)
+    expect(server.messages()).toEqual([
+      deployed(`staging: ${image.reference} as release1 in slot a`)
+    ])
   })
 
   test("says once that it can't stop the old slot, and that the deploy is finished once it can", async () => {
