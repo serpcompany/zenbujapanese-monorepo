@@ -35,7 +35,7 @@ does on the device; when it crashes or freezes it sends a report without anythin
 reads, types, says, or photographs, unless they turn crash reports off, and a problem report sends
 what they write; an account keeps the email, how they sign in, and the study data they sync; we
 don't sell or share personal information, and the app (not the website, which counts visits) has
-no ads, analytics, or tracking; a few companies help run the service, Cloudflare and useSend among
+no ads, usage analytics, or tracking; a few companies help run the service, Cloudflare and useSend among
 them; and they can see, export, correct, or delete their data, and delete the account.
 
 - Source: #681; the owner's answers on #683 (no sale or sharing); the
@@ -76,14 +76,17 @@ in account sync, an optional dictionary's install, the dictionary core, or Trans
 checks sends a code for the step and how it failed, never the error's message. They're on by
 default, and the **Send crash reports** switch in the app's Settings turns them off. A report holds
 the stack trace, version and build, iOS version, device model and state, and a random install ID
-that isn't linked to the account; never what the learner reads, types, says, or photographs, nor
+that a crash report doesn't link to the account; never what the learner reads, types, says, or photographs, nor
 location, device name, language, region, or time zone; and the app removes file paths and names,
 links, email addresses, and quoted text from error messages. A problem report (#860), sent with
-**Report a Problem…** in Settings, holds what the learner writes, an optional email for a reply,
-and the details under **Included with your report** (version and build, iOS version, device model,
-signed in or not, crash reports on or off, and the optional dictionaries installed); Sentry adds
-the same details and install ID, so an email can be seen alongside the copy's other reports. It is
-sent even with crash reports off. The app removes paths, links, and emails from what the learner
+**Report a Problem…** in Settings, holds what the learner writes, the form's email for a reply if
+it has one, and the details under **Included with your report** (version and build, iOS version,
+device model, signed in or not, crash reports on or off, the optional dictionaries installed, and
+whether the microphone and camera are allowed). Signed in, the form fills in the Zenbu account's
+email, which the learner can change or clear; signed out, it sends an email only if they add one
+(#860, owner, 2026-10-20). Sentry adds the same details and install ID, so an email can be seen
+alongside the copy's other reports, and the account's email links them to the account. It is sent
+even with crash reports off. The app removes paths, links, and emails from what the learner
 writes and keeps the rest, so the page says it can hold anything they type, and attaches nothing
 else. Sentry receives the IP address and is set not to store it or its location. The app's labels
 are in English in both languages, since its screens are. The services (#861) and the website
