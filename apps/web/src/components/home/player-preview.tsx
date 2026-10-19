@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { appScreenText, playerPreview } from '@/lib/home-previews'
-import type { Locale } from '@/lib/i18n/config'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
@@ -126,7 +126,7 @@ export function PlayerPreview({ locale }: { locale: Locale }) {
     <div
       aria-hidden="true"
       data-drawing
-      lang={locale === 'en' ? undefined : 'en'}
+      lang={sourceLang(locale)}
       className="@container relative aspect-[1206/2622] w-full overflow-hidden rounded-[13.7%/6.3%] bg-background shadow-[0_2px_4px_rgb(0_0_0/0.06),0_24px_48px_-18px_rgb(0_0_0/0.3)] ring-1 ring-foreground/10"
     >
       <div className="absolute inset-0 flex flex-col text-[4cqi] leading-[1.35]">

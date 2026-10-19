@@ -10,7 +10,8 @@ import {
   wordLabels
 } from '@/test/core-labels'
 import { englishLeftIn } from '@/test/japanese-text'
-import { coreText, sourceLang } from './core-text'
+import { sourceLang } from './config'
+import { coreText } from './core-text'
 
 vi.mock('@opennextjs/cloudflare', () => ({ getCloudflareContext: async () => ({ env: {} }) }))
 

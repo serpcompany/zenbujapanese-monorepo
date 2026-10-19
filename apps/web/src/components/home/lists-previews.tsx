@@ -5,7 +5,7 @@ import { RubyText } from '@/components/dictionary/ruby-text'
 import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
 import { Badge } from '@/components/ui/badge'
 import { appScreenText, frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
-import type { Locale } from '@/lib/i18n/config'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,7 @@ export function ListPreview({ locale }: { locale: Locale }) {
     <div
       aria-hidden="true"
       data-drawing
-      lang={locale === 'en' ? undefined : 'en'}
+      lang={sourceLang(locale)}
       className={cn(previewPanel, raisedPreview, 'w-full max-w-68 overflow-hidden')}
     >
       <div className="flex items-baseline justify-between px-3.5 pt-3 pb-2">
@@ -49,7 +49,7 @@ export function FrequencyPreview({ locale }: { locale: Locale }) {
     <div
       aria-hidden="true"
       data-drawing
-      lang={locale === 'en' ? undefined : 'en'}
+      lang={sourceLang(locale)}
       className="flex w-full max-w-68 flex-col gap-3"
     >
       <div className={cn(previewPanel, 'overflow-hidden text-sm')}>

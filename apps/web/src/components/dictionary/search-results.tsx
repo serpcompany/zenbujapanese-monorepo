@@ -16,8 +16,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/
 import { ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import type { SearchData, SearchExamplesData } from '@/lib/dictionary/data'
 import { exampleListText } from '@/lib/dictionary/screen-text'
-import type { Locale } from '@/lib/i18n/config'
-import { coreText, sourceLang } from '@/lib/i18n/core-text'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
+import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, pluralOf } from '@/lib/i18n/format'
 

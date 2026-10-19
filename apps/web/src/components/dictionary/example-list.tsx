@@ -7,7 +7,7 @@ import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import type { PageExample, PageExampleToken } from '@/lib/dictionary/page-example'
 import type { ExampleListText } from '@/lib/dictionary/screen-text'
-import type { Locale } from '@/lib/i18n/config'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
 import { cn } from '@/lib/utils'
@@ -72,7 +72,7 @@ function ExampleItem({
             )
           })}
         </p>
-        <p className="text-muted-foreground" lang={locale === 'en' ? undefined : 'en'}>
+        <p className="text-muted-foreground" lang={sourceLang(locale)}>
           {example.translation}
         </p>
       </div>

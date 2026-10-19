@@ -1,5 +1,4 @@
-import type { Locale } from '@/lib/i18n/config'
-import { sourceLang } from '@/lib/i18n/core-text'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
 
 export function SourceText({ text, locale }: { text: string; locale: Locale }) {
   const lang = sourceLang(locale)

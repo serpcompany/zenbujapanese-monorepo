@@ -1,8 +1,7 @@
 import type { KanjiItem } from '@zenbu/dictionary-core/artifact/browse-kanji'
 import Link from 'next/link'
 import { kanjiSearchPath } from '@/lib/dictionary/urls'
-import type { Locale } from '@/lib/i18n/config'
-import { sourceLang } from '@/lib/i18n/core-text'
+import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { localizedPath } from '@/lib/i18n/paths'
 
 export function KanjiTiles({

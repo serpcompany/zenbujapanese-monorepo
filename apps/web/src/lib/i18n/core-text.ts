@@ -1,8 +1,6 @@
 import type { Locale } from './config'
 import { japaneseCoreText } from './core-text-ja'
 
-const coreLanguage = 'en' satisfies Locale
-
 const translations: Record<Locale, ((text: string) => string | null) | null> = {
   en: null,
   ja: japaneseCoreText
@@ -10,8 +8,4 @@ const translations: Record<Locale, ((text: string) => string | null) | null> = {
 
 export function coreText(text: string, locale: Locale): string {
   return translations[locale]?.(text) ?? text
-}
-
-export function sourceLang(locale: Locale): typeof coreLanguage | undefined {
-  return locale === coreLanguage ? undefined : coreLanguage
 }

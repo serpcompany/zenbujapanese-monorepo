@@ -1,9 +1,7 @@
 import type { BrowseCategory } from '@zenbu/dictionary-core/browse/categories'
-import type { Locale } from '@/lib/i18n/config'
+import { coreLanguage, type Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { japaneseCategoryNames, japaneseSubjects } from './category-names-ja'
-
-const coreLanguage = 'en' satisfies Locale
 
 const categoryChips: Readonly<Record<string, string>> = {
   nouns: 'Noun',

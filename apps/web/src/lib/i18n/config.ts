@@ -20,3 +20,9 @@ export function languageOf(locale: Locale): (typeof languages)[number] {
   if (!language) throw new Error(`Unknown language: ${locale}`)
   return language
 }
+
+export const coreLanguage = 'en' satisfies Locale
+
+export function sourceLang(locale: Locale): typeof coreLanguage | undefined {
+  return locale === coreLanguage ? undefined : coreLanguage
+}
