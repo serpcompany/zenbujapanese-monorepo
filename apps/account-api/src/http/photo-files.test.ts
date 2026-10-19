@@ -2,6 +2,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { imageTypeOf } from '../domain/photo-files'
 import { useAccountService } from '../test/accounts'
 import { standIns } from '../test/app'
+import { gate } from '../test/gate'
+import { logged } from '../test/logged'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { websiteOrigin } from '../test/service'
 import { createApp } from './app'
@@ -15,6 +17,8 @@ const put = (token: string, photoId: string, bytes: Uint8Array) =>
   service().sendPhoto(token, photoId, bytes)
 const get = (token: string, photoId: string) =>
   service().sendPhoto(token, photoId, new Uint8Array(), 'GET')
+
+const savedAt = '2026-10-01T12:00:00Z'
 
 const bytesOf = (hex: string, size = 16) => {
   const bytes = new Uint8Array(size)
@@ -141,6 +145,84 @@ describe('photo files', () => {
     ).toEqual([{ n: 0 }])
   })
 
+  test('an upload past 1,000 files deletes the photo emptied longest ago to make room, and is refused when none is', async () => {
+    const learner = await accounts.learner('photo-cap-emptied@example.com')
+    const emptied: string[] = []
+    for (const name of ['First.jpg', 'Second.jpg']) {
+      const photoId = await uploaded(accounts, learner)
+      const wordId = `${photoId}/${'0'.repeat(32)}`
+      await accounts.results(
+        learner,
+        { entity: 'photo', operation: 'add', entityId: photoId, fields: { name, savedAt } },
+        {
+          entity: 'photoWord',
+          operation: 'add',
+          entityId: wordId,
+          fields: { headword: '見る', savedAt }
+        },
+        { entity: 'photoWord', operation: 'remove', entityId: wordId, baseVersion: 1 }
+      )
+      emptied.push(photoId)
+    }
+    await rows(
+      `insert into photo_files (user_id, id, content_type, byte_size, storage_key) select '${learner.userId}', md5(n::text) || md5(n::text), 'image/jpeg', 1, '${learner.userId}/' || n from generate_series(1, 998) as n`
+    )
+    const statuses = async () => {
+      const found = await rows(`select id, status from photos where user_id = '${learner.userId}'`)
+      return emptied.map(id => found.find(row => row.id === id)?.status)
+    }
+    const send = async () => {
+      const bytes = aJpeg()
+      return (await put(learner.token, photoIdOf(bytes), bytes)).status
+    }
+    expect(await statuses()).toEqual(['emptied', 'emptied'])
+    expect(await send()).toBe(201)
+    expect(await statuses()).toEqual(['deleted', 'emptied'])
+    expect([await send(), await send()]).toEqual([201, 409])
+    expect(await statuses()).toEqual(['deleted', 'deleted'])
+    expect(
+      await rows(`select count(*)::int as n from photo_files where user_id = '${learner.userId}'`)
+    ).toEqual([{ n: 1000 }])
+  })
+
+  test('a lost file put back while its photo is deleted leaves nothing in storage that no row names', async () => {
+    const learner = await accounts.learner('photo-lost-race@example.com')
+    const bytes = aJpeg()
+    const photoId = await uploaded(accounts, learner, bytes)
+    await accounts.results(learner, {
+      entity: 'photo',
+      operation: 'add',
+      entityId: photoId,
+      fields: { name: 'Lost.jpg', savedAt }
+    })
+    const storage = service().photoStorage
+    const stored = () =>
+      [...storage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
+    for (const key of stored()) storage.objects.delete(key)
+    const putting = gate()
+    const finish = gate()
+    const putNow = storage.put.bind(storage)
+    const held = vi.spyOn(storage, 'put').mockImplementationOnce(async (key, data, type) => {
+      putting.open()
+      await finish.opened
+      await putNow(key, data, type)
+    })
+    const upload = put(learner.token, photoId, bytes)
+    await putting.opened
+    await accounts.results(learner, { entity: 'photo', operation: 'delete', entityId: photoId })
+    await service().files.sweep()
+    finish.open()
+    expect([200, 201]).toContain((await upload).status)
+    held.mockRestore()
+    await service().files.sweep()
+    const named = (
+      await rows(
+        `select storage_key from photo_files where user_id = '${learner.userId}' union select storage_key from photo_file_deletions`
+      )
+    ).map(row => row.storage_key)
+    expect(stored().filter(key => !named.includes(key))).toEqual([])
+  })
+
   test('answers 503 where the service keeps no photos', async () => {
     const bytes = aJpeg()
     for (const method of ['PUT', 'GET']) {
@@ -150,38 +232,91 @@ describe('photo files', () => {
     }
   })
 
-  test.each([
-    ['uploads', 'PUT', atOnce.uploads],
-    ['downloads', 'GET', atOnce.downloads]
-  ] as const)('takes a few %s at once from each account, and asks the next to wait a second', async (_, method, most) => {
-    let release = () => {}
-    const held = new Promise<void>(resolve => {
-      release = resolve
+  test.each(
+    turnTaking
+  )('takes %s from one account up to its share while the service has room, and asks the next to wait a second', async (_, method, most) => {
+    const turns = heldTurns(method)
+    const waiting = Array.from({ length: most.account }, () => turns.send('first'))
+    await vi.waitFor(() => expect(turns.started()).toBe(most.account))
+    let answer: Response | null = null
+    const extra = turns.send('first').then(answered => {
+      answer = answered
+      return answered
     })
-    let started = 0
-    const waitThenRefuse = async () => {
-      started++
-      await held
-      return { status: 'unavailable' } as const
-    }
-    const app = standInApp({ upload: waitThenRefuse, download: waitThenRefuse })
-    const bytes = aJpeg()
-    const accounts = Array.from({ length: most.service / most.account }, (_, n) => `account-${n}`)
-    const waiting = accounts.flatMap(account =>
-      Array.from({ length: most.account }, () => standInRequest(app, method, bytes, account))
+    await vi.waitFor(() => expect(answer !== null || turns.started() > most.account).toBe(true))
+    turns.open()
+    const turnedAway = await extra
+    expect(turnedAway.status).toBe(429)
+    expect(turnedAway.headers.get('retry-after')).toBe('1')
+    expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
+    expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
+      Array(most.account).fill(503)
     )
-    await vi.waitFor(() => expect(started).toBe(most.service))
-    for (const account of [accounts[0] ?? '', 'one-more-account']) {
-      const turnedAway = await standInRequest(app, method, bytes, account)
-      expect(turnedAway.status, account).toBe(429)
-      expect(turnedAway.headers.get('retry-after')).toBe('1')
-      expect(await turnedAway.json()).toMatchObject({ error: { code: 'too_many_requests' } })
-    }
-    release()
+  })
+
+  test.each(
+    turnTaking
+  )('takes %s from every account together up to the service share', async (_, method, most) => {
+    const turns = heldTurns(method)
+    const waiting = Array.from({ length: most.service }, (_, n) =>
+      turns.send(`account-${Math.floor(n / most.account)}`)
+    )
+    await vi.waitFor(() => expect(turns.started()).toBe(most.service))
+    expect((await turns.send('one-more-account')).status).toBe(429)
+    turns.open()
     expect((await Promise.all(waiting)).map(answer => answer.status)).toEqual(
       Array(most.service).fill(503)
     )
-    expect((await standInRequest(app, method, bytes)).status).toBe(503)
+    expect((await turns.send('someone')).status).toBe(503)
+  })
+
+  test("holds a download's turn until its file is sent, cancelled, or cut, logs a cut one, and gives a HEAD's back at once", async () => {
+    const sources: ReadableStreamDefaultController<Uint8Array>[] = []
+    const streaming = async () => ({
+      status: 'found' as const,
+      file: {
+        id: 'a'.repeat(64),
+        contentType: 'image/jpeg',
+        byteSize: 3,
+        storageKey: 'k',
+        uploadedAt: new Date(),
+        profileUploadAt: null
+      },
+      photo: {
+        body: new ReadableStream<Uint8Array>({
+          start(controller) {
+            sources.push(controller)
+            controller.enqueue(Uint8Array.from([0xff, 0xd8, 0xff]))
+          }
+        }),
+        size: null
+      }
+    })
+    const app = standInApp({ ...standIns.photoFiles, download: streaming })
+    const bytes = aJpeg()
+    const download = () => standInRequest(app, 'GET', bytes)
+    const share = atOnce.downloads.account
+    const sending = await Promise.all(Array.from({ length: share }, download))
+    expect([...sending.map(answer => answer.status), (await download()).status]).toEqual([
+      ...Array(share).fill(200),
+      429
+    ])
+    sources[0]?.close()
+    expect(new Uint8Array(await (sending[0] ?? new Response()).arrayBuffer())).toEqual(
+      Uint8Array.from([0xff, 0xd8, 0xff])
+    )
+    await sending[1]?.body?.cancel()
+    const lines = logged()
+    sources[2]?.error(new Error('R2 closed the connection'))
+    await expect(sending[2]?.arrayBuffer()).rejects.toThrow('R2 closed the connection')
+    expect(lines()).toContain('a photo download was cut')
+    vi.restoreAllMocks()
+    const again = await Promise.all(Array.from({ length: 4 }, download))
+    expect(again.map(answer => answer.status)).toEqual([200, 200, 200, 429])
+    for (const answer of [sending[3], ...again]) await answer?.body?.cancel()
+    const heads = []
+    for (let n = 0; n <= share; n++) heads.push((await standInRequest(app, 'HEAD', bytes)).status)
+    expect(heads).toEqual(Array(share + 1).fill(200))
   })
 
   test("puts back a file its storage lost when it's uploaded again, and says a lost file is missing, not gone", async () => {
@@ -234,3 +369,25 @@ const standInRequest = (
     headers: { authorization: `Bearer ${account}` },
     body: method === 'PUT' ? bytes : undefined
   })
+
+const turnTaking = [
+  ['uploads', 'PUT', atOnce.uploads],
+  ['downloads', 'GET', atOnce.downloads]
+] as const
+
+function heldTurns(method: string) {
+  const turn = gate()
+  let started = 0
+  const waitThenRefuse = async () => {
+    started++
+    await turn.opened
+    return { status: 'unavailable' } as const
+  }
+  const app = standInApp({ upload: waitThenRefuse, download: waitThenRefuse })
+  const bytes = aJpeg()
+  return {
+    send: async (account: string) => standInRequest(app, method, bytes, account),
+    started: () => started,
+    open: turn.open
+  }
+}

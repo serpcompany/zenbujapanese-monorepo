@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi'
-import { photoLimits } from '../domain/photo-files'
+import { photoLimits } from '../domain/photo-limits'
 import { searchLimits } from '../domain/recent-searches'
 import { noteLimits } from '../domain/word-notes'
 import { count, ItemFields, moment } from './sync-fields'

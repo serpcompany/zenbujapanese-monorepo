@@ -324,11 +324,11 @@ belongs; tests may import anything.
   (`memory.ts`), behind the domain's `PhotoStorage`. It imports only that type and `src/config.ts`'s
   settings, and no layer but the server imports it, nor `aws4fetch`.
 
-`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
-`src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
-stopping cleanly on SIGTERM come from `packages/node-service`, as in the dictionary service
-([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and nothing logs a
-learner's email, a code, a token, or a link: only what happened, as SERP's
+`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer.
+`src/wiring.ts` wires the layers and the photo sweeps for `src/server.ts` (imported by nothing; it
+runs the housekeeping hourly) and the tests alike. Logging, the request log, and stopping cleanly on
+SIGTERM come from `packages/node-service` ([`dictionary-api.md`](dictionary-api.md), Code layout).
+Nothing calls `console`, and no log holds a learner's email, a code, a token, or a link, as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says for email.
 
@@ -351,9 +351,10 @@ are in `src/db/schema.ts`:
   removed, or pruned;
 - `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
 - `word_notes`, `photos` (shown, emptied, or deleted), `photo_words`, `profile_photos`,
-  `learner_settings`, and `recent_searches`: #867's entities, each with its version; `photo_files`: each photo file an
-  account holds, by its SHA-256, with its R2 key; `photo_file_deletions`: the R2 keys waiting to be
-  deleted, which name no account ([`account-photos.md`](account-photos.md));
+  `learner_settings`, and `recent_searches`: #867's entities, each with its version, and
+  `forgotten_versions`, the highest one forgotten of a photo and a photo word; `photo_files`: each
+  file an account holds, by SHA-256, with its R2 key and when an app with only `profile` sent it;
+  `photo_file_deletions`: the keys to delete ([`account-photos.md`](account-photos.md));
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored
@@ -430,12 +431,13 @@ winning over a watch that hadn't seen it, the 51st video pruning the oldest as a
 of a pruned video sticking, the latest 100 removals remembered, and the refused and cut fields;
 and `src/http/bookmarks.test.ts` bookmarked sentences: an add and a repeat, a remove keeping none
 of what was said, an add the remover never saw winning, the 2,000 cap, and the refused and cut
-fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `profile-photo.test.ts`,
-`settings.test.ts`, and `recent-searches.test.ts` hold #867's entities and photo files to their
-rules ([`account-photos.md`](account-photos.md), Check it). Both run two or three `SyncClient`s (`src/test/sync-client.ts`, the iOS
-app's client in TypeScript) through offline changes on each until they hold the same state as a
-new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
-changes watch history, bookmarks, notes, photos, settings, and recent searches.
+fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `photo-bounds.test.ts`,
+`profile-photo.test.ts`, `settings.test.ts`, and `recent-searches.test.ts` hold #867's entities
+and files to their rules ([`account-photos.md`](account-photos.md), Check it). Both run two or
+three `SyncClient`s (`src/test/sync-client.ts`, the iOS app's client in TypeScript) through
+offline changes on each until they hold the same state as a new device. `src/http/clients.test.ts`
+holds each app to its scopes: only `zenbu-ios` reads or changes watch history, bookmarks, notes,
+photos, settings, and recent searches.
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor. The
 username's cases are `src/domain/username-cases.json`, beside the rule, which the app's
@@ -445,11 +447,11 @@ and backfill, the sync tables' rules, and fencing two restored copies of one bac
 checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and
 `src/http/sign-in-contract.test.ts` holds each sign-in answer, and each sign-in route's scope, to
 the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
-`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
-one mutation six times at once: one change goes through, and the mutation applies once. It also
-watches eight videos at once on an account holding 48, which keeps the 50 newest, and uploads one
-photo six times at once, which keeps one file and deletes the other copies. The emails' tests, in
-each language, are in [`account-email.md`](account-email.md), Check it.
+`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool,
+and one mutation six times at once: one change goes through, and the mutation applies once. It
+watches eight videos at once on an account holding 48, which keeps the 50 newest, and races photo
+uploads ([`account-photos.md`](account-photos.md), Check it). The emails' tests, in each
+language, are in [`account-email.md`](account-email.md), Check it.
 
 ## Ship it
 

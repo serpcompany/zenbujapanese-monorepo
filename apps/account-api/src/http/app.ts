@@ -98,7 +98,7 @@ export function createApp(options: AppOptions) {
   app.get('/v1/photos/*', requireScope('photos:read', 'profile'))
   app.use('/v1/photos/*', perAccountLimit(requestsPerMinute.photos))
   app.put('/v1/photos/*', atMostAtOnce(atOnce.uploads))
-  app.get('/v1/photos/*', atMostAtOnce(atOnce.downloads))
+  app.get('/v1/photos/*', atMostAtOnce(atOnce.downloads, true))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>

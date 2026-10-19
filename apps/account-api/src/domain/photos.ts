@@ -19,7 +19,7 @@ import {
   sha256IdOf
 } from './entities'
 import type { Photo, PhotoWord } from './kept-store'
-import { photoLimits } from './photo-files'
+import { photoLimits } from './photo-limits'
 import { isRejection, type Rejection, rejection } from './profile'
 import type { LockedAccount } from './store'
 
@@ -105,7 +105,7 @@ async function savePhoto(account: LockedAccount, photo: Omit<Photo, 'updatedAt'>
 
 async function saveWord(account: LockedAccount, word: Omit<PhotoWord, 'updatedAt'>, op: string) {
   await account.savePhotoWord(word)
-  await account.forgetGonePhotoWords(photoLimits.goneKept)
+  await account.forgetRemovedPhotoWords(word.photoId, photoLimits.removedWordsPerPhoto)
   return journaled(
     account,
     'photoWord',
@@ -120,9 +120,7 @@ export async function emptyPhoto(account: LockedAccount, photo: Photo) {
 }
 
 export async function deletePhoto(account: LockedAccount, current: Photo) {
-  for (const word of await account.photoWordsOn(current.id)) {
-    await saveWord(account, { ...word, present: false, version: word.version + 1 }, 'remove')
-  }
+  await account.forgetPhotoWords(current.id)
   const deleted = { id: current.id, name: null, savedAt: null, status: 'deleted' as const }
   const outcome = await savePhoto(account, { ...deleted, version: current.version + 1 }, 'delete')
   await account.releasePhotoFile(current.id)
@@ -137,11 +135,8 @@ async function addPhoto(account: LockedAccount, mutation: ClientMutation): Promi
   const fields = photoFields(mutation.fields ?? {})
   if (isRejection(fields)) return rejected(fields)
   if (!(await account.photoFile(id))) return rejected(notUploaded)
-  return savePhoto(
-    account,
-    { id, ...fields, status: 'shown', version: (current?.version ?? 0) + 1 },
-    'add'
-  )
+  const version = (current?.version ?? (await account.forgottenVersion('photo'))) + 1
+  return savePhoto(account, { id, ...fields, status: 'shown', version }, 'add')
 }
 
 async function addPhotoWord(account: LockedAccount, mutation: ClientMutation): Promise<Outcome> {
@@ -165,7 +160,8 @@ async function addPhotoWord(account: LockedAccount, mutation: ClientMutation): P
     await journaled(account, 'photo', photo.id, photo.version, 'word')
   }
   const word = { photoId: id.photo, itemId: id.item, ...text, savedAt, present: true }
-  return saveWord(account, { ...word, version: (current?.version ?? 0) + 1 }, 'add')
+  const version = (current?.version ?? (await account.forgottenVersion('photoWord'))) + 1
+  return saveWord(account, { ...word, version }, 'add')
 }
 
 async function removePhotoWord(account: LockedAccount, mutation: ClientMutation) {

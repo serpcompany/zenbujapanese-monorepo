@@ -1,5 +1,7 @@
+import { log } from '@zenbu/node-service/log'
 import type { Context } from 'hono'
 import { createMiddleware } from 'hono/factory'
+import { failureFields } from '../failure'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 
@@ -57,7 +59,30 @@ export const atOnce = {
   downloads: { service: 16, account: 4 }
 } as const
 
-export function atMostAtOnce(most: { service: number; account: number }) {
+function heldUntilSent(response: Response, body: ReadableStream<Uint8Array>, done: () => void) {
+  const reader = body.getReader()
+  const sent = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      try {
+        const read = await reader.read()
+        if (!read.done) return controller.enqueue(read.value)
+        done()
+        controller.close()
+      } catch (error) {
+        done()
+        log('warn', 'a photo download was cut', failureFields(error))
+        controller.error(error)
+      }
+    },
+    cancel(reason) {
+      done()
+      return reader.cancel(reason)
+    }
+  })
+  return new Response(sent, response)
+}
+
+export function atMostAtOnce(most: { service: number; account: number }, untilSent = false) {
   let running = 0
   const byAccount = new Map<string, number>()
   return createMiddleware<AccountEnv>(async (context, next) => {
@@ -75,13 +100,30 @@ export function atMostAtOnce(most: { service: number; account: number }) {
     }
     running++
     byAccount.set(account, mine + 1)
-    try {
-      await next()
-    } finally {
+    let held = true
+    const release = () => {
+      if (!held) return
+      held = false
       running--
       const left = (byAccount.get(account) ?? 1) - 1
       if (left > 0) byAccount.set(account, left)
       else byAccount.delete(account)
+    }
+    let sending = false
+    try {
+      await next()
+      const body = context.res.body
+      if (untilSent && context.res.status === 200 && body) {
+        if (context.req.method === 'HEAD') {
+          context.res = new Response(null, context.res)
+          await body.cancel()
+        } else {
+          context.res = heldUntilSent(context.res, body, release)
+          sending = true
+        }
+      }
+    } finally {
+      if (!sending) release()
     }
   })
 }

@@ -27,10 +27,8 @@ const badFields = rejection(
 )
 
 async function usable(account: LockedAccount, photoId: string, context: SyncContext) {
-  if (!(await account.photoFile(photoId))) return false
-  if (context.granted.has('photos:read')) return true
-  const inTheLibrary = await account.photo(photoId)
-  return !inTheLibrary || inTheLibrary.status === 'deleted'
+  const file = await account.photoFile(photoId)
+  return file !== null && (context.granted.has('photos:read') || file.profileUploadAt !== null)
 }
 
 const asChange = (accountId: string, photo: ProfilePhoto | null): Change =>

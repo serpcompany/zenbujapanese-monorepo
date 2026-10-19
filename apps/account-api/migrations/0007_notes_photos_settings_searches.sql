@@ -1,3 +1,10 @@
+CREATE TABLE "forgotten_versions" (
+	"user_id" text NOT NULL,
+	"entity_type" text NOT NULL,
+	"version" bigint NOT NULL,
+	CONSTRAINT "forgotten_versions_user_id_entity_type_pk" PRIMARY KEY("user_id","entity_type")
+);
+--> statement-breakpoint
 CREATE TABLE "learner_settings" (
 	"user_id" text NOT NULL,
 	"name" text NOT NULL,
@@ -19,6 +26,7 @@ CREATE TABLE "photo_files" (
 	"byte_size" integer NOT NULL,
 	"storage_key" text NOT NULL,
 	"uploaded_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"profile_upload_at" timestamp with time zone,
 	CONSTRAINT "photo_files_user_id_id_pk" PRIMARY KEY("user_id","id"),
 	CONSTRAINT "photo_files_storage_key_unique" UNIQUE("storage_key")
 );
@@ -78,6 +86,7 @@ CREATE TABLE "word_notes" (
 	CONSTRAINT "word_notes_user_id_id_pk" PRIMARY KEY("user_id","id")
 );
 --> statement-breakpoint
+ALTER TABLE "forgotten_versions" ADD CONSTRAINT "forgotten_versions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "learner_settings" ADD CONSTRAINT "learner_settings_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "photo_files" ADD CONSTRAINT "photo_files_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "photo_words" ADD CONSTRAINT "photo_words_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

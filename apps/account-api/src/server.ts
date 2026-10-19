@@ -1,25 +1,16 @@
 import { runService, serveUntilStopped } from '@zenbu/node-service/http'
 import { log } from '@zenbu/node-service/log'
-import { accessTokenVerifier } from './auth/access-tokens'
-import { appleRevoker } from './auth/apple-revoke'
 import { createAuth } from './auth/auth'
 import { type PhotoStore, readConfig } from './config'
-import { accountStore } from './db/accounts'
-import { purgeExpired } from './db/housekeeping'
 import { migratePostgres, openPostgres } from './db/postgres'
-import { accountDeleter } from './domain/account-deletion'
-import { createAccounts } from './domain/accounts'
-import { cursorKey, cursors, searchKeys } from './domain/cursor'
-import { type PhotoStorage, photoFiles } from './domain/photo-files'
-import { accountDeletedMessage } from './email/account-notices'
+import type { PhotoStorage } from './domain/photo-files'
 import { DevMailbox } from './email/mailbox'
 import { createMailer } from './email/mailer'
-import { failureFields } from './failure'
-import { createApp } from './http/app'
 import { MemoryPhotoStorage } from './storage/memory'
 import { r2Storage } from './storage/r2'
+import { wiredService } from './wiring'
 
-const purgeEveryMs = 60 * 60 * 1000
+const housekeepingEveryMs = 60 * 60 * 1000
 
 function photoStorage(store: PhotoStore | null): PhotoStorage | null {
   if (store?.kind === 'r2') return r2Storage(store.r2)
@@ -32,47 +23,23 @@ async function main() {
   await migratePostgres(config.databaseUrl, config.migrations)
   log('info', 'migrated', { ms: Math.round(performance.now() - started) })
   const database = openPostgres(config.databaseUrl)
-  const store = accountStore(database.db)
-  const files = photoFiles(store, photoStorage(config.photos))
-  const sweepPhotos = () =>
-    void files
-      .sweep()
-      .catch(error => log('warn', 'deleting removed photos failed', failureFields(error)))
-  const purge = () =>
-    purgeExpired(database.db)
-      .catch(error => log('warn', 'housekeeping failed', failureFields(error)))
-      .then(sweepPhotos)
-  void purge()
-  setInterval(purge, purgeEveryMs).unref()
   const devMailbox = config.email.provider?.kind === 'dev-mailbox' ? new DevMailbox() : null
   const mailer = createMailer(config.email, devMailbox)
   const auth = await createAuth({ config: config.auth, db: database.db, mailer })
-  const app = createApp({
+  const service = wiredService({
     release: config.release,
+    db: database.db,
     databaseReady: database.ready,
     auth,
-    accounts: createAccounts(
-      store,
-      cursors(cursorKey(config.auth.secret)),
-      searchKeys(config.auth.secret),
-      sweepPhotos
-    ),
-    deleteAccount: accountDeleter(
-      store,
-      appleRevoker(config.auth.apple, config.auth.publicUrl),
-      {
-        accountDeleted: (email, language) =>
-          void mailer.send(accountDeletedMessage(email, language))
-      },
-      sweepPhotos
-    ),
-    photoFiles: files,
-    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), config.auth.publicUrl),
-    allowedOrigins: config.auth.trustedOrigins,
-    devMailbox
+    authConfig: config.auth,
+    mailer,
+    devMailbox,
+    photoStorage: photoStorage(config.photos)
   })
+  void service.housekeep()
+  setInterval(() => void service.housekeep(), housekeepingEveryMs).unref()
   serveUntilStopped({
-    fetch: app.fetch,
+    fetch: service.app.fetch,
     port: config.port,
     hostname: devMailbox ? '127.0.0.1' : undefined,
     listening: {

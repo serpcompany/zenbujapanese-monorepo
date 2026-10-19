@@ -15,7 +15,10 @@ export interface PhotoFile {
   byteSize: number
   storageKey: string
   uploadedAt: Date
+  profileUploadAt: Date | null
 }
+
+export type NewPhotoFile = Omit<PhotoFile, 'uploadedAt' | 'profileUploadAt'>
 
 type PhotoStatus = 'shown' | 'emptied' | 'deleted'
 
@@ -81,16 +84,19 @@ export interface KeptWriter {
   forgetGoneNotes(kept: number): Promise<void>
   savePhoto(photo: Omit<Photo, 'updatedAt'>): Promise<void>
   forgetGonePhotos(kept: number): Promise<void>
+  oldestEmptiedPhoto(): Promise<Photo | null>
+  forgottenVersion(entity: 'photo' | 'photoWord'): Promise<number>
   photoWordCount(photoId: string): Promise<number>
-  photoWordsOn(photoId: string): Promise<PhotoWord[]>
   savePhotoWord(word: Omit<PhotoWord, 'updatedAt'>): Promise<void>
-  forgetGonePhotoWords(kept: number): Promise<void>
+  forgetRemovedPhotoWords(photoId: string, kept: number): Promise<void>
+  forgetPhotoWords(photoId: string): Promise<void>
   saveProfilePhoto(photo: Omit<ProfilePhoto, 'updatedAt'>): Promise<void>
   photoFileCount(): Promise<number>
-  filesOutsideTheLibrary(): Promise<number>
-  savePhotoFile(file: Omit<PhotoFile, 'uploadedAt'>): Promise<PhotoFile>
+  profileUploadCount(): Promise<number>
+  markProfileUpload(id: string): Promise<void>
+  savePhotoFile(file: NewPhotoFile, profileUpload: boolean): Promise<PhotoFile>
+  movePhotoFile(id: string, storageKey: string): Promise<PhotoFile>
   releasePhotoFile(id: string): Promise<void>
-  holdPhotoDeletion(storageKey: string, hours: number): Promise<void>
   cancelPhotoDeletion(storageKey: string): Promise<void>
   saveSetting(setting: Omit<Setting, 'updatedAt'>): Promise<void>
   saveRecentSearch(search: Omit<RecentSearch, 'updatedAt'>): Promise<void>

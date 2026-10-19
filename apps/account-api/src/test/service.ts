@@ -2,20 +2,12 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { exportPKCS8, generateKeyPair } from 'jose'
-import { accessTokenVerifier } from '../auth/access-tokens'
-import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
-import { accountStore } from '../db/accounts'
-import { accountDeleter } from '../domain/account-deletion'
-import { createAccounts } from '../domain/accounts'
-import { cursorKey, cursors, searchKeys } from '../domain/cursor'
-import { photoFiles } from '../domain/photo-files'
-import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
-import { createApp } from '../http/app'
 import { MemoryPhotoStorage } from '../storage/memory'
+import { wiredService } from '../wiring'
 
 export const publicUrl = 'http://localhost:8789'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
@@ -71,29 +63,16 @@ export async function startService({
     mailbox
   )
   const auth = await createAuth({ config, db, mailer })
-  const store = accountStore(db)
   const photoStorage = new MemoryPhotoStorage()
-  const files = photoFiles(store, photoStorage)
-  const app = createApp({
+  const { app, files, housekeep } = wiredService({
     release: 'test',
+    db,
     databaseReady: async () => true,
     auth,
-    accounts: createAccounts(store, cursors(cursorKey(testSecret)), searchKeys(testSecret), () => {
-      void files.sweep()
-    }),
-    deleteAccount: accountDeleter(
-      store,
-      appleRevoker(config.apple, config.publicUrl),
-      {
-        accountDeleted: (email, language) =>
-          void mailer.send(accountDeletedMessage(email, language))
-      },
-      () => void files.sweep()
-    ),
-    photoFiles: files,
-    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
-    allowedOrigins: config.trustedOrigins,
-    devMailbox: mailbox
+    authConfig: config,
+    mailer,
+    devMailbox: mailbox,
+    photoStorage
   })
   const call = async (
     path: string,
@@ -138,7 +117,7 @@ export async function startService({
       headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
       body: method === 'PUT' ? bytes : undefined
     })
-    return response
+    return new Response(await response.arrayBuffer(), response)
   }
   return {
     app,
@@ -149,6 +128,7 @@ export async function startService({
     rows,
     sendPhoto,
     files,
+    housekeep,
     photoStorage,
     close: () => client.close()
   }

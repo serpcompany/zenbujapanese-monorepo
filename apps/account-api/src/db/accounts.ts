@@ -6,7 +6,6 @@ import { profileColumns, readerOn, writerOn } from './entity-rows'
 import { deletionDueAt } from './photo-rows'
 import {
   photoFileDeletions,
-  photoFiles,
   syncChanges,
   syncMutations,
   userIdentities,
@@ -60,17 +59,7 @@ export function accountStore(db: Drizzle): AccountStore {
 
     async deleteAccount(userId, email) {
       await db.transaction(async tx => {
-        await tx.select({ id: users.id }).from(users).where(eq(users.id, userId)).for('update')
         await deletionDueAt(tx, accountFolder(userId), 0)
-        await tx
-          .insert(photoFileDeletions)
-          .select(
-            tx
-              .select({ storageKey: photoFiles.storageKey, dueAt: sql`now()`.as('due_at') })
-              .from(photoFiles)
-              .where(eq(photoFiles.userId, userId))
-          )
-          .onConflictDoUpdate({ target: photoFileDeletions.storageKey, set: { dueAt: sql`now()` } })
         await tx
           .delete(verifications)
           .where(eq(verifications.identifier, `sign-in-otp-${email.toLowerCase()}`))

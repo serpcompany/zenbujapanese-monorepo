@@ -256,9 +256,20 @@ export const photoFiles = pgTable(
     contentType: text('content_type').notNull(),
     byteSize: integer('byte_size').notNull(),
     storageKey: text('storage_key').notNull().unique(),
-    uploadedAt: moment('uploaded_at').notNull().defaultNow()
+    uploadedAt: moment('uploaded_at').notNull().defaultNow(),
+    profileUploadAt: moment('profile_upload_at')
   },
   byAccountAndId
+)
+
+export const forgottenVersions = pgTable(
+  'forgotten_versions',
+  {
+    userId: owner(),
+    entityType: text('entity_type').notNull(),
+    version: bigint('version', { mode: 'number' }).notNull()
+  },
+  table => [primaryKey({ columns: [table.userId, table.entityType] })]
 )
 
 export const photoFileDeletions = pgTable(

@@ -1,34 +1,17 @@
-import { drizzle } from 'drizzle-orm/pglite'
 import { describe, expect, test, vi } from 'vitest'
-import { purgeExpired } from '../db/housekeeping'
 import { appliedAt, deleted, type Learner, outcomesOf, useAccountService } from '../test/accounts'
-import { aJpeg, uploaded } from '../test/photos'
+import {
+  aJpeg,
+  photoChanges,
+  photoSavedAt as savedAt,
+  uploaded,
+  wordItem as word
+} from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
 
-const word = (n: number) => n.toString(16).padStart(32, '0')
-const savedAt = '2026-10-01T12:00:00.000Z'
-
-const add = (photoId: string, name = 'Menu.jpg') => ({
-  entity: 'photo',
-  operation: 'add',
-  entityId: photoId,
-  fields: { name, savedAt }
-})
-const drop = (photoId: string) => ({ entity: 'photo', operation: 'delete', entityId: photoId })
-const onWord = (photoId: string, n: number) => ({
-  entity: 'photoWord',
-  operation: 'add',
-  entityId: `${photoId}/${word(n)}`,
-  fields: { headword: '見る', reading: 'みる', savedAt }
-})
-const offWord = (photoId: string, n: number, baseVersion: number) => ({
-  entity: 'photoWord',
-  operation: 'remove',
-  entityId: `${photoId}/${word(n)}`,
-  baseVersion
-})
+const { add, drop, onWord, offWord } = photoChanges
 
 const results = accounts.results
 const changes = async (learner: Learner) =>
@@ -137,35 +120,32 @@ describe('Media Library photos', () => {
     ).toEqual([photoId, `${photoId}/${word(2)}`])
   })
 
-  test('a delete wins over words added since, marks them removed, takes the file, and the same photo saved again starts past them', async () => {
+  test('a delete wins over words added since, takes its words and file, and the same photo saved again starts its words past theirs', async () => {
     const learner = await accounts.learner('photo-delete@example.com')
     const bytes = aJpeg()
     const photoId = await uploaded(accounts, learner, bytes)
-    await results(learner, add(photoId), onWord(photoId, 1))
-    await results(learner, onWord(photoId, 2))
+    await results(learner, add(photoId), onWord(photoId, 1), onWord(photoId, 2))
+    await results(learner, offWord(photoId, 1, 1), onWord(photoId, 1))
     expect(
       await results(learner, drop(photoId), drop(photoId), drop('d'.repeat(64)))
     ).toMatchObject(appliedAt(2, 2, 0))
-    expect(await changes(learner)).toEqual([
-      deleted('photo', photoId, 2),
-      deleted('photoWord', `${photoId}/${word(1)}`, 2),
-      deleted('photoWord', `${photoId}/${word(2)}`, 2)
-    ])
+    expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
     expect(
-      await rows(
-        `select count(*)::int as n from photo_words where user_id = '${learner.userId}' and not present`
-      )
-    ).toEqual([{ n: 2 }])
+      await rows(`select count(*)::int as n from photo_words where user_id = '${learner.userId}'`)
+    ).toEqual([{ n: 0 }])
     expect(await fileCount(learner)).toBe(0)
     expect(outcomesOf(await results(learner, onWord(photoId, 3), add(photoId)))).toEqual([
       'unknown_photo',
       'photo_not_uploaded'
     ])
     await uploaded(accounts, learner, bytes)
-    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 3))
-    expect(await results(learner, offWord(photoId, 1, 1))).toMatchObject([
-      { status: 'conflict', version: 3, current: { operation: 'put' } }
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(3, 4))
+    expect(await results(learner, offWord(photoId, 1, 3))).toMatchObject([
+      { status: 'conflict', version: 4, current: { operation: 'put' } }
     ])
+    await results(learner, drop(photoId))
+    await uploaded(accounts, learner, bytes)
+    expect(await results(learner, add(photoId), onWord(photoId, 1))).toMatchObject(appliedAt(5, 5))
   })
 
   test("a delete's file leaves storage after the sync, with nothing else to start it", async () => {
@@ -181,11 +161,13 @@ describe('Media Library photos', () => {
     await vi.waitFor(() => expect(stored()).toEqual([]))
   })
 
-  test('housekeeping empties a photo left with no word for a day, and deletes it with its file 30 days on', async () => {
+  test("the hour's housekeeping empties a photo left with no word for a day, and deletes it and its stored file 30 days on", async () => {
     const learner = await accounts.learner('photo-housekeeping@example.com')
     const photoId = await uploaded(accounts, learner)
     await results(learner, add(photoId))
-    const housekeep = () => purgeExpired(drizzle(accounts.running.service.client))
+    const { housekeep, photoStorage } = accounts.running.service
+    const stored = () =>
+      [...photoStorage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
     await housekeep()
     expect(await photoStatus(photoId)).toBe('shown')
     await rows(`update photos set updated_at = now() - interval '25 hours' where id = '${photoId}'`)
@@ -193,10 +175,12 @@ describe('Media Library photos', () => {
     expect(await photoStatus(photoId)).toBe('emptied')
     expect(await changes(learner)).toEqual([deleted('photo', photoId, 2)])
     expect(await fileCount(learner)).toBe(1)
+    expect(stored()).toHaveLength(1)
     await rows(`update photos set updated_at = now() - interval '31 days' where id = '${photoId}'`)
     await housekeep()
     expect(await photoStatus(photoId)).toBe('deleted')
     expect(await fileCount(learner)).toBe(0)
+    expect(stored()).toEqual([])
   })
 
   test('refuses a bad ID or fields', async () => {
@@ -264,4 +248,10 @@ test('two devices converge on photos and their words, and one that dropped a pho
   const fresh = new SyncClient(accounts, learner.token)
   await fresh.sync()
   expect(fresh.state()).toEqual(phone.state())
+
+  phone.change('photo', 'delete', kept)
+  await phone.sync()
+  await pad.sync()
+  expect(pad.dataOf('photoWord', `${kept}/${word(1)}`)).toBeNull()
+  expect(pad.state()).toEqual(phone.state())
 })

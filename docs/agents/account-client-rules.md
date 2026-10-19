@@ -111,7 +111,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   `remove`. If a word added elsewhere comes down after, the photo comes back with it: show it
   again, downloading its file.
 - **Deleting the photo** in the Media Library sends the photo's `delete`, which wins over words
-  added elsewhere since: when a photo is deleted, drop its words on the device.
+  added elsewhere since: when a photo is deleted, drop its words on the device, since they don't
+  come down one by one.
 - **A word the service refuses:** `unknown_photo` means the account has no such photo. If its
   photo's `add` is still queued, as after `photo_not_uploaded`, send the word again after it. If
   your app had the photo from the account, it was deleted elsewhere first: drop the word on the
@@ -119,7 +120,8 @@ The learner's Media Library, as `photo`, by the SHA-256 of its file, and the wor
   Otherwise, as when the photo's file was refused, keep the word on the device without syncing.
   `photo_full` (500 words) keeps the word on the device without syncing.
 - **Refused files** stay on the device without syncing: one over 12 MB (`413`), one that isn't an
-  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`).
+  image the service takes (`415`), and one past 1,000 an account (`409 too_many_photos`), which
+  comes only once no emptied photo is left for the account to delete in its place.
 - **A download that answers `404`** never deletes anything: `not_found` means the account no
   longer names the file, and its photo's `delete` is on its way; `photo_file_missing` means the
   account lost the file, which comes back when a device that holds the image uploads it, as one
@@ -134,6 +136,10 @@ The profile's photo, as `profilePhoto`, by the account's ID or none. It needs `p
 
 - **Upload, then set.** Upload the file with `PUT /v1/photos/{photoId}`, then send `set` with its
   `photoId` at the version your app had (0 for none). Removing it sends `remove`.
+- **Without `photos:read`**, as on the website, upload the image before every `set`, even one the
+  Media Library may hold: your app may set only a file it uploaded itself. It holds two at once,
+  the profile photo and the one replacing it, so a `409 too_many_photos` means an upload it never
+  set is still held: set it, or upload again a day later.
 - **A conflict** means the photo changed elsewhere first: take `current`, a `put` with the photo's
   ID to download, or a `delete` for none.
 
@@ -166,4 +172,11 @@ The searches the learner made, as `recentSearch`. It needs `searches:read` and `
   kept. A search the device kept without a time, from before it synced them, goes up in its order
   with times from 2000-01-02T00:00:00Z on, a second apart, oldest first, so it sorts after every
   search with a real time.
+- **Removing one** sends `remove`, which always applies, and clearing them all sends one for each.
+  A search the device made before it saw a removal conflicts, and `current` is the delete: take
+  it. Keep a removed search's version while the account remembers it: the latest 100 removed or
+  pruned.
+- **The account keeps the 50 latest by `searchedAt`**: a search past that removes the oldest,
+  which comes down as a `delete`. Keep 50 on the device the same way, don't send a `remove` for
+  one your device drops for being past 50, and order them newest first.
 - **A query over 1,000 characters** is refused (`invalid_fields`): keep it on the device only.

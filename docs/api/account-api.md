@@ -164,7 +164,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 
 Upload a photo's file.
 
-The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included. An app with only `profile` may hold 2 files outside the Media Library, its photo and the one replacing it, and is always answered `201`, so it learns nothing of the library.
+The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's included; past that, an upload deletes the photo emptied longest ago to make room. An app with only `profile` holds at most 2 files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, `201` or `409`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.
 
 **Auth:** `accessToken` with `photos:write`, or `accessToken` with `profile`.
 
@@ -182,7 +182,7 @@ The file of a Media Library photo or the profile photo, before the sync change t
 - **400** `photo_digest_mismatch`: The bytes' SHA-256 isn't `photoId`: the upload was cut short or changed.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `photos:write` or `profile`.
-- **409** `too_many_photos`: The account holds 1,000 files. Remove a photo first.
+- **409** `too_many_photos`: The account holds 1,000 files, none of them an emptied photo's, or an app with only `profile` holds the 2 it may. Remove a photo first, or set the profile photo to one of the two.
 - **413** `too_large`: The file is over 12 MB.
 - **415** `unsupported_photo`: The file isn't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image.
 - **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads at once, 2 from this account. Wait the seconds `Retry-After` says.
@@ -845,7 +845,7 @@ Fields ([`NoteFields`](#notefields)), and no others:
 
 ### Entity `photo`
 
-A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too.
+A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo never stops an upload: past the account's 1,000 files, the one emptied longest ago is deleted to make room.
 
 - **ID** (`entityId`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
 - **Read with:** `photos:read`
@@ -871,7 +871,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 }
 ```
 
-**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.
+**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, and takes its words and its file, unless the profile photo is the same file. Drop the photo and its words on the device: the words come down with it, not one by one. A word added later is rejected `unknown_photo`.
 
 ```json
 {
@@ -884,7 +884,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 
 ### Entity `photoWord`
 
-A word or kanji a photo is on. A photo is on at most 500 words. A removed word keeps its version, through its photo's deletion too, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
+A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones. A word the account forgets, with its photo's deletion or past those, comes back past every version it had, so a remove from before can't take a later add. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
 
 - **ID** (`entityId`): The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
 - **Read with:** `photos:read`
@@ -932,7 +932,7 @@ The profile's photo, a file uploaded with `PUT /v1/photos/{photoId}`. The name a
 - **Read with:** `profile`
 - **As it is now** (a `put`'s `data`): [`ProfilePhoto`](#profilephoto)
 
-**`set`**, with `profile`; `baseVersion` required. It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. The file it replaces is deleted, unless a Media Library photo is the same file.
+**`set`**, with `profile`; `baseVersion` required. It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. An app without `photos:read` may set only a file it uploaded itself (else `photo_not_uploaded`). The file it replaces is deleted, unless a Media Library photo is the same file.
 
 Fields ([`ProfilePhotoFields`](#profilephotofields)), and no others:
 
