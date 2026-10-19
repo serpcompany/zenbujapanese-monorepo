@@ -67,8 +67,8 @@ describe('the Code review workflow', () => {
     expect(skillTools.filter(tool => !allowed.includes(tool))).toEqual([])
   })
 
-  test('lets claude[bot] start a review, since its @claude fixes push to the pull request', () => {
-    expect(review.with?.allowed_bots).toBe('claude[bot]')
+  test("lets claude[bot]'s @claude fixes and the agents' pushes start a review", () => {
+    expect(review.with?.allowed_bots).toBe('claude[bot],serp-agent[bot],Copilot')
   })
 
   test('lets Claude post only inline findings, and write its summary to a file', () => {
@@ -183,7 +183,7 @@ describe('a pull request that changes the review workflow', () => {
     expect(Object.keys(workflow.jobs)).toEqual(['changes', 'review'])
     const { changes } = workflow.jobs
     expect(changes.if).toBe(
-      "${{ !github.event.pull_request.draft && github.event.pull_request.user.type != 'Bot' }}"
+      `\${{ !github.event.pull_request.draft && !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login) }}`
     )
     expect(changes.permissions).toEqual({ 'pull-requests': 'read' })
     expect(changes.outputs).toEqual({ reviewable: '${{ steps.files.outputs.reviewable }}' })
