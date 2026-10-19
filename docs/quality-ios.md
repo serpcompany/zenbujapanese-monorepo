@@ -29,7 +29,7 @@ manual checks named below are in `ios.md`.
   finds, ranks, sorts, filters, and lists, the notes it finds included, is the shared core's, whose
   own tests do run before merge. Main gap: nothing runs the app's tests before merge, so neither the
   Swift that hands the core its rows and decodes its answers nor the screens are checked then; no
-  suite records sentence search (#470); and that iOS hands a website link to the app is checked only
+  suite records sentence search (#830); and that iOS hands a website link to the app is checked only
   on a device.
 - **Word and kanji detail, C.** The recorded suites cover what the word, kanji, and element pages
   draw, each page's model is the shared core's, and UI tests drive the menu, lists, notes, kanji,
@@ -42,10 +42,10 @@ manual checks named below are in `ios.md`.
 - **Translate, C.** The engine and History are tested with fakes, and UI tests walk every screen on
   a scripted conversation, held step by step where a state passes quickly, on all three devices, so
   what's left by hand is how the screens look, Auto-Lock, and what needs a microphone. The on-device
-  recognizers were checked on an iPhone with a scripted conversation (#627), and `translate-replay`
+  recognizers were checked on an iPhone with a scripted conversation (#794), and `translate-replay`
   runs the app's recognizer and engine on recordings from it, on a Mac. Main gap: no CI runs the
   app's tests; and the recorded-audio check is local only, on three recordings of synthesized
-  voices, since CI has no speech models to run it (#640).
+  voices, since CI has no speech models to run it (#843).
 - **iPad and Mac, C.** The adapters, the command routing, and the project's platform settings are
   tested, every package test and UI test runs on the iPhone and iPad Simulators and the Mac, the
   layouts are checked at the iPad's orientations and the Mac's smallest window, and a check keeps

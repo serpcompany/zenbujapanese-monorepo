@@ -700,7 +700,7 @@ this order; each step says how to check it worked.
      session cookie stays on the API host; staging may still set
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
    - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
-     app's ID, TSMC LLC's `847HR8U8D9`, #616):
+     app's ID, TSMC LLC's `847HR8U8D9`, #797):
      - **The App IDs.** Identifiers → `com.zenbujapanese.dictionary` → Capabilities → Sign in with
        Apple → Edit → **Enable as a primary App ID** → Save. Tomodachi's,
        `com.zenbujapanese.tomodachi`, then takes **Group with an existing primary App ID** and
@@ -729,7 +729,7 @@ this order; each step says how to check it worked.
      - Apple's user ID for a learner is the same in every app of one team, so the iOS app,
        Tomodachi, and the website's Services ID must be in one team for an Apple sign-in to reach
        one account, and the service holds one team's key.
-     - **Moving from the backup team** (#616). Staging and production were first set up on the
+     - **Moving from the backup team** (#797). Staging and production were first set up on the
        backup team (`W3GXL2NQQP`), with its key and the Services ID `com.zenbujapanese.web`. An
        Apple user ID from that team doesn't match TSMC LLC's, and the service holds one team's
        key, so the move is one cutover, in this order:
@@ -744,7 +744,7 @@ this order; each step says how to check it worked.
           `APPLE_SERVICES_IDS=com.zenbujapanese.website`, and TSMC LLC's `APPLE_TEAM_ID`,
           `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY`. Within 5 minutes the deployer restarts the
           service with them, and the iOS app's Apple sign-ins and deletions work again.
-       4. The website: #616's pull request names the new Services ID in `apps/web/wrangler.jsonc`,
+       4. The website: #797's pull request names the new Services ID in `apps/web/wrangler.jsonc`,
           which staging deploys on merge and production with its next `Web deploy`; and the
           Worker's `APPLE_TEAM_ID` in both environments ([`web.md`](web.md), Environment
           configuration). Until an environment's website deploys, its Apple button signs in as
@@ -872,4 +872,4 @@ this order; each step says how to check it worked.
      against `GET /v1/auth/jwks`. A learner who hid their email from Apple gets the notice of a way
      in added at their relay address.
    - Once production's service answers on `https://api.zenbujapanese.com`, open the website's
-     account pages there (#688; [`web.md`](web.md), Account pages).
+     account pages there (#798; [`web.md`](web.md), Account pages).

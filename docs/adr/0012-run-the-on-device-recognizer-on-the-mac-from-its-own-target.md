@@ -16,7 +16,7 @@ which kept every adapter there.
 
 ## Why
 
-- **The recognizer is where the remaining bugs are** (#640): lost first words, dropped words in
+- **The recognizer is where the remaining bugs are** (#843): lost first words, dropped words in
   fast speech, and sentences ended too early or too late. They depend on Apple's recognizers, so
   `TranslatorCore`'s fakes can't show them, and checking each change on an iPhone means a person
   playing a script to a phone for every attempt.

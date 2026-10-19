@@ -1,10 +1,10 @@
-# Required, not built yet (#511)
+# Required, not built yet (#831)
 
 The website features that [Dictionary](dictionary.md) requires but the website doesn't have yet.
 **App docs** is `apps/ios/docs/product/dictionary.md`, as there.
 
-These are the #511 inventory's rows marked differs or missing, and the app features the owner's
-decision on #511 makes required. Each is written as the behavior the website must have, with the
+These are the #831 inventory's rows marked differs or missing, and the app features the owner's
+decision on #831 makes required. Each is written as the behavior the website must have, with the
 app source it must match and the check it will get. When one is built, its entry moves into its
 page's section in [Dictionary](dictionary.md), with its check, in the same PR.
 
@@ -74,7 +74,7 @@ marks it, so Word Meanings shows under every linked word.
 0007), and the sitemap index lists them.
 
 - Source: #466, whose last open item this was; the route audit (#544) now decides which search
-  pages stay indexable at all, and so whether any belong in a sitemap. #463 no longer supplies the
+  pages stay indexable at all, and so whether any belong in a sitemap. #828 no longer supplies the
   query set (it dropped the precomputed search-sitemap queries with ADR 0009).
 - Check it will get: a `sitemaps.test.ts` case and a smoke check.
 

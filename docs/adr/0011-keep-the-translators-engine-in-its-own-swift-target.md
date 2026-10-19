@@ -16,7 +16,7 @@ in `SearchExperience`, next to Player.
   and leaving interact, and the prior Owll clone's state machine shipped untested because it was
   tangled with its SDK and views. A target with no UI or framework dependency is tested with
   fakes and a fake clock in seconds, without the app's bundled language data.
-- **An Online engine is coming.** The PRD's provider choice is still open (#624). With the engine
+- **An Online engine is coming.** The PRD's provider choice is still open (#836). With the engine
   talking only to transcription, translation, and playback clients, an Online engine is a new set
   of clients, and the engine, its tests, and the conversation screens don't change. The start
   checks in the app's `TranslateExperience` (microphone, downloads) are on-device-specific and

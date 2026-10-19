@@ -488,7 +488,7 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   Apple takes no `localhost` return URL and Google's web client returns only to the deployed
   services.
 
-  Production's account pages are open (#688), against `https://api.zenbujapanese.com`,
+  Production's account pages are open (#798), against `https://api.zenbujapanese.com`,
   once it answered and trusted `https://zenbujapanese.com` (`ACCOUNT_API_TRUSTED_ORIGINS`;
   [`account-api.md`](account-api.md), Set up the server). Production still deploys only when a
   person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and deploys,
@@ -616,7 +616,7 @@ Each value that differs by environment lives where the code that reads it runs:
   APPLE_TEAM_ID --env <staging|production>`. A var in `wrangler.jsonc` would have to be
   committed, and a `--var` on a deploy would drop it from the next deploy run without one. Set it
   to `847HR8U8D9`, TSMC LLC's team, which holds the app's `com.zenbujapanese.dictionary` record
-  (#616). Until it's changed from the backup team's `W3GXL2NQQP`, where the app first went to
+  (#797). Until it's changed from the backup team's `W3GXL2NQQP`, where the app first went to
   review, the association file names an app that doesn't exist, so no app opens the site's links.
 
 `SITE_ENV` is set in both the Worker `vars` and the build of each deployed environment

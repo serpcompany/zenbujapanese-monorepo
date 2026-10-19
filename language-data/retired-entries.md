@@ -4,7 +4,7 @@ A word page's URL ends in its JMdict entry number (`ent_seq`), and an entry numb
 published release once held answers 410, or 308 when a replacement is recorded; any other unknown
 number answers 404 ([ADR 0007](../docs/adr/0007-publish-the-dictionary-at-permanent-urls-from-the-websites-copy.md)).
 So each release records the entries it retires
-([issue 463](https://github.com/serpcompany/zenbujapanese-monorepo/issues/463)). The Language
+([issue 828](https://github.com/serpcompany/zenbujapanese-monorepo/issues/828)). The Language
 Reference ID is a hash of the entry number, so a retired entry number is a retired Language
 Reference ID too.
 
@@ -32,7 +32,7 @@ retires none.
 
 JMdict doesn't say where a deleted entry went. A dropped entry's replacement is the entry the new
 release holds with the same headword and reading, when it holds exactly one: the usual trace of
-two entries merged into one, and the rule in #463's plan. With none, or more than one, there's no
+two entries merged into one, and the rule in #828's plan. With none, or more than one, there's no
 replacement, and the URL answers 410. When a replacement is dropped later, the entries it replaced
 move on to its own replacement, or to none, so the website redirects in one hop. An entry that
 comes back is no longer retired.

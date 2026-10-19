@@ -76,7 +76,7 @@ the app (universal links). The app reads the website's URLs with the core's `web
 with the website's own URL rules, which the website builds its pages' paths with too. The website's association file and its App Store lookup name the app's bundle ID
 (`iosAppBundleId` in `apps/web/src/lib/app-links.ts`), and no check ties that file to the app:
 word URLs are permanent (ADR 0007), and
-the bundle ID changes only with the app's App Store record (#616 moved it back to
+the bundle ID changes only with the app's App Store record (#797 moved it back to
 `com.zenbujapanese.dictionary`), when the file changes with it
 ([`docs/agents/web.md`](docs/agents/web.md), Links that open the app).
 
