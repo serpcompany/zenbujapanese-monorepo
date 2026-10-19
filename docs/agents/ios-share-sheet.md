@@ -132,7 +132,8 @@ copies of the app's files in the App Group `group.com.zenbujapanese.dictionary<s
   dictionary and Vision), `ShareCardTranslationTests`, `SharedItemTests` (reading what the sheet
   hands over), `TokenizerFilesTests`, `SharedChangesTests`, `SharedCopyTests`, and
   `BundledDataTests`.
-- **UI:** `ShareSheetUITests`, on iPhone and iPad (skipped on the Mac). A Debug harness opens the
+- **UI:** `ShareSheetUITests`, and `ShareSheetAuditUITests`, the accessibility audit of a word's,
+  a sentence's, and a photo's card, on iPhone and iPad (skipped on the Mac). A Debug harness opens the
   system share sheet over the app at launch, with `ZENBU_SHARE_TEXT=<text>` or
   `ZENBU_SHARE_IMAGE=<path>` (`ShareSheetHarness`); the test taps **Zenbu Japanese** in it, and
   the extension's card is reached through the app's accessibility tree. An app's own share sheet

@@ -36,6 +36,22 @@ enum AuditKind: String {
   case parentChild = "parent and child"
 }
 
+enum AuditPart {
+  case every
+  case textSizes
+  case allButTextSizes
+
+  func includes(_ kind: AuditKind) -> Bool {
+    switch self {
+    case .every: true
+    case .textSizes: Self.textSizeAudits.contains(kind)
+    case .allButTextSizes: !Self.textSizeAudits.contains(kind)
+    }
+  }
+
+  private static let textSizeAudits: Set<AuditKind> = [.dynamicType, .textClipped]
+}
+
 struct AuditFinding: CustomStringConvertible {
   let screen: String
   let kind: AuditKind
@@ -62,8 +78,9 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   private var excused: [AuditFinding] = []
   private var reported: [AuditFinding] = []
   private var audited: [String] = []
+  private var ran: Set<String> = []
   private var unfinished: [String] = []
-  private var matched: [String: Int] = [:]
+  private var matched: Set<String> = []
 
   func launch(_ pass: AuditPass, _ environment: [String: String] = [:]) -> XCUIApplication {
     self.pass = pass
@@ -81,12 +98,13 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     return try openFixtureImage(pass.environment, arguments: pass.size.arguments)
   }
 
-  func audit(_ screen: String, in app: XCUIApplication) {
+  func audit(_ screen: String, in app: XCUIApplication, _ part: AuditPart = .every) {
     let found = unexcused.count + excused.count + reported.count
     let continues = continueAfterFailure
     continueAfterFailure = true
     defer { continueAfterFailure = continues }
-    for audit in audits(on: screen) {
+    for audit in audits(on: screen, part) {
+      ran.insert(Self.key(audit.kind, on: screen))
       do {
         try app.performAccessibilityAudit(for: audit.type) { issue in
           let finding = Self.finding(issue, on: screen)
@@ -106,9 +124,11 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     }
   }
 
-  func audit(_ screen: String, placing element: XCUIElement, in app: XCUIApplication) {
+  func audit(
+    _ screen: String, placing element: XCUIElement, in app: XCUIApplication, _ part: AuditPart = .every
+  ) {
     place(reveal(element, in: app), in: app)
-    audit(screen, in: app)
+    audit(screen, in: app, part)
     bringBack(element, in: app)
   }
 
@@ -121,9 +141,15 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     }
   }
 
-  func auditAtTheLargestSize(_ screen: String, showing element: XCUIElement, in app: XCUIApplication) {
+  func auditAtTheLargestSize(
+    _ screen: String, showing element: XCUIElement, in app: XCUIApplication, _ part: AuditPart = .every
+  ) {
     guard pass.size == .largest else { return }
-    audit(screen, placing: element, in: app)
+    audit(screen, placing: element, in: app, part)
+  }
+
+  func runsTextSizeAudits(on screen: String) -> Bool {
+    !audits(on: screen, .textSizes).isEmpty
   }
 
   private func place(_ element: XCUIElement, in app: XCUIApplication) {
@@ -142,11 +168,16 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   private static let margin = 0.03
   private static let swipesBack = 24
 
-  private func audits(on screen: String) -> [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
+  private func audits(
+    on screen: String, _ part: AuditPart
+  ) -> [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
     TestDevice.audits.filter { audit in
-      !AllowedFinding.notRun.contains { $0.covers(audit.kind, on: screen, device) }
+      part.includes(audit.kind)
+        && !AllowedFinding.notRun.contains { $0.covers(audit.kind, on: screen, device) }
     }
   }
+
+  private static func key(_ kind: AuditKind, on screen: String) -> String { "\(kind.rawValue) \(screen)" }
 
   private func isReportedOnly(_ kind: AuditKind) -> Bool {
     AllowedFinding.reportedOnly[kind]?.devices.contains(device) == true
@@ -158,27 +189,24 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       return true
     }
     let allowed = AllowedFinding.list.indices.first { index in
-      let entry = AllowedFinding.list[index]
-      return entry.excuses(finding, on: device, in: pass)
-        && matched["\(index) \(finding.screen)", default: 0] < entry.element.limit ?? .max
+      AllowedFinding.list[index].excuses(finding, on: device, in: pass)
     }
     guard let allowed else {
       unexcused.append(finding)
       return false
     }
     excused.append(finding)
-    matched["\(allowed) \(finding.screen)", default: 0] += 1
+    matched.insert("\(allowed) \(finding.screen)")
     return true
   }
 
   private var unneeded: [String] {
     AllowedFinding.list.enumerated().flatMap { index, allowed in
       Set(audited).sorted().compactMap { screen in
-        let count = matched["\(index) \(screen)", default: 0]
-        guard allowed.applies(to: screen, on: device, in: pass), count < allowed.element.limit ?? 1,
-          audits(on: screen).contains(where: { $0.kind == allowed.kind })
+        guard allowed.applies(to: screen, on: device, in: pass),
+          !matched.contains("\(index) \(screen)"), ran.contains(Self.key(allowed.kind, on: screen))
         else { return nil }
-        return "\(screen): the allowed [\(allowed.kind.rawValue)] \(allowed.element) matched \(count)"
+        return "\(screen): the allowed [\(allowed.kind.rawValue)] \(allowed.element) matched nothing"
       }
     }
   }
@@ -194,8 +222,9 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       excused = []
       reported = []
       audited = []
+      ran = []
       unfinished = []
-      matched = [:]
+      matched = []
     }
     let report = XCTAttachment(string: report(unneeded: unneeded))
     report.name = "Accessibility findings"

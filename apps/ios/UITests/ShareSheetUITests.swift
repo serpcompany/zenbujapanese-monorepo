@@ -4,12 +4,9 @@ final class ShareSheetUITests: ZenbuUITestCase {
   private let taberu = "ruby.食べる.食=た|べる"
 
   private func shareToZenbu(_ environment: [String: String]) throws -> XCUIApplication {
-    try XCTSkipIf(device == .mac, "the share sheet's card is on iPhone and iPad")
+    try skipWithoutTheShareCard()
     let app = launch(environment)
-    tap(
-      app.descendants(matching: .any)
-        .matching(NSPredicate(format: "label == 'Zenbu Japanese' AND NOT identifier BEGINSWITH 'share-card'"))
-        .firstMatch)
+    chooseZenbuInTheShareSheet(in: app)
     return app
   }
 

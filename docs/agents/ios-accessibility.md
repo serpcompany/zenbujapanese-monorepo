@@ -7,8 +7,9 @@ test waits is in [`ios-ui-tests.md`](ios-ui-tests.md).
 
 ## What runs
 
-Four classes in `apps/ios/UITests/Accessibility/` walk one tab each, `SearchAuditUITests`,
-`TranslateAuditUITests`, `PlayerAuditUITests`, and `AccountAuditUITests`, with three tests apiece:
+Five classes in `apps/ios/UITests/Accessibility/` walk the app, `SearchAuditUITests`,
+`TranslateAuditUITests`, `PlayerAuditUITests`, and `AccountAuditUITests` one tab each and
+`ShareSheetAuditUITests` the share sheet's card on the iPhone and iPad, with three tests apiece:
 
 - **At the default text size**, in light appearance.
 - **At the largest text size**, Accessibility XXXL, in light appearance. The app is launched with
@@ -55,6 +56,15 @@ through every text size and report text they lose track of, so text that SwiftUI
 (a List's rows and headers, a Form's labels) or redraws (a clock) can be reported though it grows
 and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
 
+On a page scrolled down to a section, that sweep reflows everything above it and slides the
+section's text under the bars, where the audit loses it and can't name the element. So three
+sections that sit low on their pages, Word Detail's kanji, a word's note, and Kanji Detail's
+readings, get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
+(`LaunchHarness.onlySections`), opens the page with only the sections it names, at the page's
+top, and the walk audits them there (`AuditPart.textSizes`). The page scrolled to the section
+keeps every other audit (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
+caption's word sheet at full height, so the Player page isn't showing behind it.
+
 ## Allowed findings
 
 Every finding a test lets pass is an entry in `AllowedFinding.list`
@@ -63,18 +73,18 @@ Every finding a test lets pass is an entry in `AllowedFinding.list`
 on (the names the walks give them), the devices and text sizes, why it is allowed, and one element:
 
 - by its identifier, or its identifier's prefix for one kind of element, such as a linked word
-  (`watch.cue.`), or a prefix and a part, where the prefix also names a card's buttons (`word`);
-- by its label, or a few labels with one reason, where the element has no identifier; or
-- as a count of findings the audit can't attach to any element (`unnamed`), which XCTest then
-  reports with no element. An entry allows that many on each of its screens and no more. Most
-  are text under the bars, so a walk auditing the lower part of a long screen first drags its
-  element to one height (`audit(_:placing:in:)`), which makes the count the same every run.
+  (`watch.cue.`), or a prefix and a part, where the prefix also names a card's buttons (`word`); or
+- by its label, or a few labels with one reason, where the element has no identifier.
+
+A finding the audit can't attach to any element is never allowed: it fails the test and is also
+recorded as XCTest's own issue. A walk auditing the lower part of a long screen first drags its
+element to one height (`audit(_:placing:in:)`), so the same rows are on screen every run.
 
 An entry is never added to make a test pass: fix the screen, and allow a finding only for a reason
-a person checking the screen would accept. A finding the list doesn't allow fails the test, and an
-unnamed finding is also recorded as XCTest's own issue. An entry that matched nothing is listed
-under **Allowed but unneeded** in the report, not failed, since a sweep through the sizes can find
-a little more or less on a busy machine; remove an entry that no device's run uses.
+a person checking the screen would accept. A finding the list doesn't allow fails the test. An
+entry that matched nothing is listed under **Allowed but unneeded** in the report, not failed,
+since a sweep through the sizes can find a little more or less on a busy machine; remove an entry
+that no device's run uses.
 
 ## What the audits can't check
 

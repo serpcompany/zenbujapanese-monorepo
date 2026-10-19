@@ -7,22 +7,17 @@ struct AllowedFinding {
     case word(prefix: String, inside: [String])
     case label(String)
     case labels([String])
-    case unnamed(Int)
 
     func names(_ finding: AuditFinding) -> Bool {
-      switch self {
+      guard finding.elementType != nil else { return false }
+      return switch self {
       case .identifier(let identifier): finding.identifier == identifier
       case .identifiedBy(let prefix): finding.identifier.hasPrefix(prefix)
       case .word(let prefix, let inside):
         finding.identifier.hasPrefix(prefix) && inside.contains { finding.identifier.contains($0) }
       case .label(let label): finding.identifier.isEmpty && finding.label == label
       case .labels(let labels): finding.identifier.isEmpty && labels.contains(finding.label)
-      case .unnamed: finding.elementType == nil
       }
-    }
-
-    var limit: Int? {
-      if case .unnamed(let count) = self { count } else { nil }
     }
   }
 
@@ -112,10 +107,6 @@ private enum Why {
     "Text redrawn as a clock or countdown runs, which the audit's sweep through the sizes misreads; it follows the text size, as the largest-size pass shows"
   static let preview =
     "A one-line preview of a longer text that the next screen shows whole, as Mail's and Messages' lists do"
-  static let scrolls =
-    "Text that runs past the edge of a view that scrolls, so the rest of it is a scroll away"
-  static let placedPage =
-    "Text on a page the walk scrolled to: as the audit's sweep through the sizes reflows the page, text moves under the bars' glass or off the screen, and the audit can't name it. The walk puts the page at the same spot every run, so the count holds, and the screenshot at the largest size shows the text whole"
   static let cappedControls =
     "Player's control bar stays at the largest standard size at the accessibility sizes, so it keeps to one line, and pressing and holding a button shows it larger (product docs, Player)"
   static let headword =
@@ -186,12 +177,11 @@ private let textThatScales = [
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
-  allow(.textClipped, .labels(["Add Note", "Add to List"]), on: ["A word's note"], because: Why.scales),
+  allow(.textClipped, .label("Add Note"), on: ["A word's note, alone"], because: Why.scales),
   allow(.dynamicType, .labels(["1 Stroke"] + (2...17).map { "\($0) Strokes" }), on: ["Radicals"], because: Why.scales),
   allow(.dynamicType, .label("Jump to Latest"), on: ["A paused conversation"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-detail.entry."), on: ["The word sheet"], because: Why.scales),
   allow(.textClipped, .label("MEANING"), on: ["The word sheet", "A caption's word"], because: Why.scales),
-  allow(.textClipped, .unnamed(1), on: ["A caption's word"], because: Why.scrolls),
   allow(
     .textClipped, .labels(["New List"]), on: ["Add to List"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-list-picker.list."), on: ["Add to List"], because: Why.scales),
@@ -203,10 +193,6 @@ private let textThatScales = [
   allow(
     .textClipped, .identifier("watch.captions-unavailable"), on: ["A video without Japanese captions"],
     because: Why.scales),
-  allow(.dynamicType, .unnamed(10), on: ["Word Detail, its kanji"], because: Why.placedPage),
-  allow(.dynamicType, .unnamed(2), on: ["A word's note"], touch, [.standard], because: Why.placedPage),
-  allow(.dynamicType, .unnamed(6), on: ["A word's note"], touch, [.largest], because: Why.placedPage),
-  allow(.textClipped, .unnamed(3), on: ["Kanji Detail, its readings"], touch, [.largest], because: Why.placedPage),
 ]
 
 private let playerControls = [

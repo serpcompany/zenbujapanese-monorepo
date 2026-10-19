@@ -19,6 +19,7 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     auditTheSearchScreen(pass)
     auditAWord(pass)
     auditAKanji(pass)
+    auditSectionsAlone(pass)
     auditAVerbsConjugations(pass)
     auditExampleSentences(pass)
   }
@@ -75,14 +76,16 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     waitForSheet("word-list-picker.screen", in: app)
     audit("Add to List", in: app)
     tap(find("word-list-picker.done", in: app))
-    let note = "the country, not the language"
-    addNote(note, in: app)
-    audit("A word's note", placing: labeled(note, in: app), in: app)
+    addNote(Self.note, in: app)
+    audit("A word's note", placing: labeled(Self.note, in: app), in: app, .allButTextSizes)
   }
+
+  private static let note = "the country, not the language"
 
   private func auditAKanji(_ pass: AuditPass) {
     let app = openJapan(pass)
-    auditAtTheLargestSize("Word Detail, its kanji", showing: find("word-detail.kanji.日", in: app), in: app)
+    auditAtTheLargestSize(
+      "Word Detail, its kanji", showing: find("word-detail.kanji.日", in: app), in: app, .allButTextSizes)
     tap(reveal(find("word-detail.kanji.日", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
     audit("Kanji Detail", in: app)
     tap(find("kanji-detail.stroke-order", in: app))
@@ -91,12 +94,25 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     tap(find("stroke-order.close", in: app))
     auditAtTheLargestSize(
       "Kanji Detail, its readings", showing: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
-      in: app)
+      in: app, .allButTextSizes)
     goBack(in: app)
     tap(reveal(find("word-detail.kanji.本", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
     let element = reveal(find("kanji-detail.element.木", in: app), in: app)
     tap(element, toShow: find("kanji-element.screen", in: app))
     audit("A kanji's element", in: app)
+  }
+
+  private func auditSectionsAlone(_ pass: AuditPass) {
+    guard runsTextSizeAudits(on: "A word's note, alone") else { return }
+    let noteAlone = openJapan(pass, showingOnly: ["word-detail.notes"])
+    addNote(Self.note, in: noteAlone)
+    audit("A word's note, alone", in: noteAlone, .textSizes)
+    guard pass.size == .largest else { return }
+    let app = openJapan(pass, showingOnly: ["word-detail.kanji", "kanji-detail.readings"])
+    waitFor(find("word-detail.kanji.日", in: app))
+    audit("Word Detail's kanji, alone", in: app, .textSizes)
+    tap(find("word-detail.kanji.日", in: app), toShow: firstElement(identifiedBy: "kanji-detail.reading.", in: app))
+    audit("Kanji Detail's readings, alone", in: app, .textSizes)
   }
 
   private func auditAVerbsConjugations(_ pass: AuditPass) {
@@ -119,8 +135,8 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     audit("Example Sentences", in: app)
   }
 
-  private func openJapan(_ pass: AuditPass) -> XCUIApplication {
-    let app = launch(pass)
+  private func openJapan(_ pass: AuditPass, showingOnly sections: [String] = []) -> XCUIApplication {
+    let app = launch(pass, sections.isEmpty ? [:] : ["ZENBU_ONLY_SECTION": sections.joined(separator: ",")])
     search("japan", in: app)
     tap(find("result.japan", in: app), toShow: find("word-detail.screen", in: app))
     return app

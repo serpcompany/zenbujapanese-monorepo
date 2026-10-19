@@ -196,8 +196,9 @@ don't contain them), so they need no network, account, camera, or microphone:
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
-  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE`
-  open the share sheet ([`ios-share-sheet.md`](ios-share-sheet.md), Tests).
+  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open
+  the share sheet ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_ONLY_SECTION` draws a
+  page with only the sections it names ([`ios-accessibility.md`](ios-accessibility.md)).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -297,16 +298,15 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
-   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
-   the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
-   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and the
+   bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record, below).
+   With any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
+   **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
-   either, so also remove those capabilities
-   ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
-   Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
-   Google in a build given its client ID. Don't commit the team, the bundle ID change, or the
-   removed capabilities.
+   either, so also remove those capabilities ([Links from the website](#links-from-the-website),
+   [Account and sync](#account-and-sync)). Such a build still shows the Apple button, which fails;
+   sign in with an emailed code, or with Google in a build given its client ID. Don't commit the
+   team, the bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.

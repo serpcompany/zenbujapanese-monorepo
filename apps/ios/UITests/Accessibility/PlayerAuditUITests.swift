@@ -34,7 +34,7 @@ final class PlayerAuditUITests: AccessibilityAuditCase {
     waitUntil(find("watch.comprehension", in: app), mentions: "words known")
     audit("A video", in: app)
     tap(firstElement(identifiedBy: "watch.cue.0.", in: app))
-    waitForSheet("recognized-word-sheet", in: app)
+    openAtFullHeight(waitForSheet("recognized-word-sheet", in: app), in: app)
     waitFor(find("word-detail.screen", in: app))
     audit("A caption's word", in: app)
     tap(find("recognized-word-sheet.done", in: app))
@@ -46,6 +46,21 @@ final class PlayerAuditUITests: AccessibilityAuditCase {
     waitFor(page.descendants(matching: .any).matching(showing("Stand-in result 1")).firstMatch)
     audit("Player's search results", in: app)
   }
+
+  private func openAtFullHeight(_ sheet: XCUIElement, in app: XCUIApplication) {
+    guard device == .phone else { return }
+    let window = app.windows.firstMatch
+    let grabber = waitFor(app.buttons["Sheet Grabber"]).coordinate(
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+    grabber.press(
+      forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)))
+    XCTAssertTrue(
+      comesTrue("the word sheet to open at full height", within: Self.patience) {
+        sheet.frame.minY < window.frame.height * Self.fullHeightTop
+      }, "the word sheet's top is at \(sheet.frame.minY) in a window \(window.frame.height) tall")
+  }
+
+  private static let fullHeightTop = 0.15
 
   private func auditAVideo(
     _ screen: String, _ standIn: [String: String], saying message: String, _ pass: AuditPass

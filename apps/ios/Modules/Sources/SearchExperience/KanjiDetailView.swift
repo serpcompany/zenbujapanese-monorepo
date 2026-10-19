@@ -54,21 +54,23 @@ struct KanjiDetailView: View {
   var body: some View {
     ScrollViewReader { proxy in
       List {
-        Section {
-          KanjiOverview(
-            character: character.rawValue,
-            page: page,
-            strokeDiagramLoadState: strokeDiagramLoadState,
-            retryStrokeOrder: retryStrokeOrder,
-            openStrokeOrder: openStrokeOrder
-          )
-          if let latest = photos.displayable.first {
-            SavedItemPhotoButton(media: latest, count: photos.displayable.count) {
-              presentedMedia = $0
+        if LaunchHarness.shows("overview", on: "kanji-detail") {
+          Section {
+            KanjiOverview(
+              character: character.rawValue,
+              page: page,
+              strokeDiagramLoadState: strokeDiagramLoadState,
+              retryStrokeOrder: retryStrokeOrder,
+              openStrokeOrder: openStrokeOrder
+            )
+            if let latest = photos.displayable.first {
+              SavedItemPhotoButton(media: latest, count: photos.displayable.count) {
+                presentedMedia = $0
+              }
             }
-          }
-          if wordKnowledge.isKnown(item) {
-            KnownWordBadge(announces: true)
+            if wordKnowledge.isKnown(item) {
+              KnownWordBadge(announces: true)
+            }
           }
         }
 
@@ -98,7 +100,11 @@ struct KanjiDetailView: View {
           }
         }
 
-        ForEach(page?.sections ?? KanjiPage.sectionsWithoutContent, id: \.kind) { section in
+        ForEach(
+          (page?.sections ?? KanjiPage.sectionsWithoutContent).filter {
+            LaunchHarness.shows($0.kind.rawValue, on: "kanji-detail")
+          }, id: \.kind
+        ) { section in
           pageSection(section, of: page)
         }
       }

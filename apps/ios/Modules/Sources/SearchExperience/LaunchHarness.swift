@@ -17,6 +17,7 @@ enum LaunchHarness {
   static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
   static let shareTextKey = "ZENBU_SHARE_TEXT"
   static let shareImageKey = "ZENBU_SHARE_IMAGE"
+  static let onlySectionKey = "ZENBU_ONLY_SECTION"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -88,6 +89,21 @@ enum LaunchHarness {
   }
 
   static let colorScheme = colorScheme(ProcessInfo.processInfo.environment)
+
+  static func onlySections(_ environment: [String: String]) -> Set<String> {
+    #if DEBUG
+      Set(environment[onlySectionKey]?.split(separator: ",").map(String.init) ?? [])
+    #else
+      []
+    #endif
+  }
+
+  static let onlySections = onlySections(ProcessInfo.processInfo.environment)
+
+  static func shows(_ section: String, on page: String, only: Set<String> = LaunchHarness.onlySections) -> Bool {
+    let named = only.filter { $0.hasPrefix(page + ".") }
+    return named.isEmpty || named.contains("\(page).\(section)")
+  }
 
   static func linkToOpen(_ environment: [String: String]) -> URL? {
     #if DEBUG

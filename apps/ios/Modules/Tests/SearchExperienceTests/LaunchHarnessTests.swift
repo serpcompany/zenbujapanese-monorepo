@@ -45,6 +45,20 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.colorScheme([:]) == nil)
   }
 
+  @Test("a launch that names a page's section shows only it on that page, and other pages whole")
+  func onlySections() {
+    let named = LaunchHarness.onlySections(
+      [LaunchHarness.onlySectionKey: "word-detail.kanji,kanji-detail.readings"])
+    #expect(named == ["word-detail.kanji", "kanji-detail.readings"])
+    #expect(LaunchHarness.shows("kanji", on: "word-detail", only: named))
+    #expect(!LaunchHarness.shows("headword", on: "word-detail", only: named))
+    #expect(!LaunchHarness.shows("notes", on: "word-detail", only: named))
+    #expect(LaunchHarness.shows("readings", on: "kanji-detail", only: named))
+    #expect(!LaunchHarness.shows("overview", on: "kanji-detail", only: named))
+    #expect(LaunchHarness.shows("meaning", on: "share-card", only: named))
+    #expect(LaunchHarness.shows("headword", on: "word-detail", only: LaunchHarness.onlySections([:])))
+  }
+
   @Test("Player, Search, and a kanji page count or record their draws only when a UI test asks")
   func countedDraws() {
     #expect(LaunchHarness.countsDraws([LaunchHarness.drawCountKey: "1"]))
