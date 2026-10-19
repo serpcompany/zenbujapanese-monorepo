@@ -22,9 +22,12 @@ sync; what the learner sees is in the product docs'
   same user ID picks them up and syncs from the kept cursor. Signing in to any other account drops
   them, moves Favorites to its shared ID (`WordLists.favoritesID`, from the oldest list if it's
   still named Favorites), and queues the phone's marks, lists, list words, Recent videos,
-  bookmarked sentences, notes, photos and their words, the profile photo, and the settings changed
-  from their standard at version 0 before the first sync, and its recent searches once the first
-  answer brings the account's search key. Deleting the account drops everything.
+  bookmarked sentences, notes, photos and their words, the profile photo, and the settings and
+  frequency dictionaries changed from their standard at version 0, and its recent searches once the
+  first answer brings the account's search key. The stores it reads wait for the dictionary and the
+  packs to open, which can take seconds at launch, so it gathers them in a task the first sync
+  waits for (`firstUpload`), and the sign-in sheet closes at once. Deleting the account drops
+  everything.
 - **Entities added later.** `account-sync.json` names the entities the account's first upload
   covered (`syncedEntities`; a file without it covered known words, lists, and list words). A phone
   that signed in before its app synced an entity, such as watch history, queues that entity's items
@@ -95,9 +98,7 @@ sync; what the learner sees is in the product docs'
     frequency dictionaries chosen are one setting, `frequencyDictionaries.chosen`, through
     `FrequencyChoice`: `FrequencyPackManager` tells the learner's enable, disable, reorder,
     download, and remove, and shows the account's choice in its order, downloading the packs it
-    lacks in the background (`applySynced`), without telling. Reading the choice opens the packs,
-    which can take seconds at launch, so a first upload queues it in a task the first sync waits
-    for (`choiceUpload`), never while the sign-in sheet waits.
+    lacks in the background (`applySynced`), without telling.
   - **Recent searches.** A search's ID is the HMAC-SHA256 of its query in NFC under the account's
     `searchKey`, which each sync answer carries and the file keeps. The store reports searches by
     their query, and `AccountSync` names them under the key; until the first answer brings it,

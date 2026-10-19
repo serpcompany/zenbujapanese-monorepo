@@ -25,7 +25,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored let kept: KeptStores
   @ObservationIgnored var keptToApply: [AccountCopy] = []
   @ObservationIgnored var filesWait = false
-  @ObservationIgnored var choiceUpload: Task<Void, Never>?
+  @ObservationIgnored private var firstUpload: Task<Void, Never>?
   @ObservationIgnored private let wordKnowledge: WordKnowledge
   @ObservationIgnored private let wordLists: WordLists
   @ObservationIgnored private let watchHistory: WatchHistory
@@ -109,7 +109,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func ready() async {
-    await choiceUpload?.value
+    await firstUpload?.value
     kept.settings.noticeChanges()
     await flush()
     await wordKnowledge.flush()
@@ -128,8 +128,7 @@ final class AccountSync: LocalFileStore {
       wordLists.useSharedFavoritesID()
       state = AccountSyncState(account: account)
       state.takesAccountProfile = switchesAccount
-      state.queue = await uploads().map(\.upload)
-      choiceUpload = Task { await queueFrequencyChoice(for: account) }
+      firstUpload = Task { await queueFirstUpload(for: account) }
     }
     state.versions[state.profileKey.stored] = nil
     persist()
@@ -199,6 +198,14 @@ final class AccountSync: LocalFileStore {
     state.enqueue(change.queued(in: state))
     persist()
     if account != nil { onLocalChange?() }
+  }
+
+  private func queueFirstUpload(for account: SignedInAccount) async {
+    let changes = await uploads()
+    guard state.account == account else { return }
+    state.queue = changes.map(\.upload) + state.queue
+    await queueFrequencyChoice(for: account)
+    persist()
   }
 
   private func uploads() async -> [SavedItemChange] {

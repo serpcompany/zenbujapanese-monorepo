@@ -199,6 +199,26 @@ struct AccountSyncKeptTests {
     #expect(await handed.values == [.string("c.pack")])
   }
 
+  @Test("signing in doesn't wait for the stores the first upload reads, and the first sync does")
+  func signInDoesNotWaitForTheStores() async throws {
+    let fixture = Fixture()
+    let (held, letGo) = AsyncStream.makeStream(of: Void.self)
+    fixture.frequency = FrequencyChoice(changedFromStandard: {
+      for await _ in held {}
+      return KeptChanges.settingSet(FrequencyChoice.setting, .string(""))
+    })
+    fixture.serve()
+    await fixture.launch()
+
+    try await fixture.account.signIn(email: Fixture.email, code: "123456")
+    #expect(fixture.sync.account?.email == Fixture.email)
+    #expect(fixture.server.requests(to: "POST /v1/sync").isEmpty)
+
+    letGo.finish()
+    await fixture.account.scheduler.settled()
+    #expect(sent("setting", in: fixture).map(\.entityId) == [FrequencyChoice.setting])
+  }
+
   @Test("a sync or a photo upload answered 402, not subscribed, keeps every change queued, and isn't tried again on its own")
   func notSubscribed() async throws {
     let fixture = try await Fixture.afterSignIn()
