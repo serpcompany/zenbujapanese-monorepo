@@ -25,6 +25,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored let kept: KeptStores
   @ObservationIgnored var keptToApply: [AccountCopy] = []
   @ObservationIgnored var filesWait = false
+  @ObservationIgnored var choiceUpload: Task<Void, Never>?
   @ObservationIgnored private let wordKnowledge: WordKnowledge
   @ObservationIgnored private let wordLists: WordLists
   @ObservationIgnored private let watchHistory: WatchHistory
@@ -108,6 +109,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func ready() async {
+    await choiceUpload?.value
     kept.settings.noticeChanges()
     await flush()
     await wordKnowledge.flush()
@@ -127,6 +129,7 @@ final class AccountSync: LocalFileStore {
       state = AccountSyncState(account: account)
       state.takesAccountProfile = switchesAccount
       state.queue = await uploads().map(\.upload)
+      choiceUpload = Task { await queueFrequencyChoice(for: account) }
     }
     state.versions[state.profileKey.stored] = nil
     persist()
@@ -224,6 +227,9 @@ final class AccountSync: LocalFileStore {
     let entities = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
     guard !entities.isEmpty else { return }
     state.queue += await uploads().map(\.upload).filter { entities.contains($0.key.entity) }
+    if entities.contains(SyncEntity.setting), let account {
+      await queueFrequencyChoice(for: account)
+    }
     state.syncedEntities = SyncEntity.uploaded
     state.cursor = nil
     state.heldWords = []

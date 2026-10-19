@@ -95,7 +95,9 @@ sync; what the learner sees is in the product docs'
     frequency dictionaries chosen are one setting, `frequencyDictionaries.chosen`, through
     `FrequencyChoice`: `FrequencyPackManager` tells the learner's enable, disable, reorder,
     download, and remove, and shows the account's choice in its order, downloading the packs it
-    lacks in the background (`applySynced`), without telling.
+    lacks in the background (`applySynced`), without telling. Reading the choice opens the packs,
+    which can take seconds at launch, so a first upload queues it in a task the first sync waits
+    for (`choiceUpload`), never while the sign-in sheet waits.
   - **Recent searches.** A search's ID is the HMAC-SHA256 of its query in NFC under the account's
     `searchKey`, which each sync answer carries and the file keeps. The store reports searches by
     their query, and `AccountSync` names them under the key; until the first answer brings it,

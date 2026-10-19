@@ -51,11 +51,18 @@ extension AccountSync {
     let notes = await kept.notes.keptNotes().map { KeptChanges.noteWritten($0, startedFrom: nil) }
     let media = await kept.media.keptPhotos()
     let profilePhoto = userProfile.photoData.map { [KeptChanges.profilePhotoSet($0.sha256)] } ?? []
-    let frequency = await kept.frequency.changedFromStandard().map { [$0] } ?? []
     let changes =
       notes + media.photos.map(KeptChanges.photoAdded) + media.words.map(KeptChanges.photoWordAdded)
-      + profilePhoto + kept.settings.changedFromStandard + frequency
+      + profilePhoto + kept.settings.changedFromStandard
     return changes.map(SavedItemChange.kept)
+  }
+
+  func queueFrequencyChoice(for account: SignedInAccount) async {
+    guard let change = await kept.frequency.changedFromStandard(), state.account == account else {
+      return
+    }
+    state.enqueue(SavedItemChange.kept(change).upload)
+    persist()
   }
 
   func identifyingSearch(_ change: SavedItemChange) -> SavedItemChange? {
