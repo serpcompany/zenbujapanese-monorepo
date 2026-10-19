@@ -166,8 +166,12 @@ sync; what the learner sees is in the product docs'
   nothing, so no newer copy comes), and a rejected one takes it. A list word whose list hasn't
   arrived is kept in the file until a sync reaches `hasMore: false`, even across a failed page or a
   relaunch, then dropped if the list never came. A deleted list drops its words. `410` drops the
-  cursor and the held copies and words, and syncs again, still sending the queue. A sync's answer is
-  dropped if the learner signed out or in while it was on the way.
+  cursor and the held copies and words, and syncs again, still sending the queue. The keys that
+  read brings or sends are kept in the file (`rereadSeen`), across a failed page or a relaunch, and
+  once it reaches `hasMore: false`, each entity the device holds a version for that it didn't
+  bring, send, or have queued is removed on the device with its version, since the account forgot
+  it; the profile never is. A sync's answer is dropped if the learner signed out or in while it
+  was on the way.
 - **When.** `AccountSyncScheduler` syncs a second after a local change, on becoming active (once the
   files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
   `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
@@ -188,10 +192,12 @@ sync; what the learner sees is in the product docs'
 against a stub server (`StubAccountServer`, a `URLProtocol`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
-failed page, the request size, `410`, `429` and backoff, and signing out and deleting, which keep
+failed page, the request size, `410` and the read after it dropping what the account forgot, even
+when cut off, `429` and backoff, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules (`FakeAccountService+Kept.swift` holds the six newer entities', with emptied
-photos, the search key, and the two kinds of `404`), so two installs can share one account: changes made while signed out going to
+photos, the search key, the two kinds of `404`, and `410` for a cursor from before what it
+forgot), so two installs can share one account: changes made while signed out going to
 the same account, another account starting over, and two phones ending with one Favorites.
 `AccountSyncWatchHistoryTests` covers Recent's first upload, a newer watch replacing an unsent one,
 pulled videos kept to the newest 50, removals both ways, a watch that lost to a removal, a rejected

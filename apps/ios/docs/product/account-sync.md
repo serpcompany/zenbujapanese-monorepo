@@ -146,10 +146,14 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
 - A search on two devices is one search, kept at its later time. A search removed on one device is
   removed everywhere, even from a device that searched it again without having heard of the
   removal; searching it after that brings it back. The account keeps the latest 50.
+- A device away longer than the account remembers a deletion (its latest 1,000 deleted notes or
+  photos, or a photo's latest 500 removed words) reads everything again at its next sync, then
+  removes here what the account no longer has; what it changed meanwhile still goes.
 
 Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`,
-`AccountSyncBookmarkTests`, `AccountSyncProfileTests`, `AccountSyncKeptTests`, and
-`AccountSyncPhotoTests`; UI
+`AccountSyncBookmarkTests`, `AccountSyncProfileTests`, `AccountSyncKeptTests`,
+`AccountSyncPhotoTests`, and `AccountSyncRecoveryTests` (a device away past what the account
+forgot); UI
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` (iPhone
 and iPad: a photo, Reading Aids' romaji, and a recent search from the stand-in account show after
 signing in).

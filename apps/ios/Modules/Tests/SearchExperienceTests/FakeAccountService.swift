@@ -16,6 +16,7 @@ final class FakeAccountService: @unchecked Sendable {
   var photosUnavailable = false
   var fileRefusals: [String: StubReply] = [:]
   var droppedUploads: Set<String> = []
+  private var forgottenThrough: [String: Int] = [:]
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
   private var sequence = 0
@@ -40,6 +41,14 @@ final class FakeAccountService: @unchecked Sendable {
 
   func change(for email: String, _ mutation: StubSyncRequest.Mutation) {
     lock.withLock { _ = apply(mutation, for: userID(for: email)) }
+  }
+
+  func forget(_ key: String, for email: String) {
+    let user = userID(for: email)
+    lock.withLock {
+      guard let entity = accounts[user]?.removeValue(forKey: key) else { return }
+      forgottenThrough[user] = max(forgottenThrough[user] ?? 0, entity.sequence)
+    }
   }
 
   func profile(for email: String) -> [String: Any] {
@@ -93,8 +102,9 @@ final class FakeAccountService: @unchecked Sendable {
   }
 
   private func sync(_ request: StubSyncRequest, for user: String) -> StubReply {
-    let results = request.mutations.map { apply($0, for: user) }
     let after = Int(request.cursor ?? "") ?? 0
+    if after > 0, after < forgottenThrough[user] ?? 0 { return .error(410, "invalid_cursor") }
+    let results = request.mutations.map { apply($0, for: user) }
     let changes = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
       .sorted { $0.value.sequence < $1.value.sequence }
     let last = changes.last?.value.sequence ?? after

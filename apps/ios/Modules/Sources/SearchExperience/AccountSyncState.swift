@@ -158,6 +158,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var refusedNotes: [String] = []
   var photoRoomFreed = false
   var retryNextLaunch: [QueuedSyncChange] = []
+  var rereadSeen: Set<String>?
 
   init(account: SignedInAccount? = nil) {
     self.account = account
@@ -198,6 +199,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     photoRoomFreed = try container.decodeIfPresent(Bool.self, forKey: .photoRoomFreed) ?? false
     retryNextLaunch =
       try container.decodeIfPresent([QueuedSyncChange].self, forKey: .retryNextLaunch) ?? []
+    rereadSeen = try container.decodeIfPresent(Set<String>.self, forKey: .rereadSeen)
   }
 
   var keepsChanges: Bool { account != nil || signedOutFrom != nil }

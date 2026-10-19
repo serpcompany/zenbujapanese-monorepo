@@ -68,6 +68,14 @@ struct SyncEntityKey: Codable, Hashable, Sendable {
   }
 }
 
+extension SyncEntityKey {
+  init?(stored: String) {
+    guard let colon = stored.firstIndex(of: ":") else { return nil }
+    self.init(
+      entity: String(stored[..<colon]), entityID: String(stored[stored.index(after: colon)...]))
+  }
+}
+
 struct SyncMutationPayload: Encodable, Sendable {
   let id: String
   let entity: String

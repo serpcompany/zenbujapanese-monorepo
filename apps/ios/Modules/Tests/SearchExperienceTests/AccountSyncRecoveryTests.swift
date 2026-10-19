@@ -40,6 +40,69 @@ struct AccountSyncRecoveryTests {
     #expect(fixture.sync.state.heldWords.isEmpty)
   }
 
+  @Test("a device away past what the account forgot reads everything again and drops what's gone, keeping what it wrote meanwhile")
+  func rereadDropsWhatTheAccountForgot() async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    let taberu = SavedItemID(rawValue: Fixture.taberu)
+    let deleted = UUID().uuidString.lowercased()
+    try await phone.signIn()
+    await phone.notes.save(LearnerWordNote(id: deleted, text: "朝"), for: taberu)
+    await phone.notes.save(LearnerWordNote(text: "夜"), for: taberu)
+    try await phone.syncNow()
+    try await pad.signIn()
+    await phone.notes.save(LearnerWordNote(id: deleted, text: ""), for: taberu)
+    try await phone.syncNow()
+    service.forget("wordNote:\(deleted)", for: Fixture.email)
+    await pad.notes.save(LearnerWordNote(text: "昼"), for: taberu)
+
+    try await pad.syncNow()
+
+    #expect(Set(await pad.notes.load(taberu).map(\.text)) == ["夜", "昼"])
+    #expect(pad.sync.state.versions["wordNote:\(deleted)"] == nil)
+    #expect(pad.sync.state.rereadSeen == nil)
+    try await phone.syncNow()
+    #expect(Set(await phone.notes.load(taberu).map(\.text)) == ["夜", "昼"])
+  }
+
+  @Test("a re-read after a 410 that stops partway drops nothing until it reaches its end, across a relaunch")
+  func rereadCutOff() async throws {
+    let fixture = Fixture()
+    fixture.serve { request in
+      StubSync.answer(
+        results: StubSync.applied(request),
+        changes: [
+          StubSync.knownWord(Fixture.taberu, known: true, version: 1),
+          StubSync.knownWord(Fixture.miru, known: true, version: 1),
+        ], cursor: "cursor-1")
+    }
+    await fixture.launch()
+    try await fixture.signIn()
+    let calls = CallCount()
+    fixture.serve { request in
+      switch request.cursor {
+      case "cursor-1": .error(410, "invalid_cursor")
+      case nil:
+        StubSync.answer(
+          results: StubSync.applied(request),
+          changes: [StubSync.knownWord(Fixture.miru, known: true, version: 1)], cursor: "page-1",
+          hasMore: true)
+      default: calls.next() == 1 ? .offline : StubSync.answer(cursor: "page-2")
+      }
+    }
+
+    await #expect(throws: (any Error).self) { try await fixture.syncNow() }
+    #expect(fixture.sync.state.cursor == "page-1")
+    #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
+    fixture.account.scheduler.stop()
+    await fixture.launch()
+    try await fixture.syncNow()
+
+    #expect(!fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
+    #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.miru))
+    #expect(fixture.sync.state.versions["knownWord:\(Fixture.taberu)"] == nil)
+    #expect(fixture.sync.state.rereadSeen == nil)
+  }
+
   @Test("after a 429, nothing syncs before Retry-After, not even Sync Now")
   func retryAfterHolds() async throws {
     let fixture = Fixture()

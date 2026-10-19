@@ -246,6 +246,7 @@ final class AccountSync: LocalFileStore {
         state.cursor = nil
         state.heldWords = []
         state.deferred = [:]
+        state.rereadSeen = []
         persist()
         continue
       }
@@ -254,6 +255,8 @@ final class AccountSync: LocalFileStore {
       await takeSearchKey(answer.searchKey)
       guard self.session == session else { return }
       for change in answer.changes { apply(change) }
+      state.rereadSeen?.formUnion(batch.map(\.key.stored) + answer.changes.map(\.key.stored))
+      if !answer.hasMore { dropWhatTheRereadDidntBring() }
       await drainKept(in: session)
       await wordKnowledge.flush()
       await wordLists.flush()
@@ -355,6 +358,20 @@ final class AccountSync: LocalFileStore {
       removeLocally(copy.key)
     }
     state.setVersion(copy.version, of: copy.key, gone: copy.value == .gone)
+  }
+
+  private func dropWhatTheRereadDidntBring() {
+    guard let seen = state.rereadSeen else { return }
+    state.rereadSeen = nil
+    for stored in Array(state.versions.keys) where !seen.contains(stored) {
+      guard state.versions[stored] != nil, let key = SyncEntityKey(stored: stored),
+        key.entity != SyncEntity.profile, !state.hasQueuedChange(to: key)
+      else { continue }
+      state.versions[stored] = nil
+      state.goneVideos.removeAll { $0 == stored }
+      state.goneSearches.removeAll { $0 == stored }
+      removeLocally(key)
+    }
   }
 
   private func placeHeldWords() {
