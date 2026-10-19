@@ -124,8 +124,8 @@ is updated.
 the page itself in its own language. Its hreflang links name the English and Japanese pages and
 `x-default` (the English page), on absolute URLs of the environment's host, and each page names
 the other back. The homepages write these tags themselves, so the English homepage is the bare
-origin and the Japanese one `/ja/`. A Japanese page's Open Graph names `ja_JP`; English pages
-keep the Open Graph they had (`en_US` on the site's pages, none on the dictionary's).
+origin and the Japanese one `/ja/`. Every page's `og:locale` names its language, `ja_JP` or
+`en_US`, dictionary pages included ([Titles, descriptions, and sharing](snippets.md)).
 
 - Source: SERP localization standard, SEO signals; SERP URL trailing slash standard (the
   homepage as the origin).
