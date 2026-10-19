@@ -7,7 +7,8 @@ decided the app must have but doesn't yet.
 
 The app runs on iPhone in portrait, on iPad in every orientation and beside other apps, and on Macs
 with Apple silicon and macOS 26, as one app with one App Store record ([iPad and
-Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) open it from other apps. It has four tabs:
+Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) open it from other apps, and its
+[Share sheet](share-sheet.md) card looks up what another app shares. It has four tabs:
 
 - **Search** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
   re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
@@ -355,11 +356,10 @@ A word's page also names the lists holding it; tapping one opens that list here.
 Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList`.
 
 Lists are stored on the device, keyed by each entry's stable identifier, and sync through the Zenbu
-account while the learner is signed in. Like Known Words,
-lists saved by a newer version of Zenbu, or a damaged file that couldn't be kept aside, are shown
-but can't be changed, and Lists and the list picker say so. A lists file that can't be read at
-launch is left untouched, Favorites is not created over it, and Lists asks the learner to reopen
-Zenbu.
+account while the learner is signed in. Like Known Words, lists saved by a newer version of Zenbu,
+or a damaged file that couldn't be kept aside, are shown but can't be changed, and Lists and the
+list picker say so. A lists file that can't be read at launch is left untouched, Favorites is not
+created over it, and Lists asks the learner to reopen Zenbu.
 
 Check: package `WordListsTests` (newer, damaged, and unreadable files).
 

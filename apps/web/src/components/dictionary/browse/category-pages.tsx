@@ -20,7 +20,6 @@ import {
   browseText,
   categoryHeading,
   categoryIntro,
-  joinSentences,
   moreWaysToBrowse,
   orderName
 } from '@/lib/dictionary/browse/copy'
@@ -36,6 +35,7 @@ import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
+import { joinedSentences } from '@/lib/snippets'
 
 const indexCrumbs = (index: CategoryIndex, locale: Locale) => [
   { label: browseText(locale).names.browse, path: browsePath },
@@ -97,7 +97,7 @@ export function CategoryWords({
         ]}
       />
       <BrowseHeading title={categoryHeading(category, locale)}>
-        {joinSentences([categoryIntro(category, words.total, order, locale), pageOf], locale)}
+        {joinedSentences([categoryIntro(category, words.total, order, locale), pageOf], locale)}
       </BrowseHeading>
       <LinkTabs
         label={t.category.orderLabel}

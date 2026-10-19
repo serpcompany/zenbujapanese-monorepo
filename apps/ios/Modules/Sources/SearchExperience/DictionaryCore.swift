@@ -21,9 +21,9 @@ final class DictionaryCore {
     frequencyLists: FrequencyListReading? = nil
   ) throws {
     guard
-      let url = Bundle.module.url(
+      let url = BundledData.bundle.url(
         forResource: "dictionary-core", withExtension: "js", subdirectory: "DictionaryCore")
-        ?? Bundle.module.url(forResource: "dictionary-core", withExtension: "js"),
+        ?? BundledData.bundle.url(forResource: "dictionary-core", withExtension: "js"),
       let source = try? String(contentsOf: url, encoding: .utf8),
       let context = Self.contextCreation.withLock({ JSContext() }),
       let host = JSValue(newObjectIn: context)
@@ -60,12 +60,15 @@ final class DictionaryCore {
     if let tokenizerFile {
       let unpacked: @convention(block) (String) -> JSValue? = { file in
         guard let context = JSContext.current(), let bytes = tokenizerFile(file) else { return nil }
+        let release: JSTypedArrayBytesDeallocator =
+          bytes.isMapped
+          ? { bytes, count in _ = munmap(bytes, Int(bitPattern: count)) } : { bytes, _ in free(bytes) }
         guard
           let buffer = JSObjectMakeArrayBufferWithBytesNoCopy(
-            context.jsGlobalContextRef, bytes.pointer, bytes.count, { bytes, _ in free(bytes) },
-            nil, nil)
+            context.jsGlobalContextRef, bytes.pointer, bytes.count, release,
+            UnsafeMutableRawPointer(bitPattern: bytes.count), nil)
         else {
-          free(bytes.pointer)
+          bytes.release()
           return nil
         }
         return JSValue(jsValueRef: buffer, in: context)

@@ -108,17 +108,20 @@ actor DictionaryTextData {
   private let databaseURL: URL?
   private let wordIndexURL: URL?
   private let morphology: JapaneseMorphologyClient?
+  private let tokenizerFile: @Sendable (String) -> InflatedBytes?
   private var core: DictionaryCore?
   private var linkingAnswersToFail = LaunchHarness.failsLinkingAnswers
 
   init(
     databaseURL: URL? = nil,
     wordIndexURL: URL? = nil,
-    morphology: JapaneseMorphologyClient? = nil
+    morphology: JapaneseMorphologyClient? = nil,
+    tokenizerFile: @escaping @Sendable (String) -> InflatedBytes? = TokenizerDictionary.unpacked
   ) {
     self.databaseURL = databaseURL
     self.wordIndexURL = wordIndexURL
     self.morphology = morphology
+    self.tokenizerFile = tokenizerFile
   }
 
   func exampleCount(_ query: String) async throws -> Int {
@@ -189,11 +192,11 @@ actor DictionaryTextData {
     if let core { return core }
     guard let database = databaseURL ?? Bundle.languageReferenceDataURL,
       let wordIndex = wordIndexURL
-        ?? Bundle.module.url(forResource: "ExampleWordIndex", withExtension: "sqlite3")
+        ?? BundledData.bundle.url(forResource: "ExampleWordIndex", withExtension: "sqlite3")
     else { throw ExampleSentenceRetrievalError.retrievalUnavailable(.missingBundledData) }
     let prepared = try DictionaryCore(
       statements: try SQLiteStatements(reading: database, attaching: ["word_index": wordIndex]),
-      tokenizerFile: morphology == nil ? TokenizerDictionary.unpacked : nil)
+      tokenizerFile: morphology == nil ? tokenizerFile : nil)
     let _: Bool = try prepared.answer("checkExamples", "")
     core = prepared
     return prepared

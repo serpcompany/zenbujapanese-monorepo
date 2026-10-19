@@ -15,6 +15,7 @@ import type {
   SearchResults
 } from '@zenbu/dictionary-core/search/search'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { watchedRender } from '../render-health'
 import {
   getConjugationExamples,
   getKanjiDetails,
@@ -343,12 +344,14 @@ describe('word pages and kanji details', () => {
     await expect(getKanjiDetails('要')).rejects.toThrow('answered 500')
   })
 
-  test('a word page whose kanji details fail still shows, with that kanji closed, and logs it', async () => {
+  test('a word page whose kanji details fail still shows, with that kanji closed, logs it, and marks its render incomplete', async () => {
     const logged = vi.spyOn(console, 'log').mockImplementation(() => {})
     const answer: WordResponse = { rows: iruRows, slug: '要る', slugs: {}, kanjiPages: ['要'] }
     serve({ '/v1/words/1546640': answer, '/v1/kanji/要': 500 })
-    const page = await getWordPage(1546640)
+    const watched = watchedRender(() => getWordPage(1546640))
+    const page = await watched.result
     expect(page?.kanji.map(kanji => [kanji.character, kanji.details])).toEqual([['要', null]])
+    expect(watched.incomplete()).toBe(true)
     expect(logged).toHaveBeenCalledWith(expect.stringContaining('"kanji_details_unavailable"'))
     logged.mockRestore()
   })

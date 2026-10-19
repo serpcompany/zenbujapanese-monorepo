@@ -30,7 +30,7 @@ struct FrequencyRankRow: View {
 struct FrequencyDisclosureView: View {
   @Environment(\.dismiss) private var dismiss
   let details: FrequencyRow.Details
-  let manage: () -> Void
+  var manage: (() -> Void)?
 
   var body: some View {
     NavigationStack {
@@ -51,9 +51,11 @@ struct FrequencyDisclosureView: View {
             Text(explanation)
           }
         }
-        Section {
-          Button("Manage Frequency Dictionaries", action: manage)
-            .accessibilityIdentifier("frequency-detail.manage")
+        if let manage {
+          Section {
+            Button("Manage Frequency Dictionaries", action: manage)
+              .accessibilityIdentifier("frequency-detail.manage")
+          }
         }
       }
       .accessibilityIdentifier("frequency-detail.list")

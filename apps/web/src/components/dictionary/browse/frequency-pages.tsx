@@ -25,7 +25,6 @@ import {
   counted,
   inKanaOrder,
   jlptCopy,
-  joinSentences,
   legendTiers,
   type RankedListCopy,
   rankedListCopy,
@@ -34,7 +33,7 @@ import {
   tierCutoffs,
   tierName
 } from '@/lib/dictionary/browse/copy'
-import type { BrowseWordsPage } from '@/lib/dictionary/browse/data'
+import type { BrowseWordsPage, RankBandWords } from '@/lib/dictionary/browse/data'
 import {
   browsePath,
   frequencyDictionariesPath,
@@ -48,6 +47,7 @@ import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
+import { joinedSentences } from '@/lib/snippets'
 
 type Word = Linked<{ entSeq: number; headword: string; reading: string }>
 
@@ -202,7 +202,7 @@ export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; 
           <TierLegend locale={locale} />
         </div>
         <p className="text-sm text-muted-foreground">
-          {joinSentences([tierCutoffs(locale), t.frequency.bandDot], locale)}
+          {joinedSentences([tierCutoffs(locale), t.frequency.bandDot], locale)}
         </p>
         {ranked.lists.map(list => (
           <RankedPanel key={list.slug} list={list} locale={locale} />
@@ -216,19 +216,22 @@ export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; 
 export function RankBandPage({
   list,
   band,
+  page,
   copy,
   words,
   locale
 }: {
   list: RankedList
   band: number
+  page: number
   copy: RankedListCopy
-  words: BrowseWordsPage
+  words: RankBandWords
   locale: Locale
 }) {
   const t = browseText(locale)
   const name = coreText(list.name, locale)
-  const range = rankRange(band, locale)
+  const range = rankRange(words.ranks, locale)
+  const path = rankBandPath(list.slug, band, page)
   return (
     <BrowsePage>
       <DictionaryBreadcrumbs
@@ -236,11 +239,11 @@ export function RankBandPage({
         pages={[
           ...frequencyCrumbs(locale),
           { label: name, path: rankedListPath(list.slug) },
-          ...(band > 1 ? [{ label: range, path: rankBandPath(list.slug, band) }] : [])
+          ...(path === rankedListPath(list.slug) ? [] : [{ label: range, path }])
         ]}
       />
       <BrowseHeading title={fill(t.frequency.bandHeading, { name })}>
-        {joinSentences(
+        {joinedSentences(
           [
             copy.description,
             counted(t.frequency.bandWords, words.words.length, locale, { range }),
@@ -251,6 +254,12 @@ export function RankBandPage({
       </BrowseHeading>
       <RankBands slug={list.slug} name={name} current={band} locale={locale} />
       <WordList words={words.words} section="words" locale={locale} />
+      <Pagination
+        page={page}
+        pages={words.pages}
+        pathFor={number => rankBandPath(list.slug, band, number)}
+        locale={locale}
+      />
       <SourceCredits sources={copy.sources} locale={locale} />
     </BrowsePage>
   )
@@ -279,7 +288,7 @@ export function JlptListPage({
         ]}
       />
       <BrowseHeading title={fill(t.frequency.jlptHeading, { name: level.name })}>
-        {joinSentences(
+        {joinedSentences(
           [copy.description, inKanaOrder(words.total, page, words.pages, locale)],
           locale
         )}

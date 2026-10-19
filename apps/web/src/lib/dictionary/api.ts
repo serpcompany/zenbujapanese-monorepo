@@ -7,6 +7,7 @@ import {
 import type { BrowseAnswer, BrowsePath } from '@zenbu/dictionary-core/browse/service-paths'
 import { edgeCache } from '../edge-cache'
 import { log } from '../log'
+import { markRenderIncomplete } from '../render-health'
 
 export interface DictionaryApiEnvironment {
   DICTIONARY_API_URL?: string
@@ -73,6 +74,7 @@ export function dictionaryApi(
         service: contract,
         site: dictionaryContract
       })
+      markRenderIncomplete()
     }
     return {
       data: (await response.json()) as T,

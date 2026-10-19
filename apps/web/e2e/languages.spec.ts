@@ -1,12 +1,21 @@
 import type { Locator, Page } from '@playwright/test'
 import { getDictionary } from '../src/lib/i18n/dictionary'
-import { expect, menuButton, needed, onPhone, phoneMenu, test } from './test'
+import {
+  accountButton,
+  accountMenu,
+  expect,
+  menuButton,
+  needed,
+  onPhone,
+  phoneMenu,
+  test
+} from './test'
 
 type Language = 'en' | 'ja'
 
 const labels = {
-  en: { trigger: 'English, change language', list: 'Language', menu: 'Menu' },
-  ja: { trigger: '日本語、表示言語を切り替える', list: '言語', menu: 'メニュー' }
+  en: { trigger: 'EN, English, change language', menu: 'Menu' },
+  ja: { trigger: 'JA, 日本語、表示言語を切り替える', menu: 'メニュー' }
 } as const
 
 const notFound = {
@@ -26,14 +35,11 @@ async function openUntil(trigger: Locator, opened: Locator) {
   }).toPass(untilHydrated)
 }
 
-const headerTrigger = (page: Page, language: Language) =>
-  page.getByRole('banner').getByRole('button', { name: labels[language].trigger })
-
 const footerTrigger = (page: Page, language: Language) =>
   page.getByRole('contentinfo').getByRole('button', { name: labels[language].trigger })
 
-async function menuItems(page: Page): Promise<Item[]> {
-  const items = page.getByRole('menu').getByRole('menuitem')
+async function menuItems(scope: Locator): Promise<Item[]> {
+  const items = scope.getByRole('menuitem')
   await expect(items).toHaveCount(2)
   return Promise.all(
     (await items.all()).map(async item => ({
@@ -44,31 +50,9 @@ async function menuItems(page: Page): Promise<Item[]> {
   )
 }
 
-async function drawerItems(page: Page, language: Language): Promise<Item[]> {
-  await openUntil(
-    page.getByRole('banner').getByRole('button', { name: labels[language].menu }),
-    phoneMenu(page)
-  )
-  const list = phoneMenu(page).getByRole('navigation', { name: labels[language].list })
-  const entries = list.getByRole('listitem')
-  await expect(entries).toHaveCount(2)
-  return Promise.all(
-    (await entries.all()).map(async entry => {
-      const link = entry.getByRole('link')
-      const isLink = (await link.count()) > 0
-      return {
-        name: (await entry.textContent())?.trim() ?? '',
-        href: isLink ? await link.getAttribute('href') : null,
-        current: !isLink
-      }
-    })
-  )
-}
-
 async function switcherItems(page: Page, language: Language): Promise<Item[]> {
-  if (onPhone()) return drawerItems(page, language)
-  await openUntil(headerTrigger(page, language), page.getByRole('menu'))
-  return menuItems(page)
+  await openUntil(footerTrigger(page, language), page.getByRole('menu'))
+  return menuItems(page.getByRole('menu'))
 }
 
 const current = (name: string): Item => ({ name, href: null, current: true })
@@ -143,10 +127,9 @@ test.describe('the language switcher', () => {
     await page.goto('/about/')
     const cookies = await context.cookies()
     await switcherItems(page, 'en')
-    const container = onPhone() ? phoneMenu(page) : page.getByRole('menu')
     const [japanese] = await Promise.all([
       page.waitForResponse(response => new URL(response.url()).pathname === '/ja/about/'),
-      container.getByRole(onPhone() ? 'link' : 'menuitem', { name: '日本語' }).click()
+      page.getByRole('menu').getByRole('menuitem', { name: '日本語' }).click()
     ])
     expect(japanese.status()).toBe(200)
     expect(japanese.request().redirectedFrom()).toBeNull()
@@ -160,44 +143,46 @@ test.describe('the language switcher', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'en')
   })
 
-  test.describe('from 1024 pixels', () => {
-    test.beforeEach(() => {
-      test.skip(onPhone(), 'Below 1024 pixels the phone menu holds the languages')
-    })
-
-    test('the header menu opens and follows a language by keyboard, each named in itself', async ({
-      page
-    }) => {
-      await page.goto('/about/')
-      const trigger = headerTrigger(page, 'en')
-      await expect(trigger).toHaveText('English')
-      await expect(async () => {
-        await trigger.focus()
-        await page.keyboard.press('Enter')
-        await expect(page.getByRole('menu')).toBeVisible(clickBeforeHydrationIsLost)
-      }).toPass(untilHydrated)
-      const japanese = page.getByRole('menuitem', { name: '日本語' })
-      await expect(japanese).toHaveAttribute('lang', 'ja')
-      await expect(japanese).toHaveAttribute('hreflang', 'ja')
-      await page.keyboard.press('ArrowDown')
-      await expect(japanese).toBeFocused()
-      await page.keyboard.press('Enter')
-      await expect(page).toHaveURL(/\/ja\/about\/$/)
-      await expect(headerTrigger(page, 'ja')).toHaveText('日本語')
-    })
-  })
-
-  test('the footer has the same menu on every width', async ({ page }) => {
-    await page.goto('/ja/legal/terms/')
-    await openUntil(footerTrigger(page, 'ja'), page.getByRole('menu'))
-    expect(await menuItems(page)).toEqual([link('English', '/legal/terms/'), current('日本語')])
-  })
-
-  test('the header shows the menu from 1024 pixels and the phone menu below, never both', async ({
+  test('the footer menu opens and follows a language by keyboard, each named in itself', async ({
     page
   }) => {
     await page.goto('/about/')
-    await expect(headerTrigger(page, 'en')).toBeVisible({ visible: !onPhone() })
-    await expect(menuButton(page)).toBeVisible({ visible: onPhone() })
+    const trigger = footerTrigger(page, 'en')
+    await expect(async () => {
+      await trigger.focus()
+      await page.keyboard.press('Enter')
+      await expect(page.getByRole('menu')).toBeVisible(clickBeforeHydrationIsLost)
+    }).toPass(untilHydrated)
+    const japanese = page.getByRole('menuitem', { name: '日本語' })
+    await expect(japanese).toHaveAttribute('lang', 'ja')
+    await expect(japanese).toHaveAttribute('hreflang', 'ja')
+    await page.keyboard.press('End')
+    await expect(japanese).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(page).toHaveURL(/\/ja\/about\/$/)
+    await expect(footerTrigger(page, 'ja')).toHaveText('JA')
+  })
+
+  test('the footer has a flag menu, named by its code, on every width', async ({ page }) => {
+    await page.goto('/ja/legal/terms/')
+    const trigger = footerTrigger(page, 'ja')
+    await expect(trigger).toHaveText('JA')
+    await expect(trigger.locator('svg[data-flag="JP"]')).toBeVisible()
+    await openUntil(trigger, page.getByRole('menu'))
+    const menu = page.getByRole('menu')
+    expect(await menuItems(menu)).toEqual([link('English', '/legal/terms/'), current('日本語')])
+    await expect(menu.locator('svg[data-flag]')).toHaveCount(2)
+  })
+
+  test('only the footer offers the languages: not the header, the account menu, or the phone menu', async ({
+    page
+  }) => {
+    await page.goto('/about/')
+    const banner = page.getByRole('banner')
+    await expect(banner.getByRole('button', { name: labels.en.trigger })).toHaveCount(0)
+    const opened = onPhone() ? phoneMenu(page) : accountMenu(page)
+    await openUntil(onPhone() ? menuButton(page) : accountButton(page), opened)
+    await expect(opened.getByRole('link', { name: '日本語' })).toHaveCount(0)
+    await expect(opened.getByRole('menuitem', { name: '日本語' })).toHaveCount(0)
   })
 })

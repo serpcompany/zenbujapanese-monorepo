@@ -246,7 +246,7 @@ enum FrequencyPackInstaller {
 
   private static func mappingPolicyURL(version: Int) throws -> URL {
     guard [1, 2].contains(version),
-      let url = Bundle.module.url(
+      let url = BundledData.bundle.url(
         forResource: "FrequencyPackMappingV\(version)", withExtension: "sql")
     else { throw FrequencyPackError.invalidArtifact }
     return url
