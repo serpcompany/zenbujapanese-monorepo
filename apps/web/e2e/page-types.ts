@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { appAreasIn } from '../src/lib/app-areas'
 import type { Locale } from '../src/lib/i18n/config'
 import { getDictionary } from '../src/lib/i18n/dictionary'
@@ -44,23 +44,22 @@ async function settle(page: Page) {
 const clickBeforeHydrationIsLost = { timeout: 1_000 }
 const untilItTakes = { timeout: 15_000 }
 
-async function pressOpen(page: Page, name: string) {
-  const button = page.getByRole('button', { name, exact: true })
+async function pressToExpand(button: Locator) {
   await expect(async () => {
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
     await expect(button).toHaveAttribute('aria-expanded', 'true', clickBeforeHydrationIsLost)
   }).toPass(untilItTakes)
-  return button
 }
 
 async function expand(page: Page, name: string) {
-  await pressOpen(page, name)
+  await pressToExpand(page.getByRole('button', { name, exact: true }))
   await settle(page)
 }
 
-async function expandMenuGroup(page: Page, name: string) {
-  const button = await pressOpen(page, name)
+async function expandMenuSection(page: Page, name: string) {
   const menu = phoneMenu(page)
+  const button = menu.getByRole('button', { name, exact: true })
+  await pressToExpand(button)
   await expect(menu.locator(`[id="${await button.getAttribute('aria-controls')}"]`)).toBeVisible()
   await expect(menu.locator('[data-slot="accordion-content"]:visible')).toHaveCount(1)
   await settle(page)
@@ -94,7 +93,7 @@ function phoneMenuViews(locale: Locale): PageView[] {
     ...siteMenusIn(locale).map(({ label }) => ({
       name: `Phone menu, ${label}`,
       overlay: true,
-      show: (page: Page) => expandMenuGroup(page, label)
+      show: (page: Page) => expandMenuSection(page, label)
     }))
   ]
 }
