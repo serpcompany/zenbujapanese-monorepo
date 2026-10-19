@@ -3,7 +3,8 @@
 The app's UI tests (`apps/ios/UITests/`) spend most of their time waiting for the app, so how they
 wait decides how long a suite takes and whether a test passes by luck. What the tests cover, the
 harnesses they launch the app with, and the commands are in [`ios.md`](ios.md), Tests on every
-platform; running a few of them quickly while working is the `verify-app` skill.
+platform; running a few of them quickly while working is the `verify-app` skill. The accessibility
+audits, and the findings they allow, are in [`ios-accessibility.md`](ios-accessibility.md).
 
 ## One wait that looks at once
 

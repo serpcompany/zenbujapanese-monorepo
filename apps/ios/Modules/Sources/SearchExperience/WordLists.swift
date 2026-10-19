@@ -23,7 +23,8 @@ struct WordListMembership: Codable, Hashable, Identifiable, Sendable {
 @MainActor
 @Observable
 final class WordLists: LocalFileStore {
-  static let shared = WordLists()
+  static let shared = WordLists(
+    sharedCopy: SharedContainer.copy(named: SharedContainer.wordLists))
 
   static let defaultListName = String(localized: "Favorites")
   nonisolated static let favoritesID = UUID(uuidString: "2177c773-9e88-410f-9348-6cefaebe0a93")!
@@ -38,8 +39,8 @@ final class WordLists: LocalFileStore {
   @ObservationIgnored let writes = LocalFileWriteQueue()
   @ObservationIgnored var changeObserver: ((SavedItemChange) -> Void)?
 
-  init(fileURL: URL = WordLists.defaultFileURL) {
-    let writer = WordListsWriter(fileURL: fileURL)
+  init(fileURL: URL = WordLists.defaultFileURL, sharedCopy: URL? = nil) {
+    let writer = WordListsWriter(fileURL: fileURL, sharedCopy: sharedCopy)
     self.writer = writer
     writes.load { [self] in
       let loaded = await writer.load()
@@ -332,9 +333,9 @@ private actor WordListsWriter {
 
   private let file: LocalJSONFile
 
-  init(fileURL: URL) {
+  init(fileURL: URL, sharedCopy: URL?) {
     file = LocalJSONFile(
-      fileURL: fileURL, currentVersion: StoredFile.currentVersion,
+      fileURL: fileURL, sharedCopy: sharedCopy, currentVersion: StoredFile.currentVersion,
       description: "word lists", logCategory: "WordLists")
   }
 

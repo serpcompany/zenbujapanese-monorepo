@@ -7,14 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5A4E00000000000000000001 /* ZenbuShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5A4E00000000000000000002 /* ZenbuShare.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5A4E00000000000000000003 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 5A4E00000000000000000004 /* SearchExperience */; };
 		48A12CB415EF48F78F16871A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */; };
 		A1C04F09D3A74D8B82D3C6E1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2D15A10E4B85E9C93E4D7F2 /* Assets.xcassets */; };
 		E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */ = {isa = PBXBuildFile; productRef = 71B99CFA03F259B063FB7CC8 /* SearchExperience */; };
+		5A4E00000000000000000017 /* DictionaryData in Frameworks */ = {isa = PBXBuildFile; productRef = 5A4E00000000000000000018 /* DictionaryData */; };
 		EE0568414863DA5F77D21D34 /* ZenbuJapaneseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6DE26B8A994C087243DFB0F /* ZenbuJapaneseApp.swift */; };
 		A39400F1000000000000000B /* ZenbuShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A39400F1000000000000000A /* ZenbuShortcuts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5A4E00000000000000000002 /* ZenbuShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZenbuShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		05C3FD9ADDFFACDD673A50B8 /* Modules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Modules; path = Modules; sourceTree = SOURCE_ROOT; };
 		48A12CB315EF48F78F16871A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ZenbuJapanese.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -34,12 +38,52 @@
 			remoteGlobalIDString = 5CD4552D207F8AC0D2D15CD6;
 			remoteInfo = ZenbuJapanese;
 		};
+		5A4E00000000000000000005 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DE54BDCD4DF440D8324A14C7 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A4E00000000000000000010;
+			remoteInfo = ZenbuShare;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5A4E00000000000000000007 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5A4E00000000000000000001 /* ZenbuShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5A4E00000000000000000016 /* Exceptions for "ShareExtension" folder in "ZenbuShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				ZenbuShare.entitlements,
+			);
+			target = 5A4E00000000000000000010 /* ZenbuShare */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C5730B0000000000000000B2 /* UITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = UITests;
+			sourceTree = "<group>";
+		};
+		5A4E00000000000000000008 /* ShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5A4E00000000000000000016 /* Exceptions for "ShareExtension" folder in "ZenbuShare" target */,
+			);
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -50,6 +94,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1FD0205CD84132DCB314678 /* SearchExperience in Frameworks */,
+				5A4E00000000000000000017 /* DictionaryData in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -57,6 +102,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A4E00000000000000000009 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A4E00000000000000000003 /* SearchExperience in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -76,6 +129,7 @@
 			children = (
 				0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */,
 				C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */,
+				5A4E00000000000000000002 /* ZenbuShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -86,6 +140,7 @@
 				9DF55C21A8674721DB56F09F /* App */,
 				0D9EF723FB60C0407E450D3E /* Packages */,
 				4A0C8C2271C037859685316D /* Products */,
+				5A4E00000000000000000008 /* ShareExtension */,
 				C5730B0000000000000000B2 /* UITests */,
 			);
 			sourceTree = "<group>";
@@ -114,14 +169,17 @@
 				F38B6861CA6A9754CF93F50B /* Frameworks */,
 				C3E26B21F5C96FAD04F5E803 /* Resources */,
 				F25800000000000000000001 /* Prepare bundled Sudachi Core */,
+				5A4E00000000000000000007 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				5A4E00000000000000000006 /* PBXTargetDependency */,
 			);
 			name = ZenbuJapanese;
 			packageProductDependencies = (
 				71B99CFA03F259B063FB7CC8 /* SearchExperience */,
+				5A4E00000000000000000018 /* DictionaryData */,
 			);
 			productName = ZenbuJapanese;
 			productReference = 0BB4AC5EE8C0DBD544F1CE40 /* ZenbuJapanese.app */;
@@ -147,6 +205,29 @@
 			productName = ZenbuJapaneseUITests;
 			productReference = C5730B0000000000000000B1 /* ZenbuJapaneseUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		5A4E00000000000000000010 /* ZenbuShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5A4E00000000000000000011 /* Build configuration list for PBXNativeTarget "ZenbuShare" */;
+			buildPhases = (
+				5A4E00000000000000000012 /* Sources */,
+				5A4E00000000000000000009 /* Frameworks */,
+				5A4E00000000000000000013 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5A4E00000000000000000008 /* ShareExtension */,
+			);
+			name = ZenbuShare;
+			packageProductDependencies = (
+				5A4E00000000000000000004 /* SearchExperience */,
+			);
+			productName = ZenbuShare;
+			productReference = 5A4E00000000000000000002 /* ZenbuShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -181,6 +262,7 @@
 			targets = (
 				5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */,
 				C5730B0000000000000000B8 /* ZenbuJapaneseUITests */,
+				5A4E00000000000000000010 /* ZenbuShare */,
 			);
 		};
 /* End PBXProject section */
@@ -196,6 +278,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C5730B0000000000000000B5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5A4E00000000000000000013 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -241,6 +330,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		5A4E00000000000000000012 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -248,6 +344,14 @@
 			isa = PBXTargetDependency;
 			target = 5CD4552D207F8AC0D2D15CD6 /* ZenbuJapanese */;
 			targetProxy = C5730B0000000000000000B6 /* PBXContainerItemProxy */;
+		};
+		5A4E00000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilters = (
+				ios,
+			);
+			target = 5A4E00000000000000000010 /* ZenbuShare */;
+			targetProxy = 5A4E00000000000000000005 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -259,7 +363,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
@@ -281,7 +384,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
@@ -348,6 +450,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				CURRENT_PROJECT_VERSION = 8;
+				MARKETING_VERSION = 2.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -365,7 +469,6 @@
 				CODE_SIGN_ENTITLEMENTS = App/ZenbuJapanese.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				DEVELOPMENT_TEAM = 847HR8U8D9;
-				CURRENT_PROJECT_VERSION = 5;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
@@ -387,7 +490,6 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 2.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)";
 				PRODUCT_NAME = "Zenbu Japanese";
 				SDKROOT = auto;
@@ -460,6 +562,8 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				CURRENT_PROJECT_VERSION = 8;
+				MARKETING_VERSION = 2.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -523,6 +627,60 @@
 			};
 			name = Release;
 		};
+		5A4E00000000000000000014 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ZenbuShare.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_DISPLAY_NAME = "Zenbu Japanese";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).share";
+				PRODUCT_NAME = ZenbuShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5A4E00000000000000000015 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ZenbuShare.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 847HR8U8D9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(ZENBU_DISPLAY_NAME)";
+				ZENBU_BUNDLE_ID_SUFFIX = "";
+				ZENBU_DISPLAY_NAME = "Zenbu Japanese";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX).share";
+				PRODUCT_NAME = ZenbuShare;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -553,6 +711,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
+		5A4E00000000000000000011 /* Build configuration list for PBXNativeTarget "ZenbuShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5A4E00000000000000000014 /* Debug */,
+				5A4E00000000000000000015 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -566,6 +733,14 @@
 		71B99CFA03F259B063FB7CC8 /* SearchExperience */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SearchExperience;
+		};
+		5A4E00000000000000000004 /* SearchExperience */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SearchExperience;
+		};
+		5A4E00000000000000000018 /* DictionaryData */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DictionaryData;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

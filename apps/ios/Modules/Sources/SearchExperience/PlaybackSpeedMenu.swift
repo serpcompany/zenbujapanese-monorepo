@@ -21,6 +21,7 @@ struct PlaybackSpeedMenu: View {
         .frame(minWidth: 44, minHeight: 44)
     }
     .accessibilityLabel("Playback speed, \(Self.label(player.playbackRate))")
+    .accessibilityShowsLargeContentViewer()
     .accessibilityIdentifier("watch.speed")
     .countingDraws(as: "watch.speed.draws", in: draws)
   }

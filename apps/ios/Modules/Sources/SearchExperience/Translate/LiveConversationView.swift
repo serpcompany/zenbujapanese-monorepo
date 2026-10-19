@@ -107,6 +107,7 @@ struct LiveConversationView: View {
       .frame(height: 1)
       .listRowSeparator(.hidden)
       .listRowBackground(Color.clear)
+      .accessibilityHidden(true)
   }
 
   @ViewBuilder

@@ -86,6 +86,7 @@ struct FrequencyDictionariesView: View {
           .font(.footnote)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+      .accessibilityRespondsToUserInteraction(false)
       trailingControl(for: pack)
     }
     .accessibilityElement(children: .contain)
@@ -275,6 +276,7 @@ private struct FrequencyPackDetailView: View {
       .toolbar {
         ToolbarItem(placement: .confirmationAction) {
           Button("Done", action: dismiss.callAsFunction)
+            .accessibilityIdentifier("frequency-pack.detail.done")
         }
       }
     }

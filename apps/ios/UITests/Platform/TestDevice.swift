@@ -48,6 +48,18 @@ enum TestDevice {
     #endif
   }
 
+  static var audits: [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
+    let everywhere: [(XCUIAccessibilityAuditType, AuditKind)] = [
+      (.contrast, .contrast), (.elementDetection, .elementDetection), (.hitRegion, .hitRegion),
+      (.sufficientElementDescription, .elementDescription),
+    ]
+    #if os(macOS)
+      return everywhere + [(.action, .action), (.parentChild, .parentChild)]
+    #else
+      return everywhere + [(.dynamicType, .dynamicType), (.textClipped, .textClipped), (.trait, .trait)]
+    #endif
+  }
+
   @MainActor static func turn(landscape: Bool) {
     #if os(iOS)
       let orientation: UIDeviceOrientation = landscape ? .landscapeLeft : .portrait

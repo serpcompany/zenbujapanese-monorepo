@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import notify
 
 enum LaunchHarness {
@@ -11,9 +12,14 @@ enum LaunchHarness {
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
+  static let appearanceKey = "ZENBU_APPEARANCE"
   static let openLinkKey = "ZENBU_OPEN_LINK"
   static let openLinkNotice = "com.zenbujapanese.dictionary.uitests.open-link"
   static let earlierNotesKey = "ZENBU_EARLIER_NOTES"
+  static let shareTextKey = "ZENBU_SHARE_TEXT"
+  static let shareImageKey = "ZENBU_SHARE_IMAGE"
+  static let shareCardInAppKey = "ZENBU_SHARE_CARD_IN_APP"
+  static let onlySectionKey = "ZENBU_ONLY_SECTION"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -71,6 +77,35 @@ enum LaunchHarness {
   }
 
   static let countsDraws = countsDraws(ProcessInfo.processInfo.environment)
+
+  static func colorScheme(_ environment: [String: String]) -> ColorScheme? {
+    #if DEBUG
+      switch environment[appearanceKey] {
+      case "dark": .dark
+      case "light": .light
+      default: nil
+      }
+    #else
+      nil
+    #endif
+  }
+
+  static let colorScheme = colorScheme(ProcessInfo.processInfo.environment)
+
+  static func onlySections(_ environment: [String: String]) -> Set<String> {
+    #if DEBUG
+      Set(environment[onlySectionKey]?.split(separator: ",").map(String.init) ?? [])
+    #else
+      []
+    #endif
+  }
+
+  static let onlySections = onlySections(ProcessInfo.processInfo.environment)
+
+  static func shows(_ section: String, on page: String, only: Set<String> = LaunchHarness.onlySections) -> Bool {
+    let named = only.filter { $0.hasPrefix(page + ".") }
+    return named.isEmpty || named.contains("\(page).\(section)")
+  }
 
   static func linkToOpen(_ environment: [String: String]) -> URL? {
     #if DEBUG
@@ -259,6 +294,7 @@ enum LaunchHarness {
         try? FileManager.default.removeItem(
           at: URL.applicationSupportDirectory.appending(path: folder, directoryHint: .isDirectory))
       }
+      if let shared = SharedContainer.folder { try? FileManager.default.removeItem(at: shared) }
       if let earlierNotes = environment[earlierNotesKey] {
         UserDefaults.standard.set(
           Data(earlierNotes.utf8), forKey: WordNoteStorage.earlierStorageKey)

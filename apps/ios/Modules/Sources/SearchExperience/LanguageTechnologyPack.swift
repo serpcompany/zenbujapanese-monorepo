@@ -20,7 +20,7 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
 
   static func bundled() throws -> Self {
     guard
-      let url = Bundle.module.url(
+      let url = BundledData.bundle.url(
         forResource: "LanguageTechnologyPackCatalog", withExtension: "json")
     else { throw LanguageTechnologyPackError.invalidCatalog }
     let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
@@ -44,7 +44,7 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
       pack.unknownDefinitionSHA256 == SudachiCoreContract.unknownDefinitionSHA256,
       pack.bundledResource == "system_core",
       pack.bundledResourceExtension == "dic",
-      Bundle.module.url(forResource: pack.licenseResource, withExtension: "txt") != nil,
+      BundledData.bundle.url(forResource: pack.licenseResource, withExtension: "txt") != nil,
       catalog.trustedHistoricalManifests.allSatisfy({ historical in
         catalog.packs.contains { $0.packID == historical.packID }
       })
@@ -188,7 +188,7 @@ actor LanguageTechnologyPackManager {
         guard let resource = manifest.bundledResource,
           let resourceExtension = manifest.bundledResourceExtension
         else { return nil }
-        return Bundle.module.url(forResource: resource, withExtension: resourceExtension)
+        return BundledData.bundle.url(forResource: resource, withExtension: resourceExtension)
           ?? Bundle.main.url(forResource: resource, withExtension: resourceExtension)
       }
     if let manifest = bundledManifest, let url = resolvedBundledURL,

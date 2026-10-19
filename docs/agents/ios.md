@@ -88,7 +88,8 @@ every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). I
 encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
-(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)). `ZenbuJapaneseScenes`
+(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card is a
+second target ([`ios-share-sheet.md`](ios-share-sheet.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
@@ -180,9 +181,8 @@ don't contain them), so they need no network, account, camera, or microphone:
 
 - `ZENBU_UI_TEST_FRESH=1` erases the app's saved state before anything loads (its defaults, its
   session token in the Keychain, and its `Zenbu Japanese`, `FrequencyPacks`, and `Profile`
-  folders), only in a `.uitests` build.
-- `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, for the
-  offline states.
+  folders, and its App Group's), only in a `.uitests` build.
+- `ZENBU_ACCOUNT_API_URL=http://127.0.0.1:9` points the account at a closed port, so it's offline.
 - `ZENBU_CAMERA_IMAGE=<path>` stands in for the camera: **Take Photo** returns that image, which
   goes through the camera picker's own conversion, the import checks, recognition, and Image
   Search, as a photo would.
@@ -197,8 +197,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   token goes to the real Keychain, so these tests are skipped on the Mac, where a build signed to
   run locally has no keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
-  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests).
+  Simulator harness); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open the share sheet, or its card
+  in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
+  test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
+  draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -229,9 +231,9 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
 slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
-`xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
-element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
-text. On a busy Mac a tab tap, a shortcut, the conversation's pause, or a Simulator rotation
+`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Search's **Sorted by** row
+beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
+conversation's pause, or a Simulator rotation
 sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
 (`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
 page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once
@@ -240,10 +242,11 @@ and the rules a test keeps, are in [`ios-ui-tests.md`](ios-ui-tests.md). A query
 every element's value, such as `value CONTAINS`, times out on the Mac on a long page; ask for the
 element by its identifier and read it with `waitUntil(_:mentions:)`. An iPad Simulator that had
 run the suites for hours once stopped turning at all, though XCUITest confirmed each turn;
-`xcrun simctl shutdown` and `boot` brought it back.
+`xcrun simctl shutdown` and `boot` brought it back. A menu's choice is found by its label
+(`menuChoice`): iOS 27 drops the identifier of an item in a `Menu`'s `Section`, but not of one in a
+`.contextMenu` or a row's swipe actions.
 
-On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference so a test reads
-the same on every device:
+On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference:
 
 - A menu's choice is a menu item found by its title, and only among the window's menus
   (`menuChoices`): the menu bar's **Edit ▸ Delete** and Continuity Camera's **Take Photo** carry the
@@ -297,16 +300,15 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
-   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
-   the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
-   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and the
+   bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record, below).
+   With any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
+   **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
-   either, so also remove those capabilities
-   ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
-   Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
-   Google in a build given its client ID. Don't commit the team, the bundle ID change, or the
-   removed capabilities.
+   either, so also remove those capabilities ([Links from the website](#links-from-the-website),
+   [Account and sync](#account-and-sync)). Such a build still shows the Apple button, which fails;
+   sign in with an emailed code, or with Google in a build given its client ID. Don't commit the
+   team, the bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.
@@ -849,7 +851,7 @@ submitting the first version built after iPad and the Mac came in, add the iPad 
 build, the Mac) platform's screenshots and set up the record (Releasing on iPad and the Mac,
 above), and say so in What's New.
 
-1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the app target's configurations,
+1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the project's configurations,
    as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise
    `MARKETING_VERSION` instead and set `CURRENT_PROJECT_VERSION` back to 1.
 2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of
@@ -861,10 +863,9 @@ above), and say so in What's New.
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.
 
 Before submitting a version, open it in App Store Connect and check **Version Release**: choose
-**Manually release this version** unless it should go live on approval.
-`asc versions create --release-type MANUAL` left 2.0.0 on automatic release, so it went live as soon
-as App Review approved it; `asc versions list --app 6800229215 --output json` shows each version's
-`releaseType`.
+**Manually release this version** unless it should go live on approval. `asc versions create
+--release-type MANUAL` left 2.0.0 on automatic release, so it went live as soon as App Review
+approved it; `asc versions list --app 6800229215 --output json` shows each version's `releaseType`.
 
 Check it on a device from TestFlight: signing in with Apple, Google, and a code reaches
 production's service, a change syncs to a second device, and deleting the account works.

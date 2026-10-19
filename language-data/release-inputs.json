@@ -89,6 +89,10 @@
     { "path": "resources/DAKANJI-MIT.txt", "why": "The licence of the handwriting model." },
     { "path": "resources/DaKanji.mlpackage", "why": "The handwriting model, not language data." },
     {
+      "path": "resources/DictionaryData.swift",
+      "why": "The Swift source the folder needs to be its own package target, which only the app links (ADR 0017)."
+    },
+    {
       "path": "resources/DictionaryCore",
       "why": "The app's bundle of the shared core, built from packages/dictionary-core."
     },

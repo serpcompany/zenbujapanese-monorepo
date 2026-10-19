@@ -5,23 +5,23 @@ final class WordDetailUITests: ZenbuUITestCase {
   func testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))
-    waitFor(find("word-detail.add-to-list", in: app))
+    waitFor(menuChoice("Add to List…", in: app))
     waitFor(menuChoice("Add Note", in: app))
     waitFor(menuChoice("Choose Photo", in: app))
     XCTAssertEqual(menuChoice("Take Photo", in: app).exists, device != .mac, "Take Photo")
-    tap(find("word-detail.mark-known", in: app))
+    tap(menuChoice("Mark as Known", in: app))
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
     tabItem(.search, in: app).tap()
     tap(find("word-detail.more-menu", in: app))
-    waitFor(find("word-detail.mark-unknown", in: app))
+    waitFor(menuChoice("Mark as Unknown", in: app))
   }
 
   func testAddToListPutsTheWordInFavoritesAndANewList() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))
-    tap(find("word-detail.add-to-list", in: app))
+    tap(menuChoice("Add to List…", in: app))
     waitForSheet("word-list-picker.screen", in: app)
     tap(
       app.descendants(matching: .any)

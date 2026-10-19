@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { keptAnswers } from '@/test/edge-cache'
 import { appStoreLookupUrl, appStoreRelease, readAppStoreLookup } from './app-store'
+import { watchedRender } from './render-health'
 
 const liveApp = {
   resultCount: 1,
@@ -34,19 +36,6 @@ describe('reading the App Store lookup', () => {
 })
 
 type Fetcher = (request: Request) => Promise<Response>
-
-function keptAnswers() {
-  const kept = new Map<string, Response>()
-  vi.stubGlobal('caches', {
-    default: {
-      match: async (key: Request) => kept.get(key.url)?.clone(),
-      put: async (key: Request, response: Response) => {
-        kept.set(key.url, response)
-      }
-    }
-  })
-  return kept
-}
 
 describe('asking Apple', () => {
   beforeEach(() => {
@@ -118,5 +107,22 @@ describe('asking Apple', () => {
     expect(warnings()).toEqual([
       expect.objectContaining({ level: 'warn', message: 'app_store_lookup_failed' })
     ])
+  })
+
+  test('marks the page incomplete when Apple fails, and again while the failure is kept, but not for an app that isn’t on the store', async () => {
+    keptAnswers()
+    const failing = vi.fn<Fetcher>(async () => new Response('Busy', { status: 503 }))
+    for (const _ of [1, 2]) {
+      const watched = watchedRender(() => appStoreRelease(failing))
+      expect(await watched.result).toBeNull()
+      expect(watched.incomplete()).toBe(true)
+    }
+    vi.unstubAllGlobals()
+    keptAnswers()
+    const absent = watchedRender(() =>
+      appStoreRelease(async () => Response.json({ resultCount: 0, results: [] }))
+    )
+    expect(await absent.result).toBeNull()
+    expect(absent.incomplete()).toBe(false)
   })
 })

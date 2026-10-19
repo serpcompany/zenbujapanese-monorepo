@@ -175,8 +175,8 @@ function FrequencyPanel({ summary, locale }: { summary: BrowseSummaryResponse; l
       </Chips>
       <p className="text-sm font-medium">{t.hub.mostUsedOnYouTube}</p>
       <Chips label={t.hub.mostUsedOnYouTube}>
-        {allRankBands.map(({ band }) => (
-          <Chip key={band} href={rankBandPath('youtube', band)} locale={locale}>
+        {allRankBands.map(band => (
+          <Chip key={band.band} href={rankBandPath('youtube', band.band)} locale={locale}>
             {rankRange(band, locale)}
           </Chip>
         ))}
