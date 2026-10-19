@@ -118,6 +118,8 @@ describe('.claude/settings.json', () => {
     'gh api graphql -f query="mutation { mergePullRequest(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
     'gh api graphql -f query="mutation { enqueuePullRequest(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
     'gh api graphql -f query="mutation { enablePullRequestAutoMerge(input: {pullRequestId: \\"x\\"}) { clientMutationId } }"',
+    'gh api graphql --input tmp/merge.json',
+    'gh api graphql -F query=@tmp/merge.graphql',
     'gh secret set CLAUDE_CODE_OAUTH_TOKEN',
     'gh variable set DEPLOY_PRODUCTION --body false',
     'gh api -XPUT repos/serpcompany/zenbujapanese-monorepo/environments/production',
