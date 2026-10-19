@@ -86,7 +86,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     let continues = continueAfterFailure
     continueAfterFailure = true
     defer { continueAfterFailure = continues }
-    for audit in audits {
+    for audit in audits(on: screen) {
       do {
         try app.performAccessibilityAudit(for: audit.type) { issue in
           let finding = Self.finding(issue, on: screen)
@@ -142,8 +142,10 @@ class AccessibilityAuditCase: ZenbuUITestCase {
   private static let margin = 0.03
   private static let swipesBack = 24
 
-  private var audits: [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
-    TestDevice.audits.filter { AllowedFinding.notRun[$0.kind]?.devices.contains(device) != true }
+  private func audits(on screen: String) -> [(type: XCUIAccessibilityAuditType, kind: AuditKind)] {
+    TestDevice.audits.filter { audit in
+      !AllowedFinding.notRun.contains { $0.covers(audit.kind, on: screen, device) }
+    }
   }
 
   private func isReportedOnly(_ kind: AuditKind) -> Bool {
@@ -174,7 +176,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       Set(audited).sorted().compactMap { screen in
         let count = matched["\(index) \(screen)", default: 0]
         guard allowed.applies(to: screen, on: device, in: pass), count < allowed.element.limit ?? 1,
-          audits.contains(where: { $0.kind == allowed.kind })
+          audits(on: screen).contains(where: { $0.kind == allowed.kind })
         else { return nil }
         return "\(screen): the allowed [\(allowed.kind.rawValue)] \(allowed.element) matched \(count)"
       }

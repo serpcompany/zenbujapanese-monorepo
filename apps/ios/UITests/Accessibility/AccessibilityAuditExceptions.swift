@@ -48,9 +48,22 @@ struct AllowedFinding {
     .parentChild: ([.mac], Why.swiftUIOnTheMac),
   ]
 
-  static let notRun: [AuditKind: (devices: Set<TestDevice.Kind>, reason: String)] = [
-    .dynamicType: ([.pad], Why.floatingTabBar),
-    .textClipped: ([.pad], Why.floatingTabBar),
+  struct Exclusion {
+    let kind: AuditKind
+    let devices: Set<TestDevice.Kind>
+    let screens: [String]?
+    let reason: String
+
+    func covers(_ kind: AuditKind, on screen: String, _ device: TestDevice.Kind) -> Bool {
+      self.kind == kind && devices.contains(device) && screens.map { $0.contains(screen) } ?? true
+    }
+  }
+
+  static let notRun = [
+    Exclusion(kind: .dynamicType, devices: [.pad], screens: nil, reason: Why.floatingTabBar),
+    Exclusion(kind: .textClipped, devices: [.pad], screens: nil, reason: Why.floatingTabBar),
+    Exclusion(kind: .elementDetection, devices: [.pad], screens: iPadSheets, reason: Why.behindSheet),
+    Exclusion(kind: .dynamicType, devices: [.phone], screens: ["Image's sources"], reason: Why.imageAlert),
   ]
 
   static let list =
@@ -58,6 +71,10 @@ struct AllowedFinding {
 }
 
 private let touch: Set<TestDevice.Kind> = [.phone, .pad]
+private let iPadSheets = [
+  "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
+  "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
+]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -75,8 +92,8 @@ private enum Why {
     "On the Mac these audits report SwiftUI's own AppKit elements: the unnamed groups it makes for stacks and sections, a List's outline, a NavigationLink row's role, and a Picker's pop-up. The app's code creates none of them by name; the counts are in harness-debt.md"
   static let barButton =
     "A bar button: the system draws its title, which stops growing at a size of its own and shows in the Large Content Viewer on a long press, as in Apple's apps"
-  static let alert =
-    "The Image alert is the system's alert: the system draws its title, message, and three buttons, caps their size, and lets the alert scroll"
+  static let imageAlert =
+    "The Image alert is Apple's: the system draws its title, message, and three buttons, and rebuilds the alert as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself"
   static let searchField =
     "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Search"
   static let floatingTabBar =
@@ -84,7 +101,7 @@ private enum Why {
   static let clearButton =
     "The search field's clear button is the system's: on the iPad the field sits in the toolbar, where the system draws its clear button 20 points wide"
   static let behindSheet =
-    "Text behind an open sheet, which VoiceOver rightly skips while the sheet is up. The audit can't name it"
+    "On the iPad a sheet or alert floats over the page, which stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and element detection finds nothing behind them there"
   static let inlineWord =
     "A word linked inside a sentence is as large as the text it is part of: WCAG 2.5.8's inline exception. Every word of the sentence is a link, side by side"
   static let photoWord =
@@ -115,33 +132,11 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-detail.image-attachment-done"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
-  allow(.dynamicType, .labels(["Image", "Then tap any word to look it up."]), on: ["Image's sources"], because: Why.alert),
-  allow(.dynamicType, .unnamed(3), on: ["Image's sources"], because: Why.alert),
-  allow(.elementDetection, .unnamed(3), on: ["Image's sources"], [.pad], [.standard], because: Why.alert),
-  allow(.elementDetection, .unnamed(8), on: ["Image's sources"], [.pad], [.largest], because: Why.alert),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(
     .hitRegion, .label("Clear text"),
     on: ["Search's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
     because: Why.clearButton),
-  allow(
-    .elementDetection, .unnamed(8),
-    on: ["A frequency rank's details"], [.pad], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(5), on: ["Add to List"], [.pad], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(4), on: ["A word's photo"], [.pad], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(3), on: ["Handwriting", "Radicals"], [.pad], because: Why.behindSheet),
-  allow(
-    .elementDetection, .unnamed(9), on: ["A frequency dictionary's details"], [.pad], [.standard],
-    because: Why.behindSheet),
-  allow(
-    .elementDetection, .unnamed(4), on: ["A frequency dictionary's details"], [.pad], [.largest],
-    because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(7), on: ["Stroke Order"], [.pad], [.standard], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(2), on: ["Stroke Order"], [.pad], [.largest], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(8), on: ["Sign In"], [.pad], [.standard], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(2), on: ["Sign In"], [.pad], [.largest], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(7), on: ["Delete Account"], [.pad], [.standard], because: Why.behindSheet),
-  allow(.elementDetection, .unnamed(2), on: ["Delete Account"], [.pad], [.largest], because: Why.behindSheet),
 ]
 
 private let linkedWords = [

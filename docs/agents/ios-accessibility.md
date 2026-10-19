@@ -44,9 +44,11 @@ them with `xcrun xcresulttool export attachments`.
 | Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
 | Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
 | Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
+| Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, and Delete Account | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
+| Dynamic Type | iPhone: Image's sources | Not run: the Image alert is Apple's, and the system rebuilds it as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself |
 
 `AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
-ones a device skips; the reported counts are in [`harness-debt.md`](../harness-debt.md). A
+ones a device skips, everywhere or on the screens it names; the reported counts are in [`harness-debt.md`](../harness-debt.md). A
 reported audit that doesn't finish in XCTest's time, as contrast sometimes doesn't on a busy iPad,
 is listed in the report and doesn't fail the test; any other audit that doesn't finish fails it. The Dynamic Type and text-clipped audits sweep the app
 through every text size and report text they lose track of, so text that SwiftUI lays out again
