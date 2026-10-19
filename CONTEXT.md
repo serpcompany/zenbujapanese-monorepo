@@ -39,3 +39,18 @@ _Avoid_: flashcard, entry, word page
 An app outside the Zenbu apps, such as Tomodachi, in which a learner links their Zenbu
 account.
 _Avoid_: Zenbu app, client
+
+**Subscription**:
+What a learner bought in one store, the App Store or Stripe, kept by that store's own ID. An
+account may hold more than one, from either store.
+_Avoid_: plan, entitlement
+
+**Entitlement**:
+The account's one answer to whether its paid features are on, made from its subscriptions, with
+the source, product, status, and expiry of the one that counts.
+_Avoid_: subscription (for the account's answer), license
+
+**appAccountToken**:
+The random UUID an App Store purchase carries to name the Zenbu account it's for. It isn't the
+Zenbu user ID, and it never changes.
+_Avoid_: user ID, account ID

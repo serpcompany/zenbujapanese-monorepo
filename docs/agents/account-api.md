@@ -6,11 +6,12 @@ Postgres database, beside the dictionary service on the API servers
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
 the apps and other services use. Signed-in apps read and change the learner's profile at
 `/v1/me`, and keep their copies in step with `/v1/sync`
-([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)). Every Zenbu app stays
-local-first, so nothing in an app waits on this service.
+([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)), which a subscription
+can unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so
+nothing in an app waits on this service.
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
-service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`
+service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/health`, and `/v1/webhooks`
 ([`api-servers.md`](api-servers.md), The API host).
 
 Run every command below from `apps/account-api`, after `pnpm install` at the repository root.
@@ -54,6 +55,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | `EMAIL_ALLOWED_RECIPIENTS` | required to send | Who may be emailed: on staging, the testers, comma-separated (addresses, or domains as `@example.com`); in production, `everyone`. With `cloudflare` or `usesend` and nothing here, the service doesn't start, so staging never emails a stranger. |
 | `PORT` | `8789` | The port it listens on. |
 | `ACCOUNT_API_RELEASE` | `local` | The release `/healthz` names. The image sets it to its commit. |
+| `ACCOUNT_API_CLOUD_*`, `STRIPE_*`, `APP_STORE_*` | free, off | The subscription's ([`account-billing.md`](account-billing.md), Settings). |
 
 ## Routes
 
@@ -80,6 +82,7 @@ which only the log records.
 | `GET /v1/auth/get-session`, `POST /v1/auth/sign-out` | The session, and signing out of it. |
 | `GET /v1/auth/list-sessions`, `POST /v1/auth/revoke-session`, `/revoke-sessions`, `/revoke-other-sessions` | Signed in, where the learner is signed in, and signing out of those. |
 | `GET /dev/mail` | On a local run with the dev mailbox, the codes it would have sent. Elsewhere, `404`. |
+| `/v1/me/subscription`, `/v1/webhooks/stripe`, `/v1/webhooks/apple` | The subscription, and the stores' events ([`account-billing.md`](account-billing.md), Routes). |
 
 The routes under `/v1/auth/` are Better Auth's, with its errors put in the format above, such as
 `invalid_otp`, `oauth_link_error`, or `too_many_requests`. Only the routes above are open: Better
@@ -335,8 +338,8 @@ else, and deletes only after a fresh sign-in.
     by signing in with Apple again.
 - **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
   its synced profile, known words, lists, list words, watched videos, and bookmarked sentences,
-  its journal, and its mutation results;
-  and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
+  its journal, its mutation results, and its subscriptions, its website one canceled at Stripe
+  first ([`account-billing.md`](account-billing.md)); and any sign-in code waiting for its email. Its access tokens stop working at `/v1/me` and
   `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere else. The
   account's email is told. Backups that hold it are deleted within 30 days (Back up and
   restore).
@@ -371,6 +374,8 @@ belongs; tests may import anything.
   (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
+- **`src/billing`** holds Stripe's and the App Store's adapters, which know no other layer
+  ([`account-billing.md`](account-billing.md), Code layout).
 
 `src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
 `src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
@@ -401,7 +406,9 @@ are in `src/db/schema.ts`:
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored
-  copy (Back up and restore).
+  copy (Back up and restore);
+- `billing_customers`, `subscriptions`, `billing_ledger`, and `billing_events`, in
+  `src/db/billing-schema.ts` ([`account-billing.md`](account-billing.md), The model).
 
 Better Auth names its models `user`, `account`, `session`, `verification`, and `jwks`. The schema
 maps them to these tables, and `account` to #374's `user_identities`, whose `provider` and
@@ -542,56 +549,9 @@ runners: check `https://api-staging.zenbujapanese.com/v1/health` in a browser.
 
 ## Back up and restore
 
-`apps/account-api/deploy/backups.sh` backs up each environment's database every night: the one
-its environment file's `DATABASE_URL` names, so after a restore it backs up the database the
-environment runs on. It's `pg_dump` in Postgres's custom format, uploaded to the private R2 bucket
-`zenbujapanese-account-backups` as `<environment>/<time>.dump`. The bucket's lifecycle rule deletes a backup after 30 days. The
-script runs as root, takes no input but its arguments, and reads its bucket and key from a
-root-only file, like the deployer. It logs to `journalctl -t zenbujapanese-account-backups`, and
-never a backup's contents.
-
-**Restore** a backup into a new database beside the others:
-
-```sh
-sudo zenbujapanese-account-backups restore staging/2026-10-06T031700Z.dump account_restore_check
-```
-
-It downloads the backup, creates the database owned by the backup's environment's role
-(`account_staging` for a staging backup), restores into it as that role, and logs how many tables
-and migrations it holds. It never writes to a database that exists, so it can't overwrite one an
-environment uses. Drop the database when you're done looking
-(`docker exec zenbujapanese-account-db dropdb --username postgres account_restore_check`).
-
-To run an environment on a restored database, point its `DATABASE_URL` at it (Set up the server,
-step 2). The deployer sees the environment's file change and deploys it again within 5 minutes, as
-it would a new image, with no request dropped ([`api-servers.md`](api-servers.md), The deployer).
-The restored database belongs to the environment's role, so the service migrates it as it would
-its own.
-
-**The service fences a restored database itself**, the first time it starts on it. It keeps the
-OID of the database it serves in `sync_origin`. A restore is always a new database, with a new
-OID, so when the two differ after migrating, under the migration lock, it jumps every profile's
-version to the time in milliseconds and the journal's sequence to the time in microseconds (or
-leaves each where it is, if that's higher), journals each profile at its new version, and logs
-`a restored database`. The jump is to the clock, not by a fixed amount, so every restore lands
-past every earlier one, even a second restore of the same backup:
-
-- a change an app made after the backup, and lost with it, can't come back under a version the
-  server reuses: it conflicts, and the app takes the profile as it is;
-- every app hears of each profile on its next sync, whatever cursor it holds.
-
-What changed after the backup is lost, as for any restore. The first time the service starts on
-any database, it fences it too, and logs `first start on this database`: a new one's journal starts
-at the time, and the accounts one already holds (on the first deploy of `sync_origin`, or from a
-backup made before it) jump as a restored copy's do. A database restored only to look at is never served, so it stays as the backup
-was. Moving the database by dump and reload, to a new server or across a major version without
-`pg_upgrade`, looks like a restore and is fenced the same way: every version jumps once, and an
-app's change made offline before the move conflicts. `pg_upgrade`, a container restart, and
-renaming a database keep its OID.
-
-A night's backup fails, and cron's run exits with an error the journal shows, when Postgres
-doesn't answer, or when an environment is set up (its file exists) but its database is missing.
-An environment that isn't set up is skipped.
+Each environment's database is backed up every night to R2 and kept 30 days, a backup restores
+into a new database beside the others, and the service fences a restored copy the first time it
+starts on it: [`account-backups.md`](account-backups.md).
 
 ## Set up the server
 
@@ -699,6 +659,8 @@ this order; each step says how to check it worked.
      `https://zenbujapanese.com` in production. Leave `ACCOUNT_API_COOKIE_DOMAIN` unset, so the
      session cookie stays on the API host; staging may still set
      `ACCOUNT_API_COOKIE_PREFIX=zenbu-staging`.
+   - **The subscription** (Stripe, App Store Connect, and nginx's `/v1/webhooks`): its own steps,
+     in [`account-billing.md`](account-billing.md), Set it up.
    - **Apple** (Apple Developer, Certificates, Identifiers & Profiles, on the team that owns the
      app's ID, TSMC LLC's `847HR8U8D9`, #797):
      - **The App IDs.** Identifiers → `com.zenbujapanese.dictionary` → Capabilities → Sign in with

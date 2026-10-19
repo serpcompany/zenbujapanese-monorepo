@@ -16,8 +16,8 @@ setting up the server. Each service's doc covers its image, its workflow, and it
 Clients reach both services at one host, `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com`
 for staging (ADR 0013). nginx sends a request by its path:
 
-- `/v1/auth`, `/v1/me`, `/v1/sync`, and `/v1/health`, and anything under them, to the account
-  service;
+- `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/health`, and `/v1/webhooks`, and anything under
+  them, to the account service;
 - every other path to the dictionary service, including `/healthz`.
 
 The list is `accountServicePaths` in `packages/node-service/src/api-host.ts`. Each service's tests
@@ -56,7 +56,7 @@ server {
         set $account "zenbujapanese-account-api-staging";
         set $dictionary "zenbujapanese-dictionary-api-staging";
 
-        location ~ ^/v1/(auth|me|sync|health)(/|$) {
+        location ~ ^/v1/(auth|me|sync|health|webhooks)(/|$) {
                 proxy_http_version 1.1;
                 proxy_set_header Connection "";
                 proxy_set_header Host $host;
