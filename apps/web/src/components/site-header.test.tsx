@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Locale } from '@/lib/i18n/config'
+import { switcherFor } from '@/lib/i18n/switcher'
 import { linkTo, placeholderHref } from '@/lib/site'
+import { LanguageMenu } from './language-switcher'
 import { SiteHeader } from './site-header'
 
 const navigation = vi.hoisted(() => ({ pathname: '/' }))
@@ -198,17 +200,21 @@ test('the Get the app button leads with a phone icon', () => {
   expect(content.replace(/<svg[\s\S]*?<\/svg>/, '')).toBe('Get the app')
 })
 
-function languageTrigger(html: string): string {
-  return (
-    html.match(/<button [^>]*aria-label="[^"]*"[^>]*>(?=<svg [^>]*lucide-languages)/)?.[0] ?? ''
-  )
-}
+const languageButtons = (html: string) =>
+  [...html.matchAll(/<button [^>]*aria-label="([^"]*)"/g)]
+    .map(([, label]) => label)
+    .filter(label => label.endsWith(', change language') || label.endsWith('切り替える'))
 
 test.each([
   ['en', '/about/'],
   ['ja', '/ja/about/']
 ] as const)('the %s header has no language button: the footer holds the languages', (locale, path) => {
-  expect(languageTrigger(header(path, locale))).toBe('')
+  const languageMenu = renderToStaticMarkup(<LanguageMenu {...switcherFor(locale)} />)
+  expect(languageButtons(languageMenu)).toHaveLength(1)
+  expect(languageMenu).toContain('data-flag=')
+  const html = header(path, locale)
+  expect(languageButtons(html)).toEqual([])
+  expect(html).not.toContain('data-flag=')
 })
 
 describe("a Japanese page's header is in Japanese, and its links stay in Japanese", () => {

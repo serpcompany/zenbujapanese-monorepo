@@ -44,8 +44,8 @@ are `noindex` and in no sitemap, and where they're closed, in a build whose envi
 account service, nothing links to them.
 
 Every page is in English, at its bare URL, and in Japanese, under `/ja/`, with a language switcher
-in the header, the phone menu, and the footer; [Languages](languages.md) describes the URLs, what
-each language shows, the search-engine tags, and the switcher.
+in the footer; [Languages](languages.md) describes the URLs, what each language shows, the
+search-engine tags, and the switcher.
 
 The legal pages are under `/legal/`. [Privacy Policy](privacy.md) describes what
 `/legal/privacy/` says about the app, Tomodachi, the website, and a Zenbu account, and what the
