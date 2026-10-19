@@ -40,9 +40,9 @@ brand's Open Graph card (`assets/brand/web/social/open-graph-1200x630.png`), com
 - Source: #877; F6 in #871 (38 frequency bands, the kanji hub, and four word pages over 70).
 - Check: `src/lib/dictionary/word-snippet.test.ts`, "leaves the reading out when the title with it
   would pass 70 characters"; `src/app/[locale]/dictionary/browse/snippets.test.ts`, "every ranked
-  list’s every band is titled within 70 characters" and each kind of browse page; browse-lists
-  spec, "a ranked list shows a band of 1,000 ranks, …"; browse spec, "the JLPT kanji lists are
-  Waller’s, credited under CC BY".
+  list’s every band page is titled within 70 characters" and each kind of browse page;
+  browse-lists spec, "a ranked list shows a band’s first 200 ranks, …"; browse spec, "the JLPT
+  kanji lists are Waller’s, credited under CC BY".
 
 ## Descriptions
 
@@ -52,7 +52,7 @@ a sentence that would take it past 160 is skipped, and the next tried. The last 
 every page: "Free on the web and in the iPhone app." (in Japanese, that Zenbu Japanese's
 dictionary is free on the web and in the app), true of the web dictionary and of the app, which
 the App Store lists as free. A description that starts past 160 is cut at its last space, comma,
-or 、, with "…". The page itself shows what it did before.
+or 、 in the second half of the limit (otherwise where the limit falls), with "…". The page itself shows what it did before.
 
 - Source: #876; F4 and F5 in #871 (36,544 pages under 110 and 2,230 over 160).
 - Check: `src/lib/snippets.test.ts`, "fittedDescription" and "shortened";
