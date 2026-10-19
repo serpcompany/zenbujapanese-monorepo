@@ -74,7 +74,7 @@ test.describe('frequency dictionaries', () => {
     await expect(page).toHaveURL(browse('frequency-dictionaries/anime/1-1000/'))
   })
 
-  test('a ranked list shows a band of 1,000 ranks, says which words it skips, and credits Jiten', async ({
+  test('a ranked list shows its first band’s words, says which words it skips, and credits Jiten', async ({
     page
   }) => {
     await page.goto(browse('frequency-dictionaries/anime/1-1000/'))

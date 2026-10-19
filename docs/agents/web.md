@@ -393,8 +393,8 @@ lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility ka
 is cut to its first 20 words. Any other browse page is a 404 there.
 
 `src/lib/dictionary/browse/paths.ts` builds the pages' URLs: a list's first page has no number, and
-`…/1/` redirects to it; a ranked list's page is a band of 1,000 ranks (`…/anime/1001-2000/`), and
-its name links to the first band; a JLPT level is `…/jlpt/n5/`; and a category's kana order is
+`…/1/` redirects to it; a ranked list's band of 1,000 ranks (`…/anime/1001-2000/`) is pages of
+200 words, its name links to its first band, a JLPT level is `…/jlpt/n5/`, and a kana order is
 `…/<category>/kana-order/`. A list of fewer than 10 words, and a category's kana order, are
 `noindex, follow` (`dictionaryMetadata`'s `index`) and left out of the browse sitemaps. No browse
 page links to a URL that redirects (`e2e/browse-links.spec.ts` follows every link). The hiragana and
@@ -733,9 +733,9 @@ is listed in `src/lib/pages.ts`, and the pages sitemap also lists the browse hom
   the `ent_seq` ranges the service works out, three to each of its 50,000-word sitemaps. The writer
   streams 10,000 words at a time, never a whole file, and refuses one over Workers' 25 MiB.
 - The browse sitemaps, one per kind of list, built from what the service's `/v1/sitemaps/browse`
-  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,300 pages in all, each in both languages:
+  lists (`src/lib/dictionary/browse/sitemap.ts`), about 5,600 pages in all, each in both languages:
   `/sitemap-kana.xml` (hiragana and katakana lists, about 3,200), `/sitemap-categories.xml`
-  (about 1,900), `/sitemap-frequency-lists.xml` (ranked bands and JLPT vocabulary, about 120), and
+  (about 1,900), `/sitemap-frequency-lists.xml` (bands' pages and JLPT vocabulary, about 440), and
   `/sitemap-kanji-lists.xml` (about 30). Each hub leads its kind's file (the kana charts and both
   scripts, the category indexes, the frequency dictionaries, the kanji lists). Each is far under
   50,000, so none has a second file.

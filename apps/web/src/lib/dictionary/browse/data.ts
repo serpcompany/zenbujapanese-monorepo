@@ -19,8 +19,11 @@ import { markRenderIncomplete } from '@/lib/render-health'
 import { dictionaryService } from '../data'
 import type { Linked } from '../page-example'
 import { linkedWordPath } from '../results/links'
+import { type RankBandPage, rankBandPage } from './rank-pages'
 
 export type BrowseWordsPage = Omit<BrowseWordsResponse, 'words'> & { words: Linked<BrowseWord>[] }
+
+export type RankBandWords = RankBandPage<Linked<BrowseWord>>
 
 export type KanaInitialPage = Omit<KanaInitialResponse, 'words'> & {
   words: Linked<BrowseWord>[]
@@ -122,6 +125,15 @@ export const getRankedLists = cache(async () => {
 export const getRankedWords = cache(async (slug: string, page: number) =>
   wordsPage(await answer(browseService.rankedWords(slug, page)))
 )
+
+export async function getRankBandWords(
+  slug: string,
+  band: number,
+  page: number
+): Promise<RankBandWords | null> {
+  const found = await getRankedWords(slug, band)
+  return found ? rankBandPage(found.words, band, page) : null
+}
 
 export const getKanjiHub = cache(async () => (await required(browseService.kanjiHub())).data)
 

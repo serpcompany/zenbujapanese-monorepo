@@ -3,12 +3,7 @@ import {
   type CategoryOrder,
   commonWords
 } from '@zenbu/dictionary-core/browse/categories'
-import {
-  type KanjiList,
-  type RankBand,
-  rankBand,
-  rankBandSize
-} from '@zenbu/dictionary-core/browse/lists'
+import { type KanjiList, type RankBand, rankBandSize } from '@zenbu/dictionary-core/browse/lists'
 import { type FrequencyTier, tierForRank } from '@zenbu/dictionary-core/detail/frequency'
 import { type SourceCredit, sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import type { Locale } from '@/lib/i18n/config'
@@ -16,6 +11,7 @@ import { coreText } from '@/lib/i18n/core-text'
 import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, type Plural, pluralOf } from '@/lib/i18n/format'
 import { categoryName } from './category-names'
+import type { Ranks } from './rank-pages'
 
 type Values = Readonly<Record<string, string | number>>
 
@@ -208,16 +204,15 @@ export const moreWaysToBrowse: readonly string[] = [
   commonWords.slug
 ]
 
-export function rankRange(band: number, locale: Locale): string {
-  const { first, last } = rankBand(band)
+export function rankRange({ first, last }: Ranks, locale: Locale): string {
   return fill(browseText(locale).frequency.rankRange, {
     first: formatNumber(first, locale),
     last: formatNumber(last, locale)
   })
 }
 
-export const rankBandTitle = (name: string, band: number, locale: Locale) =>
-  fill(browseText(locale).frequency.bandTitle, { name, range: rankRange(band, locale) })
+export const rankBandTitle = (name: string, ranks: Ranks, locale: Locale) =>
+  fill(browseText(locale).frequency.bandTitle, { name, range: rankRange(ranks, locale) })
 
 const thousands = (rank: number) => `${rank / rankBandSize}k`
 
