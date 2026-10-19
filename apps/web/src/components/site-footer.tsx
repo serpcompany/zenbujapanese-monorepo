@@ -58,6 +58,7 @@ export function SiteFooter({ locale }: { locale: Locale }) {
           <SocialIcons locale={locale} className="hidden md:ml-auto md:flex md:flex-wrap" />
           <Separator
             orientation="vertical"
+            aria-hidden="true"
             className="hidden h-4 data-vertical:self-center md:block"
           />
           <div className="flex flex-wrap items-center gap-2">

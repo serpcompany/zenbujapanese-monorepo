@@ -125,6 +125,19 @@ test('from 768 pixels the bottom row shows the nine brand marks at 16 pixels in 
   }
 })
 
+test('from 768 pixels a divider sits between the icons and the language menu, hidden from screen readers', () => {
+  const ending = footerEnding()
+  const divider = ending.match(/<div [^>]*role="separator"[^>]*>/)?.[0]
+  expect(divider).toContain('aria-hidden="true"')
+  expect(classesOf(divider)).toEqual(expect.arrayContaining(['hidden', 'md:block']))
+  expect(ending.indexOf('aria-label="Zenbu Japanese elsewhere"')).toBeLessThan(
+    ending.indexOf('role="separator"')
+  )
+  expect(ending.indexOf('role="separator"')).toBeLessThan(
+    ending.indexOf('aria-label="EN, English, change language"')
+  )
+})
+
 test('below 768 pixels a Socials menu takes the icons’ place, just before the language menu', () => {
   const ending = footerEnding()
   const socials = ending.match(

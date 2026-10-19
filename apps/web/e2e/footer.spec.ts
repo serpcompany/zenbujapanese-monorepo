@@ -55,7 +55,7 @@ test.describe('site footer', () => {
     else expect(new Set(lefts).size).toBe(footerColumns.length)
   })
 
-  test('from 768 pixels the nine social icons sit before the language menu, as 16-pixel marks in 28-pixel targets 4 pixels apart', async ({
+  test('from 768 pixels the nine social icons sit before the language menu, as 16-pixel marks in 28-pixel targets 4 pixels apart, with a divider screen readers skip', async ({
     page
   }) => {
     test.skip(onPhone(), 'The phone project is narrower than 768 pixels')
@@ -84,6 +84,9 @@ test.describe('site footer', () => {
       const language = await boxOf(footerLanguageTrigger(page))
       expect(boxes[8].right).toBeLessThan(language.x)
       expect(Math.abs(boxes[8].middle - (language.y + language.height / 2))).toBeLessThanOrEqual(1)
+      const footer = page.getByRole('contentinfo')
+      await expect(footer.locator('[data-slot="separator"]')).toBeVisible()
+      await expect(footer.getByRole('separator')).toHaveCount(0)
       expect(
         await sidewaysOverflow(page),
         `The page scrolls sideways at ${width}`
@@ -91,9 +94,10 @@ test.describe('site footer', () => {
     }
   })
 
-  test('below 768 pixels the icons fold into a Socials menu before the language menu, which opens upward with the nine networks', async ({
+  test('below 768 pixels the icons fold into a Socials menu before the language menu, which opens upward with the nine networks at 320 and 375 pixels', async ({
     page
   }) => {
+    const menu = socialsMenu(page)
     for (const width of [320, 375]) {
       await page.setViewportSize({ width, height: 740 })
       await page.goto('/')
@@ -107,27 +111,26 @@ test.describe('site footer', () => {
         await sidewaysOverflow(page),
         `The page scrolls sideways at ${width}`
       ).toBeLessThanOrEqual(0)
+      await expect(async () => {
+        if (!(await menu.isVisible())) await socialsTrigger(page).click()
+        await expect(menu).toBeVisible({ timeout: 1_000 })
+      }).toPass({ timeout: 15_000 })
+      const items = menu.getByRole('menuitem')
+      await expect(items).toHaveText(socialLinks.map(link => link.name))
+      expect(
+        await items.evaluateAll(links => links.map(link => link.getAttribute('href')))
+      ).toEqual(socialLinks.map(link => link.href))
+      await expect(items.locator('svg')).toHaveCount(9)
+      const opened = await boxOf(menu)
+      expect(opened.y + opened.height).toBeLessThanOrEqual((await boxOf(socialsTrigger(page))).y)
+      expect(
+        await sidewaysOverflow(page),
+        `The open menu scrolls the page sideways at ${width}`
+      ).toBeLessThanOrEqual(0)
     }
-    const menu = socialsMenu(page)
-    await expect(async () => {
-      if (!(await menu.isVisible())) await socialsTrigger(page).click()
-      await expect(menu).toBeVisible({ timeout: 1_000 })
-    }).toPass({ timeout: 15_000 })
-    const items = menu.getByRole('menuitem')
-    await expect(items).toHaveText(socialLinks.map(link => link.name))
-    expect(await items.evaluateAll(links => links.map(link => link.getAttribute('href')))).toEqual(
-      socialLinks.map(link => link.href)
-    )
-    await expect(items.locator('svg')).toHaveCount(9)
-    const opened = await boxOf(menu)
-    expect(opened.y + opened.height).toBeLessThanOrEqual((await boxOf(socialsTrigger(page))).y)
-    expect(
-      await sidewaysOverflow(page),
-      'The open menu scrolls the page sideways'
-    ).toBeLessThanOrEqual(0)
   })
 
-  test('Tab reaches the Socials menu after the footer links, Enter or Down Arrow opens it, and Escape closes it', async ({
+  test('Tab reaches the Socials menu after the footer links, Enter, Space, or Down Arrow opens it, and Escape closes it', async ({
     page
   }) => {
     await page.setViewportSize({ width: 375, height: 740 })
@@ -146,10 +149,12 @@ test.describe('site footer', () => {
     await page.keyboard.press('Escape')
     await expect(menu).toBeHidden()
     await expect(socialsTrigger(page)).toBeFocused()
-    await page.keyboard.press('ArrowDown')
-    await expect(menu.getByRole('menuitem', { name: 'YouTube' })).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(menu).toBeHidden()
-    await expect(socialsTrigger(page)).toBeFocused()
+    for (const key of ['Space', 'ArrowDown']) {
+      await page.keyboard.press(key)
+      await expect(menu.getByRole('menuitem', { name: 'YouTube' })).toBeFocused()
+      await page.keyboard.press('Escape')
+      await expect(menu).toBeHidden()
+      await expect(socialsTrigger(page)).toBeFocused()
+    }
   })
 })

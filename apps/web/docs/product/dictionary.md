@@ -1072,30 +1072,30 @@ Dictionary, and, where the account pages are open, Sign in, or Account once sign
 [Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
 Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
 Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
-one column. Below them, after a rule, one row: the copyright, then the social accounts, the
-language menu, and Sitemap. The accounts (YouTube, GitHub, X, Facebook, Reddit, Instagram, TikTok,
-LinkedIn, Medium) are a group named "Zenbu Japanese elsewhere", each the brand's own 16-pixel mark
-in the text color: Simple Icons' paths (CC0), and for LinkedIn a trace of the In bug from LinkedIn's
-brand downloads (`components/social-links.tsx`). From 768 pixels they are a row of 28-pixel ghost
-targets 4 pixels apart, each named "Zenbu Japanese on" its network. Below 768 the row is hidden (out
-of the Tab order and the accessibility tree) and a Socials menu ("SNS" in Japanese), built as the
-language menu is, opens upward with each network's mark and name. Nothing scrolls sideways at 320
-pixels, and every target is at least 24 pixels (WCAG 2.5.8). The legal index (`/legal/`) is in the
-Company menu rather than the footer.
+one column. After a rule comes the bottom row: the copyright, the social accounts, the language
+menu, and Sitemap, on one line from 768 pixels; at 320 and 375 pixels the copyright fills a line and
+the rest wrap below it. The accounts (YouTube, GitHub, X, Facebook, Reddit, Instagram, TikTok,
+LinkedIn, Medium) are a group named "Zenbu Japanese elsewhere", each the brand's 16-pixel mark in
+the text color: Simple Icons' paths (CC0), and for LinkedIn a trace of the In bug from LinkedIn's
+brand downloads (`components/social-links.tsx`). From 768 pixels they are 28-pixel ghost targets 4
+pixels apart, each named "Zenbu Japanese on" its network, then a decorative divider screen readers
+skip. Below 768 the row is hidden (out of the Tab order and the accessibility tree) and a Socials
+menu ("SNS" in Japanese), built as the language menu is, opens upward with each network's mark and
+name. Nothing scrolls sideways at 320 pixels, and every target is at least 24 pixels (WCAG 2.5.8).
+The legal index (`/legal/`) is in the Company menu, not the footer.
 
 - Source: #844 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
   and the text's contrast); #902 (round 2's option D: the Socials menu and 16-pixel marks), which
   replaces the owner's call on #679 for one row of icons on phones.
-- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, on every page in both themes);
-  `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
-  Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
-  from 768 pixels", "the footer leads with the brand linking home and its tagline", "from 768
-  pixels the bottom row shows the nine brand marks at 16 pixels in 28-pixel targets…", "below 768
-  pixels a Socials menu takes the icons’ place…", and "the footer ends with the copyright, the
-  language menu, and the Sitemap"; `apps/web/e2e/footer.spec.ts`, "the footer groups its links…",
-  "the footer lays its columns side by side…", "from 768 pixels the nine social icons sit before
-  the language menu…" (at 768 and 1280), "below 768 pixels the icons fold into a Socials menu…" (at
-  320 and 375), and "Tab reaches the Socials menu…"; smoke "the footer links the Privacy Policy".
+- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, every page, both themes);
+  `src/components/site-footer.test.tsx`, "the footer groups its links…", "the footer stacks its
+  columns…", "the footer leads with the brand…", "from 768 pixels the bottom row shows the nine
+  brand marks…", "from 768 pixels a divider sits between the icons…", "below 768 pixels a Socials
+  menu takes…", and "the footer ends with the copyright…"; `apps/web/e2e/footer.spec.ts`, "the
+  footer groups its links…", "the footer lays its columns…", "from 768 pixels the nine social
+  icons…" (768 and 1280, with the divider), "below 768 pixels the icons fold…" (opened at 320 and
+  375), and "Tab reaches the Socials menu…" (Enter, Space, Down Arrow); smoke "the footer links the
+  Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
