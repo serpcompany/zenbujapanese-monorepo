@@ -15,13 +15,16 @@ extension ZenbuUITestCase {
     waitFor(find("delete-account.done-note", in: app))
   }
 
-  func openFixtureImage() throws -> XCUIApplication {
+  func openFixtureImage(
+    _ environment: [String: String] = [:], arguments: [String] = []
+  ) throws -> XCUIApplication {
     let fixture = fixtures.appending(path: "horizontal-japanese.png")
     let onMac = device == .mac
-    let app = launch(onMac ? [:] : ["ZENBU_CAMERA_IMAGE": fixture.path])
+    let camera = onMac ? [:] : ["ZENBU_CAMERA_IMAGE": fixture.path]
+    let app = launch(camera.merging(environment) { $1 }, arguments: arguments)
     if onMac { TestDevice.copyImage(try Data(contentsOf: fixture)) }
     open(.translate, in: app)
-    tap(find("translate.start.image", in: app))
+    tap(reveal(find("translate.start.image", in: app), in: app))
     tap(app.buttons[onMac ? "Paste Image" : "Take Photo"].firstMatch)
     return app
   }
@@ -95,13 +98,17 @@ extension ZenbuUITestCase {
     let opened = menuChoice(row, in: app)
     for _ in 0..<3 {
       if opened.exists { break }
-      tapWhereReachable([sortedBy.staticTexts, sortedBy], in: app)
+      let row = firstReachable([sortedBy], in: app).frame
+      point(x: row.minX + row.width * Self.besideTheSortedByText, y: row.midY, in: app.windows.firstMatch)
+        .tap()
       if appears(opened, within: Self.patience / 3) { break }
     }
     if device == .mac { return chooseFromSubmenu(row, choice, in: app) }
     tap(opened)
     tap(menuChoice(choice, in: app))
   }
+
+  static let besideTheSortedByText: CGFloat = 0.85
 
   static var countingDraws: [String: String] { ["ZENBU_COUNT_DRAWS": "1"] }
 
@@ -239,7 +246,7 @@ extension ZenbuUITestCase {
       return longList != nil && longList == lastLongList
     }
     var isAbove = false
-    for _ in 0..<12 {
+    for _ in 0..<24 {
       if isReachable(element, in: app, within: container) { break }
       if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
       scroll(scrolled, back: isAbove)

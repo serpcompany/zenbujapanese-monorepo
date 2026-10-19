@@ -120,7 +120,6 @@ private struct TranslateHomeHeader: View {
         .font(.title2.bold())
       Text("Japanese and English, on your \(ThisDevice.name).")
         .foregroundStyle(.secondary)
-        .lineLimit(1)
     }
     .padding(.vertical, 2)
     .accessibilityElement(children: .combine)
