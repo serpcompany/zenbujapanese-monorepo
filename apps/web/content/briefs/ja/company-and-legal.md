@@ -153,4 +153,7 @@ A navigational page with no keyword of its own; it lists every other page by its
   with it.
 - The Privacy Policy names the app's tabs and modes with the term list's words (翻訳, プレイヤー,
   画像検索) and calls Listening リスニング; the app's own screens show the English names.
+- The Privacy Policy keeps the app's Settings labels in English, in 「」 (Send crash reports,
+  Report a Problem…, Included with your report), since the app's screens are English, and calls a
+  crash report クラッシュレポート and a problem report 問題の報告.
 - Whether support answers in Japanese. The Support and Contact pages don't say either way.

@@ -81,11 +81,11 @@ word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()
 beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
 the title was drawn over it.
 
-`pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it
-knows anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`,
-and names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on
-every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or `CGImage` in models (`ImageCoding.swift`
-encodes and draws without UIKit).
+`pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
+anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
+names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on every
+platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or
+`CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
 actions (`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card
@@ -195,9 +195,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
-  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE`
-  open the share sheet ([`ios-share-sheet.md`](ios-share-sheet.md), Tests).
+  Simulator harness); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open the share sheet, or its card
+  in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
+  test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
+  draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -228,9 +229,9 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
 slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
-`xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
-element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
-text. On a busy Mac a tab tap, a shortcut, the conversation's pause, or a Simulator rotation
+`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Search's **Sorted by** row
+beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
+conversation's pause, or a Simulator rotation
 sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
 (`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
 page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once

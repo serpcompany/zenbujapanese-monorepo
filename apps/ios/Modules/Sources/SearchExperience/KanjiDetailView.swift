@@ -19,6 +19,7 @@ struct KanjiDetailView: View {
   @State private var strokeDiagramLoadState = KanjiStrokeDiagramLoadState.loading
   @State private var strokeRetryID = 0
   @State private var presentedStrokeDiagram: KanjiStrokeDiagram?
+  @State private var presentedMedia: EncounterMedia?
   @State private var pendingScrollTarget: KanjiDetailScrollTarget?
 
   init(
@@ -53,24 +54,23 @@ struct KanjiDetailView: View {
   var body: some View {
     ScrollViewReader { proxy in
       List {
-        Section {
-          KanjiOverview(
-            character: character.rawValue,
-            page: page,
-            strokeDiagramLoadState: strokeDiagramLoadState,
-            retryStrokeOrder: retryStrokeOrder,
-            openStrokeOrder: openStrokeOrder
-          )
-          if let latest = photos.displayable.first {
-            SavedItemPhotoButton(
-              media: latest,
-              count: photos.displayable.count,
-              encounterMedia: photos.displayable,
-              removeEncounterMedia: photos.remove
+        if LaunchHarness.shows("overview", on: "kanji-detail") {
+          Section {
+            KanjiOverview(
+              character: character.rawValue,
+              page: page,
+              strokeDiagramLoadState: strokeDiagramLoadState,
+              retryStrokeOrder: retryStrokeOrder,
+              openStrokeOrder: openStrokeOrder
             )
-          }
-          if wordKnowledge.isKnown(item) {
-            KnownWordBadge(announces: true)
+            if let latest = photos.displayable.first {
+              SavedItemPhotoButton(media: latest, count: photos.displayable.count) {
+                presentedMedia = $0
+              }
+            }
+            if wordKnowledge.isKnown(item) {
+              KnownWordBadge(announces: true)
+            }
           }
         }
 
@@ -100,7 +100,11 @@ struct KanjiDetailView: View {
           }
         }
 
-        ForEach(page?.sections ?? KanjiPage.sectionsWithoutContent, id: \.kind) { section in
+        ForEach(
+          (page?.sections ?? KanjiPage.sectionsWithoutContent).filter {
+            LaunchHarness.shows($0.kind.rawValue, on: "kanji-detail")
+          }, id: \.kind
+        ) { section in
           pageSection(section, of: page)
         }
       }
@@ -125,6 +129,8 @@ struct KanjiDetailView: View {
     }
     .navigationTitle(character.rawValue)
     .inlineNavigationTitle()
+    .encounterMediaViewer(
+      $presentedMedia, encounterMedia: photos.displayable, removeEncounterMedia: photos.remove)
     .savedItemActions(
       for: item, identifierPrefix: "kanji-detail", share: SharedPage(kanji: character, page: page),
       notes: notes,

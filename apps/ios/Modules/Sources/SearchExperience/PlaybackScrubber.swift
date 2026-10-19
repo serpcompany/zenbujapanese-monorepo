@@ -29,7 +29,7 @@ struct PlaybackScrubber: View {
       )
       .animation(.easeOut(duration: 0.15), value: isDragging)
     }
-    .frame(height: 18)
+    .frame(height: HitTarget.minimum)
     .accessibilityElement()
     .accessibilityLabel("Playback position")
     .accessibilityValue(
@@ -39,7 +39,10 @@ struct PlaybackScrubber: View {
       commit(min(max(position + step, 0), duration))
     }
     .accessibilityIdentifier("watch.scrubber")
+    .padding(.vertical, (Self.height - HitTarget.minimum) / 2)
   }
+
+  private static let height: CGFloat = 18
 
   private func time(at x: CGFloat, width: CGFloat) -> TimeInterval {
     guard width > 0 else { return 0 }
