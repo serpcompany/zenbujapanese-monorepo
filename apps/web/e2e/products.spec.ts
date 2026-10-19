@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test'
+import { iosAppStoreUrl } from '../src/lib/app-links'
 import {
   productFilterPath as localizedFilterPath,
   type ProductFilter
@@ -120,12 +121,12 @@ test.describe('the products catalog', () => {
     }
   })
 
-  test('the iPhone app’s Learn more opens its page, and its Get the app is the App Store placeholder', async ({
+  test('the iPhone app’s Learn more opens its page, and its Get the app opens the App Store', async ({
     page
   }) => {
     await page.goto('/products/')
     const card = catalog(page).getByRole('button', { name: 'Get the app' })
-    await expect(card).toHaveAttribute('href', '#')
+    await expect(card).toHaveAttribute('href', iosAppStoreUrl)
     await expect(card).toHaveAttribute('data-link-target', 'app-store')
     await catalog(page)
       .getByRole('link', { name: `Learn more about ${featuredApp.title}` })

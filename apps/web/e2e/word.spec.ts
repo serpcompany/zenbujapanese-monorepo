@@ -50,7 +50,7 @@ test.describe('word page', () => {
 
   test('shows the word, its breadcrumb, and its meaning', async ({ page }) => {
     await expect(page).toHaveTitle(
-      `${needed.headword} (${needed.reading}) meaning | Zenbu Japanese`
+      `Iru Meaning & Definition: ${needed.headword} (${needed.reading}) in English | Zenbu Japanese`
     )
     const heading = page.getByRole('heading', { level: 1 })
     await expect(heading).toHaveCount(1)

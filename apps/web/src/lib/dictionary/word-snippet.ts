@@ -3,7 +3,14 @@ import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { countOf, fill } from '@/lib/i18n/format'
 import { site } from '@/lib/site'
-import { characters, descriptionLength, fitsTitle, fittedDescription } from '@/lib/snippets'
+import {
+  capitalized,
+  characters,
+  descriptionLength,
+  fitsTitle,
+  fittedDescription
+} from '@/lib/snippets'
+import { plainRomaji } from './plain-romaji'
 
 export interface SnippetWord {
   headword: string
@@ -56,25 +63,57 @@ function wordName(word: SnippetWord, locale: Locale) {
     : fill(metadataText(locale).word, { headword: word.headword, reading: word.reading })
 }
 
+const titleOrder = ['first', 'second', 'third', 'fourth'] as const
+
+function titleFeatures(word: SnippetWord, locale: Locale) {
+  const t = metadataText(locale).titleFeatures
+  return [
+    t.meaning,
+    word.kanji.length > 0 ? t.kanji : '',
+    hasExamples(word) ? t.examples : ''
+  ].join('')
+}
+
 export function wordTitle(word: SnippetWord, locale: Locale): string {
   const t = metadataText(locale)
-  const template = hasExamples(word) ? t.titleWithExamples : t.title
-  const named = fill(template, { word: wordName(word, locale) })
-  return fitsTitle(named) ? named : fill(template, { word: word.headword })
+  const latin = plainRomaji(word.reading)
+  const values = {
+    romaji: latin ? capitalized(latin) : '',
+    word: wordName(word, locale),
+    headword: word.headword,
+    gloss: topLevelGlosses(word.summary)[0],
+    features: titleFeatures(word, locale)
+  }
+  const searched = titleOrder
+    .map(key => t.titles[key])
+    .filter(template => latin !== null || !template.includes('{romaji}'))
+    .map(template => fill(template, values))
+  const plain = hasExamples(word) ? t.titleWithExamples : t.title
+  const titles = [
+    ...searched,
+    fill(plain, { word: values.word }),
+    fill(plain, { word: word.headword })
+  ]
+  return titles.find(fitsTitle) ?? titles[titles.length - 1]
 }
 
 function wordLead(word: SnippetWord, locale: Locale): string {
   const t = metadataText(locale)
   const partOfSpeech = coreText(word.partOfSpeech, locale)
   const template = partOfSpeech ? t.descriptionWithPartOfSpeech : t.description
+  const latin = plainRomaji(word.reading)
   const glosses = topLevelGlosses(word.summary)
-  const leads = glosses.map((_, dropped) =>
-    fill(template, {
-      word: wordName(word, locale),
-      meaning: glosses.slice(0, glosses.length - dropped).join(glossSeparator),
-      partOfSpeech
-    })
-  )
+  const named = (name: string) =>
+    glosses.map((_, dropped) =>
+      fill(template, {
+        word: name,
+        meaning: glosses.slice(0, glosses.length - dropped).join(glossSeparator),
+        partOfSpeech
+      })
+    )
+  const plain = named(wordName(word, locale))
+  const asked = latin ? plain.map(lead => fill(t.asked, { romaji: latin, lead })) : []
+  const leads = [...asked, ...plain, ...named(word.headword)]
   return (
     leads.find(lead => characters(lead) <= descriptionLength.longest) ?? leads[leads.length - 1]
   )

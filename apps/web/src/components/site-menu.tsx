@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { DrawerAccountButton } from '@/components/account-menu'
-import { LanguageList } from '@/components/language-switcher'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GetAppButton } from '@/components/site-actions'
 import { SiteLogo } from '@/components/site-brand'
@@ -29,7 +28,6 @@ import {
 import { useMediaQuery } from '@/hooks/use-media-query'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
-import type { Switcher } from '@/lib/i18n/switcher'
 import { site } from '@/lib/site'
 import {
   drawerLinks,
@@ -90,13 +88,11 @@ function GroupLinks({
 export function SiteMenu({
   locale,
   menus,
-  text,
-  switcher
+  text
 }: {
   locale: Locale
   menus: readonly Menu[]
   text: Dictionary['chrome']
-  switcher: Switcher
 }) {
   const [open, setOpen] = useMenuOpenOnThisPage()
   const pathname = usePathname()
@@ -138,7 +134,6 @@ export function SiteMenu({
           </Accordion>
         </nav>
         <DrawerFooter className="border-t">
-          <LanguageList {...switcher} />
           <DrawerAccountButton
             locale={locale}
             text={text.account}

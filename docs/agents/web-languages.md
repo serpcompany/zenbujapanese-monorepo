@@ -100,15 +100,20 @@ No keyword volumes are measured yet.
 
 ## The switcher
 
-`src/components/language-switcher.tsx`: `LanguageMenu`, a stock `DropdownMenu` whose trigger
-shows the Languages icon and the current language's name, in the header from 1024 pixels and in
-the footer; and `LanguageList`, the same links in the phone menu. Both read the page's
-`<link rel="alternate" hreflang>` tags when they open, all but `x-default`, and fall back to a
-language's homepage (`switcherFor` in `src/lib/i18n/switcher.ts`). They keep each link's path, so a
-local or staging page links to its own host. An item is the `<a>` itself, so switching is a full
-page load.
+`src/components/language-switcher.tsx`: `LanguageMenu`, the footer's `DropdownMenu`, the site's only
+language choice, whose trigger shows the language's flag (`src/components/flag.tsx`, from its
+`ogLocale`), its code, and a down arrow. It reads the page's `<link rel="alternate" hreflang>` tags
+when it opens, all but `x-default`, and falls back to a language's homepage (`switcherFor` in
+`src/lib/i18n/switcher.ts`). It keeps each link's path, so a local or staging page links to its own
+host. An item is the `<a>` itself, so switching is a full page load.
 
 ## Where this site differs from the standards
+
+- **The languages are only in the footer, with flags.** The standard puts one menu in the header,
+  and the same list in the phone menu, with the Languages icon and the language's name, and no
+  flags. The owner chose (2026-10-19) the footer alone, at every width, with a flag, code, and
+  arrow: 🇺🇸 EN and 🇯🇵 JA, drawn as SVG, since Windows doesn't draw flag emoji. The menu still
+  names each language in itself. Its menu is a list, so more languages need no new design.
 
 - **Unreviewed Japanese is built.** The standard builds a translation only once it's reviewed;
   the owner chose to publish the drafts so they're reviewed on staging (#847). Production deploys

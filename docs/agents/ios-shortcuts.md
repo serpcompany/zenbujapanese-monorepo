@@ -45,7 +45,9 @@ app target's own sources; what they call is in the package, where it's tested.
   builds don't have.
 - A phrase can't hold a text parameter, so Siri asks for the text (`requestValueDialog`). App
   Shortcut phrases take only an `AppEntity` or `AppEnum` value, never free text.
-  `INAlternativeAppNames` in `Info.plist` lets Siri hear "Zenbu" for the app.
+  `INAlternativeAppNames` in `Info.plist` lets Siri hear "Zenbu" for the app, with the
+  pronunciation hint "zen boo": on build 6 Siri sometimes heard a quick "Zenbu" as "Zumba" and
+  searched the web (the owner's recording, 2026-10-20).
 - Phrases that start with the app's name ("Zenbu look up", "Zenbu translate") are the owner's
   (2026-10-19), and the app's name on its own runs Look Up. The metadata processor accepts a
   phrase that is only `\(.applicationName)`; whether Siri prefers it to opening the app is checked

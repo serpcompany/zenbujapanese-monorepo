@@ -10,7 +10,9 @@ const inLanguage = (locale: Locale, title: string) =>
 test.describe('search', () => {
   test('the dictionary home searches and lands on the canonical results page', async ({ page }) => {
     await page.goto('/dictionary/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Japanese dictionary' })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Japanese–English Dictionary' })
+    ).toBeVisible()
     await page.getByRole('textbox', { name: 'Search Japanese or English' }).fill('  IRU ')
     await page.getByRole('button', { name: 'Search' }).click()
     await expect(page).toHaveURL('/dictionary/search/iru/')

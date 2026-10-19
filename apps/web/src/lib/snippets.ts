@@ -13,6 +13,8 @@ const trailingBreaks = /[\s,、]+$/u
 
 export const characters = (text: string) => Array.from(text).length
 
+export const capitalized = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+
 export const siteTitle = (title: string) => `${title} | ${site.name}`
 
 export const fitsTitle = (title: string) => characters(siteTitle(title)) <= longestTitle

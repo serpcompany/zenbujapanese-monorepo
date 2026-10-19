@@ -149,25 +149,27 @@ sitemaps` refuses to write a file over 25 MiB.
 
 ## Language switcher
 
-**Where.** From 1024 pixels a button in the header, before Get the app, opens the language menu;
-below 1024 pixels the phone menu lists the languages above its account and Get the app buttons.
-The footer has the same menu, beside the Sitemap link, at every width.
+**Where.** Only the footer offers the languages, beside the Sitemap link, at every width. The
+header, its account menu, and the phone menu have no language choice.
 
-- Source: SERP language switcher standard, Behavior; #847 (the header, the drawer below 1024
-  pixels, and the footer).
-- Check: `src/components/site-header.test.tsx`, "from 1024 pixels the header has the language
-  menu, …"; `src/components/site-footer.test.tsx`, "the footer ends with the copyright, the
-  language menu, and the Sitemap"; Languages spec, "the header shows the menu from 1024 pixels
-  and the phone menu below, never both" and "the footer has the same menu on every width".
+- Source: SERP language switcher standard, Behavior; #847 (the footer); the owner's choice on
+  2026-10-19 (the footer alone, with flags).
+- Check: `src/components/site-header.test.tsx`, "the %s header has no language button: …";
+  `src/components/site-footer.test.tsx`, "the footer ends with the copyright, the language menu,
+  and the Sitemap"; Languages spec, "only the footer offers the languages: …".
 
-**What it shows.** The button shows the Languages icon and the current language's name, and its
-accessible name starts with it: "English, change language", 「日本語、表示言語を切り替える」. Each
-language is named in itself (English, 日本語), with no flags. The current one is marked and isn't a
-link. The others are links, with `lang` and `hreflang` set.
+**What it shows.** The footer's button shows the current language's flag and code with a down
+arrow, 🇺🇸 EN or 🇯🇵 JA, the flags drawn as SVG so every system shows them. Its accessible name
+starts with the code: "EN, English, change language", 「JA, 日本語、表示言語を切り替える」. Its menu
+lists each language by flag and by its name in itself (English, 日本語). The current one is marked
+and isn't a link; the others are links, with `lang` and `hreflang` set.
 
-- Source: SERP language switcher standard, Behavior and Accessibility.
-- Check: `src/components/site-header.test.tsx`; Languages spec, "the header menu opens and
-  follows a language by keyboard, each named in itself".
+- Source: SERP language switcher standard, Behavior and Accessibility, but for the flags, which it
+  rules out ([`web-languages.md`](../../../../docs/agents/web-languages.md), Where this site
+  differs).
+- Check: `src/components/site-footer.test.tsx`; Languages spec, "the footer has a flag menu,
+  named by its code, on every width" and "the footer menu opens and follows a language by
+  keyboard, each named in itself".
 
 **Where each item goes.** Each language links to the same page in that language, read from the
 page's hreflang links when the menu opens; a page without them, such as a missing page, links each
