@@ -8,7 +8,7 @@ import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { type Accounts, createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
-import { cursorKey, cursors } from '../domain/cursor'
+import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
 import { billingRecordsKeptYears, purgeExpired } from './housekeeping'
@@ -154,6 +154,15 @@ describe('the migrations', () => {
     await original.query(
       "insert into translation_bookmarks (user_id, id, text, language, bookmarked_at, present, version) values ('u1', '00000000-0000-4000-8000-000000000002', 'はい。', 'ja', now(), true, 1)"
     )
+    const photo = 'a'.repeat(64)
+    await original.exec(`
+      insert into word_notes (user_id, id, item_id, text, present, version) values ('u1', '00000000-0000-4000-8000-000000000003', 'kanji:日', 'Sun.', true, 1);
+      insert into photo_files (user_id, id, content_type, byte_size, storage_key) values ('u1', '${photo}', 'image/jpeg', 1, 'u1/one');
+      insert into photos (user_id, id, name, saved_at, status, version) values ('u1', '${photo}', 'x', now(), 'shown', 1);
+      insert into photo_words (user_id, photo_id, item_id, headword, reading, saved_at, present, version) values ('u1', '${photo}', 'kanji:日', '日', 'にち', now(), true, 1);
+      insert into profile_photos (user_id, photo_id, version) values ('u1', '${photo}', 1);
+      insert into learner_settings (user_id, name, value, version) values ('u1', 'readingAids.romaji', 'true', 1);
+      insert into recent_searches (user_id, id, query, searched_at, status, version) values ('u1', '${photo}', '日', now(), 'searched', 1)`)
     const backup = await original.dumpDataDir()
     await original.close()
 
@@ -163,7 +172,10 @@ describe('the migrations', () => {
       await copy.query('update sync_origin set database_oid = 1')
       expect(await fenceIfRestored(db)).toBe('restored')
       expect(await fenceIfRestored(db)).toBe('same database')
-      return { copy, accounts: createAccounts(accountStore(db), cursors(cursorKey('test'))) }
+      return {
+        copy,
+        accounts: createAccounts(accountStore(db), cursors(cursorKey('test')), searchKeys('test'))
+      }
     }
     const answered = (answer: Awaited<ReturnType<Accounts['sync']>>) =>
       answer.status === 'synced' ? answer : expect.unreachable()
@@ -191,8 +203,14 @@ describe('the migrations', () => {
       'knownWord',
       'list',
       'listWord',
+      'photo',
+      'photoWord',
       'profile',
-      'watchedVideo'
+      'profilePhoto',
+      'recentSearch',
+      'setting',
+      'watchedVideo',
+      'wordNote'
     ])
     for (const row of fenced.rows) {
       expect(Number(row.entity_version)).toBeGreaterThan(firstVersion + 1)

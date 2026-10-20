@@ -7,7 +7,9 @@ import {
   appleCodeWithoutAppleId,
   misconfiguredAppleCode
 } from '../test/identity-provider'
+import { keptTables, oneOfEachKept } from '../test/kept'
 import { logged } from '../test/logged'
+import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { appBundleIdentifier, publicUrl, websiteOrigin, websiteServicesId } from '../test/service'
 import { fromTheWebsite, sessionToken, sha256, websiteSession } from '../test/sign-in'
 
@@ -123,6 +125,41 @@ describe('DELETE /v1/me', () => {
     const again = await accounts.learner('delete-me@example.com')
     expect(again.userId).not.toBe(learner.userId)
     expect((await accounts.me(again.token)).body).toMatchObject({ version: 1 })
+  })
+
+  test('deletes its notes, photos, profile photo, every file in its folder, settings, and recent searches', async () => {
+    const learner = await accounts.learner('delete-kept@example.com')
+    const { appOnly, profilePhoto } = await oneOfEachKept(accounts, learner)
+    await uploaded(accounts, learner)
+    const sent = [...appOnly, profilePhoto]
+    expect((await accounts.results(learner, ...sent)).map(result => result.status)).toEqual(
+      sent.map(() => 'applied')
+    )
+    const { photoStorage, files, rows } = accounts.running.service
+    const stored = () =>
+      [...photoStorage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
+    expect(stored()).toHaveLength(3)
+    await photoStorage.put(`${learner.userId}/left-by-a-restore`, aJpeg(), 'image/jpeg')
+    expect(await remove(learner)).toMatchObject({ status: 200 })
+    await vi.waitFor(() => expect(stored()).toEqual([]))
+    const { sendPhoto } = accounts.running.service
+    const bytes = aJpeg()
+    for (const [method, sent] of [
+      ['GET', new Uint8Array()],
+      ['PUT', bytes]
+    ] as const) {
+      expect((await sendPhoto(learner.token, photoIdOf(bytes), sent, method)).status, method).toBe(
+        401
+      )
+    }
+    await files.sweep()
+    expect(await rows('select count(*)::int as n from photo_file_deletions')).toEqual([{ n: 0 }])
+    for (const table of keptTables) {
+      expect(
+        await rows(`select count(*)::int as n from ${table} where user_id = '${learner.userId}'`),
+        table
+      ).toEqual([{ n: 0 }])
+    }
   })
 
   test("tells the email in the language the request names, or the account's, or English", async () => {

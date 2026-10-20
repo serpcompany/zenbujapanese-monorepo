@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, test } from 'vitest'
+import { searchKeys } from '../domain/cursor'
+import { searchIdOf } from '../domain/recent-searches'
 import type { EntityType } from '../domain/store'
 import { syncedEntities } from '../domain/sync'
-import { useAccountService } from '../test/accounts'
+import { type Learner, useAccountService } from '../test/accounts'
+import { examplePhotoFiles, photoIdOf, uploaded } from '../test/photos'
+import { testSecret } from '../test/service'
 import { syncEntitiesExtension, syncEntityRules } from './sync-entities'
+import { examplePhotoIds, exampleSearchKey } from './sync-kept-rules'
 
 const accounts = useAccountService()
 
@@ -17,10 +22,19 @@ const deletesLast = (examples: Example[]) => [
   ...examples.filter(example => example.operation === 'delete')
 ]
 
+const underKeyOf = (learner: Learner) => (example: Example) =>
+  example.entity === 'recentSearch'
+    ? {
+        ...example,
+        entityId: searchIdOf(searchKeys(testSecret)(learner.userId), '食べる')
+      }
+    : example
+
 async function sendAs(email: string, examples: Example[]) {
   const learner = await accounts.learner(email)
+  for (const bytes of Object.values(examplePhotoFiles)) await uploaded(accounts, learner, bytes)
   const answer = await accounts.sync(learner.token, {
-    mutations: examples.map(example => ({ ...example, id: randomUUID() }))
+    mutations: examples.map(underKeyOf(learner)).map(example => ({ ...example, id: randomUUID() }))
   })
   expect(answer.status, JSON.stringify(answer.body)).toBe(200)
   return (answer.body as unknown as { results: { status: string; error?: { code: string } }[] })
@@ -34,6 +48,13 @@ describe("sync's documented entities", () => {
       const syncs = syncedEntities[entity as EntityType].operations
       expect(Object.keys(rule.operations).sort(), entity).toEqual(Object.keys(syncs).sort())
     }
+  })
+
+  test("name example photos by their files' SHA-256, and the example search under its key", () => {
+    expect(photoIdOf(examplePhotoFiles.library)).toBe(examplePhotoIds.library)
+    expect(photoIdOf(examplePhotoFiles.profile)).toBe(examplePhotoIds.profile)
+    const example = syncEntitiesExtension.recentSearch?.operations.search?.example
+    expect(example?.entityId).toBe(searchIdOf(exampleSearchKey, '食べる'))
   })
 
   test('apply each example as written, sending baseVersion only where it is read', async () => {

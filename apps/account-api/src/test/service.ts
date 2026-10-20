@@ -2,26 +2,20 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { exportPKCS8, generateKeyPair } from 'jose'
-import { accessTokenVerifier } from '../auth/access-tokens'
-import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
 import { appStoreBilling } from '../billing/app-store'
 import { storeTraits } from '../billing/stores'
 import { stripeBilling } from '../billing/stripe'
 import type { CloudSettings } from '../billing-config'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
-import { accountStore } from '../db/accounts'
 import { billingStore } from '../db/billing'
-import { accountDeleter } from '../domain/account-deletion'
-import { createAccounts } from '../domain/accounts'
 import type { BillingStore } from '../domain/billing'
 import { cloudIsFree } from '../domain/cloud-access'
-import { cursorKey, cursors } from '../domain/cursor'
 import { createBilling } from '../domain/subscription-billing'
-import { accountDeletedMessage } from '../email/account-notices'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
-import { createApp } from '../http/app'
+import { MemoryPhotoStorage } from '../storage/memory'
+import { wiredService } from '../wiring'
 import { appAppleId, monthly, type StandInAppStore, yearly } from './app-store'
 import { type StandInStripe, stripeSettings } from './stripe'
 
@@ -146,30 +140,22 @@ export async function startService({
     mailbox
   )
   const auth = await createAuth({ config, db, mailer })
-  const store = accountStore(db)
   const billing = createBilling(
     watchedTransactions(billingStore(db), standIns.stripe),
     billingProviders(standIns),
     billingRules(standIns)
   )
-  const app = createApp({
+  const photoStorage = new MemoryPhotoStorage()
+  const { app, files, housekeep } = wiredService({
     release: 'test',
+    db,
     databaseReady: async () => true,
     auth,
-    accounts: createAccounts(store, cursors(cursorKey(testSecret))),
-    deleteAccount: accountDeleter(
-      store,
-      appleRevoker(config.apple, config.publicUrl),
-      {
-        accountDeleted: (email, language) =>
-          void mailer.send(accountDeletedMessage(email, language))
-      },
-      billing
-    ),
-    billing,
-    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
-    allowedOrigins: config.trustedOrigins,
-    devMailbox: mailbox
+    authConfig: config,
+    mailer,
+    devMailbox: mailbox,
+    photoStorage,
+    billing
   })
   const call = async (
     path: string,
@@ -208,7 +194,28 @@ export async function startService({
     }
   }
   const rows = async (sql: string) => (await client.query<Record<string, unknown>>(sql)).rows
-  return { app, auth, billing, client, mailbox, call, rows, close: () => client.close() }
+  const sendPhoto = async (token: string, photoId: string, bytes: Uint8Array, method = 'PUT') => {
+    const response = await app.request(`${publicUrl}/v1/photos/${photoId}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+      body: method === 'PUT' ? bytes : undefined
+    })
+    return new Response(await response.arrayBuffer(), response)
+  }
+  return {
+    app,
+    auth,
+    billing,
+    client,
+    mailbox,
+    call,
+    rows,
+    sendPhoto,
+    files,
+    housekeep,
+    photoStorage,
+    close: () => client.close()
+  }
 }
 
 export type Service = Awaited<ReturnType<typeof startService>>

@@ -52,7 +52,8 @@ the stores retry: for each, in Stripe's dashboard, either cancel the subscriptio
 or, once the learner signs up again, set its `zenbu_account` metadata to the new account's ID and
 resend the event. An App Store one is claimed again by the learner's app when they sign in.
 
-What changed after the backup is lost, as for any restore. The first time the service starts on
+What changed after the backup is lost, as for any restore. Photo files aren't in the backups: they
+stay in R2 ([`account-photos.md`](account-photos.md), A restore). The first time the service starts on
 any database, it fences it too, and logs `first start on this database`: a new one's journal starts
 at the time, and the accounts one already holds (on the first deploy of `sync_origin`, or from a
 backup made before it) jump as a restored copy's do. A database restored only to look at is never served, so it stays as the backup

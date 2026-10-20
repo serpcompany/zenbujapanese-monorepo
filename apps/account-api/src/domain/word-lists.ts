@@ -8,6 +8,7 @@ import {
   gone,
   itemIdOf,
   itemText,
+  journaled,
   listWordEntityId,
   listWordSeparator,
   needsBaseVersion,
@@ -102,13 +103,7 @@ async function saveList(
   operation: string
 ) {
   await account.saveWordList(list)
-  await account.journal({
-    entityType: 'list',
-    entityId: list.id,
-    entityVersion: list.version,
-    operation
-  })
-  return applied(list.version)
+  return journaled(account, 'list', list.id, list.version, operation)
 }
 
 const writes = ['lists:write'] as const
@@ -184,13 +179,13 @@ async function saveListWord(
   operation: string
 ) {
   await account.saveListWord(word)
-  await account.journal({
-    entityType: 'listWord',
-    entityId: listWordEntityId(word.listId, word.itemId),
-    entityVersion: word.version,
+  return journaled(
+    account,
+    'listWord',
+    listWordEntityId(word.listId, word.itemId),
+    word.version,
     operation
-  })
-  return applied(word.version)
+  )
 }
 
 const listWordIdRejection = (mutation: ClientMutation) =>

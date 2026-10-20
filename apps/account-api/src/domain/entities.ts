@@ -1,4 +1,5 @@
 import type { Scope } from './clients'
+import type { SettingValue } from './kept-store'
 import { type Profile, type Rejection, rejection } from './profile'
 import type { EntityReader, EntityType, LockedAccount } from './store'
 
@@ -51,6 +52,43 @@ interface BookmarkData {
   bookmarkedAt: Date
 }
 
+interface WordNoteData {
+  id: string
+  itemId: string
+  text: string
+  headword: string | null
+  reading: string | null
+}
+
+interface PhotoData {
+  id: string
+  name: string
+  savedAt: Date
+}
+
+interface PhotoWordData {
+  photoId: string
+  itemId: string
+  headword: string
+  reading: string
+  savedAt: Date
+}
+
+interface ProfilePhotoData {
+  photoId: string
+}
+
+interface SettingData {
+  name: string
+  value: SettingValue
+}
+
+interface RecentSearchData {
+  id: string
+  query: string
+  searchedAt: Date
+}
+
 interface Put<E extends EntityType, D> {
   entity: E
   entityId: string
@@ -66,12 +104,19 @@ export type Change =
   | Put<'listWord', ListWordData>
   | Put<'watchedVideo', WatchedVideoData>
   | Put<'bookmarkedSentence', BookmarkData>
+  | Put<'wordNote', WordNoteData>
+  | Put<'photo', PhotoData>
+  | Put<'photoWord', PhotoWordData>
+  | Put<'profilePhoto', ProfilePhotoData>
+  | Put<'setting', SettingData>
+  | Put<'recentSearch', RecentSearchData>
   | {
       entity: Exclude<EntityType, 'profile'>
       entityId: string
       operation: 'delete'
       version: number
       data: null
+      emptied?: true
     }
 
 export type Outcome =
@@ -79,7 +124,16 @@ export type Outcome =
   | { status: 'conflict'; current: Change }
   | { status: 'rejected'; rejection: Rejection }
 
-type Operation = (account: LockedAccount, mutation: ClientMutation) => Promise<Outcome>
+export interface SyncContext {
+  granted: ReadonlySet<Scope>
+  searchKey: string
+}
+
+type Operation = (
+  account: LockedAccount,
+  mutation: ClientMutation,
+  context: SyncContext
+) => Promise<Outcome>
 
 export interface Entity {
   reads: Scope
@@ -88,6 +142,17 @@ export interface Entity {
 }
 
 export const applied = (version: number): Outcome => ({ status: 'applied', version })
+
+export async function journaled(
+  account: LockedAccount,
+  entityType: EntityType,
+  entityId: string,
+  entityVersion: number,
+  operation: string
+): Promise<Outcome> {
+  await account.journal({ entityType, entityId, entityVersion, operation })
+  return applied(entityVersion)
+}
 export const conflict = (current: Change): Outcome => ({ status: 'conflict', current })
 export const rejected = (reason: Rejection): Outcome => ({ status: 'rejected', rejection: reason })
 
@@ -101,6 +166,8 @@ export const needsBaseVersion = rejection(
 
 const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
+const noteIdentity = /^wn1:[0-9a-f]{64}(:\d{1,3})?$/
+const sha256Hex = /^[0-9a-f]{64}$/
 const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -127,12 +194,31 @@ export const plainText = (raw: string) =>
     .normalize('NFC')
     .trim()
 
+export const cutText = (raw: string, most: number) =>
+  [...plainText(raw)].slice(0, most).join('').trim()
+
+export const sha256IdOf = (raw: string | undefined) => (raw && sha256Hex.test(raw) ? raw : null)
+
 const isItemId = (id: string) => languageReferenceId.test(id) || kanjiItem.test(id)
 
+const normalizedItem = (raw: string | undefined) =>
+  raw?.startsWith('kanji:') ? `kanji:${raw.slice(6).normalize('NFC')}` : (raw ?? '')
+
 export function itemIdOf(raw: string | undefined): string | null {
-  const id = raw?.startsWith('kanji:') ? `kanji:${raw.slice(6).normalize('NFC')}` : (raw ?? '')
+  const id = normalizedItem(raw)
   return isItemId(id) ? id : null
 }
+
+export function savedItemIdOf(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const id = normalizedItem(raw)
+  return isItemId(id) || noteIdentity.test(id) ? id : null
+}
+
+export const badSavedItem = rejection(
+  'invalid_mutation',
+  'An item is a Language Reference ID (32 lowercase hex digits), `kanji:` and one kanji, or a note identity an earlier app saved (`wn1:` and 64 lowercase hex digits).'
+)
 
 export const listWordSeparator = '/'
 

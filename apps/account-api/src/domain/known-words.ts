@@ -8,6 +8,7 @@ import {
   gone,
   itemIdOf,
   itemText,
+  journaled,
   needsBaseVersion,
   type Outcome,
   rejected
@@ -49,13 +50,7 @@ async function setKnown(
   if (isRejection(text)) return rejected(text)
   const next = { itemId, ...text, known, version: version + 1 }
   await account.saveKnownWord(next)
-  await account.journal({
-    entityType: 'knownWord',
-    entityId: itemId,
-    entityVersion: next.version,
-    operation: mutation.operation
-  })
-  return applied(next.version)
+  return journaled(account, 'knownWord', itemId, next.version, mutation.operation)
 }
 
 export const knownWords: Entity = {

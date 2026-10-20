@@ -3,20 +3,22 @@ import {
   type Change,
   type ClientMutation,
   conflict,
+  cutText,
   type Entity,
   gone,
+  journaled,
   momentOf,
   needsBaseVersion,
   type Outcome,
-  plainText,
   rejected
 } from './entities'
 import { isRejection, type Rejection, rejection } from './profile'
+import { keepTheNewest, recentLimits } from './recents'
 import type { LockedAccount, WatchedVideo } from './store'
 
 export const watchLimits = {
-  videos: 50,
-  goneKept: 100,
+  videos: recentLimits.kept,
+  goneKept: recentLimits.goneKept,
   textLength: 200,
   seconds: 10_000_000
 } as const
@@ -74,7 +76,7 @@ const emptied = (videoId: string) => ({ videoId, ...detailsOf(null), watchedAt: 
 
 function shortText(raw: unknown): string | null | Rejection {
   if (typeof raw !== 'string') return badFields
-  const text = [...plainText(raw)].slice(0, watchLimits.textLength).join('').trim()
+  const text = cutText(raw, watchLimits.textLength)
   return text === '' ? null : text
 }
 
@@ -129,23 +131,19 @@ async function save(
   operation: string
 ) {
   await account.saveWatchedVideo(video)
-  await account.journal({
-    entityType: 'watchedVideo',
-    entityId: video.videoId,
-    entityVersion: video.version,
-    operation
-  })
+  await journaled(account, 'watchedVideo', video.videoId, video.version, operation)
 }
 
-async function keepTheNewest(account: LockedAccount) {
-  while ((await account.watchedVideoCount()) > watchLimits.videos) {
-    const oldest = await account.oldestWatchedVideo()
-    if (!oldest) break
-    const pruned = { ...emptied(oldest.videoId), status: 'pruned' as const }
-    await save(account, { ...pruned, version: oldest.version + 1 }, 'prune')
-  }
-  await account.forgetWatchedVideos(watchLimits.goneKept)
-}
+const keepTheNewestOf = (account: LockedAccount) =>
+  keepTheNewest({
+    count: () => account.watchedVideoCount(),
+    oldest: () => account.oldestWatchedVideo(),
+    prune: async oldest => {
+      const pruned = { ...emptied(oldest.videoId), status: 'pruned' as const }
+      await save(account, { ...pruned, version: oldest.version + 1 }, 'prune')
+    },
+    forget: kept => account.forgetWatchedVideos(kept)
+  })
 
 async function watch(account: LockedAccount, mutation: ClientMutation): Promise<Outcome> {
   const videoId = videoIdOf(mutation.entityId)
@@ -162,7 +160,7 @@ async function watch(account: LockedAccount, mutation: ClientMutation): Promise<
   if (watching && unchanged(watching, next)) return applied(watching.version)
   const version = (current?.version ?? 0) + 1
   await save(account, { ...next, version }, 'watch')
-  if (!watching) await keepTheNewest(account)
+  if (!watching) await keepTheNewestOf(account)
   return applied(version)
 }
 
@@ -181,7 +179,7 @@ export const watchHistory: Entity = {
         if (!current || current.status === 'removed') return applied(current?.version ?? 0)
         const version = current.version + 1
         await save(account, { ...emptied(videoId), status: 'removed', version }, 'remove')
-        await account.forgetWatchedVideos(watchLimits.goneKept)
+        await account.forgetWatchedVideos(recentLimits.goneKept)
         return applied(version)
       }
     }
