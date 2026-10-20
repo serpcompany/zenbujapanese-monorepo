@@ -77,6 +77,16 @@ package, as a native SwiftUI app on each: not Mac Catalyst, and not the iPhone a
   for the App ID's Sign in with Apple and Associated Domains, Mac and iPad screenshots, and App
   Review for both.
 
+Amended (issue 931): iPad and the Mac are built and tested, but not released yet. 2.0.0 shipped
+before they came in, and once a version ships on iPad no later version can drop it, so the owner
+chose on 2026-10-20 to release 2.0.1 on iPhone only. The Release configuration builds an iPhone app
+(`TARGETED_DEVICE_FAMILY = 1`, the app's and its share extension's), which an iPad runs as it runs
+any iPhone app, and Debug keeps `1,2`, so the iPad code, its UI tests, and the `iOS` workflow's iPad
+steps keep running. The Mac's settings are unchanged: an archive for Any iOS Device leaves it out.
+The version that ships them sets Release back to `1,2`, adds the iPad's 13-inch screenshots (#856)
+and the Mac's (#857), and says so in What's New, from the changelog's entry that waits for them
+([`ios.md`](../agents/ios.md), Releasing on iPad and the Mac).
+
 ## What this changes
 
 - **[Issue 16](https://github.com/serpcompany/zenbujapanese-monorepo/issues/16):** its platform
