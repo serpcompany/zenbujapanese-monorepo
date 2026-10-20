@@ -104,13 +104,15 @@ what it waited for and for how long.
   sometimes registers that touchscreen too late, so the gesture never reaches the app. The
   Simulator's log then says `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer
   event … from unsupported service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a
-  previous touch down or range-in event … skipping event`. On 2026-10-20 it hit only the first
-  gesture after a pause of 8 s or more (4 of about 940 such gestures, and none of about 1,640 after
-  shorter pauses), and an audit is such a pause: the dark Account audit lost a Back tap, a swipe,
-  and a tap that way. So `audit` ends by tapping the frontmost navigation bar's title, which does
-  nothing anywhere in the app, waits 0.3 s, and fails if the screen changed; the walk's next
-  gesture then follows a short pause. In 250 audits each way, the tap straight after the audit met
-  the race once, and the tap after the warm-up never did. The Mac's tests send real pointer events,
+  previous touch down or range-in event … skipping event`. On 2026-10-20 it hit 5 of about 3,000
+  gestures, each the first after a pause of 5 to 18 s, and none of the roughly 1,500 timed after a
+  pause under 4 s. An audit is the longest pause in a walk, and the dark Account audit lost a Back
+  tap, a swipe, and a tap right after one. So `audit` ends by tapping the frontmost navigation
+  bar's title, which does nothing anywhere in the app, waits 0.3 s, and fails if the screen
+  changed; the walk's next gesture then follows a short pause. In 250 audits each way, the tap
+  straight after the audit met the race once, and the tap after the warm-up never did. That covers
+  only the gestures after an audit: a tap 5 s after a tab tap, with no audit before it, still met
+  the race, so a walk can still lose a gesture this way. The Mac's tests send real pointer events,
   so its audits skip it.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
