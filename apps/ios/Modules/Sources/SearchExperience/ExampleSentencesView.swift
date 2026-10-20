@@ -66,7 +66,7 @@ struct ExampleSentencesView: View {
             JapaneseExampleRowContent(
               example: example,
               presentation: .dedicated(index: index),
-              speak: { speechSynthesisClient.speak(example.sentence.japanese) },
+              speak: { speechSynthesisClient.speak(example.sentence.japanese, .japanese) },
               openWord: { entry in
                 place.leave(from: example.id)
                 openWord(entry)
@@ -174,7 +174,7 @@ struct ExampleSentenceSections: View {
           JapaneseExampleRowContent(
             example: example,
             presentation: presentation(index),
-            speak: { speechSynthesisClient.speak(example.sentence.japanese) },
+            speak: { speechSynthesisClient.speak(example.sentence.japanese, .japanese) },
             openWord: openWord
           )
         } header: {

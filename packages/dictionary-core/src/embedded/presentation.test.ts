@@ -41,8 +41,24 @@ describe('the embedded presentation engine', () => {
     expect(page.ruby).toEqual([{ text: '食', reading: 'た' }, { text: 'べる' }])
     expect(page.partOfSpeech).toBe('Ichidan verb (transitive)')
     expect(page.senses).toEqual([
-      { number: 1, meaning: 'to eat', notes: [], noteText: null },
-      { number: 2, meaning: 'to live on', notes: ['e.g. a salary'], noteText: 'e.g. a salary' }
+      {
+        number: 1,
+        meaning: 'to eat',
+        notes: [],
+        noteText: null,
+        spoken: 'to eat',
+        glosses: ['to eat'],
+        copyText: 'to eat'
+      },
+      {
+        number: 2,
+        meaning: 'to live on',
+        notes: ['e.g. a salary'],
+        noteText: 'e.g. a salary',
+        spoken: 'to live on',
+        glosses: ['to live on'],
+        copyText: 'to live on\ne.g. a salary'
+      }
     ])
     expect(page.alternatives).toEqual([
       { value: '喰べる', kind: 'written', labels: ['rare'], labelText: '(rare)', kanji: '喰' }

@@ -19,7 +19,7 @@ struct ShareWordCard: View {
           pitch: page?.pitch,
           pronounceLabel: frame?.pronounce ?? "",
           identifierPrefix: "share-card",
-          pronounce: { speechSynthesisClient.speak(entry.reading) }
+          pronounce: { speechSynthesisClient.speak(entry.reading, .japanese) }
         )
         PartOfSpeechRow(
           title: page?.partOfSpeechRow ?? "", entryID: entry.id, conjugations: nil,
