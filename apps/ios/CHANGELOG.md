@@ -34,7 +34,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Look Up finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
-  Your notes stay on your device.
+  Signed in, your notes sync too.
 - Tap a meaning on a word's page to hear it in English, copy it, or look up one of its words.
 - Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 

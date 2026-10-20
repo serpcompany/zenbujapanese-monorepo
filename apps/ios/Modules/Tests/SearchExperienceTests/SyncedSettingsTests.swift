@@ -32,6 +32,23 @@ struct SyncedSettingsTests {
     #expect(told == [KeptChanges.settingSet("readingAids.romaji", .bool(false))])
   }
 
+  @Test("Image Search's view follows a view from the account, where the view reads its choice, and the learner's change is told")
+  func imageSearchView() async throws {
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let settings = SyncedSettings(defaults: defaults)
+    var told: [KeptLocalChange] = []
+    settings.changeObserver = { told.append($0) }
+
+    settings.applySynced("imageSearch.textView", .string(ImageTextViewMode.text.rawValue))
+    #expect(defaults.string(forKey: ImageTextViewMode.storageKey) == ImageTextViewMode.text.rawValue)
+    #expect(told.isEmpty)
+
+    defaults.set(ImageTextViewMode.photo.rawValue, forKey: ImageTextViewMode.storageKey)
+    settings.noticeChanges()
+    #expect(told == [KeptChanges.settingSet("imageSearch.textView", .string(ImageTextViewMode.photo.rawValue))])
+  }
+
   @Test("Translate's speech speed follows a speed from the account, and its layout is no setting")
   func speechSpeed() async throws {
     let defaults = try #require(UserDefaults(suiteName: suite))
