@@ -28,6 +28,14 @@ struct ProblemReport: Equatable, Sendable {
     event.tags?[tagKey] == tagValue
   }
 
+  static func isProblemReport(envelope: Data) -> Bool {
+    envelope.split(separator: UInt8(ascii: "\n")).contains { line in
+      let item = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any]
+      let tags = item?["tags"] as? [String: Any]
+      return tags?[tagKey] as? String == tagValue
+    }
+  }
+
   var contact: String? { Self.contact(from: email) }
 
   func event() -> Event {

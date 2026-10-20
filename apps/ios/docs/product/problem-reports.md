@@ -77,14 +77,13 @@ Check: package `ProblemReportTests` (the event, the contact rule, the scrubbing,
 A report still goes, because the learner chose to send it. Sentry starts just to send it, with no
 crash, freeze, or termination reporting, then closes. A crash after that sends nothing. A report
 that can't go, such as with no connection, waits on the device and goes at a later launch, with
-crash reports on or off. If crash reports are turned on while a report is sending, they start once
-it's sent.
+crash reports on or off. Turning crash reports off deletes the crash reports waiting, but not a
+problem report waiting with them. If crash reports are turned on while a report is sending, they
+start once it's sent.
 
-Known limit: a report sent with crash reports on that can't go waits with the crash reports, and
-turning crash reports off then deletes it with them.
-
-Check: package `ProblemReportSendingTests` and `CrashReportingMachineTests` (every order of
-sends, flushes, and switch changes, with a stand-in for Sentry).
+Check: package `ProblemReportSendingTests`, `CrashReporterSwitchTests` (off keeps a waiting
+report), and `CrashReportingMachineTests` (every order of sends, flushes, and switch changes, with
+a stand-in for Sentry).
 
 ## Checked by hand
 

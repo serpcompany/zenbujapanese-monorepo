@@ -53,6 +53,9 @@ final class CrashReportingSession {
       case .close:
         sdk.close()
       case .deleteCrashReports:
+        CrashReportingPolicy.moveQueuedReports(
+          from: sdk.cacheDirectory, to: sdk.problemReportsDirectory,
+          where: ProblemReport.isProblemReport(envelope:))
         try? FileManager.default.removeItem(atPath: sdk.cacheDirectory)
       }
     }

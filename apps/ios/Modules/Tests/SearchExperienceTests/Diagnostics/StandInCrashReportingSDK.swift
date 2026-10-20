@@ -1,6 +1,7 @@
 import Foundation
 import Sentry
 import Synchronization
+import Testing
 
 @testable import SearchExperience
 
@@ -51,21 +52,35 @@ final class StandInCrashReportingSDK: Sendable {
       problemReportsDirectory: problemReportsDirectory)
   }
 
-  func queuedReport(in directory: String) -> String {
-    (directory as NSString).appendingPathComponent("io.sentry/dsn-hash/envelopes/report")
+  static func envelope(of event: Event) throws -> Data {
+    let payload = event.serialize()
+    try #require(JSONSerialization.isValidJSONObject(payload))
+    let body = try JSONSerialization.data(withJSONObject: payload)
+    let lines = [
+      try JSONSerialization.data(withJSONObject: ["event_id": event.eventId.sentryIdString]),
+      try JSONSerialization.data(withJSONObject: ["type": "event", "length": body.count]),
+      body,
+    ]
+    return Data(lines.joined(separator: Data("\n".utf8)))
   }
 
-  func queueReport(in directory: String) throws {
-    let path = queuedReport(in: directory)
+  func queuedReport(in directory: String, named name: String = "report") -> String {
+    (directory as NSString).appendingPathComponent("io.sentry/dsn-hash/envelopes/\(name)")
+  }
+
+  func queueReport(
+    in directory: String, named name: String = "report", contents: Data = Data("{}".utf8)
+  ) throws {
+    let path = queuedReport(in: directory, named: name)
     try FileManager.default.createDirectory(
       atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
-    guard FileManager.default.createFile(atPath: path, contents: Data("{}".utf8)) else {
+    guard FileManager.default.createFile(atPath: path, contents: contents) else {
       throw CocoaError(.fileWriteUnknown)
     }
   }
 
-  func hasQueuedReport(in directory: String) -> Bool {
-    FileManager.default.fileExists(atPath: queuedReport(in: directory))
+  func hasQueuedReport(in directory: String, named name: String = "report") -> Bool {
+    FileManager.default.fileExists(atPath: queuedReport(in: directory, named: name))
   }
 
   func removeFiles() {

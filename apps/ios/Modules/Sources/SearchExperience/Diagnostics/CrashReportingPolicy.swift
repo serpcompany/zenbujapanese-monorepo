@@ -69,15 +69,17 @@ enum CrashReportingPolicy {
   }
 
   static func moveQueuedReports(
-    from source: String, to target: String, fileManager: FileManager = .default
+    from source: String, to target: String, fileManager: FileManager = .default,
+    where moves: ((Data) -> Bool)? = nil
   ) {
     for path in queuedReports(in: source, fileManager: fileManager) {
+      let origin = (source as NSString).appendingPathComponent(path)
+      if let moves, !moves(fileManager.contents(atPath: origin) ?? Data()) { continue }
       let destination = (target as NSString).appendingPathComponent(path)
       try? fileManager.createDirectory(
         atPath: (destination as NSString).deletingLastPathComponent,
         withIntermediateDirectories: true)
-      try? fileManager.moveItem(
-        atPath: (source as NSString).appendingPathComponent(path), toPath: destination)
+      try? fileManager.moveItem(atPath: origin, toPath: destination)
     }
   }
 

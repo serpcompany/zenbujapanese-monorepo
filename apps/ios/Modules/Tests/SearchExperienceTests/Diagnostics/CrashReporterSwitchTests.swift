@@ -99,6 +99,20 @@ struct CrashReporterSwitchTests {
     }
   }
 
+  @Test("turning the switch off keeps a problem report waiting with the crash reports, for later")
+  func turningOffKeepsAProblemReportFromTheirQueue() async throws {
+    try await Self.withSession { session, stand, _ in
+      session.setEnabled(true)
+      let report = try StandInCrashReportingSDK.envelope(of: ProblemReportSendingTests.report.event())
+      try stand.queueReport(in: stand.cacheDirectory, named: "problem", contents: report)
+      try stand.queueReport(in: stand.cacheDirectory)
+      session.setEnabled(false)
+      #expect(stand.hasQueuedReport(in: stand.problemReportsDirectory, named: "problem"))
+      #expect(!stand.hasQueuedReport(in: stand.problemReportsDirectory))
+      #expect(!FileManager.default.fileExists(atPath: stand.cacheDirectory))
+    }
+  }
+
   @Test("the folder the switch empties is the one Sentry is told to keep its reports in")
   func deletesSentrysOwnFolder() async throws {
     try await Self.withDefaults { defaults in

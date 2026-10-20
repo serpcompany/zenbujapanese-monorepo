@@ -118,6 +118,15 @@ struct ProblemReportTests {
     let elapsed = clock.measure { _ = CrashReportScrubber.scrub(Self.report(pasted).event()) }
     #expect(elapsed < .seconds(1))
   }
+
+  @Test("a report waiting on the device is told from a crash report by its tag, over many lines")
+  func waitingEnvelopeIsAProblemReportByItsTag() throws {
+    let report = CrashReportScrubber.scrub(Self.report().event())
+    let failure = HandledProblem(area: .accountSync, code: "refused_400").event()
+    #expect(ProblemReport.isProblemReport(envelope: try StandInCrashReportingSDK.envelope(of: report)))
+    #expect(!ProblemReport.isProblemReport(envelope: try StandInCrashReportingSDK.envelope(of: failure)))
+    #expect(!ProblemReport.isProblemReport(envelope: Data("{}\n\u{0}\u{1}".utf8)))
+  }
 }
 
 extension Event {

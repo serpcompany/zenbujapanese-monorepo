@@ -69,9 +69,10 @@ meanwhile.
   starts for crash reports, at launch or from the switch, the session moves waiting envelopes into
   `Sentry/` at the same relative path, so the main transport sends them.
 - **The switch off** deletes `Sentry/`, as for crash reports, and never `Problem Reports/`, which
-  is beside it rather than inside, as the standard has it, for that reason.
-- **Known limit:** a report sent with crash reports on that can't go waits in `Sentry/`, and
-  turning crash reports off deletes it with them; the standard keeps it until they're back on.
+  is beside it rather than inside, as the standard has it, for that reason. First it moves each
+  envelope in `Sentry/` whose event is tagged `report: problem`
+  (`ProblemReport.isProblemReport(envelope:)`) into `Problem Reports/`, so a report sent with
+  crash reports on that couldn't go still goes at a later launch.
 - **A handled failure** recorded while Sentry runs only to send is dropped by `beforeSend`, and
   counts as sent for the rest of that launch.
 
@@ -82,7 +83,9 @@ meanwhile.
   from each kind of launch and checks that nothing catches crashes with the switch off, nothing
   starts twice, every send is captured and flushed, and the end state follows the switch;
   `ProblemReportSendingTests` runs the session against `StandInCrashReportingSDK`;
-  `ProblemReportTests` checks the event, the contact rule, and the scrubbing; and
+  `CrashReporterSwitchTests` checks the switch off keeps a waiting report and deletes the rest;
+  `ProblemReportTests` checks the event, the contact rule, the scrubbing, and telling a waiting
+  envelope that's a report from one that isn't; and
   `ProblemReportFormTests` the form.
 - **UI:** `ProblemReportUITests`,
   `AccountSignedInUITests.testAReportOpensWithTheAccountsEmailFilledInAndSaysSo`,

@@ -221,14 +221,13 @@ It provides:
   so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
   Reading Aids offers to download;
 - management of optional frequency dictionaries; and
-- the app's name, version, and description; Help & Support, [**Report a
+- the app's name, version, and description; Help & Support (the website), [**Report a
   Problem…**](problem-reports.md), [**Send Crash Reports**](crash-reports.md), and the Privacy
-  Policy, the first and last on the Zenbu website; and **Credits & Attributions**: each source's
-  credit, license, and project link, in the shared core's wording
-  ([`data-sources.md`](../../../../docs/data-sources.md)), with Jiten's notice that its rankings are
-  adapted and shared alike. **Licenses**, under it, opens each bundled license text, with one for
-  each Swift package the app links (Sentry, ZIPFoundation). If the app can't read the core's list,
-  Credits says so, and Licenses still lists every text.
+  Policy (the website); and **Credits & Attributions**: each source's credit, license, and project
+  link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with
+  Jiten's notice that its rankings are adapted and shared alike. **Licenses**, under it, opens each
+  bundled license text, with one for each Swift package the app links (Sentry, ZIPFoundation). If
+  the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
