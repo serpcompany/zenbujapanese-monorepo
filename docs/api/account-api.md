@@ -1191,7 +1191,7 @@ A search the learner made, as the app's recent searches list it. The account kee
 
 Fields ([`SearchFields`](#searchfields)), and no others:
 
-- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its SHA-256, after Unicode NFC, is the `entityId`.
+- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its HMAC-SHA256 in UTF-8, after Unicode NFC, keyed with the account's `searchKey`, is the `entityId`.
 - `searchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
 
 ```json
@@ -1377,7 +1377,7 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 
 ### SearchFields
 
-- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its SHA-256, after Unicode NFC, is the `entityId`.
+- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its HMAC-SHA256 in UTF-8, after Unicode NFC, keyed with the account's `searchKey`, is the `entityId`.
 - `searchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
 
 ### Profile

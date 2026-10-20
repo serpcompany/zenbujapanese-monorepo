@@ -51,7 +51,7 @@ const SettingFields = z.strictObject({
 
 const SearchFields = z.strictObject({
   query: z.string().openapi({
-    description: `What was searched, as the app keeps it: 1 to ${count(searchLimits.queryLength)} characters, with no control characters. Its SHA-256, after Unicode NFC, is the \`entityId\`.`
+    description: `What was searched, as the app keeps it: 1 to ${count(searchLimits.queryLength)} characters, with no control characters. Its HMAC-SHA256 in UTF-8, after Unicode NFC, keyed with the account's \`searchKey\`, is the \`entityId\`.`
   }),
   searchedAt: moment
 })
