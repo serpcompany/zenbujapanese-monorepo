@@ -57,7 +57,8 @@ export function accountDeleter(
   store: AccountStore,
   apple: AppleRevoker,
   notices: DeletionNotices,
-  subscriptions: SubscriptionEnder
+  subscriptions: SubscriptionEnder,
+  afterDeletion: () => void = () => {}
 ) {
   return async (
     principal: Principal,
@@ -92,6 +93,7 @@ export function accountDeleter(
     if (ended.status === 'unavailable') return refused('billing_unavailable')
     const language = emailLanguage(requestedLanguage, await store.language(principal.userId))
     await store.deleteAccount(principal.userId, profile.email)
+    afterDeletion()
     notices.accountDeleted(profile.email, language)
     return {
       status: 'deleted',

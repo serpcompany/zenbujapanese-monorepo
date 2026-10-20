@@ -1,7 +1,7 @@
 # Photo files in the account service
 
 The account service keeps the files of a learner's Media Library photos and profile photo in
-Cloudflare R2 (#867, decision 1; [ADR 0018](../adr/0018-keep-learners-photos-in-r2-by-their-sha-256-apart-from-sync.md)).
+Cloudflare R2 (#867, decision 1; [ADR 0020](../adr/0020-keep-learners-photos-in-r2-by-their-sha-256-apart-from-sync.md)).
 The photos themselves, and the words each is on, are sync entities
 ([`account-entities.md`](account-entities.md)); this doc is their files. The service is
 [`account-api.md`](account-api.md), and the routes are in the
@@ -38,7 +38,9 @@ and its upload always puts the bytes in R2 (an image the account holds moves to 
 it learns nothing of the library, even from how long an upload takes. It sets the profile photo
 only to a file it uploaded, a library photo's included: it has the image. A file stops counting
 when the profile photo moves off it, or a day after its upload if it never became the profile
-photo.
+photo. With `ACCOUNT_API_CLOUD_ACCESS=subscription`, both routes need what sync needs: an account
+without it gets `402 subscription_required` before the service reads or keeps a byte
+([`account-billing.md`](account-billing.md), The gate).
 
 The service refuses bytes whose SHA-256 isn't the ID (`400 photo_digest_mismatch`), bytes that
 aren't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image, by their first bytes rather
@@ -150,7 +152,8 @@ stray object, each refused upload, each image type read from its bytes, the 1,00
 emptied photo keeping its place for a word sent later, `503` with no storage, the slots for one
 account while the service has room and for the service, a download keeping its slot until its
 body is sent, cancelled, or cut or its client goes, a cut one logged, a `HEAD` giving its slot back
-at once, and CORS for the website. `src/http/download-disconnect.test.ts` runs the real Node
+at once, and CORS for the website. `src/http/cloud-access.test.ts` holds both routes to the
+subscription's gate when it's on. `src/http/download-disconnect.test.ts` runs the real Node
 adapter: downloads whose clients leave before the answer starts give their slots back.
 `src/http/photos.test.ts` and `src/http/profile-photo.test.ts` hold the photo entities to their
 rules, and show a file swept from storage after the sync that deleted its photo, an emptied photo

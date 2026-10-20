@@ -16,8 +16,8 @@ setting up the server. Each service's doc covers its image, its workflow, and it
 Clients reach both services at one host, `api.zenbujapanese.com`, and `api-staging.zenbujapanese.com`
 for staging (ADR 0013). nginx sends a request by its path:
 
-- `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/health`, and `/v1/webhooks`, and anything under
-  them, to the account service;
+- `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/photos`, `/v1/health`, and `/v1/webhooks`, and anything
+  under them, to the account service;
 - every other path to the dictionary service, including `/healthz`.
 
 The list is `accountServicePaths` in `packages/node-service/src/api-host.ts`. Each service's tests
@@ -56,7 +56,11 @@ server {
         set $account "zenbujapanese-account-api-staging";
         set $dictionary "zenbujapanese-dictionary-api-staging";
 
-        location ~ ^/v1/(auth|me|sync|health|webhooks)(/|$) {
+        location ~ ^/v1/(auth|me|sync|photos|health|webhooks)(/|$) {
+                location ~ ^/v1/photos/ {
+                        client_max_body_size 13m;
+                        proxy_pass http://$account:8789;
+                }
                 proxy_http_version 1.1;
                 proxy_set_header Connection "";
                 proxy_set_header Host $host;
@@ -86,14 +90,15 @@ server {
 
 - `ssl_client_certificate` and `ssl_verify_client on` take only Cloudflare's client certificate
   (Authenticated Origin Pulls), so a request that skips Cloudflare gets `400` from nginx, and the
-  `CF-Connecting-IP` the account service counts by is always Cloudflare's.
+  `CF-Connecting-IP` the account service counts by is always Cloudflare's. Only the nested
+  `/v1/photos/` location lets a 12 MB photo through, past nginx's 1 MB default: a regex, since
+  nginx loads no prefix location in a regex one, with its own `proxy_pass`, which isn't inherited.
 - `resolver … valid=5s` with the alias in a variable makes nginx look the alias up every 5
   seconds, so it finds the new slot after a deploy without a reload, and
   `proxy_next_upstream … http_502 http_503` with two tries sends a request a slot can't answer to
   the other.
-- The nginx repository's dictionary sites also keep a `location = /v1/sitemaps/conjugations` that
-  doesn't fail over on a `503`; the dictionary service no longer has that route (it answers
-  `404`), so the API host's sites leave it out.
+- The dictionary sites' `location = /v1/sitemaps/conjugations`, which doesn't fail over on a
+  `503`, is left out: the dictionary service no longer has that route (it answers `404`).
 
 The dictionary service also keeps its own host (`dictionary-api.zenbujapanese.com`), which the
 website's Worker reads; it can move to the API host by changing `DICTIONARY_API_URL`. The two
@@ -133,10 +138,8 @@ missing or isn't internal, since a slot there couldn't serve.
 1. It creates the new image's container in the free slot without the alias, so nginx sends it
    nothing while it starts, connects it to the service's private networks, and only then starts
    it, so the service never starts without its database.
-2. It waits until its `/healthz` names the image's release. Each check may take 3 seconds, and the
-   whole wait 3 minutes.
-3. It gives it the alias, by reconnecting it to the network, since Docker can't add an alias to a
-   connected container.
+2. It waits until its `/healthz` names the image's release: 3 seconds a check, 3 minutes in all.
+3. It gives it the alias by reconnecting it to the network: Docker can't alias a connected one.
 4. It waits 10 seconds more, past nginx's 5-second resolver cache, so nginx has seen it.
 5. It stops the old one.
 
@@ -170,14 +173,12 @@ A few details keep a deploy safe:
   containers it starts there, and removes it when the run ends.
 - **Stopped slots first.** A deploy removes the environment's stopped slot containers, freeing
   their slots, and treats any container with a slot's name as taking it.
-- **The verified digest.** It runs the new container by its image's digest, the one cosign
-  verified.
+- **The verified digest.** It runs the new container by its image's digest, which cosign verified.
 - **A restart policy only once it answers,** so a crash shows at once rather than as a restart
   loop. The old slot gets SIGTERM and 30 seconds to finish its requests.
 - **A deploy cut short is finished.** A run that finds the tag's image in a slot finishes the
   deploy: once it answers as the tag's release, it gets the alias and the restart policy, and the
-  other slot stops. One that doesn't answer is removed, unless it has the alias, since it's
-  serving.
+  other slot stops. One that doesn't answer is removed, unless it has the alias, since it's serving.
 - **Old images are pruned.** After a deploy, the deployer removes the service's images that no slot
   uses, except the ones the deploy replaced, which a rollback deploys again, and the ones the tags
   name. It removes an image by its references in this repository, so an image another repository
@@ -198,9 +199,8 @@ To look after it:
 
 ## Set up the server
 
-A person with root sets these up once. Each service then has its own steps
-([`dictionary-api.md`](dictionary-api.md), Set up the server;
-[`account-api.md`](account-api.md), Set up the server).
+A person with root sets these up once; then each service has its own steps
+([`dictionary-api.md`](dictionary-api.md) and [`account-api.md`](account-api.md), Set up the server).
 
 1. **cosign**, which the deployer verifies each image's signature with: the version the workflows
    sign with, checked against its release's SHA-256 (for an arm64 server, `cosign-linux-arm64`
@@ -303,6 +303,5 @@ A person with root sets these up once. Each service then has its own steps
    (`curl -k --resolve api-staging.zenbujapanese.com:443:<server address> https://api-staging.zenbujapanese.com/healthz`),
    gets nginx's `400 No required SSL certificate was sent`.
 
-   The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI
-   runners, so nothing in CI checks a deployed service, and it may challenge the apps' requests
-   (ADR 0013).
+   The zone's Bot Fight Mode stays on and can't be skipped per host name. It challenges CI runners,
+   so nothing in CI checks a deployed service, and it may challenge the apps' requests (ADR 0013).

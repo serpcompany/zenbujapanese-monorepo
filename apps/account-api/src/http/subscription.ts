@@ -5,31 +5,32 @@ import type { Principal } from '../domain/clients'
 import type { Billing, SubscriptionView } from '../domain/subscription-billing'
 import type { Entitlement } from '../domain/subscriptions'
 import { languageHeader, languageOf } from '../language'
-import {
-  failed,
-  malformed,
-  needs,
-  noScope,
-  onTheWebsite,
-  refuse,
-  tooLarge,
-  tooMany,
-  unauthorized
-} from './accounts'
+import { onTheWebsite } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
 import { json, refusal } from './refusals'
 import {
+  failed,
+  malformed,
+  needs,
+  noScope,
+  refuse,
+  tooLarge,
+  tooMany,
+  unauthorized
+} from './route-answers'
+import {
   AppleTransactionSchema,
   CheckoutRequestSchema,
   LanguageHeaders,
+  PlansSchema,
   PortalRequestSchema,
   RedirectSchema,
   SubscriptionSchema
 } from './subscription-schemas'
 
-export const cloudDataPaths = ['/v1/sync'] as const
+export const cloudDataPaths = ['/v1/sync', '/v1/photos/*'] as const
 
 export const subscriptionPath = '/v1/me/subscription'
 
@@ -69,7 +70,10 @@ export function requireCloudAccess(billing: Billing) {
     if (access === 'no_account') return refuse(context)
     if (access === 'subscription_required') {
       return context.json(
-        errorBody('subscription_required', 'Syncing needs a subscription. Nothing was applied.'),
+        errorBody(
+          'subscription_required',
+          'Syncing and photo files need a subscription. Nothing was applied.'
+        ),
         402
       )
     }
@@ -92,6 +96,20 @@ const readSubscription = createRoute({
     "Read from the service's own records, which each store's events keep current. One subscription stands for the account, wherever it was bought; the app shows the paywall when `cloudAccess` is `subscription_required`, and offers a subscription only when `canSubscribe` is true.",
   security: needs('subscription'),
   responses: { 200: json(SubscriptionSchema, 'The subscription.'), ...common }
+})
+
+const readPlans = createRoute({
+  method: 'get',
+  path: `${subscriptionPath}/plans`,
+  summary: "The website's plans, with their prices",
+  description:
+    "What the website's paywall shows before Checkout: each of `offers.website` with Stripe's name, price, and period, read from Stripe on each request, and the free trial this account would get.",
+  security: needs('subscription'),
+  responses: {
+    200: json(PlansSchema, 'The plans.'),
+    503: refusal(billingUnavailable),
+    ...common
+  }
 })
 
 const startCheckout = createRoute({
@@ -189,6 +207,13 @@ export function subscriptionRoutes(
   app.openapi(readSubscription, async context => {
     const view = await billing.view(principalIn(context), new Date())
     return view ? context.json(viewJson(view), 200) : refuse(context)
+  })
+
+  app.openapi(readPlans, async context => {
+    const plans = await billing.plans(principalIn(context))
+    return plans.status === 'listed'
+      ? context.json({ plans: plans.plans, trialDays: plans.trialDays }, 200)
+      : context.json(unavailableBody, 503)
   })
 
   app.openapi(startCheckout, async context => {

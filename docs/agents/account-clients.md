@@ -35,7 +35,7 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write`, `notes:read`, `notes:write`, `photos:read`, `photos:write`, `settings:read`, `settings:write`, `searches:read`, `searches:write` |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write`, `notes:read`, `notes:write`, `photos:read`, `photos:write`, `settings:read`, `settings:write`, `searches:read`, `searches:write`, `subscription` |
 | zenbujapanese.com | `zenbu-web` | the same, without `watch:*`, `translations:*`, `notes:*`, `photos:*`, `settings:*`, and `searches:*` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
@@ -50,6 +50,8 @@ setting ([`account-api.md`](account-api.md), Settings).
   ([`account-client-rules.md`](account-client-rules.md)). Only the iOS app has them: no other app
   shows them, so none gets them, least privilege. `profile` also reads and changes the profile
   photo, and downloads its file.
+- `subscription` reads the account's subscription, and buys or manages one
+  ([`account-billing.md`](account-billing.md)).
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
 - An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
   change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
@@ -458,7 +460,7 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 invalid_nonce`, `invalid_token`, `400 nonce_required` | Start the Apple or Google sign-in over, with a new nonce. |
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
-| `402 subscription_required` | Keep the queue; show the paywall ([billing](account-billing.md)). |
+| `402 subscription_required` | From `/v1/sync` or `/v1/photos`: keep the queue and the photos on the device; show the paywall ([billing](account-billing.md)). |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Read again from no cursor, as a full read (How to sync, step 5). |
 | `413 too_large` | The body is over 64 KB: send fewer mutations at a time. A photo's file is over 12 MB: keep the photo on the device only. |

@@ -3,7 +3,7 @@
   "info": {
     "title": "Zenbu account service",
     "version": "1",
-    "description": "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract.\n\n- **Errors.** Every error is `{ \"error\": { \"code\": \"...\", \"message\": \"...\" } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.\n- **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.\n- **Bodies** are JSON, at most 64 KB (`413 too_large`).\n- **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.\n- **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).\n- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`."
+    "description": "Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is Better Auth's, under /v1/auth; a test holds each of its answers to this contract.\n\n- **Errors.** Every error is `{ \"error\": { \"code\": \"...\", \"message\": \"...\" } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.\n- **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.\n- **Bodies** are JSON, at most 64 KB (`413 too_large`), but a photo's upload, which is the photo's file.\n- **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.\n- **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).\n- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`."
   },
   "servers": [
     {
@@ -202,6 +202,141 @@
         ],
         "additionalProperties": false
       },
+      "NoteFields": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "description": "A Language Reference ID (32 lowercase hex digits), `kanji:` and one kanji in Unicode NFC, or a note identity an earlier app saved (`wn1:` and 64 lowercase hex digits)."
+          },
+          "text": {
+            "type": "string",
+            "description": "The note: 1 to 10,000 characters once trimmed, kept in Unicode NFC. Line breaks and tabs stay, and other control characters become spaces. Never cut: a longer note is refused."
+          },
+          "headword": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "The headword the note was saved on, if any."
+          },
+          "reading": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200,
+            "description": "Its reading, if any."
+          }
+        },
+        "required": [
+          "item",
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "PhotoFields": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The photo's name, such as its file's. Cut to 200 characters, with control characters made spaces; it may be empty."
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "name",
+          "savedAt"
+        ],
+        "additionalProperties": false
+      },
+      "PhotoWordFields": {
+        "type": "object",
+        "properties": {
+          "headword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters."
+          },
+          "reading": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its reading, held as `headword` is. Empty when left out."
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "headword",
+          "savedAt"
+        ],
+        "additionalProperties": false
+      },
+      "ProfilePhotoFields": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "The SHA-256 of the photo file, uploaded first with `PUT /v1/photos/{photoId}`."
+          }
+        },
+        "required": [
+          "photoId"
+        ],
+        "additionalProperties": false
+      },
+      "SettingFields": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "description": "The setting's value, of its kind: `x-sync-entities` lists each setting."
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "SearchFields": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its SHA-256, after Unicode NFC, is the `entityId`."
+          },
+          "searchedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's."
+          }
+        },
+        "required": [
+          "query",
+          "searchedAt"
+        ],
+        "additionalProperties": false
+      },
       "Profile": {
         "type": "object",
         "properties": {
@@ -345,7 +480,7 @@
             "items": {
               "$ref": "#/components/schemas/Change"
             },
-            "description": "The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists come before their words, but a word can come on an earlier page than its list: hold it until the sync reaches `hasMore: false`."
+            "description": "The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists and photos come before their words, but a word can come on an earlier page than its list or photo: hold it until the sync reaches `hasMore: false`."
           },
           "cursor": {
             "type": "string",
@@ -354,6 +489,10 @@
           "hasMore": {
             "type": "boolean",
             "description": "More changes are waiting: sync again with the new cursor."
+          },
+          "searchKey": {
+            "type": "string",
+            "description": "To an app with `searches:read`: the account's key for recent searches' IDs, 64 hex digits. A recent search's `entityId` is the HMAC-SHA256 of its query, after Unicode NFC, under this key, so a removed search keeps nothing that reveals what was searched. Keep it with the account; it changes only if the service's secret does."
           }
         },
         "required": [
@@ -442,6 +581,11 @@
                       "too_many_lists",
                       "list_full",
                       "too_many_bookmarks",
+                      "too_many_notes",
+                      "unknown_photo",
+                      "photo_not_uploaded",
+                      "photo_full",
+                      "unknown_setting",
                       "not_allowed"
                     ]
                   },
@@ -670,11 +814,215 @@
               "entity": {
                 "type": "string",
                 "enum": [
+                  "wordNote"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/WordNote"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "photo"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/Photo"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "photoWord"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/PhotoWord"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "profilePhoto"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/ProfilePhoto"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "setting"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/Setting"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "recentSearch"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "put"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "$ref": "#/components/schemas/RecentSearch"
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
                   "knownWord",
                   "list",
                   "listWord",
                   "watchedVideo",
-                  "bookmarkedSentence"
+                  "bookmarkedSentence",
+                  "wordNote",
+                  "photo",
+                  "photoWord",
+                  "profilePhoto",
+                  "setting",
+                  "recentSearch"
                 ]
               },
               "entityId": {
@@ -700,9 +1048,50 @@
               "version",
               "data"
             ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "type": "string",
+                "enum": [
+                  "photo"
+                ]
+              },
+              "entityId": {
+                "type": "string"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "delete"
+                ]
+              },
+              "version": {
+                "type": "integer"
+              },
+              "data": {
+                "type": "null"
+              },
+              "emptied": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ],
+                "description": "The photo was emptied, its last word removed, not deleted. Drop it and its words as for any delete, but no place among the account's files was freed: it keeps its file for 30 days, and a word added from elsewhere brings it back. Any other delete leaves this out."
+              }
+            },
+            "required": [
+              "entity",
+              "entityId",
+              "operation",
+              "version",
+              "data",
+              "emptied"
+            ]
           }
         ],
-        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`."
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`."
       },
       "KnownWord": {
         "type": "object",
@@ -875,6 +1264,146 @@
           "bookmarkedAt"
         ]
       },
+      "WordNote": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string",
+            "description": "The word, kanji, or note identity it is on."
+          },
+          "text": {
+            "type": "string"
+          },
+          "headword": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reading": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "itemId",
+          "text",
+          "headword",
+          "reading"
+        ]
+      },
+      "Photo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The SHA-256 of its file: download it by this ID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "savedAt"
+        ]
+      },
+      "PhotoWord": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "headword": {
+            "type": "string"
+          },
+          "reading": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "photoId",
+          "itemId",
+          "headword",
+          "reading",
+          "savedAt"
+        ]
+      },
+      "ProfilePhoto": {
+        "type": "object",
+        "properties": {
+          "photoId": {
+            "type": "string",
+            "description": "Download it by this ID."
+          }
+        },
+        "required": [
+          "photoId"
+        ]
+      },
+      "Setting": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ]
+      },
+      "RecentSearch": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "searchedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "query",
+          "searchedAt"
+        ]
+      },
       "SyncRequest": {
         "type": "object",
         "properties": {
@@ -914,7 +1443,7 @@
           "entity": {
             "type": "string",
             "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$",
-            "description": "`profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
+            "description": "`profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`, `wordNote`, `photo`, `photoWord`, `profilePhoto`, `setting`, `recentSearch`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do."
           },
           "operation": {
             "type": "string",
@@ -924,7 +1453,7 @@
           "entityId": {
             "type": "string",
             "pattern": "^[^\\p{Cc}\\p{Cf}\\s]{1,200}$",
-            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.\n- `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase."
+            "description": "- `profile`: The account's ID, or left out.\n- `knownWord`: The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.\n- `list`: Its UUID, in either case; answers name it in lowercase.\n- `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.\n- `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.\n- `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase.\n- `wordNote`: The note's UUID, in either case; answers name it in lowercase.\n- `photo`: The SHA-256 of the photo's file, in 64 lowercase hex digits.\n- `photoWord`: The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.\n- `profilePhoto`: The account's ID, or left out.\n- `setting`: The setting's name, from the list above.\n- `recentSearch`: The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros."
           },
           "baseVersion": {
             "type": "integer",
@@ -1235,6 +1764,257 @@
                 }
               }
             }
+          },
+          "wordNote": {
+            "description": "A note the learner wrote on a word or a kanji, or one an earlier app saved under a note identity no word takes now. A word may have several. An account holds at most 10,000. A deleted note's row keeps only its ID and version.",
+            "entityId": "The note's UUID, in either case; answers name it in lowercase.",
+            "read": "notes:read",
+            "data": {
+              "$ref": "#/components/schemas/WordNote"
+            },
+            "operations": {
+              "write": {
+                "scopes": [
+                  "notes:write"
+                ],
+                "baseVersion": true,
+                "description": "Writes the note whole: a new one at `baseVersion` 0, or a change to one at its current version. A write that matches the note is applied and changes nothing. A write at an older version conflicts with the note as it is now, so neither device's text is lost: keep yours as a new note on the same word, or, if `current`'s text is the one your change started from, write it again at `current`'s version. A write of a note deleted since `baseVersion` applies and brings it back: the deleter never saw that text. Past 10,000 notes it's rejected `too_many_notes`.",
+                "fields": {
+                  "$ref": "#/components/schemas/NoteFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
+                  "entity": "wordNote",
+                  "operation": "write",
+                  "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
+                  "baseVersion": 0,
+                  "fields": {
+                    "item": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                    "text": "「見る」は目で、「観る」は映画を。",
+                    "headword": "見る",
+                    "reading": "みる"
+                  }
+                }
+              },
+              "delete": {
+                "scopes": [
+                  "notes:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the note's current version, so it deletes only what the learner saw: a note written elsewhere since stays, and the delete conflicts. Deleting a note the account hasn't is applied.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
+                  "entity": "wordNote",
+                  "operation": "delete",
+                  "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
+                  "baseVersion": 1
+                }
+              }
+            }
+          },
+          "photo": {
+            "description": "A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` marked `emptied: true` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's 1,000 for its 30 days, so the word that brings it back always finds it; then it's deleted, which syncs as a plain `delete`, freeing its place.",
+            "entityId": "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
+            "read": "photos:read",
+            "data": {
+              "$ref": "#/components/schemas/Photo"
+            },
+            "operations": {
+              "add": {
+                "scopes": [
+                  "photos:write"
+                ],
+                "baseVersion": false,
+                "description": "It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete or once emptied comes back. Adding one the account shows changes nothing. Send its words next, as `photoWord` adds.",
+                "fields": {
+                  "$ref": "#/components/schemas/PhotoFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
+                  "entity": "photo",
+                  "operation": "add",
+                  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab",
+                  "fields": {
+                    "name": "Menu.jpg",
+                    "savedAt": "2026-10-07T03:25:00Z"
+                  }
+                }
+              },
+              "delete": {
+                "scopes": [
+                  "photos:write"
+                ],
+                "baseVersion": false,
+                "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
+                  "entity": "photo",
+                  "operation": "delete",
+                  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab"
+                }
+              }
+            }
+          },
+          "photoWord": {
+            "description": "A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones; a deleted photo's words go when the account forgets the photo. A word the account forgets comes back past every version it had, so a remove from before can't take a later add, and a cursor from before its removal is refused `410 invalid_cursor`, so the device reads everything again. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.",
+            "entityId": "The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.",
+            "read": "photos:read",
+            "data": {
+              "$ref": "#/components/schemas/PhotoWord"
+            },
+            "operations": {
+              "add": {
+                "scopes": [
+                  "photos:write"
+                ],
+                "baseVersion": false,
+                "description": "It always applies to a photo the account has, an emptied one too, which it brings back. To a deleted or unknown photo it's rejected `unknown_photo`: drop the word on the device, and the photo if no other word holds it. Past 500 words it's `photo_full`: keep the word on the device. Adding a word the photo is on is applied and changes nothing.",
+                "fields": {
+                  "$ref": "#/components/schemas/PhotoWordFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
+                  "entity": "photoWord",
+                  "operation": "add",
+                  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "fields": {
+                    "headword": "見る",
+                    "reading": "みる",
+                    "savedAt": "2026-10-07T03:25:00Z"
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "photos:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
+                  "entity": "photoWord",
+                  "operation": "remove",
+                  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+                  "baseVersion": 1
+                }
+              }
+            }
+          },
+          "profilePhoto": {
+            "description": "The profile's photo, a file uploaded with `PUT /v1/photos/{photoId}`. The name and username stay the profile's own, so changing one never conflicts with the other.",
+            "entityId": "The account's ID, or left out.",
+            "read": "profile",
+            "data": {
+              "$ref": "#/components/schemas/ProfilePhoto"
+            },
+            "operations": {
+              "set": {
+                "scopes": [
+                  "profile"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. An app without `photos:read` may set only a file it uploaded itself (else `photo_not_uploaded`). The file it replaces is deleted, unless a Media Library photo is the same file.",
+                "fields": {
+                  "$ref": "#/components/schemas/ProfilePhotoFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
+                  "entity": "profilePhoto",
+                  "operation": "set",
+                  "baseVersion": 0,
+                  "fields": {
+                    "photoId": "02a3e298f1533f62558c58e4c70edcab9af5a50d62d925fd5390942020fb0fb8"
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "profile"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the current version, so a photo set elsewhere since stays, and the remove conflicts. It syncs as a `delete`.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
+                  "entity": "profilePhoto",
+                  "operation": "remove",
+                  "baseVersion": 1
+                }
+              }
+            }
+          },
+          "setting": {
+            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.",
+            "entityId": "The setting's name, from the list above.",
+            "read": "settings:read",
+            "data": {
+              "$ref": "#/components/schemas/Setting"
+            },
+            "operations": {
+              "set": {
+                "scopes": [
+                  "settings:write"
+                ],
+                "baseVersion": true,
+                "description": "It applies only at the setting's current version (0 for one never set), so two devices that change one setting conflict, and the second gets the value as it is now; settings change apart, so changing one never conflicts with another. Setting the value it has is applied and changes nothing. A name the service doesn't know is rejected `unknown_setting`, and a value out of its kind `invalid_fields`: keep the device's value either way.",
+                "fields": {
+                  "$ref": "#/components/schemas/SettingFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
+                  "entity": "setting",
+                  "operation": "set",
+                  "entityId": "readingAids.furigana",
+                  "baseVersion": 0,
+                  "fields": {
+                    "value": false
+                  }
+                }
+              }
+            }
+          },
+          "recentSearch": {
+            "description": "A search the learner made, as the app's recent searches list it. The account keeps the 50 with the latest `searchedAt`, and remembers the latest 100 it removed or pruned, as it does Player's Recent.",
+            "entityId": "The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.",
+            "read": "searches:read",
+            "data": {
+              "$ref": "#/components/schemas/RecentSearch"
+            },
+            "operations": {
+              "search": {
+                "scopes": [
+                  "searches:write"
+                ],
+                "baseVersion": true,
+                "description": "A search of a query the account has applies whatever its base version, and the later `searchedAt` is kept. A search of a query the learner removed applies only at the removal's version, so one made before seeing the removal conflicts with the `delete`. A search past the 50 newest prunes the oldest, which syncs as a `delete`.",
+                "fields": {
+                  "$ref": "#/components/schemas/SearchFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
+                  "entity": "recentSearch",
+                  "operation": "search",
+                  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
+                  "baseVersion": 0,
+                  "fields": {
+                    "query": "食べる",
+                    "searchedAt": "2026-10-07T03:30:00Z"
+                  }
+                }
+              },
+              "remove": {
+                "scopes": [
+                  "searches:write"
+                ],
+                "baseVersion": false,
+                "description": "The learner removed the search, or cleared them all, one `remove` each. It always applies; removing one the account has not is applied and changes nothing.",
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
+                  "entity": "recentSearch",
+                  "operation": "remove",
+                  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"
+                }
+              }
+            }
           }
         },
         "x-sync-rejections": {
@@ -1249,6 +2029,11 @@
           "too_many_lists": "The account has 500 lists.",
           "list_full": "The list has 5,000 words.",
           "too_many_bookmarks": "The account has 2,000 bookmarked sentences.",
+          "too_many_notes": "The account has 10,000 notes. Keep the note on the device, untouched.",
+          "unknown_photo": "The photo word's photo isn't in the account, or was deleted: drop the word on the device, and the photo if no other word holds it.",
+          "photo_not_uploaded": "The account holds no file for that photo: upload it with `PUT /v1/photos/{photoId}`, then send the change again under a new ID.",
+          "photo_full": "The photo is on 500 words. Keep the word on the device.",
+          "unknown_setting": "The service syncs no setting of that name, as when it is older than the app. Keep the setting on the device, and send it again once the service knows it.",
           "not_allowed": "The app's scopes don't include the operation's."
         }
       },
@@ -1332,7 +2117,7 @@
               "free",
               "subscription_required"
             ],
-            "description": "What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
+            "description": "What POST /v1/sync and the photo files' routes do for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
           },
           "appAccountToken": {
             "type": [
@@ -1433,6 +2218,71 @@
           "managedIn"
         ],
         "description": "A subscription still running at its store, and where it is managed."
+      },
+      "WebsitePlans": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebsitePlan"
+            },
+            "description": "Each of `offers.website`, in its order, as Stripe describes it. Empty where Stripe is off."
+          },
+          "trialDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The free trial a checkout gives this account, or null: none is set, or the account has subscribed before."
+          }
+        },
+        "required": [
+          "plans",
+          "trialDays"
+        ]
+      },
+      "WebsitePlan": {
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "string",
+            "description": "The Stripe price, one of `offers.website`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Stripe's name for the product."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Each period's price in the currency's smallest unit, as Stripe has it: cents, or yen."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Its ISO 4217 code, in lowercase, as Stripe has it."
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ]
+          },
+          "intervalCount": {
+            "type": "integer",
+            "description": "How many intervals each period lasts."
+          }
+        },
+        "required": [
+          "price",
+          "name",
+          "amount",
+          "currency",
+          "interval",
+          "intervalCount"
+        ]
       },
       "Redirect": {
         "type": "object",
@@ -1547,6 +2397,34 @@
         },
         "required": [
           "signedPayload"
+        ]
+      },
+      "PhotoFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The SHA-256 of the file's bytes."
+          },
+          "contentType": {
+            "type": "string",
+            "description": "The image type, read from the bytes themselves, such as `image/jpeg`."
+          },
+          "byteSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12582912
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "contentType",
+          "byteSize",
+          "uploadedAt"
         ]
       },
       "SignIn": {
@@ -2655,7 +3533,7 @@
             }
           },
           "410": {
-            "description": "`invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.",
+            "description": "`invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2924,6 +3802,196 @@
                           "type": "string",
                           "enum": [
                             "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/subscription/plans": {
+      "get": {
+        "summary": "The website's plans, with their prices",
+        "description": "What the website's paywall shows before Checkout: each of `offers.website` with Stripe's name, price, and period, read from Stripe on each request, and the free trial this account would get.",
+        "security": [
+          {
+            "accessToken": [
+              "subscription"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The plans.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebsitePlans"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `subscription`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`billing_unavailable`: The store didn't answer, or subscribing there isn't set up in this environment. Nothing changed. Try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "billing_unavailable"
                           ]
                         },
                         "message": {
@@ -4249,6 +5317,735 @@
                           "type": "string",
                           "enum": [
                             "try_again"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/photos/{photoId}": {
+      "put": {
+        "summary": "Upload a photo's file",
+        "description": "The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's and an emptied photo's for its 30 days included. An app with only `profile` holds at most 2 files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, `201` or `409`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.",
+        "security": [
+          {
+            "accessToken": [
+              "photos:write"
+            ]
+          },
+          {
+            "accessToken": [
+              "profile"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "The SHA-256 of the photo's file, in 64 lowercase hex digits."
+            },
+            "required": true,
+            "description": "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
+            "name": "photoId",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The file's bytes.",
+          "content": {
+            "image/*": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The account already held this file.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoFile"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The file is kept.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoFile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: `photoId` is not 64 lowercase hex digits. `photo_digest_mismatch`: The bytes' SHA-256 isn't `photoId`: the upload was cut short or changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request",
+                            "photo_digest_mismatch"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "`subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "subscription_required"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `photos:write` or `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`too_many_photos`: The account holds 1,000 files, or an app with only `profile` holds the 2 it may. Keep the photo on the device; send it again once a photo is deleted, or set the profile photo to one of the two.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_photos"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "`too_large`: The file is over 12 MB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_large"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "`unsupported_photo`: The file isn't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unsupported_photo"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads at once, 2 from this account. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "photos_unavailable"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Download a photo's file",
+        "description": "The bytes uploaded, with their type, streamed. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.",
+        "security": [
+          {
+            "accessToken": [
+              "photos:read"
+            ]
+          },
+          {
+            "accessToken": [
+              "profile"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "The SHA-256 of the photo's file, in 64 lowercase hex digits."
+            },
+            "required": true,
+            "description": "The SHA-256 of the photo's file, in 64 lowercase hex digits.",
+            "name": "photoId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "headers": {
+              "Cache-Control": {
+                "description": "`private, max-age=31536000, immutable`: the file under this ID never changes.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "ETag": {
+                "description": "The photo ID, quoted.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Disposition": {
+                "description": "`attachment`, with the photo ID as its file name.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Content-Type-Options": {
+                "description": "`nosniff`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: `photoId` is not 64 lowercase hex digits.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "`subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "subscription_required"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `photos:read` or `profile`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync. `photo_file_missing`: The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "not_found",
+                            "photo_file_missing"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the account or the service is sending as many files as it may at once. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "photos_unavailable"
                           ]
                         },
                         "message": {

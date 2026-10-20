@@ -10,10 +10,18 @@ import type { Accounts } from '../domain/accounts'
 import { clientById, type Principal } from '../domain/clients'
 import type { Billing } from '../domain/subscription-billing'
 import { failureFields } from '../failure'
-import { accountRoutes, bodyLimitKb, requireAccount, requireScope } from './accounts'
+import { accountRoutes } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
-import { perAccountLimit, perClientLimit, requestsPerMinute } from './rate-limit'
+import { type PhotoRoutesFiles, photoBodyLimit, photoRoutes } from './photos'
+import {
+  atMostAtOnce,
+  atOnce,
+  perAccountLimit,
+  perClientLimit,
+  requestsPerMinute
+} from './rate-limit'
+import { bodyLimitKb, requireAccount, requireScope } from './route-answers'
 import { signInContract } from './sign-in-contract'
 import {
   cloudDataPaths,
@@ -38,6 +46,7 @@ export interface AppOptions {
   accounts: Accounts
   deleteAccount: DeleteAccount
   billing: Billing
+  photoFiles: PhotoRoutesFiles
   verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null
@@ -50,7 +59,7 @@ function isLocal(url: string): boolean {
 }
 
 const subscriptionPaths = [subscriptionPath, `${subscriptionPath}/*`] as const
-const accountPaths = ['/v1/me', '/v1/sync', ...subscriptionPaths] as const
+const accountPaths = ['/v1/me', '/v1/sync', '/v1/photos/*', ...subscriptionPaths] as const
 
 function forTheWebsite(response: Response): Response {
   const headers = new Headers(response.headers)
@@ -79,7 +88,7 @@ export function createApp(options: AppOptions) {
   const crossOrigin = cors({
     origin: origin => (options.allowedOrigins.includes(origin) ? origin : null),
     credentials: true,
-    allowMethods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowHeaders: ['authorization', 'content-type', 'x-zenbu-client'],
     exposeHeaders: ['retry-after', 'x-retry-after'],
     maxAge: 600
@@ -99,13 +108,28 @@ export function createApp(options: AppOptions) {
     app.use(path, requireScope('subscription'))
     app.use(path, subscriptionLimit)
   }
+  app.put('/v1/photos/*', requireScope('photos:write', 'profile'))
+  app.get('/v1/photos/*', requireScope('photos:read', 'profile'))
+  app.use('/v1/photos/*', perAccountLimit(requestsPerMinute.photos))
   for (const path of cloudDataPaths) app.use(path, requireCloudAccess(options.billing))
+  app.put('/v1/photos/*', atMostAtOnce(atOnce.uploads))
+  app.get('/v1/photos/*', atMostAtOnce(atOnce.downloads, true))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>
       context.json(errorBody('too_large', `The body is over ${bodyLimitKb} KB.`), 413)
   })
-  for (const path of ['/v1/auth/*', ...accountPaths]) app.use(path, limitedBody)
+  for (const path of ['/v1/auth/*', '/v1/me', '/v1/sync', ...subscriptionPaths]) {
+    app.use(path, limitedBody)
+  }
+  app.use(
+    '/v1/photos/*',
+    bodyLimit({
+      maxSize: photoBodyLimit,
+      onError: context =>
+        context.json(errorBody('too_large', 'The photo is over its size limit.'), 413)
+    })
+  )
 
   app.get('/healthz', async context =>
     (await databaseReady())
@@ -116,6 +140,7 @@ export function createApp(options: AppOptions) {
   accountRoutes(app, options.accounts, options.deleteAccount, databaseReady, options.allowedOrigins)
   subscriptionRoutes(app, options.billing, options.allowedOrigins)
   webhookRoutes(app, options.billing)
+  photoRoutes(app, options.photoFiles)
   signInContract(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {

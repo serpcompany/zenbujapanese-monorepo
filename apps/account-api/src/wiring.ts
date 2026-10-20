@@ -10,6 +10,7 @@ import { accountDeleter } from './domain/account-deletion'
 import { createAccounts } from './domain/accounts'
 import { cursorKey, cursors, searchKeys } from './domain/cursor'
 import { type PhotoStorage, photoFiles } from './domain/photo-files'
+import type { Billing } from './domain/subscription-billing'
 import { accountDeletedMessage } from './email/account-notices'
 import type { DevMailbox } from './email/mailbox'
 import type { Mailer } from './email/mailer'
@@ -25,6 +26,7 @@ interface ServiceParts {
   mailer: Mailer
   devMailbox: DevMailbox | null
   photoStorage: PhotoStorage | null
+  billing: Billing
 }
 
 export function wiredService(parts: ServiceParts) {
@@ -53,8 +55,10 @@ export function wiredService(parts: ServiceParts) {
         accountDeleted: (email, language) =>
           void mailer.send(accountDeletedMessage(email, language))
       },
+      parts.billing,
       sweepSoon
     ),
+    billing: parts.billing,
     photoFiles: files,
     verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), authConfig.publicUrl),
     allowedOrigins: authConfig.trustedOrigins,

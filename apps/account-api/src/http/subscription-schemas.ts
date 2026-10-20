@@ -7,6 +7,11 @@ export const subscriptionRequired = {
     "Syncing and the account's other cloud features need a subscription, and this account has none that is active. Nothing was applied: keep the changes on the device, and show the paywall. GET /v1/me/subscription says what to offer."
 }
 
+export const photoFilesNeedASubscription = {
+  subscription_required:
+    'Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.'
+}
+
 const statusMeanings = {
   none: 'The account has never had a subscription.',
   active: 'Paid through `expiresAt`. It renews then unless `willRenew` is false.',
@@ -74,7 +79,7 @@ export const SubscriptionSchema = z
     }),
     cloudAccess: z.enum(['subscribed', 'free', 'subscription_required']).openapi({
       description:
-        "What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
+        "What POST /v1/sync and the photo files' routes do for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
     }),
     appAccountToken: z.uuid().nullable().openapi({
       description:
@@ -92,6 +97,38 @@ export const SubscriptionSchema = z
       .openapi({ description: 'What to offer when `canSubscribe` is true.' })
   })
   .openapi('Subscription')
+
+const PlanSchema = z
+  .object({
+    price: z.string().openapi({ description: 'The Stripe price, one of `offers.website`.' }),
+    name: z.string().openapi({ description: "Stripe's name for the product." }),
+    amount: z.number().int().openapi({
+      description:
+        "Each period's price in the currency's smallest unit, as Stripe has it: cents, or yen."
+    }),
+    currency: z
+      .string()
+      .openapi({ description: 'Its ISO 4217 code, in lowercase, as Stripe has it.' }),
+    interval: z.enum(['day', 'week', 'month', 'year']),
+    intervalCount: z
+      .number()
+      .int()
+      .openapi({ description: 'How many intervals each period lasts.' })
+  })
+  .openapi('WebsitePlan')
+
+export const PlansSchema = z
+  .object({
+    plans: z.array(PlanSchema).openapi({
+      description:
+        'Each of `offers.website`, in its order, as Stripe describes it. Empty where Stripe is off.'
+    }),
+    trialDays: z.number().int().nullable().openapi({
+      description:
+        'The free trial a checkout gives this account, or null: none is set, or the account has subscribed before.'
+    })
+  })
+  .openapi('WebsitePlans')
 
 const websiteUrl = (what: string) =>
   z
