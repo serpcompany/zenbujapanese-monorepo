@@ -144,7 +144,7 @@ describe('the search results page on a Japanese page', () => {
   test('says in Japanese when nothing matches', () => {
     expect(
       readRenderedPage(render({ state: 'noResults', query: 'qzxvkj' }, null, 'ja')).noResults
-    ).toBe('一致する言葉は見つかりませんでした 別の日本語か英語で検索してみてください。')
+    ).toBe('一致する言葉は見つかりませんでした')
   })
 })
 
@@ -217,9 +217,7 @@ describe('the search results page', () => {
 
   test('says No Dictionary Matches, as the app does, when nothing matches', () => {
     const page = readRenderedPage(render({ state: 'noResults', query: 'qzxvkj' }))
-    expect(page.noResults).toBe(
-      'No Dictionary Matches Try another Japanese or English Search query.'
-    )
+    expect(page.noResults).toBe('No Dictionary Matches')
     expect(page.rows).toEqual([])
   })
 

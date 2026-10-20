@@ -116,6 +116,14 @@ final class AccountUITests: ZenbuUITestCase {
     tap(reveal(find("credits.licenses", in: app), in: app, scrolling: credits))
     tap(find("licenses.text.KANJIVG-CC-BY-SA-3.0.txt", in: app))
     waitUntil(find("credits.license-text", in: app), mentions: "CREATIVE COMMONS PUBLIC LICENSE")
+    for (file, copyright) in [
+      ("SENTRY-COCOA-NOTICES.txt", "Copyright (c) 2015 Sentry"),
+      ("ZIPFOUNDATION-MIT.txt", "Copyright (c) 2017-2025 Thomas Zoechling"),
+    ] {
+      goBack(in: app)
+      tap(reveal(find("licenses.text.\(file)", in: app), in: app))
+      waitUntil(find("credits.license-text", in: app), mentions: copyright)
+    }
   }
 
   func testAFrequencyDictionaryShowsItsDetailsAndTurnsOff() {

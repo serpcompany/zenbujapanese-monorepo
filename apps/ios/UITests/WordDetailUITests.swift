@@ -18,6 +18,31 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(menuChoice("Mark as Unknown", in: app))
   }
 
+  func testAMeaningSpeaksInEnglishAndLooksUpAGloss() {
+    let app = launch(["ZENBU_SPEECH_STAND_IN": "1"])
+    search("inu", in: app)
+    tap(
+      app.descendants(matching: .any)
+        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '犬'"))
+        .firstMatch)
+    let spoken = find("speech.spoken", in: app)
+    tap(find("word-detail.pronounce", in: app))
+    waitUntil(spoken, mentions: "ja-JP いぬ")
+    let meaning = find("word-detail.meaning.1", in: app)
+    tap(meaning)
+    waitFor(menuChoice("Copy", in: app))
+    tap(menuChoice("Speak", in: app))
+    waitUntil(spoken, mentions: "en-US dog, canine")
+    tap(meaning)
+    if device == .mac {
+      chooseFromSubmenu("Look Up", "canine", in: app)
+    } else {
+      tap(app.collectionViews.containing(.button, identifier: "speaker.wave.2").buttons["Look Up"])
+      tap(menuChoice("canine", in: app))
+    }
+    waitUntil(searchField(in: app), "value == %@", "canine")
+  }
+
   func testAddToListPutsTheWordInFavoritesAndANewList() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))

@@ -51,12 +51,13 @@ struct SourceCreditsTests {
   func licensesFollowTheCredits() throws {
     let shown = try #require(SourceCredits.shown)
     for file in BundledLicenseText.listed {
-      #expect(shown.credit(file.source) != nil, "\(file.source)")
+      let credited = file.source.map { shown.credit($0) != nil }
+      #expect(credited ?? (file.package != nil), "\(file.id)")
     }
     #expect(
       BundledLicenseText.listed.map { $0.title(in: shown) } == [
         "KanjiVG", "UniDic", "JLPT vocabulary lists", "TUBELEX", "Wikipedia Word Frequency Clean",
-        "Sudachi", "Kuromoji", "IPADIC", "Tatoeba", "DaKanji",
+        "Sudachi", "Kuromoji", "IPADIC", "Tatoeba", "DaKanji", "Sentry", "ZIPFoundation",
       ])
     let terms = BundledLicenseText.sourcesWithLinkedTerms.compactMap { shown.credit($0)?.license }
     #expect(terms.map(\.name) == ["EDRDG licence, CC BY-SA 4.0", "CC BY-SA 4.0", "CC BY 2.0 FR"])
@@ -83,7 +84,24 @@ struct SourceCreditsTests {
         "KANJIVG-CC-BY-SA-3.0", "UNIDIC-NEW-BSD", "JLPT-VOCABULARY-CC-BY-SA-4.0",
         "TUBELEX-BSD-3-CLAUSE", "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE",
         "SudachiLanguageTechnologyNotices", "LICENSE-2.0", "IPADIC", "TATOEBA-NOTICE",
-        "DAKANJI-MIT",
+        "DAKANJI-MIT", "Sentry", "ZIPFoundation",
+      ])
+  }
+
+  @Test("each license text Licenses lists is bundled, and each package's has its copyright line")
+  func licenseTextsAreBundled() {
+    for file in BundledLicenseText.listed {
+      #expect(file.contents?.isEmpty == false, "\(file.id)")
+    }
+    let packages = BundledLicenseText.listed.filter { $0.package != nil }
+    #expect(packages.map(\.package) == ["sudachi-swift", "sentry-cocoa", "zipfoundation"])
+    let copyrights = packages.map { file in
+      file.contents?.split(separator: "\n").first { $0.hasPrefix("Copyright ") }.map(String.init)
+    }
+    #expect(
+      copyrights == [
+        "Copyright 2026 Ilia Snezhkov", "Copyright (c) 2015 Sentry",
+        "Copyright (c) 2017-2025 Thomas Zoechling (https://www.peakstep.com)",
       ])
   }
 }

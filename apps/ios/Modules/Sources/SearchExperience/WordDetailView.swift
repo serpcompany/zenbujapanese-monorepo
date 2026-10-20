@@ -70,7 +70,7 @@ struct WordDetailView: View {
               pronounceLabel: frame?.pronounce ?? "",
               encounterMedia: photos.displayable,
               removeEncounterMedia: photos.remove,
-              pronounce: { speechSynthesisClient.speak(entry.reading) }
+              pronounce: { speechSynthesisClient.speak(entry.reading, .japanese) }
             )
             PartOfSpeechRow(
               title: page?.partOfSpeechRow ?? "", entryID: entry.id,
@@ -90,6 +90,7 @@ struct WordDetailView: View {
       .groupedList()
       .scrollDismissesKeyboard(.immediately)
       .accessibilityIdentifier("word-detail.screen")
+      .showingSpeechToUITests()
       .onChange(of: notes.editingNoteID) { _, noteID in
         noteEditorFocused = noteID != nil
         guard noteID != nil else { return }
@@ -144,7 +145,10 @@ extension WordDetailView {
     switch section.kind {
     case .meaning:
       Section(title) {
-        MeaningSection(senses: page?.senses ?? [])
+        MeaningSection(
+          senses: page?.senses ?? [],
+          actions: MeaningActions(
+            speechSynthesisClient: speechSynthesisClient, lookUp: AppLinkInbox.shared.lookUp))
       }
     case .frequency:
       Section(title) {

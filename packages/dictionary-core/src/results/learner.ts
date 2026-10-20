@@ -95,7 +95,7 @@ interface ResultsMenu {
 }
 
 export type LearnerResultsScreen =
-  | { state: 'noResults'; query: string; title: string; message: string }
+  | { state: 'noResults'; query: string; title: string }
   | {
       state: 'results'
       query: string

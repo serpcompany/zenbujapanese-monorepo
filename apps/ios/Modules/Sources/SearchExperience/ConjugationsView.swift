@@ -21,7 +21,7 @@ struct ConjugationsView: View {
     List {
       Section {
         ConjugationHeader(entry: entry, page: WordPage(entry), rule: conjugations.rule) {
-          speechSynthesisClient.speak(entry.reading)
+          speechSynthesisClient.speak(entry.reading, .japanese)
         }
       }
 
@@ -148,7 +148,7 @@ struct ConjugatedFormView: View {
           highlightedEnding: form.ending,
           pronounceLabel: form.pronounce,
           identifierPrefix: "conjugations.form",
-          pronounce: { speechSynthesisClient.speak(form.reading) }
+          pronounce: { speechSynthesisClient.speak(form.reading, .japanese) }
         )
       }
 
