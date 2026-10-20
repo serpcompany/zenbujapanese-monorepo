@@ -150,7 +150,7 @@
       "appStoreManaged": "You subscribed in the Zenbu Japanese app, so it’s managed in the App Store: change or cancel it in your Apple Account’s subscriptions.",
       "openAppStore": "Open your App Store subscriptions",
       "payingTwice": "You’re paying for two subscriptions, one in the App Store and one here. Cancel the one you don’t need where you bought it.",
-      "pitch": "A Zenbu subscription syncs your known words, lists, watch history, and bookmarked translations across the Zenbu apps, on every device you sign in to. Everything else in Zenbu stays free.",
+      "pitch": "A Zenbu subscription syncs your known words, lists, notes, photos, profile photo, settings, recent searches, watch history, and bookmarked translations across the Zenbu apps, on every device you sign in to. Your name, your username, and everything else in Zenbu stay free.",
       "subscribe": "Subscribe",
       "subscribeTo": "Subscribe to {plan}",
       "planPrice": "{price} {period}",

@@ -58,15 +58,19 @@ the learner doesn't need.
 first payment still on its way): each of the service's `offers.website` prices, in its order,
 with Stripe's name, the price in its currency for the page's language, its period, and a free trial
 when the service says this account would get one. The page reads the plans with the rest of the
-account, so they arrive with the section, in one paint. The section says what syncs and that
-everything else stays free, that Stripe's checkout page takes the payment, and that it renews until
-canceled, here, at any time. Where only the App Store sells it, the section says to subscribe in
+account, so they arrive with the section, in one paint. The section says what syncs (known words,
+lists, notes, photos, the profile photo, settings, recent searches, watch history, and bookmarked
+translations) and that the name, the username, and everything else stay free, that Stripe's
+checkout page takes the payment, and that it renews until canceled, here, at any time. Where only
+the App Store sells it, the section says to subscribe in
 the app; where neither does, or sync is free, there's no section. If Stripe doesn't answer, or
 none of the prices can be offered, it says the plans aren't available.
 
-- Source: #868; the service's `GET /v1/me/subscription/plans`.
+- Source: #868; the service's `GET /v1/me/subscription/plans`; #867 (notes, photos, the profile
+  photo, settings, and recent searches sync too, and the service's gate covers them and the photo
+  files, [`account-billing.md`](../../../../docs/agents/account-billing.md), The gate).
 - Check: Subscription tests, "offers each plan with its price and the trial, and opens Stripe
-  Checkout to come back here", "offers nothing while sync is free, as before the owner turns the
+  Checkout to come back here" (the list and what stays free), "offers nothing while sync is free, as before the owner turns the
   gate on", "shows nothing where neither store sells it, and sends to the app where only the App
   Store does", "says the plans can't be shown when Stripe doesn't answer, or none can be offered",
   and "shows the plans in Japanese, with their prices in yen"; Subscription spec, "a learner who

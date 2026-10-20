@@ -70,7 +70,12 @@ describe('the subscription on the account page', () => {
     await shows(page, '$49.99 a year')
     expect(page.textContent).toContain('$4.99 a month')
     expect(page.textContent).toContain('Starts with a 7-day free trial')
-    expect(page.textContent).toContain('Everything else in Zenbu stays free.')
+    expect(page.textContent).toContain(
+      'syncs your known words, lists, notes, photos, profile photo, settings, recent searches, watch history, and bookmarked translations across the Zenbu apps'
+    )
+    expect(page.textContent).toContain(
+      'Your name, your username, and everything else in Zenbu stay free.'
+    )
     await click(page, 'Subscribe to Zenbu Sync, $4.99 a month')
     expect(callTo(calls, 'POST /v1/me/subscription/checkout')[0]).toMatchObject({
       credentials: 'omit',
@@ -224,6 +229,12 @@ describe('the subscription on the account page', () => {
     const page = renderAccountView(settings(), 'ja')
     await shows(page, '月額￥600')
     expect(page.textContent).toContain('サブスクリプション')
+    expect(page.textContent).toContain(
+      '覚えた単語、リスト、メモ、写真、プロフィール写真、設定、検索履歴、視聴履歴、ブックマークした翻訳を'
+    )
+    expect(page.textContent).toContain(
+      '名前とユーザー名、そしてそのほかの機能はすべて無料のままです。'
+    )
   })
 })
 
