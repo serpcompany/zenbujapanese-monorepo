@@ -1,7 +1,12 @@
 import { existsSync, mkdirSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { changed, checkoutWith, giveContext } from './code-review-context-support'
+import {
+  changed,
+  checkoutWith,
+  giveContext,
+  giveContextAsACommand
+} from './code-review-context-support'
 import {
   bot,
   minutesAfterStart,
@@ -108,6 +113,19 @@ describe("the review's context", () => {
     expect(status).not.toBe(0)
   })
 
+  test('runs as the command the workflow starts: it writes the context, or fails the job', async () => {
+    const given = await giveContextAsACommand({ files })
+    expect(given.status).toBe(0)
+    expect(given.outputs.changed_files).toBe('6')
+    expect(given.context).toContain('# Repository rules for this review')
+    expect(given.output).toContain('Passed to the review: 6 changed files')
+    const refused = await giveContextAsACommand({ status: 403 })
+    expect(refused.status).toBe(1)
+    expect(refused.output).toContain(
+      "::error title=Couldn't read the pull request for the review::"
+    )
+  })
+
   test.each<[string, { status: number; headers: Record<string, string> } | undefined]>([
     ['is unavailable', undefined],
     ['says too many requests', { status: 429, headers: { 'retry-after': '1' } }],
@@ -128,18 +146,15 @@ describe("the review's context", () => {
     expect(run.requests).toHaveLength(9)
   })
 
-  test('asks again after five seconds when an answer never arrives, or is cut short', async () => {
-    const began = Date.now()
-    const runs = await Promise.all([
-      giveContext({ files, lostAnswers: 1 }),
-      giveContext({ files, lostBodies: 1 })
-    ])
-    for (const run of runs) {
-      expect(run.status).toBe(0)
-      expect(run.outputs.changed_files).toBe('6')
-      expect(run.requests).toHaveLength(9)
-    }
-    expect(Date.now() - began).toBeGreaterThan(4_900)
+  test.each([
+    ['never arrives', { lostAnswers: 1 }],
+    ['is cut short', { lostBodies: 1 }]
+  ])('asks again after five seconds when an answer %s', async (_, lost) => {
+    const run = await giveContext({ files, ...lost })
+    expect(run.status).toBe(0)
+    expect(run.outputs.changed_files).toBe('6')
+    expect(run.requests).toHaveLength(9)
+    expect(run.secondsWaited).toBe(5)
   })
 
   test("gives up at once on a refusal that waiting won't change", async () => {

@@ -208,6 +208,38 @@ export function runNodeStep(
   )
 }
 
+interface ScriptMachine {
+  fetch: typeof fetch
+  wait: (milliseconds: number) => Promise<void>
+  now: () => number
+  log: (line: string) => void
+}
+
+export function runNodeModule(
+  start: (
+    environment: Record<string, string | undefined>,
+    machine: ScriptMachine
+  ) => Promise<number>,
+  env: Record<string, string>,
+  route: Route,
+  files: Record<string, string> = {}
+): Promise<RunWithFiles & { secondsWaited: number }> {
+  return withFiles(files, paths =>
+    runInProcess(route, here => {
+      const machine = {
+        fetch: here.fetch as unknown as typeof fetch,
+        wait: (milliseconds: number) =>
+          new Promise<void>(resolve => here.setTimeout(() => resolve(), milliseconds)),
+        now: here.now,
+        log: here.say
+      }
+      start(runnerEnvironment(inProcessApi, env, paths), machine).then(status => {
+        if (status !== 0) here.exitWith(status)
+      }, here.crash)
+    })
+  )
+}
+
 export function runNodeScript(
   script: { path: string },
   env: Record<string, string>,
@@ -265,6 +297,7 @@ const inProcessApi = 'https://api.github.test'
 class Exited {}
 
 function virtualClock() {
+  const startedAt = Date.now()
   let now = 0
   let lastId = 0
   const timers = new Map<number, { due: number; fire: () => void }>()
@@ -288,6 +321,7 @@ function virtualClock() {
       now = timer.due
       return timer.fire
     },
+    now: () => startedAt + now,
     secondsWaited: () => now / 1000
   }
 }
@@ -325,10 +359,19 @@ function answeredInProcess(route: Route, requests: SentRequest[], running: () =>
   }
 }
 
-async function runInlineScript(
-  text: string,
-  env: Record<string, string | undefined>,
-  route: Route
+interface InProcess {
+  fetch: ReturnType<typeof answeredInProcess>
+  setTimeout: ReturnType<typeof virtualClock>['setTimeout']
+  clearTimeout: ReturnType<typeof virtualClock>['clearTimeout']
+  now: () => number
+  say: (...values: unknown[]) => void
+  exitWith: (code: number) => void
+  crash: (error: unknown) => void
+}
+
+async function runInProcess(
+  route: Route,
+  start: (here: InProcess) => void
 ): Promise<StepRun & { secondsWaited: number }> {
   const requests: SentRequest[] = []
   const clock = virtualClock()
@@ -338,31 +381,24 @@ async function runInlineScript(
   const say = (...values: unknown[]) => {
     if (running()) output += `${format(...values)}\n`
   }
+  const exitWith = (code: number) => {
+    if (running()) exitCode = code
+  }
   const crash = (error: unknown) => {
     if (error instanceof Exited || !running()) return
     say(error instanceof Error ? error.stack : error)
-    exitCode = 1
+    exitWith(1)
   }
-  const context = createContext({
-    process: {
-      env,
-      cwd: () => process.cwd(),
-      exit: (code = 0) => {
-        if (running()) exitCode = code
-        throw new Exited()
-      }
-    },
-    console: { log: say, error: say },
-    require: loadForAStep,
-    fetch: answeredInProcess(route, requests, running),
-    Headers,
-    URL,
-    AbortSignal: { timeout: () => new AbortController().signal },
-    setTimeout: clock.setTimeout,
-    clearTimeout: clock.clearTimeout
-  })
   try {
-    Promise.resolve(runInContext(text, context)).catch(crash)
+    start({
+      fetch: answeredInProcess(route, requests, running),
+      setTimeout: clock.setTimeout,
+      clearTimeout: clock.clearTimeout,
+      now: clock.now,
+      say,
+      exitWith,
+      crash
+    })
   } catch (error) {
     crash(error)
   }
@@ -377,4 +413,28 @@ async function runInlineScript(
     }
   }
   return { status: exitCode ?? 0, output, requests, secondsWaited: clock.secondsWaited() }
+}
+
+function runInlineScript(text: string, env: Record<string, string | undefined>, route: Route) {
+  return runInProcess(route, here => {
+    const context = createContext({
+      process: {
+        env,
+        cwd: () => process.cwd(),
+        exit: (code = 0) => {
+          here.exitWith(code)
+          throw new Exited()
+        }
+      },
+      console: { log: here.say, error: here.say },
+      require: loadForAStep,
+      fetch: here.fetch,
+      Headers,
+      URL,
+      AbortSignal: { timeout: () => new AbortController().signal },
+      setTimeout: here.setTimeout,
+      clearTimeout: here.clearTimeout
+    })
+    Promise.resolve(runInContext(text, context)).catch(here.crash)
+  })
 }

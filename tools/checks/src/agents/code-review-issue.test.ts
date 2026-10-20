@@ -136,11 +136,10 @@ describe('the issue given to the review', () => {
   })
 
   test('asks again after five seconds when GitHub answers the question with errors', async () => {
-    const began = Date.now()
     const run = await giveContext({ closes: [issue()], linksAnsweredWithErrorsFor: 1 })
     expect(run.status).toBe(0)
     expect(asksOf(run.requests)).toHaveLength(2)
-    expect(Date.now() - began).toBeGreaterThan(4_900)
+    expect(run.secondsWaited).toBe(5)
     expect(issueSection(run.context)).toContain('## #542: Alert on the server deploys')
   })
 
@@ -148,6 +147,7 @@ describe('the issue given to the review', () => {
     const run = await giveContext({ body: 'Closes #542' })
     expect(run.status).toBe(0)
     expect(asksOf(run.requests)).toHaveLength(3)
+    expect(run.secondsWaited).toBe(10)
     expect(issueSection(run.context).trim()).toBe(
       'GitHub links no closing issue to this pull request.'
     )
