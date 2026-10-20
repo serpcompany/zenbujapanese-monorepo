@@ -130,7 +130,11 @@ struct ZenbuAccountView: View {
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("zenbu-account.photos-wait")
       }
-      ForEach(AccountMessage.refusedPhotos(zenbuAccount.sync.state.refusedPhotos), id: \.self) {
+      ForEach(
+        AccountMessage.refusedPhotos(
+          zenbuAccount.sync.state.refusedPhotos,
+          profilePhoto: zenbuAccount.sync.state.refusedProfilePhoto), id: \.self
+      ) {
         Text($0)
           .foregroundStyle(.secondary)
       }

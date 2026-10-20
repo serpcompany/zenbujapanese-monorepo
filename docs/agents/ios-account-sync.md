@@ -92,7 +92,13 @@ sync; what the learner sees is in the product docs'
     never wait behind a library; each file that went is remembered
     (`uploadedFiles`) until its change's result, so a sync cut off mid-way doesn't send it again. A
     file the account refuses (`409`, `413`, `415`) drops that change, and the photo stays on the
-    device, named in `refusedPhotos` for Zenbu Account's message; one refused as too many goes
+    device, named in `refusedPhotos`, or the profile photo in `refusedProfilePhoto`, for Zenbu
+    Account's message. Any other `4xx` but `401`, `402`, and `429` (`photo_digest_mismatch`, for an
+    upload cut short, or `403`) drops the change too, so the rest of the queue goes, notes it the
+    same way, and keeps it in `retryNextLaunch` for the next launch; an upload that goes forgets
+    its refusal, as a new profile photo does. A file that's there but can't be read yet, as before
+    the device's first unlock, keeps its change and holds the files for the rest of the sync
+    (`filesWait`); one that's gone drops its change. One refused as too many goes
     again, with its words, at the next launch after a place frees (`photoRoomFreed`): a photo
     deletion from this device that the account applied at a new version, or one that comes down
     without `emptied` and newer than the device's copy, outside a full read when the device had no

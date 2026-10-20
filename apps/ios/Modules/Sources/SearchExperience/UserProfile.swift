@@ -95,6 +95,7 @@ final class UserProfile {
   }
 
   var photoData: Data? { try? Data(contentsOf: photoURL) }
+  var cantReadPhoto: Bool { FileManager.default.fileExists(atPath: photoURL.path) && photoData == nil }
 
   func applySyncedPhoto(_ data: Data) {
     guard let image = ImageCoding.image(from: data), Self.write(data, to: photoURL) else { return }

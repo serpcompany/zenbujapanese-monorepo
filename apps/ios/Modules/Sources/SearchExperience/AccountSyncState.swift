@@ -155,6 +155,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var goneSearches: [String] = []
   var uploadedFiles: [String] = []
   var refusedPhotos: [String: String] = [:]
+  var refusedProfilePhoto: String?
   var refusedNotes: [String] = []
   var photoRoomFreed = false
   var retryNextLaunch: [QueuedSyncChange] = []
@@ -195,6 +196,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
     uploadedFiles = try container.decodeIfPresent([String].self, forKey: .uploadedFiles) ?? []
     refusedPhotos =
       try container.decodeIfPresent([String: String].self, forKey: .refusedPhotos) ?? [:]
+    refusedProfilePhoto = try container.decodeIfPresent(String.self, forKey: .refusedProfilePhoto)
     refusedNotes = try container.decodeIfPresent([String].self, forKey: .refusedNotes) ?? []
     photoRoomFreed = try container.decodeIfPresent(Bool.self, forKey: .photoRoomFreed) ?? false
     retryNextLaunch =

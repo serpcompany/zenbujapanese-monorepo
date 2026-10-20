@@ -128,7 +128,9 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   brings it back to every device. Deleting a photo in the Media Library deletes it and its words
   everywhere, and a word added to it elsewhere since is dropped. A file the account refuses (over
   12 MB, not an image it takes, or past 1,000 photos) stays on the phone with its words, without
-  syncing, and Zenbu Account says how many and why; one past 1,000 goes again the next time the
+  syncing, and Zenbu Account says how many and why; one refused for another reason, such as an
+  upload cut short, goes again the next time the app opens, and a file the phone can't read yet,
+  as before its first unlock, waits for a later sync; one past 1,000 goes again the next time the
   app opens after a photo the account held is deleted, here or on another device. Removing a
   photo's last word frees no place: the account keeps it for 30 days. While the account has no
   photo storage, photos and their words wait, Zenbu Account
@@ -140,7 +142,8 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   after the seconds it says. The Media Library says how many photos are on their way, or, while
   syncing needs a subscription, that they come once the learner subscribes, and shows
   each as it arrives.
-- The profile photo set or removed on one device shows the same on the others; of two changes,
+- The profile photo set or removed on one device shows the same on the others, and one the
+  account refuses stays on the phone while Zenbu Account says why; of two changes,
   the one that syncs second gives way. A first sync fills an account whose photo was removed from
   the phone's, and signing in to a different account never gives it the last account's photo.
 - A setting changed on two devices takes the first to sync, and the other device shows it. Each

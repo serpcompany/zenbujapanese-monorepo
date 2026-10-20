@@ -161,6 +161,76 @@ struct AccountSyncPhotoTests {
     #expect(service.liveKeys(for: Fixture.email, entity: "knownWord").count == 1)
   }
 
+  @Test(
+    "a photo file refused for now, cut short on the way or without the scope, leaves the queue so the rest syncs, stays on the device, says so, and goes again at the next launch",
+    arguments: [StubReply.error(400, "photo_digest_mismatch"), .error(403, "insufficient_scope")])
+  func fileRefusedForNow(_ refusal: StubReply) async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    service.refuseFiles(refusal)
+    await save(on: taberu, in: phone)
+    phone.markKnown(Fixture.miru)
+    try await phone.signIn()
+
+    #expect(phone.sync.lastFailure == nil)
+    #expect(service.liveKeys(for: Fixture.email, entity: "knownWord").count == 1)
+    #expect(!phone.queuedOperations.contains("photo add \(photoID)"))
+    #expect(await words(in: phone) == ["食べる"])
+    #expect(
+      AccountMessage.refusedPhotos(phone.sync.state.refusedPhotos) == [
+        "1 photo couldn't sync, so it stays on this \(ThisDevice.name). Zenbu tries again the next time it opens."
+      ])
+
+    service.refuseFiles(nil)
+    await phone.launch()
+    try await phone.syncNow()
+    #expect(service.liveKeys(for: Fixture.email, entity: "photo").count == 1)
+    #expect(phone.sync.state.refusedPhotos.isEmpty)
+  }
+
+  @Test(
+    "a profile photo the account refuses stays on the device, Zenbu Account says why, and a new photo forgets it",
+    arguments: zip([413, 409, 403], ["too_large", "too_many_photos", "insufficient_scope"]))
+  func refusedProfilePhoto(_ status: Int, _ code: String) async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    try await phone.signIn()
+    service.refuseFiles(.error(status, code))
+    await phone.profile.setPhoto(try ProfilePhotoImage.png())
+    try await phone.syncNow()
+
+    #expect(phone.sync.state.refusedProfilePhoto == code)
+    #expect(!phone.queuedOperations.contains { $0.hasPrefix("profilePhoto set") })
+    let said = AccountMessage.refusedPhotos(
+      phone.sync.state.refusedPhotos, profilePhoto: phone.sync.state.refusedProfilePhoto)
+    #expect(said.count == 1)
+    #expect(said.first?.contains("profile photo") == true)
+
+    service.refuseFiles(nil)
+    await phone.profile.setPhoto(try ProfilePhotoImage.png(red: 0.1))
+    try await phone.syncNow()
+    #expect(phone.sync.state.refusedProfilePhoto == nil)
+    #expect(service.data(of: "profilePhoto:\(service.userID(for: Fixture.email))", for: Fixture.email) != nil)
+  }
+
+  @Test("a photo whose file can't be read yet, as before the device's first unlock, waits while the rest syncs, and goes once it can be read")
+  func unreadableFileWaits() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    await save(on: taberu, in: phone)
+    let file = phone.directory.appending(path: "Encounter Media/\(photoID).image").path
+    try FileManager.default.setAttributes([.posixPermissions: 0], ofItemAtPath: file)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: file) }
+    phone.markKnown(Fixture.miru)
+    try await phone.signIn()
+
+    #expect(phone.queuedOperations.contains("photo add \(photoID)"))
+    #expect(service.liveKeys(for: Fixture.email, entity: "knownWord").count == 1)
+    #expect(service.liveKeys(for: Fixture.email, entity: "photo").isEmpty)
+
+    try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: file)
+    try await phone.syncNow()
+    #expect(service.liveKeys(for: Fixture.email, entity: "photo").count == 1)
+    #expect(phone.queuedOperations.isEmpty)
+  }
+
   @Test("while the account has no photo storage, photos and their words wait, the rest syncs, and they go once it has")
   func photosUnavailable() async throws {
     let (service, phone, _) = await Fixture.twoPhones()

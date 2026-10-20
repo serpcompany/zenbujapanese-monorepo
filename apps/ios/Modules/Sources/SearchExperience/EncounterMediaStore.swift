@@ -214,6 +214,11 @@ actor EncounterMediaStorage {
     return try? Data(contentsOf: blobURL(mediaID))
   }
 
+  func cantReadFile(_ mediaID: String) async -> Bool {
+    await prepared()
+    return blobExists(mediaID) && (try? Data(contentsOf: blobURL(mediaID))) == nil
+  }
+
   func storeFile(_ data: Data, as mediaID: String) async -> Bool {
     await prepared()
     guard data.sha256 == mediaID else { return false }

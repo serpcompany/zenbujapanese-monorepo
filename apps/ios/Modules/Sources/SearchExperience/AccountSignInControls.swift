@@ -33,11 +33,46 @@ enum AccountMessage {
   static let photosWaitForStorage = String(
     localized: "Photos wait to sync until your Zenbu account can keep them. Everything else syncs.")
 
-  static func refusedPhotos(_ refused: [String: String]) -> [String] {
+  static let unsyncablePhotoCodes: Set<String> = ["too_large", "unsupported_photo"]
+
+  static func refusedPhotos(_ refused: [String: String], profilePhoto: String? = nil) -> [String] {
     let full = refused.values.filter { $0 == AccountSync.tooManyPhotos }.count
-    let unsyncable = refused.count - full
-    return [full > 0 ? accountFull(full) : nil, unsyncable > 0 ? unsyncablePhotos(unsyncable) : nil]
-      .compactMap { $0 }
+    let unsyncable = refused.values.filter(unsyncablePhotoCodes.contains).count
+    let retried = refused.count - full - unsyncable
+    return [
+      full > 0 ? accountFull(full) : nil, unsyncable > 0 ? unsyncablePhotos(unsyncable) : nil,
+      retried > 0 ? photosRetried(retried) : nil, profilePhoto.map(refusedProfilePhoto),
+    ].compactMap { $0 }
+  }
+
+  private static func photosRetried(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "1 photo couldn't sync, so it stays on this \(ThisDevice.name). Zenbu tries again the next time it opens."
+      )
+      : String(
+        localized:
+          "\(count) photos couldn't sync, so they stay on this \(ThisDevice.name). Zenbu tries again the next time it opens."
+      )
+  }
+
+  private static func refusedProfilePhoto(_ code: String) -> String {
+    if code == AccountSync.tooManyPhotos {
+      return String(
+        localized:
+          "Your Zenbu account holds as many photos as it can, so your profile photo stays on this \(ThisDevice.name). Delete some in the Media Library, and it syncs the next time Zenbu opens."
+      )
+    }
+    return unsyncablePhotoCodes.contains(code)
+      ? String(
+        localized:
+          "Your profile photo is too large, or a kind of image Zenbu can't sync, so it stays on this \(ThisDevice.name)."
+      )
+      : String(
+        localized:
+          "Your profile photo couldn't sync, so it stays on this \(ThisDevice.name). Zenbu tries again the next time it opens."
+      )
   }
 
   private static func accountFull(_ count: Int) -> String {

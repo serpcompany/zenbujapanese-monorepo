@@ -92,7 +92,11 @@ extension AccountSync {
         continue
       }
       guard let data = await heldFile(photoID) else {
-        state.queue.removeAll { $0.id == change.id }
+        if await mayReadLater(photoID) {
+          filesWait = true
+        } else {
+          state.queue.removeAll { $0.id == change.id }
+        }
         continue
       }
       do {
@@ -101,19 +105,42 @@ extension AccountSync {
         }
         photosUnavailable = false
         state.uploadedFiles.append(photoID)
+        state.forgetRefusal(ofFile: photoID, for: change)
         persist()
         sendable.append(change)
-      } catch AccountServiceError.refused(let status, let code, _, _)
-        where [409, 413, 415].contains(status)
-      {
-        state.queue.removeAll { $0.id == change.id }
-        if change.key.entity == SyncEntity.photo { state.refusedPhotos[photoID] = code }
       } catch AccountServiceError.refused(status: 503, _, _, _) {
         filesWait = true
         photosUnavailable = true
+      } catch AccountServiceError.refused(let status, let code, _, _)
+        where Self.refusesFile(status)
+      {
+        state.queue.removeAll { $0.id == change.id }
+        refuse(change, photoID: photoID, code: code, lasting: Self.lastingRefusals.contains(status))
       }
     }
     return sendable
+  }
+
+  private static let lastingRefusals: Set<Int> = [409, 413, 415]
+
+  private static func refusesFile(_ status: Int) -> Bool {
+    (400..<500).contains(status) && ![401, 402, 429].contains(status)
+  }
+
+  private func refuse(_ change: QueuedSyncChange, photoID: String, code: String, lasting: Bool) {
+    if !lasting {
+      state.retryNextLaunch.removeAll { $0.key == change.key }
+      state.retryNextLaunch.append(change)
+    }
+    if change.key.entity == SyncEntity.photo {
+      state.refusedPhotos[photoID] = code
+    } else {
+      state.refusedProfilePhoto = code
+    }
+  }
+
+  private func mayReadLater(_ photoID: String) async -> Bool {
+    await kept.media.cantReadFile(photoID) || userProfile.cantReadPhoto
   }
 
   static func fileUploaded(by change: QueuedSyncChange) -> String? {
@@ -133,6 +160,11 @@ extension AccountSync {
 
   private func requeueRefusedPhotos() async {
     state.photoRoomFreed = false
+    if state.refusedProfilePhoto == AccountSync.tooManyPhotos, let photo = userProfile.photoData {
+      state.refusedProfilePhoto = nil
+      let change = SavedItemChange.kept(KeptChanges.profilePhotoSet(photo.sha256))
+      state.enqueue(change.queued(in: state))
+    }
     let full = state.refusedPhotos.filter { $0.value == AccountSync.tooManyPhotos }.map(\.key)
     guard !full.isEmpty else { return }
     let media = await kept.media.keptPhotos()
@@ -167,7 +199,16 @@ extension AccountSyncState {
     switch kept.key.entity {
     case SyncEntity.wordNote: refusedNotes.removeAll { $0 == kept.key.entityID }
     case SyncEntity.photo where kept.operation == "delete": refusedPhotos[kept.key.entityID] = nil
+    case SyncEntity.profilePhoto: refusedProfilePhoto = nil
     default: return
+    }
+  }
+
+  mutating func forgetRefusal(ofFile photoID: String, for change: QueuedSyncChange) {
+    if change.key.entity == SyncEntity.photo {
+      refusedPhotos[photoID] = nil
+    } else {
+      refusedProfilePhoto = nil
     }
   }
 }
