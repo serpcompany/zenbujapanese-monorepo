@@ -9,6 +9,7 @@ import { errorBody } from './errors'
 import { atOnce, requestsPerMinute } from './rate-limit'
 import { json, refusal } from './refusals'
 import { failed, needsOneOf, refuse, unauthorized } from './route-answers'
+import { photoFilesNeedASubscription } from './subscription-schemas'
 
 const megabytes = photoLimits.bytes / 1024 / 1024
 const imageTypes = 'JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP'
@@ -67,6 +68,7 @@ const uploadPhoto = createRoute({
         "The bytes' SHA-256 isn't `photoId`: the upload was cut short or changed."
     }),
     401: unauthorized,
+    402: refusal(photoFilesNeedASubscription),
     403: refusal({
       insufficient_scope:
         "This app's access to the account doesn't include `photos:write` or `profile`."
@@ -112,6 +114,7 @@ const downloadPhoto = createRoute({
     },
     400: refusal({ bad_request: '`photoId` is not 64 lowercase hex digits.' }),
     401: unauthorized,
+    402: refusal(photoFilesNeedASubscription),
     403: refusal({
       insufficient_scope:
         "This app's access to the account doesn't include `photos:read` or `profile`."

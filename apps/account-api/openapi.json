@@ -2117,7 +2117,7 @@
               "free",
               "subscription_required"
             ],
-            "description": "What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
+            "description": "What POST /v1/sync and the photo files' routes do for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall."
           },
           "appAccountToken": {
             "type": [
@@ -5468,6 +5468,39 @@
               }
             }
           },
+          "402": {
+            "description": "`subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "subscription_required"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
           "403": {
             "description": "`insufficient_scope`: This app's access to the account doesn't include `photos:write` or `profile`.",
             "content": {
@@ -5814,6 +5847,39 @@
                           "type": "string",
                           "enum": [
                             "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "`subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "subscription_required"
                           ]
                         },
                         "message": {

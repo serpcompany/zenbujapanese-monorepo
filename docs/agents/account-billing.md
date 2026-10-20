@@ -106,7 +106,7 @@ every account syncs as before, and the stores are off until their settings are s
 
 | Route | What it does |
 | --- | --- |
-| `GET /v1/me/subscription` | The entitlement, `running`, `canSubscribe`, `cloudAccess` (what sync does for this app now), the `appAccountToken`, and the offers: the App Store product IDs and Stripe price IDs. |
+| `GET /v1/me/subscription` | The entitlement, `running`, `canSubscribe`, `cloudAccess` (what sync and photo files do for this app now), the `appAccountToken`, and the offers: the App Store product IDs and Stripe price IDs. |
 | `GET /v1/me/subscription/plans` | The website's plans before Checkout: each of `offers.website` with Stripe's name, amount, currency, and interval, read from Stripe at most every 5 minutes, and the free trial this account would get. A price Stripe can't describe as a fixed recurring amount is left out and logged by its ID. |
 | `POST /v1/me/subscription/apple` | The app sends a StoreKit 2 transaction after a purchase, a restore, or an update. |
 | `POST /v1/me/subscription/checkout` | Stripe Checkout's URL for one of the website's prices. |
@@ -124,8 +124,9 @@ The [API reference](../api/account-api.md) has every field and error code.
 - **Read the subscription** after signing in, when syncing on launch and on returning to the
   foreground, and after a purchase. Keep the answer with the account, and show it offline.
 - **The paywall** is where a paid feature starts, when `cloudAccess` is `subscription_required`
-  or a sync answers `402 subscription_required`. Keep the queued changes and stop syncing until the
-  subscription is `active`; everything on the device works as before.
+  or a sync or a photo file's upload or download answers `402 subscription_required`. Keep the
+  queued changes and the photos on the device, and stop syncing until the subscription is
+  `active`; everything on the device works as before.
 - **Offer** only when `canSubscribe` is true: the app `offers.appStore`, the website
   `offers.website`. Never offer a second subscription.
 - **Manage** each subscription in `running` where its `managedIn` says. `app_store`: the app opens
@@ -149,11 +150,13 @@ The [API reference](../api/account-api.md) has every field and error code.
 ## The gate
 
 `cloudDataPaths` in `src/http/subscription.ts` lists the routes that hold cloud data, and
-`requireCloudAccess` gates each, after the access token and before anything applies. Today it is
-`POST /v1/sync`, which every synced entity passes through, so a new entity is gated with no change
-here. A test walks every route in the contract and fails on one neither in `cloudDataPaths` nor on
-its list of routes kept free (signing in, the profile, the subscription, the webhooks), so a new
-route, such as #867's photos, must be put on one. Deleting the account and the dictionary are free.
+`requireCloudAccess` gates each, after the access token and before anything applies. Today they
+are `POST /v1/sync`, which every synced entity passes through, so a new entity is gated with no
+change here, and `/v1/photos/*`, which Hono matches for `/v1/photos` and every path under it, so
+every photo file's upload and download ([`account-photos.md`](account-photos.md)). A test walks
+every route in the contract and fails on one neither under `cloudDataPaths` nor on its list of
+routes kept free (signing in, the profile, the subscription, the webhooks), so a new route must be
+put on one. Deleting the account, its photo files with it, and the dictionary are free.
 
 `cloudAccess` (`src/domain/cloud-access.ts`) decides, from the settings: an account with an
 active subscription syncs; with `ACCOUNT_API_CLOUD_ACCESS=free`, everyone syncs; otherwise an app
@@ -206,8 +209,9 @@ Store Server API.
   revocation that isn't a refund.
 - `src/http/subscription.test.ts`: the entitlement, a website retry past 60 days, no record for
   the website's read, both stores at once, the app's transactions and whose they are, Checkout (an
-  open one expired, a paid one confirming, a pending one waiting), and the portal. `src/http/cloud-access.test.ts`: the gate, and every
-  route on it or kept free.
+  open one expired, a paid one confirming, a pending one waiting), and the portal.
+  `src/http/cloud-access.test.ts`: the gate on sync and photo files, off by default, deleting
+  staying free, and every route on it or kept free.
 - `src/http/delete-subscribed-account.test.ts`, `delete-with-stripe-off.test.ts`, and
   `delete-with-app-store-off.test.ts`: deletion with each store's subscription, a refunded purchase
   after it, with either store off, an App Store one that won't renew, and a website one retrying

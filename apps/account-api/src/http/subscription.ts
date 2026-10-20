@@ -30,7 +30,7 @@ import {
   SubscriptionSchema
 } from './subscription-schemas'
 
-export const cloudDataPaths = ['/v1/sync'] as const
+export const cloudDataPaths = ['/v1/sync', '/v1/photos/*'] as const
 
 export const subscriptionPath = '/v1/me/subscription'
 
@@ -70,7 +70,10 @@ export function requireCloudAccess(billing: Billing) {
     if (access === 'no_account') return refuse(context)
     if (access === 'subscription_required') {
       return context.json(
-        errorBody('subscription_required', 'Syncing needs a subscription. Nothing was applied.'),
+        errorBody(
+          'subscription_required',
+          'Syncing and photo files need a subscription. Nothing was applied.'
+        ),
         402
       )
     }

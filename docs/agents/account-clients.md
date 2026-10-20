@@ -460,7 +460,7 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 invalid_nonce`, `invalid_token`, `400 nonce_required` | Start the Apple or Google sign-in over, with a new nonce. |
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
-| `402 subscription_required` | Keep the queue; show the paywall ([billing](account-billing.md)). |
+| `402 subscription_required` | From `/v1/sync` or `/v1/photos`: keep the queue and the photos on the device; show the paywall ([billing](account-billing.md)). |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Read again from no cursor, as a full read (How to sync, step 5). |
 | `413 too_large` | The body is over 64 KB: send fewer mutations at a time. A photo's file is over 12 MB: keep the photo on the device only. |

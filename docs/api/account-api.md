@@ -355,6 +355,7 @@ The file of a Media Library photo or the profile photo, before the sync change t
 - **400** `bad_request`: `photoId` is not 64 lowercase hex digits.
 - **400** `photo_digest_mismatch`: The bytes' SHA-256 isn't `photoId`: the upload was cut short or changed.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
+- **402** `subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `photos:write` or `profile`.
 - **409** `too_many_photos`: The account holds 1,000 files, or an app with only `profile` holds the 2 it may. Keep the photo on the device; send it again once a photo is deleted, or set the profile photo to one of the two.
 - **413** `too_large`: The file is over 12 MB.
@@ -380,6 +381,7 @@ The bytes uploaded, with their type, streamed. A file never changes under its ID
 - **200**, `image/*`: The file.
 - **400** `bad_request`: `photoId` is not 64 lowercase hex digits.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
+- **402** `subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.
 - **403** `insufficient_scope`: This app's access to the account doesn't include `photos:read` or `profile`.
 - **404** `not_found`: The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync.
 - **404** `photo_file_missing`: The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it.
@@ -1285,7 +1287,7 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `sign_in_again` | 401 | [`GET /v1/auth/token`](#get-v1authtoken) |
 | `sign_in_only` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `subscription_belongs_to_another_account` | 409 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
-| `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync) |
+| `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
 | `too_many_attempts` | 403 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
 | `too_many_photos` | 409 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
@@ -1648,7 +1650,7 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
 - `managedIn` (`"app_store"`, `"website"`, or `null`, required): Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one.
 - `running` (array of [`RunningSubscription`](#runningsubscription), required): Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought.
 - `canSubscribe` (boolean, required): Whether to offer a subscription. False while one runs anywhere, in a grace period, a billing retry, or a pause too, so a learner is never offered a second.
-- `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
+- `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync and the photo files' routes do for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
 - `appAccountToken` (string (uuid) or null, required): The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes. The app that sells the subscription always gets one; another app gets null until the account first buys or is answered for that app, so no record is made for an account that never subscribes.
 - `offers` (object, required): What to offer when `canSubscribe` is true.
   - `appStore` (array of string, required): The App Store product IDs the app offers. Empty where the App Store is off.
