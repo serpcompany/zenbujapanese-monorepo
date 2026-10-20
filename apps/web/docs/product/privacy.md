@@ -105,17 +105,20 @@ names what an account keeps, by category, and why: the account (the email, and a
 and profile picture link if the learner or the provider at sign-up gives one), how they sign in
 (Apple, Google, or an emailed code, with their ID at Apple or Google), sessions (each device or
 browser, with its IP address and user agent), study data (known words and lists, and from the
-iPhone app the 50 most recently watched Player videos and the bookmarked Translate sentences),
-a subscription if the learner has one (where it was bought, its plan and status, when it renews
-or ends, and each payment, failed payment, refund, dispute, or card network's fraud warning with
-its amount and date, never card details), to
-unlock sync on every device and keep a record of what was paid, and a record of each synced
-change, so a change sent twice applies once. Expired sessions, codes,
-and counts go within an hour (said under the second table), and a removed video, list, or bookmark
-leaves only a record that it was removed. The app's profile syncs its name and username, which the
-account keeps anyway; the profile's photo and email, notes, photos, searches, settings, and whole
+iPhone app the 50 most recently watched Player videos, the bookmarked Translate sentences, notes,
+the Media Library's photos with the words they're on, settings such as Reading Aids and the chosen
+frequency dictionaries, and the 50 most recent searches), a subscription if the learner has one
+(where it was bought, its plan and status, when it renews or ends, and each payment, failed
+payment, refund, dispute, or card network's fraud warning with its amount and date, never card
+details), to unlock sync on every device and keep a record of what was paid, and a record of each
+synced change, so a change sent twice applies once. Expired sessions, codes, and counts go within
+an hour (said under the second table). The app's profile syncs its name, username, and photo too.
+Anything removed leaves only a record that it was removed, and a removed search only a code that
+can't be turned back into the query (an HMAC under the account's key). Photo files are kept in
+Cloudflare R2, apart from the database and its backups. The profile's email and whole
 conversations don't sync; a bookmarked sentence may be someone else's words, so only bookmarked
-ones leave the device.
+ones leave the device. Deleting the account deletes everything it synced, the photo files
+included.
 The account service emails only sign-in codes, a way to sign in added or removed, and a deletion's
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, subscribes and manages a subscription bought there, signs out,
@@ -126,13 +129,17 @@ syncs anything else.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
   sync); [`account-billing.md`](../../../../docs/agents/account-billing.md) (the subscription, the
-  ledger, and what deletion keeps, #868); [`account-clients.md`](../../../../docs/agents/account-clients.md) (The website); the app's
+  ledger, and what deletion keeps, #868); [`account-clients.md`](../../../../docs/agents/account-clients.md)
+  (The website); #867, the owner's decisions of 2026-10-18 (photos in R2, recent searches bounded
+  at 50, Translate's layout and conversations staying on the device), and the account service's
+  docs it adds on each synced entity, what a removal keeps, and photo files; the app's
   [Zenbu account and sync](../../../ios/docs/product/account-sync.md) docs;
   [Account pages](account.md).
-- Check: Privacy spec, "names each kind of data an account keeps, and why", and "says what stays on
-  the device, and that the app works without an account" (nothing sent signed out, "where our apps
-  or this website offer one", the app's profile, what doesn't sync). The email's uses and the website's lines: No
-  automated check yet.
+- Check: Privacy spec, "names each kind of data an account keeps, and why", "names what the iPhone
+  app syncs besides known words and lists", and "says what stays on the device, and that the app
+  works without an account" (nothing sent signed out, "where our apps or this website offer one",
+  the app's profile and photo, a removed search's code, R2, what doesn't sync, deletion, and the
+  website's subscription). The email's uses and the website's other lines: No automated check yet.
 
 **Tomodachi.** Its own section, `/legal/privacy/#tomodachi`, which the support page links to.
 Tomodachi needs no account or sign-in. It saves the learner's progress (Tomo, its words, and their
@@ -164,20 +171,21 @@ phone without scrolling sideways, in light and dark.
 
 **Who else handles your information.** The section opens by saying we don't sell or share
 personal information, then lists who handles it for us: Cloudflare (this website, downloads,
-requests to the servers, the backups, and forwarding the support address's email, through Email
-Routing), useSend (email, which keeps copies of what it sends), Lambda, Inc. (Lambda Labs, in the
-United States, the machines the account database runs on), Sentry (Functional Software, Inc., in
-the United States, the app's crash and problem reports), Ahrefs (Ahrefs Web Analytics, which
-counts the website's visits without cookies), Google (Google Tag Manager, which loads Ahrefs'
-script, the support mailbox, on Google Workspace, and sign-in with Google), Stripe (the payments
-for subscriptions bought on the website: it receives the email, payment details, and billing
-address, and keeps its own record of them under its own policy, also after the account is
+requests to the servers, the backups and the photo files, and forwarding the support address's
+email, through Email Routing), useSend (email, which keeps copies of what it sends), Lambda, Inc.
+(Lambda Labs, in the United States, the machines the account database runs on), Sentry (Functional
+Software, Inc., in the United States, the app's crash and problem reports), Ahrefs (Ahrefs Web
+Analytics, which counts the website's visits without cookies), Google (Google Tag Manager, which
+loads Ahrefs' script, the support mailbox, on Google Workspace, and sign-in with Google), Stripe
+(the payments for subscriptions bought on the website: it receives the email, payment details, and
+billing address, and keeps its own record of them under its own policy, also after the account is
 deleted; we never see a full card number), Apple (sign-in with Apple, and the payment for a
-subscription bought in our apps on iPhone, iPad, or Mac), and YouTube (Player). These companies may process information in the United States and
+subscription bought in our apps on iPhone, iPad, or Mac), and YouTube (Player). These companies
+may process information in the United States and
 other countries; the page names no particular safeguard. Adding anything to Google Tag Manager
 that uses cookies means updating the page and asking for consent where the law requires it.
 
-- Source: #563 decisions 1 to 3; #565 (the backups on R2); the owners' choice of useSend on
+- Source: #563 decisions 1 to 3; #565 (the backups on R2); #867 (the photo files on R2); the owners' choice of useSend on
   2026-10-07 ([`account-api.md`](../../../../docs/agents/account-api.md), Email); the owner's
   answers on #683, dated October 8, 2026 (production's Google Tag Manager container,
   `GTM-MCNL5QH4`, has one tag, a Custom HTML tag loading Ahrefs Web Analytics; production runs no
@@ -196,11 +204,15 @@ else) for 7 years, so a payment that arrives for it afterwards is refunded; the 
 after that (`billingRecordsKeptYears`, a proposal the owner sets); sessions
 until sign-out, or 60 days after their last use; sign-in codes 10 minutes; request counts by IP
 address a day after the last request; each synced change's record 30 days, and then until the next
-change synced; backups 30 days; crash and problem reports up to 90 days; support email as long as
-it's needed.
+change synced; a photo's file until the photo is deleted, or 30 days after its last word is
+removed; the records of what was removed, the latest 1,000 notes and 1,000 photos, the latest 500
+words removed from each photo, and 100 videos and 100 searches, and the rest until the account is
+deleted; backups 30 days; crash and problem reports up to 90 days; support email as long as it's
+needed.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Profiles and sync,
-  Deleting an account, Back up and restore); #574 (the hourly purge of what has expired); Sentry's
+  Deleting an account, Back up and restore); #574 (the hourly purge of what has expired); #867
+  (what a removal keeps, and photo files); Sentry's
   [data retention periods](https://docs.sentry.io/security-legal-pii/security/data-retention-periods/)
   (errors kept 30 days on the Developer plan and 90 days on Team, Business, and Enterprise, set
   when an event arrives). The organization's plan wasn't visible to agents on 2026-10-20, so

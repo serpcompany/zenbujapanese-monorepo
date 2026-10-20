@@ -1289,7 +1289,7 @@
     "account": {
       "heading": "Your Zenbu account",
       "intro": "While you're signed out, our apps send nothing to our account service. If you create or sign in to a Zenbu account where our apps or this website offer one, we keep:",
-      "removals": "When you remove a video, list, or bookmark, we keep only a record that it was removed, so your other devices follow. The iPhone app's profile syncs its name and username, which your account keeps anyway. The profile's photo and email, notes, photos, searches, settings, and whole Translate conversations don't sync. A sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. We'll update this policy before an app or this website syncs anything else.",
+      "removals": "Besides your study data, the iPhone app syncs its profile's name, username, and photo. When you remove something, such as a video, a list, a note, a photo, or a search, we keep only a record that it was removed, so your other devices follow, and a removed search keeps only a code that can't be turned back into it. We keep your photos' files in Cloudflare R2, apart from the account database and its backups. The profile's email and whole Translate conversations don't sync: a sentence you bookmark may be something someone else said, so only the sentences you bookmark leave your device. Deleting your account deletes everything it synced, your photos' files included. We'll update this policy before an app or this website syncs anything else.",
       "emails": "Our account service emails you only to send sign-in codes, to tell you when a way to sign in is added or removed, and to confirm that your account was deleted.",
       "website": "Where this website offers sign-in, your account there lets you change your name and username, manage how you sign in, subscribe and manage a subscription you bought here, sign out, and delete your account. It doesn't read your study data yet, and we'll update this policy before it does. Signing in uses cookies only to sign you in and keep you signed in, and the website remembers your theme and that you're signed in."
     },
@@ -1309,7 +1309,7 @@
         "why": "To keep you signed in, and to keep the service secure"
       },
       "studyData": {
-        "what": "Your study data: known words and lists, and from the iPhone app, the 50 videos you most recently watched in Player and the Translate sentences you bookmark",
+        "what": "Your study data: known words and lists, and from the iPhone app, the 50 videos you most recently watched in Player, the Translate sentences you bookmark, your notes, the photos in your Media Library with the words they're on, your settings, such as Reading Aids and the frequency dictionaries you chose, and your 50 most recent searches",
         "why": "To keep your devices and apps in step"
       },
       "subscription": {
@@ -1330,7 +1330,7 @@
     "providers": {
       "heading": "Who else handles your information",
       "intro": "We don't sell or share your personal information. These companies handle it for us, under their own terms:",
-      "cloudflare": "{provider} hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address. It processes routine request details, such as IP addresses.",
+      "cloudflare": "{provider} hosts this website, delivers our downloads, carries requests to our servers, stores our backups and your photos' files, and forwards email sent to our support address. It processes routine request details, such as IP addresses.",
       "useSend": "{provider} sends our email, so it gets your email address and the messages we send you, and keeps copies of them.",
       "stripe": "{provider} takes the payments for subscriptions bought on this website. It receives your email, payment details, and billing address, and keeps its own record of them under its own privacy policy, also after you delete your account; we never see your full card number.",
       "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
@@ -1372,6 +1372,14 @@
       "changes": {
         "what": "Records of each change you sync",
         "howLong": "30 days, and then until the next change you sync"
+      },
+      "photos": {
+        "what": "Your photos' files",
+        "howLong": "Until you delete the photo, or 30 days after you remove it from its last word"
+      },
+      "removed": {
+        "what": "Records of what you removed",
+        "howLong": "The latest 1,000 notes and 1,000 photos, the latest 500 words removed from each photo, and 100 videos and 100 searches; the rest until you delete your account"
       },
       "backups": {
         "what": "Backups of the account database",

@@ -35,6 +35,8 @@ const howLongWeKeepIt = [
   'codes',
   'requestCounts',
   'changes',
+  'photos',
+  'removed',
   'backups',
   'reports',
   'supportEmail'
