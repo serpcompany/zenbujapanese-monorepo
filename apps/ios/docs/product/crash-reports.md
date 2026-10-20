@@ -21,11 +21,13 @@ app's code it happened, to its developers through Sentry, and never the learner'
 conversations, or account details. On the Mac, the same switch is in Settings' Account pane.
 
 Turning it off stops reports at once, without waiting on the network, and a crash after that sends
-nothing. Turning it back on starts them again without a relaunch.
+nothing. It also deletes the reports still waiting on the device to be sent, so turning it back on
+never sends one from before. Turning it back on starts them again without a relaunch.
 
 Check: UI `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` (on at first, and off
 once flipped) and `testAccountListsEveryArea` (the row); package `CrashReporterSwitchTests` (off
-closes Sentry and on starts it again, against a stand-in for the SDK) and
+closes Sentry and deletes its waiting reports, and on starts it again, against a stand-in for the
+SDK) and
 `CrashReportingPolicyTests` (on until turned off, and a build without a destination that the
 switch can't start). The Mac's
 Settings pane is checked by hand while the Mac is on hold (2026-10-18).
@@ -79,5 +81,5 @@ extension, and the privacy manifest's Crash Data and Other Diagnostic Data).
 | By hand | Closest automated check |
 | --- | --- |
 | A crash, a freeze, and a handled failure each arrive in Sentry's `zenbujapanese-ios` as `qa`, symbolicated, with nothing the policy removes ([`ios-crash-reports.md`](../../../../docs/agents/ios-crash-reports.md#checking-a-report-arrives)) | `CrashReporterOptionsTests` and `CrashReportScrubberTests` |
-| With the switch off before launch, a crash sends nothing. Turning it off while the app runs isn't checked in the running app | `CrashReporterSwitchTests` (off closes the SDK), `CrashReportingPolicyTests`, and the UI switch test |
+| With the switch off before launch, a crash sends nothing. Turning it off in the running app deletes a report waiting offline; a crash after that isn't checked | `CrashReporterSwitchTests` (off closes the SDK), `CrashReportingPolicyTests`, and the UI switch test |
 | A crash that couldn't be sent arrives once the app is back online | None: Sentry keeps it on the device |

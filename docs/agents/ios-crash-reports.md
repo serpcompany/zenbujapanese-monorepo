@@ -12,8 +12,8 @@ the app has a crash-reporting SDK at all in
   - `CrashReporter`: `startAtLaunch()`, which `ZenbuJapaneseApp.init()` calls first, so a crash
     during the rest of launch is caught; `setEnabled(_:)` for the switch; `record(_:in:details:)`
     for handled failures; and `configure(_:dsn:environment:installID:bundleID:)`, every option.
-  - `CrashReportingSDK`: the SDK's start, close, and whether it runs, which the switch's tests
-    replace with a stand-in.
+  - `CrashReportingSDK`: the SDK's start, close, whether it runs, and its folder, which the
+    switch's tests replace with a stand-in.
   - `CrashReportingPolicy`: which build reports and as what, the switch's default, the install
     ID, Sentry's folder, and which breadcrumbs and contexts a report keeps.
   - `CrashReportScrubber`: what `beforeSend` and `beforeBreadcrumb` remove.
@@ -128,18 +128,23 @@ details only from values the app chose, never text a learner or a service wrote.
 `CrashReportsSection` is a stock `Toggle` (`account.send-crash-reports`) on Account, after Frequency
 Dictionaries, and in the Mac's Settings window. It stores `crash-reports.send` in defaults, on until
 turned off, and calls `CrashReporter.setEnabled`, which closes the SDK at once or starts it again.
-With the switch off at launch, Sentry isn't started at all. What checks it:
+Turning it off also deletes Sentry's folder, the options' `cacheDirectoryPath`, which sentry-cocoa
+documents as where it keeps events and raw crash data: a report waiting there to be sent would
+otherwise go when the switch is turned back on. With the switch off at launch, Sentry isn't started
+at all. What checks it:
 
 - `CrashReporterSwitchTests`, against a stand-in `CrashReportingSDK`: turning the switch off
-  closes a running SDK, turning it on starts it with the app's options, and a build with no
-  destination ignores it.
+  closes a running SDK and deletes a waiting report from its folder, turning it on starts it with
+  the app's options, a build with no destination ignores it, and the folder deleted is the one
+  the options set.
 - `CrashReportingPolicyTests`: on until turned off, and the real SDK never starts in a build with
   no destination.
 - `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff`: the row is on at first and
   off once flipped.
-- By hand (Checking a report arrives, step 3): with the switch off before launch, a crash sends
-  nothing. Turning it off while the app runs and then crashing hasn't been checked in the running
-  app, since the test crash comes 3 seconds after launch.
+- By hand (Checking a report arrives, steps 3 and 4): with the switch off before launch, a crash
+  sends nothing, and turning it off in Account while a report waits offline deletes the folder.
+  Turning it off while the app runs and then crashing hasn't been checked in the running app,
+  since the test crash comes 3 seconds after launch.
 
 ## Test switches
 

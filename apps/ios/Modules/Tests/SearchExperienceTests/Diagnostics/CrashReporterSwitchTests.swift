@@ -11,6 +11,8 @@ struct CrashReporterSwitchTests {
     var running = false
     var started: [Options] = []
     var closes = 0
+    let cacheDirectory = FileManager.default.temporaryDirectory
+      .appendingPathComponent("crash-reporting-switch-\(UUID().uuidString)").path
 
     var sdk: CrashReportingSDK {
       CrashReportingSDK(
@@ -22,8 +24,22 @@ struct CrashReporterSwitchTests {
         close: {
           self.closes += 1
           self.running = false
-        })
+        },
+        cacheDirectory: cacheDirectory)
     }
+
+    var pendingReport: String {
+      (cacheDirectory as NSString).appendingPathComponent("io.sentry/dsn-hash/envelopes/report")
+    }
+
+    func keepPendingReport() throws {
+      try FileManager.default.createDirectory(
+        atPath: (pendingReport as NSString).deletingLastPathComponent,
+        withIntermediateDirectories: true)
+      #expect(FileManager.default.createFile(atPath: pendingReport, contents: Data("{}".utf8)))
+    }
+
+    var hasPendingReport: Bool { FileManager.default.fileExists(atPath: pendingReport) }
   }
 
   private static let build = CrashReportingBuild(
@@ -74,6 +90,34 @@ struct CrashReporterSwitchTests {
     }
   }
 
+  @Test("turning the switch off deletes the reports Sentry keeps on the device, so none is sent later")
+  func turningOffDeletesPendingReports() throws {
+    try withDefaults { defaults in
+      let stand = StandInSDK()
+      defer { try? FileManager.default.removeItem(atPath: stand.cacheDirectory) }
+      stand.running = true
+      try stand.keepPendingReport()
+      CrashReporter.setEnabled(true, build: Self.build, defaults: defaults, sdk: stand.sdk)
+      #expect(stand.hasPendingReport)
+      CrashReporter.setEnabled(false, build: Self.build, defaults: defaults, sdk: stand.sdk)
+      #expect(!stand.hasPendingReport)
+      #expect(!FileManager.default.fileExists(atPath: stand.cacheDirectory))
+
+      try stand.keepPendingReport()
+      CrashReporter.setEnabled(false, build: Self.build, defaults: defaults, sdk: stand.sdk)
+      #expect(!stand.hasPendingReport)
+    }
+  }
+
+  @Test("the folder the switch empties is the one Sentry is told to keep its reports in")
+  func deletesSentrysOwnFolder() throws {
+    try withDefaults { defaults in
+      let options = CrashReporter.options(for: Self.build, defaults: defaults)
+      #expect(CrashReportingSDK.sentry.cacheDirectory == options.cacheDirectoryPath)
+      #expect(options.cacheDirectoryPath.hasSuffix("/\(CrashReporter.bundleID)/Sentry"))
+    }
+  }
+
   @Test("the offline test switch reaches Sentry only in a qa build")
   func offlineSwitchOnlyInQA() throws {
     try withDefaults { defaults in
@@ -90,11 +134,14 @@ struct CrashReporterSwitchTests {
   func noDestinationIgnoresTheSwitch() throws {
     try withDefaults { defaults in
       let stand = StandInSDK()
+      defer { try? FileManager.default.removeItem(atPath: stand.cacheDirectory) }
+      try stand.keepPendingReport()
       CrashReporter.setEnabled(true, build: nil, defaults: defaults, sdk: stand.sdk)
       stand.running = true
       CrashReporter.setEnabled(false, build: nil, defaults: defaults, sdk: stand.sdk)
       #expect(stand.started.isEmpty)
       #expect(stand.closes == 0)
+      #expect(stand.hasPendingReport)
     }
   }
 }

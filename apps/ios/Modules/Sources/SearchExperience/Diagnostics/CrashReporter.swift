@@ -34,11 +34,12 @@ public enum CrashReporter {
     _ enabled: Bool, build: CrashReportingBuild?, defaults: UserDefaults, sdk: CrashReportingSDK
   ) {
     guard let build else { return }
-    if enabled, !sdk.isEnabled() {
-      sdk.start(options(for: build, defaults: defaults))
-    } else if !enabled, sdk.isEnabled() {
-      sdk.close()
+    if enabled {
+      if !sdk.isEnabled() { sdk.start(options(for: build, defaults: defaults)) }
+      return
     }
+    if sdk.isEnabled() { sdk.close() }
+    try? FileManager.default.removeItem(atPath: sdk.cacheDirectory)
   }
 
   nonisolated static func record(
