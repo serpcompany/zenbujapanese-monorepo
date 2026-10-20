@@ -130,7 +130,7 @@ export const sourceCredits = {
     id: 'sudachi',
     name: 'Sudachi',
     url: 'https://github.com/WorksApplications/SudachiDict',
-    credit: 'Japanese word analysis for Search by Sudachi.rs and SudachiDict.',
+    credit: 'Japanese word analysis by Sudachi.rs and SudachiDict.',
     license: { name: 'Apache-2.0 · BSD-3-Clause · MIT' },
     clients: everyClient
   },

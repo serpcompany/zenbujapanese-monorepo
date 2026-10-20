@@ -95,7 +95,6 @@ struct ResultsList: Decodable, Hashable, Sendable {
 
 struct NoMatches: Decodable, Hashable, Sendable {
   let title: String
-  let message: String
 }
 
 enum ResultsScreen: Decodable, Hashable, Sendable {
