@@ -105,12 +105,20 @@
       "why": "Sudachi's pack catalog, which pins Sudachi's dictionary and where it comes from. Sudachi isn't in the release."
     },
     {
+      "path": "resources/SENTRY-COCOA-NOTICES.txt",
+      "why": "The licence of the Sentry crash-reporting SDK and the code it bundles."
+    },
+    {
       "path": "resources/SudachiLanguageTechnologyNotices.txt",
       "why": "Sudachi's notices, which the pack catalog names."
     },
     {
       "path": "resources/SudachiRuntime",
       "why": "Sudachi's character and unknown-word definitions, which the pack catalog pins."
+    },
+    {
+      "path": "resources/ZIPFOUNDATION-MIT.txt",
+      "why": "The licence of ZIPFoundation, which unpacks the packs the app downloads."
     }
   ]
 }
