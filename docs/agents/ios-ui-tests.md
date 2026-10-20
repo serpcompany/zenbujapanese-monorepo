@@ -20,7 +20,7 @@ gives up at its limit, and the helpers a test calls all wait through it:
 | `waitUntil(_:_:)`, `waitUntil(_:mentions:)`, `waitUntilGone` | The element meets a predicate, such as `isEnabled == true` | 90 s; `<element> never met <condition>` |
 | `waitUntil("the two lists changing places") { … }` | Anything a closure can read | 90 s; `<what> never happened` |
 | `appears(_:within:)` | The same, as an answer, for a step that may be tried again | The caller's: a third of the 90 s for a retried tap |
-| `assertOnScreen`, `firstReachable`, `tap`, `tap(_:toShow:)`, `focus`, `type`, `name`, `open`, `choose`, `reveal`, `waitForSheet` | What each needs before it acts or measures | 90 s, or a third of it for each try of a retried step |
+| `assertOnScreen`, `firstReachable`, `tap`, `tap(_:toShow:)`, `tapClearOfTheBars`, `focus`, `type`, `name`, `open`, `choose`, `reveal`, `waitForSheet` | What each needs before it acts or measures | 90 s, or a third of it for each try of a retried step |
 
 The 90 seconds is `patience`; `TEST_RUNNER_ZENBU_UI_TEST_PATIENCE=30` on the `xcodebuild` command
 shortens every wait, for an idle Mac. A passing test never runs to a limit, so the limit costs it
@@ -85,6 +85,12 @@ what it waited for and for how long.
   seen, until the row has a real frame above the list, and a frame that is empty for a moment
   keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
   forth twelve times without reaching the row.
+- **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
+  the window, and at the largest text size on iOS 27 that can be under the tab bar, so a tap there
+  reaches the bar. A tall row whose middle was 8 points above the bar still lost its tap to it.
+  `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
+  bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
+  middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being

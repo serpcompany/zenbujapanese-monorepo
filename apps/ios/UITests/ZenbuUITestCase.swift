@@ -318,9 +318,15 @@ class ZenbuUITestCase: XCTestCase {
   ) -> XCUIElement {
     guard !shown.exists else { return shown }
     tap(row, file: file, line: line)
+    return tapAgain(until: shown, file: file, line: line) { if row.exists { row.tap() } }
+  }
+
+  func tapAgain(
+    until shown: XCUIElement, file: StaticString, line: UInt, _ again: () -> Void
+  ) -> XCUIElement {
     for _ in 0..<2 {
       if appears(shown, within: Self.patience / 3) { return shown }
-      if row.exists { row.tap() }
+      again()
     }
     return waitFor(shown, file: file, line: line)
   }
