@@ -41,7 +41,8 @@ what it waited for and for how long.
   word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
   which no row may change its height and the opened sentence may not leave its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
-  looks at a frame, `comesTrue`'s wait between two looks, and three on the iPad and the Mac with
+  looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between an audit's warm-up
+  touch and the next gesture (below), and three on the iPad and the Mac with
   nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut pressed
   over a sheet, and the pointer moving off a headword before its picture. `pnpm verify waits` counts
   each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
@@ -98,6 +99,19 @@ what it waited for and for how long.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
   middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
+- **An audit ends with a touch on the navigation title.** XCUITest sends each gesture through a
+  virtual touchscreen that testmanagerd makes for it, and on the iOS 26.2 Simulator backboardd
+  sometimes registers that touchscreen too late, so the gesture never reaches the app. The
+  Simulator's log then says `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer
+  event … from unsupported service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a
+  previous touch down or range-in event … skipping event`. On 2026-10-20 it hit only the first
+  gesture after a pause of 8 s or more (4 of about 940 such gestures, and none of about 1,640 after
+  shorter pauses), and an audit is such a pause: the dark Account audit lost a Back tap, a swipe,
+  and a tap that way. So `audit` ends by tapping the frontmost navigation bar's title, which does
+  nothing anywhere in the app, waits 0.3 s, and fails if the screen changed; the walk's next
+  gesture then follows a short pause. In 250 audits each way, the tap straight after the audit met
+  the race once, and the tap after the warm-up never did. The Mac's tests send real pointer events,
+  so its audits skip it.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being

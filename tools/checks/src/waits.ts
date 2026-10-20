@@ -22,6 +22,11 @@ const allowedPauses: Readonly<Record<string, AllowedPauses>> = {
     proves:
       "nothing: they are comesTrue's wait between two looks and waitUntilStill's second between two looks at a frame"
   },
+  [ui('Accessibility/AccessibilityAudit.swift')]: {
+    pauses: 1,
+    proves:
+      "nothing: it spaces an audit's warm-up touch from the next gesture, so that gesture doesn't start the Simulator's touch system after a long pause"
+  },
   [ui('ExampleRowsUITests.swift')]: {
     pauses: 2,
     proves:
