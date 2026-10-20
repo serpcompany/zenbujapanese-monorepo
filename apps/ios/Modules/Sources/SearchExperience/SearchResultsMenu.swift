@@ -6,6 +6,24 @@ struct SearchResultsMenu: View {
   let chooseFilter: (ResultsChoice) -> Void
 
   var body: some View {
+    OutsetHitTarget(fillsWidth: true) {
+      status.hidden()
+      menuButton
+    }
+  }
+
+  private var status: some View {
+    HStack(spacing: 4) {
+      Label(menu.status, systemImage: "arrow.up.arrow.down")
+      Image(systemName: "chevron.down")
+        .imageScale(.small)
+        .accessibilityHidden(true)
+    }
+    .font(.footnote)
+    .foregroundStyle(.secondary)
+  }
+
+  private var menuButton: some View {
     Menu {
       picker(
         "Sort By", summary: menu.sort.summary, chosen: menu.sort.chosen,
@@ -18,14 +36,9 @@ struct SearchResultsMenu: View {
       )
       .accessibilityIdentifier("search.filter.words")
     } label: {
-      HStack(spacing: 4) {
-        Label(menu.status, systemImage: "arrow.up.arrow.down")
-        Image(systemName: "chevron.down")
-          .imageScale(.small)
-          .accessibilityHidden(true)
-      }
-      .font(.footnote)
-      .foregroundStyle(.secondary)
+      status
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .contentShape(.rect)
     }
     .buttonStyle(.plain)
     .accessibilityIdentifier("search.sort-menu")

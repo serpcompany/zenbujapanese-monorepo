@@ -33,9 +33,8 @@ Each behavior here ends with a **Check** naming the automated tests that prove i
   Simulator, and the Mac, so a package test checks all three.
 - **Core tests** (`packages/dictionary-core/src/`), named by file, such as
   `results/ordering.test.ts`. What the dictionary lists, orders, labels, and says is the shared
-  core's, which the app runs
-  ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)), so a core test checks a
-  rule for every platform and for the website.
+  core's, which the app runs ([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md)),
+  so a core test checks a rule for every platform and for the website.
 - **UI tests** (`apps/ios/UITests/`), `ZenbuJapaneseUITests`, which drive the built app on the
   same three, named as class and test, such as `SearchUITests.testAQueryWithNoMatchesSaysSo`. They
   use stand-ins only at the edge: an image for the camera, a sheet's answer for Apple's and
@@ -73,14 +72,12 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   window), and on the Mac
   `KeyboardAndWindowUITests.testANewWindowTakesTheShortcutsWhileTheFirstKeepsItsTab`; package
   `AppCommandTests` (window sizes).
-- **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in
-  Dictionary** (⌘F on the Mac) goes to Look Up and puts the cursor in its field; on iPad, iPadOS
-  keeps ⌘F for its own Find, so Find in Dictionary is in the menu bar without a working shortcut.
-  **Search an Image…** (⌘⇧I)
-  opens Translate and its **Image** alert, over whatever Translate is showing, and ⌘1 to ⌘4
-  switch to Look Up, Translate, Player, and Account.
-  With two windows open, a shortcut acts in the one used last. A website link opens in an open
-  window rather than a new one.
+- **Menus and keyboard shortcuts**, on the Mac and with a hardware keyboard: **Find in Dictionary**
+  (⌘F on the Mac) goes to Look Up and puts the cursor in its field; on iPad, iPadOS keeps ⌘F for
+  its own Find, so Find in Dictionary is in the menu bar without a working shortcut. **Search an
+  Image…** (⌘⇧I) opens Translate and its **Image** alert, over whatever Translate is showing, and
+  ⌘1 to ⌘4 switch to Look Up, Translate, Player, and Account. With two windows open, a shortcut
+  acts in the one used last. A website link opens in an open window rather than a new one.
   Check: iPad and Mac, UI `KeyboardAndWindowUITests` (⌘1 to ⌘4, ⌘⇧I, and on the Mac ⌘F and a
   second window);
   package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
@@ -173,6 +170,10 @@ iPhone-only API outside the adapters), and UI `LayoutUITests` (every tab fits th
 portrait, the iPad in both orientations, and the Mac's smallest window). By hand: the iPad beside
 another app ([iPad and Mac checks](../../../../docs/agents/ios.md#ipad-and-mac-checks)).
 
+## Accessibility
+
+Text sizes, touch targets, and the audits that check every screen: [Accessibility](accessibility.md).
+
 ## Furigana kanji highlight
 
 Wherever furigana appears over a run of kanji, a learner can tap one kanji to see which part of
@@ -182,10 +183,9 @@ compact furigana; nothing is spaced apart.
 
 Check: UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading`.
 
-The split comes from each kanji's own readings, including the sound changes compounds make
-(学校 is がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's
-reading exactly one way. Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no
-per-kanji highlight.
+The split comes from each kanji's own readings, including the sound changes compounds make (学校 is
+がっ・こう, 人々 is ひと・びと), and appears only when those readings split the word's reading exactly one way.
+Words read as a whole, such as 大人 (おとな) or 今日 (きょう), have no per-kanji highlight.
 
 Check: core `detail/kanji-split.test.ts`; package `JapaneseRubyTests` and the recorded
 `WordDetailConformanceTests`.
@@ -335,16 +335,17 @@ like any other; once deleted it is not created again. Signed in, Favorites is on
 device and Zenbu app ([Zenbu account and sync](account-sync.md)). Words and kanji are added
 from their page's **•••** menu (see [Dictionary](dictionary.md)).
 
-The Account row shows how many lists there are. Lists shows every list in the learner's order
-with its word count; two lists in one place, as after signing in on a second phone, show in the
-same order on every device. A learner can create a list, swipe a list to rename or delete it (a list
-that has words asks first), and open a list. In Edit, the learner drags lists to reorder them and
-taps a list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are trimmed, can't be
-empty, hold at most 500 characters (control characters become spaces), and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known words; the learner can search
-it by headword or reading, swipe a word to remove it from that list, or open its word page, found
-the same way as in Known Words. Its **•••** menu renames the
-list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
-offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+The Account row shows how many lists there are. Lists shows every list in the learner's order with
+its word count; two lists in one place, as after signing in on a second phone, show in the same
+order on every device. A learner can create a list, swipe a list to rename or delete it (a list that
+has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
+list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
+trimmed, can't be empty, hold at most 500 characters (control characters become spaces), and may
+repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known
+words; the learner can search it by headword or reading, swipe a word to remove it from that list,
+or open its word page, found the same way as in Known Words. Its **•••** menu renames the list,
+deletes it (asking first when it has words), or selects words: while selecting, the top bar offers
+Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming,
 deleting, and dragging a list into order) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
