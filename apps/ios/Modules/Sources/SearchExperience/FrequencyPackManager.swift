@@ -183,6 +183,7 @@ actor FrequencyPackManager {
       try persist()
     } catch {
       guard !Self.isCancellation(error) else { throw error }
+      CrashReporter.record(error, in: .frequencyPack, details: ["pack": packID.rawValue])
       failures[packID] =
         error as? FrequencyPackError == .checksumMismatch
         ? "Downloaded file failed checksum validation."

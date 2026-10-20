@@ -21,7 +21,7 @@ struct RecentSearchHistoryView: View {
               }
             }
             .accessibilityLabel(search.value)
-            .accessibilityValue("Recent search \(index + 1)")
+            .accessibilityValue("Recent lookup \(index + 1)")
             .accessibilityIdentifier("recent-search.\(index)")
             .listRowSeparator(index == 0 ? .hidden : .automatic, edges: .top)
             .swipeActions(edge: .trailing, allowsFullSwipe: false) {

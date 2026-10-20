@@ -7,7 +7,7 @@ final class ListsUITests: ZenbuUITestCase {
     let id = row.identifier.replacingOccurrences(of: "word-lists.list.", with: "")
     revealRowActions(on: row)
     tap(find("word-lists.rename.\(id)", in: app))
-    name("Anime S1", in: app, button: "Save")
+    name("Anime S1", in: app)
     let renamed = waitFor(labeled("Anime S1", in: app))
     revealRowActions(on: renamed)
     tap(find("word-lists.delete.\(id)", in: app))

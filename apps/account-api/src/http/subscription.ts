@@ -5,21 +5,21 @@ import type { Principal } from '../domain/clients'
 import type { Billing, SubscriptionView } from '../domain/subscription-billing'
 import type { Entitlement } from '../domain/subscriptions'
 import { languageHeader, languageOf } from '../language'
+import { onTheWebsite } from './accounts'
+import type { AccountEnv } from './env'
+import { errorBody } from './errors'
+import { requestsPerMinute } from './rate-limit'
+import { json, refusal } from './refusals'
 import {
   failed,
   malformed,
   needs,
   noScope,
-  onTheWebsite,
   refuse,
   tooLarge,
   tooMany,
   unauthorized
-} from './accounts'
-import type { AccountEnv } from './env'
-import { errorBody } from './errors'
-import { requestsPerMinute } from './rate-limit'
-import { json, refusal } from './refusals'
+} from './route-answers'
 import {
   AppleTransactionSchema,
   CheckoutRequestSchema,
@@ -30,7 +30,7 @@ import {
   SubscriptionSchema
 } from './subscription-schemas'
 
-export const cloudDataPaths = ['/v1/sync'] as const
+export const cloudDataPaths = ['/v1/sync', '/v1/photos/*'] as const
 
 export const subscriptionPath = '/v1/me/subscription'
 
@@ -70,7 +70,10 @@ export function requireCloudAccess(billing: Billing) {
     if (access === 'no_account') return refuse(context)
     if (access === 'subscription_required') {
       return context.json(
-        errorBody('subscription_required', 'Syncing needs a subscription. Nothing was applied.'),
+        errorBody(
+          'subscription_required',
+          'Syncing and photo files need a subscription. Nothing was applied.'
+        ),
         402
       )
     }

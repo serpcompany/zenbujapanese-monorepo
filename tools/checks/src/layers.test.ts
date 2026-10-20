@@ -56,6 +56,29 @@ test('keeps the on-device adapters free of the app and its screens', () => {
   expect(checkLayers([onDevice])).toEqual([])
 })
 
+test('keeps Sentry in the Diagnostics folders, in the app, its tests, and its layers', () => {
+  const sentry = source('import Foundation\n@_implementationOnly import Sentry\n')
+  const diagnostics = [
+    'apps/ios/Modules/Sources/SearchExperience/Diagnostics/CrashReporter.swift',
+    'apps/ios/Modules/Sources/SearchExperience/Platform/Diagnostics/CrashReportingPlatform.swift',
+    'apps/ios/Modules/Tests/SearchExperienceTests/Diagnostics/CrashReportScrubberTests.swift'
+  ]
+  expect(checkLayers(diagnostics, swiftLayers, sentry)).toEqual([])
+  const elsewhere = [
+    app,
+    'apps/ios/App/ZenbuJapaneseApp.swift',
+    'apps/ios/ShareExtension/Share.swift'
+  ]
+  expect(checkLayers(elsewhere, swiftLayers, sentry)).toEqual(
+    elsewhere.map(path => ({
+      path,
+      line: 2,
+      problem: expect.stringMatching(/^imports Sentry; only .*SearchExperience\/Diagnostics\//)
+    }))
+  )
+  expect(checkLayers([core], swiftLayers, sentry)[0]?.problem).toMatch(/may import only Foundation/)
+})
+
 const feature = 'apps/ios/Modules/Sources/SearchExperience/SearchView.swift'
 const adapters = 'apps/ios/Modules/Sources/SearchExperience/Platform/PlatformModifiers.swift'
 

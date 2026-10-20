@@ -3,12 +3,17 @@ import { updateProfile } from './profile-update'
 import type { AccountStore } from './store'
 import { syncer } from './sync'
 
-export function createAccounts(store: AccountStore, cursors: Cursors) {
+export function createAccounts(
+  store: AccountStore,
+  cursors: Cursors,
+  searchKeys: (userId: string) => string,
+  afterChanges: () => void = () => {}
+) {
   return {
     profile: (userId: string) => store.profile(userId),
     updateProfile: (userId: string, baseVersion: number, fields: Record<string, unknown>) =>
       store.withLockedAccount(userId, account => updateProfile(account, baseVersion, fields)),
-    sync: syncer(store, cursors)
+    sync: syncer(store, cursors, searchKeys, afterChanges)
   }
 }
 

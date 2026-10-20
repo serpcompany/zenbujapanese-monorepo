@@ -8,7 +8,7 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 
 - **Errors.** Every error is `{ "error": { "code": "...", "message": "..." } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn't list here, such as one from a Better Auth upgrade: handle it by its status.
 - **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.
-- **Bodies** are JSON, at most 64 KB (`413 too_large`).
+- **Bodies** are JSON, at most 64 KB (`413 too_large`), but a photo's upload, which is the photo's file.
 - **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.
 - **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).
 - **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`.
@@ -39,6 +39,8 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) | `accessToken` with `subscription` | Tell the service about an App Store purchase or restore |
 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe) | none | Stripe's events, for subscriptions bought on the website |
 | [`POST /v1/webhooks/apple`](#post-v1webhooksapple) | none | App Store Server Notifications V2, for subscriptions bought in the app |
+| [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) | `accessToken` with `photos:write`, or `accessToken` with `profile` | Upload a photo's file |
+| [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) | `accessToken` with `photos:read`, or `accessToken` with `profile` | Download a photo's file |
 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) | none | Email a sign-in code |
 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) | none | Sign in with the emailed code |
 | [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce) | none | A nonce for one Apple or Google sign-in |
@@ -162,7 +164,7 @@ Applies `mutations` in order, then answers with the changes after `cursor`. Ever
 - **400** `bad_request`: The body is not JSON, or not this shape.
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **402** `subscription_required`: Syncing and the account's other cloud features need a subscription, and this account has none that is active. Nothing was applied: keep the changes on the device, and show the paywall. GET /v1/me/subscription says what to offer.
-- **410** `invalid_cursor`: The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back.
+- **410** `invalid_cursor`: The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once.
 - **413** `too_large`: The body is over 64 KB.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.
@@ -331,6 +333,68 @@ The App Store's notification URL. The signed payload is checked with Apple's App
 - **413** `too_large`: The body is over 256 KB.
 - **500** `internal`: The event failed and was not recorded, so the store sends it again.
 - **503** `try_again`: The service couldn't check or apply the event now, and recorded nothing. The store sends it again.
+
+### `PUT /v1/photos/{photoId}`
+
+Upload a photo's file.
+
+The file of a Media Library photo or the profile photo, before the sync change that names it (`photo`'s `add`, or `profilePhoto`'s `set`). The body is the file's bytes, at most 12 MB, JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP; the service reads the type from the bytes, not from `Content-Type`, and keeps them as they are. Uploading a file the account holds changes nothing, unless its storage lost it, which this puts back. A file no photo names 24 hours after its upload is deleted. An account holds at most 1,000 files, the profile photo's and an emptied photo's for its 30 days included. An app with only `profile` holds at most 2 files it uploaded, the profile photo and the one replacing it, which may be ones the Media Library holds too; it's answered as though the library held nothing, `201` or `409`, so it learns nothing of the library, and may set only a file it uploaded as the profile photo.
+
+**Auth:** `accessToken` with `photos:write`, or `accessToken` with `profile`.
+
+**Path parameters:**
+
+- `photoId` (string, required, matching `^[0-9a-f]{64}$`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
+
+**Body** (`image/*`, required): The file's bytes.
+
+**Answers:**
+
+- **200**, [`PhotoFile`](#photofile): The account already held this file.
+- **201**, [`PhotoFile`](#photofile): The file is kept.
+- **400** `bad_request`: `photoId` is not 64 lowercase hex digits.
+- **400** `photo_digest_mismatch`: The bytes' SHA-256 isn't `photoId`: the upload was cut short or changed.
+- **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
+- **402** `subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.
+- **403** `insufficient_scope`: This app's access to the account doesn't include `photos:write` or `profile`.
+- **409** `too_many_photos`: The account holds 1,000 files, or an app with only `profile` holds the 2 it may. Keep the photo on the device; send it again once a photo is deleted, or set the profile photo to one of the two.
+- **413** `too_large`: The file is over 12 MB.
+- **415** `unsupported_photo`: The file isn't a JPEG, PNG, HEIC, HEIF, AVIF, GIF, WebP, TIFF, or BMP image.
+- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the service is taking 4 uploads at once, 2 from this account. Wait the seconds `Retry-After` says.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
+- **503** `photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.
+
+### `GET /v1/photos/{photoId}`
+
+Download a photo's file.
+
+The bytes uploaded, with their type, streamed. A file never changes under its ID, so the answer may be kept for good. An app with `photos:read` reads every file the account holds; one with only `profile` reads only the profile photo's.
+
+**Auth:** `accessToken` with `photos:read`, or `accessToken` with `profile`.
+
+**Path parameters:**
+
+- `photoId` (string, required, matching `^[0-9a-f]{64}$`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
+
+**Answers:**
+
+- **200**, `image/*`: The file.
+- **400** `bad_request`: `photoId` is not 64 lowercase hex digits.
+- **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
+- **402** `subscription_required`: Photo files, like syncing, need a subscription, and this account has none that is active. Nothing was kept or sent: keep the photo on the device, and show the paywall. GET /v1/me/subscription says what to offer.
+- **403** `insufficient_scope`: This app's access to the account doesn't include `photos:read` or `profile`.
+- **404** `not_found`: The account holds no file with that ID, or this app's scopes don't reach it. Never delete a photo for it: if the account deleted it, the photo's `delete` comes down in sync.
+- **404** `photo_file_missing`: The account names the file, but its storage hasn't it, as after a restore. Upload it again if the device has it; otherwise try again later. Never delete the photo for it.
+- **429** `too_many_requests`: This account sent more than 300 requests here from this app in the current minute, the app more than its limit from all its accounts together, or the account or the service is sending as many files as it may at once. Wait the seconds `Retry-After` says.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
+- **503** `photos_unavailable`: This service keeps no photos here yet. Keep the photo on the device, and try again later.
+
+**Headers:**
+
+- A 200 sends `Cache-Control`: `private, max-age=31536000, immutable`: the file under this ID never changes.
+- A 200 sends `ETag`: The photo ID, quoted.
+- A 200 sends `Content-Disposition`: `attachment`, with the photo ID as its file name.
+- A 200 sends `X-Content-Type-Options`: `nosniff`.
 
 ### `POST /v1/auth/email-otp/send-verification-otp`
 
@@ -910,6 +974,251 @@ Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
 }
 ```
 
+### Entity `wordNote`
+
+A note the learner wrote on a word or a kanji, or one an earlier app saved under a note identity no word takes now. A word may have several. An account holds at most 10,000. A deleted note's row keeps only its ID and version.
+
+- **ID** (`entityId`): The note's UUID, in either case; answers name it in lowercase.
+- **Read with:** `notes:read`
+- **As it is now** (a `put`'s `data`): [`WordNote`](#wordnote)
+
+**`write`**, with `notes:write`; `baseVersion` required. Writes the note whole: a new one at `baseVersion` 0, or a change to one at its current version. A write that matches the note is applied and changes nothing. A write at an older version conflicts with the note as it is now, so neither device's text is lost: keep yours as a new note on the same word, or, if `current`'s text is the one your change started from, write it again at `current`'s version. A write of a note deleted since `baseVersion` applies and brings it back: the deleter never saw that text. Past 10,000 notes it's rejected `too_many_notes`.
+
+Fields ([`NoteFields`](#notefields)), and no others:
+
+- `item` (string, required): A Language Reference ID (32 lowercase hex digits), `kanji:` and one kanji in Unicode NFC, or a note identity an earlier app saved (`wn1:` and 64 lowercase hex digits).
+- `text` (string, required): The note: 1 to 10,000 characters once trimmed, kept in Unicode NFC. Line breaks and tabs stay, and other control characters become spaces. Never cut: a longer note is refused.
+- `headword` (string or null, optional, at most 200 characters): The headword the note was saved on, if any.
+- `reading` (string or null, optional, at most 200 characters): Its reading, if any.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
+  "entity": "wordNote",
+  "operation": "write",
+  "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
+  "baseVersion": 0,
+  "fields": {
+    "item": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+    "text": "「見る」は目で、「観る」は映画を。",
+    "headword": "見る",
+    "reading": "みる"
+  }
+}
+```
+
+**`delete`**, with `notes:write`; `baseVersion` required. It applies only at the note's current version, so it deletes only what the learner saw: a note written elsewhere since stays, and the delete conflicts. Deleting a note the account hasn't is applied.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
+  "entity": "wordNote",
+  "operation": "delete",
+  "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
+  "baseVersion": 1
+}
+```
+
+### Entity `photo`
+
+A photo in the learner's Media Library, by its file, which `PUT /v1/photos/{photoId}` uploads first and `GET /v1/photos/{photoId}` downloads. The account keeps the bytes as the app sent them. A photo is shown while it's on a word; removing its last word empties it, which syncs as a `delete` marked `emptied: true` but keeps its file for 30 days, and a word added from elsewhere brings it back. A photo left with no word for a day is emptied too. An emptied photo's file counts toward the account's 1,000 for its 30 days, so the word that brings it back always finds it; then it's deleted, which syncs as a plain `delete`, freeing its place.
+
+- **ID** (`entityId`): The SHA-256 of the photo's file, in 64 lowercase hex digits.
+- **Read with:** `photos:read`
+- **As it is now** (a `put`'s `data`): [`Photo`](#photo)
+
+**`add`**, with `photos:write`; `baseVersion` not read. It always applies, once the account holds the file (else `photo_not_uploaded`): the same photo saved again after a delete or once emptied comes back. Adding one the account shows changes nothing. Send its words next, as `photoWord` adds.
+
+Fields ([`PhotoFields`](#photofields)), and no others:
+
+- `name` (string, required): The photo's name, such as its file's. Cut to 200 characters, with control characters made spaces; it may be empty.
+- `savedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
+  "entity": "photo",
+  "operation": "add",
+  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab",
+  "fields": {
+    "name": "Menu.jpg",
+    "savedAt": "2026-10-07T03:25:00Z"
+  }
+}
+```
+
+**`delete`**, with `photos:write`; `baseVersion` not read. The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
+  "entity": "photo",
+  "operation": "delete",
+  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab"
+}
+```
+
+### Entity `photoWord`
+
+A word or kanji a photo is on. A photo is on at most 500 words, and remembers its latest 500 removed ones; a deleted photo's words go when the account forgets the photo. A word the account forgets comes back past every version it had, so a remove from before can't take a later add, and a cursor from before its removal is refused `410 invalid_cursor`, so the device reads everything again. Adding a word journals its photo again, so a device that dropped the photo gets it back with the word.
+
+- **ID** (`entityId`): The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
+- **Read with:** `photos:read`
+- **As it is now** (a `put`'s `data`): [`PhotoWord`](#photoword)
+
+**`add`**, with `photos:write`; `baseVersion` not read. It always applies to a photo the account has, an emptied one too, which it brings back. To a deleted or unknown photo it's rejected `unknown_photo`: drop the word on the device, and the photo if no other word holds it. Past 500 words it's `photo_full`: keep the word on the device. Adding a word the photo is on is applied and changes nothing.
+
+Fields ([`PhotoWordFields`](#photowordfields)), and no others:
+
+- `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `savedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
+  "entity": "photoWord",
+  "operation": "add",
+  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+  "fields": {
+    "headword": "見る",
+    "reading": "みる",
+    "savedAt": "2026-10-07T03:25:00Z"
+  }
+}
+```
+
+**`remove`**, with `photos:write`; `baseVersion` required. It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
+  "entity": "photoWord",
+  "operation": "remove",
+  "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
+  "baseVersion": 1
+}
+```
+
+### Entity `profilePhoto`
+
+The profile's photo, a file uploaded with `PUT /v1/photos/{photoId}`. The name and username stay the profile's own, so changing one never conflicts with the other.
+
+- **ID** (`entityId`): The account's ID, or left out.
+- **Read with:** `profile`
+- **As it is now** (a `put`'s `data`): [`ProfilePhoto`](#profilephoto)
+
+**`set`**, with `profile`; `baseVersion` required. It applies only at the profile photo's current version (0 for none ever set), so two devices that change it conflict, and the second gets the photo as it is now. Setting the photo it has is applied and changes nothing. An app without `photos:read` may set only a file it uploaded itself (else `photo_not_uploaded`). The file it replaces is deleted, unless a Media Library photo is the same file.
+
+Fields ([`ProfilePhotoFields`](#profilephotofields)), and no others:
+
+- `photoId` (string, required, matching `^[0-9a-f]{64}$`): The SHA-256 of the photo file, uploaded first with `PUT /v1/photos/{photoId}`.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
+  "entity": "profilePhoto",
+  "operation": "set",
+  "baseVersion": 0,
+  "fields": {
+    "photoId": "02a3e298f1533f62558c58e4c70edcab9af5a50d62d925fd5390942020fb0fb8"
+  }
+}
+```
+
+**`remove`**, with `profile`; `baseVersion` required. It applies only at the current version, so a photo set elsewhere since stays, and the remove conflicts. It syncs as a `delete`.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
+  "entity": "profilePhoto",
+  "operation": "remove",
+  "baseVersion": 1
+}
+```
+
+### Entity `setting`
+
+One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:
+
+- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.
+- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.
+- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.
+- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.
+- `readingAids.translations` (`true` or `false`): Reading Aids: translations.
+- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.
+- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.
+- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.
+- `translate.furigana` (`true` or `false`): Translate's own furigana switch.
+- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.
+- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.
+- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.
+- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.
+- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.
+
+- **ID** (`entityId`): The setting's name, from the list above.
+- **Read with:** `settings:read`
+- **As it is now** (a `put`'s `data`): [`Setting`](#setting)
+
+**`set`**, with `settings:write`; `baseVersion` required. It applies only at the setting's current version (0 for one never set), so two devices that change one setting conflict, and the second gets the value as it is now; settings change apart, so changing one never conflicts with another. Setting the value it has is applied and changes nothing. A name the service doesn't know is rejected `unknown_setting`, and a value out of its kind `invalid_fields`: keep the device's value either way.
+
+Fields ([`SettingFields`](#settingfields)), and no others:
+
+- `value` (string, number, or boolean, required): The setting's value, of its kind: `x-sync-entities` lists each setting.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
+  "entity": "setting",
+  "operation": "set",
+  "entityId": "readingAids.furigana",
+  "baseVersion": 0,
+  "fields": {
+    "value": false
+  }
+}
+```
+
+### Entity `recentSearch`
+
+A search the learner made, as the app's recent searches list it. The account keeps the 50 with the latest `searchedAt`, and remembers the latest 100 it removed or pruned, as it does Player's Recent.
+
+- **ID** (`entityId`): The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.
+- **Read with:** `searches:read`
+- **As it is now** (a `put`'s `data`): [`RecentSearch`](#recentsearch)
+
+**`search`**, with `searches:write`; `baseVersion` required. A search of a query the account has applies whatever its base version, and the later `searchedAt` is kept. A search of a query the learner removed applies only at the removal's version, so one made before seeing the removal conflicts with the `delete`. A search past the 50 newest prunes the oldest, which syncs as a `delete`.
+
+Fields ([`SearchFields`](#searchfields)), and no others:
+
+- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its SHA-256, after Unicode NFC, is the `entityId`.
+- `searchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
+  "entity": "recentSearch",
+  "operation": "search",
+  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
+  "baseVersion": 0,
+  "fields": {
+    "query": "食べる",
+    "searchedAt": "2026-10-07T03:30:00Z"
+  }
+}
+```
+
+**`remove`**, with `searches:write`; `baseVersion` not read. The learner removed the search, or cleared them all, one `remove` each. It always applies; removing one the account has not is applied and changes nothing.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
+  "entity": "recentSearch",
+  "operation": "remove",
+  "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"
+}
+```
+
 ### Rejected mutations
 
 A `rejected` result's `error.code`. A rejection is final for that mutation ID.
@@ -927,6 +1236,11 @@ A `rejected` result's `error.code`. A rejection is final for that mutation ID.
 | `too_many_lists` | The account has 500 lists. |
 | `list_full` | The list has 5,000 words. |
 | `too_many_bookmarks` | The account has 2,000 bookmarked sentences. |
+| `too_many_notes` | The account has 10,000 notes. Keep the note on the device, untouched. |
+| `unknown_photo` | The photo word's photo isn't in the account, or was deleted: drop the word on the device, and the photo if no other word holds it. |
+| `photo_not_uploaded` | The account holds no file for that photo: upload it with `PUT /v1/photos/{photoId}`, then send the change again under a new ID. |
+| `photo_full` | The photo is on 500 words. Keep the word on the device. |
+| `unknown_setting` | The service syncs no setting of that name, as when it is older than the app. Keep the setting on the device, and send it again once the service knows it. |
 | `not_allowed` | The app's scopes don't include the operation's. |
 
 ## Error codes
@@ -942,14 +1256,14 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `apple_authorization_invalid` | 400 | [`DELETE /v1/me`](#delete-v1me) |
 | `apple_authorization_needed` | 400 | [`DELETE /v1/me`](#delete-v1me) |
 | `apple_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me) |
-| `bad_request` | 400 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
+| `bad_request` | 400 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `billing_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `client_mismatch` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `email_not_verified` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `email_unavailable` | 503 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `failed_to_unlink_last_account` | 400 | [`POST /v1/auth/unlink-account`](#post-v1authunlink-account) |
-| `insufficient_scope` | 403 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/get-session`](#get-v1authget-session), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
-| `internal` | 500 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
+| `insufficient_scope` | 403 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/get-session`](#get-v1authget-session), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `internal` | 500 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `invalid_cursor` | 410 | [`POST /v1/sync`](#post-v1sync) |
 | `invalid_email` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `invalid_fields` | 400 | [`PATCH /v1/me`](#patch-v1me) |
@@ -960,26 +1274,31 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `invalid_transaction` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `no_subscription` | 404 | [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal) |
 | `nonce_required` | 400 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
-| `not_found` | 404 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
+| `not_found` | 404 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `oauth_link_error` | 401 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `otp_expired` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
 | `payment_confirming` | 409 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
+| `photo_digest_mismatch` | 400 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
+| `photo_file_missing` | 404 | [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
+| `photos_unavailable` | 503 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
 | `provider_not_found` | 404 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `session_not_fresh` | 403 | [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account) |
 | `sign_in_again` | 403 | [`DELETE /v1/me`](#delete-v1me) |
 | `sign_in_again` | 401 | [`GET /v1/auth/token`](#get-v1authtoken) |
 | `sign_in_only` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `subscription_belongs_to_another_account` | 409 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
-| `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync) |
-| `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
+| `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid) |
+| `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
 | `too_many_attempts` | 403 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
-| `too_many_requests` | 429 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/jwks`](#get-v1authjwks), [`GET /v1/auth/get-session`](#get-v1authget-session), [`POST /v1/auth/sign-out`](#post-v1authsign-out), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `too_many_photos` | 409 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
+| `too_many_requests` | 429 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/jwks`](#get-v1authjwks), [`GET /v1/auth/get-session`](#get-v1authget-session), [`POST /v1/auth/sign-out`](#post-v1authsign-out), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `try_again` | 503 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
-| `unauthorized` | 401 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `unauthorized` | 401 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid), [`GET /v1/photos/{photoId}`](#get-v1photosphotoid), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `unknown_client` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `unknown_price` | 400 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `unknown_product` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `unreadable_event` | 400 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe) |
+| `unsupported_photo` | 415 | [`PUT /v1/photos/{photoId}`](#put-v1photosphotoid) |
 | `username_taken` | 409 | [`PATCH /v1/me`](#patch-v1me) |
 | `validation_error` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session) |
 | `version_conflict` | 409 | [`PATCH /v1/me`](#patch-v1me) |
@@ -1030,6 +1349,37 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 - `language` (`"ja"` or `"en"`, required): The language it was said in.
 - `bookmarkedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
 
+### NoteFields
+
+- `item` (string, required): A Language Reference ID (32 lowercase hex digits), `kanji:` and one kanji in Unicode NFC, or a note identity an earlier app saved (`wn1:` and 64 lowercase hex digits).
+- `text` (string, required): The note: 1 to 10,000 characters once trimmed, kept in Unicode NFC. Line breaks and tabs stay, and other control characters become spaces. Never cut: a longer note is refused.
+- `headword` (string or null, optional, at most 200 characters): The headword the note was saved on, if any.
+- `reading` (string or null, optional, at most 200 characters): Its reading, if any.
+
+### PhotoFields
+
+- `name` (string, required): The photo's name, such as its file's. Cut to 200 characters, with control characters made spaces; it may be empty.
+- `savedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+### PhotoWordFields
+
+- `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `savedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
+### ProfilePhotoFields
+
+- `photoId` (string, required, matching `^[0-9a-f]{64}$`): The SHA-256 of the photo file, uploaded first with `PUT /v1/photos/{photoId}`.
+
+### SettingFields
+
+- `value` (string, number, or boolean, required): The setting's value, of its kind: `x-sync-entities` lists each setting.
+
+### SearchFields
+
+- `query` (string, required): What was searched, as the app keeps it: 1 to 1,000 characters, with no control characters. Its SHA-256, after Unicode NFC, is the `entityId`.
+- `searchedAt` (string (date-time), required): ISO 8601, from 2000 on, by the device's clock; a time after the service's is taken as the service's.
+
 ### Profile
 
 - `id` (string, required): The Zenbu user ID. It never changes.
@@ -1064,9 +1414,10 @@ The profile changed since `baseVersion`. `current` is the profile as it is now.
 ### SyncAnswer
 
 - `results` (array of [`MutationResult`](#mutationresult), required): One per mutation, in order.
-- `changes` (array of [`Change`](#change), required): The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists come before their words, but a word can come on an earlier page than its list: hold it until the sync reaches `hasMore: false`.
+- `changes` (array of [`Change`](#change), required): The entities that changed after the cursor, each once, as they are now, including the ones this request changed. On a page, lists and photos come before their words, but a word can come on an earlier page than its list or photo: hold it until the sync reaches `hasMore: false`.
 - `cursor` (string, required): Opaque, and at most 200 characters. Keep it once the changes are applied, and send it next time.
 - `hasMore` (boolean, required): More changes are waiting: sync again with the new cursor.
+- `searchKey` (string, optional): To an app with `searches:read`: the account's key for recent searches' IDs, 64 hex digits. A recent search's `entityId` is the HMAC-SHA256 of its query, after Unicode NFC, under this key, so a removed search keeps nothing that reveals what was searched. Keep it with the account; it changes only if the service's secret does.
 
 ### MutationResult
 
@@ -1087,12 +1438,12 @@ One of:
   - `id` (string, required)
   - `status` (`"rejected"`, required)
   - `error` (object, required)
-    - `code` (`"invalid_fields"`, `"username_taken"`, `"unknown_entity"`, `"unknown_operation"`, `"invalid_mutation"`, `"mutation_id_reused"`, `"already_exists"`, `"unknown_list"`, `"too_many_lists"`, `"list_full"`, `"too_many_bookmarks"`, or `"not_allowed"`, required)
+    - `code` (`"invalid_fields"`, `"username_taken"`, `"unknown_entity"`, `"unknown_operation"`, `"invalid_mutation"`, `"mutation_id_reused"`, `"already_exists"`, `"unknown_list"`, `"too_many_lists"`, `"list_full"`, `"too_many_bookmarks"`, `"too_many_notes"`, `"unknown_photo"`, `"photo_not_uploaded"`, `"photo_full"`, `"unknown_setting"`, or `"not_allowed"`, required)
     - `message` (string, required)
 
 ### Change
 
-An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, a word removed from a list, a video removed or past the newest the account keeps, a bookmark removed, or one never there. A cleared known word is a `put` with `known: false`.
+An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`.
 
 One of:
 
@@ -1132,12 +1483,55 @@ One of:
   - `operation` (`"put"`, required)
   - `version` (integer, required)
   - `data` ([`BookmarkedSentence`](#bookmarkedsentence), required)
+- `entity` `"wordNote"`, `operation` `"put"`
+  - `entity` (`"wordNote"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`WordNote`](#wordnote), required)
+- `entity` `"photo"`, `operation` `"put"`
+  - `entity` (`"photo"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`Photo`](#photo), required)
+- `entity` `"photoWord"`, `operation` `"put"`
+  - `entity` (`"photoWord"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`PhotoWord`](#photoword), required)
+- `entity` `"profilePhoto"`, `operation` `"put"`
+  - `entity` (`"profilePhoto"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`ProfilePhoto`](#profilephoto), required)
+- `entity` `"setting"`, `operation` `"put"`
+  - `entity` (`"setting"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`Setting`](#setting), required)
+- `entity` `"recentSearch"`, `operation` `"put"`
+  - `entity` (`"recentSearch"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"put"`, required)
+  - `version` (integer, required)
+  - `data` ([`RecentSearch`](#recentsearch), required)
 - `operation` `"delete"`
-  - `entity` (`"knownWord"`, `"list"`, `"listWord"`, `"watchedVideo"`, or `"bookmarkedSentence"`, required)
+  - `entity` (`"knownWord"`, `"list"`, `"listWord"`, `"watchedVideo"`, `"bookmarkedSentence"`, `"wordNote"`, `"photo"`, `"photoWord"`, `"profilePhoto"`, `"setting"`, or `"recentSearch"`, required)
   - `entityId` (string, required)
   - `operation` (`"delete"`, required)
   - `version` (integer, required)
   - `data` (null, required)
+- `entity` `"photo"`, `operation` `"delete"`, `emptied` `true`
+  - `entity` (`"photo"`, required)
+  - `entityId` (string, required)
+  - `operation` (`"delete"`, required)
+  - `version` (integer, required)
+  - `data` (null, required)
+  - `emptied` (`true`, required): The photo was emptied, its last word removed, not deleted. Drop it and its words as for any delete, but no place among the account's files was freed: it keeps its file for 30 days, and a word added from elsewhere brings it back. Any other delete leaves this out.
 
 ### KnownWord
 
@@ -1179,6 +1573,43 @@ One of:
 - `language` (`"ja"` or `"en"`, required): The language the sentence was said in.
 - `bookmarkedAt` (string (date-time), required): When the learner bookmarked it, as the app said; a time after the service's is taken as the service's.
 
+### WordNote
+
+- `id` (string, required)
+- `itemId` (string, required): The word, kanji, or note identity it is on.
+- `text` (string, required)
+- `headword` (string or null, required)
+- `reading` (string or null, required)
+
+### Photo
+
+- `id` (string, required): The SHA-256 of its file: download it by this ID.
+- `name` (string, required)
+- `savedAt` (string (date-time), required)
+
+### PhotoWord
+
+- `photoId` (string, required)
+- `itemId` (string, required)
+- `headword` (string, required)
+- `reading` (string, required)
+- `savedAt` (string (date-time), required)
+
+### ProfilePhoto
+
+- `photoId` (string, required): Download it by this ID.
+
+### Setting
+
+- `name` (string, required)
+- `value` (string, number, or boolean, required)
+
+### RecentSearch
+
+- `id` (string, required)
+- `query` (string, required)
+- `searchedAt` (string (date-time), required)
+
 ### SyncRequest
 
 - `cursor` (string or null, optional, 1 to 200 characters): The `cursor` from the last answer whose changes the client applied. Leave it out, or send null, to start from the beginning.
@@ -1190,7 +1621,7 @@ One of:
 One change made on the device. `x-sync-entities` holds each entity and its operations, and `x-sync-rejections` each code a rejected result can carry.
 
 - `id` (string, required, matching `^[A-Za-z0-9_-]{8,64}$`): A client-made ID, unique for each mutation, such as a UUID. Sending the same mutation again under its ID never applies it twice, and gets the same outcome: applied at the same version, a conflict with the entity as it is then, or a rejection with the same `error.code`. Reusing an ID for a different mutation is rejected with `mutation_id_reused`.
-- `entity` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): `profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do.
+- `entity` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): `profile`, `knownWord`, `list`, `listWord`, `watchedVideo`, `bookmarkedSentence`, `wordNote`, `photo`, `photoWord`, `profilePhoto`, `setting`, `recentSearch`. Any other is rejected with `unknown_entity`, and the rest of the request still applies. A change the app's scopes don't allow is rejected with `not_allowed`, and the app reads only the entities its scopes do.
 - `operation` (string, required, matching `^[A-Za-z][A-Za-z0-9_-]{0,63}$`): One of the entity's operations, in `x-sync-entities`, with the scopes each needs, the fields it takes, and whether it reads `baseVersion`. Any other is rejected with `unknown_operation`.
 - `entityId` (string, optional, matching `^[^\p{Cc}\p{Cf}\s]{1,200}$`):
   - `profile`: The account's ID, or left out.
@@ -1199,6 +1630,12 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
   - `listWord`: The list's UUID, a slash, and the item: `<list>/<item>`.
   - `watchedVideo`: The YouTube video ID: 11 letters, digits, `-`, or `_`.
   - `bookmarkedSentence`: The sentence's UUID, in either case; answers name it in lowercase.
+  - `wordNote`: The note's UUID, in either case; answers name it in lowercase.
+  - `photo`: The SHA-256 of the photo's file, in 64 lowercase hex digits.
+  - `photoWord`: The photo's SHA-256, a slash, and the item: `<photo>/<item>`, the item as a note's is.
+  - `profilePhoto`: The account's ID, or left out.
+  - `setting`: The setting's name, from the list above.
+  - `recentSearch`: The HMAC-SHA256 of the query in UTF-8, after Unicode NFC, under the account's `searchKey` from the sync answer, in 64 lowercase hex digits: one query is one entity on every device, and a removed one keeps nothing that shows what was searched without the key. The examples use a key of 64 zeros.
 - `baseVersion` (integer, optional, at least 0): The version of the entity the change was made to, or 0 for one the client has never seen. If the entity has changed since, what happens is the operation's rule, in `x-sync-entities`, which also says which operations read it.
 - `fields` (map to string, number, boolean, or null, optional): What the operation sets: the operation's fields, in `x-sync-entities`. Each value is a string, number, boolean, or null.
 
@@ -1213,7 +1650,7 @@ One change made on the device. `x-sync-entities` holds each entity and its opera
 - `managedIn` (`"app_store"`, `"website"`, or `null`, required): Where it was bought, so where the learner changes, cancels, or fixes the payment of one still running: `app_store`, in the App Store's subscription settings, or `website`, through POST /v1/me/subscription/portal. A subscription that no longer runs keeps it, to say where it was bought; only `running` is managed. `null` when the account never had one.
 - `running` (array of [`RunningSubscription`](#runningsubscription), required): Every subscription still running for the account, in either store, each managed where it was bought. Usually one; two when the learner subscribed in both, which the app and the website show, so each can be managed or canceled where it was bought.
 - `canSubscribe` (boolean, required): Whether to offer a subscription. False while one runs anywhere, in a grace period, a billing retry, or a pause too, so a learner is never offered a second.
-- `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync does for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
+- `cloudAccess` (`"subscribed"`, `"free"`, or `"subscription_required"`, required): What POST /v1/sync and the photo files' routes do for this app now: `subscribed` and `free` sync, and `subscription_required` refuses with `402 subscription_required`, the app's cue for the paywall.
 - `appAccountToken` (string (uuid) or null, required): The account's `appAccountToken`: the app sets it on every App Store purchase, so the purchase belongs to this account. It never changes. The app that sells the subscription always gets one; another app gets null until the account first buys or is answered for that app, so no record is made for an account that never subscribes.
 - `offers` (object, required): What to offer when `canSubscribe` is true.
   - `appStore` (array of string, required): The App Store product IDs the app offers. Empty where the App Store is off.
@@ -1278,6 +1715,13 @@ A Stripe event, in the webhook endpoint's API version.
 ### AppleNotification
 
 - `signedPayload` (string, required): App Store Server Notifications V2's signed payload, checked with Apple's root certificate.
+
+### PhotoFile
+
+- `id` (string, required): The SHA-256 of the file's bytes.
+- `contentType` (string, required): The image type, read from the bytes themselves, such as `image/jpeg`.
+- `byteSize` (integer, required, 1 to 12,582,912)
+- `uploadedAt` (string (date-time), required)
 
 ### SignIn
 

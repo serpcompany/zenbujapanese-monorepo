@@ -2,18 +2,11 @@ import plistlib
 import unittest
 
 from project_settings import BUILD_CONFIGURATION, PROJECT, ROOT, build_setting
+from project_settings import share_extension_build_settings as extension_build_settings
 
 APP_ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
 EXTENSION = ROOT / "apps/ios/ShareExtension"
 APP_GROUP = "group.com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)"
-
-
-def extension_build_settings() -> list[str]:
-    return [
-        found["settings"]
-        for found in BUILD_CONFIGURATION.finditer(PROJECT.read_text(encoding="utf-8"))
-        if "INFOPLIST_FILE = ShareExtension/Info.plist;" in found["settings"]
-    ]
 
 
 class ShareExtensionTests(unittest.TestCase):

@@ -31,6 +31,7 @@ export interface SyncedAnswer {
   changes: SyncedChange[]
   cursor: string
   hasMore: boolean
+  searchKey?: string
 }
 
 export function useAccountService(options: { appleKey?: boolean; billing?: BillingStandIns } = {}) {
@@ -70,3 +71,17 @@ export function useAccountService(options: { appleKey?: boolean; billing?: Billi
       (await mutate(learner.token)).changes.filter(change => change.entity === entity)
   }
 }
+
+export const appliedAt = (...versions: number[]) =>
+  versions.map(version => ({ status: 'applied', version }))
+
+export const outcomesOf = (results: SyncedResult[]) =>
+  results.map(result => result.error?.code ?? result.status)
+
+export const deleted = (entity: string, entityId: string, version: number) => ({
+  entity,
+  entityId,
+  operation: 'delete',
+  version,
+  data: null
+})

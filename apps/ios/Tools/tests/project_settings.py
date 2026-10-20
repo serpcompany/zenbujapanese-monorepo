@@ -9,13 +9,21 @@ BUILD_CONFIGURATION = re.compile(
 )
 
 
-def app_build_settings(name: str = "") -> list[str]:
+def target_build_settings(info_plist: str, name: str = "") -> list[str]:
     return [
         found["settings"]
         for found in BUILD_CONFIGURATION.finditer(PROJECT.read_text(encoding="utf-8"))
         if (not name or found["name"] == name)
-        and "INFOPLIST_FILE = App/Info.plist;" in found["settings"]
+        and f"INFOPLIST_FILE = {info_plist};" in found["settings"]
     ]
+
+
+def app_build_settings(name: str = "") -> list[str]:
+    return target_build_settings("App/Info.plist", name)
+
+
+def share_extension_build_settings() -> list[str]:
+    return target_build_settings("ShareExtension/Info.plist")
 
 
 def build_setting(settings: str, key: str) -> str:

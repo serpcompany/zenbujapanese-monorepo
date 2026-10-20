@@ -5,7 +5,7 @@ automated check that enforces each behavior. It is updated with the implementati
 roadmap. The one exception is [Required, not built yet](not-built-yet.md),
 which lists features the website must have but doesn't yet, with the check each will get.
 
-The website is a public mirror of the app's dictionary. Its pages show what the app's Search tab
+The website is a public mirror of the app's dictionary. Its pages show what the app's Look Up tab
 shows for the same word or kanji, laid out as the #462 designs chose: stock shadcn components in
 one column, with sections in the app's order. The site has account pages ([Account
 pages](account.md)), open where an environment names an account service (staging and production),

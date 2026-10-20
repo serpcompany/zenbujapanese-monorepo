@@ -31,13 +31,13 @@ struct SearchView: View {
 
   var body: some View {
     searchScreen
-      .alert("Clear Recent Searches?", isPresented: $isConfirmingClearAll) {
+      .alert("Clear Recent Lookups?", isPresented: $isConfirmingClearAll) {
         Button("Cancel", role: .cancel) {}
         Button("Clear All", role: .destructive) {
           clearRecentSearches()
         }
       } message: {
-        Text("This removes every recent Search query from this device.")
+        Text("This removes every recent lookup from this device.")
       }
   }
 
@@ -59,11 +59,11 @@ struct SearchView: View {
         .dragToCloseSheet(sizeOnMac: AppWindow.inputPanelSize)
         .presentationBackground(SystemColor.panel)
     }
-    .navigationTitle("Search")
+    .navigationTitle("Look Up")
     .searchField(
       text: $query,
       isPresented: $isSearchPresented,
-      prompt: Text(dynamicTypeSize >= .xxLarge ? "Search" : "Search Japanese or English"),
+      prompt: Text(dynamicTypeSize >= .xxLarge ? "Look Up" : "Look up Japanese or English"),
       submit: submitTypedQuery
     )
     .searchFocused($isSearchFocused)
@@ -80,7 +80,7 @@ struct SearchView: View {
             Button(role: .destructive) {
               isConfirmingClearAll = true
             } label: {
-              Label("Clear Recent Searches", systemImage: "trash")
+              Label("Clear Recent Lookups", systemImage: "trash")
             }
             .accessibilityIdentifier("recent-search.clear-all")
           }
@@ -117,7 +117,7 @@ struct SearchView: View {
       )
 
     case .loading:
-      ProgressView("Searching")
+      ProgressView("Looking Up")
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityIdentifier("search.loading")
 
@@ -177,8 +177,6 @@ struct SearchView: View {
   private func noDictionaryMatches(_ noMatches: NoMatches) -> some View {
     ContentUnavailableView {
       Label(noMatches.title, systemImage: "magnifyingglass")
-    } description: {
-      Text(noMatches.message)
     }
     .accessibilityIdentifier("search.no-results")
   }

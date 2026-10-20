@@ -41,7 +41,7 @@ struct SearchExperienceRootView: View {
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
-    speechSynthesisClient = .live
+    speechSynthesisClient = LaunchHarness.speechSynthesis ?? .live
     kanjiStrokeOrderClient = .live
     imageTextRecognitionClient = .live
     naturalTranslationClient = .live

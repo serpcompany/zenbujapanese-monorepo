@@ -22,7 +22,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and Example Sentences, reading-refinement, kanji, and notes rows. | `ResultsScreen` |
-| `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, and a linked word's gloss. Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
+| `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, a linked word's gloss, and a meaning's glosses to speak and look up (`meaning-actions.ts`). Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
@@ -266,7 +266,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |
 | `HandwritingRecognitionLiveAdapter.swift` | `japaneseCandidates` | Which of Vision's candidates the handwriting panel offers, when the bundled model (`OfflineHandwritingRecognizer.swift`) gives none. The model's own candidates are offered as they are. |
 | `ResultsScreen.swift` (`SearchResultsView`, `SearchResultsMenu`, `ResultRow`, `RecognizedWordSheet`) | `resultsScreen`, `wordRows` | The results screen and a sheet's candidates |
-| `LearnerNotes.swift` (`SearchView`) | `notesInSearch` | The notes Search lists after its matches |
+| `LearnerNotes.swift` (`SearchView`) | `notesInSearch` | The notes Look Up lists after matches |
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |
@@ -443,8 +443,7 @@ records keyed by JMdict entry number. `retired()` answers the release's `Retired
 - `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
   a real SQL bug as no results.
 - A query's examples are cached, so the results page's row, its sentences section, and each page of
-  more share one retrieval. The caches of sentence lists keep a quarter as many entries, since each
-  holds up to 100 sentences.
+  more share one retrieval. Sentence-list caches hold a quarter as many entries, of up to 100 each.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
   meanings or readings isn't indexable (#465).
 

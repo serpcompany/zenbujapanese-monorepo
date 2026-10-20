@@ -21,7 +21,7 @@ conformance"). **SRR** is `search-results.json`, the results screen after the fr
 replayed field by field by `apps/dictionary-api/src/conformance/results.conformance.test.ts`
 ("search results conformance"), and rendered for seven of its cases by
 `src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
-app"). **ES** is `example-search.json`, what the Example Sentences screen that Search's examples
+app"). **ES** is `example-search.json`, what the Example Sentences screen that Look Up's examples
 row opens lists for 69 queries, replayed by
 `apps/dictionary-api/src/conformance/example-search.conformance.test.ts` ("example search
 conformance") and rendered for nine of its cases by
@@ -256,11 +256,11 @@ is left out.
 - Check: `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary,
   JLPT then YouTube"; WD `frequency`.
 
-**No results.** When no word and no example sentence matches and the query isn't one kanji, the
-page shows the app's "No Dictionary Matches" with its hint, "Try another Japanese or English
-Search query." A query of punctuation full-text search treats specially, such as a stray double
-quote (`eat"`), shows the same page rather than an error. So does a query over 200 characters,
-without searching: that is the dictionary service's limit, and the app has none.
+**No results.** When no word and no example sentence matches and the query isn't one kanji, the page
+shows the app's "No Dictionary Matches", with nothing under it. A query of punctuation full-text
+search treats specially, such as a stray double quote (`eat"`), shows the same page rather than an
+error. So does a query over 200 characters, without searching: that is the dictionary service's
+limit, and the app has none.
 
 - Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
   results); the 200-character limit: the dictionary service's request limit
@@ -1072,29 +1072,30 @@ Dictionary, and, where the account pages are open, Sign in, or Account once sign
 [Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
 Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
 Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
-one column. Below them, after a rule, a row of plain social icons with no boxes, each named "Zenbu
-Japanese on" its network and opening the account: YouTube, GitHub, X, Facebook, Reddit, Instagram,
-TikTok, LinkedIn, and Medium, in one row at every width. On phones the nine share the row evenly,
-each an 18-pixel mark in a tap target at least 24 pixels across (WCAG 2.5.8), so they fit a
-360-pixel phone without scrolling sideways; from 768 pixels each is a 20-pixel mark in a 36-pixel
-target. Each is the brand's own mark, drawn as inline SVG in the text color: Simple Icons' paths
-(CC0), and for LinkedIn, which Simple Icons doesn't carry, a trace of the In bug from LinkedIn's
-brand downloads (`components/social-links.tsx`). The copyright line, the language menu, and
-Sitemap end it. The legal index (`/legal/`) is in the Company menu rather than the footer.
+one column. After a rule comes the bottom row: the copyright, the social accounts, the language
+menu, and Sitemap, on one line from 768 pixels; at 320 and 375 pixels the copyright fills a line and
+the rest wrap below it. The accounts (YouTube, GitHub, X, Facebook, Reddit, Instagram, TikTok,
+LinkedIn, Medium) are a group named "Zenbu Japanese elsewhere", each the brand's 16-pixel mark in
+the text color: Simple Icons' paths (CC0), and for LinkedIn a trace of the In bug from LinkedIn's
+brand downloads (`components/social-links.tsx`). From 768 pixels they are 28-pixel ghost targets 4
+pixels apart, each named "Zenbu Japanese on" its network, then a decorative divider screen readers
+skip. Below 768 the row is hidden (out of the Tab order and the accessibility tree) and a Socials
+menu ("SNS" in Japanese), built as the language menu is, opens upward with each network's mark and
+name. Nothing scrolls sideways at 320 pixels, and every target is at least 24 pixels (WCAG 2.5.8).
+The legal index (`/legal/`) is in the Company menu, not the footer.
 
 - Source: #844 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
-  and the text's contrast); the owner's feedback on #679 (one compact row of icons on phones, in
-  place of the mockup's two rows of five).
-- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, on every page in both themes);
-  `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
-  Company, and Legal", "the footer stacks its columns into one on phones, and lays them side by side
-  from 768 pixels", "the footer leads with the brand linking home and its tagline", "one row of plain
-  brand icons, all nine on phones, links each account in src/lib/site.ts", and "the footer ends
-  with the copyright and the Sitemap"; `apps/web/e2e/site.spec.ts`, "the footer groups its links
-  under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap", "the footer
-  lays its columns side by side from 768 pixels, and stacks them on phones", and "the footer shows
-  all nine social icons in one row, with tap targets of 24 pixels or more" (at 360 pixels on
-  phones); smoke "the footer links the Privacy Policy".
+  and the text's contrast); #902 (round 2's option D: the Socials menu and 16-pixel marks), which
+  replaces the owner's call on #679 for one row of icons on phones.
+- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, every page, both themes);
+  `src/components/site-footer.test.tsx`, "the footer groups its links…", "the footer stacks its
+  columns…", "the footer leads with the brand…", "from 768 pixels the bottom row shows the nine
+  brand marks…", "from 768 pixels a divider sits between the icons…", "below 768 pixels a Socials
+  menu takes…", and "the footer ends with the copyright…"; `apps/web/e2e/footer.spec.ts`, "the
+  footer groups its links…", "the footer lays its columns…", "from 768 pixels the nine social
+  icons…" (768 and 1280, with the divider), "below 768 pixels the icons fold…" (opened at 320 and
+  375), and "Tab reaches the Socials menu…" (Enter, Space, Down Arrow); smoke "the footer links the
+  Privacy Policy".
 
 **Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
 its defaults: headwords and linked example words have furigana, examples show their translation,
@@ -1257,7 +1258,7 @@ say where), and without it, on the website, which redirects a kanji URL to the k
 `<team ID>.com.zenbujapanese.dictionary`, and claims `/dictionary/search/?*`,
 `/dictionary/kanji/?*`, and `/dictionary/*-*`, after excluding `/dictionary/*.json`, the JSON
 routes that load more of a page. The pattern can't say that a word URL ends in digits, so any
-other dictionary path with a dash, which the website answers 404, opens the app's Search screen.
+other dictionary path with a dash, which the website answers 404, opens the app's Look Up screen.
 The dictionary home and the site's other pages stay on the website. The file answers 200 as
 `application/json` at that exact path, without a redirect, and 404 until the site has the Apple
 team ID (`APPLE_TEAM_ID`, set by a person), so nothing claims the site's links before then.

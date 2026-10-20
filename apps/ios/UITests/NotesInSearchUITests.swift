@@ -90,7 +90,7 @@ final class NotesInSearchUITests: ZenbuUITestCase {
     let drawn = record.components(separatedBy: "; ")
     let sinceTheSearch = drawn.split(separator: "no search", omittingEmptySubsequences: false).last
     XCTAssertEqual(
-      sinceTheSearch.map(Array.init), [summary], "Search's notes were drawn as \(record)", file: file,
+      sinceTheSearch.map(Array.init), [summary], "Look Up's notes were drawn as \(record)", file: file,
       line: line)
   }
 

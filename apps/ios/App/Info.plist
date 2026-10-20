@@ -34,6 +34,8 @@
 	<string>$(ZENBU_BUNDLE_ID_SUFFIX)</string>
 	<key>ZenbuAccountServiceURL</key>
 	<string>$(ZENBU_ACCOUNT_API_URL)</string>
+	<key>ZenbuCrashReportsDSN</key>
+	<string>$(ZENBU_CRASH_REPORTS_DSN)</string>
 	<key>ZenbuGoogleIOSClientID</key>
 	<string>$(ZENBU_GOOGLE_IOS_CLIENT_ID)</string>
 </dict>

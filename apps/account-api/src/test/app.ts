@@ -16,6 +16,8 @@ export const noBillingStore: BillingStore = {
   settleOwedAction: async () => 'settled'
 }
 
+const noPhotos = { status: 'unavailable' } as const
+
 export const standIns: AppOptions = {
   release: 'abc123def456',
   databaseReady: async () => true,
@@ -36,6 +38,10 @@ export const standIns: AppOptions = {
     { web: null, store: null },
     { cloud: cloudIsFree, storeTesting: null, stores: storeTraits }
   ),
+  photoFiles: {
+    upload: async () => noPhotos,
+    download: async () => noPhotos
+  },
   verifyAccessToken: async () => null,
   allowedOrigins: [],
   devMailbox: null

@@ -18,17 +18,17 @@ isn't checked yet (Checked by hand, below). A phrase can't carry the word itself
 見る" in one breath isn't a phrase Siri knows. In Shortcuts it takes the text the step before it hands
 on, so a shortcut shown in the share sheet can pass it the shared text.
 
-From any tab, Translate included, Zenbu switches to Search and closes an open word sheet. A running
+From any tab, Translate included, Zenbu switches to Look Up and closes an open word sheet. A running
 Translate conversation keeps going. Then:
 
 - Japanese written or read as exactly one entry, such as 見る, or a form of exactly one, such as
-  食べた, opens that word's Word Detail on top of what Search was showing;
-- anything else is searched, as if it were typed into Search: a reading several entries share
+  食べた, opens that word's Word Detail on top of what Look Up was showing;
+- anything else is looked up, as if it were typed into Look Up: a reading several entries share
   (かみ), one kanji, whose results lead with its row, English or romaji, and a sentence, whose
-  words Search lists; and
-- blank text returns to the Search screen.
+  words Look Up lists; and
+- blank text returns to the Look Up screen.
 
-Check: core `embedded/dictionary.test.ts` (which text opens a word, and which is searched); package
+Check: core `embedded/dictionary.test.ts` (which text opens a word, and which is looked up); package
 `AppLinkTests.lookUpRoutes` on the bundled dictionary, and `AppLinkTests.inbox` (the action hands
 the window its link, once); UI `AppLinkUITests.testLookUpOpensTheWordsPageFromAnotherTab` and
 `testLookUpOfAWordWithSeveralEntriesShowsItsSearchResults`.

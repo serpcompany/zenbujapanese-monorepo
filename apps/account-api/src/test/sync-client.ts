@@ -24,6 +24,8 @@ interface Queued {
 }
 
 const listOf = (key: string) => key.slice('listWord:'.length).split('/')[0]
+const wordsOf: Record<string, string> = { list: 'listWord', photo: 'photoWord' }
+const forgettableKinds = new Set(['wordNote', 'photo', 'photoWord'])
 
 export class SyncClient {
   readonly local = new Map<string, Entity>()
@@ -53,12 +55,14 @@ export class SyncClient {
           ? null
           : { ...this.dataOf(entity, entityId), ...fields }
     this.local.set(key, { version: baseVersion, data })
-    if (entity === 'list' && operation === 'delete') this.dropWordsOf(entityId)
+    if (operation === 'delete') this.dropWordsOf(entity, entityId)
   }
 
-  private dropWordsOf(listId: string) {
+  private dropWordsOf(entity: string, parentId: string) {
+    const words = wordsOf[entity]
+    if (!words) return
     for (const key of [...this.local.keys()]) {
-      if (key.startsWith('listWord:') && listOf(key) === listId) this.local.delete(key)
+      if (key.startsWith(`${words}:${parentId}/`)) this.local.delete(key)
     }
   }
 
@@ -70,11 +74,19 @@ export class SyncClient {
       return
     }
     this.local.set(key, { version: change.version, data: change.data })
-    if (change.entity === 'list' && change.data === null) this.dropWordsOf(change.entityId)
+    if (change.data === null) this.dropWordsOf(change.entity, change.entityId)
+  }
+
+  private dropAllBut(seen: ReadonlySet<string>) {
+    for (const [key, entity] of [...this.local]) {
+      const forgettable = forgettableKinds.has(key.slice(0, key.indexOf(':')))
+      if (forgettable && entity.version > 0 && !seen.has(key)) this.local.delete(key)
+    }
   }
 
   async sync() {
     const waiting: Change[] = []
+    let rereading = this.cursor === null ? new Set<string>() : null
     for (;;) {
       const { queue } = this
       this.queue = []
@@ -85,6 +97,15 @@ export class SyncClient {
           ...(fields ? { fields } : {})
         }))
       })
+      if (answer.status === 410 && rereading) {
+        throw new Error(`a read from no cursor was refused: ${JSON.stringify(answer.body)}`)
+      }
+      if (answer.status === 410 && this.cursor !== null) {
+        this.queue = queue
+        this.cursor = null
+        rereading = new Set()
+        continue
+      }
       expect(answer.status, JSON.stringify(answer.body)).toBe(200)
       const body = answer.body as unknown as {
         results: {
@@ -110,13 +131,17 @@ export class SyncClient {
         if (result.current) this.apply(result.current, waiting)
         else if (entity && result.version !== undefined) entity.version = result.version
       })
-      for (const change of body.changes) this.apply(change, waiting)
+      for (const change of body.changes) {
+        rereading?.add(this.key(change.entity, change.entityId))
+        this.apply(change, waiting)
+      }
       this.cursor = body.cursor
       if (!body.hasMore) break
     }
     for (const change of waiting) {
       if (this.dataOf('list', change.entityId.split('/')[0] ?? '')) this.apply(change, [])
     }
+    if (rereading) this.dropAllBut(rereading)
   }
 
   state() {

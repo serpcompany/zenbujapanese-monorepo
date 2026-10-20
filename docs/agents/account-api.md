@@ -11,7 +11,8 @@ can unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays l
 nothing in an app waits on this service.
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
-service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/health`, and `/v1/webhooks`
+service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/photos`, `/v1/health`, and
+`/v1/webhooks`
 ([`api-servers.md`](api-servers.md), The API host).
 
 Run every command below from `apps/account-api`, after `pnpm install` at the repository root.
@@ -41,7 +42,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | --- | --- | --- |
 | `DATABASE_URL` | required | The Postgres database the service owns: `postgres://user:password@host:port/database`. It's never logged or repeated in an error. |
 | `ACCOUNT_API_URL` | required | The API host's origin, such as `https://api.zenbujapanese.com`. Its access tokens name it as their issuer and audience. |
-| `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs session tokens and encrypts the codes and the token-signing keys in the database. Changing it signs everyone out, and needs `delete from signing_keys` too, or no access token can be made. |
+| `ACCOUNT_API_SECRET` | required | At least 32 characters. It signs sessions, encrypts codes and signing keys, and makes search keys. Changing it signs everyone out, needs `delete from signing_keys` too, or no access token can be made, and changes every search key, so apps resend searches. |
 | `ACCOUNT_API_TRUSTED_ORIGINS` | none | The website origins, comma-separated, that may sign in with a cookie, such as `https://zenbujapanese.com`. |
 | `ACCOUNT_API_COOKIE_DOMAIN` | none | A domain to share the session cookie across, such as `zenbujapanese.com`. Leave it unset: the website's pages call the service from the browser (#468), so the cookie stays on the API host, and the website's Worker and pages never get it. |
 | `ACCOUNT_API_COOKIE_PREFIX` | `zenbu` | The start of the cookies' names. Staging sets `zenbu-staging`, so its cookies and production's could never overwrite each other, even on a shared domain. |
@@ -53,6 +54,7 @@ would send are at `http://localhost:8789/dev/mail` (Email, below).
 | `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_EMAIL_TOKEN` | | For `cloudflare`: the account, and an API token that may only send email. |
 | `EMAIL_FROM` | `Zenbu Japanese <support@zenbujapanese.com>` | The sender, which is also where replies go. Any address but `support@zenbujapanese.com` is refused. |
 | `EMAIL_ALLOWED_RECIPIENTS` | required to send | Who may be emailed: on staging, the testers, comma-separated (addresses, or domains as `@example.com`); in production, `everyone`. With `cloudflare` or `usesend` and nothing here, the service doesn't start, so staging never emails a stranger. |
+| `ACCOUNT_API_PHOTOS` | off | Where photo files go: `r2`, with `R2_ENDPOINT`, `R2_PHOTOS_BUCKET`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY`; or, on a local run only, `dev-memory`. Off, `/v1/photos` answers `503 photos_unavailable` ([`account-photos.md`](account-photos.md)). |
 | `PORT` | `8789` | The port it listens on. |
 | `ACCOUNT_API_RELEASE` | `local` | The release `/healthz` names. The image sets it to its commit. |
 | `ACCOUNT_API_CLOUD_*`, `STRIPE_*`, `APP_STORE_*` | off | [Billing's](account-billing-stores.md). |
@@ -70,6 +72,7 @@ which only the log records.
 | `GET /v1/me` | With an access token, the learner's profile: `id`, `name`, `username`, `email`, `version`, `createdAt`, and `updatedAt`. |
 | `PATCH /v1/me` | With an access token, changes the name, the username, or both: `{ "baseVersion": 3, "name": "...", "username": "..." }`. It answers `409 version_conflict`, with the profile as it is now in `current`, if the profile has moved past `baseVersion`, and `409 username_taken`. |
 | `POST /v1/sync` | With an access token, applies the device's changes and answers what changed after its cursor (Profiles and sync, below). |
+| `PUT /v1/photos/{photoId}`, `GET /v1/photos/{photoId}` | With an access token, uploads and downloads a photo's file by its SHA-256 ([`account-photos.md`](account-photos.md)). |
 | `DELETE /v1/me` | With an access token from a sign-in in the last 10 minutes, deletes the account: `{ "confirm": true }`, and for an account that signs in with Apple, `"appleAuthorizationCode"` from that sign-in, with the website's `"appleRedirectUri"` (Deleting an account, below). |
 | `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
 | `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
@@ -108,8 +111,8 @@ add one, is the [client guide](account-clients.md).
 `Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
 token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
 `401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies, and those sent to `/v1/auth`,
-are at most 64 KB (`413 too_large`). Each account may send 60 requests a minute to `/v1/me` and
-120 to `/v1/sync` from each app, and each app 30,000 a minute from all its accounts together
+are at most 64 KB (`413 too_large`), a photo's file 12 MB. Each account may send 60 requests a
+minute to `/v1/me`, 120 to `/v1/sync`, and 300 to `/v1/photos` from each app, and each app 30,000 a minute from all its accounts together
 (`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so an app stuck in a
 loop, or a stolen access token, can't flood the service. A browser can call the
 service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`,
@@ -201,69 +204,13 @@ How, and why, is in [`account-email.md`](account-email.md).
 
 ## Profiles and sync
 
-Six entities sync: the profile, known words, lists, and the words in each list (#572), and, from the
-iOS app, the videos the learner watched in its Player and the Translate sentences they bookmarked.
-Each has its own rule in `src/domain`, never blanket last-write-wins, and none needs a clock to
-settle a conflict: a change says the version it was made to, and the rule decides what a stale one
-does. `PATCH /v1/me` and a sync mutation change the profile through the same rule.
-
-- **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
-  Unicode NFC, as the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
-  version (0 for one never seen), and marking a known word or clearing one not known changes
-  nothing. So a mark made before the learner cleared the word loses to the clear, and a mark made
-  after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear that never saw a
-  later mark conflicts, and the learner sees the word Known again.
-- **List** (`list`, by its UUID, in either case, as Swift writes it uppercase; answers name it in
-  lowercase): `create` with a name and a position, then `update` at the current version, so two
-  renames conflict and the second gets the name as it is now. An update that already matches the
-  list is applied. A name is the app's rule: 1 to 500 characters once trimmed, with control
-  characters made spaces, so nothing the app makes is refused. `delete` wins over everything done
-  to the list since, renames and words added elsewhere too: the learner deleted it. It takes the
-  list's words with it, and its ID can't be used again.
-- **List word** (`listWord`, `<list>/<item>`): `add` always applies, and `remove` applies only at
-  the current version, so it removes only an add it saw: an add the remover never saw wins.
-- **Watched video** (`watchedVideo`, by its YouTube video ID, `src/domain/watch-history.ts`):
-  `watch` sends `watchedAt` (an ISO 8601 time from 2000 on, by the app's clock; one after the
-  service's time is taken as the service's) and any of the title, the channel (`author`), the
-  duration, the position (both in seconds, 0 to 10,000,000), and the comprehension (0 to 1). A
-  title or channel is cut to 200 characters, with control characters made spaces, and a blank one
-  is left out, so nothing the app makes is refused. A watch of a video the account has applies at
-  any version. The watch with the later `watchedAt` sets the place: an older watch that arrives
-  late, from a device that was offline or uploading what it had, only fills in fields the account
-  doesn't have, and a field a watch leaves out keeps its value. This is the one rule that reads an
-  app's clock, and only to order one learner's own watches. `remove` always applies, a pruned
-  video too, and a watch of a removed video applies only at the removal's version, so a position
-  sent by a device that hadn't seen the removal loses to it, and watching it again after seeing it
-  brings it back.
-- **Watch history stays bounded.** An account keeps the 50 videos with the latest `watchedAt`, as
-  the app's Recent does: a watch past that prunes the oldest, never refuses the new one, and the
-  prune syncs as a delete. A watch of a pruned video applies at any version, since the learner
-  didn't remove it. A removed or pruned video's row keeps only its ID, its version, and when it
-  was removed or pruned, and the account remembers the latest 100 of them by that time: older ones
-  are forgotten with their journal rows, so the table and its journal hold at most 150 rows an
-  account (the mutation results, kept 30 days as for every entity, name the videos too). A device
-  that missed a forgotten prune still ends with the 50 newest, since it keeps 50 by `watchedAt`
-  too. One that missed a forgotten removal keeps that video until newer ones push it out, and a
-  watch it sends for it brings it back, at version 1, since the account no longer knows it was
-  removed.
-- **Bookmarked sentence** (`bookmarkedSentence`, by the sentence's UUID, in either case,
-  answered in lowercase, `src/domain/bookmarks.ts`): one sentence the learner bookmarked in
-  Translate, never the conversation around it. `add` sends its `text` (cut to 2,000 characters),
-  its `translation` (cut to 4,000, or null), its `language` (`ja` or `en`), and `bookmarkedAt` (the
-  app's time, from 2000 on; the iOS app sends when the sentence was said for one bookmarked before
-  it synced bookmarks); control characters become spaces, and nothing else is taken, the
-  conversation's ID included. Like a list word, an add always applies, and adding one the account
-  has changes nothing; `remove` applies only at the current version, so an add the remover never
-  saw wins. A removed bookmark's row keeps only its ID and version, none of what was said.
-- **Limits:** 500 lists an account and 5,000 words a list (`too_many_lists`, `list_full`); a
-  word added to a deleted or unknown list is rejected (`unknown_list`); 2,000 bookmarked sentences
-  an account (`too_many_bookmarks`).
-- **Each keeps its history** as its version and a row that stays (a cleared word, a deleted list,
-  a removed list word), so a stale change finds the version it lost to. A deleted list's words are
-  deleted with it, and its row keeps no name.
-- **Order:** on a page, lists come before their words, but a list word can come a page before its
-  list, since the journal keeps each entity's latest change. A client holds such a word until the
-  sync reaches `hasMore: false`. A rejected change (`unknown_list`, say) is undone on the device.
+Twelve entities sync: the profile, known words, lists, and the words in each list (#572); from
+the iOS app, the videos the learner watched in its Player and the Translate sentences they
+bookmarked; and, since #867, notes, Media Library photos and their words, the profile photo,
+settings, and recent searches. Each has its own rule in `src/domain`, never blanket last-write-wins,
+and none needs a clock to settle a conflict: a change says the version it was made to, and the rule
+decides what a stale one does ([`account-entities.md`](account-entities.md) has all but the
+profile's). `PATCH /v1/me` and a sync mutation change the profile through the same rule:
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
   invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
@@ -281,9 +228,9 @@ does. `PATCH /v1/me` and a sync mutation change the profile through the same rul
 - **The journal**, `sync_changes`, holds each entity's latest change: a change replaces the
   entity's row, and a new account gets one from a trigger on `users`, so an account Better Auth
   makes is in it too. A sync answers each entity as it is now, so the older rows were never
-  needed, and the journal grows with an account's entities, not its changes. The trigger names the profile
-  in SQL, and the first-sync test fails if it and the domain disagree. Every write to an account's
-  journal holds that account's `users` row locked, so its entries commit in the order of their
+  needed, and the journal grows with an account's entities, not its changes. The trigger names
+  the profile in SQL, and the first-sync test fails if it and the domain disagree. Every write to
+  an account's journal holds its `users` row locked, so its entries commit in the order of their
   sequence, which the cursor relies on.
 - **A sync** applies its mutations in order, each in its own transaction. Then it reads up to
   `limit` of the account's journal entries after the cursor (100 unless the request says, at most
@@ -302,12 +249,15 @@ does. `PATCH /v1/me` and a sync mutation change the profile through the same rul
   and entity ID are plain printable text, so nothing a client sends can fail to store or hash.
 - **Unknown entities and operations** are rejected one by one, and the rest still apply, so an
   older service can answer a newer app.
-- **The cursor** is opaque: a journal position, encrypted and authenticated (AES-256-GCM) for the
-  account with a key derived from `ACCOUNT_API_SECRET`, so it shows nothing of the journal, and a
-  sync that reads nothing new answers the cursor it was sent. A cursor another account was given,
-  or one past the end of the journal, as when an environment goes back to a database it left, is
-  refused with `410 invalid_cursor` before anything applies. The client then syncs from no cursor
-  and keeps what comes back. Changing the secret makes every client do that once.
+- **The cursor** is opaque: a journal position and a floor, sealed with AES-256-GCM under a key from
+  `ACCOUNT_API_SECRET`, so a new secret refuses every cursor once; one from before floors has its
+  position as its floor. A cursor another account was given, one past the journal's end (as after
+  going back to an older database), or one whose floor is below the highest sequence the account
+  forgot (`forgotten_versions`) is refused `410 invalid_cursor` before anything applies, and the
+  client reads again from no cursor. An answer's floor is, after a cursor, the higher of its floor
+  and its position; from no cursor, the account's own journal head after the request's changes and
+  before its page. So a full read is refused only if a deletion made after it began is forgotten
+  before it's read, or, past that head, an entry it read is forgotten before its next request.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Deleting an account
@@ -335,15 +285,18 @@ else, and deletes only after a fresh sign-in.
   - anything else, Apple down or refusing the key: `503 apple_unavailable`, with nothing deleted,
     and the key's refusal logged as an error. The code may be used up, so the app gets a new one
     by signing in with Apple again.
-- **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions, its
-  synced profile, known words, lists, list words, watched videos, and bookmarked sentences, its
-  journal, its mutation results, and its billing customer, its website subscription canceled first;
-  and any sign-in code waiting for its email. What stays, with no account: its ID in
+- **What goes:** the account's row, and with it, by cascade, its ways to sign in, its sessions,
+  its synced profile, known words, lists, list words, watched videos, bookmarked sentences, notes,
+  photos and their words, profile photo, settings, and recent searches, its journal, its mutation
+  results, and its billing customer, its website subscription canceled first; any sign-in code
+  waiting for its email; and every photo file it uploaded, which the same transaction queues for
+  deletion from R2 and the service deletes at once, or within the hour if R2 doesn't answer
+  ([`account-photos.md`](account-photos.md)). What stays, with no account: its ID in
   `deleted_accounts`, and its subscriptions, ledger rows, and store events
   ([`account-billing.md`](account-billing.md), The model). Its access tokens stop working at
-  `/v1/me` and `/v1/sync` at once (the account is gone), and expire within 15 minutes everywhere
-  else. The account's email is told. Backups that hold it are deleted within 30 days (Back up and
-  restore).
+  `/v1/me`, `/v1/sync`, and `/v1/photos` at once (the account is gone), and expire within 15
+  minutes everywhere else. The account's email is told. Backups that hold it are deleted within 30
+  days (Back up and restore).
 - **Each device** keeps its own data and works signed out, as the apps' product docs say.
 - **Signing in again** with the same email or Apple or Google account makes a new account.
 
@@ -377,12 +330,16 @@ belongs; tests may import anything.
   store the domain works through (`accounts.ts`). It knows nothing of HTTP or sign-in.
 - **`src/billing`** holds Stripe's and the App Store's adapters, which import only the domain
   ([`account-billing.md`](account-billing.md), Code layout).
+- **`src/storage`** keeps photo files in R2 (`r2.ts`) or, on a local run and in tests, in memory
+  (`memory.ts`), behind the domain's `PhotoStorage`. It imports only that type and `src/config.ts`'s
+  settings, and no layer but the server imports it, nor `aws4fetch`.
 
-`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer;
-`src/server.ts` wires the layers together and is imported by nothing. Logging, the request log, and
-stopping cleanly on SIGTERM come from `packages/node-service`, as in the dictionary service
-([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and nothing logs a
-learner's email, a code, a token, or a link: only what happened, as SERP's
+`src/config.ts` reads the environment and `src/language.ts` an email's language, below every layer.
+`src/wiring.ts` wires the layers and the photo sweeps for `src/server.ts` (imported by nothing; it
+builds the billing from the settings and runs the housekeeping hourly) and the tests alike. Logging,
+the request log, and stopping cleanly on SIGTERM come from `packages/node-service`
+([`dictionary-api.md`](dictionary-api.md), Code layout). Nothing calls `console`, and no log holds a
+learner's email, a code, a token, or a link, as SERP's
 [transactional email standard](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/transactional-email.md)
 says for email.
 
@@ -404,6 +361,11 @@ are in `src/db/schema.ts`:
 - `watched_videos`: the watch history, each video with its version and whether it's watched,
   removed, or pruned;
 - `translation_bookmarks`: the bookmarked Translate sentences, each with its version;
+- `word_notes`, `photos` (shown, emptied, or deleted), `photo_words`, `profile_photos`,
+  `learner_settings`, and `recent_searches`: #867's entities, each with its version;
+  `forgotten_versions`: the highest version and journal sequence forgotten of each; `photo_files`:
+  each file an account holds, by SHA-256, its R2 key, and when an app with only `profile` sent it;
+  `photo_file_deletions`: the keys to delete ([`account-photos.md`](account-photos.md));
 - `sync_changes`: the journal, read by account and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
 - `sync_origin`: the OID of the database the service last started on, which tells it a restored
@@ -419,10 +381,10 @@ The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To ch
 change `src/db/schema.ts` or billing's `src/db/billing-schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
 `meta/` files it writes. Never edit or regenerate a migration once it has run anywhere: Drizzle
 runs only those dated after the last one a database ran, so an edited one never runs where the old
-one did, and a regenerated one, with a new date, runs again over the tables it made. Add a new one. For
-SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate --custom --name
-<what it does>` and write it into the empty file. They're drizzle-kit's, comments and formatting
-included, so Biome and the comments check leave the folder alone.
+one did, and a regenerated one, with a new date, runs again over the tables it made: add a new
+one. For SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate
+--custom --name <what it does>` and fill in the empty file. They're drizzle-kit's, comments and
+formatting included, so Biome and the comments check leave the folder alone.
 
 The service applies the migrations when it starts, before it listens, holding a Postgres advisory
 lock so two starts take them one after the other. A deploy starts the new image while the old one
@@ -468,9 +430,10 @@ way and call the routes with their access tokens. They show:
   paging; queued mutations applied in order; a retry applied once and answered the same; a
   conflict, again on a retry; unknown entities and operations, and a reused ID, rejected while the
   rest apply; and a result forgotten after 30 days.
-- **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged or
-  too-new cursor refused before anything applies; the request bounds, and fields that nest or hold
-  control characters; and logs that hold no profile, email, or token.
+- **Bounds:** others' profiles, cursors, and mutation IDs out of reach; a forged, too-new, or
+  forgotten-past cursor refused once, a full read only for a deletion forgotten after it began
+  (`sync-forgotten.test.ts`; races in `src/db/sync-races.test.ts`); request bounds, and fields that
+  nest or hold control characters; and logs that hold no profile, email, or token.
 - **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.
@@ -482,10 +445,13 @@ winning over a watch that hadn't seen it, the 51st video pruning the oldest as a
 of a pruned video sticking, the latest 100 removals remembered, and the refused and cut fields;
 and `src/http/bookmarks.test.ts` bookmarked sentences: an add and a repeat, a remove keeping none
 of what was said, an add the remover never saw winning, the 2,000 cap, and the refused and cut
-fields. Both run two or three `SyncClient`s (`src/test/sync-client.ts`, the iOS
-app's client in TypeScript) through offline changes on each until they hold the same state as a
-new device. `src/http/clients.test.ts` holds each app to its scopes: only `zenbu-ios` reads or
-changes watch history and bookmarks.
+fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `photo-bounds.test.ts`,
+`profile-photo.test.ts`, `settings.test.ts`, and `recent-searches.test.ts` hold #867's entities
+and files to their rules ([`account-photos.md`](account-photos.md), Check it). Both run two or
+three `SyncClient`s (`src/test/sync-client.ts`, the iOS app's client in TypeScript) through
+offline changes on each until they hold the same state as a new device. `src/http/clients.test.ts`
+holds each app to its scopes: only `zenbu-ios` reads or changes watch history, bookmarks, notes,
+photos, settings, and recent searches.
 
 The domain's own tests (`src/domain/`) cover the name and username rules and the cursor. The
 username's cases are `src/domain/username-cases.json`, beside the rule, which the app's
@@ -495,10 +461,11 @@ and backfill, the sync tables' rules, and fencing two restored copies of one bac
 checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and
 `src/http/sign-in-contract.test.ts` holds each sign-in answer, and each sign-in route's scope, to
 the contract. In CI, and when `ACCOUNT_API_TEST_DATABASE_URL` names a real Postgres database,
-`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool, and
-one mutation six times at once: one change goes through, and the mutation applies once. It also
-watches eight videos at once on an account holding 48, which keeps the 50 newest. The emails'
-tests, in each language, are in [`account-email.md`](account-email.md), Check it.
+`src/db/postgres.test.ts` also sends eight changes to one account at once through the `pg` pool,
+and one mutation six times at once: one change goes through, and the mutation applies once. It
+watches eight videos at once on an account holding 48, which keeps the 50 newest, and races photo
+uploads ([`account-photos.md`](account-photos.md), Check it). The emails' tests, in each
+language, are in [`account-email.md`](account-email.md), Check it.
 
 ## Ship it
 
@@ -814,7 +781,11 @@ this order; each step says how to check it worked.
    ```
    The script comes from a checkout of `main` (copy `apps/account-api/deploy/backups.sh` to the
    server, as for the deployer). Reinstall it the same way after it changes.
-7. **The first deploy.** Run the workflow by hand (Actions → Account API deploy → Run workflow); the
+7. **Photo storage**, before an app syncs photos: a private R2 bucket and a token for each
+   environment, their five settings in its file, and nginx letting a 12 MB upload through to
+   `/v1/photos` ([`account-photos.md`](account-photos.md), Set it up). Until then, uploads answer
+   `503 photos_unavailable`, and an app keeps its photos on the device.
+8. **The first deploy.** Run the workflow by hand (Actions → Account API deploy → Run workflow); the
    deployer starts each image within 5 minutes of its tag moving. Then, before anything relies on
    it:
    - `docker ps --filter label=zenbujapanese.account-api.slot` shows one slot for each
