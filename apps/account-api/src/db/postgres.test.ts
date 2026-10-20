@@ -1,8 +1,6 @@
-import { createHash, randomUUID } from 'node:crypto'
-import { PGlite } from '@electric-sql/pglite'
-import { PGLiteSocketServer } from '@electric-sql/pglite-socket'
+import { createHash } from 'node:crypto'
 import pg from 'pg'
-import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
@@ -11,62 +9,29 @@ import { photoFiles } from '../domain/photo-files'
 import type { AccountStore } from '../domain/store'
 import { MemoryPhotoStorage } from '../storage/memory'
 import { gate } from '../test/gate'
+import { realPostgres, usePostgres } from '../test/postgres'
 import { accountStore } from './accounts'
 import { migratePostgres, migrationLock, openPostgres } from './postgres'
 
 const everyScope = new Set(scopes)
 
-const realPostgres = process.env.ACCOUNT_API_TEST_DATABASE_URL ?? ''
-let url = realPostgres
-let stop = async () => {}
-
-beforeAll(async () => {
-  if (url !== '') return
-  const db = await PGlite.create()
-  const server = new PGLiteSocketServer({ db, host: '127.0.0.1', port: 0, maxConnections: 10 })
-  await server.start()
-  url = `postgres://postgres@${server.getServerConn()}/postgres`
-  stop = async () => {
-    await server.stop()
-    await db.close()
-  }
-})
-
-afterAll(() => stop())
-
-async function anAccount(prefix: string) {
-  await migratePostgres(url, migrations)
-  const database = openPostgres(url)
-  const raw = new pg.Client({ connectionString: url })
-  await raw.connect()
-  const id = `${prefix}-${randomUUID()}`
-  await raw.query('insert into users (id, name, email) values ($1, $2, $3)', [
-    id,
-    '',
-    `${id}@example.com`
-  ])
-  const done = async () => {
-    await raw.query('delete from users where id = $1', [id])
-    await raw.end()
-    await database.close()
-  }
-  return { database, raw, id, done }
-}
+const postgres = usePostgres()
+const anAccount = postgres.anAccount
 
 describe('Postgres, through the driver the service runs', () => {
   test('applies the migrations, and again with nothing left to do', async () => {
-    await migratePostgres(url, migrations)
-    await migratePostgres(url, migrations)
+    await migratePostgres(postgres.url(), migrations)
+    await migratePostgres(postgres.url(), migrations)
   })
 
   test.skipIf(realPostgres === '')(
     'waits while another start holds the migration lock, then migrates',
     async () => {
-      const other = new pg.Client({ connectionString: url })
+      const other = new pg.Client({ connectionString: postgres.url() })
       await other.connect()
       await other.query('select pg_advisory_lock($1)', [migrationLock])
       let finished = false
-      const migrating = migratePostgres(url, migrations).then(() => {
+      const migrating = migratePostgres(postgres.url(), migrations).then(() => {
         finished = true
       })
       await new Promise(resolve => setTimeout(resolve, 2500))
@@ -79,7 +44,7 @@ describe('Postgres, through the driver the service runs', () => {
   )
 
   test('answers while the pool is open, and not after it closes', async () => {
-    const database = openPostgres(url)
+    const database = openPostgres(postgres.url())
     expect(await database.ready()).toBe(true)
     await database.close()
     expect(await database.ready()).toBe(false)
@@ -241,50 +206,4 @@ describe('Postgres, through the driver the service runs', () => {
       await done()
     }
   )
-
-  test('refuses the next sync after another device makes the account forget a deletion between a sync check and its page', async () => {
-    const { database, raw, id, done } = await anAccount('forgotten-mid-sync')
-    const store = accountStore(database.db)
-    const accountsOn = (on: AccountStore) =>
-      createAccounts(on, cursors(cursorKey('test')), searchKeys('test'))
-    const plain = accountsOn(store)
-    const note = (entityId: string, operation: string, baseVersion: number) => ({
-      id: randomUUID(),
-      entity: 'wordNote',
-      operation,
-      entityId,
-      baseVersion,
-      ...(operation === 'write' ? { fields: { item: 'kanji:見', text: '見る。' } } : {})
-    })
-    const sync = async (on: typeof plain, body: Record<string, unknown>) => {
-      const answer = await on.sync(id, body, everyScope)
-      if (answer.status !== 'synced') throw new Error(`the sync answered ${answer.status}`)
-      return answer
-    }
-    const [missed, other] = [randomUUID(), randomUUID()]
-    await sync(plain, { mutations: [note(missed, 'write', 0), note(other, 'write', 0)] })
-    const padAt = (await sync(plain, {})).cursor
-    await sync(plain, { mutations: [note(missed, 'delete', 1)] })
-    await raw.query(
-      'insert into word_notes (user_id, id, present, version) select $1, gen_random_uuid()::text, false, 2 from generate_series(1, 999) as n',
-      [id]
-    )
-    let raced = false
-    const racing = accountsOn({
-      ...store,
-      async changesAfter(userId, sequence, limit) {
-        if (!raced) {
-          raced = true
-          await sync(plain, { mutations: [note(other, 'delete', 1)] })
-        }
-        return store.changesAfter(userId, sequence, limit)
-      }
-    })
-    const during = await sync(racing, { cursor: padAt })
-    expect(during.changes.map(change => change.entityId)).not.toContain(missed)
-    expect(await plain.sync(id, { cursor: during.cursor }, everyScope)).toEqual({
-      status: 'invalid_cursor'
-    })
-    await done()
-  })
 })

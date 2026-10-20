@@ -1,6 +1,8 @@
-import { randomUUID } from 'node:crypto'
+import { createCipheriv, randomBytes, randomUUID } from 'node:crypto'
 import { describe, expect, test, vi } from 'vitest'
+import { cursorKey } from '../domain/cursor'
 import { type Learner, useAccountService } from '../test/accounts'
+import { testSecret } from '../test/service'
 import { SyncClient } from '../test/sync-client'
 
 const accounts = useAccountService()
@@ -27,6 +29,25 @@ const remove = (id: string) => ({
 const withIds = (...mutations: Record<string, unknown>[]) =>
   mutations.map(mutation => ({ id: randomUUID(), ...mutation }))
 const rows = (sql: string) => accounts.running.service.rows(sql)
+
+const headOf = async (learner: Learner) =>
+  Number(
+    (
+      await rows(
+        `select max(sequence) as head from sync_changes where user_id = '${learner.userId}'`
+      )
+    )[0]?.head
+  )
+
+function formatOne(learner: Learner, sequence: number) {
+  const nonce = randomBytes(12)
+  const sealing = createCipheriv('aes-256-gcm', cursorKey(testSecret), nonce, { authTagLength: 16 })
+  sealing.setAAD(Buffer.concat([Buffer.of(1), Buffer.from(learner.userId)]))
+  const position = Buffer.alloc(8)
+  position.writeBigUInt64BE(BigInt(sequence))
+  const sealed = Buffer.concat([sealing.update(position), sealing.final()])
+  return Buffer.concat([Buffer.of(1), nonce, sealed, sealing.getAuthTag()]).toString('base64url')
+}
 
 const deletedNotes = async (learner: Learner, count: number, journaled = false) => {
   const ids = await rows(
@@ -167,25 +188,45 @@ describe('a sync past what the account forgot', () => {
     const learner = await accounts.learner('away-past-forgotten@example.com')
     const [kept, deleted] = [randomUUID(), randomUUID()]
     const { phone, pad } = await devicesWithNotes(learner, [kept, deleted])
-    const headBefore = Number(
-      (
-        await rows(
-          `select max(sequence) as head from sync_changes where user_id = '${learner.userId}'`
-        )
-      )[0]?.head
-    )
     phone.change('wordNote', 'delete', deleted)
     await phone.sync()
     await deletedNotes(learner, 1000)
     await forgetTheOldestDeletion(learner)
-    const asBeforeFloors = (sequence: number) =>
-      accounts.cursors.encode(learner.userId, { sequence, floor: sequence })
-    expect(
-      (await accounts.sync(learner.token, { cursor: asBeforeFloors(headBefore) })).status
-    ).toBe(410)
     const statuses = await statusesOf(() => pad.sync())
     expect(statuses.filter(status => status === 410)).toEqual([410])
     expect(pad.dataOf('wordNote', deleted)).toBeNull()
     expect(pad.state()).toEqual(phone.state())
+  })
+
+  test('takes a cursor given before cursors carried a floor, and refuses it once the account forgets a deletion past it', async () => {
+    const learner = await accounts.learner('cursor-before-floors@example.com')
+    const deleted = randomUUID()
+    await accounts.results(learner, write(deleted))
+    const before = await headOf(learner)
+    expect(
+      (await accounts.sync(learner.token, { cursor: formatOne(learner, before) })).status
+    ).toBe(200)
+    await accounts.results(learner, remove(deleted))
+    await deletedNotes(learner, 1000)
+    await forgetTheOldestDeletion(learner)
+    expect(
+      await accounts.sync(learner.token, { cursor: formatOne(learner, before) })
+    ).toMatchObject({ status: 410, body: { error: { code: 'invalid_cursor' } } })
+    const now = await accounts.sync(learner.token, {
+      cursor: formatOne(learner, await headOf(learner))
+    })
+    expect(now.status).toBe(200)
+    expect((await accounts.sync(learner.token, { cursor: now.body?.cursor })).status).toBe(200)
+  })
+
+  test("a full read whose own first changes delete a note and make the account forget it isn't refused for it", async () => {
+    const learner = await accounts.learner('full-read-forgets-its-own-deletion@example.com')
+    const [deletedHere] = await writeNotes(learner, 120)
+    await rows(
+      `insert into word_notes (user_id, id, present, version, updated_at) select '${learner.userId}', gen_random_uuid()::text, false, 2, now() + interval '1 hour' from generate_series(1, 999) as n`
+    )
+    const last = randomUUID()
+    const first = withIds(remove(deletedHere ?? ''), write(last), remove(last))
+    expect(await pagesFromNoCursor(learner, { mutations: first })).toEqual([200, 200])
   })
 })

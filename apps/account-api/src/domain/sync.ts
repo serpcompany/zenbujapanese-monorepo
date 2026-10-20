@@ -230,8 +230,8 @@ async function changesIn(
   return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-const floorFor = async (store: AccountStore, from: Position | undefined) =>
-  from ? Math.max(from.floor, from.sequence) : store.journalHead()
+const floorFor = async (store: AccountStore, userId: string, from: Position | undefined) =>
+  from ? Math.max(from.floor, from.sequence) : store.accountJournalHead(userId)
 
 export function syncer(
   store: AccountStore,
@@ -260,7 +260,7 @@ export function syncer(
       results.push(result)
     }
     if (results.some(result => result.status === 'applied')) afterChanges()
-    const floor = await floorFor(store, from)
+    const floor = await floorFor(store, userId, from)
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)
