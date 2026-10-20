@@ -51,6 +51,9 @@ struct WordPage: Decodable, Hashable, Sendable {
     let meaning: String
     let notes: [String]
     let noteText: String?
+    let spoken: String
+    let glosses: [String]
+    let copyText: String
   }
 
   struct AlternativeForm: Decodable, Hashable, Sendable {

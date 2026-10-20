@@ -67,12 +67,11 @@ checks](../../../../docs/agents/ios.md#look-up-manual-checks)).
 
 ### Handwriting and Radicals
 
-Tapping the pencil, the grid, or the cap slides up a full-height sheet over the field and
-the tab bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags
-the sheet. The same three buttons stay at its bottom left, in the same place as on Look Up's
-screen, with the current one highlighted, so another mode is one tap away. The panels share one gray
-background, flat candidate tiles in the same fill as the radical squares, and glass buttons
-(white in light mode).
+Tapping the pencil, the grid, or the cap slides up a full-height sheet over the field and the tab
+bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags the sheet.
+The same three buttons stay at its bottom left, in the same place as on Look Up's screen, with the
+current one highlighted, so another mode is one tap away. The panels share one gray background, flat
+candidate tiles in the same fill as the radical squares, and glass buttons (white in light mode).
 
 - **Handwriting.** A white drawing pad sits at the top, with candidate tiles below it: five to a row
   (three at the largest text sizes), each with the kanji's first meaning. Three rows show and more
@@ -220,9 +219,8 @@ well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
 `SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
 Recent lookups are stored on the device and listed while the query is empty. A learner can
-repeat a lookup, remove one by swiping or long-pressing it, or clear the entire history from the
-**•••** menu, which offers **Clear Recent Lookups** while recent lookups are listed. Result
-headings scroll with the results instead of staying pinned over them.
+repeat a lookup, remove one by swiping or long-pressing it, or clear them all from the **•••**
+menu ([Top bar](#top-bar)). Result headings scroll with the results instead of staying pinned.
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
 `SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the
@@ -243,6 +241,14 @@ written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examp
 
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
 `embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
+
+Each meaning opens a menu. **Speak** reads its glosses in an English voice, leaving out a
+parenthesis that ends a gloss and reading a leading one as words ("dog (Canis (lupus) familiaris),
+canine" is "dog, canine"), and never the note line. **Copy** copies it with its note line, and
+**Look Up** searches one of its glosses. The pronounce buttons keep their Japanese voice.
+
+Check: core `detail/meaning-actions.test.ts`; package `MeaningActionsTests`; UI
+`WordDetailUITests.testAMeaningSpeaksInEnglishAndLooksUpAGloss`.
 
 A related word opens the entry it names. One that names none is looked up, and opens the
 result written and read the same, or the first result when none is.
@@ -280,18 +286,18 @@ returns to the form.
 Check: the recorded `WordDetailConformanceTests` (each table's forms and their examples); UI
 `SearchUITests.testAVerbOpensItsConjugationsAndAForm`.
 
-Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
-visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
-見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or
-the looked-up form are accented. Words the learner marked known have no underline, and no
-furigana when **Hide Furigana on Known Words** is on, but can still be selected. With **Show
-Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and
-**Show Sentence Translations** controls whether example sentences show their English.
+Linked Japanese in example sentences, on Example Sentences and on a word's page, splits into words
+as Image Search does and underlines each, so word boundaries are visible. An inflected verb or
+adjective is one word with its endings, such as 見なかった, 見ている, or 静かな, and opens its dictionary entry.
+The words that make up the current entry or the looked-up form are accented. Words the learner
+marked known have no underline, and no furigana when **Hide Furigana on Known Words** is on, but can
+still be selected. With **Show Word Meanings** on, each unknown word shows a short accent-colored
+meaning under it, and **Show Sentence Translations** controls whether sentences show their English.
 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
 pieces join into one word), `artifact/word-examples.test.ts` (which words are accented), and
 `detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests` and
-`WordMeaningTests`.
+`WordMeaningTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it
@@ -311,11 +317,6 @@ row opens that dictionary's details. JLPT levels are presented as unofficial stu
 Check: the recorded `WordDetailConformanceTests` (each pack's row and its details); package
 `ResultsScreenTests` (the rows' names, values, and details); UI
 `WordDetailUITests.testAFrequencyRowOpensItsDetails` and `AccountUITests` (one turned off).
-
-Selectable Japanese inside Word Detail and Example Sentences uses the same interactive word-boundary
-analysis as Image Search. Selecting a linked word continues into its normal dictionary entry.
-
-Check: package `LinkedWordResolutionTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
@@ -372,13 +373,13 @@ Check: package `KanjiStatTests`; the recorded `KanjiDetailConformanceTests`.
 
 A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
 kanji, its readings, and its meanings as text, with the link to the kanji's search on
-zenbujapanese.com, such as `https://zenbujapanese.com/dictionary/search/%E6%97%A5/` for 日, which
-the website opens with the kanji's details and Zenbu in Look Up. The website has no kanji
-pages, and shares a kanji at the same search; a compatibility kanji's is its normalized form's.
-Before the page has loaded, Share sends the kanji alone. The menu marks the kanji known, adds it to lists,
-and adds notes and photos, which work as they do for a word. Lists and Notes sections appear
-above the words containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji
-is saved as itself, not as a dictionary word, so marking 最 known doesn't mark the word 最.
+zenbujapanese.com, such as `https://zenbujapanese.com/dictionary/search/%E6%97%A5/` for 日, which the
+website opens with the kanji's details and Zenbu in Look Up. The website has no kanji pages, and
+shares a kanji at the same search; a compatibility kanji's is its normalized form's. Before the page
+has loaded, Share sends the kanji alone. The menu marks the kanji known, adds it to lists, and adds
+notes and photos, which work as they do for a word. Lists and Notes sections appear above the words
+containing the kanji, and a known kanji shows the **✓ Known** capsule. A kanji is saved as itself,
+not as a dictionary word, so marking 最 known doesn't mark the word 最.
 
 Check: package `SavedKanjiTests`; `WordDetailShareTests` (the kanji's text and link, which
 searches the kanji again); UI `SavedWordsUITests.testAKanjiIsMarkedKnownFromItsMenu` and

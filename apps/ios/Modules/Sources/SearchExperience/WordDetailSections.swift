@@ -45,20 +45,76 @@ struct PartOfSpeechRow: View {
   }
 }
 
+@MainActor
+struct MeaningActions {
+  let speechSynthesisClient: SpeechSynthesisClient
+  let lookUp: @MainActor (String) -> Void
+  var writeToPasteboard: @MainActor (String) -> Void = Pasteboard.copy
+
+  func speak(_ sense: WordPage.Sense) {
+    speechSynthesisClient.speak(sense.spoken, .english)
+  }
+
+  func copy(_ sense: WordPage.Sense) {
+    writeToPasteboard(sense.copyText)
+  }
+}
+
 struct MeaningSection: View {
   let senses: [WordPage.Sense]
+  var actions: MeaningActions?
 
   var body: some View {
     ForEach(senses, id: \.number) { sense in
-      VStack(alignment: .leading, spacing: 6) {
-        Text("\(sense.number).  \(sense.meaning)")
-          .font(.body.weight(.semibold))
-        if let noteText = sense.noteText {
-          Text(noteText)
-            .font(.footnote)
-            .foregroundStyle(.secondary)
+      if let actions {
+        Menu {
+          MeaningMenu(sense: sense, actions: actions)
+        } label: {
+          MeaningLabel(sense: sense)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Opens actions for this meaning")
+        .accessibilityIdentifier("word-detail.meaning.\(sense.number)")
+      } else {
+        MeaningLabel(sense: sense)
+      }
+    }
+  }
+}
+
+private struct MeaningLabel: View {
+  let sense: WordPage.Sense
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 6) {
+      Text("\(sense.number).  \(sense.meaning)")
+        .font(.body.weight(.semibold))
+      if let noteText = sense.noteText {
+        Text(noteText)
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+      }
+    }
+  }
+}
+
+private struct MeaningMenu: View {
+  let sense: WordPage.Sense
+  let actions: MeaningActions
+
+  var body: some View {
+    Button("Speak", systemImage: "speaker.wave.2") { actions.speak(sense) }
+    Button("Copy", systemImage: "doc.on.doc") { actions.copy(sense) }
+    if sense.glosses.count > 1 {
+      Menu("Look Up", systemImage: "magnifyingglass") {
+        ForEach(sense.glosses, id: \.self) { gloss in
+          Button(gloss) { actions.lookUp(gloss) }
         }
       }
+    } else if let gloss = sense.glosses.first {
+      Button("Look Up", systemImage: "magnifyingglass") { actions.lookUp(gloss) }
     }
   }
 }
