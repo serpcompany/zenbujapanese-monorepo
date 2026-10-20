@@ -229,7 +229,7 @@ private let textThatScales = [
   allow(
     .dynamicType,
     .label(
-      "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent searches, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
+      "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent lookups, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
     ),
     on: zenbuAccountNotes, [.phone], because: Why.scales),
   allow(

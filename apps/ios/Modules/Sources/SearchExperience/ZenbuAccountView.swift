@@ -152,7 +152,7 @@ struct ZenbuAccountView: View {
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent searches, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
+        "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent lookups, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
       )
     }
   }

@@ -203,7 +203,7 @@ it on at the service, every account syncs as before, and the app shows no subscr
 - **Subscribe to Sync…** appears only when sync needs a subscription and the account has none
   running anywhere, nor the Apple Account, so no one is offered a second or one sync doesn't need.
   Opening the paywall and buying check again first. The paywall says what syncs (known words,
-  lists, notes, photos, the profile photo, settings, recent searches, watch history, and bookmarked
+  lists, notes, photos, the profile photo, settings, recent lookups, watch history, and bookmarked
   translations) and that the rest stays free, the name and username included, lists each
   plan with its name, price, and period from the App Store, with a free trial or introductory price
   when the Apple Account may have one, and has the renewal terms, **Restore Purchases**, **Terms of
