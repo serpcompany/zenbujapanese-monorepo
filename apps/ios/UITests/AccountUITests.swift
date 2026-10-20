@@ -15,13 +15,13 @@ final class AccountUITests: ZenbuUITestCase {
       let bar = waitFor(app.navigationBars["Account"])
       XCTAssertLessThan(bar.frame.height, 64, "Account has the small title the other tabs use")
     }
+    waitUntil(
+      find("account.sign-in", in: app),
+      mentions: "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history,"
+        + " and bookmarked translations, on all your devices")
     for row in Self.rows {
       reveal(find(row, in: app), in: app)
     }
-    waitUntil(
-      reveal(find("account.sign-in", in: app), in: app),
-      mentions: "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history,"
-        + " and bookmarked translations, on all your devices")
   }
 
   func testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites() {
