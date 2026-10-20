@@ -81,13 +81,13 @@ describe('the company and legal pages', () => {
 
   test('each legal page writes its effective date in the reader’s language', async () => {
     expect(visibleText(await htmlOf(PrivacyPage as LocalePage, 'en'))).toContain(
-      'Effective October 19, 2026'
+      'Effective October 20, 2026'
     )
     expect(visibleText(await htmlOf(TermsPage as LocalePage, 'en'))).toContain(
       'Effective September 28, 2026'
     )
     expect(visibleText(await htmlOf(PrivacyPage as LocalePage, 'ja'))).toContain(
-      '施行日：2026年10月19日'
+      '施行日：2026年10月20日'
     )
   })
 

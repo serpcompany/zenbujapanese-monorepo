@@ -118,17 +118,23 @@ struct WatchSessionView: View {
   @ViewBuilder
   private var playerFailure: some View {
     if case .failed(let code) = player.state {
-      ContentUnavailableView(
-        "Video Unavailable",
-        systemImage: "play.slash",
-        description: Text(
-          code == 101 || code == 150
-            ? "The video's owner doesn't allow it to play in other apps."
-            : "YouTube couldn't play this video.")
-      )
-      .background(.black)
-      .environment(\.colorScheme, .dark)
+      ScrollView { unavailable(code) }
+        .defaultScrollAnchor(.center, for: .alignment)
+        .scrollBounceBehavior(.basedOnSize)
+        .background(.black)
+        .environment(\.colorScheme, .dark)
     }
+  }
+
+  private func unavailable(_ code: Int) -> some View {
+    ContentUnavailableView(
+      "Video Unavailable",
+      systemImage: "play.slash",
+      description: Text(
+        code == 101 || code == 150
+          ? "The video's owner doesn't allow it to play in other apps."
+          : "YouTube couldn't play this video.")
+    )
   }
 
   @ViewBuilder
@@ -206,7 +212,9 @@ struct WatchSessionView: View {
         HStack(spacing: 28) {
           Button("Previous Line", systemImage: "backward.end.fill") { step(by: -1) }
             .font(.body)
+            .accessibilityShowsLargeContentViewer()
             .accessibilityIdentifier("watch.previous")
+            .outsetHitTarget()
           Button {
             player.togglePlayback()
           } label: {
@@ -218,10 +226,13 @@ struct WatchSessionView: View {
               .background(.primary, in: .circle)
           }
           .accessibilityLabel(player.isPlaying ? "Pause" : "Play")
+          .accessibilityShowsLargeContentViewer()
           .accessibilityIdentifier("watch.play-pause")
           Button("Next Line", systemImage: "forward.end.fill") { step(by: 1) }
             .font(.body)
+            .accessibilityShowsLargeContentViewer()
             .accessibilityIdentifier("watch.next")
+            .outsetHitTarget()
         }
         HStack(spacing: 4) {
           repeatButton
@@ -231,6 +242,7 @@ struct WatchSessionView: View {
       }
       .labelStyle(.iconOnly)
       .tint(.primary)
+      .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
     .buttonStyle(.borderless)
     .padding(.horizontal, 16)
@@ -251,9 +263,11 @@ struct WatchSessionView: View {
     }
     .font(.footnote.weight(.semibold))
     .foregroundStyle(isOn ? Color.accentColor : .primary)
-    .frame(minWidth: 36, minHeight: 44)
     .accessibilityAddTraits(isOn ? .isSelected : [])
+    .accessibilityShowsLargeContentViewer()
     .accessibilityIdentifier("watch.repeat")
+    .outsetHitTarget()
+    .frame(minWidth: 36, minHeight: 44)
   }
 
   private var loadedCues: [SubtitleCue] {

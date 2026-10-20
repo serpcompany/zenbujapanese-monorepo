@@ -10,7 +10,13 @@ import { pageMetadata } from '@/lib/metadata'
 import { pageFor } from '@/lib/pages'
 import { site } from '@/lib/site'
 
-const shortVersion = ['works', 'account', 'noSale', 'providers', 'rights'] as const
+const shortVersion = ['works', 'reports', 'account', 'noSale', 'providers', 'rights'] as const
+
+const appLabels = {
+  sendCrashReports: 'Send crash reports',
+  reportAProblem: 'Report a Problem…',
+  included: 'Included with your report'
+} as const
 
 const whatWeKeep = [
   'account',
@@ -30,6 +36,7 @@ const howLongWeKeepIt = [
   'requestCounts',
   'changes',
   'backups',
+  'reports',
   'supportEmail'
 ] as const
 
@@ -38,6 +45,7 @@ const providers = [
   { key: 'useSend', name: 'useSend' },
   { key: 'stripe', name: 'Stripe' },
   { key: 'lambda', name: 'Lambda, Inc.' },
+  { key: 'sentry', name: 'Sentry' },
   { key: 'ahrefs', name: 'Ahrefs' },
   { key: 'google', name: 'Google' },
   { key: 'apple', name: 'Apple' },
@@ -83,7 +91,7 @@ export default async function PrivacyPage({ params }: PageProps<'/[locale]/legal
   const t = getDictionary(locale).privacy
   const named = { name: site.name }
   return (
-    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-19" englishPrevails>
+    <PageShell path="/legal/privacy/" locale={locale} updated="2026-10-20" englishPrevails>
       <p>{fill(t.intro, named)}</p>
 
       <h2>{t.short.heading}</h2>
@@ -113,6 +121,27 @@ export default async function PrivacyPage({ params }: PageProps<'/[locale]/legal
       <p>{t.device.storage}</p>
       <p>{t.device.onDevice}</p>
       <p>{t.device.youtube}</p>
+
+      <h2 id="reports">{t.reports.heading}</h2>
+      <p>
+        <Fill
+          template={t.reports.crashes}
+          values={{ sendCrashReports: <strong>{appLabels.sendCrashReports}</strong> }}
+        />
+      </p>
+      <p>{t.reports.includes}</p>
+      <p>{t.reports.never}</p>
+      <p>
+        <Fill
+          template={t.reports.problems}
+          values={{
+            reportAProblem: <strong>{appLabels.reportAProblem}</strong>,
+            included: <strong>{appLabels.included}</strong>
+          }}
+        />
+      </p>
+      <p>{t.reports.written}</p>
+      <p>{t.reports.ipAddress}</p>
 
       <h2>{t.account.heading}</h2>
       <p>{t.account.intro}</p>

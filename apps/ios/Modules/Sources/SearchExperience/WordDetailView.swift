@@ -62,22 +62,27 @@ struct WordDetailView: View {
     let frame = WordPage.frame(for: entry, page: page)
     ScrollViewReader { proxy in
       List {
-        Section {
-          WordHeroView(
-            entry: entry,
-            page: page,
-            pronounceLabel: frame?.pronounce ?? "",
-            encounterMedia: photos.displayable,
-            removeEncounterMedia: photos.remove,
-            pronounce: { speechSynthesisClient.speak(entry.reading) }
-          )
-          PartOfSpeechRow(
-            title: page?.partOfSpeechRow ?? "", entryID: entry.id,
-            conjugations: page?.conjugations, openConjugations: openConjugations)
+        if LaunchHarness.shows("headword", on: "word-detail") {
+          Section {
+            WordHeroView(
+              entry: entry,
+              page: page,
+              pronounceLabel: frame?.pronounce ?? "",
+              encounterMedia: photos.displayable,
+              removeEncounterMedia: photos.remove,
+              pronounce: { speechSynthesisClient.speak(entry.reading) }
+            )
+            PartOfSpeechRow(
+              title: page?.partOfSpeechRow ?? "", entryID: entry.id,
+              conjugations: page?.conjugations, openConjugations: openConjugations)
+          }
         }
 
         if let frame {
-          ForEach(frame.sections, id: \.kind) { section in
+          ForEach(
+            frame.sections.filter { LaunchHarness.shows($0.kind.rawValue, on: "word-detail") },
+            id: \.kind
+          ) { section in
             pageSection(section, of: page, in: frame)
           }
         }
@@ -273,6 +278,7 @@ private struct WordHeroView: View {
   let pronounce: () -> Void
 
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @State private var presentedMedia: EncounterMedia?
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -282,6 +288,8 @@ private struct WordHeroView: View {
           .padding(.bottom, 4)
       }
     }
+    .encounterMediaViewer(
+      $presentedMedia, encounterMedia: encounterMedia, removeEncounterMedia: removeEncounterMedia)
   }
 
   private var headline: some View {
@@ -293,12 +301,7 @@ private struct WordHeroView: View {
       pronounce: pronounce
     ) {
       if let latest = encounterMedia.first {
-        SavedItemPhotoButton(
-          media: latest,
-          count: encounterMedia.count,
-          encounterMedia: encounterMedia,
-          removeEncounterMedia: removeEncounterMedia
-        )
+        SavedItemPhotoButton(media: latest, count: encounterMedia.count) { presentedMedia = $0 }
       }
     }
   }

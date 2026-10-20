@@ -195,9 +195,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
   keychain access group; a build signed with the team keeps it.
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
-  Simulator harness); `ZENBU_OPEN_LINK` hands a Mac test's link to the window
-  ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE`
-  open the share sheet ([`ios-share-sheet.md`](ios-share-sheet.md), Tests).
+  Simulator harness); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open the share sheet, or its card
+  in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
+  test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
+  draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -228,9 +229,9 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
 slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
-`xcrun xcresulttool export attachments`. Search's **Sorted by** row is a `Menu` whose accessibility
-element spans the row, though only its text opens the menu, so `chooseFromSortedBy` taps the
-text. On a busy Mac a tab tap, a shortcut, the conversation's pause, or a Simulator rotation
+`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Search's **Sorted by** row
+beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
+conversation's pause, or a Simulator rotation
 sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
 (`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
 page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once
@@ -297,16 +298,15 @@ or how fast it feels. The app needs iOS 26.0 or later, and the Sudachi cache abo
 
 1. Connect the iPhone by USB, or pair it over the same Wi-Fi, and tap **Trust** on it.
 2. Open `apps/ios/ZenbuJapanese.xcodeproj` and sign in under Xcode → Settings → Accounts. The
-   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and
-   the bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record,
-   below). With any other Apple ID, such as a free one (a Personal Team), pick your team under the
-   target's **Signing & Capabilities** and change the bundle ID to one of your own, such as
+   ZenbuJapanese target signs with the team that publishes the app, TSMC LLC's `847HR8U8D9`, and the
+   bundle ID that team registered, `com.zenbujapanese.dictionary` (The App Store record, below).
+   With any other Apple ID, such as a free one (a Personal Team), pick your team under the target's
+   **Signing & Capabilities** and change the bundle ID to one of your own, such as
    `com.<you>.zenbujapanese`. A Personal Team can't sign Associated Domains or Sign in with Apple
-   either, so also remove those capabilities
-   ([Links from the website](#links-from-the-website), [Account and sync](#account-and-sync)).
-   Such a build still shows the Apple button, which fails; sign in with an emailed code, or with
-   Google in a build given its client ID. Don't commit the team, the bundle ID change, or the
-   removed capabilities.
+   either, so also remove those capabilities ([Links from the website](#links-from-the-website),
+   [Account and sync](#account-and-sync)). Such a build still shows the Apple button, which fails;
+   sign in with an emailed code, or with Google in a build given its client ID. Don't commit the
+   team, the bundle ID change, or the removed capabilities.
 3. Choose the iPhone as the run destination and run.
 4. If iOS asks, turn on Developer Mode under Settings → Privacy & Security → Developer Mode. With a
    free Apple ID, also trust it under Settings → General → VPN & Device Management.

@@ -57,10 +57,10 @@ struct TypedTranslationCard: View {
           text = ""
           isEditing = true
         }
-        .labelStyle(.iconOnly)
         .font(.title3)
         .foregroundStyle(.secondary)
         .accessibilityIdentifier("translate.typed.clear")
+        .outsetHitTarget()
       }
       Spacer()
     }
@@ -95,14 +95,15 @@ struct TypedTranslationCard: View {
           Pasteboard.copy(result.translation)
           copyCount += 1
         }
+        .outsetHitTarget()
         Button("Speak", systemImage: "speaker.wave.2") {
           Task {
             await experience.services.clients.playback.speak(
               result.translation, result.source.counterpart)
           }
         }
+        .outsetHitTarget()
       }
-      .labelStyle(.iconOnly)
       .buttonStyle(.borderless)
       TranslateLinkedText(
         text: result.translation, language: result.source.counterpart,

@@ -379,6 +379,7 @@ struct MediaLibraryView: View {
 }
 
 private struct EncounterMediaRow: View {
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @State private var image: Image?
   let item: EncounterMediaSummary
   let store: EncounterMediaStore
@@ -394,11 +395,11 @@ private struct EncounterMediaRow: View {
           .clipped()
       }
       VStack(alignment: .leading, spacing: 4) {
-        Text(item.name).font(.headline).lineLimit(1)
+        Text(item.name).font(.headline).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
         Text(item.words.map(\.headword).joined(separator: " · "))
           .font(.body)
           .foregroundStyle(.secondary)
-          .lineLimit(2)
+          .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
         RomajiReadingAidText(
           romaji: encounterRomaji,
           lineLimit: 2,

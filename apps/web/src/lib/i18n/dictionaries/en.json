@@ -1259,8 +1259,9 @@
     "short": {
       "heading": "The short version",
       "works": "The app works without an account, and keeps what you do in it on your device.",
+      "reports": "When the app crashes or freezes, it sends us a report without anything you read, type, say, or photograph, unless you turn crash reports off. If you report a problem, we get what you write.",
       "account": "If you create a Zenbu account, we keep your email, how you sign in, and the study data you sync, so your devices stay in step. If you subscribe, we keep a record of your subscription and payments; Apple or Stripe takes the payment itself.",
-      "noSale": "We don't sell or share your personal information, and the app has no ads, analytics, or tracking.",
+      "noSale": "We don't sell or share your personal information, and the app has no ads, usage analytics, or tracking.",
       "providers": "A few companies help us run the service, such as Cloudflare, which carries our traffic, and useSend, which sends our email.",
       "rights": "You can see, export, correct, or delete your data, and delete your account any time."
     },
@@ -1273,6 +1274,15 @@
       "storage": "You never need an account. The app keeps your profile, searches, notes, known words, lists, watch history, photos, and Translate conversations in its private storage on your device, and sends us none of it unless you sign in to a Zenbu account, which syncs only what's listed below. It stays until you delete it in the app or uninstall the app, which doesn't delete a Zenbu account. Your device's own backups, such as iCloud Backup, can include it, under Apple's terms.",
       "onDevice": "Image Search, Translate, text recognition, and speech run on your device with Apple's frameworks. Translate uses the microphone only while a conversation or Listening is running, and hears whoever is speaking nearby, but keeps no audio and never sends a conversation to us. The app asks for the camera and microphone only when a feature needs them, and you can change that in iPhone Settings.",
       "youtube": "Player plays and searches YouTube videos, and can show YouTube's caption translations, so YouTube (Google) receives those requests under its own privacy policy. Optional dictionaries you download are delivered by Cloudflare."
+    },
+    "reports": {
+      "heading": "Crash and problem reports",
+      "crashes": "When the app crashes, freezes, or is closed by iOS while you're using it, it sends a crash report to Sentry, which collects them for us, so we can find and fix the cause. When a step such as syncing your account, installing an optional dictionary, or starting Translate fails, it sends a code for the step and how it failed, never the error's own message. Crash reports are on by default, and you can turn them off at any time with {sendCrashReports} in the app's Settings.",
+      "includes": "A crash report includes where in the app's code the problem happened, the app's version and build, the iOS version, your device's model and its state at the time (such as the memory in use), and a random identifier the app creates on your device, so we can tell how many devices a problem affects. A crash report doesn't link that identifier to your Zenbu account.",
+      "never": "A crash report never includes what you read, type, say, or photograph in the app, such as your searches, notes, lists, photos, or Translate conversations. Nor does it include your location, your device's name, or its language, region, and time zone. Before a report leaves your device, the app removes the file paths and names, links, email addresses, and quoted text it finds in error messages.",
+      "problems": "You can also tell us about a problem with {reportAProblem} in the app's Settings. A problem report holds what you write, the email address in the form for a reply, if there is one, and the details the form lists under {included}: the app's version and build, the iOS version, your device's model, whether you're signed in, whether crash reports are on, which optional dictionaries you've installed, and whether the microphone and camera are allowed. If you're signed in, the form fills in your Zenbu account's email, which you can change or clear; if you're signed out, it sends an email only if you add one. Sentry adds the same technical details and random identifier as a crash report, so we can see a report's email alongside the other reports from the same copy of the app, and your account's email links those reports to your Zenbu account. A problem report is sent even when crash reports are off, because you chose to send it.",
+      "written": "The app removes file paths, links, and email addresses from what you write, and sends the rest as you wrote it, so it can hold anything you type, such as a word you looked up. Leave out anything you'd rather not share. The app attaches nothing else: no screenshots, photos, searches, lists, or conversations.",
+      "ipAddress": "Sentry receives your IP address with each report, as with any request over the internet, but we've set it not to store the address or the location it suggests."
     },
     "account": {
       "heading": "Your Zenbu account",
@@ -1322,6 +1332,7 @@
       "useSend": "{provider} sends our email, so it gets your email address and the messages we send you, and keeps copies of them.",
       "stripe": "{provider} takes the payments for subscriptions bought on this website. It receives your email, payment details, and billing address, and keeps its own record of them under its own privacy policy, also after you delete your account; we never see your full card number.",
       "lambda": "{provider} (Lambda Labs), in the United States, provides the machines our account database runs on.",
+      "sentry": "{provider} (Functional Software, Inc.), in the United States, collects and stores the app's crash reports and the problem reports you send.",
       "ahrefs": "{provider} counts visits to this website with Ahrefs Web Analytics, which uses no cookies.",
       "google": "{provider} serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google.",
       "apple": "{provider} signs you in if you choose Apple, and takes the payment for a subscription you buy in our apps on iPhone, iPad, or Mac.",
@@ -1364,6 +1375,10 @@
         "what": "Backups of the account database",
         "howLong": "30 days"
       },
+      "reports": {
+        "what": "Crash and problem reports",
+        "howLong": "Up to 90 days"
+      },
       "supportEmail": {
         "what": "Support email",
         "howLong": "As long as we need it to help you"
@@ -1374,8 +1389,8 @@
       "heading": "Why we're allowed to use it",
       "account": "Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for.",
       "subscription": "Your subscription and payment records: they're needed to provide the subscription you bought, and to keep a record of payments.",
-      "security": "Sessions, request counts, backups, running this website and our downloads, and counting visits: our legitimate interest in keeping the service secure, reliable, and working well.",
-      "support": "Support email: our legitimate interest in answering you."
+      "security": "Sessions, request counts, backups, crash reports, running this website and our downloads, and counting visits: our legitimate interest in keeping the service secure, reliable, and working well.",
+      "support": "Support email and problem reports: our legitimate interest in answering you and fixing what you report."
     },
     "rights": {
       "heading": "Your rights",
@@ -1389,7 +1404,7 @@
       },
       "delete": {
         "title": "Delete.",
-        "text": "{title} Delete your account in any of our apps that lets you create one, or on this website wherever you can sign in to it. That deletes your account and the data you synced at once, and the backups that hold them within 30 days. Your devices keep their own data and keep working. Deleting your account cancels a subscription you bought on this website; one bought in the App Store keeps billing until you cancel it there."
+        "text": "{title} Delete your account in any of our apps that lets you create one, or on this website wherever you can sign in to it. That deletes your account and the data you synced at once, and the backups that hold them within 30 days. Your devices keep their own data and keep working. Deleting your account cancels a subscription you bought on this website; one bought in the App Store keeps billing until you cancel it there. To delete a problem report you sent, email us."
       },
       "object": {
         "title": "Object or restrict.",
