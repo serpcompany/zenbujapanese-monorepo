@@ -111,7 +111,9 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     let app = openJapan(pass, showingOnly: ["word-detail.kanji", "kanji-detail.readings"])
     waitFor(find("word-detail.kanji.日", in: app))
     audit("Word Detail's kanji, alone", in: app, .textSizes)
-    tap(find("word-detail.kanji.日", in: app), toShow: firstElement(identifiedBy: "kanji-detail.reading.", in: app))
+    tapClearOfTheBars(
+      find("word-detail.kanji.日", in: app), toShow: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
+      in: app)
     audit("Kanji Detail's readings, alone", in: app, .textSizes)
   }
 
