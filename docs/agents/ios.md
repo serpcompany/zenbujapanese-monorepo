@@ -87,9 +87,9 @@ names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays t
 platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or
 `CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
-The app target is `ZenbuJapaneseApp.swift`, one line, and the Shortcuts actions
-(`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card is a
-second target ([`ios-share-sheet.md`](ios-share-sheet.md)). `ZenbuJapaneseScenes`
+The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
+actions (`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card
+is a second target ([`ios-share-sheet.md`](ios-share-sheet.md)). `ZenbuJapaneseScenes`
 (`Platform/AppScenes.swift`, in `Platform/` because a Settings scene can only be added with
 `#if os(macOS)` in the scene's body) holds the window, the Reading Aids and profile every window
 shares, the scene's lifecycle, the iPhone and iPad background sync task, and on the Mac the window
@@ -232,18 +232,17 @@ slowed the app until XCUITest's queries timed out. A wait that fails also attach
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
 `xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Look Up's **Sorted by** row
 beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
-conversation's pause, or a Simulator rotation
-sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
-(`open`, `press`, `pause`, `LayoutUITests.turn`), so a repeat can't undo it. A row on a word's
-page is tapped the same way (`tap(_:toShow:)`). Every helper waits on a condition, looking at once
-and going on the moment it holds, and repeats a gesture only while its effect hasn't shown: how,
-and the rules a test keeps, are in [`ios-ui-tests.md`](ios-ui-tests.md). A query that compares
-every element's value, such as `value CONTAINS`, times out on the Mac on a long page; ask for the
-element by its identifier and read it with `waitUntil(_:mentions:)`. An iPad Simulator that had
-run the suites for hours once stopped turning at all, though XCUITest confirmed each turn;
-`xcrun simctl shutdown` and `boot` brought it back. A menu's choice is found by its label
-(`menuChoice`): iOS 27 drops the identifier of an item in a `Menu`'s `Section`, but not of one in a
-`.contextMenu` or a row's swipe actions.
+conversation's pause, or a Simulator rotation sometimes doesn't take; the tests repeat one only
+while what it should bring hasn't appeared (`open`, `press`, `pause`, `LayoutUITests.turn`), so a
+repeat can't undo it. A row on a word's page is tapped the same way (`tap(_:toShow:)`). Every helper
+waits on a condition, looking at once and going on the moment it holds, and repeats a gesture only
+while its effect hasn't shown: how, and the rules a test keeps, are in
+[`ios-ui-tests.md`](ios-ui-tests.md). A query that compares every element's value, such as `value
+CONTAINS`, times out on the Mac on a long page; ask for the element by its identifier and read it
+with `waitUntil(_:mentions:)`. An iPad Simulator that had run the suites for hours once stopped
+turning at all, though XCUITest confirmed each turn; `xcrun simctl shutdown` and `boot` brought it
+back. A menu's choice is found by its label (`menuChoice`): iOS 27 drops the identifier of an item
+in a `Menu`'s `Section`, but not of one in a `.contextMenu` or a row's swipe actions.
 
 On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference:
 
@@ -333,7 +332,7 @@ xcrun devicectl device install app --device <device-udid> \
 ```
 
 Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
-below).
+below). Built for Release, it reports crashes as `qa` ([crash reports](ios-crash-reports.md)).
 
 ### From a Mac the iPhone can't reach
 
@@ -958,7 +957,8 @@ above), and say so in What's New.
 2. On a Mac signed in to TSMC LLC's team under Xcode → Settings → Accounts, with a checkout of
    `main`, open `apps/ios/ZenbuJapanese.xcodeproj`, pick the `ZenbuJapanese` scheme and **Any iOS
    Device (arm64)**, then Product → Archive.
-3. In the Organizer: Distribute App → App Store Connect → Upload.
+3. In the Organizer: Distribute App → App Store Connect → Upload. Then send the archive's debug
+   symbols to Sentry ([`ios-crash-reports.md`](ios-crash-reports.md#debug-symbols)).
 4. In App Store Connect, the build appears under TestFlight once it's processed, about 15 minutes
    later, with no export compliance question (both configurations set
    `ITSAppUsesNonExemptEncryption` to `NO`); add the testers.

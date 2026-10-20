@@ -4,8 +4,8 @@ final class AccountUITests: ZenbuUITestCase {
   static let rows = [
     "account.profile", "account.sign-in", "account.media-library", "account.known-words",
     "account.lists", "account.translations", "account.reading-aids",
-    "account.frequency-dictionaries", "account.support", "account.privacy-policy",
-    "account.credits", "account.about",
+    "account.frequency-dictionaries", "account.send-crash-reports", "account.support",
+    "account.privacy-policy", "account.credits", "account.about",
   ]
 
   func testAccountListsEveryArea() {
@@ -89,6 +89,15 @@ final class AccountUITests: ZenbuUITestCase {
     let downloads = app.descendants(matching: .any)
       .matching(NSPredicate(format: "identifier BEGINSWITH 'frequency-pack.download.'"))
     waitUntil("Available offering each optional pack's download") { downloads.count == 7 }
+  }
+
+  func testCrashReportsAreOnUntilTheSwitchTurnsThemOff() {
+    let app = launch()
+    open(.account, in: app)
+    let send = reveal(find("account.send-crash-reports", in: app), in: app)
+    waitUntil(send, Self.switchedOn)
+    flip(send)
+    waitUntil(send, Self.switchedOff)
   }
 
   func testTranslationsAndCreditsOpenFromAccount() {

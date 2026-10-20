@@ -106,7 +106,10 @@ saying where the code belongs:
   and OSLog, and can't import the app's `SearchExperience` target;
   the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
   recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,
-  Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)).
+  Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)). Only
+  `SearchExperience/Diagnostics/` and `Platform/Diagnostics/` may import Sentry; the rest of the
+  app reports through `CrashReporter`
+  ([ADR 0018](docs/adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md)).
 - **Across parts**: the app finds and ranks nothing itself: it asks the core, through the bundle
   it runs, what each dictionary screen lists, in what order, and with what labels
   ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side), apart

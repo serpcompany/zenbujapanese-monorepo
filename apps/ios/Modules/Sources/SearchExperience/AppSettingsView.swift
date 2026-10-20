@@ -62,6 +62,7 @@ private struct AccountSettingsPane: View {
           ZenbuAccountRow()
         }
       }
+      CrashReportsSection()
     }
     .formStyle(.grouped)
     .navigationTitle("Account")
