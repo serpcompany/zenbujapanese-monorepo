@@ -78,6 +78,7 @@ final class SearchResultsUITests: ZenbuUITestCase {
     returnToRecentSearches(in: app)
     tap(find("search.actions-menu", in: app))
     tap(menuChoice("Clear Recent Lookups", in: app))
+    waitFor(labeled("This removes every recent lookup from this device.", in: app))
     tap(app.buttons["Clear All"].firstMatch)
     waitUntilGone(find("recent-search.0", in: app))
   }

@@ -151,7 +151,9 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   again the next time the app opens if they couldn't.
 - A search on two devices is one search, kept at its later time. A search removed on one device is
   removed everywhere, even from a device that searched it again without having heard of the
-  removal; searching it after that brings it back. The account keeps the latest 50.
+  removal; searching it after that brings it back. The account keeps the latest 50. **Clear
+  Recent Lookups** asks first, and says it clears them from every device signed in to the account,
+  or, signed out, from this device.
 - A device away longer than the account remembers a deletion (its latest 1,000 deleted notes or
   photos, or a photo's latest 500 removed words) reads everything again at its next sync, then
   removes here the notes, photos, and their words the account no longer has. A sign-in or a
@@ -166,7 +168,9 @@ Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`,
 `AccountSyncPhotoTests`, and `AccountSyncFullReadTests` (reading everything again); UI
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` (iPhone
 and iPad: a photo, Reading Aids' romaji, and a recent search from the stand-in account show after
-signing in).
+signing in), `AccountSignedInUITests.testClearingRecentLookupsSignedInSaysItClearsThemOnEveryDevice`
+and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList` (what clearing them says,
+signed in and out).
 
 **Zenbu Account** shows the email, when the last sync was (or that one is running), how many changes
 are waiting (not counting profile edits waiting for the profile to be read), and a note when the

@@ -99,6 +99,20 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("recent-search.0", in: app)), "label == '猫'")
   }
 
+  func testClearingRecentLookupsSignedInSaysItClearsThemOnEveryDevice() {
+    let app = launch(Self.standIns)
+    signInWithApple(in: app)
+    search("japan", in: app)
+    returnToRecentSearches(in: app)
+    tap(find("search.actions-menu", in: app))
+    tap(menuChoice("Clear Recent Lookups", in: app))
+    waitFor(
+      labeled(
+        "This removes every recent lookup from every device signed in to your Zenbu account.", in: app))
+    tap(app.buttons["Clear All"].firstMatch)
+    waitUntilGone(find("recent-search.0", in: app))
+  }
+
   func testAnOpenMediaLibraryShowsAPhotoFromAnotherDeviceAsItArrives() {
     let app = launch(Self.standIns.merging(["ZENBU_ACCOUNT_STAND_IN_KEPT": "hold"]) { a, _ in a })
     signInWithApple(in: app)
