@@ -3,7 +3,7 @@ import XCTest
 final class SavedWordsUITests: ZenbuUITestCase {
   func testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted() throws {
     let app = try openFixtureImage()
-    waitFor(firstElement(identifiedBy: "image-text.region.", in: app)).tap()
+    tap(firstElement(identifiedBy: "image-text.region.", in: app))
     tap(find("recognized-word-sheet.open-full-entry", in: app))
     waitFor(find("word-detail.screen", in: app))
     tap(find("word-detail.image-attachment", in: app))

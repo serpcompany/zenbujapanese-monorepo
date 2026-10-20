@@ -50,7 +50,8 @@ extension ZenbuUITestCase {
   @discardableResult
   func markJapanKnown(in app: XCUIApplication) -> XCUIElement {
     let row = find("result.japan", in: app)
-    if device == .mac { waitFor(row).rightClick() } else { waitFor(row).swipeRight() }
+    waitFor(row)
+    gesture(on: row) { if device == .mac { row.rightClick() } else { row.swipeRight() } }
     tap(find("result.japan.mark-known", in: app))
     return row
   }
@@ -111,8 +112,9 @@ extension ZenbuUITestCase {
     for _ in 0..<3 {
       if opened.exists { break }
       let row = firstReachable([sortedBy], in: app).frame
-      point(x: row.minX + row.width * Self.besideTheSortedByText, y: row.midY, in: app.windows.firstMatch)
-        .tap()
+      let spot = point(
+        x: row.minX + row.width * Self.besideTheSortedByText, y: row.midY, in: app.windows.firstMatch)
+      gesture { spot.tap() }
       if appears(opened, within: Self.patience / 3) { break }
     }
     if device == .mac { return chooseFromSubmenu(row, choice, in: app) }
@@ -176,7 +178,7 @@ extension ZenbuUITestCase {
     }
     let grabber = waitFor(app.buttons["Sheet Grabber"]).coordinate(
       withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-    grabber.press(forDuration: 0.1, thenDragTo: grabber.withOffset(CGVector(dx: 0, dy: 600)))
+    gesture { grabber.press(forDuration: 0.1, thenDragTo: grabber.withOffset(CGVector(dx: 0, dy: 600))) }
   }
 
   @discardableResult
@@ -188,7 +190,8 @@ extension ZenbuUITestCase {
     waitFor(buttons.firstMatch)
     for index in 0..<buttons.count {
       if shown.exists { break }
-      buttons.element(boundBy: index).tap()
+      let button = buttons.element(boundBy: index)
+      gesture(on: button) { button.tap() }
       if appears(shown, within: Self.patience / 3) { break }
     }
     return waitFor(shown)
@@ -298,9 +301,10 @@ extension ZenbuUITestCase {
     }
     let press = {
       if let part = self.partClearOfTheBars(of: row, in: app) {
-        self.point(x: part.midX, y: part.midY, in: window).tap()
+        let spot = self.point(x: part.midX, y: part.midY, in: window)
+        self.gesture(on: row) { spot.tap() }
       } else if row.exists {
-        row.tap()
+        self.gesture(on: row) { row.tap() }
       }
     }
     press()
@@ -339,12 +343,14 @@ extension ZenbuUITestCase {
   }
 
   func scroll(_ area: XCUIElement, back: Bool) {
-    if device == .mac {
-      area.scroll(byDeltaX: 0, deltaY: back ? 150 : -150)
-    } else if back {
-      area.swipeDown(velocity: .slow)
-    } else {
-      area.swipeUp(velocity: .slow)
+    gesture {
+      if device == .mac {
+        area.scroll(byDeltaX: 0, deltaY: back ? 150 : -150)
+      } else if back {
+        area.swipeDown(velocity: .slow)
+      } else {
+        area.swipeUp(velocity: .slow)
+      }
     }
   }
 
@@ -354,7 +360,7 @@ extension ZenbuUITestCase {
       .withOffset(CGVector(dx: -3, dy: -3))
     let target = window.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
       .withOffset(CGVector(dx: 50, dy: 50))
-    corner.press(forDuration: 0.3, thenDragTo: target)
+    gesture { corner.press(forDuration: 0.3, thenDragTo: target) }
   }
 
   static let switchedOn = "value == '1' OR value == 1"
@@ -369,11 +375,14 @@ extension ZenbuUITestCase {
   }
 
   func flip(_ toggle: XCUIElement) {
-    if device == .mac {
-      waitFor(toggle).tap()
-    } else {
-      waitFor(toggle).coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5))
-        .withOffset(CGVector(dx: -45, dy: 0)).tap()
+    waitFor(toggle)
+    gesture(on: toggle) {
+      if device == .mac {
+        toggle.tap()
+      } else {
+        toggle.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5))
+          .withOffset(CGVector(dx: -45, dy: 0)).tap()
+      }
     }
   }
 
@@ -383,7 +392,7 @@ extension ZenbuUITestCase {
     var chosen = isOn(button)
     for _ in 0..<3 {
       if chosen { break }
-      button.tap()
+      gesture(on: button) { button.tap() }
       chosen = comesTrue("\(segment) to be chosen", within: Self.patience / 3) { isOn(button) }
     }
     XCTAssertTrue(chosen, "\(segment) didn't take")
@@ -394,18 +403,14 @@ extension ZenbuUITestCase {
   }
 
   func openContextMenu(on element: XCUIElement) {
-    if device == .mac {
-      waitFor(element).rightClick()
-    } else {
-      waitFor(element).press(forDuration: 1.2)
+    waitFor(element)
+    gesture(on: element) {
+      if device == .mac { element.rightClick() } else { element.press(forDuration: 1.2) }
     }
   }
 
   func revealRowActions(on row: XCUIElement) {
-    if device == .mac {
-      waitFor(row).rightClick()
-    } else {
-      waitFor(row).swipeLeft()
-    }
+    waitFor(row)
+    gesture(on: row) { if device == .mac { row.rightClick() } else { row.swipeLeft() } }
   }
 }

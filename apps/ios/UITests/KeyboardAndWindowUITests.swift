@@ -75,7 +75,7 @@ final class KeyboardAndWindowUITests: ZenbuUITestCase {
 
   private func launchAndTouch() -> XCUIApplication {
     let app = launch()
-    tabItem(.search, in: app).tap()
+    tap(tabItem(.search, in: app))
     app.typeKey(XCUIKeyboardKey.escape.rawValue, modifierFlags: [])
     RunLoop.current.run(until: Date.now.addingTimeInterval(1))
     return app

@@ -125,25 +125,7 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       picture.lifetime = .keepAlways
       add(picture)
     }
-    wakeTheTouchSystem(after: screen, in: app)
   }
-
-  private func wakeTheTouchSystem(after screen: String, in app: XCUIApplication) {
-    guard device != .mac else { return }
-    let titles = app.navigationBars.allElementsBoundByIndex.map(\.identifier).filter { !$0.isEmpty }
-    let front = titles.last { title in
-      let text = app.navigationBars[title].staticTexts[title]
-      return text.exists && text.isHittable
-    }
-    guard let front else { return }
-    app.navigationBars[front].staticTexts[front].tap()
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.afterTheWarmUpTouch))
-    XCTAssertTrue(
-      app.navigationBars[front].exists,
-      "the touch on \(front)'s title after the audit of \(screen) changed the screen")
-  }
-
-  private static let afterTheWarmUpTouch: TimeInterval = 0.3
 
   func audit(
     _ screen: String, placing element: XCUIElement, in app: XCUIApplication, _ part: AuditPart = .every
@@ -179,9 +161,11 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     let height = window.frame.height
     let grip = window.coordinate(withNormalizedOffset: CGVector(dx: Self.margin, dy: Self.gripAt))
     let spot = window.frame.minY + height * Self.placedAt
-    grip.press(
-      forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
-      thenHoldForDuration: 0.5)
+    gesture {
+      grip.press(
+        forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
+        thenHoldForDuration: 0.5)
+    }
   }
 
   private static let gripAt = 0.7

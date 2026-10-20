@@ -43,7 +43,7 @@ extension ZenbuUITestCase {
     let toggle = find("translate.session.toggle", in: app)
     for _ in 0..<3 {
       if waitFor(toggle).label == label { break }
-      toggle.tap()
+      gesture(on: toggle) { toggle.tap() }
       if comesTrue(what, within: Self.patience / 3, { toggle.label == label }) { break }
     }
     XCTAssertEqual(toggle.label, label, what)

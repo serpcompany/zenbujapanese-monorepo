@@ -41,8 +41,8 @@ what it waited for and for how long.
   word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
   which no row may change its height and the opened sentence may not leave its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
-  looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between an audit's warm-up
-  touch and the next gesture (below), and three on the iPad and the Mac with
+  looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between the warm-up touch and
+  the gesture after it (below), and three on the iPad and the Mac with
   nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut pressed
   over a sheet, and the pointer moving off a headword before its picture. `pnpm verify waits` counts
   each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
@@ -99,21 +99,26 @@ what it waited for and for how long.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
   middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
-- **An audit ends with a touch on the navigation title.** XCUITest sends each gesture through a
-  virtual touchscreen that testmanagerd makes for it, and on the iOS 26.2 Simulator backboardd
-  sometimes registers that touchscreen too late, so the gesture never reaches the app. The
-  Simulator's log then says `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer
-  event … from unsupported service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a
-  previous touch down or range-in event … skipping event`. On 2026-10-20 it hit 5 of about 3,000
-  gestures, each the first after a pause of 5 to 18 s, and none of the roughly 1,500 timed after a
-  pause under 4 s. An audit is the longest pause in a walk, and the dark Account audit lost a Back
-  tap, a swipe, and a tap right after one. So `audit` ends by tapping the frontmost navigation
-  bar's title, which does nothing anywhere in the app, waits 0.3 s, and fails if the screen
-  changed; the walk's next gesture then follows a short pause. In 250 audits each way, the tap
-  straight after the audit met the race once, and the tap after the warm-up never did. That covers
-  only the gestures after an audit: a tap 5 s after a tab tap, with no audit before it, still met
-  the race, so a walk can still lose a gesture this way. The Mac's tests send real pointer events,
-  so its audits skip it.
+- **A gesture after a pause of 4 s or more follows a warm-up touch.** This works around a race in
+  the iOS 26.2 Simulator (Xcode 26.2), and goes once Apple fixes it. XCUITest sends each gesture
+  through a virtual touchscreen that testmanagerd makes for it, and backboardd sometimes registers
+  that touchscreen too late, so the gesture never reaches the app. The Simulator's log then says
+  `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer event … from unsupported
+  service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a previous touch down or
+  range-in event … skipping event` (`xcrun simctl spawn <udid> log show --predicate 'process ==
+  "backboardd"'`). On 2026-10-20 it hit 5 of about 3,000 gestures, each the first after a pause of
+  5 to 18 s, and none of the roughly 1,500 timed after a pause under 4 s; the dark Account audit
+  lost a Back tap, a swipe, and a tap that way, each right after an audit. So `gesture(on:_:)`
+  (`ZenbuUITestCase.swift`), which every step that taps, swipes, presses, or scrolls goes
+  through, keeps the time of the last gesture. When the next comes 4 s or more after it, it first
+  taps the frontmost navigation bar's title, which does nothing anywhere in the app, then sends
+  the gesture 0.3 s later. The warm-up is sent every time that holds and nothing depends on it
+  landing, so it isn't a retry. It fails the test if the title's bar is gone afterwards, or the
+  gesture's element is, and it's skipped when no title is showing, while a menu or popover is open
+  (a touch outside one closes it), and on the Mac, whose tests send real pointer events. In a
+  probe of 250 audits each way, the tap straight after an audit met the race once and the tap
+  after a warm-up never did. Gestures a test sends itself, rather than through a step, get no
+  warm-up.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being

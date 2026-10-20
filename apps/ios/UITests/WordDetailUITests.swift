@@ -13,7 +13,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
-    tabItem(.search, in: app).tap()
+    tap(tabItem(.search, in: app))
     tap(find("word-detail.more-menu", in: app))
     waitFor(menuChoice("Mark as Unknown", in: app))
   }

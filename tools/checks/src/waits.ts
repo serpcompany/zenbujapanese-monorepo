@@ -18,14 +18,9 @@ const ui = (file: string) => `${uiTestFolder}${file}`
 
 const allowedPauses: Readonly<Record<string, AllowedPauses>> = {
   [ui('ZenbuUITestCase.swift')]: {
-    pauses: 2,
+    pauses: 3,
     proves:
-      "nothing: they are comesTrue's wait between two looks and waitUntilStill's second between two looks at a frame"
-  },
-  [ui('Accessibility/AccessibilityAudit.swift')]: {
-    pauses: 1,
-    proves:
-      "nothing: it spaces an audit's warm-up touch from the next gesture, so that gesture doesn't start the Simulator's touch system after a long pause"
+      "nothing: they are comesTrue's wait between two looks, waitUntilStill's second between two looks at a frame, and the 0.3 s between the warm-up touch and the gesture it wakes the Simulator's touch system for"
   },
   [ui('ExampleRowsUITests.swift')]: {
     pauses: 2,
