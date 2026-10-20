@@ -4,7 +4,7 @@ import Synchronization
 
 @MainActor
 public enum CrashReporter {
-  private static var build: CrashReportingBuild?
+  private static var session: CrashReportingSession?
   private nonisolated static let recorded = Mutex<Set<String>>([])
 
   nonisolated static let bundleID = Bundle.main.bundleIdentifier ?? "com.zenbujapanese.dictionary"
@@ -15,31 +15,26 @@ public enum CrashReporter {
   }
 
   static func startAtLaunch(defaults: UserDefaults, bundle: Bundle, environment: [String: String]) {
-    build = CrashReportingPolicy.build(
-      info: bundle.infoDictionary, bundleID: bundle.bundleIdentifier, environment: environment)
-    guard let build else { return }
-    if CrashReportingPolicy.sendsCrashReports(in: defaults) {
-      CrashReportingSDK.sentry.start(options(for: build, defaults: defaults))
-    }
+    guard
+      let build = CrashReportingPolicy.build(
+        info: bundle.infoDictionary, bundleID: bundle.bundleIdentifier, environment: environment)
+    else { return }
+    let session = CrashReportingSession(build: build, defaults: defaults, sdk: .sentry)
+    self.session = session
+    session.startAtLaunch()
     if build.allowsTestSwitches {
       CrashReportTest.runIfRequested(defaults: defaults)
     }
   }
 
   static func setEnabled(_ enabled: Bool) {
-    setEnabled(enabled, build: build, defaults: .standard, sdk: .sentry)
+    session?.setEnabled(enabled)
   }
 
-  static func setEnabled(
-    _ enabled: Bool, build: CrashReportingBuild?, defaults: UserDefaults, sdk: CrashReportingSDK
-  ) {
-    guard let build else { return }
-    if enabled {
-      if !sdk.isEnabled() { sdk.start(options(for: build, defaults: defaults)) }
-      return
-    }
-    if sdk.isEnabled() { sdk.close() }
-    try? FileManager.default.removeItem(atPath: sdk.cacheDirectory)
+  static var canSendProblemReports: Bool { session != nil }
+
+  static func send(_ report: ProblemReport) {
+    session?.send(report)
   }
 
   nonisolated static func record(
@@ -67,6 +62,13 @@ public enum CrashReporter {
     if build.allowsTestSwitches, let offline = CrashReportTest.offlineSession(defaults: defaults) {
       options.urlSession = offline
     }
+    return options
+  }
+
+  static func sendingOnlyOptions(for build: CrashReportingBuild, defaults: UserDefaults) -> Options
+  {
+    let options = options(for: build, defaults: defaults)
+    configureSendingOnly(options)
     return options
   }
 
@@ -114,6 +116,18 @@ public enum CrashReporter {
       let scrubbed = CrashReportScrubber.scrub(event)
       scrubbed.user = User(userId: installID)
       return scrubbed
+    }
+  }
+
+  nonisolated static func configureSendingOnly(_ options: Options) {
+    options.enableCrashHandler = false
+    options.enableAppHangTracking = false
+    options.enableWatchdogTerminationTracking = false
+    options.cacheDirectoryPath = CrashReportingPolicy.problemReportsDirectory(
+      besides: options.cacheDirectoryPath)
+    let scrub = options.beforeSend
+    options.beforeSend = { event in
+      ProblemReport.isProblemReport(event) ? scrub?(event) : nil
     }
   }
 }

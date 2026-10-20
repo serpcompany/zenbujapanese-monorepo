@@ -2,6 +2,8 @@
 status: accepted
 ---
 
+Superseded in part by ADR 0021: Crash Data and Other Diagnostic Data are now declared linked.
+
 # Report the app's crashes and freezes to Sentry
 
 The Zenbu Japanese app reports its crashes, its freezes, and the failures it handles at a few

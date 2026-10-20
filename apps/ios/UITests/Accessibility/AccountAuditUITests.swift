@@ -16,6 +16,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
 
   private func auditAccount(_ pass: AuditPass) {
     auditTheAccountAndItsSettings(pass)
+    auditReportingAProblem(pass)
     auditTheLearnersWords(pass)
     auditSigningIn(pass)
     if device == .mac { auditTheSettingsWindow(pass) } else { auditTheZenbuAccount(pass) }
@@ -60,8 +61,12 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     waitFor(find("credits.list", in: app))
     goBack(in: app)
-    reveal(find("account.about", in: app), in: app)
-    audit("Account, at its end", in: app)
+    reveal(find("account.credits", in: app), in: app)
+    audit("Account, at its end", in: app, .allButTextSizes)
+    let about = launch(pass, ["ZENBU_ONLY_SECTION": "account.about"])
+    tap(tabItem(.account, in: about))
+    waitFor(find("account.about", in: about))
+    audit("Account, its about rows", in: about, .textSizes)
   }
 
   private func auditTheLearnersWords(_ pass: AuditPass) {
@@ -104,6 +109,25 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     tap(reveal(find("account.sign-in", in: app), in: app))
     waitUntilStill(waitForSheet("account.sign-in.cancel", in: app))
     audit("Sign In", in: app)
+  }
+
+  private func auditReportingAProblem(_ pass: AuditPass) {
+    let app = launch(pass, Self.problemReportStandIn)
+    let send = openTheReport(in: app)
+    if pass.size != .largest { waitFor(labeled("Permissions", in: app)) }
+    audit("Report a Problem", in: app)
+    type("Search froze", into: find("problem-report.description", in: app))
+    type("pat@", into: reveal(find("problem-report.email", in: app), in: app))
+    waitFor(find("problem-report.invalid-email", in: app))
+    audit("Report a Problem, an email that isn't an address", in: app)
+    typeAtTheEnd("example.com", of: reveal(find("problem-report.email", in: app), in: app), in: app)
+    if pass.size == .largest {
+      reveal(labeled("Permissions", in: app), in: app)
+      audit("Report a Problem, its details", in: app)
+    }
+    tap(send)
+    waitFor(labeled("Report Sent", in: app))
+    audit("Report a Problem, sent", in: app)
   }
 
   private func auditTheZenbuAccount(_ pass: AuditPass) {

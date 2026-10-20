@@ -24,7 +24,7 @@ answer the request. Data kept only on the device, or in the learner's own iCloud
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
-| Contact Info → Email Address | The account's email, or Apple's relay address if the learner hides theirs. Sign-in codes, and notices when a way to sign in is added or removed, go to it. | App Functionality | Yes | No |
+| Contact Info → Email Address | The account's email, or Apple's relay address if the learner hides theirs. Sign-in codes, and notices when a way to sign in is added or removed, go to it. In the Zenbu app, a problem report also sends an email for a reply: the account's, filled in when signed in, or one the learner types. Sentry keeps it. | App Functionality | Yes | No |
 | Contact Info → Name | The optional name, typed by the learner or sent by Apple or Google at sign-up. | App Functionality | Yes | No |
 | Identifiers → User ID | The Zenbu user ID, the optional username, and the learner's account ID at Apple or Google for each way they sign in. | App Functionality | Yes | No |
 | User Content → Other User Content | The known words and lists synced to the account. | App Functionality | Yes | No |
@@ -38,37 +38,47 @@ Every other type is not collected. The ones a reviewer may ask about:
 
 - **Location**, precise or coarse: no. The IP address isn't used to locate anyone; it's answered
   under Other Data Types.
-- **Device ID**: no. The account keeps no device or advertising identifier.
+- **Device ID**: no, but for the Zenbu app's install ID (below). The account keeps no device or
+  advertising identifier.
 - **Photos or Videos**: no. Photos stay on the device; the account keeps at most a profile
   picture's address (Other Data Types).
 - **Search History**: no. Searches stay on the device, and the dictionary service answers
   Tomodachi's word-card and segmentation requests without keeping them.
 - **Usage Data and Diagnostics**: no, but for the Zenbu app's Product Interaction and its crash
-  reports (below). The services' request logs hold each request's method, route, status, and
-  timing, and nothing the learner sent or that identifies them. The API host's nginx access log is
-  configured outside this repository: if it keeps IP addresses or full URLs, answer Other
-  Diagnostic Data under Data Not Linked to You, or turn it off.
-- **Customer Support**: no. Support is by email, outside the apps.
+  and problem reports (below). The services' request logs hold each request's method, route,
+  status, and timing, and nothing the learner sent or that identifies them. The API host's nginx
+  access log is configured outside this repository: if it keeps IP addresses or full URLs, answer
+  Other Diagnostic Data under Data Not Linked to You, or turn it off.
+- **Customer Support**: no, but for the Zenbu app's problem reports (below). Other support is by
+  email, outside the apps.
 
 ## The Zenbu Japanese app
 
 All five types above, two more for the watch history it syncs from its Player, which only it
-reads and changes (`watch:read` and `watch:write`), and two for the crash reports it sends to
-Sentry ([`crash-reports.md`](../../ios/docs/product/crash-reports.md)):
+reads and changes (`watch:read` and `watch:write`), and four for the crash reports and problem
+reports it sends to Sentry ([`crash-reports.md`](../../ios/docs/product/crash-reports.md),
+[`problem-reports.md`](../../ios/docs/product/problem-reports.md)). A problem report also sends an
+email for a reply, answered under Email Address: the account's, filled in when signed in, or one
+the learner types.
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
 | Browsing History | The 50 YouTube videos the learner most recently watched in the app: each video's ID, title, channel, and length, and when they last watched it; the IDs of up to 100 they removed or that fell past the 50, with when; and, for 30 days, the result of each change the app sent, naming the video and when. | App Functionality | Yes | No |
 | Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know. | App Functionality | Yes | No |
-| Diagnostics → Crash Data | A crash's or freeze's stack trace, the app's and system's versions, the device's model and state, and a random ID made for this install, which nothing links to the account. Sentry keeps it. | App Functionality | No | No |
-| Diagnostics → Other Diagnostic Data | A code for a handled failure, such as an account sync's, and its HTTP status, never the error's message, with the same details and ID. | App Functionality | No | No |
+| Identifiers → Device ID | A random ID made for this install, which every crash report and problem report from it carries. A problem report's email, which can be the account's, links it, and so that install's reports, to the person. Sentry keeps it. | App Functionality | Yes | No |
+| User Content → Customer Support | What the learner writes in a problem report, without file paths, links, and email addresses. Sentry keeps it. | App Functionality | Yes | No |
+| Diagnostics → Crash Data | A crash's or freeze's stack trace, the app's and system's versions, and the device's model and state, with the install ID. Sentry keeps it. | App Functionality | Yes | No |
+| Diagnostics → Other Diagnostic Data | A code for a handled failure, such as an account sync's, and its HTTP status, never the error's message; and a problem report's details: the version and build, the system version, the device's model, signed in or out, crash reports on or off, the optional dictionaries installed, and the microphone and camera permissions. Each with the same details and install ID. | App Functionality | Yes | No |
 
-The App Store then also shows Browsing History and Usage Data under Data Linked to You, and
-Diagnostics under Data Not Linked to You. Crash reports are on until the learner turns off **Send
-Crash Reports**, and Debug builds never send them. Its Other User Content is the known words and
-lists it syncs, and the Translate sentences the learner bookmarks: each one's text and
-translation, its language, and when it was bookmarked (or said, for one bookmarked before the app
-synced bookmarks), which may be what someone nearby said. It never sends a conversation, or a
+The App Store then also shows Browsing History, Usage Data, and Diagnostics under Data Linked to
+You, and nothing under Data Not Linked to You. Crash data is linked because a problem report
+shares its install ID and can carry the account's email
+([ADR 0021](../../../docs/adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)).
+Crash reports are on until the learner turns off **Send Crash Reports**, a problem report goes
+only when the learner sends one, and Debug builds never send either. Its Other User Content is the
+known words and lists it syncs, and the Translate sentences the learner bookmarks: each one's text
+and translation, its language, and when it was bookmarked (or said, for one bookmarked before the
+app synced bookmarks), which may be what someone nearby said. It never sends a conversation, or a
 sentence the learner didn't bookmark, and it keeps no audio, so it collects no Audio Data. It has
 no analytics SDK.
 
@@ -78,7 +88,7 @@ The app measures nothing: tracing, profiling, app-start measurement, MetricKit, 
 metrics are off (`CrashReporterOptionsTests`), and a freeze is one report with its stack trace,
 not a launch time or hang rate. Declare it if any of those is turned on.
 
-Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same nine types, and the
+Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same eleven types, and the
 listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
 with the labels:
 
@@ -86,9 +96,10 @@ with the labels:
   type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
   `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`,
   `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`, or
-  `NSPrivacyCollectedDataTypeProductInteraction`; for crash reports,
-  `NSPrivacyCollectedDataTypeCrashData` and `NSPrivacyCollectedDataTypeOtherDiagnosticData`),
-  `NSPrivacyCollectedDataTypeLinked` (true, or false for the two diagnostics types),
+  `NSPrivacyCollectedDataTypeProductInteraction`; for crash and problem reports,
+  `NSPrivacyCollectedDataTypeDeviceID`, `NSPrivacyCollectedDataTypeCustomerSupport`,
+  `NSPrivacyCollectedDataTypeCrashData`, and `NSPrivacyCollectedDataTypeOtherDiagnosticData`),
+  `NSPrivacyCollectedDataTypeLinked` (true),
   `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
   holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
 - **The listing's description**, which names what the account syncs.

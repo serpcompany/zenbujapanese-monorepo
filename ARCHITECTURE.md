@@ -113,7 +113,8 @@ saying where the code belongs:
   Speech, and Translation ([`docs/agents/translate.md`](docs/agents/translate.md)). Only
   `SearchExperience/Diagnostics/` and `Platform/Diagnostics/` may import Sentry; the rest of the
   app reports through `CrashReporter`
-  ([ADR 0018](docs/adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md)).
+  ([ADR 0018](docs/adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md)), and so do
+  problem reports ([ADR 0021](docs/adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)).
 - **Across parts**: the app finds and ranks nothing itself: it asks the core, through the bundle
   it runs, what each dictionary screen lists, in what order, and with what labels
   ([`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md), The app's side), apart

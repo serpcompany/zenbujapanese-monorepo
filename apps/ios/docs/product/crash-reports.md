@@ -14,20 +14,22 @@ learner searches, reads, types, says, or photographs. How it's built is in
 
 ## Send Crash Reports
 
-Account has a **Send Crash Reports** switch, after Frequency Dictionaries, on until the learner
-turns it off. The line under it says what's sent and where: the app and system versions, the
+Account has a **Send Crash Reports** switch, in the Help & Support group under
+[**Report a Problem…**](problem-reports.md), on until the learner turns it off. The line under it says what's sent and where: the app and system versions, the
 device's model and state (such as memory in use), a random ID for this install, and where in the
-app's code it happened, to its developers through Sentry, and never the learner's searches, words, sentences, notes, photos,
-conversations, or account details. On the Mac, the same switch is in Settings' Account pane.
+app's code it happened, to its developers through Sentry, and that crash reports never include the
+learner's searches, words, sentences, notes, photos, conversations, or account details. On the Mac, the same switch is in Settings' Account pane.
 
 Turning it off stops reports at once, without waiting on the network, and a crash after that sends
 nothing. It also deletes the reports still waiting on the device to be sent, so turning it back on
-never sends one from before. Turning it back on starts them again without a relaunch.
+never sends one from before. Turning it back on starts them again without a relaunch. A problem
+report still goes with the switch off ([problem reports](problem-reports.md#with-crash-reports-off)).
 
 Check: UI `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` (on at first, and off
 once flipped) and `testAccountListsEveryArea` (the row); package `CrashReporterSwitchTests` (off
-closes Sentry and deletes its waiting reports, and on starts it again, against a stand-in for the
-SDK) and
+closes Sentry and deletes its waiting reports but not a waiting problem report, and on starts it
+again, against a stand-in for the SDK), `CrashReportingMachineTests` (never catching crashes with
+the switch off, in any order of switch changes and problem reports), and
 `CrashReportingPolicyTests` (on until turned off, and a build without a destination that the
 switch can't start). The Mac's
 Settings pane is checked by hand while the Mac is on hold (2026-10-18).
@@ -74,7 +76,8 @@ tests never do.
 
 Check: package `CrashReportingPolicyTests` (each build, and the test hosts); contract
 `test_crash_report_settings.py` (the destination only in Release builds, never in the share
-extension, and the privacy manifest's Crash Data and Other Diagnostic Data).
+extension, and the privacy manifest's Device ID, Customer Support, Crash Data, and Other Diagnostic
+Data, each linked).
 
 ## Checked by hand
 

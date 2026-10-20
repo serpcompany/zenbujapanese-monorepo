@@ -47,88 +47,98 @@ struct AccountRootView: View {
 
   var body: some View {
     List {
-      Section {
-        NavigationLink(value: AccountRoute.profile) {
-          ProfileCardRow()
-        }
-        .accessibilityIdentifier("account.profile")
-        if zenbuAccount != nil {
-          ZenbuAccountRow()
-        }
-      }
-
-      Section {
-        NavigationLink(value: AccountRoute.mediaLibrary) {
-          SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
-        }
-        .accessibilityIdentifier("account.media-library")
-
-        NavigationLink(value: AccountRoute.knownWords) {
-          AccountCountRowLabel(
-            "Known Words", systemImage: "checkmark.circle.fill", tint: .teal,
-            count: wordKnowledge.isLoaded ? wordKnowledge.knownCount : nil)
-        }
-        .accessibilityIdentifier("account.known-words")
-
-        NavigationLink(value: AccountRoute.wordLists) {
-          AccountCountRowLabel(
-            "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
-            count: wordLists.isLoaded ? wordLists.lists.count : nil)
-        }
-        .accessibilityIdentifier("account.lists")
-
-        NavigationLink(value: TranslateRoute.history) {
-          AccountCountRowLabel(
-            "Translations", systemImage: "translate", tint: .purple,
-            count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
-        }
-        .accessibilityIdentifier("account.translations")
-
-        if !notesWithoutAWord.notes.isEmpty {
-          NavigationLink(value: AccountRoute.notesWithoutAWord) {
-            AccountCountRowLabel(
-              "Notes Without a Word", systemImage: "note.text", tint: .yellow,
-              count: notesWithoutAWord.notes.count)
+      if LaunchHarness.shows("library", on: "account") {
+        Section {
+          NavigationLink(value: AccountRoute.profile) {
+            ProfileCardRow()
           }
-          .accessibilityIdentifier("account.notes-without-a-word")
+          .accessibilityIdentifier("account.profile")
+          if zenbuAccount != nil {
+            ZenbuAccountRow()
+          }
+        }
+
+        Section {
+          NavigationLink(value: AccountRoute.mediaLibrary) {
+            SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
+          }
+          .accessibilityIdentifier("account.media-library")
+
+          NavigationLink(value: AccountRoute.knownWords) {
+            AccountCountRowLabel(
+              "Known Words", systemImage: "checkmark.circle.fill", tint: .teal,
+              count: wordKnowledge.isLoaded ? wordKnowledge.knownCount : nil)
+          }
+          .accessibilityIdentifier("account.known-words")
+
+          NavigationLink(value: AccountRoute.wordLists) {
+            AccountCountRowLabel(
+              "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
+              count: wordLists.isLoaded ? wordLists.lists.count : nil)
+          }
+          .accessibilityIdentifier("account.lists")
+
+          NavigationLink(value: TranslateRoute.history) {
+            AccountCountRowLabel(
+              "Translations", systemImage: "translate", tint: .purple,
+              count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
+          }
+          .accessibilityIdentifier("account.translations")
+
+          if !notesWithoutAWord.notes.isEmpty {
+            NavigationLink(value: AccountRoute.notesWithoutAWord) {
+              AccountCountRowLabel(
+                "Notes Without a Word", systemImage: "note.text", tint: .yellow,
+                count: notesWithoutAWord.notes.count)
+            }
+            .accessibilityIdentifier("account.notes-without-a-word")
+          }
+        }
+
+        Section {
+          NavigationLink(value: AccountRoute.readingAids) {
+            SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+          }
+          .accessibilityIdentifier("account.reading-aids")
+
+          NavigationLink(value: AccountRoute.frequencyDictionaries) {
+            SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+          }
+          .accessibilityIdentifier("account.frequency-dictionaries")
         }
       }
 
-      Section {
-        NavigationLink(value: AccountRoute.readingAids) {
-          SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+      if LaunchHarness.shows("about", on: "account") {
+        Section {
+          AccountAboutHeader()
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 24, leading: 4, bottom: 8, trailing: 4))
         }
-        .accessibilityIdentifier("account.reading-aids")
 
-        NavigationLink(value: AccountRoute.frequencyDictionaries) {
-          SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+        Section {
+          AccountExternalLink(destination: AccountLinks.support) {
+            SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
+          }
+          .accessibilityIdentifier("account.support")
+
+          ReportAProblemButton()
+
+          CrashReportsToggle()
+        } footer: {
+          Text(CrashReportsSection.note)
         }
-        .accessibilityIdentifier("account.frequency-dictionaries")
-      }
 
-      CrashReportsSection()
+        Section {
+          AccountExternalLink(destination: AccountLinks.privacyPolicy) {
+            SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
+          }
+          .accessibilityIdentifier("account.privacy-policy")
 
-      Section {
-        AccountAboutHeader()
-          .listRowBackground(Color.clear)
-          .listRowInsets(EdgeInsets(top: 24, leading: 4, bottom: 8, trailing: 4))
-      }
-
-      Section {
-        AccountExternalLink(destination: AccountLinks.support) {
-          SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
+          NavigationLink(value: AccountRoute.credits) {
+            SettingsRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
+          }
+          .accessibilityIdentifier("account.credits")
         }
-        .accessibilityIdentifier("account.support")
-
-        AccountExternalLink(destination: AccountLinks.privacyPolicy) {
-          SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
-        }
-        .accessibilityIdentifier("account.privacy-policy")
-
-        NavigationLink(value: AccountRoute.credits) {
-          SettingsRowLabel("Credits & Attributions", systemImage: "text.book.closed.fill", tint: .gray)
-        }
-        .accessibilityIdentifier("account.credits")
       }
     }
     .compactSectionSpacing()

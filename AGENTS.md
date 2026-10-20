@@ -25,7 +25,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — the repository's parts, how data moves between them, and each part's enforced layers. Start here for anything that crosses parts.
 - [`docs/technologies.md`](docs/technologies.md) — technology implementations, roles, and consumers.
 - [`docs/data-sources.md`](docs/data-sources.md) — supplied information, source roles, and current consumers.
-- [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch on iPhone, iPad, and the Mac, the platform adapters, installing on an iPhone, Simulator verification, and the current iOS test and CI boundary.
+- [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch on iPhone, iPad, and the Mac, the platform adapters, installing on an iPhone, Simulator checks, and the iOS test and CI boundary.
 - [`docs/agents/translate.md`](docs/agents/translate.md) — the iOS Translate tab: its engine target, the on-device speech and translation adapters, its tests, the Simulator harness, and device checks.
 - [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, the account pages, environments, deploys, and sitemaps.
 - [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) — the website's dictionary service: run, check, routes, the Docker image, and deploying it.
@@ -68,4 +68,5 @@ SERP's [engineering standards](https://github.com/serpcompany/serp/tree/main/doc
 ## Evidence and research
 
 - [`docs/agents/clipy.md`](docs/agents/clipy.md) — feedback supplied as a Clipy recording.
+- App problem reports: `devin@serp.co` triages them ([how](docs/agents/ios-problem-reports.md)).
 - [`zenbujapanese/research`](https://github.com/zenbujapanese/research) — private repository for exploratory research and archived reference evidence.

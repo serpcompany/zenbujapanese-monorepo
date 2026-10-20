@@ -17,6 +17,8 @@ enum CrashReportingPolicy {
   static let breadcrumbPrefix = "zenbu."
 
   static let keptContexts: Set<String> = ["app", "device", "os", "runtime", "trace", "problem"]
+  static let problemReportContexts: Set<String> = ["report", "permissions"]
+  static let flushTimeout: TimeInterval = 15
 
   static let droppedContextFields: [String: Set<String>] = [
     "app": ["device_app_hash"],
@@ -55,6 +57,37 @@ enum CrashReportingPolicy {
   static func cacheDirectory(caches: String, bundleID: String) -> String {
     ((caches as NSString).appendingPathComponent(bundleID) as NSString)
       .appendingPathComponent("Sentry")
+  }
+
+  static func problemReportsDirectory(besides cacheDirectory: String) -> String {
+    ((cacheDirectory as NSString).deletingLastPathComponent as NSString)
+      .appendingPathComponent("Problem Reports")
+  }
+
+  static func hasQueuedReports(in directory: String, fileManager: FileManager = .default) -> Bool {
+    !queuedReports(in: directory, fileManager: fileManager).isEmpty
+  }
+
+  static func moveQueuedReports(
+    from source: String, to target: String, fileManager: FileManager = .default,
+    where moves: ((Data) -> Bool)? = nil
+  ) {
+    for path in queuedReports(in: source, fileManager: fileManager) {
+      let origin = (source as NSString).appendingPathComponent(path)
+      if let moves, !moves(fileManager.contents(atPath: origin) ?? Data()) { continue }
+      let destination = (target as NSString).appendingPathComponent(path)
+      try? fileManager.createDirectory(
+        atPath: (destination as NSString).deletingLastPathComponent,
+        withIntermediateDirectories: true)
+      try? fileManager.moveItem(atPath: origin, toPath: destination)
+    }
+  }
+
+  private static func queuedReports(in directory: String, fileManager: FileManager) -> [String] {
+    guard let paths = fileManager.enumerator(atPath: directory) else { return [] }
+    return paths.compactMap { $0 as? String }.filter { path in
+      ((path as NSString).deletingLastPathComponent as NSString).lastPathComponent == "envelopes"
+    }
   }
 
   static func keepsBreadcrumb(category: String) -> Bool {
