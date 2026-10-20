@@ -65,7 +65,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     audit("Account, at its end", in: app, .allButTextSizes)
     let about = launch(pass, ["ZENBU_ONLY_SECTION": "account.about"])
     tap(tabItem(.account, in: about))
-    waitFor(find("account.report-a-problem", in: about))
+    waitFor(find("account.about", in: about))
     audit("Account, its about rows", in: about, .textSizes)
   }
 

@@ -174,7 +174,9 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(.dynamicType, .labels(["Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
+  allow(.dynamicType, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
+  allow(.textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
   allow(
     .dynamicType,
     .label(
@@ -183,7 +185,10 @@ private let textThatScales = [
     on: ["Account, its about rows"], touch, [.standard], because: Why.scales),
   allow(
     .textClipped,
-    .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
+    .labels([
+      "Lists", "Translations", "Sign In to Sync",
+      "Known words, lists, watch history, and bookmarks, on all your devices",
+    ]),
     on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
