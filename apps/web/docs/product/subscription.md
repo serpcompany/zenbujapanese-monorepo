@@ -23,8 +23,8 @@ sync again once it doesn't. When none runs, the latest shows where it was bought
 (ended, or refunded or revoked).
 
 - Source: #868; the service's `GET /v1/me/subscription`, its `running` list and `managedIn`.
-- Check: Subscription tests, "shows a website subscription with when it renews, and opens
-  Stripe's portal", "shows an App Store subscription as managed in the App Store, and offers no
+- Check: Subscription tests, "shows a website subscription with when it renews, opens Stripe's
+  portal, and offers it again after Back", "shows an App Store subscription as managed in the App Store, and offers no
   other", "shows a %s subscription in %s" (each failed, pending, and paused state), and "shows the
   latest one, where it was bought, when none runs any more"; `src/lib/account/subscription.test.ts`
   (the date on the learner's calendar); Subscription spec, "a website subscription opens the
@@ -69,9 +69,9 @@ none of the prices can be offered, it says the plans aren't available.
 - Source: #868; the service's `GET /v1/me/subscription/plans`; #867 (notes, photos, the profile
   photo, settings, and recent searches sync too, and the service's gate covers them and the photo
   files, [`account-billing.md`](../../../../docs/agents/account-billing.md), The gate).
-- Check: Subscription tests, "offers each plan with its price and the trial, and opens Stripe
-  Checkout to come back here" (the list and what stays free), "offers nothing while sync is free, as before the owner turns the
-  gate on", "shows nothing where neither store sells it, and sends to the app where only the App
+- Check: Subscription tests, "offers each plan with its price and the trial, opens Stripe
+  Checkout to come back here, and offers it again after Back" (the list and what stays free),
+  "offers nothing while sync is free, as before the owner turns the gate on", "shows nothing where neither store sells it, and sends to the app where only the App
   Store does", "says the plans can't be shown when Stripe doesn't answer, or none can be offered",
   and "shows the plans in Japanese, with their prices in yen"; Subscription spec, "a learner who
   needs one sees the plans and goes to Stripe Checkout for one", "the plans arrive with the
@@ -86,11 +86,13 @@ between reads, until it runs, then shows it; if it still doesn't, it says a card
 few minutes and a bank debit or konbini payment a few days, and still offers nothing. A refusal
 says so: payments not answering, a plan no longer offered, a subscription already running, or a
 last payment Stripe is still confirming (the service refuses a second checkout then). A session
-that ends meanwhile shows the page signed out.
+that ends meanwhile shows the page signed out. A learner who comes back from Checkout or the portal
+with the browser's Back finds Subscribe and Manage your subscription working again, also where the
+browser shows the page as it left it.
 
 - Source: #868; the service's `POST /v1/me/subscription/checkout` and `/portal`.
 - Check: Subscription tests, "back from Checkout, reads the subscription again until it runs, or
-  says Stripe is still confirming", "back from Checkout, offers nothing while it confirms, also when
+  says Stripe is still confirming", the two tests above that end "and offers it again after Back", "back from Checkout, offers nothing while it confirms, also when
   React runs its effects twice", "shows signed out when the session ends while it's confirming a
   payment", "says nothing changed when payments don't answer, or when the plan is gone", and "says
   why Subscribe started nothing: a running subscription, or a payment still confirming";

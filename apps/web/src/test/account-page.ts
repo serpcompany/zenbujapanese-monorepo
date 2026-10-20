@@ -80,7 +80,7 @@ export async function shows(container: HTMLElement, text: string) {
   })
 }
 
-function button(container: HTMLElement, name: string): HTMLButtonElement {
+export function button(container: HTMLElement, name: string): HTMLButtonElement {
   const found = [...container.querySelectorAll('button')].find(
     candidate =>
       candidate.getAttribute('aria-label') === name || candidate.textContent?.trim() === name

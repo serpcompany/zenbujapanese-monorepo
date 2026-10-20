@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { HeldSubscription, Plan, Plans, Subscription } from '@/lib/account/answers'
 import type { AccountApi, Result } from '@/lib/account/client'
@@ -182,7 +183,7 @@ export function SubscriptionSection({
   const [confirming, setConfirming] = useState<'waiting' | 'slow' | null>(
     returnedFromCheckout && !startedRunning.current ? 'waiting' : null
   )
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useBusy()
   const [problem, setProblem] = useState<string | null>(null)
   const offering = offersOnTheWebsite(subscription) && confirming === null
   const told = useRef({ onChanged, onSignedOut })
