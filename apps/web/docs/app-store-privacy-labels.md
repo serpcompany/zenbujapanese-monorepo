@@ -24,7 +24,7 @@ answer the request. Data kept only on the device, or in the learner's own iCloud
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
-| Contact Info → Email Address | The account's email, or Apple's relay address if the learner hides theirs. Sign-in codes, and notices when a way to sign in is added or removed, go to it. | App Functionality | Yes | No |
+| Contact Info → Email Address | The account's email, or Apple's relay address if the learner hides theirs. Sign-in codes, and notices when a way to sign in is added or removed, go to it. In the Zenbu app, a problem report also sends an email for a reply: the account's, filled in when signed in, or one the learner types. Sentry keeps it. | App Functionality | Yes | No |
 | Contact Info → Name | The optional name, typed by the learner or sent by Apple or Google at sign-up. | App Functionality | Yes | No |
 | Identifiers → User ID | The Zenbu user ID, the optional username, and the learner's account ID at Apple or Google for each way they sign in. | App Functionality | Yes | No |
 | User Content → Other User Content | The known words and lists synced to the account. | App Functionality | Yes | No |
