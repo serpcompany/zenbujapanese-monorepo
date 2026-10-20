@@ -153,6 +153,10 @@ enum SubscriptionProblem: String, Codable, Equatable, Sendable {
   case appleAccountSubscribed
   case paymentPending
   case notNeeded
+  case serviceFailed
+  case purchaseNotApplied
+
+  var readsAgain: Bool { [.unreachable, .serviceFailed, .storeUnavailable].contains(self) }
 }
 
 struct AccountDeletion: Decodable, Sendable {

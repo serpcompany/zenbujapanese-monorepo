@@ -111,6 +111,13 @@ enum SubscriptionText {
       )
     case .notNeeded:
       String(localized: "Syncing doesn't need a subscription for this account right now.")
+    case .serviceFailed:
+      String(localized: "Zenbu couldn't read your subscription just now. Try again in a moment.")
+    case .purchaseNotApplied:
+      String(
+        localized:
+          "Your App Store purchase hasn't reached your Zenbu account yet. Zenbu sends it again on its own; if this keeps happening, contact support."
+      )
     }
   }
 

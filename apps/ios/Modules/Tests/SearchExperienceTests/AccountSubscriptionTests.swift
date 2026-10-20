@@ -115,6 +115,49 @@ struct AccountSubscriptionTests {
     #expect(fixture.account.subscription.problem == .anotherAccount)
   }
 
+  @Test(arguments: [
+    StubReply.error(400, "unknown_product"), .error(400, "bad_request"),
+    .error(402, "subscription_required"), .error(403, "insufficient_scope"), .error(404, "not_found"),
+    .error(413, "too_large"),
+  ])
+  func leavesAPurchaseTheServiceRefusesForNowUnfinishedSaysSoAndSendsItAgain(_ refusal: StubReply)
+    async throws
+  {
+    let fixture = try await Answers.signedIn(answeringPurchases: refusal)
+    let subscription = fixture.account.subscription
+    await subscription.subscribe(to: Answers.monthly)
+    #expect(fixture.store.finished.isEmpty)
+    #expect(subscription.problem == .purchaseNotApplied)
+
+    fixture.serve(subscription: Answers.noneThenSubscribed)
+    fixture.store.leavesUnfinished([Answers.bought])
+    await subscription.refresh()
+    #expect(fixture.store.finished == [Answers.bought])
+    #expect(subscription.current?.active == true)
+    #expect(subscription.problem == nil)
+  }
+
+  @Test(arguments: [StubReply.error(500, "internal"), .error(429, "too_many_requests")])
+  func saysWhenTheSubscriptionCantBeReadAndReadsItAgainOnTryAgain(_ failure: StubReply)
+    async throws
+  {
+    let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
+    let subscription = fixture.account.subscription
+    fixture.serve(subscription: { _ in failure })
+    await subscription.loadOffers()
+    #expect(subscription.offers.isEmpty)
+    #expect(subscription.problem == .serviceFailed)
+    #expect(subscription.problem?.readsAgain == true)
+    await subscription.subscribe(to: Answers.monthly)
+    #expect(fixture.store.purchases.isEmpty)
+    #expect(subscription.problem == .serviceFailed)
+
+    fixture.serve(subscription: Answers.noneThenSubscribed)
+    await subscription.loadOffers()
+    #expect(subscription.problem == nil)
+    #expect(!subscription.offers.isEmpty)
+  }
+
   @Test func saysNothingWhenTheLearnerCancelsAndSaysWhenTheStoreFails() async throws {
     let fixture = try await Answers.signedIn(answeringPurchases: .json(200, Answers.subscribed()))
     let subscription = fixture.account.subscription

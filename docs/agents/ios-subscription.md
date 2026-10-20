@@ -71,7 +71,9 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   the Apple Account has no subscription of its own running, and no `409` is waiting, so no learner
   is offered a second subscription or one sync doesn't need. Opening the paywall and buying read the
   subscription again first: buying needs that fresh answer, says so when the service can't be
-  reached, and refuses when it's no longer offered (a website purchase that just landed). When
+  reached or fails (`unreachable`, or `serviceFailed` for a `5xx` or `429`, each with **Try
+  Again** on the paywall, as is the App Store not answering), and refuses when it's no longer
+  offered (a website purchase that just landed). When
   nothing is offered the paywall says why (the Apple Account already subscribes, a first payment
   is on its way, sync needs none now, the account has one), and an App Store that sells none of
   the plans says so.
@@ -82,8 +84,11 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   so StoreKit's sheet belongs to the paywall's scene, with `.appAccountToken(token)` set to the
   account's token; then the verified transaction's `jwsRepresentation` goes to
   `POST /v1/me/subscription/apple`. The
-  transaction is finished after a `200` or a `4xx` (except `401` and `429`), and left unfinished after a
-  `5xx` or no network, so StoreKit hands it over again. Ask to Buy says it's waiting, across a
+  transaction is finished after a `200`, and after the two refusals that are final for it: `409`
+  (another account's) and `400 invalid_transaction` (Apple didn't sign it for this app). Any other
+  refusal, a `5xx`, or no network leaves it unfinished, so StoreKit hands it over again; another
+  `4xx`, such as `400 unknown_product` or `403`, also says the purchase hasn't reached the account
+  yet (`purchaseNotApplied`). Ask to Buy says it's waiting, across a
   relaunch, for a day, or until the approved purchase arrives or the learner tries again; a `409`
   says the Apple Account's subscription is another Zenbu account's, until the learner signs out, a
   purchase goes through, or the Apple Account no longer has one. These notes are kept for the
@@ -91,8 +96,8 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 - **Listening.** From launch, once the account's file has loaded, `Transaction.updates` are sent
   the same way: a renewal, an approval, an offer code, a refund. `Transaction.unfinished` is sent
   after each read of the subscription (at launch, on becoming active, and after signing in), so a
-  purchase left unfinished by a `5xx` goes again. A transaction is sent once at a time and, once
-  answered, not again until the next sign-in, unless StoreKit signs it again (a refund or an
+  purchase left unfinished goes again. A transaction is sent once at a time and, once finished,
+  not again until the next sign-in, unless StoreKit signs it again (a refund or an
   upgrade of the same transaction). A signed-out app sends and finishes nothing, so they
   wait for the next sign-in.
 - **Signing in and restoring.** Signing in sends `Transaction.currentEntitlements`, so the Apple

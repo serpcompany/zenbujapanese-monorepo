@@ -55,6 +55,10 @@ enum SubscriptionAnswers {
     return fixture
   }
 
+  static func noneThenSubscribed(_ request: StubRequest) -> StubReply {
+    request.method == "GET" ? .json(200, answer()) : .json(200, subscribed())
+  }
+
   static let anothers = StubReply.error(409, "subscription_belongs_to_another_account")
 
   static func noneButAnothers(_ request: StubRequest) -> StubReply {

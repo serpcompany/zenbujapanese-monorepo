@@ -220,7 +220,9 @@ it on at the service, every account syncs as before, and the app shows no subscr
   Buy says so, across a relaunch, for a day or until it's approved or the learner tries again. If
   the Apple Account's subscription belongs to another Zenbu account, the app says to sign in to
   that one until the learner signs out or the Apple Account has none. The app buys only after
-  reading the account's subscription again, and says so when it can't. When nothing is offered
+  reading the account's subscription again, and says so when it can't, with **Try Again**. A
+  purchase the account doesn't take yet stays with the App Store, which hands it over again, and
+  the app says it hasn't reached the account yet. When nothing is offered
   the paywall says why, and an App Store that doesn't sell the plans, or an Apple Account with
   nothing to restore, says so; VoiceOver reads each of these notes once, as it appears.
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
@@ -235,7 +237,8 @@ it on at the service, every account syncs as before, and the app shows no subscr
 
 Check: package `AccountSubscriptionTests` (the purchase and its token, no offer while sync is free
 or another subscription runs, reading again before buying, a service that's down, another
-account's purchase, Ask to Buy, a store that sells none, restoring with and without a purchase,
+account's purchase, Ask to Buy, a purchase refused for now, a read that fails, a store that sells
+none, restoring with and without a purchase,
 signing in, a purchase handed over twice, buying only on a fresh read, and a purchase's answer over
 an older read), `AccountSubscriptionStateTests` (the answer kept per account, switching accounts,
 late answers, a relaunch, signed out, no refused sync but the profile, Sync Now, a refused sync,

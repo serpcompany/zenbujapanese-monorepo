@@ -19,6 +19,7 @@ final class AccountSubscription: LocalFileStore {
   }
 
   private static let kept: Set<SubscriptionProblem> = [.anotherAccount, .pendingApproval]
+  private static let invalidTransaction = "invalid_transaction"
 
   private(set) var known: KnownSubscription?
   private(set) var offers: [SubscriptionOffer] = []
@@ -114,13 +115,16 @@ final class AccountSubscription: LocalFileStore {
         try await api.subscription(accessToken: $0)
       }
       take(answer, for: account, asked: ask, fromAPurchase: false)
-      if problem == .unreachable { note(nil) }
+      if problem == .unreachable || problem == .serviceFailed { note(nil) }
       await sendUnfinished()
       return signedInAs() == account
     } catch AccountServiceError.unreachable {
       note(.unreachable)
       return false
+    } catch AccountServiceError.sessionEnded {
+      return false
     } catch {
+      note(.serviceFailed)
       return false
     }
   }
@@ -305,10 +309,12 @@ final class AccountSubscription: LocalFileStore {
     } catch AccountServiceError.refused(409, _, _, _) {
       wait(.anotherAccount)
       await finish(transaction)
+    } catch AccountServiceError.refused(400, Self.invalidTransaction, _, _) {
+      await finish(transaction)
     } catch AccountServiceError.refused(let status, _, _, _)
       where (400..<500).contains(status) && status != 401 && status != 429
     {
-      await finish(transaction)
+      note(.purchaseNotApplied)
     } catch AccountServiceError.sessionEnded {
       return
     } catch {
