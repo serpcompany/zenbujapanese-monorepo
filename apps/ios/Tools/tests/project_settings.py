@@ -7,6 +7,7 @@ BUILD_CONFIGURATION = re.compile(
     r"isa = XCBuildConfiguration;\s*buildSettings = \{(?P<settings>.*?)\};\s*name = (?P<name>\w+);",
     re.DOTALL,
 )
+DEVICE_FAMILIES = {"Debug": "1,2", "Release": "1"}
 
 
 def target_build_settings(info_plist: str, name: str = "") -> list[str]:
@@ -22,8 +23,8 @@ def app_build_settings(name: str = "") -> list[str]:
     return target_build_settings("App/Info.plist", name)
 
 
-def share_extension_build_settings() -> list[str]:
-    return target_build_settings("ShareExtension/Info.plist")
+def share_extension_build_settings(name: str = "") -> list[str]:
+    return target_build_settings("ShareExtension/Info.plist", name)
 
 
 def build_setting(settings: str, key: str) -> str:

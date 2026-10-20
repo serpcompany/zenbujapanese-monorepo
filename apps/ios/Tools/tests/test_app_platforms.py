@@ -3,7 +3,14 @@ import plistlib
 import re
 import unittest
 
-from project_settings import BUILD_CONFIGURATION, PROJECT, ROOT, app_build_settings, build_setting
+from project_settings import (
+    BUILD_CONFIGURATION,
+    DEVICE_FAMILIES,
+    PROJECT,
+    ROOT,
+    app_build_settings,
+    build_setting,
+)
 
 ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
 SCHEME = ROOT / "apps/ios/ZenbuJapanese.xcodeproj/xcshareddata/xcschemes/ZenbuJapanese.xcscheme"
@@ -31,7 +38,6 @@ class AppPlatformTests(unittest.TestCase):
         configurations = app_build_settings()
         self.assertEqual(len(configurations), 2)
         for settings in configurations:
-            self.assertEqual(build_setting(settings, "TARGETED_DEVICE_FAMILY"), "1,2")
             self.assertEqual(
                 build_setting(settings, "SUPPORTED_PLATFORMS"), "iphoneos iphonesimulator macosx"
             )
@@ -41,6 +47,12 @@ class AppPlatformTests(unittest.TestCase):
                 build_setting(settings, "PRODUCT_BUNDLE_IDENTIFIER"),
                 "com.zenbujapanese.dictionary$(ZENBU_BUNDLE_ID_SUFFIX)",
             )
+
+    def test_release_builds_an_iphone_app_and_debug_keeps_ipad(self) -> None:
+        for name, family in DEVICE_FAMILIES.items():
+            with self.subTest(configuration=name):
+                (settings,) = app_build_settings(name)
+                self.assertEqual(build_setting(settings, "TARGETED_DEVICE_FAMILY"), family)
 
     def test_the_mac_build_is_apple_silicon_only_on_macos_26(self) -> None:
         project = PROJECT.read_text(encoding="utf-8")

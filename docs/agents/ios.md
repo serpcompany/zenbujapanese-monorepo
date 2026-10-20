@@ -277,12 +277,17 @@ On the Mac, XCUITest sees AppKit's elements, and the helpers hide the difference
 
 ### Releasing on iPad and the Mac
 
-What a person does once, on TSMC LLC's team (`847HR8U8D9`): turn on the Mac platform for the App
-ID `com.zenbujapanese.dictionary` (and `.dev`) with Sign in with Apple and Associated Domains, so
-automatic signing makes macOS profiles; add the macOS platform to the App Store record
-([The App Store record](#the-app-store-record)), which keeps one record with universal purchase;
-and add iPad and Mac screenshots. A Mac build is archived with
-**Any Mac (Apple Silicon)** and uploaded the same way as the iPhone's.
+iPad and the Mac are built and tested but not released (#931): Release sets `TARGETED_DEVICE_FAMILY`
+to `1` for the app and its share extension, and Debug keeps `1,2`, so an archive for **Any iOS
+Device** is an iPhone app while the UI tests and the `iOS` workflow still drive iPad. Once a version
+ships iPad, no later one can drop it. That version sets Release back to `1,2` (and `DEVICE_FAMILIES`
+in `project_settings.py`), adds iPad's 13-inch screenshots (#856) and the Mac's (#857), and moves
+the [changelog's](../../apps/ios/CHANGELOG.md) **Not released yet: iPad and the Mac** entry into
+Unreleased for What's New. A person also does once, on TSMC LLC's team (`847HR8U8D9`): turn on the
+Mac platform for the App ID `com.zenbujapanese.dictionary` (and `.dev`) with Sign in with Apple and
+Associated Domains, so automatic signing makes macOS profiles, and add the macOS platform to the App
+Store record ([The App Store record](#the-app-store-record)), which keeps one record with universal
+purchase. A Mac build is archived with **Any Mac (Apple Silicon)** and uploaded as the iPhone's is.
 
 ### iPad and Mac checks
 
@@ -844,12 +849,7 @@ Connect requires: each scaled to 1320 × 2870 with Lanczos, a pixel cropped off 
 
 **A TestFlight build:**
 
-Every archive is also an iPad app (ADR 0015), and an archive for **Any Mac** a Mac app. App Store
-Connect won't submit a version that runs on iPad without 13-inch iPad screenshots, App Review
-checks it on iPad, and a later version can't drop iPad once one has shipped with it. So before
-submitting the first version built after iPad and the Mac came in, add the iPad (and, for a Mac
-build, the Mac) platform's screenshots and set up the record (Releasing on iPad and the Mac,
-above), and say so in What's New.
+The archive is an iPhone app until a version ships iPad (Releasing on iPad and the Mac, above).
 
 1. In a pull request, raise `CURRENT_PROJECT_VERSION` in both of the project's configurations,
    as "Prepare build 20 of 1.0.1 for TestFlight" did, and merge it. For a new version, raise
