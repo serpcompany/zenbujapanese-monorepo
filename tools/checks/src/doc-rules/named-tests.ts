@@ -1,9 +1,9 @@
-const swiftTestFile = /^apps\/ios\/(?:.*\/)?(?:Tests|UITests)\/.*\.swift$/
+const swiftTestFile = /^apps\/ios\/(?:.*\/)?\w*Tests\/.*\.swift$/
 const pythonTestFile = /(?:^|\/)tests\/test_\w+\.py$/
 const scriptTestFile =
   /(?:^|\/)(?:e2e|test|conformance)\/.*\.(?:tsx?|mjs)$|\.test\.tsx?$|(?:^|\/)(?:playwright|vitest)\.config\.ts$/
 const testTarget = /^apps\/ios\/(?:.*?\/)?Tests\/([^/]+)\//
-const uiTestTarget = 'ZenbuJapaneseUITests'
+const appTestTargets = ['ZenbuJapaneseUITests', 'ZenbuJapaneseStoreKitTests']
 
 const pair = /^(\w+Tests)\.(\w+)$/
 const method = /^test(?:[A-Z]\w*|_\w+)$/
@@ -18,7 +18,7 @@ export interface NamedTests {
 }
 
 export function testsIn(sources: ReadonlyMap<string, string>): NamedTests {
-  const types = new Map<string, Set<string>>([[uiTestTarget, new Set()]])
+  const types = new Map<string, Set<string>>(appTestTargets.map(target => [target, new Set()]))
   const names = new Set<string>()
   for (const [path, text] of sources) {
     const declared = [...text.matchAll(/\b(?:struct|class|enum|extension|actor)\s+(\w+)/g)]

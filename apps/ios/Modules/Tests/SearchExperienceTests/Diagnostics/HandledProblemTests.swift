@@ -88,6 +88,19 @@ struct HandledProblemTests {
     #expect(HandledProblem(AccountServiceError.differentAccount, in: .accountSync)?.code == "account_service_error.different_account")
   }
 
+  @Test("a sync or photo file refused for want of a subscription isn't a problem, being the account's state, while other refusals still are")
+  func subscriptionRefusalIsntAProblem() {
+    let needsSubscription = AccountServiceError.refused(
+      status: 402, code: "subscription_required",
+      message: "Syncing and photo files need a subscription.", retryAfter: nil)
+    #expect(HandledProblem(needsSubscription, in: .accountSync) == nil)
+    let full = AccountServiceError.refused(
+      status: 409, code: "too_many_photos", message: "", retryAfter: nil)
+    #expect(
+      HandledProblem(full, in: .accountSync)?.details
+        == ["status": "409", "service_code": "too_many_photos"])
+  }
+
   @Test("codes and details are bounded: unstable text is dropped, and at most four details")
   func codesAndDetailsAreBounded() {
     #expect(HandledProblem(area: .translateStart, code: "Microphone denied!").code == "unknown")

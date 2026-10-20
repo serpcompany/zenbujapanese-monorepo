@@ -55,7 +55,8 @@ export const swiftPlatforms: SwiftPlatforms = {
     'apps/ios/Modules/Tests/',
     'apps/ios/App/',
     'apps/ios/ShareExtension/',
-    'apps/ios/UITests/'
+    'apps/ios/UITests/',
+    'apps/ios/StoreKitTests/'
   ],
   apis: [
     {
@@ -133,6 +134,11 @@ export const swiftPlatforms: SwiftPlatforms = {
       pattern: /\bnavigationBarBackButtonHidden\b/,
       name: 'hiding the Back button',
       use: '.backButtonHidden()'
+    },
+    {
+      pattern: /\bmanageSubscriptionsSheet\b/,
+      name: "StoreKit's manage subscriptions sheet",
+      use: '.appStoreSubscriptionSettings(isPresented:)'
     }
   ]
 }

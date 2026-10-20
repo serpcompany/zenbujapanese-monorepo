@@ -13,7 +13,8 @@ struct ZenbuAccountRow: View {
               .lineLimit(1)
           } label: {
             SettingsRowLabel(
-              "Zenbu Account", systemImage: "arrow.triangle.2.circlepath", tint: .purple)
+              "Zenbu Account", subtitle: signedInNote, systemImage: "arrow.triangle.2.circlepath",
+              tint: .purple)
           }
         }
         .accessibilityIdentifier("account.zenbu-account")
@@ -35,10 +36,18 @@ struct ZenbuAccountRow: View {
     }
   }
 
+  private var signedInNote: String? {
+    zenbuAccount.syncNeedsSubscription
+      ? SubscriptionText.syncWaitsShort(zenbuAccount.subscription.current) : nil
+  }
+
   private var signedOutNote: String {
     zenbuAccount.sync.sessionEndedOnItsOwn
       ? String(localized: "You were signed out. Sign in again to keep syncing.")
-      : String(localized: "Known words, lists, watch history, and bookmarks, on all your devices")
+      : String(
+        localized:
+          "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices"
+      )
   }
 }
 
@@ -47,6 +56,8 @@ struct ZenbuAccountView: View {
   @Environment(\.dismiss) private var dismiss
   @State private var confirmsSignOut = false
   @State private var deletes = false
+  @State private var showsPaywall = false
+  @State private var managesInAppStore = false
 
   var body: some View {
     Form {
@@ -55,6 +66,7 @@ struct ZenbuAccountView: View {
           LabeledContent("Email", value: account.email)
             .accessibilityIdentifier("zenbu-account.email")
         }
+        SubscriptionSection(showsPaywall: $showsPaywall, managesInAppStore: $managesInAppStore)
         syncSection
         Section {
           Button("Sign Out") { confirmsSignOut = true }
@@ -74,6 +86,7 @@ struct ZenbuAccountView: View {
     }
     .formStyle(.grouped)
     .navigationTitle("Zenbu Account")
+    .task { await zenbuAccount.subscription.refresh() }
     .confirmationDialog(
       "Sign out of Zenbu?", isPresented: $confirmsSignOut, titleVisibility: .visible
     ) {
@@ -85,12 +98,14 @@ struct ZenbuAccountView: View {
       }
     } message: {
       Text(
-        "Your known words, lists, watch history, and translations stay on this \(ThisDevice.name). Changes you make while signed out sync when you sign in to this account again."
+        "Your known words, lists, notes, photos, watch history, and translations stay on this \(ThisDevice.name). Changes you make while signed out sync when you sign in to this account again."
       )
     }
     .sheet(isPresented: $deletes) {
       DeleteAccountView { dismiss() }
     }
+    .sheet(isPresented: $showsPaywall) { SubscriptionPaywall() }
+    .appStoreSubscriptionSettings(isPresented: $managesInAppStore)
   }
 
   private var syncSection: some View {
@@ -110,10 +125,27 @@ struct ZenbuAccountView: View {
           Text(zenbuAccount.sync.queuedChangeCount, format: .number)
         }
       }
+      if zenbuAccount.sync.photosUnavailable {
+        Text(AccountMessage.photosWaitForStorage)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.photos-wait")
+      }
+      ForEach(
+        AccountMessage.refusedPhotos(
+          zenbuAccount.sync.state.refusedPhotos,
+          profilePhoto: zenbuAccount.sync.state.refusedProfilePhoto), id: \.self
+      ) {
+        Text($0)
+          .foregroundStyle(.secondary)
+      }
       if let problem = zenbuAccount.sync.bookmarksProblem {
         Text(AccountMessage.syncPaused(by: problem))
           .foregroundStyle(.secondary)
           .accessibilityIdentifier("zenbu-account.bookmarks-unreadable")
+      } else if zenbuAccount.syncNeedsSubscription {
+        Text(SubscriptionText.syncWaits(zenbuAccount.subscription.current, on: ThisDevice.name))
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.sync-waits")
       } else if let failure = zenbuAccount.sync.lastFailure,
         let message = AccountMessage.text(for: failure)
       {
@@ -121,13 +153,13 @@ struct ZenbuAccountView: View {
           .foregroundStyle(.secondary)
       }
       Button("Sync Now") {
-        Task { await zenbuAccount.scheduler.refresh() }
+        Task { await zenbuAccount.syncNowAsked() }
       }
       .disabled(zenbuAccount.sync.isSyncing || zenbuAccount.sync.waitsForUnreadableBookmarks)
       .accessibilityIdentifier("zenbu-account.sync-now")
     } footer: {
       Text(
-        "Zenbu syncs your name and username, known words, lists, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
+        "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent lookups, watch history, and bookmarked translations after each change and when it opens. They also stay on this \(ThisDevice.name), and work offline."
       )
     }
   }

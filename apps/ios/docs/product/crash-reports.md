@@ -44,7 +44,8 @@ report that can't be sent, such as with no connection, waits on the device and g
 A failure the app handles sends only its area and a fixed code, such as `account_sync:
 account_service_error.refused`, with at most four short details such as an HTTP status or a pack's
 ID. Each is sent at most once a launch, and never holds the error's message. A cancelled task, a
-lost connection, or a session that ended sends nothing, since each is expected; a download the
+lost connection, a session that ended, or a sync or photo file refused because the account has no
+subscription (`402`, the account's state rather than a fault) sends nothing; a download the
 app's setup or its host broke, such as one refused for its certificate, is reported.
 
 | Area | Fails when |

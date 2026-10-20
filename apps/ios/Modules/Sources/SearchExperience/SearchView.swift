@@ -14,6 +14,7 @@ struct SearchView: View {
   let openNote: (NotesInSearch.Row) -> Void
   @Environment(WordKnowledge.self) private var wordKnowledge
   @Environment(LearnerNotes.self) private var learnerNotes
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var results = LookupSearchResults.empty
   @State private var shown: ShownResults?
   @State private var shownNotes: ShownNotes?
@@ -37,8 +38,15 @@ struct SearchView: View {
           clearRecentSearches()
         }
       } message: {
-        Text("This removes every recent lookup from this device.")
+        Text(clearingRecentLookupsSays)
       }
+  }
+
+  private var clearingRecentLookupsSays: String {
+    zenbuAccount?.account == nil
+      ? String(localized: "This removes every recent lookup from this device.")
+      : String(
+        localized: "This removes every recent lookup from every device signed in to your Zenbu account.")
   }
 
   private var searchScreen: some View {

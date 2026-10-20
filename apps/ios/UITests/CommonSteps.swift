@@ -1,6 +1,24 @@
 import XCTest
 
 extension ZenbuUITestCase {
+  func signInWithApple(in app: XCUIApplication) {
+    open(.account, in: app)
+    tap(reveal(find("account.sign-in", in: app), in: app))
+    tap(reveal(appleButton(in: app), in: app))
+    waitFor(find("account.zenbu-account", in: app))
+  }
+
+  func deleteSigningInWithApple(in app: XCUIApplication) {
+    tap(reveal(find("delete-account.start", in: app), in: app))
+    tap(find("delete-account.confirm", in: app))
+    tap(reveal(appleButton(in: app), in: app))
+    waitFor(find("delete-account.done-note", in: app))
+  }
+
+  private func appleButton(in app: XCUIApplication) -> XCUIElement {
+    app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch
+  }
+
   func openFixtureImage(
     _ environment: [String: String] = [:], arguments: [String] = []
   ) throws -> XCUIApplication {
@@ -13,6 +31,14 @@ extension ZenbuUITestCase {
     tap(reveal(find("translate.start.image", in: app), in: app))
     tap(app.buttons[onMac ? "Paste Image" : "Take Photo"].firstMatch)
     return app
+  }
+
+  func saveThePhotoOnAWord(in app: XCUIApplication) {
+    tap(waitFor(firstElement(identifiedBy: "image-text.region.", in: app)))
+    tap(find("recognized-word-sheet.open-full-entry", in: app))
+    tap(find("word-detail.image-attachment", in: app))
+    waitForSheet("word-detail.image-page", in: app)
+    tap(find("word-detail.image-attachment-done", in: app))
   }
 
   @discardableResult

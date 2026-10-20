@@ -1,10 +1,12 @@
 import XCTest
+import notify
 
 final class AccountSignedInUITests: ZenbuUITestCase {
   static let standIns = [
     "ZENBU_SIGN_IN_STAND_IN": "1", "ZENBU_ACCOUNT_STAND_IN": "1",
     "ZENBU_ACCOUNT_API_URL": "https://account.stand-in.test",
   ]
+  static let keptOnAnotherDevice = ["ZENBU_ACCOUNT_STAND_IN_KEPT": "1"]
 
   override func setUpWithError() throws {
     try XCTSkipIf(
@@ -50,10 +52,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitFor(
       app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Deleting your Zenbu account'"))
         .firstMatch)
-    tap(find("delete-account.start", in: app))
-    tap(find("delete-account.confirm", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
-    waitFor(find("delete-account.done-note", in: app))
+    deleteSigningInWithApple(in: app)
     tap(find("delete-account.done", in: app))
     waitFor(find("account.sign-in", in: app))
   }
@@ -71,8 +70,8 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     XCTAssertFalse(find("profile.email", in: app).exists, "the account's email can't be edited")
     waitFor(
       labeled(
-        "A username is 3 to 30 letters a to z, digits, or underscores. Your name and username sync"
-          + " with your Zenbu account. Your photo stays on this device.", in: app))
+        "A username is 3 to 30 letters a to z, digits, or underscores. Your name, username, and"
+          + " photo sync with your Zenbu account.", in: app))
 
     focus(name)
     TestDevice.selectAllText(in: name)
@@ -87,6 +86,42 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Kana Fan'")
   }
 
+  func testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice() {
+    let app = launch(Self.standIns.merging(Self.keptOnAnotherDevice) { a, _ in a })
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    let photo = waitFor(firstElement(identifiedBy: "media-library.item.", in: app))
+    waitUntil(photo, mentions: "猫")
+    goBack(in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    waitUntil(waitFor(find("reading-aids.show-romaji", in: app)), Self.switchedOn)
+    open(.search, in: app)
+    waitUntil(waitFor(find("recent-search.0", in: app)), "label == '猫'")
+  }
+
+  func testClearingRecentLookupsSignedInSaysItClearsThemOnEveryDevice() {
+    let app = launch(Self.standIns)
+    signInWithApple(in: app)
+    search("japan", in: app)
+    returnToRecentSearches(in: app)
+    tap(find("search.actions-menu", in: app))
+    tap(menuChoice("Clear Recent Lookups", in: app))
+    waitFor(
+      labeled(
+        "This removes every recent lookup from every device signed in to your Zenbu account.", in: app))
+    tap(app.buttons["Clear All"].firstMatch)
+    waitUntilGone(find("recent-search.0", in: app))
+  }
+
+  func testAnOpenMediaLibraryShowsAPhotoFromAnotherDeviceAsItArrives() {
+    let app = launch(Self.standIns.merging(["ZENBU_ACCOUNT_STAND_IN_KEPT": "hold"]) { a, _ in a })
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitFor(find("media-library.empty", in: app))
+    notify_post("com.zenbujapanese.dictionary.uitests.release-kept")
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
+  }
+
   func testAReportOpensWithTheAccountsEmailFilledInAndSaysSo() {
     let app = launch(Self.standIns.merging(Self.problemReportStandIn) { $1 })
     signInWithApple(in: app)
@@ -97,12 +132,5 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     reveal(labeled("Account, Signed in", in: app), in: app)
     tap(find("problem-report.cancel", in: app))
     waitFor(find("account.report-a-problem", in: app))
-  }
-
-  private func signInWithApple(in app: XCUIApplication) {
-    open(.account, in: app)
-    tap(find("account.sign-in", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
-    waitFor(find("account.zenbu-account", in: app))
   }
 }

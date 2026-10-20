@@ -76,23 +76,41 @@ final class UserProfile {
 
   func setPhoto(_ data: Data) async {
     let url = photoURL
-    let scaled = await Task.detached(priority: .userInitiated) { () -> CGImage? in
+    let made = await Task.detached(priority: .userInitiated) { () -> (CGImage, Data)? in
       guard let scaled = Self.squareThumbnail(from: data),
-        let jpeg = ImageCoding.jpegData(scaled, quality: 0.85)
+        let jpeg = ImageCoding.jpegData(scaled, quality: 0.85),
+        Self.write(jpeg, to: url)
       else { return nil }
-      try? FileManager.default.createDirectory(
-        at: url.deletingLastPathComponent(),
-        withIntermediateDirectories: true
-      )
-      try? jpeg.write(to: url, options: .atomic)
-      return scaled
+      return (scaled, jpeg)
     }.value
-    if let scaled { photo = scaled }
+    guard let (scaled, jpeg) = made else { return }
+    photo = scaled
+    changeObserver?(.kept(KeptChanges.profilePhotoSet(jpeg.sha256)))
   }
 
   func removePhoto() {
+    guard photo != nil || FileManager.default.fileExists(atPath: photoURL.path) else { return }
+    applySyncedPhotoRemoval()
+    changeObserver?(.kept(KeptChanges.profilePhotoRemoved))
+  }
+
+  var photoData: Data? { try? Data(contentsOf: photoURL) }
+  var cantReadPhoto: Bool { FileManager.default.fileExists(atPath: photoURL.path) && photoData == nil }
+
+  func applySyncedPhoto(_ data: Data) {
+    guard let image = ImageCoding.image(from: data), Self.write(data, to: photoURL) else { return }
+    photo = image
+  }
+
+  func applySyncedPhotoRemoval() {
     photo = nil
     try? FileManager.default.removeItem(at: photoURL)
+  }
+
+  private nonisolated static func write(_ data: Data, to url: URL) -> Bool {
+    try? FileManager.default.createDirectory(
+      at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+    return (try? data.write(to: url, options: .atomic)) != nil
   }
 
   nonisolated static let usernameLengths = 3...30

@@ -133,10 +133,11 @@ The [API reference](../api/account-api.md) has every field and error code.
   the App Store's subscription settings, and the website says it's managed in the App Store.
   `website`: the website opens `POST /v1/me/subscription/portal`'s URL, and the app says it's
   managed on the website. Two running means the learner pays twice: show both.
-- **The app** sets the account's `appAccountToken` on every purchase, and sends each verified
-  transaction's `jwsRepresentation` to `POST /v1/me/subscription/apple`: after a purchase, from
-  `Transaction.updates`, and on a restore. It finishes a transaction once the service answers `200`
-  or a `4xx`, and leaves it for StoreKit to hand over again after a `5xx`. A
+- **The app** ([`ios-subscription.md`](ios-subscription.md)) sets the account's `appAccountToken` on
+  every purchase, and sends each verified transaction's `jwsRepresentation` to
+  `POST /v1/me/subscription/apple`: after a purchase, from `Transaction.updates`, and on a restore. It
+  finishes a transaction once the service answers `200`, `409`, or `400 invalid_transaction`, and
+  leaves it for StoreKit to hand over again after any other answer. A
   `409 subscription_belongs_to_another_account` means the Apple ID's subscription is another Zenbu
   account's: say so, and offer nothing.
 - **The website** opens `POST /v1/me/subscription/checkout`'s URL, sending the page's

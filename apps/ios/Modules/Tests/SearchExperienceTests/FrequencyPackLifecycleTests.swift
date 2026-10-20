@@ -243,6 +243,76 @@ final class FrequencyPackLifecycleTests {
     #expect(try listed(relaunched) == [tubelex.packID])
   }
 
+  @Test("a choice from another device is shown in its order once the packs it needs download quietly, and only the learner's own changes are told")
+  func syncedChoice() async throws {
+    let catalog = try FrequencyPackCatalog.bundled()
+    let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
+    let optional = try animePack(in: catalog)
+    let source = try animeSource()
+    let told = ToldChoices()
+    let manager = try syncedManager(catalog, told: told, quietly: { _, _ in source })
+    #expect(await manager.changedFromStandard() == nil)
+
+    let choice = "\(optional.packID.rawValue),\(bundled.packID.rawValue),unknown.pack"
+    #expect(await manager.applySynced(.string(choice)) == [optional.packID])
+    #expect(try listed(manager) == [bundled.packID])
+    try await manager.download(optional.packID, synced: true)
+    #expect(try await manager.snapshot().enabledPackIDs == [optional.packID, bundled.packID])
+    #expect(try listed(manager) == [optional.packID, bundled.packID])
+    #expect(told.changes.isEmpty)
+    #expect(
+      await manager.changedFromStandard()
+        == KeptChanges.settingSet(
+          FrequencyChoice.setting, .string("\(optional.packID.rawValue),\(bundled.packID.rawValue)")))
+
+    try await manager.disable(bundled.packID)
+    #expect(told.changes == [chosen([optional.packID])])
+    #expect(await manager.applySynced(.string("")).isEmpty)
+    #expect(try listed(manager) == [])
+  }
+
+  @Test("a pack another device chose that hasn't downloaded yet stays in the choice the learner's changes send, and is tried again after a relaunch, never marked failed")
+  func pendingSyncedPack() async throws {
+    let catalog = try FrequencyPackCatalog.bundled()
+    let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
+    let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
+    let optional = try animePack(in: catalog)
+    let told = ToldChoices()
+    let offline = try syncedManager(
+      catalog, told: told, quietly: { _, _ in throw URLError(.notConnectedToInternet) })
+    let choice = [optional.packID, jlpt.packID, bundled.packID]
+    _ = await offline.applySynced(.string(choice.map(\.rawValue).joined(separator: ",")))
+    await #expect(throws: URLError.self) { try await offline.download(optional.packID, synced: true) }
+    let state = try await offline.snapshot()
+    #expect(state.packs.first { $0.id == optional.packID }?.failureMessage == nil)
+
+    try await offline.disable(jlpt.packID)
+    #expect(told.changes == [chosen([optional.packID, bundled.packID])])
+    quit(offline)
+
+    let source = try animeSource()
+    let relaunched = try syncedManager(catalog, told: told, quietly: { _, _ in source })
+    #expect(await relaunched.pendingSyncedPacks() == [optional.packID])
+    try await relaunched.download(optional.packID, synced: true)
+    #expect(try listed(relaunched) == [optional.packID, bundled.packID])
+    #expect(await relaunched.pendingSyncedPacks().isEmpty)
+  }
+
+  private func syncedManager(
+    _ catalog: FrequencyPackCatalog, told: ToldChoices,
+    quietly: @escaping FrequencyPackManager.Download
+  ) throws -> FrequencyPackManager {
+    let relay = KeptChangeRelay()
+    relay.observe { told.add($0) }
+    return try FrequencyPackManager.bundled(
+      catalog, storageDirectory: storage, relay: relay,
+      download: { _, _ in throw FrequencyPackError.invalidSource }, quietDownload: quietly)
+  }
+
+  private func chosen(_ packIDs: [FrequencyPackID]) -> KeptLocalChange {
+    KeptChanges.settingSet(FrequencyChoice.setting, .string(packIDs.map(\.rawValue).joined(separator: ",")))
+  }
+
   private func jmdictID(_ sequence: Int) -> LanguageReferenceID? {
     let digest = Data("edrdg.jmdict\0\(sequence)".utf8).sha256
     return LanguageReferenceID(rawValue: String(digest.prefix(32)))
@@ -282,6 +352,15 @@ final class FrequencyPackLifecycleTests {
     try FileManager.default.contentsOfDirectory(at: storage, includingPropertiesForKeys: nil)
       .filter { $0.pathExtension == "staged" }
   }
+}
+
+private final class ToldChoices: @unchecked Sendable {
+  private let lock = NSLock()
+  private var told: [KeptLocalChange] = []
+
+  var changes: [KeptLocalChange] { lock.withLock { told } }
+
+  func add(_ change: KeptLocalChange) { lock.withLock { told.append(change) } }
 }
 
 extension FrequencyPackManifest {

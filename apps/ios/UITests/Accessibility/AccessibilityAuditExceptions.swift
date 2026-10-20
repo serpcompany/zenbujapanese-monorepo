@@ -68,9 +68,27 @@ struct AllowedFinding {
 private let touch: Set<TestDevice.Kind> = [.phone, .pad]
 private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
-  "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
+  "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account", "Subscribe", "Subscribe, its plans",
+  "Subscribe, its end", deletingWithAnAppStoreOne, "Delete Account, its App Store subscription",
+  deletedWithAnAppStoreOne, "Deleted, its App Store subscription",
 ]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
+private let subscriptionStates = [
+  "no subscription", "an App Store subscription", "a website subscription", "both stores", "a payment retried",
+  "a first payment pending",
+].map { "Zenbu Account, \($0)" }
+private let syncWaiting = ["no subscription", "a payment retried", "a first payment pending"].map {
+  "Zenbu Account, \($0)"
+}
+private let managedByApple = ["an App Store subscription", "both stores", "a payment retried"].map {
+  "Zenbu Account, \($0)"
+}
+private let deletingWithAnAppStoreOne = "Delete Account, with an App Store subscription"
+private let deletedWithAnAppStoreOne = "Deleted, with an App Store subscription"
+private let deletingAndDeleted = [deletingWithAnAppStoreOne, deletedWithAnAppStoreOne]
+private let zenbuAccountNotes = [
+  "Zenbu Account, a photo refused as too many", "Zenbu Account, photos waiting for storage",
+]
 private let problemReportsEditing = ["Report a Problem", "Report a Problem, an email that isn't an address"]
 private let problemReports = problemReportsEditing + ["Report a Problem, its details"]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
@@ -127,7 +145,11 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-list-picker.done"), on: ["Add to List"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-done"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
-  allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
+  allow(
+    .dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account", deletingWithAnAppStoreOne],
+    [.phone, .pad], because: Why.barButton),
+  allow(.dynamicType, .identifier("delete-account.done"), on: [deletedWithAnAppStoreOne], [.phone], because: Why.barButton),
+  allow(.dynamicType, .identifier("paywall.close"), on: ["Subscribe"], [.phone], because: Why.barButton),
   allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
   allow(.dynamicType, .identifier("problem-report.send"), on: problemReports, because: Why.barButton),
   allow(.dynamicType, .identifier("problem-report.done"), on: ["Report a Problem, sent"], because: Why.barButton),
@@ -187,7 +209,10 @@ private let textThatScales = [
     on: ["Account, its about rows"], touch, [.standard], because: Why.scales),
   allow(
     .textClipped,
-    .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
+    .labels([
+      "Translations", "Sign In to Sync",
+      "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices",
+    ]),
     on: ["Account"], because: Why.scales),
   allow(.textClipped, .label("Lists"), on: ["Account"], touch, [.standard], because: Why.scales),
   allow(
@@ -195,7 +220,39 @@ private let textThatScales = [
     .label(
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
     ),
-    on: ["Zenbu Account"], [.phone], because: Why.scales),
+    on: ["Zenbu Account"] + zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: subscriptionStates + zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-waits"), on: syncWaiting, [.phone], because: Why.scales),
+  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting, [.phone], because: Why.scales),
+  allow(
+    .dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("subscription.manage"), on: ["Zenbu Account, a payment retried"], [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("subscription.paying-twice"), on: ["Zenbu Account, both stores"], [.phone],
+    because: Why.scales),
+  allow(.dynamicType, .identifier("paywall.terms"), on: ["Subscribe"], [.phone], because: Why.scales),
+  allow(.dynamicType, .label("Privacy Policy"), on: ["Subscribe"], [.phone], because: Why.scales),
+  allow(
+    .dynamicType, .identifier("delete-account.app-store-subscription"), on: deletingAndDeleted, [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("delete-account.manage-subscription"), on: deletingAndDeleted, [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType,
+    .label(
+      "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent lookups, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
+    ),
+    on: zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(
+    .dynamicType,
+    .label(
+      "This iPhone keeps your known words, lists, watch history, translations, notes, and media, and Zenbu keeps working signed out."
+    ),
+    on: ["Delete Account"], [.phone], because: Why.scales),
   allow(
     .dynamicType,
     .labels(

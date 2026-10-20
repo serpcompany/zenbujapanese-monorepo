@@ -26,7 +26,12 @@ Five classes in `apps/ios/UITests/Accessibility/` walk the app, `SearchAuditUITe
 A walk launches the app fresh for each part of its tab, reaches each screen the way a learner
 does, and audits it (`audit(_:in:)` in `AccessibilityAudit.swift`). It collects every finding and
 fails once, at the end, listing each finding that isn't allowed, so one run measures a whole tab.
-Each test attaches **Accessibility findings**: the screens it audited, the findings not allowed,
+On the iPhone and iPad, `AccountAuditUITests` also signs in to the stand-in account: with
+`ZENBU_ACCOUNT_STAND_IN_KEPT=1` for the Media Library holding a photo from another device, the
+signed-in Profile, and Zenbu Account, and, after saving a photo on a word, with
+`ZENBU_ACCOUNT_STAND_IN_REFUSES` for Zenbu Account's notes on a photo refused as too many and on
+photos waiting for storage ([`ios-account-sync.md`](ios-account-sync.md)). Each test attaches
+**Accessibility findings**: the screens it audited, the findings not allowed,
 those allowed, those only reported, any allowed entry that matched nothing, and what each kind of
 finding means. A screen with findings also attaches its screenshot;
 `TEST_RUNNER_ZENBU_AUDIT_SCREENSHOTS=1` on the `xcodebuild` command keeps every screen's. Read
@@ -45,7 +50,7 @@ them with `xcrun xcresulttool export attachments`.
 | Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
 | Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
 | Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
-| Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, and Delete Account | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
+| Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, Delete Account, and the subscription's paywall and Delete Account with an App Store subscription, before and after deleting, each at the top and scrolled | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
 | Dynamic Type | iPhone: Image's sources | Not run: the Image alert is Apple's, and the system rebuilds it as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself |
 
 `AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
@@ -66,6 +71,12 @@ only the sections it names, at the page's top, and the walk audits them there
 (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
 (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
 caption's word sheet at full height, so the Player page isn't showing behind it.
+
+The subscription's screens, Zenbu Account in each state the stand-ins show
+([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App
+Store subscription, fit on the screen whole at the default size, where the sweep takes them
+through every size from the page's top. At the largest size the walk audits each page's top with
+every audit, and the part below it scrolled into place without those two.
 
 The share sheet's card is drawn by the share extension, in a process of its own, and the audit
 reads only the app's: in the share sheet it finds nothing on the card, not even the contrast

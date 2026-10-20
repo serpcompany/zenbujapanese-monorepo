@@ -83,7 +83,6 @@ struct ResultsList: Decodable, Hashable, Sendable {
   let query: String
   let sections: [Section]
   let menu: ResultsMenuContent?
-  let forgetsSort: Bool
   let examples: Examples?
   let readingRefinement: Refinement?
   let heading: String?

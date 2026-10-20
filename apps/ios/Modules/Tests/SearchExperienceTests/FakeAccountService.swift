@@ -3,14 +3,22 @@ import Foundation
 @testable import SearchExperience
 
 final class FakeAccountService: @unchecked Sendable {
-  private struct Entity {
+  struct Entity {
     var version: Int
     var data: [String: Any]?
     var sequence: Int
   }
 
-  private let lock = NSLock()
-  private var accounts: [String: [String: Entity]] = [:]
+  let lock = NSLock()
+  var accounts: [String: [String: Entity]] = [:]
+  var files: [String: [String: Data]] = [:]
+  var emptiedPhotos: [String: [String: [String: Any]]] = [:]
+  var photosUnavailable = false
+  var fileRefusals: [String: StubReply] = [:]
+  var droppedUploads: Set<String> = []
+  var pageSize = 100
+  private(set) var invalidCursors = 0
+  private var forgottenThrough: [String: Int] = [:]
   private var sessions: [String: String] = [:]
   private var accessTokens: [String: String] = [:]
   private var sequence = 0
@@ -35,6 +43,18 @@ final class FakeAccountService: @unchecked Sendable {
 
   func change(for email: String, _ mutation: StubSyncRequest.Mutation) {
     lock.withLock { _ = apply(mutation, for: userID(for: email)) }
+  }
+
+  func setPageSize(_ size: Int) {
+    lock.withLock { pageSize = size }
+  }
+
+  func forget(_ key: String, for email: String) {
+    let user = userID(for: email)
+    lock.withLock {
+      guard let entity = accounts[user]?.removeValue(forKey: key) else { return }
+      forgottenThrough[user] = max(forgottenThrough[user] ?? 0, entity.sequence)
+    }
   }
 
   func profile(for email: String) -> [String: Any] {
@@ -77,7 +97,9 @@ final class FakeAccountService: @unchecked Sendable {
       sessions[bearer(of: request)] = nil
       return .json(200, ["success": true])
     default:
-      return .error(404, "not_found")
+      guard request.path.hasPrefix("/v1/photos/") else { return .error(404, "not_found") }
+      guard let user = accessTokens[bearer(of: request)] else { return .error(401, "unauthorized") }
+      return photoFile(request, for: user)
     }
   }
 
@@ -86,19 +108,37 @@ final class FakeAccountService: @unchecked Sendable {
   }
 
   private func sync(_ request: StubSyncRequest, for user: String) -> StubReply {
+    let position = (request.cursor ?? "").split(separator: ".").compactMap { Int($0) }
+    let after = position.first ?? 0
+    let floor = position.dropFirst().first ?? after
+    if request.cursor != nil, forgottenThrough[user] ?? 0 > floor {
+      invalidCursors += 1
+      return .error(410, "invalid_cursor")
+    }
     let results = request.mutations.map { apply($0, for: user) }
-    let after = Int(request.cursor ?? "") ?? 0
-    let changes = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
+    let nextFloor = request.cursor == nil ? sequence : max(floor, after)
+    let pending = (accounts[user] ?? [:]).filter { $0.value.sequence > after }
       .sorted { $0.value.sequence < $1.value.sequence }
-    let last = changes.last?.value.sequence ?? after
-    let ordered =
-      changes.filter { !$0.key.hasPrefix("listWord:") }
-      + changes.filter { $0.key.hasPrefix("listWord:") }
+    let page = pending.prefix(pageSize)
+    let last = page.last?.value.sequence ?? after
+    let isChild = { (key: String) in key.hasPrefix("listWord:") || key.hasPrefix("photoWord:") }
+    let ordered = page.filter { !isChild($0.key) } + page.filter { isChild($0.key) }
     return StubSync.answer(
-      results: results, changes: ordered.map { change(key: $0.key, $0.value) }, cursor: "\(last)")
+      results: results, changes: ordered.map { syncedChange(key: $0.key, $0.value, of: user) },
+      cursor: "\(last).\(nextFloor)", hasMore: pending.count > page.count,
+      searchKey: searchKey(of: user).hexString)
   }
 
-  private func change(key: String, _ entity: Entity) -> [String: Any] {
+  private func syncedChange(key: String, _ entity: Entity, of user: String) -> [String: Any] {
+    var synced = change(key: key, entity)
+    let photoID = String(key.dropFirst("photo:".count))
+    if key.hasPrefix("photo:"), entity.data == nil, emptiedPhotos[user]?[photoID] != nil {
+      synced["emptied"] = true
+    }
+    return synced
+  }
+
+  func change(key: String, _ entity: Entity) -> [String: Any] {
     let entityID = String(key.drop { $0 != ":" }.dropFirst())
     let kind = String(key.prefix { $0 != ":" })
     guard let data = entity.data else {
@@ -120,19 +160,12 @@ final class FakeAccountService: @unchecked Sendable {
 
   private func apply(_ mutation: StubSyncRequest.Mutation, for user: String) -> [String: Any] {
     if mutation.entity == "profile" { _ = profile(of: user) }
+    if SyncEntity.kept.contains(mutation.entity) { return applyKept(mutation, for: user) }
     let key = "\(mutation.entity):\(mutation.entityId)"
     let current = accounts[user]?[key]
     let version = current?.version ?? 0
     let base = mutation.baseVersion ?? 0
-    let applied = { (version: Int) -> [String: Any] in
-      ["id": mutation.id, "status": "applied", "version": version]
-    }
-    let conflict = { () -> [String: Any] in
-      StubSync.conflict(
-        mutation.id,
-        current.map { self.change(key: key, $0) }
-          ?? StubSync.gone(mutation.entity, mutation.entityId, version: 0))
-    }
+    let (applied, conflict) = outcomes(of: mutation, key: key, current: current)
     let text = { (name: String) -> String in
       if case .string(let value) = mutation.fields?[name] { return value }
       return current?.data?[name] as? String ?? ""
@@ -242,13 +275,28 @@ final class FakeAccountService: @unchecked Sendable {
     }
   }
 
+  func outcomes(
+    of mutation: StubSyncRequest.Mutation, key: String, current: Entity?
+  ) -> (applied: (Int) -> [String: Any], conflict: () -> [String: Any]) {
+    let entityID = String(key.drop { $0 != ":" }.dropFirst())
+    return (
+      { version in ["id": mutation.id, "status": "applied", "version": version] },
+      {
+        StubSync.conflict(
+          mutation.id,
+          current.map { self.change(key: key, $0) }
+            ?? StubSync.gone(mutation.entity, entityID, version: 0))
+      }
+    )
+  }
+
   private func usernameTaken(_ username: String, byOtherThan user: String) -> Bool {
     accounts.contains { owner, entities in
       owner != user && entities["profile:\(owner)"]?.data?["username"] as? String == username
     }
   }
 
-  private static func json(_ value: SyncFieldValue) -> Any {
+  static func json(_ value: SyncFieldValue) -> Any {
     switch value {
     case .string(let text): text
     case .number(let number): number
@@ -258,7 +306,7 @@ final class FakeAccountService: @unchecked Sendable {
     }
   }
 
-  private func save(
+  func save(
     _ user: String, _ key: String, _ data: [String: Any]?, _ version: Int,
     _ applied: (Int) -> [String: Any]
   ) -> [String: Any] {

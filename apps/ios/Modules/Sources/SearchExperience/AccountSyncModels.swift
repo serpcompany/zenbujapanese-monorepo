@@ -44,7 +44,7 @@ enum SyncEntity {
   static let profile = "profile"
 
   static let firstSynced = [knownWord, list, listWord]
-  static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence]
+  static let uploaded = firstSynced + [watchedVideo, bookmarkedSentence] + kept
 }
 
 struct SyncEntityKey: Codable, Hashable, Sendable {
@@ -68,11 +68,19 @@ struct SyncEntityKey: Codable, Hashable, Sendable {
   }
 }
 
+extension SyncEntityKey {
+  init?(stored: String) {
+    guard let colon = stored.firstIndex(of: ":") else { return nil }
+    self.init(
+      entity: String(stored[..<colon]), entityID: String(stored[stored.index(after: colon)...]))
+  }
+}
+
 struct SyncMutationPayload: Encodable, Sendable {
   let id: String
   let entity: String
   let operation: String
-  let entityId: String
+  let entityId: String?
   let baseVersion: Int
   let fields: [String: SyncFieldValue]?
 }
@@ -139,6 +147,7 @@ struct SyncChange: Decodable, Sendable {
     case watchedVideo(SyncedWatchedVideo)
     case bookmark(SyncedBookmark)
     case profile(SyncedProfile)
+    case kept(KeptValue)
     case gone
     case unsynced
   }
@@ -146,17 +155,27 @@ struct SyncChange: Decodable, Sendable {
   let key: SyncEntityKey
   let version: Int
   let payload: Payload
+  let emptied: Bool
 
   private enum CodingKeys: String, CodingKey {
-    case entity, entityId, operation, version, data
+    case entity, entityId, operation, version, data, emptied
+  }
+
+  init(key: SyncEntityKey, version: Int, payload: Payload) {
+    self.key = key
+    self.version = version
+    self.payload = payload
+    emptied = false
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     let entity = try container.decode(String.self, forKey: .entity)
+    let entityID = try container.decode(String.self, forKey: .entityId)
     key = SyncEntityKey(
-      entity: entity, entityID: try container.decode(String.self, forKey: .entityId))
+      entity: entity, entityID: entity == SyncEntity.profilePhoto ? "" : entityID)
     version = try container.decode(Int.self, forKey: .version)
+    emptied = try container.decodeIfPresent(Bool.self, forKey: .emptied) ?? false
     guard try container.decode(String.self, forKey: .operation) == "put" else {
       payload = .gone
       return
@@ -175,7 +194,11 @@ struct SyncChange: Decodable, Sendable {
     case SyncEntity.profile:
       payload = .profile(try container.decode(SyncedProfile.self, forKey: .data))
     default:
-      payload = .unsynced
+      payload =
+        KeptValue(
+          entity: entity, entityID: entityID,
+          data: try container.decode(KeptData.self, forKey: .data)
+        ).map(Payload.kept) ?? .unsynced
     }
   }
 }
@@ -198,6 +221,11 @@ struct SyncResult: Decodable, Sendable {
     let code: String
   }
 
+  init(id: String, outcome: Outcome) {
+    self.id = id
+    self.outcome = outcome
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     id = try container.decode(String.self, forKey: .id)
@@ -218,6 +246,7 @@ struct SyncAnswer: Decodable, Sendable {
   let changes: [SyncChange]
   let cursor: String
   let hasMore: Bool
+  let searchKey: String?
 }
 
 extension JSONDecoder {

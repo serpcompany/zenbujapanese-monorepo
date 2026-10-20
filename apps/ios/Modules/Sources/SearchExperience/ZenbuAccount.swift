@@ -15,19 +15,27 @@ struct SignInProviders: Sendable {
 @Observable
 final class ZenbuAccount {
   static let shared: ZenbuAccount? = AccountServiceConfiguration.resolve().map {
-    ZenbuAccount(
+    let account = ZenbuAccount(
       configuration: $0, session: LaunchHarness.accountSession ?? AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
-      watchHistory: .shared, translations: .shared, profile: .shared,
+      watchHistory: .shared, translations: .shared, profile: .shared, kept: .shared,
+      store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
+    account.startSubscription()
+    return account
   }
 
   let configuration: AccountServiceConfiguration
   let sync: AccountSync
+  let subscription: AccountSubscription
   @ObservationIgnored let scheduler: AccountSyncScheduler
+  @ObservationIgnored private(set) var subscriptionWork: Task<Void, Never>?
   @ObservationIgnored private let api: AccountAPI
   @ObservationIgnored private let session: URLSession
   @ObservationIgnored private let providers: SignInProviders
+  @ObservationIgnored private let now: @MainActor () -> Date
+  @ObservationIgnored private var lastWaitingRead: Date?
+  static let waitingReadEvery: TimeInterval = 5 * 60
 
   init(
     configuration: AccountServiceConfiguration,
@@ -38,6 +46,8 @@ final class ZenbuAccount {
     watchHistory: WatchHistory,
     translations: ConversationHistory,
     profile: UserProfile,
+    kept: KeptStores,
+    store: any AppStorePurchases,
     fileURL: URL = AccountSync.defaultFileURL,
     providers: SignInProviders = .system,
     now: @escaping @MainActor () -> Date = Date.init,
@@ -48,14 +58,37 @@ final class ZenbuAccount {
     self.api = api
     self.session = session
     self.providers = providers
+    self.now = now
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
-      translations: translations, profile: profile, fileURL: fileURL, now: now)
+      translations: translations, profile: profile, kept: kept, fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now, clock: retryClock)
+    subscription = AccountSubscription(
+      api: api, tokens: sync.tokens, store: store,
+      fileURL: fileURL.deletingLastPathComponent().appending(path: AccountSubscription.fileName),
+      signedInAs: { [sync] in sync.account?.userID }, now: now)
+    subscription.onActive = { [scheduler] in scheduler.syncNow() }
+    subscription.onSyncAllowed = { [scheduler] in scheduler.syncNow() }
+    sync.waitsForSubscription = { [subscription] in subscription.syncNeedsSubscription }
+    sync.onRefusedForSubscription = { [weak self] in self?.refreshSubscription() }
+    sync.onWaitingForSubscription = { [weak self] in self?.readWhileSyncWaits() }
   }
 
   var account: SignedInAccount? { sync.account }
+
+  var syncNeedsSubscription: Bool {
+    guard account != nil else { return false }
+    if sync.lastFailure?.needsSubscription == true { return true }
+    return subscription.syncNeedsSubscription
+  }
+  var photosComing: String? {
+    let count = sync.photosOnTheirWay
+    guard count > 0 else { return nil }
+    return syncNeedsSubscription
+      ? AccountMessage.photosWaitForSubscription(count) : AccountMessage.photosOnTheirWay(count)
+  }
+
   var offersGoogle: Bool { configuration.googleClientID != nil }
   var offersApple: Bool { configuration.offersApple }
 
@@ -81,6 +114,7 @@ final class ZenbuAccount {
     }
     scheduler.stop()
     sync.endSession()
+    subscription.signedOut()
   }
 
   func signInMethods() async throws -> Set<String> {
@@ -107,12 +141,14 @@ final class ZenbuAccount {
     try await reauthenticate(try await emailSignIn(email: email, code: code))
   }
 
-  func deleteAccount(appleAuthorizationCode: String?) async throws {
+  @discardableResult
+  func deleteAccount(appleAuthorizationCode: String?) async throws -> Bool {
+    var appStoreSubscriptionContinues = subscription.current?.renewsInTheAppStore ?? false
     do {
-      try await sync.tokens.withAccessToken { [api] token in
+      appStoreSubscriptionContinues = try await sync.tokens.withAccessToken { [api] token in
         try await api.deleteAccount(
           accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
-      }
+      }.appStoreSubscriptionContinues
     } catch AccountServiceError.unreachable {
       guard try await accountIsGone() else { throw AccountServiceError.unreachable }
     } catch AccountServiceError.sessionEnded {
@@ -121,6 +157,42 @@ final class ZenbuAccount {
     }
     scheduler.stop()
     sync.forgetAccount()
+    subscription.forget()
+    return appStoreSubscriptionContinues
+  }
+
+  func appBecameActive() {
+    scheduler.appBecameActive()
+    refreshSubscription()
+  }
+
+  func syncNowAsked() async {
+    await subscriptionWork?.value
+    await subscription.refresh()
+    await scheduler.refresh()
+  }
+
+  private func readWhileSyncWaits() {
+    let at = now()
+    if let lastWaitingRead, at.timeIntervalSince(lastWaitingRead) < Self.waitingReadEvery { return }
+    lastWaitingRead = at
+    refreshSubscription()
+  }
+
+  private func refreshSubscription() {
+    let earlier = subscriptionWork
+    subscriptionWork = Task { [subscription] in
+      await earlier?.value
+      await subscription.refresh()
+    }
+  }
+
+  func startSubscription() {
+    subscriptionWork = Task {
+      await sync.ready()
+      subscription.listen()
+      await subscription.refresh()
+    }
   }
 
   private func accountIsGone() async throws -> Bool {
@@ -137,6 +209,7 @@ final class ZenbuAccount {
     await sync.begin(signIn)
     scheduler.stop()
     scheduler.syncNow()
+    subscriptionWork = Task { await subscription.signedIn() }
   }
 
   private func reauthenticate(_ signIn: AccountSignIn) async throws {

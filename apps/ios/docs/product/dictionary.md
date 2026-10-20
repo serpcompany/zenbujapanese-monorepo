@@ -218,9 +218,9 @@ Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the webs
 well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
 `SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
-Recent lookups are stored on the device and listed while the query is empty. A learner can
-repeat a lookup, remove one by swiping or long-pressing it, or clear them all from the **•••**
-menu ([Top bar](#top-bar)). Result headings scroll with the results instead of staying pinned.
+Recent lookups, the latest 50, sync to a signed-in learner's devices and are listed while the query
+is empty. A learner can repeat one, remove one by swiping or long-pressing it, or clear them all
+from the **•••** menu ([Top bar](#top-bar)). Result headings scroll with the results, unpinned.
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
 `SearchResultsUITests.testARecentSearchIsRemovedFromItsMenu` (long-press, or right-click on the

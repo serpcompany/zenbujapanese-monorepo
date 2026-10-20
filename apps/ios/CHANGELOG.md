@@ -6,16 +6,17 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
 - Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
-  sign in to the same Zenbu account to keep your known words, lists, Recent videos, and bookmarks
-  the same everywhere. On iPad it turns every way and runs beside other apps, with the tabs at
-  the top, where they open into a sidebar; on the Mac the tabs sit in a bar at the top of the
-  window. On the Mac, Settings (⌘,) holds your account and preferences, ⌘F
-  goes to Look Up, ⌘⇧I opens Translate's **Image** to search an image, and ⌘1 to ⌘4 switch tabs.
-  On the Mac, **Image** pastes an image in place of taking a photo, and a photo taken on your
-  iPhone with Continuity Camera opens in Image Search; on every device, drag images onto the
-  window to open them there. Right-click a list, a known word, a Recent video, or a frequency
-  dictionary on the Mac for what a swipe does on the iPhone.
+  sign in to the same Zenbu account to keep your known words, lists, notes, photos, settings,
+  recent lookups, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
+  turns every way and runs beside other apps, with the tabs at the top, where they open into a
+  sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
+  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
+  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
+  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
+  every device, drag images onto the window to open them there. Right-click a list, a known word, a
+  Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
   most common first (JLPT by level), or your known words, known first. Your choice stays across
   launches and applies to Japanese, English, and romaji searches.
@@ -33,7 +34,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Look Up finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
-  Your notes stay on your device.
+  Signed in, your notes sync too.
 - Tap a meaning on a word's page to hear it in English, copy it, or look up one of its words.
 - Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 
@@ -168,10 +169,11 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   word's page. Known words show a green **✓ Known** capsule in Search and on the word's page,
   and **Account → Known Words** lists them with a count, search, and swipe to mark unknown.
   Known words are stored on your device.
-- Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page
-  to add it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts with **Favorites** and lets you
-  create, rename (swipe, or tap a list in Edit), reorder, and delete lists, and search a list, swipe a word out of it, or select several words to remove. Lists
-  are stored on your device.
+- Save words to your own **Lists**. Use **Add to List…** in the **•••** menu on a word's page to add
+  it to any list or a new one; the word's page lists them above Notes. **Account → Lists** starts
+  with **Favorites** and lets you create, rename (swipe, or tap a list in Edit), reorder, and delete
+  lists, and search a list, swipe a word out of it, or select several words to remove. Lists are
+  stored on your device.
 - Share a word from its page: the headword, reading, and meanings are shared as text.
 - New optional frequency dictionaries built from openly licensed Jiten lists (CC BY-SA 4.0):
   **TV & Movies**, **Anime**, **Manga**, **Novels**, **Visual Novels**, and **Video Games**.

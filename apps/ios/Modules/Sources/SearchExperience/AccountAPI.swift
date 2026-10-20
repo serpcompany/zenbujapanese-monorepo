@@ -9,6 +9,13 @@ enum AccountServiceError: Error, Equatable, Sendable {
   case differentAccount
 }
 
+extension AccountServiceError {
+  var needsSubscription: Bool {
+    guard case .refused(status: 402, _, _, _) = self else { return false }
+    return true
+  }
+}
+
 enum AccountSignInProvider: String, Sendable {
   case apple
   case google
@@ -90,6 +97,10 @@ struct AccountAPI: Sendable {
     let appleAuthorizationCode: String?
   }
 
+  private struct AppleTransaction: Encodable {
+    let signedTransaction: String
+  }
+
   func signInNonce() async throws -> String {
     try await decoded(Nonce.self, from: send("POST", "v1/auth/sign-in/nonce", body: json(Empty())))
       .nonce
@@ -140,13 +151,50 @@ struct AccountAPI: Sendable {
     )
   }
 
+  func uploadPhoto(_ photoID: String, data: Data, accessToken: String) async throws {
+    _ = try await send(
+      "PUT", "v1/photos/\(photoID)", body: data, contentType: "application/octet-stream",
+      bearer: accessToken)
+  }
+
+  func photo(_ photoID: String, accessToken: String) async throws -> Data {
+    try await send("GET", "v1/photos/\(photoID)", bearer: accessToken).0
+  }
+
   func profile(accessToken: String) async throws -> SyncedProfile {
     try decoded(SyncedProfile.self, from: await send("GET", "v1/me", bearer: accessToken))
   }
 
-  func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws {
+  func changeProfile(
+    _ fields: [String: SyncFieldValue], baseVersion: Int, accessToken: String
+  ) async throws -> SyncedProfile {
+    let body = fields.merging(["baseVersion": .number(baseVersion)]) { _, base in base }
+    return try decoded(
+      SyncedProfile.self,
+      from: await send("PATCH", "v1/me", body: json(body), bearer: accessToken))
+  }
+
+  func subscription(accessToken: String) async throws -> KnownSubscription {
+    try decoded(
+      KnownSubscription.self, from: await send("GET", "v1/me/subscription", bearer: accessToken))
+  }
+
+  func sendAppleTransaction(_ signedTransaction: String, accessToken: String) async throws
+    -> KnownSubscription
+  {
+    let body = AppleTransaction(signedTransaction: signedTransaction)
+    return try decoded(
+      KnownSubscription.self,
+      from: await send("POST", "v1/me/subscription/apple", body: json(body), bearer: accessToken))
+  }
+
+  func deleteAccount(accessToken: String, appleAuthorizationCode: String?) async throws
+    -> AccountDeletion
+  {
     let body = Deletion(appleAuthorizationCode: appleAuthorizationCode)
-    _ = try await send("DELETE", "v1/me", body: json(body), bearer: accessToken)
+    let answer = try await send("DELETE", "v1/me", body: json(body), bearer: accessToken)
+    return (try? JSONDecoder.accountService.decode(AccountDeletion.self, from: answer.0))
+      ?? AccountDeletion(appStoreSubscriptionContinues: false)
   }
 
   private func signedIn(_ answer: (Data, HTTPURLResponse)) throws -> AccountSignIn {
@@ -172,7 +220,8 @@ struct AccountAPI: Sendable {
   }
 
   private func send(
-    _ method: String, _ path: String, body: Data? = nil, bearer: String? = nil
+    _ method: String, _ path: String, body: Data? = nil,
+    contentType: String = "application/json", bearer: String? = nil
   ) async throws -> (Data, HTTPURLResponse) {
     var request = URLRequest(url: baseURL.appending(path: path))
     request.httpMethod = method
@@ -180,7 +229,7 @@ struct AccountAPI: Sendable {
     request.setValue(AccountServiceConfiguration.clientID, forHTTPHeaderField: "X-Zenbu-Client")
     if let bearer { request.setValue("Bearer \(bearer)", forHTTPHeaderField: "Authorization") }
     if let body {
-      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+      request.setValue(contentType, forHTTPHeaderField: "Content-Type")
       request.httpBody = body
     }
     let data: Data

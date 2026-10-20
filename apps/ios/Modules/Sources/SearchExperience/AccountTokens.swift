@@ -74,6 +74,7 @@ final class AccountTokens {
   private let storage: any SessionTokenStorage
   private let now: @MainActor () -> Date
   private var accessToken: (token: String, expiresAt: Date)?
+  private var refreshing: (signIn: Int, task: Task<String, Error>)?
   private var signIns = 0
 
   init(
@@ -108,7 +109,29 @@ final class AccountTokens {
     if let accessToken, accessToken.expiresAt.timeIntervalSince(now()) > Self.refreshMargin {
       return accessToken.token
     }
-    return try await refreshedAccessToken()
+    if let refreshing, refreshing.signIn == signIns { return try await joined(refreshing.task) }
+    let task = Task { try await refreshedAccessToken() }
+    refreshing = (signIns, task)
+    Task { [weak self] in
+      _ = try? await task.value
+      if self?.refreshing?.task == task { self?.refreshing = nil }
+    }
+    return try await joined(task)
+  }
+
+  private func joined(_ task: Task<String, Error>) async throws -> String {
+    let (answers, answer) = AsyncThrowingStream.makeStream(of: String.self)
+    let relay = Task {
+      do {
+        answer.yield(try await task.value)
+        answer.finish()
+      } catch {
+        answer.finish(throwing: error)
+      }
+    }
+    defer { relay.cancel() }
+    for try await token in answers { return token }
+    throw CancellationError()
   }
 
   func withAccessToken<Value: Sendable>(
@@ -120,7 +143,7 @@ final class AccountTokens {
     } catch AccountServiceError.refused(status: 401, _, _, _) {
       guard signIns == signIn else { throw AccountServiceError.sessionEnded }
       accessToken = nil
-      return try await call(try await refreshedAccessToken())
+      return try await call(try await validAccessToken())
     }
   }
 

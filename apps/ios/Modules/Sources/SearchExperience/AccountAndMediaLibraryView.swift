@@ -116,7 +116,7 @@ struct AccountRootView: View {
         }
 
         Section {
-          AccountExternalLink(destination: AccountLinks.support) {
+          AccountExternalLink(destination: ZenbuLinks.support) {
             SettingsRowLabel("Help & Support", systemImage: "questionmark.bubble.fill", tint: .red)
           }
           .accessibilityIdentifier("account.support")
@@ -129,7 +129,7 @@ struct AccountRootView: View {
         }
 
         Section {
-          AccountExternalLink(destination: AccountLinks.privacyPolicy) {
+          AccountExternalLink(destination: ZenbuLinks.privacyPolicy) {
             SettingsRowLabel("Privacy Policy", systemImage: "hand.raised.fill", tint: .blue)
           }
           .accessibilityIdentifier("account.privacy-policy")
@@ -225,11 +225,6 @@ private struct AccountAboutHeader: View {
     .accessibilityElement(children: .combine)
     .accessibilityIdentifier("account.about")
   }
-}
-
-private enum AccountLinks {
-  static let support = URL(string: "https://zenbujapanese.com/support")!
-  static let privacyPolicy = URL(string: "https://zenbujapanese.com/privacy")!
 }
 
 private enum AppBundleInfo {
@@ -347,12 +342,21 @@ extension ReadingAidSettingsView {
 }
 
 struct MediaLibraryView: View {
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var items: [EncounterMediaSummary] = []
   let store: EncounterMediaStore
 
+  private var photosComing: String? { zenbuAccount?.photosComing }
+  private var photosWaitForSubscription: Bool { zenbuAccount?.syncNeedsSubscription == true }
+
   var body: some View {
     Group {
-      if items.isEmpty {
+      if items.isEmpty, let photosComing {
+        ContentUnavailableView(
+          photosWaitForSubscription ? "Photos Waiting to Sync" : "Photos on Their Way",
+          systemImage: "icloud.and.arrow.down", description: Text(photosComing))
+          .accessibilityIdentifier("media-library.on-their-way")
+      } else if items.isEmpty {
         ContentUnavailableView(
           "No Saved Images",
           systemImage: "photo.on.rectangle.angled",
@@ -361,6 +365,11 @@ struct MediaLibraryView: View {
         .accessibilityIdentifier("media-library.empty")
       } else {
         List {
+          if let photosComing {
+            Label(photosComing, systemImage: "icloud.and.arrow.down")
+              .foregroundStyle(.secondary)
+              .accessibilityIdentifier("media-library.on-their-way")
+          }
           ForEach(items) { item in
             NavigationLink {
               EncounterMediaDetail(item: item, store: store)
@@ -379,7 +388,7 @@ struct MediaLibraryView: View {
       }
     }
     .navigationTitle("Media Library")
-    .task { items = await store.library() }
+    .task(id: zenbuAccount?.sync.keptRevision) { items = await store.library() }
   }
 
   private func delete(_ mediaID: String) {

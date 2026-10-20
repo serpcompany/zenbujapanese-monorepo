@@ -200,15 +200,14 @@ Check: the recorded `WordDetailConformanceTests` (each conjugation's headword sp
 ## Account
 
 Account is a supporting navigation area rather than a separate Product Experience. The tab holds
-on-device content and preferences, and signing in to a Zenbu account, which syncs known words,
-lists, Player's watch history, Translate's bookmarked sentences, and the profile's name and
-username. Like the other tabs, it has a small **Account** title in the bar rather than a large one.
+on-device content and preferences, and signing in to a Zenbu account, which syncs what the learner
+keeps, from known words to settings and the profile ([Zenbu account and sync](account-sync.md)). Like the other tabs, it has a small **Account** title in the bar rather than a large one.
 It provides:
 
 - a profile card with the learner's photo, name, and username;
-- the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
-  ([Zenbu account and sync](account-sync.md)), against production's account service in
-  TestFlight and App Store builds and staging's in Debug builds;
+- the Zenbu account: **Sign In to Sync**, which names what syncs, or, signed in, **Zenbu Account**
+  with the account's email ([Zenbu account and sync](account-sync.md)), against production's
+  account service in TestFlight and App Store builds and staging's in Debug builds;
 - the [Media Library](saved-data.md#media-library);
 - Known Words;
 - Lists;
@@ -229,8 +228,8 @@ It provides:
   bundled license text, with one for each Swift package the app links (Sentry, ZIPFoundation). If
   the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
-Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
-iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
+Check: UI `AccountUITests.testAccountListsEveryArea` (every row, what Sign In to Sync names, and
+the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
 first credit, Jiten's notice, and the KanjiVG, Sentry, and ZIPFoundation texts), and
@@ -251,12 +250,12 @@ account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, t
 lowercased, or empty for none. An email is a single valid address or empty. A username the rule
 refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username an
 earlier version saved stays as it was until it is edited. Without a photo, the card shows the name's
-initials. Signed in, name and username sync with the Zenbu account: each sign-in keeps the
-account's, filling its empty ones from the phone ([The profile at sign-in](account-sync.md)). Email
-shows the account's, read-only (Apple's relay address for Hide My Email), the name can't be emptied,
-and a change the account refuses, such as a taken username, goes back and says why. Signed out,
-edits stay on the phone, and the photo always does. One this version can't read is kept aside
-([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
+initials. Signed in, name, username, and photo sync with the Zenbu account: each sign-in keeps the
+account's name and username, filling its empty ones from the phone ([The profile at
+sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide My
+Email), the name can't be emptied, and a change the account refuses, such as a taken username,
+goes back and says why. Signed out, edits stay on the phone. One this version can't read is kept
+aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
 Check: package `UserProfileTests` (the field rules, the username's from the cases the account
 service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
@@ -264,18 +263,18 @@ reload; an earlier username kept; an unreadable profile; the first sync), `Accou
 `PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
 (the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
 
-Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers
-seven optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels,
-and Video Games built from Jiten's CC BY-SA 4.0 lists. Every pack's source is openly licensed.
-Optional packs are downloaded on request and mapped locally into Zenbu's dictionary; Jiten packs
-match words by reading as well as spelling. YouTube counts words by spelling, so a spelling
-shared by several dictionary words (時 is とき and じ) ranks the one UniDic's reading for it
-names (とき); a spelling UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube
-rank. A pack removed from the catalog in an update is
-deleted from the device on the next launch. A learner can enable any number of installed packs,
-including none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can
-be disabled but not removed, and removing an optional pack also disables it. A new install
-enables JLPT Levels first and YouTube second. JLPT Levels marks words with an estimated N5–N1
+Frequency Dictionaries includes JLPT Levels and YouTube (TUBELEX) in the app and offers seven
+optional packs: Japanese Wikipedia, plus TV & Movies, Anime, Manga, Novels, Visual Novels, and
+Video Games built from Jiten's CC BY-SA 4.0 lists. Every pack's source is openly licensed. Optional
+packs download on request, or on their own when chosen on another signed-in device
+([sync](account-sync.md)), and are mapped locally into Zenbu's dictionary; Jiten packs match words
+by reading as well as spelling. YouTube counts words by spelling, so a spelling shared by several
+dictionary words (時 is とき and じ) ranks the one UniDic's reading for it names (とき); a spelling
+UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube rank. A pack an update drops
+from the catalog is deleted on the next launch. A learner can enable any number of installed packs,
+or none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled
+but not removed, and removing an optional pack also disables it. A new install enables JLPT Levels
+first and YouTube second. JLPT Levels marks words with an estimated N5–N1
 level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
 presents levels as unofficial study estimates.
 

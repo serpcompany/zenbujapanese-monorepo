@@ -31,6 +31,32 @@ struct StubSyncRequest: Decodable, Sendable {
     let entityId: String
     let baseVersion: Int?
     let fields: [String: SyncFieldValue]?
+
+    private enum CodingKeys: String, CodingKey {
+      case id, entity, operation, entityId, baseVersion, fields
+    }
+
+    init(
+      id: String, entity: String, operation: String, entityId: String, baseVersion: Int?,
+      fields: [String: SyncFieldValue]?
+    ) {
+      self.id = id
+      self.entity = entity
+      self.operation = operation
+      self.entityId = entityId
+      self.baseVersion = baseVersion
+      self.fields = fields
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      id = try container.decode(String.self, forKey: .id)
+      entity = try container.decode(String.self, forKey: .entity)
+      operation = try container.decode(String.self, forKey: .operation)
+      entityId = try container.decodeIfPresent(String.self, forKey: .entityId) ?? ""
+      baseVersion = try container.decodeIfPresent(Int.self, forKey: .baseVersion)
+      fields = try container.decodeIfPresent([String: SyncFieldValue].self, forKey: .fields)
+    }
   }
 
   var cursor: String?
@@ -40,6 +66,7 @@ struct StubSyncRequest: Decodable, Sendable {
 enum StubReply: Sendable {
   case answer(status: Int, headers: [String: String], body: Data)
   case offline
+  case later(LaterReply)
 
   static func json(_ status: Int, _ object: Any, headers: [String: String] = [:]) -> StubReply {
     .answer(
@@ -118,6 +145,31 @@ final class HeldReply: @unchecked Sendable {
   }
 }
 
+final class LaterReply: @unchecked Sendable {
+  private let lock = NSLock()
+  private var sent: StubReply?
+  private var waiting: [@Sendable (StubReply) -> Void] = []
+
+  var isWaiting: Bool { lock.withLock { !waiting.isEmpty } }
+
+  func send(_ reply: StubReply) {
+    let waiting = lock.withLock {
+      sent = reply
+      defer { self.waiting = [] }
+      return self.waiting
+    }
+    for each in waiting { each(reply) }
+  }
+
+  fileprivate func whenSent(_ deliver: @escaping @Sendable (StubReply) -> Void) {
+    let ready = lock.withLock {
+      if sent == nil { waiting.append(deliver) }
+      return sent
+    }
+    if let ready { deliver(ready) }
+  }
+}
+
 final class StubURLProtocol: URLProtocol {
   override class func canInit(with request: URLRequest) -> Bool { true }
   override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -131,6 +183,22 @@ final class StubURLProtocol: URLProtocol {
       method: request.httpMethod ?? "GET", path: url.path(),
       headers: request.allHTTPHeaderFields ?? [:], body: request.bodyData)
     switch server.reply(to: stub) {
+    case .later(let later):
+      nonisolated(unsafe) let loading = self
+      nonisolated(unsafe) let runLoop = CFRunLoopGetCurrent()
+      later.whenSent { reply in
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.defaultMode.rawValue) {
+          loading.send(reply, for: url)
+        }
+        CFRunLoopWakeUp(runLoop)
+      }
+    case let reply:
+      send(reply, for: url)
+    }
+  }
+
+  private func send(_ reply: StubReply, for url: URL) {
+    switch reply {
     case .offline:
       client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
     case .answer(let status, let headers, let body):
@@ -139,6 +207,8 @@ final class StubURLProtocol: URLProtocol {
       client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
       client?.urlProtocol(self, didLoad: body)
       client?.urlProtocolDidFinishLoading(self)
+    case .later:
+      client?.urlProtocol(self, didFailWithError: URLError(.badServerResponse))
     }
   }
 
@@ -182,9 +252,13 @@ enum StubTokens {
 enum StubSync {
   static func answer(
     results: [[String: Any]] = [], changes: [[String: Any]] = [], cursor: String,
-    hasMore: Bool = false
+    hasMore: Bool = false, searchKey: String? = nil
   ) -> StubReply {
-    .json(200, ["results": results, "changes": changes, "cursor": cursor, "hasMore": hasMore])
+    var answer: [String: Any] = [
+      "results": results, "changes": changes, "cursor": cursor, "hasMore": hasMore,
+    ]
+    if let searchKey { answer["searchKey"] = searchKey }
+    return .json(200, answer)
   }
 
   static func applied(_ request: StubSyncRequest, version: Int = 1) -> [[String: Any]] {

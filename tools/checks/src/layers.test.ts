@@ -118,6 +118,18 @@ test('sends a hidden Back button to its adapter, since the Mac then hides it on 
   ])
 })
 
+test("sends StoreKit's subscriptions sheet to its adapter, since the Mac has none", () => {
+  const sheet = '    .manageSubscriptionsSheet(isPresented: $manages)\n'
+  expect(checkLayers([adapters], swiftLayers, source(sheet))).toEqual([])
+  expect(checkLayers([feature], swiftLayers, source(sheet))).toEqual([
+    {
+      path: feature,
+      line: 1,
+      problem: expect.stringMatching(/use \.appStoreSubscriptionSettings\(isPresented:\)$/)
+    }
+  ])
+})
+
 test('refuses UIKit and AppKit types that SwiftUI reaches without an import', () => {
   const problems = checkLayers(
     [feature],

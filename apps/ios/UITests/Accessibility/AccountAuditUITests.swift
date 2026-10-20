@@ -1,25 +1,30 @@
 import XCTest
 
 final class AccountAuditUITests: AccessibilityAuditCase {
-  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() {
-    auditAccount(.standard)
+  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() throws {
+    try auditAccount(.standard)
   }
 
   func testAccountsScreensPassTheAuditAtTheLargestTextSize() throws {
     try skipWithoutTextSizes()
-    auditAccount(.largest)
+    try auditAccount(.largest)
   }
 
-  func testAccountsScreensPassTheAuditInDarkAppearance() {
-    auditAccount(.dark)
+  func testAccountsScreensPassTheAuditInDarkAppearance() throws {
+    try auditAccount(.dark)
   }
 
-  private func auditAccount(_ pass: AuditPass) {
+  private func auditAccount(_ pass: AuditPass) throws {
     auditTheAccountAndItsSettings(pass)
     auditReportingAProblem(pass)
     auditTheLearnersWords(pass)
     auditSigningIn(pass)
-    if device == .mac { auditTheSettingsWindow(pass) } else { auditTheZenbuAccount(pass) }
+    guard device != .mac else { return auditTheSettingsWindow(pass) }
+    auditTheZenbuAccount(pass)
+    try auditPhotosTheAccountCantKeep(pass)
+    auditSubscribing(pass)
+    for (state, held) in Self.subscriptions { auditASubscription(state, held, pass) }
+    auditDeletingWithAnAppStoreSubscription(pass)
   }
 
   private func auditTheAccountAndItsSettings(_ pass: AuditPass) {
@@ -131,15 +136,114 @@ final class AccountAuditUITests: AccessibilityAuditCase {
   }
 
   private func auditTheZenbuAccount(_ pass: AuditPass) {
-    let app = launch(pass, AccountSignedInUITests.standIns)
-    open(.account, in: app)
-    tap(reveal(find("account.sign-in", in: app), in: app))
-    tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
+    let app = launch(pass, Self.signedIn(AccountSignedInUITests.keptOnAnotherDevice))
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
+    audit("Media Library, with a photo from the account", in: app)
+    goBack(in: app)
+    tap(reveal(find("account.profile", in: app), in: app))
+    waitUntil(waitFor(find("profile.account-email", in: app)), mentions: "learner@example.com")
+    audit("Profile, signed in", in: app)
+    goBack(in: app)
     tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
     tap(reveal(find("zenbu-account.delete", in: app), in: app))
     waitUntilStill(waitForSheet("delete-account.cancel", in: app))
     audit("Delete Account", in: app)
+  }
+
+  private static let subscriptions: [(state: String, held: [String: String])] = [
+    ("a website subscription", ["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe"]),
+    ("both stores", ["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple,stripe"]),
+    (
+      "a payment retried",
+      ["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1", "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple:billing_retry"]
+    ),
+    (
+      "a first payment pending",
+      ["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1", "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe:pending"]
+    ),
+  ]
+
+  private func openTheZenbuAccount(
+    _ pass: AuditPass, _ environment: [String: String]
+  ) -> XCUIApplication {
+    let app = launch(pass, environment)
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+    return app
+  }
+
+  private func auditASubscription(_ state: String, _ held: [String: String], _ pass: AuditPass) {
+    let app = openTheZenbuAccount(pass, SubscriptionUITests.standIns(held))
+    auditTheZenbuAccount(state, showing: find("subscription.status", in: app), in: app)
+  }
+
+  private func auditTheZenbuAccount(
+    _ state: String, showing element: XCUIElement, in app: XCUIApplication
+  ) {
+    waitFor(element)
+    audit("Zenbu Account, \(state)", in: app)
+    auditAtTheLargestSize(
+      "Zenbu Account, \(state), its subscription", showing: element, in: app, .allButTextSizes)
+  }
+
+  private func auditSubscribing(_ pass: AuditPass) {
+    let app = openTheZenbuAccount(
+      pass, SubscriptionUITests.standIns(["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1"]))
+    let subscribe = find("subscription.subscribe", in: app)
+    auditTheZenbuAccount("no subscription", showing: subscribe, in: app)
+    tap(reveal(subscribe, in: app))
+    waitUntilStill(waitForSheet("paywall.close", in: app))
+    let plan = find(SubscriptionUITests.monthly, in: app)
+    guard pass.size == .largest else {
+      waitFor(plan)
+      return audit("Subscribe", in: app)
+    }
+    audit("Subscribe", in: app)
+    audit("Subscribe, its plans", placing: plan, in: app, .allButTextSizes)
+    audit("Subscribe, its end", placing: find("paywall.restore", in: app), in: app, .allButTextSizes)
+  }
+
+  private func auditDeletingWithAnAppStoreSubscription(_ pass: AuditPass) {
+    let app = openTheZenbuAccount(
+      pass, SubscriptionUITests.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple"]))
+    let status = find("subscription.status", in: app)
+    auditTheZenbuAccount("an App Store subscription", showing: status, in: app)
+    tap(reveal(find("zenbu-account.delete", in: app), in: app))
+    waitUntilStill(waitForSheet("delete-account.cancel", in: app))
+    let note = find("delete-account.app-store-subscription", in: app)
+    audit("Delete Account, with an App Store subscription", in: app)
+    waitUntil(reveal(note, in: app), mentions: "doesn't cancel your App Store subscription")
+    auditAtTheLargestSize(
+      "Delete Account, its App Store subscription", showing: note, in: app, .allButTextSizes)
+    deleteSigningInWithApple(in: app)
+    waitUntil(reveal(note, in: app), mentions: "Apple keeps billing for it until you cancel it")
+    guard pass.size == .largest else { return audit("Deleted, with an App Store subscription", in: app) }
+    let deleted = find("delete-account.done-note", in: app)
+    audit("Deleted, with an App Store subscription", placing: deleted, in: app, .allButTextSizes)
+    audit("Deleted, its App Store subscription", placing: note, in: app, .allButTextSizes)
+  }
+
+  private func auditPhotosTheAccountCantKeep(_ pass: AuditPass) throws {
+    let notes = [
+      ("too_many_photos", "a photo refused as too many", "Your Zenbu account holds as many photos"),
+      ("photos_unavailable", "photos waiting for storage", "Photos wait to sync"),
+    ]
+    for (refusal, state, note) in notes {
+      let app = try openFixtureImage(pass, Self.signedIn(["ZENBU_ACCOUNT_STAND_IN_REFUSES": refusal]))
+      saveThePhotoOnAWord(in: app)
+      signInWithApple(in: app)
+      tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+      waitFor(
+        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", note)).firstMatch)
+      audit("Zenbu Account, \(state)", in: app)
+    }
+  }
+
+  private static func signedIn(_ more: [String: String]) -> [String: String] {
+    AccountSignedInUITests.standIns.merging(more) { $1 }
   }
 
   private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {

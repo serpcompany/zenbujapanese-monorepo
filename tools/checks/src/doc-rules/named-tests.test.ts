@@ -17,6 +17,10 @@ const tests = testsIn(
       '@Suite("Menu commands")\nstruct AppCommandTests {\n  @Test func everyTabHasAShortcut() {}\n}'
     ],
     [
+      'apps/ios/StoreKitTests/StoreKitPurchasesTests.swift',
+      'struct StoreKitPurchasesTests {\n  @Test func waitsForAskToBuy() async throws {}\n}'
+    ],
+    [
       'apps/ios/Tools/tests/test_simulator.py',
       'class SimulatorTests(unittest.TestCase):\n    def test_delete(self) -> None: ...'
     ],
@@ -35,6 +39,7 @@ const tests = testsIn(
 describe('a test a doc names', () => {
   test.each([
     'apps/ios/UITests/SearchUITests.swift',
+    'apps/ios/StoreKitTests/StoreKitPurchasesTests.swift',
     'apps/ios/Modules/Tests/TranslatorCoreTests/StartTests.swift',
     'apps/ios/Tools/TranslateReplay/Tests/ReplayTests/ScoreTests.swift',
     'apps/ios/Tools/tests/test_simulator.py',
@@ -69,7 +74,9 @@ describe('a test a doc names', () => {
     'SearchExperienceTests',
     'TranslateReplayTests',
     'ZenbuJapaneseUITests',
+    'ZenbuJapaneseStoreKitTests',
     'AppCommandTests.everyTabHasAShortcut',
+    'StoreKitPurchasesTests.waitsForAskToBuy',
     'pnpm test',
     'tests',
     'src/lib/site.test.ts'

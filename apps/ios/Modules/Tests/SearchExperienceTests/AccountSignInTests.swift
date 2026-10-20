@@ -268,19 +268,7 @@ struct AccountSignInTests {
       }
       return StubSync.answer(cursor: "cursor-2")
     }
-    let asked = fixture.server.requests(to: "GET /v1/auth/token").count
-
-    let sync = Task { try await fixture.sync.sync() }
-    while fixture.server.requests(to: "GET /v1/auth/token").count == asked {
-      try await Task.sleep(for: .milliseconds(5))
-    }
-    fixture.sync.endSession()
-    await fixture.sync.begin(
-      AccountSignIn(
-        sessionToken: "session-2.signed", userID: "learner-2", email: "second@example.com"))
-    held.letGo()
-
-    try await sync.value
+    try await fixture.syncAcrossAnotherSignIn(letting: held, once: "GET /v1/auth/token")
     #expect(!held.wasNeverLetGo, "the held refresh was never let go")
     #expect(fixture.sync.account?.userID == "learner-2")
     #expect(fixture.storage.read() == "session-2.signed")

@@ -86,6 +86,7 @@ const languagesByExtension: Record<string, Language> = {
   '.json': 'json',
   '.jsonc': 'json',
   '.webmanifest': 'json',
+  '.storekit': 'json',
   '.swift': 'swift',
   '.py': 'python',
   '.sh': 'shell',

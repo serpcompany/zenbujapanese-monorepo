@@ -221,7 +221,7 @@ struct ProfileView: View {
   private var storageNote: String {
     accountEmail == nil
       ? "Your profile is stored only on this device."
-      : "Your name and username sync with your Zenbu account. Your photo stays on this device."
+      : "Your name, username, and photo sync with your Zenbu account."
   }
 
   private var footerErrors: [String] {

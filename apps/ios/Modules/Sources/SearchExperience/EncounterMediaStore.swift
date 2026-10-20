@@ -108,6 +108,7 @@ actor EncounterMediaStorage {
   private let deferredDeletions: DeferredImageDeletions
   private var preparation: Task<Void, Never>?
   private var lastRetry: Date?
+  nonisolated let relay = KeptChangeRelay()
 
   init(
     directory: URL, legacyDirectory: URL? = nil, placing: SavedKeyLookup,
@@ -150,23 +151,131 @@ actor EncounterMediaStorage {
       try? attachment.data.write(to: destination, options: .atomic)
     }
     guard FileManager.default.fileExists(atPath: destination.path) else { return }
-    if current.media[mediaID] == nil {
+    let isNew = current.media[mediaID] == nil
+    if isNew {
       current.media[mediaID] = MediaRecord(name: attachment.name, savedAt: now)
     }
+    let wasOnWord = current.encounters.contains { $0.word.id == word.id && $0.mediaID == mediaID }
     current.encounters.removeAll { $0.word.id == word.id && $0.mediaID == mediaID }
     current.encounters.append(EncounterRecord(word: word, mediaID: mediaID, savedAt: now))
     guard write(current) else { return }
     deferredDeletions.remove(mediaID)
+    if isNew {
+      await relay.post(
+        KeptChanges.photoAdded(KeptPhoto(id: mediaID, name: attachment.name, savedAt: now)))
+    }
+    if !wasOnWord {
+      await relay.post(KeptChanges.photoWordAdded(Self.kept(word, on: mediaID, savedAt: now)))
+    }
   }
 
   func remove(_ word: EncounterWordReference, mediaID: String) async {
     await prepared()
-    guard var current = index() else { return }
-    current.encounters.removeAll { $0.word.id == word.id && $0.mediaID == mediaID }
-    let removesMedia = !current.encounters.contains { $0.mediaID == mediaID }
-    if removesMedia { current.media[mediaID] = nil }
-    guard write(current) else { return }
-    if removesMedia { deleteImage(mediaID) }
+    guard removing(word.id, from: mediaID) else { return }
+    await relay.post(KeptChanges.photoWordRemoved(mediaID, word.id.rawValue))
+  }
+
+  private func removing(_ wordID: SavedItemID, from mediaID: String) -> Bool {
+    removing([(wordID, mediaID)])
+  }
+
+  private func removing(_ words: [(id: SavedItemID, mediaID: String)]) -> Bool {
+    guard var current = index() else { return false }
+    let matches = { (encounter: EncounterRecord) in
+      words.contains { $0.id == encounter.word.id && $0.mediaID == encounter.mediaID }
+    }
+    let wasOnWord = current.encounters.contains(where: matches)
+    current.encounters.removeAll(where: matches)
+    let emptied = Set(words.map(\.mediaID)).filter { mediaID in
+      current.media[mediaID] != nil && !current.encounters.contains { $0.mediaID == mediaID }
+    }
+    for mediaID in emptied { current.media[mediaID] = nil }
+    guard write(current) else { return false }
+    emptied.forEach(deleteImage)
+    return wasOnWord
+  }
+
+  func keptPhotos() async -> (photos: [KeptPhoto], words: [KeptPhotoWord]) {
+    await prepared()
+    guard let current = index() else { return ([], []) }
+    let shown = current.media.filter { mediaID, _ in
+      blobExists(mediaID) && current.encounters.contains { $0.mediaID == mediaID }
+    }
+    let photos = shown.map { KeptPhoto(id: $0.key, name: $0.value.name, savedAt: $0.value.savedAt) }
+      .sorted { $0.savedAt < $1.savedAt }
+    let words = current.encounters.filter { shown[$0.mediaID] != nil }
+      .sorted { $0.savedAt < $1.savedAt }
+      .map { Self.kept($0.word, on: $0.mediaID, savedAt: $0.savedAt) }
+    return (photos, words)
+  }
+
+  func fileData(_ mediaID: String) async -> Data? {
+    await prepared()
+    return try? Data(contentsOf: blobURL(mediaID))
+  }
+
+  func cantReadFile(_ mediaID: String) async -> Bool {
+    await prepared()
+    return blobExists(mediaID) && (try? Data(contentsOf: blobURL(mediaID))) == nil
+  }
+
+  func storeFile(_ data: Data, as mediaID: String) async -> Bool {
+    await prepared()
+    guard data.sha256 == mediaID else { return false }
+    if !blobExists(mediaID) { try? data.write(to: blobURL(mediaID), options: .atomic) }
+    return blobExists(mediaID)
+  }
+
+  func applySynced(photos: [KeptPhoto]) async -> Set<String> {
+    guard !photos.isEmpty else { return [] }
+    await prepared()
+    guard var current = index() else { return [] }
+    let placed = photos.filter { blobExists($0.id) }
+    for photo in placed {
+      current.media[photo.id] = MediaRecord(name: photo.name, savedAt: photo.savedAt)
+    }
+    guard write(current) else { return [] }
+    for photo in placed { deferredDeletions.remove(photo.id) }
+    return Set(placed.map(\.id))
+  }
+
+  func applySynced(words: [KeptPhotoWord]) async -> [KeptPhotoWord] {
+    await prepared()
+    guard var current = index() else { return words }
+    var unplaced: [KeptPhotoWord] = []
+    for word in words {
+      guard current.media[word.photoID] != nil, blobExists(word.photoID) else {
+        unplaced.append(word)
+        continue
+      }
+      let id = SavedItemID(rawValue: word.item)
+      guard !current.encounters.contains(where: { $0.word.id == id && $0.mediaID == word.photoID })
+      else { continue }
+      current.encounters.append(
+        EncounterRecord(
+          word: EncounterWordReference(id: id, headword: word.headword, reading: word.reading),
+          mediaID: word.photoID, savedAt: word.savedAt))
+    }
+    return write(current) ? unplaced : words
+  }
+
+  func applySyncedRemoval(ofWords words: [(item: String, mediaID: String)]) async {
+    guard !words.isEmpty else { return }
+    await prepared()
+    _ = removing(words.map { (SavedItemID(rawValue: $0.item), $0.mediaID) })
+  }
+
+  func applySyncedRemoval(ofPhoto mediaID: String) async {
+    await prepared()
+    deleting(mediaID)
+  }
+
+  private static func kept(
+    _ word: EncounterWordReference, on mediaID: String, savedAt: Date
+  ) -> KeptPhotoWord {
+    KeptPhotoWord(
+      photoID: mediaID, item: word.id.rawValue, headword: word.headword, reading: word.reading,
+      savedAt: savedAt)
   }
 
   func library() async -> [EncounterMediaSummary] {
@@ -196,11 +305,19 @@ actor EncounterMediaStorage {
 
   func deleteMedia(_ mediaID: String) async {
     await prepared()
-    guard var current = index() else { return }
+    guard deleting(mediaID) else { return }
+    await relay.post(KeptChanges.photoDeleted(mediaID))
+  }
+
+  @discardableResult
+  private func deleting(_ mediaID: String) -> Bool {
+    guard var current = index() else { return false }
+    let existed = current.media[mediaID] != nil
     current.encounters.removeAll { $0.mediaID == mediaID }
     current.media[mediaID] = nil
-    guard write(current) else { return }
+    guard write(current) else { return false }
     deleteImage(mediaID)
+    return existed
   }
 
   func deleteImagesDue() async {

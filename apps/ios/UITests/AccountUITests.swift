@@ -16,6 +16,10 @@ final class AccountUITests: ZenbuUITestCase {
       let bar = waitFor(app.navigationBars["Account"])
       XCTAssertLessThan(bar.frame.height, 64, "Account has the small title the other tabs use")
     }
+    waitUntil(
+      find("account.sign-in", in: app),
+      mentions: "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history,"
+        + " and bookmarked translations, on all your devices")
     for row in Self.rows {
       reveal(find(row, in: app), in: app)
     }
@@ -161,6 +165,22 @@ final class AccountUITests: ZenbuUITestCase {
     waitFor(result)
     if device != .mac {
       waitUntil(result, "value CONTAINS 'JLPT level N' AND NOT (value CONTAINS 'YouTube')")
+    }
+  }
+
+  func testASortByADictionaryTurnedOffShowsDefaultAndComesBackWhenItsOn() {
+    let app = launch()
+    search("japan", in: app)
+    chooseFromSortedBy("Sort By", "YouTube", in: app)
+    waitFor(sortedByRow(saying: "Sorted by YouTube", in: app))
+    for (switchedTo, sorted) in [(Self.switchedOff, "Default"), (Self.switchedOn, "YouTube")] {
+      open(.account, in: app)
+      tap(reveal(find("account.frequency-dictionaries", in: app), in: app))
+      let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
+      flip(toggle)
+      waitUntil(toggle, switchedTo)
+      tabItem(.search, in: app).tap()
+      waitFor(sortedByRow(saying: "Sorted by \(sorted)", in: app))
     }
   }
 

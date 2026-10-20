@@ -60,16 +60,24 @@ final class AccountFixture {
   nonisolated let defaultsSuite = "account-tests-\(UUID().uuidString)"
   let server: StubAccountServer
   let storage: MemorySessionTokenStorage
-  var now = Date(timeIntervalSince1970: 1_791_000_000)
+  nonisolated static let start = Date(timeIntervalSince1970: 1_791_000_000)
+  var now = AccountFixture.start
   var providers = SignInProviders.system
   var googleClientID: String?
   let retries = HeldRetries()
+  let store = FakeAppStore()
   private(set) var wordKnowledge: WordKnowledge!
   private(set) var wordLists: WordLists!
   private(set) var watchHistory: WatchHistory!
   private(set) var translations: ConversationHistory!
   private(set) var profile: UserProfile!
+  private(set) var notes: WordNoteStorage!
+  private(set) var media: EncounterMediaStorage!
+  private(set) var searches: RecentSearchHistory!
+  private(set) var settings: SyncedSettings!
+  var frequency = FrequencyChoice()
   private(set) var account: ZenbuAccount!
+  lazy var defaults = UserDefaults(suiteName: defaultsSuite) ?? .standard
 
   var sync: AccountSync { account.sync }
 
@@ -87,23 +95,35 @@ final class AccountFixture {
     if account != nil { await settle() }
     wordKnowledge = WordKnowledge(fileURL: directory.appending(path: "word-knowledge.json"))
     wordLists = WordLists(fileURL: directory.appending(path: "word-lists.json"))
-    watchHistory = WatchHistory(
-      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard, now: { [unowned self] in now })
+    watchHistory = WatchHistory(defaults: defaults, now: { [unowned self] in now })
     translations = ConversationHistory(
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
-    profile = UserProfile(
-      defaults: UserDefaults(suiteName: defaultsSuite) ?? .standard,
-      photoURL: directory.appending(path: "photo.jpg"))
+    profile = UserProfile(defaults: defaults, photoURL: directory.appending(path: "photo.jpg"))
+    (notes, searches) = Self.stores(in: defaultsSuite)
+    media = EncounterMediaStorage(
+      directory: directory.appending(path: "Encounter Media"), placing: SavedWords.lookup)
+    settings = SyncedSettings(defaults: defaults)
     account = ZenbuAccount(
       configuration: AccountServiceConfiguration(
         serviceURL: server.baseURL, googleClientID: googleClientID),
       session: server.session, storage: storage, wordKnowledge: wordKnowledge,
       wordLists: wordLists, watchHistory: watchHistory, translations: translations,
-      profile: profile, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
-      now: { [unowned self] in now }, retryClock: retries.clock)
+      profile: profile,
+      kept: KeptStores(
+        notes: notes, media: media, searches: searches, settings: settings, frequency: frequency),
+      store: store, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
+      now: { [weak self] in self?.now ?? Self.start }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
+  }
+
+  nonisolated private static func stores(in suite: String) -> (WordNoteStorage, RecentSearchHistory) {
+    (
+      WordNoteStorage(
+        defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup),
+      RecentSearchHistory(defaults: UserDefaults(suiteName: suite) ?? UserDefaults())
+    )
   }
 
   func settle() async {
@@ -118,7 +138,15 @@ final class AccountFixture {
     profile: StubReply = .json(200, AccountFixture.profile()),
     sync: @escaping @Sendable (StubSyncRequest) -> StubReply = { request in
       StubSync.answer(results: StubSync.applied(request), cursor: "cursor-1")
-    }
+    },
+    subscription: @escaping @Sendable (StubRequest) -> StubReply = { _ in
+      .error(404, "not_found")
+    },
+    files: @escaping @Sendable (StubRequest) -> StubReply = { _ in .error(404, "not_found") },
+    deletion: StubReply = .json(200, ["status": "deleted"]),
+    patched: StubReply = .json(200, AccountFixture.profile(name: "Kana Fan", version: 2)),
+    profiles: StubProfiles? = nil,
+    signsInAs signedInID: String = AccountFixture.userID
   ) {
     let accessToken = StubTokens.access(expiresAt: now + tokenLifetime)
     server.respond { request in
@@ -128,7 +156,7 @@ final class AccountFixture {
       case "POST /v1/auth/email-otp/send-verification-otp":
         .json(200, ["success": true])
       case "POST /v1/auth/sign-in/email-otp", "POST /v1/auth/sign-in/social":
-        .json(200, Self.signedIn(), headers: ["set-auth-token": Self.sessionToken])
+        .json(200, Self.signedIn(as: signedInID), headers: ["set-auth-token": Self.sessionToken])
       case "POST /v1/auth/sign-in/nonce":
         .json(200, ["nonce": Self.nonce])
       case "POST /v1/sync":
@@ -138,11 +166,15 @@ final class AccountFixture {
       case "GET /v1/auth/list-accounts":
         .json(200, [["providerId": "email", "accountId": Self.email]])
       case "GET /v1/me":
-        profile
+        profiles?.reply(to: request) ?? profile
+      case "PATCH /v1/me":
+        profiles?.reply(to: request) ?? patched
       case "DELETE /v1/me":
-        .json(200, ["status": "deleted"])
+        deletion
+      case "GET /v1/me/subscription", "POST /v1/me/subscription/apple":
+        subscription(request)
       default:
-        .error(404, "not_found")
+        request.path.hasPrefix("/v1/photos/") ? files(request) : .error(404, "not_found")
       }
     }
   }
@@ -172,6 +204,20 @@ final class AccountFixture {
   func syncNow() async throws {
     try await sync.sync()
     await settle()
+  }
+
+  func syncAcrossAnotherSignIn(letting held: HeldReply, once route: String) async throws {
+    let asked = server.requests(to: route).count
+    let running = Task { try await sync.sync() }
+    while server.requests(to: route).count == asked {
+      try await Task.sleep(for: .milliseconds(5))
+    }
+    sync.endSession()
+    await sync.begin(
+      AccountSignIn(
+        sessionToken: "session-2.signed", userID: "learner-2", email: "second@example.com"))
+    held.letGo()
+    try await running.value
   }
 
   func markKnown(_ id: String, headword: String = "食べる") {
@@ -222,7 +268,7 @@ final class AccountFixture {
     return (fixture, fixture.server.requests(to: "POST /v1/sync").last?.sync ?? StubSyncRequest())
   }
 
-  private func storeSyncedEntities(_ entities: [String]?) async throws {
+  func storeSyncedEntities(_ entities: [String]?) async throws {
     await settle()
     let file = directory.appending(path: "account-sync.json")
     var stored = try JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any]

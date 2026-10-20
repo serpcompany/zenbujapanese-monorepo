@@ -36,11 +36,11 @@ struct ImageTextAsset: Identifiable, Sendable {
     }
     let data = try Data(contentsOf: url)
     guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-      hasReadableDimensions(source)
+      hasReadableDimensions(source), let stripped = ImageCoding.withoutMetadata(data)
     else {
       throw ImageTextAssetError.unsupportedDimensions
     }
-    return ImageTextAsset(name: url.lastPathComponent, data: data)
+    return ImageTextAsset(name: url.lastPathComponent, data: stripped)
   }
 
   nonisolated(nonsending) static func dropped(_ provider: NSItemProvider) async -> ImageTextAsset? {
