@@ -6,31 +6,15 @@ export interface MeaningActions {
 
 export function meaningActions(sense: {
   meaning: string
+  glosses: readonly string[]
   noteText: string | null
 }): MeaningActions {
-  const glosses = [...new Set(meaningGlosses(sense.meaning).map(spokenGloss))].filter(Boolean)
+  const glosses = [...new Set(sense.glosses.map(spokenGloss))].filter(Boolean)
   return {
     spoken: glosses.length > 0 ? glosses.join(', ') : collapsed(sense.meaning),
     glosses,
     copyText: sense.noteText ? `${sense.meaning}\n${sense.noteText}` : sense.meaning
   }
-}
-
-export function meaningGlosses(meaning: string): string[] {
-  const glosses: string[] = []
-  let depth = 0
-  let start = 0
-  for (let index = 0; index < meaning.length; index++) {
-    const character = meaning[index]
-    if (character === '(') depth++
-    else if (character === ')') depth = Math.max(0, depth - 1)
-    else if (character === ',' && depth === 0) {
-      glosses.push(meaning.slice(start, index))
-      start = index + 1
-    }
-  }
-  glosses.push(meaning.slice(start))
-  return glosses.map(collapsed).filter(Boolean)
 }
 
 export function spokenGloss(gloss: string): string {

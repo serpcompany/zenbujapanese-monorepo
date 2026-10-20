@@ -317,6 +317,27 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     expect(observed).toEqual(withoutFields(expected, ['covers']))
   })
 
+  test.each([
+    { entSeq: '1980230', lookUp: ['Ministry of Health, Labour and Welfare', 'MHLW'] },
+    { entSeq: '1335140', lookUp: ['100,000', 'hundred thousand'] }
+  ])('offers JMdict $entSeq’s glosses whole, as the entry gives them', async ({
+    entSeq,
+    lookUp
+  }) => {
+    const [row] = db.all<{ id: string }>(
+      `SELECT lower(hex(id)) AS id FROM entries
+       WHERE source_identity = 'edrdg.jmdict' AND source_record_id = ?`,
+      [Number(entSeq)]
+    )
+    const entry = row && entryAsTheAppReadsIt(db, row.id)
+    if (!entry) throw new Error(`The artifact has no JMdict entry ${entSeq}`)
+    const [sense] = (await app.presentation<EmbeddedWordPage>('wordPage', entry)).senses
+    expect({ glosses: sense.glosses, spoken: sense.spoken }).toEqual({
+      glosses: lookUp,
+      spoken: lookUp.join(', ')
+    })
+  })
+
   test('puts the word a kanji page was opened from first among its words', async () => {
     const ids = await app.lookup<string[]>('entriesContainingKanji', '日')
     const entries = entriesById(db, ids)

@@ -245,9 +245,12 @@ Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
 Each meaning opens a menu. **Speak** reads its glosses in an English voice, leaving out a
 parenthesis that ends a gloss and reading a leading one as words ("dog (Canis (lupus) familiaris),
 canine" is "dog, canine"), and never the note line. **Copy** copies it with its note line, and
-**Look Up** searches one of its glosses. The pronounce buttons keep their Japanese voice.
+**Look Up** searches one of its glosses. Each gloss is whole, as JMdict gives it, even one that
+holds a comma: １０万 offers "100,000" and "hundred thousand". The pronounce buttons keep their
+Japanese voice.
 
-Check: core `detail/meaning-actions.test.ts`; package `MeaningActionsTests`; UI
+Check: core `detail/meaning-actions.test.ts` and `embedded/presentation.test.ts`; package
+`MeaningActionsTests`; the service's `embedded-detail.conformance.test.ts`; UI
 `WordDetailUITests.testAMeaningSpeaksInEnglishAndLooksUpAGloss`.
 
 A related word opens the entry it names. One that names none is looked up, and opens the

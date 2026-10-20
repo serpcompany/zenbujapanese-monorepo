@@ -172,12 +172,33 @@ extension LanguageReferenceData {
     return try decoder.decode(type, from: Data(value.utf8))
   }
 
-  func decodeEntry(from statement: OpaquePointer) throws -> DictionaryEntry {
+  func glosses(ofEntriesEquivalentTo listed: String) throws -> [String: [Int: [String]]] {
+    let statement = try openStatements().statement(Self.equivalentGlossesSQL)
+    defer { sqlite3_reset(statement) }
+    sqliteBind(listed, at: 1, to: statement)
+    var glosses: [String: [Int: [String]]] = [:]
+    while try checkedSQLiteStep(statement) == .row {
+      let sense = Int(sqlite3_column_int(statement, 1))
+      glosses[sqliteText(statement, 0), default: [:]][sense, default: []]
+        .append(sqliteText(statement, 2))
+    }
+    return glosses
+  }
+
+  func decodeEntry(
+    from statement: OpaquePointer, glosses: [String: [Int: [String]]]
+  ) throws -> DictionaryEntry {
+    let id = sqliteText(statement, 0)
     let meanings: [String] = try Self.decode(column: 6, statement: statement)
     let partsOfSpeech: [PartOfSpeech] = try Self.decode(column: 7, statement: statement)
     let writtenForms: [DictionaryForm] = try Self.decode(column: 8, statement: statement)
     let readingForms: [DictionaryForm] = try Self.decode(column: 9, statement: statement)
-    let senses: [DictionarySense] = try Self.decode(column: 10, statement: statement)
+    let stored: [StoredSense] = try Self.decode(column: 10, statement: statement)
+    let senses = stored.enumerated().map { index, sense in
+      DictionarySense(
+        meaning: sense.meaning, glosses: glosses[id]?[index] ?? [], notes: sense.notes,
+        partsOfSpeech: sense.partsOfSpeech)
+    }
     let relationships: [DictionaryRelationship] = try Self.decode(column: 11, statement: statement)
     let pitch: PitchAccent? = try Self.decodeIfPresent(column: 12, statement: statement)
     let compoundPitch: PitchAccent? = try Self.decodeIfPresent(column: 15, statement: statement)
@@ -186,7 +207,7 @@ extension LanguageReferenceData {
       sourceRecordID: sqliteText(statement, 2)
     )
     return DictionaryEntry(
-      id: LanguageReferenceID(rawValue: sqliteText(statement, 0)),
+      id: LanguageReferenceID(rawValue: id),
       sourceRecord: record,
       sourceProvenances: [record],
       reading: sqliteText(statement, 4),
@@ -243,6 +264,12 @@ extension LanguageReferenceData {
 
   private static let decoder = JSONDecoder()
 
+  private struct StoredSense: Decodable {
+    let meaning: String
+    let notes: [String]
+    let partsOfSpeech: [PartOfSpeech]
+  }
+
   static let selectedColumns = """
     lower(hex(e.id)), e.source_identity, CAST(e.source_record_id AS TEXT), e.headword, e.reading, e.summary,
     e.meanings_json, e.parts_of_speech_json, e.written_forms_json, e.reading_forms_json,
@@ -251,11 +278,18 @@ extension LanguageReferenceData {
     (SELECT c.pitch_accent_json FROM compound_pitch.entry_pitch c WHERE c.entry_id = e.id)
     """
 
-  static let equivalentEntriesSQL = """
-    SELECT \(selectedColumns)
+  private static let equivalentEntries = """
     FROM json_each(?) listed
     JOIN entries named ON named.id = unhex(listed.value)
     JOIN entries e ON e.semantic_fingerprint = named.semantic_fingerprint
+    """
+
+  static let equivalentEntriesSQL = "SELECT \(selectedColumns) \(equivalentEntries)"
+
+  private static let equivalentGlossesSQL = """
+    SELECT lower(hex(entry_id)), sense_order, text FROM gloss_atoms
+    WHERE entry_id IN (SELECT e.id \(equivalentEntries))
+    ORDER BY entry_id, sense_order, gloss_order
     """
 
   private static let noteIdentitiesSQL = """
