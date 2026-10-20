@@ -85,6 +85,13 @@ what it waited for and for how long.
   seen, until the row has a real frame above the list, and a frame that is empty for a moment
   keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
   forth twelve times without reaching the row.
+- **`reveal` looks both ways for a row it can't see.** A lazy list also lets go of a row that
+  scrolls out of view, so a row above the screen is missing from the tree just as a row below
+  it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
+  when a swipe moves nothing (the list's tree is the same after it as before), it is at that
+  end: it turns once, and stops at the other end. Scrolling only down once failed the Account
+  rows test, whose Sign In row, near the top, was gone once the list reached Credits at the
+  bottom. `RevealUITests` scrolls Credits to its end and finds its first source again.
 - **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
   the window, and at the largest text size on iOS 27 that can be under the tab bar, so a tap there
   reaches the bar. A tall row whose middle was 8 points above the bar still lost its tap to it.

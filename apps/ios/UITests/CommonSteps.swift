@@ -258,12 +258,31 @@ extension ZenbuUITestCase {
       return longList != nil && longList == lastLongList
     }
     var isAbove = false
-    for _ in 0..<24 {
+    var hasTurned = false
+    for _ in 0..<Self.revealSwipes {
       if isReachable(element, in: app, within: container) { break }
-      if let laidOut = laidOutFrame(of: element) { isAbove = laidOut.midY < area.frame.midY }
-      scroll(scrolled, back: isAbove)
+      if element.exists, let laidOut = laidOutFrame(of: element) {
+        isAbove = laidOut.midY < area.frame.midY
+        scroll(scrolled, back: isAbove)
+      } else if !scrollMoves(scrolled, back: isAbove) {
+        if hasTurned { break }
+        hasTurned = true
+        isAbove.toggle()
+      }
     }
     return waitFor(element)
+  }
+
+  private static let revealSwipes = 48
+
+  private func scrollMoves(_ area: XCUIElement, back: Bool) -> Bool {
+    let before = shownContent(of: area)
+    scroll(area, back: back)
+    return before == nil || shownContent(of: area) != before
+  }
+
+  private func shownContent(of area: XCUIElement) -> NSDictionary? {
+    (try? area.snapshot()).map { $0.dictionaryRepresentation as NSDictionary }
   }
 
   @discardableResult
