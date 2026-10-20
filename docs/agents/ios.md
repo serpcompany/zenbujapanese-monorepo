@@ -331,8 +331,8 @@ xcrun devicectl device install app --device <device-udid> \
   "$(python3 Tools/simulator.py derived-data)/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
 
-Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
-below). Built for Release, it reports crashes as `qa` ([crash reports](ios-crash-reports.md)).
+Zenbu Dev signs in with Google or an emailed code, not Apple (Account and sync, below). Built for
+Release, it reports [crashes](ios-crash-reports.md) and [problems](ios-problem-reports.md) as `qa`.
 
 ### From a Mac the iPhone can't reach
 

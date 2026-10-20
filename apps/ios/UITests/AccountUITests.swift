@@ -4,8 +4,9 @@ final class AccountUITests: ZenbuUITestCase {
   static let rows = [
     "account.profile", "account.sign-in", "account.media-library", "account.known-words",
     "account.lists", "account.translations", "account.reading-aids",
-    "account.frequency-dictionaries", "account.send-crash-reports", "account.support",
-    "account.privacy-policy", "account.credits", "account.about",
+    "account.frequency-dictionaries", "account.about", "account.support",
+    "account.report-a-problem", "account.send-crash-reports", "account.privacy-policy",
+    "account.credits",
   ]
 
   func testAccountListsEveryArea() {

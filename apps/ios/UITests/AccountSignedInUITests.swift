@@ -87,6 +87,18 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Kana Fan'")
   }
 
+  func testAReportOpensWithTheAccountsEmailFilledInAndSaysSo() {
+    let app = launch(Self.standIns.merging(Self.problemReportStandIn) { $1 })
+    signInWithApple(in: app)
+    tap(reveal(find("account.report-a-problem", in: app), in: app))
+    waitUntil(waitFor(find("problem-report.email", in: app)), "value == 'learner@example.com'")
+    let note = reveal(find("problem-report.note", in: app), in: app)
+    waitUntil(note, mentions: "Your Zenbu account's email is filled in")
+    reveal(labeled("Account, Signed in", in: app), in: app)
+    tap(find("problem-report.cancel", in: app))
+    waitFor(find("account.report-a-problem", in: app))
+  }
+
   private func signInWithApple(in app: XCUIApplication) {
     open(.account, in: app)
     tap(find("account.sign-in", in: app))

@@ -71,6 +71,8 @@ private let iPadSheets = [
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
 ]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
+private let problemReportsEditing = ["Report a Problem", "Report a Problem, an email that isn't an address"]
+private let problemReports = problemReportsEditing + ["Report a Problem, its details"]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -90,6 +92,8 @@ private enum Why {
     "A bar button: the system draws its title, which stops growing at a size of its own and shows in the Large Content Viewer on a long press, as in Apple's apps"
   static let imageAlert =
     "The Image alert is Apple's: the system draws its title, message, and three buttons, and rebuilds the alert as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself"
+  static let emailField =
+    "An email field is one line, as Apple's are, since an address doesn't wrap: at the largest sizes the system ends its prompt with an ellipsis, and VoiceOver reads it whole. At the default size the field shows its text whole and the audit still reads it as cut"
   static let searchField =
     "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Look Up, or to Search in Player"
   static let floatingTabBar =
@@ -125,8 +129,11 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
   allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
+  allow(.dynamicType, .identifier("problem-report.send"), on: problemReports, because: Why.barButton),
+  allow(.dynamicType, .identifier("problem-report.done"), on: ["Report a Problem, sent"], because: Why.barButton),
   allow(.textClipped, .label("Look Up"), on: ["Recent lookups"], because: Why.searchField),
   allow(.textClipped, .label("Search"), on: ["Player's Recent"], because: Why.searchField),
+  allow(.textClipped, .identifier("problem-report.email"), on: problemReportsEditing, because: Why.emailField),
   allow(
     .hitRegion, .label("Clear text"),
     on: ["Look Up's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
@@ -167,23 +174,29 @@ private let textThatScales = [
       "Apple Translation", "Translate Player Captions With", "Translation Language", "English", "YouTube",
       "Show Furigana", "Show Word Meanings", "Hide Furigana on Known Words",
     ]), on: ["Reading Aids"], because: Why.scales),
-  allow(.dynamicType, .labels(["Translations", "0"]), on: ["Account", "Account, at its end"], because: Why.scales),
+  allow(.dynamicType, .labels(["Translations", "0"]), on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
     .label(
       "When Zenbu crashes, freezes, or hits an error, such as a failed sync or download, it sends a report to its developers through Sentry: the app and system versions, the device's model and state (such as memory in use), a random ID for this install, and where in the app's code it happened. Reports never include your searches, words, sentences, notes, photos, conversations, or account details."
     ),
-    on: ["Account", "Account, at its end"], touch, [.standard], because: Why.scales),
+    on: ["Account, its about rows"], touch, [.standard], because: Why.scales),
   allow(
     .textClipped,
     .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
-    on: ["Account", "Account, at its end"], because: Why.scales),
+    on: ["Account"], because: Why.scales),
   allow(
     .dynamicType,
     .label(
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
     ),
     on: ["Zenbu Account"], [.phone], because: Why.scales),
+  allow(
+    .dynamicType,
+    .labels([
+      "Included with your report",
+      "Sentry also adds technical details about this iPhone's state, such as memory in use and Low Power Mode. No conversations, searches, lists, or photos are attached.",
+    ]), on: problemReportsEditing, touch, [.standard], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),

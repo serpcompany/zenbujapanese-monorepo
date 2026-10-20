@@ -103,7 +103,7 @@ struct CrashReportingPolicyTests {
     #expect(!CrashReportingPolicy.keepsBreadcrumb(category: "http"))
   }
 
-  @Test("a build with no destination never starts Sentry, and the switch can't start it")
+  @Test("a build with no destination never starts Sentry, the switch can't start it, and it can't send a report")
   @MainActor
   func noDestinationNeverStarts() throws {
     let suite = "crash-reporting-start-\(UUID().uuidString)"
@@ -113,6 +113,9 @@ struct CrashReportingPolicyTests {
     CrashReporter.startAtLaunch(
       defaults: defaults, bundle: .main, environment: ProcessInfo.processInfo.environment)
     CrashReporter.setEnabled(true)
+    #expect(!CrashReporter.canSendProblemReports)
+    CrashReporter.send(
+      ProblemReport(description: "Search froze", email: "", details: ProblemReportFixtures.details))
     #expect(!SentrySDK.isEnabled)
     #expect(defaults.string(forKey: CrashReportingPolicy.installIDKey) == nil)
   }
