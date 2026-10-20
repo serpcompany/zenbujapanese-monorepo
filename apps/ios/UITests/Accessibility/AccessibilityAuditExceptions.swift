@@ -139,8 +139,8 @@ private let systemControls = [
   allow(
     .dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account", deletingWithAnAppStoreOne],
     [.phone, .pad], because: Why.barButton),
-  allow(.dynamicType, .identifier("delete-account.done"), on: [deletedWithAnAppStoreOne], because: Why.barButton),
-  allow(.dynamicType, .identifier("paywall.close"), on: ["Subscribe"], because: Why.barButton),
+  allow(.dynamicType, .identifier("delete-account.done"), on: [deletedWithAnAppStoreOne], [.phone], because: Why.barButton),
+  allow(.dynamicType, .identifier("paywall.close"), on: ["Subscribe"], [.phone], because: Why.barButton),
   allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(
@@ -194,16 +194,26 @@ private let textThatScales = [
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
     ),
     on: ["Zenbu Account"], [.phone], because: Why.scales),
-  allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: subscriptionStates, because: Why.scales),
-  allow(.dynamicType, .identifier("zenbu-account.sync-waits"), on: syncWaiting, because: Why.scales),
-  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting, because: Why.scales),
-  allow(.dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, because: Why.scales),
-  allow(.dynamicType, .identifier("subscription.manage"), on: ["Zenbu Account, a payment retried"], because: Why.scales),
-  allow(.dynamicType, .identifier("subscription.paying-twice"), on: ["Zenbu Account, both stores"], because: Why.scales),
-  allow(.dynamicType, .identifier("paywall.terms"), on: ["Subscribe"], because: Why.scales),
-  allow(.dynamicType, .label("Privacy Policy"), on: ["Subscribe"], because: Why.scales),
-  allow(.dynamicType, .identifier("delete-account.app-store-subscription"), on: deletingAndDeleted, because: Why.scales),
-  allow(.dynamicType, .identifier("delete-account.manage-subscription"), on: deletingAndDeleted, because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: subscriptionStates, [.phone], because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-waits"), on: syncWaiting, [.phone], because: Why.scales),
+  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting, [.phone], because: Why.scales),
+  allow(
+    .dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("subscription.manage"), on: ["Zenbu Account, a payment retried"], [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("subscription.paying-twice"), on: ["Zenbu Account, both stores"], [.phone],
+    because: Why.scales),
+  allow(.dynamicType, .identifier("paywall.terms"), on: ["Subscribe"], [.phone], because: Why.scales),
+  allow(.dynamicType, .label("Privacy Policy"), on: ["Subscribe"], [.phone], because: Why.scales),
+  allow(
+    .dynamicType, .identifier("delete-account.app-store-subscription"), on: deletingAndDeleted, [.phone],
+    because: Why.scales),
+  allow(
+    .dynamicType, .identifier("delete-account.manage-subscription"), on: deletingAndDeleted, [.phone],
+    because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
