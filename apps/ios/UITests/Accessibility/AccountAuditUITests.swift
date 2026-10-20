@@ -44,6 +44,8 @@ final class AccountAuditUITests: AccessibilityAuditCase {
       "Frequency Dictionaries, its downloads",
       showing: firstElement(identifiedBy: "frequency-pack.download.", in: app), in: app)
     goBack(in: app)
+    auditAtTheLargestSize(
+      "Account, Send Crash Reports", showing: find("account.send-crash-reports", in: app), in: app)
     tap(reveal(find("account.credits", in: app), in: app))
     waitFor(find("credits.list", in: app))
     audit("Credits & Attributions", in: app)

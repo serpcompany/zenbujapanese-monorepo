@@ -83,9 +83,9 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   package `AppCommandTests` (each command's shortcut, and the window it reaches). A link from
   another app is by hand; `WebsiteLinkTests` checks where it goes.
 - **Settings on the Mac.** **Zenbu Japanese → Settings…** (⌘,) opens a Settings window with
-  the profile and the Zenbu account, Reading Aids, and Frequency Dictionaries. They stay in Account
-  too, and both show the same settings; a change to Frequency Dictionaries shows in Look Up, an
-  open word, and the word sheet at once.
+  the profile, the Zenbu account, Send Crash Reports, Reading Aids, and Frequency Dictionaries.
+  They stay in Account too, and both show the same settings; a change to Frequency Dictionaries
+  shows in Look Up, an open word, and the word sheet at once. Its crash switch is checked by hand.
   Check: Mac, UI `KeyboardAndWindowUITests.testTheSettingsWindowHoldsTheAccountReadingAidsAndFrequencyDictionaries`;
   package `AppCommandTests` (its panes and size), `UserProfileTests` (a field changed in another
   window), and `FrequencyPackLifecycleTests` and `FrequencyListsTests` (each change published).
@@ -221,7 +221,7 @@ It provides:
   kanji in Look Up's Grade panel); and Sentence Translations, with a translation language (English
   so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
   Reading Aids offers to download;
-- management of optional frequency dictionaries; and
+- management of optional frequency dictionaries; [**Send Crash Reports**](crash-reports.md); and
 - the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
   open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
   link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with

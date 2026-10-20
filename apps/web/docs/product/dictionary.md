@@ -256,11 +256,11 @@ is left out.
 - Check: `packages/dictionary-core/src/detail/frequency.test.ts`, "lists each default dictionary,
   JLPT then YouTube"; WD `frequency`.
 
-**No results.** When no word and no example sentence matches and the query isn't one kanji, the
-page shows the app's "No Dictionary Matches" with its hint, "Try another Japanese or English
-Search query." A query of punctuation full-text search treats specially, such as a stray double
-quote (`eat"`), shows the same page rather than an error. So does a query over 200 characters,
-without searching: that is the dictionary service's limit, and the app has none.
+**No results.** When no word and no example sentence matches and the query isn't one kanji, the page
+shows the app's "No Dictionary Matches", with nothing under it. A query of punctuation full-text
+search treats specially, such as a stray double quote (`eat"`), shows the same page rather than an
+error. So does a query over 200 characters, without searching: that is the dictionary service's
+limit, and the app has none.
 
 - Source: App docs, Search; `SearchView.swift` (`search.no-results`); #462 (`Empty` for no
   results); the 200-character limit: the dictionary service's request limit

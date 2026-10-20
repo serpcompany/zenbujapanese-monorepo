@@ -12,7 +12,7 @@ import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { Row, WordRow } from '@/components/dictionary/word-row'
 import { Fill } from '@/components/fill'
 import { Card } from '@/components/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import type { SearchData, SearchExamplesData } from '@/lib/dictionary/data'
 import { exampleListText } from '@/lib/dictionary/screen-text'
@@ -31,7 +31,6 @@ function NoResults({ locale }: { locale: Locale }) {
           <SearchIcon />
         </EmptyMedia>
         <EmptyTitle>{coreText(noMatches.title, locale)}</EmptyTitle>
-        <EmptyDescription>{coreText(noMatches.message, locale)}</EmptyDescription>
       </EmptyHeader>
     </Empty>
   )

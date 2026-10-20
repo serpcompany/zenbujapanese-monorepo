@@ -35,6 +35,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
 - Tap a meaning on a word's page to hear it in English, copy it, or look up one of its words.
+- Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 
 ### Changed
 
@@ -236,8 +237,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   and every form fits in one list with its changed ending highlighted. Tapping a form opens its
   own screen, which explains it and lists the example sentences that use it.
 - Example sentences appear as separate cards, underline each word separately so you can see where
-  one word ends and the next begins, and highlight the word or form you're studying. Inflected
-  words such as 見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
+  one word ends and the next begins, and highlight the word or form you're studying. Inflected words
+  such as 見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
 - Search now presents one Results list ordered by dictionary relevance first, then by the enabled
   frequency dictionaries in priority order. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific

@@ -761,7 +761,7 @@
       id: "sudachi",
       name: "Sudachi",
       url: "https://github.com/WorksApplications/SudachiDict",
-      credit: "Japanese word analysis for Search by Sudachi.rs and SudachiDict.",
+      credit: "Japanese word analysis by Sudachi.rs and SudachiDict.",
       license: { name: "Apache-2.0 · BSD-3-Clause · MIT" },
       clients: everyClient
     },
@@ -2009,8 +2009,7 @@
     return lhs.sourceOrder - rhs.sourceOrder || comparePresentationRanks(lhs.matchRank, rhs.matchRank);
   }
   var noMatches = {
-    title: "No Dictionary Matches",
-    message: "Try another Japanese or English Search query."
+    title: "No Dictionary Matches"
   };
   var discoveredWordsHeading = "Discovered Words";
   var readingRefinementSpoken = (query) => `Search for Japanese reading ${query}`;

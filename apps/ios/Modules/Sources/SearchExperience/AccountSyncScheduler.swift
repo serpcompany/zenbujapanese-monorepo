@@ -158,6 +158,7 @@ final class AccountSyncScheduler {
         waitIsRetryAfter = false
       } catch {
         runsAgain = false
+        CrashReporter.record(error, in: .accountSync)
         retry(after: error)
       }
     } while runsAgain

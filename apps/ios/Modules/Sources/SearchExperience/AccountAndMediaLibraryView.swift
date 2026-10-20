@@ -106,6 +106,8 @@ struct AccountRootView: View {
         .accessibilityIdentifier("account.frequency-dictionaries")
       }
 
+      CrashReportsSection()
+
       Section {
         AccountAboutHeader()
           .listRowBackground(Color.clear)

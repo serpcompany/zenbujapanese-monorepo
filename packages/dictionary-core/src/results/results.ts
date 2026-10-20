@@ -34,8 +34,7 @@ export interface ListedResults {
 }
 
 export const noMatches = {
-  title: 'No Dictionary Matches',
-  message: 'Try another Japanese or English Search query.'
+  title: 'No Dictionary Matches'
 }
 
 export const discoveredWordsHeading = 'Discovered Words'
