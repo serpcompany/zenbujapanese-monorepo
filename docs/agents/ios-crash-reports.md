@@ -75,8 +75,9 @@ and that the privacy manifest declares Crash Data and Other Diagnostic Data, unl
 - **IP addresses:** with default PII off, the SDK sends `infer_ip: never`, asking Sentry not to
   take the connection's IP address. Whether Sentry stores it, or a location from it, is set in
   the project: Prevent Storing of IP Addresses, and a `[Remove] [Anything] from [$user.geo.**]`
-  rule. Neither setting is checked yet; the owner confirms both before a build with the DSN
-  reaches TestFlight, since the live policy says the address isn't stored.
+  rule. Both are set in `zenbujapanese-ios`, and the organization adds no rules (checked
+  2026-10-20, [on #910](https://github.com/serpcompany/zenbujapanese-monorepo/pull/910#issuecomment-6282866928)),
+  as the live policy says the address isn't stored.
 
 ## What a report holds
 
