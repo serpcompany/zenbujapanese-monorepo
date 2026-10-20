@@ -68,7 +68,9 @@ struct AllowedFinding {
 private let touch: Set<TestDevice.Kind> = [.phone, .pad]
 private let iPadSheets = [
   "Image's sources", "A frequency rank's details", "Add to List", "A word's photo", "Handwriting", "Radicals",
-  "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
+  "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account", "Subscribe", "Subscribe, its plans",
+  "Subscribe, its end", deletingWithAnAppStoreOne, "Delete Account, its App Store subscription",
+  deletedWithAnAppStoreOne, "Deleted, its App Store subscription",
 ]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
 private let subscriptionStates = [
