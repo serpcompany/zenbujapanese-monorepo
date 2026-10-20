@@ -9,6 +9,13 @@ enum AccountServiceError: Error, Equatable, Sendable {
   case differentAccount
 }
 
+extension AccountServiceError {
+  var needsSubscription: Bool {
+    guard case .refused(status: 402, _, _, _) = self else { return false }
+    return true
+  }
+}
+
 enum AccountSignInProvider: String, Sendable {
   case apple
   case google
