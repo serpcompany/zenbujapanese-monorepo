@@ -6,7 +6,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
-- Your notes, photos, settings, recent lookups, Recent videos, and profile photo sync too.
+- Your notes, photos, settings, recent lookups, and profile photo sync too.
 - Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
   most common first (JLPT by level), or your known words, known first. Your choice stays across
@@ -112,6 +112,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
   every device, drag images onto the window to open them there. Right-click a list, a known word, a
   Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
+- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
+  you can type; the keyboard used to stay with the page.
 
 ## [2.0.0] - 2026-10-09
 
@@ -136,17 +138,17 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
   **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
   **Conversation**, two people take turns speaking either language with no language button. Each
-  sentence appears as it's spoken with its translation under it, and the translation is spoken
-  aloud once the speaker pauses while the microphone keeps listening. **Listening** translates
-  Japanese or English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
+  sentence appears as it's spoken with its translation under it, and the translation is spoken aloud
+  once the speaker pauses while the microphone keeps listening. **Listening** translates Japanese or
+  English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
   **Two Panes** (Japanese over English), with buttons to mute spoken translations, change their
-  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app
-  pauses too. **Text** translates what you type or paste in whichever direction you wrote, and
-  **Document Upload** translates the text in a PDF, a photo, or a text file. Conversations are
-  saved to **Translations**, which shows how many of each one's words you know and has search, copy,
-  share, and delete; in a transcript each sentence can be replayed or bookmarked, and
-  **Bookmarked** lists them. **Account → Translations** opens it too.
-  Every Japanese word opens the dictionary at half height.
+  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app pauses
+  too. **Text** translates what you type or paste in whichever direction you wrote, and **Document
+  Upload** translates the text in a PDF, a photo, or a text file. Conversations are saved to
+  **Translations**, which shows how many of each one's words you know and has search, copy, share,
+  and delete; in a transcript each sentence can be replayed or bookmarked, and **Bookmarked** lists
+  them. **Account → Translations** opens it too. Every Japanese word opens the dictionary at half
+  height.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
   and **Translate** (a natural translation, then context on what the text is and its idioms,
@@ -190,9 +192,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 ### Fixed
 
 - About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
-  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
-  (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual
-  spelling instead of a rare one.
+  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生 (せんせい). About 100
+  words, such as 色 and 猫, now take a better YouTube rank from their usual spelling, not a rare one.
 - Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
   now shows it in the same half-height sheet instead of reopening the sheet at full height.
 - Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
