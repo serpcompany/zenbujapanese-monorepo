@@ -78,6 +78,30 @@ struct AccountSyncFileTests {
     #expect(service.liveKeys(for: Fixture.email, entity: "photoWord").count == (retries ? 1 : 0))
   }
 
+  @Test("the notes on refused photos and on photos on their way say one photo, or how many")
+  func photoNotesCountPhotos() {
+    let device = ThisDevice.name
+    let full = AccountSync.tooManyPhotos
+    #expect(
+      AccountMessage.refusedPhotos(["a": full]) == [
+        "Your Zenbu account holds as many photos as it can, so 1 stays on this \(device). Delete some in the Media Library, and it syncs the next time Zenbu opens."
+      ])
+    #expect(
+      AccountMessage.refusedPhotos(["a": full, "b": full]) == [
+        "Your Zenbu account holds as many photos as it can, so 2 stay on this \(device). Delete some in the Media Library, and they sync the next time Zenbu opens."
+      ])
+    #expect(
+      AccountMessage.refusedPhotos(["a": "too_large"]) == [
+        "1 photo is too large, or a kind of image Zenbu can't sync, so it stays on this \(device)."
+      ])
+    #expect(
+      AccountMessage.refusedPhotos(["a": "too_large", "b": "unsupported_photo"]) == [
+        "2 photos are too large, or a kind of image Zenbu can't sync, so they stay on this \(device)."
+      ])
+    #expect(AccountMessage.photosOnTheirWay(1) == "1 photo from your Zenbu account is on its way.")
+    #expect(AccountMessage.photosOnTheirWay(2) == "2 photos from your Zenbu account are on their way.")
+  }
+
   @Test("a photo held back for a later request keeps its changes in order, so a deletion and a re-save after it end as the learner left them")
   func heldBackPhotoKeepsItsOrder() async throws {
     let (service, phone, _) = await Fixture.twoPhones()

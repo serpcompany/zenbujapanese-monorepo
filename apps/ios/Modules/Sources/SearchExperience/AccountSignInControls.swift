@@ -14,7 +14,9 @@ enum AccountMessage {
   )
 
   static func photosOnTheirWay(_ count: Int) -> String {
-    String(localized: "\(count) photos from your Zenbu account are on their way.")
+    count == 1
+      ? String(localized: "1 photo from your Zenbu account is on its way.")
+      : String(localized: "\(count) photos from your Zenbu account are on their way.")
   }
 
   static let photosWaitForStorage = String(
@@ -23,18 +25,32 @@ enum AccountMessage {
   static func refusedPhotos(_ refused: [String: String]) -> [String] {
     let full = refused.values.filter { $0 == AccountSync.tooManyPhotos }.count
     let unsyncable = refused.count - full
-    return [
-      full > 0
-        ? String(
-          localized:
-            "Your Zenbu account holds as many photos as it can, so \(full) stay on this \(ThisDevice.name). Delete some in the Media Library, and they sync the next time Zenbu opens."
-        ) : nil,
-      unsyncable > 0
-        ? String(
-          localized:
-            "\(unsyncable) photos are too large, or a kind of image Zenbu can't sync, so they stay on this \(ThisDevice.name)."
-        ) : nil,
-    ].compactMap { $0 }
+    return [full > 0 ? accountFull(full) : nil, unsyncable > 0 ? unsyncablePhotos(unsyncable) : nil]
+      .compactMap { $0 }
+  }
+
+  private static func accountFull(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "Your Zenbu account holds as many photos as it can, so 1 stays on this \(ThisDevice.name). Delete some in the Media Library, and it syncs the next time Zenbu opens."
+      )
+      : String(
+        localized:
+          "Your Zenbu account holds as many photos as it can, so \(count) stay on this \(ThisDevice.name). Delete some in the Media Library, and they sync the next time Zenbu opens."
+      )
+  }
+
+  private static func unsyncablePhotos(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "1 photo is too large, or a kind of image Zenbu can't sync, so it stays on this \(ThisDevice.name)."
+      )
+      : String(
+        localized:
+          "\(count) photos are too large, or a kind of image Zenbu can't sync, so they stay on this \(ThisDevice.name)."
+      )
   }
 
   static func syncPaused(by problem: SharedBookmarksProblem) -> String {
