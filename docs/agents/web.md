@@ -450,31 +450,31 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
 [`account-clients.md`](account-clients.md), The website).
 
 - **The learner's browser calls the service, never the Worker.** Bot Fight Mode challenges the
-  Worker's own requests to the API host (Dictionary service, below), so the Worker only renders
-  the pages, with the service's URL, and their components call the service with `fetch` and
+  Worker's own requests to the API host (Dictionary service, below), so the Worker only renders the
+  pages, with the service's URL, and their components call the service with `fetch` and
   `credentials: 'include'`. The service keeps the session in an HttpOnly cookie on its own host,
   which no page can read; the pages keep the 15-minute access token in memory
   (`src/lib/account/access-tokens.ts`), for the account they show only, and send it only to
   `/v1/me`, without cookies. Deleting the account, signing in again, coming back from a Google
-  confirmation, checking the browser is still signed in to the account on the page, and signing
-  out from the header's account menu (from any page, with the address the build names) are in
+  confirmation, checking the browser is still signed in to the account on the page, and signing out
+  from the header's account menu (from any page, with the address the build names) are in
   `src/lib/account/flows.ts`; the components make the other calls.
-- **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the
-  client (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
+- **Each answer's shape is checked where it enters** (`src/lib/account/answers.ts`), and the client
+  (`src/lib/account/client.ts`) turns every answer into a value, a refusal with its code and
   `Retry-After`, a network failure, or an answer of another shape; `src/lib/account/messages.ts`
   says each to the learner.
 - **Settings per environment**, Worker `vars` read per request (the pages are `force-dynamic`), in
   `src/lib/account/settings.ts`. The header and footer are in static pages too, which are built
-  once, so they can't read a Worker var: `next.config.ts` reads the environment's
-  `ACCOUNT_API_URL` from `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by
-  `SITE_ENV`) and passes `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws the
-  footer's Sign in, and points the `login` and `register` entries in `linkTargets`
-  (`src/lib/site.ts`), the account menu's Log in and Create an account, at `/login/` and
-  `/register/` rather than `#`, only where it's `open`. It passes the origin itself as
-  `ZENBU_ACCOUNT_SERVICE`, which the account menu's Sign out calls (`builtAccountService` in
-  `src/lib/account/availability.ts`, nothing where the pages are closed). A value set only in
-  `.dev.vars` changes the pages, not the header or footer. The `Web` workflow checks that
-  staging's and production's builds link signing in from the footer ([`ci.md`](ci.md), Web).
+  once, so they can't read a Worker var: `next.config.ts` reads the environment's `ACCOUNT_API_URL`
+  from `wrangler.jsonc` when it builds (`src/lib/account/availability.ts`, by `SITE_ENV`) and passes
+  `ZENBU_ACCOUNT_PAGES` (`open` or `closed`) to the build, which draws the footer's Sign in, and
+  points the `login` and `register` entries in `linkTargets` (`src/lib/site.ts`), the account menu's
+  Log in and Create an account, at `/login/` and `/register/` rather than `#`, only where it's
+  `open`. It passes the origin itself as `ZENBU_ACCOUNT_SERVICE`, which the account menu's Sign out
+  calls (`builtAccountService` in `src/lib/account/availability.ts`, nothing where the pages are
+  closed). A value set only in `.dev.vars` changes the pages, not the header or footer. The `Web`
+  workflow checks that staging's and production's builds link signing in from the footer
+  ([`ci.md`](ci.md), Web).
 
   | Var | What it does |
   | --- | --- |
@@ -483,37 +483,37 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   | `ACCOUNT_GOOGLE_SIGN_IN` | `on` offers Google, once the service has a Google web client. |
 
   Apple and Google are on for staging and production, whose account services have Apple's key and
-  Google's web client ([`account-api.md`](account-api.md), Set up the server): under
-  `env.staging.vars` and `env.production.vars`,
-  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website"`, the first of the service's
-  `APPLE_SERVICES_IDS`, and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`. The local site has neither, since
-  Apple takes no `localhost` return URL and Google's web client returns only to the deployed
-  services.
+  Google's web client ([`account-api.md`](account-api.md), Set up the server), with
+  `"ACCOUNT_APPLE_SERVICES_ID": "com.zenbujapanese.website"` and `"ACCOUNT_GOOGLE_SIGN_IN": "on"`
+  under `env.staging.vars` and `env.production.vars`. The local site has neither: Apple takes no
+  `localhost` return URL, and Google's web client returns only to the deployed services.
 
-  Production's account pages are open (#798), against `https://api.zenbujapanese.com`,
-  once it answered and trusted `https://zenbujapanese.com` (`ACCOUNT_API_TRUSTED_ORIGINS`;
-  [`account-api.md`](account-api.md), Set up the server). Production still deploys only when a
-  person runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and deploys,
-  below).
-- **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the
-  page Apple's ID token and authorization code. Apple answers a popup only on a page of its return
-  URL's origin, so the return URL is the site's own `/account/`, and deleting an Apple account
-  sends it with the code (`appleRedirectUri`), for the service to take the code from Apple. The
-  script loads, and the nonce is fetched, when the learner points at, focuses, or touches an Apple
-  button, and the next nonce right after each popup, so a click opens the popup at once rather than
-  after a request a popup blocker would count.
+  Production's account pages are open (#798), against `https://api.zenbujapanese.com`, which trusts
+  `https://zenbujapanese.com` (`ACCOUNT_API_TRUSTED_ORIGINS`). Production deploys only when a person
+  runs `Web deploy` by hand while `DEPLOY_PRODUCTION` is `false` (Environments and deploys, below).
+- **Apple** runs in Sign in with Apple JS's popup (`src/lib/account/apple.ts`), which hands the page
+  Apple's ID token and authorization code. Apple answers a popup only on a page of its return URL's
+  origin, so the return URL is the site's own `/account/`, and deleting an Apple account sends it
+  with the code (`appleRedirectUri`), for the service to take the code from Apple. The script loads,
+  and the nonce is fetched, when the learner points at, focuses, or touches an Apple button, and the
+  next nonce right after each popup, so a click opens the popup at once rather than after a request
+  a popup blocker would count.
 - **Google** goes through the service: `POST /v1/auth/sign-in/social` (or `link-social`) names the
   page to come back to, and the browser goes to Google, then to the service's
   `/v1/auth/callback/google`, then back, with `?error=` on a failure.
+- **The subscription** ([product doc](../../apps/web/docs/product/subscription.md)):
+  `src/components/account/subscription-section.tsx`, with `src/lib/account/subscription.ts`.
+  `src/lib/account/load.ts` reads `/v1/me/subscription` and its `plans` with the account;
+  `client.ts` opens Checkout, which comes back with `?subscribed=1`, and the portal.
 - **Code:** the routes in `src/app/[locale]/` (`login/`, `register/`, `forgot-password/`, and
   `account/`); the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the
-  browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads
-  the local-storage notes behind the footer's Sign in or Account and the account button's initials
-  (`src/lib/account/signed-in.ts`; the account page writes the initials as it shows the account).
-  A confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the
-  account it left from in session storage, to sign its earlier session out on the way back; a
-  failed load keeps it for Try again, and coming back with Back drops it.
+  browser comes back from Google with Back, and `src/hooks/use-seems-signed-in.ts`, which reads the
+  local-storage notes behind the footer's Sign in or Account and the account button's initials
+  (`src/lib/account/signed-in.ts`; the account page writes the initials as it shows the account). A
+  confirmation through Google leaves the page, so `src/lib/account/confirming.ts` keeps the account
+  it left from in session storage, to sign its earlier session out on the way back; a failed load
+  keeps it for Try again, and coming back with Back drops it.
 
 To run them locally, run the account service ([`account-api.md`](account-api.md), Run it) with
 `ACCOUNT_API_TRUSTED_ORIGINS` naming this checkout's `site` and `e2e` addresses (`pnpm -w ports`);
@@ -532,9 +532,9 @@ ZENBU_ACCOUNT_API=1 pnpm test:e2e e2e/account-service.spec.ts --project desktop
 ```
 
 `ZENBU_ACCOUNT_API_URL` names a service elsewhere than `http://localhost:8789`, for reading its
-mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends
-at most five from one address in 10 minutes, so a second run within 10 minutes needs a new
-database, or `delete from rate_limits` in it.
+mailbox; the site reads its own `ACCOUNT_API_URL`. A run sends three codes, and the service sends at
+most five from one address in 10 minutes, so a second run within 10 minutes needs a new database, or
+`delete from rate_limits` in it.
 
 ## Environments and deploys
 
