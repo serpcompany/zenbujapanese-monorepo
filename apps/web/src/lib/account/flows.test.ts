@@ -53,11 +53,12 @@ describe('deleting the account', () => {
   test('signs the browser out once deleted, and sorts each refusal for the page', async () => {
     const deleted = stubApi({
       accessToken: { ok: true, value: 'access' },
-      deleteAccount: { ok: true, value: true },
+      deleteAccount: { ok: true, value: { appStoreSubscriptionContinues: true } },
       signOut: { ok: true, value: true }
     })
     expect(await deleteTheAccount(deleted, accessTokens(deleted), null)).toEqual({
-      kind: 'deleted'
+      kind: 'deleted',
+      appStoreSubscriptionContinues: true
     })
     expect(deleted.signOut).toHaveBeenCalled()
     for (const [status, code, kind, byApple] of [

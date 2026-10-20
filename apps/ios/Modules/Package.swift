@@ -72,6 +72,7 @@ let package = Package(
         .process("LanguageReferenceData.sqlite3"),
         .process("LanguageTechnologyPackCatalog.json"),
         .process("RadicalReferenceData.json"),
+        .process("SENTRY-COCOA-NOTICES.txt"),
         .process("SudachiLanguageTechnologyNotices.txt"),
         .process("SudachiRuntime"),
         .process("TATOEBA-NOTICE.txt"),
@@ -79,6 +80,7 @@ let package = Package(
         .process("TUBELEXFrequencyPack.sqlite3"),
         .process("UNIDIC-NEW-BSD.txt"),
         .process("WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE.txt"),
+        .process("ZIPFOUNDATION-MIT.txt"),
       ]
     ),
     .testTarget(

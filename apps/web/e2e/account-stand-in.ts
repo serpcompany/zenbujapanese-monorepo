@@ -43,7 +43,15 @@ export const signedInService: Answers = {
   },
   'GET /v1/auth/token': { token: accessTokenFor(profile.id) },
   'GET /v1/me': profile,
-  'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }]
+  'GET /v1/auth/list-accounts': [{ id: 'i1', providerId: 'email', accountId: email }],
+  'GET /v1/me/subscription': {
+    status: 'none',
+    active: false,
+    running: [],
+    canSubscribe: true,
+    cloudAccess: 'free',
+    offers: { appStore: [], website: [] }
+  }
 }
 
 export async function seemSignedIn(page: Page, initials: string) {

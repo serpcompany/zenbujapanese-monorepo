@@ -98,6 +98,108 @@ export const textAnswer = (value: unknown, key: string) =>
 
 export const trueAnswer = (value: unknown, key: string) => isFields(value) && value[key] === true
 
+type ManagedIn = 'app_store' | 'website'
+
+const subscriptionStatuses = [
+  'active',
+  'grace_period',
+  'billing_retry',
+  'pending',
+  'paused',
+  'expired',
+  'revoked'
+] as const
+
+type SubscriptionStatus = (typeof subscriptionStatuses)[number]
+
+export interface HeldSubscription {
+  status: SubscriptionStatus
+  expiresAt: string | null
+  willRenew: boolean | null
+  managedIn: ManagedIn | null
+}
+
+type CloudAccess = 'subscribed' | 'free' | 'subscription_required'
+
+export interface Subscription {
+  latest: HeldSubscription | null
+  running: HeldSubscription[]
+  canSubscribe: boolean
+  cloudAccess: CloudAccess
+  websitePrices: string[]
+  appStoreProducts: string[]
+}
+
+const cloudAccesses: readonly CloudAccess[] = ['subscribed', 'free', 'subscription_required']
+
+const managedInOf = (value: unknown): ManagedIn | null =>
+  value === 'app_store' || value === 'website' ? value : null
+
+const textsIn = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+
+function heldOf(value: unknown, managed: boolean): HeldSubscription | null {
+  if (!isFields(value)) return null
+  const status = subscriptionStatuses.find(each => each === value.status)
+  const managedIn = managedInOf(value.managedIn)
+  if (status === undefined || (managed && managedIn === null)) return null
+  return {
+    status,
+    expiresAt: textIn(value, 'expiresAt'),
+    willRenew: typeof value.willRenew === 'boolean' ? value.willRenew : null,
+    managedIn
+  }
+}
+
+export function subscriptionOf(value: unknown): Subscription | null {
+  if (!isFields(value) || typeof value.canSubscribe !== 'boolean') return null
+  const offers = isFields(value.offers) ? value.offers : {}
+  const running = Array.isArray(value.running) ? value.running.map(item => heldOf(item, true)) : []
+  return {
+    latest: heldOf(value, false),
+    running: running.filter((held): held is HeldSubscription => held !== null),
+    canSubscribe: value.canSubscribe,
+    cloudAccess: cloudAccesses.find(each => each === value.cloudAccess) ?? 'free',
+    websitePrices: textsIn(offers.website),
+    appStoreProducts: textsIn(offers.appStore)
+  }
+}
+
+export interface Plan {
+  price: string
+  name: string
+  amount: number
+  currency: string
+  interval: 'day' | 'week' | 'month' | 'year'
+  intervalCount: number
+}
+
+export interface Plans {
+  plans: Plan[]
+  trialDays: number | null
+}
+
+const intervals = ['day', 'week', 'month', 'year'] as const
+
+function planOf(value: unknown): Plan[] {
+  if (!isFields(value)) return []
+  const price = textIn(value, 'price')
+  const name = textIn(value, 'name')
+  const currency = textIn(value, 'currency')
+  const interval = intervals.find(each => each === value.interval)
+  const { amount, intervalCount } = value
+  if (price === null || name === null || currency === null || interval === undefined) return []
+  if (typeof amount !== 'number' || typeof intervalCount !== 'number') return []
+  return [{ price, name, amount, currency, interval, intervalCount }]
+}
+
+export function plansOf(value: unknown): Plans | null {
+  if (!isFields(value) || !Array.isArray(value.plans)) return null
+  const plans = value.plans.flatMap(planOf)
+  if (plans.length !== value.plans.length) return null
+  return { plans, trialDays: typeof value.trialDays === 'number' ? value.trialDays : null }
+}
+
 export function refusalOf(value: unknown, status: number): Refusal {
   const error = isFields(value) && isFields(value.error) ? value.error : {}
   return {

@@ -229,17 +229,17 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
 (`apps/account-api/src/domain/username-cases.json`), in two jobs:
 
 - `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux, with
-  every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source
-  snapshots (`LFS_SNAPSHOTS`), which only a rebuild reads, and the recorded-audio check's
-  recordings (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
-  reports, and the bundled dictionary, and that each import report records the current hash of
-  the tool that wrote it ([`ios.md`](ios.md)). Then the app's own Python tests
-  (`apps/ios/Tools/tests/`) check that Release builds sign in to
-  production's account service, that every build signs as the App Store record
-  ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad, and Mac
-  settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon, privacy
-  strings, and entitlements), and test the Simulator script (`test_simulator.py`). Its LFS cache is
-  keyed on the pointers of the LFS patterns it fetches.
+  every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source snapshots
+  (`LFS_SNAPSHOTS`), which only a rebuild reads, and the recorded-audio check's recordings
+  (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
+  reports, and the bundled dictionary, and that each import report records the current hash of the
+  tool that wrote it ([`ios.md`](ios.md)). Then the app's own Python tests (`apps/ios/Tools/tests/`)
+  check that Release builds sign in to production's account service, that every build signs as the
+  App Store record ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad,
+  and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon,
+  privacy strings, and entitlements), that every Swift package the app links has a license text with
+  its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
+  (`test_simulator.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
   `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
   and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents
