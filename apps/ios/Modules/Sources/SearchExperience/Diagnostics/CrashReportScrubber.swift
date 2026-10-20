@@ -12,12 +12,19 @@ enum CrashReportScrubber {
     (#""[^"\n]*""#, "“<name>”"),
   ])
 
-  private static let pathRules: [(NSRegularExpression, String)] = compile([
-    (#"(?<![A-Za-z0-9+.\-])([0-9+.\-]*+)[A-Za-z][A-Za-z0-9+.\-]*+://[^"# + end + "]*", "$1<url>"),
+  private static func linkRule(endingAt end: String) -> (String, String) {
+    (#"(?<![A-Za-z0-9+.\-])([0-9+.\-]*+)[A-Za-z][A-Za-z0-9+.\-]*+://[^"# + end + "]*", "$1<url>")
+  }
+
+  private static let emailAndPathRules: [(String, String)] = [
     (CrashReportingPolicy.emailPattern, "<email>"),
     (#"(?:/Users|/Volumes|/private|/tmp|/var)/[^"# + end + "]*", "<path>"),
     (#"~/[^"# + end + "]*", "<path>"),
-  ])
+  ]
+
+  private static let pathRules = compile([linkRule(endingAt: end)] + emailAndPathRules)
+
+  private static let writtenRules = compile([linkRule(endingAt: #"\s"# + end)] + emailAndPathRules)
 
   static let fileExtensions = [
     "sqlite3", "sqlite", "db", "json", "plist", "txt", "csv", "pdf", "png", "jpeg", "jpg", "heic",
@@ -92,8 +99,10 @@ enum CrashReportScrubber {
     event.extra = nil
     event.error = nil
     event.user = event.user?.userId.map { User(userId: $0) }
+    let isProblemReport = ProblemReport.isProblemReport(event)
     if let message = event.message {
-      event.message = SentryMessage(formatted: scrub(message.formatted))
+      event.message = SentryMessage(
+        formatted: isProblemReport ? scrubWritten(message.formatted) : scrub(message.formatted))
     }
     event.exceptions?.forEach { exception in
       exception.value = scrub(exception.value)
@@ -107,15 +116,42 @@ enum CrashReportScrubber {
     scrubFrames(event.stacktrace)
     event.debugMeta?.forEach { $0.codeFile = scrubImagePath($0.codeFile) }
     event.breadcrumbs = event.breadcrumbs?.compactMap(scrub)
-    event.context = event.context.map(scrubContexts)
+    event.context = event.context.map { scrubContexts($0, keepsReport: isProblemReport) }
     return event
   }
 
-  static func scrubContexts(_ contexts: [String: [String: Any]]) -> [String: [String: Any]] {
+  static func scrubContexts(
+    _ contexts: [String: [String: Any]], keepsReport: Bool = false
+  ) -> [String: [String: Any]] {
     contexts.reduce(into: [:]) { kept, entry in
+      if keepsReport, CrashReportingPolicy.problemReportContexts.contains(entry.key) {
+        kept[entry.key] = scrubReport(entry.value)
+        return
+      }
       guard CrashReportingPolicy.keptContexts.contains(entry.key) else { return }
       let dropped = CrashReportingPolicy.droppedContextFields[entry.key] ?? []
       kept[entry.key] = entry.value.filter { !dropped.contains($0.key) }.mapValues(scrubValue)
+    }
+  }
+
+  static func scrubWritten(_ text: String) -> String {
+    apply(writtenRules, to: text)
+  }
+
+  private static func scrubReport(_ context: [String: Any]) -> [String: Any] {
+    context.reduce(into: [:]) { kept, field in
+      switch (field.key, field.value) {
+      case ("contact", let contact as String):
+        if ProblemReport.isEmail(contact) { kept[field.key] = contact }
+      case ("contact", _):
+        return
+      case (_, let lines as [String]):
+        kept[field.key] = lines.map(scrubWritten)
+      case (_, let text as String):
+        kept[field.key] = scrubWritten(text)
+      default:
+        kept[field.key] = scrubValue(field.value)
+      }
     }
   }
 

@@ -9,6 +9,22 @@ enum ThisDevice {
     #endif
   }()
 
+  static let systemName: String = {
+    #if os(macOS)
+      "macOS"
+    #else
+      name == "iPad" ? "iPadOS" : "iOS"
+    #endif
+  }()
+
+  static let model: String = {
+    #if os(macOS)
+      sysctlString("hw.model")
+    #else
+      modelIdentifier
+    #endif
+  }()
+
   static let translationLanguagesSettings: String = {
     #if os(macOS)
       String(localized: "System Settings › General › Language & Region › Translation Languages")
@@ -35,14 +51,16 @@ enum ThisDevice {
 
   #if os(iOS)
     private static var modelIdentifier: String {
-      if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
-        return simulated
-      }
-      var size = 0
-      sysctlbyname("hw.machine", nil, &size, nil, 0)
-      var machine = [CChar](repeating: 0, count: size)
-      sysctlbyname("hw.machine", &machine, &size, nil, 0)
-      return String(decoding: machine.prefix { $0 != 0 }.map(UInt8.init), as: UTF8.self)
+      ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"]
+        ?? sysctlString("hw.machine")
     }
   #endif
+
+  private static func sysctlString(_ key: String) -> String {
+    var size = 0
+    sysctlbyname(key, nil, &size, nil, 0)
+    var value = [CChar](repeating: 0, count: size)
+    sysctlbyname(key, &value, &size, nil, 0)
+    return String(decoding: value.prefix { $0 != 0 }.map(UInt8.init), as: UTF8.self)
+  }
 }

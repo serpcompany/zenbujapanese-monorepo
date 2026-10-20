@@ -266,6 +266,44 @@ extension ZenbuUITestCase {
     return waitFor(element)
   }
 
+  @discardableResult
+  func tapClearOfTheBars(
+    _ row: XCUIElement, toShow shown: XCUIElement, in app: XCUIApplication,
+    file: StaticString = #filePath, line: UInt = #line
+  ) -> XCUIElement {
+    guard !shown.exists else { return shown }
+    let window = app.windows.firstMatch
+    reveal(row, in: app)
+    for _ in 0..<6 where !isClearOfTheBars(row, in: app) {
+      scroll(window, back: row.frame.midY < window.frame.midY)
+    }
+    let press = {
+      if let part = self.partClearOfTheBars(of: row, in: app) {
+        self.point(x: part.midX, y: part.midY, in: window).tap()
+      } else if row.exists {
+        row.tap()
+      }
+    }
+    press()
+    return tapAgain(until: shown, file: file, line: line, press)
+  }
+
+  func isClearOfTheBars(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+    partClearOfTheBars(of: element, in: app) != nil
+  }
+
+  private func partClearOfTheBars(of element: XCUIElement, in app: XCUIApplication) -> CGRect? {
+    guard let frame = reachableFrame(of: element, in: app) else { return nil }
+    let window = app.windows.firstMatch.frame
+    var (top, bottom) = (window.minY, window.maxY)
+    for bar in [app.navigationBars.firstMatch, app.tabBars.firstMatch] where bar.exists {
+      let edge = bar.frame
+      if edge.midY < window.midY { top = max(top, edge.maxY) } else { bottom = min(bottom, edge.minY) }
+    }
+    guard top < frame.midY, frame.midY < bottom else { return nil }
+    return frame.intersection(CGRect(x: frame.minX, y: top, width: frame.width, height: bottom - top))
+  }
+
   func laidOutFrame(of element: XCUIElement) -> CGRect? {
     guard let shown = try? element.snapshot(), !shown.frame.isEmpty else { return nil }
     return shown.frame

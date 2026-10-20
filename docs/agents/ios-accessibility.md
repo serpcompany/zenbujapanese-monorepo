@@ -62,12 +62,14 @@ through every text size and report text they lose track of, so text that SwiftUI
 and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
 
 On a page scrolled down to a section, that sweep reflows everything above it and slides the
-section's text under the bars, where the audit loses it and can't name the element. So three
-sections that sit low on their pages, Word Detail's kanji, a word's note, and Kanji Detail's
-readings, get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
-(`LaunchHarness.onlySections`), opens the page with only the sections it names, at the page's
-top, and the walk audits them there (`AuditPart.textSizes`). The page scrolled to the section
-keeps every other audit (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
+section's text under the bars, where the audit loses it and can't name the element. So the
+sections that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's
+readings, and the Account page's about part (Help & Support, Report a Problem, the crash
+reports switch, and the links under them), get those two audits on their own:
+`ZENBU_ONLY_SECTION`, a Debug-only harness (`LaunchHarness.onlySections`), opens the page with
+only the sections it names, at the page's top, and the walk audits them there
+(`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
+(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
 caption's word sheet at full height, so the Player page isn't showing behind it.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show

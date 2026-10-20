@@ -134,12 +134,11 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   and 40 megapixels; a pasted image file has the same limits.
   Check: package `PlatformAdapterTests` (a dropped image's limits). Dragging from another app is
   by hand.
-- **Look Up on iPad and the Mac.** On iPad the tabs and the title bar stay above its field
-  while you type and beside the results, where the iPhone slides its title away, and there's no
-  **X**. On the Mac the field sits in the window's toolbar. On both, the field's own clear button
-  empties it and returns to Recent. On the Mac, the input panels open as a sheet of a
-  fixed size with a **Done** button, which Escape presses too, since a Mac can't drag a sheet
-  away.
+- **Look Up on iPad and the Mac.** On iPad the tabs and the title bar stay above its field while you
+  type and beside the results, where the iPhone slides its title away, and there's no **X**. On the
+  Mac the field sits in the window's toolbar. On both, the field's own clear button empties it and
+  returns to Recent. On the Mac, the input panels open as a sheet of a fixed size with a **Done**
+  button, which Escape presses too, since a Mac can't drag a sheet away.
   Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and
   `testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the clear button), and on the Mac
   `SearchInputUITests.testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (**Done**);
@@ -220,9 +219,10 @@ It provides:
   kanji in Look Up's Grade panel); and Sentence Translations, with a translation language (English
   so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
   Reading Aids offers to download;
-- management of optional frequency dictionaries; [**Send Crash Reports**](crash-reports.md); and
-- the app's name, version, and description, followed by Help & Support and the Privacy Policy, which
-  open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
+- management of optional frequency dictionaries; and
+- the app's name, version, and description; Help & Support (the website), [**Report a
+  Problem…**](problem-reports.md), [**Send Crash Reports**](crash-reports.md), and the Privacy
+  Policy (the website); and **Credits & Attributions**: each source's credit, license, and project
   link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with
   Jiten's notice that its rankings are adapted and shared alike. **Licenses**, under it, opens each
   bundled license text, with one for each Swift package the app links (Sentry, ZIPFoundation). If

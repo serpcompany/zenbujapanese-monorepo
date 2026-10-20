@@ -88,7 +88,11 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
    o.note_identity` answers 0, and list in the pull request the entries the new JMdict drops
    (`SELECT o.id FROM old.entries o LEFT JOIN entries e USING (id) WHERE e.id IS NULL`), whose
    notes go to Notes Without a Word.
-5. Rebuild everything, re-record the suites, and list in the pull request what changed for
+5. `test_gloss_atoms_contract.py` checks that each entry's `gloss_atoms.sense_order` values run 0
+   to n−1, n being its count of senses in `senses_json`: the app and the dictionary service give
+   each stored sense the glosses at its position. `jmdict_entries.py` numbers every `<sense>` but
+   stores only those with an English gloss, so a new JMdict with one that has none fails it.
+6. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
 ## Provenance

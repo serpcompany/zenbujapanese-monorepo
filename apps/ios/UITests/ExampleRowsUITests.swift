@@ -232,14 +232,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
 
   private func isInView(_ element: XCUIElement, of rows: Rows, in app: XCUIApplication) -> Bool {
     guard device != .mac else { return isReachable(element, in: app, within: rows.list) }
-    guard let frame = reachableFrame(of: element, in: app) else { return false }
-    let window = app.windows.firstMatch.frame
-    var (top, bottom) = (window.minY, window.maxY)
-    for bar in [app.navigationBars.firstMatch, app.tabBars.firstMatch] where bar.exists {
-      let edge = bar.frame
-      if edge.midY < window.midY { top = max(top, edge.maxY) } else { bottom = min(bottom, edge.minY) }
-    }
-    return top < frame.midY && frame.midY < bottom
+    return isClearOfTheBars(element, in: app)
   }
 
   private func bringIntoView(_ element: XCUIElement, of rows: Rows, in app: XCUIApplication) {

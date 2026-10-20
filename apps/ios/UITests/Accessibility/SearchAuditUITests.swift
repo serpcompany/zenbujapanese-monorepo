@@ -67,7 +67,7 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     let app = openJapan(pass)
     audit("Word Detail", in: app)
     let rank = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'JLPT level'")).firstMatch
-    tap(reveal(rank, in: app))
+    tapClearOfTheBars(rank, toShow: sheet("frequency-detail.list", in: app), in: app)
     waitForSheet("frequency-detail.list", in: app)
     audit("A frequency rank's details", in: app)
     tap(app.buttons["Done"].firstMatch)
@@ -86,7 +86,7 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     let app = openJapan(pass)
     auditAtTheLargestSize(
       "Word Detail, its kanji", showing: find("word-detail.kanji.日", in: app), in: app, .allButTextSizes)
-    tap(reveal(find("word-detail.kanji.日", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
+    tapClearOfTheBars(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.glyph", in: app), in: app)
     audit("Kanji Detail", in: app)
     tap(find("kanji-detail.stroke-order", in: app))
     waitForSheet("stroke-order.screen", in: app)
@@ -96,9 +96,9 @@ final class SearchAuditUITests: AccessibilityAuditCase {
       "Kanji Detail, its readings", showing: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
       in: app, .allButTextSizes)
     goBack(in: app)
-    tap(reveal(find("word-detail.kanji.本", in: app), in: app), toShow: find("kanji-detail.glyph", in: app))
-    let element = reveal(find("kanji-detail.element.木", in: app), in: app)
-    tap(element, toShow: find("kanji-element.screen", in: app))
+    tapClearOfTheBars(find("word-detail.kanji.本", in: app), toShow: find("kanji-detail.glyph", in: app), in: app)
+    let element = find("kanji-detail.element.木", in: app)
+    tapClearOfTheBars(element, toShow: find("kanji-element.screen", in: app), in: app)
     audit("A kanji's element", in: app)
   }
 
@@ -111,19 +111,20 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     let app = openJapan(pass, showingOnly: ["word-detail.kanji", "kanji-detail.readings"])
     waitFor(find("word-detail.kanji.日", in: app))
     audit("Word Detail's kanji, alone", in: app, .textSizes)
-    tap(find("word-detail.kanji.日", in: app), toShow: firstElement(identifiedBy: "kanji-detail.reading.", in: app))
+    tapClearOfTheBars(
+      find("word-detail.kanji.日", in: app), toShow: firstElement(identifiedBy: "kanji-detail.reading.", in: app),
+      in: app)
     audit("Kanji Detail's readings, alone", in: app, .textSizes)
   }
 
   private func auditAVerbsConjugations(_ pass: AuditPass) {
     let app = launch(pass)
     openTaberu(in: app)
-    let conjugations = reveal(find("word-detail.conjugations", in: app), in: app)
-    tap(conjugations, toShow: find("conjugations.screen", in: app))
+    let conjugations = find("word-detail.conjugations", in: app)
+    tapClearOfTheBars(conjugations, toShow: find("conjugations.screen", in: app), in: app)
     let form = waitFor(firstElement(identifiedBy: "conjugations.row.", in: app))
     audit("Conjugations", in: app)
-    tap(form)
-    waitFor(firstElement(identifiedBy: "conjugations.explanation.", in: app))
+    tapClearOfTheBars(form, toShow: firstElement(identifiedBy: "conjugations.explanation.", in: app), in: app)
     audit("A conjugated form", in: app)
   }
 

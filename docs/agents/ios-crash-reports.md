@@ -4,21 +4,26 @@ How the app reports its crashes, freezes, and handled failures to Sentry, and ho
 report arrives. What the learner sees is in
 [`apps/ios/docs/product/crash-reports.md`](../../apps/ios/docs/product/crash-reports.md), and why
 the app has a crash-reporting SDK at all in
-[ADR 0018](../adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md) (#859).
+[ADR 0018](../adr/0018-report-the-apps-crashes-and-freezes-to-sentry.md) (#859). The problem
+reports a learner sends go the same way ([`ios-problem-reports.md`](ios-problem-reports.md)).
 
 ## Code layout
 
 - **`SearchExperience/Diagnostics/`** (in `apps/ios/Modules/Sources/`) holds all of it:
   - `CrashReporter`: `startAtLaunch()`, which `ZenbuJapaneseApp.init()` calls first, so a crash
     during the rest of launch is caught; `setEnabled(_:)` for the switch; `record(_:in:details:)`
-    for handled failures; and `configure(_:dsn:environment:installID:bundleID:)`, every option.
-  - `CrashReportingSDK`: the SDK's start, close, whether it runs, and its folder, which the
-    switch's tests replace with a stand-in.
+    for handled failures; `send(_:)` for a problem report; and
+    `configure(_:dsn:environment:installID:bundleID:)`, every option.
+  - `CrashReportingMachine` and `CrashReportingSession`: when Sentry starts, captures, flushes,
+    and closes, with crash reports on or off ([problem reports](ios-problem-reports.md)).
+  - `CrashReportingSDK`: the SDK's start, capture, flush, and close, and its two folders, which
+    the tests replace with a stand-in (`StandInCrashReportingSDK`).
   - `CrashReportingPolicy`: which build reports and as what, the switch's default, the install
     ID, Sentry's folder, and which breadcrumbs and contexts a report keeps.
   - `CrashReportScrubber`: what `beforeSend` and `beforeBreadcrumb` remove.
   - `HandledProblem` and `ProblemArea`: a handled failure's area, code, and details.
-  - `CrashReportsSection`: the **Send Crash Reports** row.
+  - `CrashReportsSection`: the **Send Crash Reports** row (`CrashReportsToggle`) and its note.
+  - `ProblemReport/`: **Report a Problem…** ([`ios-problem-reports.md`](ios-problem-reports.md)).
   - `CrashReportTest`: the test switches, which only a `qa` build reads.
 - **`SearchExperience/Platform/Diagnostics/CrashReportingPlatform.swift`** holds the options only
   iOS or the Mac has, since only `Platform/` may use `#if os`.
@@ -53,7 +58,9 @@ carries as `ZenbuCrashReportsDSN`. It is set only in the app target's Release co
 The release is `<bundle ID>@<version>+<build>` and the dist the build number, both from
 `Info.plist`. `apps/ios/Tools/tests/test_crash_report_settings.py` checks that only the app's
 Release configuration has a DSN, that `Info.plist` reads it under the key the Swift code reads,
-and that the privacy manifest declares Crash Data and Other Diagnostic Data, unlinked.
+and that the privacy manifest declares Device ID, Customer Support, Crash Data, and Other Diagnostic
+Data, each linked, since a problem report's email links an install's reports
+([ADR 0021](../adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)).
 
 ## Options
 
@@ -89,7 +96,8 @@ user, set in `initialScope` and again in `beforeSend`. `CrashReportScrubber.scru
 
 - clears the server name, the request, extras, and the error object, and keeps the user's ID only;
 - keeps only the `app`, `device`, `os`, `runtime`, `trace`, and `problem` contexts, without the
-  device's name, locale, and time zone, or the app's device hash;
+  device's name, locale, and time zone, or the app's device hash, and on a problem report its
+  `report` and `permissions` too;
 - drops each frame's source lines and variables, in the exceptions', the threads', and the
   event's own stack traces, and shortens an image's or frame's path that names a folder
   (`/Users`, `/private`, `/var`, and the like) to `<path>/<file>`;
@@ -131,20 +139,23 @@ details only from values the app chose, never text a learner or a service wrote.
 
 ## The switch
 
-`CrashReportsSection` is a stock `Toggle` (`account.send-crash-reports`) on Account, after Frequency
-Dictionaries, and in the Mac's Settings window. It stores `crash-reports.send` in defaults, on until
-turned off, and calls `CrashReporter.setEnabled`, which closes the SDK at once or starts it again.
+`CrashReportsToggle` is a stock `Toggle` (`account.send-crash-reports`) in Account's Help & Support
+group, and in the Mac's Settings window. It stores `crash-reports.send` in defaults, on until
+turned off, and calls `CrashReporter.setEnabled`, which closes the SDK at once or starts it again,
+or, while a problem report is sending, once it's sent.
 Turning it off also deletes Sentry's folder, the options' `cacheDirectoryPath`, which sentry-cocoa
 documents as where it keeps events and raw crash data: a report waiting there to be sent would
 otherwise go when the switch is turned back on. With the switch off at launch, Sentry isn't started
-at all. What checks it:
+at all, unless a problem report is waiting. What checks it:
 
 - `CrashReporterSwitchTests`, against a stand-in `CrashReportingSDK`: turning the switch off
-  closes a running SDK and deletes a waiting report from its folder, turning it on starts it with
-  the app's options, a build with no destination ignores it, and the folder deleted is the one
-  the options set.
+  closes a running SDK and deletes a waiting report from its folder but not a waiting problem
+  report, turning it on starts it with the app's options, and the folder deleted is the one the
+  options set.
+- `CrashReportingMachineTests`: in every order of switch changes and problem reports, the crash
+  handler is never installed with the switch off.
 - `CrashReportingPolicyTests`: on until turned off, and the real SDK never starts in a build with
-  no destination.
+  no destination, from the switch or a problem report.
 - `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff`: the row is on at first and
   off once flipped.
 - By hand (Checking a report arrives, steps 3 and 4): with the switch off before launch, a crash
@@ -221,8 +232,9 @@ python3 apps/ios/Tools/upload_dsyms.py ~/Library/Developer/Xcode/Archives/<date>
 ## Tests
 
 - **Package** (`apps/ios/Modules`, `-only-testing:SearchExperienceTests/<suite>`):
-  `CrashReporterOptionsTests`, `CrashReporterSwitchTests`, `CrashReportingPolicyTests`,
-  `CrashReportScrubberTests`, and `HandledProblemTests`. They don't run in CI ([`ci.md`](ci.md)), so a change cites a local run.
+  `CrashReporterOptionsTests`, `CrashReporterSwitchTests`, `CrashReportingMachineTests`,
+  `CrashReportingPolicyTests`, `CrashReportScrubberTests`, and `HandledProblemTests`, and the
+  problem reports' suites. They don't run in CI ([`ci.md`](ci.md)), so a change cites a local run.
 - **UI:** `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` and
   `testAccountListsEveryArea`.
 - **Contract:** `test_crash_report_settings.py` and `test_upload_dsyms.py` in

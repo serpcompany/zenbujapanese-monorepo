@@ -177,13 +177,37 @@ describe('the embedded presentation engine', () => {
     expect(await shared({ ...eat, sourceIdentity: 'fixture' })).toBeNull()
   })
 
+  test('speaks and looks up each gloss the entry gives, whole when it holds a comma', async () => {
+    const ministry: EmbeddedEntry = {
+      ...eat,
+      headword: '厚生労働省',
+      reading: 'こうせいろうどうしょう',
+      partsOfSpeech: ['noun'],
+      senses: [
+        {
+          meaning: 'Ministry of Health, Labour and Welfare, MHLW',
+          glosses: ['Ministry of Health, Labour and Welfare', 'MHLW'],
+          notes: [],
+          partsOfSpeech: ['noun']
+        }
+      ]
+    }
+    const page = (await ask(host, 'wordPage', JSON.stringify(ministry))) as EmbeddedWordPage
+    expect(page.senses.map(({ spoken, glosses }) => ({ spoken, glosses }))).toEqual([
+      {
+        spoken: 'Ministry of Health, Labour and Welfare, MHLW',
+        glosses: ['Ministry of Health, Labour and Welfare', 'MHLW']
+      }
+    ])
+  })
+
   test('gives a word that does not conjugate no table, and one without pitch no contour', async () => {
     const noun: EmbeddedEntry = {
       ...eat,
       headword: '学校',
       reading: 'がっこう',
       partsOfSpeech: ['noun'],
-      senses: [{ meaning: 'school', notes: [], partsOfSpeech: ['noun'] }],
+      senses: [{ meaning: 'school', glosses: ['school'], notes: [], partsOfSpeech: ['noun'] }],
       pitch: null,
       compoundPitch: null
     }

@@ -1,32 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { meaningActions, meaningGlosses, spokenGloss } from './meaning-actions'
-
-describe('meaningGlosses', () => {
-  test('splits a meaning at the commas outside parentheses', () => {
-    expect(meaningGlosses('dog (Canis (lupus) familiaris), canine')).toEqual([
-      'dog (Canis (lupus) familiaris)',
-      'canine'
-    ])
-    expect(
-      meaningGlosses(
-        'to hang up (e.g. a coat, a picture on the wall), to let hang, to suspend (from)'
-      )
-    ).toEqual([
-      'to hang up (e.g. a coat, a picture on the wall)',
-      'to let hang',
-      'to suspend (from)'
-    ])
-  })
-
-  test('is the whole meaning when it has one gloss', () => {
-    expect(meaningGlosses('to eat')).toEqual(['to eat'])
-  })
-})
+import { meaningActions, spokenGloss } from './meaning-actions'
 
 describe('spokenGloss', () => {
   test('drops a parenthesis that ends a gloss, nested or repeated', () => {
     expect(spokenGloss('dog (Canis (lupus) familiaris)')).toBe('dog')
     expect(spokenGloss('to make (a call) (on the phone)')).toBe('to make')
+    expect(spokenGloss('to hang up (e.g. a coat, a picture on the wall)')).toBe('to hang up')
   })
 
   test('reads a leading parenthesis as words', () => {
@@ -44,6 +23,7 @@ describe('meaningActions', () => {
     expect(
       meaningActions({
         meaning: 'dog (Canis (lupus) familiaris), canine',
+        glosses: ['dog (Canis (lupus) familiaris)', 'canine'],
         noteText: null
       })
     ).toEqual({
@@ -54,6 +34,7 @@ describe('meaningActions', () => {
     expect(
       meaningActions({
         meaning: 'squealer, rat, snitch, informer, informant, spy',
+        glosses: ['squealer', 'rat', 'snitch', 'informer', 'informant', 'spy'],
         noteText: 'Usually written in kana'
       })
     ).toEqual({
@@ -63,9 +44,38 @@ describe('meaningActions', () => {
     })
   })
 
+  test('keeps a gloss whole when it holds a comma of its own', () => {
+    expect(
+      meaningActions({
+        meaning: 'Ministry of Health, Labour and Welfare, MHLW',
+        glosses: ['Ministry of Health, Labour and Welfare', 'MHLW'],
+        noteText: null
+      })
+    ).toEqual({
+      spoken: 'Ministry of Health, Labour and Welfare, MHLW',
+      glosses: ['Ministry of Health, Labour and Welfare', 'MHLW'],
+      copyText: 'Ministry of Health, Labour and Welfare, MHLW'
+    })
+    expect(
+      meaningActions({
+        meaning: '100,000, hundred thousand',
+        glosses: ['100,000', 'hundred thousand'],
+        noteText: null
+      })
+    ).toEqual({
+      spoken: '100,000, hundred thousand',
+      glosses: ['100,000', 'hundred thousand'],
+      copyText: '100,000, hundred thousand'
+    })
+  })
+
   test('says a gloss once', () => {
     expect(
-      meaningActions({ meaning: 'to live on (e.g. a salary), to live on', noteText: null })
+      meaningActions({
+        meaning: 'to live on (e.g. a salary), to live on',
+        glosses: ['to live on (e.g. a salary)', 'to live on'],
+        noteText: null
+      })
     ).toEqual({
       spoken: 'to live on',
       glosses: ['to live on'],
@@ -74,6 +84,11 @@ describe('meaningActions', () => {
   })
 
   test('speaks the meaning as written when no gloss is left', () => {
-    expect(meaningActions({ meaning: ' () ', noteText: null }).spoken).toBe('()')
+    expect(meaningActions({ meaning: ' () ', glosses: ['()'], noteText: null })).toEqual({
+      spoken: '()',
+      glosses: [],
+      copyText: ' () '
+    })
+    expect(meaningActions({ meaning: 'to eat', glosses: [], noteText: null }).spoken).toBe('to eat')
   })
 })

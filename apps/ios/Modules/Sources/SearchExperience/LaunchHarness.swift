@@ -23,6 +23,7 @@ enum LaunchHarness {
   static let shareImageKey = "ZENBU_SHARE_IMAGE"
   static let shareCardInAppKey = "ZENBU_SHARE_CARD_IN_APP"
   static let onlySectionKey = "ZENBU_ONLY_SECTION"
+  static let problemReportStandInKey = "ZENBU_PROBLEM_REPORT_STAND_IN"
   static let uiTestBundleSuffix = ".uitests"
   static let savedStateFolders = ["Zenbu Japanese", "FrequencyPacks", "Profile"]
 
@@ -167,6 +168,16 @@ enum LaunchHarness {
         return callback
       })
   #endif
+
+  static var problemReportSender: ProblemReportSender? {
+    #if DEBUG
+      guard ProcessInfo.processInfo.environment[problemReportStandInKey] == "1" else { return nil }
+      return ProblemReportSender(
+        canSend: { true }, send: { _ in try? await Task.sleep(for: .milliseconds(400)) })
+    #else
+      nil
+    #endif
+  }
 
   static var accountSession: URLSession? {
     #if DEBUG

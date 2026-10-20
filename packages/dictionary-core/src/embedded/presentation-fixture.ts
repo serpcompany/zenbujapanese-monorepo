@@ -115,8 +115,13 @@ export const eat: EmbeddedEntry = {
   ],
   readingForms: [{ value: 'たべる', kind: 'reading', labels: [] }],
   senses: [
-    { meaning: 'to eat', notes: [], partsOfSpeech: ['ichidanVerb', 'transitive'] },
-    { meaning: 'to live on', notes: ['e.g. a salary'], partsOfSpeech: [] }
+    {
+      meaning: 'to eat',
+      glosses: ['to eat'],
+      notes: [],
+      partsOfSpeech: ['ichidanVerb', 'transitive']
+    },
+    { meaning: 'to live on', glosses: ['to live on'], notes: ['e.g. a salary'], partsOfSpeech: [] }
   ],
   relationships: [
     { headword: '学校', reading: 'がっこう', summary: 'school', relation: 'See also' }
