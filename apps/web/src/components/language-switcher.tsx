@@ -1,15 +1,10 @@
 'use client'
 
-import { CheckIcon, ChevronDownIcon } from 'lucide-react'
-import { type ComponentProps, useState } from 'react'
+import { CheckIcon } from 'lucide-react'
+import { useState } from 'react'
 import { Flag } from '@/components/flag'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+import { MenuButton, MenuLink, type MenuSide } from '@/components/menu-button'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import type { Switcher } from '@/lib/i18n/switcher'
 
 const xDefault = 'x-default'
@@ -28,10 +23,6 @@ function alternatePaths(): ReadonlyMap<string, string> {
   return paths
 }
 
-function LanguageLink(props: ComponentProps<'a'>) {
-  return <a {...props} />
-}
-
 function LanguageItems({ current, languages }: Pick<Switcher, 'current' | 'languages'>) {
   const [paths] = useState(alternatePaths)
   return languages.map(language =>
@@ -45,7 +36,7 @@ function LanguageItems({ current, languages }: Pick<Switcher, 'current' | 'langu
       <DropdownMenuItem
         key={language.code}
         render={
-          <LanguageLink
+          <MenuLink
             href={paths.get(language.code) ?? language.home}
             hrefLang={language.code}
             lang={language.code}
@@ -64,28 +55,22 @@ export function LanguageMenu({
   languages,
   label,
   className,
-  side = 'bottom'
-}: Switcher & { className?: string; side?: 'bottom' | 'top' }) {
+  side
+}: Switcher & { className?: string; side?: MenuSide }) {
   const shown = languages.find(language => language.code === current)
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="lg"
-            className={className}
-            aria-label={shown ? `${shown.short}, ${label}` : label}
-          />
-        }
-      >
-        {shown ? <Flag region={shown.region} /> : null}
-        {shown?.short}
-        <ChevronDownIcon data-icon="inline-end" aria-hidden="true" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side={side} className="w-40">
-        <LanguageItems current={current} languages={languages} />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <MenuButton
+      label={shown ? `${shown.short}, ${label}` : label}
+      trigger={
+        <>
+          {shown ? <Flag region={shown.region} /> : null}
+          {shown?.short}
+        </>
+      }
+      side={side}
+      className={className}
+    >
+      <LanguageItems current={current} languages={languages} />
+    </MenuButton>
   )
 }

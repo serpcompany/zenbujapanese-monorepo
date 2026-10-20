@@ -55,7 +55,7 @@ warning triangle, and its value links do nothing), and pushing onto another tab'
 while the first tab's path is a typed array crashes in `NavigationColumnState.boundPathChange`. The
 tab-bar-only style gives each tab its own stack, as on iPhone and iPad, so the Mac has a tab bar and
 no sidebar; `pnpm verify layers` refuses `sidebarAdaptable` outside `Platform/`. A sheet that iPhone
-and iPad close by dragging, as Search's Handwriting and Radicals panel does, uses
+and iPad close by dragging, as Look Up's Handwriting and Radicals panel does, uses
 `.dragToCloseSheet(sizeOnMac:)`: a Mac can't drag a sheet away, and sizes one from its content, so
 there it gets a fixed size (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
 On the Mac a click on a `List` row leaves the keyboard with the list, so a field that the click
@@ -214,12 +214,13 @@ don't contain them), so they need no network, account, camera, or microphone:
   laid out like YouTube's mobile results, by YouTube's element names, whose results change the
   page's address without loading it, as YouTube's do.
 - `ZENBU_COUNT_DRAWS=1` has the Player count its draws and show its time to tests (`watch.draws`,
-  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`). Search
-  and a kanji page record each list or page they drew (`search.results.drawn`, `search.notes.drawn`,
-  `kanji-detail.drawn`), so a test fails when a results list is drawn without its chips and then
-  again (`SearchResultsUITests`), Search's notes come after its results (`NotesInSearchUITests`), a
-  kanji page's facts come before its words (`WordDetailUITests`), or nothing is recorded. Each is a
-  clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives a test no plain view's value.
+  `watch.time`, …), so a test fails when it redraws as the time ticks (`PlayerWatchUITests`).
+  Look Up and a kanji page record each list or page they drew (`search.results.drawn`,
+  `search.notes.drawn`, `kanji-detail.drawn`), so a test fails when a results list is drawn without
+  its chips and then again (`SearchResultsUITests`), Look Up's notes come after its results
+  (`NotesInSearchUITests`), a kanji page's facts come before its words (`WordDetailUITests`), or
+  nothing is recorded. Each is a clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives
+  a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
 `TestDevice` (`apps/ios/UITests/Platform/`, the one place `pnpm verify layers` lets UI tests name
@@ -229,7 +230,7 @@ A failing test keeps screenshots rather than a screen recording (the scheme's
 `preferredScreenCaptureFormat`): recording every test kept a busy Mac's video encoder running and
 slowed the app until XCUITest's queries timed out. A wait that fails also attaches **What was on
 screen**, the app's accessibility hierarchy (`attachWhatIsOnScreen`); read it with
-`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Search's **Sorted by** row
+`xcrun xcresulttool export attachments`. `chooseFromSortedBy` taps Look Up's **Sorted by** row
 beside its text: the whole row opens its menu. On a busy Mac a tab tap, a shortcut, the
 conversation's pause, or a Simulator rotation
 sometimes doesn't take; the tests repeat one only while what it should bring hasn't appeared
@@ -404,7 +405,7 @@ uses the bundled dictionary.
 
 ## Current verification boundary
 
-The `SearchExperienceTests` Swift package target covers Search behavior (result ordering,
+The `SearchExperienceTests` Swift package target covers Look Up's behavior (result ordering,
 deinflection, frequency chips and packs, pitch accent, and parts of speech) on an arm64 iOS
 Simulator. Run it from `apps/ios/Modules` with:
 
@@ -421,7 +422,7 @@ app's UI tests on all three ([Tests on every platform](#tests-on-every-platform)
 `SearchConformanceTests` checks Search against the shared conformance suite in
 `language-data/conformance/search-retrieval.json` (see ADR 0006). Only each result's
 Language Reference ID and position are the contract; its headword and reading are there to make the
-file and failures readable. After an intended change to Search results or a dictionary rebuild,
+file and failures readable. After an intended change to Look Up's results or a dictionary rebuild,
 record it again by adding `TEST_RUNNER_ZENBU_RECORD_CONFORMANCE=1` before the test command above,
 add `-only-testing:SearchExperienceTests/SearchConformanceTests` after it, and review the diff.
 
@@ -434,20 +435,20 @@ and reading-refinement rows; the frequency notice; and the No Dictionary Matches
 SHA-256 of every bundled artifact it reads and the dictionaries a fresh install enables. It records
 the **Default** order: the learner's Sort By and Filter choices re-sort and narrow these rows in the
 same answer, which the core's `results/ordering.test.ts` and `results/learner.test.ts` cover, and
-`ResultsScreenTests` and `SearchResultOrderingTests` on the bundled data. Recent searches and known
+`ResultsScreenTests` and `SearchResultOrderingTests` on the bundled data. Recent lookups and known
 words don't change the recorded list. The suite covers queries that match directly, deinflected
 queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no matches
 that aren't Japanese. It doesn't cover Japanese queries with no direct match or Discovered Words:
-Search splits those into words with the Sudachi dictionary the app bundles, which the package's test
-host lacks, so recording fails on them. `DictionaryCoreTests` runs one such sentence with a stand-in
-analysis, which checks the path but not Sudachi's words; check those in the Simulator. The screen's
-titles, counts, and which rows it shows are the core's answer, which `ResultsScreen.swift` decodes
-for the view and the suite alike. Record it with
+Look Up splits those into words with the Sudachi dictionary the app bundles, which the package's
+test host lacks, so recording fails on them. `DictionaryCoreTests` runs one such sentence with a
+stand-in analysis, which checks the path but not Sudachi's words; check those in the Simulator. The
+screen's titles, counts, and which rows it shows are the core's answer, which `ResultsScreen.swift`
+decodes for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
 `query` and `covers` fields and recording.
 
 `ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen that
-Search's "View N Example Sentences" row opens: for each query, the row's count and title, the
+Look Up's "View N Example Sentences" row opens: for each query, the row's count and title, the
 screen's count line, the entry the screen links words to, whether it lists that entry's examples (a
 deinflected or romaji query) or the sentences that contain the query, every listed sentence's pair
 ID in order, and the first five sentences' words with their entry, candidates, and whether the
@@ -574,7 +575,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, and which entry stands for its equivalents |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Search's notes, credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Look Up's notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -650,7 +651,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   they left, stops within a few milliseconds. The core's call then fails, the lookup throws
   `CancellationError`, and no half-made answer is kept.
 - **`SearchQuery`** is the app's value for a query: what the screens compare and store. Its
-  text is the core's `normalizeQuery` of what was typed: the query Search reads.
+  text is the core's `normalizeQuery` of what was typed: the query Look Up reads.
 - **Speed.** JavaScriptCore runs without its JIT inside an app, on the Mac as on iPhone, so the
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
@@ -685,7 +686,7 @@ What stays native, and why:
   learner hasn't marked it known), and `Comprehension` counts the known among the words the
   core counted and formats the percentage.
 - **The learner's data.** Favorites and lists, Known Words, notes, encounter media, recent
-  searches, watch history, and account sync are stored and merged by the app, with the account
+  lookups, watch history, and account sync are stored and merged by the app, with the account
   service as what every signed-in client agrees with ([`account-api.md`](account-api.md)).
 - **The Player's YouTube plumbing.** Reading a video's ID out of a link, choosing the Japanese
   caption track, turning YouTube's caption XML into cards, and pairing them with YouTube's
@@ -1011,10 +1012,10 @@ YouTube can change: check the live page by hand.
 
 ## SwiftUI notes
 
-- A plain `List` pins section headers and footers over scrolling rows, so Search's headings
+- A plain `List` pins section headers and footers over scrolling rows, so Look Up's headings
   (`SearchListHeading`) and frequency notice are rows.
 - SwiftUI can miss the last keystroke before Return, so `SearchView` searches again when the query
-  changed without SwiftUI starting a newer task; otherwise Searching stays on screen.
+  changed without SwiftUI starting a newer task; otherwise Looking Up stays on screen.
 - Back runs a covered screen's `.task` again on iPhone and iPad, not on the Mac, where a covered
   screen never disappears. Example screens read their examples in `screenTask(id:)`, which also
   runs when any stack's screen is closed (`ScreenReturns`), in the closing screen too: put nothing
@@ -1050,7 +1051,7 @@ YouTube can change: check the live page by hand.
 - `SearchField` asks the bar to keep its content while a search is active at regular width
   (`searchPresentationToolbarBehavior(.avoidHidingContent)`). iPadOS draws the tabs in the
   navigation bar and hides them, with the title and the bar's buttons, while a search is active,
-  and Search keeps its search active while results show, to hold the query in the field. Without
+  and Look Up keeps its search active while results show, to hold the query in the field. Without
   it the iPad's results had no tabs until the field was cleared. At compact width, the iPhone and
   a narrow iPad window, the title slides away as the owners chose.
 - Translate's Image alert (in `ImageTextImport`, listing `ImageTextSource.offered`) only records
@@ -1093,14 +1094,14 @@ YouTube can change: check the live page by hand.
 - `CreditsView` words no credit: it lays out the core's `sourceCredits`, a section for each source,
   so each EDRDG file (JMdict, KANJIDIC2, RADKFILE) has its own link, as the EDRDG licence requires.
 
-## Search manual checks
+## Look Up manual checks
 
-Search ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`. The
-UI tests drive the top bar and its field, recent searches, the **Sorted by** row's Sort By and
+Look Up's ordering, deinflection, and frequency-chip rules are covered by `SearchExperienceTests`.
+The UI tests drive the top bar and its field, recent lookups, the **Sorted by** row's Sort By and
 Filter, the Handwriting and Radicals panel, and In your notes on an iPhone Simulator, an iPad
 Simulator, and the Mac (`SearchUITests`, `SearchResultsUITests`, `SearchInputUITests`,
-`NotesInSearchUITests`), and Grade's steps there and in `GradeInputUITests` on iPhone only (iPad
-and Mac on hold); the lists below are what to look at beyond them. When changing Search results or
+`NotesInSearchUITests`), and Grade's steps there and in `GradeInputUITests` on iPhone only (iPad and
+Mac on hold); the lists below are what to look at beyond them. When changing Look Up's results or
 frequency dictionaries, also check in the Simulator:
 
 - `いる` shows chips in the Enabled order (JLPT first by default). Reordering or disabling
@@ -1118,7 +1119,7 @@ frequency dictionaries, also check in the Simulator:
   that dictionary's chip first and puts the words it doesn't rank last; **Known Words** moves a
   word marked known by swiping at once. The row names the order, and **Default** in its menu
   returns to the Default order. The choice survives relaunching the app, and disabling the
-  chosen dictionary under **Account → Frequency Dictionaries** returns Search to **Default**.
+  chosen dictionary under **Account → Frequency Dictionaries** returns Look Up to **Default**.
 - The menu shows only **Sort By** and **Filter**, each naming its current choice underneath. **Sort
   By** lists the sorts with no direction to choose.
 - **Filter** on `dog`, `いる`, and `miru`: **Known** leaves only known words and **Unknown** only the
@@ -1126,11 +1127,11 @@ frequency dictionaries, also check in the Simulator:
   filter that hides every word shows **No Words Match Your Filter**; marking a word known from its
   long-press menu drops it at once while **Unknown** is chosen. The filter survives relaunching.
 
-When changing Search's top bar or the shared field in `SearchField.swift`, also check:
+When changing Look Up's top bar or the shared field in `SearchField.swift`, also check:
 
-- on **Recent**, the **Search** title and its **•••** (**Clear Recent Searches**) show above the
+- on **Recent**, the **Look Up** title and its **•••** (**Clear Recent Lookups**) show above the
   field; tapping the field slides it to the top with **X** beside it, as on Player;
-- submitting, a recent search, the reading refinement, a handwriting candidate, and a radical
+- submitting, a recent lookup, the reading refinement, a handwriting candidate, and a radical
   candidate each put the keyboard away with the query in the field and **X** beside it;
 - **X** returns to **Recent** with an empty field; the clear button inside the field clears the
   text and keeps typing;
@@ -1187,10 +1188,10 @@ camera's flash, from Translate and from a word's **•••**.
 `WordKnowledgeTests` cover known-word storage: persistence, unreadable and newer-version files,
 failed writes, and backups. When changing known words, also check in the Simulator:
 
-- Swiping a Search result right, or the **•••** menu on Word Detail, toggles **✓ Known** on
+- Swiping a Look Up result right, or the **•••** menu on Word Detail, toggles **✓ Known** on
   both screens, and the mark survives a relaunch.
 - **Account → Known Words** shows the count, lists the word, swipes it back to unknown, and
-  opens it in Search.
+  opens it in Look Up.
 - Known words live in `Application Support/Zenbu Japanese/word-knowledge.json` in the app's
   data container.
 
@@ -1203,7 +1204,7 @@ word lists, also check in the Simulator:
 - Word Detail **•••** → **Add to List…** toggles a word in Favorites and in a list made with
   **New List**, and both survive a relaunch. The word's **Lists** section above Notes names both.
 - **Account → Lists** shows the count; a list removes a word by swipe or by **•••** → Select Words,
-  renames or deletes itself from **•••**, and opens a word in Search; the index renames by swipe or
+  renames or deletes itself from **•••**, and opens a word in Look Up; the index renames by swipe or
   by tapping a list in Edit, reorders in Edit, and asks before deleting a list that has words.
 - Lists live in `Application Support/Zenbu Japanese/word-lists.json` in the app's data container.
 

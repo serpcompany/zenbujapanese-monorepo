@@ -96,15 +96,21 @@ test('the footer leads with the brand linking home and its tagline', () => {
   expect(html).toContain(getDictionary('en').site.description)
 })
 
-const brandIcon =
-  /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4.5 md:size-5"><path d="[^"]+"><\/path><\/svg>/
+const footerEnding = (locale: Locale = 'en') =>
+  footer(locale).match(/<\/nav><\/div><div [^>]*>([\s\S]*)<\/div><\/div><\/footer>$/)?.[1] ?? ''
 
-test('one row of plain brand icons, all nine on phones, links each account in src/lib/site.ts', () => {
-  const html = footer()
-  const list = html.match(
+const classesOf = (tag: string | undefined) => tag?.match(/class="([^"]*)"/)?.[1].split(' ') ?? []
+
+const brandMark =
+  /^<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4"><path d="[^"]+"><\/path><\/svg>/
+
+test('from 768 pixels the bottom row shows the nine brand marks at 16 pixels in 28-pixel targets, each linking its account in src/lib/site.ts', () => {
+  const list = footerEnding().match(
     /<ul aria-label="Zenbu Japanese elsewhere" class="([^"]*)">([\s\S]*?)<\/ul>/
   )
-  expect(list?.[1].split(' ')).toEqual(expect.arrayContaining(['grid', 'grid-cols-9']))
+  expect(list?.[1].split(' ')).toEqual(
+    expect.arrayContaining(['hidden', 'md:flex', 'md:ml-auto', 'gap-1'])
+  )
   const links = [...(list?.[2] ?? '').matchAll(/<a ([^>]*)>([\s\S]*?)<\/a>/g)]
   expect(
     links.map(([, , content]) => content.match(/<span class="sr-only">([^<]+)</)?.[1])
@@ -112,12 +118,37 @@ test('one row of plain brand icons, all nine on phones, links each account in sr
   for (const [index, [, attributes, content]] of links.entries()) {
     expect(attributes).toContain(`href="${socialLinks[index].href}"`)
     expect(attributes).toContain(`data-link-target="${socialLinks[index].id}"`)
-    expect(content).toMatch(brandIcon)
+    expect(classesOf(`<a ${attributes}>`)).toEqual(
+      expect.arrayContaining(['size-7', 'hover:bg-background', 'dark:hover:bg-background'])
+    )
+    expect(content).toMatch(brandMark)
   }
 })
 
-const footerEnding = (locale: Locale = 'en') =>
-  footer(locale).match(/<\/ul><div [^>]*>([\s\S]*)<\/div><\/div><\/footer>$/)?.[1] ?? ''
+test('from 768 pixels a divider sits between the icons and the language menu, hidden from screen readers', () => {
+  const ending = footerEnding()
+  const divider = ending.match(/<div [^>]*role="separator"[^>]*>/)?.[0]
+  expect(divider).toContain('aria-hidden="true"')
+  expect(classesOf(divider)).toEqual(expect.arrayContaining(['hidden', 'md:block']))
+  expect(ending.indexOf('aria-label="Zenbu Japanese elsewhere"')).toBeLessThan(
+    ending.indexOf('role="separator"')
+  )
+  expect(ending.indexOf('role="separator"')).toBeLessThan(
+    ending.indexOf('aria-label="EN, English, change language"')
+  )
+})
+
+test('below 768 pixels a Socials menu takes the icons’ place, just before the language menu', () => {
+  const ending = footerEnding()
+  const socials = ending.match(
+    /<button [^>]*aria-label="Socials, Zenbu Japanese elsewhere"[^>]*><svg [^>]*lucide-at-sign[^>]*>[\s\S]*?<\/svg>Socials<svg [^>]*lucide-chevron-down[^>]*>[\s\S]*?<\/svg><\/button><button [^>]*aria-label="EN, English, change language"/
+  )
+  expect(socials).not.toBeNull()
+  expect(classesOf(socials?.[0])).toEqual(expect.arrayContaining(['md:hidden', '-my-2']))
+  expect(ending.indexOf('aria-label="Zenbu Japanese elsewhere"')).toBeLessThan(
+    ending.indexOf('aria-label="Socials, Zenbu Japanese elsewhere"')
+  )
+})
 
 test('the footer ends with the copyright, the language menu, and the Sitemap', () => {
   const ending = footerEnding()
@@ -146,4 +177,8 @@ test('a Japanese page’s footer is in Japanese, and its links stay in Japanese'
     /aria-label="JA, 日本語、表示言語を切り替える"[^>]*><svg [^>]*data-flag="JP"/
   )
   expect(ending).toMatch(/<a [^>]*href="\/ja\/sitemap\/"[^>]*>サイトマップ<\/a><\/div>$/)
+  expect(ending).toContain('<ul aria-label="Zenbu JapaneseのSNS"')
+  expect(ending).toMatch(
+    /aria-label="Zenbu JapaneseのSNS"[^>]*><svg [^>]*lucide-at-sign[\s\S]*?<\/svg>SNS<svg /
+  )
 })

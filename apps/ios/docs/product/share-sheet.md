@@ -62,7 +62,7 @@ Check: package `ShareCardTests` (`photo`, `photoWithoutJapanese`, `notAnImage`,
 check beside each the word is in, and **New List**. Lists and known words are the app's: a word
 added in the share sheet is in the list the next time Zenbu opens, or at once when it's already
 open, and syncs with the Zenbu account like a word added in the app. Swiping a word in **Words**
-marks it known, as in Search.
+marks it known, as in Look Up.
 
 Before Zenbu has been opened once since it was installed or updated, the sheet shows only
 **Favorites**; a word saved to it still reaches the app.

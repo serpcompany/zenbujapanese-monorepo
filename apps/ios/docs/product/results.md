@@ -1,7 +1,7 @@
 # Sorting and filtering results
 
-Search's results open with a row naming their order, which re-sorts and filters them
-([Dictionary](dictionary.md#search) describes the results themselves).
+Look Up's results open with a row naming their order, which re-sorts and filters them
+([Dictionary](dictionary.md#look-up) describes the results themselves).
 
 ## Sorting results
 
@@ -12,7 +12,7 @@ current order underneath and opens a list with **Default**, one item for each en
 dictionary by its name (JLPT, YouTube, Japanese Wikipedia, TV & Movies, Anime, Manga, Novels, Visual
 Novels, Video Games), and **Known Words**, one checked at a time. There is no direction to choose.
 
-- **Default** is Search's own order ([Dictionary](dictionary.md#search)).
+- **Default** is Look Up's own order ([Dictionary](dictionary.md#look-up)).
 - **A dictionary** orders every matching word by that dictionary alone, most common first,
   however it matched. JLPT orders by level, N5 first.
 - **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
@@ -28,8 +28,8 @@ to Default).
 
 Switching re-sorts the visible results without searching again and announces the new order to
 VoiceOver. The choice is kept on the device across launches and applies to Japanese, English, and
-romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it can
-be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji row,
+romaji queries. If frequency data can't be read, a dictionary sort shows as Default until it can
+be. If the chosen dictionary is disabled or removed, Look Up goes back to Default. The Kanji row,
 Example Sentences, the reading refinement, and Discovered Words keep their places; when there are no
 word rows to sort (only Discovered Words, or only a single kanji's Kanji row), the row isn't shown.
 
@@ -51,7 +51,7 @@ list shows **No Words Match Your Filter** with the count and **Clear Filter**.
 
 Changing the filter updates the visible results without searching again and announces how many
 words show to VoiceOver. The filter is kept on the device across launches and applies to
-Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
+Japanese, English, and romaji queries. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
 Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
