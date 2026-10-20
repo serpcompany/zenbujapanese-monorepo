@@ -12,6 +12,10 @@ let package = Package(
   ],
   dependencies: [
     .package(
+      url: "https://github.com/getsentry/sentry-cocoa.git",
+      exact: "9.30.2"
+    ),
+    .package(
       url: "https://github.com/iasnezhkov/sudachi-swift.git",
       exact: "0.1.1"
     ),
@@ -32,6 +36,7 @@ let package = Package(
       dependencies: [
         "TranslatorCore",
         "TranslatorOnDevice",
+        .product(name: "Sentry", package: "sentry-cocoa"),
         .product(name: "Sudachi", package: "sudachi-swift"),
         .product(name: "ZIPFoundation", package: "ZIPFoundation"),
       ],
@@ -78,7 +83,11 @@ let package = Package(
     ),
     .testTarget(
       name: "SearchExperienceTests",
-      dependencies: ["SearchExperience", "DictionaryData"],
+      dependencies: [
+        "SearchExperience",
+        "DictionaryData",
+        .product(name: "Sentry", package: "sentry-cocoa"),
+      ],
       resources: [.copy("Fixtures")]
     ),
   ]

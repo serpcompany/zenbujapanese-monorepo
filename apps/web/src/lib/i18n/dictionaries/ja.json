@@ -732,7 +732,9 @@
     },
     "social": {
       "elsewhere": "{name}のSNS",
-      "on": "{network}の{name}"
+      "on": "{network}の{name}",
+      "label": "SNS",
+      "trigger": "{name}のSNS"
     },
     "notFound": {
       "message": "お探しのページは見つかりませんでした。"

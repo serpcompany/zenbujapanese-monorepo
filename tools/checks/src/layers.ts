@@ -18,6 +18,22 @@ export const swiftLayers: readonly SwiftLayer[] = [
   }
 ]
 
+export interface RestrictedImport {
+  module: string
+  folders: readonly string[]
+}
+
+const restrictedImports: readonly RestrictedImport[] = [
+  {
+    module: 'Sentry',
+    folders: [
+      'apps/ios/Modules/Sources/SearchExperience/Diagnostics/',
+      'apps/ios/Modules/Sources/SearchExperience/Platform/Diagnostics/',
+      'apps/ios/Modules/Tests/SearchExperienceTests/Diagnostics/'
+    ]
+  }
+]
+
 interface PlatformAPI {
   pattern: RegExp
   name: string
@@ -154,6 +170,25 @@ function importProblems(path: string, text: string, layer: SwiftLayer): LayerPro
   })
 }
 
+function restrictedImportProblems(
+  path: string,
+  text: string,
+  restricted: readonly RestrictedImport[]
+): LayerProblem[] {
+  return text.split('\n').flatMap((line, index) => {
+    const module = importedModule.exec(line)?.[1]
+    const rule = restricted.find(each => each.module === module)
+    if (!rule || rule.folders.some(folder => path.startsWith(folder))) return []
+    return [
+      {
+        path,
+        line: index + 1,
+        problem: `imports ${rule.module}; only ${rule.folders.join(', ')} may import it`
+      }
+    ]
+  })
+}
+
 const appPart = (folder: string) => folder.split('/').slice(0, 3).join('/')
 
 function adaptersFor(path: string, platforms: SwiftPlatforms): string {
@@ -180,17 +215,19 @@ export function checkLayers(
   files: readonly string[],
   layers: readonly SwiftLayer[] = swiftLayers,
   read: (path: string) => string = readRepositoryFile,
-  platforms: SwiftPlatforms = swiftPlatforms
+  platforms: SwiftPlatforms = swiftPlatforms,
+  restricted: readonly RestrictedImport[] = restrictedImports
 ): LayerProblem[] {
   return files.filter(isSwift).flatMap(path => {
     const layer = layers.find(each => path.startsWith(each.folder))
     const sharedAcrossPlatforms =
       platforms.sharedCode.some(folder => path.startsWith(folder)) &&
       !platforms.adapters.some(folder => path.startsWith(folder))
-    if (!layer && !sharedAcrossPlatforms) return []
     const text = read(path)
     return [
-      ...(layer ? importProblems(path, text, layer) : []),
+      ...(layer
+        ? importProblems(path, text, layer)
+        : restrictedImportProblems(path, text, restricted)),
       ...(sharedAcrossPlatforms ? platformProblems(path, text, platforms) : [])
     ]
   })

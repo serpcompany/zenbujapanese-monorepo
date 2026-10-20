@@ -1,11 +1,11 @@
 # Dictionary
 
-Dictionary is the app's primary Product Experience. It appears as the **Search** tab and uses
+Dictionary is the app's primary Product Experience. It appears as the **Look Up** tab and uses
 bundled Language Reference Data so ordinary dictionary lookup works offline.
 
-## Search
+## Look Up
 
-A learner can search in Japanese or English using:
+A learner can look up Japanese or English using:
 
 - the keyboard;
 - handwriting recognition, which reads the finished drawing's shape, so stroke order and
@@ -14,7 +14,7 @@ A learner can search in Japanese or English using:
 - kanji by school grade ([Grade](#grade)).
 
 Check: UI `SearchUITests.testAnEnglishSearchListsTheWordAndOpensItsDetail` (the keyboard) and
-`SearchInputUITests` (a drawn stroke's kanji, and a radical's, searched); package
+`SearchInputUITests` (a drawn stroke's kanji, and a radical's, looked up); package
 `HandwritingRecognitionTests` (a drawn kanji is read whatever the stroke order) and
 `RadicalLookupTests` (radicals narrow to the kanji that have them).
 
@@ -27,23 +27,23 @@ Check: package `DictionaryCoreTests` (a query normalized by the core, scalar for
 Image Search, for Japanese in a photo, is Translate's **Image** option
 ([Image Search](translate.md#image-search)).
 
-Check: UI `SearchUITests` (Search has no camera button) and `ImageSearchUITests`.
+Check: UI `SearchUITests` (Look Up has no camera button) and `ImageSearchUITests`.
 
 ### Top bar
 
-Search's top bar is Player's: a small, centered **Search** title above the same search field,
-with the prompt **Search Japanese or English** (**Search** at the largest text sizes) and a clear
+Look Up's top bar is Player's: a small, centered **Look Up** title above the same search field,
+with the prompt **Look up Japanese or English** (**Look Up** at the largest text sizes) and a clear
 button while it has text.
 
-- **Recent.** With nothing searched, the title bar's **•••** menu offers **Clear Recent
-  Searches** while recent searches are listed. The recent searches are listed without a heading.
+- **Recent.** With nothing looked up, the title bar's **•••** menu offers **Clear Recent
+  Lookups** while recent lookups are listed. The recent lookups are listed without a heading.
 - **Input buttons.** Three round buttons, a pencil for **Handwriting**, a grid for **Radicals**, and
-  a cap for **Grade**, sit at the bottom left on every Search screen: above the tab bar on Recent
+  a cap for **Grade**, sit at the bottom left on every Look Up screen: above the tab bar on Recent
   and results, and above the keyboard while typing. Each opens its panel in one tap.
 - **Typing.** Tapping the field slides the screen up as Player's does: the title bar slides away,
   the field moves to the top, and an **X** appears beside it. The clear button inside the field
   clears the text.
-- **Results.** Submitting, or picking a recent search, the reading refinement, or a handwriting
+- **Results.** Submitting, or picking a recent lookup, the reading refinement, or a handwriting
   candidate, a radical candidate, or a grade's kanji, puts the keyboard away and keeps the query in
   the field at the top, with **X** beside it. The first row of the results names the order and opens
   Sort and Filter ([Sorting results](results.md#sorting-results), [Filtering
@@ -62,14 +62,14 @@ in the field, the input buttons beside the results (Grade's on iPhone only), bac
 `testTheTabsStayBesideTheResultsWhichStayAcrossTabs`,
 `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList` (the **•••** menu), and
 `LayoutUITests` (the field and the input buttons at every size the device offers). How the bar
-slides on iPhone is by hand ([Search manual
-checks](../../../../docs/agents/ios.md#search-manual-checks)).
+slides on iPhone is by hand ([Look Up manual
+checks](../../../../docs/agents/ios.md#look-up-manual-checks)).
 
 ### Handwriting and Radicals
 
-Tapping the pencil, the grid, or the cap slides up a full-height sheet over the search field and
+Tapping the pencil, the grid, or the cap slides up a full-height sheet over the field and
 the tab bar, with a grabber at the top: drag it down to close it. Drawing on the pad never drags
-the sheet. The same three buttons stay at its bottom left, in the same place as on the search
+the sheet. The same three buttons stay at its bottom left, in the same place as on Look Up's
 screen, with the current one highlighted, so another mode is one tap away. The panels share one gray
 background, flat candidate tiles in the same fill as the radical squares, and glass buttons
 (white in light mode).
@@ -128,8 +128,8 @@ the shared core, offline.
   total. Both forms of a compatibility kanji are known, and counted, together.
 
 Check: UI `GradeInputUITests` on iPhone only (iPad and Mac on hold, 2026-10-18):
-`testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a kanji from the next one
-searched, and its kanji detail opened), `testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade`
+`testAGradesKanjiJoinsTheQueryAndOpensItsDetail` (a grade closed, a kanji from the next one looked
+up, and its kanji detail opened), `testMarkingAKanjiKnownOutlinesItsTileAndCountsItInItsGrade`
 (marked known, then unknown), `testClosedSectionsStayClosedAndTheFilterNarrowsEveryGrade` (Radicals'
 sections too), `testTurningOffKanjiMeaningsLeavesTheKanjiAlone`, and
 `testBothFormsOfACompatibilityKanjiAreTiles`; package `SchoolKanjiTests` (each list against the
@@ -140,11 +140,11 @@ compatibility kanji).
 
 ### Results
 
-Japanese, English, and romaji searches show one **Results** list. Stronger matches come first; among
+Japanese, English, and romaji queries show one **Results** list. Stronger matches come first; among
 equally good matches, the enabled frequency dictionaries decide the order, in the learner's priority
 order (see [Frequency Dictionaries](index.md#account)). Frequency never adds a result the query did
 not match or lifts an incidental match above a direct one. English rows show the meaning that
-matched. Matching notes follow ([Notes in Search](saved-data.md#notes-in-search)).
+matched. Matching notes follow ([Notes in Look Up](saved-data.md#notes-in-look-up)).
 
 Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
 `SearchResultOrderingTests`.
@@ -168,7 +168,7 @@ Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; t
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
-dictionary that ranks it. While Search is sorted by a dictionary ([Sorting results](results.md#sorting-results)), that dictionary takes the
+dictionary that ranks it. While Look Up's results are sorted by a dictionary ([Sorting results](results.md#sorting-results)), that dictionary takes the
 first chip's place. JLPT shows only when it lists the word. At accessibility text sizes, only the
 first dictionary's chip shows, followed by a count of the rest.
 
@@ -198,7 +198,7 @@ device. When the query is itself a word (`いって` is 一手), that word stays
 Check: package `JapaneseDeinflectionTests`; the recorded `SearchConformanceTests`.
 
 Results show once, in order and with their chips; changing the enabled dictionaries or their
-order re-sorts them at once. If frequency data can't be read, Search still shows every result and
+order re-sorts them at once. If frequency data can't be read, Look Up still shows every result and
 says which dictionary is unavailable. Results can also offer a Japanese-reading refinement, related
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
@@ -219,9 +219,9 @@ Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the webs
 well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
 `SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
-Recent text searches, the latest 50, sync to a signed-in learner's devices and are listed while
-the query is empty. A learner can repeat one, remove one by swiping or long-pressing it, or clear
-them all from the **•••** menu, which offers **Clear Recent Searches** while any are listed. Result
+Recent lookups, the latest 50, sync to a signed-in learner's devices and are listed while the
+query is empty. A learner can repeat one, remove one by swiping or long-pressing it, or clear them
+all from the **•••** menu, which offers **Clear Recent Lookups** while any are listed. Result
 headings scroll with the results instead of staying pinned over them.
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,
@@ -244,7 +244,7 @@ written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examp
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
 `embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
 
-A related word opens the entry it names. One that names none is searched for, and opens the
+A related word opens the entry it names. One that names none is looked up, and opens the
 result written and read the same, or the first result when none is.
 
 Check: package `WordResolutionTests`; core `embedded/dictionary.test.ts`.
@@ -283,7 +283,7 @@ Check: the recorded `WordDetailConformanceTests` (each table's forms and their e
 Linked Japanese in Example Sentences gives each word its own underline, so word boundaries are
 visible. An inflected verb or adjective is one word with its endings, such as 見なかった,
 見ている, or 静かな, and opens its dictionary entry. The words that make up the current entry or
-the searched form are accented. Words the learner marked known have no underline, and no
+the looked-up form are accented. Words the learner marked known have no underline, and no
 furigana when **Hide Furigana on Known Words** is on, but can still be selected. With **Show
 Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and
 **Show Sentence Translations** controls whether example sentences show their English.
@@ -337,7 +337,7 @@ word).
 contain the word. Tapping a list adds or removes the word at once, **New List** asks for a name,
 creates the list, and adds the word to it, and Done closes the sheet. A **Lists** section above
 Notes names every list holding the word, each opening that list in Account, followed by
-**Add to List**, which opens the same sheet. Search results don't show which lists a word is in.
+**Add to List**, which opens the same sheet. Look Up's results don't show which lists a word is in.
 
 Check: UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList` (the sheet, New List,
 the Lists section, and a list opening in Account); package `WordListsTests`.
@@ -373,7 +373,7 @@ Check: package `KanjiStatTests`; the recorded `KanjiDetailConformanceTests`.
 A kanji detail has the same **Share** button and **•••** menu as a word detail. Share sends the
 kanji, its readings, and its meanings as text, with the link to the kanji's search on
 zenbujapanese.com, such as `https://zenbujapanese.com/dictionary/search/%E6%97%A5/` for 日, which
-the website opens with the kanji's details and Zenbu with its search. The website has no kanji
+the website opens with the kanji's details and Zenbu in Look Up. The website has no kanji
 pages, and shares a kanji at the same search; a compatibility kanji's is its normalized form's.
 Before the page has loaded, Share sends the kanji alone. The menu marks the kanji known, adds it to lists,
 and adds notes and photos, which work as they do for a word. Lists and Notes sections appear

@@ -111,10 +111,10 @@ such a rebuild until the importer writes each existing entry's value from the pr
 ([`language-data/tools/README.md`](../../language-data/tools/README.md), Refresh a source snapshot).
 `EarlierWordKeysTests` reads the bundled database, so it fails without the column.
 
-## Notes in Search
+## Notes in Look Up
 
-Search lists the notes whose words the dictionary has
-([product docs](../../apps/ios/docs/product/saved-data.md#notes-in-search)). `LearnerNotes`
+Look Up lists the notes whose words the dictionary has
+([product docs](../../apps/ios/docs/product/saved-data.md#notes-in-look-up)). `LearnerNotes`
 (`LearnerNotes.swift`), in the app's environment, holds them as `WordNoteStorage.onTheirWords`
 reads them: after the move above, every note under a Language Reference ID or a kanji, and none
 under a note identity or a key `withoutAWord`. It reads them once at launch, and again after each
@@ -126,9 +126,9 @@ and the part shown are the core's (`notesInSearch`, [`dictionary-core.md`](dicti
 screen's request is, and answers `ShownNotes`, stamped with the revision it read. `SearchView`
 waits for the first read, then asks for the notes after the results screen and sets both
 together, so the group is drawn with the results and never after (`search.notes.drawn` records
-each one drawn); a task keyed on both revisions asks again when they differ, so a Search screen
+each one drawn); a task keyed on both revisions asks again when they differ, so a Look Up screen
 already showing the group, in any window, draws the change, and a note synced from another device
 is drawn once `AccountSync` reloads `LearnerNotes` after applying it
 ([How the iOS app syncs](ios-account-sync.md)). `LearnerNotesTests` saves,
-changes, and deletes a note through a page's `SavedItemNotes` and reads Search's answer after
+changes, and deletes a note through a page's `SavedItemNotes` and reads Look Up's answer after
 each save.

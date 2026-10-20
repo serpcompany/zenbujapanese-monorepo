@@ -173,9 +173,7 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(
       try await SearchedScreen.search("qzxvkj").screen
         == .noResults(
-          NoMatches(
-            title: "No Dictionary Matches",
-            message: "Try another Japanese or English Search query.")))
+          NoMatches(title: "No Dictionary Matches")))
   }
 
   @Test("at the largest text sizes a row shows its first chip and counts the rest")

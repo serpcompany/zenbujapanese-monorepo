@@ -196,6 +196,7 @@ actor FrequencyPackManager {
       if synced { showSyncedChoice() } else { await tell(after: before) }
     } catch {
       guard !Self.isCancellation(error), !synced else { throw error }
+      CrashReporter.record(error, in: .frequencyPack, details: ["pack": packID.rawValue])
       failures[packID] =
         error as? FrequencyPackError == .checksumMismatch
         ? "Downloaded file failed checksum validation."

@@ -27,7 +27,10 @@ final class DictionaryCore {
       let source = try? String(contentsOf: url, encoding: .utf8),
       let context = Self.contextCreation.withLock({ JSContext() }),
       let host = JSValue(newObjectIn: context)
-    else { throw DictionaryCoreError.bundleUnavailable }
+    else {
+      CrashReporter.record(HandledProblem(area: .dictionaryCore, code: "bundle_unavailable"))
+      throw DictionaryCoreError.bundleUnavailable
+    }
     if let statements {
       let rows = SQLiteJSONRows(statements: statements)
       let all: @convention(block) (String, String) -> JSValue? = { sql, parametersJSON in
@@ -82,6 +85,7 @@ final class DictionaryCore {
       let answerNow = endpoint.objectForKeyedSubscript("answer"), answerNow.isObject,
       let answerNowJSON = endpoint.objectForKeyedSubscript("answerJSON"), answerNowJSON.isObject
     else {
+      CrashReporter.record(HandledProblem(area: .dictionaryCore, code: "core_did_not_load"))
       throw DictionaryCoreError.failed(
         context.exception?.toString() ?? "The dictionary core did not load")
     }

@@ -323,7 +323,7 @@ the real one with `TEST_RUNNER_ZENBU_RUN_LANGUAGE_MODEL=1` and Apple Intelligenc
 Tapping a word in any view opens its Word Detail in a half-height sheet that can be dragged to full
 height, as in the Player. The view behind stays usable, so tapping another word switches the sheet,
 and nothing behind it moves when a word opens. A word with several possible entries opens a
-**Choose** list that uses Search's result rows, and one with none shows a no-entry state. The
+**Choose** list that uses Look Up's result rows, and one with none shows a no-entry state. The
 sheet's top bar has a close button and **Open Full Entry**, which continues to the normal
 full-screen dictionary route in the Translate tab. Words use the same Kuromoji parser family as the
 Zenbu browser extension and other linked Japanese in the app.

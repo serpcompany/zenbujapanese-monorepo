@@ -10,6 +10,17 @@ The one app built from `apps/ios` for iPhone, iPad, and Mac, with one bundle ID 
 record. iPhone, iPad, and Mac are its platforms, not separate apps (ADR 0015).
 _Avoid_: Mac app or iPad app (as a product of its own), iOS app (for what also runs on the Mac)
 
+**Look Up**:
+The app's first tab, where a learner types, draws, or picks Japanese or English and reads the
+dictionary's results. Its code keeps the name search (`SearchView`, `search.*` identifiers).
+_Avoid_: Search (for the tab)
+
+**search**:
+The shared core's matching and ranking of a query (`packages/dictionary-core/src/search/`), which
+Look Up, the website, and the dictionary service all run. Translate's Image Search and the
+Player's YouTube search are other features.
+_Avoid_: Look Up (for the core)
+
 **Language Reference ID**:
 Zenbu's permanent identity for a dictionary entry. Anything a learner saves or syncs refers to a
 word by it.

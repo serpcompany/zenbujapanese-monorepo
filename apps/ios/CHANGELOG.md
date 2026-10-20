@@ -12,10 +12,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   recent searches, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
   turns every way and runs beside other apps, with the tabs at the top, where they open into a
   sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
-  holds your account and preferences, ⌘F goes to Search, ⌘⇧I opens Translate's **Image** to search
-  an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of taking a
-  photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on every
-  device, drag images onto the window to open them there. Right-click a list, a known word, a
+  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
+  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
+  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
+  every device, drag images onto the window to open them there. Right-click a list, a known word, a
   Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
   most common first (JLPT by level), or your known words, known first. Your choice stays across
@@ -32,24 +32,26 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - Share a word, a sentence, or a photo to Zenbu from any app's share sheet to see its card there,
   without leaving the app: a word's reading, pitch, meanings, and JLPT level, or a sentence's or
   photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
-- Search finds your notes too: a word or kanji whose note has what you searched for is listed
+- Look Up finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
   Your notes stay on your device.
+- Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 
 ### Changed
 
+- **Search** is now **Look Up**, and **Clear Recent Searches** is now **Clear Recent Lookups**.
 - Image Search moved from Search's camera button to Translate's **Image** row: take a photo or
   pick one from your library, then tap any word to look it up.
 - Translate's home is laid out like Settings: a header, then **Spoken** (Conversation, Listen) and
   **Written** (Image, Text, Document). Tapping a row opens it, with no Start button.
   **Document** opens PDFs and text files.
 - Image Search can open up to 8 photos from your library at once.
-- Search's top bar matches Player's: a small title and the same search field, which slides up while
-  you type and keeps your query after a search, with **X** to go back to your recent searches.
-- Search has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
+- Look Up's top bar matches Player's: a small title and the same search field, which slides up while
+  you type and keeps your query after a search, with **X** to go back to your recent lookups.
+- Look Up has a pencil and a grid button, always one tap away, for Handwriting and Radicals. Both
   slide up as a sheet you can drag away, and add their pick to the end of what's in the field, so
   you can build a word from both; Handwriting shows bigger candidates with their meanings, and both
-  have the same **Undo** button for the last stroke or radical. Recent searches no longer sit under a **Recent** heading.
+  have the same **Undo** button for the last stroke or radical. Recent lookups no longer sit under a **Recent** heading.
 - Player works out how many of a video's words you know more than twice as fast, so **Counting known
   words…** gives way to the percentage sooner on a long video, and a video you go back to while
   Zenbu stays open usually shows it at once. Translate counts a conversation's words the same way.
@@ -234,10 +236,9 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - The conjugation table is compact: the word, its meaning, and a one-line rule sit at the top,
   and every form fits in one list with its changed ending highlighted. Tapping a form opens its
   own screen, which explains it and lists the example sentences that use it.
-- Example sentences appear as separate cards, underline each word separately so you can see
-  where one word ends and the next begins, and highlight the word or form you're studying.
-  Inflected words such as 見なかった are one tappable word instead of 見 + なかっ + た, here and
-  in Image Search.
+- Example sentences appear as separate cards, underline each word separately so you can see where
+  one word ends and the next begins, and highlight the word or form you're studying. Inflected words
+  such as 見なかった are one tappable word instead of 見 + なかっ + た, here and in Image Search.
 - Search now presents one Results list ordered by dictionary relevance first, then by the enabled
   frequency dictionaries in priority order. English rows show the gloss that matched the query.
 - TUBELEX remains included and enabled by default. Japanese Wikipedia and nine domain-specific

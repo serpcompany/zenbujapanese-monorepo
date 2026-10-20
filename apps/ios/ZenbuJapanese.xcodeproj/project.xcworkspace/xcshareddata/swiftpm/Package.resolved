@@ -1,6 +1,15 @@
 {
-  "originHash" : "a090a226d7aa5ecf6912b316613cde2c33ed9c7e358244ef624d030d1b6c2487",
+  "originHash" : "5c87701ed5fbda37e0cdef94ebe7d59dd22eb9bd980b3bb13d954801a42a7c58",
   "pins" : [
+    {
+      "identity" : "sentry-cocoa",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/getsentry/sentry-cocoa.git",
+      "state" : {
+        "revision" : "4bb2282661ee6ca2212aa01d19a1214394cd3c45",
+        "version" : "9.30.2"
+      }
+    },
     {
       "identity" : "sudachi-swift",
       "kind" : "remoteSourceControl",

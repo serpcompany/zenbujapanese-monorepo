@@ -71,7 +71,7 @@ struct SearchActionsMenu<Content: View>: View {
     Menu {
       content
     } label: {
-      Label("Search Actions", systemImage: "ellipsis")
+      Label("Look Up Actions", systemImage: "ellipsis")
     }
     .accessibilityIdentifier("search.actions-menu")
   }

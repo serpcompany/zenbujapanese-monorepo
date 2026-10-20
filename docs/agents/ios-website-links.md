@@ -14,7 +14,7 @@ team, `847HR8U8D9`.
 
 SwiftUI hands a universal link to `onOpenURL` in `AppLinkOpening` (`AppLinkOpening.swift`), which
 also takes the Shortcuts actions' links ([`ios-shortcuts.md`](ios-shortcuts.md)). It switches to
-Search from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Search's
+Look Up from any tab, Translate included, and `WebsiteLinkRoute.apply` puts the route on Look Up's
 stack. `LookupClient.websiteRoute` hands the link's host and path to the core (`websiteRoute`,
 [`dictionary-core.md`](dictionary-core.md), Embedded), which reads the website's URL shapes,
 decoded one path segment at a time, with the parser the website uses, and finds a word URL's
