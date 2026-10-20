@@ -4,7 +4,7 @@ The account service sells one subscription, which unlocks syncing and the accoun
 features (#868). A learner buys it in the app, with Apple's in-app purchase, or on the website,
 with Stripe, and either unlocks the same account everywhere. Each is managed where it was bought.
 Everything on the device stays free. The service records the subscription itself, with no
-third-party entitlement service ([ADR 0017](../adr/0017-sell-one-subscription-through-the-app-store-and-stripe.md)).
+third-party entitlement service ([ADR 0019](../adr/0019-sell-one-subscription-through-the-app-store-and-stripe.md)).
 Each store, its settings, and the owner's setup are in [`account-billing-stores.md`](account-billing-stores.md).
 
 Until the owner turns it on, nothing is paid: `ACCOUNT_API_CLOUD_ACCESS` is `free` unless set, so
