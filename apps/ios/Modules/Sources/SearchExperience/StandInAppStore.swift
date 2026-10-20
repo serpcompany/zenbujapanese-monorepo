@@ -87,8 +87,10 @@ import SwiftUI
       }
     }
 
+    private static let waiting = [":billing_retry", ":paused", ":pending"]
+
     private static func syncs(_ held: [String]) -> Bool {
-      held.contains { !$0.hasSuffix(":billing_retry") && !$0.hasSuffix(":paused") }
+      held.contains { entry in !waiting.contains { entry.hasSuffix($0) } }
     }
 
     private static func running(_ entry: String) -> [String: Any] {
@@ -99,7 +101,7 @@ import SwiftUI
         "source": apple ? "apple" : "stripe",
         "productId": apple ? StandInAppStore.monthly : "price_monthly",
         "status": state == "ending" ? "active" : state,
-        "expiresAt": paidThrough, "willRenew": state != "ending",
+        "expiresAt": state == "pending" ? NSNull() : paidThrough, "willRenew": state != "ending",
         "managedIn": apple ? "app_store" : "website",
       ]
     }
@@ -111,7 +113,7 @@ import SwiftUI
       return [
         "status": first?["status"] ?? "none", "active": subscribed,
         "source": first?["source"] ?? NSNull(), "productId": first?["productId"] ?? NSNull(),
-        "expiresAt": first == nil ? NSNull() : paidThrough,
+        "expiresAt": first?["expiresAt"] ?? NSNull(),
         "willRenew": first?["willRenew"] ?? NSNull(), "managedIn": first?["managedIn"] ?? NSNull(),
         "running": running, "canSubscribe": running.isEmpty,
         "cloudAccess": subscribed ? "subscribed" : paywall ? "subscription_required" : "free",

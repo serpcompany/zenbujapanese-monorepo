@@ -3,16 +3,20 @@ import XCTest
 extension ZenbuUITestCase {
   func signInWithApple(in app: XCUIApplication) {
     open(.account, in: app)
-    tap(find("account.sign-in", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
+    tap(reveal(find("account.sign-in", in: app), in: app))
+    tap(reveal(appleButton(in: app), in: app))
     waitFor(find("account.zenbu-account", in: app))
   }
 
   func deleteSigningInWithApple(in app: XCUIApplication) {
-    tap(find("delete-account.start", in: app))
+    tap(reveal(find("delete-account.start", in: app), in: app))
     tap(find("delete-account.confirm", in: app))
-    tap(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch)
+    tap(reveal(appleButton(in: app), in: app))
     waitFor(find("delete-account.done-note", in: app))
+  }
+
+  private func appleButton(in app: XCUIApplication) -> XCUIElement {
+    app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch
   }
 
   func openFixtureImage(

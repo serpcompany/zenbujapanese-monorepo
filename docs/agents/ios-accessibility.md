@@ -65,6 +65,12 @@ top, and the walk audits them there (`AuditPart.textSizes`). The page scrolled t
 keeps every other audit (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
 caption's word sheet at full height, so the Player page isn't showing behind it.
 
+The subscription's screens, Zenbu Account in each state the stand-ins show
+([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App
+Store subscription, fit on the screen whole at the default size, where the sweep takes them
+through every size from the page's top. At the largest size the walk audits each page's top with
+every audit, and the part below it scrolled into place without those two.
+
 The share sheet's card is drawn by the share extension, in a process of its own, and the audit
 reads only the app's: in the share sheet it finds nothing on the card, not even the contrast
 findings every screen of the app has. So `ShareSheetAuditUITests` opens the same card, the

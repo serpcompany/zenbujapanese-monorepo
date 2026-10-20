@@ -127,6 +127,7 @@ struct SubscriptionPaywall: View {
             Text(
               "Payment is charged to your Apple Account. The subscription renews automatically at the same price unless you cancel it at least 24 hours before the period ends. Manage or cancel it in your App Store account settings."
             )
+            .accessibilityIdentifier("paywall.terms")
             if subscription.offers.contains(where: { $0.introduction != nil }) {
               Text(
                 "A free trial or introductory price ends with its period, and the plan's price is charged then, unless you cancel at least 24 hours before."

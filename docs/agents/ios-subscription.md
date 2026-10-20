@@ -151,8 +151,13 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   stand-ins: `ZENBU_APP_STORE_STAND_IN=1` (`StandInAppStore`: the same plans, and a purchase that
   completes at once), `ZENBU_ACCOUNT_STAND_IN_PAYWALL=1` (sync refused until subscribed), and
   `ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION`, a comma-separated list of `apple` or `stripe`, each with
-  an optional `:grace_period`, `:billing_retry`, `:paused`, or `:ending` (already subscribed in
-  that store, in that state).
+  an optional `:grace_period`, `:billing_retry`, `:paused`, `:pending`, or `:ending` (already
+  subscribed in that store, in that state; a retried, paused, or pending one doesn't sync, as the
+  service answers).
+- **Accessibility audits**, `AccountAuditUITests` ([`ios-accessibility.md`](ios-accessibility.md)),
+  on iPhone and iPad, with the same stand-ins: the paywall, Zenbu Account's Subscription section
+  with none, an App Store one, a website one, both, a payment retried, and a first payment pending,
+  and Delete Account with an App Store subscription, before and after deleting.
 - **By hand, with the StoreKit configuration file:** in Xcode, Product → Scheme → Edit Scheme → Run
   → Options → StoreKit Configuration: `ZenbuSync.storekit`, against a service on this Mac whose
   `APP_STORE_ENVIRONMENTS` includes `Xcode` (taken only at localhost) and whose

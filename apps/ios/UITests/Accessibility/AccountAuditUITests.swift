@@ -18,7 +18,11 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     auditTheAccountAndItsSettings(pass)
     auditTheLearnersWords(pass)
     auditSigningIn(pass)
-    if device == .mac { auditTheSettingsWindow(pass) } else { auditTheZenbuAccount(pass) }
+    guard device != .mac else { return auditTheSettingsWindow(pass) }
+    auditTheZenbuAccount(pass)
+    auditSubscribing(pass)
+    for (state, held) in Self.subscriptions { auditASubscription(state, held, pass) }
+    auditDeletingWithAnAppStoreSubscription(pass)
   }
 
   private func auditTheAccountAndItsSettings(_ pass: AuditPass) {
@@ -105,15 +109,84 @@ final class AccountAuditUITests: AccessibilityAuditCase {
   }
 
   private func auditTheZenbuAccount(_ pass: AuditPass) {
-    let app = launch(pass, AccountSignedInUITests.standIns)
-    open(.account, in: app)
-    tap(reveal(find("account.sign-in", in: app), in: app))
-    tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
-    tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+    let app = openTheZenbuAccount(pass, AccountSignedInUITests.standIns)
     audit("Zenbu Account", in: app)
     tap(reveal(find("zenbu-account.delete", in: app), in: app))
     waitUntilStill(waitForSheet("delete-account.cancel", in: app))
     audit("Delete Account", in: app)
+  }
+
+  private static let subscriptions: [(state: String, held: [String: String])] = [
+    ("a website subscription", ["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe"]),
+    ("both stores", ["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple,stripe"]),
+    (
+      "a payment retried",
+      ["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1", "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple:billing_retry"]
+    ),
+    (
+      "a first payment pending",
+      ["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1", "ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe:pending"]
+    ),
+  ]
+
+  private func openTheZenbuAccount(
+    _ pass: AuditPass, _ environment: [String: String]
+  ) -> XCUIApplication {
+    let app = launch(pass, environment)
+    signInWithApple(in: app)
+    tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+    return app
+  }
+
+  private func auditASubscription(_ state: String, _ held: [String: String], _ pass: AuditPass) {
+    let app = openTheZenbuAccount(pass, SubscriptionUITests.standIns(held))
+    auditTheZenbuAccount(state, showing: find("subscription.status", in: app), in: app)
+  }
+
+  private func auditTheZenbuAccount(
+    _ state: String, showing element: XCUIElement, in app: XCUIApplication
+  ) {
+    waitFor(element)
+    audit("Zenbu Account, \(state)", in: app)
+    auditAtTheLargestSize(
+      "Zenbu Account, \(state), its subscription", showing: element, in: app, .allButTextSizes)
+  }
+
+  private func auditSubscribing(_ pass: AuditPass) {
+    let app = openTheZenbuAccount(
+      pass, SubscriptionUITests.standIns(["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1"]))
+    let subscribe = find("subscription.subscribe", in: app)
+    auditTheZenbuAccount("no subscription", showing: subscribe, in: app)
+    tap(reveal(subscribe, in: app))
+    waitUntilStill(waitForSheet("paywall.close", in: app))
+    let plan = find(SubscriptionUITests.monthly, in: app)
+    guard pass.size == .largest else {
+      waitFor(plan)
+      return audit("Subscribe", in: app)
+    }
+    audit("Subscribe", in: app)
+    audit("Subscribe, its plans", placing: plan, in: app, .allButTextSizes)
+    audit("Subscribe, its end", placing: find("paywall.restore", in: app), in: app, .allButTextSizes)
+  }
+
+  private func auditDeletingWithAnAppStoreSubscription(_ pass: AuditPass) {
+    let app = openTheZenbuAccount(
+      pass, SubscriptionUITests.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "apple"]))
+    let status = find("subscription.status", in: app)
+    auditTheZenbuAccount("an App Store subscription", showing: status, in: app)
+    tap(reveal(find("zenbu-account.delete", in: app), in: app))
+    waitUntilStill(waitForSheet("delete-account.cancel", in: app))
+    let note = find("delete-account.app-store-subscription", in: app)
+    audit("Delete Account, with an App Store subscription", in: app)
+    waitUntil(reveal(note, in: app), mentions: "doesn't cancel your App Store subscription")
+    auditAtTheLargestSize(
+      "Delete Account, its App Store subscription", showing: note, in: app, .allButTextSizes)
+    deleteSigningInWithApple(in: app)
+    waitUntil(reveal(note, in: app), mentions: "Apple keeps billing for it until you cancel it")
+    guard pass.size == .largest else { return audit("Deleted, with an App Store subscription", in: app) }
+    let deleted = find("delete-account.done-note", in: app)
+    audit("Deleted, with an App Store subscription", placing: deleted, in: app, .allButTextSizes)
+    audit("Deleted, its App Store subscription", placing: note, in: app, .allButTextSizes)
   }
 
   private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {

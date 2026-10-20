@@ -172,7 +172,9 @@ configuration file: the plans and an introductory offer, a purchase carrying the
 current purchases, one made outside the app, Ask to Buy and its approval, a refund, a renewal, an
 expiry, and syncing with the App Store); UI `SubscriptionUITests` (iPhone and iPad: buying unlocks
 sync and offers no second, a website subscription and a failed website payment, sync waiting for an
-App Store payment, paying in both, an ending one and Manage, and deleting with an App Store one).
+App Store payment, paying in both, an ending one and Manage, and deleting with an App Store one);
+`AccountAuditUITests` audits the paywall, the section with none, an App Store one, a website one,
+both, a payment retried, and a first payment pending, and deleting with an App Store one.
 
 ## Deleting the account
 

@@ -106,7 +106,7 @@ final class SubscriptionUITests: ZenbuUITestCase {
     waitFor(find("app-store-subscriptions.stand-in", in: app))
   }
 
-  private static func standIns(_ more: [String: String]) -> [String: String] {
+  static func standIns(_ more: [String: String]) -> [String: String] {
     AccountSignedInUITests.standIns.merging(more.merging(["ZENBU_APP_STORE_STAND_IN": "1"]) { $1 })
     { $1 }
   }

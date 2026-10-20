@@ -71,6 +71,19 @@ private let iPadSheets = [
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
 ]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
+private let subscriptionStates = [
+  "no subscription", "an App Store subscription", "a website subscription", "both stores", "a payment retried",
+  "a first payment pending",
+].map { "Zenbu Account, \($0)" }
+private let syncWaiting = ["no subscription", "a payment retried", "a first payment pending"].map {
+  "Zenbu Account, \($0)"
+}
+private let managedByApple = ["an App Store subscription", "both stores", "a payment retried"].map {
+  "Zenbu Account, \($0)"
+}
+private let deletingWithAnAppStoreOne = "Delete Account, with an App Store subscription"
+private let deletedWithAnAppStoreOne = "Deleted, with an App Store subscription"
+private let deletingAndDeleted = [deletingWithAnAppStoreOne, deletedWithAnAppStoreOne]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -123,7 +136,11 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-list-picker.done"), on: ["Add to List"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-done"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
-  allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
+  allow(
+    .dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account", deletingWithAnAppStoreOne],
+    [.phone, .pad], because: Why.barButton),
+  allow(.dynamicType, .identifier("delete-account.done"), on: [deletedWithAnAppStoreOne], because: Why.barButton),
+  allow(.dynamicType, .identifier("paywall.close"), on: ["Subscribe"], because: Why.barButton),
   allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
   allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
   allow(
@@ -177,6 +194,16 @@ private let textThatScales = [
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
     ),
     on: ["Zenbu Account"], [.phone], because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: subscriptionStates, because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-waits"), on: syncWaiting, because: Why.scales),
+  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting, because: Why.scales),
+  allow(.dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, because: Why.scales),
+  allow(.dynamicType, .identifier("subscription.manage"), on: ["Zenbu Account, a payment retried"], because: Why.scales),
+  allow(.dynamicType, .identifier("subscription.paying-twice"), on: ["Zenbu Account, both stores"], because: Why.scales),
+  allow(.dynamicType, .identifier("paywall.terms"), on: ["Subscribe"], because: Why.scales),
+  allow(.dynamicType, .label("Privacy Policy"), on: ["Subscribe"], because: Why.scales),
+  allow(.dynamicType, .identifier("delete-account.app-store-subscription"), on: deletingAndDeleted, because: Why.scales),
+  allow(.dynamicType, .identifier("delete-account.manage-subscription"), on: deletingAndDeleted, because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),
