@@ -179,6 +179,12 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
     [id]
   )
   if (!row) return null
+  const glosses = db.all<{ sense_order: number; text: string }>(
+    `SELECT sense_order, text FROM gloss_atoms WHERE entry_id = unhex(?)
+     ORDER BY sense_order, gloss_order`,
+    [id]
+  )
+  const senses: Omit<EmbeddedEntry['senses'][number], 'glosses'>[] = JSON.parse(row.senses_json)
   return {
     id: row.id,
     headword: row.headword,
@@ -187,7 +193,10 @@ export function entryAsTheAppReadsIt(db: ArtifactDatabase, id: string): Embedded
     partsOfSpeech: JSON.parse(row.parts_of_speech_json),
     writtenForms: JSON.parse(row.written_forms_json),
     readingForms: JSON.parse(row.reading_forms_json),
-    senses: JSON.parse(row.senses_json),
+    senses: senses.map((sense, index) => ({
+      ...sense,
+      glosses: glosses.filter(gloss => gloss.sense_order === index).map(gloss => gloss.text)
+    })),
     relationships: JSON.parse(row.relationships_json),
     pitch: row.pitch ? JSON.parse(row.pitch) : null,
     compoundPitch: row.compound_pitch ? JSON.parse(row.compound_pitch) : null,

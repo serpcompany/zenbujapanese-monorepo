@@ -3864,29 +3864,13 @@
 
   // src/detail/meaning-actions.ts
   function meaningActions(sense) {
-    const glosses = [...new Set(meaningGlosses(sense.meaning).map(spokenGloss))].filter(Boolean);
+    const glosses = [...new Set(sense.glosses.map(spokenGloss))].filter(Boolean);
     return {
       spoken: glosses.length > 0 ? glosses.join(", ") : collapsed(sense.meaning),
       glosses,
       copyText: sense.noteText ? `${sense.meaning}
 ${sense.noteText}` : sense.meaning
     };
-  }
-  function meaningGlosses(meaning) {
-    const glosses = [];
-    let depth = 0;
-    let start = 0;
-    for (let index = 0; index < meaning.length; index++) {
-      const character = meaning[index];
-      if (character === "(") depth++;
-      else if (character === ")") depth = Math.max(0, depth - 1);
-      else if (character === "," && depth === 0) {
-        glosses.push(meaning.slice(start, index));
-        start = index + 1;
-      }
-    }
-    glosses.push(meaning.slice(start));
-    return glosses.map(collapsed).filter(Boolean);
   }
   function spokenGloss(gloss) {
     let text = collapsed(gloss);
@@ -4467,7 +4451,10 @@ ${sense.noteText}` : sense.meaning
           }
         },
         pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-        senses: detail.senses.map((sense) => ({ ...sense, ...meaningActions(sense) })),
+        senses: detail.senses.map((sense, index) => ({
+          ...sense,
+          ...meaningActions({ ...sense, glosses: entry.senses[index].glosses })
+        })),
         alternatives: detail.alternatives,
         kanji: detail.kanji.map(({ character }) => character),
         alternativeKanji: detail.alternativeKanji.map(({ character }) => character),

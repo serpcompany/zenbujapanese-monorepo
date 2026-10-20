@@ -55,7 +55,7 @@ export interface EmbeddedEntry {
   partsOfSpeech: string[]
   writtenForms: FormRow[]
   readingForms: FormRow[]
-  senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
+  senses: { meaning: string; glosses: string[]; notes: string[]; partsOfSpeech: string[] }[]
   relationships: { headword: string; reading: string; summary: string; relation: string }[]
   pitch: PitchRow | null
   compoundPitch: PitchRow | null
@@ -240,7 +240,10 @@ export class EmbeddedPresentation {
         }
       },
       pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-      senses: detail.senses.map(sense => ({ ...sense, ...meaningActions(sense) })),
+      senses: detail.senses.map((sense, index) => ({
+        ...sense,
+        ...meaningActions({ ...sense, glosses: entry.senses[index].glosses })
+      })),
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
       alternativeKanji: detail.alternativeKanji.map(({ character }) => character),

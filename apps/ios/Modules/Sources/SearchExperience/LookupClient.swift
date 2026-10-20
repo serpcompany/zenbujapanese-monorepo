@@ -213,12 +213,15 @@ actor LanguageReferenceData {
       listed.append("\"\(id.rawValue)\"")
     }
     guard !listed.isEmpty else { return [:] }
+    let argument = "[\(listed.joined(separator: ","))]"
+    let glosses = try self.glosses(ofEntriesEquivalentTo: argument)
     let statement = try openStatements().statement(Self.equivalentEntriesSQL)
     defer { sqlite3_reset(statement) }
-    sqliteBind("[\(listed.joined(separator: ","))]", at: 1, to: statement)
+    sqliteBind(argument, at: 1, to: statement)
     var groups: [String: [DictionaryEntry]] = [:]
     while try checkedSQLiteStep(statement) == .row {
-      groups[sqliteText(statement, 14), default: []].append(try decodeEntry(from: statement))
+      groups[sqliteText(statement, 14), default: []].append(
+        try decodeEntry(from: statement, glosses: glosses))
     }
     var found: [LanguageReferenceID: DictionaryEntry] = [:]
     for members in groups.values where members.count == 1 {

@@ -103,8 +103,9 @@ struct DictionaryForm: Hashable, Sendable, Codable {
   }
 }
 
-struct DictionarySense: Hashable, Sendable, Codable {
+struct DictionarySense: Hashable, Sendable, Encodable {
   let meaning: String
+  let glosses: [String]
   let notes: [String]
   let partsOfSpeech: [PartOfSpeech]
 }
