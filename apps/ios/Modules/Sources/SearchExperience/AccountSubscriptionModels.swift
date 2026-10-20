@@ -170,3 +170,10 @@ struct AccountDeletion: Decodable, Sendable {
       try container.decodeIfPresent(Bool.self, forKey: .appStoreSubscriptionContinues) ?? false
   }
 }
+
+extension AccountServiceError {
+  var needsSubscription: Bool {
+    guard case .refused(status: 402, _, _, _) = self else { return false }
+    return true
+  }
+}

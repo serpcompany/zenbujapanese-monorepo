@@ -80,22 +80,14 @@ struct AccountSyncPhotoTests {
     #expect(service.liveKeys(for: Fixture.email, entity: "photoWord").isEmpty)
   }
 
-  enum Withheld: CaseIterable, Sendable {
-    case lost
-    case notSubscribed
-  }
-
   @Test(
-    "a photo whose file the account lost, or won't send while the account isn't subscribed, is never deleted: it waits for the app's next launch, and shows once the file comes",
-    arguments: Withheld.allCases)
-  func withheldFile(_ withheld: Withheld) async throws {
+    "a photo whose file the account lost is never deleted: it waits for the app's next launch, and shows once the file comes"
+  )
+  func lostFile() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
     await save(on: taberu, in: phone)
     try await phone.signIn()
-    switch withheld {
-    case .lost: service.loseFile(photoID, for: Fixture.email)
-    case .notSubscribed: service.refuseFiles(.error(402, "subscription_required"), on: "GET")
-    }
+    service.loseFile(photoID, for: Fixture.email)
 
     try await pad.signIn()
     try await pad.syncNow()
@@ -104,12 +96,39 @@ struct AccountSyncPhotoTests {
     #expect(pad.sync.state.queue.isEmpty)
 
     service.restoreFile(photo, for: Fixture.email)
-    service.refuseFiles(nil, on: "GET")
     await pad.launch()
     try await pad.syncNow()
     #expect(downloads(on: pad) == 2)
     #expect(await words(in: pad) == ["食べる"])
     #expect(service.liveKeys(for: Fixture.email, entity: "photo").count == 1)
+  }
+
+  @Test(
+    "a photo file the account won't send while it isn't subscribed is never deleted: the sync says it needs a subscription, and the file comes at the next sync once it's sent"
+  )
+  func fileWithheldForSubscription() async throws {
+    let (service, phone, pad) = await Fixture.twoPhones()
+    await save(on: taberu, in: phone)
+    try await phone.signIn()
+    service.refuseFiles(.error(402, "subscription_required"), on: "GET")
+
+    try await pad.signIn()
+    #expect(pad.sync.lastFailure?.needsSubscription == true)
+    #expect(pad.account.syncNeedsSubscription)
+    #expect(downloads(on: pad) == 1)
+    #expect(pad.retries.waits.isEmpty)
+    await #expect(throws: AccountServiceError.self) { try await pad.syncNow() }
+    #expect(downloads(on: pad) == 2)
+    #expect(await pad.media.library().isEmpty)
+    #expect(pad.sync.state.waitingFiles.map(\.key.entityID) == [photoID])
+    #expect(pad.sync.state.missingFiles.isEmpty)
+
+    service.refuseFiles(nil, on: "GET")
+    try await pad.syncNow()
+    #expect(downloads(on: pad) == 3)
+    #expect(await words(in: pad) == ["食べる"])
+    #expect(pad.sync.lastFailure == nil)
+    #expect(pad.sync.state.waitingFiles.isEmpty)
   }
 
   @Test("a photo the device already holds is never downloaded: two phones that saved one image share it")

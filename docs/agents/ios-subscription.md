@@ -110,7 +110,8 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   `409`, by the account already holding it, so the edits after it go on. A waiting sync reads the
   subscription again at most every 5 minutes, and **Sync Now** reads it first, so a website
   purchase made while the app is open unlocks sync without a relaunch. A
-  `402 subscription_required` keeps the queue and reads the subscription again. The Account row and Zenbu Account say why sync waits: no subscription, a payment being
+  `402 subscription_required`, from the sync or a photo file's upload or download, keeps the
+  queue and the photos, and reads the subscription again. The Account row and Zenbu Account say why sync waits: no subscription, a payment being
   retried, a paused subscription, or a first payment still to come. A subscription that turns
   active, or an answer that lets sync go, syncs at once.
 - **Deleting.** The sheet warns while an App Store subscription runs, and afterwards when

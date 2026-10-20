@@ -28,7 +28,7 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored let kept: KeptStores
   @ObservationIgnored var keptToApply: [AccountCopy] = []
   @ObservationIgnored var filesWait = false
-  @ObservationIgnored var downloadsWait: TimeInterval?
+  @ObservationIgnored var downloadsHeld: HeldDownloads?
   @ObservationIgnored let wordKnowledge: WordKnowledge
   @ObservationIgnored let wordLists: WordLists
   @ObservationIgnored let watchHistory: WatchHistory
@@ -181,7 +181,7 @@ final class AccountSync: LocalFileStore {
     defer { isSyncing = false }
     let session = session
     filesWait = false
-    downloadsWait = nil
+    downloadsHeld = nil
     await catchUpOnNewEntities()
     do {
       try await readProfileIfNew(in: session)
@@ -193,7 +193,7 @@ final class AccountSync: LocalFileStore {
       throw AccountServiceError.sessionEnded
     } catch let failure as AccountServiceError {
       lastFailure = failure
-      if case .refused(402, _, _, _) = failure { onRefusedForSubscription?() }
+      if failure.needsSubscription { onRefusedForSubscription?() }
       throw failure
     }
   }
@@ -326,11 +326,11 @@ final class AccountSync: LocalFileStore {
     await drainKept(in: session)
     await retryWaitingFiles(in: session)
     guard self.session == session else { return }
-    if let wait = downloadsWait { onRetryFiles?(wait) }
     placeHeldWords()
     state.accountHadFavorites = false
     state.lastSyncedAt = now()
     persist()
+    try answerHeldDownloads()
   }
 
   private func resolve(_ batch: [QueuedSyncChange], with results: [SyncResult]) {

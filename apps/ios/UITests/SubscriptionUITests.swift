@@ -34,6 +34,21 @@ final class SubscriptionUITests: ZenbuUITestCase {
     waitUntil(row, "NOT (label CONTAINS 'Syncing needs a subscription')")
   }
 
+  func testAPhotoSavedWithoutASubscriptionStaysOnTheDeviceWhileSyncingWaitsForOne() throws {
+    let app = try openFixtureImage(Self.standIns(["ZENBU_ACCOUNT_STAND_IN_PAYWALL": "1"]))
+    saveThePhotoOnAWord(in: app)
+    signInWithApple(in: app)
+    let row = find("account.zenbu-account", in: app)
+    waitUntil(row, mentions: "Syncing needs a subscription")
+    tap(row)
+    waitFor(find("subscription.subscribe", in: app))
+    waitUntil(
+      find("zenbu-account.sync-waits", in: app), mentions: "Syncing needs a Zenbu subscription")
+    goBack(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitFor(firstElement(identifiedBy: "media-library.item.", in: app))
+  }
+
   func testAWebsiteSubscriptionIsManagedOnTheWebsiteAndNoneIsOffered() {
     let app = launch(Self.standIns(["ZENBU_ACCOUNT_STAND_IN_SUBSCRIPTION": "stripe"]))
     signInWithApple(in: app)

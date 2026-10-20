@@ -8,6 +8,7 @@ import Foundation
     static let name = "Kana Fan"
     static let username = "kana_fan"
     static let searchKey = String(repeating: "5a", count: 32)
+    static let needsSubscription = "Syncing and photo files need a subscription."
     static let releaseKeptNotice = "com.zenbujapanese.dictionary.uitests.release-kept"
     private static let keptReleased = DispatchSemaphore(value: 0)
     private static let watchesRelease: Void = DarwinNotice.observe(releaseKeptNotice) { _ in
@@ -27,7 +28,7 @@ import Foundation
       guard let url = request.url else { return }
       let route = "\(request.httpMethod ?? "GET") \(url.path())"
       let (status, body, headers): (Int, Data, [String: String]) =
-        route == "GET /v1/photos/\(Self.photo.sha256)"
+        route == "GET /v1/photos/\(Self.photo.sha256)" && !StandInSubscription.shared.refusesSync
         ? (200, Self.photo, ["Content-Type": "image/png"])
         : Self.json(Self.answer(route, body: request.bodyData))
       let response = HTTPURLResponse(
@@ -50,8 +51,10 @@ import Foundation
         (200, StandInSubscription.shared.answer, [:])
       case "POST /v1/me/subscription/apple":
         (200, StandInSubscription.shared.buy(body), [:])
-      case "POST /v1/sync" where StandInSubscription.shared.refusesSync:
-        (402, ["error": ["code": "subscription_required", "message": "Subscribe to sync"]], [:])
+      case let cloud
+      where StandInSubscription.shared.refusesSync
+        && (cloud == "POST /v1/sync" || cloud.contains(" /v1/photos/")):
+        (402, ["error": ["code": "subscription_required", "message": Self.needsSubscription]], [:])
       case "POST /v1/auth/sign-in/nonce":
         (200, ["nonce": "stand-in-nonce"], [:])
       case "POST /v1/auth/sign-in/social", "POST /v1/auth/sign-in/email-otp":

@@ -15,6 +15,11 @@ private struct KeptBatch {
   var touchesSearches: Bool { !searches.isEmpty || !goneSearches.isEmpty }
 }
 
+enum HeldDownloads {
+  case retryAfter(TimeInterval)
+  case subscriptionRequired(AccountServiceError)
+}
+
 extension AccountSync {
   var photosOnTheirWay: Int {
     downloadsLeft + state.waitingFiles.filter { $0.key.entity == SyncEntity.photo }.count
@@ -33,7 +38,7 @@ extension AccountSync {
   }
 
   func retryWaitingFiles(in session: Int) async {
-    guard downloadsWait == nil else { return }
+    guard downloadsHeld == nil else { return }
     let waiting = state.waitingFiles
     state.waitingFiles = waiting.filter { state.hasQueuedChange(to: $0.key) }
     await applyBatch(waiting.filter { !state.hasQueuedChange(to: $0.key) }, in: session)
@@ -62,7 +67,7 @@ extension AccountSync {
       downloadsLeft = max(0, downloadsLeft - 1)
       if let data, await kept.media.storeFile(data, as: photo.id) {
         stored.append((copy, photo))
-      } else if data != nil || downloadsWait != nil {
+      } else if data != nil || downloadsHeld != nil {
         state.waitingFiles.append(copy)
       }
     }
@@ -147,7 +152,7 @@ extension AccountSync {
 
   private func file(for copy: AccountCopy, photoID: String, in session: Int) async -> Data? {
     if let held = await heldFile(photoID) { return held }
-    guard downloadsWait == nil else { return nil }
+    guard downloadsHeld == nil else { return nil }
     let answer: Result<Data, AccountServiceError>
     do {
       answer = .success(
@@ -164,7 +169,9 @@ extension AccountSync {
     case .success(let data) where data.sha256 == photoID:
       return data
     case .failure(.refused(status: 429, _, _, let retryAfter)):
-      downloadsWait = retryAfter ?? 1
+      downloadsHeld = .retryAfter(retryAfter ?? 1)
+    case .failure(let refusal) where refusal.needsSubscription:
+      downloadsHeld = .subscriptionRequired(refusal)
     case .failure(.refused(let status, _, _, _)) where (400..<500).contains(status):
       state.missingFiles.append(copy)
     default:
@@ -173,11 +180,19 @@ extension AccountSync {
     return nil
   }
 
+  func answerHeldDownloads() throws {
+    switch downloadsHeld {
+    case .retryAfter(let wait): onRetryFiles?(wait)
+    case .subscriptionRequired(let refusal): throw refusal
+    case nil: return
+    }
+  }
+
   private func applyProfilePhoto(_ copy: AccountCopy, photoID: String, in session: Int) async {
     let data = await file(for: copy, photoID: photoID, in: session)
     guard self.session == session else { return }
     guard let data else {
-      if downloadsWait != nil { state.waitingFiles.append(copy) }
+      if downloadsHeld != nil { state.waitingFiles.append(copy) }
       return
     }
     userProfile.applySyncedPhoto(data)

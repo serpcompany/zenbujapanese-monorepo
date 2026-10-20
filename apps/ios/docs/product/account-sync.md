@@ -82,11 +82,14 @@ the foreground with changes waiting or a last sync over 15 minutes ago, when iOS
 the background, and when the learner taps **Sync Now** on Zenbu Account. Never on a timer. Offline,
 changes wait on the phone, in order, across relaunches, and go when it's back; a failed sync tries
 again a few times, waiting longer each time, only while the app is open. A sync the account
-answers as not subscribed (`402`) keeps every change waiting on the phone, and isn't tried again
-until the next change, launch, or **Sync Now**.
+answers as not subscribed (`402`), for the sync or for a photo's file going up or coming down,
+keeps every change and photo on the phone, says syncing needs a subscription, and isn't tried
+again until the next change, launch, or **Sync Now**.
 
-Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncKeptTests` (a
-`402`).
+Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, `AccountSyncKeptTests` (a `402`),
+and `AccountSyncPhotoTests` (a `402` download); UI
+`SubscriptionUITests.testAPhotoSavedWithoutASubscriptionStaysOnTheDeviceWhileSyncingWaitsForOne`
+(iPhone and iPad).
 
 **When the same thing changed elsewhere.** Each kind of change follows the account's rule
 ([`docs/agents/account-client-rules.md`](../../../../docs/agents/account-client-rules.md)):
@@ -130,8 +133,9 @@ Check: package `AccountSyncTests`, `AccountSyncRecoveryTests`, and `AccountSyncK
   photo's last word frees no place: the account keeps it for 30 days. While the account has no
   photo storage, photos and their words wait, Zenbu Account
   says so, and the rest syncs. Files go up a few at a time beside everything else, and one cut off
-  goes again without the ones before it. A file the account can't send, or won't while it isn't
-  subscribed, never deletes the photo: it's tried again the next time the app opens. One cut off,
+  goes again without the ones before it. A file the account can't send never deletes the photo:
+  it's tried again the next time the app opens. One it won't send while it isn't subscribed comes
+  at the first sync after subscribing. One cut off,
   answered 5xx, or that the phone can't save yet is tried at the next sync, and one answered 429
   after the seconds it says. The Media Library says how many photos are on their way, and shows
   each as it arrives.

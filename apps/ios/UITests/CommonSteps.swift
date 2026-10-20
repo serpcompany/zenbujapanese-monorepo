@@ -33,6 +33,14 @@ extension ZenbuUITestCase {
     return app
   }
 
+  func saveThePhotoOnAWord(in app: XCUIApplication) {
+    tap(waitFor(firstElement(identifiedBy: "image-text.region.", in: app)))
+    tap(find("recognized-word-sheet.open-full-entry", in: app))
+    tap(find("word-detail.image-attachment", in: app))
+    waitForSheet("word-detail.image-page", in: app)
+    tap(find("word-detail.image-attachment-done", in: app))
+  }
+
   @discardableResult
   func markJapanKnownFromItsResult(in app: XCUIApplication) -> XCUIElement {
     search("japan", in: app)

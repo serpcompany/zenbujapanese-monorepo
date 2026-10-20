@@ -110,11 +110,14 @@ sync; what the learner sees is in the product docs'
     holds under its SHA-256, in the Media Library or the profile, and downloads it otherwise. A
     photo word whose photo isn't on the device waits for it (`heldPhotoWords`). A download cut off
     on the way, a `5xx`, or one the device couldn't save is tried again at the end of the next sync
-    (`waitingFiles`). A `429` stops downloads for the sync (`downloadsWait`) and asks the scheduler
-    for another after its `Retry-After` (`onRetryFiles`). Each download checks the session before
+    (`waitingFiles`). A `429` stops downloads for the sync (`downloadsHeld`) and asks the scheduler
+    for another after its `Retry-After` (`onRetryFiles`). A `402` (not subscribed) stops them too,
+    keeps the file in `waitingFiles`, and ends the sync with that refusal once everything else is
+    applied, so it reads as a sync's `402`: Zenbu Account says syncing needs a subscription and
+    offers it, and the file comes at the first sync after. Each download checks the session before
     it records anything, so one that arrives or fails after a sign-out or another sign-in changes
     nothing, and a new session starts with no photos on their way and no note that photos wait.
-    A `404` (`not_found` or `photo_file_missing`), a `402`, or any other refusal never deletes
+    A `404` (`not_found` or `photo_file_missing`), or any other refusal, never deletes
     anything, and waits for the next launch's first sync (`missingFiles`), so a file the account
     lost isn't asked for on every sync.
   - **Applying.** The kept copies of one answer are applied together, the latest per entity: one
@@ -187,7 +190,7 @@ sync; what the learner sees is in the product docs'
   failure, `5xx`, or a `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
   retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
-  the sync. `402` (not subscribed), from the sync or a photo's upload, keeps every change queued
+  the sync. `402` (not subscribed), from the sync or a photo's upload or download, keeps every change queued
   and waits for the next change, launch, or **Sync Now**: it's never tried again by itself.
 - **Deleting** signs in again first (Apple when `GET /v1/auth/list-accounts` lists it, keeping the
   authorization code), refuses a sign-in to another account, and signs out the session the new
@@ -221,8 +224,8 @@ and two edits of one kept as two notes; a setting's first change winning, with T
 left alone; searches on two phones, their IDs against the service's own example, waiting for the
 key and a new key; the frequency dictionaries' choice; and a `402`. `AccountSyncPhotoTests` covers
 a file going up before its photo, the last word's removal and a word that brings the photo back,
-a deletion dropping a word added since, a lost file and a `402` download waiting for the next
-launch, a held image never downloaded, a refused file, no photo storage, `photo_not_uploaded`,
+a deletion dropping a word added since, a lost file waiting for the next launch, a `402` download
+saying sync needs a subscription and coming at the next sync, a held image never downloaded, a refused file, no photo storage, `photo_not_uploaded`,
 and the profile photo on two phones, in either order, filling an account whose photo was removed,
 and not going to another account. `AccountSyncNoteTests` covers a deletion losing to an edit, a
 refused note kept through a pull, two offline edits, a stale page's edit, and a page's deletion

@@ -79,7 +79,7 @@ final class ZenbuAccount {
 
   var syncNeedsSubscription: Bool {
     guard account != nil else { return false }
-    if case .refused(402, _, _, _) = sync.lastFailure { return true }
+    if sync.lastFailure?.needsSubscription == true { return true }
     return subscription.syncNeedsSubscription
   }
   var offersGoogle: Bool { configuration.googleClientID != nil }
