@@ -732,7 +732,9 @@
     },
     "social": {
       "elsewhere": "{name} elsewhere",
-      "on": "{name} on {network}"
+      "on": "{name} on {network}",
+      "label": "Socials",
+      "trigger": "Socials, {name} elsewhere"
     },
     "notFound": {
       "message": "This page could not be found."
