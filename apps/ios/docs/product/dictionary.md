@@ -242,16 +242,13 @@ written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examp
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
 `embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
 
-Each meaning opens a menu. **Speak** reads its glosses in an English voice, leaving out a
-parenthesis that ends a gloss and reading a leading one as words ("dog (Canis (lupus) familiaris),
-canine" is "dog, canine"), and never the note line. **Copy** copies it with its note line, and
-**Look Up** searches one of its glosses. Each gloss is whole, as JMdict gives it, even one that
-holds a comma: １０万 offers "100,000" and "hundred thousand". The pronounce buttons keep their
-Japanese voice.
+Each meaning opens a menu. **Speak** reads its glosses, each whole as JMdict gives it, in an English
+voice, leaving out a parenthesis that ends one and reading a leading one as words ("dog (Canis
+(lupus) familiaris), canine" is "dog, canine"), never the note line. **Copy** copies it with its
+note line, and **Look Up** searches a gloss (１０万's "100,000"). The pronounce buttons stay Japanese.
 
-Check: core `detail/meaning-actions.test.ts` and `embedded/presentation.test.ts`; package
-`MeaningActionsTests`; the service's `embedded-detail.conformance.test.ts`; UI
-`WordDetailUITests.testAMeaningSpeaksInEnglishAndLooksUpAGloss`.
+Check: core `detail/meaning-actions.test.ts`; package `MeaningActionsTests`; the service's
+`embedded-detail.conformance.test.ts`; UI `testAMeaningSpeaksInEnglishAndLooksUpAGloss`.
 
 A related word opens the entry it names. One that names none is looked up, and opens the
 result written and read the same, or the first result when none is.
