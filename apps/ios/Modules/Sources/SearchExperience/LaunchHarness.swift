@@ -6,6 +6,7 @@ enum LaunchHarness {
   static let freshStateKey = "ZENBU_UI_TEST_FRESH"
   static let cameraImageKey = "ZENBU_CAMERA_IMAGE"
   static let signInStandInKey = "ZENBU_SIGN_IN_STAND_IN"
+  static let speechStandInKey = "ZENBU_SPEECH_STAND_IN"
   static let youTubeStandInKey = "ZENBU_YOUTUBE_STAND_IN"
   static let accountStandInKey = "ZENBU_ACCOUNT_STAND_IN"
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
@@ -76,6 +77,25 @@ enum LaunchHarness {
   }
 
   static let countsDraws = countsDraws(ProcessInfo.processInfo.environment)
+
+  static func standsInForSpeech(_ environment: [String: String]) -> Bool {
+    #if DEBUG
+      environment[speechStandInKey] == "1"
+    #else
+      false
+    #endif
+  }
+
+  static let standsInForSpeech = standsInForSpeech(ProcessInfo.processInfo.environment)
+
+  @MainActor
+  static var speechSynthesis: SpeechSynthesisClient? {
+    #if DEBUG
+      standsInForSpeech ? SpeechStandIn.shared.client : nil
+    #else
+      nil
+    #endif
+  }
 
   static func colorScheme(_ environment: [String: String]) -> ColorScheme? {
     #if DEBUG

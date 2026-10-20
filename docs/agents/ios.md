@@ -199,6 +199,7 @@ don't contain them), so they need no network, account, camera, or microphone:
   in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
   test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
   draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
+- `ZENBU_SPEECH_STAND_IN=1` stands in for speech: `speech.spoken` is the locale and text last said.
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
@@ -219,7 +220,7 @@ don't contain them), so they need no network, account, camera, or microphone:
   `search.notes.drawn`, `kanji-detail.drawn`), so a test fails when a results list is drawn without
   its chips and then again (`SearchResultsUITests`), Look Up's notes come after its results
   (`NotesInSearchUITests`), a kanji page's facts come before its words (`WordDetailUITests`), or
-  nothing is recorded. Each is a clear text (`DrawCountProbe`) read with `text(of:)`: the Mac gives
+  nothing is recorded. Each is a clear text (`HarnessProbe`) read with `text(of:)`: the Mac gives
   a test no plain view's value.
 
 The tests share `ZenbuUITestCase` and `AppTab`; what differs between the devices they ask
@@ -331,8 +332,8 @@ xcrun devicectl device install app --device <device-udid> \
   "$(python3 Tools/simulator.py derived-data)/Build/Products/Debug-iphoneos/Zenbu Japanese.app"
 ```
 
-Zenbu Dev signs in to the account with Google or an emailed code, not with Apple (Account and sync,
-below). Built for Release, it reports crashes as `qa` ([crash reports](ios-crash-reports.md)).
+Zenbu Dev signs in with Google or an emailed code, not with Apple (Account and sync, below).
+Built for Release, it reports crashes as `qa` ([crash reports](ios-crash-reports.md)).
 
 ### From a Mac the iPhone can't reach
 
@@ -519,9 +520,8 @@ that it matches that database, its pinned source, and its import report. Without
 as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
 index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
-Pitch for two-part compounds UniDic doesn't list whole, such as 記者会見, comes from
-`CompoundPitch.sqlite3`, also built against that database; `test_compound_pitch_contract.py`
-verifies it.
+Pitch for two-part compounds UniDic doesn't list whole (記者会見) comes from `CompoundPitch.sqlite3`,
+also built against that database; `test_compound_pitch_contract.py` verifies it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so

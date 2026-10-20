@@ -16,7 +16,7 @@ extension View {
       let drawn = count.next()
       ZStack(alignment: .topLeading) {
         self
-        DrawCountProbe(identifier: identifier, text: "\(drawn)")
+        HarnessProbe(identifier: identifier, text: "\(drawn)")
       }
     } else {
       self
@@ -28,7 +28,7 @@ extension View {
     if LaunchHarness.countsDraws {
       ZStack(alignment: .topLeading) {
         self
-        DrawCountProbe(identifier: identifier, text: text)
+        HarnessProbe(identifier: identifier, text: text)
       }
     } else {
       self
@@ -36,7 +36,7 @@ extension View {
   }
 }
 
-private struct DrawCountProbe: View {
+struct HarnessProbe: View {
   let identifier: String
   let text: String
 
