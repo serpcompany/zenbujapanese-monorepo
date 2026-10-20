@@ -19,6 +19,9 @@ final class SubscriptionUITests: ZenbuUITestCase {
 
     let offer = waitFor(find(Self.monthly, in: app))
     waitUntil(offer, mentions: "$4.99 a month")
+    waitUntil(
+      find("paywall.syncs", in: app),
+      mentions: "known words, lists, notes, photos, profile photo, settings, recent searches,")
     waitFor(labeled("Terms of Use", in: app))
     waitFor(labeled("Privacy Policy", in: app))
     waitFor(find("paywall.restore", in: app))

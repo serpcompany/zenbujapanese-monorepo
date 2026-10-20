@@ -105,8 +105,8 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
   manages it. A website one is a plain statement, and a failed website payment says only that it
   failed, with no step to take there. Paying in both stores shows both, and says to cancel one.
 - **Sync.** While the answer says sync needs a subscription, the app sends no `POST /v1/sync`,
-  which the service would refuse; the queue waits, and the profile, which stays free, goes alone
-  through `PATCH /v1/me`; an edit whose answer was lost is recognized after the service's
+  which the service would refuse; the queue waits, the profile photo in it, and the profile's name
+  and username, which stay free, go alone through `PATCH /v1/me`; an edit whose answer was lost is recognized after the service's
   `409`, by the account already holding it, so the edits after it go on. A waiting sync reads the
   subscription again at most every 5 minutes, and **Sync Now** reads it first, so a website
   purchase made while the app is open unlocks sync without a relaunch. A

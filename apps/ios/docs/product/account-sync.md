@@ -202,8 +202,9 @@ it on at the service, every account syncs as before, and the app shows no subscr
   both, and says to cancel one. An ended or refunded one shows its status.
 - **Subscribe to Sync…** appears only when sync needs a subscription and the account has none
   running anywhere, nor the Apple Account, so no one is offered a second or one sync doesn't need.
-  Opening the paywall and buying check again first. The paywall says what syncs and that the rest
-  stays free, lists each
+  Opening the paywall and buying check again first. The paywall says what syncs (known words,
+  lists, notes, photos, the profile photo, settings, recent searches, watch history, and bookmarked
+  translations) and that the rest stays free, the name and username included, lists each
   plan with its name, price, and period from the App Store, with a free trial or introductory price
   when the Apple Account may have one, and has the renewal terms, **Restore Purchases**, **Terms of
   Use**, and **Privacy Policy**. A purchase belongs to the signed-in account; one waiting for Ask to
@@ -216,7 +217,8 @@ it on at the service, every account syncs as before, and the app shows no subscr
 - **When sync needs a subscription**, the Account row says so, Zenbu Account says the changes stay
   on the device and sync once the learner subscribes, and nothing queued is lost; a payment being
   retried, a paused subscription, and a first payment still to come each say that instead. The app
-  sends no sync the service would refuse, but the profile, which stays free, still syncs.
+  sends no sync the service would refuse, but the profile's name and username, which stay free,
+  still sync; its photo waits with the rest.
   Subscribing syncs at once, and so does **Sync Now** after a purchase on the website, since it
   reads the subscription first.
 - **Restore Purchases** asks the App Store for the Apple Account's purchases and sends them; signing

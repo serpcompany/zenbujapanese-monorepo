@@ -96,9 +96,10 @@ struct SubscriptionPaywall: View {
           Text("Sync with a Zenbu subscription")
             .font(.headline)
           Text(
-            "Your known words, lists, watch history, and bookmarked translations, on every device you sign in to. Your profile and everything else in Zenbu stay free, and work on this \(ThisDevice.name) without one."
+            "Your known words, lists, notes, photos, profile photo, settings, recent searches, watch history, and bookmarked translations, on every device you sign in to. Your name, your username, and everything else in Zenbu stay free, and work on this \(ThisDevice.name) without one."
           )
           .foregroundStyle(.secondary)
+          .accessibilityIdentifier("paywall.syncs")
         }
         Section {
           if subscription.offers.isEmpty, subscription.problem == nil {
