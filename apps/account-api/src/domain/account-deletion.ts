@@ -25,7 +25,15 @@ export interface DeletionNotices {
   accountDeleted(email: string, language: Language): void
 }
 
-export type Deletion =
+export interface SubscriptionEnder {
+  canEndSubscriptions(userId: string, now: Date): Promise<boolean>
+  endSubscriptions(
+    userId: string,
+    now: Date
+  ): Promise<{ status: 'ended' | 'unavailable'; appStoreSubscriptionContinues: boolean }>
+}
+
+type Deletion =
   | 'deleted'
   | 'no_account'
   | 'sign_in_again'
@@ -33,38 +41,64 @@ export type Deletion =
   | 'apple_authorization_invalid'
   | 'apple_account_mismatch'
   | 'apple_unavailable'
+  | 'billing_unavailable'
 
-export function accountDeleter(store: AccountStore, apple: AppleRevoker, notices: DeletionNotices) {
+export interface DeletionResult {
+  status: Deletion
+  appStoreSubscriptionContinues: boolean
+}
+
+const refused = (status: Deletion): DeletionResult => ({
+  status,
+  appStoreSubscriptionContinues: false
+})
+
+export function accountDeleter(
+  store: AccountStore,
+  apple: AppleRevoker,
+  notices: DeletionNotices,
+  subscriptions: SubscriptionEnder,
+  afterDeletion: () => void = () => {}
+) {
   return async (
     principal: Principal,
     authorization: AppleAuthorization = {},
     requestedLanguage: Language | null = null
-  ): Promise<Deletion> => {
+  ): Promise<DeletionResult> => {
     if (Date.now() - principal.signedInAt.getTime() > freshSignInMinutes * 60 * 1000) {
-      return 'sign_in_again'
+      return refused('sign_in_again')
     }
     const profile = await store.profile(principal.userId)
-    if (!profile) return 'no_account'
+    if (!profile) return refused('no_account')
     const appleUserIds = (await store.identities(principal.userId))
       .filter(identity => identity.provider === 'apple')
       .map(identity => identity.subject)
-    if (appleUserIds.length > 0 && apple.configured) {
-      const { code, redirectUri } = authorization
-      if (!code) return 'apple_authorization_needed'
+    const revokesApple = appleUserIds.length > 0 && apple.configured
+    if (revokesApple && !authorization.code) return refused('apple_authorization_needed')
+    if (!(await subscriptions.canEndSubscriptions(principal.userId, new Date()))) {
+      return refused('billing_unavailable')
+    }
+    if (revokesApple && authorization.code) {
       const revoked = await apple.revoke(
-        { code, redirectUri },
+        { code: authorization.code, redirectUri: authorization.redirectUri },
         principal.clientId,
         appleUserIds,
         subject => store.identityInUse('apple', subject)
       )
-      if (revoked === 'invalid') return 'apple_authorization_invalid'
-      if (revoked === 'other_apple_id') return 'apple_account_mismatch'
-      if (revoked === 'unavailable') return 'apple_unavailable'
+      if (revoked === 'invalid') return refused('apple_authorization_invalid')
+      if (revoked === 'other_apple_id') return refused('apple_account_mismatch')
+      if (revoked === 'unavailable') return refused('apple_unavailable')
     }
+    const ended = await subscriptions.endSubscriptions(principal.userId, new Date())
+    if (ended.status === 'unavailable') return refused('billing_unavailable')
     const language = emailLanguage(requestedLanguage, await store.language(principal.userId))
     await store.deleteAccount(principal.userId, profile.email)
+    afterDeletion()
     notices.accountDeleted(profile.email, language)
-    return 'deleted'
+    return {
+      status: 'deleted',
+      appStoreSubscriptionContinues: ended.appStoreSubscriptionContinues
+    }
   }
 }
 

@@ -168,23 +168,41 @@ const account: Part = {
       name: 'account-http-never-reaches-the-database',
       severity: 'error',
       comment:
-        'src/http is the HTTP layer: it answers from what src/server.ts hands it, through the domain, and never touches the database (docs/agents/account-api.md, Code layout). Put database code in src/db.',
+        "src/http is the HTTP layer: it answers from what src/server.ts and src/wiring.ts hand it, through the domain, and never touches the database, photo storage, or a payment provider (docs/agents/account-api.md, Code layout). Put database code in src/db, storage code in src/storage, and a provider's in src/billing.",
       from: { path: '^src/http/', pathNot: accountTestCode },
       to: {
-        path: ['^src/(db|auth|email)/', '(^|/)node_modules/(pg|drizzle-orm|better-auth)/']
+        path: [
+          '^src/(db|auth|email|billing|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|stripe|@apple|aws4fetch)/'
+        ]
       }
     },
     {
       name: 'account-domain-builds-on-no-layer',
       severity: 'error',
       comment:
-        'src/domain holds the account and sync rules, which the HTTP and database layers build on, so it imports neither, nor Hono, nor a database driver (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.',
+        "src/domain holds the account, sync, and billing rules, which the HTTP layer, the database layer, the payment providers' adapters, and photo storage build on, so it imports none of them, nor Hono, nor a database driver, nor a provider's SDK (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.",
       from: { path: '^src/domain/', pathNot: accountTestCode },
       to: {
         path: [
-          '^src/(http|db)/',
-          '^src/server\\.ts$',
-          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono)/'
+          '^src/(http|db|billing|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|hono|@hono|stripe|@apple|aws4fetch)/'
+        ]
+      }
+    },
+    {
+      name: 'account-storage-keeps-files-and-nothing-more',
+      severity: 'error',
+      comment:
+        "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts and src/wiring.ts hand it to the domain, so it imports neither HTTP, the database, sign-in, email, nor the payment providers (docs/agents/account-api.md, Code layout).",
+      from: { path: '^src/storage/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|email|billing)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|stripe|@apple)/'
         ]
       }
     },
@@ -196,9 +214,9 @@ const account: Part = {
       from: { path: '^src/email/', pathNot: accountTestCode },
       to: {
         path: [
-          '^src/(http|db|auth|domain)/',
-          '^src/server\\.ts$',
-          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono)/'
+          '^src/(http|db|auth|domain|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/'
         ]
       }
     },
@@ -206,17 +224,43 @@ const account: Part = {
       name: 'account-sign-in-knows-no-http',
       severity: 'error',
       comment:
-        'src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+        'src/auth sets up sign-in on the database and the mailer; src/server.ts and src/wiring.ts hand its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
       from: { path: '^src/auth/', pathNot: accountTestCode },
-      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+      to: {
+        path: [
+          '^src/(http|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(hono|@hono|aws4fetch)/'
+        ]
+      }
     },
     {
       name: 'account-database-knows-no-http',
       severity: 'error',
       comment:
-        'src/db is the database layer: the HTTP layer builds on it through src/server.ts, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).',
+        'src/db is the database layer: the HTTP layer builds on it through src/server.ts and src/wiring.ts, so it knows nothing of HTTP, photo storage, or a payment provider (docs/agents/account-api.md, Code layout).',
       from: { path: '^src/db/', pathNot: accountTestCode },
-      to: { path: ['^src/http/', '^src/server\\.ts$', '(^|/)node_modules/(hono|@hono)/'] }
+      to: {
+        path: [
+          '^src/(http|billing|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(hono|@hono|stripe|@apple|aws4fetch)/'
+        ]
+      }
+    },
+    {
+      name: 'account-billing-adapts-providers-and-nothing-more',
+      severity: 'error',
+      comment:
+        "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts and src/wiring.ts hand them to the domain, so they know nothing of HTTP, the database, sign-in, email, or photo storage (docs/agents/account-billing.md, Code layout).",
+      from: { path: '^src/billing/', pathNot: accountTestCode },
+      to: {
+        path: [
+          '^src/(http|db|auth|email|storage)/',
+          '^src/(server|wiring)\\.ts$',
+          '(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/'
+        ]
+      }
     }
   ]
 }

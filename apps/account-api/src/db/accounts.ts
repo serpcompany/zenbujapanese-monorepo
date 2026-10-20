@@ -1,8 +1,19 @@
-import { and, asc, eq, gt, lt, max, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, lt, lte, max, sql } from 'drizzle-orm'
+import { accountFolder } from '../domain/photo-files'
 import type { AccountStore, LockedAccount } from '../domain/store'
+import { deletedAccounts } from './billing-schema'
 import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
-import { syncChanges, syncMutations, userIdentities, users, verifications } from './schema'
+import { deletionDueAt } from './photo-rows'
+import {
+  forgottenVersions,
+  photoFileDeletions,
+  syncChanges,
+  syncMutations,
+  userIdentities,
+  users,
+  verifications
+} from './schema'
 
 const journalColumns = {
   sequence: syncChanges.sequence,
@@ -50,10 +61,15 @@ export function accountStore(db: Drizzle): AccountStore {
 
     async deleteAccount(userId, email) {
       await db.transaction(async tx => {
+        await deletionDueAt(tx, accountFolder(userId), 0)
         await tx
           .delete(verifications)
           .where(eq(verifications.identifier, `sign-in-otp-${email.toLowerCase()}`))
         await tx.delete(users).where(eq(users.id, userId))
+        await tx
+          .insert(deletedAccounts)
+          .values({ userId, deletedAt: new Date() })
+          .onConflictDoNothing()
       })
     },
 
@@ -141,6 +157,45 @@ export function accountStore(db: Drizzle): AccountStore {
     async journalHead() {
       const [row] = await db.select({ head: max(syncChanges.sequence) }).from(syncChanges)
       return Number(row?.head ?? 0)
+    },
+
+    async accountJournalHead(userId) {
+      const [row] = await db
+        .select({ head: max(syncChanges.sequence) })
+        .from(syncChanges)
+        .where(eq(syncChanges.userId, userId))
+      return Number(row?.head ?? 0)
+    },
+
+    async forgottenThrough(userId) {
+      const [row] = await db
+        .select({ through: max(forgottenVersions.sequence) })
+        .from(forgottenVersions)
+        .where(eq(forgottenVersions.userId, userId))
+      return Number(row?.through ?? 0)
+    },
+
+    photoDeletions: {
+      dueAt: (storageKey, hours) => deletionDueAt(db, storageKey, hours),
+      async due(limit) {
+        const due = await db
+          .select({ storageKey: photoFileDeletions.storageKey })
+          .from(photoFileDeletions)
+          .where(lte(photoFileDeletions.dueAt, sql`now()`))
+          .orderBy(asc(photoFileDeletions.dueAt))
+          .limit(limit)
+        return due.map(row => row.storageKey)
+      },
+      async done(storageKey) {
+        await db
+          .delete(photoFileDeletions)
+          .where(
+            and(
+              eq(photoFileDeletions.storageKey, storageKey),
+              lte(photoFileDeletions.dueAt, sql`now()`)
+            )
+          )
+      }
     }
   }
 }

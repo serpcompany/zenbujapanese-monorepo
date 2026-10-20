@@ -4,12 +4,18 @@ import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
 import {
   knownWords,
+  learnerSettings,
   listWords,
+  photos,
+  photoWords,
+  profilePhotos,
+  recentSearches,
   syncOrigin,
   translationBookmarks,
   users,
   watchedVideos,
-  wordLists
+  wordLists,
+  wordNotes
 } from './schema'
 
 export type DatabaseStart = 'first start' | 'same database' | 'restored'
@@ -24,7 +30,13 @@ const versioned = [
   wordLists,
   listWords,
   watchedVideos,
-  translationBookmarks
+  translationBookmarks,
+  wordNotes,
+  photos,
+  photoWords,
+  profilePhotos,
+  learnerSettings,
+  recentSearches
 ] as const
 
 export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
@@ -55,7 +67,19 @@ export function fenceIfRestored(db: Drizzle): Promise<DatabaseStart> {
       union all
       select user_id, ${entity('watchedVideo')}, video_id, version, 'restore' from watched_videos
       union all
-      select user_id, ${entity('bookmarkedSentence')}, id, version, 'restore' from translation_bookmarks`)
+      select user_id, ${entity('bookmarkedSentence')}, id, version, 'restore' from translation_bookmarks
+      union all
+      select user_id, ${entity('wordNote')}, id, version, 'restore' from word_notes
+      union all
+      select user_id, ${entity('photo')}, id, version, 'restore' from photos
+      union all
+      select user_id, ${entity('photoWord')}, photo_id || ${listWordSeparator} || item_id, version, 'restore' from photo_words
+      union all
+      select user_id, ${entity('profilePhoto')}, user_id, version, 'restore' from profile_photos
+      union all
+      select user_id, ${entity('setting')}, name, version, 'restore' from learner_settings
+      union all
+      select user_id, ${entity('recentSearch')}, id, version, 'restore' from recent_searches`)
     if (origin) {
       await tx.update(syncOrigin).set({ databaseOid: thisDatabase })
       return 'restored'

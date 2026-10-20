@@ -1,9 +1,6 @@
 import { createRoute, type OpenAPIHono, z } from '@hono/zod-openapi'
-import type { Context } from 'hono'
-import { createMiddleware } from 'hono/factory'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
-import type { Principal, Scope } from '../domain/clients'
 import type { Change } from '../domain/entities'
 import type { Profile } from '../domain/profile'
 import type { MutationResult } from '../domain/sync'
@@ -12,6 +9,17 @@ import type { AccountEnv } from './env'
 import { errorBody } from './errors'
 import { requestsPerMinute } from './rate-limit'
 import { json, meaningsText, refusal, refusalSchema } from './refusals'
+import {
+  failed,
+  failedSync,
+  malformed,
+  needs,
+  noScope,
+  refuse,
+  tooLarge,
+  tooMany,
+  unauthorized
+} from './route-answers'
 import {
   DeleteAccountSchema,
   ErrorSchema,
@@ -22,66 +30,8 @@ import {
   SyncAnswerSchema,
   SyncRequestSchema
 } from './schemas'
+import { subscriptionRequired } from './subscription-schemas'
 import { syncFieldSchemas } from './sync-entities'
-
-export const bodyLimitKb = 64
-
-const needs = (...scopes: Scope[]) => [{ accessToken: scopes }]
-
-const noScope = (scope: Scope) => ({
-  insufficient_scope: `This app's access to the account doesn't include \`${scope}\`.`
-})
-
-const unauthorized = refusal({
-  unauthorized:
-    'No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.'
-})
-const tooLarge = refusal({ too_large: `The body is over ${bodyLimitKb} KB.` })
-const malformed = { bad_request: 'The body is not JSON, or not this shape.' }
-const tooMany = (perMinute: number) =>
-  refusal({
-    too_many_requests: `This account sent more than ${perMinute} requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds \`Retry-After\` says.`
-  })
-const failed = refusal({
-  internal: 'The service failed, and nothing says why. Try again later, backing off.'
-})
-const failedSync = refusal({
-  internal:
-    'The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.'
-})
-
-const unauthorizedBody = errorBody(
-  'unauthorized',
-  'Send an access token from GET /v1/auth/token as `Authorization: Bearer <token>`.'
-)
-
-function refuse(context: Context) {
-  return context.json(unauthorizedBody, 401, { 'WWW-Authenticate': 'Bearer' })
-}
-
-export function requireAccount(verifyAccessToken: (token: string) => Promise<Principal | null>) {
-  return createMiddleware<AccountEnv>(async (context, next) => {
-    const token = /^bearer\s+(\S+)$/i.exec(context.req.header('authorization') ?? '')?.[1]
-    const principal = token ? await verifyAccessToken(token) : null
-    if (!principal) return refuse(context)
-    context.set('userId', principal.userId)
-    context.set('clientId', principal.clientId)
-    context.set('scopes', principal.scopes)
-    context.set('signedInAt', principal.signedInAt)
-    await next()
-  })
-}
-
-export function requireScope(scope: Scope) {
-  return createMiddleware<AccountEnv>(async (context, next) => {
-    if (context.get('scopes').has(scope)) return next()
-    return context.json(
-      errorBody('insufficient_scope', `This app's access to the account doesn't include ${scope}.`),
-      403,
-      { 'WWW-Authenticate': `Bearer error="insufficient_scope", scope="${scope}"` }
-    )
-  })
-}
 
 const profileJson = (profile: Profile) => ({
   ...profile,
@@ -191,10 +141,15 @@ const deletionAnswers = {
     503,
     'apple_unavailable',
     "Revoking with Apple didn't finish, and nothing was deleted. Sign in with Apple again for a new code, and try again."
+  ],
+  billing_unavailable: [
+    503,
+    'billing_unavailable',
+    "Canceling the account's website subscription didn't finish, and nothing was deleted. Try again later; an account that signs in with Apple signs in with Apple again first, since its code was used."
   ]
 } as const
 
-const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
+export const onTheWebsite = (uri: string, websiteOrigins: readonly string[]) =>
   websiteOrigins.includes(new URL(uri).origin)
 
 const deletionRefusals = (status: number) =>
@@ -216,7 +171,16 @@ const removeAccount = createRoute({
     body: { content: { 'application/json': { schema: DeleteAccountSchema } }, required: true }
   },
   responses: {
-    200: json(z.object({ status: z.literal('deleted') }), 'Deleted.'),
+    200: json(
+      z.object({
+        status: z.literal('deleted'),
+        appStoreSubscriptionContinues: z.boolean().openapi({
+          description:
+            "True when the account had an App Store subscription still running. The service can't end one: Apple keeps billing until the learner cancels it in the App Store, so the app tells them, and offers the App Store's subscription settings."
+        })
+      }),
+      'Deleted.'
+    ),
     400: refusal({
       bad_request:
         "The body is not JSON, or not this shape, or its `appleRedirectUri` is on none of the website's origins.",
@@ -245,9 +209,10 @@ const sync = createRoute({
     200: json(SyncAnswerSchema, 'The results and the changes.'),
     400: refusal(malformed),
     401: unauthorized,
+    402: refusal(subscriptionRequired),
     410: refusal({
       invalid_cursor:
-        "The cursor isn't one this service gave this account, or is past what it holds, as after a restore. Nothing was applied. Sync again with no cursor, and keep what comes back."
+        "The cursor isn't one this service gave this account, is past what it holds, as after a restore, or the account has since forgotten a note, photo, or photo word's deletion past it. Nothing was applied. Sync again with no cursor, as a full read: keep what comes back, and once `hasMore` is false, drop each note, photo, and photo word your app holds a version for that the read didn't bring. A read from no cursor is never refused for what the account forgot before it began; if one is, back off rather than start again at once."
     }),
     413: tooLarge,
     429: tooMany(requestsPerMinute.sync),
@@ -324,8 +289,16 @@ export function accountRoutes(
       { code: appleAuthorizationCode, redirectUri: appleRedirectUri },
       languageOf(context.req.valid('header')[languageHeader])
     )
-    if (deletion === 'deleted') return context.json({ status: 'deleted' as const }, 200)
-    const [status, code, message] = deletionAnswers[deletion]
+    if (deletion.status === 'deleted') {
+      return context.json(
+        {
+          status: 'deleted' as const,
+          appStoreSubscriptionContinues: deletion.appStoreSubscriptionContinues
+        },
+        200
+      )
+    }
+    const [status, code, message] = deletionAnswers[deletion.status]
     return context.json(errorBody(code, message), status)
   })
 
@@ -347,7 +320,8 @@ export function accountRoutes(
         results: answer.results.map(resultJson),
         changes: answer.changes.map(changeJson),
         cursor: answer.cursor,
-        hasMore: answer.hasMore
+        hasMore: answer.hasMore,
+        ...(answer.searchKey ? { searchKey: answer.searchKey } : {})
       },
       200
     )

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect } from 'vitest'
 import { cursorKey, cursors } from '../domain/cursor'
-import { testSecret } from './service'
+import { type BillingStandIns, testSecret } from './service'
 import { sessionToken, userIdOf, useSignInService } from './sign-in'
 
 export interface Learner {
@@ -31,9 +31,10 @@ export interface SyncedAnswer {
   changes: SyncedChange[]
   cursor: string
   hasMore: boolean
+  searchKey?: string
 }
 
-export function useAccountService(options: { appleKey?: boolean } = {}) {
+export function useAccountService(options: { appleKey?: boolean; billing?: BillingStandIns } = {}) {
   const running = useSignInService({ providers: true, ...options })
   const call = (path: string, options: Parameters<typeof running.service.call>[1]) =>
     running.service.call(path, options)
@@ -70,3 +71,17 @@ export function useAccountService(options: { appleKey?: boolean } = {}) {
       (await mutate(learner.token)).changes.filter(change => change.entity === entity)
   }
 }
+
+export const appliedAt = (...versions: number[]) =>
+  versions.map(version => ({ status: 'applied', version }))
+
+export const outcomesOf = (results: SyncedResult[]) =>
+  results.map(result => result.error?.code ?? result.status)
+
+export const deleted = (entity: string, entityId: string, version: number) => ({
+  entity,
+  entityId,
+  operation: 'delete',
+  version,
+  data: null
+})

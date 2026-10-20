@@ -1,4 +1,11 @@
-const accountServicePaths = ['/v1/auth', '/v1/me', '/v1/sync', '/v1/health'] as const
+const accountServicePaths = [
+  '/v1/auth',
+  '/v1/me',
+  '/v1/sync',
+  '/v1/photos',
+  '/v1/health',
+  '/v1/webhooks'
+] as const
 
 const serviceOwnPaths = ['/healthz', '/dev/mail'] as const
 

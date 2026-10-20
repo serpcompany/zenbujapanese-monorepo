@@ -6,7 +6,8 @@ keeps its copy of their known words, lists, and other study data in step. The co
 readable form is the [API reference](../api/account-api.md): every route with its auth and scopes,
 every field with its type and bounds, every answer and error code, and each synced entity's
 operations, with an example of each. This guide is the order to use them in, and the rules no
-schema shows. How the service works inside is [`account-api.md`](account-api.md).
+schema shows. How the service works inside is [`account-api.md`](account-api.md), and the
+subscription that unlocks sync is [`account-billing.md`](account-billing.md), For apps.
 
 Every app stays local-first: everything works signed out and offline, the device's copy is what the
 app shows, and the account only carries changes between devices and apps (#374).
@@ -14,8 +15,9 @@ app shows, and the account only carries changes between devices and apps (#374).
 ## The host
 
 `https://api.zenbujapanese.com`, and `https://api-staging.zenbujapanese.com` for staging. Every
-route is under `/v1`, and every body is JSON (`Content-Type: application/json`), at most 64 KB. An
-error is `{ "error": { "code": "...", "message": "..." } }`: branch on `code`, show or log
+route is under `/v1`, and every body is JSON (`Content-Type: application/json`), at most 64 KB, but
+a photo's upload, which is the photo's file, up to 12 MB ([Photos](account-client-rules.md#photos)).
+An error is `{ "error": { "code": "...", "message": "..." } }`: branch on `code`, show or log
 `message` (Errors, below).
 
 Staging and production are separate: an account, a session, or an access token from one means
@@ -33,18 +35,23 @@ setting ([`account-api.md`](account-api.md), Settings).
 
 | App | ID | Scopes |
 | --- | --- | --- |
-| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write` |
-| zenbujapanese.com | `zenbu-web` | the same, without `watch:*` and `translations:*` |
+| Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write`, `notes:read`, `notes:write`, `photos:read`, `photos:write`, `settings:read`, `settings:write`, `searches:read`, `searches:write`, `subscription` |
+| zenbujapanese.com | `zenbu-web` | the same, without `watch:*`, `translations:*`, `notes:*`, `photos:*`, `settings:*`, and `searches:*` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
   `GET /v1/auth/get-session`, which shows the email and name.
 - `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
-- `watch:read` and `watch:write` read and change the videos the learner watched in the iOS app's
-  Player ([Watch history](#watch-history)), and `translations:read` and `translations:write` the
-  sentences they bookmarked in its Translate tab ([Translate bookmarks](#translate-bookmarks)).
-  Only the iOS app has them: no other app shows them, so none gets them, least privilege.
+- `watch:*` reads and changes the videos the learner watched in the iOS app's Player,
+  `translations:*` the sentences they bookmarked in its Translate tab, `notes:*` their word and
+  kanji notes, `photos:*` their Media Library photos and the files under them, `settings:*` their
+  settings, and `searches:*` their recent searches, each by its rule
+  ([`account-client-rules.md`](account-client-rules.md)). Only the iOS app has them: no other app
+  shows them, so none gets them, least privilege. `profile` also reads and changes the profile
+  photo, and downloads its file.
+- `subscription` reads the account's subscription, and buys or manages one
+  ([`account-billing.md`](account-billing.md)).
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
 - An app without a scope gets `403 insufficient_scope` from the route, or `not_allowed` for a sync
   change, and sync never sends it the entities it can't read: Tomodachi never gets the profile.
@@ -93,12 +100,12 @@ doesn't list, a sign-in is refused (`unknown_client`).
   `"idToken": { "token": "…", "nonce": "…", "user": { "name": { "firstName": "Kana", "lastName": "Fan" } } }`,
   so a new account has a name. Keep the credential's `authorizationCode` only while deleting the
   account (Deleting the account, below).
-- **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself
-  (not hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client
-  ID, which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web
-  client's. The iOS app needs no SDK: it opens Google's OAuth for iOS with PKCE in
-  `ASWebAuthenticationSession` and exchanges the code for the ID token
-  ([`ios.md`](ios.md), Account and sync).
+- **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself (not
+  hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client ID,
+  which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web client's.
+  The iOS app needs no SDK: it opens Google's OAuth for iOS with PKCE in
+  `ASWebAuthenticationSession` and exchanges the code for the ID token ([`ios.md`](ios.md), Account
+  and sync).
 - **An emailed code:** `POST /v1/auth/email-otp/send-verification-otp` with
   `{ "email": "...", "type": "sign-in" }`, then `POST /v1/auth/sign-in/email-otp` with the email
   and the code. The first answers `200` whether or not the email has an account, so it shows
@@ -264,9 +271,9 @@ are the learner's to fix; the reference lists each field's bounds.
 
 ## Word cards
 
-An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards
-and segmentation, on the same host: send the access token, as to `/v1/me`. They're the only
-dictionary routes an app calls (ADR 0014). Their contract is
+An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards and
+segmentation, on the same host: send the access token, as to `/v1/me`. They're the only dictionary
+routes an app calls (ADR 0014). Their contract is
 [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), and its readable form
 the [dictionary API reference](../api/dictionary-api.md): every field of a card and a token, and
 every answer.
@@ -277,8 +284,7 @@ every answer.
   `sources` to show, and lists the IDs it has no entry for in `missing`.
 - `GET /v1/apps/segmentation?text=<text>` splits 1 to 200 characters into words: each token's
   `text`, its `reading` when it has kanji, its `dictionaryForm` when that differs, and its
-  `languageReferenceID`,
-  or `candidates` when it may be one of several words. URL-encode the text.
+  `languageReferenceID`, or `candidates` when it may be one of several words. URL-encode the text.
 
 ```http
 GET /v1/apps/word-cards?ids=7f490a9c9c0da94f4e9474f4efe74be1 HTTP/1.1
@@ -334,8 +340,7 @@ and the cursor across launches.
 
 ## How to sync
 
-`POST /v1/sync` with the queued changes and the cursor from the last sync you applied, or none the
-first time:
+`POST /v1/sync` with the queued changes and the cursor from the last sync you applied, or none:
 
 1. **Queue each change as it's made**, with:
    - a new UUID as its `id`, kept with it;
@@ -353,9 +358,8 @@ first time:
      your copy.
    - `rejected`: undo the change on the device, unless it was part of the first upload (below),
      or the code is `unknown_entity`: the service is older than your app, so keep the change, stop
-     sending that entity's changes, and upload it again later, as a first upload.
-     To try something else, queue a new change with a new `id`; never send a result's `id` again
-     with a different change.
+     sending that entity's changes, and upload it again later, as a first upload. To try something
+     else, queue a new change with a new `id`; never send a result's `id` with a different change.
 4. **Apply each change in `changes`** over your copy, by entity and `entityId`: `put` is the
    entity as it is now, `delete` is gone. Keep the `cursor`. While `hasMore` is true, sync again.
    A list word can arrive a page before its list: hold it until `hasMore` is false. An entity
@@ -363,8 +367,10 @@ first time:
    change's result. A conflict's `current` replaces it. If the change is applied at a newer
    version, the account's copy of that comes in `changes`; if it's applied at the held copy's
    version (it changed nothing), or rejected, take the held copy.
-5. **On `410 invalid_cursor`**, sync again with no cursor, and take what comes back over your copy;
-   queued changes still go.
+5. **On `410 invalid_cursor`**, sync again with no cursor; queued changes still go. **A read from no
+   cursor is a full read** (a first sign-in, a catch-up, after a 410): at `hasMore: false`, drop
+   each note, photo, and photo word you hold a version for that it didn't bring, send, or still has
+   queued, and nothing else. A 410 during a full read: back off and report it, never loop.
 
 A request and its answer:
 
@@ -427,79 +433,16 @@ example. The bounds of a request:
 
 **The first upload.** The first time a device syncs to an account, queue what the device has:
 each known word as a `mark`, each list as a `create`, each list word as an `add`, each watched
-video as a `watch`, and each bookmarked sentence as an `add`, all at base version 0, then sync with
-no cursor. A device that already synced
+video as a `watch`, each bookmarked sentence as an `add`, each note as a `write`, each Media
+Library photo as an `add` (its file uploaded first) and each of its words as an `add`, the
+profile photo as a `set`, each setting the learner changed as a `set`, and each recent search as a
+`search`, all at base version 0, then sync with no cursor. A device that already synced
 before its app could sync an entity uploads that entity's items the same way, once, and syncs
 again with no cursor, since its cursor passed that entity's changes. The device had these before the account did, so a rejection
 of one undoes nothing on the device: a list the account already has is rejected `already_exists`,
-and the account's copy comes down.
-
-### The rules, from your side
-
-- **The profile**, by the account's ID (or none): `update` with `name`, `username`, or both, at
-  the version your app had, conflicts if the profile changed since. Only an app with `profile`
-  reads or changes it.
-- **Known words**, by item: a Language Reference ID, or `kanji:` and the kanji.
-  - `mark` and `clear` take the version your app had. If the word changed since, it's a conflict.
-  - Marking a known word, or clearing one not known, is applied and changes nothing.
-  - **Tomodachi:** mark a word the first time it reaches "knows it". If the mark conflicts because
-    the learner un-marked the word in Zenbu, don't send it again: mark it again only once the word
-    climbs back to "knows it" (#563, decision 4).
-- **Lists**, by UUID:
-  - A rename or move conflicts if the list changed since.
-  - A delete wins over everything done to the list since, and takes its words: when a list is
-    deleted, drop its words on the device.
-  - **Favorites has one ID in every app: `2177c773-9e88-410f-9348-6cefaebe0a93`.** An app that
-    starts learners with a Favorites list gives it this ID, so every device's Favorites is one list
-    in the account (lists are the account's own, so the ID can't collide with another learner's).
-    On a second device, its `create` is rejected (`already_exists`): keep the list, take the
-    account's copy as it comes down, and its words' adds still apply. If the account's copy comes
-    down deleted, the device's Favorites never belonged to it: keep it and its words as a new list,
-    under a new ID, rather than dropping them, even though an `add` to the deleted list was
-    rejected (`unknown_list`). Any other list the account deleted is deleted on the device. The
-    iOS app moves an older install's Favorites to this ID before its first upload.
-- **List words**, `<list>/<item>`:
-  - An add always applies.
-  - A remove applies only if your app had the latest add: an add from elsewhere wins.
-  - An add to a list that's gone is rejected (`unknown_list`): undo it.
-
-### Watch history
-
-What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube video ID. It needs
-`watch:read` and `watch:write`.
-
-- **Send the whole video with each `watch`:** `watchedAt`, when the learner last watched it, and
-  whatever the device knows of `title`, `author` (the channel), `duration` and `position` (seconds),
-  and `comprehension` (0 to 1). A field left out keeps the account's value, and the account keeps
-  the later `watchedAt`. Send a watch each time one of them changes; while one is queued and not
-  yet sent, a newer watch of the same video can replace it.
-- **A watch of a video the account has always applies,** whatever its base version. The watch
-  with the later `watchedAt` sets the place; an older one that arrives late only fills in fields
-  the account lacks. So use the device's clock for `watchedAt`, and a time from 2000 on.
-- **`remove`, when the learner removes a video, always applies.** A watch of a removed video
-  applies only at the removal's version: one made before the device saw the removal conflicts,
-  and `current` is the delete. Take it. Watching it again afterwards brings it back. Keep a removed
-  video's version while the account remembers it: the latest 100 videos removed or pruned.
-- **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
-  comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
-  device that missed an old prune still shows what the account has. Don't send a `remove` for one
-  your device drops for being past 50.
-- **Order** the list by `watchedAt`, newest first.
-
-### Translate bookmarks
-
-The sentences the learner bookmarked in the iOS app's Translate tab, as `bookmarkedSentence`, by
-the sentence's UUID. It needs `translations:read` and `translations:write`.
-
-- **Send only the bookmarked sentence:** its `text`, its `translation` (or null), its `language`
-  (`ja` or `en`), and `bookmarkedAt`. Never the conversation, its ID, or any sentence the learner
-  didn't bookmark: conversations hold other people's words, and stay on the device.
-- **An add always applies.** Un-bookmarking sends a `remove` at the version your app had, which
-  conflicts if the sentence was bookmarked again elsewhere since: take `current`, and show it
-  bookmarked. Deleting a conversation un-bookmarks its sentences, so send a `remove` for each.
-- **A bookmark from another device** names a sentence whose conversation may not be on this one:
-  show it on its own, with its translation.
-- **At most 2,000** an account (`too_many_bookmarks`): undo the add.
+and the account's copy comes down. A setting or the profile photo the account already has
+conflicts, and the account's wins, as the profile's name does at sign-in. How each entity's
+change applies, from your side, is [`account-client-rules.md`](account-client-rules.md).
 
 ## Errors
 
@@ -517,12 +460,16 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 invalid_nonce`, `invalid_token`, `400 nonce_required` | Start the Apple or Google sign-in over, with a new nonce. |
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
+| `402 subscription_required` | From `/v1/sync` or `/v1/photos`: keep the queue and the photos on the device; show the paywall ([billing](account-billing.md)). |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
-| `410 invalid_cursor` | Sync again with no cursor. |
-| `413 too_large` | The body is over 64 KB: send fewer mutations at a time. |
+| `410 invalid_cursor` | Read again from no cursor, as a full read (How to sync, step 5). |
+| `413 too_large` | The body is over 64 KB: send fewer mutations at a time. A photo's file is over 12 MB: keep the photo on the device only. |
+| `400 photo_digest_mismatch` | The bytes sent aren't the file the ID names: read the file again, and upload it once more. |
+| `409 too_many_photos`, `415 unsupported_photo` | The account can't keep this file: keep the photo on the device only. |
+| `503 photos_unavailable` | The service keeps no photos yet: keep them on the device, and upload them later. |
 | `429 too_many_requests` | Wait the seconds `Retry-After` says, whatever started the request. |
 | `500 internal`, a network failure, an answer that isn't JSON | Retry with exponential backoff and jitter, in the foreground. |
-| `503 apple_unavailable` | Nothing was deleted: sign in with Apple again for a new code, and try again (Deleting the account). |
+| `503 apple_unavailable`, `billing_unavailable` | Nothing was deleted: sign in with Apple again for a new code, or wait, and try again (Deleting the account). |
 | `503 email_unavailable` | The service sends no email here: offer Apple or Google, and don't retry the code. |
 | A code not listed | Act on its status as above. A newer service, or Better Auth, may add one. |
 
@@ -555,15 +502,14 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
    (a `providerId` of `apple`). One without it, such as Tomodachi, sends step 3 without a code: an
    Apple account answers `400 apple_authorization_needed`, so it then signs in with Apple and
    sends the code. If the fresh sign-in in step 1 was Apple's, send its code at once.
-3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account: the code from signing in with the Apple ID the account uses. The website sends its
-   popup's return URL too, as `"appleRedirectUri"`. The service revokes your
-   app's Apple access with it before deleting. `apple_authorization_needed`,
-   `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
-   nothing: sign in with Apple again for a new code, and try again.
-4. On `200`, sign out on the device: forget the session token and the cursor, and keep the
-   device's data. The account, and everything it synced, is gone; signing in again makes a new
-   one.
+3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple account:
+   the code from signing in with the Apple ID the account uses. The website sends its popup's return
+   URL too, as `"appleRedirectUri"`. The service revokes your app's Apple access with it before
+   deleting. `apple_authorization_needed`, `apple_authorization_invalid`, `apple_account_mismatch`,
+   and `503 apple_unavailable` delete nothing: sign in with Apple again for a new code, and retry.
+4. On `200`, sign out on the device: forget the session token and the cursor, and keep the device's
+   data. The account, and all it synced, is gone; signing in again makes a new one. With
+   `appStoreSubscriptionContinues`, say that Apple bills until the learner cancels in the App Store.
 
 The fresh sign-in in step 1 makes a new session: use its tokens, and sign the earlier session out
 (`POST /v1/auth/sign-out` with its token) so it doesn't linger. Refuse a fresh sign-in into another
