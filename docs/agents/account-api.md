@@ -252,8 +252,9 @@ profile's). `PATCH /v1/me` and a sync mutation change the profile through the sa
   going back to an older database), or one whose floor is below the highest sequence the account
   forgot (`forgotten_versions`) is refused `410 invalid_cursor` before anything applies, and the
   client reads again from no cursor. An answer's floor is, after a cursor, the higher of its floor
-  and its position; from no cursor, the journal head after the request's own changes. So a full
-  read is refused only if a deletion made after it began is forgotten before it's read.
+  and its position; from no cursor, the account's own journal head after the request's changes and
+  before its page. So a full read is refused only if a deletion made after it began is forgotten
+  before it's read, or, past that head, an entry it read is forgotten before its next request.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
 
 ## Deleting an account
@@ -288,8 +289,8 @@ else, and deletes only after a fresh sign-in.
   the same transaction queues for deletion from R2 and the service deletes at once, or within the
   hour if R2 doesn't answer ([`account-photos.md`](account-photos.md)). Its access tokens stop
   working at `/v1/me`, `/v1/sync`, and `/v1/photos` at once (the account is gone), and expire
-  within 15 minutes everywhere else. The account's email is told. Backups that hold it are deleted within 30 days (Back up and
-  restore).
+  within 15 minutes everywhere else. The account's email is told. Backups that hold it are
+  deleted within 30 days (Back up and restore).
 - **Each device** keeps its own data and works signed out, as the apps' product docs say.
 - **Signing in again** with the same email or Apple or Google account makes a new account.
 
@@ -369,10 +370,10 @@ The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To ch
 change `src/db/schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
 `meta/` files it writes. Never edit or regenerate a migration once it has run anywhere: Drizzle
 runs only those dated after the last one a database ran, so an edited one never runs where the old
-one did, and a regenerated one, with a new date, runs again over the tables it made. Add a new one. For
-SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate --custom --name
-<what it does>` and write it into the empty file. They're drizzle-kit's, comments and formatting
-included, so Biome and the comments check leave the folder alone.
+one did, and a regenerated one, with a new date, runs again over the tables it made: add a new
+one. For SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate
+--custom --name <what it does>` and fill in the empty file. They're drizzle-kit's, comments and
+formatting included, so Biome and the comments check leave the folder alone.
 
 The service applies the migrations when it starts, before it listens, holding a Postgres advisory
 lock so two starts take them one after the other. A deploy starts the new image while the old one
@@ -418,9 +419,10 @@ way and call the routes with their access tokens. They show:
   paging; queued mutations applied in order; a retry applied once and answered the same; a
   conflict, again on a retry; unknown entities and operations, and a reused ID, rejected while the
   rest apply; and a result forgotten after 30 days.
-- **Bounds:** another account's profile, cursor, and mutation IDs out of reach; a forged, too-new,
-  or forgotten-past cursor refused before anything applies, once, a full read refused only for a
-  deletion forgotten after it began (`sync-forgotten.test.ts`); request bounds; fields; safe logs.
+- **Bounds:** others' profiles, cursors, and mutation IDs out of reach; a forged, too-new, or
+  forgotten-past cursor refused once, a full read only for a deletion forgotten after it began
+  (`sync-forgotten.test.ts`; races in `src/db/sync-races.test.ts`); request bounds, and fields that
+  nest or hold control characters; and logs that hold no profile, email, or token.
 - **Edges:** a name given at sign-up held to the rules, and fields sign-up has no say in ignored;
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.

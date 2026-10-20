@@ -154,6 +154,14 @@ export function accountStore(db: Drizzle): AccountStore {
       return Number(row?.head ?? 0)
     },
 
+    async accountJournalHead(userId) {
+      const [row] = await db
+        .select({ head: max(syncChanges.sequence) })
+        .from(syncChanges)
+        .where(eq(syncChanges.userId, userId))
+      return Number(row?.head ?? 0)
+    },
+
     async forgottenThrough(userId) {
       const [row] = await db
         .select({ through: max(forgottenVersions.sequence) })
