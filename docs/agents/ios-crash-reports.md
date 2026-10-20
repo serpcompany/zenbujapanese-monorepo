@@ -110,7 +110,9 @@ in: area)` builds the code from the error's type and case in snake case
 type's name, and a code that isn't short and stable becomes `unknown`. At most four details go
 with it, and only short, stable keys and values (a status or a pack's ID). Cancellation, a lost
 connection (`HandledProblem.expectedURLErrors`: no network, a timeout, a host that can't be found
-or reached, and the like), and an unreachable service or an ended session send nothing; any other
+or reached, and the like), an unreachable service, an ended session, and a `402`
+(`AccountServiceError.needsSubscription`: an account without a subscription, not a fault) send
+nothing; any other
 URL error, such as a refused certificate or an `http://` address, is sent as
 `nsurlerror_domain.<number>`. Each area and code is sent once a launch, grouped by
 `["handled-problem", area, code]`. `HandledProblemTests` checks the codes, once a launch, and that

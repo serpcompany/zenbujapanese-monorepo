@@ -112,6 +112,8 @@ struct HandledProblem: Equatable, Sendable {
     switch error {
     case .unreachable, .sessionEnded:
       return nil
+    case .refused where error.needsSubscription:
+      return nil
     case .refused(let status, let serviceCode, _, _):
       var details = ["status": String(status)]
       if (1...64).contains(serviceCode.count),
