@@ -94,17 +94,35 @@ async function saved(
 export function photoFiles(store: AccountStore, storage: PhotoStorage | null) {
   let sweeping: Promise<number> | null = null
 
+  async function deleteDue(key: string) {
+    try {
+      await (key.endsWith('/') ? storage?.deleteUnder(key) : storage?.delete(key))
+    } catch (error) {
+      await store.photoDeletions.dueAt(key, photoLimits.deletionRetryHours)
+      return error
+    }
+    await store.photoDeletions.done(key)
+    return null
+  }
+
   async function sweepOnce() {
     let deleted = 0
+    const failures: unknown[] = []
     for (;;) {
       const due = storage ? await store.photoDeletions.due(photoLimits.deletionsPerSweep) : []
       for (const key of due) {
-        await (key.endsWith('/') ? storage?.deleteUnder(key) : storage?.delete(key))
-        await store.photoDeletions.done(key)
+        const failure = await deleteDue(key)
+        if (failure === null) deleted += 1
+        else failures.push(failure)
       }
-      deleted += due.length
-      if (due.length < photoLimits.deletionsPerSweep) return deleted
+      if (due.length < photoLimits.deletionsPerSweep) break
     }
+    if (failures.length > 0) {
+      throw new Error(`${failures.length} due photo files could not be deleted`, {
+        cause: failures[0]
+      })
+    }
+    return deleted
   }
 
   async function keep(

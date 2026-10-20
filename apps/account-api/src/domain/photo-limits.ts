@@ -6,6 +6,7 @@ export const photoLimits = {
   nameLength: 200,
   uploadHeldHours: 24,
   deletionsPerSweep: 100,
+  deletionRetryHours: 1,
   goneKept: 1_000,
   profileUploads: 2,
   emptiedKeptDays: 30

@@ -55,6 +55,7 @@
                       "../db",
                       "../db/**",
                       "../server",
+                      "../wiring",
                       "pg",
                       "drizzle-orm",
                       "drizzle-orm/**",
@@ -74,7 +75,7 @@
                       "../storage/**",
                       "aws4fetch"
                     ],
-                    "message": "src/http is the HTTP layer: it answers from what src/server.ts hands it (the database's state, the auth handler, the billing rules, the photo files, the dev mailbox), and imports neither the database, sign-in, email, photo storage, nor the payment providers (docs/agents/account-api.md, Code layout)."
+                    "message": "src/http is the HTTP layer: it answers from what src/server.ts and src/wiring.ts hand it (the database's state, the auth handler, the billing rules, the photo files, the dev mailbox), and imports neither the database, sign-in, email, photo storage, nor the payment providers (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -99,6 +100,7 @@
                       "../db",
                       "../db/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -145,6 +147,7 @@
                       "../http",
                       "../http/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -191,6 +194,7 @@
                       "../auth",
                       "../auth/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -231,6 +235,7 @@
                       "../http",
                       "../http/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -243,7 +248,7 @@
                       "../storage/**",
                       "aws4fetch"
                     ],
-                    "message": "src/auth sets up sign-in on the database and the mailer; src/server.ts hands its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
+                    "message": "src/auth sets up sign-in on the database and the mailer; src/server.ts and src/wiring.ts hand its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -272,6 +277,7 @@
                       "../email",
                       "../email/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -284,7 +290,7 @@
                       "../storage/**",
                       "aws4fetch"
                     ],
-                    "message": "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts hands them to the domain, so they know nothing of HTTP, the database, sign-in, email, or photo storage (docs/agents/account-billing.md, Code layout)."
+                    "message": "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts and src/wiring.ts hand them to the domain, so they know nothing of HTTP, the database, sign-in, email, or photo storage (docs/agents/account-billing.md, Code layout)."
                   }
                 ]
               }
@@ -313,6 +319,7 @@
                       "../email",
                       "../email/**",
                       "../server",
+                      "../wiring",
                       "hono",
                       "hono/**",
                       "@hono/**",
@@ -327,7 +334,7 @@
                       "stripe/**",
                       "@apple/**"
                     ],
-                    "message": "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts hands it to the domain, so it imports neither HTTP, the database, sign-in, email, nor the payment providers (docs/agents/account-api.md, Code layout)."
+                    "message": "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts and src/wiring.ts hand it to the domain, so it imports neither HTTP, the database, sign-in, email, nor the payment providers (docs/agents/account-api.md, Code layout)."
                   }
                 ]
               }
@@ -354,6 +361,7 @@
                       "./domain",
                       "./domain/**",
                       "./server",
+                      "./wiring",
                       "hono",
                       "hono/**",
                       "pg",
