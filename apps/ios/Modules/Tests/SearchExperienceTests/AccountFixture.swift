@@ -60,7 +60,8 @@ final class AccountFixture {
   nonisolated let defaultsSuite = "account-tests-\(UUID().uuidString)"
   let server: StubAccountServer
   let storage: MemorySessionTokenStorage
-  var now = Date(timeIntervalSince1970: 1_791_000_000)
+  nonisolated static let start = Date(timeIntervalSince1970: 1_791_000_000)
+  var now = AccountFixture.start
   var providers = SignInProviders.system
   var googleClientID: String?
   let retries = HeldRetries()
@@ -112,7 +113,7 @@ final class AccountFixture {
       kept: KeptStores(
         notes: notes, media: media, searches: searches, settings: settings, frequency: frequency),
       store: store, fileURL: directory.appending(path: "account-sync.json"), providers: providers,
-      now: { [unowned self] in now }, retryClock: retries.clock)
+      now: { [weak self] in self?.now ?? Self.start }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
   }
