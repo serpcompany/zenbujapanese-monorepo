@@ -3863,6 +3863,52 @@
     };
   }
 
+  // src/detail/meaning-actions.ts
+  function meaningActions(sense) {
+    const glosses = [...new Set(meaningGlosses(sense.meaning).map(spokenGloss))].filter(Boolean);
+    return {
+      spoken: glosses.length > 0 ? glosses.join(", ") : collapsed(sense.meaning),
+      glosses,
+      copyText: sense.noteText ? `${sense.meaning}
+${sense.noteText}` : sense.meaning
+    };
+  }
+  function meaningGlosses(meaning) {
+    const glosses = [];
+    let depth = 0;
+    let start = 0;
+    for (let index = 0; index < meaning.length; index++) {
+      const character = meaning[index];
+      if (character === "(") depth++;
+      else if (character === ")") depth = Math.max(0, depth - 1);
+      else if (character === "," && depth === 0) {
+        glosses.push(meaning.slice(start, index));
+        start = index + 1;
+      }
+    }
+    glosses.push(meaning.slice(start));
+    return glosses.map(collapsed).filter(Boolean);
+  }
+  function spokenGloss(gloss) {
+    let text = collapsed(gloss);
+    for (let opening = endingGroupStart(text); opening > 0; opening = endingGroupStart(text)) {
+      text = text.slice(0, opening).trimEnd();
+    }
+    return collapsed(text.replace(/[()]/gu, ""));
+  }
+  function endingGroupStart(text) {
+    if (!text.endsWith(")")) return -1;
+    let depth = 0;
+    for (let index = text.length - 1; index >= 0; index--) {
+      if (text[index] === ")") depth++;
+      else if (text[index] === "(" && --depth === 0) return index;
+    }
+    return -1;
+  }
+  function collapsed(text) {
+    return text.replace(/\s+/gu, " ").trim();
+  }
+
   // src/detail/pitch.ts
   var joinsPreviousMora = new Set("ゃゅょぁぃぅぇぉゎャュョァィゥェォヮ");
   var heiban = 0;
@@ -4422,7 +4468,7 @@
           }
         },
         pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-        senses: detail.senses,
+        senses: detail.senses.map((sense) => ({ ...sense, ...meaningActions(sense) })),
         alternatives: detail.alternatives,
         kanji: detail.kanji.map(({ character }) => character),
         alternativeKanji: detail.alternativeKanji.map(({ character }) => character),

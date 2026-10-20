@@ -21,6 +21,7 @@ import {
 import { type KanjiElementDetail, kanjiElementDetail } from '../detail/kanji-element'
 import { type KanjiReadings, withKanjiReadings } from '../detail/kanji-split'
 import { kanjiSearchURL, wordURL } from '../detail/links'
+import { type MeaningActions, meaningActions } from '../detail/meaning-actions'
 import { type PitchAccent, shownPitch } from '../detail/pitch'
 import type { FormRow, KanjiReadingRow, KanjiStrokesRow, PitchRow } from '../detail/rows'
 import { type RubySegment, rubySegments } from '../detail/ruby'
@@ -73,11 +74,11 @@ export interface EmbeddedWordPage
     | 'partOfSpeech'
     | 'partOfSpeechRow'
     | 'pronounce'
-    | 'senses'
     | 'alternatives'
     | 'related'
     | 'shareText'
   > {
+  senses: (WordDetail['senses'][number] & MeaningActions)[]
   noExamples: string
   pitch: (PitchAccent & { source: string }) | null
   conjugations:
@@ -239,7 +240,7 @@ export class EmbeddedPresentation {
         }
       },
       pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-      senses: detail.senses,
+      senses: detail.senses.map(sense => ({ ...sense, ...meaningActions(sense) })),
       alternatives: detail.alternatives,
       kanji: detail.kanji.map(({ character }) => character),
       alternativeKanji: detail.alternativeKanji.map(({ character }) => character),
