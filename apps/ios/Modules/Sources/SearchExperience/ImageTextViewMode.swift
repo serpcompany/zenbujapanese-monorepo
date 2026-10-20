@@ -1,6 +1,8 @@
 import SwiftUI
 
 enum ImageTextViewMode: String, CaseIterable, Identifiable {
+  static let storageKey = "image-text.view-mode"
+
   case photo
   case both
   case text

@@ -1,10 +1,12 @@
 import XCTest
+import notify
 
 final class AccountSignedInUITests: ZenbuUITestCase {
   static let standIns = [
     "ZENBU_SIGN_IN_STAND_IN": "1", "ZENBU_ACCOUNT_STAND_IN": "1",
     "ZENBU_ACCOUNT_API_URL": "https://account.stand-in.test",
   ]
+  static let keptOnAnotherDevice = ["ZENBU_ACCOUNT_STAND_IN_KEPT": "1"]
 
   override func setUpWithError() throws {
     try XCTSkipIf(
@@ -68,8 +70,8 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     XCTAssertFalse(find("profile.email", in: app).exists, "the account's email can't be edited")
     waitFor(
       labeled(
-        "A username is 3 to 30 letters a to z, digits, or underscores. Your name and username sync"
-          + " with your Zenbu account. Your photo stays on this device.", in: app))
+        "A username is 3 to 30 letters a to z, digits, or underscores. Your name, username, and"
+          + " photo sync with your Zenbu account.", in: app))
 
     focus(name)
     TestDevice.selectAllText(in: name)
@@ -82,5 +84,27 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     waitUntil(name, "value == 'Kana Fan'")
     goBack(in: app)
     waitUntil(waitFor(find("account.profile", in: app)), "label CONTAINS 'Kana Fan'")
+  }
+
+  func testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice() {
+    let app = launch(Self.standIns.merging(Self.keptOnAnotherDevice) { a, _ in a })
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    let photo = waitFor(firstElement(identifiedBy: "media-library.item.", in: app))
+    waitUntil(photo, mentions: "猫")
+    goBack(in: app)
+    tap(reveal(find("account.reading-aids", in: app), in: app))
+    waitUntil(waitFor(find("reading-aids.show-romaji", in: app)), Self.switchedOn)
+    open(.search, in: app)
+    waitUntil(waitFor(find("recent-search.0", in: app)), "label == '猫'")
+  }
+
+  func testAnOpenMediaLibraryShowsAPhotoFromAnotherDeviceAsItArrives() {
+    let app = launch(Self.standIns.merging(["ZENBU_ACCOUNT_STAND_IN_KEPT": "hold"]) { a, _ in a })
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitFor(find("media-library.empty", in: app))
+    notify_post("com.zenbujapanese.dictionary.uitests.release-kept")
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
   }
 }

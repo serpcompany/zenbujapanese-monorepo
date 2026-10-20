@@ -45,6 +45,27 @@ enum ImageCoding {
       ] as CFDictionary)
   }
 
+  static func withoutMetadata(_ data: Data) -> Data? {
+    guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+      let type = CGImageSourceGetType(source)
+    else { return nil }
+    let output = NSMutableData()
+    if let destination = CGImageDestinationCreateWithData(output, type, 1, nil) {
+      let options: [CFString: Any] = [
+        kCGImageDestinationMetadata: CGImageMetadataCreateMutable(),
+        kCGImageDestinationMergeMetadata: false,
+        kCGImageMetadataShouldExcludeGPS: true,
+        kCGImageMetadataShouldExcludeXMP: true,
+        kCGImageDestinationOrientation: orientation(of: source).rawValue,
+      ]
+      if CGImageDestinationCopyImageSource(destination, source, options as CFDictionary, nil) {
+        return output as Data
+      }
+    }
+    guard let image = thumbnail(from: source, maxPixelSize: 12_000) else { return nil }
+    return jpegData(image, quality: 0.95)
+  }
+
   static func jpegData(_ image: CGImage, quality: Double) -> Data? {
     encode(image, as: .jpeg, options: [kCGImageDestinationLossyCompressionQuality: quality])
   }

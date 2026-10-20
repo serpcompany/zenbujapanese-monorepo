@@ -37,6 +37,7 @@ flowchart LR
     Accounts["Account service image"] --> Server
     App -->|"sign-in and sync, through Cloudflare"| Server
     Server --- Postgres[("Postgres, on the server")]
+    Server --- Photos[("Learners' photo files, in R2")]
     Browser["Learner's browser, on the website's account pages"] -->|"session cookie, then access token"| Server
 ```
 
@@ -60,8 +61,9 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 ([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
 holds what learners keep across devices, and the one subscription that unlocks syncing it, which
 Stripe and the App Store report to it at `/v1/webhooks`. Its Postgres database sits on the same
-server, on a network only the service's slots reach, and every app keeps its own copy and works
-offline (ADR 0013). The website's account pages call it from the learner's browser, not from the
+server, on a network only the service's slots reach, learners' photo files are in R2 (ADR 0020),
+and every app keeps its own copy and works offline (ADR 0013). The website's account pages call it
+from the learner's browser, not from the
 Worker, whose requests to the API host Bot Fight Mode challenges
 ([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
@@ -91,8 +93,8 @@ saying where the code belongs:
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
-- **The account service**: the domain; then the database, email, sign-in, and the payment
-  providers' adapters; then HTTP, which reaches them only through what `src/server.ts` hands it
+- **The account service**: the domain; then the database, photo storage, email, sign-in, and the
+  payment providers' adapters; then HTTP, which reaches them only through what `src/server.ts` hands it
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which

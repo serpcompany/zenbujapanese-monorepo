@@ -4,7 +4,7 @@ import SwiftUI
 struct ImageTextFlowView: View {
   @State private var model: ImageTextFlowModel
   @State private var analysisAvailability = JapaneseTextAnalysisAvailability.full
-  @AppStorage("image-text.view-mode") private var mode = ImageTextViewMode.both
+  @AppStorage(ImageTextViewMode.storageKey) private var mode = ImageTextViewMode.both
   @State private var activeLineID: Int?
   @Binding private var presentedWord: RecognizedWordSheetRequest?
   let textAnalysisClient: JapaneseTextAnalysisClient

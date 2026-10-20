@@ -51,7 +51,6 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(menu.status == "Sorted by Default")
     #expect(menu.filter.options.map(\.value) == ["all", "known", "unknown"])
     #expect(menu.filter.options.map(\.title) == ["All", "Known", "Unknown"])
-    #expect(!list.forgetsSort)
   }
 
   @Test("sorting by a dictionary orders every word by it and leads each row with its chip")
@@ -107,7 +106,7 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(list.menu?.filter.options.first?.value == "all")
   }
 
-  @Test("with no dictionary enabled, words keep their order and say so, and a dictionary's sort is forgotten")
+  @Test("with no dictionary enabled, words keep their order and say so, and a dictionary's sort shows as Default")
   func noDictionaryEnabled() async throws {
     let searched = try await SearchedScreen.search(
       "iru", using: PresentationCore(listing: try .listing()),
@@ -118,14 +117,14 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(
       list.rows.first?.spoken == "Result 1 of \(list.rows.count), No frequency dictionary enabled")
     #expect(list.menu?.sort.options.map(\.title) == ["Default", "Known Words"])
-    #expect(list.forgetsSort)
+    #expect(list.menu?.sort.chosen == ResultsLearner.defaultSort)
   }
 
-  @Test("a sort by a dictionary that is no longer enabled is forgotten")
-  func forgetsADisabledDictionary() async throws {
+  @Test("a sort by a dictionary that isn't enabled here shows as Default")
+  func keepsADisabledDictionarysSort() async throws {
     let list = try await SearchedScreen.search("iru", sort: "frequency|zenbu.jiten.anime").list
-    #expect(list.forgetsSort)
     #expect(list.menu?.status == "Sorted by Default")
+    #expect(list.menu?.sort.chosen == ResultsLearner.defaultSort)
   }
 
   @Test("a dictionary whose file can't be opened is named, and the others still order the list")

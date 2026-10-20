@@ -93,9 +93,12 @@ class AccessibilityAuditCase: ZenbuUITestCase {
       "the \(device.name) has no Dynamic Type: its text sizes don't follow a setting")
   }
 
-  func openFixtureImage(_ pass: AuditPass) throws -> XCUIApplication {
+  func openFixtureImage(_ pass: AuditPass, _ environment: [String: String] = [:]) throws
+    -> XCUIApplication
+  {
     self.pass = pass
-    return try openFixtureImage(pass.environment, arguments: pass.size.arguments)
+    return try openFixtureImage(
+      pass.environment.merging(environment) { $1 }, arguments: pass.size.arguments)
   }
 
   func audit(_ screen: String, in app: XCUIApplication, _ part: AuditPart = .every) {

@@ -1,25 +1,26 @@
 import XCTest
 
 final class AccountAuditUITests: AccessibilityAuditCase {
-  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() {
-    auditAccount(.standard)
+  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() throws {
+    try auditAccount(.standard)
   }
 
   func testAccountsScreensPassTheAuditAtTheLargestTextSize() throws {
     try skipWithoutTextSizes()
-    auditAccount(.largest)
+    try auditAccount(.largest)
   }
 
-  func testAccountsScreensPassTheAuditInDarkAppearance() {
-    auditAccount(.dark)
+  func testAccountsScreensPassTheAuditInDarkAppearance() throws {
+    try auditAccount(.dark)
   }
 
-  private func auditAccount(_ pass: AuditPass) {
+  private func auditAccount(_ pass: AuditPass) throws {
     auditTheAccountAndItsSettings(pass)
     auditTheLearnersWords(pass)
     auditSigningIn(pass)
     guard device != .mac else { return auditTheSettingsWindow(pass) }
     auditTheZenbuAccount(pass)
+    try auditPhotosTheAccountCantKeep(pass)
     auditSubscribing(pass)
     for (state, held) in Self.subscriptions { auditASubscription(state, held, pass) }
     auditDeletingWithAnAppStoreSubscription(pass)
@@ -109,7 +110,17 @@ final class AccountAuditUITests: AccessibilityAuditCase {
   }
 
   private func auditTheZenbuAccount(_ pass: AuditPass) {
-    let app = openTheZenbuAccount(pass, AccountSignedInUITests.standIns)
+    let app = launch(pass, Self.signedIn(AccountSignedInUITests.keptOnAnotherDevice))
+    signInWithApple(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
+    audit("Media Library, with a photo from the account", in: app)
+    goBack(in: app)
+    tap(reveal(find("account.profile", in: app), in: app))
+    waitUntil(waitFor(find("profile.account-email", in: app)), mentions: "learner@example.com")
+    audit("Profile, signed in", in: app)
+    goBack(in: app)
+    tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
     tap(reveal(find("zenbu-account.delete", in: app), in: app))
     waitUntilStill(waitForSheet("delete-account.cancel", in: app))
@@ -187,6 +198,34 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     let deleted = find("delete-account.done-note", in: app)
     audit("Deleted, with an App Store subscription", placing: deleted, in: app, .allButTextSizes)
     audit("Deleted, its App Store subscription", placing: note, in: app, .allButTextSizes)
+  }
+
+  private func auditPhotosTheAccountCantKeep(_ pass: AuditPass) throws {
+    let notes = [
+      ("too_many_photos", "a photo refused as too many", "Your Zenbu account holds as many photos"),
+      ("photos_unavailable", "photos waiting for storage", "Photos wait to sync"),
+    ]
+    for (refusal, state, note) in notes {
+      let app = try openFixtureImage(pass, Self.signedIn(["ZENBU_ACCOUNT_STAND_IN_REFUSES": refusal]))
+      saveThePhotoOnAWord(in: app)
+      signInWithApple(in: app)
+      tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+      waitFor(
+        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", note)).firstMatch)
+      audit("Zenbu Account, \(state)", in: app)
+    }
+  }
+
+  private func saveThePhotoOnAWord(in app: XCUIApplication) {
+    tap(waitFor(firstElement(identifiedBy: "image-text.region.", in: app)))
+    tap(find("recognized-word-sheet.open-full-entry", in: app))
+    tap(find("word-detail.image-attachment", in: app))
+    waitForSheet("word-detail.image-page", in: app)
+    tap(find("word-detail.image-attachment-done", in: app))
+  }
+
+  private static func signedIn(_ more: [String: String]) -> [String: String] {
+    AccountSignedInUITests.standIns.merging(more) { $1 }
   }
 
   private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {

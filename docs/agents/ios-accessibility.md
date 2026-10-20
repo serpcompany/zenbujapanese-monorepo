@@ -26,7 +26,12 @@ Five classes in `apps/ios/UITests/Accessibility/` walk the app, `SearchAuditUITe
 A walk launches the app fresh for each part of its tab, reaches each screen the way a learner
 does, and audits it (`audit(_:in:)` in `AccessibilityAudit.swift`). It collects every finding and
 fails once, at the end, listing each finding that isn't allowed, so one run measures a whole tab.
-Each test attaches **Accessibility findings**: the screens it audited, the findings not allowed,
+On the iPhone and iPad, `AccountAuditUITests` also signs in to the stand-in account: with
+`ZENBU_ACCOUNT_STAND_IN_KEPT=1` for the Media Library holding a photo from another device, the
+signed-in Profile, and Zenbu Account, and, after saving a photo on a word, with
+`ZENBU_ACCOUNT_STAND_IN_REFUSES` for Zenbu Account's notes on a photo refused as too many and on
+photos waiting for storage ([`ios-account-sync.md`](ios-account-sync.md)). Each test attaches
+**Accessibility findings**: the screens it audited, the findings not allowed,
 those allowed, those only reported, any allowed entry that matched nothing, and what each kind of
 finding means. A screen with findings also attaches its screenshot;
 `TEST_RUNNER_ZENBU_AUDIT_SCREENSHOTS=1` on the `xcodebuild` command keeps every screen's. Read

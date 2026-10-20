@@ -27,9 +27,10 @@ Check: core `results/ordering.test.ts` (each order, and the row's words); packag
 to Default).
 
 Switching re-sorts the visible results without searching again and announces the new order to
-VoiceOver. The choice is kept on the device across launches and applies to Japanese, English, and
-romaji searches. If frequency data can't be read, a dictionary sort shows as Default until it can
-be. If the chosen dictionary is disabled or removed, Search goes back to Default. The Kanji row,
+VoiceOver. The choice is kept across launches, and signed in, on the learner's other devices, and
+applies to Japanese, English, and romaji searches. If frequency data can't be read, a dictionary
+sort shows as Default until it can be. If the chosen dictionary is disabled, removed, or not yet
+downloaded on this device, Search shows Default and keeps the choice for when it's back. The Kanji row,
 Example Sentences, the reading refinement, and Discovered Words keep their places; when there are no
 word rows to sort (only Discovered Words, or only a single kanji's Kanji row), the row isn't shown.
 
@@ -50,8 +51,8 @@ filter**; no other row is added. Filtering keeps the chosen sort. When it hides 
 list shows **No Words Match Your Filter** with the count and **Clear Filter**.
 
 Changing the filter updates the visible results without searching again and announces how many
-words show to VoiceOver. The filter is kept on the device across launches and applies to
-Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
+words show to VoiceOver. The filter is kept across launches, and signed in, on the learner's other
+devices, and applies to Japanese, English, and romaji searches. The Kanji row, Example Sentences, the reading refinement,
 and Discovered Words are never filtered.
 
 Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the

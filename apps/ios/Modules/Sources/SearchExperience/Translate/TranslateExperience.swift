@@ -24,7 +24,7 @@ enum TranslateStartProblem: Equatable {
 @Observable
 final class TranslateExperience {
   private static let layoutKey = "translate.layout.v1"
-  private static let speechSpeedKey = "translate.speech-speed.v1"
+  nonisolated static let speechSpeedKey = "translate.speech-speed.v1"
   static let speechSpeeds = 0.5...2.0
   static let speechSpeedStep = 0.1
 
@@ -47,6 +47,7 @@ final class TranslateExperience {
 
   @ObservationIgnored let services: TranslateServices
   @ObservationIgnored private let defaults: UserDefaults
+  @ObservationIgnored private var speedObserver: NSObjectProtocol?
   @ObservationIgnored private var modeAwaitingTranslationDownload: TranslateMode?
   @ObservationIgnored private var startIsAbandoned = false
 
@@ -65,6 +66,18 @@ final class TranslateExperience {
     readingAids = ReadingAidPreferences(
       defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     services.setSpeechSpeed(speed)
+    speedObserver = NotificationCenter.default.addObserver(
+      forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated { self?.takeStoredSpeechSpeed() }
+    }
+  }
+
+  private func takeStoredSpeechSpeed() {
+    guard let stored = defaults.object(forKey: Self.speechSpeedKey) as? Double,
+      stored != speechSpeed
+    else { return }
+    speechSpeed = stored
   }
 
   func changeSpeechSpeed(by steps: Int) {

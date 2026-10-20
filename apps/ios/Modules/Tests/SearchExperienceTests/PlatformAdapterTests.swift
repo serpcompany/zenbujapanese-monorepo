@@ -32,18 +32,11 @@ struct PlatformAdapterTests {
 
   @Test("a photo's orientation is applied when it's decoded, for display and for storage")
   func orientation() throws {
-    let image = try #require(solidImage(width: 60, height: 20))
-    let data = NSMutableData()
-    let destination = try #require(
-      CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
-    CGImageDestinationAddImage(
-      destination, image, [kCGImagePropertyOrientation: CGImagePropertyOrientation.right.rawValue]
-        as CFDictionary)
-    #expect(CGImageDestinationFinalize(destination))
-    let decoded = try #require(ImageCoding.image(from: data as Data))
+    let data = try turnedJPEG()
+    let decoded = try #require(ImageCoding.image(from: data))
     #expect(decoded.width == 20)
     #expect(decoded.height == 60)
-    #expect(DecodedImage(data: data as Data)?.size == CGSize(width: 20, height: 60))
+    #expect(DecodedImage(data: data)?.size == CGSize(width: 20, height: 60))
   }
 
   @Test("a pasted image is stored as a JPEG no larger than Image Search reads")
@@ -72,8 +65,32 @@ struct PlatformAdapterTests {
     let bannerProvider = try #require(NSItemProvider(contentsOf: banner))
     let assets = await droppedOnTheMainActor([signProvider, bannerProvider])
     let asset = try #require(assets[0])
-    #expect(asset.data == (try Data(contentsOf: sign)))
+    let stored = try #require(ImageCoding.image(from: asset.data))
+    #expect((stored.width, stored.height) == (300, 200))
     #expect(assets[1] == nil)
+  }
+
+  @Test("a photo from Files or a drop loses where and how it was taken, and keeps which way is up")
+  func importedPhotoLosesItsMetadata() throws {
+    let data = try turnedJPEG(with: [
+      kCGImagePropertyGPSDictionary: [
+        kCGImagePropertyGPSLatitude: 35.68, kCGImagePropertyGPSLatitudeRef: "N",
+        kCGImagePropertyGPSLongitude: 139.76, kCGImagePropertyGPSLongitudeRef: "E",
+      ],
+      kCGImagePropertyExifDictionary: [kCGImagePropertyExifUserComment: "Tokyo Station"],
+    ])
+    let file = FileManager.default.temporaryDirectory.appending(path: "photo-\(UUID().uuidString).jpg")
+    defer { try? FileManager.default.removeItem(at: file) }
+    try data.write(to: file)
+
+    let asset = try ImageTextAsset.readCopy(from: file)
+    let source = try #require(CGImageSourceCreateWithData(asset.data as CFData, nil))
+    let kept = try #require(CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any])
+    #expect(kept[kCGImagePropertyGPSDictionary] == nil)
+    let exif = kept[kCGImagePropertyExifDictionary] as? [CFString: Any]
+    #expect(exif?[kCGImagePropertyExifUserComment] == nil)
+    let decoded = try #require(ImageCoding.image(from: asset.data))
+    #expect((decoded.width, decoded.height) == (20, 60))
   }
 
   @MainActor
@@ -163,6 +180,18 @@ struct PlatformAdapterTests {
   private func pngData(width: Int, height: Int) throws -> Data {
     let image = try #require(solidImage(width: width, height: height))
     return try #require(ImageCoding.pngData(image))
+  }
+
+  private func turnedJPEG(with properties: [CFString: Any] = [:]) throws -> Data {
+    let image = try #require(solidImage(width: 60, height: 20))
+    let data = NSMutableData()
+    let destination = try #require(
+      CGImageDestinationCreateWithData(data, UTType.jpeg.identifier as CFString, 1, nil))
+    let turned = properties.merging(
+      [kCGImagePropertyOrientation: CGImagePropertyOrientation.right.rawValue]) { kept, _ in kept }
+    CGImageDestinationAddImage(destination, image, turned as CFDictionary)
+    #expect(CGImageDestinationFinalize(destination))
+    return data as Data
   }
 
   private func solidImage(width: Int, height: Int) -> CGImage? {

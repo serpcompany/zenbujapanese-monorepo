@@ -18,6 +18,8 @@ final class ReadingAidPreferences {
   private static let storageKey = "reading-aids.preferences.v1"
   private let defaults: UserDefaults
   private let storageKey: String
+  @ObservationIgnored private var observer: NSObjectProtocol?
+  @ObservationIgnored private var isTaking = false
 
   var showsFurigana = true {
     didSet { persist() }
@@ -50,26 +52,50 @@ final class ReadingAidPreferences {
   ) {
     self.defaults = defaults
     self.storageKey = storageKey
-    guard
-      let data = defaults.data(forKey: storageKey),
-      let stored = try? JSONDecoder().decode(StoredPreferences.self, from: data)
-    else {
+    observer = NotificationCenter.default.addObserver(
+      forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated { self?.takeStored() }
+    }
+    guard let stored else {
       if !furiganaByDefault { showsFurigana = false }
       return
     }
-    showsFurigana = stored.showsFurigana
-    showsRomaji = stored.showsRomaji
-    showsWordMeanings = stored.showsWordMeanings ?? false
-    showsKanjiMeanings = stored.showsKanjiMeanings ?? true
-    showsTranslations = stored.showsTranslations ?? true
-    translationLanguage =
-      stored.translationLanguage.flatMap(TranslationLanguage.init(rawValue:)) ?? .english
-    hidesFuriganaOnKnownWords = stored.hidesFuriganaOnKnownWords ?? false
-    translationSource =
-      stored.translationSource.flatMap(TranslationSource.init(rawValue:)) ?? .youTube
+    take(stored)
+  }
+
+  private var stored: StoredPreferences? {
+    defaults.data(forKey: storageKey).flatMap {
+      try? JSONDecoder().decode(StoredPreferences.self, from: $0)
+    }
+  }
+
+  private func takeStored() {
+    if let stored { take(stored) }
+  }
+
+  private func take(_ stored: StoredPreferences) {
+    func set<Value: Equatable>(_ path: ReferenceWritableKeyPath<ReadingAidPreferences, Value>, _ value: Value) {
+      if self[keyPath: path] != value { self[keyPath: path] = value }
+    }
+    isTaking = true
+    defer { isTaking = false }
+    set(\.showsFurigana, stored.showsFurigana)
+    set(\.showsRomaji, stored.showsRomaji)
+    set(\.showsWordMeanings, stored.showsWordMeanings ?? false)
+    set(\.showsKanjiMeanings, stored.showsKanjiMeanings ?? true)
+    set(\.showsTranslations, stored.showsTranslations ?? true)
+    set(
+      \.translationLanguage,
+      stored.translationLanguage.flatMap(TranslationLanguage.init(rawValue:)) ?? .english)
+    set(\.hidesFuriganaOnKnownWords, stored.hidesFuriganaOnKnownWords ?? false)
+    set(
+      \.translationSource,
+      stored.translationSource.flatMap(TranslationSource.init(rawValue:)) ?? .youTube)
   }
 
   private func persist() {
+    guard !isTaking else { return }
     let stored = StoredPreferences(
       showsFurigana: showsFurigana,
       showsRomaji: showsRomaji,

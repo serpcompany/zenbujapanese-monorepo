@@ -11,6 +11,23 @@ extension Data {
   var sha256: String {
     SHA256.hash(data: self).hexString
   }
+
+  init?(hexString: String) {
+    guard hexString.count.isMultiple(of: 2) else { return nil }
+    var bytes: [UInt8] = []
+    var index = hexString.startIndex
+    while index < hexString.endIndex {
+      let next = hexString.index(index, offsetBy: 2)
+      guard let byte = UInt8(hexString[index..<next], radix: 16) else { return nil }
+      bytes.append(byte)
+      index = next
+    }
+    self.init(bytes)
+  }
+
+  func hmacSHA256(under key: Data) -> String {
+    HMAC<SHA256>.authenticationCode(for: self, using: SymmetricKey(data: key)).hexString
+  }
 }
 
 let fileDigestChunk = 4 * 1_024 * 1_024

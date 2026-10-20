@@ -9,11 +9,14 @@ final class AccountSync: LocalFileStore {
   static let unknownEntity = "unknown_entity"
   static let requestBytes = 48 * 1024
 
-  private(set) var state = AccountSyncState()
+  var state = AccountSyncState()
   private(set) var isLoaded = false
   private(set) var isUnavailable = false
   private(set) var isSyncing = false
   private(set) var lastFailure: AccountServiceError?
+  var keptRevision = 0
+  var downloadsLeft = 0
+  var photosUnavailable = false
 
   var account: SignedInAccount? { state.account }
   var sessionEndedOnItsOwn: Bool { state.endedOnItsOwn }
@@ -21,12 +24,16 @@ final class AccountSync: LocalFileStore {
   var queuedChangeCount: Int { state.queue.filter { !state.holds($0.key) }.count }
 
   @ObservationIgnored let tokens: AccountTokens
-  @ObservationIgnored private let api: AccountAPI
-  @ObservationIgnored private let wordKnowledge: WordKnowledge
-  @ObservationIgnored private let wordLists: WordLists
-  @ObservationIgnored private let watchHistory: WatchHistory
-  @ObservationIgnored private let translations: ConversationHistory
-  @ObservationIgnored private let userProfile: UserProfile
+  @ObservationIgnored let api: AccountAPI
+  @ObservationIgnored let kept: KeptStores
+  @ObservationIgnored var keptToApply: [AccountCopy] = []
+  @ObservationIgnored var filesWait = false
+  @ObservationIgnored var downloadsWait: TimeInterval?
+  @ObservationIgnored let wordKnowledge: WordKnowledge
+  @ObservationIgnored let wordLists: WordLists
+  @ObservationIgnored let watchHistory: WatchHistory
+  @ObservationIgnored let translations: ConversationHistory
+  @ObservationIgnored let userProfile: UserProfile
   @ObservationIgnored private let file: AccountSyncStateFile
   @ObservationIgnored private let now: @MainActor () -> Date
   @ObservationIgnored let writes = LocalFileWriteQueue()
@@ -34,8 +41,9 @@ final class AccountSync: LocalFileStore {
   @ObservationIgnored var onRefusedForSubscription: (() -> Void)?
   @ObservationIgnored var onWaitingForSubscription: (() -> Void)?
   @ObservationIgnored var waitsForSubscription: @MainActor () -> Bool = { false }
-  @ObservationIgnored private var session = 0
-  @ObservationIgnored private var caughtUpThisLaunch = false
+  @ObservationIgnored var onRetryFiles: ((TimeInterval) -> Void)?
+  @ObservationIgnored private(set) var session = 0
+  @ObservationIgnored var caughtUpThisLaunch = false
   @ObservationIgnored private var changesBeforeLoad: [SavedItemChange] = []
 
   init(
@@ -46,6 +54,7 @@ final class AccountSync: LocalFileStore {
     watchHistory: WatchHistory,
     translations: ConversationHistory,
     profile: UserProfile,
+    kept: KeptStores,
     fileURL: URL = AccountSync.defaultFileURL,
     now: @escaping @MainActor () -> Date = Date.init
   ) {
@@ -56,6 +65,7 @@ final class AccountSync: LocalFileStore {
     self.watchHistory = watchHistory
     self.translations = translations
     userProfile = profile
+    self.kept = kept
     self.now = now
     let file = AccountSyncStateFile(fileURL: fileURL)
     self.file = file
@@ -82,6 +92,7 @@ final class AccountSync: LocalFileStore {
     wordLists.changeObserver = { [weak self] change in self?.record(change) }
     watchHistory.changeObserver = { [weak self] change in self?.record(change) }
     profile.changeObserver = { [weak self] change in self?.record(change) }
+    observeKeptChanges()
     translations.bookmarkObserver = { [weak self] change in
       switch change {
       case .added(let bookmark): self?.record(.bookmarkAdded(bookmark))
@@ -105,6 +116,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func ready() async {
+    kept.settings.noticeChanges()
     await flush()
     await wordKnowledge.flush()
     await wordLists.flush()
@@ -114,7 +126,7 @@ final class AccountSync: LocalFileStore {
   func begin(_ signIn: AccountSignIn) async {
     await ready()
     tokens.replaceSession(with: signIn.sessionToken)
-    session += 1
+    startSession()
     lastFailure = nil
     let account = SignedInAccount(userID: signIn.userID, email: signIn.email)
     if !state.resume(as: account) {
@@ -122,10 +134,17 @@ final class AccountSync: LocalFileStore {
       wordLists.useSharedFavoritesID()
       state = AccountSyncState(account: account)
       state.takesAccountProfile = switchesAccount
-      state.queue = uploads().map(\.upload)
+      state.syncedEntities = []
+      caughtUpThisLaunch = false
     }
     state.versions[state.profileKey.stored] = nil
     persist()
+  }
+
+  private func startSession() {
+    session += 1
+    downloadsLeft = 0
+    photosUnavailable = false
   }
 
   func confirm(_ signIn: AccountSignIn) throws {
@@ -134,7 +153,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func endSession(onItsOwn: Bool = false) {
-    session += 1
+    startSession()
     tokens.forgetSession()
     state.signOut(onItsOwn: onItsOwn)
     userProfile.refusal = nil
@@ -143,7 +162,7 @@ final class AccountSync: LocalFileStore {
   }
 
   func forgetAccount() {
-    session += 1
+    startSession()
     tokens.forgetSession()
     state = AccountSyncState()
     userProfile.refusal = nil
@@ -161,7 +180,9 @@ final class AccountSync: LocalFileStore {
     isSyncing = true
     defer { isSyncing = false }
     let session = session
-    catchUpOnNewEntities()
+    filesWait = false
+    downloadsWait = nil
+    await catchUpOnNewEntities()
     do {
       try await readProfileIfNew(in: session)
       try await pull(in: session)
@@ -231,46 +252,20 @@ final class AccountSync: LocalFileStore {
     writes.save { [self] in await file.write(state) }
   }
 
+  func recordKept(_ change: KeptLocalChange) {
+    record(.kept(change))
+  }
+
   private func record(_ change: SavedItemChange) {
     guard isLoaded else {
       changesBeforeLoad.append(change)
       return
     }
-    guard !isUnavailable, state.keepsChanges else { return }
+    guard !isUnavailable, state.keepsChanges, let change = identifyingSearch(change) else { return }
+    state.forgetRefusal(of: change)
     state.enqueue(change.queued(in: state))
     persist()
-    if account != nil { onLocalChange?() }
-  }
-
-  private func uploads() -> [SavedItemChange] {
-    let marks = wordKnowledge.knownRecords.reversed().map {
-      SavedItemChange.known(
-        KnownWordChange(
-          storedID: $0.entryID, headword: $0.headword, reading: $0.reading, known: true))
-    }
-    let lists = wordLists.lists.map(SavedItemChange.listCreated)
-    let words = wordLists.lists.flatMap { wordLists.words(in: $0.id).reversed() }
-      .map(SavedItemChange.wordAdded)
-    let videos = watchHistory.videos.reversed().map {
-      SavedItemChange.videoWatched($0, previous: nil)
-    }
-    let bookmarks = translations.bookmarks.reversed().map {
-      SavedItemChange.bookmarkAdded($0.shared)
-    }
-    return marks + lists + words + videos + bookmarks
-  }
-
-  private func catchUpOnNewEntities() {
-    guard !caughtUpThisLaunch else { return }
-    caughtUpThisLaunch = true
-    let missing = Set(SyncEntity.uploaded).subtracting(state.syncedEntities)
-    guard !missing.isEmpty else { return }
-    state.queue += uploads().map(\.upload).filter { missing.contains($0.key.entity) }
-    state.syncedEntities = SyncEntity.uploaded
-    state.cursor = nil
-    state.heldWords = []
-    state.deferred = [:]
-    persist()
+    if account != nil, !change.ridesAlong { onLocalChange?() }
   }
 
   private func readProfileIfNew(in session: Int) async throws {
@@ -290,42 +285,33 @@ final class AccountSync: LocalFileStore {
     persist()
   }
 
-  private func nextBatch() -> [QueuedSyncChange] {
-    var keys = Set<SyncEntityKey>()
-    var batch: [QueuedSyncChange] = []
-    var bytes = 0
-    for change in state.queue where !state.holds(change.key) {
-      bytes += (try? JSONEncoder().encode(change.payload).count) ?? 0
-      guard batch.isEmpty || bytes <= Self.requestBytes, batch.count < Self.mutationsPerRequest,
-        keys.insert(change.key).inserted
-      else { break }
-      batch.append(change)
-    }
-    return batch
-  }
-
   private func pull(in session: Int) async throws {
     var hasMore = true
-    while hasMore || state.queue.contains(where: { !state.holds($0.key) }) {
+    while hasMore || state.queue.contains(where: isSendable) {
       try Task.checkCancellation()
-      let batch = nextBatch()
+      if state.cursor == nil, state.rereadSeen == nil { state.rereadSeen = [] }
+      let batch = try await uploadFiles(for: nextBatch())
+      guard self.session == session else { return }
       let request = SyncRequestBody(cursor: state.cursor, mutations: batch.map(\.payload))
       let answer: SyncAnswer
       do {
         answer = try await tokens.withAccessToken { [api] token in
           try await api.sync(request, accessToken: token)
         }
-      } catch AccountServiceError.refused(status: 410, _, _, _) where request.cursor != nil {
+      } catch let refusal as AccountServiceError where refusal.isInvalidCursor && request.cursor != nil {
         guard self.session == session else { return }
-        state.cursor = nil
-        state.heldWords = []
-        state.deferred = [:]
-        persist()
+        try readEverythingAgain(after: refusal)
         continue
       }
       guard self.session == session else { return }
       resolve(batch, with: answer.results)
+      await takeSearchKey(answer.searchKey)
+      guard self.session == session else { return }
+      notePhotoPlacesFreed(by: answer.changes)
       for change in answer.changes { apply(change) }
+      state.rereadSeen?.formUnion(batch.map(\.key.stored) + answer.changes.map(\.key.stored))
+      if !answer.hasMore { dropWhatTheFullReadDidntBring() }
+      await drainKept(in: session)
       await wordKnowledge.flush()
       await wordLists.flush()
       await translations.flush()
@@ -337,6 +323,10 @@ final class AccountSync: LocalFileStore {
     let leftovers = state.deferred.values
     state.deferred = [:]
     leftovers.forEach(apply)
+    await drainKept(in: session)
+    await retryWaitingFiles(in: session)
+    guard self.session == session else { return }
+    if let wait = downloadsWait { onRetryFiles?(wait) }
     placeHeldWords()
     state.accountHadFavorites = false
     state.lastSyncedAt = now()
@@ -349,8 +339,14 @@ final class AccountSync: LocalFileStore {
     let outcomes = Dictionary(results.map { ($0.id, $0.outcome) }) { first, _ in first }
     for change in batch {
       let settled = !state.hasQueuedChange(to: change.key)
+      if let photoID = Self.fileUploaded(by: change) { state.uploadedFiles.removeAll { $0 == photoID } }
       switch outcomes[change.id] {
       case .applied(let version):
+        if change.key.entity == SyncEntity.photo, change.operation == "delete",
+          version != change.baseVersion
+        {
+          state.photoRoomFreed = true
+        }
         state.setVersion(version, of: change.key, gone: change.operation == "remove")
         state.rebase(change.key, from: change.baseVersion, to: version)
         if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
@@ -359,8 +355,9 @@ final class AccountSync: LocalFileStore {
           apply(copy)
         }
       case .conflict(let current):
-        apply(current)
+        if !keptConflict(change, current: current) { apply(current) }
       case .rejected(let code):
+        keptRejected(change, code: code)
         if code == Self.unknownEntity {
           state.syncedEntities.removeAll { $0 == change.key.entity }
           state.queue.removeAll { $0.key.entity == change.key.entity }
@@ -390,7 +387,9 @@ final class AccountSync: LocalFileStore {
     if let copy = AccountCopy(change) { apply(copy) }
   }
 
-  private func apply(_ copy: AccountCopy) {
+  func apply(_ copy: AccountCopy) {
+    guard copy.key.entity != SyncEntity.wordNote || !state.refusedNotes.contains(copy.key.entityID)
+    else { return }
     guard !state.hasQueuedChange(to: copy.key), !state.holds(copy.key) else {
       state.deferred[copy.key.stored] = copy
       return
@@ -412,6 +411,8 @@ final class AccountSync: LocalFileStore {
       translations.applySynced(bookmark)
     case .profile(let fields):
       userProfile.applySynced(fields.keepingWhatCantGoUp(on: userProfile.fields))
+    case .kept:
+      keptToApply.append(copy)
     case .gone:
       removeLocally(copy.key)
     }
@@ -428,7 +429,7 @@ final class AccountSync: LocalFileStore {
     }
   }
 
-  private func removeLocally(_ key: SyncEntityKey) {
+  func removeLocally(_ key: SyncEntityKey) {
     switch key.entity {
     case SyncEntity.knownWord:
       let record = wordKnowledge.records[key.entityID]
@@ -455,7 +456,7 @@ final class AccountSync: LocalFileStore {
       guard let id = UUID(uuidString: key.entityID) else { return }
       translations.applySyncedRemoval(ofBookmark: id)
     default:
-      return
+      keptToApply.append(AccountCopy(key: key, version: 0, value: .gone))
     }
   }
 

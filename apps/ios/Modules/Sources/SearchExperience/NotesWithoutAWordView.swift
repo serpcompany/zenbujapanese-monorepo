@@ -26,7 +26,7 @@ final class NotesWithoutAWord {
   }
 
   func delete(_ saved: NoteWithoutAWord) async {
-    await store.save(LearnerWordNote(id: saved.note.id, text: ""), saved.key)
+    await store.save(LearnerWordNote(id: saved.note.id, text: ""), saved.key, nil)
     await reload()
   }
 }

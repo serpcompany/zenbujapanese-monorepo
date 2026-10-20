@@ -39,10 +39,10 @@ Every other type is not collected. The ones a reviewer may ask about:
 - **Location**, precise or coarse: no. The IP address isn't used to locate anyone; it's answered
   under Other Data Types.
 - **Device ID**: no. The account keeps no device or advertising identifier.
-- **Photos or Videos**: no. Photos stay on the device; the account keeps at most a profile
-  picture's address (Other Data Types).
-- **Search History**: no. Searches stay on the device, and the dictionary service answers
-  Tomodachi's word-card and segmentation requests without keeping them.
+- **Photos or Videos**: no for Tomodachi, whose account keeps at most a profile picture's address
+  (Other Data Types). The Zenbu app syncs photos (below).
+- **Search History**: no for Tomodachi, and the dictionary service answers its word-card and
+  segmentation requests without keeping them. The Zenbu app syncs recent searches (below).
 - **Usage Data and Diagnostics**: no, but for the Zenbu app's Product Interaction (below). The
   services' request logs hold each request's method, route, status, and timing, and nothing the
   learner sent or that identifies them. The API host's
@@ -52,24 +52,28 @@ Every other type is not collected. The ones a reviewer may ask about:
 
 ## The Zenbu Japanese app
 
-All five types above, two more for the watch history it syncs from its Player, which only it
-reads and changes (`watch:read` and `watch:write`), and one for the subscription it sells (#868):
+All five types above, four more for what only it syncs (#867): the watch history from its Player
+(`watch:read` and `watch:write`), its settings, its photos (`photos:*`, and the profile photo with
+`profile`), and its recent searches (`searches:*`); and one for the subscription it sells (#868):
 
 | Apple's data type | What the account keeps | Purpose | Linked to the user | Used for tracking |
 | --- | --- | --- | --- | --- |
 | Browsing History | The 50 YouTube videos the learner most recently watched in the app: each video's ID, title, channel, and length, and when they last watched it; the IDs of up to 100 they removed or that fell past the 50, with when; and, for 30 days, the result of each change the app sent, naming the video and when. | App Functionality | Yes | No |
-| Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know. | App Functionality | Yes | No |
+| Usage Data → Product Interaction | For each of those videos, where the learner stopped and the share of its captions' words they know; and the app's settings: Reading Aids, Translate's furigana and speech speed, search results' sort and filter, Image Search's view, and the frequency dictionaries chosen. | App Functionality | Yes | No |
+| Photos or Videos | The Media Library's photos, each file as the app saved it with its name and the words it's on, and the profile photo. A file is kept in Cloudflare R2 until its photo is deleted, or 30 days after its last word is removed; the account remembers the IDs of up to 1,000 deleted photos, and of each photo's latest 500 removed words. | App Functionality | Yes | No |
+| Search History | The 50 searches the learner most recently made in the app, each query and when, and the IDs of up to 100 they removed or that fell past the 50, each an HMAC of the query that can't be turned back into it. | App Functionality | Yes | No |
 | Purchases → Purchase History | The App Store subscription the app sends after a purchase or a restore: its product, status, renewal, and the transactions and refunds Apple reports, so it unlocks syncing on every device. | App Functionality | Yes | No |
 
-The App Store then also shows Browsing History, Usage Data, and Purchases under Data Linked to
-You. Its Other
-User Content is the known words and lists it syncs, and the Translate sentences the learner
-bookmarks: each one's text and translation, its language, and when it was bookmarked (or said, for
-one bookmarked before the app synced bookmarks), which may be
-what someone nearby said. It never sends a conversation, or a sentence the learner didn't bookmark,
-and it keeps no audio, so it collects no Audio Data. It has no analytics or crash-reporting SDK.
+The App Store then also shows Browsing History, Usage Data, Photos or Videos, Search History, and
+Purchases under Data Linked to You. Its Other User Content is the known words and lists it syncs,
+the word notes the learner writes (each note's text and the word it's on; the account remembers the
+IDs of up to 1,000 deleted ones), and the Translate sentences the learner bookmarks: each one's text
+and translation, its language, and when it was bookmarked (or said, for one bookmarked before the
+app synced bookmarks), which may be what someone nearby said. It never sends a conversation, or a
+sentence the learner didn't bookmark, and it keeps no audio, so it collects no Audio Data. It has no
+analytics or crash-reporting SDK.
 
-Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same eight types, and the
+Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same ten types, and the
 listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
 with the labels:
 
@@ -77,7 +81,9 @@ with the labels:
   type: `NSPrivacyCollectedDataTypeEmailAddress`, `NSPrivacyCollectedDataTypeName`,
   `NSPrivacyCollectedDataTypeUserID`, `NSPrivacyCollectedDataTypeOtherUserContent`,
   `NSPrivacyCollectedDataTypeOtherDataTypes`, `NSPrivacyCollectedDataTypeBrowsingHistory`,
-  `NSPrivacyCollectedDataTypeProductInteraction`, or `NSPrivacyCollectedDataTypePurchaseHistory`), `NSPrivacyCollectedDataTypeLinked` (true),
+  `NSPrivacyCollectedDataTypeProductInteraction`, `NSPrivacyCollectedDataTypePurchaseHistory`,
+  `NSPrivacyCollectedDataTypePhotosorVideos`, or `NSPrivacyCollectedDataTypeSearchHistory`),
+  `NSPrivacyCollectedDataTypeLinked` (true),
   `NSPrivacyCollectedDataTypeTracking` (false), and `NSPrivacyCollectedDataTypePurposes` (an array
   holding `NSPrivacyCollectedDataTypePurposeAppFunctionality`).
 - **The listing's description**, which names what the account syncs.

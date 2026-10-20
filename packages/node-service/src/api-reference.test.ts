@@ -51,6 +51,22 @@ const document: ApiDocument = {
           '429': json(error(['busy']), 'Wait.')
         }
       }
+    },
+    '/v1/files/{id}': {
+      put: {
+        summary: 'Upload a file',
+        requestBody: {
+          required: true,
+          description: "The file's bytes.",
+          content: { 'image/*': { schema: { type: 'string', format: 'binary' } } }
+        },
+        responses: {
+          '200': {
+            description: 'The file.',
+            content: { 'image/*': { schema: { type: 'string', format: 'binary' } } }
+          }
+        }
+      }
     }
   },
   components: {
@@ -156,6 +172,11 @@ describe('the API reference', () => {
     expect(reference).toContain('- **400** `too_long`: Over the limit.')
     expect(reference).toContain('- **429** `busy`: Wait.')
     expect(reference).toContain('- A 200 sends `etag`: Its version.')
+  })
+
+  test('names the media types of a body or an answer that is not JSON', () => {
+    expect(reference).toContain("**Body** (`image/*`, required): The file's bytes.")
+    expect(reference).toContain('- **200**, `image/*`: The file.')
   })
 
   test("gives each field its type, whether it's required, its bounds, and its description", () => {

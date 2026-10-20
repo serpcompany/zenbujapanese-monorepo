@@ -219,9 +219,9 @@ Check: the recorded `ExampleSearchConformanceTests` (`countText`, which the webs
 well); core `detail/examples.test.ts` and `embedded/text.test.ts`; UI
 `SearchResultsUITests.testExampleSentencesSayHowManyAreListed` (3 examples, and over 100).
 
-Recent text searches are stored on the device and listed while the query is empty. A learner can
-repeat a search, remove one by swiping or long-pressing it, or clear the entire history from the
-**•••** menu, which offers **Clear Recent Searches** while recent searches are listed. Result
+Recent text searches, the latest 50, sync to a signed-in learner's devices and are listed while
+the query is empty. A learner can repeat one, remove one by swiping or long-pressing it, or clear
+them all from the **•••** menu, which offers **Clear Recent Searches** while any are listed. Result
 headings scroll with the results instead of staying pinned over them.
 
 Check: UI `SearchUITests.testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent`,

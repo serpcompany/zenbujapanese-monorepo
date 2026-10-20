@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct FrequencyDictionariesView: View {
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var snapshot: FrequencyPackSnapshot?
   @State private var removingPackIDs: Set<FrequencyPackID> = []
   @State private var detailPack: FrequencyPackState?
@@ -49,7 +50,7 @@ struct FrequencyDictionariesView: View {
     .sheet(item: $detailPack) { pack in
       FrequencyPackDetailView(pack: pack)
     }
-    .task { await load() }
+    .task(id: zenbuAccount?.sync.keptRevision) { await load() }
     .onChange(of: Set(downloads.fractions.keys)) { downloading, stillDownloading in
       if !downloading.isSubset(of: stillDownloading) { refresh() }
     }

@@ -1,16 +1,19 @@
 import { sql } from 'drizzle-orm'
 import {
+  type AnyPgColumn,
   bigint,
   boolean,
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
   timestamp,
   uniqueIndex
 } from 'drizzle-orm/pg-core'
+import type { SettingValue } from '../domain/kept-store'
 
 const moment = (name: string) => timestamp(name, { withTimezone: true })
 const created = () => moment('created_at').notNull().defaultNow()
@@ -20,6 +23,14 @@ const owner = () =>
   text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
+const revision = () => ({
+  version: bigint('version', { mode: 'number' }).notNull(),
+  updatedAt: updated()
+})
+const keptRevision = () => ({ present: boolean('present').notNull(), ...revision() })
+const byAccountAndId = (table: { userId: AnyPgColumn; id: AnyPgColumn }) => [
+  primaryKey({ columns: [table.userId, table.id] })
+]
 
 export const users = pgTable(
   'users',
@@ -221,6 +232,111 @@ export const translationBookmarks = pgTable(
     updatedAt: updated()
   },
   table => [primaryKey({ columns: [table.userId, table.id] })]
+)
+
+export const wordNotes = pgTable(
+  'word_notes',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    itemId: text('item_id'),
+    text: text('text'),
+    headword: text('headword'),
+    reading: text('reading'),
+    ...keptRevision()
+  },
+  byAccountAndId
+)
+
+export const photoFiles = pgTable(
+  'photo_files',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    contentType: text('content_type').notNull(),
+    byteSize: integer('byte_size').notNull(),
+    storageKey: text('storage_key').notNull().unique(),
+    uploadedAt: moment('uploaded_at').notNull().defaultNow(),
+    profileUploadAt: moment('profile_upload_at')
+  },
+  byAccountAndId
+)
+
+export const forgottenVersions = pgTable(
+  'forgotten_versions',
+  {
+    userId: owner(),
+    entityType: text('entity_type').notNull(),
+    version: bigint('version', { mode: 'number' }).notNull(),
+    sequence: bigint('sequence', { mode: 'number' }).notNull()
+  },
+  table => [primaryKey({ columns: [table.userId, table.entityType] })]
+)
+
+export const photoFileDeletions = pgTable(
+  'photo_file_deletions',
+  {
+    storageKey: text('storage_key').primaryKey(),
+    dueAt: moment('due_at').notNull()
+  },
+  table => [index('photo_file_deletions_due').on(table.dueAt)]
+)
+
+export const photos = pgTable(
+  'photos',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    name: text('name'),
+    savedAt: moment('saved_at'),
+    status: text('status', { enum: ['shown', 'emptied', 'deleted'] }).notNull(),
+    ...revision()
+  },
+  byAccountAndId
+)
+
+export const photoWords = pgTable(
+  'photo_words',
+  {
+    userId: owner(),
+    photoId: text('photo_id').notNull(),
+    itemId: text('item_id').notNull(),
+    headword: text('headword').notNull(),
+    reading: text('reading').notNull(),
+    savedAt: moment('saved_at').notNull(),
+    ...keptRevision()
+  },
+  table => [primaryKey({ columns: [table.userId, table.photoId, table.itemId] })]
+)
+
+export const profilePhotos = pgTable('profile_photos', {
+  userId: owner().primaryKey(),
+  photoId: text('photo_id'),
+  ...revision()
+})
+
+export const learnerSettings = pgTable(
+  'learner_settings',
+  {
+    userId: owner(),
+    name: text('name').notNull(),
+    value: jsonb('value').$type<SettingValue>().notNull(),
+    ...revision()
+  },
+  table => [primaryKey({ columns: [table.userId, table.name] })]
+)
+
+export const recentSearches = pgTable(
+  'recent_searches',
+  {
+    userId: owner(),
+    id: text('id').notNull(),
+    query: text('query'),
+    searchedAt: moment('searched_at'),
+    status: text('status', { enum: ['searched', 'removed', 'pruned'] }).notNull(),
+    ...revision()
+  },
+  byAccountAndId
 )
 
 export const syncOrigin = pgTable('sync_origin', {

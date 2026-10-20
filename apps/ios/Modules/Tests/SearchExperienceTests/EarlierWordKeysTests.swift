@@ -234,7 +234,7 @@ struct EarlierWordKeysTests {
     let storage = try storage(in: temporary, placing: SavedWords.lookup)
     let saved = NotesWithoutAWord(
       store: WordNoteStore(
-        load: { await storage.load($0) }, save: { await storage.save($0, for: $1) },
+        load: { await storage.load($0) }, save: { await storage.save($0, for: $1, startedFrom: $2) },
         withoutAWord: { await storage.withoutAWord() }))
 
     await saved.reload()

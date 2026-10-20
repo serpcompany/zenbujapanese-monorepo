@@ -18,7 +18,7 @@ final class ZenbuAccount {
     let account = ZenbuAccount(
       configuration: $0, session: LaunchHarness.accountSession ?? AccountAPI.urlSession(),
       storage: KeychainSessionTokenStorage(), wordKnowledge: .shared, wordLists: .shared,
-      watchHistory: .shared, translations: .shared, profile: .shared,
+      watchHistory: .shared, translations: .shared, profile: .shared, kept: .shared,
       store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
     account.startSubscription()
@@ -46,6 +46,7 @@ final class ZenbuAccount {
     watchHistory: WatchHistory,
     translations: ConversationHistory,
     profile: UserProfile,
+    kept: KeptStores,
     store: any AppStorePurchases,
     fileURL: URL = AccountSync.defaultFileURL,
     providers: SignInProviders = .system,
@@ -61,7 +62,7 @@ final class ZenbuAccount {
     sync = AccountSync(
       api: api, tokens: AccountTokens(api: api, storage: storage, now: now),
       wordKnowledge: wordKnowledge, wordLists: wordLists, watchHistory: watchHistory,
-      translations: translations, profile: profile, fileURL: fileURL, now: now)
+      translations: translations, profile: profile, kept: kept, fileURL: fileURL, now: now)
     scheduler = AccountSyncScheduler(sync: sync, now: now, clock: retryClock)
     subscription = AccountSubscription(
       api: api, tokens: sync.tokens, store: store,

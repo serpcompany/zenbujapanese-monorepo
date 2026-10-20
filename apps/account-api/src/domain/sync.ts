@@ -1,12 +1,23 @@
 import { createHash } from 'node:crypto'
 import { bookmarks } from './bookmarks'
 import type { Scope } from './clients'
-import type { Cursors } from './cursor'
-import { type Change, type ClientMutation, type Entity, type Outcome, rejected } from './entities'
+import type { Cursors, Position } from './cursor'
+import {
+  type Change,
+  type ClientMutation,
+  type Entity,
+  type Outcome,
+  rejected,
+  type SyncContext
+} from './entities'
 import { knownWords } from './known-words'
+import { photos, photoWords } from './photos'
 import { type Rejection, type RejectionCode, rejection } from './profile'
+import { profilePhotos } from './profile-photo'
 import { profiles } from './profile-sync'
 import { usernameTaken } from './profile-update'
+import { recentSearches } from './recent-searches'
+import { settings } from './settings'
 import type {
   AccountStore,
   EntityReader,
@@ -18,6 +29,7 @@ import type {
 } from './store'
 import { watchHistory } from './watch-history'
 import { listWords, wordLists } from './word-lists'
+import { wordNotes } from './word-notes'
 
 export const syncLimits = {
   mutations: 50,
@@ -43,6 +55,7 @@ export type SyncAnswer =
       changes: Change[]
       cursor: string
       hasMore: boolean
+      searchKey?: string
     }
   | { status: 'invalid_cursor' }
   | { status: 'no_account' }
@@ -53,7 +66,13 @@ export const syncedEntities: Readonly<Record<EntityType, Entity>> = {
   list: wordLists,
   listWord: listWords,
   watchedVideo: watchHistory,
-  bookmarkedSentence: bookmarks
+  bookmarkedSentence: bookmarks,
+  wordNote: wordNotes,
+  photo: photos,
+  photoWord: photoWords,
+  profilePhoto: profilePhotos,
+  setting: settings,
+  recentSearch: recentSearches
 }
 
 const unknownEntity = rejection('unknown_entity', 'This service syncs no entity of that type.')
@@ -75,6 +94,11 @@ const replayedMessages: Record<RejectionCode, string> = {
   too_many_lists: 'The account had too many lists.',
   list_full: 'The list was full.',
   too_many_bookmarks: 'The account had too many bookmarked sentences.',
+  too_many_notes: 'The account had too many notes.',
+  unknown_photo: 'That photo is not in this account, or was removed.',
+  photo_not_uploaded: 'The account had no file for that photo.',
+  photo_full: 'The photo was on too many words.',
+  unknown_setting: 'This service syncs no setting of that name.',
   not_allowed: 'This app may not make that change.'
 }
 
@@ -108,7 +132,7 @@ function requestSha256(mutation: ClientMutation): string {
 async function outcomeOf(
   account: LockedAccount,
   mutation: ClientMutation,
-  granted: ReadonlySet<Scope>
+  context: SyncContext
 ): Promise<Outcome> {
   const entity = entityOf(mutation.entity)
   if (!entity) return rejected(unknownEntity)
@@ -116,8 +140,8 @@ async function outcomeOf(
     ? entity.operations[mutation.operation]
     : undefined
   if (!operation) return rejected(unknownOperation)
-  if (!operation.needs.some(scope => granted.has(scope))) return rejected(notAllowed)
-  return operation.apply(account, mutation)
+  if (!operation.needs.some(scope => context.granted.has(scope))) return rejected(notAllowed)
+  return operation.apply(account, mutation, context)
 }
 
 function resultOf(id: string, outcome: Outcome): MutationResult {
@@ -166,7 +190,7 @@ function applyMutation(
   store: AccountStore,
   userId: string,
   mutation: ClientMutation,
-  granted: ReadonlySet<Scope>
+  context: SyncContext
 ) {
   return store.withLockedAccount(userId, async account => {
     const sha256 = requestSha256(mutation)
@@ -177,14 +201,15 @@ function applyMutation(
         recorded.requestSha256 === sha256 ? await replayed(recorded, account) : rejected(reused)
       )
     }
-    const outcome = await outcomeOf(account, mutation, granted)
+    const outcome = await outcomeOf(account, mutation, context)
     await account.recordMutation(recordOf(mutation, sha256, outcome))
     await account.forgetMutationsOlderThan(syncLimits.resultsKeptDays)
     return resultOf(mutation.id, outcome)
   })
 }
 
-const listsFirst = (change: Change) => (change.entity === 'listWord' ? 1 : 0)
+const childEntities = new Set<Change['entity']>(['listWord', 'photoWord'])
+const parentsFirst = (change: Change) => (childEntities.has(change.entity) ? 1 : 0)
 
 async function changesIn(
   reader: EntityReader,
@@ -202,38 +227,54 @@ async function changesIn(
     if (!change) return null
     changes.push(change)
   }
-  return changes.sort((one, other) => listsFirst(one) - listsFirst(other))
+  return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-export function syncer(store: AccountStore, cursors: Cursors) {
-  return async (
+const floorFor = async (store: AccountStore, userId: string, from: Position | undefined) =>
+  from ? Math.max(from.floor, from.sequence) : store.accountJournalHead(userId)
+
+export function syncer(
+  store: AccountStore,
+  cursors: Cursors,
+  searchKeys: (userId: string) => string,
+  afterChanges: () => void
+) {
+  return async function sync(
     userId: string,
     request: SyncRequest,
     granted: ReadonlySet<Scope>
-  ): Promise<SyncAnswer> => {
+  ): Promise<SyncAnswer> {
     if (!(await store.profile(userId))) return { status: 'no_account' }
-    const after = request.cursor ? cursors.decode(userId, request.cursor) : 0
-    if (after === null || after > (await store.journalHead())) return { status: 'invalid_cursor' }
+    const from = request.cursor ? cursors.decode(userId, request.cursor) : undefined
+    if (from === null) return { status: 'invalid_cursor' }
+    if (from && from.sequence > (await store.journalHead())) return { status: 'invalid_cursor' }
+    if (from && (await store.forgottenThrough(userId)) > from.floor) {
+      return { status: 'invalid_cursor' }
+    }
+    const after = from?.sequence ?? 0
     const results: MutationResult[] = []
+    const context = { granted, searchKey: searchKeys(userId) }
     for (const mutation of request.mutations ?? []) {
-      const result = await applyMutation(store, userId, mutation, granted)
+      const result = await applyMutation(store, userId, mutation, context)
       if (!result) return { status: 'no_account' }
       results.push(result)
     }
+    if (results.some(result => result.status === 'applied')) afterChanges()
+    const floor = await floorFor(store, userId, from)
     const limit = request.limit ?? syncLimits.changes.standard
     const entries = await store.changesAfter(userId, after, limit + 1)
     const page = entries.slice(0, limit)
     const changes = await changesIn(store.reader(userId), page, granted)
     if (!changes) return { status: 'no_account' }
     const last = page.at(-1)
+    const same = !last && floor === from?.floor ? request.cursor : null
     return {
       status: 'synced',
       results,
       changes,
-      cursor: last
-        ? cursors.encode(userId, last.sequence)
-        : (request.cursor ?? cursors.encode(userId, after)),
-      hasMore: entries.length > limit
+      cursor: same || cursors.encode(userId, { sequence: last?.sequence ?? after, floor }),
+      hasMore: entries.length > limit,
+      ...(granted.has('searches:read') ? { searchKey: context.searchKey } : {})
     }
   }
 }

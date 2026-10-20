@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct RecentSearchHistoryView: View {
+  @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   let recentSearchStore: RecentSearchStore
   let refreshID: Int
   let selectSearch: (SearchQuery) -> Void
@@ -39,7 +40,7 @@ struct RecentSearchHistoryView: View {
       }
     }
     .listStyle(.plain)
-    .task(id: refreshID) {
+    .task(id: [refreshID, zenbuAccount?.sync.keptRevision ?? 0]) {
       await reload()
     }
   }

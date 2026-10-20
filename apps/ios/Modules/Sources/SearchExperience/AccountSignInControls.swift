@@ -13,6 +13,46 @@ enum AccountMessage {
       "This account signs in with Apple, and deleting it needs Sign in with Apple, which this development build doesn't have. Delete it from the App Store or TestFlight app."
   )
 
+  static func photosOnTheirWay(_ count: Int) -> String {
+    count == 1
+      ? String(localized: "1 photo from your Zenbu account is on its way.")
+      : String(localized: "\(count) photos from your Zenbu account are on their way.")
+  }
+
+  static let photosWaitForStorage = String(
+    localized: "Photos wait to sync until your Zenbu account can keep them. Everything else syncs.")
+
+  static func refusedPhotos(_ refused: [String: String]) -> [String] {
+    let full = refused.values.filter { $0 == AccountSync.tooManyPhotos }.count
+    let unsyncable = refused.count - full
+    return [full > 0 ? accountFull(full) : nil, unsyncable > 0 ? unsyncablePhotos(unsyncable) : nil]
+      .compactMap { $0 }
+  }
+
+  private static func accountFull(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "Your Zenbu account holds as many photos as it can, so 1 stays on this \(ThisDevice.name). Delete some in the Media Library, and it syncs the next time Zenbu opens."
+      )
+      : String(
+        localized:
+          "Your Zenbu account holds as many photos as it can, so \(count) stay on this \(ThisDevice.name). Delete some in the Media Library, and they sync the next time Zenbu opens."
+      )
+  }
+
+  private static func unsyncablePhotos(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "1 photo is too large, or a kind of image Zenbu can't sync, so it stays on this \(ThisDevice.name)."
+      )
+      : String(
+        localized:
+          "\(count) photos are too large, or a kind of image Zenbu can't sync, so they stay on this \(ThisDevice.name)."
+      )
+  }
+
   static func syncPaused(by problem: SharedBookmarksProblem) -> String {
     switch problem {
     case .couldNotRead:
@@ -61,6 +101,10 @@ enum AccountMessage {
     case "otp_expired": String(localized: "That code has expired. Ask for a new one.")
     case "too_many_attempts": String(localized: "Too many tries. Ask for a new code.")
     case "too_many_requests": String(localized: "Too many tries. Wait a few minutes and try again.")
+    case "invalid_cursor":
+      String(
+        localized:
+          "Sync is reading everything in your account again, and tries again on its own soon.")
     case "account_not_linked":
       String(localized: "This email's account signs in with Apple or Google. Sign in that way.")
     case "oauth_link_error":
