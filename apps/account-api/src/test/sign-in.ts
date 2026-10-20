@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { afterAll, beforeAll, expect, vi } from 'vitest'
 import { claims, type IdentityProvider, standInForProviders } from './identity-provider'
-import { type Service, startService, websiteOrigin } from './service'
+import { type BillingStandIns, type Service, startService, websiteOrigin } from './service'
 
 type Provider = 'apple' | 'google'
 type Answer = Awaited<ReturnType<Service['call']>>
@@ -136,7 +136,12 @@ function signIn(service: Service) {
 }
 
 export function useSignInService(
-  options: { emailSender?: boolean; providers?: boolean; appleKey?: boolean } = {}
+  options: {
+    emailSender?: boolean
+    providers?: boolean
+    appleKey?: boolean
+    billing?: BillingStandIns
+  } = {}
 ) {
   const running = {} as {
     service: Service

@@ -16,7 +16,7 @@ const document = app.getOpenAPI31Document({
       '',
       '- **Errors.** Every error is `{ "error": { "code": "...", "message": "..." } }`. Branch on `code`, which is stable; `message` is for people and may change. A route may answer a code it doesn\'t list here, such as one from a Better Auth upgrade: handle it by its status.',
       "- **Apps.** A sign-in names its app in `X-Zenbu-Client`, unless it comes from one of the website's origins; the app decides the scopes its tokens carry.",
-      '- **Bodies** are JSON, at most 64 KB (`413 too_large`).',
+      "- **Bodies** are JSON, at most 64 KB (`413 too_large`), but a photo's upload, which is the photo's file.",
       "- **Emails** are in the language a request names in `Content-Language`, `en` or `ja`, which needs no entry in `Access-Control-Allow-Headers`. Without one, they are in the language the account was made with, or English. An account made with one keeps it, through Google's web sign-in too.",
       "- **Rate limits** answer `429 too_many_requests` with `Retry-After`, in seconds (Better Auth's also with `X-Retry-After`).",
       "- **Browsers** may call the service only from the website's origins, with credentials; CORS lets the page read `Retry-After` and `X-Retry-After`."
@@ -94,10 +94,22 @@ describe('the OpenAPI contract', () => {
     expect(paths.filter(path => !path.startsWith('/v1/auth/')).sort()).toEqual([
       '/v1/health',
       '/v1/me',
-      '/v1/sync'
+      '/v1/me/subscription',
+      '/v1/me/subscription/apple',
+      '/v1/me/subscription/checkout',
+      '/v1/me/subscription/plans',
+      '/v1/me/subscription/portal',
+      '/v1/photos/{photoId}',
+      '/v1/sync',
+      '/v1/webhooks/apple',
+      '/v1/webhooks/stripe'
     ])
     expect(paths.filter(path => path.startsWith('/v1/auth/'))).toHaveLength(16)
     expect(Object.keys(document.paths?.['/v1/me'] ?? {}).sort()).toEqual(['delete', 'get', 'patch'])
+    expect(Object.keys(document.paths?.['/v1/photos/{photoId}'] ?? {}).sort()).toEqual([
+      'get',
+      'put'
+    ])
   })
 
   test.each(

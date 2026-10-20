@@ -3,12 +3,16 @@ import {
   type AccountSession,
   type Identity,
   identitiesOf,
+  type Plans,
   type Profile,
+  plansOf,
   profileOf,
   type Refusal,
   refusalOf,
+  type Subscription,
   sessionOf,
   signedInUserOf,
+  subscriptionOf,
   textAnswer,
   trueAnswer
 } from './answers'
@@ -35,6 +39,16 @@ export interface ProfileChange {
   baseVersion: number
   name?: string
   username?: string | null
+}
+
+export interface CheckoutPages {
+  price: string
+  successUrl: string
+  cancelUrl: string
+}
+
+export interface Deleted {
+  appStoreSubscriptionContinues: boolean
 }
 
 export interface AppleAuthorizationForDeletion {
@@ -209,7 +223,31 @@ export function accountApi(
         '/v1/me',
         { method: 'DELETE', accessToken, body: { confirm: true, ...apple } },
         (value, status) =>
-          textAnswer(value, 'status') === 'deleted' ? accepted(true) : unexpected(status)
+          textAnswer(value, 'status') === 'deleted'
+            ? accepted<Deleted>({
+                appStoreSubscriptionContinues: trueAnswer(value, 'appStoreSubscriptionContinues')
+              })
+            : unexpected(status)
+      ),
+    subscription: (accessToken: string) =>
+      call('/v1/me/subscription', { accessToken }, (value, status) =>
+        checked<Subscription>(subscriptionOf(value), status)
+      ),
+    plans: (accessToken: string) =>
+      call('/v1/me/subscription/plans', { accessToken }, (value, status) =>
+        checked<Plans>(plansOf(value), status)
+      ),
+    checkout: (accessToken: string, pages: CheckoutPages) =>
+      call(
+        '/v1/me/subscription/checkout',
+        { method: 'POST', accessToken, body: pages },
+        providerPage
+      ),
+    portal: (accessToken: string, returnUrl: string) =>
+      call(
+        '/v1/me/subscription/portal',
+        { method: 'POST', accessToken, body: { returnUrl } },
+        providerPage
       )
   }
 }

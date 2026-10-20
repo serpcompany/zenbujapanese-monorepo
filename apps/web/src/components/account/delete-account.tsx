@@ -11,11 +11,23 @@ import { deleteTheAccount } from '@/lib/account/flows'
 import { type SignedInAccount, signsInWith } from '@/lib/account/load'
 import { type AccountText, failureMessage } from '@/lib/account/messages'
 import type { AccountSettings } from '@/lib/account/settings'
+import {
+  appStoreSubscriptions,
+  renewsInTheAppStore,
+  runsOnTheWebsite
+} from '@/lib/account/subscription'
 import type { Locale } from '@/lib/i18n/config'
 import { ConfirmItsYou } from './confirm-its-you'
 import { FormMessage } from './form-message'
 
 type Step = 'closed' | 'confirm' | 'confirm-identity' | 'deleting'
+
+function appStoreWarning(account: SignedInAccount, words: AccountText['deletion']) {
+  if (account.subscription === null) return words.subscriptionUnknown
+  return account.subscription && renewsInTheAppStore(account.subscription)
+    ? words.appStoreContinues
+    : null
+}
 
 interface DeleteAccountProps {
   api: AccountApi
@@ -26,7 +38,7 @@ interface DeleteAccountProps {
   account: SignedInAccount
   freshNow: () => boolean
   onConfirmed: (session: AccountSession | null) => void
-  onDeleted: () => void
+  onDeleted: (appStoreSubscriptionContinues: boolean) => void
   onSignedOut: () => void
 }
 
@@ -51,7 +63,7 @@ export function DeleteAccount({
     setStep('deleting')
     setProblem(null)
     const deletion = await deleteTheAccount(api, tokens, apple)
-    if (deletion.kind === 'deleted') return onDeleted()
+    if (deletion.kind === 'deleted') return onDeleted(deletion.appStoreSubscriptionContinues)
     if (deletion.kind === 'signed-out') return onSignedOut()
     const appleElsewhereNeeded = deletion.kind === 'refused' && deletion.byApple && !appleConfirms
     setProblem(
@@ -70,6 +82,15 @@ export function DeleteAccount({
         {words.heading}
       </h2>
       <p className="text-sm text-muted-foreground">{words.explained}</p>
+      {account.subscription && runsOnTheWebsite(account.subscription) ? (
+        <p className="text-sm text-muted-foreground">{words.websiteCanceled}</p>
+      ) : null}
+      {appStoreWarning(account, words) ? (
+        <p className="text-sm">
+          {appStoreWarning(account, words)}{' '}
+          <a href={appStoreSubscriptions}>{text.subscription.openAppStore}</a>
+        </p>
+      ) : null}
       {step === 'closed' ? (
         <Button
           type="button"

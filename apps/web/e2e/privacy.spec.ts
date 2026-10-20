@@ -84,10 +84,20 @@ test.describe('privacy policy', () => {
     await expectNamed(page, 'Your Zenbu account', [
       "While you're signed out, our apps send nothing to our account service",
       'where our apps or this website offer one',
-      "The iPhone app's profile syncs its name and username",
-      "notes, photos, searches, settings, and whole Translate conversations don't sync",
-      'only the sentences you bookmark leave your device'
+      "the iPhone app syncs its profile's name, username, and photo",
+      "a removed search keeps only a code that can't be turned back into it",
+      "We keep your photos' files in Cloudflare R2",
+      "The profile's email and whole Translate conversations don't sync",
+      'only the sentences you bookmark leave your device',
+      "Deleting your account deletes everything it synced, your photos' files included",
+      'subscribe and manage a subscription you bought here'
     ])
+  })
+
+  test('names what the iPhone app syncs besides known words and lists', async ({ page }) => {
+    await expect(tableRows(page, 'Why').filter({ hasText: /^Your study data/ })).toHaveText(
+      /your notes, the photos in your Media Library with the words they're on, your settings, .*the frequency dictionaries you chose, and your 50 most recent searches/
+    )
   })
 
   test('says what crash and problem reports send, what they never send, and how to turn crash reports off', async ({
@@ -124,19 +134,21 @@ test.describe('privacy policy', () => {
       /^How you sign in: Apple, Google, or a code we email you.*To sign you in/,
       /^Your sessions: .*IP address.*keep the service secure/,
       /^Your study data: known words and lists.*Player.*Translate sentences you bookmark.*in step/,
+      /^Your subscription, if you have one: where you bought it.*each payment, failed payment, refund, dispute, or card network's fraud warning.*Never your card details.*record of what you paid$/,
       /^A record of each change you sync/
     ])
   })
 
   test('names who else handles the information', async ({ page }) => {
     await expect(listAfter(page, 'Who else handles your information')).toHaveText([
-      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups, and forwards email sent to our support address/,
+      /^Cloudflare hosts this website, delivers our downloads, carries requests to our servers, stores our backups and your photos' files, and forwards email sent to our support address/,
       /^useSend sends our email, so it gets your email address and the messages we send you, and keeps copies of them/,
+      /^Stripe takes the payments for subscriptions bought on this website\..*keeps its own record of them.*also after you delete your account; we never see your full card number\.$/,
       /^Lambda, Inc\. \(Lambda Labs\), in the United States, provides the machines our account database runs on/,
       /^Sentry \(Functional Software, Inc\.\), in the United States, collects and stores the app's crash reports and the problem reports you send/,
       /^Ahrefs counts visits to this website with Ahrefs Web Analytics, which uses no cookies/,
       /^Google serves Google Tag Manager, which loads Ahrefs Web Analytics on this website, hosts our support mailbox, and signs you in if you choose Google/,
-      /^Apple signs you in if you choose Apple/,
+      /^Apple signs you in if you choose Apple, and takes the payment for a subscription you buy in our apps on iPhone, iPad, or Mac\.$/,
       /^YouTube receives your requests when you use Player/
     ])
     await expectNamed(page, 'Who else handles your information', [
@@ -149,10 +161,14 @@ test.describe('privacy policy', () => {
   test('says how long each kind of data is kept', async ({ page }) => {
     await expect(tableRows(page, 'How long')).toHaveText([
       /^Your account and study data.*Until you delete your account$/,
+      /^Your subscription and payment records.*7 years after the payment or the subscription's end, also after you delete your account, then deleted$/,
+      /^That an account was deleted.*Its account ID and when it was deleted, with nothing else, for 7 years/,
       /^Sessions.*60 days after you last use one$/,
       /^Sign-in codes.*10 minutes$/,
       /^Request counts.*A day after the last request$/,
       /^Records of each change you sync.*30 days/,
+      /^Your photos' files.*30 days after you remove it from its last word$/,
+      /^Records of what you removed.*The latest 1,000 notes and 1,000 photos, the latest 500 words removed from each photo, and 100 videos and 100 searches; the rest until you delete your account$/,
       /^Backups.*30 days$/,
       /^Crash and problem reports.*Up to 90 days$/,
       /^Support email.*As long as we need it/
@@ -162,6 +178,7 @@ test.describe('privacy policy', () => {
   test('gives the legal basis for each use', async ({ page }) => {
     await expect(listAfter(page, "Why we're allowed to use it")).toHaveText([
       /^Your account, the study data you sync, and our emails to you: they're needed to provide the account you asked for/,
+      /^Your subscription and payment records: they're needed to provide the subscription you bought, and to keep a record of payments\.$/,
       /^Sessions, request counts, backups, crash reports, running this website and our downloads, and counting visits: our legitimate interest/,
       /^Support email and problem reports: our legitimate interest in answering you and fixing what you report/
     ])
@@ -173,7 +190,7 @@ test.describe('privacy policy', () => {
     await expect(listAfter(page, 'Your rights')).toHaveText([
       /^See and export\. Email support@zenbujapanese\.com for a copy of the data your account holds/,
       /^Correct\. Change your name and username/,
-      /^Delete\. Delete your account.*within 30 days.*To delete a problem report you sent, email us\.$/,
+      /^Delete\. Delete your account.*within 30 days.*cancels a subscription you bought on this website; one bought in the App Store keeps billing until you cancel it there\. To delete a problem report you sent, email us\.$/,
       /^Object or restrict\. Ask us to stop or limit/
     ])
     await expectNamed(page, 'Your rights', [

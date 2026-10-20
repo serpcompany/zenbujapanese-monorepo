@@ -2,18 +2,22 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { exportPKCS8, generateKeyPair } from 'jose'
-import { accessTokenVerifier } from '../auth/access-tokens'
-import { appleRevoker } from '../auth/apple-revoke'
 import { createAuth } from '../auth/auth'
+import { appStoreBilling } from '../billing/app-store'
+import { storeTraits } from '../billing/stores'
+import { stripeBilling } from '../billing/stripe'
+import type { CloudSettings } from '../billing-config'
 import { type AuthConfig, migrationsFolder as migrations } from '../config'
-import { accountStore } from '../db/accounts'
-import { accountDeleter } from '../domain/account-deletion'
-import { createAccounts } from '../domain/accounts'
-import { cursorKey, cursors } from '../domain/cursor'
-import { accountDeletedMessage } from '../email/account-notices'
+import { billingStore } from '../db/billing'
+import type { BillingStore } from '../domain/billing'
+import { cloudIsFree } from '../domain/cloud-access'
+import { createBilling } from '../domain/subscription-billing'
 import { DevMailbox } from '../email/mailbox'
 import { createMailer } from '../email/mailer'
-import { createApp } from '../http/app'
+import { MemoryPhotoStorage } from '../storage/memory'
+import { wiredService } from '../wiring'
+import { appAppleId, monthly, type StandInAppStore, yearly } from './app-store'
+import { type StandInStripe, stripeSettings } from './stripe'
 
 export const publicUrl = 'http://localhost:8789'
 export const testSecret = 'test-only-secret-that-is-long-enough-for-better-auth'
@@ -39,12 +43,79 @@ async function appleSigningKey() {
   return { teamId: '847HR8U8D9', keyId: 'TESTKEY123', privateKey: await exportPKCS8(privateKey) }
 }
 
+export interface BillingStandIns {
+  stripe?: StandInStripe
+  stripeTrialDays?: number
+  stripeGraceDays?: number
+  appStore?: StandInAppStore
+  appStoreApi?: boolean
+  sandboxAccounts?: readonly string[]
+  cloud?: CloudSettings
+}
+
+function billingProviders(standIns: BillingStandIns) {
+  const { stripe, appStore } = standIns
+  return {
+    web: stripe
+      ? stripeBilling(
+          {
+            ...stripeSettings,
+            trialDays: standIns.stripeTrialDays ?? null,
+            gracePeriodDays: standIns.stripeGraceDays ?? 0
+          },
+          { fetch: stripe.fetch, retries: 0, plansKeptForMs: 0 }
+        )
+      : null,
+    store: appStore
+      ? appStoreBilling(
+          {
+            bundleId: appBundleIdentifier,
+            appAppleId,
+            environments: ['Production', 'Sandbox'],
+            products: [monthly, yearly],
+            apiKey: null,
+            sandboxAccounts: standIns.sandboxAccounts ?? null
+          },
+          standIns.appStoreApi
+            ? { ...appStore.trust, apiClients: appStore.api.clients }
+            : appStore.trust
+        )
+      : null
+  }
+}
+
+function watchedTransactions(store: BillingStore, stripe: StandInStripe | undefined): BillingStore {
+  let open = 0
+  if (stripe) stripe.state.inATransaction = () => open > 0
+  return {
+    ...store,
+    async transaction(work) {
+      open += 1
+      try {
+        return await store.transaction(work)
+      } finally {
+        open -= 1
+      }
+    }
+  }
+}
+
+const billingRules = (standIns: BillingStandIns) => ({
+  cloud: standIns.cloud ?? cloudIsFree,
+  storeTesting: standIns.sandboxAccounts
+    ? { environment: 'Sandbox', accounts: standIns.sandboxAccounts }
+    : null,
+  stores: storeTraits
+})
+
 export async function startService({
   emailSender = true,
-  appleKey = false
+  appleKey = false,
+  billing: standIns = {}
 }: {
   emailSender?: boolean
   appleKey?: boolean
+  billing?: BillingStandIns
 } = {}) {
   const config: AuthConfig = appleKey
     ? {
@@ -69,18 +140,22 @@ export async function startService({
     mailbox
   )
   const auth = await createAuth({ config, db, mailer })
-  const store = accountStore(db)
-  const app = createApp({
+  const billing = createBilling(
+    watchedTransactions(billingStore(db), standIns.stripe),
+    billingProviders(standIns),
+    billingRules(standIns)
+  )
+  const photoStorage = new MemoryPhotoStorage()
+  const { app, files, housekeep } = wiredService({
     release: 'test',
+    db,
     databaseReady: async () => true,
     auth,
-    accounts: createAccounts(store, cursors(cursorKey(testSecret))),
-    deleteAccount: accountDeleter(store, appleRevoker(config.apple, config.publicUrl), {
-      accountDeleted: (email, language) => void mailer.send(accountDeletedMessage(email, language))
-    }),
-    verifyAccessToken: accessTokenVerifier(() => auth.api.getJwks(), publicUrl),
-    allowedOrigins: config.trustedOrigins,
-    devMailbox: mailbox
+    authConfig: config,
+    mailer,
+    devMailbox: mailbox,
+    photoStorage,
+    billing
   })
   const call = async (
     path: string,
@@ -109,7 +184,7 @@ export async function startService({
         ...(client ? { 'x-zenbu-client': client } : {}),
         ...headers
       },
-      body: body === undefined ? undefined : JSON.stringify(body)
+      body: body === undefined || typeof body === 'string' ? body : JSON.stringify(body)
     })
     const text = await response.text()
     return {
@@ -119,7 +194,28 @@ export async function startService({
     }
   }
   const rows = async (sql: string) => (await client.query<Record<string, unknown>>(sql)).rows
-  return { app, auth, client, mailbox, call, rows, close: () => client.close() }
+  const sendPhoto = async (token: string, photoId: string, bytes: Uint8Array, method = 'PUT') => {
+    const response = await app.request(`${publicUrl}/v1/photos/${photoId}`, {
+      method,
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'image/jpeg' },
+      body: method === 'PUT' ? bytes : undefined
+    })
+    return new Response(await response.arrayBuffer(), response)
+  }
+  return {
+    app,
+    auth,
+    billing,
+    client,
+    mailbox,
+    call,
+    rows,
+    sendPhoto,
+    files,
+    housekeep,
+    photoStorage,
+    close: () => client.close()
+  }
 }
 
 export type Service = Awaited<ReturnType<typeof startService>>

@@ -8,10 +8,10 @@ import { describe, expect, test } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
 import { type Accounts, createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
-import { cursorKey, cursors } from '../domain/cursor'
+import { cursorKey, cursors, searchKeys } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
-import { purgeExpired } from './housekeeping'
+import { billingRecordsKeptYears, purgeExpired } from './housekeeping'
 import { fenceIfRestored } from './restores'
 
 const everyScope = new Set(scopes)
@@ -154,6 +154,15 @@ describe('the migrations', () => {
     await original.query(
       "insert into translation_bookmarks (user_id, id, text, language, bookmarked_at, present, version) values ('u1', '00000000-0000-4000-8000-000000000002', 'はい。', 'ja', now(), true, 1)"
     )
+    const photo = 'a'.repeat(64)
+    await original.exec(`
+      insert into word_notes (user_id, id, item_id, text, present, version) values ('u1', '00000000-0000-4000-8000-000000000003', 'kanji:日', 'Sun.', true, 1);
+      insert into photo_files (user_id, id, content_type, byte_size, storage_key) values ('u1', '${photo}', 'image/jpeg', 1, 'u1/one');
+      insert into photos (user_id, id, name, saved_at, status, version) values ('u1', '${photo}', 'x', now(), 'shown', 1);
+      insert into photo_words (user_id, photo_id, item_id, headword, reading, saved_at, present, version) values ('u1', '${photo}', 'kanji:日', '日', 'にち', now(), true, 1);
+      insert into profile_photos (user_id, photo_id, version) values ('u1', '${photo}', 1);
+      insert into learner_settings (user_id, name, value, version) values ('u1', 'readingAids.romaji', 'true', 1);
+      insert into recent_searches (user_id, id, query, searched_at, status, version) values ('u1', '${photo}', '日', now(), 'searched', 1)`)
     const backup = await original.dumpDataDir()
     await original.close()
 
@@ -163,7 +172,10 @@ describe('the migrations', () => {
       await copy.query('update sync_origin set database_oid = 1')
       expect(await fenceIfRestored(db)).toBe('restored')
       expect(await fenceIfRestored(db)).toBe('same database')
-      return { copy, accounts: createAccounts(accountStore(db), cursors(cursorKey('test'))) }
+      return {
+        copy,
+        accounts: createAccounts(accountStore(db), cursors(cursorKey('test')), searchKeys('test'))
+      }
     }
     const answered = (answer: Awaited<ReturnType<Accounts['sync']>>) =>
       answer.status === 'synced' ? answer : expect.unreachable()
@@ -191,8 +203,14 @@ describe('the migrations', () => {
       'knownWord',
       'list',
       'listWord',
+      'photo',
+      'photoWord',
       'profile',
-      'watchedVideo'
+      'profilePhoto',
+      'recentSearch',
+      'setting',
+      'watchedVideo',
+      'wordNote'
     ])
     for (const row of fenced.rows) {
       expect(Number(row.entity_version)).toBeGreaterThan(firstVersion + 1)
@@ -235,6 +253,44 @@ describe('the migrations', () => {
       const left = await client.query<{ id: string }>(`select id from ${table}`)
       expect(left.rows, table).toEqual([{ id: 'live' }])
     }
+    await client.close()
+  })
+
+  test(`purge billing records ${billingRecordsKeptYears} years old, and keep newer ones and running subscriptions`, async () => {
+    const client = await migrated()
+    const old = `now() - interval '${billingRecordsKeptYears} years 1 day'`
+    const recent = `now() - interval '${billingRecordsKeptYears - 1} years'`
+    for (const [id, when] of [
+      ['old', old],
+      ['live', recent]
+    ]) {
+      await client.query(`insert into billing_ledger (source, kind, outcome, reference, environment, occurred_at, outcome_at)
+        values ('stripe', 'charge', 'succeeded', '${id}', 'test', ${when}, ${when})`)
+      await client.query(
+        `insert into billing_events (source, event_id, type, received_at) values ('stripe', '${id}', 'invoice.paid', ${when})`
+      )
+      await client.query(`insert into billing_actions (source, subscription_id, action, done_at)
+        values ('stripe', '${id}', 'refund_and_cancel', ${when})`)
+      await client.query(`insert into subscriptions (source, provider_id, product_id, status, environment, period_started_at, state_at, origin)
+        values ('stripe', '${id}', 'price', 'expired', 'test', ${when}, ${when}, 'provider')`)
+      await client.query(
+        `insert into deleted_accounts (user_id, deleted_at) values ('${id}', ${when})`
+      )
+    }
+    await client.query(`insert into subscriptions (source, provider_id, product_id, status, environment, period_started_at, state_at, origin)
+      values ('stripe', 'paused', 'price', 'paused', 'test', ${old}, ${old}, 'provider')`)
+    await purgeExpired(drizzle(client))
+    const left = async (sql: string) => (await client.query<{ id: string }>(sql)).rows
+    expect(await left('select reference as id from billing_ledger')).toEqual([{ id: 'live' }])
+    expect(await left('select event_id as id from billing_events')).toEqual([{ id: 'live' }])
+    expect(await left('select subscription_id as id from billing_actions')).toEqual([
+      { id: 'live' }
+    ])
+    expect(await left('select provider_id as id from subscriptions order by 1')).toEqual([
+      { id: 'live' },
+      { id: 'paused' }
+    ])
+    expect(await left('select user_id as id from deleted_accounts')).toEqual([{ id: 'live' }])
     await client.close()
   })
 })

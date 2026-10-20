@@ -11,6 +11,15 @@ export const scopes = [
   'watch:write',
   'translations:read',
   'translations:write',
+  'notes:read',
+  'notes:write',
+  'photos:read',
+  'photos:write',
+  'settings:read',
+  'settings:write',
+  'searches:read',
+  'searches:write',
+  'subscription',
   'dictionary:read'
 ] as const
 
@@ -39,14 +48,22 @@ const appOnly: readonly Scope[] = [
   'watch:read',
   'watch:write',
   'translations:read',
-  'translations:write'
+  'translations:write',
+  'notes:read',
+  'notes:write',
+  'photos:read',
+  'photos:write',
+  'settings:read',
+  'settings:write',
+  'searches:read',
+  'searches:write'
 ]
 
 export const clients: readonly Client[] = [
   {
     id: 'zenbu-ios',
     name: 'Zenbu Japanese for iOS',
-    scopes: [...studyData, ...appOnly],
+    scopes: [...studyData, ...appOnly, 'subscription'],
     appleBundleIds: ['com.zenbujapanese.dictionary'],
     signsInOnTheWeb: false,
     requestsPerMinute: 30_000
@@ -54,7 +71,7 @@ export const clients: readonly Client[] = [
   {
     id: 'zenbu-web',
     name: 'zenbujapanese.com',
-    scopes: studyData,
+    scopes: [...studyData, 'subscription'],
     appleBundleIds: [],
     signsInOnTheWeb: true,
     requestsPerMinute: 30_000
@@ -68,6 +85,8 @@ export const clients: readonly Client[] = [
     requestsPerMinute: 30_000
   }
 ]
+
+export const appSellingTheSubscription = 'zenbu-ios'
 
 export const clientById = (id: string | null | undefined) =>
   clients.find(client => client.id === id) ?? null
