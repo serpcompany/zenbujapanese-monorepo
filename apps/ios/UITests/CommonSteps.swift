@@ -206,15 +206,15 @@ extension ZenbuUITestCase {
     return reveal(find(identifier, in: app), in: app, within: sheet)
   }
 
-  func name(_ text: String, in app: XCUIApplication, button: String = "Create") {
+  func name(_ text: String, in app: XCUIApplication) {
     let prompt = waitFor(prompt(in: app))
     let field = prompt.textFields.firstMatch
     focus(field)
     if let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
       field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
     }
-    field.typeText(text)
-    tap(prompt.buttons[button].firstMatch)
+    field.typeText(text + "\n")
+    waitUntilGone(prompt)
   }
 
   @discardableResult
