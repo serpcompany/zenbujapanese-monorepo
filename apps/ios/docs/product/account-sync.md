@@ -137,7 +137,8 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   it's tried again the next time the app opens. One it won't send while it isn't subscribed comes
   at the first sync after subscribing. One cut off,
   answered 5xx, or that the phone can't save yet is tried at the next sync, and one answered 429
-  after the seconds it says. The Media Library says how many photos are on their way, and shows
+  after the seconds it says. The Media Library says how many photos are on their way, or, while
+  syncing needs a subscription, that they come once the learner subscribes, and shows
   each as it arrives.
 - The profile photo set or removed on one device shows the same on the others; of two changes,
   the one that syncs second gives way. A first sync fills an account whose photo was removed from

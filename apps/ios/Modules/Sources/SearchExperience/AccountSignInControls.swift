@@ -19,6 +19,17 @@ enum AccountMessage {
       : String(localized: "\(count) photos from your Zenbu account are on their way.")
   }
 
+  static func photosWaitForSubscription(_ count: Int) -> String {
+    count == 1
+      ? String(
+        localized:
+          "Syncing needs a Zenbu subscription. 1 photo from your Zenbu account comes once you subscribe.")
+      : String(
+        localized:
+          "Syncing needs a Zenbu subscription. \(count) photos from your Zenbu account come once you subscribe."
+      )
+  }
+
   static let photosWaitForStorage = String(
     localized: "Photos wait to sync until your Zenbu account can keep them. Everything else syncs.")
 

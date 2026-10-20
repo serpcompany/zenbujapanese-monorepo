@@ -100,6 +100,12 @@ struct AccountSyncFileTests {
       ])
     #expect(AccountMessage.photosOnTheirWay(1) == "1 photo from your Zenbu account is on its way.")
     #expect(AccountMessage.photosOnTheirWay(2) == "2 photos from your Zenbu account are on their way.")
+    #expect(
+      AccountMessage.photosWaitForSubscription(1)
+        == "Syncing needs a Zenbu subscription. 1 photo from your Zenbu account comes once you subscribe.")
+    #expect(
+      AccountMessage.photosWaitForSubscription(2)
+        == "Syncing needs a Zenbu subscription. 2 photos from your Zenbu account come once you subscribe.")
   }
 
   @Test("a photo held back for a later request keeps its changes in order, so a deletion and a re-save after it end as the learner left them")
@@ -136,6 +142,7 @@ struct AccountSyncFileTests {
     let (service, pad) = try await waitingDownload(reply)
     #expect(await shown(in: pad) == 0)
     #expect(pad.sync.photosOnTheirWay == 1)
+    #expect(pad.account.photosComing == AccountMessage.photosOnTheirWay(1))
 
     service.refuseFiles(nil, on: "GET")
     try await pad.syncNow()

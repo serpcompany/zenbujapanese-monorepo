@@ -82,6 +82,13 @@ final class ZenbuAccount {
     if sync.lastFailure?.needsSubscription == true { return true }
     return subscription.syncNeedsSubscription
   }
+  var photosComing: String? {
+    let count = sync.photosOnTheirWay
+    guard count > 0 else { return nil }
+    return syncNeedsSubscription
+      ? AccountMessage.photosWaitForSubscription(count) : AccountMessage.photosOnTheirWay(count)
+  }
+
   var offersGoogle: Bool { configuration.googleClientID != nil }
   var offersApple: Bool { configuration.offersApple }
 

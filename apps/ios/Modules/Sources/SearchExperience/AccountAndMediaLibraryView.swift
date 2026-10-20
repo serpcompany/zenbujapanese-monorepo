@@ -336,14 +336,15 @@ struct MediaLibraryView: View {
   @State private var items: [EncounterMediaSummary] = []
   let store: EncounterMediaStore
 
-  private var onTheirWay: Int { zenbuAccount?.sync.photosOnTheirWay ?? 0 }
+  private var photosComing: String? { zenbuAccount?.photosComing }
+  private var photosWaitForSubscription: Bool { zenbuAccount?.syncNeedsSubscription == true }
 
   var body: some View {
     Group {
-      if items.isEmpty, onTheirWay > 0 {
+      if items.isEmpty, let photosComing {
         ContentUnavailableView(
-          "Photos on Their Way", systemImage: "icloud.and.arrow.down",
-          description: Text(AccountMessage.photosOnTheirWay(onTheirWay)))
+          photosWaitForSubscription ? "Photos Waiting to Sync" : "Photos on Their Way",
+          systemImage: "icloud.and.arrow.down", description: Text(photosComing))
           .accessibilityIdentifier("media-library.on-their-way")
       } else if items.isEmpty {
         ContentUnavailableView(
@@ -354,8 +355,8 @@ struct MediaLibraryView: View {
         .accessibilityIdentifier("media-library.empty")
       } else {
         List {
-          if onTheirWay > 0 {
-            Label(AccountMessage.photosOnTheirWay(onTheirWay), systemImage: "icloud.and.arrow.down")
+          if let photosComing {
+            Label(photosComing, systemImage: "icloud.and.arrow.down")
               .foregroundStyle(.secondary)
               .accessibilityIdentifier("media-library.on-their-way")
           }

@@ -104,7 +104,7 @@ struct AccountSyncPhotoTests {
   }
 
   @Test(
-    "a photo file the account won't send while it isn't subscribed is never deleted: the sync says it needs a subscription, and the file comes at the next sync once it's sent"
+    "a photo file the account won't send while it isn't subscribed is never deleted: the sync and the Media Library say it needs a subscription, and the file comes at the next sync once it's sent"
   )
   func fileWithheldForSubscription() async throws {
     let (service, phone, pad) = await Fixture.twoPhones()
@@ -122,6 +122,7 @@ struct AccountSyncPhotoTests {
     #expect(await pad.media.library().isEmpty)
     #expect(pad.sync.state.waitingFiles.map(\.key.entityID) == [photoID])
     #expect(pad.sync.state.missingFiles.isEmpty)
+    #expect(pad.account.photosComing == AccountMessage.photosWaitForSubscription(1))
 
     service.refuseFiles(nil, on: "GET")
     try await pad.syncNow()
@@ -129,6 +130,7 @@ struct AccountSyncPhotoTests {
     #expect(await words(in: pad) == ["食べる"])
     #expect(pad.sync.lastFailure == nil)
     #expect(pad.sync.state.waitingFiles.isEmpty)
+    #expect(pad.account.photosComing == nil)
   }
 
   @Test("a photo the device already holds is never downloaded: two phones that saved one image share it")
