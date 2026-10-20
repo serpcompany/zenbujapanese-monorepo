@@ -189,15 +189,14 @@ don't contain them), so they need no network, account, camera, or microphone:
 - `ZENBU_SIGN_IN_STAND_IN=1` stands in for Apple's sign-in sheet and Google's web sign-in, and
   offers Apple in a `.uitests` build; the nonce, the account client, and the session after them
   run as they would.
-- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app
-  (`StandInAccountService`, on the account's own `URLSession`): sign-in, tokens, the profile (Kana
-  Fan), sync, photo files, signing out, and deleting, so the signed-in screens run without a
-  service; with `ZENBU_ACCOUNT_STAND_IN_KEPT=1` its first sync also brings a photo, a setting, and
-  a recent search from another device ([`ios-account-sync.md`](ios-account-sync.md)). The session
-  token goes to the real Keychain, so these tests are skipped on the Mac, where a build signed to
-  run locally has no keychain access group; a build signed with the team keeps it. The
-  subscription's stand-ins, and the StoreKit tests the scheme runs too, are in
-  [`ios-subscription.md`](ios-subscription.md).
+- `ZENBU_ACCOUNT_STAND_IN=1` answers the account's requests inside the app (`StandInAccountService`,
+  on the account's own `URLSession`): sign-in, tokens, the profile (Kana Fan), sync, photo files,
+  signing out, and deleting, so the signed-in screens run without a service; with
+  `ZENBU_ACCOUNT_STAND_IN_KEPT=1` its first sync also brings a photo, a setting, and a recent search
+  from another device ([`ios-account-sync.md`](ios-account-sync.md)). The session token goes to the
+  real Keychain, so these tests are skipped on the Mac, where a build signed to run locally has no
+  keychain access group; a build signed with the team keeps it. The subscription's stand-ins, and
+  the StoreKit tests the scheme runs too, are in [`ios-subscription.md`](ios-subscription.md).
 - `ZENBU_TRANSLATE_SCRIPT=station` is the Translate harness ([`translate.md`](translate.md),
   Simulator harness); `ZENBU_SHARE_TEXT` and `ZENBU_SHARE_IMAGE` open the share sheet, or its card
   in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
@@ -841,8 +840,7 @@ The listing is `apps/ios/metadata/` (the name and subtitle in `app-info/`, the d
 New, keywords, and promotional text in `version/1.0/`, and the subscription's in `drafts/`), and its
 screenshots are `apps/ios/screenshots/app-store/en-US/iphone-63-marketing-v2/`, made with koubou
 from `koubou-v2.yaml`, and the same shots at 6.9" in `iphone-69-marketing-v2/`, which App Store
-Connect requires: each scaled to 1320 × 2870 with Lanczos and cropped a pixel at the top and bottom
-to 1320 × 2868.
+Connect requires: each scaled to 1320 × 2870 with Lanczos, a pixel cropped off the top and bottom.
 
 **A TestFlight build:**
 
