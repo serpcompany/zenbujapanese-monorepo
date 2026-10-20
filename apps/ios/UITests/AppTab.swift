@@ -1,7 +1,7 @@
 import XCTest
 
 enum AppTab: String, CaseIterable {
-  case search = "Search"
+  case search = "Look Up"
   case translate = "Translate"
   case player = "Player"
   case account = "Account"

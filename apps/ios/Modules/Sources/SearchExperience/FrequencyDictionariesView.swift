@@ -68,9 +68,9 @@ struct FrequencyDictionariesView: View {
     } footer: {
       Group {
         if snapshot.enabledPackIDs.isEmpty {
-          Text("None enabled. Search uses dictionary relevance order and hides frequency ranks.")
+          Text("None enabled. Look Up uses dictionary relevance order and hides frequency ranks.")
         } else if snapshot.enabledPackIDs.count > 1 {
-          Text("Ranks appear in this order. Search sorts by the first dictionary, then the next.")
+          Text("Ranks appear in this order. Look Up sorts by the first dictionary, then the next.")
         }
       }
       .accessibilityIdentifier("frequency-packs.enabled.footer")

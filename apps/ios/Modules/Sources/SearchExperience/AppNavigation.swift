@@ -11,7 +11,7 @@ enum SearchExperienceTab: Hashable, CaseIterable, Identifiable {
 
   var title: LocalizedStringKey {
     switch self {
-    case .search: "Search"
+    case .search: "Look Up"
     case .translate: "Translate"
     case .watchAndListen: "Player"
     case .account: "Account"

@@ -7,8 +7,8 @@ dictionary sheet Image Search uses.
 ## Opening a video
 
 - The tab has a search bar like a browser's address bar, with the prompt **Search YouTube or paste a
-  link** (**Search** at the largest text sizes, as in Search). Pasting a YouTube link (`watch?v=`,
-  `youtu.be/`, `shorts/`, `embed/`, or `live/`) opens the video directly. Anything else searches
+  link** (**Search** at the largest text sizes, as Look Up's is **Look Up**). Pasting a YouTube link
+  (`watch?v=`, `youtu.be/`, `shorts/`, `embed/`, or `live/`) opens the video directly. Anything else searches
   YouTube and shows its results in the app; choosing a video from them opens it in Player. The
   results are YouTube's mobile results page on every device, without YouTube's own header (its
   search field and voice search) or its bottom bar (Home, Shorts, You). The app's navigation bar,
@@ -82,9 +82,9 @@ player is by hand; the UI tests stand in for it with a local player that answers
   video and controls stay usable; the sheet can be pulled up to full height. **Open Full
   Entry**, the expand button beside the word, and the sheet's links to other dictionary pages (a
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
-  page inside Player, so Back returns to the video. The same goes for the word sheet in Image
-  Search and Translate, in their own tabs. A card's words keep their links however many lines
-  were linked before it.
+  page inside Player, so Back returns to the video. The same goes for the word sheet in Translate
+  and in its Image Search, which open the page inside Translate. A card's words keep their links
+  however many lines were linked before it.
   Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
   `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate

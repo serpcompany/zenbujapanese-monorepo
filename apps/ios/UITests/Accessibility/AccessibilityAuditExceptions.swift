@@ -91,7 +91,7 @@ private enum Why {
   static let imageAlert =
     "The Image alert is Apple's: the system draws its title, message, and three buttons, and rebuilds the alert as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself"
   static let searchField =
-    "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Search"
+    "The search field is the system's and draws its own prompt; at the largest sizes the app already shortens the prompt to Look Up, or to Search in Player"
   static let floatingTabBar =
     "On the iPad these audits step the text size while the system's floating tab bar lays itself out, and it loops in its own layout until the app stops responding: a sample of the hung app shows its main thread in _UIFloatingTabBar's layoutSubviews, under the audit's _axAuditCheckDynamicTextSupport, with none of the app's code. The iPhone runs both on the same views, and the iPad's other audits still run at the largest size"
   static let clearButton =
@@ -125,10 +125,11 @@ private let systemControls = [
   allow(.dynamicType, .identifier("word-detail.image-attachment-remove"), on: ["A word's photo"], because: Why.barButton),
   allow(.dynamicType, .identifier("delete-account.cancel"), on: ["Delete Account"], [.phone, .pad], because: Why.barButton),
   allow(.dynamicType, .identifier("share-card.done"), on: shareCards, because: Why.barButton),
-  allow(.textClipped, .label("Search"), on: ["Recent searches", "Player's Recent"], because: Why.searchField),
+  allow(.textClipped, .label("Look Up"), on: ["Recent lookups"], because: Why.searchField),
+  allow(.textClipped, .label("Search"), on: ["Player's Recent"], because: Why.searchField),
   allow(
     .hitRegion, .label("Clear text"),
-    on: ["Search's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
+    on: ["Look Up's results", "Results filtered to none", "No matches", "Discovered Words"], [.pad], [.standard],
     because: Why.clearButton),
 ]
 
@@ -191,7 +192,7 @@ private let textThatScales = [
   allow(
     .textClipped, .labels(["New List"]), on: ["Add to List"], because: Why.scales),
   allow(.textClipped, .identifiedBy(prefix: "word-list-picker.list."), on: ["Add to List"], because: Why.scales),
-  allow(.textClipped, .label("japan"), on: ["Recent searches"], because: Why.scales),
+  allow(.textClipped, .label("japan"), on: ["Recent lookups"], because: Why.scales),
   allow(.dynamicType, .identifiedBy(prefix: "translate.pane."), on: ["Two Panes"], because: Why.scales),
   allow(
     .dynamicType, .identifier("watch.captions-unavailable"), on: ["A video without Japanese captions"],
