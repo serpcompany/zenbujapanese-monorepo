@@ -226,20 +226,20 @@ It provides:
   open the Zenbu website, and **Credits & Attributions**: each source's credit, license, and project
   link, in the shared core's wording ([`data-sources.md`](../../../../docs/data-sources.md)), with
   Jiten's notice that its rankings are adapted and shared alike. **Licenses**, under it, opens each
-  bundled license text. If the app can't read the core's list, Credits says so, and Licenses still
-  lists every text.
+  bundled license text, with one for each Swift package the app links (Sentry, ZIPFoundation). If
+  the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
 iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
-first credit, Jiten's notice, and a license text), and
+first credit, Jiten's notice, and the KanjiVG, Sentry, and ZIPFoundation texts), and
 `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a Word); contract
 `test_account_service_settings.py` (production in TestFlight and App Store builds, staging in
-Debug); package `PlayerReadingAidTests` and `WordMeaningTests` (the Reading Aids preferences),
-`SourceCreditsTests` (the core's credits, and none it can't read), and the recorded
-`RomajiConformanceTests` with core `detail/romaji.test.ts` (how a reading and a sentence are written
-in romaji).
+Debug) and `test_package_licenses.py` (a text for each package); package `PlayerReadingAidTests`
+and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits,
+none it can't read, and every text bundled), and the recorded `RomajiConformanceTests` with core
+`detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 

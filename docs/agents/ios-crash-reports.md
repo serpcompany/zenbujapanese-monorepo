@@ -30,8 +30,11 @@ the app has a crash-reporting SDK at all in
   `apps/ios/Modules/Package.swift`. Its code links statically, and the app embeds a 33 KB
   `Sentry.framework` stub that carries Sentry's privacy manifest. To move it, change the version
   there and resolve all three `Package.resolved` files: `apps/ios/Modules`, the project's
-  workspace, and `apps/ios/Tools/TranslateReplay`. The share extension links the same code
-  through `SearchExperience`, so its binary carries it, but it never starts it.
+  workspace, and `apps/ios/Tools/TranslateReplay`. Then replace
+  `apps/ios/Modules/Sources/SearchExperience/Resources/SENTRY-COCOA-NOTICES.txt`, which Licenses
+  shows, with that version's `LICENSE.md`, a blank line, and its `THIRD_PARTY_NOTICES.md`
+  (`test_package_licenses.py` checks only that a text is there). The share extension links the
+  same code through `SearchExperience`, so its binary carries it, but it never starts it.
 
 ## Which builds send
 

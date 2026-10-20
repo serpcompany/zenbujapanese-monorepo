@@ -44,8 +44,9 @@ struct CreditsView: View {
 }
 
 struct BundledLicenseText: Identifiable, Sendable {
-  let source: String
-  var part: String?
+  var source: String?
+  var package: String?
+  var name: String?
   let resource: String
   var resourceExtension = "txt"
   var subdirectory: String?
@@ -53,7 +54,15 @@ struct BundledLicenseText: Identifiable, Sendable {
   var id: String { "\(subdirectory.map { "\($0)/" } ?? "")\(resource).\(resourceExtension)" }
 
   func title(in shown: SourceCredits?) -> String {
-    part ?? shown?.credit(source)?.name ?? resource
+    name ?? source.flatMap { shown?.credit($0)?.name } ?? resource
+  }
+
+  var contents: String? {
+    let url =
+      BundledData.bundle.url(
+        forResource: resource, withExtension: resourceExtension, subdirectory: subdirectory)
+      ?? BundledData.bundle.url(forResource: resource, withExtension: resourceExtension)
+    return url.flatMap { try? String(contentsOf: $0, encoding: .utf8) }
   }
 
   static let listed = [
@@ -62,13 +71,17 @@ struct BundledLicenseText: Identifiable, Sendable {
     BundledLicenseText(source: "jlpt", resource: "JLPT-VOCABULARY-CC-BY-SA-4.0"),
     BundledLicenseText(source: "tubelex", resource: "TUBELEX-BSD-3-CLAUSE"),
     BundledLicenseText(source: "wikipedia", resource: "WIKIPEDIA-FREQUENCY-BSD-3-CLAUSE"),
-    BundledLicenseText(source: "sudachi", resource: "SudachiLanguageTechnologyNotices"),
+    BundledLicenseText(
+      source: "sudachi", package: "sudachi-swift", resource: "SudachiLanguageTechnologyNotices"),
     BundledLicenseText(source: "kuromoji", resource: "LICENSE-2.0", subdirectory: "Kuromoji"),
     BundledLicenseText(
-      source: "kuromoji", part: "IPADIC", resource: "NOTICE", resourceExtension: "md",
+      source: "kuromoji", name: "IPADIC", resource: "NOTICE", resourceExtension: "md",
       subdirectory: "Kuromoji"),
     BundledLicenseText(source: "tatoeba", resource: "TATOEBA-NOTICE"),
     BundledLicenseText(source: "dakanji", resource: "DAKANJI-MIT"),
+    BundledLicenseText(package: "sentry-cocoa", name: "Sentry", resource: "SENTRY-COCOA-NOTICES"),
+    BundledLicenseText(
+      package: "zipfoundation", name: "ZIPFoundation", resource: "ZIPFOUNDATION-MIT"),
   ]
 
   static let sourcesWithLinkedTerms = ["jmdict", "kanjium", "tatoeba"]
@@ -141,29 +154,10 @@ private struct BundledLicenseTextView: View {
   let title: String
   let file: BundledLicenseText
 
-  private var text: String {
-    let url =
-      BundledData.bundle.url(
-        forResource: file.resource,
-        withExtension: file.resourceExtension,
-        subdirectory: file.subdirectory
-      )
-      ?? BundledData.bundle.url(
-        forResource: file.resource,
-        withExtension: file.resourceExtension
-      )
-    guard let url,
-      let contents = try? String(contentsOf: url, encoding: .utf8)
-    else {
-      return "License text unavailable"
-    }
-    return contents
-  }
-
   var body: some View {
     List {
       Section {
-        Text(text)
+        Text(file.contents ?? "License text unavailable")
           .font(.system(.footnote, design: .monospaced))
           .accessibilityIdentifier("credits.license-text")
       }
