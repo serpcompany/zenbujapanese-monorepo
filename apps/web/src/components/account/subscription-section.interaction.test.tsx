@@ -1,5 +1,6 @@
+import { act } from 'react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { answer, click, refusal, shows, unmount } from '@/test/account-page'
+import { answer, button, click, refusal, shows, unmount } from '@/test/account-page'
 import { renderAccountView } from '@/test/account-view'
 import { callTo, email, settings, signedIn } from '@/test/signed-in-account'
 
@@ -54,8 +55,11 @@ function leaving() {
 
 const accountPage = () => `${window.location.origin}/account/`
 
+const backFromStripe = () =>
+  act(async () => window.dispatchEvent(Object.assign(new Event('pageshow'), { persisted: true })))
+
 describe('the subscription on the account page', () => {
-  test('offers each plan with its price and the trial, and opens Stripe Checkout to come back here', async () => {
+  test('offers each plan with its price and the trial, opens Stripe Checkout to come back here, and offers it again after Back', async () => {
     const assign = leaving()
     const { calls } = signedIn({
       more: {
@@ -86,9 +90,13 @@ describe('the subscription on the account page', () => {
       }
     })
     expect(assign).toHaveBeenCalledWith('https://checkout.stripe.com/c/pay/cs_1')
+    const subscribe = () => button(page, 'Subscribe to Zenbu Sync, $4.99 a month')
+    expect(subscribe().disabled).toBe(true)
+    await backFromStripe()
+    expect(subscribe().disabled).toBe(false)
   })
 
-  test("shows a website subscription with when it renews, and opens Stripe's portal", async () => {
+  test("shows a website subscription with when it renews, opens Stripe's portal, and offers it again after Back", async () => {
     const assign = leaving()
     const { calls } = signedIn({
       more: {
@@ -106,6 +114,10 @@ describe('the subscription on the account page', () => {
       returnUrl: accountPage()
     })
     expect(assign).toHaveBeenCalledWith('https://billing.stripe.com/p/session/1')
+    const manage = () => button(page, 'Manage your subscription')
+    expect(manage().disabled).toBe(true)
+    await backFromStripe()
+    expect(manage().disabled).toBe(false)
   })
 
   test('shows an App Store subscription as managed in the App Store, and offers no other', async () => {
