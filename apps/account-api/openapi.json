@@ -1434,6 +1434,71 @@
         ],
         "description": "A subscription still running at its store, and where it is managed."
       },
+      "WebsitePlans": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebsitePlan"
+            },
+            "description": "Each of `offers.website`, in its order, as Stripe describes it. Empty where Stripe is off."
+          },
+          "trialDays": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "The free trial a checkout gives this account, or null: none is set, or the account has subscribed before."
+          }
+        },
+        "required": [
+          "plans",
+          "trialDays"
+        ]
+      },
+      "WebsitePlan": {
+        "type": "object",
+        "properties": {
+          "price": {
+            "type": "string",
+            "description": "The Stripe price, one of `offers.website`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Stripe's name for the product."
+          },
+          "amount": {
+            "type": "integer",
+            "description": "Each period's price in the currency's smallest unit, as Stripe has it: cents, or yen."
+          },
+          "currency": {
+            "type": "string",
+            "description": "Its ISO 4217 code, in lowercase, as Stripe has it."
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year"
+            ]
+          },
+          "intervalCount": {
+            "type": "integer",
+            "description": "How many intervals each period lasts."
+          }
+        },
+        "required": [
+          "price",
+          "name",
+          "amount",
+          "currency",
+          "interval",
+          "intervalCount"
+        ]
+      },
       "Redirect": {
         "type": "object",
         "properties": {
@@ -2924,6 +2989,196 @@
                           "type": "string",
                           "enum": [
                             "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/subscription/plans": {
+      "get": {
+        "summary": "The website's plans, with their prices",
+        "description": "What the website's paywall shows before Checkout: each of `offers.website` with Stripe's name, price, and period, read from Stripe on each request, and the free trial this account would get.",
+        "security": [
+          {
+            "accessToken": [
+              "subscription"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The plans.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebsitePlans"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include `subscription`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "`billing_unavailable`: The store didn't answer, or subscribing there isn't set up in this environment. Nothing changed. Try again later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "billing_unavailable"
                           ]
                         },
                         "message": {

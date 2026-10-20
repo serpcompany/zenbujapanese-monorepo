@@ -33,6 +33,7 @@ Accounts, sign-in, profiles, and sync for every Zenbu app (ADR 0013). Sign-in is
 | [`DELETE /v1/me`](#delete-v1me) | `accessToken` with `account:delete` | Delete the signed-in account |
 | [`POST /v1/sync`](#post-v1sync) | `accessToken` | Send the changes made on the device, and get the changes made elsewhere |
 | [`GET /v1/me/subscription`](#get-v1mesubscription) | `accessToken` with `subscription` | The account's subscription, and where it's managed |
+| [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans) | `accessToken` with `subscription` | The website's plans, with their prices |
 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) | `accessToken` with `subscription` | Start a subscription on the website, on Stripe Checkout |
 | [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal) | `accessToken` with `subscription` | Manage a website subscription, in Stripe's customer portal |
 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) | `accessToken` with `subscription` | Tell the service about an App Store purchase or restore |
@@ -181,6 +182,23 @@ Read from the service's own records, which each store's events keep current. One
 - **403** `insufficient_scope`: This app's access to the account doesn't include `subscription`.
 - **429** `too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
+
+### `GET /v1/me/subscription/plans`
+
+The website's plans, with their prices.
+
+What the website's paywall shows before Checkout: each of `offers.website` with Stripe's name, price, and period, read from Stripe on each request, and the free trial this account would get.
+
+**Auth:** `accessToken` with `subscription`.
+
+**Answers:**
+
+- **200**, [`WebsitePlans`](#websiteplans): The plans.
+- **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
+- **403** `insufficient_scope`: This app's access to the account doesn't include `subscription`.
+- **429** `too_many_requests`: This account sent more than 30 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
+- **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
+- **503** `billing_unavailable`: The store didn't answer, or subscribing there isn't set up in this environment. Nothing changed. Try again later.
 
 ### `POST /v1/me/subscription/checkout`
 
@@ -925,13 +943,13 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `apple_authorization_needed` | 400 | [`DELETE /v1/me`](#delete-v1me) |
 | `apple_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me) |
 | `bad_request` | 400 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
-| `billing_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
+| `billing_unavailable` | 503 | [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
 | `client_mismatch` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `email_not_verified` | 403 | [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `email_unavailable` | 503 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `failed_to_unlink_last_account` | 400 | [`POST /v1/auth/unlink-account`](#post-v1authunlink-account) |
-| `insufficient_scope` | 403 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription`](#get-v1mesubscription), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/get-session`](#get-v1authget-session), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
-| `internal` | 500 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
+| `insufficient_scope` | 403 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/get-session`](#get-v1authget-session), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `internal` | 500 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `invalid_cursor` | 410 | [`POST /v1/sync`](#post-v1sync) |
 | `invalid_email` | 400 | [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp) |
 | `invalid_fields` | 400 | [`PATCH /v1/me`](#patch-v1me) |
@@ -955,9 +973,9 @@ Every `error.code` a route answers, with its status. Branch on the code; show or
 | `subscription_required` | 402 | [`POST /v1/sync`](#post-v1sync) |
 | `too_large` | 413 | [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
 | `too_many_attempts` | 403 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp) |
-| `too_many_requests` | 429 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/jwks`](#get-v1authjwks), [`GET /v1/auth/get-session`](#get-v1authget-session), [`POST /v1/auth/sign-out`](#post-v1authsign-out), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `too_many_requests` | 429 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/email-otp/send-verification-otp`](#post-v1authemail-otpsend-verification-otp), [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/nonce`](#post-v1authsign-innonce), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/jwks`](#get-v1authjwks), [`GET /v1/auth/get-session`](#get-v1authget-session), [`POST /v1/auth/sign-out`](#post-v1authsign-out), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `try_again` | 503 | [`POST /v1/webhooks/stripe`](#post-v1webhooksstripe), [`POST /v1/webhooks/apple`](#post-v1webhooksapple) |
-| `unauthorized` | 401 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
+| `unauthorized` | 401 | [`GET /v1/me`](#get-v1me), [`PATCH /v1/me`](#patch-v1me), [`DELETE /v1/me`](#delete-v1me), [`POST /v1/sync`](#post-v1sync), [`GET /v1/me/subscription`](#get-v1mesubscription), [`GET /v1/me/subscription/plans`](#get-v1mesubscriptionplans), [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout), [`POST /v1/me/subscription/portal`](#post-v1mesubscriptionportal), [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple), [`POST /v1/auth/link-social`](#post-v1authlink-social), [`POST /v1/auth/unlink-account`](#post-v1authunlink-account), [`GET /v1/auth/token`](#get-v1authtoken), [`GET /v1/auth/list-accounts`](#get-v1authlist-accounts), [`GET /v1/auth/list-sessions`](#get-v1authlist-sessions), [`POST /v1/auth/revoke-session`](#post-v1authrevoke-session), [`POST /v1/auth/revoke-sessions`](#post-v1authrevoke-sessions), [`POST /v1/auth/revoke-other-sessions`](#post-v1authrevoke-other-sessions) |
 | `unknown_client` | 400 | [`POST /v1/auth/sign-in/email-otp`](#post-v1authsign-inemail-otp), [`POST /v1/auth/sign-in/social`](#post-v1authsign-insocial) |
 | `unknown_price` | 400 | [`POST /v1/me/subscription/checkout`](#post-v1mesubscriptioncheckout) |
 | `unknown_product` | 400 | [`POST /v1/me/subscription/apple`](#post-v1mesubscriptionapple) |
@@ -1211,6 +1229,20 @@ A subscription still running at its store, and where it is managed.
 - `expiresAt` (string (date-time) or null, required)
 - `willRenew` (boolean or null, required)
 - `managedIn` (`"app_store"` or `"website"`, required)
+
+### WebsitePlans
+
+- `plans` (array of [`WebsitePlan`](#websiteplan), required): Each of `offers.website`, in its order, as Stripe describes it. Empty where Stripe is off.
+- `trialDays` (integer or null, required): The free trial a checkout gives this account, or null: none is set, or the account has subscribed before.
+
+### WebsitePlan
+
+- `price` (string, required): The Stripe price, one of `offers.website`.
+- `name` (string, required): Stripe's name for the product.
+- `amount` (integer, required): Each period's price in the currency's smallest unit, as Stripe has it: cents, or yen.
+- `currency` (string, required): Its ISO 4217 code, in lowercase, as Stripe has it.
+- `interval` (`"day"`, `"week"`, `"month"`, or `"year"`, required)
+- `intervalCount` (integer, required): How many intervals each period lasts.
 
 ### Redirect
 

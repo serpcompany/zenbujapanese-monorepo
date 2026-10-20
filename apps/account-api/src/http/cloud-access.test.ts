@@ -109,6 +109,7 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
       '/v1/me/subscription',
       '/v1/me/subscription/apple',
       '/v1/me/subscription/checkout',
+      '/v1/me/subscription/plans',
       '/v1/me/subscription/portal',
       '/v1/webhooks/apple',
       '/v1/webhooks/stripe'

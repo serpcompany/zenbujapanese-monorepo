@@ -7,7 +7,8 @@ import {
   BillingUnavailable,
   type ProviderEvent,
   type StoreBilling,
-  type Verified
+  type Verified,
+  type WebsitePlan
 } from './billing'
 import { applyEvent, type EventAnswer, type EventRules, ReadAgain } from './billing-events'
 import { appSellingTheSubscription, clientById, type Principal } from './clients'
@@ -51,6 +52,7 @@ export type Checkout =
   | { status: 'already_subscribed'; entitlement: Entitlement }
   | { status: 'unknown_price' | 'no_account' | 'confirming' }
   | Unavailable
+type Plans = { status: 'listed'; plans: WebsitePlan[]; trialDays: number | null } | Unavailable
 type Portal =
   | { status: 'created'; url: string }
   | { status: 'no_customer' | 'no_account' }
@@ -277,6 +279,16 @@ export function createBilling(
         await store.rememberCheckout(principal.userId, session.id)
         return { status: 'created', url: session.url }
       })
+    },
+
+    async plans(principal: Principal): Promise<Plans> {
+      if (web === null) return { status: 'listed', plans: [], trialDays: null }
+      const subscriptions = await store.subscriptionsOf(principal.userId)
+      return unlessUnavailable(async () => ({
+        status: 'listed' as const,
+        plans: await web.describePrices(),
+        trialDays: subscriptions.length === 0 ? web.trialDays : null
+      }))
     },
 
     async portal(principal: Principal, returnUrl: string, language: Language | null) {

@@ -69,7 +69,7 @@ function billingProviders(standIns: BillingStandIns) {
             trialDays: standIns.stripeTrialDays ?? null,
             gracePeriodDays: standIns.stripeGraceDays ?? 0
           },
-          { fetch: stripe.fetch, retries: 0 }
+          { fetch: stripe.fetch, retries: 0, plansKeptForMs: 0 }
         )
       : null,
     store: appStore

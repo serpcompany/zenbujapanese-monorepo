@@ -93,6 +93,38 @@ export const SubscriptionSchema = z
   })
   .openapi('Subscription')
 
+const PlanSchema = z
+  .object({
+    price: z.string().openapi({ description: 'The Stripe price, one of `offers.website`.' }),
+    name: z.string().openapi({ description: "Stripe's name for the product." }),
+    amount: z.number().int().openapi({
+      description:
+        "Each period's price in the currency's smallest unit, as Stripe has it: cents, or yen."
+    }),
+    currency: z
+      .string()
+      .openapi({ description: 'Its ISO 4217 code, in lowercase, as Stripe has it.' }),
+    interval: z.enum(['day', 'week', 'month', 'year']),
+    intervalCount: z
+      .number()
+      .int()
+      .openapi({ description: 'How many intervals each period lasts.' })
+  })
+  .openapi('WebsitePlan')
+
+export const PlansSchema = z
+  .object({
+    plans: z.array(PlanSchema).openapi({
+      description:
+        'Each of `offers.website`, in its order, as Stripe describes it. Empty where Stripe is off.'
+    }),
+    trialDays: z.number().int().nullable().openapi({
+      description:
+        'The free trial a checkout gives this account, or null: none is set, or the account has subscribed before.'
+    })
+  })
+  .openapi('WebsitePlans')
+
 const websiteUrl = (what: string) =>
   z
     .url()

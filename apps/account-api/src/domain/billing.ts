@@ -71,10 +71,21 @@ interface CheckoutRequest {
   firstSubscription: boolean
 }
 
+export interface WebsitePlan {
+  price: string
+  name: string
+  amount: number
+  currency: string
+  interval: 'day' | 'week' | 'month' | 'year'
+  intervalCount: number
+}
+
 export interface BillingProvider {
   source: SubscriptionSource
   prices: readonly string[]
   gracePeriodDays: number
+  trialDays: number | null
+  describePrices(): Promise<WebsitePlan[]>
   createCheckout(request: CheckoutRequest): Promise<{ id: string; url: string }>
   checkoutSession(id: string): Promise<CheckoutSession>
   expireCheckout(id: string): Promise<void>

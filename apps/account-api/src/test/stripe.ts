@@ -97,6 +97,12 @@ function subscriptionObject(fields: SubscriptionFields): StripeObject {
   }
 }
 
+const prices: Record<string, StripeObject> = {
+  price_monthly: { unit_amount: 499, recurring: { interval: 'month', interval_count: 1 } },
+  price_yearly: { unit_amount: 4999, recurring: { interval: 'year', interval_count: 1 } },
+  price_metered: { unit_amount: null, recurring: { interval: 'month', interval_count: 1 } }
+}
+
 export function standInStripe() {
   const subscriptions = new Map<string, StripeObject>()
   const requests: Request[] = []
@@ -180,6 +186,20 @@ export function standInStripe() {
       }
       refunded.add(intent)
       return answer({ id: `re_${sessions++}`, object: 'refund', status: 'succeeded' })
+    }
+    if (method === 'GET' && kind === 'prices' && id && prices[id]) {
+      const product = { id: 'prod_sync', object: 'product', name: 'Zenbu Sync' }
+      const expanded = [...form.entries()].some(
+        ([key, value]) => key.startsWith('expand') && value === 'product'
+      )
+      return answer({
+        id,
+        object: 'price',
+        currency: 'usd',
+        nickname: null,
+        product: expanded ? product : product.id,
+        ...prices[id]
+      })
     }
     if (method === 'GET' && kind === 'charges' && id) {
       return answer({ id, object: 'charge', customer: charges.get(id) ?? null })
