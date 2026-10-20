@@ -4,7 +4,7 @@ import { useAccountService } from '../test/accounts'
 import { standIns } from '../test/app'
 import { gate } from '../test/gate'
 import { logged } from '../test/logged'
-import { aJpeg, photoIdOf, uploaded } from '../test/photos'
+import { aJpeg, photoChanges, photoIdOf, uploaded } from '../test/photos'
 import { websiteOrigin } from '../test/service'
 import { createApp } from './app'
 import { atOnce } from './rate-limit'
@@ -213,6 +213,34 @@ describe('photo files', () => {
       )
     ).map(row => row.storage_key)
     expect(stored().filter(key => !named.includes(key))).toEqual([])
+  })
+
+  test('a file the storage fails to delete waits an hour, and the sweep deletes the rest meanwhile', async () => {
+    const { add, drop, onWord } = photoChanges
+    const learner = await accounts.learner('photo-sweep-failure@example.com')
+    const first = await uploaded(accounts, learner, aJpeg(300))
+    const second = await uploaded(accounts, learner, aJpeg(400))
+    await accounts.results(learner, add(first), onWord(first, 1), add(second), onWord(second, 1))
+    const storage = service().photoStorage
+    const stored = () =>
+      [...storage.objects.keys()].filter(key => key.startsWith(`${learner.userId}/`))
+    expect(stored()).toHaveLength(2)
+    const own = `from photo_file_deletions where storage_key like '${learner.userId}/%'`
+    const lines = logged()
+    const failing = vi.spyOn(storage, 'delete').mockRejectedValueOnce(new Error('R2 is down'))
+    await accounts.results(learner, drop(first), drop(second))
+    await vi.waitFor(() => expect(lines()).toContain('deleting removed photos failed'))
+    failing.mockRestore()
+    expect(stored()).toHaveLength(1)
+    expect(await rows(`select storage_key, due_at > now() as later ${own}`)).toEqual([
+      { storage_key: stored()[0], later: true }
+    ])
+    await rows(
+      `update photo_file_deletions set due_at = now() - interval '1 second' where storage_key like '${learner.userId}/%'`
+    )
+    await service().files.sweep()
+    expect(stored()).toEqual([])
+    expect(await rows(`select count(*)::int as n ${own}`)).toEqual([{ n: 0 }])
   })
 
   test('answers 503 where the service keeps no photos', async () => {

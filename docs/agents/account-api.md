@@ -312,7 +312,7 @@ belongs; tests may import anything.
 
 - **`src/http`** is the HTTP layer, in Hono, with `/v1/me` and `/v1/sync` declared for the
   contract (`accounts.ts`, `schemas.ts`), their refusals (`refusals.ts`), and sync's entities as
-  the contract shows them (`sync-entities.ts`). It answers from what `src/server.ts` hands it (the
+  the contract shows them (`sync-entities.ts`). It answers from what `src/wiring.ts` hands it (the
   database's state, the sign-in handler, the access-token check, the account rules, and the dev
   mailbox), and imports none of them but the domain.
 - **`src/auth`** sets up Better Auth on the database and the mailer: its routes under

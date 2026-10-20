@@ -100,7 +100,8 @@ so it outlives the account it came from:
   restore left behind, too.
 - **The sweep** deletes each queued key that's due from R2, and every object under a queued
   folder, then the row: right after a deletion or a sync that changed something, and every hour,
-  so a key R2 didn't take is tried again. Deleting a key R2 hasn't is fine.
+  so a key R2 didn't take is tried again. A key R2 refuses waits an hour, and the sweep goes on to
+  the rest. Deleting a key R2 hasn't is fine.
 
 ## A restore
 

@@ -95,7 +95,7 @@ saying where the code belongs:
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
 - **The account service**: the domain; then the database, photo storage, email, sign-in, and the
   payment providers' adapters; then HTTP, which reaches them only through what `src/server.ts`
-  hands it
+  and `src/wiring.ts` hand it
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which
