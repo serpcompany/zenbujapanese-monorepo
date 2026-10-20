@@ -19,7 +19,7 @@ public enum CrashReporter {
       info: bundle.infoDictionary, bundleID: bundle.bundleIdentifier, environment: environment)
     guard let build else { return }
     if CrashReportingPolicy.sendsCrashReports(in: defaults) {
-      start(build, defaults: defaults)
+      CrashReportingSDK.sentry.start(options(for: build, defaults: defaults))
     }
     if build.allowsTestSwitches {
       CrashReportTest.runIfRequested(defaults: defaults)
@@ -27,11 +27,17 @@ public enum CrashReporter {
   }
 
   static func setEnabled(_ enabled: Bool) {
+    setEnabled(enabled, build: build, defaults: .standard, sdk: .sentry)
+  }
+
+  static func setEnabled(
+    _ enabled: Bool, build: CrashReportingBuild?, defaults: UserDefaults, sdk: CrashReportingSDK
+  ) {
     guard let build else { return }
-    if enabled, !SentrySDK.isEnabled {
-      start(build, defaults: .standard)
-    } else if !enabled, SentrySDK.isEnabled {
-      SentrySDK.close()
+    if enabled, !sdk.isEnabled() {
+      sdk.start(options(for: build, defaults: defaults))
+    } else if !enabled, sdk.isEnabled() {
+      sdk.close()
     }
   }
 
@@ -52,15 +58,15 @@ public enum CrashReporter {
     recorded.withLock { $0.insert(problem.key).inserted }
   }
 
-  private static func start(_ build: CrashReportingBuild, defaults: UserDefaults) {
-    let installID = CrashReportingPolicy.installID(defaults: defaults)
-    let offline = build.allowsTestSwitches ? CrashReportTest.offlineSession(defaults: defaults) : nil
-    SentrySDK.start { options in
-      configure(
-        options, dsn: build.dsn, environment: build.environment, installID: installID,
-        bundleID: bundleID)
-      if let offline { options.urlSession = offline }
+  static func options(for build: CrashReportingBuild, defaults: UserDefaults) -> Options {
+    let options = Options()
+    configure(
+      options, dsn: build.dsn, environment: build.environment,
+      installID: CrashReportingPolicy.installID(defaults: defaults), bundleID: bundleID)
+    if build.allowsTestSwitches, let offline = CrashReportTest.offlineSession(defaults: defaults) {
+      options.urlSession = offline
     }
+    return options
   }
 
   nonisolated static func configure(
@@ -79,6 +85,9 @@ public enum CrashReporter {
     options.appHangTimeoutInterval = 2
     options.enableWatchdogTerminationTracking = true
     options.attachStacktrace = true
+    options.attachAllThreads = false
+    options.enableMemoryIntrospection = false
+    options.enableSpotlight = false
     options.sendDefaultPii = false
     options.enableAutoSessionTracking = false
     options.enableAutoBreadcrumbTracking = false

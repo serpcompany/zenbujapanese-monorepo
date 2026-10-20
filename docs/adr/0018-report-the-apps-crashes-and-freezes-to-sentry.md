@@ -19,10 +19,10 @@ sessions, or tracing.
   `SearchExperienceTests/Diagnostics/`. `TranslatorCore` and `TranslatorOnDevice` stay free of it.
 - **One `configure(options)` sets every option that matters,** each with a unit test: the crash
   handler, app hangs at 2 seconds, and watchdog terminations on; and off, everything else that
-  collects: default PII, sessions, automatic and network breadcrumbs, failed requests, tracing and
-  trace headers, file I/O and Core Data tracing, MetricKit, Sentry's logs and metrics, client
-  reports, swizzling, screenshots, the view hierarchy, user-interaction tracing, and on the Mac
-  uncaught `NSException` reporting. Session replay's sample rates are set to 0 as well.
+  collects: memory introspection, all threads' stack traces, Spotlight, default PII, sessions,
+  automatic and network breadcrumbs, failed requests, tracing and trace headers, file I/O and Core
+  Data tracing, MetricKit, Sentry's logs and metrics, client reports, swizzling, screenshots, the
+  view hierarchy, user-interaction tracing, and on the Mac uncaught `NSException` reporting. Session replay's sample rates are set to 0 as well.
 - **Every report goes through a scrubber** in `beforeSend` and `beforeBreadcrumb`, ported from
   Keybumps (its ADR 0007): fields cleared, contexts on an allowlist, only the app's own
   breadcrumbs, and URLs, emails, paths, quoted names, and Japanese text removed, by rules that each
@@ -34,6 +34,27 @@ sessions, or tracing.
   `ZENBU_CRASH_REPORTS_DSN`, read from `Info.plist`; Debug builds, the share extension, and the
   unit- and UI-test hosts have none. A Release build with `ZENBU_BUNDLE_ID_SUFFIX` set reports as
   `qa`, any other as `production`.
+
+## Where this differs from the standard
+
+SERP's [native app error reporting](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/native-app-error-reporting.md)
+standard was written for desktop apps. Where this app departs from it:
+
+- **`qa` comes from the bundle ID's suffix,** not a `-dev.` version, and no CI rejects it. A
+  build with `ZENBU_BUNDLE_ID_SUFFIX` set has another bundle ID, which can't ship under the App
+  Store's app record, so a `qa` build can't reach learners.
+- **dSYMs go up by hand,** from the TestFlight steps, since no release CI archives the app (see
+  Consequences).
+- **Handled failures are sent too,** beyond the standard's crashes and freezes: a code from each
+  of a few boundaries, never a message.
+- **Four test switches, not two:** `-ZBTestCrash` and `-ZBTestFreeze` as the standard has them,
+  and `-ZBTestError` (a seeded handled failure) and `-ZBTestOffline` (no network for Sentry), to
+  check scrubbing and a report that waits offline. Only a `qa` build reads any of them.
+- **File names:** the standard never includes file paths and names. The scrubber removes paths,
+  quoted names, and a bare file name ending in a data or media extension (`.txt`, `.csv`,
+  `.jpg`, and the like); a bare name with another extension, or the earlier words of a name with
+  spaces, can stay. Handled failures send no message at all, and no crash message in the app's
+  own code holds a value, so such a name can only come from a system exception's reason.
 
 ## Why
 

@@ -93,8 +93,17 @@ struct HandledProblem: Equatable, Sendable {
     isStable(code) ? code : unknownCode
   }
 
+  static let expectedURLErrors: Set<Int> = Set(
+    [
+      URLError.Code.cancelled, .notConnectedToInternet, .networkConnectionLost, .timedOut,
+      .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .dataNotAllowed,
+      .internationalRoamingOff, .callIsActive,
+    ].map(\.rawValue))
+
   private static func isExpected(_ error: Error) -> Bool {
-    error is CancellationError || (error as NSError).domain == NSURLErrorDomain
+    if error is CancellationError { return true }
+    let bridged = error as NSError
+    return bridged.domain == NSURLErrorDomain && expectedURLErrors.contains(bridged.code)
   }
 
   private static func accountService(

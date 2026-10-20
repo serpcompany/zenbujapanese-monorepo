@@ -16,16 +16,18 @@ learner searches, reads, types, says, or photographs. How it's built is in
 
 Account has a **Send Crash Reports** switch, after Frequency Dictionaries, on until the learner
 turns it off. The line under it says what's sent and where: the app and system versions, the
-device model, a random ID for this install, and where in the app's code it happened, to its
-developers through Sentry, and never the learner's searches, words, sentences, notes, photos,
+device's model and state (such as memory in use), a random ID for this install, and where in the
+app's code it happened, to its developers through Sentry, and never the learner's searches, words, sentences, notes, photos,
 conversations, or account details. On the Mac, the same switch is in Settings' Account pane.
 
 Turning it off stops reports at once, without waiting on the network, and a crash after that sends
 nothing. Turning it back on starts them again without a relaunch.
 
 Check: UI `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` (on at first, and off
-once flipped) and `testAccountListsEveryArea` (the row); package `CrashReportingPolicyTests` (on
-until turned off, and a build without a destination that the switch can't start). The Mac's
+once flipped) and `testAccountListsEveryArea` (the row); package `CrashReporterSwitchTests` (off
+closes Sentry and on starts it again, against a stand-in for the SDK) and
+`CrashReportingPolicyTests` (on until turned off, and a build without a destination that the
+switch can't start). The Mac's
 Settings pane is checked by hand while the Mac is on hold (2026-10-18).
 
 ## What a report holds
@@ -38,7 +40,8 @@ report that can't be sent, such as with no connection, waits on the device and g
 A failure the app handles sends only its area and a fixed code, such as `account_sync:
 account_service_error.refused`, with at most four short details such as an HTTP status or a pack's
 ID. Each is sent at most once a launch, and never holds the error's message. A cancelled task, a
-lost connection, or a session that ended sends nothing, since each is expected.
+lost connection, or a session that ended sends nothing, since each is expected; a download the
+app's setup or its host broke, such as one refused for its certificate, is reported.
 
 | Area | Fails when |
 | --- | --- |
@@ -50,8 +53,9 @@ lost connection, or a session that ended sends nothing, since each is expected.
 
 Every report carries a random ID made once for this install, and nothing else about the learner:
 no name, email, account, IP address, location, device name, locale, or time zone. Before a report
-leaves the device, web addresses, email addresses, quoted text, Japanese text, and paths into the
-app's or the learner's folders are removed from everything it says; of a library loaded from those
+leaves the device, web addresses, email addresses, quoted text, Japanese text, paths into the
+app's or the learner's folders, and file names with a data or media extension (such as `.txt`,
+`.csv`, or `.jpg`) are removed from everything it says; of a library loaded from those
 folders, such as the app itself, only its name is kept. The system's own libraries keep their
 paths, which say nothing about the learner.
 
@@ -75,5 +79,5 @@ extension, and the privacy manifest's Crash Data and Other Diagnostic Data).
 | By hand | Closest automated check |
 | --- | --- |
 | A crash, a freeze, and a handled failure each arrive in Sentry's `zenbujapanese-ios` as `qa`, symbolicated, with nothing the policy removes ([`ios-crash-reports.md`](../../../../docs/agents/ios-crash-reports.md#checking-a-report-arrives)) | `CrashReporterOptionsTests` and `CrashReportScrubberTests` |
-| With the switch off, a crash sends nothing | `CrashReportingPolicyTests` and the UI switch test |
+| With the switch off before launch, a crash sends nothing. Turning it off while the app runs isn't checked in the running app | `CrashReporterSwitchTests` (off closes the SDK), `CrashReportingPolicyTests`, and the UI switch test |
 | A crash that couldn't be sent arrives once the app is back online | None: Sentry keeps it on the device |

@@ -72,6 +72,12 @@ synced bookmarks), which may be what someone nearby said. It never sends a conve
 sentence the learner didn't bookmark, and it keeps no audio, so it collects no Audio Data. It has
 no analytics SDK.
 
+It declares no Performance Data, though Sentry's own manifest, in the app's `Sentry.framework`
+stub, lists it beside the two Diagnostics types, so Xcode's privacy report for the app shows it.
+The app measures nothing: tracing, profiling, app-start measurement, MetricKit, and Sentry's
+metrics are off (`CrashReporterOptionsTests`), and a freeze is one report with its stack trace,
+not a launch time or hang rate. Declare it if any of those is turned on.
+
 Its privacy manifest, `apps/ios/App/PrivacyInfo.xcprivacy`, lists the same nine types, and the
 listing's description, in `apps/ios/metadata/version/1.0/en-US.json`, says what syncs. Change them
 with the labels:

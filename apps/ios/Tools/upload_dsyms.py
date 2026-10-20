@@ -12,6 +12,8 @@ PROJECT = "zenbujapanese-ios"
 TOKEN_VARIABLE = "SENTRY_AUTH_TOKEN"
 KEYCHAIN_ITEM = "zenbu-sentry-auth-token"
 KEYCHAIN = Path.home() / "Library" / "Keychains" / "login.keychain-db"
+INSTALL_TIMEOUT = 300
+UPLOAD_TIMEOUT = 600
 USAGE = "usage: upload_dsyms.py <an .xcarchive, or a build's products folder>"
 
 Run = Callable[..., subprocess.CompletedProcess]
@@ -35,10 +37,15 @@ def find_token(environ: Mapping[str, str], run: Run) -> str:
     return found.stdout.strip() if found.returncode == 0 else ""
 
 
+def install_command() -> list[str]:
+    return ["npx", "--yes", "--", SENTRY_CLI, "--version"]
+
+
 def upload_command(dsyms: list[Path]) -> list[str]:
     return [
         "npx",
-        "--yes",
+        "--no",
+        "--",
         SENTRY_CLI,
         "debug-files",
         "upload",
@@ -67,15 +74,31 @@ def upload(build: Path, environ: Mapping[str, str], run: Run) -> bool:
             f"{KEYCHAIN_ITEM}"
         )
         return False
+    without_token = {key: value for key, value in environ.items() if key != TOKEN_VARIABLE}
     try:
-        result = run(
-            upload_command(dsyms),
-            env={**environ, TOKEN_VARIABLE: token},
+        installed = run(
+            install_command(),
+            env=without_token,
             capture_output=True,
             text=True,
+            timeout=INSTALL_TIMEOUT,
+        )
+        if installed.returncode != 0:
+            warn(f"couldn't install {SENTRY_CLI} (exit {installed.returncode})")
+            print(installed.stderr[-2000:], file=sys.stderr)
+            return False
+        result = run(
+            upload_command(dsyms),
+            env={**without_token, TOKEN_VARIABLE: token},
+            capture_output=True,
+            text=True,
+            timeout=UPLOAD_TIMEOUT,
         )
     except OSError as error:
         warn(f"couldn't run {SENTRY_CLI} ({error.strerror})")
+        return False
+    except subprocess.TimeoutExpired as error:
+        warn(f"{SENTRY_CLI} didn't finish within {int(error.timeout)} seconds")
         return False
     if result.returncode != 0:
         warn(f"{SENTRY_CLI} couldn't upload the dSYMs (exit {result.returncode})")

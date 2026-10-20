@@ -68,6 +68,17 @@ struct CrashReportScrubberTests {
     #expect(scrub("الملف \"Q3 plan.txt\" مفقود") == "الملف “<name>” مفقود")
   }
 
+  @Test("a bare file name with a data or media extension is removed")
+  func bareFileNamesAreRemoved() {
+    #expect(scrub("couldn't open notes.txt") == "couldn't open <file>")
+    #expect(scrub("Q3_plan.v2.PDF failed to load") == "<file> failed to load")
+    #expect(scrub("saved draft-1.json.") == "saved <file>.")
+    #expect(scrub("can't decode 単語.csv") == "can't decode <file>")
+    #expect(scrub("IMG_0042.HEIC, voice memo.m4a") == "<file>, voice <file>")
+    #expect(scrub("LanguageReferenceData.sqlite3 is busy") == "<file> is busy")
+    #expect(scrub("backup.zip2 and notes.txtx") == "backup.zip2 and notes.txtx")
+  }
+
   @Test("what diagnoses a crash is kept")
   func diagnosticsAreKept() {
     for text in [
@@ -77,6 +88,10 @@ struct CrashReportScrubberTests {
       "*** -[__NSArrayM objectAtIndex:]: index 5 beyond bounds [0 .. 2]",
       "App hanging for at least 2000 ms.",
       "account_sync: account_service_error.refused",
+      "Could not cast value of type 'Foundation.URL' to 'Swift.String'",
+      "SearchExperience/AccountSyncScheduler.swift:161",
+      "nscocoa_error_domain.260 in SwiftUI.framework",
+      "version 2.0.1 (8)",
     ] {
       #expect(scrub(text) == text)
     }
@@ -99,6 +114,8 @@ struct CrashReportScrubberTests {
     #expect(scrub(token) == token)
     #expect(scrub(english) == english)
     #expect(scrub(String(repeating: "漢", count: 50_000)) == "<japanese>")
+    #expect(scrub(String(repeating: "a.", count: 25_000)) == String(repeating: "a.", count: 25_000))
+    #expect(scrub(String(repeating: "a", count: 50_000) + ".txt") == "<file>")
     for opening in ["「", "『", "“", "«", "״", "\""] {
       #expect(!scrub(String(repeating: opening + "a", count: 25_000)).isEmpty)
     }
@@ -125,12 +142,24 @@ struct CrashReportScrubberTests {
     let frame = try #require(exception.stacktrace?.frames.first)
     #expect(frame.package == "<path>/Zenbu Japanese")
     #expect(frame.function == "SearchExperience.DictionaryCore.init")
+    #expect(frame.fileName == "<path>")
     #expect(frame.contextLine == nil)
+    #expect(frame.preContext == nil)
+    #expect(frame.postContext == nil)
     #expect(frame.vars == nil)
+    let ownFrame = try #require(scrubbed.stacktrace?.frames.first)
+    #expect(ownFrame.fileName == "<path>")
+    #expect(ownFrame.package == "<path>/Zenbu Japanese")
+    #expect(ownFrame.contextLine == nil)
+    #expect(ownFrame.preContext == nil)
+    #expect(ownFrame.postContext == nil)
     #expect(scrubbed.threads?.first?.stacktrace?.frames.first?.package == "<path>/Zenbu Japanese")
     #expect(scrubbed.debugMeta?.first?.codeFile == "<path>/Zenbu Japanese")
     #expect(scrubbed.breadcrumbs?.map(\.category) == ["zenbu.sync"])
     #expect(scrubbed.breadcrumbs?.first?.message == "sent to <email>")
+    #expect(scrubbed.breadcrumbs?.first?.data?["to"] as? String == "<email>")
+    #expect(scrubbed.breadcrumbs?.first?.data?["files"] as? [String] == ["<file>", "<path>"])
+    #expect(scrubbed.breadcrumbs?.first?.data?["status"] as? Int == 400)
     #expect(Set(scrubbed.context?.keys.map { $0 } ?? []) == ["os", "app", "device", "problem"])
     #expect(scrubbed.context?["app"]?["device_app_hash"] == nil)
     #expect(scrubbed.context?["app"]?["app_version"] as? String == "2.0.1")
@@ -138,6 +167,9 @@ struct CrashReportScrubberTests {
     #expect(scrubbed.context?["device"]?["timezone"] == nil)
     #expect(scrubbed.context?["device"]?["name"] == nil)
     #expect(scrubbed.context?["device"]?["model"] as? String == "iPhone17,2")
+    #expect(scrubbed.context?["device"]?["free_memory"] as? Int == 1_073_741_824)
+    #expect(scrubbed.context?["app"]?["app_name"] as? String == "<file> on <email>")
+    #expect(scrubbed.context?["os"]?["kernel_version"] as? String == "Darwin 25.1.0 <path>")
     #expect(scrubbed.context?["problem"]?["code"] as? String == "bundle_unavailable")
   }
 
@@ -160,10 +192,20 @@ struct CrashReportScrubberTests {
     let frame = Frame()
     frame.package = binary
     frame.function = "SearchExperience.DictionaryCore.init"
+    frame.fileName = "/Users/pat/Developer/Zenbu/Sources/SearchExperience/DictionaryCore.swift"
     frame.contextLine = "let word = \"食べる\""
+    frame.preContext = ["// pat@example.com", "let note = \"Q3 plan\""]
+    frame.postContext = ["print(\"食べる\")"]
     frame.vars = ["word": "食べる"]
     exception.stacktrace = SentryStacktrace(frames: [frame], registers: [:])
     event.exceptions = [exception]
+    let ownFrame = Frame()
+    ownFrame.package = binary
+    ownFrame.fileName = "/var/mobile/Containers/Data/Application/AB12/tmp/Generated.swift"
+    ownFrame.contextLine = "lookup(\"たべる\")"
+    ownFrame.preContext = ["let email = \"pat@example.com\""]
+    ownFrame.postContext = ["}"]
+    event.stacktrace = SentryStacktrace(frames: [ownFrame], registers: [:])
     let thread = SentryThread(threadId: 0)
     thread.stacktrace = SentryStacktrace(frames: [frame], registers: [:])
     event.threads = [thread]
@@ -172,11 +214,24 @@ struct CrashReportScrubberTests {
     event.debugMeta = [meta]
     let own = Breadcrumb(level: .info, category: "zenbu.sync")
     own.message = "sent to pat@example.com"
+    own.data = [
+      "to": "pat@example.com", "files": ["Q3_notes.txt", "/var/mobile/Documents/単語.csv"],
+      "status": 400,
+    ]
     event.breadcrumbs = [Breadcrumb(level: .info, category: "ui.click"), own]
     event.context = [
-      "os": ["name": "iOS", "version": "26.1"],
-      "app": ["app_version": "2.0.1", "device_app_hash": "abc123"],
-      "device": ["model": "iPhone17,2", "locale": "ja_JP", "timezone": "Asia/Tokyo", "name": "Pat's iPhone"],
+      "os": [
+        "name": "iOS", "version": "26.1",
+        "kernel_version": "Darwin 25.1.0 /Users/pat/Library/Developer/xnu",
+      ],
+      "app": [
+        "app_version": "2.0.1", "device_app_hash": "abc123",
+        "app_name": "Q3notes.json on pat@example.com",
+      ],
+      "device": [
+        "model": "iPhone17,2", "locale": "ja_JP", "timezone": "Asia/Tokyo", "name": "Pat's iPhone",
+        "free_memory": 1_073_741_824,
+      ],
       "culture": ["timezone": "Asia/Tokyo", "locale": "ja_JP"],
       "problem": ["code": "bundle_unavailable"],
     ]

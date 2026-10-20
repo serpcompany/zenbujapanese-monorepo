@@ -56,6 +56,18 @@ struct CrashReporterOptionsTests {
     #expect(!options.sendClientReports)
   }
 
+  @Test("a crash records only the crashing thread, never memory, and goes nowhere else")
+  func noMemoryOtherThreadsOrSpotlight() {
+    let options = Options()
+    options.enableMemoryIntrospection = true
+    options.attachAllThreads = true
+    options.enableSpotlight = true
+    Self.configured(options)
+    #expect(!options.enableMemoryIntrospection)
+    #expect(!options.attachAllThreads)
+    #expect(!options.enableSpotlight)
+  }
+
   @Test("the app's own code and its requests are left alone: no swizzling, no trace headers")
   func swizzlingAndTraceHeadersAreOff() {
     let options = Self.configured().options

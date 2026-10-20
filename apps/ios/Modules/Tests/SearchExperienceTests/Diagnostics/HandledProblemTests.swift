@@ -41,12 +41,33 @@ struct HandledProblemTests {
     #expect(CrashReporter.isFirstThisLaunch(HandledProblem(area: .accountSync, code: code)))
   }
 
-  @Test("cancellations, network failures, and an unreachable or ended session aren't problems")
+  @Test("cancellations, lost connections, and an unreachable or ended session aren't problems")
   func expectedOutcomesAreSkipped() {
     #expect(HandledProblem(CancellationError(), in: .frequencyPack) == nil)
-    #expect(HandledProblem(URLError(.notConnectedToInternet), in: .frequencyPack) == nil)
+    let connectivity: [URLError.Code] = [
+      .cancelled, .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost,
+      .cannotConnectToHost, .dnsLookupFailed, .dataNotAllowed, .internationalRoamingOff,
+      .callIsActive,
+    ]
+    for code in connectivity {
+      #expect(HandledProblem(URLError(code), in: .frequencyPack) == nil, "\(code.rawValue)")
+    }
     #expect(HandledProblem(AccountServiceError.unreachable, in: .accountSync) == nil)
     #expect(HandledProblem(AccountServiceError.sessionEnded, in: .accountSync) == nil)
+  }
+
+  @Test("a download the app's setup or its host broke is reported, by its code alone")
+  func setupURLErrorsAreReported() {
+    let insecure = HandledProblem(
+      URLError(.appTransportSecurityRequiresSecureConnection), in: .frequencyPack)
+    #expect(insecure?.code == "nsurlerror_domain.-1022")
+    let untrusted = HandledProblem(
+      URLError(.serverCertificateUntrusted, userInfo: [
+        NSURLErrorFailingURLStringErrorKey: "https://data.zenbujapanese.com/packs/a.zip?token=secret"
+      ]), in: .languagePack)
+    #expect(untrusted?.code == "nsurlerror_domain.-1202")
+    #expect(untrusted?.details == [:])
+    #expect(HandledProblem(URLError(.badServerResponse), in: .frequencyPack)?.code == "nsurlerror_domain.-1011")
   }
 
   @Test("a refused sync keeps its status and a service code, never the service's message")

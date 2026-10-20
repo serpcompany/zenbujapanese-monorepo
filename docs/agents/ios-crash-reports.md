@@ -12,6 +12,8 @@ the app has a crash-reporting SDK at all in
   - `CrashReporter`: `startAtLaunch()`, which `ZenbuJapaneseApp.init()` calls first, so a crash
     during the rest of launch is caught; `setEnabled(_:)` for the switch; `record(_:in:details:)`
     for handled failures; and `configure(_:dsn:environment:installID:bundleID:)`, every option.
+  - `CrashReportingSDK`: the SDK's start, close, and whether it runs, which the switch's tests
+    replace with a stand-in.
   - `CrashReportingPolicy`: which build reports and as what, the switch's default, the install
     ID, Sentry's folder, and which breadcrumbs and contexts a report keeps.
   - `CrashReportScrubber`: what `beforeSend` and `beforeBreadcrumb` remove.
@@ -57,18 +59,24 @@ and that the privacy manifest declares Crash Data and Other Diagnostic Data, unl
 
 - **On:** the crash handler; app hangs, at 2 seconds; watchdog terminations (iOS ending the app
   for memory or a hang, reported on the next launch, never on a Simulator); and stack traces on
-  handled failures.
-- **Off:** default PII; sessions; automatic and network breadcrumbs; network tracking and failed
-  requests; tracing and trace headers (`tracePropagationTargets` is empty); file I/O and Core Data
-  tracing; MetricKit; Sentry's logs and metrics; client reports; swizzling; and, on iOS,
-  screenshots, the view hierarchy, user-interaction tracing, and view-controller tracing, or on
-  the Mac, uncaught `NSException` reporting.
+  handled failures, of the current thread only (`attachAllThreads` off).
+- **Off:** memory introspection, which would put strings near the stack in a crash's report;
+  Spotlight, a second destination; default PII; sessions; automatic and network breadcrumbs;
+  network tracking and failed requests; tracing and trace headers (`tracePropagationTargets` is
+  empty); file I/O and Core Data tracing; MetricKit; Sentry's logs and metrics; client reports;
+  swizzling; and, on iOS, screenshots, the view hierarchy, user-interaction tracing, and
+  view-controller tracing, or on the Mac, uncaught `NSException` reporting.
 - **`shutdownTimeInterval` is 0,** so turning the switch off never waits on the network, and
   `cacheDirectoryPath` is `Library/Caches/<bundle ID>/Sentry`, the app's own folder.
 - Sentry still lists its session replay and metrics integrations as installed. Both are inert:
   replay's sample rates are set to 0 and swizzling is off, and the app records no metrics. Its
-  frames tracker runs for app hangs, to tell a fully blocked hang from a partial one. The SDK
-  sends `infer_ip: never`, so Sentry keeps no IP address.
+  frames tracker runs for app hangs, to tell a fully blocked hang from a partial one. Profiling
+  is never configured, so nothing measures performance.
+- **IP addresses:** with default PII off, the SDK sends `infer_ip: never`, asking Sentry not to
+  take the connection's IP address. Whether Sentry stores it, or a location from it, is set in
+  the project: Prevent Storing of IP Addresses, and a `[Remove] [Anything] from [$user.geo.**]`
+  rule. Neither setting is checked yet; the owner confirms both before a build with the DSN
+  reaches TestFlight, since the live policy says the address isn't stored.
 
 ## What a report holds
 
@@ -78,24 +86,31 @@ user, set in `initialScope` and again in `beforeSend`. `CrashReportScrubber.scru
 - clears the server name, the request, extras, and the error object, and keeps the user's ID only;
 - keeps only the `app`, `device`, `os`, `runtime`, `trace`, and `problem` contexts, without the
   device's name, locale, and time zone, or the app's device hash;
-- drops each frame's source lines and variables, and shortens an image's or frame's path that
-  names a folder (`/Users`, `/private`, `/var`, and the like) to `<path>/<file>`;
+- drops each frame's source lines and variables, in the exceptions', the threads', and the
+  event's own stack traces, and shortens an image's or frame's path that names a folder
+  (`/Users`, `/private`, `/var`, and the like) to `<path>/<file>`;
 - keeps only breadcrumbs whose category starts `zenbu.` (the app leaves none yet); and
 - in every message, exception value, mechanism, and kept context or breadcrumb value, replaces
-  URLs, email addresses, paths, quoted text (“…”, 「…」, "…"), and Japanese text with a
-  placeholder. Each rule runs in linear time, and `CrashReportScrubberTests` checks them on
-  real-looking strings and a fully populated event.
+  URLs, email addresses, paths, quoted text (“…”, 「…」, "…"), bare file names, and Japanese
+  text with a placeholder. A bare file name is a word ending in a data or media extension
+  (`fileExtensions`: `sqlite`, `db`, `json`, `plist`, `txt`, `csv`, `pdf`, images, audio, video,
+  `zip`), so type names such as `Foundation.URL` and code files such as `DictionaryCore.swift`
+  stay; a name with spaces loses only its last word. Each rule runs in linear time, and
+  `CrashReportScrubberTests` checks them on real-looking strings and a fully populated event.
 
 ## Handled failures
 
 A handled failure sends its area and a stable code, never its message: `CrashReporter.record(error,
 in: area)` builds the code from the error's type and case in snake case
-(`account_service_error.refused`), or an `NSError`'s domain and number, and anything else becomes
-`unknown`. At most four details go with it, and only short, stable keys and values (a status or a
-pack's ID). Cancellation, `NSURLErrorDomain` errors, and an unreachable service or an ended session
-send nothing; each area and code is sent once a launch, grouped by `["handled-problem", area,
-code]`. `HandledProblemTests` checks the codes, once a launch, and that a message, a service's
-answer, or a payload never reaches the event.
+(`account_service_error.refused`), or an `NSError`'s domain and number; other errors give their
+type's name, and a code that isn't short and stable becomes `unknown`. At most four details go
+with it, and only short, stable keys and values (a status or a pack's ID). Cancellation, a lost
+connection (`HandledProblem.expectedURLErrors`: no network, a timeout, a host that can't be found
+or reached, and the like), and an unreachable service or an ended session send nothing; any other
+URL error, such as a refused certificate or an `http://` address, is sent as
+`nsurlerror_domain.<number>`. Each area and code is sent once a launch, grouped by
+`["handled-problem", area, code]`. `HandledProblemTests` checks the codes, once a launch, and that
+a message, a service's answer, or a payload never reaches the event.
 
 | Area | Where | Codes |
 | --- | --- | --- |
@@ -113,8 +128,18 @@ details only from values the app chose, never text a learner or a service wrote.
 `CrashReportsSection` is a stock `Toggle` (`account.send-crash-reports`) on Account, after Frequency
 Dictionaries, and in the Mac's Settings window. It stores `crash-reports.send` in defaults, on until
 turned off, and calls `CrashReporter.setEnabled`, which closes the SDK at once or starts it again.
-With the switch off at launch, Sentry isn't started at all. `CrashReportingPolicyTests` and
-`AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` check it.
+With the switch off at launch, Sentry isn't started at all. What checks it:
+
+- `CrashReporterSwitchTests`, against a stand-in `CrashReportingSDK`: turning the switch off
+  closes a running SDK, turning it on starts it with the app's options, and a build with no
+  destination ignores it.
+- `CrashReportingPolicyTests`: on until turned off, and the real SDK never starts in a build with
+  no destination.
+- `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff`: the row is on at first and
+  off once flipped.
+- By hand (Checking a report arrives, step 3): with the switch off before launch, a crash sends
+  nothing. Turning it off while the app runs and then crashing hasn't been checked in the running
+  app, since the test crash comes 3 seconds after launch.
 
 ## Test switches
 
@@ -165,8 +190,9 @@ checked on 2026-10-20 for #859.
 
 Without the build's dSYMs, a report's stack trace is addresses. `apps/ios/Tools/upload_dsyms.py`
 takes an `.xcarchive` (its `dSYMs` folder) or a build's products folder and runs a pinned
-`@sentry/cli` (`npx --yes @sentry/cli@<version> debug-files upload --org serpcompany --project
-zenbujapanese-ios`). In the TestFlight steps ([`ios.md`](ios.md#the-app-store-record)), after the
+`@sentry/cli`: first `npx --yes -- @sentry/cli@<version> --version`, which installs it without the
+token, and then `npx --no -- @sentry/cli@<version> debug-files upload --org serpcompany --project
+zenbujapanese-ios`, which can't install anything and alone gets the token. Each has a timeout. In the TestFlight steps ([`ios.md`](ios.md#the-app-store-record)), after the
 upload, it's run on the archive, which the Organizer's **Show in Finder** reveals:
 
 ```sh
@@ -177,14 +203,15 @@ python3 apps/ios/Tools/upload_dsyms.py ~/Library/Developer/Xcode/Archives/<date>
   `zenbu-sentry-auth-token`, an organization auth token from Sentry's settings. Keep it with
   `security add-generic-password -U -a "$USER" -s zenbu-sentry-auth-token -w "$(pbpaste)"`, since
   the keychain's own prompt cuts a long token short. The script never prints it.
-- **A failure is a warning:** with no dSYMs, no token, or a failed upload, it says so and exits 0,
-  since the build is fine; run it again later. `test_upload_dsyms.py` checks each case.
+- **A failure is a warning:** with no dSYMs, no token, or an install or upload that fails or
+  stalls, it says so and exits 0, since the build is fine; run it again later.
+  `test_upload_dsyms.py` checks each case, and that the install never gets the token.
 
 ## Tests
 
 - **Package** (`apps/ios/Modules`, `-only-testing:SearchExperienceTests/<suite>`):
-  `CrashReporterOptionsTests`, `CrashReportingPolicyTests`, `CrashReportScrubberTests`, and
-  `HandledProblemTests`. They don't run in CI ([`ci.md`](ci.md)), so a change cites a local run.
+  `CrashReporterOptionsTests`, `CrashReporterSwitchTests`, `CrashReportingPolicyTests`,
+  `CrashReportScrubberTests`, and `HandledProblemTests`. They don't run in CI ([`ci.md`](ci.md)), so a change cites a local run.
 - **UI:** `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` and
   `testAccountListsEveryArea`.
 - **Contract:** `test_crash_report_settings.py` and `test_upload_dsyms.py` in

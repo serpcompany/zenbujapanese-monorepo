@@ -19,6 +19,19 @@ enum CrashReportScrubber {
     (#"~/[^"# + end + "]*", "<path>"),
   ])
 
+  static let fileExtensions = [
+    "sqlite3", "sqlite", "db", "json", "plist", "txt", "csv", "pdf", "png", "jpeg", "jpg", "heic",
+    "gif", "mp3", "m4a", "wav", "mp4", "mov", "zip",
+  ]
+
+  private static let fileNameRules: [(NSRegularExpression, String)] = compile([
+    (
+      #"(?<![\p{L}\p{M}\p{N}_.\-])[\p{L}\p{M}\p{N}_\-]++(?:\.[\p{L}\p{M}\p{N}_\-]++)*+(?<=(?i:\.(?:"#
+        + fileExtensions.joined(separator: "|") + ")))",
+      "<file>"
+    )
+  ])
+
   private static let japaneseRules: [(NSRegularExpression, String)] = compile([
     (#"[\p{Hiragana}\p{Katakana}\p{Han}ー々〆ヶｰ]++"#, "<japanese>")
   ])
@@ -40,7 +53,9 @@ enum CrashReportScrubber {
   }
 
   static func scrub(_ text: String) -> String {
-    apply(japaneseRules, to: apply(pathRules, to: apply(quotedNameRules, to: text)))
+    apply(
+      japaneseRules,
+      to: apply(fileNameRules, to: apply(pathRules, to: apply(quotedNameRules, to: text))))
   }
 
   static func scrub(_ text: String?) -> String? {

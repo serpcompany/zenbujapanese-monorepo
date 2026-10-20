@@ -170,7 +170,7 @@ private let textThatScales = [
   allow(
     .dynamicType,
     .label(
-      "When Zenbu crashes, freezes, or hits an error, such as a failed sync or download, it sends a report to its developers through Sentry: the app and system versions, the device model, a random ID for this install, and where in the app's code it happened. Reports never include your searches, words, sentences, notes, photos, conversations, or account details."
+      "When Zenbu crashes, freezes, or hits an error, such as a failed sync or download, it sends a report to its developers through Sentry: the app and system versions, the device's model and state (such as memory in use), a random ID for this install, and where in the app's code it happened. Reports never include your searches, words, sentences, notes, photos, conversations, or account details."
     ),
     on: ["Account", "Account, at its end"], touch, [.standard], because: Why.scales),
   allow(
