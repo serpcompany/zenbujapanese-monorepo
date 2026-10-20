@@ -63,10 +63,17 @@ import Foundation
       case "DELETE /v1/me":
         (200, ["status": "deleted"], [:])
       case let put where put.hasPrefix("PUT /v1/photos/"):
-        (201, ["id": String(put.dropFirst("PUT /v1/photos/".count))], [:])
+        refusedUpload ?? (201, ["id": String(put.dropFirst("PUT /v1/photos/".count))], [:])
       default:
         (404, ["error": ["code": "not_found", "message": route]], [:])
       }
+    }
+
+    private static var refusedUpload: (Int, Any, [String: String])? {
+      let code = ProcessInfo.processInfo.environment[LaunchHarness.accountRefusesStandInKey]
+      let status = ["too_many_photos": 409, "photos_unavailable": 503]
+      guard let code, let status = status[code] else { return nil }
+      return (status, ["error": ["code": code, "message": code]], [:])
     }
 
     private static var signedIn: [String: Any] {

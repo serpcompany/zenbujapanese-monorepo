@@ -71,6 +71,9 @@ private let iPadSheets = [
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account",
 ]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
+private let zenbuAccountNotes = [
+  "Zenbu Account, a photo refused as too many", "Zenbu Account, photos waiting for storage",
+]
 private let bothSizes: Set<TextSize> = [.standard, .largest]
 
 private func allow(
@@ -176,7 +179,20 @@ private let textThatScales = [
     .label(
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."
     ),
-    on: ["Zenbu Account"], [.phone], because: Why.scales),
+    on: ["Zenbu Account"] + zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(
+    .dynamicType,
+    .label(
+      "Zenbu syncs your profile, known words, lists, notes, photos, settings, recent searches, watch history, and bookmarked translations after each change and when it opens. They also stay on this iPhone, and work offline."
+    ),
+    on: zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(
+    .dynamicType,
+    .label(
+      "This iPhone keeps your known words, lists, watch history, translations, notes, and media, and Zenbu keeps working signed out."
+    ),
+    on: ["Delete Account"], [.phone], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),

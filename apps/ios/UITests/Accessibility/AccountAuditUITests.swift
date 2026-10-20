@@ -1,24 +1,26 @@
 import XCTest
 
 final class AccountAuditUITests: AccessibilityAuditCase {
-  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() {
-    auditAccount(.standard)
+  func testAccountsScreensPassTheAuditAtTheDefaultTextSize() throws {
+    try auditAccount(.standard)
   }
 
   func testAccountsScreensPassTheAuditAtTheLargestTextSize() throws {
     try skipWithoutTextSizes()
-    auditAccount(.largest)
+    try auditAccount(.largest)
   }
 
-  func testAccountsScreensPassTheAuditInDarkAppearance() {
-    auditAccount(.dark)
+  func testAccountsScreensPassTheAuditInDarkAppearance() throws {
+    try auditAccount(.dark)
   }
 
-  private func auditAccount(_ pass: AuditPass) {
+  private func auditAccount(_ pass: AuditPass) throws {
     auditTheAccountAndItsSettings(pass)
     auditTheLearnersWords(pass)
     auditSigningIn(pass)
-    if device == .mac { auditTheSettingsWindow(pass) } else { auditTheZenbuAccount(pass) }
+    if device == .mac { return auditTheSettingsWindow(pass) }
+    auditTheZenbuAccount(pass)
+    try auditPhotosTheAccountCantKeep(pass)
   }
 
   private func auditTheAccountAndItsSettings(_ pass: AuditPass) {
@@ -105,15 +107,56 @@ final class AccountAuditUITests: AccessibilityAuditCase {
   }
 
   private func auditTheZenbuAccount(_ pass: AuditPass) {
-    let app = launch(pass, AccountSignedInUITests.standIns)
-    open(.account, in: app)
-    tap(reveal(find("account.sign-in", in: app), in: app))
-    tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
+    let app = launch(pass, Self.signedIn(AccountSignedInUITests.keptOnAnotherDevice))
+    signIn(in: app)
+    tap(reveal(find("account.media-library", in: app), in: app))
+    waitUntil(waitFor(firstElement(identifiedBy: "media-library.item.", in: app)), mentions: "猫")
+    audit("Media Library, with a photo from the account", in: app)
+    goBack(in: app)
+    tap(reveal(find("account.profile", in: app), in: app))
+    waitUntil(waitFor(find("profile.account-email", in: app)), mentions: "learner@example.com")
+    audit("Profile, signed in", in: app)
+    goBack(in: app)
     tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
     audit("Zenbu Account", in: app)
     tap(reveal(find("zenbu-account.delete", in: app), in: app))
     waitUntilStill(waitForSheet("delete-account.cancel", in: app))
     audit("Delete Account", in: app)
+  }
+
+  private func auditPhotosTheAccountCantKeep(_ pass: AuditPass) throws {
+    let notes = [
+      ("too_many_photos", "a photo refused as too many", "Your Zenbu account holds as many photos"),
+      ("photos_unavailable", "photos waiting for storage", "Photos wait to sync"),
+    ]
+    for (refusal, state, note) in notes {
+      let app = try openFixtureImage(pass, Self.signedIn(["ZENBU_ACCOUNT_STAND_IN_REFUSES": refusal]))
+      saveThePhotoOnAWord(in: app)
+      signIn(in: app)
+      tap(find("account.zenbu-account", in: app), toShow: find("zenbu-account.email", in: app))
+      waitFor(
+        app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", note)).firstMatch)
+      audit("Zenbu Account, \(state)", in: app)
+    }
+  }
+
+  private func saveThePhotoOnAWord(in app: XCUIApplication) {
+    tap(waitFor(firstElement(identifiedBy: "image-text.region.", in: app)))
+    tap(find("recognized-word-sheet.open-full-entry", in: app))
+    tap(find("word-detail.image-attachment", in: app))
+    waitForSheet("word-detail.image-page", in: app)
+    tap(find("word-detail.image-attachment-done", in: app))
+  }
+
+  private func signIn(in app: XCUIApplication) {
+    open(.account, in: app)
+    tap(reveal(find("account.sign-in", in: app), in: app))
+    tap(reveal(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Apple'")).firstMatch, in: app))
+    waitFor(find("account.zenbu-account", in: app))
+  }
+
+  private static func signedIn(_ more: [String: String]) -> [String: String] {
+    AccountSignedInUITests.standIns.merging(more) { $1 }
   }
 
   private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {

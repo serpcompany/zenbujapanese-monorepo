@@ -6,6 +6,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
     "ZENBU_SIGN_IN_STAND_IN": "1", "ZENBU_ACCOUNT_STAND_IN": "1",
     "ZENBU_ACCOUNT_API_URL": "https://account.stand-in.test",
   ]
+  static let keptOnAnotherDevice = ["ZENBU_ACCOUNT_STAND_IN_KEPT": "1"]
 
   override func setUpWithError() throws {
     try XCTSkipIf(
@@ -89,7 +90,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
   }
 
   func testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice() {
-    let app = launch(Self.standIns.merging(["ZENBU_ACCOUNT_STAND_IN_KEPT": "1"]) { a, _ in a })
+    let app = launch(Self.standIns.merging(Self.keptOnAnotherDevice) { a, _ in a })
     signInWithApple(in: app)
     tap(reveal(find("account.media-library", in: app), in: app))
     let photo = waitFor(firstElement(identifiedBy: "media-library.item.", in: app))

@@ -238,4 +238,8 @@ synced choice and telling only the learner's. On iPhone and iPad,
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` signs
 in to the stand-in service with `ZENBU_ACCOUNT_STAND_IN_KEPT=1`, whose first answer brings a
 photo on a word, Reading Aids' romaji, and a recent search, and finds each where the learner
-would.
+would. `AccountAuditUITests` signs in the same way to audit the Media Library with that photo,
+the signed-in Profile, and Zenbu Account, and, after saving a photo on a word, with
+`ZENBU_ACCOUNT_STAND_IN_REFUSES=too_many_photos` or `photos_unavailable`, which answers the photo's
+upload `409` or `503`, Zenbu Account's notes for a photo refused as too many and for photos
+waiting for storage.
