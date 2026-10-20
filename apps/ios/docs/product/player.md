@@ -82,9 +82,9 @@ player is by hand; the UI tests stand in for it with a local player that answers
   video and controls stay usable; the sheet can be pulled up to full height. **Open Full
   Entry**, the expand button beside the word, and the sheet's links to other dictionary pages (a
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
-  page inside Player, so Back returns to the video. The same goes for the word sheet in Image
-  Search and Translate, in their own tabs. A card's words keep their links however many lines
-  were linked before it.
+  page inside Player, so Back returns to the video. The same goes for the word sheet in Translate
+  and in its Image Search, which open the page inside Translate. A card's words keep their links
+  however many lines were linked before it.
   Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
   `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate
