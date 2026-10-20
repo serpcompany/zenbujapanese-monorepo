@@ -6,7 +6,8 @@ how to check that one arrives, and how a report is found and answered. What the 
 uses the crash reports' SDK, destination, install ID, and scrubber
 ([`ios-crash-reports.md`](ios-crash-reports.md)), and SERP's
 [native app problem reports](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/native-app-problem-reports.md)
-standard (#860).
+standard (#860). [ADR 0021](../adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)
+records where it differs from the standard, such as the account's email filled in.
 
 ## Code layout
 
@@ -49,9 +50,10 @@ trimmed description as its message. Its contexts:
 `report: problem` (`ProblemReport.isProblemReport`): its message goes through only the path, URL,
 and email rules (`scrubWritten`), so quoted words and Japanese stay; it keeps the `report` and
 `permissions` contexts (`problemReportContexts`), which it drops from any other event; and it
-keeps `report.contact` only while it's still wholly an email, through no rule. The path and URL
-rules end only at a line break, a quotation mark, or an angle bracket, so a path or link takes the
-rest of its line.
+keeps `report.contact` only while it's still wholly an email, through no rule. In what the learner
+writes, a URL ends at a space too, since a typed link can't hold one, so the words after it stay. A
+path ends only at a line break, a quotation mark, or an angle bracket, since a path can hold
+spaces, so it takes the rest of its line.
 
 ## Sending
 

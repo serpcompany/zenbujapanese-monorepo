@@ -10,7 +10,10 @@ and how a report is found and answered, is in
   details, the email rules, and every line of copy (on #860, 2026-10-20). iPhone only while the
   Mac and iPad are on hold.
 - SERP's [native app problem reports](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/native-app-problem-reports.md)
-  standard, and the website's privacy policy (#904), which says what a report sends.
+  standard, and the website's privacy policy (#904), which says what a report sends, and the
+  [App Store privacy labels](../../../web/docs/app-store-privacy-labels.md), which declare it.
+- [ADR 0021](../../../../docs/adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)
+  records where this differs from the standard.
 
 ## The row
 
@@ -36,8 +39,8 @@ Check: UI `AccountUITests.testAccountListsEveryArea` (each row shows; not their 
   identifier (such as `iPhone17,1`), signed in or out, crash reports on or off, the installed
   frequency dictionaries (or None), and whether the microphone and camera are allowed, denied, or
   not asked. These rows are exactly what's sent. The note under them says Sentry also adds the
-  iPhone's state, such as memory in use and Low Power Mode, and that no conversations, searches,
-  lists, or photos are attached.
+  state of "this iPhone" (or iPad, or Mac), such as memory in use and Low Power Mode, and that no
+  conversations, searches, lists, or photos are attached.
 
 **Send** is the toolbar's confirm button. It stays off until What happened? has text, while the
 email isn't an address, and until the details have loaded. Sending shows a spinner in its place,
@@ -52,7 +55,8 @@ as a link.
 Check: package `ProblemReportFormTests` (Send's rules, the email signed in and out, typed text,
 sending once, and a cleared email sending no contact); UI
 `ProblemReportUITests.testAReportSendsOnceItSaysWhatHappenedAndTheEmailIsAnAddress`,
-`testClosingAReportWithTextAsksFirstAndAnEmptyOneClosesAtOnce`, and
+`testClosingAReportWithTextAsksFirstAndAnEmptyOneClosesAtOnce`,
+`testSwipingDownKeepsAReportWithTextAndClosesAnEmptyOne`, and
 `testABuildThatCantSendKeepsSendOffAndGivesTheSupportAddress`, and
 `AccountSignedInUITests.testAReportOpensWithTheAccountsEmailFilledInAndSaysSo`; and the Account
 audits, which include the form, an email that isn't an address, and Report Sent.
@@ -62,8 +66,9 @@ audits, which include the form, an email that isn't an address, and Report Sent.
 The report is an `info` event, tagged `report: problem`, and its own issue in Sentry. It holds:
 
 - what the learner wrote, without file paths, links, and email addresses, which become
-  `<path>`, `<url>`, and `<email>`. A path or a link takes the rest of its line with it. Quoted
-  words and Japanese stay, since a learner reporting a word's problem names the word;
+  `<path>`, `<url>`, and `<email>`. A link ends at a space, and a path takes the rest of its line
+  with it, since a path can hold spaces. Quoted words and Japanese stay, since a learner reporting
+  a word's problem names the word;
 - the email, only when the whole field is one email address;
 - the details rows, as `Label: value` lines, and the microphone and camera permissions; and
 - what Sentry adds to every crash report: the app and system versions, the device's model and

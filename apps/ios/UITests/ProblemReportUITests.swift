@@ -56,6 +56,22 @@ final class ProblemReportUITests: ZenbuUITestCase {
     waitUntil(find("problem-report.description", in: app), "value != 'Search froze'")
   }
 
+  func testSwipingDownKeepsAReportWithTextAndClosesAnEmptyOne() {
+    let app = launch(Self.problemReportStandIn)
+    let send = openTheReport(in: app)
+    type("Search froze", into: find("problem-report.description", in: app))
+    swipeTheReportDown(in: app)
+    waitUntilStill(send)
+    XCTAssertTrue(send.exists)
+    tap(find("problem-report.cancel", in: app))
+    tap(app.buttons["Discard Report"].firstMatch)
+    waitUntilGone(send)
+    openTheReport(in: app)
+    swipeTheReportDown(in: app)
+    waitUntilGone(find("problem-report.send", in: app))
+    waitFor(find("account.report-a-problem", in: app))
+  }
+
   func testABuildThatCantSendKeepsSendOffAndGivesTheSupportAddress() {
     let app = launch()
     let send = openTheReport(in: app)
@@ -63,5 +79,11 @@ final class ProblemReportUITests: ZenbuUITestCase {
     let note = reveal(find("problem-report.note", in: app), in: app)
     waitUntil(note, mentions: "support@zenbujapanese.com")
     XCTAssertFalse(send.isEnabled)
+  }
+
+  private func swipeTheReportDown(in app: XCUIApplication) {
+    let bar = waitFor(app.navigationBars["Report a Problem"]).coordinate(
+      withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+    bar.press(forDuration: 0.1, thenDragTo: bar.withOffset(CGVector(dx: 0, dy: 600)))
   }
 }

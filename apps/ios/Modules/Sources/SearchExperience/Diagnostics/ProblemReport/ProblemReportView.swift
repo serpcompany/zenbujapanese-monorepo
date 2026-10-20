@@ -29,7 +29,7 @@ struct ProblemReportView: View {
   static let cannotSendNote: LocalizedStringKey =
     "This build of Zenbu Japanese can't send reports. Email [support@zenbujapanese.com](mailto:support@zenbujapanese.com) instead."
   static let alsoAdded: LocalizedStringKey =
-    "Sentry also adds technical details about this iPhone's state, such as memory in use and Low Power Mode. No conversations, searches, lists, or photos are attached."
+    "Sentry also adds technical details about this \(ThisDevice.name)'s state, such as memory in use and Low Power Mode. No conversations, searches, lists, or photos are attached."
 
   @Environment(\.dismiss) private var dismiss
   @State private var form: ProblemReportForm

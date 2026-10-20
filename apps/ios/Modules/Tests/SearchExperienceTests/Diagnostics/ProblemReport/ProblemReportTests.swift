@@ -84,10 +84,16 @@ struct ProblemReportTests {
     #expect(full.message?.formatted.contains("“<name>”") == true)
   }
 
-  @Test("a path or link takes the rest of its line with it, and the next lines stay")
-  func pathOrLinkTakesTheRestOfItsLine() {
+  @Test("a link ends at a space, so the words after it stay, and the next lines stay")
+  func linkEndsAtASpace() {
     let event = Self.report("Tap https://example.com/a?b=c then Back\nIt froze").event()
-    #expect(CrashReportScrubber.scrub(event).message?.formatted == "Tap <url>\nIt froze")
+    #expect(CrashReportScrubber.scrub(event).message?.formatted == "Tap <url> then Back\nIt froze")
+  }
+
+  @Test("a path takes the rest of its line with it, since a path can hold spaces, and the next lines stay")
+  func pathTakesTheRestOfItsLine() {
+    let event = Self.report("Open ~/My Words/list.csv then Back\nIt froze").event()
+    #expect(CrashReportScrubber.scrub(event).message?.formatted == "Open <path>\nIt froze")
   }
 
   @Test("the report's contexts are kept for a report, and dropped from any other event")

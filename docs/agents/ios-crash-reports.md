@@ -58,7 +58,9 @@ carries as `ZenbuCrashReportsDSN`. It is set only in the app target's Release co
 The release is `<bundle ID>@<version>+<build>` and the dist the build number, both from
 `Info.plist`. `apps/ios/Tools/tests/test_crash_report_settings.py` checks that only the app's
 Release configuration has a DSN, that `Info.plist` reads it under the key the Swift code reads,
-and that the privacy manifest declares Crash Data and Other Diagnostic Data, unlinked.
+and that the privacy manifest declares Device ID, Customer Support, Crash Data, and Other Diagnostic
+Data, each linked, since a problem report's email links an install's reports
+([ADR 0021](../adr/0021-send-problem-reports-through-the-crash-reports-sentry-setup.md)).
 
 ## Options
 

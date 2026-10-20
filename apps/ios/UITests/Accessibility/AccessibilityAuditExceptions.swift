@@ -176,20 +176,20 @@ private let textThatScales = [
     ]), on: ["Reading Aids"], because: Why.scales),
   allow(.dynamicType, .labels(["Lists", "1", "Translations", "0"]), on: ["Account"], because: Why.scales),
   allow(.dynamicType, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
-  allow(.textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], because: Why.scales),
+  allow(
+    .textClipped, .label("Send Crash Reports"), on: ["Account, its about rows"], touch, [.standard],
+    because: Why.scales),
   allow(
     .dynamicType,
     .label(
-      "When Zenbu crashes, freezes, or hits an error, such as a failed sync or download, it sends a report to its developers through Sentry: the app and system versions, the device's model and state (such as memory in use), a random ID for this install, and where in the app's code it happened. Reports never include your searches, words, sentences, notes, photos, conversations, or account details."
+      "When Zenbu crashes, freezes, or hits an error, such as a failed sync or download, it sends a report to its developers through Sentry: the app and system versions, the device's model and state (such as memory in use), a random ID for this install, and where in the app's code it happened. Crash reports never include your searches, words, sentences, notes, photos, conversations, or account details."
     ),
     on: ["Account, its about rows"], touch, [.standard], because: Why.scales),
   allow(
     .textClipped,
-    .labels([
-      "Lists", "Translations", "Sign In to Sync",
-      "Known words, lists, watch history, and bookmarks, on all your devices",
-    ]),
+    .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
     on: ["Account"], because: Why.scales),
+  allow(.textClipped, .label("Lists"), on: ["Account"], touch, [.standard], because: Why.scales),
   allow(
     .dynamicType,
     .label(
@@ -198,10 +198,11 @@ private let textThatScales = [
     on: ["Zenbu Account"], [.phone], because: Why.scales),
   allow(
     .dynamicType,
-    .labels([
-      "Included with your report",
-      "Sentry also adds technical details about this iPhone's state, such as memory in use and Low Power Mode. No conversations, searches, lists, or photos are attached.",
-    ]), on: problemReportsEditing, touch, [.standard], because: Why.scales),
+    .labels(
+      ["Included with your report"]
+        + ["iPhone", "iPad"].map {
+          "Sentry also adds technical details about this \($0)'s state, such as memory in use and Low Power Mode. No conversations, searches, lists, or photos are attached."
+        }), on: problemReportsEditing, touch, [.standard], because: Why.scales),
   allow(.dynamicType, .label("READINGS"), on: ["Kanji Detail"], because: Why.scales),
   allow(.dynamicType, .label("Linked on-readings: ショウ, コウ, トウ, カン"), on: ["A kanji's element"], because: Why.scales),
   allow(.dynamicType, .identifier("word-detail.alternative.にっぽん"), on: ["Word Detail"], because: Why.scales),

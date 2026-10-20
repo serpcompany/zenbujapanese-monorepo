@@ -10,7 +10,9 @@ from project_settings import build_setting as setting
 APP = ROOT / "apps/ios/App"
 POLICY = ROOT / "apps/ios/Modules/Sources/SearchExperience/Diagnostics/CrashReportingPolicy.swift"
 SENTRY_INGEST = re.compile(r"^https://[0-9a-f]{32}@o\d+\.ingest\.us\.sentry\.io/\d+$")
-DIAGNOSTICS = {
+REPORTS = {
+    "NSPrivacyCollectedDataTypeDeviceID",
+    "NSPrivacyCollectedDataTypeCustomerSupport",
     "NSPrivacyCollectedDataTypeCrashData",
     "NSPrivacyCollectedDataTypeOtherDiagnosticData",
 }
@@ -39,15 +41,15 @@ class CrashReportSettingsTests(unittest.TestCase):
         self.assertIsNotNone(key)
         self.assertEqual(info[key.group(1)], "$(ZENBU_CRASH_REPORTS_DSN)")
 
-    def test_the_privacy_manifest_declares_unlinked_diagnostics(self) -> None:
+    def test_the_privacy_manifest_declares_what_reports_send_as_linked(self) -> None:
         manifest = plistlib.loads((APP / "PrivacyInfo.xcprivacy").read_bytes())
         declared = {
             entry["NSPrivacyCollectedDataType"]: entry
             for entry in manifest["NSPrivacyCollectedDataTypes"]
         }
-        self.assertLessEqual(DIAGNOSTICS, declared.keys())
-        for name in DIAGNOSTICS:
-            self.assertFalse(declared[name]["NSPrivacyCollectedDataTypeLinked"])
+        self.assertLessEqual(REPORTS, declared.keys())
+        for name in REPORTS:
+            self.assertTrue(declared[name]["NSPrivacyCollectedDataTypeLinked"])
             self.assertFalse(declared[name]["NSPrivacyCollectedDataTypeTracking"])
             self.assertEqual(
                 declared[name]["NSPrivacyCollectedDataTypePurposes"],

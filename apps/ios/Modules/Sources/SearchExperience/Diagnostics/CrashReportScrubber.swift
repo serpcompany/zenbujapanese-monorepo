@@ -12,12 +12,19 @@ enum CrashReportScrubber {
     (#""[^"\n]*""#, "“<name>”"),
   ])
 
-  private static let pathRules: [(NSRegularExpression, String)] = compile([
-    (#"(?<![A-Za-z0-9+.\-])([0-9+.\-]*+)[A-Za-z][A-Za-z0-9+.\-]*+://[^"# + end + "]*", "$1<url>"),
+  private static func linkRule(endingAt end: String) -> (String, String) {
+    (#"(?<![A-Za-z0-9+.\-])([0-9+.\-]*+)[A-Za-z][A-Za-z0-9+.\-]*+://[^"# + end + "]*", "$1<url>")
+  }
+
+  private static let emailAndPathRules: [(String, String)] = [
     (CrashReportingPolicy.emailPattern, "<email>"),
     (#"(?:/Users|/Volumes|/private|/tmp|/var)/[^"# + end + "]*", "<path>"),
     (#"~/[^"# + end + "]*", "<path>"),
-  ])
+  ]
+
+  private static let pathRules = compile([linkRule(endingAt: end)] + emailAndPathRules)
+
+  private static let writtenRules = compile([linkRule(endingAt: #"\s"# + end)] + emailAndPathRules)
 
   static let fileExtensions = [
     "sqlite3", "sqlite", "db", "json", "plist", "txt", "csv", "pdf", "png", "jpeg", "jpg", "heic",
@@ -128,7 +135,7 @@ enum CrashReportScrubber {
   }
 
   static func scrubWritten(_ text: String) -> String {
-    apply(pathRules, to: text)
+    apply(writtenRules, to: text)
   }
 
   private static func scrubReport(_ context: [String: Any]) -> [String: Any] {
