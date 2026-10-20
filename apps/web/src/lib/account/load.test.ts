@@ -13,7 +13,16 @@ const profile = {
   version: 1,
   createdAt: '2026-10-07T00:00:00.000Z'
 }
+const subscription = {
+  latest: null,
+  running: [],
+  canSubscribe: true,
+  cloudAccess: 'subscription_required' as const,
+  websitePrices: ['price_monthly'],
+  appStoreProducts: []
+}
 const ok = <T>(value: T): Result<T> => ({ ok: true, value })
+const plans = { plans: [], trialDays: null }
 const refused = (status: number) =>
   refusedResult(status, status === 401 ? 'unauthorized' : 'internal')
 
@@ -23,6 +32,8 @@ const stubApi = (parts: Partial<Record<keyof AccountApi, unknown>>) =>
     accessToken: ok(jwtFor({ sub: 'u1' })),
     profile: ok(profile),
     identities: ok([]),
+    subscription: ok(subscription),
+    plans: ok(plans),
     ...parts
   })
 
@@ -32,7 +43,23 @@ describe('loading the account page', () => {
   test('reads the session from the cookie, then the profile with an access token and the ways in', async () => {
     expect(await load(stubApi({}))).toEqual({
       kind: 'signed-in',
-      account: { session, profile, identities: [] }
+      account: { session, profile, identities: [], subscription, plans: ok(plans) }
+    })
+  })
+
+  test('reads the plans with the subscription only when the website offers one, and a 401 there signs out', async () => {
+    const subscribed = { ...subscription, canSubscribe: false }
+    expect(await load(stubApi({ subscription: ok(subscribed) }))).toMatchObject({
+      kind: 'signed-in',
+      account: { subscription: subscribed, plans: null }
+    })
+    expect(await load(stubApi({ plans: refused(401) }))).toEqual({ kind: 'signed-out' })
+  })
+
+  test("keeps the account when its subscription can't be read, and shows none", async () => {
+    expect(await load(stubApi({ subscription: refused(500) }))).toMatchObject({
+      kind: 'signed-in',
+      account: { profile, subscription: null }
     })
   })
 

@@ -18,14 +18,25 @@ const appLabels = {
   included: 'Included with your report'
 } as const
 
-const whatWeKeep = ['account', 'signIn', 'sessions', 'studyData', 'changes'] as const
+const whatWeKeep = [
+  'account',
+  'signIn',
+  'sessions',
+  'studyData',
+  'subscription',
+  'changes'
+] as const
 
 const howLongWeKeepIt = [
   'account',
+  'subscription',
+  'deletedAccount',
   'sessions',
   'codes',
   'requestCounts',
   'changes',
+  'photos',
+  'removed',
   'backups',
   'reports',
   'supportEmail'
@@ -34,6 +45,7 @@ const howLongWeKeepIt = [
 const providers = [
   { key: 'cloudflare', name: 'Cloudflare' },
   { key: 'useSend', name: 'useSend' },
+  { key: 'stripe', name: 'Stripe' },
   { key: 'lambda', name: 'Lambda, Inc.' },
   { key: 'sentry', name: 'Sentry' },
   { key: 'ahrefs', name: 'Ahrefs' },
@@ -42,7 +54,7 @@ const providers = [
   { key: 'youtube', name: 'YouTube' }
 ] as const
 
-const legalBases = ['account', 'security', 'support'] as const
+const legalBases = ['account', 'subscription', 'security', 'support'] as const
 
 const rights = ['export', 'correct', 'delete', 'object'] as const
 

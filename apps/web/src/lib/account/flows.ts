@@ -63,7 +63,7 @@ export function afterGoogleConfirmation(
 }
 
 type Deletion =
-  | { kind: 'deleted' }
+  | { kind: 'deleted'; appStoreSubscriptionContinues: boolean }
   | { kind: 'signed-out' }
   | { kind: 'confirm-first'; failure: Failure }
   | { kind: 'refused'; failure: Failure; byApple: boolean }
@@ -82,7 +82,7 @@ export async function deleteTheAccount(
   if (deleted.ok) {
     tokens.forget()
     await api.signOut()
-    return { kind: 'deleted' }
+    return { kind: 'deleted', ...deleted.value }
   }
   const { failure } = deleted
   if (isSignedOut(failure)) return { kind: 'signed-out' }
