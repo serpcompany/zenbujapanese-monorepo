@@ -286,13 +286,13 @@ returns to the form.
 Check: the recorded `WordDetailConformanceTests` (each table's forms and their examples); UI
 `SearchUITests.testAVerbOpensItsConjugationsAndAForm`.
 
-Linked Japanese in Example Sentences, split into words as Image Search splits them, gives each word
-its own underline, so word boundaries are visible. An inflected verb or adjective is one word with
-its endings, such as 見なかった, 見ている, or 静かな, and opens its dictionary entry. The words that make up the
-current entry or the looked-up form are accented. Words the learner marked known have no underline,
-and no furigana when **Hide Furigana on Known Words** is on, but can still be selected. With **Show
-Word Meanings** on, each unknown word shows a short accent-colored meaning under it, and **Show
-Sentence Translations** controls whether example sentences show their English.
+Linked Japanese in example sentences, on Example Sentences and on a word's page, splits into words
+as Image Search does and underlines each, so word boundaries are visible. An inflected verb or
+adjective is one word with its endings, such as 見なかった, 見ている, or 静かな, and opens its dictionary entry.
+The words that make up the current entry or the looked-up form are accented. Words the learner
+marked known have no underline, and no furigana when **Hide Furigana on Known Words** is on, but can
+still be selected. With **Show Word Meanings** on, each unknown word shows a short accent-colored
+meaning under it, and **Show Sentence Translations** controls whether sentences show their English.
 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
 pieces join into one word), `artifact/word-examples.test.ts` (which words are accented), and
