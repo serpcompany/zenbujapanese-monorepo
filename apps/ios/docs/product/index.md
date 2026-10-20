@@ -206,9 +206,9 @@ keeps, from known words to settings and the profile ([Zenbu account and sync](ac
 It provides:
 
 - a profile card with the learner's photo, name, and username;
-- the Zenbu account: **Sign In to Sync**, or, signed in, **Zenbu Account** with the account's email
-  ([Zenbu account and sync](account-sync.md)), against production's account service in
-  TestFlight and App Store builds and staging's in Debug builds;
+- the Zenbu account: **Sign In to Sync**, which names what syncs, or, signed in, **Zenbu Account**
+  with the account's email ([Zenbu account and sync](account-sync.md)), against production's
+  account service in TestFlight and App Store builds and staging's in Debug builds;
 - the [Media Library](saved-data.md#media-library);
 - Known Words;
 - Lists;
@@ -228,8 +228,8 @@ It provides:
   bundled license text, with one for each Swift package the app links (Sentry, ZIPFoundation). If
   the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
-Check: UI `AccountUITests.testAccountListsEveryArea` (every row, and the small title on iPhone and
-iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
+Check: UI `AccountUITests.testAccountListsEveryArea` (every row, what Sign In to Sync names, and
+the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
 first credit, Jiten's notice, and the KanjiVG, Sentry, and ZIPFoundation texts), and

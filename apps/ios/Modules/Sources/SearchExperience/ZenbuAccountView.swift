@@ -44,7 +44,10 @@ struct ZenbuAccountRow: View {
   private var signedOutNote: String {
     zenbuAccount.sync.sessionEndedOnItsOwn
       ? String(localized: "You were signed out. Sign in again to keep syncing.")
-      : String(localized: "Known words, lists, watch history, and bookmarks, on all your devices")
+      : String(
+        localized:
+          "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices"
+      )
   }
 }
 

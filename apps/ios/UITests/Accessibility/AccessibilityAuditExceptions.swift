@@ -198,7 +198,10 @@ private let textThatScales = [
     on: ["Account", "Account, at its end"], touch, [.standard], because: Why.scales),
   allow(
     .textClipped,
-    .labels(["Translations", "Sign In to Sync", "Known words, lists, watch history, and bookmarks, on all your devices"]),
+    .labels([
+      "Translations", "Sign In to Sync",
+      "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history, and bookmarked translations, on all your devices",
+    ]),
     on: ["Account", "Account, at its end"], because: Why.scales),
   allow(
     .dynamicType,
