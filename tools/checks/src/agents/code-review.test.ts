@@ -275,18 +275,13 @@ describe('a pull request that changes the review workflow', () => {
 describe('asking GitHub, from any step the workflow runs itself', () => {
   const workflowRef = `${repository}/${workflowPath}@refs/pull/${pr}/merge`
   const ask = async (pullRequest: PullRequest) => {
-    const began = Date.now()
     const run = await runNodeStep(
       find,
       { ...environment, GITHUB_WORKFLOW_REF: workflowRef, GITHUB_OUTPUT: 'output.txt' },
       github({ files: [{ filename: workflowPath }], ...pullRequest }),
       { 'output.txt': '' }
     )
-    return {
-      ...run,
-      outputs: outputsOf(run.files['output.txt']),
-      seconds: (Date.now() - began) / 1000
-    }
+    return { ...run, outputs: outputsOf(run.files['output.txt']) }
   }
   const inASecond = () => String(Math.ceil(Date.now() / 1000) + 1)
 
@@ -294,7 +289,7 @@ describe('asking GitHub, from any step the workflow runs itself', () => {
     const run = await ask({ unavailableFor: 2 })
     expect(run.outputs).toEqual({ reviewable: 'false' })
     expect(run.requests).toHaveLength(3)
-    expect(run.seconds).toBeGreaterThan(1.9)
+    expect(run.secondsWaited).toBe(2)
   })
 
   test.concurrent.each<[string, PullRequest]>([
@@ -305,7 +300,7 @@ describe('asking GitHub, from any step the workflow runs itself', () => {
     const run = await ask(pullRequest)
     expect(run.outputs).toEqual({ reviewable: 'false' })
     expect(run.requests).toHaveLength(2)
-    expect(run.seconds).toBeGreaterThan(4.9)
+    expect(run.secondsWaited).toBe(5)
   })
 
   test.each<[string, { status: number; headers: Record<string, string> }]>([

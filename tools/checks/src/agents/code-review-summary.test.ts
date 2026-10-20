@@ -125,15 +125,16 @@ describe("creating the review's summary, when GitHub answers an error or nothing
   const createIt = `POST /issues/${pr}/comments`
   const lookForIt = `GET /issues/${pr}/comments`
 
-  test.each<[string, PullRequest]>([
-    ['answered a server error and made nothing', { failingCreates: { times: 1 } }],
-    ['never answered and made nothing', { failingCreates: { times: 1, lost: true } }]
-  ])('looks for the summary, finds none, and creates it again when the create %s', async (_, onGitHub) => {
+  test.each<[string, PullRequest, number]>([
+    ['answered a server error and made nothing', { failingCreates: { times: 1 } }, 1],
+    ['never answered and made nothing', { failingCreates: { times: 1, lost: true } }, 5]
+  ])('looks for the summary, finds none, and creates it again when the create %s, after the wait', async (_, onGitHub, seconds) => {
     const created = await create(onGitHub)
     expect(created.output).not.toContain('::error')
     expect(created.status).toBe(0)
     expect(created.asked).toEqual([createIt, lookForIt, createIt])
     expect(created.onThePullRequest).toEqual([summaryBody.body])
+    expect(created.secondsWaited).toBe(seconds)
   })
 
   test.each<[string, PullRequest]>([
@@ -179,6 +180,7 @@ describe("creating the review's summary, when GitHub answers an error or nothing
     )
     expect(created.asked.filter(each => each === createIt)).toHaveLength(4)
     expect(created.onThePullRequest).toEqual([])
+    expect(created.secondsWaited).toBe(3)
   })
 
   test.each([

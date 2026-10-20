@@ -262,8 +262,12 @@ were open, so a kept transcript of a merged pull request still gets its second a
 ## Tests
 
 `tools/checks/src/agents/` runs each step as the workflow does, against a stand-in for the
-GitHub API: `code-review.test.ts` (the jobs, the inline script and its patience, the scripts'
-origin), `code-review-context.test.ts` and `code-review-issue.test.ts` (what the reviewer is
+GitHub API. A step written in a workflow runs inside the test process (`runNodeStep` in
+`tools/checks/src/agents/workflow.ts`): its `fetch` asks the stand-in, and its waits pass on a
+clock that moves only when the step waits, so a test of its patience waits for no real time and
+holds however busy the machine is. The review's scripts in `tools/checks/` run as Node processes,
+against the stand-in on a local port. The tests: `code-review.test.ts` (the jobs, the inline
+script and its patience, the scripts' origin), `code-review-context.test.ts` and `code-review-issue.test.ts` (what the reviewer is
 given), `code-review-verdict.test.ts` (the decision and the correction),
 `code-review-summary.test.ts` (the comment), `code-review-attempts.test.ts` (both attempts end
 to end, a second attempt that stops early or leaves no summary, and a pull request closed
