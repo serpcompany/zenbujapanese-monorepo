@@ -223,7 +223,10 @@ private let textThatScales = [
     on: ["Zenbu Account"] + zenbuAccountNotes, [.phone], because: Why.scales),
   allow(.dynamicType, .identifier("zenbu-account.sync-now"), on: subscriptionStates + zenbuAccountNotes, [.phone], because: Why.scales),
   allow(.dynamicType, .identifier("zenbu-account.sync-waits"), on: syncWaiting, [.phone], because: Why.scales),
-  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting, [.phone], because: Why.scales),
+  allow(.dynamicType, .label("Waiting to Sync"), on: syncWaiting + zenbuAccountNotes, [.phone], because: Why.scales),
+  allow(
+    .dynamicType, .identifier("zenbu-account.photos-wait"), on: ["Zenbu Account, photos waiting for storage"],
+    [.phone], because: Why.scales),
   allow(
     .dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, [.phone],
     because: Why.scales),
