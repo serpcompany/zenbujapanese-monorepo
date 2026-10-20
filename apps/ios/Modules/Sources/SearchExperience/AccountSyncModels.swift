@@ -165,6 +165,7 @@ struct SyncChange: Decodable, Sendable {
     self.key = key
     self.version = version
     self.payload = payload
+    emptied = false
   }
 
   init(from decoder: Decoder) throws {
