@@ -199,8 +199,7 @@ don't contain them), so they need no network, account, camera, or microphone:
   in the app ([`ios-share-sheet.md`](ios-share-sheet.md), Tests); `ZENBU_OPEN_LINK` hands a Mac
   test's link to the window ([`ios-shortcuts.md`](ios-shortcuts.md), Tests); `ZENBU_ONLY_SECTION`
   draws a page's named sections ([`ios-accessibility.md`](ios-accessibility.md)).
-- `ZENBU_SPEECH_STAND_IN=1` stands in for the speech synthesizer: `speech.spoken` shows a test the
-  last text the app said, after its voice's language (`en-US dog, canine`; `WordDetailUITests`).
+- `ZENBU_SPEECH_STAND_IN=1` stands in for speech: `speech.spoken` is the locale and text last said.
 - `ZENBU_EARLIER_NOTES=<json>` stands in for notes an earlier version saved: with
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's

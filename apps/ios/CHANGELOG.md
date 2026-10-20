@@ -80,8 +80,7 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   only when you scroll up; a tall new line used to stop it and show **Jump to Latest** on its own.
 - At larger text sizes, a conversation's controls stay on screen on iPhone, where the pause button
   could be pushed off the edge; press and hold one to see it larger.
-- VoiceOver says which kanji is selected when you tap one in a headword to see its part of the
-  furigana.
+- VoiceOver says which kanji is selected when you tap one in a headword to see its furigana.
 - Player's **Recent**, word notes, the Media Library, and the profile are no longer written over
   when Zenbu can't read what was saved: a copy is kept on your device, and each keeps everything
   it can read. A photo you delete is still deleted, within 30 days if a kept copy names it.
