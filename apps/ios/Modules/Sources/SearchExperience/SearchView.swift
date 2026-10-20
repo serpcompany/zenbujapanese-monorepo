@@ -177,8 +177,6 @@ struct SearchView: View {
   private func noDictionaryMatches(_ noMatches: NoMatches) -> some View {
     ContentUnavailableView {
       Label(noMatches.title, systemImage: "magnifyingglass")
-    } description: {
-      Text(noMatches.message)
     }
     .accessibilityIdentifier("search.no-results")
   }

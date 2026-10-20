@@ -308,7 +308,6 @@ function everyResultsLabel(): Label[] {
   ]
   return plain([
     noMatches.title,
-    noMatches.message,
     discoveredWordsHeading,
     readingRefinementSpoken('いる'),
     resultsLayout('要', emptyResults(null), 0).kanji?.summary,
@@ -377,7 +376,7 @@ export function everyCoreLabel(): Label[] {
 }
 
 export function searchLabels(data: SearchData): Label[] {
-  if (data.state === 'noResults') return plain([noMatches.title, noMatches.message])
+  if (data.state === 'noResults') return plain([noMatches.title])
   const kanji = data.kanji
   return [
     ...plain([

@@ -199,7 +199,6 @@ const examples: Record<string, string> = {
 
 const results: Record<string, string> = {
   'No Dictionary Matches': '一致する言葉は見つかりませんでした',
-  'Try another Japanese or English Search query.': '別の日本語か英語で検索してみてください。',
   'Discovered Words': '文中の単語',
   KANJI: '漢字',
   'Kanji detail': '漢字の詳細',
@@ -242,8 +241,8 @@ const credits: Record<string, string> = {
     'Jiten（jiten.moe）によるテレビ・映画、アニメ、マンガ、小説、ビジュアルノベル、ゲームの使用頻度データ（改変あり）。',
   'The rankings from Jiten are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.':
     'Jitenの順位はそのデータを改変したもので、同じCC BY-SA 4.0ライセンスで公開しています。',
-  'Japanese word analysis for Search by Sudachi.rs and SudachiDict.':
-    'Sudachi.rsとSudachiDictによる、検索のための日本語の単語解析。',
+  'Japanese word analysis by Sudachi.rs and SudachiDict.':
+    'Sudachi.rsとSudachiDictによる日本語の単語解析。',
   'Interactive text parsing ported from kuromoji.js, with MeCab IPADIC.':
     'kuromoji.jsから移植したテキスト解析（MeCab IPADICを使用）。',
   'Example sentences by Tatoeba contributors.': 'Tatoebaの協力者による例文。',
