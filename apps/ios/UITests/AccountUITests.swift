@@ -19,7 +19,7 @@ final class AccountUITests: ZenbuUITestCase {
       reveal(find(row, in: app), in: app)
     }
     waitUntil(
-      find("account.sign-in", in: app),
+      reveal(find("account.sign-in", in: app), in: app),
       mentions: "Known words, lists, notes, photos, profile photo, settings, recent lookups, watch history,"
         + " and bookmarked translations, on all your devices")
   }
