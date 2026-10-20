@@ -1,4 +1,20 @@
+import { storeTraits } from '../billing/stores'
+import type { BillingStore } from '../domain/billing'
+import { cloudIsFree } from '../domain/cloud-access'
+import { createBilling } from '../domain/subscription-billing'
 import type { AppOptions } from '../http/app'
+
+export const noBillingStore: BillingStore = {
+  account: async () => null,
+  ensureCustomer: async () => null,
+  customerOf: async () => null,
+  rememberCheckout: async () => {},
+  subscriptionsOf: async () => [],
+  eventRecorded: async () => false,
+  transaction: () => Promise.reject(new Error('the stand-in app has no database')),
+  claimOwedAction: async () => null,
+  settleOwedAction: async () => 'settled'
+}
 
 export const standIns: AppOptions = {
   release: 'abc123def456',
@@ -14,7 +30,12 @@ export const standIns: AppOptions = {
     updateProfile: async () => null,
     sync: async () => ({ status: 'no_account' })
   },
-  deleteAccount: async () => 'no_account',
+  deleteAccount: async () => ({ status: 'no_account', appStoreSubscriptionContinues: false }),
+  billing: createBilling(
+    noBillingStore,
+    { web: null, store: null },
+    { cloud: cloudIsFree, storeTesting: null, stores: storeTraits }
+  ),
   verifyAccessToken: async () => null,
   allowedOrigins: [],
   devMailbox: null

@@ -10,7 +10,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015), with a share-sheet extension on iPhone and iPad (ADR 0017). It reads the language data bundled with it, which the importers in `language-data/tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, watch history, bookmarked translations, and the profile's name and username. Its Shortcuts actions open it with links in its own scheme. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
-| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
+| `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. It keeps the subscription a learner buys in the App Store or through Stripe, which can unlock sync (ADR 0017). | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
@@ -58,7 +58,8 @@ cards the core exports, and, signed in, fetches more cards and segmentation from
 Clients reach both services at one API host, `api.zenbujapanese.com`: nginx sends the account
 service's paths to it and the rest to the dictionary service, so they deploy apart
 ([`docs/agents/api-servers.md`](docs/agents/api-servers.md), The API host). The account service
-holds what learners keep across devices. Its Postgres database sits on the same
+holds what learners keep across devices, and the one subscription that unlocks syncing it, which
+Stripe and the App Store report to it at `/v1/webhooks`. Its Postgres database sits on the same
 server, on a network only the service's slots reach, and every app keeps its own copy and works
 offline (ADR 0013). The website's account pages call it from the learner's browser, not from the
 Worker, whose requests to the API host Bot Fight Mode challenges
@@ -90,8 +91,8 @@ saying where the code belongs:
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).
-- **The account service**: the domain; then the database, email, and sign-in; then HTTP, which
-  reaches them only through what `src/server.ts` hands it
+- **The account service**: the domain; then the database, email, sign-in, and the payment
+  providers' adapters; then HTTP, which reaches them only through what `src/server.ts` hands it
   ([`docs/agents/account-api.md`](docs/agents/account-api.md), Code layout).
 - **The website**: `src/lib`, then components and hooks, then routes; only
   `src/lib/dictionary/data.ts` reads the service's client, apart from `retired.ts`, which

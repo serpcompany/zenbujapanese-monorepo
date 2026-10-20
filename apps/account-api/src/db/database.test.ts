@@ -11,7 +11,7 @@ import { scopes } from '../domain/clients'
 import { cursorKey, cursors } from '../domain/cursor'
 import { accountStore } from './accounts'
 import { answers } from './database'
-import { purgeExpired } from './housekeeping'
+import { billingRecordsKeptYears, purgeExpired } from './housekeeping'
 import { fenceIfRestored } from './restores'
 
 const everyScope = new Set(scopes)
@@ -235,6 +235,44 @@ describe('the migrations', () => {
       const left = await client.query<{ id: string }>(`select id from ${table}`)
       expect(left.rows, table).toEqual([{ id: 'live' }])
     }
+    await client.close()
+  })
+
+  test(`purge billing records ${billingRecordsKeptYears} years old, and keep newer ones and running subscriptions`, async () => {
+    const client = await migrated()
+    const old = `now() - interval '${billingRecordsKeptYears} years 1 day'`
+    const recent = `now() - interval '${billingRecordsKeptYears - 1} years'`
+    for (const [id, when] of [
+      ['old', old],
+      ['live', recent]
+    ]) {
+      await client.query(`insert into billing_ledger (source, kind, outcome, reference, environment, occurred_at, outcome_at)
+        values ('stripe', 'charge', 'succeeded', '${id}', 'test', ${when}, ${when})`)
+      await client.query(
+        `insert into billing_events (source, event_id, type, received_at) values ('stripe', '${id}', 'invoice.paid', ${when})`
+      )
+      await client.query(`insert into billing_actions (source, subscription_id, action, done_at)
+        values ('stripe', '${id}', 'refund_and_cancel', ${when})`)
+      await client.query(`insert into subscriptions (source, provider_id, product_id, status, environment, period_started_at, state_at, origin)
+        values ('stripe', '${id}', 'price', 'expired', 'test', ${when}, ${when}, 'provider')`)
+      await client.query(
+        `insert into deleted_accounts (user_id, deleted_at) values ('${id}', ${when})`
+      )
+    }
+    await client.query(`insert into subscriptions (source, provider_id, product_id, status, environment, period_started_at, state_at, origin)
+      values ('stripe', 'paused', 'price', 'paused', 'test', ${old}, ${old}, 'provider')`)
+    await purgeExpired(drizzle(client))
+    const left = async (sql: string) => (await client.query<{ id: string }>(sql)).rows
+    expect(await left('select reference as id from billing_ledger')).toEqual([{ id: 'live' }])
+    expect(await left('select event_id as id from billing_events')).toEqual([{ id: 'live' }])
+    expect(await left('select subscription_id as id from billing_actions')).toEqual([
+      { id: 'live' }
+    ])
+    expect(await left('select provider_id as id from subscriptions order by 1')).toEqual([
+      { id: 'live' },
+      { id: 'paused' }
+    ])
+    expect(await left('select user_id as id from deleted_accounts')).toEqual([{ id: 'live' }])
     await client.close()
   })
 })

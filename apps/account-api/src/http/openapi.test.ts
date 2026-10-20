@@ -94,7 +94,13 @@ describe('the OpenAPI contract', () => {
     expect(paths.filter(path => !path.startsWith('/v1/auth/')).sort()).toEqual([
       '/v1/health',
       '/v1/me',
-      '/v1/sync'
+      '/v1/me/subscription',
+      '/v1/me/subscription/apple',
+      '/v1/me/subscription/checkout',
+      '/v1/me/subscription/portal',
+      '/v1/sync',
+      '/v1/webhooks/apple',
+      '/v1/webhooks/stripe'
     ])
     expect(paths.filter(path => path.startsWith('/v1/auth/'))).toHaveLength(16)
     expect(Object.keys(document.paths?.['/v1/me'] ?? {}).sort()).toEqual(['delete', 'get', 'patch'])

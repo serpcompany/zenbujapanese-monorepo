@@ -6,7 +6,8 @@ keeps its copy of their known words, lists, and other study data in step. The co
 readable form is the [API reference](../api/account-api.md): every route with its auth and scopes,
 every field with its type and bounds, every answer and error code, and each synced entity's
 operations, with an example of each. This guide is the order to use them in, and the rules no
-schema shows. How the service works inside is [`account-api.md`](account-api.md).
+schema shows. How the service works inside is [`account-api.md`](account-api.md), and the
+subscription that unlocks sync is [`account-billing.md`](account-billing.md), For apps.
 
 Every app stays local-first: everything works signed out and offline, the device's copy is what the
 app shows, and the account only carries changes between devices and apps (#374).
@@ -93,12 +94,12 @@ doesn't list, a sign-in is refused (`unknown_client`).
   `"idToken": { "token": "…", "nonce": "…", "user": { "name": { "firstName": "Kana", "lastName": "Fan" } } }`,
   so a new account has a name. Keep the credential's `authorizationCode` only while deleting the
   account (Deleting the account, below).
-- **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself
-  (not hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client
-  ID, which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web
-  client's. The iOS app needs no SDK: it opens Google's OAuth for iOS with PKCE in
-  `ASWebAuthenticationSession` and exchanges the code for the ID token
-  ([`ios.md`](ios.md), Account and sync).
+- **Google:** the same, with `"provider": "google"`, Google's ID token, and the nonce itself (not
+  hashed) as the `nonce` the app gives Google. The token's audience is the app's Google client ID,
+  which must be in the service's `GOOGLE_CLIENT_IDS`, so the iOS client's ID, not the web client's.
+  The iOS app needs no SDK: it opens Google's OAuth for iOS with PKCE in
+  `ASWebAuthenticationSession` and exchanges the code for the ID token ([`ios.md`](ios.md), Account
+  and sync).
 - **An emailed code:** `POST /v1/auth/email-otp/send-verification-otp` with
   `{ "email": "...", "type": "sign-in" }`, then `POST /v1/auth/sign-in/email-otp` with the email
   and the code. The first answers `200` whether or not the email has an account, so it shows
@@ -264,9 +265,9 @@ are the learner's to fix; the reference lists each field's bounds.
 
 ## Word cards
 
-An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards
-and segmentation, on the same host: send the access token, as to `/v1/me`. They're the only
-dictionary routes an app calls (ADR 0014). Their contract is
+An app with `dictionary:read`, such as Tomodachi, can ask the dictionary service for word cards and
+segmentation, on the same host: send the access token, as to `/v1/me`. They're the only dictionary
+routes an app calls (ADR 0014). Their contract is
 [`apps/dictionary-api/openapi.json`](../../apps/dictionary-api/openapi.json), and its readable form
 the [dictionary API reference](../api/dictionary-api.md): every field of a card and a token, and
 every answer.
@@ -277,8 +278,7 @@ every answer.
   `sources` to show, and lists the IDs it has no entry for in `missing`.
 - `GET /v1/apps/segmentation?text=<text>` splits 1 to 200 characters into words: each token's
   `text`, its `reading` when it has kanji, its `dictionaryForm` when that differs, and its
-  `languageReferenceID`,
-  or `candidates` when it may be one of several words. URL-encode the text.
+  `languageReferenceID`, or `candidates` when it may be one of several words. URL-encode the text.
 
 ```http
 GET /v1/apps/word-cards?ids=7f490a9c9c0da94f4e9474f4efe74be1 HTTP/1.1
@@ -517,12 +517,13 @@ Every error names a `code`, and the reference lists the codes each route answers
 | `401 invalid_nonce`, `invalid_token`, `400 nonce_required` | Start the Apple or Google sign-in over, with a new nonce. |
 | `401 oauth_link_error`, `403 account_not_linked` | The email has an account through another way in: sign in that way, then add this one. |
 | `403 email_not_verified`, `client_mismatch`, `400 unknown_client` | A sign-in this app can't make; `unknown_client` is a missing or unlisted `X-Zenbu-Client`. |
+| `402 subscription_required` | Keep the queue; show the paywall ([billing](account-billing.md)). |
 | `409 version_conflict` | Take `current`, show it, and let the learner try again. |
 | `410 invalid_cursor` | Sync again with no cursor. |
 | `413 too_large` | The body is over 64 KB: send fewer mutations at a time. |
 | `429 too_many_requests` | Wait the seconds `Retry-After` says, whatever started the request. |
 | `500 internal`, a network failure, an answer that isn't JSON | Retry with exponential backoff and jitter, in the foreground. |
-| `503 apple_unavailable` | Nothing was deleted: sign in with Apple again for a new code, and try again (Deleting the account). |
+| `503 apple_unavailable`, `billing_unavailable` | Nothing was deleted: sign in with Apple again for a new code, or wait, and try again (Deleting the account). |
 | `503 email_unavailable` | The service sends no email here: offer Apple or Google, and don't retry the code. |
 | A code not listed | Act on its status as above. A newer service, or Better Auth, may add one. |
 
@@ -555,15 +556,14 @@ Every app that signs in offers deleting the account (App Review guideline 5.1.1(
    (a `providerId` of `apple`). One without it, such as Tomodachi, sends step 3 without a code: an
    Apple account answers `400 apple_authorization_needed`, so it then signs in with Apple and
    sends the code. If the fresh sign-in in step 1 was Apple's, send its code at once.
-3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple
-   account: the code from signing in with the Apple ID the account uses. The website sends its
-   popup's return URL too, as `"appleRedirectUri"`. The service revokes your
-   app's Apple access with it before deleting. `apple_authorization_needed`,
-   `apple_authorization_invalid`, `apple_account_mismatch`, and `503 apple_unavailable` delete
-   nothing: sign in with Apple again for a new code, and try again.
-4. On `200`, sign out on the device: forget the session token and the cursor, and keep the
-   device's data. The account, and everything it synced, is gone; signing in again makes a new
-   one.
+3. `DELETE /v1/me` with `{ "confirm": true }`, and `"appleAuthorizationCode"` for an Apple account:
+   the code from signing in with the Apple ID the account uses. The website sends its popup's return
+   URL too, as `"appleRedirectUri"`. The service revokes your app's Apple access with it before
+   deleting. `apple_authorization_needed`, `apple_authorization_invalid`, `apple_account_mismatch`,
+   and `503 apple_unavailable` delete nothing: sign in with Apple again for a new code, and retry.
+4. On `200`, sign out on the device: forget the session token and the cursor, and keep the device's
+   data. The account, and all it synced, is gone; signing in again makes a new one. With
+   `appStoreSubscriptionContinues`, say that Apple bills until the learner cancels in the App Store.
 
 The fresh sign-in in step 1 makes a new session: use its tokens, and sign the earlier session out
 (`POST /v1/auth/sign-out` with its token) so it doesn't linger. Refuse a fresh sign-in into another

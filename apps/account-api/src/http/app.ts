@@ -8,12 +8,20 @@ import { routePath } from 'hono/route'
 import type { DeleteAccount } from '../domain/account-deletion'
 import type { Accounts } from '../domain/accounts'
 import { clientById, type Principal } from '../domain/clients'
+import type { Billing } from '../domain/subscription-billing'
 import { failureFields } from '../failure'
 import { accountRoutes, bodyLimitKb, requireAccount, requireScope } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
 import { perAccountLimit, perClientLimit, requestsPerMinute } from './rate-limit'
 import { signInContract } from './sign-in-contract'
+import {
+  cloudDataPaths,
+  requireCloudAccess,
+  subscriptionPath,
+  subscriptionRoutes
+} from './subscription'
+import { webhookRoutes } from './webhooks'
 
 interface AuthHandler {
   handler(request: Request): Promise<Response>
@@ -29,6 +37,7 @@ export interface AppOptions {
   auth: AuthHandler
   accounts: Accounts
   deleteAccount: DeleteAccount
+  billing: Billing
   verifyAccessToken(token: string): Promise<Principal | null>
   allowedOrigins: readonly string[]
   devMailbox: Mailbox | null
@@ -40,7 +49,8 @@ function isLocal(url: string): boolean {
   return localHosts.has(new URL(url).hostname)
 }
 
-const accountPaths = ['/v1/me', '/v1/sync'] as const
+const subscriptionPaths = [subscriptionPath, `${subscriptionPath}/*`] as const
+const accountPaths = ['/v1/me', '/v1/sync', ...subscriptionPaths] as const
 
 function forTheWebsite(response: Response): Response {
   const headers = new Headers(response.headers)
@@ -84,6 +94,12 @@ export function createApp(options: AppOptions) {
   app.delete('/v1/me', requireScope('account:delete'))
   app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
   app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
+  const subscriptionLimit = perAccountLimit(requestsPerMinute.subscription)
+  for (const path of subscriptionPaths) {
+    app.use(path, requireScope('subscription'))
+    app.use(path, subscriptionLimit)
+  }
+  for (const path of cloudDataPaths) app.use(path, requireCloudAccess(options.billing))
   const limitedBody = bodyLimit({
     maxSize: bodyLimitKb * 1024,
     onError: context =>
@@ -98,6 +114,8 @@ export function createApp(options: AppOptions) {
   )
 
   accountRoutes(app, options.accounts, options.deleteAccount, databaseReady, options.allowedOrigins)
+  subscriptionRoutes(app, options.billing, options.allowedOrigins)
+  webhookRoutes(app, options.billing)
   signInContract(app)
 
   app.on(['GET', 'POST'], '/v1/auth/*', async context => {
