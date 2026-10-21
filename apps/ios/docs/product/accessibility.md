@@ -12,5 +12,7 @@ largest size in light, and `ShareSheetAuditUITests` the share sheet's card for a
 photo the same way on the iPhone and iPad; the card for a word isn't audited yet. The Mac has no
 largest size. The iPad doesn't run the Dynamic Type and text-clipped audits, which hang its tab bar,
 so those two are checked on the iPhone; it also leaves element detection out of the screens that
-show a sheet, and the iPhone leaves the Dynamic Type audit out of Apple's Image alert. VoiceOver is
-by hand, on a device.
+show a sheet, and the iPhone leaves the Dynamic Type audit out of Apple's Image alert and of Image
+Search's Text view, whose text is one size larger than the device's and whose rows the audit loses
+as they are laid out again; there, Dynamic Type is checked by the text-clipped audit and the
+largest-size pass. VoiceOver is by hand, on a device.

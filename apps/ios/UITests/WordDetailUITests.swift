@@ -13,7 +13,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
-    tabItem(.search, in: app).tap()
+    tap(tabItem(.search, in: app))
     tap(find("word-detail.more-menu", in: app))
     waitFor(menuChoice("Mark as Unknown", in: app))
   }
@@ -103,7 +103,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     let kanji = waitFor(find("word-detail.screen", in: app)).buttons["学"].firstMatch
     tap(kanji)
     waitUntil(kanji, "isSelected == true")
-    kanji.tap()
+    tap(kanji)
     waitUntil(kanji, "isSelected == false")
   }
 

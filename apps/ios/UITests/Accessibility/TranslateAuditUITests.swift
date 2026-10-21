@@ -48,7 +48,7 @@ final class TranslateAuditUITests: AccessibilityAuditCase {
 
   private func auditAConversationAndItsTranscript(_ pass: AuditPass) {
     let app = startLiveMode("conversation", pass)
-    audit("The silence prompt", in: app)
+    holdingTheConversationClock { audit("The silence prompt", in: app) }
     pauseFromTheSilencePrompt(in: app)
     audit("A paused conversation", in: app)
     tap(find("translate.conversation.options", in: app))

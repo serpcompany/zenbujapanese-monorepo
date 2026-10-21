@@ -74,7 +74,7 @@ final class AccountSignedInUITests: ZenbuUITestCase {
           + " photo sync with your Zenbu account.", in: app))
 
     focus(name)
-    TestDevice.selectAllText(in: name)
+    gesture(on: name) { TestDevice.selectAllText(in: name) }
     name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 16))
     tap(find("profile.username", in: app))
     waitFor(

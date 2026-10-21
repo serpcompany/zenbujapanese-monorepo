@@ -5,7 +5,7 @@ final class ConversationUITests: ZenbuUITestCase {
     let app = startConversation()
     let mute = waitFor(find("translate.session.mute", in: app))
     XCTAssertEqual(mute.label, "Mute Translations")
-    mute.tap()
+    tap(mute)
     waitUntil(find("translate.session.mute", in: app), "label == 'Play Translations Aloud'")
     waitFor(find("translate.session.speed", in: app))
     pause(app)
@@ -35,7 +35,7 @@ final class ConversationUITests: ZenbuUITestCase {
     }
     let mute = waitFor(find("translate.session.mute", in: app))
     XCTAssertEqual(mute.label, "Mute Translations")
-    mute.tap()
+    tap(mute)
     waitUntil(find("translate.session.mute", in: app), "label == 'Play Translations Aloud'")
     letTheScriptGoOn()
     assertLeadsWithItsTranslation(cardOf(spokenWord("関東", in: app)), in: app)
@@ -236,7 +236,7 @@ final class ConversationUITests: ZenbuUITestCase {
       if device == .mac {
         app.outlines.firstMatch.scroll(byDeltaX: 0, deltaY: 800)
       } else {
-        app.windows.firstMatch.swipeDown()
+        gesture { app.windows.firstMatch.swipeDown() }
       }
       if appears(jump, within: Self.patience / 3) { break }
     }

@@ -41,7 +41,8 @@ what it waited for and for how long.
   word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
   which no row may change its height and the opened sentence may not leave its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
-  looks at a frame, `comesTrue`'s wait between two looks, and three on the iPad and the Mac with
+  looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between the warm-up touch and
+  the gesture after it (below), and three on the iPad and the Mac with
   nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut pressed
   over a sheet, and the pointer moving off a headword before its picture. `pnpm verify waits` counts
   each file's run-loop pauses and sleeps, however they are spelled, against `allowedPauses` in
@@ -85,12 +86,46 @@ what it waited for and for how long.
   seen, until the row has a real frame above the list, and a frame that is empty for a moment
   keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
   forth twelve times without reaching the row.
+- **`reveal` looks both ways for a row it can't see.** A lazy list also lets go of a row that
+  scrolls out of view, so a row above the screen is missing from the tree just as a row below
+  it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
+  when a swipe moves nothing (the tree is the same after it as before) and the frontmost list's
+  scroll bar, of more than one page, reads 100%, it is at the bottom: it turns once, and stops when
+  a swipe moves nothing at 0%. A swipe that moves nothing anywhere else doesn't count as an end.
+  It never turns on a short page, on the Mac, whose lists keep their rows, or inside a container
+  such as the word sheet, where a swipe down at the top drags the sheet away; there only a
+  laid-out frame above sends it up. Scrolling only down once failed the Account
+  rows test, whose Sign In row, near the top, was gone once the list reached Credits at the
+  bottom. `RevealUITests` scrolls Credits to its end and finds its first source again.
 - **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
   the window, and at the largest text size on iOS 27 that can be under the tab bar, so a tap there
   reaches the bar. A tall row whose middle was 8 points above the bar still lost its tap to it.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
   middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
+- **A gesture after a pause of 4 s or more follows a warm-up touch.** This works around a race in
+  the iOS 26.2 Simulator (Xcode 26.2), and goes once Apple fixes it. XCUITest sends each gesture
+  through a virtual touchscreen that testmanagerd makes for it, and backboardd sometimes registers
+  that touchscreen too late, so the gesture never reaches the app. The Simulator's log then says
+  `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer event … from unsupported
+  service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a previous touch down or
+  range-in event … skipping event` (`xcrun simctl spawn <udid> log show --predicate 'process ==
+  "backboardd"'`). On 2026-10-20 it hit 5 of about 3,000 gestures, each the first after a pause of
+  5 to 18 s, and none of the roughly 1,500 timed after a pause under 4 s; the dark Account audit
+  lost a Back tap, a swipe, and a tap that way, each right after an audit. So `gesture(on:_:)`
+  (`ZenbuUITestCase.swift`), which every step that taps, swipes, presses, or scrolls goes
+  through, keeps the time of the last gesture. When the next comes 4 s or more after it, it first
+  taps the frontmost navigation bar's title, which does nothing anywhere in the app, then sends
+  the gesture 0.3 s later. The warm-up is sent every time that holds and nothing depends on it
+  landing, so it isn't a retry. It fails the test if the number of bars with that title changed
+  afterwards, or the gesture's element is gone. It's skipped when no title is showing, when the
+  app isn't in front, while a menu or popover is open, and for the gesture right after a step that
+  opens a row's actions or a context menu (`gestureThatOpensActions`), since a touch elsewhere
+  closes those; and on the Mac, whose tests send real pointer events. In a
+  probe of 250 audits each way, the tap straight after an audit met the race once and the tap
+  after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
+  only ones sent directly are the Mac's own: clicks in its Settings window, on a headword's kanji,
+  and on an example's linked word, right-clicks, wheel scrolls, and moving the pointer away.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being

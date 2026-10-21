@@ -5,17 +5,39 @@ import Foundation
 
   final class ScriptedClock: Sendable {
     static let skipCountdownNotice = "com.zenbujapanese.dictionary.uitests.skip-translate-countdown"
+    static let holdNotice = "com.zenbujapanese.dictionary.uitests.translate-hold-clock"
+    static let heldNotice = "com.zenbujapanese.dictionary.uitests.translate-clock-held"
+    static let releaseNotice = "com.zenbujapanese.dictionary.uitests.translate-release-clock"
 
-    private let skipped = Mutex<TimeInterval>(0)
+    private let state = Mutex<(skipped: TimeInterval, heldAt: Date?)>((0, nil))
 
-    var now: Date { Date.now.addingTimeInterval(skipped.withLock { $0 }) }
-
-    func skipAhead(_ seconds: TimeInterval) {
-      skipped.withLock { $0 += seconds }
+    var now: Date {
+      state.withLock { ($0.heldAt ?? Date.now).addingTimeInterval($0.skipped) }
     }
 
-    func skipsAheadOnNotice(by seconds: TimeInterval) {
+    func skipAhead(_ seconds: TimeInterval) {
+      state.withLock { $0.skipped += seconds }
+    }
+
+    func hold() {
+      state.withLock { $0.heldAt = $0.heldAt ?? Date.now }
+    }
+
+    func release() {
+      state.withLock {
+        guard let heldAt = $0.heldAt else { return }
+        $0.skipped -= Date.now.timeIntervalSince(heldAt)
+        $0.heldAt = nil
+      }
+    }
+
+    func followsNotices(skippingAheadBy seconds: TimeInterval) {
       DarwinNotice.observe(Self.skipCountdownNotice) { _ in self.skipAhead(seconds) }
+      DarwinNotice.observe(Self.holdNotice) { _ in
+        self.hold()
+        DarwinNotice.post(Self.heldNotice)
+      }
+      DarwinNotice.observe(Self.releaseNotice) { _ in self.release() }
     }
   }
 

@@ -25,7 +25,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     waitUntil(find("watch.comprehension", in: app), mentions: "words known")
     let playPause = find("watch.play-pause", in: app)
     waitUntil(playPause, "isEnabled == true")
-    playPause.tap()
+    tap(playPause)
     waitUntil(playPause, "label == 'Pause'")
     tap(find("watch.next", in: app))
     tap(find("watch.previous", in: app))
@@ -131,7 +131,7 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     if device == .mac {
       page.scroll(byDeltaX: 0, deltaY: -600)
     } else {
-      page.swipeUp()
+      gesture(on: last) { page.swipeUp() }
     }
     waitUntilStill(last)
     XCTAssertTrue(isReachable(last, in: app), "the last result can't be scrolled to")

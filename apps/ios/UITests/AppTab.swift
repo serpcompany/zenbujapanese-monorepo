@@ -53,7 +53,8 @@ extension ZenbuUITestCase {
   func open(_ tab: AppTab, in app: XCUIApplication) {
     let root = find(tab.rootIdentifier, in: app)
     for _ in 0..<3 {
-      tabItem(tab, in: app).tap()
+      let item = tabItem(tab, in: app)
+      gesture(on: item) { item.tap() }
       if appears(root, within: Self.patience / 3) { return }
     }
     waitFor(root)

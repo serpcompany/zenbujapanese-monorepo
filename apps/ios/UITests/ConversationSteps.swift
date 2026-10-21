@@ -31,6 +31,21 @@ extension ZenbuUITestCase {
     notify_post("com.zenbujapanese.dictionary.uitests.skip-translate-countdown")
   }
 
+  func holdingTheConversationClock(_ body: () -> Void) {
+    var held: Int32 = 0
+    notify_register_check("com.zenbujapanese.dictionary.uitests.translate-clock-held", &held)
+    defer { notify_cancel(held) }
+    var posted: Int32 = 0
+    notify_check(held, &posted)
+    notify_post("com.zenbujapanese.dictionary.uitests.translate-hold-clock")
+    waitUntil("the conversation's clock to stop") {
+      notify_check(held, &posted)
+      return posted != 0
+    }
+    body()
+    notify_post("com.zenbujapanese.dictionary.uitests.translate-release-clock")
+  }
+
   func pause(_ app: XCUIApplication) {
     turnTheConversation(to: "Resume", saying: "the conversation pausing", in: app)
   }
@@ -43,7 +58,7 @@ extension ZenbuUITestCase {
     let toggle = find("translate.session.toggle", in: app)
     for _ in 0..<3 {
       if waitFor(toggle).label == label { break }
-      toggle.tap()
+      gesture(on: toggle) { toggle.tap() }
       if comesTrue(what, within: Self.patience / 3, { toggle.label == label }) { break }
     }
     XCTAssertEqual(toggle.label, label, what)

@@ -15,12 +15,17 @@ class ZenbuUITestCase: XCTestCase {
 
   var device: TestDevice.Kind { TestDevice.kind }
   private var launched: XCUIApplication?
+  private var lastGesture = Date.distantPast
+  private var actionsAreOpen = false
+  static let touchSystemIdle: TimeInterval = 4
+  static let afterTheWarmUpTouch: TimeInterval = 0.3
 
   func launch(_ environment: [String: String] = [:], arguments: [String] = []) -> XCUIApplication {
     continueAfterFailure = false
     TestDevice.turn(landscape: false)
     let app = XCUIApplication()
     launched = app
+    actionsAreOpen = false
     app.launchArguments = TestDevice.launchArguments + arguments
     app.launchEnvironment = [
       "ZENBU_UI_TEST_FRESH": "1",
@@ -252,7 +257,52 @@ class ZenbuUITestCase: XCTestCase {
 
   func tapWhereReachable(_ queries: [XCUIElementQuery], in app: XCUIApplication) {
     let frame = firstReachable(queries, in: app).frame
-    point(x: frame.midX, y: frame.midY, in: app.windows.firstMatch).tap()
+    gesture { point(x: frame.midX, y: frame.midY, in: app.windows.firstMatch).tap() }
+  }
+
+  func gesture(on target: XCUIElement? = nil, _ send: () -> Void) {
+    if Date.now.timeIntervalSince(lastGesture) >= Self.touchSystemIdle, !actionsAreOpen {
+      wakeTheTouchSystem(before: target)
+    }
+    actionsAreOpen = false
+    send()
+    lastGesture = .now
+  }
+
+  func gestureThatOpensActions(on target: XCUIElement, _ send: () -> Void) {
+    gesture(on: target, send)
+    actionsAreOpen = true
+  }
+
+  private func wakeTheTouchSystem(before target: XCUIElement?) {
+    guard device != .mac, let app = launched, app.state == .runningForeground,
+      !app.otherElements["PopoverDismissRegion"].exists
+    else { return }
+    let targetWasThere = target?.exists ?? false
+    var found: (String, CGRect)?
+    for bar in app.navigationBars.allElementsBoundByIndex.reversed() {
+      found = Self.hittableTitle(of: bar)
+      if found != nil { break }
+    }
+    guard let found else { return }
+    let (front, spot) = found
+    let sameTitled = app.navigationBars.matching(identifier: front).count
+    point(x: spot.midX, y: spot.midY, in: app.windows.firstMatch).tap()
+    lastGesture = .now
+    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.afterTheWarmUpTouch))
+    XCTAssertEqual(
+      app.navigationBars.matching(identifier: front).count, sameTitled,
+      "the warm-up touch on \(front)'s title changed the screen")
+    if let target, targetWasThere {
+      XCTAssertTrue(target.exists, "the warm-up touch on \(front)'s title took away \(target)")
+    }
+  }
+
+  private static func hittableTitle(of bar: XCUIElement) -> (String, CGRect)? {
+    let name = bar.identifier
+    let title = bar.staticTexts[name].firstMatch
+    guard !name.isEmpty, title.exists, title.isHittable else { return nil }
+    return (name, title.frame)
   }
 
   func point(x: CGFloat, y: CGFloat, in window: XCUIElement) -> XCUICoordinate {
@@ -265,10 +315,10 @@ class ZenbuUITestCase: XCTestCase {
     waitFor(element, file: file, line: line)
     guard device == .mac, element.elementType == .menuItem,
       let window = launched?.windows.firstMatch
-    else { return element.tap() }
+    else { return gesture(on: element) { element.tap() } }
     waitUntil(element, "isHittable == true", file: file, line: line)
     guard let frame = laidOutFrame(of: element, file: file, line: line) else { return }
-    point(x: frame.midX, y: frame.midY, in: window).tap()
+    gesture { point(x: frame.midX, y: frame.midY, in: window).tap() }
   }
 
   func chooseFromSubmenu(
@@ -318,7 +368,9 @@ class ZenbuUITestCase: XCTestCase {
   ) -> XCUIElement {
     guard !shown.exists else { return shown }
     tap(row, file: file, line: line)
-    return tapAgain(until: shown, file: file, line: line) { if row.exists { row.tap() } }
+    return tapAgain(until: shown, file: file, line: line) {
+      if row.exists { gesture(on: row) { row.tap() } }
+    }
   }
 
   func tapAgain(
@@ -353,7 +405,7 @@ class ZenbuUITestCase: XCTestCase {
       .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
     for _ in 0..<2 {
       if appears(focused, within: Self.patience / 3) { return }
-      element.tap()
+      gesture(on: element) { element.tap() }
     }
     waitFor(focused, file: file, line: line)
   }

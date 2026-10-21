@@ -161,9 +161,11 @@ class AccessibilityAuditCase: ZenbuUITestCase {
     let height = window.frame.height
     let grip = window.coordinate(withNormalizedOffset: CGVector(dx: Self.margin, dy: Self.gripAt))
     let spot = window.frame.minY + height * Self.placedAt
-    grip.press(
-      forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
-      thenHoldForDuration: 0.5)
+    gesture {
+      grip.press(
+        forDuration: 0.1, thenDragTo: grip.withOffset(CGVector(dx: 0, dy: spot - top)), withVelocity: .slow,
+        thenHoldForDuration: 0.5)
+    }
   }
 
   private static let gripAt = 0.7

@@ -246,9 +246,9 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     if device == .mac {
       rows.list.scroll(byDeltaX: 0, deltaY: back ? 450 : -450)
     } else if back {
-      app.windows.firstMatch.swipeDown()
+      gesture { app.windows.firstMatch.swipeDown() }
     } else {
-      app.windows.firstMatch.swipeUp()
+      gesture { app.windows.firstMatch.swipeUp() }
     }
   }
 
