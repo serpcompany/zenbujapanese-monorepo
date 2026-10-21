@@ -1,7 +1,7 @@
 import plistlib
 import unittest
 
-from project_settings import BUILD_CONFIGURATION, PROJECT, ROOT, build_setting
+from project_settings import BUILD_CONFIGURATION, DEVICE_FAMILIES, PROJECT, ROOT, build_setting
 from project_settings import share_extension_build_settings as extension_build_settings
 
 APP_ENTITLEMENTS = ROOT / "apps/ios/App/ZenbuJapanese.entitlements"
@@ -21,8 +21,13 @@ class ShareExtensionTests(unittest.TestCase):
             self.assertEqual(
                 build_setting(settings, "SUPPORTED_PLATFORMS"), "iphoneos iphonesimulator"
             )
-            self.assertEqual(build_setting(settings, "TARGETED_DEVICE_FAMILY"), "1,2")
             self.assertEqual(build_setting(settings, "DEVELOPMENT_TEAM"), "847HR8U8D9")
+
+    def test_the_extension_has_the_apps_device_families(self) -> None:
+        for name, family in DEVICE_FAMILIES.items():
+            with self.subTest(configuration=name):
+                (settings,) = extension_build_settings(name)
+                self.assertEqual(build_setting(settings, "TARGETED_DEVICE_FAMILY"), family)
 
     def test_only_iphone_and_ipad_builds_embed_it(self) -> None:
         embedded = "ZenbuShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile;"

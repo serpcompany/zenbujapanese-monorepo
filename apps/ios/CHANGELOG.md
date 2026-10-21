@@ -6,17 +6,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 
 ### Added
 
+- Your notes, photos, settings, recent lookups, and profile photo sync too.
 - Syncing can need a Zenbu subscription, sold in the app; everything on your device stays free.
-- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
-  sign in to the same Zenbu account to keep your known words, lists, notes, photos, settings,
-  recent lookups, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
-  turns every way and runs beside other apps, with the tabs at the top, where they open into a
-  sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
-  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
-  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
-  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
-  every device, drag images onto the window to open them there. Right-click a list, a known word, a
-  Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
 - Sort search results from the **Sorted by** row at the top of the results: a frequency dictionary,
   most common first (JLPT by level), or your known words, known first. Your choice stays across
   launches and applies to Japanese, English, and romaji searches.
@@ -34,7 +25,6 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
   photo's translation and words, each opening its card. **Add to List** saves a word to your lists.
 - Look Up finds your notes too: a word or kanji whose note has what you searched for is listed
   under **In your notes**, after the dictionary's matches, with the part of the note that matched.
-  Signed in, your notes sync too.
 - Tap a meaning on a word's page to hear it in English, copy it, or look up one of its words.
 - Zenbu reports crashes and freezes, never what you type or say. **Send Crash Reports** stops it.
 
@@ -88,13 +78,10 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - A word's notes and photos stay on it when a dictionary update changes the word's meanings; the
   ones you saved before move to the same word the first time Zenbu opens them. A note Zenbu
   can't match to a word is kept under Account → **Notes Without a Word**, to copy or delete.
-- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
-  you can type; the keyboard used to stay with the page.
 - In the half-height word sheet in Player, Image Search, and Translate, a word's **Kanji** and its
   part of speech (which opens its conjugations) now open, in the tab you're in.
 - Player's search results show only YouTube's results, between Player's own bars: YouTube's
-  header, search field, voice search, and bottom bar (Home, Shorts, You) no longer appear, on
-  iPhone, iPad, and the Mac.
+  header, search field, voice search, and bottom bar (Home, Shorts, You) no longer appear.
 - When a newer version of Zenbu saved the bookmarks synced to your device, Zenbu Account now says
   to update Zenbu instead of reopening it.
 - Frequency Dictionaries: downloading several packs at once no longer looks like each tap cancels
@@ -112,6 +99,21 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - After many sentences have been linked in one session, a caption card, an example sentence, a
   Translate line, or a line of Image Search's text no longer shows some of its words as plain
   text, with no meaning and nothing to tap.
+
+## Not released yet: iPad and the Mac
+
+- Zenbu Japanese runs on iPad and on Macs with Apple silicon, as the same app: get it once and
+  sign in to the same Zenbu account to keep your known words, lists, notes, photos, settings,
+  recent lookups, Recent videos, bookmarks, and profile photo the same everywhere. On iPad it
+  turns every way and runs beside other apps, with the tabs at the top, where they open into a
+  sidebar; on the Mac the tabs sit in a bar at the top of the window. On the Mac, Settings (⌘,)
+  holds your account and preferences, ⌘F goes to Look Up, ⌘⇧I opens Translate's **Image** to
+  search an image, and ⌘1 to ⌘4 switch tabs. On the Mac, **Image** pastes an image in place of
+  taking a photo, and a photo taken on your iPhone with Continuity Camera opens in Image Search; on
+  every device, drag images onto the window to open them there. Right-click a list, a known word, a
+  Recent video, or a frequency dictionary on the Mac for what a swipe does on the iPhone.
+- On the Mac, clicking a note, or **Add Note** under a word's notes, puts the cursor in the note so
+  you can type; the keyboard used to stay with the page.
 
 ## [2.0.0] - 2026-10-09
 
@@ -136,17 +138,17 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 - New **Translate** tab: a Japanese and English translator that runs entirely on the iPhone. Pick
   **Conversation**, **Listening**, **Text**, or **Document Upload** and tap **Start**. In
   **Conversation**, two people take turns speaking either language with no language button. Each
-  sentence appears as it's spoken with its translation under it, and the translation is spoken
-  aloud once the speaker pauses while the microphone keeps listening. **Listening** translates
-  Japanese or English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
+  sentence appears as it's spoken with its translation under it, and the translation is spoken aloud
+  once the speaker pauses while the microphone keeps listening. **Listening** translates Japanese or
+  English from a TV, a guide, or announcements. A conversation fills the screen, as cards or as
   **Two Panes** (Japanese over English), with buttons to mute spoken translations, change their
-  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app
-  pauses too. **Text** translates what you type or paste in whichever direction you wrote, and
-  **Document Upload** translates the text in a PDF, a photo, or a text file. Conversations are
-  saved to **Translations**, which shows how many of each one's words you know and has search, copy,
-  share, and delete; in a transcript each sentence can be replayed or bookmarked, and
-  **Bookmarked** lists them. **Account → Translations** opens it too.
-  Every Japanese word opens the dictionary at half height.
+  speed, and pause; silence asks **Are you still there?** before pausing, and leaving the app pauses
+  too. **Text** translates what you type or paste in whichever direction you wrote, and **Document
+  Upload** translates the text in a PDF, a photo, or a text file. Conversations are saved to
+  **Translations**, which shows how many of each one's words you know and has search, copy, share,
+  and delete; in a transcript each sentence can be replayed or bookmarked, and **Bookmarked** lists
+  them. **Account → Translations** opens it too. Every Japanese word opens the dictionary at half
+  height.
 - Image Search has four views: **Photo**, **Both** (the image above the Player's caption cards,
   with furigana and line translations), **Text** (the recognized Japanese as paragraph cards),
   and **Translate** (a natural translation, then context on what the text is and its idioms,
@@ -190,9 +192,8 @@ All notable user-facing changes to Zenbu Japanese are recorded here.
 ### Fixed
 
 - About 1,260 more words now show a YouTube rank, including common ones whose spelling belongs to
-  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生
-  (せんせい). About 100 words, such as 色 and 猫, now take a better YouTube rank from their usual
-  spelling instead of a rare one.
+  more than one dictionary word, such as 事 (こと), 時 (とき), 年 (ねん), 上 (うえ), and 先生 (せんせい). About 100
+  words, such as 色 and 猫, now take a better YouTube rank from their usual spelling, not a rare one.
 - Tapping another word while a word's half-height sheet is open, in the Player or Image Search,
   now shows it in the same half-height sheet instead of reopening the sheet at full height.
 - Image Search now recognizes vertical Japanese (縦書き), such as book pages and signs,
