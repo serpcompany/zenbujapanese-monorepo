@@ -25,6 +25,7 @@ class ZenbuUITestCase: XCTestCase {
     TestDevice.turn(landscape: false)
     let app = XCUIApplication()
     launched = app
+    actionsAreOpen = false
     app.launchArguments = TestDevice.launchArguments + arguments
     app.launchEnvironment = [
       "ZENBU_UI_TEST_FRESH": "1",
@@ -277,19 +278,27 @@ class ZenbuUITestCase: XCTestCase {
     guard device != .mac, let app = launched, app.state == .runningForeground,
       !app.otherElements["PopoverDismissRegion"].exists
     else { return }
-    let title = { (name: String) in app.navigationBars[name].staticTexts[name].firstMatch }
-    let titles = app.navigationBars.allElementsBoundByIndex.map(\.identifier).filter { !$0.isEmpty }
-    guard let front = titles.last(where: { title($0).exists && title($0).isHittable }), title(front).exists
-    else { return }
     let targetWasThere = target?.exists ?? false
-    title(front).tap()
+    let bars = app.navigationBars.allElementsBoundByIndex.reversed()
+    guard let found = bars.lazy.compactMap({ Self.hittableTitle(of: $0) }).first else { return }
+    let (front, spot) = found
+    let sameTitled = app.navigationBars.matching(identifier: front).count
+    point(x: spot.midX, y: spot.midY, in: app.windows.firstMatch).tap()
     lastGesture = .now
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.afterTheWarmUpTouch))
-    XCTAssertTrue(
-      app.navigationBars[front].firstMatch.exists, "the warm-up touch on \(front)'s title changed the screen")
+    XCTAssertEqual(
+      app.navigationBars.matching(identifier: front).count, sameTitled,
+      "the warm-up touch on \(front)'s title changed the screen")
     if let target, targetWasThere {
       XCTAssertTrue(target.exists, "the warm-up touch on \(front)'s title took away \(target)")
     }
+  }
+
+  private static func hittableTitle(of bar: XCUIElement) -> (String, CGRect)? {
+    let name = bar.identifier
+    let title = bar.staticTexts[name].firstMatch
+    guard !name.isEmpty, title.exists, title.isHittable else { return nil }
+    return (name, title.frame)
   }
 
   func point(x: CGFloat, y: CGFloat, in window: XCUIElement) -> XCUICoordinate {

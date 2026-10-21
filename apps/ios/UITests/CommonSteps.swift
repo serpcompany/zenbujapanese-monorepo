@@ -268,7 +268,7 @@ extension ZenbuUITestCase {
         isAbove = laidOut.midY < area.frame.midY
         scroll(scrolled, back: isAbove)
       } else if !scrollMoves(scrolled, back: isAbove) {
-        if hasTurned || container != nil { break }
+        if hasTurned || container != nil || !listGoesOnAbove(in: scrolled) { break }
         hasTurned = true
         isAbove.toggle()
       }
@@ -333,13 +333,22 @@ extension ZenbuUITestCase {
   }
 
   func listGoingOnBelow(in area: XCUIElement) -> String? {
+    guard let shown = longListScrollBar(in: area) else { return nil }
+    return shown.hasSuffix(", 100%") ? nil : shown
+  }
+
+  private func listGoesOnAbove(in area: XCUIElement) -> Bool {
+    guard let shown = longListScrollBar(in: area) else { return false }
+    return !shown.hasSuffix(", 0%")
+  }
+
+  private func longListScrollBar(in area: XCUIElement) -> String? {
     guard device != .mac else { return nil }
     let longList = NSPredicate(
       format: "label BEGINSWITH 'Vertical scroll bar,' AND NOT (label ENDSWITH ' 1 page')")
     guard let bar = try? area.descendants(matching: .any).matching(longList).firstMatch.snapshot()
     else { return nil }
-    let shown = "\(bar.label), \(bar.value ?? "")"
-    return shown.hasSuffix(", 100%") ? nil : shown
+    return "\(bar.label), \(bar.value ?? "")"
   }
 
   func scroll(_ area: XCUIElement, back: Bool) {

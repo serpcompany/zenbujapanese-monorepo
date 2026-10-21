@@ -7,7 +7,7 @@ extension ZenbuUITestCase {
   func openTheReport(in app: XCUIApplication) -> XCUIElement {
     open(.account, in: app)
     tap(reveal(find("account.report-a-problem", in: app), in: app))
-    return waitFor(find("problem-report.send", in: app))
+    return waitFor(app.buttons["problem-report.send"].firstMatch)
   }
 
   func typeAtTheEnd(_ text: String, of field: XCUIElement, in app: XCUIApplication) {
@@ -27,7 +27,7 @@ final class ProblemReportUITests: ZenbuUITestCase {
     let app = launch(Self.problemReportStandIn)
     let send = openTheReport(in: app)
     reveal(labeled("Account, Signed out", in: app), in: app)
-    waitUntil(send, "isEnabled == false")
+    XCTAssertFalse(send.isEnabled)
     type("The Language menu froze", into: find("problem-report.description", in: app))
     waitUntil(send, "isEnabled == true")
     let email = reveal(find("problem-report.email", in: app), in: app)

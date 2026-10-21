@@ -90,9 +90,10 @@ what it waited for and for how long.
   scrolls out of view, so a row above the screen is missing from the tree just as a row below
   it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
   when a swipe moves nothing (the list's tree is the same after it as before), it is at that
-  end: it turns once, and stops at the other end. Inside a container, such as the word sheet, it
-  stops at the end instead of turning, since a swipe down at the top of a sheet drags the sheet
-  away; there only a laid-out frame above sends it up. Scrolling only down once failed the Account
+  end: it turns once, and stops at the other end. It turns only when the list's scroll bar, of
+  more than one page, says there is more above, and never inside a container such as the word
+  sheet, since a swipe down at the top of a sheet drags the sheet away; there, and on a short page,
+  it stops at the end, and only a laid-out frame above sends it up. Scrolling only down once failed the Account
   rows test, whose Sign In row, near the top, was gone once the list reached Credits at the
   bottom. `RevealUITests` scrolls Credits to its end and finds its first source again.
 - **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
@@ -122,8 +123,8 @@ what it waited for and for how long.
   whose tests send real pointer events. In a
   probe of 250 audits each way, the tap straight after an audit met the race once and the tap
   after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
-  only ones sent directly are the Mac's own: clicks in its Settings window and on a headword's
-  kanji, right-clicks, wheel scrolls, and moving the pointer away.
+  only ones sent directly are the Mac's own: clicks in its Settings window, on a headword's kanji,
+  and on an example's linked word, right-clicks, wheel scrolls, and moving the pointer away.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
