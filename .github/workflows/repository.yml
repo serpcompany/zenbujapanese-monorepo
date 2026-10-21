@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
@@ -42,4 +44,6 @@ jobs:
       - name: The checks' own lint, typecheck, and tests
         run: pnpm --filter zenbujapanese-checks check
       - name: The shared checks, at the version the lockfile pins
+        env:
+          SERP_VERIFY_BASE: HEAD^1
         run: pnpm verify

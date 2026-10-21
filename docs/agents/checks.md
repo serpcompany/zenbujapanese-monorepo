@@ -45,6 +45,11 @@ below to this.
   the `@serpcompany` scope, and the job's own token as `NODE_AUTH_TOKEN` on the install step
   only. The token reads the package once its settings give this repository Read under Manage
   Actions access; until then every install fails, and `Repository` says which grant it needs.
+- **`Repository` hands the checks their base** as `SERP_VERIFY_BASE`: the commit the pull request
+  merges into, `HEAD^1`, so it checks out two commits. From 0.1.1 the package fails an exception
+  list in `verify.json` that gained or raised an entry against the base's; 0.1.0 compares only
+  `exceptions.hiddenLinks`, which this repository doesn't use
+  ([`harness-debt.md`](../harness-debt.md)).
 - **Each service image** installs it with that token in a secret `npmrc`, mounted for the
   install's one `RUN` and kept in no layer: the deploy workflow writes it to the runner's temp
   folder and hands it to the build as `secret-files` ([`ci-deploys.md`](ci-deploys.md)). By hand,
