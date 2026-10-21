@@ -268,9 +268,12 @@ extension ZenbuUITestCase {
         isAbove = laidOut.midY < area.frame.midY
         scroll(scrolled, back: isAbove)
       } else if !scrollMoves(scrolled, back: isAbove) {
-        if hasTurned || container != nil || !listGoesOnAbove(in: scrolled) { break }
-        hasTurned = true
-        isAbove.toggle()
+        let end = frontListEnd(in: scrolled)
+        if hasTurned, end == Self.listTop { break }
+        if !hasTurned, container == nil, end == Self.listBottom {
+          hasTurned = true
+          isAbove.toggle()
+        }
       }
     }
     return waitFor(element)
@@ -333,23 +336,28 @@ extension ZenbuUITestCase {
   }
 
   func listGoingOnBelow(in area: XCUIElement) -> String? {
-    guard let shown = longListScrollBar(in: area) else { return nil }
-    return shown.hasSuffix(", 100%") ? nil : shown
-  }
-
-  private func listGoesOnAbove(in area: XCUIElement) -> Bool {
-    guard let shown = longListScrollBar(in: area) else { return false }
-    return !shown.hasSuffix(", 0%")
-  }
-
-  private func longListScrollBar(in area: XCUIElement) -> String? {
     guard device != .mac else { return nil }
     let longList = NSPredicate(
       format: "label BEGINSWITH 'Vertical scroll bar,' AND NOT (label ENDSWITH ' 1 page')")
     guard let bar = try? area.descendants(matching: .any).matching(longList).firstMatch.snapshot()
     else { return nil }
-    return "\(bar.label), \(bar.value ?? "")"
+    let shown = "\(bar.label), \(bar.value ?? "")"
+    return shown.hasSuffix(", 100%") ? nil : shown
   }
+
+  private func frontListEnd(in area: XCUIElement) -> String? {
+    guard device != .mac else { return nil }
+    let bars = area.descendants(matching: .any)
+      .matching(NSPredicate(format: "label BEGINSWITH 'Vertical scroll bar,'"))
+    let count = bars.count
+    guard count > 0, let bar = try? bars.element(boundBy: count - 1).snapshot(),
+      !bar.label.hasSuffix(" 1 page")
+    else { return nil }
+    return "\(bar.value ?? "")"
+  }
+
+  private static let listTop = "0%"
+  private static let listBottom = "100%"
 
   func scroll(_ area: XCUIElement, back: Bool) {
     gesture {

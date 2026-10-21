@@ -279,8 +279,12 @@ class ZenbuUITestCase: XCTestCase {
       !app.otherElements["PopoverDismissRegion"].exists
     else { return }
     let targetWasThere = target?.exists ?? false
-    let bars = app.navigationBars.allElementsBoundByIndex.reversed()
-    guard let found = bars.lazy.compactMap({ Self.hittableTitle(of: $0) }).first else { return }
+    var found: (String, CGRect)?
+    for bar in app.navigationBars.allElementsBoundByIndex.reversed() {
+      found = Self.hittableTitle(of: bar)
+      if found != nil { break }
+    }
+    guard let found else { return }
     let (front, spot) = found
     let sameTitled = app.navigationBars.matching(identifier: front).count
     point(x: spot.midX, y: spot.midY, in: app.windows.firstMatch).tap()
