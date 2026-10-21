@@ -13,7 +13,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm install --frozen-lockf
 COPY packages/dictionary-core packages/dictionary-core
 COPY packages/node-service packages/node-service
 COPY apps/dictionary-api apps/dictionary-api
-RUN pnpm --filter zenbujapanese-dictionary-api build \
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm --filter zenbujapanese-dictionary-api build \
   && pnpm --filter zenbujapanese-dictionary-api deploy --legacy --prod /service
 
 FROM ${NODE_IMAGE} AS sudachi

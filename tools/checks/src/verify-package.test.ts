@@ -69,6 +69,17 @@ describe('@serpcompany/verify, a private package on GitHub Packages', () => {
     expect(text).not.toMatch(/^COPY .*\.npmrc/m)
   })
 
+  test.each(images)('%s mounts that npmrc for every pnpm step that installs packages', path => {
+    const steps = readRepositoryFile(path)
+      .replace(/\\\n\s*/g, ' ')
+      .split('\n')
+      .filter(line => /^RUN .*\bpnpm\b.*\b(install|deploy)\b/.test(line))
+    expect(steps.length).toBeGreaterThan(0)
+    for (const step of steps) {
+      expect(step, step).toMatch(/^RUN --mount=type=secret,id=npmrc,target=\/root\/\.npmrc /)
+    }
+  })
+
   test.each(images)('the workflow that builds %s hands its build that npmrc', path => {
     const builds = workflowFiles().flatMap(file =>
       Object.values(readWorkflow(file).jobs).flatMap(job =>
