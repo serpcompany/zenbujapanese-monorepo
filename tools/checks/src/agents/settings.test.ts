@@ -281,7 +281,7 @@ describe('the hooks in .claude/settings.json', () => {
     expect(edit.hooks).toEqual([
       {
         type: 'command',
-        command: 'node "$CLAUDE_PROJECT_DIR/tools/checks/hook.mjs"',
+        command: expect.stringMatching(/\bserp-verify hook;/),
         timeout: 30,
         onFailure: 'block'
       }
@@ -294,7 +294,7 @@ describe('the hooks in .claude/settings.json', () => {
     expect(stop.hooks).toEqual([
       {
         type: 'command',
-        command: 'node "$CLAUDE_PROJECT_DIR/tools/checks/stop-hook.mjs"',
+        command: expect.stringMatching(/\bserp-verify stop-hook;/),
         timeout: 120
       }
     ])

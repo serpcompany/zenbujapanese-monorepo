@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 concurrency:
   group: repository-${{ github.event.pull_request.number || github.ref }}
@@ -17,6 +18,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
@@ -25,8 +28,22 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
+      - name: Install every package, with @serpcompany/verify from GitHub Packages
+        id: install
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+      - name: Say what installing the private package needs
+        if: failure() && steps.install.outcome == 'failure'
+        run: >-
+          echo "::error title=@serpcompany/verify is a private GitHub Package::This job grants
+          packages: read, and the package's settings must give this repository Read under Manage
+          Actions access (docs/agents/checks.md, In CI)."
       - name: The checks' own lint, typecheck, and tests
         run: pnpm --filter zenbujapanese-checks check
-      - name: No comments, docs, sizes, secrets, duplicates, dead code, import rules, and the pinned linters
+      - name: The shared checks, at the version the lockfile pins
+        env:
+          SERP_VERIFY_BASE: HEAD^1
         run: pnpm verify

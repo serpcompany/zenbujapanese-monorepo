@@ -480,7 +480,7 @@ Build and run it by hand from the repository root, beside a Postgres it can reac
 
 ```sh
 docker build -f apps/account-api/Dockerfile --build-arg RELEASE=$(git rev-parse --short HEAD) \
-  -t zenbujapanese-account-api .
+  --secret id=npmrc,src=$HOME/.npmrc -t zenbujapanese-account-api .
 docker run --network host -e DATABASE_URL=postgres://account@localhost:5432/account \
   zenbujapanese-account-api
 ```

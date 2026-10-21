@@ -86,12 +86,20 @@ jobs:
           echo "release=${GITHUB_SHA::12}" >>"$GITHUB_OUTPUT"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069
         if: env.TAG == ''
+      - name: Let the image's install read @serpcompany/verify with this job's token
+        if: env.TAG == ''
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: >-
+          printf '%s\n' '@serpcompany:registry=https://npm.pkg.github.com'
+          "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" > "$RUNNER_TEMP/npmrc"
       - name: Build the image
         if: env.TAG == ''
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc
         with:
           context: .
           file: apps/account-api/Dockerfile
+          secret-files: npmrc=${{ runner.temp }}/npmrc
           build-args: RELEASE=${{ steps.release.outputs.release }}
           load: true
           tags: zenbujapanese-account-api:candidate

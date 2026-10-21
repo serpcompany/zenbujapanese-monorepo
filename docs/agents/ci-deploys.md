@@ -85,10 +85,14 @@ hand, the `tag` input deploys an image already pushed (`sha-<commit>`) without b
 back, but only to an image main signed before.
 
 - **`image`** builds the image, with Docker's layer cache in the Actions cache, or pulls the one
-  `tag` names, and starts it. It checks that `/v1/info` refuses a request without the token, that a
-  search, its examples, a word, and a kanji (見る, JMdict entry 1259290, and 見) answer with it,
-  and, for a build, that `/healthz` names this commit's release (the first 12 characters of its
-  SHA). A build is then pushed as `:sha-<release>`, and as `:main` from `main` only.
+  `tag` names, and starts it. The build's install reads the private `@serpcompany/verify`, a root
+  devDependency, with the job's own token: a step writes an `npmrc` with it to the runner's temp
+  folder, and the build mounts it as the secret `npmrc` for that one `RUN`, so no layer keeps it
+  ([`checks.md`](checks.md), In CI). It checks that `/v1/info` refuses a request without the
+  token, that a search, its examples, a word, and a kanji (見る, JMdict entry 1259290, and 見)
+  answer with it, and, for a build, that `/healthz` names this commit's release (the first 12
+  characters of its SHA). A build is then pushed as `:sha-<release>`, and as `:main` from `main`
+  only.
 - **`staging`** signs the image's digest with cosign, keylessly, then moves the `:staging` tag to
   it. Its `id-token: write` permission gives cosign a certificate for the run's
   GitHub identity, which names this workflow and the branch it ran from; since the `staging`
@@ -116,11 +120,12 @@ rollback's comes from an image the run pulled. The whole deploy is in
 
 `.github/workflows/account-api-deploy.yml` ships the account service's Docker image
 (`apps/account-api/Dockerfile`, ADR 0013) as `Dictionary API deploy` ships the dictionary
-service's, with the same three jobs, the same signing, the same `staging` and `production`
-environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
-image holds: the service, what the services share, and the package files it installs from (the
-root ones). Tests, the username cases they read (`apps/account-api/src/domain/username-cases.json`),
-and the backups script (`apps/account-api/deploy/`) aren't in the image, so they don't start it.
+service's, with the same three jobs, the same secret `npmrc` for the build's install, the same
+signing, the same `staging` and `production` environments, and the same rollback by `tag`. It
+runs on a push to `main` that changes what the image holds: the service, what the services share,
+and the package files it installs from (the root ones). Tests, the username cases they read
+(`apps/account-api/src/domain/username-cases.json`), and the backups script
+(`apps/account-api/deploy/`) aren't in the image, so they don't start it.
 
 Its `image` job starts the image beside a Postgres 18 service container, on the runner's network,
 with a read-only file system as the server runs it. It checks that the image migrates the empty

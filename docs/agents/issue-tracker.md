@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live as GitHub issues in `serpcompany/zenbujapanese-monorepo`. Use the `gh` CLI for all operations.
+Issues and PRDs for this repo live as GitHub issues in `serpcompany/zenbujapanese-monorepo`. Use the `gh` CLI for all operations, as `serp-agent[bot]` ([Outside CI](ci-agents.md#outside-ci)).
 
 ## Conventions
 

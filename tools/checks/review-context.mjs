@@ -1,21 +1,8 @@
-import { appendFileSync, copyFileSync, writeFileSync } from 'node:fs'
+import { appendFileSync, copyFileSync, realpathSync, writeFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 import { closingReferences, noIssueReason, patiently } from './pull-request.mjs'
 import { counted, named, writeChange } from './review-change.mjs'
 
-const environment = process.env
-const repository = environment.GITHUB_REPOSITORY ?? ''
-const pullRequest = environment.PR_NUMBER ?? ''
-const apiRoot = environment.GITHUB_API_URL || 'https://api.github.com'
-const api = `${apiRoot}/repos/${repository}`
-const headers = {
-  Accept: 'application/vnd.github+json',
-  Authorization: `Bearer ${environment.GITHUB_TOKEN}`,
-  'X-GitHub-Api-Version': '2022-11-28'
-}
-const reviewBot = environment.REVIEW_BOT || 'claude[bot]'
-const summaryBot = environment.SUMMARY_BOT || 'github-actions[bot]'
-const workspace = environment.GITHUB_WORKSPACE || process.cwd()
-const changeFolder = environment.CHANGE_DIR ?? ''
 const team = ['OWNER', 'MEMBER', 'COLLABORATOR']
 const issueLimit = 20_000
 const allIssuesLimit = 40_000
@@ -45,29 +32,58 @@ const issueByNumber = `query($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) { issue(number: $number) { ${issueFields} } }
 }`
 
-const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
+const thisMachine = {
+  fetch: (url, options) => fetch(url, options),
+  wait: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
+  now: () => Date.now(),
+  log: line => console.log(line)
+}
 
-function secondsGitHubAsksFor(response) {
+function reviewOf(environment, machine) {
+  const repository = environment.GITHUB_REPOSITORY ?? ''
+  const apiRoot = environment.GITHUB_API_URL || 'https://api.github.com'
+  return {
+    environment,
+    machine,
+    repository,
+    pullRequest: environment.PR_NUMBER ?? '',
+    apiRoot,
+    api: `${apiRoot}/repos/${repository}`,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${environment.GITHUB_TOKEN}`,
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    reviewBot: environment.REVIEW_BOT || 'claude[bot]',
+    summaryBot: environment.SUMMARY_BOT || 'github-actions[bot]',
+    workspace: environment.GITHUB_WORKSPACE || process.cwd(),
+    changeFolder: environment.CHANGE_DIR ?? ''
+  }
+}
+
+function secondsGitHubAsksFor(response, now) {
   const after = Number(response.headers.get('retry-after'))
   if (after > 0) return after
   if (response.headers.get('x-ratelimit-remaining') !== '0') return null
   const reset = Number(response.headers.get('x-ratelimit-reset'))
-  return Math.max(1, Math.ceil(reset - Date.now() / 1000))
+  return Math.max(1, Math.ceil(reset - now() / 1000))
 }
 
-async function request(name, url, { read = 'json', ...options } = {}) {
+async function request(review, name, url, { read = 'json', ...options } = {}) {
+  const { machine } = review
   for (let attempt = 0; ; attempt += 1) {
-    const response = await fetch(url, {
-      ...options,
-      headers: { ...headers, ...options.headers },
-      signal: AbortSignal.timeout(answerWait)
-    })
+    const response = await machine
+      .fetch(url, {
+        ...options,
+        headers: { ...review.headers, ...options.headers },
+        signal: AbortSignal.timeout(answerWait)
+      })
       .then(async answer =>
         answer.ok ? { ok: true, headers: answer.headers, body: await answer[read]() } : answer
       )
       .catch(error => ({ unanswered: error.name, headers: new Headers() }))
     if (response.ok) return response
-    const asked = secondsGitHubAsksFor(response)
+    const asked = secondsGitHubAsksFor(response, machine.now)
     const worthAnotherTry =
       asked !== null || response.status === 429 || response.unanswered || response.status >= 500
     const seconds = asked ?? secondsBetweenTries[attempt]
@@ -77,30 +93,31 @@ async function request(name, url, { read = 'json', ...options } = {}) {
         : `returned ${response.status}`
       throw Object.assign(new Error(`${name} ${outcome}`), { status: response.status })
     }
-    await wait(seconds * 1000)
+    await machine.wait(seconds * 1000)
   }
 }
 
-async function list(path, pages) {
+async function list(review, path, pages) {
   const items = []
-  let url = `${api}${path}?per_page=100`
+  let url = `${review.api}${path}?per_page=100`
   for (let page = 0; url && page < pages; page += 1) {
-    const response = await request(`GET ${path}`, url)
+    const response = await request(review, `GET ${path}`, url)
     items.push(...response.body)
     url = /<([^>]+)>;\s*rel="next"/.exec(response.headers.get('link') ?? '')?.[1]
   }
   return items
 }
 
-async function rulesSection() {
-  const base = environment.BASE_REF ?? ''
-  const files = (environment.RULES ?? '').split(/\s+/).filter(Boolean)
+async function rulesSection(review) {
+  const base = review.environment.BASE_REF ?? ''
+  const files = (review.environment.RULES ?? '').split(/\s+/).filter(Boolean)
   const copies = await Promise.all(
     files.map(async file => {
       try {
         const copy = await request(
+          review,
           `GET /contents/${file}`,
-          `${api}/contents/${file}?ref=${encodeURIComponent(base)}`,
+          `${review.api}/contents/${file}?ref=${encodeURIComponent(base)}`,
           { read: 'text', headers: { Accept: 'application/vnd.github.raw' } }
         )
         return copy.body.trimEnd()
@@ -118,9 +135,9 @@ async function rulesSection() {
   ]
 }
 
-async function graphql(query, variables, answered) {
+async function graphql(review, query, variables, answered) {
   for (let attempt = 0; ; attempt += 1) {
-    const { body: answer } = await request('POST /graphql', `${apiRoot}/graphql`, {
+    const { body: answer } = await request(review, 'POST /graphql', `${review.apiRoot}/graphql`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query, variables })
@@ -129,15 +146,16 @@ async function graphql(query, variables, answered) {
     if (attempt >= secondsBetweenTries.length) {
       throw new Error(`POST /graphql answered ${JSON.stringify(answer.errors ?? answer)}`)
     }
-    await wait(secondsBetweenTries[attempt] * 1000)
+    await review.machine.wait(secondsBetweenTries[attempt] * 1000)
   }
 }
 
-async function linksNow() {
-  const [owner, name] = repository.split('/')
+async function linksNow(review) {
+  const [owner, name] = review.repository.split('/')
   const answer = await graphql(
+    review,
     linksOfPullRequest,
-    { owner, name, number: Number(pullRequest) },
+    { owner, name, number: Number(review.pullRequest) },
     answer => answer.data?.repository?.pullRequest
   )
   const found = answer.data.repository.pullRequest
@@ -150,10 +168,10 @@ async function linksNow() {
   }
 }
 
-async function issuesNamedIn(body) {
-  const [owner, name] = repository.split('/')
+async function issuesNamedIn(review, body) {
+  const [owner, name] = review.repository.split('/')
   const issues = []
-  for (const reference of closingReferences(body, repository).slice(0, namedIssuesLimit)) {
+  for (const reference of closingReferences(body, review.repository).slice(0, namedIssuesLimit)) {
     if (reference.repository) {
       issues.push({
         number: reference.number,
@@ -162,6 +180,7 @@ async function issuesNamedIn(body) {
       continue
     }
     const answer = await graphql(
+      review,
       issueByNumber,
       { owner, name, number: reference.number },
       answer => answer.data && 'repository' in answer.data
@@ -171,14 +190,17 @@ async function issuesNamedIn(body) {
   return issues
 }
 
-async function closedIssues() {
+async function closedIssues(review) {
   let links
-  await patiently(async () => {
-    links = await linksNow()
-    return links.issues.length > 0 || !links.intoDefaultBranch || noIssueReason(links.body)
-  })
+  await patiently(
+    async () => {
+      links = await linksNow(review)
+      return links.issues.length > 0 || !links.intoDefaultBranch || noIssueReason(links.body)
+    },
+    { wait: review.machine.wait }
+  )
   if (links.issues.length > 0 || links.intoDefaultBranch) return links
-  return { ...links, issues: await issuesNamedIn(links.body), namedInDescription: true }
+  return { ...links, issues: await issuesNamedIn(review, links.body), namedInDescription: true }
 }
 
 function excerpt(text, max) {
@@ -190,7 +212,7 @@ function excerpt(text, max) {
 
 const byTeam = item => team.includes(item?.authorAssociation)
 
-const inThisRepository = issue =>
+const inRepository = (issue, repository) =>
   (issue.repository?.nameWithOwner ?? repository).toLowerCase() === repository.toLowerCase()
 
 const author = item =>
@@ -205,10 +227,10 @@ const quoted = text =>
     .map(line => `> ${line}`.trimEnd())
     .join('\n')
 
-function issueLines(issue, limit) {
+function issueLines(issue, limit, repository) {
   const from = issue.repository?.nameWithOwner ?? repository
   const view = `\`gh issue view ${issue.number} --repo ${from} --comments\``
-  if (!inThisRepository(issue)) {
+  if (!inRepository(issue, repository)) {
     return {
       used: 0,
       lines: [
@@ -280,7 +302,7 @@ function issueLines(issue, limit) {
   return { used: limit - room, lines }
 }
 
-function issuesSection(links) {
+function issuesSection(links, repository) {
   const lines = ['', '# The issue this pull request closes', '']
   if (links.issues.length === 0) {
     if (links.namedInDescription) {
@@ -307,7 +329,7 @@ function issuesSection(links) {
   }
   let room = allIssuesLimit
   for (const issue of links.issues) {
-    const copied = issueLines(issue, Math.min(issueLimit, room))
+    const copied = issueLines(issue, Math.min(issueLimit, room), repository)
     room -= copied.used
     lines.push('', ...copied.lines)
   }
@@ -316,7 +338,7 @@ function issuesSection(links) {
 
 const isSummary = item => /^## Claude review\b/.test(String(item.body || '').trim())
 
-function earlierSection(allInline, allComments) {
+function earlierSection(allInline, allComments, { reviewBot, summaryBot }) {
   const byClaude = item => item?.user?.login === reviewBot
   const inline = allInline.filter(byClaude)
   const findings = inline.filter(item => !item.in_reply_to_id)
@@ -382,22 +404,24 @@ const whatCounts = [
   '- The issue above is always checked against the change.'
 ]
 
-async function main() {
+async function main(review) {
+  const { environment, pullRequest, changeFolder } = review
   const [rules, files, links, allInline, allComments] = await Promise.all([
-    rulesSection(),
-    list(`/pulls/${pullRequest}/files`, filePages),
-    closedIssues(),
-    list(`/pulls/${pullRequest}/comments`, commentPages),
-    list(`/issues/${pullRequest}/comments`, commentPages)
+    rulesSection(review),
+    list(review, `/pulls/${pullRequest}/files`, filePages),
+    closedIssues(review),
+    list(review, `/pulls/${pullRequest}/comments`, commentPages),
+    list(review, `/issues/${pullRequest}/comments`, commentPages)
   ])
-  const earlier = earlierSection(allInline, allComments)
+  const earlier = earlierSection(allInline, allComments, review)
   const change = writeChange(files, {
     pullRequest,
-    workspace,
+    workspace: review.workspace,
     changeFolder,
     changeFile: environment.CHANGE_FILE ?? ''
   })
-  const lines = [...rules, ...change, ...issuesSection(links), ...earlier.lines, ...whatCounts]
+  const issues = issuesSection(links, review.repository)
+  const lines = [...rules, ...change, ...issues, ...earlier.lines, ...whatCounts]
   writeFileSync(environment.CONTEXT_FILE ?? '', `${lines.join('\n')}\n`)
   if (environment.REVIEWERS_CONTEXT_FILE) {
     copyFileSync(environment.CONTEXT_FILE ?? '', environment.REVIEWERS_CONTEXT_FILE)
@@ -408,13 +432,32 @@ async function main() {
       `summary_id=${earlier.summary ? earlier.summary.id : ''}\nchanged_files=${files.length}\n`
     )
   }
-  console.log(
+  review.machine.log(
     `Passed to the review: ${counted(files.length, 'changed file')} in ${changeFolder}, ${counted(links.issues.length, 'closed issue')}, and its earlier findings: ${earlier.findings} inline, ${earlier.summary ? 1 : 0} summary, ${earlier.replies} replies to @claude requests.`
   )
 }
 
-main().catch(error => {
-  const message = String(error?.message).replace(/[\r\n%]+/g, ' ')
-  console.log(`::error title=Couldn't read the pull request for the review::${message}`)
-  process.exit(1)
-})
+export async function giveTheReviewItsContext(environment, machine = thisMachine) {
+  try {
+    await main(reviewOf(environment, machine))
+    return 0
+  } catch (error) {
+    const message = String(error?.message).replace(/[\r\n%]+/g, ' ')
+    machine.log(`::error title=Couldn't read the pull request for the review::${message}`)
+    return 1
+  }
+}
+
+function startedAsAScript() {
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1] ?? '')).href
+  } catch {
+    return false
+  }
+}
+
+if (startedAsAScript()) {
+  giveTheReviewItsContext(process.env).then(status => {
+    if (status !== 0) process.exit(status)
+  })
+}

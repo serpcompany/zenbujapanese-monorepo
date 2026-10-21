@@ -9,11 +9,11 @@ COPY apps/web/package.json apps/web/
 COPY apps/dictionary-api/package.json apps/dictionary-api/
 COPY packages/dictionary-core/package.json packages/dictionary-core/
 COPY packages/node-service/package.json packages/node-service/
-RUN pnpm install --frozen-lockfile --filter zenbujapanese-dictionary-api...
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm install --frozen-lockfile --filter zenbujapanese-dictionary-api...
 COPY packages/dictionary-core packages/dictionary-core
 COPY packages/node-service packages/node-service
 COPY apps/dictionary-api apps/dictionary-api
-RUN pnpm --filter zenbujapanese-dictionary-api build \
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm --filter zenbujapanese-dictionary-api build \
   && pnpm --filter zenbujapanese-dictionary-api deploy --legacy --prod /service
 
 FROM ${NODE_IMAGE} AS sudachi

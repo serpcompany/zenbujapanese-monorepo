@@ -1,19 +1,12 @@
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { findComments } from './comments/find'
-import { findDeadCode } from './deadcode'
-import { checkDependencies, parts } from './dependencies'
-import { knownLongDocs } from './doc-rules/budgets'
-import { checkDocs, isOwnedDoc, referencedFiles } from './docs'
-import { findDuplicates } from './duplicates'
-import { repositoryFiles, root } from './files'
-import { duplicateProblems, knownDuplicates } from './known-duplicates'
-import { checkLayers } from './layers'
-import { type CheckProblems, docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { referencedFiles, treeOf } from './doc-references'
+import { isWrittenHere, readVerifyConfig, repositoryFiles, root } from './files'
+import { docsToReverify, lastChangeTimes, renderReport } from './maintenance'
+import { filesNearLimit } from './near-limit'
 import { groupFindings, readFindings } from './review-findings'
-import { findSecrets } from './secrets'
-import { checkSizes, filesNearLimit, knownLargeFiles } from './sizes'
+import { runSharedChecks } from './shared-checks'
 import { debtFiles, qualityFiles, scoresToRegrade, summarizeDebt } from './work-tracking'
 
 const git = (...args: string[]) =>
@@ -22,68 +15,33 @@ const read = (path: string) => readFileSync(join(root, path), 'utf8')
 
 const collectedFindings = join(root, 'tmp/review-findings.json')
 const files = repositoryFiles()
+const config = readVerifyConfig()
 const times = lastChangeTimes(git('log', '--format=%x00%ct', '--name-only'))
-
-const comments = findComments(files)
-const checks: CheckProblems[] = [
-  {
-    name: 'comments',
-    problems: [
-      ...comments.found.flatMap(file =>
-        file.comments.map(comment => `${file.path}:${comment.line}  ${comment.text}`)
-      ),
-      ...comments.unclassified.map(file => `${file.path}  isn't classified`)
-    ]
-  },
-  {
-    name: 'docs',
-    problems: checkDocs(files).map(
-      problem => `${problem.path}${problem.line ? `:${problem.line}` : ''}  ${problem.problem}`
-    )
-  },
-  {
-    name: 'sizes',
-    problems: checkSizes(files).map(problem => `${problem.path}  ${problem.problem}`)
-  },
-  {
-    name: 'layers',
-    problems: checkLayers(files).map(
-      problem => `${problem.path}:${problem.line}  ${problem.problem}`
-    )
-  },
-  { name: 'secrets', problems: await findSecrets(files) },
-  { name: 'duplicates', problems: duplicateProblems(findDuplicates(files), files) },
-  { name: 'deadcode', problems: findDeadCode() }
-]
-
-const ruleExplanation = /^ {4}\S|^x \d+ dependency violations/
-const dependencyFindings: string[] = []
-for (const part of parts) {
-  const report = await checkDependencies(part)
-  dependencyFindings.push(...report.filter(line => !ruleExplanation.test(line)))
-}
-checks.push({ name: 'dependencies', problems: dependencyFindings })
+const tree = treeOf(files)
+const pathRoots = config.docs?.pathRoots ?? []
+const allowances = (list: keyof NonNullable<typeof config.exceptions>) =>
+  Object.entries(config.exceptions?.[list] ?? {})
 
 const docs = files
-  .filter(isOwnedDoc)
-  .map(doc => ({ doc, references: referencedFiles(doc, read(doc)) }))
+  .filter(path => path.endsWith('.md') && isWrittenHere(path, config))
+  .map(doc => ({ doc, references: referencedFiles(doc, read(doc), tree, pathRoots) }))
 
 process.stdout.write(
   renderReport({
     date: new Date().toISOString().slice(0, 10),
-    checks,
+    checks: runSharedChecks(),
     staleDocs: docsToReverify(docs, times),
     quality: scoresToRegrade(qualityFiles.map(read).join('\n'), times),
     debt: summarizeDebt(debtFiles.map(read).join('\n')),
-    sizeExceptions: Object.entries(knownLargeFiles).map(([path, { lines }]) => ({ path, lines })),
-    longDocs: Object.entries(knownLongDocs)
-      .map(([path, lines]) => ({ path, lines }))
+    sizeExceptions: allowances('knownLargeFiles').map(([path, { lines = 0 }]) => ({ path, lines })),
+    longDocs: allowances('knownLongDocs')
+      .map(([path, { lines = 0 }]) => ({ path, lines }))
       .sort((a, b) => b.lines - a.lines),
-    duplicateExceptions: Object.entries(knownDuplicates).map(([pair, { blocks }]) => ({
+    duplicateExceptions: allowances('knownDuplicates').map(([pair, { blocks = 0 }]) => ({
       pair,
       blocks
     })),
-    nearLimit: filesNearLimit(files),
+    nearLimit: filesNearLimit(files, config),
     reviewFindings: existsSync(collectedFindings)
       ? groupFindings(readFindings(JSON.parse(readFileSync(collectedFindings, 'utf8'))))
       : null

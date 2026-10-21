@@ -10,7 +10,7 @@ standards; this doc holds this repository's commands for them.
 
 | Level | When | What runs |
 | --- | --- | --- |
-| Inner loop | While editing | The edit hook checks each file as it's written, and the stop hook the whole change before a turn ends ([`code.md`](code.md), Checks). Beside them, the touched part's typecheck and the tests for the changed code, below. |
+| Inner loop | While editing | The edit hook checks each file as it's written, and the stop hook the whole change before a turn ends ([`checks.md`](checks.md)). Beside them, the touched part's typecheck and the tests for the changed code, below. |
 | Push | Before each push for review | `pnpm check` in each package the change touched. The `pre-push` hook runs `pnpm verify`, then the fast check of each package the branch changes ([`code.md`](code.md)). |
 | Finish gate | Once, on the finished tree | `pnpm check` from the root, then the evidence the change needs. The `finish-change` skill walks through it. |
 
@@ -41,7 +41,8 @@ The inner loop, by part:
 - Anything that can take more than a couple of minutes runs in the background with its output in
   a file: UI suites, the website's browser tests, the root `pnpm check`, CI, deploys.
 - No foreground `sleep` loops and no foreground `gh pr checks --watch`. One background watcher per
-  wait, or the harness's completion notice.
+  wait, or the harness's completion notice. An agent's `gh` runs as `serp-agent[bot]`
+  ([Outside CI](ci-agents.md#outside-ci)).
 - Before starting a run again, look for the one already running (`pgrep -lf playwright`,
   `pgrep -lf xcodebuild`): two runs on one dev server, or two `xcodebuild` on one Simulator, fail
   each other.
@@ -100,7 +101,12 @@ from any folder:
   ([`web.md`](web.md), Account pages). Giving each checkout its own is in
   [`harness-debt.md`](../harness-debt.md).
 
-The script is tested in `tools/checks/src/ports.test.ts`.
+The script is tested in `tools/checks/src/ports.test.ts`. Most of its tests make their claims
+inside the test process, in scratch folders, with a stand-in for git and a clock that moves only
+while a run waits for the lock (`tools/checks/src/agents/ports-world.ts`), so two runs meeting at the
+lock are played out in a set order and the waits take no real time. A few run the script as a
+command, on real git, for what only a process shows: git's own answers, a hook's `GIT_DIR`, and
+a command's port and status.
 
 ## This checkout's Simulator and build folder
 

@@ -1,8 +1,9 @@
+extends:
+  - node_modules/@serpcompany/verify/configs/lefthook.yml
+
 pre-commit:
   parallel: true
   commands:
-    verify:
-      run: pnpm --silent verify comments,sizes,secrets {staged_files}
     web:
       root: apps/web/
       glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css}"
@@ -30,8 +31,6 @@ pre-commit:
 
 pre-push:
   commands:
-    verify:
-      run: pnpm --silent verify
     web:
       skip:
         - run: git diff --quiet origin/main...HEAD -- apps/web packages/dictionary-core tools/checks/ports.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml
@@ -64,5 +63,5 @@ pre-push:
       run: pnpm --silent --filter @zenbu/dictionary-core check
     checks:
       skip:
-        - run: git diff --quiet origin/main...HEAD -- tools/checks .github .claude deploy lefthook.yml package.json pnpm-lock.yaml pnpm-workspace.yaml
+        - run: git diff --quiet origin/main...HEAD -- tools/checks .github .claude deploy lefthook.yml verify.json package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: pnpm --silent --filter zenbujapanese-checks check

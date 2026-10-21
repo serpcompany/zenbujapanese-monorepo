@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/tools/checks/hook.mjs\"",
+            "command": "if [ -x \"$CLAUDE_PROJECT_DIR\"/node_modules/.bin/serp-verify ]; then \"$CLAUDE_PROJECT_DIR\"/node_modules/.bin/serp-verify hook; elif [ \"$GITHUB_ACTIONS\" != true ]; then echo \"The checks can't run in $CLAUDE_PROJECT_DIR: its packages aren't installed. Run pnpm install there, then make this change again (docs/agents/code.md, Checks).\" >&2; exit 2; fi",
             "timeout": 30,
             "onFailure": "block"
           }
@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/tools/checks/stop-hook.mjs\"",
+            "command": "if [ -x \"$CLAUDE_PROJECT_DIR\"/node_modules/.bin/serp-verify ]; then \"$CLAUDE_PROJECT_DIR\"/node_modules/.bin/serp-verify stop-hook; elif [ \"$GITHUB_ACTIONS\" != true ]; then echo \"The checks can't run in $CLAUDE_PROJECT_DIR: its packages aren't installed. Run pnpm install there (docs/agents/code.md, Checks).\" >&2; exit 1; fi",
             "timeout": 120
           }
         ]

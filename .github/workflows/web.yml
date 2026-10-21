@@ -10,6 +10,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   changes:
@@ -42,7 +43,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
       - name: ShellCheck the scripts
         working-directory: apps/web
         run: >-
@@ -93,7 +98,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
       - name: Install Chromium
         working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium

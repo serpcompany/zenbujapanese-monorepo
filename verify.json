@@ -1,0 +1,741 @@
+{
+  "$schema": "./node_modules/@serpcompany/verify/verify.schema.json",
+  "files": {
+    "generated": {
+      "apps/web/cloudflare-env.d.ts": "wrangler types (pnpm cf-typegen in apps/web)",
+      "pnpm-lock.yaml": "pnpm install",
+      "apps/account-api/migrations/**": "drizzle-kit (pnpm db:generate in apps/account-api)",
+      "apps/account-api/openapi.json": "the account service's tests (pnpm test -u in apps/account-api)",
+      "apps/dictionary-api/openapi.json": "the dictionary service's tests (pnpm test -u in apps/dictionary-api)",
+      "apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js": "esbuild (pnpm bundle:javascriptcore in packages/dictionary-core)",
+      "**/*.{pbxproj,xcscheme,xcworkspacedata}": "Xcode",
+      "**/Package.resolved": "Swift Package Manager"
+    },
+    "thirdParty": {
+      "apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**": "Kuromoji",
+      "apps/ios/Modules/Sources/SearchExperience/Resources/SudachiRuntime/**": "Sudachi",
+      "language-data/notices/**": "the language data sources",
+      "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
+    },
+    "pinned": {
+      "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV{1,2}.sql": "every published frequency pack's mappingPolicySHA256"
+    }
+  },
+  "rules": {
+    "comments": "docs/agents/code.md, No comments",
+    "docs": "docs/agents/code.md, Docs",
+    "sizes": "docs/agents/code.md, File size",
+    "layers": "ARCHITECTURE.md, Layers",
+    "waits": "docs/agents/ios-ui-tests.md, Rules for a test",
+    "secrets": "docs/agents/code.md, Secrets",
+    "duplicates": "docs/agents/code.md, Duplicate code",
+    "deadcode": "docs/agents/code.md, Dead code",
+    "dependencies": "docs/agents/code.md, Imports",
+    "linters": "docs/agents/checks.md"
+  },
+  "waits": {
+    "uiTestFolders": [
+      "apps/ios/UITests/"
+    ],
+    "helpers": "ZenbuUITestCase's waitFor, waitUntil, appears, or comesTrue"
+  },
+  "layers": {
+    "swift": [
+      {
+        "folder": "apps/ios/Modules/Sources/TranslatorCore/",
+        "allowedImports": [
+          "Foundation",
+          "Observation",
+          "OSLog"
+        ]
+      },
+      {
+        "folder": "apps/ios/Modules/Sources/TranslatorOnDevice/",
+        "allowedImports": [
+          "Foundation",
+          "AVFoundation",
+          "Speech",
+          "Translation",
+          "TranslatorCore"
+        ]
+      }
+    ],
+    "restrictedModules": [
+      {
+        "module": "Sentry",
+        "folders": [
+          "apps/ios/Modules/Sources/SearchExperience/Diagnostics/",
+          "apps/ios/Modules/Sources/SearchExperience/Platform/Diagnostics/",
+          "apps/ios/Modules/Tests/SearchExperienceTests/Diagnostics/"
+        ],
+        "message": "report through CrashReporter (ADR 0018)"
+      }
+    ],
+    "platforms": {
+      "names": "iPhone, iPad, and Mac",
+      "adapters": [
+        "apps/ios/Modules/Sources/SearchExperience/Platform/",
+        "apps/ios/UITests/Platform/"
+      ],
+      "sharedCode": [
+        "apps/ios/Modules/Sources/",
+        "apps/ios/Modules/Tests/",
+        "apps/ios/App/",
+        "apps/ios/ShareExtension/",
+        "apps/ios/UITests/",
+        "apps/ios/StoreKitTests/"
+      ],
+      "apis": [
+        {
+          "pattern": "^\\s*#(?:if|elseif)\\b.*\\b(?:os|canImport|targetEnvironment)\\s*\\(",
+          "name": "a platform condition",
+          "use": "an adapter in SearchExperience/Platform/"
+        },
+        {
+          "pattern": "^\\s*(?:@\\w+\\s+)*import\\s+(?:UIKit|AppKit)\\b",
+          "name": "UIKit or AppKit",
+          "use": "an adapter in SearchExperience/Platform/"
+        },
+        {
+          "pattern": "\\bUI[A-Z][A-Za-z]+\\b",
+          "name": "a UIKit type",
+          "use": "an adapter in SearchExperience/Platform/"
+        },
+        {
+          "pattern": "\\bNS(?:Image|Color|Pasteboard|Workspace|Application|View|ViewRepresentable|ViewController|ViewControllerRepresentable|Window|Font|Event|Screen|Alert|OpenPanel|SavePanel|Menu|MenuItem|HostingView|HostingController|TextView|TextField|Button|Cursor|Responder|Appearance|BitmapImageRep|SharingService|StatusBar|Sound)\\b",
+          "name": "an AppKit type",
+          "use": "an adapter in SearchExperience/Platform/"
+        },
+        {
+          "pattern": "\\bAVAudioSession\\b",
+          "name": "AVAudioSession",
+          "use": "ConversationAudioSession"
+        },
+        {
+          "pattern": "\\bBG(?:TaskScheduler|AppRefreshTaskRequest)\\b",
+          "name": "BackgroundTasks",
+          "use": "BackgroundRefresh"
+        },
+        {
+          "pattern": "\\bnavigationBarTitleDisplayMode\\b",
+          "name": "navigationBarTitleDisplayMode",
+          "use": ".inlineNavigationTitle()"
+        },
+        {
+          "pattern": "\\.topBar(?:Leading|Trailing)\\b",
+          "name": ".topBarLeading or .topBarTrailing",
+          "use": ".barLeading or .barTrailing"
+        },
+        {
+          "pattern": "\\.insetGrouped\\b",
+          "name": ".insetGrouped",
+          "use": ".groupedList()"
+        },
+        {
+          "pattern": "\\b(?:textInputAutocapitalization|keyboardType)\\b",
+          "name": "textInputAutocapitalization or keyboardType",
+          "use": ".textEntry(_:)"
+        },
+        {
+          "pattern": "\\btabViewBottomAccessory\\b",
+          "name": "tabViewBottomAccessory",
+          "use": ".bottomAccessory(isEnabled:accessory:fallback:)"
+        },
+        {
+          "pattern": "\\blistSectionSpacing\\b",
+          "name": "listSectionSpacing",
+          "use": ".compactSectionSpacing() or .sectionSpacing(_:)"
+        },
+        {
+          "pattern": "\\bnavigationBarDrawer\\b",
+          "name": "navigationBarDrawer",
+          "use": ".alwaysShown"
+        },
+        {
+          "pattern": "\\bsearchToolbarBehavior\\b",
+          "name": "searchToolbarBehavior",
+          "use": ".minimizedSearchToolbar()"
+        },
+        {
+          "pattern": "\\bEditButton\\b|\\\\\\.editMode\\b|\\bEditMode\\b",
+          "name": "EditButton or editMode",
+          "use": "ListEditButton, ListEditMode, .listEditMode(_:), and \\.isEditingList"
+        },
+        {
+          "pattern": "\\.page\\(indexDisplayMode|\\bindexViewStyle\\b",
+          "name": "the page tab view style",
+          "use": "PagedView(selection:showsIndex:)"
+        },
+        {
+          "pattern": "for: \\.tabBar\\b",
+          "name": "the tab bar placement",
+          "use": ".tabBarVisibility(_:)"
+        },
+        {
+          "pattern": "\\bsidebarAdaptable\\b",
+          "name": "the sidebar-adaptable tab style",
+          "use": ".tabShell()"
+        },
+        {
+          "pattern": "\\bnavigationBarBackButtonHidden\\b",
+          "name": "hiding the Back button",
+          "use": ".backButtonHidden()"
+        },
+        {
+          "pattern": "\\bmanageSubscriptionsSheet\\b",
+          "name": "StoreKit's manage subscriptions sheet",
+          "use": ".appStoreSubscriptionSettings(isPresented:)"
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "parts": [
+      {
+        "folder": "apps/web",
+        "sources": [
+          "src",
+          "worker.ts",
+          "e2e",
+          "scripts"
+        ],
+        "testCode": "(\\.test\\.tsx?$|^e2e/|^src/test/)",
+        "entries": [
+          "^src/app/(|.*/)(page|layout|route|not-found|global-not-found|error|global-error|loading|template|default|sitemap|robots|manifest|icon|opengraph-image)\\.tsx?$",
+          "^worker\\.ts$",
+          "^scripts/[^/]+\\.ts$"
+        ],
+        "runtime": {
+          "path": "^(src/|worker\\.ts$)",
+          "pathNot": "(\\.test\\.tsx?$|^e2e/|^src/test/)"
+        },
+        "rules": [
+          {
+            "name": "core-by-package-name",
+            "severity": "error",
+            "comment": "Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./packages/",
+              "dependencyTypes": [
+                "local"
+              ]
+            }
+          },
+          {
+            "name": "web-never-imports-the-service",
+            "severity": "error",
+            "comment": "The website reaches the dictionary service only over HTTP, through src/lib/dictionary/api.ts, and shares row shapes through the core (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./dictionary-api/"
+            }
+          },
+          {
+            "name": "web-never-imports-the-account-service",
+            "severity": "error",
+            "comment": "The website reaches the account service only over HTTP, through its /v1 API (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./account-api/"
+            }
+          },
+          {
+            "name": "worker-runs-before-nextjs",
+            "severity": "error",
+            "comment": "worker.ts runs before Next.js on every request, so nothing it imports, however indirectly, may load Next.js or React (docs/agents/web.md, Code layout). Keep what it needs in src/lib, free of both.",
+            "from": {
+              "path": "^worker\\.ts$"
+            },
+            "to": {
+              "path": "(^|/)node_modules/(next|react|react-dom|server-only)/",
+              "reachable": true
+            }
+          },
+          {
+            "name": "only-data-reads-the-service",
+            "severity": "error",
+            "comment": "Pages read the dictionary service only through src/lib/dictionary/data.ts; only src/lib/dictionary/retired.ts, which worker.ts runs before Next.js, and scripts/write-sitemaps.ts, which writes the sitemaps at deploy, call the client too (docs/agents/web.md, Code layout). Add a function to data.ts instead.",
+            "from": {
+              "path": "^(src/|worker\\.ts$|scripts/)",
+              "pathNot": [
+                "^src/lib/dictionary/(data|retired)\\.ts$",
+                "^scripts/write-sitemaps\\.ts$",
+                "(\\.test\\.tsx?$|^e2e/|^src/test/)"
+              ]
+            },
+            "to": {
+              "path": "^src/lib/dictionary/api\\.ts$"
+            }
+          },
+          {
+            "name": "lib-builds-on-nothing-above-it",
+            "severity": "error",
+            "comment": "src/lib holds the data and logic that components, hooks, and routes build on, so it never imports them (docs/agents/web.md, Code layout). Move what both sides need into src/lib.",
+            "from": {
+              "path": "^src/lib/",
+              "pathNot": "(\\.test\\.tsx?$|^e2e/|^src/test/)"
+            },
+            "to": {
+              "path": "^src/(components|hooks|app)/"
+            }
+          },
+          {
+            "name": "components-never-import-routes",
+            "severity": "error",
+            "comment": "Routes (src/app) import components and hooks, never the reverse (docs/agents/web.md, Code layout). Pass what a component needs from its route as a prop, or move shared code into src/lib.",
+            "from": {
+              "path": "^src/(components|hooks)/",
+              "pathNot": "(\\.test\\.tsx?$|^e2e/|^src/test/)"
+            },
+            "to": {
+              "path": "^src/app/"
+            }
+          }
+        ]
+      },
+      {
+        "folder": "apps/dictionary-api",
+        "sources": [
+          "src",
+          "scripts"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/conformance/)",
+        "entries": [
+          "^src/server\\.ts$",
+          "^src/worker\\.ts$",
+          "^src/worker-dev\\.mjs$"
+        ],
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.ts$|^src/conformance/)|^src/worker-dev\\.mjs$"
+        },
+        "rules": [
+          {
+            "name": "core-by-package-name",
+            "severity": "error",
+            "comment": "Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./packages/",
+              "dependencyTypes": [
+                "local"
+              ]
+            }
+          },
+          {
+            "name": "service-never-imports-the-website",
+            "severity": "error",
+            "comment": "The dictionary service knows nothing of the website: they share row shapes through the core, and the website calls the service over HTTP (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./web/"
+            }
+          },
+          {
+            "name": "service-never-imports-the-account-service",
+            "severity": "error",
+            "comment": "The dictionary service checks an account only through the account service, over HTTP and its JWKS (ADR 0014), never by importing it (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./account-api/"
+            }
+          }
+        ]
+      },
+      {
+        "folder": "apps/account-api",
+        "sources": [
+          "src",
+          "scripts"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/test/)",
+        "entries": [
+          "^src/server\\.ts$"
+        ],
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.ts$|^src/test/)"
+        },
+        "rules": [
+          {
+            "name": "core-by-package-name",
+            "severity": "error",
+            "comment": "Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./packages/",
+              "dependencyTypes": [
+                "local"
+              ]
+            }
+          },
+          {
+            "name": "account-service-never-imports-another-app",
+            "severity": "error",
+            "comment": "The account service knows nothing of the website or the dictionary service: they call it over HTTP (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./(web|dictionary-api)/"
+            }
+          },
+          {
+            "name": "account-http-never-reaches-the-database",
+            "severity": "error",
+            "comment": "src/http is the HTTP layer: it answers from what src/server.ts and src/wiring.ts hand it, through the domain, and never touches the database, photo storage, or a payment provider (docs/agents/account-api.md, Code layout). Put database code in src/db, storage code in src/storage, and a provider's in src/billing.",
+            "from": {
+              "path": "^src/http/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(db|auth|email|billing|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(pg|drizzle-orm|better-auth|stripe|@apple|aws4fetch)/"
+              ]
+            }
+          },
+          {
+            "name": "account-domain-builds-on-no-layer",
+            "severity": "error",
+            "comment": "src/domain holds the account, sync, and billing rules, which the HTTP layer, the database layer, the payment providers' adapters, and photo storage build on, so it imports none of them, nor Hono, nor a database driver, nor a provider's SDK (docs/agents/account-api.md, Code layout). Take what a rule needs as a parameter.",
+            "from": {
+              "path": "^src/domain/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|db|billing|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(pg|drizzle-orm|hono|@hono|stripe|@apple|aws4fetch)/"
+              ]
+            }
+          },
+          {
+            "name": "account-storage-keeps-files-and-nothing-more",
+            "severity": "error",
+            "comment": "src/storage keeps photo files in R2 behind the domain's PhotoStorage, and nothing more: src/server.ts and src/wiring.ts hand it to the domain, so it imports neither HTTP, the database, sign-in, email, nor the payment providers (docs/agents/account-api.md, Code layout).",
+            "from": {
+              "path": "^src/storage/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|db|auth|email|billing)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|stripe|@apple)/"
+              ]
+            }
+          },
+          {
+            "name": "account-email-sends-and-nothing-more",
+            "severity": "error",
+            "comment": "src/email sends a message and nothing more: sign-in uses it, so it imports neither sign-in, the database, nor HTTP (docs/agents/account-api.md, Code layout).",
+            "from": {
+              "path": "^src/email/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|db|auth|domain|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/"
+              ]
+            }
+          },
+          {
+            "name": "account-sign-in-knows-no-http",
+            "severity": "error",
+            "comment": "src/auth sets up sign-in on the database and the mailer; src/server.ts and src/wiring.ts hand its handler to the HTTP layer, so it knows nothing of HTTP (docs/agents/account-api.md, Code layout).",
+            "from": {
+              "path": "^src/auth/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(hono|@hono|aws4fetch)/"
+              ]
+            }
+          },
+          {
+            "name": "account-database-knows-no-http",
+            "severity": "error",
+            "comment": "src/db is the database layer: the HTTP layer builds on it through src/server.ts and src/wiring.ts, so it knows nothing of HTTP, photo storage, or a payment provider (docs/agents/account-api.md, Code layout).",
+            "from": {
+              "path": "^src/db/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|billing|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(hono|@hono|stripe|@apple|aws4fetch)/"
+              ]
+            }
+          },
+          {
+            "name": "account-billing-adapts-providers-and-nothing-more",
+            "severity": "error",
+            "comment": "src/billing holds the payment providers' adapters, Stripe's and the App Store's, behind the domain's billing interfaces; src/server.ts and src/wiring.ts hand them to the domain, so they know nothing of HTTP, the database, sign-in, email, or photo storage (docs/agents/account-billing.md, Code layout).",
+            "from": {
+              "path": "^src/billing/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "path": [
+                "^src/(http|db|auth|email|storage)/",
+                "^src/(server|wiring)\\.ts$",
+                "(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "folder": "packages/dictionary-core",
+        "sources": [
+          "src"
+        ],
+        "testCode": "\\.test\\.ts$",
+        "rules": [
+          {
+            "name": "core-needs-no-runtime",
+            "severity": "error",
+            "comment": "The core imports no runtime, framework, or package: a client passes in its database, files, and capabilities (ARCHITECTURE.md, Layers). Take what this needs as a parameter, or import only types.",
+            "from": {
+              "path": "^src/",
+              "pathNot": "\\.test\\.ts$"
+            },
+            "to": {
+              "dependencyTypes": [
+                "core",
+                "npm",
+                "npm-dev",
+                "npm-optional",
+                "npm-peer",
+                "npm-no-pkg"
+              ],
+              "dependencyTypesNot": [
+                "type-only"
+              ]
+            }
+          },
+          {
+            "name": "core-imports-no-client",
+            "severity": "error",
+            "comment": "The core is shared by every client, so it imports none of them and no repository tool (ARCHITECTURE.md, Layers). Move what it needs into the core, or pass it in.",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          }
+        ]
+      },
+      {
+        "folder": "packages/node-service",
+        "sources": [
+          "src"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/test/)",
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.ts$|^src/test/)"
+        },
+        "rules": [
+          {
+            "name": "node-service-imports-no-app",
+            "severity": "error",
+            "comment": "What the Node services share imports none of them and no repository tool (ARCHITECTURE.md, Layers). Pass what it needs in as a parameter.",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          }
+        ]
+      },
+      {
+        "folder": "tools/checks",
+        "sources": [
+          "src"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/(agents|deployer)/)",
+        "entries": [
+          "^src/report\\.ts$"
+        ]
+      }
+    ]
+  },
+  "docs": {
+    "pathRoots": [
+      "apps",
+      "packages",
+      "tools",
+      "deploy",
+      "docs",
+      "language-data",
+      "assets",
+      ".github",
+      ".claude"
+    ],
+    "maps": [
+      "README.md",
+      "**/AGENTS.md",
+      "**/CLAUDE.md"
+    ],
+    "unbudgeted": [
+      "docs/api/**"
+    ],
+    "layout": {
+      "root": [
+        "AGENTS.md",
+        "ARCHITECTURE.md",
+        "CONTEXT.md",
+        "README.md",
+        "CLAUDE.md"
+      ],
+      "docs": [
+        "adr",
+        "agents",
+        "api",
+        "data-sources.md",
+        "harness-debt.md",
+        "quality.md",
+        "quality-ios.md",
+        "quality-ios-account.md",
+        "quality-web.md",
+        "tech-debt.md",
+        "technologies.md"
+      ]
+    },
+    "kebabCase": [
+      "docs/**",
+      "apps/*/docs/**"
+    ],
+    "homes": [
+      {
+        "docs": "apps/*/docs/**",
+        "packages": [
+          "apps/$1"
+        ]
+      },
+      {
+        "docs": "docs/agents/*.md",
+        "packages": [
+          "apps/$1",
+          "packages/$1"
+        ]
+      }
+    ],
+    "skills": {
+      "catalog": "docs/agents/code.md"
+    },
+    "testTargets": [
+      "ZenbuJapaneseUITests",
+      "ZenbuJapaneseStoreKitTests"
+    ],
+    "github": {
+      "pointer": "agent-github-identity|serp-github-app|ci-agents\\.md#outside-ci",
+      "exempt": {
+        ".claude/skills/pr-review/SKILL.md": "the Code review workflow runs it, where its gh commands read with the job's own token, and its allowed tools admit only plain gh reads",
+        "docs/agents/checks.md": "its gh auth commands set up a machine's own read:packages token, a person's one-time step on their own machine",
+        "docs/agents/ci-review.md": "its one gh command is history: what the Code review workflow's reviewer ran on #761",
+        "docs/agents/dictionary-api.md": "its gh commands set the GitHub environments' variables, an owner's step: settings stay with a person (ci-agents.md, Outside CI)"
+      }
+    },
+    "githubLinks": {
+      "orgs": []
+    }
+  },
+  "exceptions": {
+    "knownLongDocs": {
+      "apps/ios/docs/product/dictionary.md": {
+        "lines": 392,
+        "reason": "over its budget when the check arrived"
+      },
+      "apps/ios/docs/product/index.md": {
+        "lines": 407,
+        "reason": "over its budget when the check arrived"
+      },
+      "apps/ios/docs/product/translate.md": {
+        "lines": 357,
+        "reason": "over its budget when the check arrived"
+      },
+      "apps/web/docs/product/account.md": {
+        "lines": 345,
+        "reason": "over its budget when the check arrived"
+      },
+      "apps/web/docs/product/browse.md": {
+        "lines": 332,
+        "reason": "over its budget when the check arrived"
+      },
+      "apps/web/docs/product/dictionary.md": {
+        "lines": 1286,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/account-api.md": {
+        "lines": 860,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/account-clients.md": {
+        "lines": 555,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/api-servers.md": {
+        "lines": 318,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/dictionary-api.md": {
+        "lines": 543,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/dictionary-core.md": {
+        "lines": 604,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/ios.md": {
+        "lines": 1177,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/translate.md": {
+        "lines": 364,
+        "reason": "over its budget when the check arrived"
+      },
+      "docs/agents/web.md": {
+        "lines": 808,
+        "reason": "over its budget when the check arrived"
+      }
+    },
+    "allowedPauses": {
+      "apps/ios/UITests/ZenbuUITestCase.swift": {
+        "pauses": 3,
+        "proves": "nothing: they are comesTrue's wait between two looks, waitUntilStill's second between two looks at a frame, and the 0.3 s between the warm-up touch and the gesture it wakes the Simulator's touch system for"
+      },
+      "apps/ios/UITests/ExampleRowsUITests.swift": {
+        "pauses": 2,
+        "proves": "no row changes its height, and the opened sentence keeps its place, once held answers are let go"
+      },
+      "apps/ios/UITests/LayoutUITests.swift": {
+        "pauses": 1,
+        "proves": "the iPhone doesn't turn"
+      },
+      "apps/ios/UITests/SearchInputUITests.swift": {
+        "pauses": 1,
+        "proves": "the input panel stays open"
+      },
+      "apps/ios/UITests/TranslateUITests.swift": {
+        "pauses": 1,
+        "proves": "the word sheet stays up after Return in its note"
+      },
+      "apps/ios/UITests/KeyboardAndWindowUITests.swift": {
+        "pauses": 2,
+        "proves": "nothing on screen to wait for yet: a window taking keyboard focus after Escape, and a shortcut pressed over a sheet"
+      },
+      "apps/ios/UITests/WordDetailUITests.swift": {
+        "pauses": 1,
+        "proves": "nothing on screen to wait for yet: the pointer moving off a headword before its picture"
+      }
+    }
+  }
+}

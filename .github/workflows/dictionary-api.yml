@@ -18,6 +18,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: read
 
 env:
   RESOURCES: apps/ios/Modules/Sources/SearchExperience/Resources
@@ -81,7 +82,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
       - name: Restore Sudachi's dictionary
         uses: actions/cache@v5
         with:

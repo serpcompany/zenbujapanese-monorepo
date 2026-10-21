@@ -14,7 +14,7 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseEnv } from 'node:util'
-import { withoutGitLocation } from './route.mjs'
+import { withoutGitLocation } from './git-environment.mjs'
 
 export const mainPorts = { site: 3000, e2e: 3100, preview: 8787, dictionary: 8788 }
 export const roles = Object.keys(mainPorts)
@@ -54,17 +54,32 @@ export function portsFor(slot) {
   return Object.fromEntries(roles.map((role, index) => [role, first + index]))
 }
 
-function git(folder, ...command) {
-  const result = spawnSync('git', command, {
-    cwd: folder,
-    encoding: 'utf8',
-    env: withoutGitLocation(process.env)
-  })
-  return result.status === 0 ? result.stdout : undefined
+const thisMachine = {
+  git(folder, ...command) {
+    const result = spawnSync('git', command, {
+      cwd: folder,
+      encoding: 'utf8',
+      env: withoutGitLocation(process.env)
+    })
+    return result.status === 0 ? result.stdout : undefined
+  },
+  now: () => Date.now(),
+  pause(milliseconds) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds)
+  },
+  running(pid) {
+    try {
+      process.kill(pid, 0)
+      return true
+    } catch (error) {
+      return error.code === 'EPERM'
+    }
+  },
+  pid: process.pid
 }
 
-function checkoutIn(folder) {
-  const found = git(folder, 'rev-parse', '--show-toplevel', '--git-dir', '--git-common-dir')
+function checkoutIn(folder, machine) {
+  const found = machine.git(folder, 'rev-parse', '--show-toplevel', '--git-dir', '--git-common-dir')
   if (found === undefined) return undefined
   const [top, gitDir, commonDir] = found
     .split('\n')
@@ -74,8 +89,8 @@ function checkoutIn(folder) {
   return { top, worktree: gitDir !== commonDir, claims: join(commonDir, claimsFolder) }
 }
 
-function worktreesIn(folder) {
-  const listed = git(folder, 'worktree', 'list', '--porcelain')
+function worktreesIn(folder, machine) {
+  const listed = machine.git(folder, 'worktree', 'list', '--porcelain')
   if (listed === undefined) return undefined
   const paths = listed
     .split('\n')
@@ -98,37 +113,26 @@ function claimsIn(folder) {
     .sort((one, other) => one.slot - other.slot)
 }
 
-const pause = milliseconds =>
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds)
-
-function running(pid) {
-  if (!Number.isInteger(pid) || pid <= 0) return false
+function heldByARunningProcess(lock, machine) {
   try {
-    process.kill(pid, 0)
-    return true
-  } catch (error) {
-    return error.code === 'EPERM'
-  }
-}
-
-function heldByARunningProcess(lock) {
-  try {
-    return running(Number(readFileSync(join(lock, holderName), 'utf8')))
+    const holder = Number(readFileSync(join(lock, holderName), 'utf8'))
+    return Number.isInteger(holder) && holder > 0 && machine.running(holder)
   } catch (error) {
     if (error.code === 'ENOENT') return false
     throw error
   }
 }
 
-const abandoned = lock =>
-  Date.now() - statSync(lock).mtimeMs >= lockAbandonedAfter && !heldByARunningProcess(lock)
+const abandoned = (lock, machine) =>
+  machine.now() - statSync(lock).mtimeMs >= lockAbandonedAfter &&
+  !heldByARunningProcess(lock, machine)
 
-function breakAbandoned(lock) {
-  const aside = `${lock}.${process.pid}`
+function breakAbandoned(lock, machine) {
+  const aside = `${lock}.${machine.pid}`
   try {
-    if (!abandoned(lock)) return
+    if (!abandoned(lock, machine)) return
     renameSync(lock, aside)
-    if (abandoned(aside)) rmSync(aside, { recursive: true, force: true })
+    if (abandoned(aside, machine)) rmSync(aside, { recursive: true, force: true })
     else renameSync(aside, lock)
   } catch (error) {
     rmSync(aside, { recursive: true, force: true })
@@ -136,10 +140,10 @@ function breakAbandoned(lock) {
   }
 }
 
-function locked(folder, work) {
+function locked(folder, work, machine) {
   mkdirSync(folder, { recursive: true })
   const lock = join(folder, lockName)
-  const giveUpAt = Date.now() + lockWait
+  const giveUpAt = machine.now() + lockWait
   for (;;) {
     try {
       mkdirSync(lock)
@@ -147,14 +151,14 @@ function locked(folder, work) {
     } catch (error) {
       if (error.code !== 'EEXIST') throw error
     }
-    breakAbandoned(lock)
-    if (Date.now() > giveUpAt) {
+    breakAbandoned(lock, machine)
+    if (machine.now() > giveUpAt) {
       throw new Error(`Another run has held ${lock} for ${lockWait / 1000} seconds. Remove it.`)
     }
-    pause(lockPause)
+    machine.pause(lockPause)
   }
   try {
-    writeFileSync(join(lock, holderName), String(process.pid))
+    writeFileSync(join(lock, holderName), String(machine.pid))
     return work()
   } finally {
     rmSync(lock, { recursive: true, force: true })
@@ -172,12 +176,14 @@ function releaseWhere(folder, isTheirs) {
 const forgetGone = (folder, worktrees) =>
   worktrees ? releaseWhere(folder, claim => !worktrees.has(claim.owner)) : []
 
-const underLock = (folder, work) => (existsSync(folder) ? locked(folder, work) : [])
+const underLock = (folder, work, machine) =>
+  existsSync(folder) ? locked(folder, work, machine) : []
 
-const prune = (folder, worktreesNow) => underLock(folder, () => forgetGone(folder, worktreesNow()))
+const prune = (folder, worktreesNow, machine) =>
+  underLock(folder, () => forgetGone(folder, worktreesNow()), machine)
 
-const giveUp = (folder, owner) =>
-  underLock(folder, () => releaseWhere(folder, claim => claim.owner === owner))
+const giveUp = (folder, owner, machine) =>
+  underLock(folder, () => releaseWhere(folder, claim => claim.owner === owner), machine)
 
 function claim(draft, slotFile, content) {
   try {
@@ -188,9 +194,9 @@ function claim(draft, slotFile, content) {
   }
 }
 
-function take(folder, owner) {
+function take(folder, owner, machine) {
   const content = `${owner}\n`
-  const draft = join(folder, `claim.${process.pid}`)
+  const draft = join(folder, `claim.${machine.pid}`)
   writeFileSync(draft, content)
   try {
     for (let slot = 1; slot <= lastSlot; slot += 1) {
@@ -209,25 +215,28 @@ function take(folder, owner) {
   )
 }
 
-function slotOf(folder, owner, worktreesNow) {
+function slotOf(folder, owner, worktreesNow, machine) {
   const mine = () => claimsIn(folder).filter(each => each.owner === owner)
   const [held] = mine()
   if (held) return held.slot
-  return locked(folder, () => {
-    if (mine().length === 0) {
-      forgetGone(folder, worktreesNow())
-      take(folder, owner)
-    }
-    const [first, ...extra] = mine()
-    for (const each of extra) release(folder, each.slot)
-    return first.slot
-  })
+  return locked(
+    folder,
+    () => {
+      if (mine().length === 0) {
+        forgetGone(folder, worktreesNow())
+        take(folder, owner, machine)
+      }
+      const [first, ...extra] = mine()
+      for (const each of extra) release(folder, each.slot)
+      return first.slot
+    },
+    machine
+  )
 }
 
-function slotIn(folder) {
-  const checkout = checkoutIn(folder)
+function slotIn(checkout, folder, machine) {
   if (!checkout?.worktree) return 0
-  return slotOf(checkout.claims, checkout.top, () => worktreesIn(folder))
+  return slotOf(checkout.claims, checkout.top, () => worktreesIn(folder, machine), machine)
 }
 
 const addressOf = port => `http://localhost:${port}`
@@ -245,14 +254,19 @@ export function launch(port, command, environment, fileSettings) {
   return { program, arguments: rest, env }
 }
 
-function runCommand(rest, folder) {
+export function commandToRun(rest, folder, environment, machine = thisMachine) {
   const dashes = rest.indexOf('--')
   const [role, flag, file, ...more] = dashes === -1 ? [] : rest.slice(0, dashes)
   const command = dashes === -1 ? [] : rest.slice(dashes + 1)
   const named = flag === undefined || (flag === settingsFlag && file !== undefined)
-  if (!roles.includes(role) || !named || more.length > 0 || command.length === 0) return refuse()
-  const port = portsFor(slotIn(folder))[role]
-  const started = launch(port, command, process.env, settingsIn(file && resolve(folder, file)))
+  if (!roles.includes(role) || !named || more.length > 0 || command.length === 0) return undefined
+  const port = portsFor(slotIn(checkoutIn(folder, machine), folder, machine))[role]
+  return launch(port, command, environment, settingsIn(file && resolve(folder, file)))
+}
+
+function runCommand(rest, folder) {
+  const started = commandToRun(rest, folder, process.env)
+  if (!started) return refuse()
   const child = spawn(started.program, started.arguments, {
     stdio: 'inherit',
     env: started.env,
@@ -280,29 +294,34 @@ const freed = claims =>
         )
         .join('\n')
 
-function main([command, ...rest], folder = process.cwd()) {
-  if (command === 'run') return runCommand(rest, folder)
-  if (rest.length > 0) return refuse()
-  const checkout = checkoutIn(folder)
+const answered = [undefined, '--json', 'delete', 'prune']
+
+export function answerTo(argv, folder, machine = thisMachine) {
+  const [command, ...rest] = argv
+  if (rest.length > 0 || !answered.includes(command)) return undefined
+  const checkout = checkoutIn(folder, machine)
   if (command === 'delete') {
     if (!checkout?.worktree) {
-      console.log('This checkout uses the main ports. Only a worktree has a block to give up.')
-      return
+      return 'This checkout uses the main ports. Only a worktree has a block to give up.'
     }
-    console.log(freed(giveUp(checkout.claims, checkout.top)))
-    return
+    return freed(giveUp(checkout.claims, checkout.top, machine))
   }
   if (command === 'prune') {
-    console.log(freed(checkout ? prune(checkout.claims, () => worktreesIn(folder)) : []))
-    return
+    return freed(
+      checkout ? prune(checkout.claims, () => worktreesIn(folder, machine), machine) : []
+    )
   }
-  if (command !== undefined && command !== '--json') return refuse()
-  const ports = portsFor(slotIn(folder))
-  if (command === '--json') {
-    console.log(JSON.stringify(ports))
-    return
-  }
-  for (const role of roles) console.log(`${role.padEnd(11)}${addressOf(ports[role])}`)
+  const ports = portsFor(slotIn(checkout, folder, machine))
+  if (command === '--json') return JSON.stringify(ports)
+  return roles.map(role => `${role.padEnd(11)}${addressOf(ports[role])}`).join('\n')
+}
+
+function main(argv, folder = process.cwd()) {
+  const [command, ...rest] = argv
+  if (command === 'run') return runCommand(rest, folder)
+  const answer = answerTo(argv, folder)
+  if (answer === undefined) return refuse()
+  console.log(answer)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(real(process.argv[1])).href) {

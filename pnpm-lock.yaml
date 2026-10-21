@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@serpcompany/verify':
+        specifier: 0.1.0
+        version: 0.1.0(@biomejs/biome@2.4.2)
       lefthook:
         specifier: 2.0.15
         version: 2.0.15
@@ -277,24 +280,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.2
         version: 2.4.2
-      '@secretlint/node':
-        specifier: 11.3.1
-        version: 11.3.1
-      '@secretlint/secretlint-rule-preset-recommend':
-        specifier: 11.3.1
-        version: 11.3.1
       '@types/node':
         specifier: ^22.20.4
         version: 22.20.4
-      dependency-cruiser:
-        specifier: 17.3.6
-        version: 17.3.6
-      jscpd:
-        specifier: 4.0.7
-        version: 4.0.7
-      knip:
-        specifier: 6.39.0
-        version: 6.39.0
       vitest:
         specifier: ^5.0.2
         version: 5.0.2(@types/node@22.20.4)(happy-dom@20.14.5)(vite@8.3.1(@types/node@22.20.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.16.9)(tsx@4.23.15)(yaml@2.9.1))
@@ -2483,6 +2471,16 @@ packages:
   '@secretlint/types@11.3.1':
     resolution: {integrity: sha512-6PU7JLivE6Swavrw1TxiPVbvk1Nafihm+v6hNpsEAt7raLlazoFXFK/O8YeSEK15u+4oofSBqwipy81HAbLnlg==}
     engines: {node: '>=20.0.0'}
+
+  '@serpcompany/verify@0.1.0':
+    resolution: {integrity: sha512-66u9/ZSf8DzR/xvz5OimKG5eX64b31d89X7pLt2e2j5HzJINR7kEO9xf6PSzAsLreuZKfbnVRyAz1nqkIpt8dw==, tarball: https://npm.pkg.github.com/download/@serpcompany/verify/0.1.0/46f7b40d4b397d32b4f9b5bf3bd85546ea4728b4}
+    engines: {node: '>=22.18.0'}
+    hasBin: true
+    peerDependencies:
+      '@biomejs/biome': 2.4.2
+    peerDependenciesMeta:
+      '@biomejs/biome':
+        optional: true
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -7559,6 +7557,21 @@ snapshots:
       istextorbinary: 9.5.0
 
   '@secretlint/types@11.3.1': {}
+
+  '@serpcompany/verify@0.1.0(@biomejs/biome@2.4.2)':
+    dependencies:
+      '@secretlint/node': 11.3.1
+      '@secretlint/secretlint-rule-preset-recommend': 11.3.1
+      ajv: 8.20.0
+      dependency-cruiser: 17.3.6
+      jscpd: 4.0.7
+      knip: 6.39.0
+      typescript: 5.9.3
+      yaml: 2.9.1
+    optionalDependencies:
+      '@biomejs/biome': 2.4.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@sindresorhus/is@7.2.0': {}
 

@@ -309,7 +309,7 @@ Build and run it by hand from the repository root, with the Git LFS files pulled
 
 ```sh
 docker build -f apps/dictionary-api/Dockerfile --build-arg RELEASE=$(git rev-parse --short HEAD) \
-  -t zenbujapanese-dictionary-api .
+  --secret id=npmrc,src=$HOME/.npmrc -t zenbujapanese-dictionary-api .
 docker run -p 8788:8788 -e DICTIONARY_API_TOKEN=<token> zenbujapanese-dictionary-api
 ```
 

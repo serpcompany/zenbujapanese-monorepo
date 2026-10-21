@@ -7,7 +7,7 @@ WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/account-api/package.json apps/account-api/
 COPY packages/node-service/package.json packages/node-service/
-RUN pnpm install --frozen-lockfile --filter zenbujapanese-account-api...
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm install --frozen-lockfile --filter zenbujapanese-account-api...
 COPY packages/node-service packages/node-service
 COPY apps/account-api apps/account-api
 RUN pnpm --filter zenbujapanese-account-api build

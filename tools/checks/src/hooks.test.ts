@@ -1,106 +1,64 @@
 import { spawnSync } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { expect, test } from 'vitest'
-import { git, outsideGit, scratchFolder } from './agents/scratch'
-import { root } from './files'
+import { describe, expect, test } from 'vitest'
+import { outsideGit, scratchFolder } from './agents/scratch'
+import { readRepositoryFile } from './agents/workflow'
 
-const scratch = () => scratchFolder('hooks')
+const settings = JSON.parse(readRepositoryFile('.claude/settings.json')) as {
+  hooks: Record<string, { hooks: { command: string }[] }[]>
+}
+const hooks = [
+  ['edit', settings.hooks.PostToolUse[0].hooks[0].command, 'hook'],
+  ['stop', settings.hooks.Stop[0].hooks[0].command, 'stop-hook']
+] as const
+const input = '{"session_id":"session-1"}'
+const verdict = 2
+const serpVerifyThatRecordsItsCall = [
+  '#!/bin/sh',
+  'echo "$*" >"$(dirname "$0")/called"',
+  'cat >"$(dirname "$0")/input"',
+  `exit ${verdict}`,
+  ''
+].join('\n')
 
-const run = (script: string, input: object, inGitHubActions = false) =>
-  spawnSync(process.execPath, [join(root, 'tools', 'checks', script)], {
-    input: JSON.stringify(input),
+function checkout(installed: boolean): string {
+  const folder = join(scratchFolder('hooks'), 'a checkout')
+  const bin = join(folder, 'node_modules', '.bin')
+  mkdirSync(bin, { recursive: true })
+  if (installed) {
+    writeFileSync(join(bin, 'serp-verify'), serpVerifyThatRecordsItsCall, { mode: 0o755 })
+  }
+  return folder
+}
+
+const run = (command: string, folder: string, inGitHubActions = false) =>
+  spawnSync('sh', ['-c', command], {
+    input,
     encoding: 'utf8',
-    env: outsideGit({ GITHUB_ACTIONS: inGitHubActions ? 'true' : '' })
+    env: outsideGit({ CLAUDE_PROJECT_DIR: folder, GITHUB_ACTIONS: inGitHubActions ? 'true' : '' })
   })
 
-function committed(checkout: string): string {
-  git(checkout, 'add', '--all')
-  git(checkout, 'commit', '--quiet', '--message', 'Start')
-  return checkout
-}
+describe.each(hooks)('the %s hook', (name, command, subcommand) => {
+  test(`hands its input to serp-verify ${subcommand}, and serp-verify's verdict back`, () => {
+    const folder = checkout(true)
+    const result = run(command, folder)
+    const bin = join(folder, 'node_modules', '.bin')
+    expect(result.status).toBe(verdict)
+    expect(readFileSync(join(bin, 'called'), 'utf8')).toBe(`${subcommand}\n`)
+    expect(readFileSync(join(bin, 'input'), 'utf8')).toBe(input)
+  })
 
-function otherCheckout(script: string, installed: boolean): string {
-  const checkout = scratch()
-  git(checkout, 'init', '--quiet')
-  mkdirSync(join(checkout, 'tools', 'checks'), { recursive: true })
-  writeFileSync(
-    join(checkout, 'tools', 'checks', script),
-    "process.stderr.write('checked by its own checkout')\nprocess.exit(2)\n"
-  )
-  if (installed) mkdirSync(join(checkout, 'tools', 'checks', 'node_modules'))
-  writeFileSync(join(checkout, 'probe.ts'), 'export const probe = 1\n')
-  return checkout
-}
+  test('says the checks need an install where the checkout has none', () => {
+    const folder = checkout(false)
+    const result = run(command, folder)
+    expect(result.status).toBe(name === 'edit' ? 2 : 1)
+    expect(result.stderr).toContain(`The checks can't run in ${folder}`)
+  })
 
-test('the edit hook runs the checks of the checkout that owns the file', () => {
-  const checkout = otherCheckout('hook.mjs', true)
-  const result = run('hook.mjs', { tool_input: { file_path: join(checkout, 'probe.ts') } })
-  expect(result.status).toBe(2)
-  expect(result.stderr).toContain('checked by its own checkout')
-})
-
-test('the edit hook asks for an install where the owning checkout has none', () => {
-  const checkout = otherCheckout('hook.mjs', false)
-  const result = run('hook.mjs', { tool_input: { file_path: join(checkout, 'probe.ts') } })
-  expect(result.status).toBe(2)
-  expect(result.stderr).toContain(`The checks can't run in ${checkout}`)
-})
-
-test('the edit hook passes in a GitHub Actions job that installed nothing', () => {
-  const checkout = otherCheckout('hook.mjs', false)
-  const call = { tool_input: { file_path: join(checkout, 'probe.ts') } }
-  expect(run('hook.mjs', call, true).status).toBe(0)
-})
-
-test('the edit hook leaves a file outside every repository alone', () => {
-  const folder = scratch()
-  writeFileSync(join(folder, 'probe.ts'), 'export const probe = 1\n')
-  const result = run('hook.mjs', { tool_input: { file_path: join(folder, 'probe.ts') } })
-  expect(result.status).toBe(0)
-})
-
-test('the stop hook blocks a turn once, never twice in a row', () => {
-  const result = run('stop-hook.mjs', { stop_hook_active: true, cwd: root })
-  expect(result.status).toBe(0)
-  expect(result.stderr).toBe('')
-})
-
-test('the stop hook runs the checks of the checkout the session works in', () => {
-  const checkout = otherCheckout('stop-hook.mjs', true)
-  const result = run('stop-hook.mjs', { cwd: checkout })
-  expect(result.status).toBe(2)
-  expect(result.stderr).toContain('checked by its own checkout')
-})
-
-test('the stop hook passes a checkout without packages while nothing has changed', () => {
-  const checkout = committed(otherCheckout('stop-hook.mjs', false))
-  const result = run('stop-hook.mjs', { cwd: checkout, session_id: 'session-1' })
-  expect(result.status).toBe(0)
-  expect(result.stderr).toBe('')
-})
-
-test('the stop hook asks a session once for an install, where a change waits to be checked', () => {
-  const checkout = committed(otherCheckout('stop-hook.mjs', false))
-  writeFileSync(join(checkout, 'probe.ts'), 'export const probe = 2\n')
-  const first = run('stop-hook.mjs', { cwd: checkout, session_id: 'session-1' })
-  expect(first.status).toBe(2)
-  expect(first.stderr).toContain(`The checks can't run in ${checkout}`)
-  expect(run('stop-hook.mjs', { cwd: checkout, session_id: 'session-1' }).status).toBe(0)
-  expect(run('stop-hook.mjs', { cwd: checkout, session_id: 'session-2' }).status).toBe(2)
-})
-
-test.each([
-  ['installed nothing', false],
-  ['installed its packages', true]
-])('the stop hook leaves a GitHub Actions job that %s to its own checks', (_, installed) => {
-  const checkout = committed(otherCheckout('stop-hook.mjs', installed))
-  writeFileSync(join(checkout, 'probe.ts'), 'export const probe = 2\n')
-  const result = run('stop-hook.mjs', { cwd: checkout, session_id: 'session-1' }, true)
-  expect(result.status).toBe(0)
-  expect(result.stderr).toBe('')
-})
-
-test('the stop hook leaves a folder outside every repository alone', () => {
-  expect(run('stop-hook.mjs', { cwd: scratch() }).status).toBe(0)
+  test('passes in a GitHub Actions job that installed nothing', () => {
+    const result = run(command, checkout(false), true)
+    expect(result.status).toBe(0)
+    expect(result.stderr).toBe('')
+  })
 })

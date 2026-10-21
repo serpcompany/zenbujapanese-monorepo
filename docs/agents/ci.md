@@ -13,9 +13,10 @@ pull request as the workflow.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
 says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
-`.node-version` names, and install with `pnpm install --frozen-lockfile`. A job that runs Python on
-Linux sets up the one `.python-version` names. Every job has a time limit, and a change to a
-version file starts the workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
+`.node-version` names, and install with `pnpm install --frozen-lockfile`, reading packages with
+their own token ([`checks.md`](checks.md), In CI). A job that runs Python on Linux sets up the one
+`.python-version` names. Every job has a time limit, and a change to a version file starts the
+workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 
 | Workflow | File | Starts on | Section in |
 | --- | --- | --- | --- |
@@ -42,8 +43,8 @@ starts it too.
 GitHub also runs four workflows that have no file here, turned on in the repository's settings:
 `CodeQL`, code scanning's default setup, on `main` and on every pull request; `Dependency Graph`;
 and Copilot's two, `Copilot` (its pull request reviewer) and `Copilot cloud agent`, which last ran
-in September 2026. `gh api repos/serpcompany/zenbujapanese-monorepo/actions/workflows` lists them.
-None is a check a merge waits for.
+in September 2026. `gh api repos/serpcompany/zenbujapanese-monorepo/actions/workflows` lists them
+([as the app](ci-agents.md#outside-ci)). None is a check a merge waits for.
 
 ## Checks a merge can wait for
 
@@ -86,11 +87,11 @@ scratch repositories.
 
 `.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull request's
 last run. It installs the whole workspace, since the dead-code and import checks read every package,
-then runs the checks' own `pnpm check` (`tools/checks`), then `pnpm verify`: no comments, docs, file
-sizes, Swift layers, no XCUITest waits or unlisted fixed pauses in the UI tests, secrets, duplicate
-code, dead code, imports, and the linters. What each enforces is in [`code.md`](code.md), Checks. It
-also starts on `merge_group`, so once `main`'s ruleset requires its `verify` job, the merge queue
-runs it on the tree that will land; a queue run is never cancelled.
+then runs this repository's own checks (`pnpm check` in `tools/checks`), then `pnpm verify`: every
+shared check, at the `@serpcompany/verify` the lockfile pins ([`checks.md`](checks.md) has the
+grant its install needs, and why it isn't SERP's reusable workflow). It starts on `merge_group`
+too, so once `main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that
+will land; a queue run is never cancelled.
 
 The checks' tests include the server's deployer's (`tools/checks/src/deployer/`), which run
 `deploy/deployer.sh` itself against stand-ins for Docker, cosign, Slack, and the journal
@@ -112,12 +113,11 @@ without a bash new enough.
 
 It runs again when the title or body is edited, which `Repository` doesn't, so a retitled pull
 request is checked at once. Each job runs `tools/checks/pull-request.mjs`, which uses nothing but
-Node, so the job checks out that one file and installs nothing. The title and body reach it through
-the environment, never through the command line. Pull requests from `claude[bot]`,
-`dependabot[bot]`, and `renovate[bot]` skip all three; `serp-agent[bot]`'s don't. On `merge_group`
-the jobs pass without doing anything: a required check that never reports in the merge queue would
-block every merge, and the pull request has already been checked. SERP's own `pr-issue-link.yml`
-isn't copied unchanged for that reason, and because workflow files here hold no comments.
+Node, so the job checks out that one file and installs nothing (why it isn't the package's action:
+[`checks.md`](checks.md)). The title and body reach it through the environment, never the command
+line. Pull requests from `claude[bot]`, `dependabot[bot]`, and `renovate[bot]` skip all three;
+`serp-agent[bot]`'s don't. On `merge_group` the jobs pass without doing anything: a required check
+that never reports in the merge queue would block every merge, and the pull request was checked.
 
 ## Web
 
