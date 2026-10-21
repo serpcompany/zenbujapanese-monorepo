@@ -11,7 +11,8 @@ extension ZenbuUITestCase {
   }
 
   func typeAtTheEnd(_ text: String, of field: XCUIElement, in app: XCUIApplication) {
-    waitFor(field).coordinate(withNormalizedOffset: CGVector(dx: Self.endOfTheLine, dy: 0.5)).tap()
+    waitFor(field)
+    gesture(on: field) { field.coordinate(withNormalizedOffset: CGVector(dx: Self.endOfTheLine, dy: 0.5)).tap() }
     let focused = app.descendants(matching: .any)
       .matching(NSPredicate(format: "hasKeyboardFocus == true")).firstMatch
     waitFor(focused)
@@ -84,6 +85,6 @@ final class ProblemReportUITests: ZenbuUITestCase {
   private func swipeTheReportDown(in app: XCUIApplication) {
     let bar = waitFor(app.navigationBars["Report a Problem"]).coordinate(
       withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-    bar.press(forDuration: 0.1, thenDragTo: bar.withOffset(CGVector(dx: 0, dy: 600)))
+    gesture { bar.press(forDuration: 0.1, thenDragTo: bar.withOffset(CGVector(dx: 0, dy: 600))) }
   }
 }

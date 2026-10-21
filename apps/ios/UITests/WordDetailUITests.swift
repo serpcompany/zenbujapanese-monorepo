@@ -103,7 +103,7 @@ final class WordDetailUITests: ZenbuUITestCase {
     let kanji = waitFor(find("word-detail.screen", in: app)).buttons["学"].firstMatch
     tap(kanji)
     waitUntil(kanji, "isSelected == true")
-    kanji.tap()
+    tap(kanji)
     waitUntil(kanji, "isSelected == false")
   }
 

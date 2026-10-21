@@ -117,8 +117,8 @@ what it waited for and for how long.
   gesture's element is, and it's skipped when no title is showing, while a menu or popover is open
   (a touch outside one closes it), and on the Mac, whose tests send real pointer events. In a
   probe of 250 audits each way, the tap straight after an audit met the race once and the tap
-  after a warm-up never did. Gestures a test sends itself, rather than through a step, get no
-  warm-up.
+  after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
+  only ones sent directly are the Mac's (its Settings window, right-clicks, and wheel scrolls).
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
