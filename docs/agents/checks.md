@@ -47,9 +47,10 @@ below to this.
   Actions access; until then every install fails, and `Repository` says which grant it needs.
 - **`Repository` hands the checks their base** as `SERP_VERIFY_BASE`: the commit the pull request
   merges into, `HEAD^1`, so it checks out two commits. The package fails an exception list in
-  `verify.json` that gained or raised an entry against the base's. `Claude` hands over the tip of
-  the branch the pull request merges into, or `main` on an issue, which it fetches, since its
-  checkout is one commit ([`ci-agents.md`](ci-agents.md)).
+  `verify.json` that gained or raised an entry against the base's, and in CI fails when it has no
+  base. `Claude` hands over the tip of the branch the pull request merges into, or `main` on an
+  issue, which it fetches, since its checkout is one commit; `Weekly maintenance` hands over
+  `origin/main`, for the report and doc gardening ([`ci-agents.md`](ci-agents.md)).
 - **Each service image** installs it with that token in a secret `npmrc`, mounted for the
   install's one `RUN` and kept in no layer: the deploy workflow writes it to the runner's temp
   folder and hands it to the build as `secret-files` ([`ci-deploys.md`](ci-deploys.md)). By hand,
