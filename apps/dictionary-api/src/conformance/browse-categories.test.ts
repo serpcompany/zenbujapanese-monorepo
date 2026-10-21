@@ -4,6 +4,7 @@ import {
   type BrowseCategory,
   browseCategories,
   browseCategory,
+  type CategoryOrder,
   senseLabelKeys
 } from '@zenbu/dictionary-core/browse/categories'
 import { isContentWord } from '@zenbu/dictionary-core/browse/content-words'
@@ -73,10 +74,17 @@ describe.runIf(artifactAvailable)('browsing a category on the app’s data', () 
     db = await artifactDatabase()
   })
 
+  const firstPages = (order: CategoryOrder) => {
+    const pages = browseCategories.map(
+      category => [category, service.categoryWords(category.slug, order, 1)?.words ?? []] as const
+    )
+    const words = pages.flatMap(([, listed]) => listed)
+    return { pages, senses: sensesOf(db, words) }
+  }
+
   test('each row shows the first meaning that carries the category’s label', () => {
-    for (const category of browseCategories) {
-      const words = service.categoryWords(category.slug, 'kana', 1)?.words ?? []
-      const senses = sensesOf(db, words)
+    const { pages, senses } = firstPages('kana')
+    for (const [category, words] of pages) {
       for (const word of words) {
         const [first] = labelledSenses(category, senses.get(word.entSeq) ?? [])
         expect(first, `${category.slug} ${word.headword}`).toBeDefined()
@@ -88,9 +96,8 @@ describe.runIf(artifactAvailable)('browsing a category on the app’s data', () 
   })
 
   test('a category leads with the words it labels in their first meaning, each part most used first', () => {
-    for (const category of browseCategories) {
-      const words = service.categoryWords(category.slug, 'used', 1)?.words ?? []
-      const senses = sensesOf(db, words)
+    const { pages, senses } = firstPages('used')
+    for (const [category, words] of pages) {
       const ranked = words.filter(word => youtubeRank(word) !== null)
       const tiers = ranked.map(word =>
         labelledSenses(category, senses.get(word.entSeq) ?? [])[0] === 0 ? 0 : 1
