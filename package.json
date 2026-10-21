@@ -13,7 +13,7 @@
     "node": ">=22.12.0"
   },
   "devDependencies": {
-    "@serpcompany/verify": "0.1.0",
+    "@serpcompany/verify": "0.1.1",
     "lefthook": "2.0.15"
   }
 }

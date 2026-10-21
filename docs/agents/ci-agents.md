@@ -68,7 +68,9 @@ waits replaces the waiting one, so ask again after the first finishes.
   or pnpmfile hook runs), since the edit hook needs `@serpcompany/verify` and a fix may touch any
   package. The workflow's file is `main`'s while the checkout is the branch's, so on a branch from
   before `.node-version` it takes `main`'s copy, and keeps it out of what git sees there. The
-  checkout keeps no token in the working tree (`persist-credentials: false`); the action sets up its
+  checkout is one commit, so it also fetches the tip of the branch the pull request merges into, or
+  `main` on an issue, and hands it to `pnpm verify` as `SERP_VERIFY_BASE`, the base its exception
+  lists are compared with ([`checks.md`](checks.md), In CI). The checkout keeps no token in the working tree (`persist-credentials: false`); the action sets up its
   own for pushing. It runs the pull request's own code when it checks it, so ask it only on a pull
   request whose code you trust.
 - **The rules it follows.** A file appended to its system prompt says to follow `AGENTS.md`,

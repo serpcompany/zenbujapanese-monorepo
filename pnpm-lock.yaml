@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@serpcompany/verify':
-        specifier: 0.1.0
-        version: 0.1.0(@biomejs/biome@2.4.2)
+        specifier: 0.1.1
+        version: 0.1.1(@biomejs/biome@2.4.2)
       lefthook:
         specifier: 2.0.15
         version: 2.0.15
@@ -2472,15 +2472,12 @@ packages:
     resolution: {integrity: sha512-6PU7JLivE6Swavrw1TxiPVbvk1Nafihm+v6hNpsEAt7raLlazoFXFK/O8YeSEK15u+4oofSBqwipy81HAbLnlg==}
     engines: {node: '>=20.0.0'}
 
-  '@serpcompany/verify@0.1.0':
-    resolution: {integrity: sha512-66u9/ZSf8DzR/xvz5OimKG5eX64b31d89X7pLt2e2j5HzJINR7kEO9xf6PSzAsLreuZKfbnVRyAz1nqkIpt8dw==, tarball: https://npm.pkg.github.com/download/@serpcompany/verify/0.1.0/46f7b40d4b397d32b4f9b5bf3bd85546ea4728b4}
+  '@serpcompany/verify@0.1.1':
+    resolution: {integrity: sha512-DSiPWUp+8viBkZrarSkOlbEpsTQR9rlWaagkVPngk7mqdJ2Zg47u3SLHq+2IunOSTm1bXUF+Mgm4TtzeUxqgdw==, tarball: https://npm.pkg.github.com/download/@serpcompany/verify/0.1.1/1b8c60e374ad7cadc8cd9ac3bf426951b1e596ff}
     engines: {node: '>=22.18.0'}
     hasBin: true
     peerDependencies:
       '@biomejs/biome': 2.4.2
-    peerDependenciesMeta:
-      '@biomejs/biome':
-        optional: true
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -7558,8 +7555,9 @@ snapshots:
 
   '@secretlint/types@11.3.1': {}
 
-  '@serpcompany/verify@0.1.0(@biomejs/biome@2.4.2)':
+  '@serpcompany/verify@0.1.1(@biomejs/biome@2.4.2)':
     dependencies:
+      '@biomejs/biome': 2.4.2
       '@secretlint/node': 11.3.1
       '@secretlint/secretlint-rule-preset-recommend': 11.3.1
       ajv: 8.20.0
@@ -7568,8 +7566,6 @@ snapshots:
       knip: 6.39.0
       typescript: 5.9.3
       yaml: 2.9.1
-    optionalDependencies:
-      '@biomejs/biome': 2.4.2
     transitivePeerDependencies:
       - supports-color
 

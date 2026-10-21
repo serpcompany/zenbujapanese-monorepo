@@ -15,6 +15,9 @@ concurrency:
   group: weekly-maintenance
   cancel-in-progress: false
 
+env:
+  SERP_VERIFY_BASE: origin/main
+
 jobs:
   doc-gardening:
     if: github.event_name != 'workflow_dispatch' || inputs.job == 'all' || inputs.job == 'doc-gardening'

@@ -90,6 +90,18 @@ jobs:
           mkdir -p .git/info
           echo .node-version >> .git/info/exclude
 
+      - name: Fetch the branch it merges into, the base the shared checks compare verify.json with
+        if: env.ANSWER == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          base=$BASE_BRANCH
+          if [ "$IS_PR" = true ]; then
+            base=$(gh pr view "$ENTITY_NUMBER" --repo "$GITHUB_REPOSITORY" --json baseRefName --jq .baseRefName)
+          fi
+          git fetch --quiet --no-tags --depth=1 origin "+refs/heads/$base:refs/remotes/origin/$base"
+          echo "SERP_VERIFY_BASE=origin/$base" >> "$GITHUB_ENV"
+
       - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
         if: env.ANSWER == 'true'
         with:

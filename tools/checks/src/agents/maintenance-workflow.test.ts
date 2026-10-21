@@ -152,6 +152,14 @@ describe('the Weekly maintenance workflow', () => {
     expect(runs).not.toContain('--body-file report.md')
   })
 
+  test('hands the shared checks main as their base, which every job checks out with its history', () => {
+    expect(maintenance.env?.SERP_VERIFY_BASE).toBe('origin/main')
+    for (const [name, job] of Object.entries(maintenance.jobs)) {
+      const checkout = (job.steps ?? []).find(step => step.uses?.startsWith('actions/checkout'))
+      expect(checkout?.with?.['fetch-depth'], name).toBe(0)
+    }
+  })
+
   test("collects Claude's own review findings before it builds the report", () => {
     const collect = reportSteps.findIndex(step => step.run?.includes('tmp/review-findings.json'))
     const build = reportSteps.findIndex(step => step.run?.includes('pnpm -s maintenance:report'))
