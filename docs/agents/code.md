@@ -25,9 +25,9 @@ kind of change needs are in [`verification.md`](verification.md).
 Git hooks run the fast checks before work leaves the machine: `pnpm install` installs them
 ([`lefthook.yml`](../../lefthook.yml), which extends the package's own). Before each commit they
 check the staged files for comments, size, and secrets, and run each package's Biome on its staged
-files. Before each push they run every shared check, then the fast check (lint, types, and unit tests, no build) of each package the
-branch changes against `origin/main`: the package itself, one that imports it, and every package
-when the root's package files change. A branch that changes only docs or the app runs
+files. Before each push they run every shared check, then the fast check (lint, types, and unit
+tests, no build) of each package the branch changes against `origin/main`: the package itself, one
+that imports it, and every package when the root's package files change. A branch that changes only docs or the app runs
 `pnpm verify` alone. Fix what they report rather than skipping them; CI runs the same checks
 either way.
 
@@ -186,10 +186,6 @@ The docs are the map agents work from, so they stay correct and reachable:
   differs from what they write: change the routes, then run `pnpm test -u` in the service.
 - Each skill under `.claude/skills/` has frontmatter naming it for its folder, with a description
   of at most 1,024 characters, and is listed in the Skills table below.
-- Every link into a serpcompany repository opens, read through GitHub's API with a token
-  (`SERP_VERIFY_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN`; without one, a local run skips them
-  and CI fails). A link GitHub hides from every reader is in `exceptions.hiddenLinks`, with its
-  reason, until it opens again; that list only shrinks.
 - A doc that shows a `gh` command links how an agent runs it as `serp-agent[bot]`
   ([`ci-agents.md`](ci-agents.md#outside-ci)), or is in `docs.github.exempt` with the reason its
   commands aren't an agent's. No folder is an archive (`archive/`, `old/`, `legacy/`): git keeps

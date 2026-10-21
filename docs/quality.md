@@ -115,8 +115,7 @@ in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
   weekly, by doc gardening in `Weekly maintenance`. Main gaps: no check is required to merge yet, an
   owner's setting; Swift has no linter (#516); nothing refuses a cast of parsed JSON
   ([`harness-debt.md`](harness-debt.md), Checks); and CI installs nothing until the owners give
-  this repository Read on `@serpcompany/verify`, with the `serp-agent` key for the docs check's
-  private links ([`checks.md`](agents/checks.md), In CI).
+  this repository Read on `@serpcompany/verify` ([`checks.md`](agents/checks.md), In CI).
 
 Re-grade an area, and set its Graded date to that day, in the same pull request that changes its
 tests, CI, or docs, even when its grade stays the same.

@@ -31,6 +31,15 @@ describe('@serpcompany/verify, a private package on GitHub Packages', () => {
     )
   })
 
+  test('is configured to except only through the lists exceptions.md names, with no baseline', () => {
+    const config = JSON.parse(readRepositoryFile('verify.json'))
+    const documented = readRepositoryFile('docs/agents/exceptions.md')
+    const lists = Object.keys(config.exceptions ?? {})
+    expect(lists.length).toBeGreaterThan(0)
+    expect(lists).not.toContain('baseline')
+    for (const list of lists) expect(documented).toContain(`\`exceptions.${list}\``)
+  })
+
   test('comes from GitHub Packages, through a committed .npmrc that holds no token', () => {
     expect(readRepositoryFile('.npmrc')).toBe(`${scope}:registry=${registry}\n`)
   })

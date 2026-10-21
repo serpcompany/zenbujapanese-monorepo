@@ -45,8 +45,9 @@ what it waited for and for how long.
   the gesture after it (below), and three on the iPad and the Mac with
   nothing on screen to wait for yet: a window taking keyboard focus after Escape, a shortcut pressed
   over a sheet, and the pointer moving off a headword before its picture. `pnpm verify waits` counts
-  each file's run-loop pauses and sleeps, however they are spelled, against `exceptions.allowedPauses` in
-  `verify.json`, which says what each proves; a new pause goes there and in this list.
+  each file's run-loop pauses and sleeps, however they are spelled, against
+  `exceptions.allowedPauses` in `verify.json`, which says what each proves; a new pause goes there
+  and in this list.
 - **Repeat a gesture only while its effect hasn't shown,** and stop as soon as it has: `open`,
   `press`, `tap(_:toShow:)`, `focus`, `choose`, `pause`, and `resume` tap again only after a wait
   for what the tap should bring runs out. `for … where` tests its condition on every pass and never leaves

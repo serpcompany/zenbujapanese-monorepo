@@ -16,34 +16,12 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      HAS_APP_KEY: ${{ vars.SERP_AGENT_APP_ID != '' && secrets.SERP_AGENT_PRIVATE_KEY != '' }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-        with:
-          fetch-depth: 2
-      - name: The serp-agent app's short-lived token, which reads serpcompany's private repositories
-        id: app-token
-        if: env.HAS_APP_KEY == 'true'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        with:
-          app-id: ${{ vars.SERP_AGENT_APP_ID }}
-          private-key: ${{ secrets.SERP_AGENT_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: read
-          permission-issues: read
-          permission-pull-requests: read
-      - name: Say what is missing while the serp-agent app's key isn't set
-        if: env.HAS_APP_KEY != 'true'
-        run: >-
-          echo "::error title=The serp-agent app's key isn't set::Set the SERP_AGENT_APP_ID variable
-          and the SERP_AGENT_PRIVATE_KEY secret. Until then the docs check reads links with this
-          job's own token, which can't read serpcompany's private repositories, so every link into
-          one fails below (docs/agents/ci.md, Repository)."
-      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: package.json
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+      - uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
           cache: pnpm
@@ -60,11 +38,8 @@ jobs:
         run: >-
           echo "::error title=@serpcompany/verify is a private GitHub Package::This job grants
           packages: read, and the package's settings must give this repository Read under Manage
-          Actions access (docs/agents/ci.md, Repository)."
+          Actions access (docs/agents/checks.md, In CI)."
       - name: The checks' own lint, typecheck, and tests
         run: pnpm --filter zenbujapanese-checks check
       - name: The shared checks, at the version the lockfile pins
-        env:
-          SERP_VERIFY_GITHUB_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
-          SERP_VERIFY_BASE: HEAD^1
         run: pnpm verify

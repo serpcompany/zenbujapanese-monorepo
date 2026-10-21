@@ -18,7 +18,7 @@
       "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
     },
     "pinned": {
-      "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV*.sql": "every published frequency pack's mappingPolicySHA256"
+      "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV{1,2}.sql": "every published frequency pack's mappingPolicySHA256"
     }
   },
   "rules": {
@@ -642,6 +642,9 @@
         "docs/agents/ci-review.md": "its one gh command is history: what the Code review workflow's reviewer ran on #761",
         "docs/agents/dictionary-api.md": "its gh commands set the GitHub environments' variables, an owner's step: settings stay with a person (ci-agents.md, Outside CI)"
       }
+    },
+    "githubLinks": {
+      "orgs": []
     }
   },
   "exceptions": {
@@ -731,44 +734,6 @@
       "apps/ios/UITests/WordDetailUITests.swift": {
         "pauses": 1,
         "proves": "nothing on screen to wait for yet: the pointer moving off a headword before its picture"
-      }
-    },
-    "hiddenLinks": {
-      "https://github.com/serpcompany/tomodachi-app/issues/28": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/tomodachi-app/issues/105": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-tomo-app/issues/28": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/16": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/461": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/468": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/473": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/477": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/481": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/614": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/issues/661": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
-      },
-      "https://github.com/serpcompany/zenbujapanese-monorepo/pull/478": {
-        "reason": "hidden: answers 404 to an owner's token, not the 410 of a deleted issue, 2026-10-21"
       }
     }
   }

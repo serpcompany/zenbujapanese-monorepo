@@ -88,11 +88,10 @@ scratch repositories.
 `.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull request's
 last run. It installs the whole workspace, since the dead-code and import checks read every package,
 then runs this repository's own checks (`pnpm check` in `tools/checks`), then `pnpm verify`: every
-shared check, at the `@serpcompany/verify` the lockfile pins ([`checks.md`](checks.md) has its
-token for the docs check, its install's grant, and why it isn't SERP's reusable workflow). It reads
-a secret, so its actions are pinned ([`ci-deploys.md`](ci-deploys.md), Pinned actions). It starts
-on `merge_group` too, so once `main`'s ruleset requires its `verify` job, the merge queue runs it on
-the tree that will land; a queue run is never cancelled.
+shared check, at the `@serpcompany/verify` the lockfile pins ([`checks.md`](checks.md) has the
+grant its install needs, and why it isn't SERP's reusable workflow). It starts on `merge_group`
+too, so once `main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that
+will land; a queue run is never cancelled.
 
 The checks' tests include the server's deployer's (`tools/checks/src/deployer/`), which run
 `deploy/deployer.sh` itself against stand-ins for Docker, cosign, Slack, and the journal

@@ -14,6 +14,8 @@ const reportedChecks = [
   'dependencies'
 ]
 
+const readsNothingRemote = { CI: '', SERP_VERIFY_GITHUB_TOKEN: '', GH_TOKEN: '', GITHUB_TOKEN: '' }
+
 const verdict = /^[\w-]+ (?:passed|failed)\b/
 
 const finding = /^\S+ {2}\S/
@@ -43,7 +45,7 @@ export function runSharedChecks(names: readonly string[] = reportedChecks): Chec
     cwd: root,
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
-    env: { ...process.env, CI: '' }
+    env: { ...process.env, ...readsNothingRemote }
   })
   if (run.status !== 0 && run.status !== 1) {
     throw new Error(`serp-verify exited ${run.status}: ${run.stderr || run.error?.message}`)
