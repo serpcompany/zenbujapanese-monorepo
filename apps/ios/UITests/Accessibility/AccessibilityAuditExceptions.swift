@@ -59,6 +59,7 @@ struct AllowedFinding {
     Exclusion(kind: .textClipped, devices: [.pad], screens: nil, reason: Why.floatingTabBar),
     Exclusion(kind: .elementDetection, devices: [.pad], screens: iPadSheets, reason: Why.behindSheet),
     Exclusion(kind: .dynamicType, devices: [.phone], screens: ["Image's sources"], reason: Why.imageAlert),
+    Exclusion(kind: .dynamicType, devices: [.phone], screens: ["Image Search's text"], reason: Why.largerText),
   ]
 
   static let list =
@@ -135,7 +136,7 @@ private enum Why {
   static let headword =
     "A long headword shrinks one size to keep its reading beside the pitch accent, as the product docs say; at the accessibility sizes it is full size on a line of its own"
   static let largerText =
-    "Image Search's Text view sets its text one size larger than the device's, so the audit sees it miss the device's size; it grows with it"
+    "Image Search's Text view sets its text one size larger than the device's, so the audit always reports it as missing the device's size, though it grows with it, as the largest-size pass shows. Its list lays every row out again at each size the audit steps through, so the audit often loses the text it found and reports it with no element to name, which no allowance can match. The text-clipped audit still runs there"
 }
 
 private let systemControls = [
@@ -306,8 +307,4 @@ private let previews = [
 
 private let design = [
   allow(.dynamicType, .labels(["た", "食", "べる"]), on: ["A conjugated form"], because: Why.headword),
-  allow(
-    .dynamicType,
-    .labels(["えき", "く", "ちか", "の", "ほんや", "まいあさ", "みます", "本屋", "毎朝", "近", "飲", "駅"]),
-    on: ["Image Search's text"], because: Why.largerText),
 ]

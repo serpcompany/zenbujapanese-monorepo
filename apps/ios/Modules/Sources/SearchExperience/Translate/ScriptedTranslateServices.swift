@@ -141,7 +141,7 @@ extension TranslateServices {
       timing.silenceBeforePrompt = holds.map { $0.startsSilent ? 20 : Self.longerThanAnyTest } ?? 20
       timing.longestTurn = holds == nil ? timing.longestTurn : Self.longerThanAnyTest
       timing.promptCountdown = 120
-      clock.skipsAheadOnNotice(by: timing.promptCountdown)
+      clock.followsNotices(skippingAheadBy: timing.promptCountdown)
       return TranslateServices(
         clients: TranslatorClients(
           transcription: TranscriptionClient(

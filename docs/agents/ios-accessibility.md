@@ -52,6 +52,7 @@ them with `xcrun xcresulttool export attachments`.
 | Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
 | Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, Delete Account, and the subscription's paywall and Delete Account with an App Store subscription, before and after deleting, each at the top and scrolled | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
 | Dynamic Type | iPhone: Image's sources | Not run: the Image alert is Apple's, and the system rebuilds it as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself |
+| Dynamic Type | iPhone: Image Search's text | Not run: the Text view sets its text one size larger than the device's, by design, so the audit always reports it, and its list lays every row out again at each size, so the audit often loses what it found and reports it with no element, which no allowance can match. The largest-size pass shows the text whole, and the text-clipped audit still runs there |
 
 `AllowedFinding.reportedOnly` holds the reported audits and why, and `AllowedFinding.notRun` the
 ones a device skips, everywhere or on the screens it names; the reported counts are in [`harness-debt.md`](../harness-debt.md). A
@@ -60,6 +61,14 @@ is listed in the report and doesn't fail the test; any other audit that doesn't 
 through every text size and report text they lose track of, so text that SwiftUI lays out again
 (a List's rows and headers, a Form's labels) or redraws (a clock) can be reported though it grows
 and fits; each such entry says which, and the largest-size pass's screenshot shows it whole.
+
+The Translate harness's silence prompt counts down on the harness's clock (`ScriptedClock`,
+[`translate.md`](translate.md), Simulator harness), and a number changing during that sweep lays
+the card out again. So the Translate audit holds that clock while it audits the prompt
+(`holdingTheConversationClock`): it posts the Darwin notice
+`com.zenbujapanese.dictionary.uitests.translate-hold-clock`, waits for the harness's answer,
+`…translate-clock-held`, and posts `…translate-release-clock` after, which starts the clock again
+from where it stopped.
 
 On a page scrolled down to a section, that sweep reflows everything above it and slides the
 section's text under the bars, where the audit loses it and can't name the element. So the
