@@ -92,9 +92,9 @@ what it waited for and for how long.
   when a swipe moves nothing (the tree is the same after it as before) and the frontmost list's
   scroll bar, of more than one page, reads 100%, it is at the bottom: it turns once, and stops when
   a swipe moves nothing at 0%. A swipe that moves nothing anywhere else doesn't count as an end.
-  It never turns inside a container such as the word sheet, since a swipe down at the top of a
-  sheet drags the sheet away, on a short page, or on the Mac, whose lists keep their rows; there
-  only a laid-out frame above sends it up. Scrolling only down once failed the Account
+  It never turns on a short page, on the Mac, whose lists keep their rows, or inside a container
+  such as the word sheet, where a swipe down at the top drags the sheet away; there only a
+  laid-out frame above sends it up. Scrolling only down once failed the Account
   rows test, whose Sign In row, near the top, was gone once the list reached Credits at the
   bottom. `RevealUITests` scrolls Credits to its end and finds its first source again.
 - **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
@@ -118,10 +118,10 @@ what it waited for and for how long.
   taps the frontmost navigation bar's title, which does nothing anywhere in the app, then sends
   the gesture 0.3 s later. The warm-up is sent every time that holds and nothing depends on it
   landing, so it isn't a retry. It fails the test if the number of bars with that title changed
-  afterwards, or the gesture's element is gone. It's skipped when no title is showing, when the app isn't in front, while a
-  menu or popover is open, and for the gesture right after a step that opens a row's actions or a
-  context menu (`gestureThatOpensActions`), since a touch elsewhere closes those; and on the Mac,
-  whose tests send real pointer events. In a
+  afterwards, or the gesture's element is gone. It's skipped when no title is showing, when the
+  app isn't in front, while a menu or popover is open, and for the gesture right after a step that
+  opens a row's actions or a context menu (`gestureThatOpensActions`), since a touch elsewhere
+  closes those; and on the Mac, whose tests send real pointer events. In a
   probe of 250 audits each way, the tap straight after an audit met the race once and the tap
   after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
   only ones sent directly are the Mac's own: clicks in its Settings window, on a headword's kanji,
