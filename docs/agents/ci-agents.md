@@ -65,7 +65,7 @@ waits replaces the waiting one, so ask again after the first finishes.
   its branch, which starts a re-review (Code review, above); on an issue it branches from `main` and
   links a pull request to open. It sets up pnpm and Node as `Repository` does and installs every
   package (`pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile`, so no install script
-  or pnpmfile hook runs), since the edit hook needs the checks' dependencies and a fix may touch any
+  or pnpmfile hook runs), since the edit hook needs `@serpcompany/verify` and a fix may touch any
   package. The workflow's file is `main`'s while the checkout is the branch's, so on a branch from
   before `.node-version` it takes `main`'s copy, and keeps it out of what git sees there. The
   checkout keeps no token in the working tree (`persist-credentials: false`); the action sets up its

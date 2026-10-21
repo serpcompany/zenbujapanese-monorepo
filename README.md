@@ -13,6 +13,6 @@ Today it holds the iPhone app and zenbujapanese.com, which publishes the app's d
 - [Dictionary service](apps/dictionary-api/), which answers the website's dictionary pages
 - [Shared dictionary core](packages/dictionary-core/)
 - [Brand assets](assets/brand/)
-- [Repository checks](tools/checks/), which `pnpm verify` runs: the [code rules](docs/agents/code.md) every change follows
+- [Repository checks](docs/agents/checks.md): SERP's shared checks, which `pnpm verify` runs from `@serpcompany/verify` as [`verify.json`](verify.json) configures them, and this repository's own in [`tools/checks`](tools/checks/), holding the [code rules](docs/agents/code.md) every change follows
 - [Project issues and planned work](https://github.com/serpcompany/zenbujapanese-monorepo/issues)
 - [Research and archived product exploration](https://github.com/zenbujapanese/research)

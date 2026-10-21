@@ -1,7 +1,11 @@
 # Code rules and checks
 
 The rules every change in this repository follows, whatever the language, and the checks that
-enforce them. Each rule is checked mechanically, and each check's failure says how to fix it.
+enforce them. Each rule is checked mechanically, and each check's failure says how to fix it. The
+checks are SERP's, shared by every SERP repository: `pnpm verify` runs `serp-verify` from
+[`@serpcompany/verify`](https://github.com/serpcompany/serp/blob/main/packages/verify/README.md), configured by this repository's
+[`verify.json`](../../verify.json), and SERP's [Verification](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification/README.md) standard defines each
+one. This doc holds what is this repository's own: its rules' scope, its layers, and its exceptions.
 
 Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
 package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `apps/account-api`,
@@ -19,9 +23,9 @@ the pull request. What to run while editing and before a push, how to wait, and 
 kind of change needs are in [`verification.md`](verification.md).
 
 Git hooks run the fast checks before work leaves the machine: `pnpm install` installs them
-([`lefthook.yml`](../../lefthook.yml)). Before each commit they check the staged files for comments,
-size, and secrets, and run each package's Biome on its staged files. Before each push they run
-`pnpm verify`, then the fast check (lint, types, and unit tests, no build) of each package the
+([`lefthook.yml`](../../lefthook.yml), which extends the package's own). Before each commit they
+check the staged files for comments, size, and secrets, and run each package's Biome on its staged
+files. Before each push they run every shared check, then the fast check (lint, types, and unit tests, no build) of each package the
 branch changes against `origin/main`: the package itself, one that imports it, and every package
 when the root's package files change. A branch that changes only docs or the app runs
 `pnpm verify` alone. Fix what they report rather than skipping them; CI runs the same checks
@@ -50,8 +54,8 @@ TOML, XML, and ignore files.
   only ones allowed are the markers `next dev` writes around its block in `apps/web/AGENTS.md`.
 - Files written by a tool (regenerated, never edited), third-party
   files, and files whose exact bytes a published checksum pins are left as they are:
-  [`tools/checks/src/files.ts`](../../tools/checks/src/files.ts) lists them by name, with the tool,
-  source, or checksum for each. One thing is pinned: the frequency packs' mapping SQL. Every
+  `files` in [`verify.json`](../../verify.json) lists them by glob, with the tool, source, or
+  checksum for each. One thing is pinned: the frequency packs' mapping SQL. Every
   published frequency pack carries its SHA-256, and the app refuses a pack whose mapping doesn't
   match, so changing even a comment there would break installed packs.
 
@@ -61,8 +65,8 @@ A code file (TypeScript, JavaScript, Swift, Python, or shell) has at most 500 li
 outgrows it by responsibility, into files named for what each does.
 
 There are no exceptions without a reason that makes splitting unsafe now, and none today. An
-exception goes in `knownLargeFiles` in [`tools/checks/src/sizes.ts`](../../tools/checks/src/sizes.ts),
-with its size and that reason, and may only shrink: the check refuses an entry without a reason,
+exception goes in `exceptions.knownLargeFiles` in [`verify.json`](../../verify.json), with its size
+and that reason, and may only shrink: the check refuses an entry without a reason,
 asks for an entry to be lowered as its file shrinks, and for it to go once the file is under the
 limit.
 
@@ -70,13 +74,12 @@ limit.
 
 Code says each thing once. When two places repeat a block of 5 lines or 50 tokens (TypeScript,
 JavaScript, Swift, Python, or shell, tests included), move what they share into one function, type,
-or test helper named for what it does, and call it from both. jscpd finds them
-([`tools/checks/src/duplicates.ts`](../../tools/checks/src/duplicates.ts)).
+or test helper named for what it does, and call it from both. jscpd finds them (SERP's
+[Duplicate check](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification/duplicate-check/README.md)).
 
 There are no exceptions without a reason that makes sharing the code unsafe now, and none today. An
-exception goes in `knownDuplicates` in
-[`tools/checks/src/known-duplicates.ts`](../../tools/checks/src/known-duplicates.ts), as the pair of
-files, how many blocks they repeat, and why, and may only shrink, as size exceptions do. The
+exception goes in `exceptions.knownDuplicates` in [`verify.json`](../../verify.json), as the pair
+of files, how many blocks they repeat, and why, and may only shrink, as size exceptions do. The
 language-data importers record their own SHA-256 in the data they build, so sharing code there
 means rebuilding that data in the same pull request
 ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
@@ -93,8 +96,7 @@ file a tool or runtime loads by name, name that file there rather than ignoring 
 Imports point one way inside each part, and parts meet only where
 [`ARCHITECTURE.md`](../../ARCHITECTURE.md) says. Biome checks each layer by import string, with a
 message saying where the code belongs. dependency-cruiser checks the files those imports resolve
-to, with the rules in
-[`tools/checks/src/dependencies.ts`](../../tools/checks/src/dependencies.ts):
+to, with each part's rules in `dependencies.parts` in [`verify.json`](../../verify.json):
 
 - No import cycles, type-only ones included.
 - Production code never imports a test or test support (`apps/web/src/test/`,
@@ -102,7 +104,7 @@ to, with the rules in
   more than its types.
 - Every module in `apps/web`, `apps/dictionary-api`, `apps/account-api`, and `tools/checks` is
   reachable from an entry point: a route or `worker.ts`, each service's server (and the dictionary
-  service's workers), the checks' commands. Code only tests use lives beside them.
+  service's workers), the maintenance report. Code only tests use lives beside them.
 - The core imports no Node built-in, package, app, or tool; apps reach a shared package by its
   name; no app imports another; and what the Node services share imports none of them.
 - The website's layers by resolved path, and nothing `worker.ts` reaches loads Next.js or React.
@@ -112,7 +114,7 @@ to, with the rules in
 No credential is committed, whatever the file: git history keeps it after a fix, and everyone with
 access can read it. Secrets come from the environment: Wrangler secrets, GitHub Actions secrets,
 and a gitignored `.dev.vars` or `.env` locally. Secretlint's recommended rules check every text
-file ([`tools/checks/src/secrets.ts`](../../tools/checks/src/secrets.ts)). If one is ever
+file (SERP's [Secrets check](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification/secrets-check/README.md)). If one is ever
 committed, have whoever issued it rotate it; deleting the line isn't enough.
 
 ## Fixes
@@ -174,40 +176,30 @@ The docs are the map agents work from, so they stay correct and reachable:
 - Every doc keeps to a size budget, counted in lines wrapped at 100 characters, since an agent
   loads a whole doc to answer one question: 120 for a map (`AGENTS.md` and `CLAUDE.md` anywhere,
   and the root `README.md`), which only routes, and 300 for any other doc. Split a doc that
-  outgrows it by topic. The docs over 300 when the check arrived are in `knownLongDocs` in
-  [`tools/checks/src/doc-rules/budgets.ts`](../../tools/checks/src/doc-rules/budgets.ts), each at
-  its size: one may shrink but not grow, the check asks for its entry to be lowered as it
-  shrinks, and for it to go once the doc fits. No new entry is added. The API references in
+  outgrows it by topic. The docs over 300 when the check arrived are in
+  `exceptions.knownLongDocs` in [`verify.json`](../../verify.json), each at its size: one may
+  shrink but not grow, the check asks for its entry to be lowered as it shrinks, and for it to go
+  once the doc fits. No new entry is added. The API references in
   `docs/api/` are written from code and ADRs are records, so neither has a budget.
 - A service's API reference, `docs/api/<service>.md`, is written from its OpenAPI document by
   `packages/node-service/src/api-reference.ts`, and the service's tests fail when either file
   differs from what they write: change the routes, then run `pnpm test -u` in the service.
 - Each skill under `.claude/skills/` has frontmatter naming it for its folder, with a description
   of at most 1,024 characters, and is listed in the Skills table below.
+- Every link into a serpcompany repository opens, read through GitHub's API with a token
+  (`SERP_VERIFY_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN`; without one, a local run skips them
+  and CI fails). A link GitHub hides from every reader is in `exceptions.hiddenLinks`, with its
+  reason, until it opens again; that list only shrinks.
+- A doc that shows a `gh` command links how an agent runs it as `serp-agent[bot]`
+  ([`ci-agents.md`](ci-agents.md#outside-ci)), or is in `docs.github.exempt` with the reason its
+  commands aren't an agent's. No folder is an archive (`archive/`, `old/`, `legacy/`): git keeps
+  what was retired.
 
 ## Checks
 
-| Check | What it enforces | Where it runs |
-| --- | --- | --- |
-| `pnpm verify` | No comments, docs, file size, Swift layers, no XCUITest waits or unlisted pauses in UI tests, secrets, duplicate code, dead code, and imports ([`tools/checks`](../../tools/checks/)), then ShellCheck, actionlint, and Ruff | The `Repository` workflow, on every pull request and in the merge queue; the pre-push hook |
-| `pnpm verify <checks> [paths]` | Some of the checks (`comments`, `docs`, `sizes`, `layers`, `waits`, `secrets`, `duplicates`, `deadcode`, `dependencies`, `linters`, comma-separated), on the given repository paths or on every file. `deadcode` always reads the whole workspace, and `dependencies` the packages the paths touch | By hand; the pre-commit hook runs `comments,sizes,secrets` on the staged files |
-| `pnpm maintenance:report` | A Markdown report: the checks' failures; docs whose named files changed after the doc was edited; the quality rows whose Code changed after their Graded date ("Scores to re-grade"); known debt counted by Size, with the first small item; size and duplicate exceptions; the docs over their size budget; code files within 50 lines of the size limit; and, in the weekly `report` job, the review's findings of the last four weeks by part, with the parts that repeat (`tools/checks/src/report.ts`) | `Weekly maintenance`, on Mondays, where doc gardening and code gardening start from it ([`ci-agents.md`](ci-agents.md)); by hand |
-| The edit hook | No comments, file size, Swift layers, and no secrets, on each file Claude Code writes, as it writes it (`.claude/settings.json`, `tools/checks/hook.mjs`). A file in a git worktree is checked by that worktree's own copy of the checks, since Claude Code runs the hook from the checkout the session started in. A checkout whose packages aren't installed says so rather than passing, except in a GitHub Actions job, which chose not to install. From Claude Code 2.1.295 a hook that crashes is reported too (`onFailure`); an older one ignores the setting | Claude Code sessions in this repository |
-| The stop hook | The same four checks on every file changed since the last commit, and the docs check, before a turn ends (`tools/checks/stop-hook.mjs`). It catches what the edit hook can't see: a file a shell command rewrote, and a doc a change elsewhere made wrong. It reports the same failures once per session, and never holds a turn twice in a row. In a GitHub Actions job it does nothing: the jobs that run Claude there run the checks themselves, on a checkout the action has partly reset | Claude Code sessions in this repository |
-| The git hooks | Before a commit, `comments,sizes,secrets` and each package's Biome on the staged files; before a push, `pnpm verify` and each changed package's lint, typecheck, and tests, without its build or the dictionary service's recorded suites, which take over a minute and need the app's data files ([`lefthook.yml`](../../lefthook.yml), `tools/checks/src/git-hooks.test.ts`) | Every clone after `pnpm install` |
-| The pull request checks | A Conventional Commit title, a closing issue or a stated reason for none, and a test in every fix ([Fixes](#fixes), [Pull requests](#pull-requests)), from `tools/checks/pull-request.mjs`, which needs no install | The `Pull request` workflow, on every pull request, again when its title or body is edited |
-| `pnpm check` | `pnpm verify`, then `pnpm check` in every package | By hand, before a pull request |
-| `pnpm check` in a package | Biome (with the package's import and logging rules, and no non-null assertions), typecheck, tests, and its build | The package's workflow, on pull requests that change it |
-| Generated files | The core's fixtures match what `pnpm --filter zenbujapanese-dictionary-api fixtures` exports from the language data, `apps/web/cloudflare-env.d.ts` matches what `pnpm cf-typegen` writes from `wrangler.jsonc`, and the app's bundle of the core matches what `pnpm --filter @zenbu/dictionary-core bundle:javascriptcore` writes (`packages/dictionary-core/src/embedded/bundle.test.ts`) | The `Dictionary API`, `Web`, and `Dictionary core` workflows |
-
-`pnpm verify` lists files with `git ls-files`, so it checks new files before they're committed, and
-skips ignored ones. It runs ShellCheck, actionlint, and Ruff in Docker, at the versions pinned in
-[`tools/checks/src/linters.ts`](../../tools/checks/src/linters.ts), so a run here and a run in CI
-agree. Without Docker it runs an installed copy instead, and with neither it says the linter
-didn't run and passes; in CI a linter that can't run fails the check. Ruff reads
-[`ruff.toml`](../../ruff.toml), and ShellCheck a `.shellcheckrc` beside a script. The checks' own
-tests are in `tools/checks` (`pnpm check` there). `deadcode` and `dependencies` read every package,
-so they need the whole workspace installed (`pnpm install`).
+Each rule above is checked mechanically, and [`checks.md`](checks.md) lists every check: what it
+enforces, where it runs (`pnpm verify`, the edit, stop, and git hooks, the pull request checks,
+and each package's `pnpm check`), and how `@serpcompany/verify` is installed here and in CI.
 
 ## Exceptions
 
@@ -219,7 +211,8 @@ kinds; add to it in the pull request that makes one.
 ## SERP's standards
 
 This repository follows SERP's engineering standards, starting from
-[Agent Harness](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/agent-harness/README.md).
+[Agent Harness](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/agent-harness/README.md)
+and, for the checks, [Verification](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/verification/README.md).
 What every SERP repository shares isn't restated here: how an orchestrator hands work to
 subagents ([Token Budget](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/agent-harness/token-budget.md)),
 the prompt a review starts from

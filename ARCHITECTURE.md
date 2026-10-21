@@ -15,7 +15,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
 | `language-data` | What every client's language data comes from: the pinned sources, the importers that build the app's bundled data from them, the conformance suites every client passes, and the release, with the pipeline that packages and publishes that data as a versioned artifact (ADR 0006). | [`language-data/README.md`](language-data/README.md) |
-| `tools/checks` | The repository-wide checks behind `pnpm verify`, the script that hands each checkout its local ports, and the tests of what has no package of its own: the workflows and the server's deployer. | [`docs/agents/code.md`](docs/agents/code.md) |
+| `tools/checks` | This repository's own checks and tools: the script that hands each checkout its local ports, the pull request checks, the code review's scripts, the weekly maintenance report, and the tests of what has no package of its own: the workflows, the hooks, the agent settings, and the server's deployer. `pnpm verify` runs SERP's shared checks from `@serpcompany/verify`, configured by `verify.json`. | [`docs/agents/code.md`](docs/agents/code.md), [`docs/agents/checks.md`](docs/agents/checks.md) |
 
 ## How data moves
 
@@ -105,8 +105,8 @@ saying where the code belongs:
 - **The app**: only `SearchExperience/Platform/` may use `#if os(...)`, UIKit, AppKit, or an API
   that iPhone, iPad, or the Mac lacks; everything else in the package, its tests, and the app
   target calls its
-  adapters (`tools/checks/src/layers.ts`, [`docs/agents/ios.md`](docs/agents/ios.md), iPad and
-  Mac). `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
+  adapters (`layers.platforms` in `verify.json`, [`docs/agents/ios.md`](docs/agents/ios.md), iPad
+  and Mac). `TranslatorCore`, the Translate tab's engine, imports only Foundation, Observation,
   and OSLog, and can't import the app's `SearchExperience` target;
   the app supplies its speech, translation, and playback clients. `TranslatorOnDevice`, the
   recognizer and translation adapters the Mac's replay check shares, adds only AVFoundation,

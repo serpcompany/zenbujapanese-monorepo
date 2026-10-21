@@ -103,7 +103,8 @@ it on the pull request's branch and pushes, which starts a re-review (`docs/agen
 Finished work leaves nothing behind (SERP's
 [Housekeeping](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/housekeeping.md)):
 
-- Confirm the issue closed: `gh issue view <number> --json state`. Close one the merge left open,
+- Confirm the issue closed: `gh issue view <number> --json state`, as `serp-agent[bot]`
+  ([Outside CI](../../../docs/agents/ci-agents.md#outside-ci)). Close one the merge left open,
   with a comment that links the pull request, only if every acceptance item is done.
 - In a worktree that made Simulators, `python3 apps/ios/Tools/simulator.py delete` removes them
   and the worktree's build folder. `prune` does the same for worktrees that are already gone.

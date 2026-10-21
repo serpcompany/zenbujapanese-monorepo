@@ -83,9 +83,9 @@ the title was drawn over it.
 
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
 anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
-names the adapter to use (`tools/checks/src/layers.ts`), so feature code stays the same on every
-platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays `Data` or
-`CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
+names the adapter to use (`layers.platforms` in `verify.json`), so feature code stays the same on
+every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays
+`Data` or `CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
 actions (`ZenbuShortcuts.swift`, [`ios-shortcuts.md`](ios-shortcuts.md)); the share sheet's card

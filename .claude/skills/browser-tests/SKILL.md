@@ -70,7 +70,8 @@ option after it as a file filter.
 In CI, a failure uploads the HTML report and those folders as the `playwright-report` artifact:
 `gh run download <run-id> -n playwright-report` fetches it, and
 `gh run view <run-id> --log-failed` prints the failing step's log, with the server's lines
-Playwright printed.
+Playwright printed. Run each as `serp-agent[bot]`
+([Outside CI](../../../docs/agents/ci-agents.md#outside-ci)).
 
 ## 3. Write specs the repository's way
 

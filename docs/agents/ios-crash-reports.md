@@ -28,8 +28,8 @@ reports a learner sends go the same way ([`ios-problem-reports.md`](ios-problem-
 - **`SearchExperience/Platform/Diagnostics/CrashReportingPlatform.swift`** holds the options only
   iOS or the Mac has, since only `Platform/` may use `#if os`.
 - **Only those folders import Sentry,** with the tests' `SearchExperienceTests/Diagnostics/`:
-  `pnpm verify layers` refuses `import Sentry` anywhere else (`restrictedImports` in
-  [`layers.ts`](../../tools/checks/src/layers.ts)). Code elsewhere reports through
+  `pnpm verify layers` refuses `import Sentry` anywhere else (`layers.restrictedModules` in
+  [`verify.json`](../../verify.json)). Code elsewhere reports through
   `CrashReporter`. `TranslatorCore` and `TranslatorOnDevice` never import it.
 - **The package** is `sentry-cocoa`, pinned to an exact 9.x version in
   `apps/ios/Modules/Package.swift`. Its code links statically, and the app embeds a 33 KB
@@ -239,4 +239,5 @@ python3 apps/ios/Tools/upload_dsyms.py ~/Library/Developer/Xcode/Archives/<date>
   `testAccountListsEveryArea`.
 - **Contract:** `test_crash_report_settings.py` and `test_upload_dsyms.py` in
   `apps/ios/Tools/tests/`, which the iOS workflow runs.
-- **Layers:** `tools/checks/src/layers.test.ts` keeps `import Sentry` in the Diagnostics folders.
+- **Layers:** `pnpm verify layers` keeps `import Sentry` in the Diagnostics folders, as
+  `layers.restrictedModules` in `verify.json` names them.
