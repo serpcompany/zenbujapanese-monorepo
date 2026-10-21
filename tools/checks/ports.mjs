@@ -14,7 +14,7 @@ import {
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { parseEnv } from 'node:util'
-import { withoutGitLocation } from './route.mjs'
+import { withoutGitLocation } from './git-environment.mjs'
 
 export const mainPorts = { site: 3000, e2e: 3100, preview: 8787, dictionary: 8788 }
 export const roles = Object.keys(mainPorts)

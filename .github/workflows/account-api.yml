@@ -11,6 +11,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   changes:
@@ -60,7 +61,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
       - name: Check what the services share
         run: pnpm --filter @zenbu/node-service check
       - name: Check the service, against Postgres 18
@@ -94,7 +99,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
       - name: Install Chromium
         working-directory: apps/web
         run: pnpm exec playwright install --with-deps chromium

@@ -3,7 +3,7 @@ import { mkdtempSync, realpathSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach } from 'vitest'
-import { withoutGitLocation } from '../../route.mjs'
+import { withoutGitLocation } from '../../git-environment.mjs'
 
 const folders: string[] = []
 

@@ -20,8 +20,9 @@ interface Package {
 }
 
 const hookFile = 'lefthook.yml'
+const sharedHookFile = 'node_modules/@serpcompany/verify/configs/lefthook.yml'
 const lefthook = join(root, 'node_modules', 'lefthook', 'bin', 'index.js')
-const staticChecks = '--silent verify'
+const staticChecks = '--silent exec serp-verify'
 const rootPackageFiles = ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml']
 const unchangedOnTheBranch = /^git diff --quiet origin\/main\.\.\.HEAD -- (.+)$/
 const pnpmThatRecordsItsCalls = [
@@ -106,6 +107,8 @@ function branch(): { origin: string; checkout: string } {
   const checkout = scratchFolder('push-clone')
   git(origin, 'init', '--quiet', '--initial-branch=main')
   writeFileSync(join(origin, hookFile), readRepositoryFile(hookFile))
+  mkdirSync(dirname(join(origin, sharedHookFile)), { recursive: true })
+  writeFileSync(join(origin, sharedHookFile), readRepositoryFile(sharedHookFile))
   commit(origin, 'README.md')
   git(checkout, 'clone', '--quiet', `file://${origin}`, '.')
   git(checkout, 'switch', '--quiet', '--create', 'work')
@@ -134,6 +137,11 @@ function push(checkout: string, failing = ''): { status: number | null; calls: s
 }
 
 describe('the pre-push hook', () => {
+  test("runs the shared checks from @serpcompany/verify's own hooks", () => {
+    expect(parse(readRepositoryFile(hookFile)).extends).toEqual([sharedHookFile])
+    expect(Object.keys(prePush)).not.toContain('verify')
+  })
+
   test('finds every package of the workspace', () => {
     expect(packages.map(each => each.name)).toEqual(
       expect.arrayContaining([

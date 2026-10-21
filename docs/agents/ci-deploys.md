@@ -85,7 +85,10 @@ hand, the `tag` input deploys an image already pushed (`sha-<commit>`) without b
 back, but only to an image main signed before.
 
 - **`image`** builds the image, with Docker's layer cache in the Actions cache, or pulls the one
-  `tag` names, and starts it. It checks that `/v1/info` refuses a request without the token, that a
+  `tag` names, and starts it. The build's install reads the private `@serpcompany/verify`, a root
+  devDependency, with the job's own token: a step writes an `npmrc` with it to the runner's temp
+  folder, and the build mounts it as the secret `npmrc` for that one `RUN`, so no layer keeps it
+  ([`checks.md`](checks.md), In CI). It checks that `/v1/info` refuses a request without the token, that a
   search, its examples, a word, and a kanji (見る, JMdict entry 1259290, and 見) answer with it,
   and, for a build, that `/healthz` names this commit's release (the first 12 characters of its
   SHA). A build is then pushed as `:sha-<release>`, and as `:main` from `main` only.
@@ -116,8 +119,8 @@ rollback's comes from an image the run pulled. The whole deploy is in
 
 `.github/workflows/account-api-deploy.yml` ships the account service's Docker image
 (`apps/account-api/Dockerfile`, ADR 0013) as `Dictionary API deploy` ships the dictionary
-service's, with the same three jobs, the same signing, the same `staging` and `production`
-environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
+service's, with the same three jobs, the same secret `npmrc` for the build's install, the same
+signing, the same `staging` and `production` environments, and the same rollback by `tag`. It runs on a push to `main` that changes what the
 image holds: the service, what the services share, and the package files it installs from (the
 root ones). Tests, the username cases they read (`apps/account-api/src/domain/username-cases.json`),
 and the backups script (`apps/account-api/deploy/`) aren't in the image, so they don't start it.
@@ -186,9 +189,10 @@ needs a checkout. It:
 ## Pinned actions
 
 A workflow that reads a secret runs every action at a pinned commit. A tag such as `@v5` can be
-moved to new code, which would then run with the bucket's token, the registry's, Cloudflare's, or
-Claude's. Those are the release workflow, the three deploy workflows, and the three that run
-Claude; a workflow with no secret names its actions by major-version tag.
+moved to new code, which would then run with the bucket's token, the registry's, Cloudflare's,
+Claude's, or the `serp-agent` app's. Those are the release workflow, the three deploy workflows,
+the three that run Claude, and `Repository`, whose docs check reads serpcompany's private
+repositories with the app's key; a workflow with no secret names its actions by major-version tag.
 `tools/checks/src/workflow-rules.test.ts` holds the pins, and this table, to that.
 
 - `anthropics/claude-code-action` is at v1.0.247. It was pinned there because v1.0.248 seemed to
@@ -197,14 +201,18 @@ Claude; a workflow with no secret names its actions by major-version tag.
   again on 2026-10-11, so nothing waits on it now; moving the pin to the latest release is in
   [`harness-debt.md`](../harness-debt.md).
 - `pnpm/action-setup` is at v6.0.10, the commit its `v6` tag named when it was pinned.
+- `actions/create-github-app-token` is at v3.2.0, not v3.3.0, which was nine days old when it was
+  pinned. `Repository` gives it `app-id`, as SERP's Verify workflow does: v3 marks it deprecated
+  for `client-id`, but actionlint 1.7.12, the version `@serpcompany/verify` pins, knows only
+  `app-id`.
 
 To update one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
 | --- | --- | --- | --- |
-| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/language-data-release.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
-| `actions/setup-node` | `a0853c24544627f65ddf259abe73b1d18a591444` | v5.0.0 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
-| `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/language-data-release.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/repository.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/setup-node` | `a0853c24544627f65ddf259abe73b1d18a591444` | v5.0.0 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/repository.yml`, `.github/workflows/web-deploy.yml` |
+| `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/repository.yml`, `.github/workflows/web-deploy.yml` |
 | `actions/upload-artifact` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` | v7.0.2 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
 | `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/workflows/dictionary-api-deploy.yml`, `.github/actions/package-language-data/action.yml` |
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
@@ -213,3 +221,4 @@ To update one, pin the new release's commit and change this table in the same pu
 | `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/web-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
+| `actions/create-github-app-token` | `bcd2ba49218906704ab6c1aa796996da409d3eb1` | v3.2.0 | `.github/workflows/repository.yml` |

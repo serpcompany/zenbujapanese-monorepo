@@ -32,6 +32,7 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+      packages: read
     env:
       HAS_CLAUDE_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
       BASE_BRANCH: main
@@ -100,10 +101,14 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
 
       - name: Install every package
         if: env.ANSWER == 'true'
         run: pnpm install --frozen-lockfile --ignore-scripts --ignore-pnpmfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
 
       - name: Give Claude the repository rules
         if: env.ANSWER == 'true'
