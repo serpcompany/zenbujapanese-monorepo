@@ -639,6 +639,7 @@
       "pointer": "agent-github-identity|serp-github-app|ci-agents\\.md#outside-ci",
       "exempt": {
         ".claude/skills/pr-review/SKILL.md": "the Code review workflow runs it, where its gh commands read with the job's own token, and its allowed tools admit only plain gh reads",
+        "docs/agents/checks.md": "its gh auth commands set up a machine's own read:packages token, a person's one-time step on their own machine",
         "docs/agents/ci-review.md": "its one gh command is history: what the Code review workflow's reviewer ran on #761",
         "docs/agents/dictionary-api.md": "its gh commands set the GitHub environments' variables, an owner's step: settings stay with a person (ci-agents.md, Outside CI)"
       }
