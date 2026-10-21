@@ -101,7 +101,12 @@ from any folder:
   ([`web.md`](web.md), Account pages). Giving each checkout its own is in
   [`harness-debt.md`](../harness-debt.md).
 
-The script is tested in `tools/checks/src/ports.test.ts`.
+The script is tested in `tools/checks/src/ports.test.ts`. Most of its tests make their claims
+inside the test process, in scratch folders, with a stand-in for git and a clock that moves only
+while a run waits for the lock (`tools/checks/src/agents/ports-world.ts`), so two runs meeting at the
+lock are played out in a set order and the waits take no real time. A few run the script as a
+command, on real git, for what only a process shows: git's own answers, a hook's `GIT_DIR`, and
+a command's port and status.
 
 ## This checkout's Simulator and build folder
 

@@ -137,8 +137,14 @@ test('asks again, after a pause, until there is an answer or the attempts run ou
     asked.push('asked')
     return answers[asked.length - 1]
   }
-  expect(await patiently(read, 3, 1)).toBe('#12')
+  const waited: number[] = []
+  const wait = async (milliseconds: number) => {
+    waited.push(milliseconds)
+  }
+  expect(await patiently(read, { wait })).toBe('#12')
   expect(asked).toHaveLength(3)
-  expect(await patiently(() => '', 2, 1)).toBe('')
-  expect(await patiently(() => '#7', 3, 1)).toBe('#7')
+  expect(waited).toEqual([5000, 5000])
+  expect(await patiently(() => '', { attempts: 2, pause: 1, wait })).toBe('')
+  expect(await patiently(() => '#7', { wait })).toBe('#7')
+  expect(waited).toEqual([5000, 5000, 1])
 })

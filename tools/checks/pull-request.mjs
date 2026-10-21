@@ -60,9 +60,9 @@ export const fixRule =
 export const fixWithoutTest = (branch, title, changed) =>
   isFix(branch, title) && !changed.some(isTest)
 
-const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
+const pauseFor = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds))
 
-export async function patiently(read, attempts = 3, pause = 5000) {
+export async function patiently(read, { attempts = 3, pause = 5000, wait = pauseFor } = {}) {
   for (let attempt = 1; ; attempt += 1) {
     const found = await read()
     if (found || attempt >= attempts) return found
