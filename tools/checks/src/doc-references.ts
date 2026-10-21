@@ -1,11 +1,11 @@
 import { posix } from 'node:path'
 
-export interface Reference {
+interface Reference {
   line: number
   target: string
 }
 
-export interface Tree {
+interface Tree {
   files: ReadonlySet<string>
   folders: ReadonlySet<string>
 }
