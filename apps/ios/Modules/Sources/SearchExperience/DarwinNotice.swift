@@ -10,4 +10,8 @@ enum DarwinNotice {
       handle(state)
     }
   }
+
+  static func post(_ name: String) {
+    notify_post(name)
+  }
 }

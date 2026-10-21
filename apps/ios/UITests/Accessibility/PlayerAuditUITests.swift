@@ -52,8 +52,10 @@ final class PlayerAuditUITests: AccessibilityAuditCase {
     let window = app.windows.firstMatch
     let grabber = waitFor(app.buttons["Sheet Grabber"]).coordinate(
       withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-    grabber.press(
-      forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)))
+    gesture(on: sheet) {
+      grabber.press(
+        forDuration: 0.1, thenDragTo: window.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.05)))
+    }
     XCTAssertTrue(
       comesTrue("the word sheet to open at full height", within: Self.patience) {
         sheet.frame.minY < window.frame.height * Self.fullHeightTop

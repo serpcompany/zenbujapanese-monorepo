@@ -5,7 +5,7 @@ final class ImageSearchUITests: ZenbuUITestCase {
     let app = try openFixtureImage()
     assertOnScreen(find("image-text.close", in: app), in: app)
     assertOnScreen(find("image-text.mode", in: app), in: app)
-    waitFor(firstElement(identifiedBy: "image-text.region.", in: app)).tap()
+    tap(firstElement(identifiedBy: "image-text.region.", in: app))
     let sheet = waitForSheet("recognized-word-sheet", in: app)
     assertSheetPlacement(sheet, in: app)
     tap(find("recognized-word-sheet.open-full-entry", in: app))

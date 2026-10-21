@@ -18,9 +18,9 @@ const ui = (file: string) => `${uiTestFolder}${file}`
 
 const allowedPauses: Readonly<Record<string, AllowedPauses>> = {
   [ui('ZenbuUITestCase.swift')]: {
-    pauses: 2,
+    pauses: 3,
     proves:
-      "nothing: they are comesTrue's wait between two looks and waitUntilStill's second between two looks at a frame"
+      "nothing: they are comesTrue's wait between two looks, waitUntilStill's second between two looks at a frame, and the 0.3 s between the warm-up touch and the gesture it wakes the Simulator's touch system for"
   },
   [ui('ExampleRowsUITests.swift')]: {
     pauses: 2,

@@ -22,9 +22,11 @@ final class ListsUITests: ZenbuUITestCase {
     let (upper, lower) = animeWasFirst ? (anime, favorites) : (favorites, anime)
     if device != .mac { tap(find("word-lists.edit", in: app)) }
     let grip = device == .mac ? lower : reorderControl(beside: lower, in: app)
-    grip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
-      forDuration: 0.8, thenDragTo: upper.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)),
-      withVelocity: .slow, thenHoldForDuration: 0.5)
+    gesture(on: grip) {
+      grip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
+        forDuration: 0.8, thenDragTo: upper.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)),
+        withVelocity: .slow, thenHoldForDuration: 0.5)
+    }
     waitUntil("the two lists changing places") {
       (anime.frame.minY < favorites.frame.minY) != animeWasFirst
     }

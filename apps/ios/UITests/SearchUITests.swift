@@ -6,7 +6,7 @@ final class SearchUITests: ZenbuUITestCase {
     search("japan", in: app)
     let row = find("result.japan", in: app)
     assertOnScreen(row, in: app)
-    row.tap()
+    tap(row)
     assertOnScreen(find("word-detail.screen", in: app), in: app)
     assertOnScreen(find("word-detail.more-menu", in: app), in: app)
   }
@@ -63,7 +63,7 @@ final class SearchUITests: ZenbuUITestCase {
         XCTAssertLessThanOrEqual(button.frame.maxY, keyboard.frame.minY + 1, "above the keyboard")
       }
     }
-    close.tap()
+    tap(close)
     waitUntilGone(close)
   }
 

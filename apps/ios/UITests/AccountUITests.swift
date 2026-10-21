@@ -157,7 +157,7 @@ final class AccountUITests: ZenbuUITestCase {
     let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
     flip(toggle)
     waitUntil(toggle, Self.switchedOff)
-    tabItem(.search, in: app).tap()
+    tap(tabItem(.search, in: app))
     waitFor(find("word-detail.screen", in: app))
     waitUntilGone(ranked)
     waitFor(find("word-detail.frequency.\(Self.jlpt)", in: app))
@@ -179,7 +179,7 @@ final class AccountUITests: ZenbuUITestCase {
       let toggle = waitFor(find("frequency-pack.toggle.\(Self.youTube)", in: app))
       flip(toggle)
       waitUntil(toggle, switchedTo)
-      tabItem(.search, in: app).tap()
+      tap(tabItem(.search, in: app))
       waitFor(sortedByRow(saying: "Sorted by \(sorted)", in: app))
     }
   }

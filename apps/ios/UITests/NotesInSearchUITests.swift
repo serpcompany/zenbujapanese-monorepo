@@ -135,7 +135,7 @@ final class NotesInSearchUITests: ZenbuUITestCase {
       editor.typeKey("a", modifierFlags: .command)
       editor.typeText(XCUIKeyboardKey.delete.rawValue + replacement)
     } else {
-      editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap()
+      gesture(on: editor) { editor.coordinate(withNormalizedOffset: CGVector(dx: 0.97, dy: 0.5)).tap() }
       editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: written.count) + replacement)
     }
     tap(find("word-note.done", in: app))

@@ -36,18 +36,18 @@ final class SearchInputUITests: ZenbuUITestCase {
     tap(find("radical.one", in: app))
     let candidate = firstElement(identifiedBy: "radical.candidate.", in: app)
     waitFor(candidate)
-    undo.tap()
+    tap(undo)
     waitUntilGone(candidate)
     tap(find("radical.one", in: app))
     let first = waitFor(candidate).label
-    candidate.tap()
+    tap(candidate)
     waitFor(find("search.results", in: app))
     waitUntilGone(find("radical.grid", in: app))
     XCTAssertEqual(searchField(in: app).value as? String, first, "the kanji is the query")
     tap(find("search.input.radicals", in: app))
     tap(find("radical.one", in: app))
     let second = waitFor(candidate).label
-    candidate.tap()
+    tap(candidate)
     waitUntilGone(find("radical.grid", in: app))
     waitUntil(searchField(in: app), "value == %@", first + second)
   }
@@ -62,13 +62,13 @@ final class SearchInputUITests: ZenbuUITestCase {
     draw(on: canvas, from: CGVector(dx: 0.5, dy: 0.15), to: CGVector(dx: 0.5, dy: 0.85))
     waitUntil(undo, "isEnabled == true")
     XCTAssertTrue(canvas.exists, "a stroke drawn downward doesn't drag the sheet away")
-    undo.tap()
+    tap(undo)
     draw(on: canvas, from: Self.strokeStart, to: Self.strokeEnd)
     waitFor(candidate)
-    undo.tap()
+    tap(undo)
     waitUntilGone(candidate)
     draw(on: canvas, from: Self.strokeStart, to: Self.strokeEnd)
-    waitFor(candidate).tap()
+    tap(candidate)
     waitFor(find("search.results", in: app))
     waitUntilGone(canvas)
   }
@@ -77,7 +77,9 @@ final class SearchInputUITests: ZenbuUITestCase {
   private static let strokeEnd = CGVector(dx: 0.8, dy: 0.5)
 
   private func draw(on canvas: XCUIElement, from start: CGVector, to end: CGVector) {
-    canvas.coordinate(withNormalizedOffset: start)
-      .press(forDuration: 0.2, thenDragTo: canvas.coordinate(withNormalizedOffset: end))
+    gesture(on: canvas) {
+      canvas.coordinate(withNormalizedOffset: start)
+        .press(forDuration: 0.2, thenDragTo: canvas.coordinate(withNormalizedOffset: end))
+    }
   }
 }

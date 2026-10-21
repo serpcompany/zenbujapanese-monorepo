@@ -249,7 +249,8 @@ final class AccountAuditUITests: AccessibilityAuditCase {
   private func fill(_ identifier: String, with text: String, in app: XCUIApplication) {
     let field = find(identifier, in: app)
     guard device != .mac else { return type(text, into: field) }
-    waitFor(field).coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: Self.inputLine)).tap()
+    waitFor(field)
+    gesture(on: field) { field.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: Self.inputLine)).tap() }
     let focused = NSPredicate(format: "hasKeyboardFocus == true AND identifier == %@", identifier)
     waitFor(app.descendants(matching: .any).matching(focused).firstMatch)
     field.typeText(text)
