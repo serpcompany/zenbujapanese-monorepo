@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
@@ -313,6 +313,67 @@ describe('the Node an @claude request sets up', () => {
 
   test("fails the job when main's version can't be read", () => {
     expect(olderBranch('exit 1').result.status).not.toBe(0)
+  })
+})
+
+describe('the base an @claude request hands the shared checks', () => {
+  const baseIndex = steps.findIndex(step => step.run?.includes('SERP_VERIFY_BASE='))
+  const base = steps[baseIndex]
+
+  function fetchBase(isPullRequest: boolean) {
+    const origin = scratchFolder('claude-base-origin')
+    const tools = scratchFolder('claude-base-tools')
+    git(origin, 'init', '--quiet', '--initial-branch=main')
+    git(origin, 'commit', '--quiet', '--allow-empty', '--message', 'On main')
+    git(origin, 'switch', '--quiet', '--create', 'fl/parent')
+    git(origin, 'commit', '--quiet', '--allow-empty', '--message', 'On the parent branch')
+    git(origin, 'switch', '--quiet', '--create', 'fl/feature')
+    git(origin, 'commit', '--quiet', '--allow-empty', '--message', 'On the pull request')
+    const checkout = join(scratchFolder('claude-base-checkout'), 'repository')
+    git(origin, 'clone', '-q', '--depth=1', '-b', 'fl/feature', `file://${origin}`, checkout)
+    writeFileSync(join(tools, 'gh'), '#!/bin/sh\necho "$@" > "$ASKED"\necho fl/parent\n', {
+      mode: 0o755
+    })
+    const result = spawnSync('bash', ['-e', '-c', base.run ?? ''], {
+      cwd: checkout,
+      encoding: 'utf8',
+      env: outsideGit({
+        PATH: `${tools}:${process.env.PATH}`,
+        GITHUB_REPOSITORY: repository,
+        GITHUB_ENV: join(tools, 'env.txt'),
+        BASE_BRANCH: 'main',
+        IS_PR: String(isPullRequest),
+        ENTITY_NUMBER: '7',
+        ASKED: join(tools, 'asked.txt')
+      })
+    })
+    const at = (folder: string, ref: string) => git(folder, 'rev-parse', ref).stdout.trim()
+    return { origin, checkout, tools, result, at }
+  }
+
+  test('runs after the checkout, before Claude, with a token that reads the pull request', () => {
+    const checkoutIndex = steps.findIndex(step => step.uses?.startsWith('actions/checkout'))
+    expect(baseIndex).toBeGreaterThan(checkoutIndex)
+    expect(baseIndex).toBeLessThan(claudeIndex)
+    expect(base.env?.GH_TOKEN).toBe('${{ github.token }}')
+  })
+
+  test("on a pull request, fetches the branch it merges into, which may be a parent's, and hands it over", () => {
+    const { origin, checkout, tools, result, at } = fetchBase(true)
+    expect(result.status, result.stderr).toBe(0)
+    expect(readFileSync(join(tools, 'asked.txt'), 'utf8')).toBe(
+      `pr view 7 --repo ${repository} --json baseRefName --jq .baseRefName\n`
+    )
+    expect(readFileSync(join(tools, 'env.txt'), 'utf8')).toBe('SERP_VERIFY_BASE=origin/fl/parent\n')
+    expect(at(checkout, 'origin/fl/parent')).toBe(at(origin, 'fl/parent'))
+  })
+
+  test('on an issue, hands over main without asking', () => {
+    const { origin, checkout, tools, result, at } = fetchBase(false)
+    expect(result.status, result.stderr).toBe(0)
+    expect(readFileSync(join(tools, 'env.txt'), 'utf8')).toBe('SERP_VERIFY_BASE=origin/main\n')
+    expect(existsSync(join(tools, 'asked.txt'))).toBe(false)
+    expect(at(checkout, 'origin/main')).toBe(at(origin, 'main'))
   })
 })
 
