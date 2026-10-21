@@ -16,6 +16,7 @@ class ZenbuUITestCase: XCTestCase {
   var device: TestDevice.Kind { TestDevice.kind }
   private var launched: XCUIApplication?
   private var lastGesture = Date.distantPast
+  private var actionsAreOpen = false
   static let touchSystemIdle: TimeInterval = 4
   static let afterTheWarmUpTouch: TimeInterval = 0.3
 
@@ -259,28 +260,33 @@ class ZenbuUITestCase: XCTestCase {
   }
 
   func gesture(on target: XCUIElement? = nil, _ send: () -> Void) {
-    if Date.now.timeIntervalSince(lastGesture) >= Self.touchSystemIdle {
+    if Date.now.timeIntervalSince(lastGesture) >= Self.touchSystemIdle, !actionsAreOpen {
       wakeTheTouchSystem(before: target)
     }
+    actionsAreOpen = false
     send()
     lastGesture = .now
+  }
+
+  func gestureThatOpensActions(on target: XCUIElement, _ send: () -> Void) {
+    gesture(on: target, send)
+    actionsAreOpen = true
   }
 
   private func wakeTheTouchSystem(before target: XCUIElement?) {
     guard device != .mac, let app = launched, app.state == .runningForeground,
       !app.otherElements["PopoverDismissRegion"].exists
     else { return }
+    let title = { (name: String) in app.navigationBars[name].staticTexts[name].firstMatch }
     let titles = app.navigationBars.allElementsBoundByIndex.map(\.identifier).filter { !$0.isEmpty }
-    let front = titles.last { title in
-      let text = app.navigationBars[title].staticTexts[title]
-      return text.exists && text.isHittable
-    }
-    guard let front else { return }
+    guard let front = titles.last(where: { title($0).exists && title($0).isHittable }), title(front).exists
+    else { return }
     let targetWasThere = target?.exists ?? false
-    app.navigationBars[front].staticTexts[front].tap()
+    title(front).tap()
     lastGesture = .now
     RunLoop.current.run(until: Date.now.addingTimeInterval(Self.afterTheWarmUpTouch))
-    XCTAssertTrue(app.navigationBars[front].exists, "the warm-up touch on \(front)'s title changed the screen")
+    XCTAssertTrue(
+      app.navigationBars[front].firstMatch.exists, "the warm-up touch on \(front)'s title changed the screen")
     if let target, targetWasThere {
       XCTAssertTrue(target.exists, "the warm-up touch on \(front)'s title took away \(target)")
     }

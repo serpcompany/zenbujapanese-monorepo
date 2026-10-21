@@ -51,7 +51,7 @@ extension ZenbuUITestCase {
   func markJapanKnown(in app: XCUIApplication) -> XCUIElement {
     let row = find("result.japan", in: app)
     waitFor(row)
-    gesture(on: row) { if device == .mac { row.rightClick() } else { row.swipeRight() } }
+    gestureThatOpensActions(on: row) { if device == .mac { row.rightClick() } else { row.swipeRight() } }
     tap(find("result.japan.mark-known", in: app))
     return row
   }
@@ -268,7 +268,7 @@ extension ZenbuUITestCase {
         isAbove = laidOut.midY < area.frame.midY
         scroll(scrolled, back: isAbove)
       } else if !scrollMoves(scrolled, back: isAbove) {
-        if hasTurned { break }
+        if hasTurned || container != nil { break }
         hasTurned = true
         isAbove.toggle()
       }
@@ -404,13 +404,13 @@ extension ZenbuUITestCase {
 
   func openContextMenu(on element: XCUIElement) {
     waitFor(element)
-    gesture(on: element) {
+    gestureThatOpensActions(on: element) {
       if device == .mac { element.rightClick() } else { element.press(forDuration: 1.2) }
     }
   }
 
   func revealRowActions(on row: XCUIElement) {
     waitFor(row)
-    gesture(on: row) { if device == .mac { row.rightClick() } else { row.swipeLeft() } }
+    gestureThatOpensActions(on: row) { if device == .mac { row.rightClick() } else { row.swipeLeft() } }
   }
 }

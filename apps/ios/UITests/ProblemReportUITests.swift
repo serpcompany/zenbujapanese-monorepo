@@ -27,7 +27,7 @@ final class ProblemReportUITests: ZenbuUITestCase {
     let app = launch(Self.problemReportStandIn)
     let send = openTheReport(in: app)
     reveal(labeled("Account, Signed out", in: app), in: app)
-    XCTAssertFalse(send.isEnabled)
+    waitUntil(send, "isEnabled == false")
     type("The Language menu froze", into: find("problem-report.description", in: app))
     waitUntil(send, "isEnabled == true")
     let email = reveal(find("problem-report.email", in: app), in: app)

@@ -90,7 +90,9 @@ what it waited for and for how long.
   scrolls out of view, so a row above the screen is missing from the tree just as a row below
   it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
   when a swipe moves nothing (the list's tree is the same after it as before), it is at that
-  end: it turns once, and stops at the other end. Scrolling only down once failed the Account
+  end: it turns once, and stops at the other end. Inside a container, such as the word sheet, it
+  stops at the end instead of turning, since a swipe down at the top of a sheet drags the sheet
+  away; there only a laid-out frame above sends it up. Scrolling only down once failed the Account
   rows test, whose Sign In row, near the top, was gone once the list reached Credits at the
   bottom. `RevealUITests` scrolls Credits to its end and finds its first source again.
 - **A row is tapped where it shows between the bars.** `reveal` stops once a row's middle is in
@@ -114,11 +116,14 @@ what it waited for and for how long.
   taps the frontmost navigation bar's title, which does nothing anywhere in the app, then sends
   the gesture 0.3 s later. The warm-up is sent every time that holds and nothing depends on it
   landing, so it isn't a retry. It fails the test if the title's bar is gone afterwards, or the
-  gesture's element is, and it's skipped when no title is showing, while a menu or popover is open
-  (a touch outside one closes it), and on the Mac, whose tests send real pointer events. In a
+  gesture's element is. It's skipped when no title is showing, when the app isn't in front, while a
+  menu or popover is open, and for the gesture right after a step that opens a row's actions or a
+  context menu (`gestureThatOpensActions`), since a touch elsewhere closes those; and on the Mac,
+  whose tests send real pointer events. In a
   probe of 250 audits each way, the tap straight after an audit met the race once and the tap
   after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
-  only ones sent directly are the Mac's (its Settings window, right-clicks, and wheel scrolls).
+  only ones sent directly are the Mac's own: clicks in its Settings window and on a headword's
+  kanji, right-clicks, wheel scrolls, and moving the pointer away.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
