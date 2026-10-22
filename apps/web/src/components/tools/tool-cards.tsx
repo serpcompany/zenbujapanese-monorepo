@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import { RubyText } from '@/components/dictionary/ruby-text'
 import { ProductMarkTile } from '@/components/products/product-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Locale } from '@/lib/i18n/config'
@@ -9,7 +10,7 @@ import type { ProductMark } from '@/lib/products/catalog'
 import { convert } from '@/lib/tools/convert'
 import { languageOf } from '@/lib/tools/converters'
 import type { ConverterSlug } from '@/lib/tools/paths'
-import { converterPageIn } from '@/lib/tools/tool-pages'
+import { converterPageIn, furiganaPageIn } from '@/lib/tools/tool-pages'
 
 export function ToolCard({
   title,
@@ -44,6 +45,29 @@ export function ToolCard({
   )
 }
 
+function CardSample({
+  sample,
+  lang,
+  locale,
+  children
+}: {
+  sample: string
+  lang: string
+  locale: Locale
+  children: ReactNode
+}) {
+  return (
+    <p className="flex flex-wrap items-center gap-1.5">
+      <span lang={lang}>{sample}</span>
+      <span aria-hidden="true" className="text-muted-foreground">
+        →
+      </span>
+      <span className="sr-only">{getDictionary(locale).tools.card.becomes}</span>
+      {children}
+    </p>
+  )
+}
+
 export function ConverterCard({ slug, locale }: { slug: ConverterSlug; locale: Locale }) {
   const converter = converterPageIn(slug, locale)
   return (
@@ -53,16 +77,27 @@ export function ConverterCard({ slug, locale }: { slug: ConverterSlug; locale: L
       href={localizedPath(converter.path, locale)}
       mark={{ glyph: converter.card.mark }}
     >
-      <p className="flex flex-wrap items-center gap-1.5">
-        <span lang={languageOf[converter.input]}>{converter.card.sample}</span>
-        <span aria-hidden="true" className="text-muted-foreground">
-          →
-        </span>
-        <span className="sr-only">{getDictionary(locale).tools.card.becomes}</span>
+      <CardSample sample={converter.card.sample} lang={languageOf[converter.input]} locale={locale}>
         <span lang={languageOf[converter.output]}>
           {convert(converter.slug, converter.card.sample)}
         </span>
-      </p>
+      </CardSample>
+    </ToolCard>
+  )
+}
+
+export function FuriganaCard({ locale }: { locale: Locale }) {
+  const page = furiganaPageIn(locale)
+  return (
+    <ToolCard
+      title={page.name}
+      line={page.card.line}
+      href={localizedPath(page.path, locale)}
+      mark={{ glyph: page.card.mark }}
+    >
+      <CardSample sample={page.card.sample.text} lang="ja" locale={locale}>
+        <RubyText segments={page.card.sample.furigana} />
+      </CardSample>
     </ToolCard>
   )
 }

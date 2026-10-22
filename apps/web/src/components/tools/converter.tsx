@@ -2,17 +2,9 @@
 
 import { useRef, useState } from 'react'
 import { ConverterBox } from '@/components/tools/converter-box'
+import { ClearButton, ConverterHeader, TryExamples } from '@/components/tools/converter-parts'
 import { ScriptSetting, WidthSettings } from '@/components/tools/converter-settings'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { bothSides, defaultConverterOptions, type Edit } from '@/lib/tools/convert'
@@ -42,17 +34,15 @@ export function Converter({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>
-          <h2>{text.heading}</h2>
-        </CardTitle>
-        <CardDescription>{text.line}</CardDescription>
-        {converter.setting === 'script' ? (
-          <CardAction>
+      <ConverterHeader
+        heading={text.heading}
+        line={text.line}
+        action={
+          converter.setting === 'script' ? (
             <ScriptSetting options={options} onChange={setOptions} text={text} />
-          </CardAction>
-        ) : null}
-      </CardHeader>
+          ) : null
+        }
+      />
       <CardContent className="flex flex-col gap-6">
         {converter.setting === 'widths' ? (
           <WidthSettings options={options} onChange={setOptions} text={text} />
@@ -67,15 +57,11 @@ export function Converter({
           locale={locale}
           fieldRef={fromField}
           actions={
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setEdit({ side: 'from', text: '' })
-                fromField.current?.focus()
-              }}
-            >
-              {text.clear}
-            </Button>
+            <ClearButton
+              label={text.clear}
+              field={fromField}
+              onClear={() => setEdit({ side: 'from', text: '' })}
+            />
           }
         />
         <ConverterBox
@@ -88,24 +74,12 @@ export function Converter({
           locale={locale}
         />
       </CardContent>
-      <CardFooter>
-        <fieldset className="flex flex-wrap items-center gap-2 text-sm">
-          <legend className="sr-only">{text.examples}</legend>
-          <span aria-hidden="true" className="font-medium">
-            {text.try}
-          </span>
-          {converter.tries.map(example => (
-            <Button
-              key={example}
-              variant="outline"
-              lang={languageOf[converter.input]}
-              onClick={() => setEdit({ side: 'from', text: example })}
-            >
-              {example}
-            </Button>
-          ))}
-        </fieldset>
-      </CardFooter>
+      <TryExamples
+        examples={converter.tries}
+        lang={languageOf[converter.input]}
+        words={text}
+        onTry={example => setEdit({ side: 'from', text: example })}
+      />
     </Card>
   )
 }

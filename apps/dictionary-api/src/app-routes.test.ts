@@ -328,8 +328,11 @@ describe('an app’s access token', () => {
     expect((await service.request(get(paths[0], another))).status).toBe(200)
   })
 
-  test('is never the website’s way in: its routes still want the service token', async () => {
-    const response = await app().request(get('/v1/info', await accessToken()))
+  test.each([
+    '/v1/info',
+    `/v1/segmentation/${encodeURIComponent('見る')}`
+  ])('is never the website’s way in: %s still wants the service token', async path => {
+    const response = await app().request(get(path, await accessToken()))
     expect(response.status).toBe(401)
   })
 })

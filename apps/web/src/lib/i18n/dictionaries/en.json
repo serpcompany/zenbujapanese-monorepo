@@ -1852,6 +1852,13 @@
         "description": "Convert full-width katakana, letters, and numbers to half-width, for systems that only take narrow characters, free in your browser.",
         "lead": "Turn full-width katakana, letters, and numbers into half-width, for systems that only take narrow characters.",
         "card": "Shrink full-width katakana, letters, and numbers."
+      },
+      "kanji-to-furigana": {
+        "from": "Kanji",
+        "to": "Furigana",
+        "description": "Add furigana to Japanese text: paste it and get readings over its kanji, each word read in context by the Zenbu app’s dictionary. Free, up to 200 characters.",
+        "lead": "Paste Japanese text and get furigana over its kanji, each word read in context by the Zenbu app’s dictionary.",
+        "card": "Paste Japanese and get furigana over its kanji."
       }
     },
     "page": {
@@ -1897,6 +1904,22 @@
         "lettersAndNumbers": "Letters and numbers",
         "symbolsAndSpaces": "Symbols and spaces"
       }
+    },
+    "furigana": {
+      "heading": "Paste or type Japanese",
+      "line": "The furigana appear over its kanji as you type.",
+      "input": "Japanese",
+      "output": "With furigana",
+      "placeholder": "Type or paste Japanese here",
+      "empty": "The text shows here with its furigana",
+      "count": {
+        "one": "{count} of {limit} characters",
+        "other": "{count} of {limit} characters"
+      },
+      "tooLong": "That’s more than {limit} characters. Shorten it to add furigana.",
+      "reading": "Reading the text…",
+      "unavailable": "The dictionary didn’t answer, so there’s no furigana yet. Your text is still here.",
+      "retry": "Try again"
     },
     "chart": {
       "title": "Conversion chart",
@@ -2046,6 +2069,10 @@
       "full-width-to-half-width": {
         "first": "Each full-width character becomes its narrow form: <ja>カ</ja> becomes <ja>ｶ</ja>, and <ja>Ａ</ja> becomes <latin>A</latin>. A voiced kana splits into two characters, <ja>ガ</ja> into <ja>ｶﾞ</ja>.",
         "second": "Hiragana and kanji have no half-width form, so they stay as they are."
+      },
+      "kanji-to-furigana": {
+        "first": "Each word is read where it stands, with the dictionary and the word splitting the Zenbu app uses for captions and example sentences, so <ja>今日</ja> reads <ja>きょう</ja> and <ja>大人</ja> reads <ja>おとな</ja>, rather than each kanji on its own. Unlike the other converters, this one sends your text to Zenbu’s dictionary service to read it.",
+        "second": "The furigana go over the kanji only: in <ja>食べます</ja> they cover <ja>食</ja>. Kana, letters, numbers, and punctuation stay as they are, and a word the dictionary can’t read keeps its kanji without furigana."
       }
     },
     "questions": {
@@ -2089,6 +2116,20 @@
         "hiragana": {
           "question": "Does it change hiragana?",
           "answer": "No. Hiragana has no half-width form, so it stays as it is either way."
+        }
+      },
+      "furigana": {
+        "context": {
+          "question": "How does it choose a kanji’s reading?",
+          "answer": "It reads whole words, not single kanji, with the dictionary and word splitting the Zenbu app uses, so 今日 reads きょう and 大人 reads おとな. Where a word splits differently from how it’s read, a reading can still be wrong."
+        },
+        "limit": {
+          "question": "How much text can it read at once?",
+          "answer": "Up to 200 characters at a time, about a paragraph. For a longer text, paste it a paragraph at a time."
+        },
+        "paste": {
+          "question": "Can I paste the result into a document?",
+          "answer": "Yes. Copy puts the text on the clipboard with its furigana as ruby, which apps that show ruby draw over the kanji, and as plain text with each reading in brackets after its word, such as 今日（きょう）."
         }
       }
     },

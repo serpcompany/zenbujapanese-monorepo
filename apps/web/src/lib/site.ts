@@ -37,7 +37,7 @@ const linkTargets = [
     id: 'kanji-to-furigana',
     kind: 'page',
     name: 'Kanji to Furigana converter',
-    href: placeholderHref
+    href: converterPath('kanji-to-furigana')
   },
   { id: 'products', kind: 'page', name: 'Products index', href: '/products/' },
   {

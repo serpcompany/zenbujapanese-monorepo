@@ -17,6 +17,7 @@ const pagesToCheck = [
   ...sitePaths,
   toolsPath,
   converterPath('hiragana-to-katakana'),
+  converterPath('kanji-to-furigana'),
   '/dictionary/search/iru/',
   needed.path,
   '/dictionary/browse/',

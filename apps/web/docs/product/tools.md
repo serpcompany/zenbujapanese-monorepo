@@ -1,14 +1,14 @@
 # Tools pages
 
-The tools index, `/tools/`, and six converters, each at `/tools/<name>/`: Hiragana to Katakana,
-Katakana to Hiragana, Romaji to Kana, Kana to Romaji, Half-width to Full-width, and Full-width to
-Half-width. They follow the owner's decisions on #579 (2026-10-09), the prototype linked there,
+The tools index, `/tools/`, and seven converters, each at `/tools/<name>/`: Hiragana to Katakana,
+Katakana to Hiragana, Romaji to Kana, Kana to Romaji, Half-width to Full-width, Full-width to
+Half-width, and Kanji to Furigana, whose page is [Kanji to Furigana](kanji-to-furigana.md). The
+first six follow the owner's decisions on #579 (2026-10-09), the prototype linked there,
 and the owner's later changes: both boxes of a converter are editable, in place of the swap
 button, and the pages are built from stock shadcn components, as the owner's UI rules ask (#696). The copy is a first draft that #848 dials in.
-Kanji to Furigana, which needs the dictionary service, is #849, and stays a placeholder until
-then.
 
-The converters run entirely in the browser: nothing typed is sent anywhere.
+The six kana and width converters run entirely in the browser: nothing typed is sent anywhere.
+Kanji to Furigana sends the text to the dictionary service to read it.
 
 Every tools page is also in Japanese, at `/ja/tools/` and `/ja/tools/<name>/`, with the same
 converter, chart, and examples and its interface, copy, questions, and structured data in Japanese
@@ -27,9 +27,9 @@ reference tables' examples, and `src/lib/tools/tool-pages.ts` puts each page tog
 
 ## Tools index
 
-**Layout.** The heading Online tools for learning Japanese and a line about them; then Converters, six cards
+**Layout.** The heading Online tools for learning Japanese and a line about them; then Converters, seven cards
 (one per converter, each with its mark, name, a line, and a sample it converts, such as こーひー →
-コーヒー); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
+コーヒー, Kanji to Furigana's last); then Dictionary and reference, six cards that open existing pages (Dictionary, Hiragana
 chart, Katakana chart, Kanji lists, Frequency lists, and Word categories, which is the browse
 home); then a card for the app, its title and line beside Get the app (under them on phones), which
 opens the iPhone app's page. The cards are stock `Card` parts (`CardHeader`, `CardTitle`, `CardDescription`,
@@ -39,11 +39,14 @@ page is laid out as the browse pages are (`BrowsePage` and `BrowseHeading`), wit
 headings.
 
 - Source: the owner's decision on #579 (Index: cards).
-- Check: Tools spec, "lists the six converters, then the dictionary and reference pages, then the
-  app" and "each card leads to its page, with no redirect"; `src/lib/tools/converters.test.ts`, "…
+- Check: Tools spec, "lists the six converters and Kanji to Furigana, then the dictionary and
+  reference pages, then the app" and "each card leads to its page, with no redirect"; `src/lib/tools/converters.test.ts`, "…
   turns its card’s sample … into …" for each converter.
 
 ## Converter pages
+
+This section is the six kana and width converters'; Kanji to Furigana's page is
+[its own](kanji-to-furigana.md).
 
 **Layout.** In this order: a breadcrumb (Tools, then the converter); the converter's name and a
 line about it; the converter, with a link under it to the other direction's page (Katakana to Hiragana → on Hiragana to Katakana); How it works; on the
@@ -222,20 +225,21 @@ Japanese | Zenbu Japanese" and each converter "<Name> Converter | Zenbu Japanese
 description and canonical URL, from the dictionaries' `tools` namespace, in each language. All are
 indexed: no page carries
 a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them in English and
-Japanese, as does the HTML sitemap (`/sitemap/`, and `/ja/sitemap/` in Japanese), under the tools
-index. A converter name the site doesn't have is 404,
+Japanese. The HTML sitemap (`/sitemap/`, and `/ja/sitemap/` in Japanese) lists the index and the
+six kana and width converters under it, not yet Kanji to Furigana
+([`tech-debt.md`](../../../../docs/tech-debt.md)). A converter name the site doesn't have is 404,
 and not indexed.
 
 - Source: the owner's decision on #579 (all pages indexed and in the sitemap); the SERP XML
   sitemaps standard (`sitemap-tools.xml` for tool pages).
 - Check: Tools spec, "… has its title, description, canonical URL, and structured data" for each
   page in each language, "a converter name the site doesn’t have is 404", and "the HTML sitemap
-  lists the tools index and every converter"; `e2e/sitemaps.spec.ts`, "the tools sitemap lists the
-  tools index and every converter, each with its slash, in English and Japanese";
-  `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`; `src/lib/tools/converters.test.ts`, "the
-  tools pages in %s are the index and the six converters, …"; `e2e/hreflang.spec.ts`, "every page
-  in the tools sitemap, both tools indexes included, names its languages as its sitemap entry
-  does, and they name it back".
+  lists the tools index and the six kana and width converters"; `e2e/sitemaps.spec.ts`, "the tools
+  sitemap lists the tools index and every converter, each with its slash, in English and
+  Japanese"; `src/lib/sitemap.test.ts`; `src/app/routes.test.ts`;
+  `src/lib/tools/converters.test.ts`, "the tools pages in %s are the index, the six converters, and
+  Kanji to Furigana, …"; `e2e/hreflang.spec.ts`, "every page in the tools sitemap, both tools
+  indexes included, names its languages as its sitemap entry does, and they name it back".
 
 **In Japanese.** `/ja/tools/` and each `/ja/tools/<name>/` read in Japanese, from the cards and the
 converter's boxes, count, options, and Copy to the chart, the questions, and their FAQ data, and
@@ -251,20 +255,20 @@ every link they write stays under `/ja/`.
 **Links to the tools.** The header's Tools menu (All free tools, and its Hiragana to Katakana and
 Romaji to Kana), the Products menu's Free tools, the footer's All tools, the homepage's All free
 tools and its free web tools list, and the products catalog's Converters card open these pages,
-through the `tools`, `hiragana-to-katakana`, and `romaji-to-kana` entries in `linkTargets`
-(`src/lib/site.ts`). Kanji to Furigana stays a placeholder (#849). Pages under `/tools/` are in
-the header's Tools section.
+through the `tools`, `hiragana-to-katakana`, `romaji-to-kana`, and `kanji-to-furigana` entries in
+`linkTargets` (`src/lib/site.ts`), the last the Tools menu's Kanji to Furigana. Pages under
+`/tools/` are in the header's Tools section.
 
-- Source: the owner's decision on #579.
+- Source: the owner's decision on #579; #849 (Kanji to Furigana).
 - Check: `src/components/site-header.test.tsx`, "the Tools menu leads to the tools, the reference
-  pages, and the converters, and Kanji to Furigana is a placeholder" and "/tools/ is in Tools";
+  pages, and the converters, Kanji to Furigana among them" and "/tools/ is in Tools";
   `src/components/site-footer.test.tsx`; `src/lib/products/catalog.test.ts`; `e2e/site.spec.ts`,
-  "the Tools menu opens the tools and two converters, Kanji to Furigana and the Products menu’s
-  planned pages are # placeholders, and All products opens the catalog".
+  "the Tools menu opens the tools and three converters, the Products menu’s planned pages are #
+  placeholders, and All products opens the catalog".
 
 **Layout.** No tools page scrolls sideways at a desktop or a phone width, and each passes the phone
 checks and the contrast check.
 
 - Check: `e2e/layout.spec.ts`, for each tools page; `e2e/phone-layout.spec.ts` and
   `e2e/contrast.spec.ts`, which list the tools pages among the page types in `e2e/page-types.ts`;
-  `e2e/placeholders.spec.ts`, on the index and Hiragana to Katakana.
+  `e2e/placeholders.spec.ts`, on the index, Hiragana to Katakana, and Kanji to Furigana.

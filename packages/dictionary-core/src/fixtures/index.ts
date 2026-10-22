@@ -1,3 +1,4 @@
+import type { SegmentedToken } from '../cards/segmentation'
 import { kanjiWords as orderKanjiWords } from '../detail/kanji'
 import type {
   ExampleCountRow,
@@ -15,6 +16,7 @@ import exampleSentences from './example-sentences.json'
 import formExamples from './form-examples.json'
 import kanji from './kanji.json'
 import kanjiWords from './kanji-words.json'
+import segmentation from './segmentation.json'
 import wordExamples from './word-examples.json'
 import words from './words.json'
 
@@ -68,3 +70,7 @@ export const fixtureSearchOrder: Record<string, number[]> = {
 }
 
 export const fixtureBrowseAnswers: Readonly<Record<string, unknown>> = browse
+
+export const fixtureSegmentation: ReadonlyMap<string, SegmentedToken[]> = new Map(
+  Object.entries(segmentation as Record<string, SegmentedToken[]>)
+)

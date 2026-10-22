@@ -102,6 +102,23 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     expect(await reading('あの人は先生です', '人')).toBe('ひと')
   })
 
+  test('the website’s segmentation, with the service token, answers the app route’s tokens, so 今日 reads きょう', async () => {
+    const text = '今日は大人も子供も、日本の映画を見に行きます。'
+    const { tokens } = await answer<{ tokens: SegmentedToken[] }>(
+      `/v1/apps/segmentation?text=${encodeURIComponent(text)}`
+    )
+    const response = await app.request(
+      new Request(`http://localhost/v1/segmentation/${encodeURIComponent(text)}`, {
+        headers: { authorization: 'Bearer service-token-0123456789' }
+      })
+    )
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ tokens })
+    const reading = (word: string) => tokens.find(token => token.text === word)?.reading
+    expect(['今日', '大人', '日本'].map(reading)).toEqual(['きょう', 'おとな', 'にほん'])
+    expect(tokens.map(token => token.text).join('')).toBe(text)
+  })
+
   test('segmentation splits each recorded sentence into the words the suite links', async () => {
     expect(recordedSentences.length).toBeGreaterThan(500)
     for (const sentence of recordedSentences) {

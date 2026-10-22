@@ -1,41 +1,54 @@
 'use client'
 
 import { CopyIcon } from 'lucide-react'
-import { type ReactNode, type Ref, useEffect, useId, useRef, useState } from 'react'
+import { type ReactNode, type Ref, useId } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { type CopyText, useCopy } from '@/hooks/use-copy'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill, pluralOf } from '@/lib/i18n/format'
 
-const copyStatusShown = 2_000
-
-type BoxText = Pick<
-  Dictionary['tools']['converter'],
-  'copy' | 'copyLabel' | 'copied' | 'selectToCopy' | 'characters'
->
+export type BoxText = CopyText &
+  Pick<Dictionary['tools']['converter'], 'copy' | 'copyLabel' | 'characters'>
 
 const characterCount = (text: string, words: BoxText, locale: Locale) => {
   const count = Array.from(text).length
   return fill(pluralOf(words.characters, count, locale), { count })
 }
 
-function useCopy(words: BoxText) {
-  const [status, setStatus] = useState('')
-  const clearing = useRef<ReturnType<typeof setTimeout>>(undefined)
-  useEffect(() => () => clearTimeout(clearing.current), [])
-  const copy = async (text: string) => {
-    clearTimeout(clearing.current)
-    try {
-      await navigator.clipboard.writeText(text)
-      setStatus(words.copied)
-    } catch {
-      setStatus(words.selectToCopy)
-    }
-    clearing.current = setTimeout(() => setStatus(''), copyStatusShown)
-  }
-  return { status, copy }
+export function BoxFooter({ count, children }: { count: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span className="text-muted-foreground">{count}</span>
+      <div className="flex flex-wrap items-center justify-end gap-2">{children}</div>
+    </div>
+  )
+}
+
+export function CopyButton({
+  label,
+  words,
+  disabled,
+  onCopy
+}: {
+  label: string
+  words: BoxText
+  disabled: boolean
+  onCopy: () => void
+}) {
+  return (
+    <Button
+      variant="outline"
+      onClick={onCopy}
+      disabled={disabled}
+      aria-label={fill(words.copyLabel, { label })}
+    >
+      <CopyIcon data-icon="inline-start" aria-hidden="true" />
+      {words.copy}
+    </Button>
+  )
 }
 
 export function ConverterBox({
@@ -47,7 +60,10 @@ export function ConverterBox({
   words,
   locale,
   fieldRef,
-  actions
+  actions,
+  count,
+  invalid,
+  copies = true
 }: {
   label: string
   lang: string
@@ -58,6 +74,9 @@ export function ConverterBox({
   locale: Locale
   fieldRef?: Ref<HTMLTextAreaElement>
   actions?: ReactNode
+  count?: string
+  invalid?: boolean
+  copies?: boolean
 }) {
   const id = useId()
   const { status, copy } = useCopy(words)
@@ -71,27 +90,24 @@ export function ConverterBox({
         value={text}
         onChange={event => onType(event.target.value)}
         placeholder={placeholder}
+        aria-invalid={invalid || undefined}
         spellCheck={false}
         autoCapitalize="off"
         autoCorrect="off"
         autoComplete="off"
       />
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <span className="text-muted-foreground">{characterCount(text, words, locale)}</span>
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          <output>{status}</output>
-          {actions}
-          <Button
-            variant="outline"
-            onClick={() => copy(text)}
+      <BoxFooter count={count ?? characterCount(text, words, locale)}>
+        <output>{status}</output>
+        {actions}
+        {copies ? (
+          <CopyButton
+            label={label}
+            words={words}
             disabled={!text}
-            aria-label={fill(words.copyLabel, { label })}
-          >
-            <CopyIcon data-icon="inline-start" aria-hidden="true" />
-            {words.copy}
-          </Button>
-        </div>
-      </div>
+            onCopy={() => copy(() => navigator.clipboard.writeText(text))}
+          />
+        ) : null}
+      </BoxFooter>
     </div>
   )
 }
