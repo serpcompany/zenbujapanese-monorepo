@@ -7,9 +7,19 @@ struct CrashReportingBuild: Equatable, Sendable {
   var allowsTestSwitches: Bool { environment == CrashReportingPolicy.qaEnvironment }
 }
 
+enum BuildSource: Equatable, Sendable {
+  case simulator
+  case provisioningProfile
+  case storeSignature
+  case mac
+
+  var mayComeFromTheStore: Bool { self == .storeSignature || self == .mac }
+}
+
 enum CrashReportingPolicy {
   static let destinationInfoKey = "ZenbuCrashReportsDSN"
   static let testConfigurationKey = "XCTestConfigurationFilePath"
+  static let provisioningProfileName = "embedded.mobileprovision"
   static let qaEnvironment = "qa"
   static let productionEnvironment = "production"
   static let preferenceKey = "crash-reports.send"
@@ -29,7 +39,7 @@ enum CrashReportingPolicy {
     #"(?:\G|(?<![\p{L}\p{M}\p{N}._%+'\-]))[\p{L}\p{M}\p{N}._%+'\-]++@[\p{L}\p{M}\p{N}.\-]+\.\p{L}[\p{L}\p{M}]+"#
 
   static func build(
-    info: [String: Any]?, bundleID: String?, environment: [String: String]
+    info: [String: Any]?, bundleID: String?, environment: [String: String], source: BuildSource
   ) -> CrashReportingBuild? {
     guard environment[testConfigurationKey] == nil,
       bundleID?.hasSuffix(LaunchHarness.uiTestBundleSuffix) != true,
@@ -39,8 +49,15 @@ enum CrashReportingPolicy {
     else { return nil }
     let suffix = (info?[AccountServiceConfiguration.bundleIDSuffixKey] as? String)?
       .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    let reportsAsProduction = suffix.isEmpty && source.mayComeFromTheStore
     return CrashReportingBuild(
-      dsn: dsn, environment: suffix.isEmpty ? productionEnvironment : qaEnvironment)
+      dsn: dsn, environment: reportsAsProduction ? productionEnvironment : qaEnvironment)
+  }
+
+  static func carriesProvisioningProfile(
+    bundleAt bundleURL: URL, fileManager: FileManager = .default
+  ) -> Bool {
+    fileManager.fileExists(atPath: bundleURL.appendingPathComponent(provisioningProfileName).path)
   }
 
   static func sendsCrashReports(in defaults: UserDefaults) -> Bool {

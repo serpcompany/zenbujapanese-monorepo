@@ -17,7 +17,8 @@ public enum CrashReporter {
   static func startAtLaunch(defaults: UserDefaults, bundle: Bundle, environment: [String: String]) {
     guard
       let build = CrashReportingPolicy.build(
-        info: bundle.infoDictionary, bundleID: bundle.bundleIdentifier, environment: environment)
+        info: bundle.infoDictionary, bundleID: bundle.bundleIdentifier, environment: environment,
+        source: CrashReportingPlatform.source(of: bundle))
     else { return }
     let session = CrashReportingSession(build: build, defaults: defaults, sdk: .sentry)
     self.session = session
