@@ -74,7 +74,7 @@ it (#682):
   the element and its text: `pnpm test:e2e e2e/phone-layout.spec.ts --project phone`.
 - **The contrast check**, `apps/web/e2e/contrast.spec.ts` (#664), runs axe's `color-contrast` on
   every page type in both themes at both widths, and on phones on the phone
-  menu and each of its groups; it doesn't open the homepage's other areas (`docs/tech-debt.md`).
+  menu and each of its groups; it doesn't open the homepage's other areas (`docs/tech-debt-web.md`).
   Both checks call axe through `apps/web/e2e/axe.ts`.
 - **The phone gallery**, `apps/web/e2e/gallery.spec.ts`, runs only when asked: it captures every
   page type and view at 390 pixels, in light and dark, into one page for a person to review.

@@ -71,11 +71,14 @@ code, once a launch, never its message or payload).
 
 ## Which builds send
 
-Only TestFlight and App Store builds (as `production`) and a Release build of Zenbu Dev (as `qa`)
-send reports. Debug builds, a Debug Zenbu Dev, the share sheet's card, and the app under unit or UI
-tests never do.
+TestFlight and App Store builds send reports as `production`. A developer's Release build sends
+them as `qa`: Zenbu Dev, a build on the Simulator, and a build on an iPhone or iPad that Xcode or a
+sideloader signed, so its freezes and crashes never count among learners'. On the Mac, which isn't
+released yet, a Release build other than Zenbu Dev still sends them as `production`. Debug builds, a
+Debug Zenbu Dev, the share sheet's card, and the app under unit or UI tests never send any.
 
-Check: package `CrashReportingPolicyTests` (each build, and the test hosts); contract
+Check: package `CrashReportingPolicyTests` (each build, from the Simulator, a device with or without
+a provisioning profile, and the Mac, and the test hosts); contract
 `test_crash_report_settings.py` (the destination only in Release builds, never in the share
 extension, and the privacy manifest's Device ID, Customer Support, Crash Data, and Other Diagnostic
 Data, each linked).

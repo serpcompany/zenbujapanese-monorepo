@@ -43,6 +43,10 @@ enum CrashReportScrubber {
     (#"[\p{Hiragana}\p{Katakana}\p{Han}ー々〆ヶｰ]++"#, "<japanese>")
   ])
 
+  static var rules: [NSRegularExpression] {
+    (quotedNameRules + pathRules + writtenRules + fileNameRules + japaneseRules).map(\.0)
+  }
+
   private static func compile(_ rules: [(String, String)]) -> [(NSRegularExpression, String)] {
     rules.map { pattern, replacement in
       guard let regex = try? NSRegularExpression(pattern: pattern) else {

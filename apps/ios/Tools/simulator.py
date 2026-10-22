@@ -27,6 +27,7 @@ CALM_IDLE_PERCENT = 50
 CALM_SAMPLES = 2
 CALM_SAMPLE_SECONDS = 2
 CALM_LIMIT_SECONDS = 120
+SETTLED_APP = "com.apple.Preferences"
 IDLE_LIMIT_SECONDS = 600
 KEEPER_PERIOD_SECONDS = 20
 LEAST_FREE_MEMORY_PERCENT = 40
@@ -206,6 +207,13 @@ def wait_until_calm(
     return clock() - began, calm >= CALM_SAMPLES
 
 
+def wait_until_it_launches(target: str, clock: Callable[[], float] = time.monotonic) -> float:
+    began = clock()
+    simctl("launch", target, SETTLED_APP)
+    simctl("terminate", target, SETTLED_APP)
+    return clock() - began
+
+
 def running(scope: str | None, devices: dict[str, list[dict]]) -> list[dict]:
     return [
         device
@@ -271,8 +279,9 @@ def boot(kind: str, scope: str | None) -> str:
         keep(target)
         simctl("bootstatus", target, "-b")
         booted = time.monotonic() - began
+        launched = wait_until_it_launches(target)
         waited, calm = wait_until_calm()
-        said = f"booted in {booted:.0f} s, and the Mac " + (
+        said = f"booted in {booted:.0f} s, launched an app {launched:.0f} s later, and the Mac " + (
             f"was calm {waited:.0f} s later" if calm else f"was still busy {waited:.0f} s later"
         )
     return (
@@ -448,7 +457,7 @@ def main(arguments: list[str]) -> int:
             "missing. The main checkout gets the app's long-lived Simulator; a git worktree gets "
             f"its own, named for the worktree, or for {SCOPE_VARIABLE} when that is set. "
             "derived-data prints this checkout's own build folder. boot starts the Simulator "
-            "when it isn't up, waits for the boot and for the Mac to be calm again, and has a "
+            "when it isn't up, waits for the boot, an app's launch, and a calm Mac, and has a "
             "keeper shut it down once nothing has used it for "
             f"{IDLE_LIMIT_SECONDS // 60} minutes, or sooner when memory runs short; shutdown "
             "stops this checkout's Simulators now. Both, and the keeper, delete the copies of "

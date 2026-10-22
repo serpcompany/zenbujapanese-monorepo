@@ -99,7 +99,7 @@ final class SyncedSettings {
     self.settings = settings
     for setting in settings { known[setting.name] = setting.read(defaults) }
     observer = NotificationCenter.default.addObserver(
-      forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+      forName: UserDefaults.didChangeNotification, object: defaults, queue: .main
     ) { [weak self] _ in
       MainActor.assumeIsolated { self?.noticeChanges() }
     }

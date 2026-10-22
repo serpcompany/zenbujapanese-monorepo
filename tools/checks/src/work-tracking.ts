@@ -120,7 +120,7 @@ export function firstSentence(text: string): string {
   return text
 }
 
-export const debtFiles = ['docs/tech-debt.md', 'docs/harness-debt.md']
+export const debtFiles = ['docs/tech-debt.md', 'docs/tech-debt-web.md', 'docs/harness-debt.md']
 
 export function summarizeDebt(text: string): DebtSummary {
   const rows = markdownTables(text).flatMap(({ heading, header, rows: tableRows }) => {

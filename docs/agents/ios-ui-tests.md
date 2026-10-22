@@ -69,9 +69,24 @@ what it waited for and for how long.
   hold carry `.timeLimit(.minutes(1))`. Those tests take milliseconds, so the limit trips only when
   an await never returns, which is a defect. It is never a speed limit: put one only on tests whose
   normal run is under a hundredth of it. The limit cancels the test's task but can't abandon it, so
-  a wait a test writes must end when its task is cancelled, as `until` and `HeldRetries` do, or give
-  up on its own well inside the limit and fail, as the sign-in tests' `HeldReply` does after 30 s;
-  one that does neither still holds up the whole run.
+  a wait a test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
+  `LaterReply.asked()` do; one that doesn't still holds up the whole run.
+- **A test holds nothing the others share.** The package's tests all run at once in one process,
+  so a wait on something they share, or a measure of all of them, ties a test to every other.
+  Every stubbed request in the process goes through CFNetwork's one thread for custom
+  `URLProtocol`s: a stub that waited there for its test to let a reply go held up every other
+  test's requests meanwhile, and on a busy Mac a holder that ran out of its own time first never
+  let go, so its reply kept the thread for its full 30 seconds and 59 account tests ran out of
+  their minute together. A reply a test sends later is a `LaterReply`, which holds no thread
+  ([`ios-account-sync.md`](ios-account-sync.md)). A notification is process-wide too: a
+  `UserDefaults.didChangeNotification` observer on the main queue holds up every defaults write
+  until the main thread has run it, so an observer that heard every store (`SyncedSettings`, before
+  it heard only its own) made each test's writes wait while every other live test's settings were
+  read again: 29% of a busy run's main thread, and defaults writes parked on the cooperative
+  threads waiting for it. Observe the object you own. Every test's memory counts in the process's
+  footprint too, which the tests beside one that hashed a file raised by 38 MB, or lowered, while
+  it hashed: a test of memory counts what the code under test holds (`DigestTests` counts the
+  chunks alive at once).
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.

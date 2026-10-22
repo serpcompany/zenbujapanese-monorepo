@@ -174,7 +174,7 @@ describe('resultsLayout', () => {
     )
   })
 
-  test('lists only the leading entries when asked, as the radical panel does for one character', () => {
+  test('lists only the leading entries when asked, as a Radicals or Grade pick does for one character', () => {
     const listed = listedResults(
       results([item('一'), item('二'), item('三')], { leadingLexicalEntryCount: 2 })
     )

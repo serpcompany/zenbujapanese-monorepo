@@ -65,7 +65,7 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       primaryEntry: results.primaryEntry,
       usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
     })
-    const state = { sort: 'default', filter: 'all', known: [], fromRadicals: false }
+    const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
     return {
       results,
       screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {

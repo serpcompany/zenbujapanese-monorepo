@@ -227,7 +227,7 @@ indexed: no page carries
 a robots meta tag. `/sitemap-tools.xml`, which the sitemap index lists, holds them in English and
 Japanese. The HTML sitemap (`/sitemap/`, and `/ja/sitemap/` in Japanese) lists the index and the
 six kana and width converters under it, not yet Kanji to Furigana
-([`tech-debt.md`](../../../../docs/tech-debt.md)). A converter name the site doesn't have is 404,
+([`tech-debt-web.md`](../../../../docs/tech-debt-web.md)). A converter name the site doesn't have is 404,
 and not indexed.
 
 - Source: the owner's decision on #579 (all pages indexed and in the sitemap); the SERP XML

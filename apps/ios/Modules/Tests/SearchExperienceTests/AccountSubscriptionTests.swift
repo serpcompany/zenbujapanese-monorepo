@@ -267,9 +267,9 @@ struct AccountSubscriptionTests {
     }
     let subscription = fixture.account.subscription
     let buying = Task { await subscription.subscribe(to: Answers.monthly) }
-    while !laterPurchase.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    await laterPurchase.asked()
     let reading = Task { await subscription.refresh() }
-    while !laterRead.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    await laterRead.asked()
 
     laterPurchase.send(.json(200, Answers.subscribed()))
     await buying.value
@@ -288,7 +288,7 @@ struct AccountSubscriptionTests {
     await fixture.store.finishing(Answers.bought)
     fixture.store.update(Answers.bought)
     fixture.store.update(Answers.bought, signedAt: Date(timeIntervalSince1970: 1_800_000_000))
-    while posted() < 2 { try await Task.sleep(for: .milliseconds(5)) }
+    await fixture.store.finishing(Answers.bought, times: 2)
 
     #expect(posted() == 2)
     await fixture.account.scheduler.settled()

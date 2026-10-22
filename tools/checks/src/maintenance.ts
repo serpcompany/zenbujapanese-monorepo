@@ -108,7 +108,7 @@ const debtItem = ({ section, debt, issue }: DebtItem) =>
 function debtLines(debt: DebtSummary): string[] {
   const { small, medium, large } = debt.bySize
   return [
-    `- ${debtFiles.map(code).join(' and ')}: ${debt.open} open items (${small} small, ${medium} medium, ${large} large).`,
+    `- ${new Intl.ListFormat('en', { type: 'conjunction' }).format(debtFiles.map(code))}: ${debt.open} open items (${small} small, ${medium} medium, ${large} large).`,
     `- First small item: ${debt.firstSmall ? debtItem(debt.firstSmall) : 'none.'}`,
     ...(debt.unsized.length
       ? [
@@ -175,7 +175,7 @@ export function renderReport(facts: MaintenanceFacts): string {
     [
       '- [ ] Fix any failing check, and re-verify the docs listed above against the code.',
       '- [ ] Re-grade each row listed under Scores to re-grade, and set its Graded date.',
-      `- [ ] Pay down one item from ${debtFiles.map(code).join(' or ')}, or split one file near the size limit, in a small pull request.`,
+      `- [ ] Pay down one item from ${new Intl.ListFormat('en', { type: 'disjunction' }).format(debtFiles.map(code))}, or split one file near the size limit, in a small pull request.`,
       `- [ ] For a part listed as repeated under Review findings, add the rule to ${code('docs/agents/code.md')} and, where possible, a check.`
     ].join('\n'),
     `Work this issue one item per small pull request, as ${code('docs/agents/ci-agents.md')} says under Weekly maintenance.`

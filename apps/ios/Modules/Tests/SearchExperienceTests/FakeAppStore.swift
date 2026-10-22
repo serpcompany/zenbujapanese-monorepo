@@ -54,9 +54,11 @@ final class FakeAppStore: AppStorePurchases, @unchecked Sendable {
     sendUpdate.yield(transaction(signedTransaction, signedAt: signedAt))
   }
 
-  func finishing(_ signedTransaction: String) async {
+  func finishing(_ signedTransaction: String, times: Int = 1) async {
     var finishes = finishes.makeAsyncIterator()
-    while !finished.contains(signedTransaction), await finishes.next() != nil {}
+    while finished.count(where: { $0 == signedTransaction }) < times,
+      await finishes.next() != nil
+    {}
   }
 
   static func signed(_ productID: String, for appAccountToken: UUID) -> String {

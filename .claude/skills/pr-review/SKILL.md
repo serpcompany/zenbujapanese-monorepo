@@ -62,7 +62,7 @@ diff itself:
 3. **The issue, tests, and docs:** an acceptance criterion the change doesn't meet, changed
    behavior with no test, a behavior change without its product doc and check in the same pull
    request (`AGENTS.md`), code the area's doc now describes wrongly, and known debt the change
-   adds without a row in `docs/tech-debt.md` or `docs/harness-debt.md`.
+   adds without a row in `docs/tech-debt.md`, `docs/tech-debt-web.md`, or `docs/harness-debt.md`.
 
 Skip what `pnpm check` already enforces: comments, file size, doc links, formatting, the lint
 rules, types, and the tests. Run no build, suite, or preview: the checks have their own workflows.

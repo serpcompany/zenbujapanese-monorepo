@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 import TranslatorCore
 
@@ -9,8 +10,16 @@ import TranslatorCore
 struct SyncedSettingsTests {
   private let suite = "synced-settings-\(UUID().uuidString)"
 
+  private var folder: URL { FileManager.default.temporaryDirectory.appending(path: suite) }
+
   private func noticed() async {
     await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
+  }
+
+  private func translate(on defaults: UserDefaults) -> TranslateExperience {
+    TranslateExperience(
+      services: .scripted(.station), history: ConversationHistory(directory: folder),
+      defaults: defaults)
   }
 
   @Test("a Reading Aids value from the account shows in Reading Aids without being sent back, and the learner's change there is told")
@@ -53,16 +62,65 @@ struct SyncedSettingsTests {
   func speechSpeed() async throws {
     let defaults = try #require(UserDefaults(suiteName: suite))
     defer { defaults.removePersistentDomain(forName: suite) }
-    let folder = FileManager.default.temporaryDirectory.appending(path: suite)
     defer { try? FileManager.default.removeItem(at: folder) }
-    let experience = TranslateExperience(
-      services: .scripted(.station), history: ConversationHistory(directory: folder),
-      defaults: defaults)
+    let experience = translate(on: defaults)
     let settings = SyncedSettings(defaults: defaults)
 
     settings.applySynced("translate.speechSpeed", .decimal(1.5))
     await noticed()
     #expect(experience.speechSpeed == 1.5)
     #expect(!SyncedSetting.all.map(\.name).contains { $0.contains("layout") })
+  }
+
+  @Test("a learner's change through Reading Aids, Translate's speed, or a screen's stored choice is told as it's made")
+  func everyWriterIsHeard() async throws {
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let preferences = ReadingAidPreferences(defaults: defaults)
+    let experience = translate(on: defaults)
+    let filter = AppStorage(
+      wrappedValue: ResultsLearner.noFilter, ResultsLearner.filterKey, store: defaults)
+    let settings = SyncedSettings(defaults: defaults)
+    var told: [KeptLocalChange] = []
+    settings.changeObserver = { told.append($0) }
+
+    preferences.showsRomaji = true
+    experience.speechSpeed = 1.5
+    filter.wrappedValue = "known"
+    await noticed()
+
+    #expect(told.contains(KeptChanges.settingSet("readingAids.romaji", .bool(true))))
+    #expect(told.contains(KeptChanges.settingSet("translate.speechSpeed", .decimal(1.5))))
+    #expect(told.contains(KeptChanges.settingSet("search.filter", .string("known"))))
+  }
+
+  @Test("another defaults store's change costs Synced settings nothing: it reads again only when its own store changes")
+  func hearsOnlyItsOwnStore() async throws {
+    let defaults = try #require(UserDefaults(suiteName: suite))
+    let otherSuite = "\(suite)-other"
+    let other = try #require(UserDefaults(suiteName: otherSuite))
+    defer {
+      defaults.removePersistentDomain(forName: suite)
+      other.removePersistentDomain(forName: otherSuite)
+    }
+    let reads = CallCount()
+    let counted = SyncedSetting(
+      name: "counted", standard: .bool(false),
+      read: { _ in
+        _ = reads.next()
+        return nil
+      }, write: { _, _ in })
+    let settings = SyncedSettings(defaults: defaults, settings: [counted])
+    let atStart = reads.current
+
+    other.set(true, forKey: "elsewhere")
+    await noticed()
+    #expect(reads.current == atStart)
+
+    defaults.set(true, forKey: "here")
+    await noticed()
+    #expect(reads.current > atStart)
+    withExtendedLifetime(settings) {}
   }
 }

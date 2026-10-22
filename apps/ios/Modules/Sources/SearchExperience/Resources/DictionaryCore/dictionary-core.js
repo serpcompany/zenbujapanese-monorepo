@@ -2047,9 +2047,9 @@
   function primaryItem(results, query) {
     return primary(results.items, (item) => item.entry.headword, normalizeQuery(query));
   }
-  function resultsLayout(rawQuery, results, exampleCount2, fromRadicals = false) {
+  function resultsLayout(rawQuery, results, exampleCount2, pickedKanji = false) {
     const query = normalizeQuery(rawQuery);
-    const leadingOnly = fromRadicals && graphemeCount(query) === 1;
+    const leadingOnly = pickedKanji && graphemeCount(query) === 1;
     const singleKanji = isKanjiCharacter(query);
     const isDiscovered = results.presentation === "discoveredWords";
     const found = primary(results.items, (item) => item.headword, query);
@@ -4218,7 +4218,7 @@ ${sense.noteText}` : sense.meaning
     };
   }
   function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency) {
-    const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.fromRadicals);
+    const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.pickedKanji);
     if (layout.isEmpty) return { state: "noResults", query: layout.query, ...noMatches };
     const known = new Set(learner2.known);
     const isKnown = (id) => known.has(id);

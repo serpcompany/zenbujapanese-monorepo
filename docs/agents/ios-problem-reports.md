@@ -124,7 +124,8 @@ is the person's own words.
 - **Finding them:** search `is:unresolved report:problem` over a wide range, since each report is
   one event and drops out of the default 14 days:
   `https://serpcompany.sentry.io/issues/?project=4512238676213760&query=is%3Aunresolved%20report%3Aproblem&statsPeriod=90d`.
-  `production` holds reports from TestFlight and the App Store, and `qa` from Zenbu Dev. In the
+  `production` holds reports from TestFlight and the App Store, and `qa` from developers' Release
+  builds ([Which builds send](ios-crash-reports.md#which-builds-send) has the Mac's exception). In the
   event's Contexts, `report.details` is what the person saw and `report.contact` their email.
 - **Replying:** as `support@zenbujapanese.com`, never a personal address, asking for anything
   missing. Email routing only forwards incoming mail, so replying as it needs send-as set up in

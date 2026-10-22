@@ -241,7 +241,7 @@ describe('the embedded presentation engine and the learner’s frequency lists',
         query: 'のむ',
         results,
         exampleCount: 3,
-        learner: { sort: 'default', filter: 'all', known: [], fromRadicals: false, ...learner }
+        learner: { sort: 'default', filter: 'all', known: [], pickedKanji: false, ...learner }
       })
     )) as LearnerResultsScreen
     if (built.state !== 'results') throw new Error('のむ has no results screen')

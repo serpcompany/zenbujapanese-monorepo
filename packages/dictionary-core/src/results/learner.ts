@@ -72,7 +72,7 @@ export interface LearnerState {
   sort: string
   filter: string
   known: readonly string[]
-  fromRadicals: boolean
+  pickedKanji: boolean
 }
 
 export interface WordRow {
@@ -186,7 +186,7 @@ export function learnerResultsScreen(
   learner: LearnerState,
   frequency: ReadFrequency
 ): LearnerResultsScreen {
-  const layout = resultsLayout(rawQuery, results, exampleCount, learner.fromRadicals)
+  const layout = resultsLayout(rawQuery, results, exampleCount, learner.pickedKanji)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query, ...noMatches }
   const known = new Set(learner.known)
   const isKnown = (id: string) => known.has(id)

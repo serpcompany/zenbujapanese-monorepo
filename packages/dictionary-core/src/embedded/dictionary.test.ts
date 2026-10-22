@@ -336,7 +336,7 @@ describe('the embedded dictionary', () => {
         sort: 'default',
         filter: 'all',
         known: [],
-        fromRadicals: false
+        pickedKanji: false
       })}}`
     )
     expect(screen).toMatchObject({ state: 'results', rows: [{ id: 'a1' }, { id: 'b2' }] })

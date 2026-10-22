@@ -21,16 +21,12 @@ struct AccountTokenRefreshTests {
     return (server, later, tokens)
   }
 
-  private static func asked(_ later: LaterReply) async throws {
-    while !later.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
-  }
-
   @Test("two requests at once with no access token make one refresh")
   func twoRequestsShareOneRefresh() async throws {
     let (server, later, tokens) = Self.heldRefresh()
     let one = Task { try await tokens.withAccessToken { $0 } }
     let two = Task { try await tokens.withAccessToken { $0 } }
-    try await Self.asked(later)
+    await later.asked()
     later.send(Self.fresh)
     let first = try await one.value
     let second = try await two.value
@@ -43,7 +39,7 @@ struct AccountTokenRefreshTests {
     let (_, later, tokens) = Self.heldRefresh()
     let one = Task { try await tokens.withAccessToken { $0 } }
     let two = Task { try await tokens.withAccessToken { $0 } }
-    try await Self.asked(later)
+    await later.asked()
     tokens.forgetSession()
     later.send(Self.fresh)
     await #expect(throws: AccountServiceError.sessionEnded) { try await one.value }
@@ -55,7 +51,7 @@ struct AccountTokenRefreshTests {
     let (_, later, tokens) = Self.heldRefresh()
     let waiting = Task { try await tokens.withAccessToken { $0 } }
     let other = Task { try await tokens.withAccessToken { $0 } }
-    try await Self.asked(later)
+    await later.asked()
     waiting.cancel()
     await #expect(throws: CancellationError.self) { try await waiting.value }
     later.send(Self.fresh)
@@ -66,7 +62,7 @@ struct AccountTokenRefreshTests {
   func refreshOutlivesItsStarter() async throws {
     let (server, later, tokens) = Self.heldRefresh()
     let starter = Task { try await tokens.withAccessToken { $0 } }
-    try await Self.asked(later)
+    await later.asked()
     starter.cancel()
     _ = try? await starter.value
     let next = Task { try await tokens.withAccessToken { $0 } }
@@ -99,7 +95,7 @@ struct AccountTokenRefreshTests {
     }
     let one = Task { try await tokens.withAccessToken(refusesStale) }
     let two = Task { try await tokens.withAccessToken(refusesStale) }
-    try await Self.asked(later)
+    await later.asked()
     later.send(Self.fresh)
     #expect(try await one.value == two.value)
     #expect(server.requests(to: "GET /v1/auth/token").count == 2)
