@@ -27,16 +27,18 @@ photos) still open a prompt to get the app (#468).
   and of kanji, linking to the word and search pages.
 - **Products**, `/products/`: a catalog of the apps, free tools, guides, and courses, with search
   and type filters, and the iPhone app's page, `/products/zenbu-japanese-app/`.
-- **Tools**, `/tools/`: the free tools, and six converters that run in the browser, each at
+- **Tools**, `/tools/`: the free tools, six converters that run in the browser, each at
   `/tools/<name>/`: hiragana and katakana, romaji and kana, and half-width and full-width
-  ([Tools pages](tools.md)).
+  ([Tools pages](tools.md)), and Kanji to Furigana, which reads a text with the dictionary
+  service ([Kanji to Furigana](kanji-to-furigana.md)).
 
 The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
 Example Sentences pages that came before it redirect to the nearest of them. The shared header and
 footer, and the URL, indexing, and sitemap rules, apply to all of them.
 [Dictionary](dictionary.md) describes every behavior, page by page, [Browse pages](browse.md)
 the browse pages, [Products pages](products.md) the catalog and the product page, and
-[Tools pages](tools.md) the tools index and the converters.
+[Tools pages](tools.md) the tools index and the converters, and [Kanji to
+Furigana](kanji-to-furigana.md) the furigana converter.
 
 The account pages, `/login/`, `/register/`, `/forgot-password/`, and `/account/`, sign a
 learner in to their Zenbu account and manage it; [Account pages](account.md) describes them, and
@@ -98,8 +100,8 @@ its app source and planned check, and is then built with its check in the same P
 ## How behavior is verified
 
 Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
-[The subscription](subscription.md), [Languages](languages.md), and [Privacy Policy](privacy.md)
-names its automated check, or says "No
+[The subscription](subscription.md), [Languages](languages.md), [Privacy Policy](privacy.md), and
+[Kanji to Furigana](kanji-to-furigana.md) names its automated check, or says "No
 automated check yet". The checks come in
 five kinds:
 

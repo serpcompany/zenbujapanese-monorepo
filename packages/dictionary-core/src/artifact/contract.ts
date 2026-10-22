@@ -1,3 +1,4 @@
+import type { SegmentationResponse } from '../cards/segmentation'
 import type {
   BrowseSitemapResponse,
   BrowseSummaryResponse,
@@ -19,7 +20,7 @@ import type {
   WordSitemap
 } from './dictionary'
 
-export const dictionaryContract = 4
+export const dictionaryContract = 5
 
 export const firstDictionaryContract = 1
 
@@ -49,6 +50,7 @@ export interface DictionaryContract {
   kanjiHub: KanjiHubResponse
   kanjiList: KanjiListResponse
   browseSitemap: BrowseSitemapResponse
+  segmentation: SegmentationResponse
 }
 
 export function answeredContract(answered: string | number | null | undefined): number {

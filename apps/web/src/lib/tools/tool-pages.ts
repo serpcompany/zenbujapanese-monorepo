@@ -13,33 +13,51 @@ import {
   widthRowShapes
 } from './content'
 import { type Converter, type ConverterPair, converterFor, converters } from './converters'
-import { type ConverterSlug, converterPath, toolsPath } from './paths'
+import { type FuriganaTool, furiganaTool } from './furigana-tool'
+import { type ConverterSlug, converterPath, furiganaSlug, type ToolSlug, toolsPath } from './paths'
 
 type ToolsText = Dictionary['tools']
 
-export interface ConverterPage extends Omit<Converter, 'card'>, SitePage {
+interface NamedTool extends SitePage {
   name: string
   from: string
   to: string
   lead: string
+}
+
+export interface ConverterPage extends Omit<Converter, 'card'>, NamedTool {
   card: Converter['card'] & { line: string }
 }
 
-function pageOf(converter: Converter, locale: Locale): ConverterPage {
+export interface FuriganaPage extends Omit<FuriganaTool, 'card'>, NamedTool {
+  slug: typeof furiganaSlug
+  card: FuriganaTool['card'] & { line: string }
+}
+
+function namedTool(slug: ToolSlug, locale: Locale): NamedTool & { line: string } {
   const t = getDictionary(locale).tools
-  const { from, to, description, lead, card } = t.converters[converter.slug]
+  const { from, to, description, lead, card } = t.converters[slug]
   const name = fill(t.names.name, { from, to })
   return {
-    ...converter,
-    path: converterPath(converter.slug),
+    path: converterPath(slug),
     name,
     title: fill(t.names.title, { name, from, to }),
     description,
     from,
     to,
     lead,
-    card: { ...converter.card, line: card }
+    line: card
   }
+}
+
+function pageOf(converter: Converter, locale: Locale): ConverterPage {
+  const { line, ...named } = namedTool(converter.slug, locale)
+  return { ...converter, ...named, card: { ...converter.card, line } }
+}
+
+export function furiganaPageIn(locale: Locale): FuriganaPage {
+  const { line, ...named } = namedTool(furiganaSlug, locale)
+  return { ...furiganaTool, ...named, slug: furiganaSlug, card: { ...furiganaTool.card, line } }
 }
 
 export const converterPagesIn = (locale: Locale) =>
@@ -55,22 +73,25 @@ export function toolsIndexIn(locale: Locale): SitePage {
 
 export const toolPagesIn = (locale: Locale): SitePage[] => [
   toolsIndexIn(locale),
-  ...converterPagesIn(locale)
+  ...converterPagesIn(locale),
+  furiganaPageIn(locale)
 ]
 
-export function howItWorksIn(slug: ConverterSlug, locale: Locale): RichText[] {
+export function howItWorksIn(slug: ToolSlug, locale: Locale): RichText[] {
   const { first, second } = getDictionary(locale).tools.howItWorks[slug]
   return [first, second].map(richText)
 }
 
-const questionOrder: { [Pair in ConverterPair]: readonly (keyof ToolsText['questions'][Pair])[] } =
-  {
-    kana: ['kanjiAndLetters', 'longMark', 'katakana'],
-    romaji: ['n', 'smallTsu', 'romanization'],
-    width: ['halfWidthKatakana', 'forms', 'hiragana']
-  }
+type QuestionSet = ConverterPair | 'furigana'
 
-export function questionsIn(pair: ConverterPair, locale: Locale): Question[] {
+const questionOrder: { [Set in QuestionSet]: readonly (keyof ToolsText['questions'][Set])[] } = {
+  kana: ['kanjiAndLetters', 'longMark', 'katakana'],
+  romaji: ['n', 'smallTsu', 'romanization'],
+  width: ['halfWidthKatakana', 'forms', 'hiragana'],
+  furigana: ['context', 'limit', 'paste']
+}
+
+export function questionsIn(pair: QuestionSet, locale: Locale): Question[] {
   const text: Record<string, Question> = getDictionary(locale).tools.questions[pair]
   return questionOrder[pair].map(key => text[key])
 }

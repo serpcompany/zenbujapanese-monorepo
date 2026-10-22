@@ -90,7 +90,7 @@ describe("the header's menus are in the page's HTML, with the current page marke
     ])
   })
 
-  test('the Tools menu leads to the tools, the reference pages, and the converters, and Kanji to Furigana is a placeholder', () => {
+  test('the Tools menu leads to the tools, the reference pages, and the converters, Kanji to Furigana among them', () => {
     expect(menuLinks(header('/')).slice(8, 17)).toEqual([
       listed('tools'),
       page('/dictionary/'),
@@ -99,12 +99,13 @@ describe("the header's menus are in the page's HTML, with the current page marke
       page('/dictionary/browse/frequency-dictionaries/'),
       listed('hiragana-to-katakana'),
       listed('romaji-to-kana'),
-      placeholder('kanji-to-furigana'),
+      listed('kanji-to-furigana'),
       listed('tools')
     ])
     expect(listed('tools')[0]).toBe('/tools/')
     expect(listed('hiragana-to-katakana')[0]).toBe('/tools/hiragana-to-katakana/')
     expect(listed('romaji-to-kana')[0]).toBe('/tools/romaji-to-kana/')
+    expect(listed('kanji-to-furigana')[0]).toBe('/tools/kanji-to-furigana/')
   })
 
   test('the Products menu leads to the products pages and the web dictionary, and its planned pages are placeholders', () => {

@@ -203,8 +203,9 @@ Only `src/lib/dictionary/data.ts` reads the dictionary service's client
 (`src/lib/dictionary/api.ts`), so every page gets the site's URLs and, in local development, the
 fixtures; the other callers are `src/lib/dictionary/retired.ts`, which `worker.ts` runs before
 Next.js, and `scripts/write-sitemaps.ts`, which writes the sitemaps at deploy. The browse pages'
-data (`src/lib/dictionary/browse/data.ts`) asks the client `dictionaryService()` returns. The
-rendered-page gate's `src/test/gate.ts` is test tooling and calls it directly.
+data (`src/lib/dictionary/browse/data.ts`) and Kanji to Furigana's readings
+(`src/lib/dictionary/furigana.ts`) ask the client `dictionaryService()` returns. The rendered-page
+gate's `src/test/gate.ts` is test tooling and calls it directly.
 
 `pnpm verify dependencies` checks the same layers by the files imports resolve to, and more: no
 import cycles, nothing outside a test importing a test or `src/test`, every module reachable from
@@ -371,11 +372,10 @@ spelling as written, since the app's form screen searches it normalized but matc
 
 Without a service, the rows are local fixtures in `packages/dictionary-core/src/fixtures/`,
 exported from the app's bundled data by the service's own readers (`pnpm --filter
-zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each
-of its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the
-fixture JSON is generated, so Biome skips it. A fixture search lists its words in
-`fixtureSearchOrder`, the app's order: each is its own match group, so the frequency re-sort
-keeps that order.
+zenbujapanese-dictionary-api fixtures`), so their shapes can't drift; each fixture word and each of
+its conjugated forms keeps its first 50 examples. Rerun it after changing a row shape; the fixture
+JSON is generated, so Biome skips it. A fixture search lists its words in `fixtureSearchOrder`, the
+app's order: each is its own match group, so the frequency re-sort keeps that order.
 
 ### Browse pages
 

@@ -131,7 +131,7 @@ test.describe('site header from 1024 pixels', () => {
     }
   })
 
-  test('the Tools menu opens the tools and two converters, Kanji to Furigana and the Products menu’s planned pages are # placeholders, and All products opens the catalog', async ({
+  test('the Tools menu opens the tools and three converters, the Products menu’s planned pages are # placeholders, and All products opens the catalog', async ({
     page
   }) => {
     await page.goto('/about/')
@@ -144,7 +144,7 @@ test.describe('site header from 1024 pixels', () => {
     ])
     await expect(converters.nth(0)).toHaveAttribute('href', '/tools/hiragana-to-katakana/')
     await expect(converters.nth(1)).toHaveAttribute('href', '/tools/romaji-to-kana/')
-    await expect(converters.nth(2)).toHaveAttribute('href', '#')
+    await expect(converters.nth(2)).toHaveAttribute('href', '/tools/kanji-to-furigana/')
     await expect(page.getByRole('link', { name: /^All free tools/ })).toHaveAttribute(
       'href',
       '/tools/'

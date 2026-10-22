@@ -42,10 +42,14 @@ describe('the converters', () => {
   test.each([
     'en',
     'ja'
-  ] as const)('the tools pages in %s are the index and the six converters, each with its own title and description', locale => {
+  ] as const)('the tools pages in %s are the index, the six converters, and Kanji to Furigana, each with its own title and description', locale => {
     const toolPages = toolPagesIn(locale)
     expect(toolPages.map(page => page.path)).toEqual([...toolPaths])
-    expect(toolPaths).toEqual(['/tools/', ...converterSlugs.map(slug => `/tools/${slug}/`)])
+    expect(toolPaths).toEqual([
+      '/tools/',
+      ...converterSlugs.map(slug => `/tools/${slug}/`),
+      '/tools/kanji-to-furigana/'
+    ])
     expect(new Set(toolPages.map(page => page.title)).size).toBe(toolPages.length)
     expect(new Set(toolPages.map(page => page.description)).size).toBe(toolPages.length)
   })

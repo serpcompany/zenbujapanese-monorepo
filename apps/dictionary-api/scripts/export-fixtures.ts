@@ -23,11 +23,24 @@ const entryNumbers = [
   1612150
 ]
 const kanjiCharacters = ['要']
+const segmentedTexts = [
+  '今日は大人一人と子供二人で、日本の映画を見に行きます。',
+  '今日',
+  '大人',
+  '明日',
+  '日本語を勉強しています。',
+  'お茶を飲みませんか？'
+]
 const examplesPerWord = 2 * examplesPerPage
 
 function writeOneRowPerLine(name: string, rows: unknown[]) {
   const lines = rows.map(row => JSON.stringify(row)).join(',\n')
   writeFileSync(join(output, name), `[\n${lines}\n]\n`)
+}
+
+function writeOneEntryPerLine(name: string, entries: [string, unknown][]) {
+  const lines = entries.map(([key, value]) => `${JSON.stringify(key)}: ${JSON.stringify(value)}`)
+  writeFileSync(join(output, name), `{\n${lines.join(',\n')}\n}\n`)
 }
 
 const resources = resolve(
@@ -141,8 +154,12 @@ const browseAnswers: [{ path: string }, unknown][] = [
   [browseService.kanjiList('jlpt-n5'), browse.kanjiList('jlpt-n5')],
   [browseService.kanjiList('jinmeiyo'), browse.kanjiList('jinmeiyo')]
 ]
-writeFileSync(
-  join(output, 'browse.json'),
-  `{\n${browseAnswers.map(([{ path }, answer]) => `${JSON.stringify(path)}: ${JSON.stringify(answer)}`).join(',\n')}\n}\n`
+writeOneEntryPerLine(
+  'browse.json',
+  browseAnswers.map(([{ path }, answer]) => [path, answer])
+)
+writeOneEntryPerLine(
+  'segmentation.json',
+  segmentedTexts.map(text => [text, dictionary.segment(text)])
 )
 artifact.close()

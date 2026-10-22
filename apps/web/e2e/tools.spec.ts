@@ -7,13 +7,17 @@ import { referenceToolsIn } from '../src/lib/tools/reference-tools'
 import {
   converterPageIn,
   converterPagesIn,
+  furiganaPageIn,
   questionsIn,
   toolPagesIn,
   toolsIndexIn
 } from '../src/lib/tools/tool-pages'
 import { expect, onPhone, test } from './test'
 
-const converters = converterPagesIn('en')
+const converterCards = (locale: 'en' | 'ja') => [
+  ...converterPagesIn(locale),
+  furiganaPageIn(locale)
+]
 const referenceTools = referenceToolsIn('en')
 const toolsIndex = toolsIndexIn('en')
 
@@ -49,7 +53,7 @@ const desktopOnly = () =>
   test.skip(onPhone(), 'A page’s HTML and metadata are the same at every width')
 
 test.describe('the tools index', () => {
-  test('lists the six converters, then the dictionary and reference pages, then the app', async ({
+  test('lists the six converters and Kanji to Furigana, then the dictionary and reference pages, then the app', async ({
     page
   }) => {
     await page.goto('/tools/')
@@ -58,7 +62,7 @@ test.describe('the tools index', () => {
     )
     await expect(
       main(page).getByRole('list', { name: 'Converters' }).getByRole('heading', { level: 3 })
-    ).toHaveText(converters.map(converter => converter.name))
+    ).toHaveText(converterCards('en').map(converter => converter.name))
     await expect(
       main(page)
         .getByRole('list', { name: 'Dictionary and reference' })
@@ -74,7 +78,7 @@ test.describe('the tools index', () => {
   test('each card leads to its page, with no redirect', async ({ page, request }) => {
     await page.goto('/tools/')
     await expectCardsLeadToTheirPages(page, request, [
-      ...converters.map(c => ({ title: c.name, href: c.path })),
+      ...converterCards('en').map(c => ({ title: c.name, href: c.path })),
       ...referenceTools
     ])
     await main(page).getByRole('link', { name: 'Romaji to Kana', exact: true }).click()
@@ -91,14 +95,14 @@ test.describe('the tools index', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ja')
     await expect(main(page).getByRole('heading', { level: 1 })).toHaveText(text.index.title)
     const cards = [
-      ...converterPagesIn('ja').map(c => ({ title: c.name, href: localizedPath(c.path, 'ja') })),
+      ...converterCards('ja').map(c => ({ title: c.name, href: localizedPath(c.path, 'ja') })),
       ...referenceToolsIn('ja').map(tool => ({ ...tool, href: localizedPath(tool.href, 'ja') }))
     ]
     await expect(
       main(page)
         .getByRole('list', { name: text.index.converters })
         .getByRole('heading', { level: 3 })
-    ).toHaveText(converterPagesIn('ja').map(converter => converter.name))
+    ).toHaveText(converterCards('ja').map(converter => converter.name))
     await expectCardsLeadToTheirPages(page, request, cards)
     await expect(
       main(page)
@@ -110,9 +114,14 @@ test.describe('the tools index', () => {
   })
 })
 
-test('the HTML sitemap lists the tools index and every converter', async ({ page }) => {
+test('the HTML sitemap lists the tools index and the six kana and width converters', async ({
+  page
+}) => {
   await page.goto('/sitemap/')
-  for (const tool of [{ name: toolsIndex.title, path: toolsIndex.path }, ...converters]) {
+  for (const tool of [
+    { name: toolsIndex.title, path: toolsIndex.path },
+    ...converterPagesIn('en')
+  ]) {
     await expect(main(page).getByRole('link', { name: tool.name, exact: true })).toHaveAttribute(
       'href',
       tool.path

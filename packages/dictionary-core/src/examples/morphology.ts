@@ -122,3 +122,39 @@ export function groupInflections(candidates: MorphologyCandidate[]): MorphologyC
   }
   return grouped
 }
+
+const isNumeral = (candidate: MorphologyCandidate) =>
+  candidate.partOfSpeech[0] === '名詞' &&
+  (candidate.partOfSpeech[1] === '数' || candidate.partOfSpeech[1] === '数詞')
+
+const isCounter = (candidate: MorphologyCandidate) => candidate.partOfSpeech.includes('助数詞')
+
+export interface NumberWithCounter {
+  word: MorphologyCandidate
+  pieces: number
+}
+
+export function numberWithCounterAt(
+  words: readonly MorphologyCandidate[],
+  start: number
+): NumberWithCounter | null {
+  if (!isNumeral(words[start]) || (start > 0 && isNumeral(words[start - 1]))) return null
+  let end = start
+  while (end < words.length && isNumeral(words[end])) end += 1
+  if (end === words.length || !isCounter(words[end])) return null
+  const pieces = words.slice(start, end + 1)
+  const surface = pieces.map(piece => piece.surface).join('')
+  return {
+    word: {
+      surface,
+      dictionaryForm: surface,
+      normalizedForm: surface,
+      reading: pieces.map(piece => piece.reading).join(''),
+      partOfSpeech: pieces[0].partOfSpeech,
+      isOutOfVocabulary: pieces.some(piece => piece.isOutOfVocabulary),
+      children: pieces,
+      joinsInflection: false
+    },
+    pieces: pieces.length
+  }
+}

@@ -7,6 +7,7 @@ import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifa
 import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
+import type { SegmentationResponse } from '@zenbu/dictionary-core/cards/segmentation'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { logRequests } from '@zenbu/node-service/http'
 import { errorFields, log } from '@zenbu/node-service/log'
@@ -144,6 +145,13 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
+
+  app.get('/v1/segmentation/:text', async context => {
+    const segmented: SegmentationResponse = {
+      tokens: await service.segment(text(context.req.param('text'), 'text'))
+    }
+    return context.json(segmented)
+  })
 
   const found = <T>(context: Context, answer: T | null, what: string) =>
     answer ? context.json(answer) : context.json({ error: `no such ${what}` }, 404)

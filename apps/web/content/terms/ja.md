@@ -50,6 +50,7 @@ screens are in English; the Japanese pages say so where a reader would otherwise
 | Translate (the app's tab) | 翻訳 | |
 | Player (the app's tab) | プレイヤー | |
 | Lists (the app's tab) | リスト | |
+| Account (the app's tab) | アカウント | アカウントタブ in running text |
 | Known (a learner's mark) | 覚えた | 覚えた単語 for Known Words |
 | handwriting | 手書き入力 | |
 | offline | オフライン | |

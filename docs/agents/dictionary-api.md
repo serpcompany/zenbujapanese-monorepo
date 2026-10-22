@@ -80,11 +80,10 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `APP_REQUESTS_PER_MINUTE` | `60` | How many app-route requests one account may make in a minute. |
 
 The build it reports (`X-Dictionary-Build` on every `/v1` answer but the app routes', and
-`/healthz`) is the
-artifact's SHA-256 prefix and the release: a new artifact or new code is a new build. It reports
-its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its answers' shapes, from
-the core, which the website compares with its own ([`dictionary-core.md`](dictionary-core.md),
-Rules).
+`/healthz`) is the artifact's SHA-256 prefix and the release: a new artifact or new code is a new
+build. It reports its contract too (`X-Dictionary-Contract` and `/healthz`): the number of its
+answers' shapes, from the core, which the website compares with its own
+([`dictionary-core.md`](dictionary-core.md), Rules).
 
 ## Routes
 
@@ -110,6 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
+| `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers (Apps, below), for the website's Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
@@ -207,9 +207,8 @@ pattern, status, and time. Queries never appear in the logs.
 A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
 SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
 `s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in
-full. Grapheme counts and string comparisons take exact
-fast paths (`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is
-the app's SQL.
+full. Grapheme counts and string comparisons take exact fast paths
+(`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is the app's SQL.
 
 ## Code layout
 
@@ -284,11 +283,11 @@ from kuromoji.js, so record it again only when the dictionary files change or th
 meant to answer differently, and read the diff.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
-for `pnpm dev` without a service: the いる homographs and the words written with 要, with two
-pages of examples for each and for each of their conjugated forms, and the kanji 要. The code the
-service answers with reads them from the app's files (or the `Resources` folder given), so their
-shapes can't drift from what staging and production render. It writes one row per line, so a
-regenerated fixture diffs by row.
+for `pnpm dev` without a service: the いる homographs and the words written with 要, with two pages of
+examples for each and for each of their conjugated forms, the kanji 要, and Kanji to Furigana's
+sample and Try texts' segmentation. The code the service answers with reads them from the app's
+files (or the `Resources` folder given), so their shapes can't drift from what staging and
+production render. It writes one row per line, so a regenerated fixture diffs by row.
 
 `pnpm word-cards <word list> <output folder>` exports word cards for an app that ships them, such
 as Tomodachi: the format, the word list, and what an export holds are in

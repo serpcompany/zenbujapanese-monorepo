@@ -110,6 +110,8 @@ export function dictionaryApi(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
     retired: () => required<DictionaryContract['retired']>('/v1/retired'),
+    segmentation: (text: string) =>
+      required<DictionaryContract['segmentation']>(`/v1/segmentation/${segment(text)}`),
     browse: <Name extends BrowseAnswer>(path: BrowsePath<Name>) =>
       get<DictionaryContract[Name]>(path.path),
     health: async (): Promise<ServiceHealth> => {

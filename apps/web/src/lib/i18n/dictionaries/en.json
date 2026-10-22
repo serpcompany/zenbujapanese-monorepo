@@ -1279,10 +1279,10 @@
     },
     "reports": {
       "heading": "Crash and problem reports",
-      "crashes": "When the app crashes, freezes, or is closed by iOS while you're using it, it sends a crash report to Sentry, which collects them for us, so we can find and fix the cause. When a step such as syncing your account, installing an optional dictionary, or starting Translate fails, it sends a code for the step and how it failed, never the error's own message. Crash reports are on by default, and you can turn them off at any time with {sendCrashReports} in the app's Settings.",
+      "crashes": "When the app crashes, freezes, or is closed by iOS while you're using it, it sends a crash report to Sentry, which collects them for us, so we can find and fix the cause. When a step such as syncing your account, installing an optional dictionary, or starting Translate fails, it sends a code for the step and how it failed, never the error's own message. Crash reports are on by default, and you can turn them off at any time with {sendCrashReports} in the app's Account tab.",
       "includes": "A crash report includes where in the app's code the problem happened, the app's version and build, the iOS version, your device's model and its state at the time (such as the memory in use), and a random identifier the app creates on your device, so we can tell how many devices a problem affects. A crash report doesn't link that identifier to your Zenbu account.",
-      "never": "A crash report never includes what you read, type, say, or photograph in the app, such as your searches, notes, lists, photos, or Translate conversations. Nor does it include your location, your device's name, or its language, region, and time zone. Before a report leaves your device, the app removes the file paths and names, links, email addresses, and quoted text it finds in error messages.",
-      "problems": "You can also tell us about a problem with {reportAProblem} in the app's Settings. A problem report holds what you write, the email address in the form for a reply, if there is one, and the details the form lists under {included}: the app's version and build, the iOS version, your device's model, whether you're signed in, whether crash reports are on, which optional dictionaries you've installed, and whether the microphone and camera are allowed. If you're signed in, the form fills in your Zenbu account's email, which you can change or clear; if you're signed out, it sends an email only if you add one. Sentry adds the same technical details and random identifier as a crash report, so we can see a report's email alongside the other reports from the same copy of the app, and your account's email links those reports to your Zenbu account. A problem report is sent even when crash reports are off, because you chose to send it.",
+      "never": "A crash report never includes what you read, type, say, or photograph in the app, such as your searches, notes, lists, photos, or Translate conversations. Nor does it include your location, your device's name, or its language, region, and time zone. Before a report leaves your device, the app removes the file paths, links, email addresses, and quoted text it finds in error messages, and the file names it recognizes, such as ones ending in .txt or .jpg.",
+      "problems": "You can also tell us about a problem with {reportAProblem} in the app's Account tab. A problem report holds what you write, the email address in the form for a reply, if there is one, and the details the form lists under {included}: the app's version and build, the iOS version, your device's model, whether you're signed in, whether crash reports are on, which optional dictionaries you've installed, and whether the microphone and camera are allowed. If you're signed in, the form fills in your Zenbu account's email, which you can change or clear; if you're signed out, it sends an email only if you add one. Sentry adds the same technical details and random identifier as a crash report, so we can see a report's email alongside the other reports from the same copy of the app, and your account's email links those reports to your Zenbu account. A problem report is sent even when crash reports are off, because you chose to send it.",
       "written": "The app removes file paths, links, and email addresses from what you write, and sends the rest as you wrote it, so it can hold anything you type, such as a word you looked up. Leave out anything you'd rather not share. The app attaches nothing else: no screenshots, photos, searches, lists, or conversations.",
       "ipAddress": "Sentry receives your IP address with each report, as with any request over the internet, but we've set it not to store the address or the location it suggests."
     },
@@ -1852,6 +1852,13 @@
         "description": "Convert full-width katakana, letters, and numbers to half-width, for systems that only take narrow characters, free in your browser.",
         "lead": "Turn full-width katakana, letters, and numbers into half-width, for systems that only take narrow characters.",
         "card": "Shrink full-width katakana, letters, and numbers."
+      },
+      "kanji-to-furigana": {
+        "from": "Kanji",
+        "to": "Furigana",
+        "description": "Add furigana to Japanese text: paste it and get readings over its kanji, each word read in context by the Zenbu app’s dictionary. Free, up to 200 characters.",
+        "lead": "Paste Japanese text and get furigana over its kanji, each word read in context by the Zenbu app’s dictionary.",
+        "card": "Paste Japanese and get furigana over its kanji."
       }
     },
     "page": {
@@ -1897,6 +1904,22 @@
         "lettersAndNumbers": "Letters and numbers",
         "symbolsAndSpaces": "Symbols and spaces"
       }
+    },
+    "furigana": {
+      "heading": "Paste or type Japanese",
+      "line": "The furigana appear over its kanji as you type.",
+      "input": "Japanese",
+      "output": "With furigana",
+      "placeholder": "Type or paste Japanese here",
+      "empty": "The text shows here with its furigana",
+      "count": {
+        "one": "{count} of {limit} characters",
+        "other": "{count} of {limit} characters"
+      },
+      "tooLong": "That’s more than {limit} characters. Shorten it to add furigana.",
+      "reading": "Reading the text…",
+      "unavailable": "The dictionary didn’t answer, so there’s no furigana yet. Your text is still here.",
+      "retry": "Try again"
     },
     "chart": {
       "title": "Conversion chart",
@@ -2046,6 +2069,10 @@
       "full-width-to-half-width": {
         "first": "Each full-width character becomes its narrow form: <ja>カ</ja> becomes <ja>ｶ</ja>, and <ja>Ａ</ja> becomes <latin>A</latin>. A voiced kana splits into two characters, <ja>ガ</ja> into <ja>ｶﾞ</ja>.",
         "second": "Hiragana and kanji have no half-width form, so they stay as they are."
+      },
+      "kanji-to-furigana": {
+        "first": "Each word is read where it stands, with the dictionary and the word splitting the Zenbu app uses for captions and example sentences, so <ja>今日</ja> reads <ja>きょう</ja> and <ja>大人</ja> reads <ja>おとな</ja>, rather than each kanji on its own. Unlike the other converters, this one sends your text to Zenbu’s dictionary service to read it.",
+        "second": "The furigana go over the kanji only: in <ja>食べます</ja> they cover <ja>食</ja>. Kana, letters, numbers, and punctuation stay as they are, and a word the dictionary can’t read keeps its kanji without furigana."
       }
     },
     "questions": {
@@ -2089,6 +2116,20 @@
         "hiragana": {
           "question": "Does it change hiragana?",
           "answer": "No. Hiragana has no half-width form, so it stays as it is either way."
+        }
+      },
+      "furigana": {
+        "context": {
+          "question": "How does it choose a kanji’s reading?",
+          "answer": "It reads whole words, not single kanji, with the dictionary and word splitting the Zenbu app uses, so 今日 reads きょう and 大人 reads おとな. Where a word splits differently from how it’s read, a reading can still be wrong."
+        },
+        "limit": {
+          "question": "How much text can it read at once?",
+          "answer": "Up to 200 characters at a time, about a paragraph. For a longer text, paste it a paragraph at a time."
+        },
+        "paste": {
+          "question": "Can I paste the result into a document?",
+          "answer": "Yes. Copy puts the text on the clipboard with its furigana as ruby, which apps that show ruby draw over the kanji, and as plain text with each reading in brackets after its word, such as 今日（きょう）."
         }
       }
     },

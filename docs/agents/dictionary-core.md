@@ -25,7 +25,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, a linked word's gloss, and a meaning's glosses, as the entry gives them, to speak and look up (`meaning-actions.ts`). Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
 | `examples/` | Example linking, inflection grouping, the ranks example retrieval shares, which English words are one word's forms (`english-inflection.ts`), and the tokenizer that splits a sentence into words (`ipadic.ts`, [The tokenizer](#the-tokenizer)). | `DictionaryTextData` |
 | `artifact/` | Reads `LanguageReferenceData.sqlite3` and its packs, checks them, and answers search, word, kanji, example, and sitemap requests (`Dictionary`), and the browse pages' (`DictionaryBrowse`). `embedded/` runs the same queries. | Through `embedded/` |
-| `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`). `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
+| `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`), with `segmentationFurigana`. `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
 | `fixtures/` | Rows exported from the app's data for twelve words and the kanji 要, each word and conjugated form with its first 50 examples, for local development and tests, never production. | — |
@@ -75,10 +75,9 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
   it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
   from the files it read and passes it, and the app hands the embedded host the files.
-- `morphology` is an analyzer such as the app's Sudachi, whose dictionary is 217 MB. A
-  `MorphologyWord` lists its part-of-speech tags most general first (名詞, 動詞), and its
-  `dictionaryForm` is `*` or empty when the analyzer has none. An analysis that throws finds no
-  words, as in the app.
+- `morphology` is an analyzer such as the app's Sudachi (a 217 MB dictionary). A `MorphologyWord`
+  lists its part-of-speech tags most general first (名詞, 動詞); its `dictionaryForm` is `*` or empty
+  when the analyzer has none, and an analysis that throws finds no words, as in the app.
 
 ## Embedded
 
@@ -406,10 +405,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   its one entry or lists its candidates. A joined inflection is looked up by its dictionary form,
   never its surface, which can be an unrelated headword (しまった is also "darn it!"); one that resolves
   to nothing falls back to its pieces. A client should cache `lookup` by form (`EmbeddedText` does).
-- A word is looked up only when it is written in kana and kanji, so linking never asks for an
-  ASCII form, and `formLookup` finds nothing for one. `entriesMatchingFirstForms` does look one
-  up, in English, for the app's own exact-form lookups.
+- Only a word in kana and kanji is looked up, and `formLookup` finds nothing for an ASCII form;
+  `entriesMatchingFirstForms` does look one up, in English, for the app's own exact-form lookups.
 - A tokenizer analysis whose tokens don't tile the text is null; the sentence is one unlinked word.
+- **Numerals and their counter** (助数詞) link as one word when that resolves to one entry: 一人 ひとり,
+  二十日 はつか, 一日 いちにち (the tokenizer's reading). 二十歳 (two entries), 十一人, or a page's word stay apart.
 - **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
   何でも), so its examples are the sentences Tatoeba's word index (`ExampleWordIndex`) links to the
   entry; at most 100, counted exactly up to 50, 51 meaning more (`ExampleSentenceResultCount`).

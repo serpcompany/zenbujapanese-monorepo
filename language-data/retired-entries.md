@@ -25,8 +25,8 @@ or was made for another database, and `/v1/retired` answers it
 whose entry is listed into a 410, or a 308 to its replacement
 ([`web.md`](../docs/agents/web.md), Retired word URLs).
 
-Release 2026.10.1 is the first pinned release. Release 2026.10.2 holds the same entries, so it
-retires none.
+Release 2026.10.1 is the first pinned release. Releases 2026.10.2 and 2026.10.3 hold the same
+entries, so they retire none.
 
 ## Which entry replaces a retired one
 

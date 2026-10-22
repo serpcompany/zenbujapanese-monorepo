@@ -68,7 +68,8 @@ describe('routes', () => {
   test.each([
     ['a word number that is not a number', '/v1/words/abc'],
     ['an examples offset past the 100 listed', '/v1/words/1358280/examples?from=100'],
-    ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`]
+    ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`],
+    ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`]
   ])('400s %s', async (_, path) => {
     expect((await app().request(get(path))).status).toBe(400)
   })
@@ -83,6 +84,19 @@ describe('routes', () => {
     const response = await app(fakeService({ word })).request(get(path))
     expect(response.status).toBe(404)
     expect(word).not.toHaveBeenCalled()
+  })
+
+  test('segments the decoded text, slashes and line breaks included, and answers its tokens', async () => {
+    const tokens = [{ text: '今日', reading: 'きょう' }]
+    const segment = vi.fn(async (_text: string) => tokens)
+    const text = '今日/明日\nです'
+    const response = await app(fakeService({ segment })).request(
+      get(`/v1/segmentation/${encodeURIComponent(text)}`)
+    )
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
+    expect(segment).toHaveBeenCalledWith(text)
+    expect(await response.json()).toEqual({ tokens })
   })
 
   test('passes the examples offset on', async () => {

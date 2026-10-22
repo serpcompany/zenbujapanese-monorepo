@@ -1,5 +1,5 @@
 import { BrowseHeading, BrowsePage } from '@/components/dictionary/browse/browse-ui'
-import { CardGrid, ConverterCard, ToolCard } from '@/components/tools/tool-cards'
+import { CardGrid, ConverterCard, FuriganaCard, ToolCard } from '@/components/tools/tool-cards'
 import { ToolSection } from '@/components/tools/tool-section'
 import { ToolsAppCard } from '@/components/tools/tools-app-card'
 import { getDictionary } from '@/lib/i18n/dictionary'
@@ -28,6 +28,9 @@ export default async function ToolsPage({ params }: PageProps<'/[locale]/tools'>
               <ConverterCard slug={converter.slug} locale={locale} />
             </li>
           ))}
+          <li>
+            <FuriganaCard locale={locale} />
+          </li>
         </CardGrid>
       </ToolSection>
       <ToolSection title={text.reference}>

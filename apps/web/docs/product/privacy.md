@@ -74,12 +74,14 @@ build sends a report (#904, Wave 0 of #864). Crash reports (#859) go to Sentry w
 crashes, freezes, or is closed by iOS (a watchdog termination) while in use, and a handled failure
 in account sync, an optional dictionary's install, the dictionary core, or Translate's start
 checks sends a code for the step and how it failed, never the error's message. They're on by
-default, and the **Send crash reports** switch in the app's Settings turns them off. A report holds
+default, and the **Send Crash Reports** switch in the app's Account tab turns them off. A report holds
 the stack trace, version and build, iOS version, device model and state, and a random install ID
 that a crash report doesn't link to the account; never what the learner reads, types, says, or photographs, nor
-location, device name, language, region, or time zone; and the app removes file paths and names,
-links, email addresses, and quoted text from error messages. A problem report (#860), sent with
-**Report a Problem…** in Settings, holds what the learner writes, the form's email for a reply if
+location, device name, language, region, or time zone; and the app removes file paths, links,
+email addresses, and quoted text from error messages, and the file names it recognizes, such as
+ones ending in .txt or .jpg (the scrubber removes a name with a data or media extension, so it
+doesn't say every name). A problem report (#860), sent with
+**Report a Problem…** in the Account tab, holds what the learner writes, the form's email for a reply if
 it has one, and the details under **Included with your report** (version and build, iOS version,
 device model, signed in or not, crash reports on or off, the optional dictionaries installed, and
 whether the microphone and camera are allowed). Signed in, the form fills in the Zenbu account's
@@ -89,16 +91,23 @@ alongside the copy's other reports, and the account's email links them to the ac
 even with crash reports off. The app removes paths, links, and emails from what the learner
 writes and keeps the rest, so the page says it can hold anything they type, and attaches nothing
 else. Sentry receives the IP address and is set not to store it or its location. The app's labels
-are in English in both languages, since its screens are. The services (#861) and the website
+are in English in both languages, since its screens are; the Japanese names the tab アカウント, as
+it names the app's other tabs, with the term list's word. The services (#861) and the website
 (#862) add their own lines when they report.
 
 - Source: #859 and #860 (what each sends, its switch, and its labels); SERP's
   [native app error reporting](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/native-app-error-reporting.md)
   and [native app problem reports](https://github.com/serpcompany/serp/blob/main/docs/engineering/standards/native-app-problem-reports.md)
-  standards (the IP setting, and what a policy says about a problem report); #904.
+  standards (the IP setting, and what a policy says about a problem report); #904; #914 (the
+  switch's name and place, Account on the iPhone, where Report a Problem… is too, and the file
+  names the scrubber removes, from the app's
+  [crash reports](../../../ios/docs/product/crash-reports.md) and
+  [problem reports](../../../ios/docs/product/problem-reports.md) docs and ADR 0018, File names).
 - Check: Privacy spec, "says what crash and problem reports send, what they never send, and how to
-  turn crash reports off", and "/legal/privacy/#reports opens on the crash and problem reports,
-  below the header".
+  turn crash reports off" (with the app's labels as the app writes them, and no Settings),
+  "in Japanese, names the crash reports switch and Report a Problem… as the app shows them, in its
+  Account tab", and "/legal/privacy/#reports opens on the crash and problem reports, below the
+  header".
 
 **Your Zenbu account.** Signed out, the apps send the account service nothing. The first table
 names what an account keeps, by category, and why: the account (the email, and a name, username,
