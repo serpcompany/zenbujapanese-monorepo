@@ -20,7 +20,7 @@ import {
   furiganaPlainText
 } from '@/lib/tools/furigana-tool'
 
-export type FuriganaText = Dictionary['tools']['furigana']
+type FuriganaText = Dictionary['tools']['furigana']
 
 async function writeFurigana(furigana: readonly RubySegment[]) {
   const plain = furiganaPlainText(furigana)
