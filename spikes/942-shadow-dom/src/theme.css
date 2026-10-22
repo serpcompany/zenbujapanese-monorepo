@@ -1,0 +1,5 @@
+@import "../../../apps/web/src/app/globals.css";
+@source "../../../apps/web/src/components/ui";
+@source "../../../apps/web/src/components/dictionary/ruby-text.tsx";
+@source "./";
+@font-face { font-family: SpikeGeistShadow; src: url(/geist.woff2) format("woff2"); }
