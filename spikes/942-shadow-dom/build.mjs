@@ -16,6 +16,9 @@ writeFileSync(here + 'out/a-raw.css', raw)
 writeFileSync(here + 'out/b-host.css', hosted)
 writeFileSync(here + 'out/c-host-px.css', px)
 writeFileSync(here + 'out/properties.css', properties)
+writeFileSync(here + 'out/d-reset.css', `:host{all:initial}\n${px}`)
+const fallback = px.match(/@supports \(\(-webkit-hyphens[^{]*/)[0]
+writeFileSync(here + 'out/e-fallback.css', px.replace(fallback, '@supports (display: block) '))
 await build({
   entryPoints: [here + 'src/app.tsx'],
   bundle: true,

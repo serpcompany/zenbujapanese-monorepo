@@ -6,11 +6,11 @@ const out = fileURLToPath(new URL('./out/', import.meta.url))
 const hostile = `html{font-size:10px} body{font-family:serif;color:rgb(255,0,0);line-height:3;letter-spacing:2px}
 :root{--card:rgb(0,255,0);--background:rgb(0,255,0);--radius:0px;--font-sans:serif}
 @font-face{font-family:SpikeGeistDoc;src:url(/geist.woff2) format("woff2")}`
-const variants = { A: 'a-raw.css', B: 'b-host.css', C: 'c-host-px.css', D: 'd-reset.css' }
+const variants = { A: 'a-raw.css', B: 'b-host.css', C: 'c-host-px.css', D: 'd-reset.css', E: 'e-fallback.css' }
 const browser = await chromium.launch({ executablePath: process.env.SPIKE_CHROME })
 console.log('browser', browser.version())
 for (const [name, file] of Object.entries(variants)) {
-  for (const hoist of name >= 'C' ? [false, true] : [false]) {
+  for (const hoist of name === 'E' ? [false] : name >= 'C' ? [false, true] : [false]) {
     const page = await browser.newPage()
     await page.route('http://spike.test/**', route => {
       const path = new URL(route.request().url()).pathname
