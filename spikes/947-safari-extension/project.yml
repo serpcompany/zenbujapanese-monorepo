@@ -1,0 +1,108 @@
+name: SafariSpike
+options:
+  bundleIdPrefix: com.zenbujapanese.dictionary
+  deploymentTarget:
+    iOS: "26.0"
+packages:
+  ZenbuJapaneseModules:
+    path: ../../apps/ios/Modules
+settings:
+  base:
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    SPIKE_SUFFIX: .spike947
+    ONLY_ACTIVE_ARCH: YES
+    ARCHS: arm64
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  SafariSpike:
+    type: application
+    platform: iOS
+    sources: [Host]
+    dependencies:
+      - target: SafariSpikeExtension
+      - target: SafariSpikeShare
+      - package: ZenbuJapaneseModules
+        product: SearchExperience
+      - package: ZenbuJapaneseModules
+        product: DictionaryData
+    entitlements:
+      path: Host/Host.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.zenbujapanese.dictionary$(SPIKE_SUFFIX)]
+    info:
+      path: Host/Info.plist
+      properties:
+        CFBundleDisplayName: Safari Spike 947
+        UILaunchScreen: {}
+        ZenbuBundleIDSuffix: $(SPIKE_SUFFIX)
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes: [$(PRODUCT_BUNDLE_IDENTIFIER)]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zenbujapanese.dictionary$(SPIKE_SUFFIX)
+  SafariSpikeExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Extension
+        excludes: ["Web/**"]
+      - path: Extension/Web/manifest.json
+        buildPhase: resources
+      - path: Extension/Web/background.js
+        buildPhase: resources
+      - path: Extension/Web/content.js
+        buildPhase: resources
+      - path: Extension/Web/_locales
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: ZenbuJapaneseModules
+        product: SearchExperience
+    entitlements:
+      path: Extension/Extension.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.zenbujapanese.dictionary$(SPIKE_SUFFIX)]
+    info:
+      path: Extension/Info.plist
+      properties:
+        CFBundleDisplayName: Safari Spike 947
+        ZenbuBundleIDSuffix: $(SPIKE_SUFFIX)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.web-extension
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SafariWebExtensionHandler
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zenbujapanese.dictionary$(SPIKE_SUFFIX).safari
+  SafariSpikeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: SafariSpike
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zenbujapanese.dictionary$(SPIKE_SUFFIX).uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: SafariSpike
+  SafariSpikeShare:
+    type: app-extension
+    platform: iOS
+    sources: [Share]
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: Safari Spike 947
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsText: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.zenbujapanese.dictionary$(SPIKE_SUFFIX).share

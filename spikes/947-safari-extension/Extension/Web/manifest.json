@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "default_locale": "en",
+  "name": "Safari Spike 947",
+  "description": "Throwaway spike for #947: look up a selected word in the app's dictionary.",
+  "version": "0.1",
+  "permissions": ["nativeMessaging"],
+  "background": {
+    "scripts": ["background.js"],
+    "type": "module",
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}
