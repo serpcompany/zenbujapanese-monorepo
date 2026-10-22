@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2"
+      "sha256" : "02185294cb22c112c208a95e712ae38b0b2deee86c71d10748cdedec9baec080"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
+      "sha256" : "738de985a600be79a4c002421db5f7baf0b54950c6bea2fa5bdef40704e884b0"
     },
     {
       "name" : "Kuromoji/base.dat.gz",

@@ -208,16 +208,16 @@
       "decision_comment_url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/140#issuecomment-5303558635",
       "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
     },
-    "example_transform_sha256": "714bc94967c5fb2252635c0a1bc2ea4a963e020307b091a2cc07e1fb5db2d494",
+    "example_transform_sha256": "7b24e84c301bdbd0a3dda375b6512748c9096cd8e617467688c3b92e0b1cb0d4",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
+    "import_tool_sha256": "ec7646e49dc3edb3de59d628345530660f06fa8ec6b8b00e00c33d9594e0964e",
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "database_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
-    "database_bytes": 483983360
+    "database_sha256": "02185294cb22c112c208a95e712ae38b0b2deee86c71d10748cdedec9baec080",
+    "database_bytes": 502886400
   }
 }

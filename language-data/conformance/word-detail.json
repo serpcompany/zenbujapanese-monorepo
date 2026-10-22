@@ -2,27 +2,27 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2"
+      "sha256" : "02185294cb22c112c208a95e712ae38b0b2deee86c71d10748cdedec9baec080"
     },
     {
       "name" : "CompoundPitch.sqlite3",
-      "sha256" : "1545dbc29fb6c453e5c3e82f54ea3d5f2b0e71d46fc1392185355136b34c648a"
+      "sha256" : "2fc9ea76d9a996573cac27b39ae935b04136aedeaa9059825353821e369255ce"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
+      "sha256" : "738de985a600be79a4c002421db5f7baf0b54950c6bea2fa5bdef40704e884b0"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "d4f98779aed948afe82897b73629a58f82a2d7cb439e771c27a4d09ad545f689"
+      "sha256" : "72e1f5438251396544722d974df81f8afef2bc3394dea7b84d4885fde2c5e760"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "81fa0e721d4968e3084fdb635acbfb10828ef74b25f86a5c491cc7a028d8f751"
+      "sha256" : "4ed98fb01cceac21a85b676b570300fc866502a24eed7c6ec7ac356768317da5"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "aabac08f5e869177d71367fde7f14162c4dbd4965ddb8c6146436ca0f469b4fd"
+      "sha256" : "c9d4a99056b2784cc7698b56e09152394eb17d22b45af6c4f4d4d259129e85c8"
     },
     {
       "name" : "KanjiReferenceData.json",
