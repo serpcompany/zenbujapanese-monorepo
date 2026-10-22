@@ -52,6 +52,13 @@ final class TranslateUITests: ZenbuUITestCase {
     waitUntilGone(find("translate.typed.direction", in: app))
   }
 
+  func testAWordSheetListsEachRowOnceInItsOwnSection() {
+    let app = typeASentenceToTranslate(Self.showingOnlyTheWords(["meaning", "frequency"]))
+    tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
+    waitForSheet("recognized-word-sheet", in: app)
+    assertListedOnceInThisOrder(Self.wordRows(meanings: 2), in: app)
+  }
+
   func testReturnInAWordSheetsNoteKeepsTheSheetOpen() {
     let app = typeASentenceToTranslate()
     tap(word(containing: "どこ", identifiedBy: "translate.typed.result.", in: app))
@@ -93,8 +100,8 @@ final class TranslateUITests: ZenbuUITestCase {
     XCTAssertTrue(text(of: row).contains(" · "), "the row gives its day and time: \(text(of: row))")
   }
 
-  private func typeASentenceToTranslate() -> XCUIApplication {
-    let app = launch(Self.script)
+  private func typeASentenceToTranslate(_ environment: [String: String] = [:]) -> XCUIApplication {
+    let app = launch(Self.script.merging(environment) { $1 })
     open(.translate, in: app)
     tap(find("translate.start.text", in: app))
     type("Where can I buy a Suica card?", into: waitFor(find("translate.typed.input", in: app)))

@@ -18,13 +18,15 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(menuChoice("Mark as Unknown", in: app))
   }
 
+  func testEachRowIsListedOnceInItsOwnSection() {
+    let app = launch(Self.showingOnlyTheWords(["meaning", "frequency", "related"]))
+    openWord("犬", searching: "inu", in: app)
+    assertListedOnceInThisOrder(Self.wordRows(meanings: 4, related: ["密告者"]), in: app)
+  }
+
   func testAMeaningSpeaksInEnglishAndLooksUpAGloss() {
     let app = launch(["ZENBU_SPEECH_STAND_IN": "1"])
-    search("inu", in: app)
-    tap(
-      app.descendants(matching: .any)
-        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '犬'"))
-        .firstMatch)
+    openWord("犬", searching: "inu", in: app)
     let spoken = find("speech.spoken", in: app)
     tap(find("word-detail.pronounce", in: app))
     waitUntil(spoken, mentions: "ja-JP いぬ")
@@ -91,11 +93,7 @@ final class WordDetailUITests: ZenbuUITestCase {
 
   func testTappingAKanjiInTheHeadwordHighlightsItsReading() {
     let app = launch()
-    search("school", in: app)
-    tap(
-      app.descendants(matching: .any)
-        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '学校'"))
-        .firstMatch)
+    openWord("学校", searching: "school", in: app)
     if device == .mac {
       assertTheMacHighlightsTheHeadwordsFirstKanji(in: app)
       return

@@ -239,7 +239,8 @@ Below the top card, sections appear in this order: Meaning, Frequency, Alternati
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
-`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page, and
+each row once in its section) and `TranslateUITests.testAWordSheetListsEachRowOnceInItsOwnSection`.
 
 Each meaning opens a menu. **Speak** reads its glosses, each whole as JMdict gives it, in an English
 voice, leaving out a parenthesis that ends one and reading a leading one as words ("dog (Canis

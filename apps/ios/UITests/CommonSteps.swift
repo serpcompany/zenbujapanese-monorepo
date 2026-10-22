@@ -57,11 +57,42 @@ extension ZenbuUITestCase {
   }
 
   func openTaberu(in app: XCUIApplication) {
-    search("taberu", in: app)
-    tap(
-      app.descendants(matching: .any)
-        .matching(NSPredicate(format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH '食べる'"))
-        .firstMatch)
+    openWord("食べる", searching: "taberu", in: app)
+  }
+
+  func openWord(_ headword: String, searching query: String, in app: XCUIApplication) {
+    search(query, in: app)
+    let result = NSPredicate(
+      format: "identifier BEGINSWITH 'result.' AND label BEGINSWITH %@", headword)
+    tap(app.descendants(matching: .any).matching(result).firstMatch)
+  }
+
+  static func showingOnlyTheWords(_ sections: [String]) -> [String: String] {
+    ["ZENBU_ONLY_SECTION": sections.map { "word-detail.\($0)" }.joined(separator: ",")]
+  }
+
+  static func wordRows(meanings: Int, related: [String] = []) -> [String] {
+    (1...meanings).map { "word-detail.meaning.\($0)" }
+      + [AccountUITests.jlpt, AccountUITests.youTube].map { "word-detail.frequency.\($0)" }
+      + related.map { "word-detail.related.\($0)" }
+  }
+
+  func assertListedOnceInThisOrder(
+    _ identifiers: [String], in app: XCUIApplication, file: StaticString = #filePath,
+    line: UInt = #line
+  ) {
+    var above: (identifier: String, top: CGFloat)?
+    for identifier in identifiers {
+      let listed = app.descendants(matching: .any).matching(identifier: identifier)
+      assertOnScreen(listed.firstMatch, in: app, file: file, line: line)
+      XCTAssertEqual(listed.count, 1, "\(identifier) is listed once", file: file, line: line)
+      let top = listed.firstMatch.frame.minY
+      if let above {
+        XCTAssertGreaterThan(
+          top, above.top, "\(identifier) is below \(above.identifier)", file: file, line: line)
+      }
+      above = (identifier, top)
+    }
   }
 
   @discardableResult

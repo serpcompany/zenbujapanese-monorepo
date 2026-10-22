@@ -79,7 +79,8 @@ a note typed in the sheet would open the full entry), and a page's trailing bar 
 (`sheetSize(onMac:)` says so through the environment) and in the bar everywhere else. That's how a
 word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()` lays a row's icon tile
 beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
-the title was drawn over it.
+the title was drawn over it. A Mac `List` gives rows that share an ID, even across sections, one
+row's content, so a word page's rows carry their section (`SectionRow`).
 
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
 anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
@@ -750,8 +751,9 @@ notes and photos an earlier version saved move to their word's Language Referenc
 ## Account and sync
 
 The app signs in to the account service as `zenbu-ios` and syncs known words, lists, watch history,
-Translate's bookmarked sentences, the profile and its photo, word notes, the Media Library, settings,
-and recent searches, as [`account-clients.md`](account-clients.md) says. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
+Translate's bookmarked sentences, the profile and its photo, word notes, the Media Library,
+settings, and recent searches, as [`account-clients.md`](account-clients.md) says. The code is in
+`SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes
 and their answers), `AccountTokens.swift`, `AccountSync.swift`, `AccountSyncState.swift`, and
 `ProfileSync.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift` and
