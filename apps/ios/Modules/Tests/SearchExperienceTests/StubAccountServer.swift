@@ -124,33 +124,16 @@ final class StubAccountServer: @unchecked Sendable {
   }
 }
 
-final class HeldReply: @unchecked Sendable {
-  static let limit: DispatchTimeInterval = .seconds(30)
-  private let letGoSignal = DispatchSemaphore(value: 0)
-  private let lock = NSLock()
-  private var expired = false
-
-  var wasNeverLetGo: Bool { lock.withLock { expired } }
-
-  func letGo() {
-    letGoSignal.signal()
-  }
-
-  func after(_ reply: @autoclosure () -> StubReply) -> StubReply {
-    guard letGoSignal.wait(timeout: .now() + Self.limit) == .success else {
-      lock.withLock { expired = true }
-      return .error(500, "held_reply_never_let_go")
-    }
-    return reply()
-  }
-}
-
 final class LaterReply: @unchecked Sendable {
   private let lock = NSLock()
   private var sent: StubReply?
   private var waiting: [@Sendable (StubReply) -> Void] = []
+  private let (arrivals, arrive) = AsyncStream.makeStream(of: Void.self)
 
-  var isWaiting: Bool { lock.withLock { !waiting.isEmpty } }
+  func asked() async {
+    var arrived = arrivals.makeAsyncIterator()
+    _ = await arrived.next()
+  }
 
   func send(_ reply: StubReply) {
     let waiting = lock.withLock {
@@ -166,6 +149,7 @@ final class LaterReply: @unchecked Sendable {
       if sent == nil { waiting.append(deliver) }
       return sent
     }
+    arrive.yield()
     if let ready { deliver(ready) }
   }
 }

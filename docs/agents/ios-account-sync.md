@@ -206,7 +206,10 @@ sync; what the learner sees is in the product docs'
 `AccountSignInTests`, `AccountSyncTests`, `AccountSyncConflictTests`, `AccountSyncRecoveryTests`,
 `AccountSyncFullReadTests`, `AccountSyncWatchHistoryTests`, `AccountSyncBookmarkTests`, `AccountSyncProfileTests`,
 `AccountSyncKeptTests`, `AccountSyncPhotoTests`, and `AccountSignedOutTests` run the client
-against a stub server (`StubAccountServer`, a `URLProtocol`):
+against a stub server (`StubAccountServer`, a `URLProtocol`, which answers on the one thread
+every stubbed request in the test process shares, so it never waits there: a reply a test holds
+is a `LaterReply`, sent when the test says, and `asked()` awaits its request;
+`StubAccountServerTests`):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410` and full reads dropping only what the account forgets, even

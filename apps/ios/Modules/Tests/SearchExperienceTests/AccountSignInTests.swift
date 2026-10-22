@@ -202,24 +202,23 @@ struct AccountSignInTests {
   func sessionConfirmedDuringRefresh(earlierAnswers status: Int) async throws {
     let server = StubAccountServer()
     let storage = MemorySessionTokenStorage("earlier.signed")
-    let confirmed = HeldReply()
+    let confirmed = LaterReply()
     let earlier = Date(timeIntervalSince1970: 1_900_000_000)
     let renewed = earlier.addingTimeInterval(60)
     server.respond { request in
       guard request.header("Authorization") == "Bearer earlier.signed" else {
         return .json(200, ["token": StubTokens.access(expiresAt: renewed)])
       }
-      return confirmed.after(
-        status == 401
-          ? .error(401, "unauthorized")
-          : .json(200, ["token": StubTokens.access(expiresAt: earlier)]))
+      return .later(confirmed)
     }
-    let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
+    let (tokens, refresh) = await refreshHeld(at: server, storage: storage, until: confirmed)
     tokens.confirmSession(with: "confirmed.signed")
-    confirmed.letGo()
+    confirmed.send(
+      status == 401
+        ? .error(401, "unauthorized")
+        : .json(200, ["token": StubTokens.access(expiresAt: earlier)]))
 
     #expect(AccessTokenClaims.expiry(of: try await refresh.value) == renewed)
-    #expect(!confirmed.wasNeverLetGo, "the held refresh was never let go")
     #expect(storage.read() == "confirmed.signed")
     #expect(server.requests(to: "GET /v1/auth/token").count == 2)
   }
@@ -230,22 +229,21 @@ struct AccountSignInTests {
   func refreshAcrossAnotherSignIn() async throws {
     let server = StubAccountServer()
     let storage = MemorySessionTokenStorage("first.signed")
-    let swapped = HeldReply()
+    let swapped = LaterReply()
     let expiry = Date(timeIntervalSince1970: 1_900_000_000)
     let other = expiry.addingTimeInterval(60)
     server.respond { request in
       guard request.header("Authorization") == "Bearer first.signed" else {
         return .json(200, ["token": StubTokens.access(expiresAt: other)])
       }
-      return swapped.after(.json(200, ["token": StubTokens.access(expiresAt: expiry)]))
+      return .later(swapped)
     }
-    let (tokens, refresh) = try await refreshHeld(at: server, storage: storage)
+    let (tokens, refresh) = await refreshHeld(at: server, storage: storage, until: swapped)
     tokens.forgetSession()
     tokens.replaceSession(with: "other.signed")
-    swapped.letGo()
+    swapped.send(.json(200, ["token": StubTokens.access(expiresAt: expiry)]))
 
     await #expect(throws: AccountServiceError.sessionEnded) { try await refresh.value }
-    #expect(!swapped.wasNeverLetGo, "the held refresh was never let go")
     #expect(
       server.requests(to: "GET /v1/auth/token").allSatisfy {
         $0.header("Authorization") == "Bearer first.signed"
@@ -260,16 +258,13 @@ struct AccountSignInTests {
   func syncAcrossAnotherSignIn() async throws {
     let fixture = try await AccountFixture.afterSignIn()
     fixture.now += 15 * 60
-    let held = HeldReply()
+    let held = LaterReply()
     let expiry = fixture.now + 15 * 60
     fixture.server.respond { request in
-      if request.route == "GET /v1/auth/token" {
-        return held.after(.json(200, ["token": StubTokens.access(expiresAt: expiry)]))
-      }
-      return StubSync.answer(cursor: "cursor-2")
+      request.route == "GET /v1/auth/token" ? .later(held) : StubSync.answer(cursor: "cursor-2")
     }
-    try await fixture.syncAcrossAnotherSignIn(letting: held, once: "GET /v1/auth/token")
-    #expect(!held.wasNeverLetGo, "the held refresh was never let go")
+    try await fixture.syncAcrossAnotherSignIn(
+      holding: held, until: .json(200, ["token": StubTokens.access(expiresAt: expiry)]))
     #expect(fixture.sync.account?.userID == "learner-2")
     #expect(fixture.storage.read() == "session-2.signed")
     #expect(!fixture.sync.sessionEndedOnItsOwn)
@@ -303,14 +298,12 @@ struct AccountSignInTests {
   }
 
   private func refreshHeld(
-    at server: StubAccountServer, storage: MemorySessionTokenStorage
-  ) async throws -> (AccountTokens, Task<String, Error>) {
+    at server: StubAccountServer, storage: MemorySessionTokenStorage, until held: LaterReply
+  ) async -> (AccountTokens, Task<String, Error>) {
     let tokens = AccountTokens(
       api: AccountAPI(baseURL: server.baseURL, session: server.session), storage: storage)
     let refresh = Task { try await tokens.validAccessToken() }
-    while server.requests(to: "GET /v1/auth/token").isEmpty {
-      try await Task.sleep(for: .milliseconds(5))
-    }
+    await held.asked()
     return (tokens, refresh)
   }
 

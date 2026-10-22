@@ -228,7 +228,7 @@ struct AccountSyncFileTests {
     .timeLimit(.minutes(1)), arguments: [true, false])
   func downloadAcrossAnotherSignIn(arrives: Bool) async throws {
     let fixture = try await Fixture.afterSignIn()
-    let held = HeldReply()
+    let held = LaterReply()
     let file = photo(0)
     let reply: StubReply =
       arrives ? .answer(status: 200, headers: [:], body: file) : .error(404, "photo_file_missing")
@@ -241,11 +241,11 @@ struct AccountSyncFileTests {
               ["id": file.sha256, "name": "0.jpg", "savedAt": "2026-10-06T10:00:00.000Z"])
           ], cursor: "c2")
       },
-      files: { _ in held.after(reply) })
-    try await fixture.syncAcrossAnotherSignIn(letting: held, once: "GET /v1/photos/\(file.sha256)")
+      files: { _ in .later(held) })
+    try await fixture.syncAcrossAnotherSignIn(holding: held, until: reply)
     #expect(fixture.sync.photosOnTheirWay == 0)
 
-    #expect(!held.wasNeverLetGo, "the held download was never let go")
+    #expect(downloads(of: file, on: fixture) == 1)
     #expect(await shown(in: fixture) == 0)
     #expect(fixture.sync.state.waitingFiles.isEmpty)
     #expect(fixture.sync.state.missingFiles.isEmpty)

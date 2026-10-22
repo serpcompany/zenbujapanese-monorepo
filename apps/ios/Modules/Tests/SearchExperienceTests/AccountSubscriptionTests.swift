@@ -267,9 +267,9 @@ struct AccountSubscriptionTests {
     }
     let subscription = fixture.account.subscription
     let buying = Task { await subscription.subscribe(to: Answers.monthly) }
-    while !laterPurchase.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    await laterPurchase.asked()
     let reading = Task { await subscription.refresh() }
-    while !laterRead.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    await laterRead.asked()
 
     laterPurchase.send(.json(200, Answers.subscribed()))
     await buying.value

@@ -83,7 +83,7 @@ struct AccountSubscriptionStateTests {
     }
     let subscription = fixture.account.subscription
     let older = Task { await subscription.refresh() }
-    while !late.isWaiting { try await Task.sleep(for: .milliseconds(5)) }
+    await late.asked()
 
     await subscription.subscribe(to: Answers.monthly)
     late.send(none)
