@@ -2,27 +2,27 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2"
+      "sha256" : "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed"
     },
     {
       "name" : "CompoundPitch.sqlite3",
-      "sha256" : "1545dbc29fb6c453e5c3e82f54ea3d5f2b0e71d46fc1392185355136b34c648a"
+      "sha256" : "95ac9930870679e632bfb1904ccb305c8ef28bc49d61ecdd3dbb285beffcf915"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "10f8410301bf8291faed20d85de41d1be8a01c7606751071940cda3a4329f15d"
+      "sha256" : "1eb5f1b8545c23522b0e1b6f45d9ef51f632d6451ae64af96f9ed4f0956efb47"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "d4f98779aed948afe82897b73629a58f82a2d7cb439e771c27a4d09ad545f689"
+      "sha256" : "e1ab385a81e7bf24793bbc5e2036918e750c12b9eadc0f11ecfa1600ac32c579"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "81fa0e721d4968e3084fdb635acbfb10828ef74b25f86a5c491cc7a028d8f751"
+      "sha256" : "a2887c91ebef445b2e90df87deb2e2a8f729d3f5844f8fe49fd425cbf80b79cb"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "aabac08f5e869177d71367fde7f14162c4dbd4965ddb8c6146436ca0f469b4fd"
+      "sha256" : "16bcc1ab1586105d7e5f28b2ddf9f1ce3191b44371e4321e6894e625bdd9f5ed"
     },
     {
       "name" : "KanjiReferenceData.json",
@@ -4978,6 +4978,13 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to see",
+            "to look",
+            "to watch",
+            "to view",
+            "to observe"
+          ],
           "meaning" : "to see, to look, to watch, to view, to observe",
           "notes" : [
 
@@ -4988,6 +4995,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to examine",
+            "to look over",
+            "to assess",
+            "to check",
+            "to judge"
+          ],
           "meaning" : "to examine, to look over, to assess, to check, to judge",
           "notes" : [
 
@@ -4998,6 +5012,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to look after",
+            "to attend to",
+            "to take care of",
+            "to keep an eye on"
+          ],
           "meaning" : "to look after, to attend to, to take care of, to keep an eye on",
           "notes" : [
 
@@ -5008,6 +5028,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to experience",
+            "to meet with (misfortune, success, etc.)"
+          ],
           "meaning" : "to experience, to meet with (misfortune, success, etc.)",
           "notes" : [
 
@@ -5018,6 +5042,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to try ...",
+            "to have a go at ...",
+            "to give ... a try"
+          ],
           "meaning" : "to try ..., to have a go at ..., to give ... a try",
           "notes" : [
             "Usually written in kana",
@@ -5029,6 +5058,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to see (that) ...",
+            "to find (that) ..."
+          ],
           "meaning" : "to see (that) ..., to find (that) ...",
           "notes" : [
             "Usually written in kana",
@@ -9696,6 +9729,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to eat"
+          ],
           "meaning" : "to eat",
           "notes" : [
 
@@ -9706,6 +9742,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to live on (e.g. a salary)",
+            "to live off",
+            "to subsist on"
+          ],
           "meaning" : "to live on (e.g. a salary), to live off, to subsist on",
           "notes" : [
 
@@ -12077,6 +12118,14 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to be needed",
+            "to be necessary",
+            "to be required",
+            "to be wanted",
+            "to need",
+            "to want"
+          ],
           "meaning" : "to be needed, to be necessary, to be required, to be wanted, to need, to want",
           "notes" : [
             "Usually written in kana"
@@ -16190,6 +16239,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to be (of animate objects)",
+            "to exist"
+          ],
           "meaning" : "to be (of animate objects), to exist",
           "notes" : [
             "Usually written in kana"
@@ -16200,6 +16253,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to stay"
+          ],
           "meaning" : "to stay",
           "notes" : [
             "Usually written in kana"
@@ -16210,6 +16266,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to be ...-ing"
+          ],
           "meaning" : "to be ...-ing",
           "notes" : [
             "Usually written in kana",
@@ -16221,6 +16280,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to have ...-ed",
+            "to be ...-ed"
+          ],
           "meaning" : "to have ...-ed, to be ...-ed",
           "notes" : [
             "Usually written in kana",
@@ -19078,6 +19141,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "high",
+            "tall"
+          ],
           "meaning" : "high, tall",
           "notes" : [
 
@@ -19087,6 +19154,10 @@
           ]
         },
         {
+          "glosses" : [
+            "expensive",
+            "high-priced"
+          ],
           "meaning" : "expensive, high-priced",
           "notes" : [
 
@@ -19096,6 +19167,10 @@
           ]
         },
         {
+          "glosses" : [
+            "high (level)",
+            "above average (in degree, quality, etc.)"
+          ],
           "meaning" : "high (level), above average (in degree, quality, etc.)",
           "notes" : [
 
@@ -19105,6 +19180,9 @@
           ]
         },
         {
+          "glosses" : [
+            "loud"
+          ],
           "meaning" : "loud",
           "notes" : [
 
@@ -19114,6 +19192,10 @@
           ]
         },
         {
+          "glosses" : [
+            "high-pitched",
+            "shrill"
+          ],
           "meaning" : "high-pitched, shrill",
           "notes" : [
 
@@ -21467,6 +21549,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "big",
+            "large",
+            "great"
+          ],
           "meaning" : "big, large, great",
           "notes" : [
 
@@ -21476,6 +21563,9 @@
           ]
         },
         {
+          "glosses" : [
+            "loud"
+          ],
           "meaning" : "loud",
           "notes" : [
 
@@ -21485,6 +21575,10 @@
           ]
         },
         {
+          "glosses" : [
+            "extensive",
+            "spacious"
+          ],
           "meaning" : "extensive, spacious",
           "notes" : [
 
@@ -21494,6 +21588,11 @@
           ]
         },
         {
+          "glosses" : [
+            "important",
+            "decisive",
+            "valuable"
+          ],
           "meaning" : "important, decisive, valuable",
           "notes" : [
 
@@ -21503,6 +21602,10 @@
           ]
         },
         {
+          "glosses" : [
+            "older",
+            "grown-up"
+          ],
           "meaning" : "older, grown-up",
           "notes" : [
 
@@ -23114,6 +23217,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "quiet",
+            "silent"
+          ],
           "meaning" : "quiet, silent",
           "notes" : [
 
@@ -23123,6 +23230,10 @@
           ]
         },
         {
+          "glosses" : [
+            "slow",
+            "unhurried"
+          ],
           "meaning" : "slow, unhurried",
           "notes" : [
 
@@ -23132,6 +23243,10 @@
           ]
         },
         {
+          "glosses" : [
+            "calm",
+            "peaceful"
+          ],
           "meaning" : "calm, peaceful",
           "notes" : [
 
@@ -28133,6 +28248,12 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to go",
+            "to move (towards)",
+            "to head (towards)",
+            "to leave (for)"
+          ],
           "meaning" : "to go, to move (towards), to head (towards), to leave (for)",
           "notes" : [
 
@@ -28143,6 +28264,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to move through",
+            "to travel across",
+            "to walk along (e.g. a road)"
+          ],
           "meaning" : "to move through, to travel across, to walk along (e.g. a road)",
           "notes" : [
 
@@ -28153,6 +28279,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to go (well, badly, etc.)",
+            "to proceed",
+            "to turn out",
+            "to get along"
+          ],
           "meaning" : "to go (well, badly, etc.), to proceed, to turn out, to get along",
           "notes" : [
 
@@ -28163,6 +28295,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to do (in a particular way)",
+            "to go (with; a choice)",
+            "to try"
+          ],
           "meaning" : "to do (in a particular way), to go (with; a choice), to try",
           "notes" : [
             "oft. as で〜"
@@ -28173,6 +28310,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to pass (of time, seasons, etc.)",
+            "to go by"
+          ],
           "meaning" : "to pass (of time, seasons, etc.), to go by",
           "notes" : [
 
@@ -28183,6 +28324,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to stream",
+            "to flow"
+          ],
           "meaning" : "to stream, to flow",
           "notes" : [
 
@@ -28193,6 +28338,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to die",
+            "to pass away"
+          ],
           "meaning" : "to die, to pass away",
           "notes" : [
             "usu. written as 逝く"
@@ -28203,6 +28352,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to reach (a stage, extent, age, etc.)",
+            "to get to",
+            "to go (so far as ...)"
+          ],
           "meaning" : "to reach (a stage, extent, age, etc.), to get to, to go (so far as ...)",
           "notes" : [
 
@@ -28213,6 +28367,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to reach (of information, instructions, wind, etc.)",
+            "to arrive"
+          ],
           "meaning" : "to reach (of information, instructions, wind, etc.), to arrive",
           "notes" : [
 
@@ -28223,6 +28381,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to continue ...",
+            "to go on ...",
+            "to (progress) steadily",
+            "to gradually ...",
+            "to progressively ..."
+          ],
           "meaning" : "to continue ..., to go on ..., to (progress) steadily, to gradually ..., to progressively ...",
           "notes" : [
             "Usually written in kana",
@@ -28234,6 +28399,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to have an orgasm",
+            "to come",
+            "to cum"
+          ],
           "meaning" : "to have an orgasm, to come, to cum",
           "notes" : [
             "Usually written in kana",
@@ -28245,6 +28415,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to trip",
+            "to get high",
+            "to have a drug-induced hallucination"
+          ],
           "meaning" : "to trip, to get high, to have a drug-induced hallucination",
           "notes" : [
             "Usually written in kana"
@@ -32794,6 +32969,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to come (spatially or temporally)",
+            "to approach",
+            "to arrive"
+          ],
           "meaning" : "to come (spatially or temporally), to approach, to arrive",
           "notes" : [
 
@@ -32804,6 +32984,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to come back",
+            "to do ... and come back"
+          ],
           "meaning" : "to come back, to do ... and come back",
           "notes" : [
             "Usually written in kana",
@@ -32816,6 +33000,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to come to be",
+            "to become",
+            "to get",
+            "to grow",
+            "to continue"
+          ],
           "meaning" : "to come to be, to become, to get, to grow, to continue",
           "notes" : [
             "Usually written in kana",
@@ -32828,6 +33019,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to come from",
+            "to be caused by",
+            "to derive from"
+          ],
           "meaning" : "to come from, to be caused by, to derive from",
           "notes" : [
 
@@ -32838,6 +33034,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to come to (e.g. \"when it comes to spinach ...\")"
+          ],
           "meaning" : "to come to (e.g. \"when it comes to spinach ...\")",
           "notes" : [
 
@@ -35853,6 +36052,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "next (e.g. \"next April\")",
+            "forthcoming",
+            "coming"
+          ],
           "meaning" : "next (e.g. \"next April\"), forthcoming, coming",
           "notes" : [
 
@@ -35862,6 +36066,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to come",
+            "to arrive",
+            "to be due to"
+          ],
           "meaning" : "to come, to arrive, to be due to",
           "notes" : [
             "orig. meaning"
@@ -40786,6 +40995,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to do",
+            "to carry out",
+            "to perform"
+          ],
           "meaning" : "to do, to carry out, to perform",
           "notes" : [
             "Usually written in kana"
@@ -40795,6 +41009,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to cause to become",
+            "to make (into)",
+            "to turn (into)"
+          ],
           "meaning" : "to cause to become, to make (into), to turn (into)",
           "notes" : [
             "Usually written in kana"
@@ -40804,6 +41023,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to serve as",
+            "to act as",
+            "to work as"
+          ],
           "meaning" : "to serve as, to act as, to work as",
           "notes" : [
             "Usually written in kana"
@@ -40813,6 +41037,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to wear (clothes, a facial expression, etc.)"
+          ],
           "meaning" : "to wear (clothes, a facial expression, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -40822,6 +41049,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to judge as being",
+            "to view as being",
+            "to think of as",
+            "to treat as",
+            "to use as"
+          ],
           "meaning" : "to judge as being, to view as being, to think of as, to treat as, to use as",
           "notes" : [
             "Usually written in kana",
@@ -40832,6 +41066,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to decide on",
+            "to choose"
+          ],
           "meaning" : "to decide on, to choose",
           "notes" : [
             "Usually written in kana",
@@ -40842,6 +41080,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to be sensed (of a smell, noise, etc.)"
+          ],
           "meaning" : "to be sensed (of a smell, noise, etc.)",
           "notes" : [
             "Usually written in kana",
@@ -40853,6 +41094,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to be (in a state, condition, etc.)"
+          ],
           "meaning" : "to be (in a state, condition, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -40863,6 +41107,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to be worth",
+            "to cost"
+          ],
           "meaning" : "to be worth, to cost",
           "notes" : [
             "Usually written in kana"
@@ -40873,6 +41121,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to pass (of time)",
+            "to elapse"
+          ],
           "meaning" : "to pass (of time), to elapse",
           "notes" : [
             "Usually written in kana"
@@ -40883,6 +41135,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to place, or raise, person A to a post or status B"
+          ],
           "meaning" : "to place, or raise, person A to a post or status B",
           "notes" : [
             "Usually written in kana",
@@ -40894,6 +41149,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to transform A to B",
+            "to make A into B",
+            "to exchange A for B"
+          ],
           "meaning" : "to transform A to B, to make A into B, to exchange A for B",
           "notes" : [
             "Usually written in kana",
@@ -40905,6 +41165,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to make use of A for B",
+            "to view A as B",
+            "to handle A as if it were B"
+          ],
           "meaning" : "to make use of A for B, to view A as B, to handle A as if it were B",
           "notes" : [
             "Usually written in kana",
@@ -40916,6 +41181,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to feel A about B"
+          ],
           "meaning" : "to feel A about B",
           "notes" : [
             "Usually written in kana",
@@ -40927,6 +41195,9 @@
           ]
         },
         {
+          "glosses" : [
+            "verbalizing suffix (applies to nouns noted in this dictionary with the part of speech \"vs\")"
+          ],
           "meaning" : "verbalizing suffix (applies to nouns noted in this dictionary with the part of speech \"vs\")",
           "notes" : [
             "Usually written in kana"
@@ -40937,6 +41208,9 @@
           ]
         },
         {
+          "glosses" : [
+            "creates a humble verb (after a noun prefixed with \"o\" or \"go\")"
+          ],
           "meaning" : "creates a humble verb (after a noun prefixed with \"o\" or \"go\")",
           "notes" : [
             "Usually written in kana"
@@ -40947,6 +41221,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to be just about to",
+            "to be just starting to",
+            "to try to",
+            "to attempt to"
+          ],
           "meaning" : "to be just about to, to be just starting to, to try to, to attempt to",
           "notes" : [
             "Usually written in kana",
@@ -45418,6 +45698,14 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to understand",
+            "to comprehend",
+            "to grasp",
+            "to see",
+            "to get",
+            "to follow"
+          ],
           "meaning" : "to understand, to comprehend, to grasp, to see, to get, to follow",
           "notes" : [
             "Usually written in kana"
@@ -45428,6 +45716,14 @@
           ]
         },
         {
+          "glosses" : [
+            "to become clear",
+            "to be known",
+            "to be discovered",
+            "to be realized (realised)",
+            "to be found out",
+            "to make sense"
+          ],
           "meaning" : "to become clear, to be known, to be discovered, to be realized (realised), to be found out, to make sense",
           "notes" : [
             "Usually written in kana"
@@ -45438,6 +45734,10 @@
           ]
         },
         {
+          "glosses" : [
+            "I know!",
+            "I think so too!"
+          ],
           "meaning" : "I know!, I think so too!",
           "notes" : [
 
@@ -49914,6 +50214,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to drink",
+            "to swallow",
+            "to take (medicine)"
+          ],
           "meaning" : "to drink, to swallow, to take (medicine)",
           "notes" : [
             "呑む refers to swallowing whole or gulping down"
@@ -49924,6 +50229,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to smoke (tobacco)"
+          ],
           "meaning" : "to smoke (tobacco)",
           "notes" : [
 
@@ -49934,6 +50242,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to swallow up",
+            "to engulf"
+          ],
           "meaning" : "to swallow up, to engulf",
           "notes" : [
             "usu. in the passive"
@@ -49944,6 +50256,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to suppress (one's anger, bitter feelings, etc.)",
+            "to keep down",
+            "to hold back",
+            "to swallow (one's tears)",
+            "to catch (one's breath)"
+          ],
           "meaning" : "to suppress (one's anger, bitter feelings, etc.), to keep down, to hold back, to swallow (one's tears), to catch (one's breath)",
           "notes" : [
 
@@ -49954,6 +50273,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to accept (a demand, conditions, etc.)",
+            "to agree to"
+          ],
           "meaning" : "to accept (a demand, conditions, etc.), to agree to",
           "notes" : [
 
@@ -49964,6 +50287,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to make light of (someone)",
+            "to think nothing of",
+            "to overwhelm",
+            "to overawe"
+          ],
           "meaning" : "to make light of (someone), to think nothing of, to overwhelm, to overawe",
           "notes" : [
 
@@ -49974,6 +50303,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to carry (a concealed dagger, etc.)",
+            "to conceal (up one's sleeve, etc.)"
+          ],
           "meaning" : "to carry (a concealed dagger, etc.), to conceal (up one's sleeve, etc.)",
           "notes" : [
 
@@ -50855,6 +51188,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "Japan"
+          ],
           "meaning" : "Japan",
           "notes" : [
 
@@ -51763,6 +52099,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "teacher",
+            "instructor",
+            "master"
+          ],
           "meaning" : "teacher, instructor, master",
           "notes" : [
 
@@ -51772,6 +52113,10 @@
           ]
         },
         {
+          "glosses" : [
+            "sensei",
+            "title or form of address for a teacher, master, doctor, lawyer, etc."
+          ],
           "meaning" : "sensei, title or form of address for a teacher, master, doctor, lawyer, etc.",
           "notes" : [
             "Honorific"
@@ -51782,6 +52127,9 @@
           ]
         },
         {
+          "glosses" : [
+            "intimate or teasing form of address"
+          ],
           "meaning" : "intimate or teasing form of address",
           "notes" : [
 
@@ -51791,6 +52139,9 @@
           ]
         },
         {
+          "glosses" : [
+            "one's elder"
+          ],
           "meaning" : "one's elder",
           "notes" : [
             "Archaic",
@@ -52649,6 +53000,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "man",
+            "boy"
+          ],
           "meaning" : "man, boy",
           "notes" : [
             "Honorific"
@@ -53487,6 +53842,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "water (esp. cool or cold)"
+          ],
           "meaning" : "water (esp. cool or cold)",
           "notes" : [
 
@@ -53496,6 +53854,10 @@
           ]
         },
         {
+          "glosses" : [
+            "fluid (esp. in an animal tissue)",
+            "liquid"
+          ],
           "meaning" : "fluid (esp. in an animal tissue), liquid",
           "notes" : [
 
@@ -53505,6 +53867,10 @@
           ]
         },
         {
+          "glosses" : [
+            "flood",
+            "floodwaters"
+          ],
           "meaning" : "flood, floodwaters",
           "notes" : [
 
@@ -53514,6 +53880,9 @@
           ]
         },
         {
+          "glosses" : [
+            "water offered to wrestlers just prior to a bout"
+          ],
           "meaning" : "water offered to wrestlers just prior to a bout",
           "notes" : [
 
@@ -53523,6 +53892,9 @@
           ]
         },
         {
+          "glosses" : [
+            "break granted to wrestlers engaged in a prolonged bout"
+          ],
           "meaning" : "break granted to wrestlers engaged in a prolonged bout",
           "notes" : [
 
@@ -54432,6 +54804,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "school"
+          ],
           "meaning" : "school",
           "notes" : [
 
@@ -55275,6 +55650,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "cat (esp. the domestic cat, Felis catus)",
+            "feline"
+          ],
           "meaning" : "cat (esp. the domestic cat, Felis catus), feline",
           "notes" : [
 
@@ -55284,6 +55663,9 @@
           ]
         },
         {
+          "glosses" : [
+            "shamisen"
+          ],
           "meaning" : "shamisen",
           "notes" : [
 
@@ -55293,6 +55675,9 @@
           ]
         },
         {
+          "glosses" : [
+            "geisha"
+          ],
           "meaning" : "geisha",
           "notes" : [
 
@@ -55302,6 +55687,9 @@
           ]
         },
         {
+          "glosses" : [
+            "wheelbarrow"
+          ],
           "meaning" : "wheelbarrow",
           "notes" : [
 
@@ -55311,6 +55699,9 @@
           ]
         },
         {
+          "glosses" : [
+            "clay bed-warmer"
+          ],
           "meaning" : "clay bed-warmer",
           "notes" : [
 
@@ -55320,6 +55711,9 @@
           ]
         },
         {
+          "glosses" : [
+            "bottom (submissive partner of a homosexual relationship)"
+          ],
           "meaning" : "bottom (submissive partner of a homosexual relationship)",
           "notes" : [
             "Usually written in kana"
@@ -56110,6 +56504,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "I",
+            "me"
+          ],
           "meaning" : "I, me",
           "notes" : [
             "slightly formal or feminine"
@@ -56939,6 +57337,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "today",
+            "this day"
+          ],
           "meaning" : "today, this day",
           "notes" : [
 
@@ -56949,6 +57351,11 @@
           ]
         },
         {
+          "glosses" : [
+            "these days",
+            "recently",
+            "nowadays"
+          ],
           "meaning" : "these days, recently, nowadays",
           "notes" : [
 
@@ -58532,6 +58939,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "adult",
+            "grown-up"
+          ],
           "meaning" : "adult, grown-up",
           "notes" : [
 
@@ -59510,6 +59921,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "study"
+          ],
           "meaning" : "study",
           "notes" : [
 
@@ -59521,6 +59935,10 @@
           ]
         },
         {
+          "glosses" : [
+            "diligence",
+            "working hard"
+          ],
           "meaning" : "diligence, working hard",
           "notes" : [
 
@@ -59532,6 +59950,11 @@
           ]
         },
         {
+          "glosses" : [
+            "experience",
+            "knowledge",
+            "lesson (for the future)"
+          ],
           "meaning" : "experience, knowledge, lesson (for the future)",
           "notes" : [
 
@@ -59541,6 +59964,10 @@
           ]
         },
         {
+          "glosses" : [
+            "discount",
+            "price reduction"
+          ],
           "meaning" : "discount, price reduction",
           "notes" : [
 
@@ -60570,6 +60997,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "one day"
+          ],
           "meaning" : "one day",
           "notes" : [
 
@@ -60580,6 +61010,11 @@
           ]
         },
         {
+          "glosses" : [
+            "all day (long)",
+            "the whole day",
+            "from morning till night"
+          ],
           "meaning" : "all day (long), the whole day, from morning till night",
           "notes" : [
 
@@ -60590,6 +61025,9 @@
           ]
         },
         {
+          "glosses" : [
+            "first day of the month"
+          ],
           "meaning" : "first day of the month",
           "notes" : [
 
@@ -65525,6 +65963,13 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to take",
+            "to pick up",
+            "to grab",
+            "to catch",
+            "to hold"
+          ],
           "meaning" : "to take, to pick up, to grab, to catch, to hold",
           "notes" : [
 
@@ -65535,6 +65980,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to pass",
+            "to hand",
+            "to give"
+          ],
           "meaning" : "to pass, to hand, to give",
           "notes" : [
 
@@ -65545,6 +65995,15 @@
           ]
         },
         {
+          "glosses" : [
+            "to get",
+            "to obtain",
+            "to acquire",
+            "to win",
+            "to receive",
+            "to earn",
+            "to take (e.g. a vacation)"
+          ],
           "meaning" : "to get, to obtain, to acquire, to win, to receive, to earn, to take (e.g. a vacation)",
           "notes" : [
 
@@ -65555,6 +66014,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to adopt (a method, proposal, etc.)",
+            "to take (a measure, attitude, etc.)",
+            "to choose"
+          ],
           "meaning" : "to adopt (a method, proposal, etc.), to take (a measure, attitude, etc.), to choose",
           "notes" : [
 
@@ -65565,6 +66029,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to remove",
+            "to get rid of",
+            "to take off"
+          ],
           "meaning" : "to remove, to get rid of, to take off",
           "notes" : [
 
@@ -65575,6 +66044,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to take away",
+            "to steal",
+            "to rob"
+          ],
           "meaning" : "to take away, to steal, to rob",
           "notes" : [
 
@@ -65585,6 +66059,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to eat",
+            "to have (e.g. lunch)",
+            "to take (e.g. vitamins)"
+          ],
           "meaning" : "to eat, to have (e.g. lunch), to take (e.g. vitamins)",
           "notes" : [
 
@@ -65595,6 +66074,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to pick (e.g. flowers)",
+            "to gather",
+            "to extract (e.g. juice)",
+            "to catch (e.g. fish)",
+            "to harvest (a crop)"
+          ],
           "meaning" : "to pick (e.g. flowers), to gather, to extract (e.g. juice), to catch (e.g. fish), to harvest (a crop)",
           "notes" : [
 
@@ -65605,6 +66091,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to take up (time, space)",
+            "to occupy",
+            "to spare",
+            "to set aside"
+          ],
           "meaning" : "to take up (time, space), to occupy, to spare, to set aside",
           "notes" : [
 
@@ -65615,6 +66107,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to secure",
+            "to reserve",
+            "to save",
+            "to put aside",
+            "to keep"
+          ],
           "meaning" : "to secure, to reserve, to save, to put aside, to keep",
           "notes" : [
 
@@ -65625,6 +66124,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to take (e.g. a joke)",
+            "to interpret",
+            "to understand",
+            "to make out",
+            "to grasp"
+          ],
           "meaning" : "to take (e.g. a joke), to interpret, to understand, to make out, to grasp",
           "notes" : [
 
@@ -65635,6 +66141,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to record",
+            "to take down"
+          ],
           "meaning" : "to record, to take down",
           "notes" : [
 
@@ -65645,6 +66155,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to subscribe to (e.g. a newspaper)",
+            "to take",
+            "to buy",
+            "to get"
+          ],
           "meaning" : "to subscribe to (e.g. a newspaper), to take, to buy, to get",
           "notes" : [
 
@@ -65655,6 +66171,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to order",
+            "to have delivered"
+          ],
           "meaning" : "to order, to have delivered",
           "notes" : [
 
@@ -65665,6 +66185,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to charge",
+            "to fine",
+            "to take (tax)"
+          ],
           "meaning" : "to charge, to fine, to take (tax)",
           "notes" : [
 
@@ -65675,6 +66200,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to take (e.g. a wife)",
+            "to take on (e.g. an apprentice)",
+            "to adopt",
+            "to accept"
+          ],
           "meaning" : "to take (e.g. a wife), to take on (e.g. an apprentice), to adopt, to accept",
           "notes" : [
 
@@ -65685,6 +66216,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to take control of",
+            "to take (the rudder)"
+          ],
           "meaning" : "to take control of, to take (the rudder)",
           "notes" : [
 
@@ -65695,6 +66230,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to compete (in sumo, cards, etc.)",
+            "to play"
+          ],
           "meaning" : "to compete (in sumo, cards, etc.), to play",
           "notes" : [
 
@@ -68645,7 +69184,7 @@
       "opensConjugations" : true,
       "partOfSpeech" : "Ichidan verb (transitive)",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 2,
         "graph" : {
           "morae" : [
             "カ",
@@ -68653,7 +69192,7 @@
             "ル"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 330
           },
           "points" : [
@@ -68666,14 +69205,14 @@
               "x" : 150
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 250
             }
           ]
         },
-        "levels" : "LHH",
+        "levels" : "LHL",
         "moraCount" : 3,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "かける",
@@ -68723,6 +69262,13 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to hang up (e.g. a coat, a picture on the wall)",
+            "to let hang",
+            "to suspend (from)",
+            "to hoist (e.g. sail)",
+            "to raise (e.g. flag)"
+          ],
           "meaning" : "to hang up (e.g. a coat, a picture on the wall), to let hang, to suspend (from), to hoist (e.g. sail), to raise (e.g. flag)",
           "notes" : [
             "Usually written in kana"
@@ -68733,6 +69279,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to put on (e.g. a blanket)",
+            "to put on top of",
+            "to cover",
+            "to lay",
+            "to spread"
+          ],
           "meaning" : "to put on (e.g. a blanket), to put on top of, to cover, to lay, to spread",
           "notes" : [
             "Usually written in kana"
@@ -68743,6 +69296,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to put on (glasses, etc.)",
+            "to wear (a necklace, etc.)"
+          ],
           "meaning" : "to put on (glasses, etc.), to wear (a necklace, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68753,6 +69310,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to make (a call)"
+          ],
           "meaning" : "to make (a call)",
           "notes" : [
             "Usually written in kana"
@@ -68763,6 +69323,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to spend (time, money)",
+            "to expend",
+            "to use"
+          ],
           "meaning" : "to spend (time, money), to expend, to use",
           "notes" : [
             "Usually written in kana"
@@ -68773,6 +69338,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to pour (liquid) onto",
+            "to sprinkle (powder or spices) onto",
+            "to splash",
+            "to throw (e.g. water) onto"
+          ],
           "meaning" : "to pour (liquid) onto, to sprinkle (powder or spices) onto, to splash, to throw (e.g. water) onto",
           "notes" : [
             "Usually written in kana"
@@ -68783,6 +69354,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to turn on (an engine, radio, etc.)",
+            "to set (a dial, alarm clock, etc.)",
+            "to put on (a DVD, song, etc.)",
+            "to use (a device, implement, etc.)"
+          ],
           "meaning" : "to turn on (an engine, radio, etc.), to set (a dial, alarm clock, etc.), to put on (a DVD, song, etc.), to use (a device, implement, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68793,6 +69370,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to cause (someone inconvenience, trouble, etc.)",
+            "to burden (someone)",
+            "to impose"
+          ],
           "meaning" : "to cause (someone inconvenience, trouble, etc.), to burden (someone), to impose",
           "notes" : [
             "Usually written in kana"
@@ -68803,6 +69385,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to multiply (arithmetic operation)"
+          ],
           "meaning" : "to multiply (arithmetic operation)",
           "notes" : [
             "Usually written in kana"
@@ -68813,6 +69398,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to secure (e.g. lock)"
+          ],
           "meaning" : "to secure (e.g. lock)",
           "notes" : [
             "Usually written in kana"
@@ -68823,6 +69411,12 @@
           ]
         },
         {
+          "glosses" : [
+            "to take a seat",
+            "to sit",
+            "to rest (something on something else)",
+            "to support (something on something else)"
+          ],
           "meaning" : "to take a seat, to sit, to rest (something on something else), to support (something on something else)",
           "notes" : [
             "Usually written in kana"
@@ -68833,6 +69427,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to bind"
+          ],
           "meaning" : "to bind",
           "notes" : [
             "Usually written in kana",
@@ -68844,6 +69441,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to wager",
+            "to bet",
+            "to risk",
+            "to stake",
+            "to gamble"
+          ],
           "meaning" : "to wager, to bet, to risk, to stake, to gamble",
           "notes" : [
             "Usually written in kana"
@@ -68854,6 +69458,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to put an effect (spell, anaesthetic, etc.) on"
+          ],
           "meaning" : "to put an effect (spell, anaesthetic, etc.) on",
           "notes" : [
             "Usually written in kana"
@@ -68864,6 +69471,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to hold (a play, festival, etc.)"
+          ],
           "meaning" : "to hold (a play, festival, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68874,6 +69484,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to hold an emotion for (pity, hope, etc.)"
+          ],
           "meaning" : "to hold an emotion for (pity, hope, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68884,6 +69497,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to argue (in court)",
+            "to deliberate (in a meeting)",
+            "to present (e.g. idea to a conference, etc.)"
+          ],
           "meaning" : "to argue (in court), to deliberate (in a meeting), to present (e.g. idea to a conference, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68894,6 +69512,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to increase further"
+          ],
           "meaning" : "to increase further",
           "notes" : [
             "Usually written in kana"
@@ -68904,6 +69525,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to catch (in a trap, etc.)"
+          ],
           "meaning" : "to catch (in a trap, etc.)",
           "notes" : [
             "Usually written in kana"
@@ -68914,6 +69538,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to set atop"
+          ],
           "meaning" : "to set atop",
           "notes" : [
             "Usually written in kana"
@@ -68924,6 +69551,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to erect (a makeshift building)"
+          ],
           "meaning" : "to erect (a makeshift building)",
           "notes" : [
             "Usually written in kana"
@@ -68934,6 +69564,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to apply (insurance)"
+          ],
           "meaning" : "to apply (insurance)",
           "notes" : [
             "Usually written in kana"
@@ -68944,6 +69577,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to pun (on a word)",
+            "to use (a word) as a pivot word",
+            "to play on words"
+          ],
           "meaning" : "to pun (on a word), to use (a word) as a pivot word, to play on words",
           "notes" : [
             "Usually written in kana"
@@ -68954,6 +69592,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to be partway doing ...",
+            "to begin (but not complete) ...",
+            "to be about to ..."
+          ],
           "meaning" : "to be partway doing ..., to begin (but not complete) ..., to be about to ...",
           "notes" : [
             "Usually written in kana",
@@ -68965,6 +69608,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to address (someone)",
+            "to direct (something, to someone)",
+            "to do (something, to someone)"
+          ],
           "meaning" : "to address (someone), to direct (something, to someone), to do (something, to someone)",
           "notes" : [
             "Usually written in kana",
@@ -69986,6 +70634,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "thank you",
+            "thanks"
+          ],
           "meaning" : "thank you, thanks",
           "notes" : [
             "Usually written in kana"
@@ -70789,6 +71441,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "coffee"
+          ],
           "meaning" : "coffee",
           "notes" : [
             "Usually written in kana"
@@ -71803,6 +72458,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "television",
+            "TV"
+          ],
           "meaning" : "television, TV",
           "notes" : [
 
@@ -71812,6 +72471,11 @@
           ]
         },
         {
+          "glosses" : [
+            "TV program",
+            "TV programme",
+            "TV broadcast"
+          ],
           "meaning" : "TV program, TV programme, TV broadcast",
           "notes" : [
 
@@ -72570,7 +73234,7 @@
       "opensConjugations" : false,
       "partOfSpeech" : "Adverb",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 1,
         "graph" : {
           "morae" : [
             "チョ",
@@ -72578,27 +73242,27 @@
             "ト"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 380
           },
           "points" : [
             {
-              "level" : "L",
+              "level" : "H",
               "x" : 75
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 200
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 300
             }
           ]
         },
-        "levels" : "LHH",
+        "levels" : "HLL",
         "moraCount" : 3,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "ちょっと",
@@ -72607,6 +73271,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "a little",
+            "a bit",
+            "slightly"
+          ],
           "meaning" : "a little, a bit, slightly",
           "notes" : [
             "Usually written in kana"
@@ -72616,6 +73285,11 @@
           ]
         },
         {
+          "glosses" : [
+            "just a minute",
+            "for a moment",
+            "briefly"
+          ],
           "meaning" : "just a minute, for a moment, briefly",
           "notes" : [
             "Usually written in kana"
@@ -72625,6 +73299,13 @@
           ]
         },
         {
+          "glosses" : [
+            "somewhat",
+            "rather",
+            "fairly",
+            "pretty",
+            "quite"
+          ],
           "meaning" : "somewhat, rather, fairly, pretty, quite",
           "notes" : [
             "Usually written in kana"
@@ -72634,6 +73315,10 @@
           ]
         },
         {
+          "glosses" : [
+            "(not) easily",
+            "(not) readily"
+          ],
           "meaning" : "(not) easily, (not) readily",
           "notes" : [
             "Usually written in kana",
@@ -72644,6 +73329,11 @@
           ]
         },
         {
+          "glosses" : [
+            "hey!",
+            "come on",
+            "excuse me"
+          ],
           "meaning" : "hey!, come on, excuse me",
           "notes" : [
             "Usually written in kana"
@@ -72653,6 +73343,11 @@
           ]
         },
         {
+          "glosses" : [
+            "thanks, but no",
+            "not feasible",
+            "not possible"
+          ],
           "meaning" : "thanks, but no, not feasible, not possible",
           "notes" : [
             "Usually written in kana"
@@ -72662,6 +73357,10 @@
           ]
         },
         {
+          "glosses" : [
+            "a little more than (a week, month, etc.)",
+            "slightly more than"
+          ],
           "meaning" : "a little more than (a week, month, etc.), slightly more than",
           "notes" : [
             "Usually written in kana",
@@ -73505,6 +74204,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "very",
+            "awfully",
+            "exceedingly"
+          ],
           "meaning" : "very, awfully, exceedingly",
           "notes" : [
             "Usually written in kana",
@@ -73515,6 +74219,11 @@
           ]
         },
         {
+          "glosses" : [
+            "(not) at all",
+            "by no means",
+            "simply (cannot)"
+          ],
           "meaning" : "(not) at all, by no means, simply (cannot)",
           "notes" : [
             "Usually written in kana",
@@ -74339,6 +75048,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "that",
+            "it"
+          ],
           "meaning" : "that, it",
           "notes" : [
             "Usually written in kana",
@@ -74349,6 +75062,11 @@
           ]
         },
         {
+          "glosses" : [
+            "then",
+            "that point (in time)",
+            "that time"
+          ],
           "meaning" : "then, that point (in time), that time",
           "notes" : [
             "Usually written in kana"
@@ -74358,6 +75076,9 @@
           ]
         },
         {
+          "glosses" : [
+            "there"
+          ],
           "meaning" : "there",
           "notes" : [
             "Archaic",
@@ -74368,6 +75089,9 @@
           ]
         },
         {
+          "glosses" : [
+            "you"
+          ],
           "meaning" : "you",
           "notes" : [
             "Archaic"
@@ -74467,30 +75191,30 @@
       "opensConjugations" : false,
       "partOfSpeech" : "Interjection",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 1,
         "graph" : {
           "morae" : [
             "ソ",
             "レ"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 230
           },
           "points" : [
             {
-              "level" : "L",
+              "level" : "H",
               "x" : 50
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 150
             }
           ]
         },
-        "levels" : "LH",
+        "levels" : "HL",
         "moraCount" : 2,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "それ",
@@ -74499,6 +75223,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "there!",
+            "look!"
+          ],
           "meaning" : "there!, look!",
           "notes" : [
             "used to call someone's attention to something"
@@ -74508,6 +75236,11 @@
           ]
         },
         {
+          "glosses" : [
+            "go on!",
+            "right!",
+            "here goes!"
+          ],
           "meaning" : "go on!, right!, here goes!",
           "notes" : [
             "used to stir someone to action or fire oneself up"
@@ -75221,6 +75954,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "please (give me)"
+          ],
           "meaning" : "please (give me)",
           "notes" : [
             "Usually written in kana",
@@ -75232,6 +75968,9 @@
           ]
         },
         {
+          "glosses" : [
+            "please (do for me)"
+          ],
           "meaning" : "please (do for me)",
           "notes" : [
             "Usually written in kana",
@@ -76301,6 +77040,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "people",
+            "men and women"
+          ],
           "meaning" : "people, men and women",
           "notes" : [
 
@@ -76310,6 +77053,10 @@
           ]
         },
         {
+          "glosses" : [
+            "each person",
+            "everybody"
+          ],
           "meaning" : "each person, everybody",
           "notes" : [
 
@@ -76920,6 +77667,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "press conference",
+            "news conference"
+          ],
           "meaning" : "press conference, news conference",
           "notes" : [
 
@@ -77031,30 +77782,30 @@
       "opensConjugations" : false,
       "partOfSpeech" : "Noun",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 1,
         "graph" : {
           "morae" : [
             "ツ",
             "マ"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 230
           },
           "points" : [
             {
-              "level" : "L",
+              "level" : "H",
               "x" : 50
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 150
             }
           ]
         },
-        "levels" : "LH",
+        "levels" : "HL",
         "moraCount" : 2,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "つま",
@@ -77063,6 +77814,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "wife"
+          ],
           "meaning" : "wife",
           "notes" : [
 
@@ -77072,6 +77826,10 @@
           ]
         },
         {
+          "glosses" : [
+            "garnish (esp. one served with sashimi)",
+            "trimmings"
+          ],
           "meaning" : "garnish (esp. one served with sashimi), trimmings",
           "notes" : [
             "Usually written in kana"
@@ -77081,6 +77839,10 @@
           ]
         },
         {
+          "glosses" : [
+            "accompaniment",
+            "side (remark)"
+          ],
           "meaning" : "accompaniment, side (remark)",
           "notes" : [
             "Usually written in kana"
@@ -77234,14 +77996,14 @@
       "opensConjugations" : false,
       "partOfSpeech" : "Noun",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 2,
         "graph" : {
           "morae" : [
             "モ",
             "ト"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 230
           },
           "points" : [
@@ -77257,7 +78019,7 @@
         },
         "levels" : "LH",
         "moraCount" : 2,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "もと",
@@ -77272,6 +78034,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "origin",
+            "source",
+            "beginning"
+          ],
           "meaning" : "origin, source, beginning",
           "notes" : [
             "esp. 元"
@@ -77281,6 +78048,12 @@
           ]
         },
         {
+          "glosses" : [
+            "basis",
+            "base",
+            "foundation",
+            "root"
+          ],
           "meaning" : "basis, base, foundation, root",
           "notes" : [
             "oft. 基"
@@ -77290,6 +78063,9 @@
           ]
         },
         {
+          "glosses" : [
+            "cause"
+          ],
           "meaning" : "cause",
           "notes" : [
             "also written as 因, 原"
@@ -77299,6 +78075,13 @@
           ]
         },
         {
+          "glosses" : [
+            "(raw) material",
+            "ingredient",
+            "base",
+            "mix (e.g. for a cake)",
+            "(soup) stock"
+          ],
           "meaning" : "(raw) material, ingredient, base, mix (e.g. for a cake), (soup) stock",
           "notes" : [
             "esp. 素"
@@ -77308,6 +78091,9 @@
           ]
         },
         {
+          "glosses" : [
+            "(one's) side"
+          ],
           "meaning" : "(one's) side",
           "notes" : [
 
@@ -77317,6 +78103,11 @@
           ]
         },
         {
+          "glosses" : [
+            "capital",
+            "principal",
+            "cost price"
+          ],
           "meaning" : "capital, principal, cost price",
           "notes" : [
 
@@ -77326,6 +78117,10 @@
           ]
         },
         {
+          "glosses" : [
+            "root (of a plant)",
+            "(tree) trunk"
+          ],
           "meaning" : "root (of a plant), (tree) trunk",
           "notes" : [
 
@@ -77335,6 +78130,9 @@
           ]
         },
         {
+          "glosses" : [
+            "part (of a brush, chopsticks, etc.) one holds (with the hand)"
+          ],
           "meaning" : "part (of a brush, chopsticks, etc.) one holds (with the hand)",
           "notes" : [
 
@@ -77344,6 +78142,9 @@
           ]
         },
         {
+          "glosses" : [
+            "first three lines of a waka"
+          ],
           "meaning" : "first three lines of a waka",
           "notes" : [
 
@@ -77353,6 +78154,9 @@
           ]
         },
         {
+          "glosses" : [
+            "counter for plants or trees"
+          ],
           "meaning" : "counter for plants or trees",
           "notes" : [
 
@@ -77362,6 +78166,9 @@
           ]
         },
         {
+          "glosses" : [
+            "counter for falcons (in falconry)"
+          ],
           "meaning" : "counter for falcons (in falconry)",
           "notes" : [
 
@@ -77539,6 +78346,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "cricket (Gryllidae spp.)"
+          ],
           "meaning" : "cricket (Gryllidae spp.)",
           "notes" : [
             "Usually written in kana"
@@ -79004,6 +79814,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "unfortunately",
+            "sorry, but ..."
+          ],
           "meaning" : "unfortunately, sorry, but ...",
           "notes" : [
             "Usually written in kana"
@@ -79225,6 +80039,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "the law of the jungle",
+            "the strong prey on the weak",
+            "the weak become the victim of the strong"
+          ],
           "meaning" : "the law of the jungle, the strong prey on the weak, the weak become the victim of the strong",
           "notes" : [
 
@@ -80926,6 +81745,18 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "announcement",
+            "publication",
+            "presenting",
+            "statement",
+            "communique",
+            "making known",
+            "breaking (news story)",
+            "expressing (one's opinion)",
+            "releasing",
+            "unveiling"
+          ],
           "meaning" : "announcement, publication, presenting, statement, communique, making known, breaking (news story), expressing (one's opinion), releasing, unveiling",
           "notes" : [
 
@@ -81934,6 +82765,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "Tokyo"
+          ],
           "meaning" : "Tokyo",
           "notes" : [
 
@@ -86276,30 +87110,30 @@
       "opensConjugations" : true,
       "partOfSpeech" : "Godan verb (transitive)",
       "pitch" : {
-        "downstep" : 0,
+        "downstep" : 1,
         "graph" : {
           "morae" : [
             "カ",
             "ク"
           ],
           "particle" : {
-            "level" : "H",
+            "level" : "L",
             "x" : 230
           },
           "points" : [
             {
-              "level" : "L",
+              "level" : "H",
               "x" : 50
             },
             {
-              "level" : "H",
+              "level" : "L",
               "x" : 150
             }
           ]
         },
-        "levels" : "LH",
+        "levels" : "HL",
         "moraCount" : 2,
-        "particle" : "H",
+        "particle" : "L",
         "source" : "UniDic for Contemporary Written Japanese 3.1.0"
       },
       "reading" : "かく",
@@ -86314,6 +87148,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to write",
+            "to compose",
+            "to pen"
+          ],
           "meaning" : "to write, to compose, to pen",
           "notes" : [
 
@@ -86324,6 +87163,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to draw",
+            "to paint"
+          ],
           "meaning" : "to draw, to paint",
           "notes" : [
 
@@ -89637,6 +90480,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to swim"
+          ],
           "meaning" : "to swim",
           "notes" : [
 
@@ -89647,6 +90493,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to struggle through (a crowd)"
+          ],
           "meaning" : "to struggle through (a crowd)",
           "notes" : [
 
@@ -89657,6 +90506,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to make one's way through the world",
+            "to get along (in life)"
+          ],
           "meaning" : "to make one's way through the world, to get along (in life)",
           "notes" : [
 
@@ -89667,6 +90520,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to totter",
+            "to lose one's balance"
+          ],
           "meaning" : "to totter, to lose one's balance",
           "notes" : [
 
@@ -94225,6 +95082,12 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to talk",
+            "to speak",
+            "to converse",
+            "to chat"
+          ],
           "meaning" : "to talk, to speak, to converse, to chat",
           "notes" : [
 
@@ -94235,6 +95098,14 @@
           ]
         },
         {
+          "glosses" : [
+            "to tell",
+            "to explain",
+            "to narrate",
+            "to mention",
+            "to describe",
+            "to discuss"
+          ],
           "meaning" : "to tell, to explain, to narrate, to mention, to describe, to discuss",
           "notes" : [
 
@@ -94245,6 +95116,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to speak (a language)"
+          ],
           "meaning" : "to speak (a language)",
           "notes" : [
 
@@ -97756,6 +98630,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to wait"
+          ],
           "meaning" : "to wait",
           "notes" : [
 
@@ -97767,6 +98644,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to await",
+            "to look forward to",
+            "to anticipate"
+          ],
           "meaning" : "to await, to look forward to, to anticipate",
           "notes" : [
 
@@ -97778,6 +98660,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to depend on",
+            "to need"
+          ],
           "meaning" : "to depend on, to need",
           "notes" : [
             "usu. in negative form"
@@ -101522,6 +102408,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to die",
+            "to pass away"
+          ],
           "meaning" : "to die, to pass away",
           "notes" : [
 
@@ -101532,6 +102422,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to lose spirit",
+            "to lose vigor",
+            "to look dead"
+          ],
           "meaning" : "to lose spirit, to lose vigor, to look dead",
           "notes" : [
 
@@ -101542,6 +102437,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to cease",
+            "to stop"
+          ],
           "meaning" : "to cease, to stop",
           "notes" : [
 
@@ -105315,6 +106214,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to play (games, sports)",
+            "to enjoy oneself",
+            "to have a good time"
+          ],
           "meaning" : "to play (games, sports), to enjoy oneself, to have a good time",
           "notes" : [
 
@@ -105325,6 +106229,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to mess about (with alcohol, gambling, philandery, etc.)"
+          ],
           "meaning" : "to mess about (with alcohol, gambling, philandery, etc.)",
           "notes" : [
 
@@ -105335,6 +106242,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to be idle",
+            "to do nothing",
+            "to be unused"
+          ],
           "meaning" : "to be idle, to do nothing, to be unused",
           "notes" : [
 
@@ -105345,6 +106257,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to meet up (with friends)",
+            "to hang out"
+          ],
           "meaning" : "to meet up (with friends), to hang out",
           "notes" : [
 
@@ -105355,6 +106271,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to give oneself up (to gambling, drinking, etc.)"
+          ],
           "meaning" : "to give oneself up (to gambling, drinking, etc.)",
           "notes" : [
 
@@ -105365,6 +106284,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to go to (for pleasure or for study)"
+          ],
           "meaning" : "to go to (for pleasure or for study)",
           "notes" : [
             "as 〜に遊ぶ"
@@ -105375,6 +106297,10 @@
           ]
         },
         {
+          "glosses" : [
+            "to tease (someone)",
+            "to play (with)"
+          ],
           "meaning" : "to tease (someone), to play (with)",
           "notes" : [
 
@@ -105385,6 +106311,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to intentionally throw a ball to lower the batter's concentration"
+          ],
           "meaning" : "to intentionally throw a ball to lower the batter's concentration",
           "notes" : [
 
@@ -109943,6 +110872,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to buy",
+            "to purchase"
+          ],
           "meaning" : "to buy, to purchase",
           "notes" : [
 
@@ -109953,6 +110886,13 @@
           ]
         },
         {
+          "glosses" : [
+            "to value (highly)",
+            "to think highly of",
+            "to have a high opinion of",
+            "to appreciate",
+            "to recognize"
+          ],
           "meaning" : "to value (highly), to think highly of, to have a high opinion of, to appreciate, to recognize",
           "notes" : [
 
@@ -109963,6 +110903,14 @@
           ]
         },
         {
+          "glosses" : [
+            "to incur (someone's anger, displeasure, etc.)",
+            "to elicit (e.g. sneers)",
+            "to invite (e.g. scorn)",
+            "to evoke",
+            "to arouse",
+            "to win (someone's favour)"
+          ],
           "meaning" : "to incur (someone's anger, displeasure, etc.), to elicit (e.g. sneers), to invite (e.g. scorn), to evoke, to arouse, to win (someone's favour)",
           "notes" : [
 
@@ -109973,6 +110921,11 @@
           ]
         },
         {
+          "glosses" : [
+            "to accept",
+            "to take on",
+            "to take up"
+          ],
           "meaning" : "to accept, to take on, to take up",
           "notes" : [
 
@@ -109983,6 +110936,9 @@
           ]
         },
         {
+          "glosses" : [
+            "to pay for (a prostitute, geisha, etc.)"
+          ],
           "meaning" : "to pay for (a prostitute, geisha, etc.)",
           "notes" : [
 
@@ -113865,6 +114821,9 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "to love"
+          ],
           "meaning" : "to love",
           "notes" : [
 
@@ -114697,6 +115656,33 @@
       "languageReferenceID" : "d04b57414d38acaf22aa7a862d705a1f",
       "opensConjugations" : false,
       "partOfSpeech" : "I-adjective",
+      "pitch" : {
+        "downstep" : 1,
+        "graph" : {
+          "morae" : [
+            "イ",
+            "イ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 230
+          },
+          "points" : [
+            {
+              "level" : "H",
+              "x" : 50
+            },
+            {
+              "level" : "L",
+              "x" : 150
+            }
+          ]
+        },
+        "levels" : "HL",
+        "moraCount" : 2,
+        "particle" : "L",
+        "source" : "UniDic for Contemporary Written Japanese 3.1.0"
+      },
       "reading" : "いい",
       "relatedWords" : [
         {
@@ -114730,6 +115716,14 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "good",
+            "excellent",
+            "fine",
+            "nice",
+            "pleasant",
+            "agreeable"
+          ],
           "meaning" : "good, excellent, fine, nice, pleasant, agreeable",
           "notes" : [
             "also written 良い, 好い and 善い"
@@ -114739,6 +115733,12 @@
           ]
         },
         {
+          "glosses" : [
+            "sufficient",
+            "enough",
+            "ready",
+            "prepared"
+          ],
           "meaning" : "sufficient, enough, ready, prepared",
           "notes" : [
 
@@ -114748,6 +115748,10 @@
           ]
         },
         {
+          "glosses" : [
+            "profitable (deal, business offer, etc.)",
+            "beneficial"
+          ],
           "meaning" : "profitable (deal, business offer, etc.), beneficial",
           "notes" : [
 
@@ -114757,6 +115761,12 @@
           ]
         },
         {
+          "glosses" : [
+            "OK",
+            "all right",
+            "fine",
+            "no problem"
+          ],
           "meaning" : "OK, all right, fine, no problem",
           "notes" : [
             "as て(も)いい, と(も)いい, etc.; indicates permission or compromise"
@@ -116530,6 +117540,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "H",
+            "h"
+          ],
           "meaning" : "H, h",
           "notes" : [
 
@@ -116539,6 +117553,13 @@
           ]
         },
         {
+          "glosses" : [
+            "indecent",
+            "lewd",
+            "sexy",
+            "dirty",
+            "obscene"
+          ],
           "meaning" : "indecent, lewd, sexy, dirty, obscene",
           "notes" : [
             "Usually written in kana",
@@ -116550,6 +117571,9 @@
           ]
         },
         {
+          "glosses" : [
+            "(having) sex"
+          ],
           "meaning" : "(having) sex",
           "notes" : [
             "Usually written in kana"
@@ -116561,6 +117585,9 @@
           ]
         },
         {
+          "glosses" : [
+            "pervert"
+          ],
           "meaning" : "pervert",
           "notes" : [
             "Usually written in kana"
@@ -116570,6 +117597,9 @@
           ]
         },
         {
+          "glosses" : [
+            "nth year in the Heisei era (1989.1.8-2019.4.30)"
+          ],
           "meaning" : "nth year in the Heisei era (1989.1.8-2019.4.30)",
           "notes" : [
 
@@ -116579,6 +117609,9 @@
           ]
         },
         {
+          "glosses" : [
+            "hour"
+          ],
           "meaning" : "hour",
           "notes" : [
 
@@ -116588,6 +117621,9 @@
           ]
         },
         {
+          "glosses" : [
+            "hydrogen (H)"
+          ],
           "meaning" : "hydrogen (H)",
           "notes" : [
 
@@ -116597,6 +117633,9 @@
           ]
         },
         {
+          "glosses" : [
+            "hole"
+          ],
           "meaning" : "hole",
           "notes" : [
 
@@ -117184,6 +118223,11 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "no good",
+            "not allowed",
+            "not acceptable"
+          ],
           "meaning" : "no good, not allowed, not acceptable",
           "notes" : [
 
@@ -117194,6 +118238,11 @@
           ]
         },
         {
+          "glosses" : [
+            "outtake",
+            "blooper",
+            "retake"
+          ],
           "meaning" : "outtake, blooper, retake",
           "notes" : [
 
@@ -118252,6 +119301,10 @@
       ],
       "senses" : [
         {
+          "glosses" : [
+            "T-shirt",
+            "tee shirt"
+          ],
           "meaning" : "T-shirt, tee shirt",
           "notes" : [
 

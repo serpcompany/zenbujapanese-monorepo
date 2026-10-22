@@ -18,12 +18,15 @@ import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { beforeAll, describe, expect, test } from 'vitest'
 import {
   codePoint,
+  joinedAsJmdictJoinsThem,
   type KanjiCase,
   kanjiSuite,
+  type ShownSense,
   type SuiteExamples,
   type SuiteWord,
   type WordCase,
   withoutFields,
+  withoutGlosses,
   wordSuite
 } from './detail-suite'
 import { languageReferenceIds, shownAsRecorded } from './examples'
@@ -118,7 +121,7 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
         return { character, meanings }
       })
     const pitch = shownPitch(entry)
-    const observed: Omit<WordCase, 'covers' | 'entSeq'> = {
+    const observed: Omit<WordCase, 'covers' | 'entSeq' | 'senses'> & { senses: ShownSense[] } = {
       id: entry.id,
       languageReferenceID: entry.id,
       headword: detail.headword,
@@ -179,7 +182,12 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
         expected.examples
       )
     }
-    expect(observed).toEqual(withoutFields(expected, ['covers', 'entSeq']))
+    const shown = { ...expected, senses: expected.senses.map(withoutGlosses) }
+    expect(observed).toEqual(withoutFields(shown, ['covers', 'entSeq']))
+    expect(
+      detail.senses.map(sense => sense.meaning),
+      'each meaning is its recorded glosses, joined as JMdict joins them'
+    ).toEqual(expected.senses.map(joinedAsJmdictJoinsThem))
     expect(
       detail.examples.map(example => example.text),
       "the page's first examples are the suite's"

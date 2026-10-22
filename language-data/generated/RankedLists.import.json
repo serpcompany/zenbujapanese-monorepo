@@ -1,7 +1,7 @@
 {
   "schema": "zenbu.ranked-lists-import.v1",
   "importerSHA256": "b720bb569b83562491c3fdd28afd469f1f75ce60691698d6737b719a5b39e35c",
-  "languageDataSHA256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+  "languageDataSHA256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
   "lists": [
     {
       "packID": "zenbu.wikipedia.written.ja.unidic-3.1",
@@ -47,5 +47,5 @@
     }
   ],
   "artifactBytes": 19587072,
-  "artifactSHA256": "77ce1ed48381b7afccd7b97d0cbd807cc185979fd3354f6afddc8c20134e28a3"
+  "artifactSHA256": "f27003e80a413e0b6513de60c3be106ff1bbc5734ed502802ad8a21818f38292"
 }

@@ -17,7 +17,7 @@ from jmdict_normalization import language_reference_id
 
 ARTIFACT_SCHEMA = "zenbu.level-pack.v1"
 JMDICT_SOURCE_IDENTITY = "edrdg.jmdict"
-REPOSITORY = Path(__file__).resolve().parents[3]
+REPOSITORY = Path(__file__).resolve().parents[2]
 
 
 def mapping_sha256(rows: list[tuple[bytes, int]]) -> str:
@@ -127,7 +127,7 @@ def main() -> int:
     parser.add_argument(
         "--record",
         type=Path,
-        default=REPOSITORY / "apps/ios/LanguageData/Sources/JLPT-Waller-2025-08-26.source.json",
+        default=REPOSITORY / "language-data/sources/JLPT-Waller-2025-08-26.source.json",
     )
     parser.add_argument(
         "--language-data",

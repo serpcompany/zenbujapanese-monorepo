@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 ARTIFACT_SCHEMA = "zenbu.frequency-pack.v1"
-RESOURCES = Path(__file__).resolve().parents[1] / "Modules/Sources/SearchExperience/Resources"
+RESOURCES = Path(__file__).resolve().parents[2] / "apps/ios/Modules/Sources/SearchExperience/Resources"
 UNIDIC_LEXICON = "unidic-cwj-3.1.0/lex_3_1.csv"
 KATAKANA_WORD = re.compile(r"^[ァ-ヺー・]+$")
 csv.field_size_limit(16 * 1024 * 1024)

@@ -196,11 +196,11 @@ Claude's. Those are the release workflow, the three deploy workflows, and the th
 Claude; a workflow with no secret names its actions by major-version tag.
 `tools/checks/src/workflow-rules.test.ts` holds the pins, and this table, to that.
 
-- `anthropics/claude-code-action` is at v1.0.247. It was pinned there because v1.0.248 seemed to
-  fail every run, but a revoked `CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the
-  same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). A review ran with the token
-  again on 2026-10-11, so nothing waits on it now; moving the pin to the latest release is in
-  [`harness-debt.md`](../harness-debt.md).
+- `anthropics/claude-code-action` is at v1.0.258, its latest release on 2026-10-22, which installs
+  Claude Code 2.1.308. The three workflows that run it run only when their file is `main`'s, so a
+  pull request that moves the pin can't try it: the first review after the merge is its test
+  ([`ci-agents.md`](ci-agents.md), Code review). Moving it also moves the Claude Code version a
+  dry run of the review uses ([`ci-review.md`](ci-review.md), Trying a change to the review).
 - `pnpm/action-setup` is at v6.0.10, the commit its `v6` tag named when it was pinned.
 
 To update one, pin the new release's commit and change this table in the same pull request.
@@ -217,4 +217,4 @@ To update one, pin the new release's commit and change this table in the same pu
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/web-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
-| `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
+| `anthropics/claude-code-action` | `6b6870e649b5ff408753befeaee5fc7989d4e6a9` | v1.0.258 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
