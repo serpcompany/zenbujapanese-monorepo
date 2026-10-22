@@ -38,6 +38,10 @@ Every step is logged to the console with the prefix `[zenbu-spike]` and to the p
 - `node run-youtube.mjs cft AQdI1o2D32I 0jWS7Tbs6kc`: Chrome for Testing 153 with a fresh
   profile under `tmp/agent/`, both YouTube videos, every control. Results go to
   `tmp/agent/verify/945/youtube-cft.json`. `branded` instead of `cft` uses Google Chrome.
+- `node run-youtube-agent.mjs AQdI1o2D32I`: the same checks in the persistent agent Chrome
+  (`~/dev/repos/zenbujapanese-monorepo/tmp/agent/agent-chrome`, its README). Start it first with
+  `node ctl.mjs start --ext <this folder>/extension`. Clicks `on-device en` for the Translator.
+  Results go to `tmp/agent/verify/945/youtube-agent.json`.
 - `node run-netflix-mock.mjs cft`: the Netflix route against `netflix-mock/`, a page that
   mimics Netflix's player API and serves two TTML files. Chrome maps `www.netflix.com` and
   `mock.nflxvideo.net` to a local HTTPS server, so nothing reaches Netflix.
