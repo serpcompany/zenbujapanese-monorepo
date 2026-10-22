@@ -10,7 +10,7 @@ import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill, pluralOf } from '@/lib/i18n/format'
 
-export type BoxText = CopyText &
+type BoxText = CopyText &
   Pick<Dictionary['tools']['converter'], 'copy' | 'copyLabel' | 'characters'>
 
 const characterCount = (text: string, words: BoxText, locale: Locale) => {
