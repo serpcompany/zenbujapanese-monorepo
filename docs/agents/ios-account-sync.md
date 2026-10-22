@@ -134,9 +134,13 @@ sync; what the learner sees is in the product docs'
     downloading or waiting, which the Media Library shows.
   - **Settings.** `SyncedSetting.all` names each setting the service lists, where the app keeps it
     in `UserDefaults`, and its standard value. `SyncedSettings` notices a change on
-    `UserDefaults.didChangeNotification` and before every sync, and sends only a value it hasn't
-    seen; the first upload sends those changed from their standard. `ReadingAidPreferences` and
-    `TranslateExperience` follow a value written under them. Translate's layout isn't one. A
+    `UserDefaults.didChangeNotification` from its own store, `UserDefaults.standard`, which Reading
+    Aids, Translate, and every `@AppStorage` setting write through, and before every sync, and
+    sends only a value it hasn't seen; the first upload sends those changed from their standard.
+    It hears no other store: a post waits for its observers on the main queue, so hearing every
+    store made each defaults write anywhere in the process wait for the main thread to read every
+    setting again. `ReadingAidPreferences` and `TranslateExperience` follow a value written under
+    them. Translate's layout isn't one. A
     setting refused `unknown_setting` or `invalid_fields` waits for the next launch
     (`retryNextLaunch`), and a conflict whose `current` is gone goes again at its version. Search
     results never write a fallback to Default into `search.sort`: the core shows Default while the
@@ -245,7 +249,8 @@ request, and a download across another sign-in. `AccountSyncRulesTests` covers s
 refused, and conflicting with a gap; searches removed against a stale search, pruned, removed
 before the key, and riding along; and the first upload across a sign-out. `PlatformAdapterTests`
 shows a photo from Files losing its metadata. `SyncedSettingsTests` shows Reading Aids and Translate's
-speech speed following a synced value, and `FrequencyPackLifecycleTests` the manager showing a
+speech speed following a synced value, a change through Reading Aids, Translate, or `@AppStorage`
+told as it's made, and another store's change costing nothing, and `FrequencyPackLifecycleTests` the manager showing a
 synced choice and telling only the learner's. On iPhone and iPad,
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` signs
 in to the stand-in service with `ZENBU_ACCOUNT_STAND_IN_KEPT=1`, whose first answer brings a

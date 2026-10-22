@@ -78,7 +78,12 @@ what it waited for and for how long.
   test's requests meanwhile, and on a busy Mac a holder that ran out of its own time first never
   let go, so its reply kept the thread for its full 30 seconds and 59 account tests ran out of
   their minute together. A reply a test sends later is a `LaterReply`, which holds no thread
-  ([`ios-account-sync.md`](ios-account-sync.md)). Every test's memory counts in the process's
+  ([`ios-account-sync.md`](ios-account-sync.md)). A notification is process-wide too: a
+  `UserDefaults.didChangeNotification` observer on the main queue holds up every defaults write
+  until the main thread has run it, so an observer that heard every store (`SyncedSettings`, before
+  it heard only its own) made each test's writes wait while every other live test's settings were
+  read again: 29% of a busy run's main thread, and defaults writes parked on the cooperative
+  threads waiting for it. Observe the object you own. Every test's memory counts in the process's
   footprint too, which the tests beside one that hashed a file raised by 38 MB, or lowered, while
   it hashed: a test of memory counts what the code under test holds (`DigestTests` counts the
   chunks alive at once).

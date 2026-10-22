@@ -7,6 +7,8 @@ final class CallCount: @unchecked Sendable {
   private let lock = NSLock()
   private var count = 0
 
+  var current: Int { lock.withLock { count } }
+
   func next() -> Int {
     lock.withLock {
       count += 1
