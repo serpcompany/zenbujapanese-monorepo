@@ -19,14 +19,14 @@
     "identity": "unidic-compound-accent-rule-c2-v1",
     "artifact_schema": "zenbu.compound-pitch.v1",
     "rule": "Two-part kanji noun compound whose second UniDic part has aConType C2: downstep on the second part's first mora.",
-    "entries_without_pitch_considered": 113815,
-    "entries_estimated": 16193,
+    "entries_without_pitch_considered": 116676,
+    "entries_estimated": 16195,
     "common_entries_estimated": 713,
     "source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
-    "language_data_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+    "language_data_sha256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
     "import_tool_sha256": "372d183d9abf2e67e0c6b10ac94a6e38c9426cd58af6ef1f2804f1097b343d76",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
-    "artifact_sha256": "1545dbc29fb6c453e5c3e82f54ea3d5f2b0e71d46fc1392185355136b34c648a",
+    "artifact_sha256": "95ac9930870679e632bfb1904ccb305c8ef28bc49d61ecdd3dbb285beffcf915",
     "artifact_bytes": 1810432
   }
 }

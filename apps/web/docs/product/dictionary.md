@@ -494,19 +494,19 @@ the reader prefers reduced motion.
   its kana; again clears it, another moves it"; smoke "学校's kanji each highlight their part of the
   furigana".
 
-**Pitch accent.** Pitch comes from UniDic, or for a two-part compound UniDic doesn't list whole,
-such as 記者会見, from CompoundPitch; a word with neither shows no pitch. It is drawn as the app
-draws it: the reading in katakana, one mora wide each (one and a half for a combined mora such as
-キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and a
-hollow dot for the following particle. The capsule is one button that pronounces the word; screen
-readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
-say it: M is the source's mora count, even where it differs from the morae drawn (#831 review).
+**Pitch accent.** Pitch is the word's own UniDic accent, never a homophone's, or CompoundPitch's for
+a two-part compound UniDic lacks (記者会見); a word with neither has none. It is drawn as the app draws
+it: the reading in katakana, one mora wide each (one and a half for a combined mora such as キョ),
+with a dot per mora at the top when high and the bottom when low, joined by a line, and a hollow dot
+for the following particle. The capsule is one button that pronounces the word; screen readers hear
+"Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value say it: M is
+the source's mora count, even where it differs from the morae drawn (#831 review).
 
 - Source: App docs, Dictionary and kanji details; `pitchGraph` in the core's `detail/pitch.ts`,
   which the app's `PitchAccentBadge.swift` draws; #462 design.
 - Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and each
   dot's position and level); WD rendered reads each dot's position from the drawn SVG;
-  `packages/dictionary-core/src/detail/pitch.test.ts`;
+  `packages/dictionary-core/src/detail/pitch.test.ts`; `UniDicPitchTests`;
   `packages/dictionary-core/src/detail/word.test.ts`, "shows CompoundPitch when UniDic has no pitch,
   and none when neither has"; smoke "見る's pitch graph and Frequency rows match the app".
 
@@ -523,7 +523,7 @@ Frequency, Lists, Notes, and Examples.
 **Meaning.** Senses are numbered, each with its notes.
 
 - Source: `MeaningSection` in `WordDetailSections.swift`.
-- Check: WD `senses`.
+- Check: WD `senses`, each meaning its recorded JMdict glosses, joined as JMdict joins them.
 
 **Frequency.** One row per default dictionary, JLPT then YouTube, with its dot and its level or
 rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTube). JLPT levels

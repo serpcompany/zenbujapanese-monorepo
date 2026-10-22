@@ -131,7 +131,7 @@ private struct WordDetailObserver {
     }
     observed.senses = zip(page.senses, entry.senses).map { shown, sense in
       WordDetailCase.Sense(
-        meaning: shown.meaning, notes: shown.notes,
+        meaning: shown.meaning, glosses: sense.glosses, notes: shown.notes,
         partsOfSpeech: sense.partsOfSpeech.map(\.rawValue))
     }
     observed.frequency = page.frequency.map(WordDetailCase.Frequency.init)
@@ -353,6 +353,7 @@ private struct WordDetailCase: Codable {
 
   struct Sense: Codable {
     let meaning: String
+    let glosses: [String]
     let notes: [String]
     let partsOfSpeech: [String]
   }
