@@ -7,6 +7,7 @@ enum ProblemArea: String, Sendable {
   case languagePack = "language_pack"
   case dictionaryCore = "dictionary_core"
   case translateStart = "translate_start"
+  case youTubeTranslation = "youtube_translation"
 }
 
 struct HandledProblem: Equatable, Sendable {
