@@ -543,8 +543,8 @@ It runs every importer in order, copies each pack's import report into its catal
 moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
 learner already installed stay trusted, and runs the contract tests. Then re-record the six
 suites above and review their diffs. Its README says what each tool builds, why the Python is
-pinned, how to move to a newer source snapshot, and which two tools the next rebuild first points
-at the new folders ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
+pinned, how to move to a newer source snapshot, and which paths two tools derive from their own
+folder ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
 `zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
