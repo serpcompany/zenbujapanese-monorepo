@@ -72,12 +72,16 @@ what it waited for and for how long.
   a wait a test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
   `LaterReply.asked()` do; one that doesn't still holds up the whole run.
 - **A test holds nothing the others share.** The package's tests all run at once in one process,
-  so a wait that blocks a shared thread ties a test to every other. Every stubbed request in the
-  process goes through CFNetwork's one thread for custom `URLProtocol`s: a stub that waited there
-  for its test to let a reply go held up every other test's requests meanwhile, and on a busy Mac a
-  holder that ran out of its own time first never let go, so its reply kept the thread for its
-  full 30 seconds and 59 account tests ran out of their minute together. A reply a test sends
-  later is a `LaterReply`, which holds no thread ([`ios-account-sync.md`](ios-account-sync.md)).
+  so a wait on something they share, or a measure of all of them, ties a test to every other.
+  Every stubbed request in the process goes through CFNetwork's one thread for custom
+  `URLProtocol`s: a stub that waited there for its test to let a reply go held up every other
+  test's requests meanwhile, and on a busy Mac a holder that ran out of its own time first never
+  let go, so its reply kept the thread for its full 30 seconds and 59 account tests ran out of
+  their minute together. A reply a test sends later is a `LaterReply`, which holds no thread
+  ([`ios-account-sync.md`](ios-account-sync.md)). Every test's memory counts in the process's
+  footprint too, which the tests beside one that hashed a file raised by 38 MB, or lowered, while
+  it hashed: a test of memory counts what the code under test holds (`DigestTests` counts the
+  chunks alive at once).
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
