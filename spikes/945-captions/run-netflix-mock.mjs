@@ -24,15 +24,22 @@ page.on('console', (m) => {
   if (m.text().startsWith('[mock-netflix]')) warnings.push(m.text());
 });
 const navStart = Date.now();
-await page.goto('https://www.netflix.com/watch/81234567', { waitUntil: 'domcontentloaded' });
+const noEnglish = Boolean(process.env.NO_EN);
+await page.goto(`https://www.netflix.com/watch/81234567${noEnglish ? '?noen=1' : ''}`, { waitUntil: 'domcontentloaded' });
 const ready = await waitState(page, (s) => s.status === 'ready' || s.status === 'No Japanese Captions', 30000);
 const result = { chrome: kind, version, readyAfterMs: Date.now() - navStart, status: ready?.status, netflix: ready?.netflix, cueCount: ready?.cueCount, translationCount: ready?.translationCount };
+if (noEnglish) {
+  await page.click('#zenbu-spike button[data-action=translator]');
+  const translated = await waitState(page, (s) => s.translationFrom === 'on-device', 60000);
+  result.onDevice = translated && { readyMs: translated.onDeviceReadyMs, lineMs: translated.onDeviceLastMs, text: translated.text, translation: translated.translation };
+  console.log('on-device', JSON.stringify(result.onDevice));
+}
 result.checks = await exerciseControls(page, 16);
 result.m7375Warnings = warnings;
 result.logs = logs;
 result.serverRequests = serverLog.filter((l) => l.includes('timedtext') || l.includes('/watch/'));
-await page.screenshot({ path: join(out, `netflix-mock-${kind}.png`) });
-writeFileSync(join(out, `netflix-mock-${kind}.json`), JSON.stringify(result, null, 2));
+await page.screenshot({ path: join(out, `netflix-mock-${kind}${noEnglish ? '-no-en' : ''}.png`) });
+writeFileSync(join(out, `netflix-mock-${kind}${noEnglish ? '-no-en' : ''}.json`), JSON.stringify(result, null, 2));
 console.log(JSON.stringify({ status: result.status, readyAfterMs: result.readyAfterMs, cues: result.cueCount, en: result.translationCount }));
 console.log('netflix', JSON.stringify(result.netflix));
 console.log('checks', JSON.stringify(result.checks));

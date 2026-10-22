@@ -8,7 +8,8 @@
     { trackId: 'T:en', bcp47: 'en', displayName: 'English', rawTrackType: 'SUBTITLES', isImageBased: false },
     { trackId: 'T:off', bcp47: null, displayName: 'Off', isNoneTrack: true },
   ];
-  let active = tracks[2];
+  if (location.search.includes('noen')) tracks.splice(2, 1);
+  let active = tracks[tracks.length - 2];
   let playerSeeking = false;
   const downloaded = [];
   const sessionState = { qx: { r7: { zz: [{ kind: 'media' }], tt: downloaded } } };

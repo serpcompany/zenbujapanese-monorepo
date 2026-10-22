@@ -11,6 +11,40 @@ globalThis.ZenbuOverlay = (() => {
   let stopAt = null;
   let settleUntil = 0;
   const state = { site: location.hostname, status: 'starting', cueCount: 0, translationCount: 0 };
+  let translator = null;
+  const onDevice = new Map();
+
+  async function startTranslator(fromClick) {
+    if (translator || !('Translator' in self)) {
+      if (!('Translator' in self)) log('on-device translator: Translator missing in this context');
+      return;
+    }
+    const options = { sourceLanguage: 'ja', targetLanguage: 'en' };
+    const availability = await Translator.availability(options);
+    log('on-device translator availability', availability);
+    if (availability !== 'available' && !fromClick) return;
+    const started = performance.now();
+    try {
+      translator = await Translator.create(options);
+      state.onDeviceReadyMs = Math.round(performance.now() - started);
+      log('on-device translator ready in ms', String(state.onDeviceReadyMs));
+    } catch (error) {
+      log('on-device translator failed', String(error));
+    }
+  }
+
+  function onDeviceTranslation(i) {
+    if (!translator || !cues[i]) return '';
+    if (!onDevice.has(i)) {
+      onDevice.set(i, '');
+      const started = performance.now();
+      translator.translate(cues[i].text).then((text) => {
+        onDevice.set(i, text);
+        state.onDeviceLastMs = Math.round(performance.now() - started);
+      });
+    }
+    return onDevice.get(i);
+  }
 
   function log(...parts) {
     const line = parts.map((p) => (typeof p === 'string' ? p : JSON.stringify(p))).join(' ');
@@ -51,6 +85,8 @@ globalThis.ZenbuOverlay = (() => {
     const controls = panel.querySelector('[data-role=controls]');
     controls.append(button('◀ line', 'previous'), button('⏯', 'toggle'), button('line ▶', 'next'), button('repeat', 'repeat'));
     for (const speed of speeds) controls.append(button(`${speed}×`, `speed:${speed}`));
+    const translate = button('on-device en', 'translator');
+    controls.append(translate);
     logBox = panel.querySelector('[data-role=log]');
     document.documentElement.append(panel);
   }
@@ -64,6 +100,11 @@ globalThis.ZenbuOverlay = (() => {
     state.repeat = repeat;
     state.text = cues[index]?.text ?? '';
     state.translation = translationFor(translations, cues[index]);
+    state.translationFrom = state.translation ? 'track' : null;
+    if (!state.translation && translations.length === 0) {
+      state.translation = onDeviceTranslation(index);
+      if (state.translation) state.translationFrom = 'on-device';
+    }
     panel.dataset.state = JSON.stringify(state);
     panel.querySelector('[data-role=status]').textContent =
       `${state.status} · ${cues.length} lines · ${translations.length} en · t=${state.time?.toFixed(1)} · ${state.rate}× ${repeat ? '· repeat' : ''}`;
@@ -122,8 +163,9 @@ globalThis.ZenbuOverlay = (() => {
   }
 
   function run(command) {
-    if (!player) return log('no player yet');
     const action = command.action;
+    if (action === 'translator') return startTranslator(true);
+    if (!player) return log('no player yet');
     log('command', action);
     if (action === 'previous') goTo(index - 1);
     else if (action === 'next') goTo(index + 1);
@@ -164,7 +206,9 @@ globalThis.ZenbuOverlay = (() => {
     setCues(next, nextTranslations) {
       cues = next;
       translations = nextTranslations ?? [];
+      onDevice.clear();
       index = -1;
+      if (cues.length && translations.length === 0) startTranslator(false);
       state.cueCount = cues.length;
       state.translationCount = translations.length;
     },
