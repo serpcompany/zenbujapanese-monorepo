@@ -41,6 +41,10 @@ def device(name: str, udid: str, state: str = "Shutdown", is_available: bool = T
     return {"name": name, "udid": udid, "state": state, "isAvailable": is_available}
 
 
+def launching(udid: str) -> list[tuple[str, ...]]:
+    return [("launch", udid, simulator.SETTLED_APP), ("terminate", udid, simulator.SETTLED_APP)]
+
+
 DEVICES = {
     "com.apple.CoreSimulator.SimRuntime.iOS-26-2": [
         device("iPhone 17 Pro Max", "DEFAULT"),
@@ -229,21 +233,30 @@ class SimulatorTests(unittest.TestCase):
         self.assertEqual(waits, [])
         self.assertEqual(kept, [mock.call("RUNNING-IPAD")])
 
-    def test_a_boot_waits_for_the_boot_and_the_mac_and_starts_a_keeper(self) -> None:
+    def test_a_boot_waits_for_the_boot_an_app_launch_and_the_mac_and_starts_a_keeper(self) -> None:
         said, commands, _, kept = self.booting("iphone", "issue-12-sidebar")
-        self.assertEqual(commands, [("boot", "LIVE"), ("bootstatus", "LIVE", "-b")])
-        self.assertRegex(said, r"^booted in \d+ s, and the Mac was calm 41 s later$")
+        self.assertEqual(commands, [("boot", "LIVE"), ("bootstatus", "LIVE", "-b"), *launching("LIVE")])
+        self.assertRegex(
+            said, r"^booted in \d+ s, launched an app \d+ s later, and the Mac was calm 41 s later$"
+        )
         self.assertEqual(kept, [mock.call("LIVE")])
 
     def test_a_checkout_keeps_one_simulator_up_unless_the_other_is_in_use(self) -> None:
         said, commands, _, _ = self.booting("iphone", "issue-8-running")
         self.assertEqual(
             commands,
-            [("shutdown", "RUNNING-IPAD"), ("boot", "RUNNING"), ("bootstatus", "RUNNING", "-b")],
+            [
+                ("shutdown", "RUNNING-IPAD"),
+                ("boot", "RUNNING"),
+                ("bootstatus", "RUNNING", "-b"),
+                *launching("RUNNING"),
+            ],
         )
         self.assertIn("zenbu-japanese-ipad--issue-8-running was shut down", said)
         said, commands, _, _ = self.booting("iphone", "issue-8-running", in_use=True)
-        self.assertEqual(commands, [("boot", "RUNNING"), ("bootstatus", "RUNNING", "-b")])
+        self.assertEqual(
+            commands, [("boot", "RUNNING"), ("bootstatus", "RUNNING", "-b"), *launching("RUNNING")]
+        )
         self.assertNotIn("shut down", said)
 
     def test_idleness_is_read_from_the_last_sample_not_the_average_since_startup(self) -> None:

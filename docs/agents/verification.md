@@ -118,7 +118,7 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 | `python3 apps/ios/Tools/simulator.py` | The UDID of this checkout's iPhone Simulator, made when it's missing: the newest iPhone Pro Max, on the newest installed iOS the selected Xcode runs |
 | `python3 apps/ios/Tools/simulator.py --device ipad` | The same for its iPad Simulator, the newest iPad Pro 13-inch |
 | `python3 apps/ios/Tools/simulator.py derived-data` | This checkout's build folder, for `-derivedDataPath` |
-| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot and for the Mac to be calm again, and sets a keeper on it; deletes the old installs of the app the Simulator keeps |
+| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot, for an app to launch in it, and for the Mac to be calm again, and sets a keeper on it; deletes the old installs of the app the Simulator keeps |
 | `python3 apps/ios/Tools/simulator.py shutdown` | Shuts down this checkout's Simulators now, and deletes the old installs of the app they keep |
 | `python3 apps/ios/Tools/simulator.py delete` | Removes this worktree's Simulators and build folder |
 | `python3 apps/ios/Tools/simulator.py prune` | Removes those of every worktree that is gone, passing over a worktree with a Simulator still running |
@@ -157,7 +157,12 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
 - **`simulator.py boot` boots, and nothing else does.** The `verify-app` script calls it, and so
   does anyone before a command that needs the Simulator up, such as the package's tests. It
   does nothing to a Simulator that is up. After a boot it waits for `simctl bootstatus` (13 to
-  41 seconds on this Mac) and then for the processors to be at least half idle in two 2-second
+  41 seconds on this Mac), then launches Settings and closes it, waiting for the launch:
+  `bootstatus` returns before the Simulator's SpringBoard, RunningBoard, and launchd can take in a
+  process, and a test process's first use of UIKit waits on them. A package run started into a
+  fresh boot beside a Mac run held its main thread there for 94 seconds, and every test with a
+  minute's limit failed; `xcodebuild` boots a Simulator that is down with neither wait, so boot
+  it here first. Then it waits for the processors to be at least half idle in two 2-second
   samples running (`iostat`), up to two minutes: a fresh boot keeps all four cores busy for
   about 35 seconds after `bootstatus` returns, longer when other work is running, and tests
   started then fail at launch. The one-minute load average is no measure of this: it is an
