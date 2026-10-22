@@ -58,7 +58,8 @@ is read in its composed form (Unicode NFC), and a text read once shows again at 
   kanji; the dictionary service's segmentation
   ([`dictionary-api.md`](../../../../docs/agents/dictionary-api.md), Routes and Apps).
 - Check: Furigana spec, "shows its sample with furigana, and reads what is typed by whole words, in
-  context"; Converter test, "reads what is typed once typing pauses, and shows its furigana"; Route
+  context"; Converter test, "reads what is typed once typing pauses, and shows its furigana" and
+  "shows a text it has read before at once, without asking again"; Route
   test, "answers the service’s segmentation as furigana over each word’s kanji, kept an hour and
   unindexed" and "asks for the text in its composed form"; Tool test, "reads words in context:
   今日 きょう, 大人 おとな, 一人 ひとり, 二人 ふたり, 日本 にほん, never kanji by kanji"; Page test,

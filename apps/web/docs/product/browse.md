@@ -269,7 +269,7 @@ header's Dictionary and Tools menus lead to the kana, kanji, frequency, and cate
 - Check: `src/components/site-footer.test.tsx`, "the footer groups its links under Products, Tools,
   Company, and Legal"; `src/components/site-header.test.tsx`, "the Dictionary menu leads to the
   dictionary and its browse pages" and "the Tools menu leads to the tools, the reference pages, and
-  the converters, and Kanji to Furigana is a placeholder"; `e2e/footer.spec.ts`, "the footer groups
+  the converters, Kanji to Furigana among them"; `e2e/footer.spec.ts`, "the footer groups
   its links under Products, Tools, Company, and Legal, then ends with the copyright and Sitemap";
   `e2e/site.spec.ts`, "every link in the header menus opens a page the site has, with no redirect".
 

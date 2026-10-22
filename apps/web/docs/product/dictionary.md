@@ -955,8 +955,8 @@ footer line with a link. Company is a plain dropdown.
   (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and Kanji
   and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
 - **Tools:** a card drawn with kana that leads to all tools (`/tools/`); Reference (Dictionary, Kana
-  charts), Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana and Romaji to
-  Kana, which open their pages, and Kanji to Furigana); then All free tools
+  charts), Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to
+  Kana, and Kanji to Furigana, which open their pages); then All free tools
   ([Tools pages](tools.md)).
 - **Products:** a card with the App Store word screenshot for Zenbu Japanese for iPhone, with Get
   the app; Apps (Zenbu Japanese for iPhone, Browser extension), Free (Zenbu Japanese Dictionary,
@@ -971,8 +971,8 @@ window.
 
 - Source: #844 decision and mockups (Header switch); #650.
 - Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
-  browse pages", "the Tools menu leads to the tools, the reference pages, and the converters, and
-  Kanji to Furigana is a placeholder", "the Products menu leads to the products pages and the web
+  browse pages", "the Tools menu leads to the tools, the reference pages, and the converters,
+  Kanji to Furigana among them", "the Products menu leads to the products pages and the web
   dictionary, and its planned pages are placeholders", and "the Company menu leads to About,
   Sources, Support, Contact, and Legal"; `apps/web/e2e/site.spec.ts`, for each menu, "the … menu
   opens and closes with a click", "the … menu opens with the keyboard and Escape closes it", and "a
@@ -980,14 +980,14 @@ window.
   a page the site has, with no redirect" and "the Dictionary menu leads to the search box".
 
 **Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
-yet, and the outside addresses that aren't known yet, link to `#` for now: Kanji to Furigana (#849),
-Browser extension, Reference guides, Courses, Log in (`/login/`) and Create an account
-(`/register/`) in a build whose account pages are closed, and See all videos (`/videos/`), which
-shows only once the product page has videos. Zenbu Japanese for iPhone and All products now open
-their pages, `/products/zenbu-japanese-app/` and `/products/` ([Products pages](products.md)), from
-the same entries, as do All free tools, Free tools, and All tools (`/tools/`) and the Hiragana to
-Katakana and Romaji to Kana converters ([Tools pages](tools.md)); so do Log in and Create an account
-where the account pages are open, as on staging and in production ([Account
+yet, and the outside addresses that aren't known yet, link to `#` for now: Browser extension,
+Reference guides, Courses, Log in (`/login/`) and Create an account (`/register/`) in a build whose
+account pages are closed, and See all videos (`/videos/`), which shows only once the product page
+has videos. Zenbu Japanese for iPhone and All products now open their pages,
+`/products/zenbu-japanese-app/` and `/products/` ([Products pages](products.md)), from the same
+entries, as do All free tools, Free tools, and All tools (`/tools/`) and the Hiragana to Katakana,
+Romaji to Kana, and Kanji to Furigana converters ([Tools pages](tools.md)); so do Log in and
+Create an account where the account pages are open, as on staging and in production ([Account
 pages](account.md#pages)), the build choosing their addresses as it does the footer's Sign in. #650
 asked for menu items to appear only once their page exists; the owner chose to show them now as `#`
 placeholders instead (#844). Every one is in one list, `linkTargets` in `src/lib/site.ts`, named for
@@ -1002,8 +1002,8 @@ directly once it exists.
   in src/lib/site.ts", which visits every page in `src/lib/pages.ts`, the tools index, a converter,
   and a search, word, and browse page at both widths, with the account menu open from 1024 pixels
   and the phone menu open below, and prints the placeholders it found; `apps/web/e2e/site.spec.ts`,
-  "the Tools menu opens the tools and two converters, Kanji to Furigana and the Products menu’s
-  planned pages are # placeholders, and All products opens the catalog"; `src/lib/site.test.ts`, "%s
+  "the Tools menu opens the tools and three converters, the Products menu’s planned pages are #
+  placeholders, and All products opens the catalog"; `src/lib/site.test.ts`, "%s
   opens its page in a build whose account pages are open, and isn't a placeholder" and "%s stays a #
   placeholder in a build whose account pages are closed", for Log in and Create an account.
 
