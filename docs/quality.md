@@ -114,7 +114,7 @@ in [`quality-ios-account.md`](quality-ios-account.md), and the website's in
   each failure says how to fix it. The docs' links, anchors, paths, scripts, named tests, and sizes
   are checked on every pull request; whether their prose still matches the code is checked only
   weekly, by doc gardening in `Weekly maintenance`. Main gaps: no check is required to merge yet, an
-  owner's setting; Swift has no linter (#516); and nothing refuses a cast of parsed JSON
+  owner's setting; Swift has no linter; and nothing refuses a cast of parsed JSON
   ([`harness-debt.md`](harness-debt.md), Checks).
 
 Re-grade an area, and set its Graded date to that day, in the same pull request that changes its
