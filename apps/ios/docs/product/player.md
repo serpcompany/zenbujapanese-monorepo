@@ -84,7 +84,9 @@ player is by hand; the UI tests stand in for it with a local player that answers
   kanji, the conjugations, a related word, or a word in an example) close the sheet and open the
   page inside Player, so Back returns to the video. The same goes for the word sheet in Translate
   and in its Image Search, which open the page inside Translate. A card's words keep their links
-  however many lines were linked before it.
+  however many lines were linked before it. A number and its counter are one word where one
+  dictionary entry has both, read as it: 一人 ひとり, 二人 ふたり, 二十日 はつか (core
+  `packages/dictionary-core/src/examples/linking.test.ts`, "a number and its counter").
   Check: UI `PlayerWatchUITests.testAWordInACaptionOpensItsEntryInsidePlayer` and
   `testAWordSheetsKanjiOpensItsPageInsidePlayer`; the same sheet in Image Search
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate

@@ -1,6 +1,11 @@
 import { isJapaneseOnly, normalizeQuery } from '../search/query'
 import { toHiragana, toKatakana } from './kana'
-import { groupInflections, type MorphologyCandidate } from './morphology'
+import {
+  groupInflections,
+  type MorphologyCandidate,
+  type NumberWithCounter,
+  numberWithCounterAt
+} from './morphology'
 
 export interface LinkEntry {
   id: string
@@ -192,7 +197,9 @@ export function formsLookedUp(
   highlighted: Highlighted | null
 ): string[][] {
   const forms = highlighted ? highlightedForms(highlighted) : null
-  return grouped(candidates)
+  const words = grouped(candidates)
+  const counted = words.flatMap((_, index) => numberWithCounterAt(words, index)?.word ?? [])
+  return [...words, ...counted]
     .filter(candidate => !isWrittenAs(candidate, forms) && isLookedUp(candidate))
     .map(lookupForms)
 }
@@ -247,8 +254,25 @@ export function linkedTokens(
     lookupForm: resolution.lookupForm
   })
 
+  const asOneWord = ({ word }: NumberWithCounter): LinkedToken | null => {
+    const piecesHighlighted = word.children.some(piece => isWrittenAs(piece, forms))
+    if (piecesHighlighted && !isWrittenAs(word, forms)) return null
+    const resolution = resolve(word)
+    if (!resolution.entry) return null
+    return { ...token(word, resolution), reading: toKatakana(resolution.entry.reading) }
+  }
+
+  const words = grouped(candidates)
   const tokens: LinkedToken[] = []
-  for (const candidate of grouped(candidates)) {
+  for (let index = 0; index < words.length; index++) {
+    const counted = numberWithCounterAt(words, index)
+    const whole = counted ? asOneWord(counted) : null
+    if (counted && whole) {
+      tokens.push(whole)
+      index += counted.pieces - 1
+      continue
+    }
+    const candidate = words[index]
     const resolution = resolve(candidate)
     if (resolution.candidates.length === 0 && candidate.children.length > 1) {
       const children = candidate.children.map(child => token(child, resolve(child)))

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 import { getDictionary } from '../src/lib/i18n/dictionary'
 import { localizedPath } from '../src/lib/i18n/paths'
 import { furiganaReadingsUrl } from '../src/lib/tools/furigana-tool'
@@ -7,6 +7,7 @@ import { furiganaPageIn } from '../src/lib/tools/tool-pages'
 import { expect, onPhone, test } from './test'
 
 const english = getDictionary('en').tools.furigana
+const words = getDictionary('en').tools.converter
 const japanese = getDictionary('ja').tools.furigana
 const path = furiganaPageIn('en').path
 
@@ -17,6 +18,27 @@ const furiganaIn = (page: Page, name = english.output) =>
   main(page).getByLabel(name, { exact: true }).locator('ruby')
 const asksForReadings = (url: URL) => url.pathname === furiganaReadingsPath
 
+const untilHydrated = { timeout: 15_000 }
+const lostBeforeHydration = { timeout: 5_000 }
+
+async function typeOnceHydrated(
+  page: Page,
+  text: string,
+  { name = english.input, clear = words.clear }: { name?: string; clear?: string } = {}
+) {
+  await clickAndSee(main(page).getByRole('button', { name: clear, exact: true }), () =>
+    expect(box(page, name)).toHaveValue('', lostBeforeHydration)
+  )
+  await box(page, name).fill(text)
+}
+
+async function clickAndSee(button: Locator, see: () => Promise<void>) {
+  await expect(async () => {
+    await button.click()
+    await see()
+  }).toPass(untilHydrated)
+}
+
 test.describe('Kanji to Furigana', () => {
   test('shows its sample with furigana, and reads what is typed by whole words, in context', async ({
     page
@@ -26,22 +48,25 @@ test.describe('Kanji to Furigana', () => {
     await expect(furiganaIn(page)).toHaveText([
       '今日きょう',
       '大人おとな',
+      '一人ひとり',
       '子供こども',
+      '二人ふたり',
       '日本にほん',
       '映画えいが',
       '見み',
       '行い'
     ])
-    await box(page).fill('日本語を勉強しています。')
+    await typeOnceHydrated(page, '日本語を勉強しています。')
     await expect(furiganaIn(page)).toHaveText(['日本語にほんご', '勉強べんきょう'])
     await expect(main(page).getByText('12 of 200 characters', { exact: true })).toBeVisible()
   })
 
   test('a Try example fills the box and reads it, and Clear empties both', async ({ page }) => {
     await page.goto(path)
-    await main(page).getByRole('button', { name: '明日', exact: true }).click()
+    await clickAndSee(main(page).getByRole('button', { name: '明日', exact: true }), () =>
+      expect(furiganaIn(page)).toHaveText(['明日あした'], lostBeforeHydration)
+    )
     await expect(box(page)).toHaveValue('明日')
-    await expect(furiganaIn(page)).toHaveText(['明日あした'])
     await main(page).getByRole('button', { name: 'Clear' }).click()
     await expect(box(page)).toHaveValue('')
     await expect(box(page)).toBeFocused()
@@ -50,8 +75,9 @@ test.describe('Kanji to Furigana', () => {
 
   test('says when a text is over 200 characters, and marks the box', async ({ page }) => {
     await page.goto(path)
-    await box(page).fill('あ'.repeat(201))
-    await expect(main(page).getByText(english.tooLong.replace('{limit}', '200'))).toBeVisible()
+    const tooLong = main(page).getByText(english.tooLong.replace('{limit}', '200'))
+    await typeOnceHydrated(page, 'あ'.repeat(201))
+    await expect(tooLong).toBeVisible()
     await expect(box(page)).toHaveAttribute('aria-invalid', 'true')
     await expect(furiganaIn(page)).toHaveCount(0)
   })
@@ -64,7 +90,7 @@ test.describe('Kanji to Furigana', () => {
         route.fulfill({ status: 502, json: { error: 'The dictionary service didn’t answer' } })
       )
       await page.goto(path)
-      await box(page).fill('大人')
+      await typeOnceHydrated(page, '大人')
       await expect(main(page).getByText(english.unavailable)).toBeVisible()
       await expect(box(page)).toHaveValue('大人')
       await expect(furiganaIn(page)).toHaveCount(0)
@@ -80,10 +106,9 @@ test.describe('Kanji to Furigana', () => {
   }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write'])
     await page.goto(path)
-    await main(page)
-      .getByRole('button', { name: `Copy ${english.output}` })
-      .click()
-    await expect(main(page).getByText('Copied')).toBeVisible()
+    await clickAndSee(main(page).getByRole('button', { name: `Copy ${english.output}` }), () =>
+      expect(main(page).getByText('Copied')).toBeVisible(lostBeforeHydration)
+    )
     const copied = await page.evaluate(async () => {
       const [item] = await navigator.clipboard.read()
       return {
@@ -92,14 +117,17 @@ test.describe('Kanji to Furigana', () => {
       }
     })
     expect(copied.plain).toBe(
-      '今日（きょう）は大人（おとな）も子供（こども）も、日本（にほん）の映画（えいが）を見（み）に行（い）きます。'
+      '今日（きょう）は大人（おとな）一人（ひとり）と子供（こども）二人（ふたり）で、日本（にほん）の映画（えいが）を見（み）に行（い）きます。'
     )
     expect(copied.html).toMatch(/<ruby>今日<rp>（<\/rp><rt>きょう<\/rt><rp>）<\/rp><\/ruby>は/)
   })
 
   test('in Japanese, its box, count, and result read in Japanese', async ({ page }) => {
     await page.goto(localizedPath(path, 'ja'))
-    await box(page, japanese.input).fill('大人')
+    await typeOnceHydrated(page, '大人', {
+      name: japanese.input,
+      clear: getDictionary('ja').tools.converter.clear
+    })
     await expect(furiganaIn(page, japanese.output)).toHaveText(['大人おとな'])
     await expect(main(page).getByText('2／200文字', { exact: true })).toBeVisible()
   })

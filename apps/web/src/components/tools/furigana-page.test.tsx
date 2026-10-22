@@ -26,7 +26,9 @@ describe('the Kanji to Furigana page’s HTML', () => {
     expect(rubyPairs(html())).toEqual([
       '今日:きょう',
       '大人:おとな',
+      '一人:ひとり',
       '子供:こども',
+      '二人:ふたり',
       '日本:にほん',
       '映画:えいが',
       '見:み',

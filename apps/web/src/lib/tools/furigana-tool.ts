@@ -16,14 +16,16 @@ export interface FuriganaTool {
 export const furiganaTool: FuriganaTool = {
   card: { mark: 'ふ', sample: { text: '今日', furigana: [{ text: '今日', reading: 'きょう' }] } },
   sample: {
-    text: '今日は大人も子供も、日本の映画を見に行きます。',
+    text: '今日は大人一人と子供二人で、日本の映画を見に行きます。',
     furigana: [
       { text: '今日', reading: 'きょう' },
       { text: 'は' },
       { text: '大人', reading: 'おとな' },
-      { text: 'も' },
+      { text: '一人', reading: 'ひとり' },
+      { text: 'と' },
       { text: '子供', reading: 'こども' },
-      { text: 'も' },
+      { text: '二人', reading: 'ふたり' },
+      { text: 'で' },
       { text: '、' },
       { text: '日本', reading: 'にほん' },
       { text: 'の' },

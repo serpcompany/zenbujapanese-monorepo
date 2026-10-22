@@ -31,11 +31,11 @@ section's seventh card, whose sample shows 今日 with its furigana, きょう.
 
 **The converter.** A stock card: its header says Paste or type Japanese, and that the furigana
 appear as you type. Its content is two parts, each a stock `Label` over its box: Japanese, a stock
-`Textarea` with its count against the limit (23 of 200 characters) and Clear, which empties both
+`Textarea` with its count against the limit (27 of 200 characters) and Clear, which empties both
 parts and puts the cursor in the box; and With furigana, the text with each reading over its kanji
 as ruby, in the site's `furigana` utility, and its own Copy. The footer is Try, whose examples
 (大人, 明日, 日本語を勉強しています。, お茶を飲みませんか？) fill the box. The page starts with a sample,
-今日は大人も子供も、日本の映画を見に行きます。, and its furigana, in the page's HTML.
+今日は大人一人と子供二人で、日本の映画を見に行きます。, and its furigana, in the page's HTML.
 
 - Source: #849; the other converters' card (#579, #696).
 - Check: Page test, "holds the sample with its furigana, so it reads before any script runs";
@@ -46,12 +46,13 @@ as ruby, in the site's `furigana` utility, and its own Copy. The footer is Try, 
 **Readings come from the app's segmentation.** Once typing pauses for 300 ms, the page asks the
 site for the text's furigana, and the site asks the dictionary service, which splits the text into
 words as the app does and gives each its reading in hiragana. Each reading goes over its word's
-kanji only, the kana after them bare: 今日 reads きょう, 大人 おとな, and 日本 にほん, never kanji
-by kanji, and in 食べます the furigana cover 食. Kana, letters, numbers, punctuation, spaces, and
-line breaks stay as they are, and a word the dictionary can't read keeps its kanji without
-furigana. The text is read in its composed form (Unicode NFC), and a text read once shows again at
-once. The app's segmentation keeps a number apart from its counter, so 一人 reads いち and ひと, as
-in the app ([`tech-debt.md`](../../../../docs/tech-debt.md)).
+kanji only, the kana after them bare: 今日 reads きょう, 大人 おとな, 日本 にほん, and 一人 ひとり,
+never kanji by kanji, and in 食べます the furigana cover 食. A number and its counter read as the
+one word the dictionary has for them, as the app reads them
+([`dictionary-core.md`](../../../../docs/agents/dictionary-core.md), Examples): 一人 ひとり,
+二人 ふたり, 十日 とおか, 二十日 はつか. Kana, letters, numbers, punctuation, spaces, and line breaks
+stay as they are, and a word the dictionary can't read keeps its kanji without furigana. The text
+is read in its composed form (Unicode NFC), and a text read once shows again at once.
 
 - Source: #849, which asks for the service's segmentation, so a reading is never a guess per
   kanji; the dictionary service's segmentation
@@ -60,10 +61,13 @@ in the app ([`tech-debt.md`](../../../../docs/tech-debt.md)).
   context"; Converter test, "reads what is typed once typing pauses, and shows its furigana"; Route
   test, "answers the service’s segmentation as furigana over each word’s kanji, kept an hour and
   unindexed" and "asks for the text in its composed form"; Tool test, "reads words in context:
-  今日 きょう, 大人 おとな, 日本 にほん, never kanji by kanji"; the core's
-  `packages/dictionary-core/src/cards/segmentation.test.ts`; the service's
-  `apps/dictionary-api/src/conformance/app-routes.test.ts`, "the website’s segmentation, with the
-  service token, answers the app route’s tokens, so 今日 reads きょう", on the app's data.
+  今日 きょう, 大人 おとな, 一人 ひとり, 二人 ふたり, 日本 にほん, never kanji by kanji"; Page test,
+  "holds the sample with its furigana, so it reads before any script runs" (一人 ひとり and 二人
+  ふたり among them); the core's `packages/dictionary-core/src/cards/segmentation.test.ts` and
+  `packages/dictionary-core/src/examples/linking.test.ts`, "a number and its counter"; the
+  service's `apps/dictionary-api/src/conformance/app-routes.test.ts`, "the website’s segmentation,
+  with the service token, answers the app route’s tokens, so 今日 reads きょう and 一人 ひとり", on
+  the app's data.
 
 **A stated limit.** A text is at most 200 characters, the dictionary service's limit, which the
 count, the description, and a question state. Past it, the box is marked invalid, the result
@@ -106,7 +110,7 @@ blank text, or one past the limit, is 400; a failure of the dictionary service i
   refuses a text past 200 characters"; Route test.
 
 **In Japanese.** `/ja/tools/kanji-to-furigana/` reads in Japanese, from the box, its count
-(23／200文字), the result, and the messages to How it works, the questions, and their FAQ data,
+(27／200文字), the result, and the messages to How it works, the questions, and their FAQ data,
 and every link it writes stays under `/ja/`.
 
 - Source: the owner's decision on #847 (every page in Japanese).

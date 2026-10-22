@@ -102,8 +102,8 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     expect(await reading('あの人は先生です', '人')).toBe('ひと')
   })
 
-  test('the website’s segmentation, with the service token, answers the app route’s tokens, so 今日 reads きょう', async () => {
-    const text = '今日は大人も子供も、日本の映画を見に行きます。'
+  test('the website’s segmentation, with the service token, answers the app route’s tokens, so 今日 reads きょう and 一人 ひとり', async () => {
+    const text = '今日は大人一人と子供二人で、日本の映画を見に行きます。'
     const { tokens } = await answer<{ tokens: SegmentedToken[] }>(
       `/v1/apps/segmentation?text=${encodeURIComponent(text)}`
     )
@@ -115,7 +115,13 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ tokens })
     const reading = (word: string) => tokens.find(token => token.text === word)?.reading
-    expect(['今日', '大人', '日本'].map(reading)).toEqual(['きょう', 'おとな', 'にほん'])
+    expect(['今日', '大人', '一人', '二人', '日本'].map(reading)).toEqual([
+      'きょう',
+      'おとな',
+      'ひとり',
+      'ふたり',
+      'にほん'
+    ])
     expect(tokens.map(token => token.text).join('')).toBe(text)
   })
 

@@ -57,7 +57,7 @@ describe('the furigana converter', () => {
     const container = converter()
     expect(box(container).value).toBe(furiganaTool.sample.text)
     expect(furiganaShown(container)).toContain('今日きょう')
-    expect(container.textContent).toContain('23 of 200 characters')
+    expect(container.textContent).toContain('27 of 200 characters')
     expect(asked).toEqual([])
   })
 
@@ -116,7 +116,7 @@ describe('the furigana converter', () => {
     const container = converter()
     await click(container, 'Copy With furigana')
     expect(await written[0]['text/plain'].text()).toBe(
-      '今日（きょう）は大人（おとな）も子供（こども）も、日本（にほん）の映画（えいが）を見（み）に行（い）きます。'
+      '今日（きょう）は大人（おとな）一人（ひとり）と子供（こども）二人（ふたり）で、日本（にほん）の映画（えいが）を見（み）に行（い）きます。'
     )
     expect(await written[0]['text/html'].text()).toContain(
       '<ruby>今日<rp>（</rp><rt>きょう</rt><rp>）</rp></ruby>は'
@@ -137,7 +137,7 @@ describe('the furigana converter', () => {
     const t = getDictionary('ja').tools.furigana
     routeAnswering()
     const container = converter('ja')
-    expect(container.textContent).toContain('23／200文字')
+    expect(container.textContent).toContain('27／200文字')
     await fill(container, t.input, 'あ'.repeat(201))
     await settle()
     expect(container.textContent).toContain(t.tooLong.replace('{limit}', '200'))

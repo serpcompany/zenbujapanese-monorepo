@@ -11518,12 +11518,8 @@
           "japanese" : "一人だ。",
           "tokens" : [
             {
-              "entry" : "dc589b305a8ec7669e47014820550c45",
-              "surface" : "一"
-            },
-            {
-              "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
-              "surface" : "人"
+              "entry" : "cc732b47f207342824e0901f0f1d3675",
+              "surface" : "一人"
             },
             {
               "candidates" : [

@@ -58,7 +58,7 @@ A change is checked by hand in a browser with the `verify-web` skill
   the pages' HTML, and each control, typing in either box included, in a browser at
   both widths; Kanji to Furigana's readings against the fixtures the service exports, and its
   limit, failure, and Copy in a browser. Main gap: the look of the converter, the cards, the tables, and the chart, in light and dark,
-  is checked only by hand and by the UI review, the How it works copy has no check while #848 rewrites it, and Kanji to Furigana reads a number apart from its counter, as the app does ([`tech-debt.md`](tech-debt.md)).
+  is checked only by hand and by the UI review, and the How it works copy has no check while #848 rewrites it.
 - **Phone layout, B.** Every page type, homepage area, and phone menu group is checked at a
   phone's width for small text, overflow, cut-off text, squeezed grids, and tap targets before
   merge, and the gallery shows each in light and dark for a person to review. Main gap: spacing,

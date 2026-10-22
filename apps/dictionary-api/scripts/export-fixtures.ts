@@ -24,7 +24,7 @@ const entryNumbers = [
 ]
 const kanjiCharacters = ['要']
 const segmentedTexts = [
-  '今日は大人も子供も、日本の映画を見に行きます。',
+  '今日は大人一人と子供二人で、日本の映画を見に行きます。',
   '今日',
   '大人',
   '明日',

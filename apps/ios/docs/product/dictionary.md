@@ -294,10 +294,10 @@ marked known have no underline, and no furigana when **Hide Furigana on Known Wo
 still be selected. With **Show Word Meanings** on, each unknown word shows a short accent-colored
 meaning under it, and **Show Sentence Translations** controls whether sentences show their English.
 
-Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` (which
-pieces join into one word), `artifact/word-examples.test.ts` (which words are accented), and
-`detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests` and
-`WordMeaningTests`; UI `ImageSearchUITests` (a linked word opens its entry).
+Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` and
+`linking.test.ts` (which pieces join into one word), `artifact/word-examples.test.ts` (which words
+are accented), and `detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests`
+and `WordMeaningTests`; UI `ImageSearchUITests` (a linked word opens its entry).
 
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it

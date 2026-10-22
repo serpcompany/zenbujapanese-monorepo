@@ -5044,6 +5044,29 @@ ${sense.noteText}` : sense.meaning
     }
     return grouped2;
   }
+  var isNumeral = (candidate) => candidate.partOfSpeech[0] === "名詞" && (candidate.partOfSpeech[1] === "数" || candidate.partOfSpeech[1] === "数詞");
+  var isCounter = (candidate) => candidate.partOfSpeech.includes("助数詞");
+  function numberWithCounterAt(words2, start) {
+    if (!isNumeral(words2[start]) || start > 0 && isNumeral(words2[start - 1])) return null;
+    let end = start;
+    while (end < words2.length && isNumeral(words2[end])) end += 1;
+    if (end === words2.length || !isCounter(words2[end])) return null;
+    const pieces = words2.slice(start, end + 1);
+    const surface = pieces.map((piece) => piece.surface).join("");
+    return {
+      word: {
+        surface,
+        dictionaryForm: surface,
+        normalizedForm: surface,
+        reading: pieces.map((piece) => piece.reading).join(""),
+        partOfSpeech: pieces[0].partOfSpeech,
+        isOutOfVocabulary: pieces.some((piece) => piece.isOutOfVocabulary),
+        children: pieces,
+        joinsInflection: false
+      },
+      pieces: pieces.length
+    };
+  }
 
   // src/examples/forms.ts
   function analyzedWords(candidates) {
@@ -5186,7 +5209,9 @@ ${sense.noteText}` : sense.meaning
   }
   function formsLookedUp(candidates, highlighted) {
     const forms2 = highlighted ? highlightedForms(highlighted) : null;
-    return grouped(candidates).filter((candidate) => !isWrittenAs(candidate, forms2) && isLookedUp(candidate)).map(lookupForms);
+    const words2 = grouped(candidates);
+    const counted2 = words2.flatMap((_, index) => numberWithCounterAt(words2, index)?.word ?? []);
+    return [...words2, ...counted2].filter((candidate) => !isWrittenAs(candidate, forms2) && isLookedUp(candidate)).map(lookupForms);
   }
   function linkedTokens(text, candidates, highlighted, lookup) {
     if (candidates === null) {
@@ -5228,8 +5253,24 @@ ${sense.noteText}` : sense.meaning
       partOfSpeech: candidate.partOfSpeech,
       lookupForm: resolution.lookupForm
     });
+    const asOneWord = ({ word }) => {
+      const piecesHighlighted = word.children.some((piece) => isWrittenAs(piece, forms2));
+      if (piecesHighlighted && !isWrittenAs(word, forms2)) return null;
+      const resolution = resolve(word);
+      if (!resolution.entry) return null;
+      return { ...token(word, resolution), reading: toKatakana(resolution.entry.reading) };
+    };
+    const words2 = grouped(candidates);
     const tokens = [];
-    for (const candidate of grouped(candidates)) {
+    for (let index = 0; index < words2.length; index++) {
+      const counted2 = numberWithCounterAt(words2, index);
+      const whole = counted2 ? asOneWord(counted2) : null;
+      if (counted2 && whole) {
+        tokens.push(whole);
+        index += counted2.pieces - 1;
+        continue;
+      }
+      const candidate = words2[index];
       const resolution = resolve(candidate);
       if (resolution.candidates.length === 0 && candidate.children.length > 1) {
         const children = candidate.children.map((child) => token(child, resolve(child)));

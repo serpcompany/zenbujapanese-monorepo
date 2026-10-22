@@ -24,15 +24,17 @@ describe('Kanji to Furigana', () => {
     for (const example of furiganaTool.tries) expect(furiganaOf(example).length).toBeGreaterThan(0)
   })
 
-  test('reads words in context: 今日 きょう, 大人 おとな, 日本 にほん, never kanji by kanji', () => {
+  test('reads words in context: 今日 きょう, 大人 おとな, 一人 ひとり, 二人 ふたり, 日本 にほん, never kanji by kanji', () => {
     const read = new Map(
       furiganaTool.sample.furigana.flatMap(({ text, reading }) =>
         reading ? [[text, reading] as const] : []
       )
     )
-    expect([read.get('今日'), read.get('大人'), read.get('日本')]).toEqual([
+    expect(['今日', '大人', '一人', '二人', '日本'].map(word => read.get(word))).toEqual([
       'きょう',
       'おとな',
+      'ひとり',
+      'ふたり',
       'にほん'
     ])
   })

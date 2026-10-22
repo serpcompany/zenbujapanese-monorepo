@@ -183,3 +183,115 @@ describe('displayReading', () => {
     )
   })
 })
+
+describe('a number and its counter', () => {
+  const numeral = (surface: string, reading: string) =>
+    candidate(surface, ['名詞', '数'], surface, reading)
+  const counter = (surface: string, reading: string) =>
+    candidate(surface, ['名詞', '接尾', '助数詞'], surface, reading)
+  const one = entry('one', 'いち', ['noun'])
+  const person = entry('person', 'ひと', ['noun'])
+  const oneDay = entry('one-day', 'いちにち', ['noun'])
+  const firstOfTheMonth = entry('first-of-the-month', 'ついたち', ['noun'])
+  const pieces = (tokens: ReturnType<typeof linkedTokens>) =>
+    tokens.map(token => [token.surface, token.entry?.id ?? token.candidates.map(c => c.id)])
+
+  test('link as the one word the dictionary has for them, read as that word', () => {
+    const lookup = dictionary({
+      一: [one],
+      人: [person],
+      一人: [entry('one-person', 'ひとり', ['noun', 'adverb'])]
+    })
+    const [alone] = linkedTokens(
+      '一人',
+      [numeral('一', 'イチ'), counter('人', 'ニン')],
+      null,
+      lookup
+    )
+    expect(alone).toMatchObject({ surface: '一人', reading: 'ヒトリ', entry: { id: 'one-person' } })
+    expect(
+      displayReading(alone, {
+        headword: '一人',
+        reading: 'ひとり',
+        writtenForms: ['一人'],
+        readingForms: ['ひとり', 'いちにん']
+      })
+    ).toBe('ひとり')
+  })
+
+  test('join a whole run of numerals, so 二十日 is はつか', () => {
+    const lookup = dictionary({ 二十日: [entry('twentieth', 'はつか', ['noun'])] })
+    const tokens = linkedTokens(
+      '二十日',
+      [numeral('二', 'ニ'), numeral('十', 'ジュウ'), counter('日', 'ニチ')],
+      null,
+      lookup
+    )
+    expect(pieces(tokens)).toEqual([['二十日', 'twentieth']])
+  })
+
+  test('take the entry the tokenizer’s reading names when the whole word is written for several', () => {
+    const lookup = dictionary({ 一日: [oneDay, firstOfTheMonth] })
+    const tokens = linkedTokens(
+      '一日',
+      [numeral('一', 'イチ'), counter('日', 'ニチ')],
+      null,
+      lookup
+    )
+    expect(pieces(tokens)).toEqual([['一日', 'one-day']])
+  })
+
+  test('stay as they link today when the whole word could be several, or the dictionary lacks it', () => {
+    const twenty = entry('twenty-years', 'はたち', ['noun'])
+    const twentyYears = entry('twenty-years-old', 'はたとせ', ['noun'])
+    const lookup = dictionary({
+      二: [entry('two', 'に', ['noun'])],
+      十: [entry('ten', 'じゅう', ['noun'])],
+      歳: [entry('age', 'とし', ['noun'])],
+      二十歳: [twenty, twentyYears],
+      一: [one],
+      人: [person],
+      一人: [entry('one-person', 'ひとり', ['noun'])]
+    })
+    const ages = [numeral('二', 'ニ'), numeral('十', 'ジュウ'), counter('歳', 'サイ')]
+    expect(pieces(linkedTokens('二十歳', ages, null, lookup))).toEqual([
+      ['二', 'two'],
+      ['十', 'ten'],
+      ['歳', 'age']
+    ])
+    const eleven = [numeral('十', 'ジュウ'), numeral('一', 'イチ'), counter('人', 'ニン')]
+    expect(pieces(linkedTokens('十一人', eleven, null, lookup))).toEqual([
+      ['十', 'ten'],
+      ['一', 'one'],
+      ['人', 'person']
+    ])
+  })
+
+  test('keep the page’s own word itself, unless the page is the whole word’s', () => {
+    const lookup = dictionary({
+      一: [one],
+      人: [person],
+      一人: [entry('one-person', 'ひとり', ['noun'])]
+    })
+    const words = [numeral('一', 'イチ'), counter('人', 'ニン')]
+    const ichi: HighlightedEntry = {
+      ...one,
+      headword: '一',
+      writtenForms: ['一'],
+      readingForms: ['いち']
+    }
+    expect(pieces(linkedTokens('一人', words, { entry: ichi, query: '一' }, lookup))).toEqual([
+      ['一', 'one'],
+      ['人', 'person']
+    ])
+    const hitori: HighlightedEntry = {
+      ...entry('one-person', 'ひとり', ['noun']),
+      headword: '一人',
+      writtenForms: ['一人'],
+      readingForms: ['ひとり']
+    }
+    expect(pieces(linkedTokens('一人', words, { entry: hitori, query: '一人' }, lookup))).toEqual([
+      ['一人', 'one-person']
+    ])
+  })
+})

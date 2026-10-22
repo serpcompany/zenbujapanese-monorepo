@@ -6672,12 +6672,8 @@
                       "surface" : "。"
                     },
                     {
-                      "entry" : "dc589b305a8ec7669e47014820550c45",
-                      "surface" : "一"
-                    },
-                    {
-                      "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
-                      "surface" : "人"
+                      "entry" : "cc732b47f207342824e0901f0f1d3675",
+                      "surface" : "一人"
                     },
                     {
                       "candidates" : [
@@ -8360,12 +8356,8 @@
                       "surface" : "。"
                     },
                     {
-                      "entry" : "dc589b305a8ec7669e47014820550c45",
-                      "surface" : "一"
-                    },
-                    {
-                      "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
-                      "surface" : "人"
+                      "entry" : "cc732b47f207342824e0901f0f1d3675",
+                      "surface" : "一人"
                     },
                     {
                       "candidates" : [
@@ -19740,12 +19732,8 @@
                       "surface" : "大きくて"
                     },
                     {
-                      "entry" : "dc589b305a8ec7669e47014820550c45",
-                      "surface" : "一"
-                    },
-                    {
-                      "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
-                      "surface" : "人"
+                      "entry" : "cc732b47f207342824e0901f0f1d3675",
+                      "surface" : "一人"
                     },
                     {
                       "entry" : "818c411c7720a83ee142ddfa37edc898",
@@ -22044,12 +22032,8 @@
                       "surface" : "について"
                     },
                     {
-                      "entry" : "0de9e74a0d1c8b8b4e5945b17778d86a",
-                      "surface" : "数"
-                    },
-                    {
-                      "entry" : "618a2547578344746f316997c344c9bd",
-                      "surface" : "ヶ月"
+                      "entry" : "b819b911b0197b4f5aab13d54cae55ef",
+                      "surface" : "数ヶ月"
                     },
                     {
                       "entry" : "c2448227d7354e204523882c2a100f5c",
@@ -33967,12 +33951,8 @@
                   "japanese" : "何時に来れますか。",
                   "tokens" : [
                     {
-                      "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
-                      "surface" : "何"
-                    },
-                    {
-                      "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
-                      "surface" : "時"
+                      "entry" : "60567467f8ac2a1ba0228a51cdc039a7",
+                      "surface" : "何時"
                     },
                     {
                       "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
@@ -44912,12 +44892,8 @@
                 "surface" : "今"
               },
               {
-                "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
-                "surface" : "何"
-              },
-              {
-                "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
-                "surface" : "時"
+                "entry" : "60567467f8ac2a1ba0228a51cdc039a7",
+                "surface" : "何時"
               },
               {
                 "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
@@ -59612,12 +59588,9 @@
             "japanese" : "一日が終わった。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "candidates" : [
@@ -59641,12 +59614,9 @@
             "japanese" : "一日中、雨だった。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -59682,12 +59652,9 @@
             "japanese" : "一日休みとれるの？",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "c0dcee11a2d38d2929767e04d6d458d4",
@@ -59720,12 +59687,9 @@
             "japanese" : "一日中寝てました。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -59746,20 +59710,13 @@
             "japanese" : "一日何時間寝てる？",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
-              },
-              {
-                "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
-                "surface" : "何"
-              },
-              {
-                "entry" : "05bdb8e2a85ec93ecc4ce862072329b5",
-                "surface" : "時間"
+                "entry" : "0f424702001493d1eb859ce6bcc92bbc",
+                "surface" : "何時間"
               },
               {
                 "entry" : "5693a0a25c585ade2d82436de2a0f3f5",
@@ -59783,12 +59740,9 @@
             "japanese" : "一日中上天気だった。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "surface" : "中上"
@@ -59820,12 +59774,9 @@
             "japanese" : "一日で完読しました。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "candidates" : [
@@ -59862,12 +59813,9 @@
             "japanese" : "一日中ブルーだった。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -59900,12 +59848,9 @@
             "japanese" : "一日中海岸で遊んだ。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -59940,12 +59885,9 @@
             "japanese" : "一日中雪だったんだ。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60015,12 +59957,9 @@
             "japanese" : "一日平均６時間寝ます。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "b0c019e136b9d3dd1149e743b4ff68eb",
@@ -60048,12 +59987,9 @@
             "japanese" : "一日中、そこにいるよ。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60103,35 +60039,17 @@
             "japanese" : "一日は二十四時間ある。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "ad63532d193fae21a8b73d5d7880b492",
                 "surface" : "は"
               },
               {
-                "entry" : "cda8dedeabf326a0a9132289eb29db84",
-                "surface" : "二"
-              },
-              {
-                "entry" : "b20d047d143f1b42aaf9694bae2a06c7",
-                "surface" : "十"
-              },
-              {
-                "candidates" : [
-                  "b1e14ca101f1d1f7be7ccf66dd2d5c80",
-                  "076bd801bff9a8303a68eeb012bd7352"
-                ],
-                "surface" : "四"
-              },
-              {
-                "entry" : "05bdb8e2a85ec93ecc4ce862072329b5",
-                "surface" : "時間"
+                "entry" : "fd6cfed6d061752f6c9cdf8ebe79e06c",
+                "surface" : "二十四時間"
               },
               {
                 "entry" : "45eefee1383a89cb3c6287032622e6fa",
@@ -60148,12 +60066,9 @@
             "japanese" : "一日はとても短いです。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "ad63532d193fae21a8b73d5d7880b492",
@@ -60178,12 +60093,9 @@
             "japanese" : "一日中雪が降ったんだ。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60229,12 +60141,9 @@
             "japanese" : "一日中グダグダしてた。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60266,12 +60175,9 @@
             "japanese" : "一日ずっと沈んでいた。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "e3cbdd0fe38cdd1f811585188879e28d",
@@ -60292,24 +60198,17 @@
             "japanese" : "一日に何度も手を洗うよ。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
                 "surface" : "に"
               },
               {
-                "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
-                "surface" : "何"
-              },
-              {
-                "entry" : "cf6ab4dbaccee645b1318dcec505ec39",
-                "surface" : "度"
+                "entry" : "aaa2b5bcb8e53c1e439ac5e514457bdb",
+                "surface" : "何度"
               },
               {
                 "entry" : "30701592e9873c43b883e1d3510287f4",
@@ -60378,24 +60277,17 @@
             "japanese" : "一日または二日ください。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "2cd29baf94aeeca58200c929d97bcc98",
                 "surface" : "または"
               },
               {
-                "entry" : "cda8dedeabf326a0a9132289eb29db84",
-                "surface" : "二"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "57f2ffe3a81d10c6bc8966e6ef8f1cff",
+                "surface" : "二日"
               },
               {
                 "entry" : "9b6de5fc2a35e970e36103c90eafb341",
@@ -60412,12 +60304,9 @@
             "japanese" : "一日、そこで過ごせるわね。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "surface" : "、"
@@ -60458,12 +60347,9 @@
             "japanese" : "一日中、雪が降っているね。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60505,12 +60391,9 @@
             "japanese" : "一日中強い雨が降っていた。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "entry" : "1543efb2bcdfaa36f64692b993fd933c",
@@ -60549,12 +60432,9 @@
             "japanese" : "一日ひとくそ、医者いらず。",
             "tokens" : [
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                "surface" : "日"
+                "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                "pageWord" : true,
+                "surface" : "一日"
               },
               {
                 "candidates" : [
@@ -62261,12 +62141,8 @@
                       "surface" : "は"
                     },
                     {
-                      "entry" : "dc589b305a8ec7669e47014820550c45",
-                      "surface" : "一"
-                    },
-                    {
-                      "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                      "surface" : "日"
+                      "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                      "surface" : "一日"
                     },
                     {
                       "surface" : "30"
@@ -66360,12 +66236,8 @@
                       "surface" : "ついつい"
                     },
                     {
-                      "entry" : "cda8dedeabf326a0a9132289eb29db84",
-                      "surface" : "二"
-                    },
-                    {
-                      "entry" : "cf6ab4dbaccee645b1318dcec505ec39",
-                      "surface" : "度"
+                      "entry" : "173963def88bbe41010b4cc8137fe7dc",
+                      "surface" : "二度"
                     },
                     {
                       "entry" : "5693a0a25c585ade2d82436de2a0f3f5",
@@ -67068,12 +66940,8 @@
                       "surface" : "ついつい"
                     },
                     {
-                      "entry" : "cda8dedeabf326a0a9132289eb29db84",
-                      "surface" : "二"
-                    },
-                    {
-                      "entry" : "cf6ab4dbaccee645b1318dcec505ec39",
-                      "surface" : "度"
+                      "entry" : "173963def88bbe41010b4cc8137fe7dc",
+                      "surface" : "二度"
                     },
                     {
                       "entry" : "5693a0a25c585ade2d82436de2a0f3f5",
@@ -75090,12 +74958,8 @@
                 "surface" : "を"
               },
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "93a1114d67a2c0a02c362328a21c5abc",
-                "surface" : "枚"
+                "entry" : "0c3fc45e57f9fd07a57637b8ab61ed79",
+                "surface" : "一枚"
               },
               {
                 "entry" : "9b6de5fc2a35e970e36103c90eafb341",
@@ -79498,19 +79362,8 @@
                 "surface" : "は"
               },
               {
-                "candidates" : [
-                  "e57ff57281ef816b1673f2361388adf0",
-                  "985aab7a0d6408cd53578724e54cf611"
-                ],
-                "surface" : "三"
-              },
-              {
-                "entry" : "b20d047d143f1b42aaf9694bae2a06c7",
-                "surface" : "十"
-              },
-              {
-                "entry" : "611cff21c6baf4c231e226c8aa244357",
-                "surface" : "分"
+                "entry" : "5f04cc5564c2ced27c6d00d0ccf02dde",
+                "surface" : "三十分"
               },
               {
                 "candidates" : [
@@ -80799,12 +80652,8 @@
                 "surface" : "は"
               },
               {
-                "entry" : "0de9e74a0d1c8b8b4e5945b17778d86a",
-                "surface" : "数"
-              },
-              {
-                "entry" : "3ccb7c144b401be82c6fad62c922ad2a",
-                "surface" : "週間"
+                "entry" : "e9373d3fc6bdd2f0762e5bfe046c979c",
+                "surface" : "数週間"
               },
               {
                 "entry" : "c9318d5bdde0dc3473696e86810e81e5",
@@ -81275,12 +81124,8 @@
                 "surface" : "今"
               },
               {
-                "entry" : "9bfc3adbfaef4e83e82cbf9ecd93e795",
-                "surface" : "何"
-              },
-              {
-                "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
-                "surface" : "時"
+                "entry" : "60567467f8ac2a1ba0228a51cdc039a7",
+                "surface" : "何時"
               },
               {
                 "entry" : "6033d456195c1da656adf7a1fa431553",
@@ -85463,12 +85308,8 @@
                 "surface" : "を"
               },
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "93a1114d67a2c0a02c362328a21c5abc",
-                "surface" : "枚"
+                "entry" : "0c3fc45e57f9fd07a57637b8ab61ed79",
+                "surface" : "一枚"
               },
               {
                 "entry" : "9b6de5fc2a35e970e36103c90eafb341",
@@ -98815,12 +98656,8 @@
                       "surface" : "死んで"
                     },
                     {
-                      "entry" : "b20d047d143f1b42aaf9694bae2a06c7",
-                      "surface" : "十"
-                    },
-                    {
-                      "entry" : "dd0960a6648dc271b678dea2764859f3",
-                      "surface" : "年"
+                      "entry" : "cdbe425112986ba934b1a69ceb3a28ec",
+                      "surface" : "十年"
                     },
                     {
                       "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
@@ -100049,12 +99886,8 @@
                       "surface" : "死んで"
                     },
                     {
-                      "entry" : "b20d047d143f1b42aaf9694bae2a06c7",
-                      "surface" : "十"
-                    },
-                    {
-                      "entry" : "dd0960a6648dc271b678dea2764859f3",
-                      "surface" : "年"
+                      "entry" : "cdbe425112986ba934b1a69ceb3a28ec",
+                      "surface" : "十年"
                     },
                     {
                       "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
@@ -101513,12 +101346,8 @@
                 "surface" : "に"
               },
               {
-                "entry" : "dc589b305a8ec7669e47014820550c45",
-                "surface" : "一"
-              },
-              {
-                "entry" : "cf6ab4dbaccee645b1318dcec505ec39",
-                "surface" : "度"
+                "entry" : "9879efe372b44748de419929570a2c0b",
+                "surface" : "一度"
               },
               {
                 "candidates" : [
@@ -102059,12 +101888,8 @@
                   "japanese" : "一日中海岸で遊んだ。",
                   "tokens" : [
                     {
-                      "entry" : "dc589b305a8ec7669e47014820550c45",
-                      "surface" : "一"
-                    },
-                    {
-                      "entry" : "ad7071d79b9e8e3719514d8121d3699f",
-                      "surface" : "日"
+                      "entry" : "1c460e92b7f21c8ef3a78f6ba309b4eb",
+                      "surface" : "一日"
                     },
                     {
                       "entry" : "1543efb2bcdfaa36f64692b993fd933c",
