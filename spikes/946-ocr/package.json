@@ -1,0 +1,1 @@
+{"name":"spike-946-ocr","private":true,"type":"module","dependencies":{"@huggingface/transformers":"^4.3.1","esbuild":"^0.28.2","esearch-ocr":"^8.5.2","js-yaml":"^5.5.0","onnxruntime-web":"^1.30.0","puppeteer":"^25.15.0","tesseract.js":"^7.0.0"}}

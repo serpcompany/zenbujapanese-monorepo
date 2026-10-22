@@ -1,0 +1,58 @@
+{
+ "id": "tess-jpn_vert-psm5",
+ "cfg": {
+  "engine": "tesseract",
+  "lang": "jpn_vert",
+  "psm": "5"
+ },
+ "chrome": "Chrome/155.0.8059.84",
+ "probe": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "gpu": true,
+  "isolated": true,
+  "cores": 16,
+  "textDetector": false,
+  "languageModel": true
+ },
+ "machine": {
+  "cpu": "Apple M3 Max",
+  "memGB": 128,
+  "cores": 16,
+  "os": "Darwin 27.2.0"
+ },
+ "warmRuns": 3,
+ "rows": [
+  {
+   "image": "v1-vertical",
+   "initMs": 105.08999999985099,
+   "firstMs": 386.26999999955297,
+   "coldMs": 491.35999999940395,
+   "warmMs": 343.570000000298,
+   "text": "内央の糸\n共川龍之介\n\nある日の事でございます。御釈迎様は極楽の夢\n池のふちを、独りでぶらぶら御歩きになってい\nらちらっしゃいました。池の中に咲いている蓮の花\nは、みんな玉のようにまっ白で、そのまん中に\nある金色の薄からは、何とも云えないぃ好い句\nが、絶間なくあたりへ溢れて居ります。極楽は\n丁度朝なのでございましょう。\n"
+  },
+  {
+   "image": "v2-vertical-ruby",
+   "initMs": 96.91499999910593,
+   "firstMs": 275.9400000013411,
+   "coldMs": 372.85500000044703,
+   "warmMs": 232.49500000104308,
+   "text": "「ではみなさんは、そういうふうに有川だ\nと云われたり、季の流れたあとだと云わ\nれたりしていたこのぼんやりと白いもの\nがほんとうは何かご承知ですか。」先生\nは、黒板に品した大きな黒い星座の図\nの、上から下へ白くけぶった銀河葵のよ\nうなところを指しながら、みんなに問を\nかけました。\n"
+  },
+  {
+   "image": "m1-manga-p1",
+   "initMs": 109.4700000025332,
+   "firstMs": 918.855000000447,
+   "coldMs": 1028.3250000029802,
+   "warmMs": 874.089999999851,
+   "text": "S 艇到各\nら を伏 | ST  党きas (へ3\n     本   0 罰 WW お  到 , ん\nRa\nん は計必 MM\n曲]  人稚人\n事。    No    二 人\n多  則- Mo人V同言和  た記っ\n了す0   の っ人tu ーー 必\n包 n       放誰了    イダ      ヘル\nタ     li        談有\n                トト シル\n色 ニー      で     、 2\nWW ニー     Ne 人   (全身\n人のNNE 公箇 )【    YY\n(と仙人 欠い     R\n講和光人 ダー     浮\nii 、d了ンー            」\nソル 入 蛋\n"
+  },
+  {
+   "image": "m2-manga-p2",
+   "initMs": 96.625,
+   "firstMs": 1050.910000000149,
+   "coldMs": 1147.535000000149,
+   "warmMs": 1010.109999999404,
+   "text": "あーあ   の光   銘\nせっかくここから (し          ili\n人 |  箇   順 問人>\n.: 人先生|回記し\n過提夫人|\n人 パン和邊選ーー   の\nスムmd バハ\n;〈ぐ倉重 全員 は人    ミグ<了\nらちし    し穏門| NA\n作    (缶骨| ドド有ン、\n有有時| 、N財\n.まっrg そうだっ | バツ ニー っ 【\nクスっ6放人 大沿いm選     どの 上\nNM |必中|多       -\nNe\n  ーー人は人|\n玉ら科 INM 人る|交\n人つがNパな 存  de\njj 2\n"
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "id": "mangaocr-comicdet-q4f16-webgpu",
+ "cfg": {
+  "engine": "mangaocr",
+  "det": "comic",
+  "q": "q4f16",
+  "ep": "webgpu"
+ },
+ "chrome": "Chrome/155.0.8059.84",
+ "probe": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "gpu": true,
+  "isolated": true,
+  "cores": 16,
+  "textDetector": false,
+  "languageModel": true
+ },
+ "machine": {
+  "cpu": "Apple M3 Max",
+  "memGB": 128,
+  "cores": 16,
+  "os": "Darwin 27.2.0"
+ },
+ "warmRuns": 3,
+ "rows": [
+  {
+   "image": "h1-web",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "h2-furigana",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "v1-vertical",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "v2-vertical-ruby",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "m1-manga-p1",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "m2-manga-p2",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "f1-video-subtitle",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  },
+  {
+   "image": "f2-video-telop",
+   "error": "Can't create a session. ERROR_CODE: 1, ERROR_MESSAGE: Type Error: Type (tensor(float16)) of output arg (/decoder/bert/encoder/layer.0/attention/self/Cast_output_0) of node (/decoder/bert/encoder/layer.0/attention/self/Cast) does not match expected type (tensor(float)).\nV (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4023:13)\ntr (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:4888:88)\nasync gr.loadModel (chrome-extension://nhomcdakkjdlaeadgjalhhhopgaokcob/bench.js:52"
+  }
+ ]
+}

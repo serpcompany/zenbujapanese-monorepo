@@ -1,0 +1,96 @@
+{
+ "id": "textdetector",
+ "cfg": {
+  "engine": "textdetector"
+ },
+ "chrome": "Chrome/155.0.8059.84",
+ "probe": {
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+  "gpu": true,
+  "isolated": true,
+  "cores": 16,
+  "textDetector": true,
+  "languageModel": true
+ },
+ "machine": {
+  "cpu": "Apple M3 Max",
+  "memGB": 128,
+  "cores": 16,
+  "os": "Darwin 27.2.0"
+ },
+ "warmRuns": 3,
+ "rows": [
+  {
+   "image": "h1-web",
+   "initMs": 0.06999999657273293,
+   "firstMs": 23.179999999701977,
+   "coldMs": 23.24999999627471,
+   "warmMs": 6.450000002980232,
+   "text": "\n\n\n\n\n\n\n\n\n\n",
+   "lines": 11
+  },
+  {
+   "image": "h2-furigana",
+   "initMs": 0.019999999552965164,
+   "firstMs": 6.929999999701977,
+   "coldMs": 6.949999999254942,
+   "warmMs": 3.939999997615814,
+   "text": "\n\n\n\n",
+   "lines": 5
+  },
+  {
+   "image": "v1-vertical",
+   "initMs": 0.02499999850988388,
+   "firstMs": 9.020000003278255,
+   "coldMs": 9.04500000178814,
+   "warmMs": 4.910000000149012,
+   "text": "\n\n\n\n\n\n\n\n",
+   "lines": 9
+  },
+  {
+   "image": "v2-vertical-ruby",
+   "initMs": 0.020000003278255463,
+   "firstMs": 8.434999998658895,
+   "coldMs": 8.455000001937151,
+   "warmMs": 4.535000000149012,
+   "text": "\n\n\n\n\n\n\n\n",
+   "lines": 9
+  },
+  {
+   "image": "m1-manga-p1",
+   "initMs": 0.015000000596046448,
+   "firstMs": 11.96000000089407,
+   "coldMs": 11.975000001490116,
+   "warmMs": 5.430000003427267,
+   "text": "\n\n",
+   "lines": 3
+  },
+  {
+   "image": "m2-manga-p2",
+   "initMs": 0.02499999850988388,
+   "firstMs": 6.949999999254942,
+   "coldMs": 6.974999997764826,
+   "warmMs": 5.004999998956919,
+   "text": "\n\n\n\n\n",
+   "lines": 6
+  },
+  {
+   "image": "f1-video-subtitle",
+   "initMs": 0.019999999552965164,
+   "firstMs": 12.195000000298023,
+   "coldMs": 12.214999999850988,
+   "warmMs": 4.175000000745058,
+   "text": "",
+   "lines": 1
+  },
+  {
+   "image": "f2-video-telop",
+   "initMs": 0.02499999850988388,
+   "firstMs": 12.53999999910593,
+   "coldMs": 12.564999997615814,
+   "warmMs": 6.03999999910593,
+   "text": "\n\n\n",
+   "lines": 4
+  }
+ ]
+}
