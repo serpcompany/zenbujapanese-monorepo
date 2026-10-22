@@ -1,0 +1,14 @@
+{
+  "name": "spike-943-dictionary-offline",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
+    "hash-wasm": "4.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "puppeteer-core": "25.15.0",
+    "wa-sqlite": "1.0.0"
+  }
+}
