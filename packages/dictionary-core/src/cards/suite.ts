@@ -21,7 +21,7 @@ export interface RecordedWord {
   reading: string
   furigana: WordCardFurigana[]
   partOfSpeech: string
-  senses: WordCardMeaning[]
+  senses: (WordCardMeaning & { glosses: string[] })[]
   pitch?: RecordedPitch & { graph: { morae: string[] } }
   frequency: RecordedChip[]
 }
@@ -75,7 +75,7 @@ export function recordedFields(recorded: RecordedWord): CardFields {
     reading: recorded.reading,
     furigana: recorded.furigana,
     partOfSpeech: recorded.partOfSpeech,
-    senses: recorded.senses,
+    senses: recorded.senses.map(({ glosses: _, ...meaning }) => meaning),
     pitch: recorded.pitch ? { ...(pitch as RecordedPitch), morae: graph.morae } : null,
     jlpt: jlpt.tier ? recordedChip(jlpt) : null,
     youtube: recordedChip(youtube)

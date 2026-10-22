@@ -1,10 +1,10 @@
 {
-  "builderSHA256": "ab0cb399dd92b0e808c7c639eb6b47affae0720c1af429291e35e67548998e12",
+  "builderSHA256": "1615a2adb7654084f22410929a53be6de27f225e41bd821093967163dd4c7595",
   "candidates": [
     {
       "analysis": {
         "ambiguousRows": 6593,
-        "artifactContentSHA256": "640ce04070127c1f129a252693fc9425c71a3bf14a887f55f1192d96a60723e7",
+        "artifactContentSHA256": "3e2e5a0979f05b4367a37098c21c06c97a2ae138ad3a025644a9e49d682b5ee7",
         "coveredSourceRows": 193752,
         "duplicateMappings": 28402,
         "mappedRows": 108209,
@@ -22,7 +22,7 @@
     {
       "analysis": {
         "ambiguousRows": 7623,
-        "artifactContentSHA256": "b6c7fc36dabafd088b904b45caeba2d3ea93c3bc2c07ecc023662932d09486ec",
+        "artifactContentSHA256": "db29f3e5a3be34d5aa7f62092607283cf1e19c3afd7263631b82054ec199a2e1",
         "coveredSourceRows": 175456,
         "duplicateMappings": 33553,
         "mappedRows": 98264,
@@ -40,7 +40,7 @@
     {
       "analysis": {
         "ambiguousRows": 8731,
-        "artifactContentSHA256": "a3236e167ac9a56578eb5fc372a53aa678c186a64ba533afff7b4a8669631fbb",
+        "artifactContentSHA256": "16178ee7a6c35afad5378506ab7a1d200908847a3fd0926365ee278d531f2074",
         "coveredSourceRows": 208204,
         "duplicateMappings": 39794,
         "mappedRows": 105287,
@@ -58,7 +58,7 @@
     {
       "analysis": {
         "ambiguousRows": 7600,
-        "artifactContentSHA256": "f51babd68e685ed0809fc12a2b727a5e034db04f6b85f210d5d0dcf17ef59b7b",
+        "artifactContentSHA256": "b8adb0fb113c47642ed645c7da2ce009b29f642bc8d776bfb416bf2ae1dede18",
         "coveredSourceRows": 272246,
         "duplicateMappings": 60591,
         "mappedRows": 140061,
@@ -76,7 +76,7 @@
     {
       "analysis": {
         "ambiguousRows": 7743,
-        "artifactContentSHA256": "6bbb4f39ec4c9811dfe8869e2e84c743339783100b120079d32c62d4a355cf2e",
+        "artifactContentSHA256": "e48a86e0e17875ba460d4427c313dbeebab221f79faae632bc3f20d8611e7c89",
         "coveredSourceRows": 205292,
         "duplicateMappings": 47730,
         "mappedRows": 115109,
@@ -94,7 +94,7 @@
     {
       "analysis": {
         "ambiguousRows": 6219,
-        "artifactContentSHA256": "c621e559d0de83d19346da57a8bea97798bf53ffe6a3e0bb7fd1911bd6b62acb",
+        "artifactContentSHA256": "0137ed7b8bff4d12bbd3b2b366e0b1e2366aa271e129c2759f18b047db5ede63",
         "coveredSourceRows": 141113,
         "duplicateMappings": 29604,
         "mappedRows": 89254,
@@ -110,7 +110,7 @@
       "sourceSHA256": "58c1ab0ae5d8ac34868a319c52c8c657a5f11b1944a41d69df08446685d6a30b"
     }
   ],
-  "languageDataSHA256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+  "languageDataSHA256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
   "mappingPolicySHA256": "ebc84f6bc0c5170f2c30555453e5436521102e79771321989c97b83ecfcafadf",
   "schema": "zenbu.frequency-candidate-analysis.v2",
   "sourceRecordSHA256": "a89c5fc1f31ab88946ec960d58fe31612611ed53c25eded69db94fdd928e084f"

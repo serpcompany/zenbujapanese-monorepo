@@ -263,15 +263,15 @@ when even that doesn't fit, the pitch accent moves to its own line under a full-
 the right of the headword are the pitch accent (the reading in katakana with an overline across the
 high morae and a hook at the downstep) in a capsule with a speaker, which pronounces the word when
 tapped, and the latest encounter photo. A word without pitch shows a standalone pronounce button.
-Pitch comes from UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is
-estimated from the parts' accent-combination types, and a word with neither shows no pitch. A
+Pitch is the word's own UniDic accent, never a homophone's (橋 2, 箸 1, 端 0); a two-part compound
+UniDic lacks, such as 記者会見, is estimated from its parts, and a word with neither shows no pitch. A
 part-of-speech row follows and opens the conjugation table when one exists. It names one word class
 and then its modifiers in sentence case without repeating "verb", for example "Godan verb
 (intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
-Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
-core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI
-`WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
+Check: recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
+`UniDicPitchTests`; core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package
+`CompoundPitchTests`; UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
 `AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
 
 The conjugation table starts with the word, its reading and meaning, its word class, and a one-line

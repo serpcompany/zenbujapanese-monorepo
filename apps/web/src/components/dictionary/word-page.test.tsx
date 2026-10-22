@@ -214,6 +214,7 @@ describe('the Frequency section', () => {
 interface SuiteCase {
   covers: string
   entSeq: string[]
+  senses: { glosses: string[] }[]
   furigana: SuiteFurigana[]
   pitch?: { graph: SuitePitchGraph }
   frequency: { name: string; text: string; details: SuiteFrequencyDetails }[]
@@ -235,6 +236,10 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
     })
     expect(readFurigana(html)).toEqual(expected.furigana)
     expect(readPitchGraph(html)).toEqual(expected.pitch?.graph ?? null)
+    expect(
+      detail.senses.map(sense => sense.meaning),
+      'each meaning is its recorded glosses, joined as JMdict joins them'
+    ).toEqual(expected.senses.map(sense => sense.glosses.join(', ')))
     const section = renderToStaticMarkup(
       <FrequencySection rows={shownRows(detail.frequencyRows)} text={english} />
     )

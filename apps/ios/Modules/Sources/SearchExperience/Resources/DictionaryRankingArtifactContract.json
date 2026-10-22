@@ -1,6 +1,6 @@
 {
-  "databaseBytes": 483983360,
-  "databaseSHA256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+  "databaseBytes": 483622912,
+  "databaseSHA256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
   "evidenceCounts": {
     "canonical_senses": 253020,
     "form_priority_profiles": 56127,
@@ -28,6 +28,6 @@
     "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028"
+    "unidic_adapter_sha256": "5f7a438aac6d26b484b9697ab786e8b8c015a9bce99f274a8891d4f98e607042"
   }
 }

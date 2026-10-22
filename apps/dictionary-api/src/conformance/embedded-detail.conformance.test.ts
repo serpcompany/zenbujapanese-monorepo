@@ -155,6 +155,7 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
         : {}),
       senses: page.senses.map((sense, index) => ({
         meaning: sense.meaning,
+        glosses: entry.senses[index].glosses,
         notes: sense.notes,
         partsOfSpeech: entry.senses[index].partsOfSpeech
       })),

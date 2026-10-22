@@ -33,6 +33,19 @@ export interface SuiteExamples {
   shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
 }
 
+export interface SuiteSense {
+  meaning: string
+  glosses: string[]
+  notes: string[]
+  partsOfSpeech: string[]
+}
+
+export type ShownSense = Omit<SuiteSense, 'glosses'>
+
+export const withoutGlosses = ({ glosses: _, ...shown }: SuiteSense): ShownSense => shown
+
+export const joinedAsJmdictJoinsThem = (sense: SuiteSense) => sense.glosses.join(', ')
+
 export interface WordCase {
   covers: string
   entSeq: string[]
@@ -44,7 +57,7 @@ export interface WordCase {
   partOfSpeech: string
   opensConjugations: boolean
   conjugations?: SuiteConjugations
-  senses: { meaning: string; notes: string[]; partsOfSpeech: string[] }[]
+  senses: SuiteSense[]
   pitch?: {
     downstep: number
     levels: string

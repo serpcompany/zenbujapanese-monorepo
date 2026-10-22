@@ -15,16 +15,13 @@ recorded-audio check, `TranslateReplay/` ([`translate.md`](../../docs/agents/tra
 uv run --no-project --python 3.14.8 python language-data/tools/rebuild_language_data.py --download
 ```
 
-The tools whose SHA-256 the data records moved here from `apps/ios/Tools/` unchanged, so those
-records stay true, and two of them still look for their inputs beside the old folder:
-`import_frequency_pack.py` for the mapping SQL (`RESOURCES`), and `build_jiten_frequency_packs.py`
-for every file it reads and writes. Neither takes those paths on the command line, so
-`rebuild_language_data.py` refuses to start, naming each missing path, until the next rebuild's
-pull request points them at `apps/ios/Modules/Sources/SearchExperience/Resources/`,
-`language-data/sources/`, and `language-data/generated/`. Each records its own SHA-256, so the edit
-belongs to that rebuild, which records the new ones and updates `tools_built_in_paths` in
-`rebuild_language_data.py` to match, or drops it once the tools take the paths as arguments
-([`tech-debt.md`](../../docs/tech-debt.md), Language data).
+Two tools don't take their paths on the command line, and find them from their own folder:
+`import_frequency_pack.py` the mapping SQL (`RESOURCES`), and `build_jiten_frequency_packs.py` every
+file it reads and writes, in `apps/ios/Modules/Sources/SearchExperience/Resources/`,
+`language-data/sources/`, and `language-data/generated/` (#929's rebuild pointed them there after
+#469's move). `rebuild_language_data.py` refuses to start, naming each path it can't find
+(`tools_built_in_paths`), so a later move fails before anything is built. Each records its own
+SHA-256, so moving them again belongs to a rebuild.
 
 A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
 app's old `LanguageData/Sources/` folder, which `apps/ios/.gitignore` still ignores so none is
@@ -145,8 +142,17 @@ sentence. A pair's identity is derived only from its NFC-normalized Japanese and
 compactly, and published as an `esp1_` ID. Tatoeba's record IDs, contributors, and license classes
 stay in the provenance table.
 
-**`unidic_adapter.py`** turns UniDic's accent type into a downstep and pronunciation mora count, by
-exact base form and pronunciation or reading.
+**`unidic_adapter.py`** gives each entry its own word's UniDic accent, as a downstep and the
+pronunciation's mora count (#929). A row is the entry's word when its lemma, without UniDic's
+`-meaning` suffix, is one of the entry's written forms (for a word written in kana, then one of its
+readings), read as the entry is by the row's own word form or pronunciation, else by the lemma's
+reading. Only when no lemma matches does a row spelled exactly like the entry count, and only when
+that spelling and reading name one lemma; a kana spelling never brings in a proper noun. Proper
+nouns count only when no common noun does. Where the word's rows disagree, those spelled like the
+headword come first, and the one UniDic's word cost rates likeliest gives the accent, the first of
+its `aType` values, the lower downstep breaking a tie. The choice reads only the entry's own rows,
+so homophones such as 橋, 箸, and 端 never share one, and a word UniDic gives no accent, such as a
+particle, has none. `tests/test_unidic_pitch.py` runs it on UniDic's real ハシ and カミ rows.
 
 **`example_sentence_retrieval_index.py`** builds the example retrieval indexes in one transaction
 and validates them, failing closed unless the artifact meets the v1 contract; validation runs the
@@ -183,8 +189,8 @@ described in [`frequency.md`](../../docs/agents/frequency.md), Trust.
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at
 several levels keeps the easiest. Its mapping digest is each ID's 16 bytes, then its level as a
-64-bit big-endian integer, in ID order. Its defaults for `--record`, `--language-data`, and
-`--output` still name the old folders, so pass all three, as the rebuild does.
+64-bit big-endian integer, in ID order. Its `--record`, `--language-data`, and `--output` default to
+the files the rebuild passes.
 
 **`build_jiten_frequency_packs.py`** builds the downloadable Jiten pack sources: a ZIP, with a fixed
 timestamp, of one JSON array of `[dictionary form, reading]` pairs in rank order. Each list's
