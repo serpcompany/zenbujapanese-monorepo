@@ -138,6 +138,11 @@ user, set in `initialScope` and again in `beforeSend`. `CrashReportScrubber.scru
   `zip`), so type names such as `Foundation.URL` and code files such as `DictionaryCore.swift`
   stay; a name with spaces loses only its last word. Each rule runs in linear time, and
   `CrashReportScrubberTests` checks them on real-looking strings and a fully populated event.
+  `CrashReportScrubberTests.everyRuleIsLinear` times nothing: it counts each rule's work on long
+  texts (runs of openers, words, kanji, file names, and a pasted description), as the progress
+  calls ICU makes after each fixed number of matching steps, and checks that four times the text
+  takes at most about four times the work. The 「」 rule before 35ded03f, which didn't exclude its
+  opener (`「[^」\n]*」`), takes 5.3 times as much on a run of openers, and fails it.
 
 ## Handled failures
 

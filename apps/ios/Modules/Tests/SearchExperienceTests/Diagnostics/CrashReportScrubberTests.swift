@@ -106,20 +106,56 @@ struct CrashReportScrubberTests {
     #expect(CrashReportScrubber.scrubImagePath(nil) == nil)
   }
 
-  @Test("every rule is linear: long text with nothing to remove scrubs quickly")
-  func longTextScrubsQuickly() {
-    let token = String(repeating: "a", count: 50_000)
-    let english = String(repeating: "word ", count: 10_000)
-    let start = ContinuousClock.now
-    #expect(scrub(token) == token)
-    #expect(scrub(english) == english)
-    #expect(scrub(String(repeating: "漢", count: 50_000)) == "<japanese>")
-    #expect(scrub(String(repeating: "a.", count: 25_000)) == String(repeating: "a.", count: 25_000))
-    #expect(scrub(String(repeating: "a", count: 50_000) + ".txt") == "<file>")
-    for opening in ["「", "『", "“", "«", "״", "\""] {
-      #expect(!scrub(String(repeating: opening + "a", count: 25_000)).isEmpty)
+  private static let shortLength = 5_000
+  private static let longLength = 20_000
+  private static let marginOverLinear = 1.1
+  private static let partlyCountedTick = 1
+
+  private static let longTexts: [(runs: [String], tail: String)] = [
+    (["a"], ""), (["word "], ""), (["漢"], ""), (["a."], ""), (["a"], ".txt"), (["a“b ", "x"], ""),
+    (["「a"], ""), (["『a"], ""), (["“a"], ""), (["«a"], ""), (["״a"], ""), (["\"a"], ""),
+  ]
+
+  private static func text(_ shape: (runs: [String], tail: String), length: Int) -> String {
+    shape.runs.map { String(repeating: $0, count: length / $0.count) }.joined() + shape.tail
+  }
+
+  private static func work(of rule: NSRegularExpression, on text: String) -> Int {
+    var ticks = 0
+    rule.enumerateMatches(
+      in: text, options: .reportProgress, range: NSRange(text.startIndex..., in: text)
+    ) { _, flags, _ in
+      if flags.contains(.progress) { ticks += 1 }
     }
-    #expect(ContinuousClock.now - start < .seconds(1))
+    return ticks
+  }
+
+  @Test("every rule is linear: its work on a long text grows no faster than the text")
+  func everyRuleIsLinear() {
+    let growth = Double(Self.longLength) / Double(Self.shortLength)
+    for rule in CrashReportScrubber.rules {
+      for shape in Self.longTexts {
+        let short = Self.work(of: rule, on: Self.text(shape, length: Self.shortLength))
+        let long = Self.work(of: rule, on: Self.text(shape, length: Self.longLength))
+        #expect(
+          Double(long) <= growth * Self.marginOverLinear * Double(short + Self.partlyCountedTick),
+          "\(rule.pattern) on \(shape.runs) \(shape.tail): \(short) ticks, then \(long)")
+      }
+    }
+  }
+
+  @Test("long text with nothing to remove stays as it is, and a long name becomes one placeholder")
+  func longTextScrubs() {
+    let length = Self.longLength
+    for unchanged in [["a"], ["word "], ["a."]] {
+      let text = Self.text((unchanged, ""), length: length)
+      #expect(scrub(text) == text)
+    }
+    #expect(scrub(Self.text((["漢"], ""), length: length)) == "<japanese>")
+    #expect(scrub(Self.text((["a"], ".txt"), length: length)) == "<file>")
+    for opening in ["「", "『", "“", "«", "״", "\""] {
+      #expect(!scrub(Self.text(([opening + "a"], ""), length: length)).isEmpty)
+    }
   }
 
   @Test("a fully populated event keeps only what the policy allows")
