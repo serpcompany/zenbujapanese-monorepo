@@ -149,7 +149,7 @@ final class ZenbuAccount {
         try await api.deleteAccount(
           accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
       }.appStoreSubscriptionContinues
-    } catch AccountServiceError.unreachable {
+    } catch AccountServiceError.unreachable, AccountServiceError.transportFailed {
       guard try await accountIsGone() else { throw AccountServiceError.unreachable }
     } catch AccountServiceError.sessionEnded {
       sync.endSession(onItsOwn: true)

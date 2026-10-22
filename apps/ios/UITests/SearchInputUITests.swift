@@ -17,6 +17,32 @@ final class SearchInputUITests: ZenbuUITestCase {
     assertOnScreen(find("search.input.handwriting", in: app), in: app)
   }
 
+  func testThePanelFitsTheSmallestWindowAndTakesAStroke() {
+    let app = launch()
+    if device == .mac {
+      shrinkWindow(in: app)
+      let window = app.windows.firstMatch.frame
+      XCTAssertLessThan(window.height, Self.fullPanelOnTheMac, "the window is shorter than a panel")
+    }
+    open(.search, in: app)
+    tap(find("search.input.handwriting", in: app))
+    waitForSheet("handwriting.canvas", in: app)
+    let done = device == .mac ? ["sheet.done"] : []
+    for control in ["handwriting.canvas", "handwriting.undo"] + done {
+      assertOnScreen(find(control, in: app), in: app)
+    }
+    switchInputPanel(to: "radicals", showing: "radical.grid", in: app)
+    assertOnScreen(find("radical.one", in: app), in: app)
+    let canvas = switchInputPanel(to: "handwriting", showing: "handwriting.canvas", in: app)
+    draw(on: canvas, from: Self.strokeStart, to: Self.strokeEnd)
+    let candidate = firstElement(identifiedBy: "handwriting.candidate.", in: app)
+    assertOnScreen(candidate, in: app)
+    tap(candidate)
+    waitFor(find("search.results", in: app))
+  }
+
+  private static let fullPanelOnTheMac: CGFloat = 720
+
   func testThePanelOpensAndStaysWhileTheFieldHasTheCaret() {
     let app = launch()
     open(.search, in: app)

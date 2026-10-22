@@ -103,10 +103,9 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   `WordSheetPresentationTests`.
 - **Sheets on the Mac.** Every sheet but Look Up's input panel and the photo library's own picker
   (720 by 520) opens 480 points wide and 520 tall, plus its row of buttons, which fits the
-  smallest window: the word sheet, **Add to List**, a
-  frequency rank's details, a frequency dictionary's details, **Stroke Order**, a word's saved
-  images, **Sign In**, and **Delete Account**. A Mac sizes a sheet from what's in it, and a page
-  that scrolls has no size of its own.
+  smallest window: the word sheet, **Add to List**, a frequency rank's details, a frequency
+  dictionary's details, **Stroke Order**, a word's saved images, **Sign In**, and **Delete
+  Account**. A Mac sizes a sheet from what's in it, and a page that scrolls has no size of its own.
   Check: Mac, UI `WordDetailUITests.testAddToListPutsTheWordInFavoritesAndANewList`,
   `testAFrequencyRankOpensItsDetailsWhichLeadToTheDictionaries`, and
   `testAKanjiShowsItsStrokeOrderAndItsWords`,
@@ -137,12 +136,13 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
 - **Look Up on iPad and the Mac.** On iPad the tabs and the title bar stay above its field while you
   type and beside the results, where the iPhone slides its title away, and there's no **X**. On the
   Mac the field sits in the window's toolbar. On both, the field's own clear button empties it and
-  returns to Recent. On the Mac, the input panels open as a sheet of a fixed size with a **Done**
-  button, which Escape presses too, since a Mac can't drag a sheet away.
+  returns to Recent. On the Mac, the input panels open as a sheet with a **Done** button, which
+  Escape presses too, since a Mac can't drag a sheet away. It's 460 by 720 points, or 40 points
+  shorter than the window under its toolbar when that's less, so it fits the smallest window.
   Check: iPad and Mac, UI `SearchUITests.testTheTabsStayBesideTheResultsWhichStayAcrossTabs` and
   `testASearchKeepsItsQueryInTheFieldAndRunsAgainFromRecent` (the clear button), and on the Mac
-  `SearchInputUITests.testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (**Done**);
-  package `AppCommandTests` (the sheet's size).
+  `SearchInputUITests.testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (**Done**) and
+  `testThePanelFitsTheSmallestWindowAndTakesAStroke`; package `AppCommandTests` (its size).
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
   them on right-click: renaming or deleting a list, removing a word from a list, marking a word
   unknown, removing a video from Recent, updating or removing a frequency dictionary or showing

@@ -123,7 +123,7 @@ enum AccountMessage {
       return String(localized: "Sign-in didn't finish. Try again.")
     }
     switch error {
-    case .unreachable:
+    case .unreachable, .transportFailed:
       return String(localized: "Couldn't reach Zenbu. Check your connection and try again.")
     case .sessionEnded:
       return String(localized: "You were signed out. Sign in again to keep syncing.")

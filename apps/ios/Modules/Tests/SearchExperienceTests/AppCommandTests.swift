@@ -101,4 +101,15 @@ struct AppCommandTests {
     #expect(AppWindow.inputPanelSize.width < AppWindow.minimumSize.width)
     #expect(AppWindow.inputPanelSize.height < AppWindow.defaultSize.height)
   }
+
+  @Test("the input panel keeps its size in a window with room, and fits a shorter one")
+  func inputPanelInTheWindow() {
+    let panel = AppWindow.inputPanelSize
+    #expect(AppWindow.sheet(panel, inWindowOfHeight: nil) == panel)
+    #expect(AppWindow.sheet(panel, inWindowOfHeight: AppWindow.defaultSize.height) == panel)
+    let smallest = AppWindow.sheet(panel, inWindowOfHeight: AppWindow.minimumSize.height)
+    #expect(smallest.width == panel.width)
+    #expect(smallest.height == AppWindow.sheetSize.height)
+    #expect(smallest.height < AppWindow.minimumSize.height)
+  }
 }
