@@ -72,7 +72,7 @@ jobs:
       - name: Garden the docs with Claude
         id: garden
         if: env.HAS_CLAUDE_TOKEN == 'true'
-        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
+        uses: anthropics/claude-code-action@6b6870e649b5ff408753befeaee5fc7989d4e6a9
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
@@ -271,7 +271,7 @@ jobs:
       - name: Garden the code with Claude
         id: garden
         if: env.GARDEN == 'true'
-        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
+        uses: anthropics/claude-code-action@6b6870e649b5ff408753befeaee5fc7989d4e6a9
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
           BASH_DEFAULT_TIMEOUT_MS: "900000"
