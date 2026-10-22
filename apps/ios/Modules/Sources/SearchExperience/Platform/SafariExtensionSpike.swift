@@ -22,6 +22,7 @@ public enum SafariExtensionSpike {
     answer["ms"] = Int(Date().timeIntervalSince(began) * 1000)
     answer["memory"] = memory()
     ShareCardMemory.note("safari lookUp \(card.kind)")
+    log("lookUp \(text.count)ch \(text.prefix(12)) kind=\(card.kind) ms=\(answer["ms"] ?? 0)")
     return answer
   }
 
@@ -43,6 +44,7 @@ public enum SafariExtensionSpike {
     }
     await stores.lists.flush()
     await stores.knowledge.flush()
+    log("save \(action) \(headword)")
     return [
       "ok": stores.savesToTheApp,
       "pending": SharedChanges.inbox?.pending().count ?? -1,
@@ -71,6 +73,36 @@ public enum SafariExtensionSpike {
       "known": WordKnowledge.shared.knownRecords.map(\.headword),
       "favorites": WordLists.shared.words(in: WordLists.favoritesID).map(\.headword),
     ]
+  }
+
+  nonisolated(unsafe) private static var held: [UnsafeMutableRawPointer] = []
+
+  public static func stress(stepMB: Int) -> [String: any Sendable] {
+    let bytes = stepMB << 20
+    if let block = malloc(bytes) {
+      memset(block, 1, bytes)
+      held.append(block)
+    }
+    log("stress held=\(held.count * stepMB)MB")
+    return ["heldMB": held.count * stepMB, "memory": memory()]
+  }
+
+  public static func log(_ moment: String) {
+    guard let folder = SharedContainer.folder else { return }
+    let m = memory()
+    let line =
+      "\(Date().ISO8601Format(.iso8601.time(includingFractionalSeconds: true))) pid=\(m["pid"] ?? 0) "
+      + "\(moment) footprint=\(m["footprintMB"] ?? 0) peak=\(m["peakMB"] ?? 0)\n"
+    let file = folder.appending(path: "spike-memory.log")
+    try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    if let handle = try? FileHandle(forWritingTo: file) {
+      _ = try? handle.seekToEnd()
+      try? handle.write(contentsOf: Data(line.utf8))
+      try? handle.synchronize()
+      try? handle.close()
+    } else {
+      try? Data(line.utf8).write(to: file)
+    }
   }
 
   public static func memory() -> [String: any Sendable] {

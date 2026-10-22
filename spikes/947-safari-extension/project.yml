@@ -28,6 +28,10 @@ targets:
         product: SearchExperience
       - package: ZenbuJapaneseModules
         product: DictionaryData
+    attributes:
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
     entitlements:
       path: Host/Host.entitlements
       properties:
@@ -62,6 +66,10 @@ targets:
     dependencies:
       - package: ZenbuJapaneseModules
         product: SearchExperience
+    attributes:
+      SystemCapabilities:
+        com.apple.ApplicationGroups.iOS:
+          enabled: 1
     entitlements:
       path: Extension/Extension.entitlements
       properties:

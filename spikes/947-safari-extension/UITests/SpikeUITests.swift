@@ -5,7 +5,8 @@ final class SpikeUITests: XCTestCase {
   let host = XCUIApplication()
   let settings = XCUIApplication(bundleIdentifier: "com.apple.Preferences")
   let safari = XCUIApplication(bundleIdentifier: "com.apple.mobilesafari")
-  let page = URL(string: "http://localhost:47947/index.html")!
+  let base = ProcessInfo.processInfo.environment["SPIKE_BASE"] ?? "http://localhost:47947"
+  var page: URL { URL(string: "\(base)/index.html")! }
 
   func dump(_ app: XCUIApplication, _ label: String) {
     print("=== DUMP \(label)\n\(app.debugDescription)\n=== END \(label)")
@@ -20,6 +21,14 @@ final class SpikeUITests: XCTestCase {
     host.buttons["Turn On in Safari Settings"].tap()
     sleep(3)
     dump(settings, "settings-opened")
+  }
+
+  func testC2_enableFromApp() {
+    settings.terminate()
+    host.launch()
+    host.buttons["Turn On in Safari Settings"].tap()
+    sleep(3)
+    enable()
   }
 
   func testC_enableByHand() {
@@ -41,6 +50,10 @@ final class SpikeUITests: XCTestCase {
     while !extensions.isHittable && tries < 10 { settings.swipeUp(); tries += 1 }
     extensions.tap()
     sleep(1)
+    enable()
+  }
+
+  func enable() {
     dump(settings, "extensions-list")
     settings.buttons["com.zenbujapanese.dictionary.spike947.safari"].firstMatch.tap()
     sleep(1)
@@ -52,6 +65,7 @@ final class SpikeUITests: XCTestCase {
     sleep(1)
     dump(settings, "spike-extension-on")
     let all = settings.staticTexts["All Websites"].firstMatch
+    if !all.exists { dump(settings, "no-all-websites") }
     var tries2 = 0
     while !all.isHittable && tries2 < 5 { settings.swipeUp(); tries2 += 1 }
     all.tap()
@@ -151,14 +165,14 @@ final class SpikeUITests: XCTestCase {
   }
 
   func testI_watchInZenbu() {
-    XCUIDevice.shared.system.open(URL(string: "http://localhost:47947/index.html?run=8")!)
+    XCUIDevice.shared.system.open(URL(string: "\(base)/index.html?run=8")!)
     XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10))
     sleep(3)
     openFromSafari(safari.buttons["Watch in Zenbu"].firstMatch, "watch")
   }
 
   func testJ_openInZenbu() {
-    XCUIDevice.shared.system.open(URL(string: "http://localhost:47947/index.html?run=9")!)
+    XCUIDevice.shared.system.open(URL(string: "\(base)/index.html?run=9")!)
     XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10))
     sleep(3)
     point(safari, 35, 103).press(forDuration: 1.2)
@@ -195,7 +209,7 @@ final class SpikeUITests: XCTestCase {
   }
 
   func testL_askPage() {
-    XCUIDevice.shared.system.open(URL(string: "http://localhost:47947/index.html?run=10")!)
+    XCUIDevice.shared.system.open(URL(string: "\(base)/index.html?run=10")!)
     XCTAssertTrue(safari.wait(for: .runningForeground, timeout: 10))
     sleep(4)
     dump(safari, "ask-page")

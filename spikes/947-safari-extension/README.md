@@ -34,14 +34,25 @@ Then `testE_longPress` (the word popup), `testG_saveAndMore`, `testI_watchInZenb
 `xcodebuild test` didn't reinstall the app after a change to `content.js`; run
 `xcrun simctl install <udid> <the built .app>` after one.
 
-## Run it on an iPhone (not done)
+## Run it on an iPhone
 
-Needs the owner's yes. Signing with team `847HR8U8D9` and `-allowProvisioningUpdates`, which
-registers the App IDs `com.zenbujapanese.dictionary.spike947`, `.spike947.safari`,
-`.spike947.share` and the app group `group.com.zenbujapanese.dictionary.spike947`; the phone
-connected, trusted, with Developer Mode on. Read the memory log afterwards with
-`xcrun devicectl device copy from --device <udid> --domain-type appGroupDataContainer
---domain-identifier group.com.zenbujapanese.dictionary.spike947 --source
-"Library/Application Support/Zenbu Japanese/share-card-memory.log" --destination memory.log`.
+Done once on 2026-10-22 (iPhone 17 Pro Max, iOS 26.6, Release). `xcodebuild -allowProvisioningUpdates`
+registered the App IDs with App Groups on, but can't register the group itself, so that build left the
+group out (`CODE_SIGN_ENTITLEMENTS=`) and saving wasn't run. Register
+`group.com.zenbujapanese.dictionary.spike947` in Xcode's Signing & Capabilities first to run saving.
+
+```sh
+xcodebuild -project SafariSpike.xcodeproj -scheme SafariSpike -configuration Release \
+  -destination 'platform=iOS,id=<udid>' -derivedDataPath ../../tmp/agent/device-dd \
+  -allowProvisioningUpdates DEVELOPMENT_TEAM=847HR8U8D9 CODE_SIGN_ENTITLEMENTS= build-for-testing
+python3 -m http.server 47947 --bind 0.0.0.0 --directory TestPage &
+```
+
+Then `testC2_enableFromApp`, and `testH_probe` with `TEST_RUNNER_SPIKE_BASE=http://<mac-ip>:47947`
+and `TEST_RUNNER_SPIKE_URL=http://<mac-ip>:47947/index.html?probe=辞書|か`, run with
+`xcodebuild test-without-building -xctestrun <the .xctestrun>`. `probe=!stress:10:400` holds 10 MB
+more per message until iOS ends the native side, to find its limit. End the extension between runs
+with `xcrun devicectl device process terminate`, so each run starts a fresh process. The phone must
+stay unlocked.
 
 `proof/` holds the Simulator's screenshots.

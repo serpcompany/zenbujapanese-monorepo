@@ -280,9 +280,19 @@
 					};
 					773346A9B744A2DE6F89AA08 = {
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					B0A901430C3A98B5DE160683 = {
 						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					B5D3A2DDC812CD4F63549103 = {
 						ProvisioningStyle = Automatic;

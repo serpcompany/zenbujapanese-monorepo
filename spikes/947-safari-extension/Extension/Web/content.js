@@ -45,7 +45,24 @@
     out.style.cssText = 'white-space:pre-wrap;font:11px ui-monospace,monospace';
     document.body.appendChild(out);
     for (const text of texts) {
-      const answer = await ask({ command: 'lookUp', text });
+      if (text.startsWith('!stress')) {
+        const [, step, cap] = text.split(':');
+        let last = null;
+        for (let i = 0; i < Number(cap || 300); i++) {
+          const answer = await ask({ command: 'stress', stepMB: Number(step || 10) })
+            .catch((error) => ({ error: String(error) }));
+          if (answer?.error || !answer?.memory) {
+            out.textContent += `PROBE stress stopped after ${JSON.stringify(last)} with ${JSON.stringify(answer)}\n`;
+            last = null;
+            break;
+          }
+          last = { heldMB: answer.heldMB, footprintMB: answer.memory.footprintMB, peakMB: answer.memory.peakMB, pid: answer.memory.pid };
+        }
+        if (last) out.textContent += `PROBE stress survived ${JSON.stringify(last)}\n`;
+        continue;
+      }
+      const answer = await ask({ command: 'lookUp', text }).catch((error) => ({ error: String(error) }));
+      if (answer?.error) out.textContent += `PROBE ${text.slice(0, 12)} error=${answer.error} rt=${answer.roundTripMs}ms\n`;
       const m = answer?.memory ?? {};
       out.textContent += `PROBE ${text.length}ch ${text.slice(0, 12)} kind=${answer?.kind} native=${answer?.ms}ms rt=${answer?.roundTripMs}ms footprint=${m.footprintMB} peak=${m.peakMB} pid=${m.pid} answered=${m.answered}\n`;
     }

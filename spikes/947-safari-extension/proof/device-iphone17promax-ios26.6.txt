@@ -1,0 +1,42 @@
+iPhone 17 Pro Max (iPhone18,2), iOS 26.6 (23G71), Release build, 2026-10-22. One fresh extension process per run.
+## words
+SPIKE PROBE 2ch 辞書 kind=word native=1710ms rt=1931ms footprint=8.4 peak=10 pid=16606 answered=1
+SPIKE PROBE 3ch 食べた kind=word native=97ms rt=102ms footprint=8.5 peak=10 pid=16606 answered=2
+SPIKE PROBE 2ch 勉強 kind=word native=96ms rt=101ms footprint=8.6 peak=10 pid=16606 answered=3
+SPIKE PROBE 14ch 毎日日本語を勉強していま kind=text native=416ms rt=421ms footprint=15.9 peak=16.7 pid=16606 answered=4
+SPIKE PROBE 228ch 日本語を勉強している人は kind=text native=11ms rt=13ms footprint=16.8 peak=17.6 pid=16606 answered=5
+SPIKE PROBE 2ch 辞書 kind=word native=63ms rt=66ms footprint=16.7 peak=17.6 pid=16606 answered=6
+SPIKE PROBE done
+## ta
+SPIKE PROBE 1ch た kind=word native=2188ms rt=2264ms footprint=33.6 peak=58.1 pid=16609 answered=1
+SPIKE PROBE done
+## single
+SPIKE PROBE 2ch 辞書 kind=word native=1612ms rt=1707ms footprint=8.4 peak=10 pid=16612 answered=1
+SPIKE PROBE 1ch の kind=word native=722ms rt=726ms footprint=28.5 peak=52.8 pid=16612 answered=2
+SPIKE PROBE 1ch 日 kind=word native=138ms rt=141ms footprint=17.7 peak=52.8 pid=16612 answered=3
+SPIKE PROBE 1ch か kind=word native=1453ms rt=1457ms footprint=37.5 peak=100.6 pid=16612 answered=4
+SPIKE PROBE 1ch た kind=word native=639ms rt=642ms footprint=15 peak=100.6 pid=16612 answered=5
+SPIKE PROBE done
+## stress
+SPIKE PROBE stress stopped after {"heldMB":170,"footprintMB":173.3,"peakMB":173.3,"pid":16615} with {"error":"Error: Invalid call to runtime.sendNativeMessage(). The operation couldn’t be completed. (SFErrorDomain error 3.).","roundTripMs":8}
+SPIKE PROBE done
+## turn-on (testC2_enableFromApp)
+## extensions-list
+NavigationBar, {{0.0, 62.0}, {440.0, 54.0}}, identifier: 'Extensions'
+## spike-extension
+NavigationBar, {{0.0, 62.0}, {440.0, 54.0}}, identifier: 'Safari Spike 947'
+Switch, {{40.0, 394.3}, {360.0, 28.0}}, identifier: 'Allow Extension', label: 'Allow Extension', value: 0
+Switch, {{339.0, 394.3}, {63.0, 28.0}}, value: 0
+## spike-extension-on
+NavigationBar, {{0.0, 62.0}, {440.0, 54.0}}, identifier: 'Safari Spike 947'
+Switch, {{40.0, 394.3}, {360.0, 28.0}}, identifier: 'Allow Extension', label: 'Allow Extension', value: 1
+Switch, {{339.0, 394.3}, {63.0, 28.0}}, value: 1
+Switch, {{40.0, 449.3}, {360.0, 28.0}}, identifier: 'Allow in Private Browsing', label: 'Allow in Private Browsing', value: 0
+Switch, {{339.0, 449.3}, {63.0, 28.0}}, value: 0
+## all-websites
+NavigationBar, {{0.0, 62.0}, {440.0, 54.0}}, identifier: 'All Websites'
+## all-websites-allowed
+NavigationBar, {{0.0, 62.0}, {440.0, 54.0}}, identifier: 'All Websites'
+## host-after-enable
+NavigationBar, {{0.0, 62.0}, {440.0, 106.0}}, identifier: 'Spike 947'
+label: 'State: on'

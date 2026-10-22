@@ -11,6 +11,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     let id = message["id"] as? String ?? ""
     let headword = message["headword"] as? String ?? ""
     let reading = message["reading"] as? String ?? ""
+    let stepMB = message["stepMB"] as? Int ?? 10
     let box = ContextBox(context)
     Task {
       let answer: [String: any Sendable]
@@ -19,6 +20,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         answer = await SafariExtensionSpike.lookUp(text)
       case "markKnown", "addToFavorites":
         answer = await SafariExtensionSpike.save(command, id: id, headword: headword, reading: reading)
+      case "stress":
+        answer = SafariExtensionSpike.stress(stepMB: stepMB)
       case "config":
         answer = [
           "scheme": SafariExtensionSpike.appScheme,
