@@ -32,6 +32,13 @@ const listAfter = (page: Page, heading: string) =>
     .locator('xpath=following-sibling::*[self::ul or self::h2][1][self::ul]')
     .getByRole('listitem')
 
+const appLabelsInReports = (page: Page, heading: string) =>
+  sectionHeading(page, heading).locator(
+    'xpath=following-sibling::p[preceding-sibling::h2[1][@id="reports"]]//strong'
+  )
+
+const appLabels = ['Send Crash Reports', 'Report a Problem…', 'Included with your report']
+
 const tableRows = (page: Page, column: string) =>
   page
     .getByRole('main')
@@ -108,14 +115,14 @@ test.describe('privacy policy', () => {
       'sends a crash report to Sentry',
       "a code for the step and how it failed, never the error's own message",
       'Crash reports are on by default',
-      "turn them off at any time with Send crash reports in the app's Settings",
+      "turn them off at any time with Send Crash Reports in the app's Account tab",
       "where in the app's code the problem happened, the app's version and build, the iOS version, your device's model",
       'a random identifier the app creates on your device',
       "A crash report doesn't link that identifier to your Zenbu account",
       'never includes what you read, type, say, or photograph',
       "your location, your device's name, or its language, region, and time zone",
-      'removes the file paths and names, links, email addresses, and quoted text',
-      "Report a Problem… in the app's Settings",
+      'removes the file paths, links, email addresses, and quoted text it finds in error messages, and the file names it recognizes, such as ones ending in .txt or .jpg',
+      "Report a Problem… in the app's Account tab",
       "the email address in the form for a reply, if there is one, and the details the form lists under Included with your report: the app's version and build, the iOS version, your device's model, whether you're signed in, whether crash reports are on, which optional dictionaries you've installed, and whether the microphone and camera are allowed",
       "If you're signed in, the form fills in your Zenbu account's email, which you can change or clear; if you're signed out, it sends an email only if you add one",
       'alongside the other reports from the same copy of the app',
@@ -125,6 +132,8 @@ test.describe('privacy policy', () => {
       'no screenshots, photos, searches, lists, or conversations',
       'not to store the address or the location it suggests'
     ])
+    await expect(appLabelsInReports(page, 'Crash and problem reports')).toHaveText(appLabels)
+    expect(await sectionText(page, 'Crash and problem reports')).not.toContain('Settings')
   })
 
   test('names each kind of data an account keeps, and why', async ({ page }) => {
@@ -236,6 +245,20 @@ test('/legal/privacy/#reports opens on the crash and problem reports, below the 
 }) => {
   await page.goto('/legal/privacy/#reports')
   await expectBelowTheHeader(page, 'Crash and problem reports')
+})
+
+test('in Japanese, names the crash reports switch and Report a Problem… as the app shows them, in its Account tab', async ({
+  page
+}) => {
+  const heading = 'クラッシュレポートと問題の報告'
+  await page.goto('/ja/legal/privacy/')
+  await expectNamed(page, heading, [
+    'アプリのアカウントタブにある「Send Crash Reports」でいつでもオフにできます',
+    'エラーメッセージに含まれるファイルのパス、リンク、メールアドレス、引用符で囲まれた文字列と、ファイル名として認識したもの（.txtや.jpgで終わる名前など）を削除します',
+    'アプリのアカウントタブにある「Report a Problem…」から'
+  ])
+  await expect(appLabelsInReports(page, heading)).toHaveText(appLabels)
+  expect(await sectionText(page, heading)).not.toContain('設定画面')
 })
 
 test.describe('Tomodachi in the privacy policy and on the support page', () => {
