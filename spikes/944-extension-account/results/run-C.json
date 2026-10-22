@@ -1,0 +1,116 @@
+{
+  "chrome": "Chrome/146.0.7680.153",
+  "redirectURL": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb",
+  "headersFromWorker": {
+    "host": "127.0.0.1:3997",
+    "connection": "keep-alive",
+    "content-length": "2",
+    "content-type": "text/plain;charset=UTF-8",
+    "accept": "*/*",
+    "origin": "chrome-extension://dejebckgimdjgbclmjicoebbpmbplldh",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-storage-access": "active",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "en-US,en;q=0.9"
+  },
+  "nonceFromWorker": {
+    "status": 200,
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "sendCodeFromWorker": {
+    "status": 200,
+    "json": {
+      "success": true
+    },
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "sendCodeFromExtensionPage": {
+    "status": 200,
+    "json": {
+      "success": true
+    },
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "codeArrived": true,
+  "signInFromWorker": {
+    "status": 200,
+    "sessionTokenVisible": true,
+    "setCookieVisible": false,
+    "userId": "txL3wC7UVyMNluFdTTGXkxQDHKsG6or1"
+  },
+  "accessToken": {
+    "status": 200,
+    "claims": {
+      "azp": "zenbu-extension",
+      "scope": "account:delete lists:read lists:write known:read known:write watch:read watch:write notes:read notes:write settings:read settings:write subscription"
+    }
+  },
+  "sync": {
+    "status": 200,
+    "results": [
+      "m-known-1: applied \"\"",
+      "m-known-kanji: rejected {\"code\":\"invalid_fields\",\"message\":\"headword is 1 to 200 characters and reading at most 200, with no control characters.\"}",
+      "m-list-1: applied \"\"",
+      "m-listword-1: applied \"\"",
+      "m-note-1: applied \"\"",
+      "m-watch-1: applied \"\"",
+      "m-watch-netflix: rejected {\"code\":\"invalid_mutation\",\"message\":\"A watched video's entityId is its YouTube video ID: 11 letters, digits, `-`, or `_`.\"}",
+      "m-setting-1: applied \"\"",
+      "m-setting-src: applied \"\"",
+      "m-bookmark-1: rejected {\"code\":\"not_allowed\",\"message\":\"This app's access to the account doesn't let it make that change.\"}"
+    ],
+    "changes": [
+      "knownWord put",
+      "list put",
+      "wordNote put",
+      "watchedVideo put",
+      "setting put",
+      "setting put",
+      "listWord put"
+    ]
+  },
+  "subscription": {
+    "status": 200,
+    "cloudAccess": "free",
+    "canSubscribe": true,
+    "keys": [
+      "status",
+      "active",
+      "source",
+      "productId",
+      "expiresAt",
+      "willRenew",
+      "managedIn",
+      "canSubscribe",
+      "running",
+      "cloudAccess",
+      "appAccountToken",
+      "offers"
+    ]
+  },
+  "meWithoutProfile": {
+    "status": 403,
+    "code": "insufficient_scope"
+  },
+  "signOut": {
+    "status": 200,
+    "json": {
+      "success": true
+    }
+  },
+  "contentScriptFetch": "failed: TypeError: Failed to fetch",
+  "authFlowFragment": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb#id_token=fake.jwt.token&state=s1"
+  },
+  "authFlowFormPost": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb"
+  },
+  "authFlowFormPostThroughBridge": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb#id_token=fake.jwt.token&state=s1"
+  }
+}

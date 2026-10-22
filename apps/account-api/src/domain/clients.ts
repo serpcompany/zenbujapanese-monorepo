@@ -31,6 +31,7 @@ export interface Client {
   scopes: readonly Scope[]
   appleBundleIds: readonly string[]
   signsInOnTheWeb: boolean
+  extensionIds?: readonly string[]
   requestsPerMinute: number
 }
 
@@ -77,6 +78,28 @@ export const clients: readonly Client[] = [
     requestsPerMinute: 30_000
   },
   {
+    id: 'zenbu-extension',
+    name: 'Zenbu Japanese browser extension',
+    scopes: [
+      'account:delete',
+      'lists:read',
+      'lists:write',
+      'known:read',
+      'known:write',
+      'watch:read',
+      'watch:write',
+      'notes:read',
+      'notes:write',
+      'settings:read',
+      'settings:write',
+      'subscription'
+    ],
+    appleBundleIds: [],
+    extensionIds: (process.env.SPIKE_EXTENSION_IDS ?? '').split(',').filter(Boolean),
+    signsInOnTheWeb: false,
+    requestsPerMinute: 30_000
+  },
+  {
     id: 'tomodachi',
     name: 'Tomodachi',
     scopes: ['account:delete', 'lists:read', 'known:read', 'known:mark', 'dictionary:read'],
@@ -111,3 +134,5 @@ export function principalOf(userId: string, claims: Record<string, unknown>): Pr
     signedInAt: new Date(typeof claims.auth_time === 'number' ? claims.auth_time * 1000 : 0)
   }
 }
+
+export const extensionOrigins = clients.flatMap(client => (client.extensionIds ?? []).map(id => `chrome-extension://${id}`))

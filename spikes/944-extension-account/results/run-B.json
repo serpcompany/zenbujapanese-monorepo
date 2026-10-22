@@ -1,0 +1,56 @@
+{
+  "chrome": "Chrome/146.0.7680.153",
+  "redirectURL": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb",
+  "headersFromWorker": {
+    "host": "127.0.0.1:3997",
+    "connection": "keep-alive",
+    "content-length": "2",
+    "content-type": "text/plain;charset=UTF-8",
+    "accept": "*/*",
+    "origin": "chrome-extension://dejebckgimdjgbclmjicoebbpmbplldh",
+    "sec-fetch-site": "none",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-storage-access": "active",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "en-US,en;q=0.9"
+  },
+  "nonceFromWorker": {
+    "status": 200,
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "sendCodeFromWorker": {
+    "status": 200,
+    "json": {
+      "success": true
+    },
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "sendCodeFromExtensionPage": {
+    "status": 200,
+    "json": {
+      "success": true
+    },
+    "sessionToken": null,
+    "setCookieVisible": false
+  },
+  "codeArrived": true,
+  "signInFromWorker": {
+    "status": 200,
+    "sessionTokenVisible": false,
+    "setCookieVisible": false,
+    "userId": "11Ht6covBz4bNfowsufUOoc1uNKDHKky"
+  },
+  "contentScriptFetch": "failed: TypeError: Failed to fetch",
+  "authFlowFragment": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb#id_token=fake.jwt.token&state=s1"
+  },
+  "authFlowFormPost": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb"
+  },
+  "authFlowFormPostThroughBridge": {
+    "answer": "https://dejebckgimdjgbclmjicoebbpmbplldh.chromiumapp.org/cb#id_token=fake.jwt.token&state=s1"
+  }
+}

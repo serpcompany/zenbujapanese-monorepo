@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Zenbu account spike",
+  "version": "0.0.1",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu8dx3bxzBWTomf0BpYmcI92dhzVWFdHltcgC36kZYFKe/iErAo6BNALq80lK/5VgUFR6y7nXm3fYBODkmBJ4Xgpv2HZOAKHYUVk4RJu1LOylHmOuiNBL+qy8qwlHDyMLEZ/dZ43qbu1AZ7aU3Dwlpn4SMBrAWEd5ejPVFXPqlinj9ywdwsBzvnQMPg/rj7ky4J0I4FKfSnKFxHcW4aSXGZyvWksBsf275lcvtiwtc3dXpKkaE1gwOVIxtIcqriaISEqTkPUAVQIZZgioE7shoYZV2qltLgRrVz9AHWoi3qtEQ/dmHUBKRTBRaNQjT4Or/RDn7rH3KKOwqQAvruW1WQIDAQAB",
+  "permissions": ["identity", "storage"],
+  "host_permissions": ["http://localhost:8790/*", "http://127.0.0.1:3997/echo"],
+  "background": { "service_worker": "sw.js", "type": "module" },
+  "content_scripts": [{ "matches": ["http://127.0.0.1:3997/page"], "js": ["content.js"] }]
+}

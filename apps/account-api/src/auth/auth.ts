@@ -6,7 +6,7 @@ import type { AuthConfig } from '../config'
 import type { Drizzle } from '../db/database'
 import { authSchema } from '../db/schema'
 import { takeVerification } from '../db/verifications'
-import { clients } from '../domain/clients'
+import { clients, extensionOrigins } from '../domain/clients'
 import type { Mailer } from '../email/mailer'
 import { codeMinutes, signInCodeMessage } from '../email/sign-in-code'
 import { failureFields } from '../failure'
@@ -58,7 +58,7 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
     baseURL: config.publicUrl,
     basePath: authPath,
     secret: config.secret,
-    trustedOrigins: config.trustedOrigins,
+    trustedOrigins: [...config.trustedOrigins, ...extensionOrigins],
     database: drizzleAdapter(db, { provider: 'pg', schema: authSchema }),
     user: {
       additionalFields: {
