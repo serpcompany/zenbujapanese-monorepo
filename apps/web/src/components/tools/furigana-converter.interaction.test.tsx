@@ -69,6 +69,22 @@ describe('the furigana converter', () => {
     expect(asked).toEqual([`/tools/furigana.json?text=${encodeURIComponent('大人')}`])
   })
 
+  test('shows a text it has read before at once, without asking again', async () => {
+    const asked = routeAnswering(
+      Response.json({ furigana: otona }),
+      Response.json({ furigana: [{ text: '子供', reading: 'こども' }] })
+    )
+    const container = converter()
+    await fill(container, 'Japanese', '大人')
+    await seesFurigana(container, ['大人おとな'])
+    await fill(container, 'Japanese', '子供')
+    await seesFurigana(container, ['子供こども'])
+    await fill(container, 'Japanese', '大人')
+    await settle()
+    expect(furiganaShown(container)).toEqual(['大人おとな'])
+    expect(asked).toHaveLength(2)
+  })
+
   test('says a text over the limit is too long, marks the box, and asks nothing', async () => {
     const asked = routeAnswering()
     const container = converter()
