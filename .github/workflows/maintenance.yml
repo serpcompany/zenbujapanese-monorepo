@@ -283,9 +283,9 @@ jobs:
             Goal: one small piece of known debt is paid down in one small pull request into main.
 
             1. Read tmp/maintenance-report.md and pick ONE item:
-               a. the first row of docs/tech-debt.md, and then of docs/harness-debt.md, whose
-                  Size is `small`, reading their tables from the top (the report names it under
-                  "Known debt"); or, when there is none or you must pass over it,
+               a. the first row of docs/tech-debt.md, then of docs/tech-debt-web.md, and then
+                  of docs/harness-debt.md, whose Size is `small`, reading their tables from the top
+                  (the report names it under "Known debt"); or, when there is none or you must pass over it,
                b. one file under "Files near the size limit" in the report, split by
                   responsibility so it stays well under the limit.
                Pass over an item that needs a deploy, a language-data release or anything in R2,

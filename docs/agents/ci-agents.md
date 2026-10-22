@@ -103,7 +103,8 @@ failures; the docs whose named or linked files changed after the doc was last ed
 [`quality.md`](../quality.md) and the two files it leads to whose Code changed after their Graded
 date ("Scores to re-grade");
 the known debt, counted by Size with the first small item named
-([`tech-debt.md`](../tech-debt.md), [`harness-debt.md`](../harness-debt.md)); the size exceptions; the docs over their size budget, to
+([`tech-debt.md`](../tech-debt.md), [`tech-debt-web.md`](../tech-debt-web.md),
+[`harness-debt.md`](../harness-debt.md)); the size exceptions; the docs over their size budget, to
 split by topic ([`code.md`](code.md), Docs); and the code files within 50 lines of the size limit
 (to split before a change has to). A job writes it under `tmp/`, which git
 ignores: a Markdown file at the repository root would fail the docs check the report runs.

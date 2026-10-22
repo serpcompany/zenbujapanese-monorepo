@@ -122,6 +122,6 @@ host. An item is the `<a>` itself, so switching is a full page load.
   and hand-written slash rules: the site's slash redirects stay as they were, so no existing URL
   answers differently, and `worker.ts` already gives moved pages their one hop.
 - **The core's labels are translated in the website,** since the core writes them in English for
-  the app (debt in `docs/tech-debt.md`).
+  the app (debt in `docs/tech-debt-web.md`).
 - **Every page is published in both languages,** the legal and account pages included, by the
   owner's decision on #847; the dictionary's pages in every language by ADR 0007.

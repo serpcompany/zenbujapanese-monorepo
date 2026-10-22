@@ -2,7 +2,8 @@
 
 Known debt in the checks, in delivery, and in the harness agents work in. The code's debt is in
 [`tech-debt.md`](tech-debt.md), which says what a row holds, what each Size means, and when to add
-or remove one. The weekly maintenance report counts both files' rows together.
+or remove one, and the website's in [`tech-debt-web.md`](tech-debt-web.md). The weekly maintenance
+report counts the three files' rows together.
 
 ## Checks
 

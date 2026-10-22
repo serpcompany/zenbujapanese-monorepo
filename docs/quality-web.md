@@ -47,7 +47,7 @@ A change is checked by hand in a browser with the `verify-web` skill
   the product doc names each section's check and the app doc behind each claim. Main gap: beyond
   the phone checks (Phone layout), the layout at each width, in light and dark, the drawings' look,
   and the page-end collage's look are checked only by hand, and only 食べる's previews are compared
-  with the dictionary ([`tech-debt.md`](tech-debt.md), Website).
+  with the dictionary ([`tech-debt-web.md`](tech-debt-web.md)).
 - **Products pages, B.** Every behavior in the product docs names its check, and the browser tests
   drive both pages at both widths. Main gap: the look of the cards, the demo, and the carousel is
   checked only by hand, nothing after a deploy checks that Apple's lookup still answers (its
