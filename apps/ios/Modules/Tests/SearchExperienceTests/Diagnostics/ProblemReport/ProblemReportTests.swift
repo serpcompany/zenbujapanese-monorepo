@@ -117,14 +117,6 @@ struct ProblemReportTests {
     #expect(report["contact"] == nil)
   }
 
-  @Test("scrubbing a long pasted description stays fast")
-  func longDescriptionScrubsQuickly() {
-    let pasted = String(repeating: "a“b ", count: 20_000) + String(repeating: "x", count: 50_000)
-    let clock = ContinuousClock()
-    let elapsed = clock.measure { _ = CrashReportScrubber.scrub(Self.report(pasted).event()) }
-    #expect(elapsed < .seconds(1))
-  }
-
   @Test("a report waiting on the device is told from a crash report by its tag, over many lines")
   func waitingEnvelopeIsAProblemReportByItsTag() throws {
     let report = CrashReportScrubber.scrub(Self.report().event())

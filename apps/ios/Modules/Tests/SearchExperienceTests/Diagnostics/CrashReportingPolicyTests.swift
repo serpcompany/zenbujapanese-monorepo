@@ -11,9 +11,10 @@ struct CrashReportingPolicyTests {
 
   private func build(
     _ info: [String: Any], bundleID: String? = "com.zenbujapanese.dictionary",
-    environment: [String: String] = [:]
+    environment: [String: String] = [:], source: BuildSource = .storeSignature
   ) -> CrashReportingBuild? {
-    CrashReportingPolicy.build(info: info, bundleID: bundleID, environment: environment)
+    CrashReportingPolicy.build(
+      info: info, bundleID: bundleID, environment: environment, source: source)
   }
 
   @Test("only a Release build, which carries a destination, reports")
@@ -33,11 +34,50 @@ struct CrashReportingPolicyTests {
     #expect(build(info, bundleID: "com.zenbujapanese.dictionary.dev") != nil)
   }
 
-  @Test("Zenbu Dev reports as qa, and TestFlight and the App Store as production")
+  @Test("Zenbu Dev reports as qa, and TestFlight and the App Store, which carry no provisioning profile, as production")
   func environments() {
     #expect(build(["ZenbuCrashReportsDSN": dsn, "ZenbuBundleIDSuffix": ".dev"])?.environment == "qa")
     #expect(build(["ZenbuCrashReportsDSN": dsn, "ZenbuBundleIDSuffix": ""])?.environment == "production")
     #expect(build(["ZenbuCrashReportsDSN": dsn])?.environment == "production")
+  }
+
+  @Test("a developer's Release build on the Simulator or with a provisioning profile reports as qa")
+  func developersReleaseBuildsReportAsQA() {
+    let release: [String: Any] = ["ZenbuCrashReportsDSN": dsn]
+    for source in [BuildSource.simulator, .provisioningProfile] {
+      #expect(build(release, source: source)?.environment == "qa")
+      #expect(build(release, source: source)?.allowsTestSwitches == true)
+      #expect(build(release, environment: ["XCTestConfigurationFilePath": "/tmp/x"], source: source) == nil)
+      #expect(build(["ZenbuCrashReportsDSN": ""], source: source) == nil)
+    }
+  }
+
+  @Test("Zenbu Dev reports as qa from every source, and a Mac Release build as production")
+  func everySourcesEnvironment() {
+    let zenbuDev: [String: Any] = ["ZenbuCrashReportsDSN": dsn, "ZenbuBundleIDSuffix": ".dev"]
+    for source in [BuildSource.simulator, .provisioningProfile, .storeSignature, .mac] {
+      #expect(build(zenbuDev, source: source)?.environment == "qa")
+    }
+    #expect(build(["ZenbuCrashReportsDSN": dsn], source: .mac)?.environment == "production")
+  }
+
+  @Test("a bundle carries a provisioning profile when embedded.mobileprovision is at its root")
+  func provisioningProfileIsAtTheBundlesRoot() throws {
+    let bundle = FileManager.default.temporaryDirectory
+      .appendingPathComponent("crash-reporting-\(UUID().uuidString).app")
+    try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: bundle) }
+    #expect(!CrashReportingPolicy.carriesProvisioningProfile(bundleAt: bundle))
+    try Data().write(to: bundle.appendingPathComponent("embedded.mobileprovision"))
+    #expect(CrashReportingPolicy.carriesProvisioningProfile(bundleAt: bundle))
+  }
+
+  @Test("this build's source is the Simulator on the Simulator, and the Mac on the Mac")
+  func thisBuildsSource() {
+    let onSimulator = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] != nil
+    let expected: BuildSource =
+      ThisDevice.name == "Mac" ? .mac : onSimulator ? .simulator : .provisioningProfile
+    #expect(CrashReportingPlatform.source(of: .main) == expected)
   }
 
   @Test("only a qa build takes the test switches")

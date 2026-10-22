@@ -26,7 +26,8 @@ reports a learner sends go the same way ([`ios-problem-reports.md`](ios-problem-
   - `ProblemReport/`: **Report a Problem…** ([`ios-problem-reports.md`](ios-problem-reports.md)).
   - `CrashReportTest`: the test switches, which only a `qa` build reads.
 - **`SearchExperience/Platform/Diagnostics/CrashReportingPlatform.swift`** holds the options only
-  iOS or the Mac has, since only `Platform/` may use `#if os`.
+  iOS or the Mac has, and where a build came from (`source(of:)`), since only `Platform/` may use
+  `#if os` and `#if targetEnvironment`.
 - **Only those folders import Sentry,** with the tests' `SearchExperienceTests/Diagnostics/`:
   `pnpm verify layers` refuses `import Sentry` anywhere else (`layers.restrictedModules` in
   [`verify.json`](../../verify.json)). Code elsewhere reports through
@@ -47,13 +48,41 @@ The destination (the DSN) is the build setting `ZENBU_CRASH_REPORTS_DSN`, which 
 carries as `ZenbuCrashReportsDSN`. It is set only in the app target's Release configuration in
 `project.pbxproj`; a DSN only lets a client send events to the project, so it isn't a secret.
 
+A build with a destination reports as `production` only when it has no `ZENBU_BUNDLE_ID_SUFFIX`
+and may have come from a store: its `BuildSource`, which `CrashReportingPlatform.source(of:)` reads
+at launch, is `storeSignature` or `mac` (`mayComeFromTheStore`). Any other reports as `qa`, and
+only `qa` takes the [test switches](#test-switches).
+
 | Build | Sends | Environment |
 | --- | --- | --- |
-| TestFlight and the App Store (a Release archive) | Yes | `production` |
-| A Release build with `ZENBU_BUNDLE_ID_SUFFIX` set, such as Zenbu Dev | Yes | `qa` |
+| TestFlight and the App Store (a Release archive), on an iPhone or iPad: no provisioning profile | Yes | `production` |
+| A Release build with `ZENBU_BUNDLE_ID_SUFFIX` set, such as Zenbu Dev, wherever it runs | Yes | `qa` |
+| A Release build on the Simulator, such as the scheme's Profile action there | Yes | `qa` |
+| A Release build on an iPhone or iPad with a provisioning profile: Xcode's Run or Profile on the device, or the unsigned `.ipa` once iloader signs it ([`ios.md`](ios.md#from-a-mac-the-iphone-cant-reach)) | Yes | `qa` |
+| A Release build on the Mac, which isn't released yet (#931), without a suffix | Yes | `production` |
 | Any Debug build, Zenbu Dev's included | No: no DSN | |
 | The unit-test host (`XCTestConfigurationFilePath` set) and the UI-test host (`.uitests`) | No | |
 | The share extension | No: no DSN, and it never starts Sentry | |
+
+Where a build came from (`BuildSource`):
+
+- **`simulator`:** the Simulator, at compile time (`targetEnvironment(simulator)`).
+- **`provisioningProfile` or `storeSignature`:** an iPhone or iPad, by whether
+  `embedded.mobileprovision` is at the bundle's root. Apple's
+  [TN3125](https://developer.apple.com/documentation/technotes/tn3125-inside-code-signing-provisioning-profiles)
+  puts the profile there and says an app downloaded from the App Store has none, since the App
+  Store re-signs it. TestFlight hands out the build App Store Connect re-signed, the one the App
+  Store would ship, so it has none either. Any other build runs on iOS only with a profile, which
+  Xcode and sideloaders such as iloader embed there: development, ad hoc, or enterprise. Only the
+  file's presence is read, since TN3125 calls its contents undocumented.
+- **`mac`:** the Mac, which isn't told apart yet. Its profile is `Contents/embedded.provisionprofile`,
+  and TN3125 says a Mac TestFlight build always has one, so having one doesn't mark a developer's
+  build. Until the Mac ships with a check of its own, a Release build there reports as `production`.
+
+`CrashReportingPolicyTests` checks each row from each source, that a bundle has a profile only with
+the file at its root, and that the test host's own source is `simulator` on the Simulator and `mac`
+on the Mac. That a TestFlight build has no profile isn't checked yet: its first build since #915
+should report in `production`.
 
 The release is `<bundle ID>@<version>+<build>` and the dist the build number, both from
 `Info.plist`. `apps/ios/Tools/tests/test_crash_report_settings.py` checks that only the app's
@@ -109,6 +138,11 @@ user, set in `initialScope` and again in `beforeSend`. `CrashReportScrubber.scru
   `zip`), so type names such as `Foundation.URL` and code files such as `DictionaryCore.swift`
   stay; a name with spaces loses only its last word. Each rule runs in linear time, and
   `CrashReportScrubberTests` checks them on real-looking strings and a fully populated event.
+  `CrashReportScrubberTests.everyRuleIsLinear` times nothing: it counts each rule's work on long
+  texts (runs of openers, words, kanji, file names, and a pasted description), as the progress
+  calls ICU makes after each fixed number of matching steps, and checks that four times the text
+  takes at most about four times the work. The 「」 rule before 35ded03f, which didn't exclude its
+  opener (`「[^」\n]*」`), takes 5.3 times as much on a run of openers, and fails it.
 
 ## Handled failures
 

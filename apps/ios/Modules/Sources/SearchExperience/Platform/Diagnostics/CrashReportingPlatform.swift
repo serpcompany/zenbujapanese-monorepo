@@ -2,6 +2,17 @@ import Foundation
 import Sentry
 
 enum CrashReportingPlatform {
+  static func source(of bundle: Bundle) -> BuildSource {
+    #if targetEnvironment(simulator)
+      .simulator
+    #elseif os(macOS)
+      .mac
+    #else
+      CrashReportingPolicy.carriesProvisioningProfile(bundleAt: bundle.bundleURL)
+        ? .provisioningProfile : .storeSignature
+    #endif
+  }
+
   static var switchedOffOptions: [(name: String, option: ReferenceWritableKeyPath<Options, Bool>)] {
     #if os(macOS)
       [("enableUncaughtNSExceptionReporting", \.enableUncaughtNSExceptionReporting)]
