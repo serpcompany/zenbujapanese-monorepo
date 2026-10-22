@@ -13,7 +13,7 @@ struct SearchedScreen {
     sort: String = ResultsLearner.defaultSort,
     filter: String = ResultsLearner.noFilter,
     known: [LanguageReferenceID] = [],
-    fromRadicals: Bool = false
+    pickedKanji: Bool = false
   ) async throws -> SearchedScreen {
     let query = SearchQuery(text)
     let examples = ExampleSentenceClient.live
@@ -23,7 +23,7 @@ struct SearchedScreen {
       results: results.listed,
       exampleCount: await examples.count(query, results),
       learner: ResultsLearner(
-        sort: sort, filter: filter, known: known.map(\.rawValue), fromRadicals: fromRadicals))
+        sort: sort, filter: filter, known: known.map(\.rawValue), pickedKanji: pickedKanji))
     return SearchedScreen(
       results: results,
       items: try await LanguageReferenceData.shared.coreSearch(query.value).items,

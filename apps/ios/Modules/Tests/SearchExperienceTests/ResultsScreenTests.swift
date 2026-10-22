@@ -154,11 +154,11 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(ranked.count > 3)
   }
 
-  @Test("the radical panel's one-character query lists only its leading words")
+  @Test("a one-character query picked from Radicals or Grade lists only its leading words")
   func leadingOnly() async throws {
     let all = try await SearchedScreen.search("日")
-    let leading = try await SearchedScreen.search("日", fromRadicals: true)
-    let longer = try await SearchedScreen.search("日本", fromRadicals: true)
+    let leading = try await SearchedScreen.search("日", pickedKanji: true)
+    let longer = try await SearchedScreen.search("日本", pickedKanji: true)
     let typed = try await SearchedScreen.search("日本")
     #expect(try longer.list.rows.map(\.id) == typed.list.rows.map(\.id))
     #expect(try leading.list.rows.count < all.list.rows.count)

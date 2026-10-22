@@ -7,7 +7,7 @@ struct ShownResults: Hashable, Sendable {
 
 struct SearchResultsView: View {
   let results: LookupSearchResults
-  let fromRadicals: Bool
+  let pickedKanji: Bool
   let notes: NotesInSearch?
   let selectRefinement: (SearchRefinement) -> Void
   let openNote: (NotesInSearch.Row) -> Void
@@ -20,13 +20,13 @@ struct SearchResultsView: View {
   init(
     results: LookupSearchResults,
     first: ShownResults,
-    fromRadicals: Bool,
+    pickedKanji: Bool,
     notes: NotesInSearch?,
     selectRefinement: @escaping (SearchRefinement) -> Void,
     openNote: @escaping (NotesInSearch.Row) -> Void
   ) {
     self.results = results
-    self.fromRadicals = fromRadicals
+    self.pickedKanji = pickedKanji
     self.notes = notes
     self.selectRefinement = selectRefinement
     self.openNote = openNote
@@ -139,7 +139,7 @@ struct SearchResultsView: View {
     request.learner = ResultsLearner(
       sort: sort, filter: filter,
       known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
-      fromRadicals: fromRadicals)
+      pickedKanji: pickedKanji)
     request.lists = FrequencyLists.live.version
     return request
   }

@@ -134,7 +134,7 @@ struct SearchView: View {
         SearchResultsView(
           results: results,
           first: shown,
-          fromRadicals: pickedKanjiQuery == searchQuery,
+          pickedKanji: pickedKanjiQuery == searchQuery,
           notes: shownNotes?.notes,
           selectRefinement: selectRefinement,
           openNote: openNote
@@ -264,7 +264,7 @@ struct SearchView: View {
               ?? ResultsLearner.noFilter,
             known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
               .map(\.rawValue),
-            fromRadicals: pickedKanjiQuery == taskQuery),
+            pickedKanji: pickedKanjiQuery == taskQuery),
           lists: FrequencyLists.live.version)
         try Task.checkCancellation()
         let screen = try await request.screen()

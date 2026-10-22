@@ -121,7 +121,7 @@ struct ResultsLearner: Encodable, Hashable, Sendable {
   var sort = Self.defaultSort
   var filter = Self.noFilter
   var known: [String] = []
-  var fromRadicals = false
+  var pickedKanji = false
 }
 
 struct ResultsScreenRequest: Hashable, Sendable {

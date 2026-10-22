@@ -136,10 +136,10 @@ export function resultsLayout(
   rawQuery: string,
   results: ListedResults,
   exampleCount: number,
-  fromRadicals = false
+  pickedKanji = false
 ): ResultsLayout {
   const query = normalizeQuery(rawQuery)
-  const leadingOnly = fromRadicals && graphemeCount(query) === 1
+  const leadingOnly = pickedKanji && graphemeCount(query) === 1
   const singleKanji = isKanjiCharacter(query)
   const isDiscovered = results.presentation === 'discoveredWords'
   const found = primary(results.items, item => item.headword, query)

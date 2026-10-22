@@ -30,7 +30,7 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       query,
       results,
       exampleCount: count,
-      learner: { sort: 'default', filter: 'all', known: [], fromRadicals: false }
+      learner: { sort: 'default', filter: 'all', known: [], pickedKanji: false }
     })
     const row = screen.state === 'results' ? screen.examples : null
     const { first, examples } = await everyPage(from =>
