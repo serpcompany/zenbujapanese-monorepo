@@ -100,7 +100,7 @@ jobs:
                issue or to the row of docs/tech-debt.md, docs/tech-debt-web.md, or
                docs/harness-debt.md that covers it (add a row, with a Size, when none does).
                Set the row's Graded date to today (UTC), even when its grade stays the same.
-               Change no other row. Remove rows of either debt file whose debt the code has
+               Change no other row. Remove rows of any debt file whose debt the code has
                paid off.
             4. Edit only Markdown: AGENTS.md, ARCHITECTURE.md, README.md files, docs/ except
                docs/adr/ (ADRs record decisions; never rewrite them), apps/*/docs/, and

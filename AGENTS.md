@@ -45,7 +45,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 
 - [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) — proposed user stories, feature changes, discovery evidence, acceptance criteria, and other issue or PRD work.
 - [`docs/quality.md`](docs/quality.md) — a grade for each product area and layer, the app's and the website's in the two files it links, with the code it covers (Code) and the day it was graded (Graded). Re-grade a row, and set its Graded date, when its tests, CI, or docs change; the weekly report lists the rows whose code changed since.
-- [`docs/tech-debt.md`](docs/tech-debt.md), and [`docs/harness-debt.md`](docs/harness-debt.md) for the checks, delivery, and the harness — known debt, each item with its issue and a Size (small, medium, or large). Add debt you knowingly leave, with its Size; remove what you pay off.
+- [`docs/tech-debt.md`](docs/tech-debt.md), [`docs/tech-debt-web.md`](docs/tech-debt-web.md) for the website, and [`docs/harness-debt.md`](docs/harness-debt.md) for checks, delivery, and the harness — known debt, each with its issue and a Size. Add what you knowingly leave; remove what you pay off.
 
 ## Decisions
 
