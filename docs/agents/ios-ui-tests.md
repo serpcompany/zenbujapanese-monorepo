@@ -90,11 +90,12 @@ what it waited for and for how long.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
-- **Count a row by where it shows, not by its elements.** On the Mac, the identifier of a menu
-  whose label has two lines, such as a meaning with its note, matched two elements while the window
-  showed the row once. `assertListedOnceInThisOrder` counts the places an identifier shows
-  (elements whose frames hold each other's middle are one place), which still finds a row drawn
-  twice, and attaches **What was on screen** when it doesn't find exactly one.
+- **A row is one element.** `assertListedOnceInThisOrder` expects each identifier on exactly one
+  element, and attaches **What was on screen** when it isn't. That's how it found that a Mac `Menu`
+  doesn't fold its label into its button as iPhone and iPad do: a meaning with its note, two
+  `Text`s, became two menu buttons, each as wide as its text and each with the menu's identifier.
+  A `Menu` whose label has more than one `Text` gives the label
+  `.accessibilityElement(children: .combine)`, so it's one button the width of its row everywhere.
 - **`reveal` scrolls at once toward a row a list hasn't built.** A lazy list builds a row only
   when it scrolls near it, so waiting for one below the screen can't work. `reveal` waits up to
   five seconds for the row, but stops as soon as the list says it goes on below: a vertical

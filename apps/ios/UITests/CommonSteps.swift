@@ -85,32 +85,17 @@ extension ZenbuUITestCase {
     for identifier in identifiers {
       let listed = app.descendants(matching: .any).matching(identifier: identifier)
       assertOnScreen(listed.firstMatch, in: app, file: file, line: line)
-      let places = placesShowing(listed)
-      if places.count != 1 { attachWhatIsOnScreen() }
+      let elements = listed.allElementsBoundByIndex.map(\.frame)
+      if elements.count != 1 { attachWhatIsOnScreen() }
       XCTAssertEqual(
-        places.count, 1, "\(identifier) is listed in one place, not at \(places)", file: file,
-        line: line)
-      let top = places.map(\.minY).min() ?? listed.firstMatch.frame.minY
+        elements.count, 1, "\(identifier) is one element, not \(elements)", file: file, line: line)
+      let top = listed.firstMatch.frame.minY
       if let above {
         XCTAssertGreaterThan(
           top, above.top, "\(identifier) is below \(above.identifier)", file: file, line: line)
       }
       above = (identifier, top)
     }
-  }
-
-  private func placesShowing(_ listed: XCUIElementQuery) -> [CGRect] {
-    listed.allElementsBoundByIndex.map(\.frame).filter { !$0.isEmpty }
-      .reduce(into: []) { places, frame in
-        let middle = CGPoint(x: frame.midX, y: frame.midY)
-        if let place = places.firstIndex(where: {
-          $0.contains(middle) || frame.contains(CGPoint(x: $0.midX, y: $0.midY))
-        }) {
-          places[place] = places[place].union(frame)
-        } else {
-          places.append(frame)
-        }
-      }
   }
 
   @discardableResult

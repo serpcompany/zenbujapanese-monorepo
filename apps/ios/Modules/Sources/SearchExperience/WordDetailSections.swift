@@ -92,6 +92,7 @@ struct MeaningSection: View {
           MeaningLabel(sense: sense)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens actions for this meaning")
