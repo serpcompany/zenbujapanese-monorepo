@@ -6,16 +6,33 @@ import Testing
 
 @Suite("File digests")
 struct DigestTests {
-  static func footprint() -> UInt64 {
-    var info = task_vm_info_data_t()
-    var count = mach_msg_type_number_t(
-      MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
-    _ = withUnsafeMutablePointer(to: &info) {
-      $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-        task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
-      }
+  final class CountedChunks: ChunkedReader {
+    private let contents: Data
+    private var offset = 0
+    private var alive = 0
+    private(set) var mostAliveAtOnce = 0
+    private(set) var largestRead = 0
+
+    init(_ contents: Data) {
+      self.contents = contents
     }
-    return info.phys_footprint
+
+    func read(upToCount count: Int) throws -> Data? {
+      largestRead = max(largestRead, count)
+      let end = min(contents.count, offset + count)
+      defer { offset = end }
+      guard end > offset else { return Data() }
+      let bytes = UnsafeMutableRawPointer.allocate(byteCount: end - offset, alignment: 1)
+      contents.copyBytes(to: bytes.assumingMemoryBound(to: UInt8.self), from: offset..<end)
+      alive += 1
+      mostAliveAtOnce = max(mostAliveAtOnce, alive)
+      let chunk = NSData(bytesNoCopy: bytes, length: end - offset) { [self] freed, _ in
+        freed.deallocate()
+        alive -= 1
+      }
+      _ = Unmanaged.passRetained(chunk).autorelease()
+      return chunk as Data
+    }
   }
 
   @Test("hashing a file holds one chunk of it at a time, however long the file")
@@ -25,14 +42,11 @@ struct DigestTests {
     let contents = Data((0..<(16 * fileDigestChunk)).lazy.map { UInt8(truncatingIfNeeded: $0 / 7) })
     try contents.write(to: file)
     let expected = SHA256.hash(data: contents).hexString
-    var grew: UInt64 = 0
-    var hashed = ""
-    try autoreleasepool {
-      let before = Self.footprint()
-      hashed = try fileSHA256(file)
-      grew = Self.footprint() &- before
-    }
-    #expect(hashed == expected)
-    #expect(grew < UInt64(4 * fileDigestChunk))
+    let chunks = CountedChunks(contents)
+
+    #expect(try fileSHA256(file) == expected)
+    #expect(try sha256(readingChunksFrom: chunks) == expected)
+    #expect(chunks.largestRead == fileDigestChunk)
+    #expect(chunks.mostAliveAtOnce == 1)
   }
 }

@@ -206,17 +206,14 @@ final class AccountFixture {
     await settle()
   }
 
-  func syncAcrossAnotherSignIn(letting held: HeldReply, once route: String) async throws {
-    let asked = server.requests(to: route).count
+  func syncAcrossAnotherSignIn(holding held: LaterReply, until reply: StubReply) async throws {
     let running = Task { try await sync.sync() }
-    while server.requests(to: route).count == asked {
-      try await Task.sleep(for: .milliseconds(5))
-    }
+    await held.asked()
     sync.endSession()
     await sync.begin(
       AccountSignIn(
         sessionToken: "session-2.signed", userID: "learner-2", email: "second@example.com"))
-    held.letGo()
+    held.send(reply)
     try await running.value
   }
 
