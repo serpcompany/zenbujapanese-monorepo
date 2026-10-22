@@ -57,7 +57,7 @@ tab-bar-only style gives each tab its own stack, as on iPhone and iPad, so the M
 no sidebar; `pnpm verify layers` refuses `sidebarAdaptable` outside `Platform/`. A sheet that iPhone
 and iPad close by dragging, as Look Up's Handwriting and Radicals panel does, uses
 `.dragToCloseSheet(sizeOnMac:)`: a Mac can't drag a sheet away, and sizes one from its content, so
-there it gets a fixed size (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+there it gets a **Done** button that Escape presses and a size that fits the window (`AppWindow`).
 On the Mac a click on a `List` row leaves the keyboard with the list, so a field that the click
 shows, such as a note's editor after a click on the note or on **Add Note**, never got it, and
 clicks on the field didn't move it either; the editor takes `.focusedOnceTheClickIsHandled(_:)`,
