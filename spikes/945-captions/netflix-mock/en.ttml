@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:tickRate="10000000" xml:lang="en">
+<body><div>
+<p begin="50000000t" end="90000000t">Good morning.<br/>It's raining today.</p>
+<p begin="150000000t" end="190000000t">Let's take an umbrella.</p>
+<p begin="200000000t" end="240000000t">I walk to the station.</p>
+<p begin="250000000t" end="290000000t">I get on the train.</p>
+<p begin="300000000t" end="340000000t">I've arrived at the office.</p>
+<p begin="350000000t" end="390000000t">Good work today.</p>
+</div></body>
+</tt>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling" xmlns:ttp="http://www.w3.org/ns/ttml#parameter" ttp:tickRate="10000000" xml:lang="ja">
+<body><div>
+<p begin="20000000t" end="45000000t">（鳥の声）</p>
+<p begin="50000000t" end="90000000t">おはようございます<br/>今日は<span tts:ruby="container"><span tts:ruby="base">雨</span><span tts:ruby="text">あめ</span></span>ですね</p>
+<p begin="100000000t" end="140000000t">［音楽］</p>
+<p begin="150000000t" end="190000000t">傘を持って行きましょう</p>
+<p begin="200000000t" end="240000000t">駅まで歩きます</p>
+<p begin="250000000t" end="290000000t">電車に乗ります</p>
+<p begin="300000000t" end="340000000t">会社に着きました</p>
+<p begin="350000000t" end="390000000t">お疲れ様でした</p>
+</div></body>
+</tt>

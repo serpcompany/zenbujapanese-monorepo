@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Zenbu captions spike (#945)",
+  "version": "0.0.1",
+  "description": "Throwaway spike: reads YouTube and Netflix Japanese and English text tracks without patching the page, and follows and controls playback.",
+  "permissions": ["declarativeNetRequestWithHostAccess"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://www.netflix.com/*",
+    "https://*.nflxvideo.net/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["page-youtube.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.netflix.com/*"],
+      "js": ["page-netflix.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.youtube.com/*", "https://www.netflix.com/*"],
+      "js": ["captions.js", "overlay.js", "content-youtube.js", "content-netflix.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
