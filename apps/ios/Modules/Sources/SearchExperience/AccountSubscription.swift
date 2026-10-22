@@ -118,7 +118,7 @@ final class AccountSubscription: LocalFileStore {
       if problem == .unreachable || problem == .serviceFailed { note(nil) }
       await sendUnfinished()
       return signedInAs() == account
-    } catch AccountServiceError.unreachable {
+    } catch AccountServiceError.unreachable, AccountServiceError.transportFailed {
       note(.unreachable)
       return false
     } catch AccountServiceError.sessionEnded {

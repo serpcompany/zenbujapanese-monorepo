@@ -45,9 +45,8 @@ struct HandledProblemTests {
   func expectedOutcomesAreSkipped() {
     #expect(HandledProblem(CancellationError(), in: .frequencyPack) == nil)
     let connectivity: [URLError.Code] = [
-      .cancelled, .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotFindHost,
-      .cannotConnectToHost, .dnsLookupFailed, .dataNotAllowed, .internationalRoamingOff,
-      .callIsActive,
+      .cancelled, .notConnectedToInternet, .networkConnectionLost, .timedOut,
+      .cannotConnectToHost, .dataNotAllowed, .internationalRoamingOff, .callIsActive,
     ]
     for code in connectivity {
       #expect(HandledProblem(URLError(code), in: .frequencyPack) == nil, "\(code.rawValue)")
@@ -68,6 +67,29 @@ struct HandledProblemTests {
     #expect(untrusted?.code == "nsurlerror_domain.-1202")
     #expect(untrusted?.details == [:])
     #expect(HandledProblem(URLError(.badServerResponse), in: .frequencyPack)?.code == "nsurlerror_domain.-1011")
+    #expect(HandledProblem(URLError(.cannotFindHost), in: .frequencyPack)?.code == "nsurlerror_domain.-1003")
+    #expect(HandledProblem(URLError(.dnsLookupFailed), in: .languagePack)?.code == "nsurlerror_domain.-1006")
+  }
+
+  @Test("a sync that failed on its way for a reason other than the connection is reported by the URL error's number alone, once a launch")
+  func syncTransportFailuresAreReported() throws {
+    let named: [URLError.Code] = [
+      .serverCertificateUntrusted, .secureConnectionFailed, .badURL, .unsupportedURL,
+      .cannotFindHost, .dnsLookupFailed,
+    ]
+    for code in named {
+      let problem = try #require(
+        HandledProblem(AccountServiceError.transportFailed(code), in: .accountSync))
+      #expect(problem.code == "account_service_error.transport_failed")
+      #expect(problem.details == ["url_error": String(code.rawValue)])
+      #expect(problem.key == "account_sync.account_service_error.transport_failed")
+    }
+    let untrusted = AccountServiceError.transportFailed(.serverCertificateUntrusted)
+    let event = CrashReportScrubber.scrub(
+      try #require(HandledProblem(untrusted, in: .accountSync)).event())
+    #expect(event.message?.formatted == "account_sync: account_service_error.transport_failed")
+    #expect(event.context?["problem"]?.count == 3)
+    #expect(event.context?["problem"]?["url_error"] as? String == "-1202")
   }
 
   @Test("a refused sync keeps its status and a service code, never the service's message")
