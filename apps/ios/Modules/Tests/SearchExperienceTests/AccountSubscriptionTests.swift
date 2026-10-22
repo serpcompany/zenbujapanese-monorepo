@@ -242,18 +242,20 @@ struct AccountSubscriptionTests {
   }
 
   @Test func buysNothingOnAnOldAnswerWhenTheSubscriptionCantBeReadFirst() async throws {
-    let reads = CallCount()
-    let none = StubReply.json(200, Answers.answer())
-    let fixture = try await Answers.signedIn { request in
-      guard request.method == "GET" else { return .json(200, Answers.subscribed()) }
-      return reads.next() == 1 ? none : .offline
+    for unread in [StubReply.offline, .failure(.serverCertificateUntrusted)] {
+      let reads = CallCount()
+      let none = StubReply.json(200, Answers.answer())
+      let fixture = try await Answers.signedIn { request in
+        guard request.method == "GET" else { return .json(200, Answers.subscribed()) }
+        return reads.next() == 1 ? none : unread
+      }
+      #expect(fixture.account.subscription.offering)
+
+      await fixture.account.subscription.subscribe(to: Answers.monthly)
+
+      #expect(fixture.store.purchases.isEmpty)
+      #expect(fixture.account.subscription.problem == .unreachable)
     }
-    #expect(fixture.account.subscription.offering)
-
-    await fixture.account.subscription.subscribe(to: Answers.monthly)
-
-    #expect(fixture.store.purchases.isEmpty)
-    #expect(fixture.account.subscription.problem == .unreachable)
   }
 
   @Test func keepsThePurchasesAnswerOverARefreshThatReadBeforeIt() async throws {

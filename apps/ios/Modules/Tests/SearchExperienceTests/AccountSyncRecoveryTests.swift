@@ -78,6 +78,41 @@ struct AccountSyncRecoveryTests {
     fixture.account.scheduler.stop()
   }
 
+  @Test(
+    "a sync that fails on its way tells a lost connection from a broken host, and reads and waits the same",
+    arguments: [
+      (URLError.Code.notConnectedToInternet, AccountServiceError.unreachable),
+      (.timedOut, .unreachable),
+      (.networkConnectionLost, .unreachable),
+      (.cannotConnectToHost, .unreachable),
+      (.dataNotAllowed, .unreachable),
+      (.internationalRoamingOff, .unreachable),
+      (.callIsActive, .unreachable),
+      (.serverCertificateUntrusted, .transportFailed(.serverCertificateUntrusted)),
+      (.secureConnectionFailed, .transportFailed(.secureConnectionFailed)),
+      (.badURL, .transportFailed(.badURL)),
+      (.unsupportedURL, .transportFailed(.unsupportedURL)),
+      (.cannotFindHost, .transportFailed(.cannotFindHost)),
+      (.dnsLookupFailed, .transportFailed(.dnsLookupFailed)),
+    ])
+  func transportErrors(_ code: URLError.Code, _ expected: AccountServiceError) async throws {
+    let fixture = try await Fixture.afterSignIn()
+    fixture.server.respond { _ in .failure(code) }
+    fixture.markKnown(Fixture.taberu)
+
+    var thrown: Error?
+    do { try await fixture.syncNow() } catch { thrown = error }
+
+    let failure = try #require(thrown)
+    #expect(failure as? AccountServiceError == expected)
+    #expect(fixture.sync.lastFailure == expected)
+    #expect(
+      AccountMessage.text(for: failure)
+        == "Couldn't reach Zenbu. Check your connection and try again.")
+    #expect(SyncRetry.delay(after: failure, failures: 0) { $0.upperBound } == SyncRetry.firstDelay)
+    #expect(fixture.sync.state.queue.count == 1)
+  }
+
   @Test("a request stays under the service's 64 KB body limit")
   func requestsStaySmall() async throws {
     let fixture = Fixture()
@@ -96,19 +131,21 @@ struct AccountSyncRecoveryTests {
 
   @Test("a deletion whose answer was lost is finished once the account is gone")
   func lostDeletionAnswer() async throws {
-    let fixture = Fixture()
-    fixture.serve()
-    await fixture.launch()
-    fixture.markKnown(Fixture.taberu)
-    try await fixture.signIn()
-    fixture.server.respond { request in
-      request.route == "DELETE /v1/me" ? .offline : .error(401, "unauthorized")
+    for lost in [StubReply.offline, .failure(.secureConnectionFailed)] {
+      let fixture = Fixture()
+      fixture.serve()
+      await fixture.launch()
+      fixture.markKnown(Fixture.taberu)
+      try await fixture.signIn()
+      fixture.server.respond { request in
+        request.route == "DELETE /v1/me" ? lost : .error(401, "unauthorized")
+      }
+
+      try await fixture.account.deleteAccount(appleAuthorizationCode: nil)
+
+      #expect(fixture.sync.account == nil)
+      #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
     }
-
-    try await fixture.account.deleteAccount(appleAuthorizationCode: nil)
-
-    #expect(fixture.sync.account == nil)
-    #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
   }
 
   @Test("signing in again to delete ends the session it replaces")
