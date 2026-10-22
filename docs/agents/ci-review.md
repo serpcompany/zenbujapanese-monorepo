@@ -246,7 +246,7 @@ last step would post is written to a file instead.
    version the runner does, put `npx -y @anthropic-ai/claude-code@<version>` where the command
    says `claude`. The version is `claudeCodeVersion` in the pinned action's
    `src/entrypoints/run.ts`, and `claude_code_version` in the first message of any kept
-   transcript: 2.1.295 at the pin of 2026-10-13.
+   transcript: 2.1.308 at the pin of 2026-10-22.
 3. `node tools/checks/review-dry-run.mjs verdict <folder> <transcript>` runs the workflow's own
    `first` step on the transcript. When it asks for a second attempt, the correction is already
    at the end of the context: run the command again, then `verdict` with `last` after the

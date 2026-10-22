@@ -388,7 +388,7 @@ jobs:
         id: review
         if: env.HAS_REVIEW_TOKEN == 'true'
         timeout-minutes: 12
-        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
+        uses: anthropics/claude-code-action@6b6870e649b5ff408753befeaee5fc7989d4e6a9
         env: &reviewer-environment
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with: &reviewer
@@ -426,7 +426,7 @@ jobs:
         if: steps.first.outputs.retry == 'true'
         continue-on-error: true
         timeout-minutes: 10
-        uses: anthropics/claude-code-action@2dca132ff0e0c4094ce6048b422c6915a071210b
+        uses: anthropics/claude-code-action@6b6870e649b5ff408753befeaee5fc7989d4e6a9
         env: *reviewer-environment
         with: *reviewer
 
