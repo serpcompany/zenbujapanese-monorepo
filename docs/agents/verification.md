@@ -118,7 +118,7 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 | `python3 apps/ios/Tools/simulator.py` | The UDID of this checkout's iPhone Simulator, made when it's missing: the newest iPhone Pro Max, on the newest installed iOS the selected Xcode runs |
 | `python3 apps/ios/Tools/simulator.py --device ipad` | The same for its iPad Simulator, the newest iPad Pro 13-inch |
 | `python3 apps/ios/Tools/simulator.py derived-data` | This checkout's build folder, for `-derivedDataPath` |
-| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot, for an app to launch in it, and for the Mac to be calm again, and sets a keeper on it; deletes the old installs of the app the Simulator keeps |
+| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot, for an app to launch in it, and for the Mac to be calm again, and hands it over with a keeper on it; deletes the old installs of the app the Simulator keeps |
 | `python3 apps/ios/Tools/simulator.py shutdown` | Shuts down this checkout's Simulators now, and deletes the old installs of the app they keep |
 | `python3 apps/ios/Tools/simulator.py delete` | Removes this worktree's Simulators and build folder |
 | `python3 apps/ios/Tools/simulator.py prune` | Removes those of every worktree that is gone, passing over a worktree with a Simulator still running |
@@ -145,8 +145,11 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
   a suffixed build can't sign in with Apple ([`ios.md`](ios.md), Account and sync).
   `apps/ios/Tools/tests/test_account_service_settings.py` holds both configurations to it.
 
-The script is tested in `apps/ios/Tools/tests/test_simulator.py`, and the `iOS` workflow makes its
-Simulators with it, so CI runs the device models agents do.
+The script keeps its keeper in `apps/ios/Tools/simulator_keeper.py` and what both run against
+`simctl` in `apps/ios/Tools/simulator_devices.py`. Each is tested in the file named for it under
+`apps/ios/Tools/tests/` (`test_simulator.py`, `test_simulator_keeper.py`, and
+`test_simulator_devices.py`), and the `iOS` workflow makes its Simulators with the script, so CI
+runs the device models agents do.
 
 ## Who boots a Simulator and who shuts it down
 
@@ -167,7 +170,11 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   about 35 seconds after `bootstatus` returns, longer when other work is running, and tests
   started then fail at launch. The one-minute load average is no measure of this: it is an
   average that takes minutes to fall after the work has stopped, which is why waiting for it
-  cost three to five minutes a boot.
+  cost three to five minutes a boot. A Mac still busy after two minutes is busy with other
+  work, such as a second heavy run beside this one, which waiting longer won't end, and the
+  Simulator is ready by then (it has launched an app), so `boot` hands it over and says the Mac
+  was still busy; a timing-sensitive run can wait for the Mac itself. A Simulator something
+  shut down while `boot` waited isn't handed over: `boot` fails and says so.
 - **A checkout keeps one Simulator up.** Booting the iPad shuts down this checkout's iPhone
   Simulator, and the reverse, unless something is using it.
 - **The run that ends the work shuts it down.** The `verify-app` script shuts the Simulator down
@@ -176,11 +183,17 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   something is using. It gives a run that has just ended up to 30 seconds to let go first: an
   iPad run's own processes were still naming the Simulator a few seconds after its tests ended.
 - **A keeper stops a forgotten one.** `boot` leaves a small process watching the Simulator.
-  Something uses the Simulator while an `xcodebuild` or `simctl` command names its UDID, and
-  `boot` again counts as use. The keeper shuts the Simulator down once nothing has used it for 10
-  minutes, or for 2 minutes when the Mac is short of memory (under 40% free, or over 2,000 MB of
-  swap), and then stops watching. Use it doesn't see, such as clicking in Simulator.app, doesn't
-  keep it up. Its one line saying why is in
+  Something uses the Simulator while an `xcodebuild` or `simctl` command names its UDID, or while
+  a `boot` is bringing it up: `boot` holds a lock on `<udid>.boot` in the keepers' folder for as
+  long as it runs, which the keeper reads, and which goes with the `boot` however it ends
+  (`delete` and `prune` remove the file with the Simulator). The
+  keeper shuts the Simulator down once nothing has used it for 10 minutes, or for 2 minutes when
+  the Mac is short of memory (under 40% free, or over 2,000 MB of swap), and then stops watching.
+  It never does so in the 5 minutes after a `boot` hands the Simulator over, so the run that
+  follows has time to start. On 2026-10-22, before the lock, the keeper shut down three
+  Simulators while their `boot` waited for a calm Mac, with swap just over 2,000 MB: the wait
+  named no UDID, so it looked like idleness. Use it doesn't see, such as clicking in
+  Simulator.app, doesn't keep it up. Its one line saying why is in
   `~/Library/Caches/com.zenbujapanese.build/SimulatorKeepers/<udid>.log`.
 - **Old installs of the app are deleted, not left for the Simulator.** Every
   `test-without-building` installs the app again, and the Simulator moves the copy it replaces

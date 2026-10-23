@@ -1,12 +1,16 @@
-import os
+from __future__ import annotations
+
 import sys
 import tempfile
 import unittest
+from collections.abc import Callable
+from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import simulator
+import simulator_keeper
 
 DEVICE_TYPES = [
     {"name": "iPhone 16 Pro Max", "identifier": "type.iPhone-16-Pro-Max"},
@@ -161,12 +165,15 @@ class SimulatorTests(unittest.TestCase):
     def test_removing_a_scope_takes_its_simulators_and_its_build_folder_and_nothing_else(
         self,
     ) -> None:
-        with tempfile.TemporaryDirectory() as scratch:
+        with tempfile.TemporaryDirectory() as scratch, tempfile.TemporaryDirectory() as keepers:
             cache = Path(scratch)
             for name in ["zenbu-japanese", "zenbu-japanese--issue-9-gone", "zenbu-japanese--issue-12-sidebar"]:
                 (cache / name / "Build").mkdir(parents=True)
+            for udid in ["GONE", "GONE-IPAD", "LIVE"]:
+                simulator_keeper.boot_lease(udid, Path(keepers)).touch()
             with mock.patch.object(simulator, "simctl") as simctl:
-                removed = simulator.remove("issue-9-gone", DEVICES, cache)
+                removed = simulator.remove("issue-9-gone", DEVICES, cache, Path(keepers))
+            self.assertEqual([lease.name for lease in Path(keepers).iterdir()], ["LIVE.boot"])
             self.assertEqual(
                 [call.args for call in simctl.call_args_list],
                 [("delete", "GONE"), ("delete", "GONE-IPAD")],
@@ -197,12 +204,6 @@ class SimulatorTests(unittest.TestCase):
             self.assertTrue((outside / "kept").is_dir())
             self.assertTrue((cache / "zenbu-japanese--x").is_dir())
 
-    def test_a_tool_that_fails_says_why(self) -> None:
-        with self.assertRaises(SystemExit) as failed:
-            simulator.run("git", "no-such-command")
-        self.assertIn("git no-such-command failed:", str(failed.exception))
-        self.assertIn("is not a git command", str(failed.exception))
-
     def test_a_running_simulator_is_shut_down_before_its_own_scope_deletes_it(self) -> None:
         with tempfile.TemporaryDirectory() as scratch, mock.patch.object(
             simulator, "simctl"
@@ -214,24 +215,37 @@ class SimulatorTests(unittest.TestCase):
         )
 
     def booting(
-        self, kind: str, scope: str, in_use: bool = False, dead: tuple[int, int] = (0, 0)
+        self,
+        kind: str,
+        scope: str,
+        in_use: bool = False,
+        dead: tuple[int, int] = (0, 0),
+        calm: Callable[[], tuple[float, bool]] = lambda: (41.0, True),
+        still_up: bool = True,
+        keepers: Path | None = None,
     ) -> tuple[str, list, list, list]:
-        with mock.patch.object(simulator, "listed", return_value={"devices": DEVICES}), mock.patch.object(
-            simulator, "is_in_use", return_value=in_use
-        ), mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
-            simulator, "wait_until_calm", return_value=(41.0, True)
-        ) as wait, mock.patch.object(simulator, "keep") as keep, mock.patch.object(
-            simulator, "empty_dead_installs", return_value=dead
-        ):
-            said = simulator.boot(kind, scope)
-        return said, [call.args for call in simctl.call_args_list], wait.call_args_list, keep.call_args_list
+        with tempfile.TemporaryDirectory() as scratch, ExitStack() as stand_ins:
+
+            def stand_in(name: str, **how: object) -> mock.Mock:
+                return stand_ins.enter_context(mock.patch.object(simulator, name, **how))
+
+            stand_in("listed", return_value={"devices": DEVICES})
+            stand_in("is_in_use", return_value=in_use)
+            stand_in("empty_dead_installs", return_value=dead)
+            stand_in("is_booted", return_value=still_up)
+            simctl = stand_in("simctl")
+            wait = stand_in("wait_until_calm", side_effect=calm)
+            keep = stand_in("keep")
+            said = simulator.boot(kind, scope, keepers or Path(scratch))
+        commands = [call.args for call in simctl.call_args_list]
+        return said, commands, wait.call_args_list, [call.args[0] for call in keep.call_args_list]
 
     def test_a_simulator_that_is_up_is_not_booted_again_and_gets_no_wait(self) -> None:
         said, commands, waits, kept = self.booting("ipad", "issue-8-running")
         self.assertEqual(said, "was already up")
         self.assertEqual(commands, [])
         self.assertEqual(waits, [])
-        self.assertEqual(kept, [mock.call("RUNNING-IPAD")])
+        self.assertEqual(kept, ["RUNNING-IPAD"])
 
     def test_a_boot_waits_for_the_boot_an_app_launch_and_the_mac_and_starts_a_keeper(self) -> None:
         said, commands, _, kept = self.booting("iphone", "issue-12-sidebar")
@@ -239,7 +253,34 @@ class SimulatorTests(unittest.TestCase):
         self.assertRegex(
             said, r"^booted in \d+ s, launched an app \d+ s later, and the Mac was calm 41 s later$"
         )
-        self.assertEqual(kept, [mock.call("LIVE")])
+        self.assertEqual(kept, ["LIVE", "LIVE"])
+
+    def test_boot_counts_as_use_until_it_hands_the_simulator_over(self) -> None:
+        with tempfile.TemporaryDirectory() as scratch, mock.patch.object(
+            simulator_keeper, "a_command_names", return_value=False
+        ):
+            keepers = Path(scratch)
+            looks = []
+
+            def busy_mac() -> tuple[float, bool]:
+                looks.append((simulator_keeper.is_in_use("LIVE", keepers), simulator.keep.call_count))
+                return 120.0, False
+
+            said, _, _, kept = self.booting(
+                "iphone", "issue-12-sidebar", calm=busy_mac, keepers=keepers
+            )
+            self.assertFalse(simulator_keeper.is_in_use("LIVE", keepers))
+        self.assertEqual(looks, [(True, 1)], "in use through the wait, handed over after it")
+        self.assertEqual(kept, ["LIVE", "LIVE"])
+        self.assertTrue(said.endswith("and the Mac was still busy 120 s later"))
+
+    def test_a_simulator_shut_down_while_boot_waits_is_not_handed_over(self) -> None:
+        with self.assertRaises(SystemExit) as refused:
+            self.booting("iphone", "issue-12-sidebar", still_up=False)
+        self.assertIn(
+            "zenbu-japanese--issue-12-sidebar was shut down while boot waited for it",
+            str(refused.exception),
+        )
 
     def test_a_checkout_keeps_one_simulator_up_unless_the_other_is_in_use(self) -> None:
         said, commands, _, _ = self.booting("iphone", "issue-8-running")
@@ -283,46 +324,6 @@ class SimulatorTests(unittest.TestCase):
         self.assertGreaterEqual(waited, 30)
         self.assertLess(waited, 40)
 
-    def test_the_keeper_never_stops_a_simulator_in_use(self) -> None:
-        self.assertIsNone(simulator.reason_to_shut_down(True, 3600, 5, 9000))
-
-    def test_the_keeper_stops_an_idle_simulator_at_the_limit_or_when_memory_is_short(self) -> None:
-        limit = simulator.IDLE_LIMIT_SECONDS
-        self.assertIsNone(simulator.reason_to_shut_down(False, limit - 1, 80, 0))
-        self.assertIn("10 minutes", simulator.reason_to_shut_down(False, limit, 80, 0))
-        idle = simulator.MEMORY_IDLE_SECONDS
-        self.assertIn("memory was short", simulator.reason_to_shut_down(False, idle, 39, 0))
-        self.assertIn("memory was short", simulator.reason_to_shut_down(False, idle, 80, 2001))
-        self.assertIsNone(simulator.reason_to_shut_down(False, idle, 40, 2000))
-        self.assertIsNone(simulator.reason_to_shut_down(False, idle - 1, 10, 9000))
-
-    def test_a_keeper_already_watching_is_told_the_simulator_was_used_not_started_again(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as scratch, mock.patch.object(
-            simulator, "keeper_is_alive", return_value=True
-        ), mock.patch.object(simulator.subprocess, "Popen") as started:
-            keepers = Path(scratch)
-            file = simulator.keeper_file("LIVE", keepers)
-            file.write_text("123")
-            os.utime(file, (1, 1))
-            simulator.keep("LIVE", keepers)
-            started.assert_not_called()
-            self.assertGreater(file.stat().st_mtime, 1)
-
-    def test_a_simulator_without_a_keeper_gets_one_that_outlives_the_command(self) -> None:
-        with tempfile.TemporaryDirectory() as scratch, mock.patch.object(
-            simulator.subprocess, "Popen"
-        ) as started:
-            started.return_value.pid = 4321
-            keepers = Path(scratch) / "keepers"
-            simulator.keep("LIVE", keepers)
-            command = started.call_args.args[0]
-            self.assertEqual(command[-3:], ["keeper", "--udid", "LIVE"])
-            self.assertTrue(started.call_args.kwargs["start_new_session"])
-            self.assertEqual(simulator.keeper_file("LIVE", keepers).read_text(), "4321")
-            self.assertFalse(simulator.keeper_is_alive(keepers / "missing.pid", "LIVE"))
-
     def test_shutdown_stops_this_checkouts_running_simulators_and_no_others(self) -> None:
         with mock.patch.object(simulator, "simctl") as simctl, mock.patch.object(
             simulator, "empty_dead_installs", return_value=(2, 1_600_000_000)
@@ -365,29 +366,6 @@ class SimulatorTests(unittest.TestCase):
         self.assertEqual(
             said, "was already up; deleted 46 old installs of the app (18.0 GB) it had kept"
         )
-
-    def test_emptying_old_installs_deletes_only_what_is_inside_the_dead_folder(self) -> None:
-        with tempfile.TemporaryDirectory() as scratch:
-            simulators = Path(scratch) / "Devices"
-            outside = Path(scratch) / "outside"
-            (outside / "kept").mkdir(parents=True)
-            dead = simulator.dead_installs("LIVE", simulators)
-            (dead / "temp.abc" / "Zenbu Japanese.app").mkdir(parents=True)
-            (dead / "temp.abc" / "Zenbu Japanese.app" / "Zenbu Japanese").write_bytes(b"x" * 1000)
-            (dead / "loose").write_bytes(b"y" * 10)
-            (dead / "linked").symlink_to(outside, target_is_directory=True)
-            (dead / "temp.moving-in").mkdir()
-            for name in ["temp.abc", "loose", "linked"]:
-                os.utime(dead / name, (1, 1), follow_symlinks=False)
-            moved_in = os.stat(dead / "temp.moving-in").st_mtime
-            emptied, freed = simulator.empty_dead_installs(
-                "LIVE", simulators, now=lambda: moved_in + 1
-            )
-            self.assertEqual(emptied, 3)
-            self.assertGreaterEqual(freed, 1010)
-            self.assertEqual([entry.name for entry in dead.iterdir()], ["temp.moving-in"])
-            self.assertTrue((outside / "kept").is_dir())
-            self.assertEqual(simulator.empty_dead_installs("GONE", simulators), (0, 0))
 
     def test_delete_refuses_the_apps_own_simulators(self) -> None:
         with self.assertRaises(SystemExit) as refused:
