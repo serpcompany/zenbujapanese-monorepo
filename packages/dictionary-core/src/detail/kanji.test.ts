@@ -7,7 +7,7 @@ const kaname = fixtureKanjiRows.find(rows => rows.kanji.character === '要') as 
 const kanameCandidates = fixtureKanjiCandidates.get('要') ?? []
 
 const appWordsForKaname = [
-  1609600, 2188720, 1546640, 1546750, 1546680, 1546850, 1612150, 1546670, 1546830, 1546800, 1546820,
+  1609600, 2188720, 1546640, 1546750, 1546800, 1546680, 1546850, 1612150, 1546670, 1546830, 1546820,
   1546770, 1605860, 1546780, 1546730, 1836130, 1546740, 1662320, 1836270, 1914670, 1546660, 1546760,
   1662260, 1836230
 ]
@@ -61,7 +61,7 @@ describe('wordsForReading (KanjiReadingsSection)', () => {
   test('lists up to three words whose reading starts with the reading’s stem', () => {
     const headwords = (value: string, kind: 'on' | 'kun' | 'name') =>
       wordsForReading({ value, kind }, words).map(entry => `${entry.headword}:${entry.reading}`)
-    expect(headwords('ヨウ', 'on')).toEqual(['要:よう', '要項:ようこう', '要求:ようきゅう'])
+    expect(headwords('ヨウ', 'on')).toEqual(['要:よう', '要項:ようこう', '要素:ようそ'])
     expect(headwords('い.る', 'kun')).toEqual(['要る:いる'])
     expect(headwords('かなめ', 'kun')).toEqual(['要:かなめ'])
     expect(headwords('とし', 'name')).toEqual([])

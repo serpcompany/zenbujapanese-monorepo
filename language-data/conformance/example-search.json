@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7"
+      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "8cfd0c71f07df8438e722da4eac78e790d22bf2cda1cbbcf5e11065cc004d096"
+      "sha256" : "f49bb8beb88fcfe9f327c8f8a7553cbf02420bb0b94aebe1e763f0792589c9f7"
     },
     {
       "name" : "Kuromoji/base.dat.gz",
@@ -2338,8 +2338,8 @@
             },
             {
               "candidates" : [
-                "2ab8b772c4bcc1f0fa19a5eecbf74fca",
-                "6da9099e05a76b77e2cbc9fb65471803"
+                "6da9099e05a76b77e2cbc9fb65471803",
+                "2ab8b772c4bcc1f0fa19a5eecbf74fca"
               ],
               "surface" : "てる"
             },
@@ -3514,8 +3514,8 @@
             },
             {
               "candidates" : [
-                "2ab8b772c4bcc1f0fa19a5eecbf74fca",
-                "6da9099e05a76b77e2cbc9fb65471803"
+                "6da9099e05a76b77e2cbc9fb65471803",
+                "2ab8b772c4bcc1f0fa19a5eecbf74fca"
               ],
               "surface" : "てる"
             },
@@ -4848,11 +4848,13 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 102,
+      "countText" : "The first 102 of more than 102 examples",
       "covers" : "Deinflected: the primary entry's examples",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
+        "esp1_a669bf2aa1e450264946c65c1e57609c",
+        "esp1_a5aa2744bc967b742b8ca8d40cfcf7e1",
         "esp1_101c1072091d90ca232c113d205029ee",
         "esp1_3fddeda051b871d19e947e032b96afbe",
         "esp1_2038ea2b909faba97e5bed4e21148bcc",
@@ -4957,6 +4959,92 @@
       "query" : "食べた",
       "shown" : [
         {
+          "english" : "You should eat more fruit.",
+          "id" : "esp1_a669bf2aa1e450264946c65c1e57609c",
+          "japanese" : "もっと果物を食べるべきです。",
+          "tokens" : [
+            {
+              "entry" : "3e77e16456efb5f67dbe87b7cf7a003d",
+              "surface" : "もっと"
+            },
+            {
+              "entry" : "96164694320d326399c5b892c1a35f5f",
+              "surface" : "果物"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "042e07f7052f611fed33ddddf37f55fd",
+              "surface" : "食べるべきです"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I am determined to make a living as a playwright.",
+          "id" : "esp1_a5aa2744bc967b742b8ca8d40cfcf7e1",
+          "japanese" : "僕は脚本家で食べていく決心をした。",
+          "tokens" : [
+            {
+              "entry" : "a6af8452cff4495733137e23d2332f7a",
+              "surface" : "僕"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "ea46fccd731b85d80cb0dd7f6066ce1f",
+              "surface" : "脚本"
+            },
+            {
+              "candidates" : [
+                "6f54be67247dcd72328d454c302c328a",
+                "11f59f15bcbbd9324880efb97d43df2b",
+                "8e98db8b38eb85164c0d5b96e90316c6",
+                "89e0002aea24586730b828bf87fe22d4"
+              ],
+              "surface" : "家"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "042e07f7052f611fed33ddddf37f55fd",
+              "surface" : "食べていく"
+            },
+            {
+              "entry" : "1718c9da4134ebc849ecb9f2787a1a16",
+              "surface" : "決心"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "した"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "Do you want to eat?",
           "id" : "esp1_101c1072091d90ca232c113d205029ee",
           "japanese" : "食べる？",
@@ -5001,75 +5089,21 @@
               "surface" : "！"
             }
           ]
-        },
-        {
-          "english" : "Is there anything to eat?",
-          "id" : "esp1_c90415c2481d15c01501a531f5dcbf83",
-          "japanese" : "食べる物ある？",
-          "tokens" : [
-            {
-              "entry" : "042e07f7052f611fed33ddddf37f55fd",
-              "surface" : "食べる"
-            },
-            {
-              "entry" : "ae5fbafaf610a8e20daf630665defa41",
-              "surface" : "物"
-            },
-            {
-              "entry" : "45eefee1383a89cb3c6287032622e6fa",
-              "surface" : "ある"
-            },
-            {
-              "surface" : "？"
-            }
-          ]
-        },
-        {
-          "english" : "Before eating here's a small tip.",
-          "id" : "esp1_7efa3b5276e490d426106dd74ea47cf7",
-          "japanese" : "食べる前にひと工夫！",
-          "tokens" : [
-            {
-              "entry" : "042e07f7052f611fed33ddddf37f55fd",
-              "surface" : "食べる"
-            },
-            {
-              "entry" : "e407cd7d59cb9766a7640cd0a5a29bfe",
-              "surface" : "前"
-            },
-            {
-              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
-              "surface" : "に"
-            },
-            {
-              "candidates" : [
-                "a1dc4bb80d5de981edff9e10be2e7ddd",
-                "2e2360526d3d5fa30239db0f6498fb5e",
-                "0d78dea1669f530e7a49827a052e41ff",
-                "50e7a15dbff3f466099eafb3a5919618",
-                "3a4aedd050e518b47cc231bf144f9d4a"
-              ],
-              "surface" : "ひと"
-            },
-            {
-              "entry" : "4ad41058f2e7cc868e2bc8ddbea3baa8",
-              "surface" : "工夫"
-            },
-            {
-              "surface" : "！"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 104,
+      "countText" : "The first 104 of more than 104 examples",
       "covers" : "Deinflected: the primary entry's examples",
       "highlightedEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
       "ids" : [
+        "esp1_ee015bcee7aa011844af8a0205c86cf2",
+        "esp1_bdd92280a7051dee71dd7f38691d74a5",
+        "esp1_22b614d2577dc2d397b41debbe4862f1",
+        "esp1_76b00f8feaa6ee66c0e9e7c2679826d9",
         "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
         "esp1_7d23f09c267a1593361eb443a33106e2",
         "esp1_1576faa95e7033f3002dd3444bc29b94",
@@ -5174,6 +5208,206 @@
       "query" : "見ない",
       "shown" : [
         {
+          "english" : "My head is swimming, so I'll try writing any old stuff without any deep thought.",
+          "id" : "esp1_ee015bcee7aa011844af8a0205c86cf2",
+          "japanese" : "頭がくらくらしているので、深く考えずにいい加減なことを書いてみる。",
+          "tokens" : [
+            {
+              "entry" : "d33af58b8a03068fda3239736407de6d",
+              "surface" : "頭"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "93a38027992a081971ef8776472bf096",
+              "surface" : "くらくら"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "している"
+            },
+            {
+              "entry" : "76f4ac20c0021f2a3a56e695b4212459",
+              "surface" : "ので"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "a27f052916875704957c0fbbd0d3229a",
+              "surface" : "深く"
+            },
+            {
+              "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
+              "surface" : "考えず"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "1208719b373333effeb5fa71820e0b78",
+              "surface" : "いい加減な"
+            },
+            {
+              "candidates" : [
+                "5c0efc251cbe41f69b8db2fe9a922225",
+                "64fe9ec2d25c902f29eb0ad2b6d29245",
+                "7dbe422ef145cd408b39631c76bc759e",
+                "20b044e781944803031ae6a90d3126b3",
+                "93b995b604b6a56822930e33a719e591"
+              ],
+              "surface" : "こと"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "a6fca4746fb6d90f45efd30334c8536d",
+              "surface" : "書いてみる"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I can't look after my parents and such either.",
+          "id" : "esp1_bdd92280a7051dee71dd7f38691d74a5",
+          "japanese" : "私も親の面倒とか見られないですね。",
+          "tokens" : [
+            {
+              "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+              "surface" : "私"
+            },
+            {
+              "entry" : "30701592e9873c43b883e1d3510287f4",
+              "surface" : "も"
+            },
+            {
+              "entry" : "e9926641cac9fb09ab0aef192213706b",
+              "surface" : "親"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "1157d396750ccaba0795ae389e6cdc9d",
+              "surface" : "面倒"
+            },
+            {
+              "entry" : "29b077042598793f3573f6db428c5bb6",
+              "surface" : "とか"
+            },
+            {
+              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
+              "surface" : "見られないです"
+            },
+            {
+              "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+              "surface" : "ね"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Would you like to take in a movie?",
+          "id" : "esp1_22b614d2577dc2d397b41debbe4862f1",
+          "japanese" : "映画を観に行かない？",
+          "tokens" : [
+            {
+              "entry" : "edacc0395a3ac1b6909fb76a3c9d0717",
+              "surface" : "映画"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "96d0535b5c66e604c74b721221f22936",
+              "surface" : "観"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "02b555a06b217e79bca2d442a5a03d86",
+              "surface" : "行かない"
+            },
+            {
+              "surface" : "？"
+            }
+          ]
+        },
+        {
+          "english" : "We should try to understand one another.",
+          "id" : "esp1_76b00f8feaa6ee66c0e9e7c2679826d9",
+          "japanese" : "私たちはお互いを理解してみるべきだ。",
+          "tokens" : [
+            {
+              "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+              "surface" : "私"
+            },
+            {
+              "candidates" : [
+                "301e7e7e6d7c951d4b15eadaa1480934",
+                "dfa52179d61995bab65afd6e6bb6df96",
+                "8cb05f21f4b12c9dfcb4aa6b7b400c20",
+                "725a635593c8173ed27deba2bfe6bf64",
+                "4d7157b1998785378c7c4dbbfec026d6",
+                "527acffb7ada74a87dd0376eb476e2a8",
+                "c97d8e608601aa40bd1d404db7b5e042"
+              ],
+              "surface" : "たち"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "eabee71102db4f9e380fcd650b7e148f",
+              "surface" : "お互い"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "f4413b1f92285e7bf92662b4a7e8e6db",
+              "surface" : "理解"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "してみるべきだ"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "It's obvious.",
           "id" : "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
           "japanese" : "見るからに明らかだよ。",
@@ -5209,210 +5443,21 @@
               "surface" : "。"
             }
           ]
-        },
-        {
-          "english" : "I couldn't abide looking at it.",
-          "id" : "esp1_7d23f09c267a1593361eb443a33106e2",
-          "japanese" : "見るのもいやなほどだ。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "3040e40d02d889316af08f4dd14a15f9",
-                "132012aaec93e930fd3b41c16f423ca2",
-                "07d411d1300b50be3e31ed93ab8ed445"
-              ],
-              "surface" : "の"
-            },
-            {
-              "entry" : "30701592e9873c43b883e1d3510287f4",
-              "surface" : "も"
-            },
-            {
-              "candidates" : [
-                "d8f87549cdec62331163ac54c9be479f",
-                "fe16c74d9456f0d87a12ce5824d0a095",
-                "b9c4d2e6518f69a3155299fea71a8c64",
-                "b52a0374e438c2bf2031a1b9e66031c8"
-              ],
-              "surface" : "いやな"
-            },
-            {
-              "entry" : "5cc32a5ca982e677c8229ebbea9e08c6",
-              "surface" : "ほど"
-            },
-            {
-              "candidates" : [
-                "e33ad4f4da88dce059a4b3fc7b2264b4",
-                "caa0908e5f4b933ebf132299796a1997"
-              ],
-              "surface" : "だ"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "Seeing is believing.",
-          "id" : "esp1_1576faa95e7033f3002dd3444bc29b94",
-          "japanese" : "見ることは信ずることなり。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "a953b6aa07ed8ad1f2d51e4a5fd0d68b",
-              "surface" : "信ずる"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "272210611822b4e70d07195d716398d6",
-              "surface" : "なり"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "To see is to believe.",
-          "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
-          "japanese" : "見ることは信じることである。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "23afef0ed02d2b6cc5601309691e9f59",
-              "surface" : "信じる"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "candidates" : [
-                "0739533096c82fb9c8aa0ba7c26c9324",
-                "3906187791ec20829976c57d3c59727d"
-              ],
-              "surface" : "で"
-            },
-            {
-              "entry" : "45eefee1383a89cb3c6287032622e6fa",
-              "surface" : "ある"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "They say that to see is to believe.",
-          "id" : "esp1_dab15e25ca5239b149f93cc13ebd4fe9",
-          "japanese" : "見る事は信じる事だといわれる。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "entry" : "64fe9ec2d25c902f29eb0ad2b6d29245",
-              "surface" : "事"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "23afef0ed02d2b6cc5601309691e9f59",
-              "surface" : "信じる"
-            },
-            {
-              "entry" : "64fe9ec2d25c902f29eb0ad2b6d29245",
-              "surface" : "事"
-            },
-            {
-              "candidates" : [
-                "e33ad4f4da88dce059a4b3fc7b2264b4",
-                "caa0908e5f4b933ebf132299796a1997"
-              ],
-              "surface" : "だ"
-            },
-            {
-              "entry" : "d005d8641e912ee4b72714255428699d",
-              "surface" : "と"
-            },
-            {
-              "candidates" : [
-                "f29080a71f7c90fd3a74d41ae1cac271",
-                "e595566598bb62d79f2d8f4c07c9cf7a"
-              ],
-              "surface" : "いわれる"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 104,
+      "countText" : "The first 104 of more than 104 examples",
       "covers" : "Deinflected polite past",
       "highlightedEntry" : "02b555a06b217e79bca2d442a5a03d86",
       "ids" : [
+        "esp1_05fb2275bc3dcade81cf77e6d03d26f4",
+        "esp1_8d9e2d4814579ab056c8e2e87bdeee57",
+        "esp1_204a22e1c90f0a08fda7a3f9b4ec3e89",
+        "esp1_45fc7ea16cb52288b26d2ff12a278d6f",
         "esp1_011b7119a0126ae038c3d28c97c6e8cd",
         "esp1_027fcf7659e94ee263046a9558e5a3cf",
         "esp1_3fd14f4669f050e4f06277ccab383546",
@@ -5517,6 +5562,199 @@
       "query" : "行きました",
       "shown" : [
         {
+          "english" : "Can I go swimming, Mother?",
+          "id" : "esp1_05fb2275bc3dcade81cf77e6d03d26f4",
+          "japanese" : "お母さん、泳ぎに行ってもいい？",
+          "tokens" : [
+            {
+              "entry" : "091b9106467bdc6ec7be1758359ea6c2",
+              "surface" : "お母さん"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "ef9bfef4fbd7d117eb3d618c7e6e1852",
+              "surface" : "泳ぎ"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "02b555a06b217e79bca2d442a5a03d86",
+              "surface" : "行って"
+            },
+            {
+              "entry" : "30701592e9873c43b883e1d3510287f4",
+              "surface" : "も"
+            },
+            {
+              "candidates" : [
+                "d04b57414d38acaf22aa7a862d705a1f",
+                "505eccb6b57001b93198600c71ce2d55",
+                "d1ea7e28776665a41bf63ea3189a2db7",
+                "6354f584735eecbc2dae0f61211b891c",
+                "24a6fe40b78a563072aa36cbfd9ae8e1",
+                "b81a1df9122db0eda20421e3a3dc4053"
+              ],
+              "surface" : "いい"
+            },
+            {
+              "surface" : "？"
+            }
+          ]
+        },
+        {
+          "english" : "The explorer pushed his way through the trackless mountain region.",
+          "id" : "esp1_8d9e2d4814579ab056c8e2e87bdeee57",
+          "japanese" : "探検家が山中の道なき道を行った。",
+          "tokens" : [
+            {
+              "entry" : "478c6b23906cc6ed6725b94c81e29032",
+              "surface" : "探検"
+            },
+            {
+              "candidates" : [
+                "6f54be67247dcd72328d454c302c328a",
+                "11f59f15bcbbd9324880efb97d43df2b",
+                "8e98db8b38eb85164c0d5b96e90316c6",
+                "89e0002aea24586730b828bf87fe22d4"
+              ],
+              "surface" : "家"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "178d42496ce93ca459dfde5f32bccf1b",
+              "surface" : "山中"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "3d0be6a3464ac27baebbe77709b426a8",
+              "surface" : "道"
+            },
+            {
+              "candidates" : [
+                "0ed61a8303546dc0a980d05834b837fb",
+                "228307a6050ebc5fed87c482184bf319",
+                "b25b711d275b5e9c9d6e017389b5bd6e"
+              ],
+              "surface" : "なき"
+            },
+            {
+              "entry" : "3d0be6a3464ac27baebbe77709b426a8",
+              "surface" : "道"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "8671f59d3dca0719b99a35172182d622",
+              "surface" : "行った"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Thanks to you, the job went well.",
+          "id" : "esp1_204a22e1c90f0a08fda7a3f9b4ec3e89",
+          "japanese" : "あなたのおかげで仕事がうまく行きました。",
+          "tokens" : [
+            {
+              "entry" : "8b1433c550e5f65ce7f35b08d7c6042e",
+              "surface" : "あなた"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "224bd332173407b529e2a29984a07808",
+              "surface" : "おかげ"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "52d0eab895319d9bd11f8d66f2f0a60b",
+              "surface" : "仕事"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "d3566f3c5fb55e29d5e0cba9b1b2ec47",
+              "surface" : "うまく"
+            },
+            {
+              "entry" : "02b555a06b217e79bca2d442a5a03d86",
+              "queryMatch" : true,
+              "surface" : "行きました"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The sound grew fainter and fainter.",
+          "id" : "esp1_45fc7ea16cb52288b26d2ff12a278d6f",
+          "japanese" : "その音はだんだん小さくなっていった。",
+          "tokens" : [
+            {
+              "entry" : "1cc9a84b606c82ec5a77ca0497e28107",
+              "surface" : "その"
+            },
+            {
+              "entry" : "ff86aad11df607845c095bf7cb05519d",
+              "surface" : "音"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "f8c0377727ef2bfa63818951c6c5d31c",
+              "surface" : "だんだん"
+            },
+            {
+              "entry" : "0eb3d750cc304efe56e34c841789e557",
+              "surface" : "小さく"
+            },
+            {
+              "candidates" : [
+                "ba3dda17086b82269a3063375d9f8217",
+                "f317ad8065cd0fb688ba815009cc7a01",
+                "ebd60cbace14e32517029a9af1d61cfd"
+              ],
+              "surface" : "なっていった"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "I'm going to go.",
           "id" : "esp1_011b7119a0126ae038c3d28c97c6e8cd",
           "japanese" : "行くよ。",
@@ -5533,103 +5771,21 @@
               "surface" : "。"
             }
           ]
-        },
-        {
-          "english" : "Are you going?",
-          "id" : "esp1_027fcf7659e94ee263046a9558e5a3cf",
-          "japanese" : "行くの？",
-          "tokens" : [
-            {
-              "entry" : "02b555a06b217e79bca2d442a5a03d86",
-              "surface" : "行く"
-            },
-            {
-              "entry" : "08c0172000564955c420c01ddadc4b63",
-              "surface" : "の"
-            },
-            {
-              "surface" : "？"
-            }
-          ]
-        },
-        {
-          "english" : "I ought to go.",
-          "id" : "esp1_3fd14f4669f050e4f06277ccab383546",
-          "japanese" : "行くべきだ。",
-          "tokens" : [
-            {
-              "entry" : "02b555a06b217e79bca2d442a5a03d86",
-              "surface" : "行くべきだ"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "I think I'll go.",
-          "id" : "esp1_763306237b515ec9c3396a416b9fd97e",
-          "japanese" : "行くと思う。",
-          "tokens" : [
-            {
-              "entry" : "02b555a06b217e79bca2d442a5a03d86",
-              "surface" : "行く"
-            },
-            {
-              "entry" : "d005d8641e912ee4b72714255428699d",
-              "surface" : "と"
-            },
-            {
-              "entry" : "65cc829eb8f1603dd0b465bdb13e003b",
-              "surface" : "思う"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "Are you going to go?",
-          "id" : "esp1_2302257ab433da146a9325f40d184a38",
-          "japanese" : "行くつもりなの？",
-          "tokens" : [
-            {
-              "entry" : "02b555a06b217e79bca2d442a5a03d86",
-              "surface" : "行く"
-            },
-            {
-              "entry" : "7b0379eb84c861df90970c7893fc0dcd",
-              "surface" : "つもり"
-            },
-            {
-              "candidates" : [
-                "6ccb3397987eac083e3d6f48bd2466b9",
-                "7945a1c66702d2c57b8c0adb7299da70",
-                "8c3e93df5a904011c581dc8c3fd65e8c",
-                "ac6acb5880c20a4c250060b31f3690d1",
-                "6d57dd245b88858a3ae84bb5c1071721"
-              ],
-              "surface" : "な"
-            },
-            {
-              "entry" : "08c0172000564955c420c01ddadc4b63",
-              "surface" : "の"
-            },
-            {
-              "surface" : "？"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 103,
+      "countText" : "The first 103 of more than 103 examples",
       "covers" : "A deinflected adjective",
       "highlightedEntry" : "380d957d6f36dc2e2aacdb743198d104",
       "ids" : [
+        "esp1_b6423b994df9a8869232ca86aca45202",
+        "esp1_144ef750beaaf2b1f29d9491b6848d40",
+        "esp1_3fccd7b3be2a9a2eba40f9a8339576a9",
+        "esp1_8fddc3225d8b4ccf67df343005bb1e50",
         "esp1_3b57f4ffc060fd9505ac93837f6392d5",
         "esp1_02c78f010b3e31e7b30bd8aa9b9f7806",
         "esp1_5a4b94b71fc7251e4239185fcf36273f",
@@ -5714,7 +5870,6 @@
         "esp1_f18fbe2781406b42f095b3d2d3a442bc",
         "esp1_f2d244a6f70ee544b25e50eab4c2ed02",
         "esp1_248f6b9cace141c22d2706e41317f32f",
-        "esp1_3fccd7b3be2a9a2eba40f9a8339576a9",
         "esp1_6216ee7426564a8a2f3cb49cf0da6657",
         "esp1_98161354773725122343c303b2f8fd2f",
         "esp1_42b9a74f0ff900fd9120cf05d4235d43",
@@ -5734,6 +5889,226 @@
       "query" : "高くて",
       "shown" : [
         {
+          "english" : "Banks charge higher interest on loans to risky customers.",
+          "id" : "esp1_b6423b994df9a8869232ca86aca45202",
+          "japanese" : "銀行はリスクの高い顧客へのローンには高い金利をつける。",
+          "tokens" : [
+            {
+              "entry" : "ca1ea2f346e646d129023197cb9244f3",
+              "surface" : "銀行"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "candidates" : [
+                "b8c72b9893534f981f2305bf98b476bb",
+                "62251072fcd1202c7689c858a838f688"
+              ],
+              "surface" : "リスク"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "380d957d6f36dc2e2aacdb743198d104",
+              "surface" : "高い"
+            },
+            {
+              "entry" : "53d5e0379a6a8a6d2ce374b0eb914730",
+              "surface" : "顧客"
+            },
+            {
+              "entry" : "cc5250789a3cec30278757d722eae89f",
+              "surface" : "へ"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "candidates" : [
+                "9df5e1f1535dfd930c1e98ecc13a6523",
+                "99a9001fd718116db48eb0fba8f68059"
+              ],
+              "surface" : "ローン"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "380d957d6f36dc2e2aacdb743198d104",
+              "surface" : "高い"
+            },
+            {
+              "entry" : "c0c773c1e0029d0d7e7f536c57d05f41",
+              "surface" : "金利"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "candidates" : [
+                "eb13f689141166e1d997007344e5f22a",
+                "d3ff4c0dd96f007d9a9fc5150e88ded3",
+                "65e8381c866f4b8bf77d286c6fa86683",
+                "629321b308893fcb0951cf2337ac56cc",
+                "4dcc186fad7f2574c9964a788dc8ca39"
+              ],
+              "surface" : "つける"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Mt. Fuji is the highest mountain in Japan.",
+          "id" : "esp1_144ef750beaaf2b1f29d9491b6848d40",
+          "japanese" : "富士山は日本で一番高い山です。",
+          "tokens" : [
+            {
+              "entry" : "5332d3f9bb236aef7e4fcc4d9674e294",
+              "surface" : "富士山"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "6342bfc30de4f6cc49b6c2db81692c98",
+              "surface" : "日本"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "aeb2033580d682f6502418f540fd5810",
+              "surface" : "一番"
+            },
+            {
+              "entry" : "380d957d6f36dc2e2aacdb743198d104",
+              "surface" : "高い"
+            },
+            {
+              "entry" : "a8aca8c27e34151011d8ece20ada3f96",
+              "surface" : "山"
+            },
+            {
+              "entry" : "6033d456195c1da656adf7a1fa431553",
+              "surface" : "です"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I can't afford to buy such an expensive car.",
+          "id" : "esp1_3fccd7b3be2a9a2eba40f9a8339576a9",
+          "japanese" : "そんな高い車を買う余裕はありません。",
+          "tokens" : [
+            {
+              "entry" : "0946ecde65bc660bc155bf20c5509c67",
+              "surface" : "そんな"
+            },
+            {
+              "entry" : "380d957d6f36dc2e2aacdb743198d104",
+              "surface" : "高い"
+            },
+            {
+              "entry" : "77f7e3b032090284623ed627e35cf16a",
+              "surface" : "車"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "d02c0e432941aa528593ef408591fd5f",
+              "surface" : "買う"
+            },
+            {
+              "entry" : "25285da63bc583e59aab9ffc1517ace8",
+              "surface" : "余裕"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "45eefee1383a89cb3c6287032622e6fa",
+              "surface" : "ありません"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "The new production process achieves a high yield.",
+          "id" : "esp1_8fddc3225d8b4ccf67df343005bb1e50",
+          "japanese" : "新しい製造過程は高い歩留まりを可能にする。",
+          "tokens" : [
+            {
+              "entry" : "30377fa16e2c1da1b22e772b834bdcfa",
+              "surface" : "新しい"
+            },
+            {
+              "entry" : "103eca943d710fc61428ae77e3d20782",
+              "surface" : "製造"
+            },
+            {
+              "entry" : "010f7fcdc01626674175dea8174cb1df",
+              "surface" : "過程"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "380d957d6f36dc2e2aacdb743198d104",
+              "surface" : "高い"
+            },
+            {
+              "entry" : "9ecf89e51c458a21167760b72bd781d4",
+              "surface" : "歩留まり"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "be49c7039555a32afa043f2f3e44ebea",
+              "surface" : "可能に"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "する"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "It's too expensive.",
           "id" : "esp1_3b57f4ffc060fd9505ac93837f6392d5",
           "japanese" : "高いですね。",
@@ -5750,157 +6125,21 @@
               "surface" : "。"
             }
           ]
-        },
-        {
-          "english" : "That is a high building, is it not?",
-          "id" : "esp1_02c78f010b3e31e7b30bd8aa9b9f7806",
-          "japanese" : "高い建物ですね。",
-          "tokens" : [
-            {
-              "entry" : "380d957d6f36dc2e2aacdb743198d104",
-              "surface" : "高い"
-            },
-            {
-              "entry" : "8781593d49e384da11baf7a5d4f6917a",
-              "surface" : "建物"
-            },
-            {
-              "entry" : "6033d456195c1da656adf7a1fa431553",
-              "surface" : "です"
-            },
-            {
-              "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
-              "surface" : "ね"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "Are you afraid of heights?",
-          "id" : "esp1_5a4b94b71fc7251e4239185fcf36273f",
-          "japanese" : "高いところが怖いの？",
-          "tokens" : [
-            {
-              "entry" : "380d957d6f36dc2e2aacdb743198d104",
-              "surface" : "高い"
-            },
-            {
-              "candidates" : [
-                "628a703f36d13a02651bc47b6a28b9d4",
-                "f4117f4bcf740e9c4ab0f9d19aae27b0"
-              ],
-              "surface" : "ところ"
-            },
-            {
-              "candidates" : [
-                "525af7a87097616e431ac3a1e524f37f",
-                "6e965c8d5bfa8eb14fc4179abb44aeed"
-              ],
-              "surface" : "が"
-            },
-            {
-              "entry" : "81feea913be8cfc862acee3a1c60d3b9",
-              "surface" : "怖い"
-            },
-            {
-              "entry" : "08c0172000564955c420c01ddadc4b63",
-              "surface" : "の"
-            },
-            {
-              "surface" : "？"
-            }
-          ]
-        },
-        {
-          "english" : "I don't like heights.",
-          "id" : "esp1_8135ddef8d80fedd26e0beaf80bc30d9",
-          "japanese" : "高いところが苦手で。",
-          "tokens" : [
-            {
-              "entry" : "380d957d6f36dc2e2aacdb743198d104",
-              "surface" : "高い"
-            },
-            {
-              "candidates" : [
-                "628a703f36d13a02651bc47b6a28b9d4",
-                "f4117f4bcf740e9c4ab0f9d19aae27b0"
-              ],
-              "surface" : "ところ"
-            },
-            {
-              "candidates" : [
-                "525af7a87097616e431ac3a1e524f37f",
-                "6e965c8d5bfa8eb14fc4179abb44aeed"
-              ],
-              "surface" : "が"
-            },
-            {
-              "entry" : "d2eb55f582dbfe3fc70d4780077028df",
-              "surface" : "苦手で"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "I'm sure it costs a pretty penny. I'll pass.",
-          "id" : "esp1_4dc16b23b863207b384ed735a4c2e850",
-          "japanese" : "高いんだろ。やめとくよ。",
-          "tokens" : [
-            {
-              "entry" : "380d957d6f36dc2e2aacdb743198d104",
-              "surface" : "高い"
-            },
-            {
-              "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
-              "surface" : "ん"
-            },
-            {
-              "entry" : "427bac3e7d4ecf9f9f6afa55b5d39ed1",
-              "surface" : "だろ"
-            },
-            {
-              "surface" : "。"
-            },
-            {
-              "candidates" : [
-                "aeaa1ba99f31f332d230675904601a3b",
-                "87ba65685104b98986483b9afefb59e4",
-                "7ea85223baa4fdce6d14b82f8a9575c2"
-              ],
-              "surface" : "やめ"
-            },
-            {
-              "candidates" : [
-                "d569445d945ff026d249763d35f8277e",
-                "5e70467102818fc64e9802d1b74d72b1",
-                "8299be7a3a58678b05903bad684afd8d",
-                "d85d5f7015bcdd2bfc3ce4d452caaabb"
-              ],
-              "surface" : "とく"
-            },
-            {
-              "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
-              "surface" : "よ"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 104,
+      "countText" : "The first 104 of more than 104 examples",
       "covers" : "Romaji: the primary entry's examples",
       "highlightedEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
       "ids" : [
+        "esp1_ee015bcee7aa011844af8a0205c86cf2",
+        "esp1_bdd92280a7051dee71dd7f38691d74a5",
+        "esp1_22b614d2577dc2d397b41debbe4862f1",
+        "esp1_76b00f8feaa6ee66c0e9e7c2679826d9",
         "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
         "esp1_7d23f09c267a1593361eb443a33106e2",
         "esp1_1576faa95e7033f3002dd3444bc29b94",
@@ -6005,6 +6244,206 @@
       "query" : "miru",
       "shown" : [
         {
+          "english" : "My head is swimming, so I'll try writing any old stuff without any deep thought.",
+          "id" : "esp1_ee015bcee7aa011844af8a0205c86cf2",
+          "japanese" : "頭がくらくらしているので、深く考えずにいい加減なことを書いてみる。",
+          "tokens" : [
+            {
+              "entry" : "d33af58b8a03068fda3239736407de6d",
+              "surface" : "頭"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "93a38027992a081971ef8776472bf096",
+              "surface" : "くらくら"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "している"
+            },
+            {
+              "entry" : "76f4ac20c0021f2a3a56e695b4212459",
+              "surface" : "ので"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "a27f052916875704957c0fbbd0d3229a",
+              "surface" : "深く"
+            },
+            {
+              "entry" : "3defc048e38c8b47e1c7cd7bfd44aa78",
+              "surface" : "考えず"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "1208719b373333effeb5fa71820e0b78",
+              "surface" : "いい加減な"
+            },
+            {
+              "candidates" : [
+                "5c0efc251cbe41f69b8db2fe9a922225",
+                "64fe9ec2d25c902f29eb0ad2b6d29245",
+                "7dbe422ef145cd408b39631c76bc759e",
+                "20b044e781944803031ae6a90d3126b3",
+                "93b995b604b6a56822930e33a719e591"
+              ],
+              "surface" : "こと"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "a6fca4746fb6d90f45efd30334c8536d",
+              "surface" : "書いてみる"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I can't look after my parents and such either.",
+          "id" : "esp1_bdd92280a7051dee71dd7f38691d74a5",
+          "japanese" : "私も親の面倒とか見られないですね。",
+          "tokens" : [
+            {
+              "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+              "surface" : "私"
+            },
+            {
+              "entry" : "30701592e9873c43b883e1d3510287f4",
+              "surface" : "も"
+            },
+            {
+              "entry" : "e9926641cac9fb09ab0aef192213706b",
+              "surface" : "親"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "1157d396750ccaba0795ae389e6cdc9d",
+              "surface" : "面倒"
+            },
+            {
+              "entry" : "29b077042598793f3573f6db428c5bb6",
+              "surface" : "とか"
+            },
+            {
+              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
+              "surface" : "見られないです"
+            },
+            {
+              "entry" : "aaa66189b5c4e83950d90bd7e49f069b",
+              "surface" : "ね"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "Would you like to take in a movie?",
+          "id" : "esp1_22b614d2577dc2d397b41debbe4862f1",
+          "japanese" : "映画を観に行かない？",
+          "tokens" : [
+            {
+              "entry" : "edacc0395a3ac1b6909fb76a3c9d0717",
+              "surface" : "映画"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "96d0535b5c66e604c74b721221f22936",
+              "surface" : "観"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "02b555a06b217e79bca2d442a5a03d86",
+              "surface" : "行かない"
+            },
+            {
+              "surface" : "？"
+            }
+          ]
+        },
+        {
+          "english" : "We should try to understand one another.",
+          "id" : "esp1_76b00f8feaa6ee66c0e9e7c2679826d9",
+          "japanese" : "私たちはお互いを理解してみるべきだ。",
+          "tokens" : [
+            {
+              "entry" : "94ad3a82a0196b6e24f8a70d2a1aa4be",
+              "surface" : "私"
+            },
+            {
+              "candidates" : [
+                "301e7e7e6d7c951d4b15eadaa1480934",
+                "dfa52179d61995bab65afd6e6bb6df96",
+                "8cb05f21f4b12c9dfcb4aa6b7b400c20",
+                "725a635593c8173ed27deba2bfe6bf64",
+                "4d7157b1998785378c7c4dbbfec026d6",
+                "527acffb7ada74a87dd0376eb476e2a8",
+                "c97d8e608601aa40bd1d404db7b5e042"
+              ],
+              "surface" : "たち"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "eabee71102db4f9e380fcd650b7e148f",
+              "surface" : "お互い"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "f4413b1f92285e7bf92662b4a7e8e6db",
+              "surface" : "理解"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "してみるべきだ"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "It's obvious.",
           "id" : "esp1_4dbf806c17dfcd0ff6d355f71abb46ba",
           "japanese" : "見るからに明らかだよ。",
@@ -6040,210 +6479,19 @@
               "surface" : "。"
             }
           ]
-        },
-        {
-          "english" : "I couldn't abide looking at it.",
-          "id" : "esp1_7d23f09c267a1593361eb443a33106e2",
-          "japanese" : "見るのもいやなほどだ。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "3040e40d02d889316af08f4dd14a15f9",
-                "132012aaec93e930fd3b41c16f423ca2",
-                "07d411d1300b50be3e31ed93ab8ed445"
-              ],
-              "surface" : "の"
-            },
-            {
-              "entry" : "30701592e9873c43b883e1d3510287f4",
-              "surface" : "も"
-            },
-            {
-              "candidates" : [
-                "d8f87549cdec62331163ac54c9be479f",
-                "fe16c74d9456f0d87a12ce5824d0a095",
-                "b9c4d2e6518f69a3155299fea71a8c64",
-                "b52a0374e438c2bf2031a1b9e66031c8"
-              ],
-              "surface" : "いやな"
-            },
-            {
-              "entry" : "5cc32a5ca982e677c8229ebbea9e08c6",
-              "surface" : "ほど"
-            },
-            {
-              "candidates" : [
-                "e33ad4f4da88dce059a4b3fc7b2264b4",
-                "caa0908e5f4b933ebf132299796a1997"
-              ],
-              "surface" : "だ"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "Seeing is believing.",
-          "id" : "esp1_1576faa95e7033f3002dd3444bc29b94",
-          "japanese" : "見ることは信ずることなり。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "a953b6aa07ed8ad1f2d51e4a5fd0d68b",
-              "surface" : "信ずる"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "272210611822b4e70d07195d716398d6",
-              "surface" : "なり"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "To see is to believe.",
-          "id" : "esp1_365f2d1697df0aef7344859ead37c32e",
-          "japanese" : "見ることは信じることである。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "23afef0ed02d2b6cc5601309691e9f59",
-              "surface" : "信じる"
-            },
-            {
-              "candidates" : [
-                "5c0efc251cbe41f69b8db2fe9a922225",
-                "64fe9ec2d25c902f29eb0ad2b6d29245",
-                "7dbe422ef145cd408b39631c76bc759e",
-                "20b044e781944803031ae6a90d3126b3",
-                "93b995b604b6a56822930e33a719e591"
-              ],
-              "surface" : "こと"
-            },
-            {
-              "candidates" : [
-                "0739533096c82fb9c8aa0ba7c26c9324",
-                "3906187791ec20829976c57d3c59727d"
-              ],
-              "surface" : "で"
-            },
-            {
-              "entry" : "45eefee1383a89cb3c6287032622e6fa",
-              "surface" : "ある"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "They say that to see is to believe.",
-          "id" : "esp1_dab15e25ca5239b149f93cc13ebd4fe9",
-          "japanese" : "見る事は信じる事だといわれる。",
-          "tokens" : [
-            {
-              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
-              "surface" : "見る"
-            },
-            {
-              "entry" : "64fe9ec2d25c902f29eb0ad2b6d29245",
-              "surface" : "事"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "entry" : "23afef0ed02d2b6cc5601309691e9f59",
-              "surface" : "信じる"
-            },
-            {
-              "entry" : "64fe9ec2d25c902f29eb0ad2b6d29245",
-              "surface" : "事"
-            },
-            {
-              "candidates" : [
-                "e33ad4f4da88dce059a4b3fc7b2264b4",
-                "caa0908e5f4b933ebf132299796a1997"
-              ],
-              "surface" : "だ"
-            },
-            {
-              "entry" : "d005d8641e912ee4b72714255428699d",
-              "surface" : "と"
-            },
-            {
-              "candidates" : [
-                "f29080a71f7c90fd3a74d41ae1cac271",
-                "e595566598bb62d79f2d8f4c07c9cf7a"
-              ],
-              "surface" : "いわれる"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 102,
+      "countText" : "The first 102 of more than 102 examples",
       "covers" : "Romaji",
       "highlightedEntry" : "042e07f7052f611fed33ddddf37f55fd",
       "ids" : [
+        "esp1_a669bf2aa1e450264946c65c1e57609c",
+        "esp1_a5aa2744bc967b742b8ca8d40cfcf7e1",
         "esp1_101c1072091d90ca232c113d205029ee",
         "esp1_3fddeda051b871d19e947e032b96afbe",
         "esp1_2038ea2b909faba97e5bed4e21148bcc",
@@ -6348,6 +6596,92 @@
       "query" : "taberu",
       "shown" : [
         {
+          "english" : "You should eat more fruit.",
+          "id" : "esp1_a669bf2aa1e450264946c65c1e57609c",
+          "japanese" : "もっと果物を食べるべきです。",
+          "tokens" : [
+            {
+              "entry" : "3e77e16456efb5f67dbe87b7cf7a003d",
+              "surface" : "もっと"
+            },
+            {
+              "entry" : "96164694320d326399c5b892c1a35f5f",
+              "surface" : "果物"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "042e07f7052f611fed33ddddf37f55fd",
+              "surface" : "食べるべきです"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I am determined to make a living as a playwright.",
+          "id" : "esp1_a5aa2744bc967b742b8ca8d40cfcf7e1",
+          "japanese" : "僕は脚本家で食べていく決心をした。",
+          "tokens" : [
+            {
+              "entry" : "a6af8452cff4495733137e23d2332f7a",
+              "surface" : "僕"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "ea46fccd731b85d80cb0dd7f6066ce1f",
+              "surface" : "脚本"
+            },
+            {
+              "candidates" : [
+                "6f54be67247dcd72328d454c302c328a",
+                "11f59f15bcbbd9324880efb97d43df2b",
+                "8e98db8b38eb85164c0d5b96e90316c6",
+                "89e0002aea24586730b828bf87fe22d4"
+              ],
+              "surface" : "家"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "042e07f7052f611fed33ddddf37f55fd",
+              "surface" : "食べていく"
+            },
+            {
+              "entry" : "1718c9da4134ebc849ecb9f2787a1a16",
+              "surface" : "決心"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "した"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
           "english" : "Do you want to eat?",
           "id" : "esp1_101c1072091d90ca232c113d205029ee",
           "japanese" : "食べる？",
@@ -6387,64 +6721,6 @@
             {
               "entry" : "6ccb3397987eac083e3d6f48bd2466b9",
               "surface" : "な"
-            },
-            {
-              "surface" : "！"
-            }
-          ]
-        },
-        {
-          "english" : "Is there anything to eat?",
-          "id" : "esp1_c90415c2481d15c01501a531f5dcbf83",
-          "japanese" : "食べる物ある？",
-          "tokens" : [
-            {
-              "entry" : "042e07f7052f611fed33ddddf37f55fd",
-              "surface" : "食べる"
-            },
-            {
-              "entry" : "ae5fbafaf610a8e20daf630665defa41",
-              "surface" : "物"
-            },
-            {
-              "entry" : "45eefee1383a89cb3c6287032622e6fa",
-              "surface" : "ある"
-            },
-            {
-              "surface" : "？"
-            }
-          ]
-        },
-        {
-          "english" : "Before eating here's a small tip.",
-          "id" : "esp1_7efa3b5276e490d426106dd74ea47cf7",
-          "japanese" : "食べる前にひと工夫！",
-          "tokens" : [
-            {
-              "entry" : "042e07f7052f611fed33ddddf37f55fd",
-              "surface" : "食べる"
-            },
-            {
-              "entry" : "e407cd7d59cb9766a7640cd0a5a29bfe",
-              "surface" : "前"
-            },
-            {
-              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
-              "surface" : "に"
-            },
-            {
-              "candidates" : [
-                "a1dc4bb80d5de981edff9e10be2e7ddd",
-                "2e2360526d3d5fa30239db0f6498fb5e",
-                "0d78dea1669f530e7a49827a052e41ff",
-                "50e7a15dbff3f466099eafb3a5919618",
-                "3a4aedd050e518b47cc231bf144f9d4a"
-              ],
-              "surface" : "ひと"
-            },
-            {
-              "entry" : "4ad41058f2e7cc868e2bc8ddbea3baa8",
-              "surface" : "工夫"
             },
             {
               "surface" : "！"
@@ -6647,8 +6923,8 @@
             },
             {
               "candidates" : [
-                "2ab8b772c4bcc1f0fa19a5eecbf74fca",
-                "6da9099e05a76b77e2cbc9fb65471803"
+                "6da9099e05a76b77e2cbc9fb65471803",
+                "2ab8b772c4bcc1f0fa19a5eecbf74fca"
               ],
               "surface" : "てた"
             },
@@ -6666,11 +6942,12 @@
       "usesPrimaryEntryExamples" : true
     },
     {
-      "count" : 100,
-      "countText" : "The first 100 of more than 100 examples",
+      "count" : 101,
+      "countText" : "The first 101 of more than 101 examples",
       "covers" : "Romaji",
       "highlightedEntry" : "8d8af9d02a7d3de3d1c6da26be309061",
       "ids" : [
+        "esp1_07b53cc32689bfeca097e20c3e827577",
         "esp1_da597e4226ff7bef36be7b07d8c47408",
         "esp1_06712da8f2f853e68cb33b8327ce1852",
         "esp1_9b081ad573519c4c0997bf59d2c994ae",
@@ -6774,6 +7051,52 @@
       ],
       "query" : "kaeru",
       "shown" : [
+        {
+          "english" : "What made him change his mind?",
+          "id" : "esp1_07b53cc32689bfeca097e20c3e827577",
+          "japanese" : "なんで彼は考えを変えたのか。",
+          "tokens" : [
+            {
+              "entry" : "24c66ade5e09e9f0a6381b56bf50d885",
+              "surface" : "なんで"
+            },
+            {
+              "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+              "surface" : "彼"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "bbe10a414d06b5b4a8b1aba1039c7ca7",
+              "surface" : "考え"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "8d8af9d02a7d3de3d1c6da26be309061",
+              "surface" : "変えた"
+            },
+            {
+              "candidates" : [
+                "3040e40d02d889316af08f4dd14a15f9",
+                "132012aaec93e930fd3b41c16f423ca2",
+                "07d411d1300b50be3e31ed93ab8ed445"
+              ],
+              "surface" : "の"
+            },
+            {
+              "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+              "surface" : "か"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
         {
           "english" : "I didn't know he had decided to leave.",
           "id" : "esp1_da597e4226ff7bef36be7b07d8c47408",
@@ -6988,76 +7311,6 @@
               "surface" : "。"
             }
           ]
-        },
-        {
-          "english" : "How can we make a difference in the world?",
-          "id" : "esp1_9914d3fc85f856f37f8e03faa010d768",
-          "japanese" : "世界を変えるためには、どうしたらいいですか。",
-          "tokens" : [
-            {
-              "entry" : "1df14e83a0beefaa84f74720312222e4",
-              "surface" : "世界"
-            },
-            {
-              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
-              "surface" : "を"
-            },
-            {
-              "entry" : "8d8af9d02a7d3de3d1c6da26be309061",
-              "surface" : "変える"
-            },
-            {
-              "candidates" : [
-                "cae38a5a387b0d688d65e138888f23df",
-                "aa6aeda67548cfb3ed5dbf3e7bced9e7",
-                "d3ea2d544c8851f6f26a0dc278cba262"
-              ],
-              "surface" : "ため"
-            },
-            {
-              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
-              "surface" : "に"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "surface" : "、"
-            },
-            {
-              "entry" : "eae0af93375e7d10d69d9d67cbe40716",
-              "surface" : "どう"
-            },
-            {
-              "candidates" : [
-                "b1a37c51a5860d4f513fdad36e99bca0",
-                "27b712d1aa61f1de61ebf3c7eb9ef070",
-                "10c213c9774338580f22d1aea02399a4",
-                "f3a7628ea368a349bbc30a62f59b9fa0",
-                "3e403ed3e2b2ac9284f0a155efaaa94e"
-              ],
-              "surface" : "したら"
-            },
-            {
-              "candidates" : [
-                "d04b57414d38acaf22aa7a862d705a1f",
-                "505eccb6b57001b93198600c71ce2d55",
-                "d1ea7e28776665a41bf63ea3189a2db7",
-                "6354f584735eecbc2dae0f61211b891c",
-                "24a6fe40b78a563072aa36cbfd9ae8e1",
-                "b81a1df9122db0eda20421e3a3dc4053"
-              ],
-              "surface" : "いいです"
-            },
-            {
-              "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
-              "surface" : "か"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
         }
       ],
       "title" : "View 50+ Example Sentences",
@@ -7069,6 +7322,7 @@
       "covers" : "Romaji",
       "highlightedEntry" : "8784500933ea7b27b14398efa769d7b8",
       "ids" : [
+        "esp1_79c749d71ed4a19a2865c8dbac8d29eb",
         "esp1_4269b725bd8cfc6692e10b2bfb1fef4e",
         "esp1_7c071d73c0de114c362a4636599f3718",
         "esp1_815ea3ad3e17c463af560c10c26a807f",
@@ -7109,7 +7363,6 @@
         "esp1_baf8ecf25a01c632324619848eea367e",
         "esp1_1411612ce4eb68721913d4c5ae2ebfe5",
         "esp1_35bbf38e05500797dbe9c579e338ca03",
-        "esp1_79c749d71ed4a19a2865c8dbac8d29eb",
         "esp1_8a92e80cb162f2e536b6193a44769c7a",
         "esp1_c7bc650d2dbfc5fef28385adad574d73",
         "esp1_486cf26752a4c615aa3fc7348a97fd66",
@@ -7172,6 +7425,43 @@
       ],
       "query" : "hashi",
       "shown" : [
+        {
+          "english" : "Will you please hold this edge?",
+          "id" : "esp1_79c749d71ed4a19a2865c8dbac8d29eb",
+          "japanese" : "こっちの端を持っててくれる？",
+          "tokens" : [
+            {
+              "entry" : "0596bc0b3e8e98f3f63a71e53440fe22",
+              "surface" : "こっち"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "8784500933ea7b27b14398efa769d7b8",
+              "surface" : "端"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "8733544dc988feb1ec23f180ed1110c8",
+              "surface" : "持っ"
+            },
+            {
+              "candidates" : [
+                "6da9099e05a76b77e2cbc9fb65471803",
+                "2ab8b772c4bcc1f0fa19a5eecbf74fca"
+              ],
+              "surface" : "ててくれる"
+            },
+            {
+              "surface" : "？"
+            }
+          ]
+        },
         {
           "english" : "Stand in the corner!",
           "id" : "esp1_4269b725bd8cfc6692e10b2bfb1fef4e",
@@ -7386,36 +7676,6 @@
             {
               "entry" : "b95905db517f646af84a64d865c6828c",
               "surface" : "欲しくない"
-            },
-            {
-              "surface" : "。"
-            }
-          ]
-        },
-        {
-          "english" : "Don't go to extremes.",
-          "id" : "esp1_e40989a528595003137a99f430329230",
-          "japanese" : "極端に走ってはならない。",
-          "tokens" : [
-            {
-              "entry" : "ae79c810f78ff9e1149898ecb47a1317",
-              "surface" : "極端に"
-            },
-            {
-              "entry" : "a89e3599bd864035f2098d6688c307e9",
-              "surface" : "走って"
-            },
-            {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
-            },
-            {
-              "candidates" : [
-                "ba3dda17086b82269a3063375d9f8217",
-                "f317ad8065cd0fb688ba815009cc7a01",
-                "ebd60cbace14e32517029a9af1d61cfd"
-              ],
-              "surface" : "ならない"
             },
             {
               "surface" : "。"
@@ -9158,122 +9418,188 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 51,
+      "count" : 100,
       "countText" : "The first 100 of more than 100 examples",
       "covers" : "A broad English word",
       "highlightedEntry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
       "ids" : [
-        "esp1_b6a437186e5bd11dd5050b22e40d83e2",
-        "esp1_260172f9f318e235cb09d16c43d238d8",
-        "esp1_c634b6aad03370ebe686e6ee3d9f1468",
-        "esp1_9f88c49a71f16933de62a3bd9a73c204",
-        "esp1_fdee44701e6e1a32a1e6ba307a42cc18",
-        "esp1_eb8c879bf48d7da2942ccade1c7af360",
-        "esp1_b26825e7cdaa29888d17c6db22d7a27c",
-        "esp1_1a37d206cfbf47b9baa7f2cef2d0577c",
-        "esp1_1dd54e6992a2e4365694cf55dd4f659b",
-        "esp1_6dd3e3f9d97ae01847a382413417c1c2",
-        "esp1_a77bea39bf9f1cc8385712ab473a2114",
-        "esp1_dd1238c6fea8200ecd8049ab38737ac0",
-        "esp1_365f2d1697df0aef7344859ead37c32e",
-        "esp1_322319bcbdc46df3d2e0ed045a998270",
-        "esp1_1e33ee5a5019340887f9f6e5d17f52fe",
-        "esp1_3cbf034c40b7392ac5195c0dd756f5a6",
-        "esp1_de9babae1a57d69d5a81b8bde1a5b9ef",
-        "esp1_98c75534a32dab25d89864c207dc02a0",
-        "esp1_a6c25ec5d687926bddf3baa59fff9e5a",
-        "esp1_3890926386020864df3a775ef7f89fe5",
-        "esp1_e169b7c762eaf376e8a0c34699bce96f",
-        "esp1_4753b9236c400d611ba0905a0687ad58",
-        "esp1_66ed7895609a48cf04ae0619cfbd63a8",
-        "esp1_331534712780c085baf3a87c6c4c36ec",
-        "esp1_37b2cb11669c60a9394469bdaad032d9",
-        "esp1_6c19f016a005a804a7e2402980780ee3",
-        "esp1_a4cb84cf6acfbf8c4c8fe1f7471a51ea",
-        "esp1_ae3afba7cc7e32bff90be48633e34a27",
-        "esp1_bb1335da4512ce109d0828e3e0db3e46",
-        "esp1_bdb7a391e12ea287a39113d2ec66f8fc",
-        "esp1_d49e67eacbc593842edc6f2d0e67a920",
-        "esp1_f12aa56f8627d73f6a7f6a1efdece278",
-        "esp1_12a2aed22b45e76c55c8bbc4f9def1ff",
-        "esp1_2887c0a38ac9769865d6ccd9755c4377",
-        "esp1_4f5becceda1c2ca04addd31bde726416",
-        "esp1_0c91108a146908165ef0ab9ec10f23ff",
-        "esp1_1759b6ff245aac715327a9f37c6f02b5",
-        "esp1_5471f2bd96dea1ab981fa168e7029789",
-        "esp1_de8a94aeefb3dd71971c3a53eb2a9fa7",
-        "esp1_f2ff5242e6afcd21648a0fc3d35a5334",
-        "esp1_681fb32adaf4f23e04f2ba591963ffb0",
-        "esp1_e2216cc9eb4ceb40e72ddd664f271bd3",
-        "esp1_73ab938dce074fb2b22fe59fa6fc0d98",
-        "esp1_f86b5a83689d3c7c008acb2ba4d8d804",
-        "esp1_aa702dfef6b2fb831569695affff5f0f",
-        "esp1_e2858e0b78b71647b714371cf217f923",
-        "esp1_adc27eb374bd200bf18af6647b765ff7",
-        "esp1_059c6e00e10a2ec05ca1094b754c23cb",
-        "esp1_ce673c309bf7bb85999b3cbd84199071",
-        "esp1_e7f8f0cc239c4bb9b8de388235ee56da",
-        "esp1_743da09b2b73c598e2d01e84c1a1ef8a",
-        "esp1_6a537cbf7d62a9098bd76586dfe847c3",
-        "esp1_6ea7b5a3b56a16f06125dff6d09f37ea",
-        "esp1_a218816cee0173f8be64dc3a75ae6b29",
-        "esp1_d5689d4a84dbf404afdeb04c491d5ef6",
-        "esp1_0d7a22cf9fc780b64094640082875abf",
-        "esp1_1406f100c8ebcd49e8c44b59b0eac684",
-        "esp1_18c6a7818c967abd42a3bcb2fd121b45",
-        "esp1_46211c30110f43fbacf417d27719300a",
-        "esp1_59837c9b3e0ae97394c77520a6fbefd8",
-        "esp1_6fee1a02a6df4b37b6c33a1170566337",
-        "esp1_773dfbf021699b5dfc5f3682ad9b3b58",
-        "esp1_894a6c84e288b7d88e196a4081818ead",
-        "esp1_d21b0483ba62c0c613e06a242be82547",
-        "esp1_e252665124dafb01ddf8d7891b669329",
-        "esp1_ebb3496b8366c34c5a1bab77c6ec3c74",
-        "esp1_ef78b96477bc79d0d1ad01822a083385",
-        "esp1_62f8e885c28b75c07ff1f9d0ec33cc30",
-        "esp1_93f4276715f10b305333f3c2906c3fd4",
-        "esp1_b6e8b6d5effb43bad46777364cc85cb7",
-        "esp1_bb8fb82a9683e47f10b22e95f3a97ece",
-        "esp1_dfdda7c406be6b000308e032aab5e942",
-        "esp1_245f97bdf957866f7f47dc467fd6911c",
-        "esp1_2bbc03cd1bc5c008d2439b7d2a0631ab",
-        "esp1_7c6eeedcf526e7bd71887e431606f5ba",
-        "esp1_9806a4c2f862d0395ef59b22e2edcc85",
-        "esp1_a9eaaaddc642314c31c31004bf2888ce",
-        "esp1_23dfd4feeae4509b0961a7b83be8122f",
-        "esp1_555dcfe0805547eb6e7d64435ee32368",
-        "esp1_eaaea80a4bf199777fc17a0353f1f3b2",
-        "esp1_140733111041de7aa09f6ee43d728140",
-        "esp1_59e687814223163a01ad919dd8fd82bd",
-        "esp1_5ce39fd88c656a3e36da7e0d620097b9",
-        "esp1_6893e520fabf3926b59f2667a12a1723",
-        "esp1_a4349fcc534e39f4420bdf227173c5e2",
-        "esp1_b9602fc5582c2df9d00ef5fbf9b627e1",
-        "esp1_f2f46489180202e98ba3d7dd5b9ce8ec",
-        "esp1_060d9d9acf700f8423bd0be8adf5226e",
-        "esp1_1daea82a765ec02fe13539e1dc33c338",
-        "esp1_3d3399938c2c05f8ee5a25568183a3a1",
-        "esp1_7d2dff139765ca81ed018e85000f9b97",
-        "esp1_8d7a29bf34855f05d561a1b014c1b8ce",
-        "esp1_9cbc5ea307b1ec946325afcd867ee526",
-        "esp1_cebb3f73f5f6cf1d28e2da0dbed7b424",
-        "esp1_d21dc159392f079183fee0b846574688",
-        "esp1_d85621735c4bfc5c5d481705a7df84f4",
-        "esp1_318d198a6990653c52271d754acf17e0",
-        "esp1_93356944a6315a74372c3a2360a99b9b",
-        "esp1_cc675cbfe91ce3d631b8a7fb9286f383",
-        "esp1_54e280b98dacea47aa239c1e07385e60"
+        "esp1_42b0112e4f779ff2a0364fe0eafab23d",
+        "esp1_9e28e15b3308f4fe4e98328644519ef6",
+        "esp1_59458d3a572810ca478cd7826c44414b",
+        "esp1_90c39784549718a185fc871024a90748",
+        "esp1_fb690fed0514e4439edf5fd0e0426663",
+        "esp1_0cdf783be3b4e89ffa32c4d2e5127140",
+        "esp1_58e516077219a431d82d99231f9a8e89",
+        "esp1_84ae4636f8428e10d0de17111e7ac277",
+        "esp1_04c29c050faf7f1fd1c317c4d9879fb7",
+        "esp1_26dbe31bbb2586e2fe5e468971cfd0af",
+        "esp1_38e4bf4cad60e03fa54246e7834fbef3",
+        "esp1_3a416cc47f63b208ac9299104f93cfe1",
+        "esp1_57a719ec60074f9a010701c313cacf21",
+        "esp1_57b3e56b633004f9f51930f5a4b86cd9",
+        "esp1_743d8be3b132954fb7d2fa0c55254e35",
+        "esp1_bd216d0201fe5bfe49deda436e55b764",
+        "esp1_2b96af868f84738b9f2f64e32855343e",
+        "esp1_568723a54e409ad8b1a29280478a6fd7",
+        "esp1_5d038ef75abb65b79fdc6e78809127aa",
+        "esp1_b3d98db0555a14325fd85b03d1da7207",
+        "esp1_dc407b3f9e71a2c837c90421bd5e7fcf",
+        "esp1_f417fcfbe397f3a0f6330a5635ab6dfe",
+        "esp1_f708f2bd153f610445a8c696b84fceba",
+        "esp1_fdef0c2389b633072c7d01da67fc5fba",
+        "esp1_154370c3c7c0447f17ed6499705f9e62",
+        "esp1_2a6793abdce9b76c000407f98222fcaf",
+        "esp1_ab0796ea026e758ab3f274ec7f9cb76d",
+        "esp1_d5d110acad19a489e6230f77f71a8a03",
+        "esp1_3f3e20435adf6c911119a36045cfe5ce",
+        "esp1_5eb44087433ce83f4fe415037987a6ce",
+        "esp1_2d22ecb48cc41c8a18d4eadc25efd50b",
+        "esp1_35cd397385763cbc665831064136b129",
+        "esp1_aa7113270bfa4322b8e2794f150ff43f",
+        "esp1_ccb81ede5ab5390cf934a42212d16a21",
+        "esp1_11e80dd3a16bfd1ad7fbcf722f3d109c",
+        "esp1_31732d9fd5a7d8c4a2a23cf02a30517d",
+        "esp1_3521acd3bdb5dc76cabcfe946e7cc1ae",
+        "esp1_63a15bc51b4cf4cb9e9db28f9ee9916c",
+        "esp1_8150af4fdc1abe35b7ba76c08e7aecbb",
+        "esp1_bcfc26198da476e81e2eb0953081368f",
+        "esp1_cbeba4d6f113b5ac0f07b64c914c0cef",
+        "esp1_eaa9ecce1f79a93df74e665b36257bcb",
+        "esp1_037e61b06ecce05e04d62fc008e48a05",
+        "esp1_0c1daf3eb2db27725b1c0838d0e5eb3c",
+        "esp1_27e79d34262fe0729f7ca460528e4f3c",
+        "esp1_30696b5deda4ea98898107bc6b3a0fad",
+        "esp1_658521599af0157ac6d780dab08392e9",
+        "esp1_a37b046c12a511495be19eb25d0af77a",
+        "esp1_aa66247fd2f5c9019079a70fde80e150",
+        "esp1_d1615571bcbda52966e35c1d87f4bf1e",
+        "esp1_d22e834e32f8a65b55fc01c3107bf79d",
+        "esp1_2e40f721885860839d4d308235d7decb",
+        "esp1_76721498bdc80448b1501646523ca881",
+        "esp1_917c12773f54b29c9c4e0e781bf16cd2",
+        "esp1_a047ab028b6a336b905d08e182efe555",
+        "esp1_a20711e02d29446c15292d37eb94a33e",
+        "esp1_a27bd4c77f918f8fccef050e6d35ba89",
+        "esp1_69bcafb239371610f4b187efbfa8aae2",
+        "esp1_0f478e6a046ad2d49ac57082a6dc39b7",
+        "esp1_16cd120a85e99200f0427cc93e7d965a",
+        "esp1_2b9807fa2f800668f974faf605f27501",
+        "esp1_fdc9fddd8d0403b6a53ea88fb46c5e12",
+        "esp1_9cf29a85de5233f6f301239c1e6e022f",
+        "esp1_01ec37cf1b58d54a985c483b987a4fb1",
+        "esp1_682979953f2cc7cc61273e9b7978b4fb",
+        "esp1_8e52d98f266b655f5db22c0cbcda60bc",
+        "esp1_be5cb86ad567c8ff58348ebb8a581392",
+        "esp1_cdab923c4b75798c91fe025880d5d0b2",
+        "esp1_427625631b56e9bc0c2230812ed6a4ce",
+        "esp1_4661d4624915f060fbb84333e71d360c",
+        "esp1_915e740d9fdf15e231fe7801477f960b",
+        "esp1_311c04ec57b1c5a50fe8e34b42f4a183",
+        "esp1_422b494106ae861dd01be889b52cc008",
+        "esp1_e356631b0de8be703d157f65b7263617",
+        "esp1_fba92facc80c1eb9f828827c1ab2fc37",
+        "esp1_07aace68c97dcf11c62601dc7db6da72",
+        "esp1_1d9ed8fcd9411a062149075428955fb6",
+        "esp1_49413d7a48641cc66fd89b46b08a88fd",
+        "esp1_ccdd72e97bac4f18a3530b94c6b4cc6b",
+        "esp1_4284f9f0d8d8c38e73714b0a1803df82",
+        "esp1_8762925f5800dda90c728de3cfc92820",
+        "esp1_a8f93929920c273e77855c46fd36c0a2",
+        "esp1_0a616a88179c4dd113b95c425d2f0507",
+        "esp1_3983f6d6ea56d372232d2813c3ab888c",
+        "esp1_398fe52f3c15dc2cb3519edb15c2a07f",
+        "esp1_6646e2dd93def094700574fe2f0204e0",
+        "esp1_75a9344dcc07f8b4a49f6b1b3bdfb733",
+        "esp1_7e2e9e1e12f0a72ec5aa14d634a604aa",
+        "esp1_82df05457d20f3eea3fc772f15599bf7",
+        "esp1_86a00ee9b59defcff17ceac35fe46803",
+        "esp1_95467e3b789ced5a2a2dcc6bcf0560ee",
+        "esp1_9810ae797a1c9e898b4261a57d1c4a52",
+        "esp1_a336e1c25b9964e329ed60ee013c5807",
+        "esp1_b445cc2f88975041e41cede42e146b96",
+        "esp1_b819b8b110e1fd7a517250b517a25f49",
+        "esp1_fa81afd49c5b71b6883c9a58f4c0453f",
+        "esp1_fb7763e109de8389d903af16ebcd8d49",
+        "esp1_02f32f144068bf3e4c0b47b0bd91300e",
+        "esp1_1c4d6773a3142458cdf92ba470d0b12b",
+        "esp1_2926eca58c88848c6cc31f26b111c72d"
       ],
       "query" : "to",
       "shown" : [
         {
-          "english" : "To be continued.",
-          "id" : "esp1_b6a437186e5bd11dd5050b22e40d83e2",
-          "japanese" : "つづく。",
+          "english" : "See that dinner is ready by ten.",
+          "id" : "esp1_42b0112e4f779ff2a0364fe0eafab23d",
+          "japanese" : "１０時までに夕食の準備をしておくように取り計らいなさい。",
           "tokens" : [
             {
-              "entry" : "a8835c1a8a34400768e77ae9e7fd1941",
-              "surface" : "つづく"
+              "surface" : "１"
+            },
+            {
+              "surface" : "０"
+            },
+            {
+              "entry" : "5f28ee2a9c9644c4d908b0005ad5fb94",
+              "surface" : "時"
+            },
+            {
+              "entry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
+              "surface" : "まで"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "ffd63f0bf4cdf37ae417e1d599f188d2",
+              "surface" : "夕食"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "3472c2cb0f33b00038c26ab33b0fa32f",
+              "surface" : "準備"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "しておく"
+            },
+            {
+              "candidates" : [
+                "bf46d6a5495acc3bcb4d32f95d7caef0",
+                "b8ee6c2c6366d9c748a2472377444e93",
+                "4c20c294ca73e3e1a6716f8bf50d5e83",
+                "b33284fbcd35ad91bcaa8b253f08a80e",
+                "50c98c58446fe231fd100da02f9495c8",
+                "d75a638350f275893a252e8aa5da4f2f",
+                "45e1dd5f93593242694c93cc202d7d93",
+                "745158029a09a9fb16618f290b075a42",
+                "c118750ea524692a6b9a008886880343"
+              ],
+              "surface" : "よう"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "67c9d5035310615cf280c91b43b338fd",
+              "surface" : "取り計らい"
+            },
+            {
+              "entry" : "a0303e92a042c33bf6b283613d442748",
+              "surface" : "なさい"
             },
             {
               "surface" : "。"
@@ -9281,54 +9607,21 @@
           ]
         },
         {
-          "english" : "To your future!",
-          "id" : "esp1_260172f9f318e235cb09d16c43d238d8",
-          "japanese" : "あなたの未来に乾杯！",
+          "english" : "I will take you home.",
+          "id" : "esp1_9e28e15b3308f4fe4e98328644519ef6",
+          "japanese" : "家まで送るよ。",
           "tokens" : [
             {
-              "entry" : "8b1433c550e5f65ce7f35b08d7c6042e",
-              "surface" : "あなた"
+              "entry" : "6f54be67247dcd72328d454c302c328a",
+              "surface" : "家"
             },
             {
-              "entry" : "08c0172000564955c420c01ddadc4b63",
-              "surface" : "の"
+              "entry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
+              "surface" : "まで"
             },
             {
-              "entry" : "815dc3f92df2d209db5bd223cba63739",
-              "surface" : "未来"
-            },
-            {
-              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
-              "surface" : "に"
-            },
-            {
-              "entry" : "647433891edf7dd314ca32a832820c28",
-              "surface" : "乾杯"
-            },
-            {
-              "surface" : "！"
-            }
-          ]
-        },
-        {
-          "english" : "To each their own.",
-          "id" : "esp1_c634b6aad03370ebe686e6ee3d9f1468",
-          "japanese" : "人それぞれだよ。",
-          "tokens" : [
-            {
-              "entry" : "2e2360526d3d5fa30239db0f6498fb5e",
-              "surface" : "人"
-            },
-            {
-              "entry" : "a1ea4ed69e09553f82b166d035f34076",
-              "surface" : "それぞれ"
-            },
-            {
-              "candidates" : [
-                "e33ad4f4da88dce059a4b3fc7b2264b4",
-                "caa0908e5f4b933ebf132299796a1997"
-              ],
-              "surface" : "だ"
+              "entry" : "eb74e8404ec754f3163001a3af8ead9d",
+              "surface" : "送る"
             },
             {
               "entry" : "1ed4ef65dcfeec365691493eaedfc44b",
@@ -9340,31 +9633,40 @@
           ]
         },
         {
-          "english" : "To change the subject.",
-          "id" : "esp1_9f88c49a71f16933de62a3bd9a73c204",
-          "japanese" : "話はかわりますが。",
+          "english" : "Stay with me till dawn.",
+          "id" : "esp1_59458d3a572810ca478cd7826c44414b",
+          "japanese" : "朝まで一緒にいよう。",
           "tokens" : [
             {
-              "entry" : "499e91699369ccd6583ea6115938edab",
-              "surface" : "話"
+              "entry" : "4637886b489d66df1fb1faa50a7b90d8",
+              "surface" : "朝"
             },
             {
-              "entry" : "ad63532d193fae21a8b73d5d7880b492",
-              "surface" : "は"
+              "entry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
+              "surface" : "まで"
+            },
+            {
+              "entry" : "e27cc8c4dd9ea4d5cd8ef8df7f7002db",
+              "surface" : "一緒"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
             },
             {
               "candidates" : [
-                "2bca2100f97063b1c81ff370cc7bd4ff",
-                "11487e8a22a5150b842825f0557be11a"
+                "d12d09f1107aef0f7d43b54b62f0b7e1",
+                "e36e4bdfdf4b6535e82b863470af9499",
+                "8647047758cffbea50d72922fad277e0",
+                "e85ded84cc6528b1785230911b2ab431",
+                "e73b1768f01728210672d2fcd73db4f8",
+                "856095faec102f96bc40f7c592b41f21",
+                "d1c35802eb939dbfd03c6e44066e3fa6",
+                "1ffcd444a2cf906f4dcbafab7d9c9324",
+                "2a68bfe16459c6ba9581a076d8e68aef",
+                "625929124ccf0595525d794cd8d8450f"
               ],
-              "surface" : "かわります"
-            },
-            {
-              "candidates" : [
-                "525af7a87097616e431ac3a1e524f37f",
-                "6e965c8d5bfa8eb14fc4179abb44aeed"
-              ],
-              "surface" : "が"
+              "surface" : "いよう"
             },
             {
               "surface" : "。"
@@ -9372,34 +9674,58 @@
           ]
         },
         {
-          "english" : "To the airport, please.",
-          "id" : "esp1_fdee44701e6e1a32a1e6ba307a42cc18",
-          "japanese" : "空港まで、お願いします。",
+          "english" : "It is a long way to the village.",
+          "id" : "esp1_90c39784549718a185fc871024a90748",
+          "japanese" : "村まで長い道のりだ。",
           "tokens" : [
             {
-              "entry" : "8f72256602d11fbabd2f12767d5d55d5",
-              "surface" : "空港"
+              "entry" : "22b07e48c786c378d322c6b608b954da",
+              "surface" : "村"
             },
             {
               "entry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
               "surface" : "まで"
             },
             {
-              "surface" : "、"
+              "entry" : "762056d840ad466d3606627380acc794",
+              "surface" : "長い"
             },
             {
-              "entry" : "89fb6dad30b623021d0992360636a50a",
-              "surface" : "お願い"
+              "entry" : "7d06b603efba1febced0ba3eec2f1f25",
+              "surface" : "道のり"
             },
             {
               "candidates" : [
-                "b1a37c51a5860d4f513fdad36e99bca0",
-                "27b712d1aa61f1de61ebf3c7eb9ef070",
-                "10c213c9774338580f22d1aea02399a4",
-                "f3a7628ea368a349bbc30a62f59b9fa0",
-                "3e403ed3e2b2ac9284f0a155efaaa94e"
+                "e33ad4f4da88dce059a4b3fc7b2264b4",
+                "caa0908e5f4b933ebf132299796a1997"
               ],
-              "surface" : "します"
+              "surface" : "だ"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "We ran on as far as the station.",
+          "id" : "esp1_fb690fed0514e4439edf5fd0e0426663",
+          "japanese" : "駅まで走りつづけた。",
+          "tokens" : [
+            {
+              "entry" : "d49b2f3c5cbf3002ebf317043cbebdad",
+              "surface" : "駅"
+            },
+            {
+              "entry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
+              "surface" : "まで"
+            },
+            {
+              "entry" : "fc253d2aff655893aea6553026209a94",
+              "surface" : "走り"
+            },
+            {
+              "entry" : "51105a322339cf1319fcd26b79f45f6c",
+              "surface" : "つづけた"
             },
             {
               "surface" : "。"
@@ -9408,7 +9734,7 @@
         }
       ],
       "title" : "View 50+ Example Sentences",
-      "usesPrimaryEntryExamples" : false
+      "usesPrimaryEntryExamples" : true
     },
     {
       "count" : 51,

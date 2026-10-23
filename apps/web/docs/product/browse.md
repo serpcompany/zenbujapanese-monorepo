@@ -221,7 +221,7 @@ common words (`/dictionary/browse/common-words/`); names and vulgar, derogatory,
 words have none.
 
 - Each row shows the first meaning that has the category's label, so 行く under Slang reads "to
-  trip, to get high", and と under Nouns "promoted pawn".
+  trip, to get high", and 必要 under Nouns "necessity, need, requirement".
 - Most used first lists the words whose first meaning has the label, then the words that have it
   only on a later meaning, each most used on YouTube first, then the words YouTube doesn't rank.
   YouTube's rank counts every use of a word, so a word whose label is on a later meaning would
