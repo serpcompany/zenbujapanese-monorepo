@@ -111,13 +111,13 @@
       "name": "CompoundPitch.sqlite3",
       "artifact_schema": "zenbu.compound-pitch.v1",
       "schema_source": "file",
-      "sha256": "0e9c18bbc6a9fd3cd09fe66a5b5f4ec88aa1c96cdbc4abcd7fc66b8517fe46dc",
-      "bytes": 4542464,
+      "sha256": "b9fa412d4ad660724979df81bc2678a9259ef9a6448f905476906d4ab0d28286",
+      "bytes": 4608000,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
       ],
       "row_counts": {
-        "entry_pitch": 41967,
+        "entry_pitch": 42611,
         "metadata": 4
       }
     },
@@ -478,7 +478,7 @@
     {
       "name": "word-detail.json",
       "suite": "word-detail",
-      "sha256": "694a044a2b2fc53d7f1e60b7d97cded53d2cba098eae6bb6f23f875ab14fe766",
+      "sha256": "006e7781d754817eeb6a8b5e84f3e976b6bbce7a9fb0aaceace58307e3ce6732",
       "bytes": 4354474
     },
     {
