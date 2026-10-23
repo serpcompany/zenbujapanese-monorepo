@@ -111,13 +111,13 @@
       "name": "CompoundPitch.sqlite3",
       "artifact_schema": "zenbu.compound-pitch.v1",
       "schema_source": "file",
-      "sha256": "75dd765eca2ae5d6c1bdeb4ad7d6a836b57cc53fc14c197e592afa1b8b1244c4",
-      "bytes": 4034560,
+      "sha256": "3e936b9416a11086ce969c5b7d238d3b4a8a7296215b6d7a586d02f0173cdbac",
+      "bytes": 4608000,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
       ],
       "row_counts": {
-        "entry_pitch": 37278,
+        "entry_pitch": 42611,
         "metadata": 4
       }
     },
@@ -478,8 +478,8 @@
     {
       "name": "word-detail.json",
       "suite": "word-detail",
-      "sha256": "490c0cf20081f16f0975cafbc59e1b2574f090edeefc2bc76625a171fd63aac2",
-      "bytes": 4319602
+      "sha256": "493e42c104fa6fdfb4466ccec2d2feaf6e26b7e8a579792604f1f9d59146729f",
+      "bytes": 4359880
     },
     {
       "name": "kanji-detail.json",
