@@ -4,82 +4,88 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from collections import defaultdict
+from collections import Counter
 from pathlib import Path
 
+from compound_accent import CompoundGroup, CompoundSplitter, lexicon_parts
 from language_data_tools import built_artifact, file_sha256, run_import
-from unidic_adapter import accented_lexicon_rows, hiragana, mora_count
-
+from unidic_adapter import lexicon_rows, mora_count
 
 ARTIFACT_SCHEMA = "zenbu.compound-pitch.v1"
-SOURCE_IDENTITY = "UniDic 3.1.0 compound accent rule (C2)"
-NOUN_LIKE = {"名詞", "形状詞", "接頭辞", "接尾辞"}
-COMBINATION_TYPES = {"C1", "C2", "C3", "C4", "C5"}
+SOURCE_IDENTITY = "UniDic 3.1.0 compound accent rules"
+COMPOUND_ACCENT = Path(__file__).with_name("compound_accent.py")
+FOUR_CHARACTER_IDIOM = "yojijukugo"
+ADJECTIVAL_SUFFIX = "的"
+FUNCTION_WORD_CLASSES = {
+    "expression", "particle", "conjunction", "interjection",
+    "auxiliary", "auxiliaryVerb", "auxiliaryAdjective", "copula",
+    "prefix", "nounPrefix", "suffix", "nounSuffix",
+}
+SHIPPED_GROUPS = frozenset(
+    CompoundGroup(script, prefixed, tuple(types.split("/")), parts)
+    for script, prefixed, types, parts in (
+        ("kanji", False, "C1", 2),
+        ("kanji", False, "C1", 3),
+        ("kanji", False, "C2", 2),
+        ("kanji", False, "*/C1", 2),
+        ("kanji", False, "*/C2", 2),
+        ("kanji", False, "C1/C3", 2),
+        ("kanji", False, "C1/C3", 3),
+        ("kanji", False, "C2/C3", 3),
+        ("kanji", False, "*/C2/C3", 2),
+        ("kanji", False, "*/C3/P", 2),
+        ("kanji", False, "C4/P", 2),
+        ("kanji", True, "C1", 2),
+        ("kanji", True, "C1", 3),
+        ("kanji", True, "C1/C3", 2),
+        ("kanji", True, "C2", 2),
+        ("kanji", True, "C2", 3),
+        ("kanji", True, "C2/C3", 2),
+        ("kanji+kana", False, "C2", 2),
+        ("kanji+kana", False, "*/C1", 2),
+        ("kanji+kana", False, "C1/C2", 2),
+        ("katakana", False, "C1", 2),
+        ("katakana", False, "C1", 3),
+        ("katakana", False, "*/C1", 2),
+        ("katakana", False, "C1/C2", 2),
+    )
+)
 
 
-def load_lexemes(source: Path) -> dict[str, set[tuple[str, int, str, str]]]:
-    lexemes: dict[str, set[tuple[str, int, str, str]]] = defaultdict(set)
-    for row, downstep in accented_lexicon_rows(source):
-        reading = hiragana(row[10])
-        if reading:
-            lexemes[row[14]].add((reading, downstep, row[29].split(",")[0], row[4]))
-    return lexemes
+def left_out_kind(headword: str, parts_of_speech: list[str], senses: list[dict]) -> str | None:
+    if any(FOUR_CHARACTER_IDIOM in sense.get("usage", ()) for sense in senses):
+        return "left_out_as_a_four_character_idiom"
+    if headword.endswith(ADJECTIVAL_SUFFIX):
+        return "left_out_as_ending_in_teki"
+    if parts_of_speech and parts_of_speech[0] in FUNCTION_WORD_CLASSES:
+        return "left_out_as_listed_first_as_a_function_word_or_affix"
+    return None
 
 
-def is_kanji(value: str) -> bool:
-    return all(0x3400 <= ord(character) <= 0x9FFF or character == "々" for character in value)
-
-
-def two_part_split(headword: str, reading: str, lexemes) -> list[tuple] | None:
-    splits = []
-    for index in range(1, len(headword)):
-        for first in sorted(lexemes.get(headword[:index], ())):
-            if not reading.startswith(first[0]) or first[3] not in NOUN_LIKE:
-                continue
-            for second in sorted(lexemes.get(headword[index:], ())):
-                if first[0] + second[0] == reading and second[3] in NOUN_LIKE:
-                    splits.append((first, second))
-    types = {second[2] for _, second in splits}
-    if not splits or len(types) != 1 or not types <= COMBINATION_TYPES:
-        return None
-    return list(splits[0])
-
-
-def estimated_downstep(headword: str, reading: str, lexemes) -> int | None:
-    split = two_part_split(headword, reading, lexemes) if is_kanji(headword) else None
-    if split is None or split[1][2] != "C2":
-        return None
-    return mora_count(split[0][0]) + 1
-
-
-def import_pitch(source: Path, source_manifest: dict, language_data: Path, output: Path) -> dict:
-    if file_sha256(source) != source_manifest["sha256"]:
-        raise ValueError("UniDic archive does not match its pinned SHA-256")
-    lexemes = load_lexemes(source)
-    database = sqlite3.connect(f"file:{language_data}?mode=ro", uri=True)
-    try:
-        candidates = database.execute(
-            "SELECT id, headword, reading, is_common FROM entries "
-            "WHERE pitch_accent_json IS NULL AND headword <> reading"
-        ).fetchall()
-    finally:
-        database.close()
-
-    rows = []
-    common = 0
-    for entry_id, headword, reading, is_common in candidates:
-        downstep = estimated_downstep(headword, reading, lexemes)
-        if downstep is None:
-            continue
-        pitch = {
-            "downstep": downstep,
-            "moraCount": mora_count(reading),
-            "sourceIdentity": SOURCE_IDENTITY,
-        }
-        rows.append((entry_id, json.dumps(pitch, ensure_ascii=False, separators=(",", ":"))))
-        common += is_common
+def estimated_pitch(splitter: CompoundSplitter, candidates: list[tuple]) -> tuple[list[tuple], Counter, Counter]:
+    rows, common, outcomes = [], Counter(), Counter()
+    for entry_id, headword, reading, is_common, parts_of_speech_json, senses_json in candidates:
+        estimate = splitter.estimate(headword, reading)
+        left_out = left_out_kind(headword, json.loads(parts_of_speech_json), json.loads(senses_json))
+        if estimate is None:
+            outcome = "no_estimate"
+        elif estimate.group not in SHIPPED_GROUPS:
+            outcome = "estimated_in_a_group_below_the_gate"
+        elif left_out:
+            outcome = left_out
+        else:
+            outcome = "estimated"
+            pitch = {"downstep": estimate.downstep, "moraCount": mora_count(reading), "sourceIdentity": SOURCE_IDENTITY}
+            rows.append((entry_id, json.dumps(pitch, ensure_ascii=False, separators=(",", ":"))))
+            common[estimate.group.label()] += is_common
+        outcomes[outcome] += 1
+        if is_common:
+            outcomes[f"common_{outcome}"] += 1
     rows.sort()
+    return rows, common, outcomes
 
+
+def write_artifact(output: Path, rows: list[tuple], metadata: tuple[tuple[str, str], ...]) -> None:
     temporary = output.with_suffix(".tmp")
     temporary.unlink(missing_ok=True)
     artifact = sqlite3.connect(temporary)
@@ -93,35 +99,57 @@ def import_pitch(source: Path, source_manifest: dict, language_data: Path, outpu
             ) WITHOUT ROWID;
             """
         )
-        language_data_sha256 = file_sha256(language_data)
-        artifact.executemany(
-            "INSERT INTO metadata(key, value) VALUES (?, ?)",
-            (
-                ("artifact_schema", ARTIFACT_SCHEMA),
-                ("source_identity", SOURCE_IDENTITY),
-                ("source_sha256", source_manifest["sha256"]),
-                ("language_data_sha256", language_data_sha256),
-            ),
-        )
-        artifact.executemany(
-            "INSERT INTO entry_pitch(entry_id, pitch_accent_json) VALUES (?, ?)", rows
-        )
+        artifact.executemany("INSERT INTO metadata(key, value) VALUES (?, ?)", metadata)
+        artifact.executemany("INSERT INTO entry_pitch(entry_id, pitch_accent_json) VALUES (?, ?)", rows)
         artifact.commit()
         artifact.execute("VACUUM")
     finally:
         artifact.close()
     temporary.replace(output)
 
+
+def import_pitch(source: Path, source_manifest: dict, language_data: Path, output: Path) -> dict:
+    if file_sha256(source) != source_manifest["sha256"]:
+        raise ValueError("UniDic archive does not match its pinned SHA-256")
+    splitter = CompoundSplitter(lexicon_parts(lexicon_rows(source)))
+    database = sqlite3.connect(f"file:{language_data}?mode=ro", uri=True)
+    try:
+        candidates = database.execute(
+            "SELECT id, headword, reading, is_common, parts_of_speech_json, senses_json FROM entries "
+            "WHERE pitch_accent_json IS NULL"
+        ).fetchall()
+    finally:
+        database.close()
+    rows, common_by_group, outcomes = estimated_pitch(splitter, candidates)
+    language_data_sha256 = file_sha256(language_data)
+    write_artifact(
+        output,
+        rows,
+        (
+            ("artifact_schema", ARTIFACT_SCHEMA),
+            ("source_identity", SOURCE_IDENTITY),
+            ("source_sha256", source_manifest["sha256"]),
+            ("language_data_sha256", language_data_sha256),
+        ),
+    )
     return {
-        "identity": "unidic-compound-accent-rule-c2-v1",
+        "identity": "unidic-compound-accent-rules-v2",
         "artifact_schema": ARTIFACT_SCHEMA,
-        "rule": "Two-part kanji noun compound whose second UniDic part has aConType C2: "
-        "downstep on the second part's first mora.",
+        "rule": "Split the word into two to four UniDic noun, na-adjective, prefix, or suffix rows by spelling "
+        "and kana form, keeping the splits with the fewest parts; combine the parts by UniDic's accent "
+        "combination types, moving a downstep off a special mora within a part; give a value only when "
+        "every such split agrees, and only in a shipped group.",
+        "left_out": "Four-character idioms, words ending in 的, and words listed first as an expression, "
+        "particle, conjunction, interjection, auxiliary, or affix.",
+        "shipped_groups": sorted(group.label() for group in SHIPPED_GROUPS),
         "entries_without_pitch_considered": len(candidates),
         "entries_estimated": len(rows),
-        "common_entries_estimated": common,
+        "common_entries_estimated": sum(common_by_group.values()),
+        "common_entries_estimated_by_group": dict(sorted(common_by_group.items())),
+        "outcomes": dict(sorted(outcomes.items())),
         "source_sha256": source_manifest["sha256"],
         "language_data_sha256": language_data_sha256,
+        "compound_accent_sha256": file_sha256(COMPOUND_ACCENT),
         **built_artifact(Path(__file__), output),
     }
 

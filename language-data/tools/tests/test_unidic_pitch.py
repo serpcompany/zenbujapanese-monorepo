@@ -5,16 +5,15 @@ import sqlite3
 import sys
 import tempfile
 import unittest
-import zipfile
 from pathlib import Path
 
-from contract_checks import ROOT
+from contract_checks import FIXTURES, ROOT, unidic_archive
 
 sys.path.insert(0, str(ROOT / "language-data/tools"))
 from jmdict_normalization import normalized_text
 from unidic_adapter import apply_unidic_pitch
 
-LEXICON_ROWS = Path(__file__).with_name("fixtures") / "unidic-cwj-3.1.0-hashi-kami.csv"
+LEXICON_ROWS = FIXTURES / "unidic-cwj-3.1.0-hashi-kami.csv"
 SOURCE = {"identity": "UniDic for Contemporary Written Japanese 3.1.0"}
 BRIDGE, CHOPSTICKS, EDGE = 1237410, 1476410, 1581610
 PAPER, HAIR, GOD, ABOVE = 1311530, 1477950, 1364440, 1352150
@@ -42,9 +41,7 @@ def stored_pitch() -> dict[int, tuple[int, int]]:
         database.execute("CREATE TABLE entries (id INTEGER PRIMARY KEY, pitch_accent_json TEXT)")
         database.executemany("INSERT INTO entries (id) VALUES (?)", [(entry_id,) for entry_id in ENTRIES])
         with tempfile.TemporaryDirectory() as scratch:
-            archive = Path(scratch) / "unidic-cwj-3.1.0.zip"
-            with zipfile.ZipFile(archive, "w") as lexicon:
-                lexicon.write(LEXICON_ROWS, "unidic-cwj-3.1.0/lex_3_1.csv")
+            archive = unidic_archive(LEXICON_ROWS, Path(scratch))
             apply_unidic_pitch(database, records, archive, SOURCE, normalized_text)
         rows = database.execute("SELECT id, pitch_accent_json FROM entries WHERE pitch_accent_json IS NOT NULL")
         stored_json = dict(rows.fetchall())
