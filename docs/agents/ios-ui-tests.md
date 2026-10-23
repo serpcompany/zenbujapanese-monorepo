@@ -91,9 +91,10 @@ what it waited for and for how long.
   and when 60 account tests a busy Mac had stalled for 17 s resumed together, it refused every
   write for 4 s (`Couldn't write values … Path not accessible`), and two note tests read back the
   earlier notes their store had just removed. Pushed past its limit it also leaks those files and
-  refuses writes until the Simulator restarts. A test keeps its defaults in memory
-  (`MemoryDefaults`), and a store it hands to an actor gets another object on the same values
-  (`opened()`).
+  refuses writes until the Simulator restarts, which `simulator.py boot` does when it finds a
+  Simulator that was up in that state ([`verification.md`](verification.md)). A test keeps its
+  defaults in memory (`MemoryDefaults`), and a store it hands to an actor gets another object on
+  the same values (`opened()`).
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
