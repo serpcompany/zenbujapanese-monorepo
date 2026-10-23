@@ -34,9 +34,9 @@ manual checks named below are in `ios.md`.
   suite records sentence search (#830); and that iOS hands a website link to the app is checked only
   on a device.
 - **Word and kanji detail, C.** The recorded suites cover what the word, kanji, and element pages
-  draw, each page's model is the shared core's, and UI tests drive the menu, lists, notes, kanji,
-  and stroke order on every device, and a meaning's menu on iPhone. Main gap: no CI for the app's
-  own tests, and no test hears the voice itself.
+  draw, each meaning's example too, each page's model is the shared core's, and UI tests drive the
+  menu, a meaning's example, lists, notes, kanji, and stroke order on every device, and a meaning's
+  menu on iPhone. Main gap: no CI for the app's own tests, and no test hears the voice itself.
 - **Player, C.** The caption model and Recent's sync are tested, and UI tests drive the screen and a
   search's results page with YouTube stood in. Main gap: no CI, and YouTube's real player, caption
   fetch, and live results page are checked only by hand.

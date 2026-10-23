@@ -65,6 +65,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     resultsExampleCount: request => text().resultsExampleCount(JSON.parse(request)),
     resultsExamples: (request, analyze) => text().resultsExamples(JSON.parse(request), analyze),
     entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
+    meaningExamples: (request, analyze) => text().meaningExamples(JSON.parse(request), analyze),
     formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
     linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
     countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),

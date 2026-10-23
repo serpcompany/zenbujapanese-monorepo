@@ -42,10 +42,16 @@ import {
 import { linkSearchScreen, type SearchData } from './results/links'
 import { kanjiSearchPath, searchPath, wordPath, wordSlug } from './urls'
 
+type Sense = WordDetail['senses'][number]
+
 export interface WordPageData
-  extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
+  extends Omit<
+    WordDetail,
+    'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples' | 'senses'
+  > {
   slug: string
   path: string
+  senses: (Omit<Sense, 'example'> & { example: PageExample | null })[]
   alternatives: Linked<AlternativeForm>[]
   kanji: Linked<WordKanji>[]
   alternativeKanji: Linked<WordKanji>[]
@@ -106,12 +112,16 @@ const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
-  const detail = wordDetail(rows)
+  const detail = wordDetail({ ...rows, senseExamples: rows.senseExamples ?? [] })
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
   return {
     ...detail,
     slug,
     path: storedWordPath(slug, detail.entSeq),
+    senses: detail.senses.map(sense => ({
+      ...sense,
+      example: sense.example ? pageExample(sense.example, links) : null
+    })),
     alternatives: detail.alternatives.map(form => ({ ...form, path: links.kanji(form.kanji) })),
     kanji: detail.kanji.map(linkKanji),
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
@@ -197,7 +207,7 @@ export async function getWordExamples(
   }
   if (build !== fixtureBuild) return null
   const rows = wordRowsBySeq.get(entSeq)
-  if (!rows) return null
+  if (!rows || from >= rows.examples.length) return null
   return rows.examples
     .slice(from, from + examplesPerPage)
     .map(row => pageExample(wordExample(row), fixtureLinks))

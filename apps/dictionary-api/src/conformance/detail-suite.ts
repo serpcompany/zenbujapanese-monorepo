@@ -25,12 +25,19 @@ interface SuiteToken {
   pageWord?: boolean
 }
 
+interface SuiteExample {
+  id: string
+  japanese: string
+  english: string
+  tokens: SuiteToken[]
+}
+
 export interface SuiteExamples {
   listed: number
   reportedCount?: string
   truncated: boolean
   error?: string
-  shown: { id: string; japanese: string; english: string; tokens: SuiteToken[] }[]
+  shown: SuiteExample[]
 }
 
 export interface SuiteSense {
@@ -38,6 +45,7 @@ export interface SuiteSense {
   glosses: string[]
   notes: string[]
   partsOfSpeech: string[]
+  example?: SuiteExample
 }
 
 export type ShownSense = Omit<SuiteSense, 'glosses'>

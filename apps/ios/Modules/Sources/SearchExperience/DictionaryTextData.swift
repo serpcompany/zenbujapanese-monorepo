@@ -31,6 +31,10 @@ private struct EntryExamplesRequest: Encodable {
   let limit: Int?
 }
 
+private struct MeaningExamplesRequest: Encodable {
+  let id: String
+}
+
 private struct FormExamplesRequest: Encodable {
   let form: String
   let from: Int
@@ -49,6 +53,11 @@ struct LinkedExamples: Decodable, Sendable {
   let listed: Int
   let cutShort: Bool
   let countText: String?
+}
+
+struct LinkedMeaningExample: Decodable, Sendable {
+  let number: Int
+  let example: LinkedExamples.Example
 }
 
 struct LinkedEntryExamples: Decodable, Sendable {
@@ -142,6 +151,11 @@ actor DictionaryTextData {
     try await linked(
       "entryExamples",
       EntryExamplesRequest(id: id.rawValue, from: batch.from, limit: batch.limit))
+  }
+
+  func meaningExamples(_ id: LanguageReferenceID) async throws -> [LinkedMeaningExample] {
+    try await answer(
+      "meaningExamples", try DictionaryCore.argument(MeaningExamplesRequest(id: id.rawValue)))
   }
 
   func formExamples(_ form: String, _ batch: ExampleBatch) async throws -> LinkedExamples {

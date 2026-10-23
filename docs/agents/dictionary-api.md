@@ -216,35 +216,35 @@ pnpm check
 ```
 
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
-(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real
-files: search retrieval, search results (every row, chip, and special row, the Example Sentences
-row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
-sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
-highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
-every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
-them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
+(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real files: search
+retrieval, search results (every row, chip, and special row, the Example Sentences row included),
+example search (every pair ID for 69 queries, 59 count lines, and the first 5 sentences' words,
+links, and marks), word detail (each meaning's checked example, the first 25 examples' order,
+tokens, links, and highlights, the counts, the furigana split, the pitch graph, each frequency row's
+details, and every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level
+among them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
 `node:sqlite` with the real tokenizer, kanji, and frequency files (`embedded*.conformance.test.ts`),
-where the kanji element suite runs too: the website has no element page yet, so that
-is its only replay. A change that would alter what the app shows fails here before any Swift
-runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
-the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
-test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
-it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
-nothing useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception:
-it holds readings and sentences with the romaji Foundation gave them, depends on no data file,
-so it pins none, and it is not among a language-data release's suites, whose packager refuses a
-suite that pins nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and
-through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
-app did. The results suite compares a row's first entry number only: the service keeps its
-Language Reference ID's, the first of the entries the app merged into the row. Where the app's
-example retrieval answers an error, the suite records it, and the page lists no examples either;
-none recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
-`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
-the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
-it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
-checks the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's
-examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
-`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
+where the kanji element suite runs too: the website has no element page yet, so that is its only
+replay. A change that would alter what the app shows fails here before any Swift runs. The
+word-detail suite's furigana, pitch graph, frequency details, and conjugations take the shapes in
+`packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page test
+(`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files it was
+recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare nothing
+useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception: it holds
+readings and sentences with the romaji Foundation gave them, depends on no data file, so it pins
+none, and it is not among a language-data release's suites, whose packager refuses a suite that pins
+nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and through the entry point
+the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the app
+did. The results suite compares a row's first entry number only: the service keeps its Language
+Reference ID's, the first of the entries the app merged into the row. Where the app's example
+retrieval answers an error, the suite records it, and the page lists no examples either; none
+recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
+`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary the
+retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording it
+needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts` checks
+the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's examples.
+`full-text.test.ts` checks English search where FTS4 differs from other engines. `frequency.test.ts`
+reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The

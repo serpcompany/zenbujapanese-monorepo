@@ -473,11 +473,11 @@ so the website's word pages and kanji details can be checked against the app. Th
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the models the
 views draw (`WordPage`, `KanjiPage`, `FrequencyRow`, and the example clients): for a word, its
 headword, furigana (with each kanji run's per-kanji split), part of speech, pitch (with the contour
-`PitchAccentBadge` draws), senses, default frequency packs (JLPT and TUBELEX, each with the
-Frequency Details it opens), the conjugation table its part of speech opens (each form with the
-words `ConjugationsView` shows, the forms that share its spelling, and the examples its screen
-lists: every pair ID, in order, and the first 3 with their linked tokens and which of them the
-screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
+`PitchAccentBadge` draws), senses and their examples, default frequency packs (JLPT and TUBELEX,
+each with the Frequency Details it opens), the conjugation table its part of speech opens (each form
+with the words `ConjugationsView` shows, the forms that share its spelling, and the examples its
+screen lists: every pair ID, in order, and the first 3 with their linked tokens and which of them
+the screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
 metrics, meanings, readings with words and labels, elements, 24 words, and whether it has stroke
 data. The views and the suite read the same models, so the suite records what the views draw. Each
 file pins the SHA-256 of every bundled artifact it was recorded against. After an intended change to

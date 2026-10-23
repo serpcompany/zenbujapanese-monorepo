@@ -73,6 +73,10 @@ struct MeaningActions {
     speechSynthesisClient.speak(sense.spoken, .english)
   }
 
+  func speakJapanese(_ sentence: String) {
+    speechSynthesisClient.speak(sentence, .japanese)
+  }
+
   func copy(_ sense: WordPage.Sense) {
     writeToPasteboard(sense.copyText)
   }
@@ -81,6 +85,8 @@ struct MeaningActions {
 struct MeaningSection: View {
   let senses: [WordPage.Sense]
   var actions: MeaningActions?
+  var examples = MeaningExamples()
+  var openWord: (DictionaryEntry) -> Void = { _ in }
 
   var body: some View {
     ForEach(senses.rows(in: .meaning)) { row in
@@ -99,6 +105,16 @@ struct MeaningSection: View {
         .accessibilityIdentifier("word-detail.meaning.\(sense.number)")
       } else {
         MeaningLabel(sense: sense)
+      }
+      if let example = examples.bySense[sense.number],
+        LaunchHarness.shows("meaning-example", on: "word-detail")
+      {
+        JapaneseExampleRowContent(
+          example: example,
+          presentation: .meaning(number: sense.number),
+          speak: { actions?.speakJapanese(example.sentence.japanese) },
+          openWord: openWord
+        )
       }
     }
   }

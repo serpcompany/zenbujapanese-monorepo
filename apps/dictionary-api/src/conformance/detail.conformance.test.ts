@@ -137,11 +137,15 @@ describe.runIf(artifactAvailable)('word and kanji detail conformance', () => {
             )
           }
         : {}),
-      senses: detail.senses.map((sense, index) => ({
-        meaning: sense.meaning,
-        notes: sense.notes,
-        partsOfSpeech: entry.senses[index].partsOfSpeech
-      })),
+      senses: detail.senses.map((sense, index) => {
+        const example = word.rows.senseExamples[index]
+        return {
+          meaning: sense.meaning,
+          notes: sense.notes,
+          partsOfSpeech: entry.senses[index].partsOfSpeech,
+          ...(example ? { example: shownAsRecorded(db, [example], 'pageWord')[0] } : {})
+        }
+      }),
       ...(detail.pitch && pitch
         ? {
             pitch: {

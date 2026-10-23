@@ -227,14 +227,14 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
-related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
-information when the corresponding data is available. A kana word's examples, such as それで or でも,
-are the sentences Tatoeba's word index links to it, so でも in いつでも does not count. Other words
-match their written forms and reading, in either width NFKC reads as one (Ｔシャツ and Tシャツ).
+A kana word's examples are the sentences Tatoeba's word index links to it, so でも in いつでも doesn't
+count; others match their written forms and reading, in either width NFKC reads as one (Ｔシャツ, Tシャツ).
+JMdict's checked examples of its meanings (`JMdict_e_examp`) lead, even one its spelling misses (食べた
+for 食べる), and none drops, so a list can pass 100. Each meaning shows its first, drawn with the page.
 
-Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
-`KanaHeadwordExampleTests`; core `artifact/example-retrieval.test.ts`.
+Check: the recorded `WordDetailConformanceTests` (each sense's `example`) and
+`ExampleSearchConformanceTests`; package `KanaHeadwordExampleTests`; core
+`artifact/example-retrieval.test.ts`; UI `WordDetailUITests.testAMeaningShowsItsCheckedExample`.
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 

@@ -51,6 +51,31 @@ struct EntryExamples: Sendable {
   let truncated: Bool
 }
 
+struct MeaningExamples: Sendable {
+  var bySense: [Int: LinkedExample] = [:]
+}
+
+@MainActor
+@Observable
+final class LoadedMeaningExamples {
+  typealias Read = @Sendable (DictionaryEntry) async -> MeaningExamples
+
+  private var source: LanguageReferenceID?
+  private var examples = MeaningExamples()
+
+  func examples(of id: LanguageReferenceID) -> MeaningExamples? {
+    source == id ? examples : nil
+  }
+
+  func load(_ entry: DictionaryEntry, read: Read) async {
+    guard source != entry.id else { return }
+    let found = await read(entry)
+    guard !Task.isCancelled else { return }
+    examples = found
+    source = entry.id
+  }
+}
+
 @MainActor
 @Observable
 final class LoadedExamples {

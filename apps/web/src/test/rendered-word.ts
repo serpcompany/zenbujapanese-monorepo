@@ -204,20 +204,32 @@ export interface RenderedExample {
 const exampleToken =
   /(<a([^>]*)>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/a>)?/g
 
+function renderedExample(pairId: string, item: string): RenderedExample {
+  const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
+  const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
+    surface: htmlText(inner),
+    href: link ? attribute(linkTag, 'href') : null,
+    highlighted: attribute(span, 'data-page-word') === 'true'
+  }))
+  if (tokens.map(token => token.surface).join('') !== htmlText(sentence)) {
+    throw new Error(`Could not read the words of ${htmlText(sentence)}`)
+  }
+  return { pairId, tokens }
+}
+
 export function readExamples(html: string): RenderedExample[] {
   const items = [...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)]
-  return items.map(([, pairId, item]) => {
-    const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
-      surface: htmlText(inner),
-      href: link ? attribute(linkTag, 'href') : null,
-      highlighted: attribute(span, 'data-page-word') === 'true'
-    }))
-    if (tokens.map(token => token.surface).join('') !== htmlText(sentence)) {
-      throw new Error(`Could not read the words of ${htmlText(sentence)}`)
-    }
-    return { pairId, tokens }
-  })
+  return items.map(([, pairId, item]) => renderedExample(pairId, item))
+}
+
+export function readMeaningExamples(html: string): (RenderedExample & { meaning: number })[] {
+  const items = html.matchAll(
+    /<div[^>]*data-meaning-example="(\d+)"[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?<p lang="ja"[^>]*>[\s\S]*?<\/p>)/g
+  )
+  return [...items].map(([, meaning, pairId, item]) => ({
+    meaning: Number(meaning),
+    ...renderedExample(pairId, item)
+  }))
 }
 
 export function readFrequencyRows(html: string): { name: string; text: string }[] {

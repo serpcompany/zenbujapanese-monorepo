@@ -1,5 +1,4 @@
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
-import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { defaultLocale } from '@/lib/i18n/config'
 import { withoutDefaultLocale } from '@/lib/i18n/routing'
@@ -12,9 +11,7 @@ export function servesFilesIn(locale: string): boolean {
 
 export function morePosition(value: string | null): number | null {
   const from = Number(value ?? examplesPerPage)
-  return Number.isInteger(from) && from >= 0 && from < exampleLimit && from % examplesPerPage === 0
-    ? from
-    : null
+  return Number.isSafeInteger(from) && from >= 0 && from % examplesPerPage === 0 ? from : null
 }
 
 export function pathText(pathname: string, pattern: RegExp): string | null {

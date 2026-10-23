@@ -71,15 +71,15 @@ the card out again. So the Translate audit holds that clock while it audits the 
 from where it stopped.
 
 On a page scrolled down to a section, that sweep reflows everything above it and slides the
-section's text under the bars, where the audit loses it and can't name the element. So the
-sections that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's
-readings, and the Account page's about part (Help & Support, Report a Problem, the crash
-reports switch, and the links under them), get those two audits on their own:
-`ZENBU_ONLY_SECTION`, a Debug-only harness (`LaunchHarness.onlySections`), opens the page with
-only the sections it names, at the page's top, and the walk audits them there
-(`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
-(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
-caption's word sheet at full height, so the Player page isn't showing behind it.
+section's text under the bars, where the audit loses it and can't name the element. So the sections
+that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, and the
+Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
+under them), get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
+(`LaunchHarness.onlySections`), opens the page with only the sections it names (Word Detail's
+examples under its meanings are one, `meaning-example`), at the page's top, and the walk audits them
+there (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
+(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
+height, so the Player page isn't showing behind it.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show
 ([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App

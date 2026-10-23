@@ -95,7 +95,13 @@ export interface WordDetail extends WordSummary {
   pronounce: string
   conjugations: Conjugations | null
   pitch: PitchAccent | null
-  senses: { number: number; meaning: string; notes: string[]; noteText: string | null }[]
+  senses: {
+    number: number
+    meaning: string
+    notes: string[]
+    noteText: string | null
+    example: Example | null
+  }[]
   frequencyRows: FrequencyRowDetail[]
   alternatives: AlternativeForm[]
   kanji: WordKanji[]
@@ -223,12 +229,16 @@ export function wordDetail(rows: WordRows): WordDetail {
     pronounce: pronounceLabel(entry.reading),
     conjugations: table,
     pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
-    senses: entry.senses.map((sense, index) => ({
-      number: index + 1,
-      meaning: sense.meaning,
-      notes: sense.notes,
-      noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null
-    })),
+    senses: entry.senses.map((sense, index) => {
+      const example = rows.senseExamples[index]
+      return {
+        number: index + 1,
+        meaning: sense.meaning,
+        notes: sense.notes,
+        noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null,
+        example: example ? wordExample(example) : null
+      }
+    }),
     frequencyRows,
     alternatives,
     kanji,
