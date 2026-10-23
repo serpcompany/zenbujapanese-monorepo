@@ -1,15 +1,37 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import time
+import uuid
 from collections.abc import Callable
 from pathlib import Path
+
+from simulator_devices import (
+    TOOL_CACHE,
+    empty_dead_installs,
+    every,
+    is_booted,
+    listed,
+    run,
+    said_emptied,
+    simctl,
+    xcrun,
+)
+from simulator_keeper import (
+    HANDOVER_SECONDS,
+    IDLE_LIMIT_SECONDS,
+    KEEPERS,
+    a_command_names,
+    boot_lease,
+    booting,
+    is_in_use,
+    keep,
+)
 
 APP = "zenbu-japanese"
 KINDS = {
@@ -19,21 +41,13 @@ KINDS = {
 SCOPE_VARIABLE = "ZENBU_SIMULATOR_SCOPE"
 SEPARATOR = "--"
 SCOPE = re.compile(r"[A-Za-z0-9._-]+")
-BUILD_CACHE = Path.home() / "Library" / "Caches" / "com.zenbujapanese.build" / "DerivedData"
-KEEPERS = BUILD_CACHE.parent / "SimulatorKeepers"
-SIMULATORS = Path.home() / "Library" / "Developer" / "CoreSimulator" / "Devices"
-DEAD_INSTALLS = Path("data") / "Library" / "Caches" / "com.apple.containermanagerd" / "Dead"
+BUILD_CACHE = TOOL_CACHE / "DerivedData"
 CALM_IDLE_PERCENT = 50
 CALM_SAMPLES = 2
 CALM_SAMPLE_SECONDS = 2
 CALM_LIMIT_SECONDS = 120
 SETTLED_APP = "com.apple.Preferences"
-IDLE_LIMIT_SECONDS = 600
-KEEPER_PERIOD_SECONDS = 20
-LEAST_FREE_MEMORY_PERCENT = 40
-MEMORY_IDLE_SECONDS = 120
-DEAD_INSTALL_SETTLE_SECONDS = 60
-MOST_SWAP_MEGABYTES = 2000
+PREFERENCES_PROBE = ("com.zenbujapanese.simulator-tool", "probe")
 RUN_ENDING_SECONDS = 30
 RUN_ENDING_LOOK_SECONDS = 1
 
@@ -96,10 +110,6 @@ def newest_runtime(runtimes: list[dict], sdk: str) -> dict:
     return max(ranked, key=lambda entry: entry[:2])[2]
 
 
-def every(devices: dict[str, list[dict]]) -> list[dict]:
-    return [device for group in devices.values() for device in group]
-
-
 def find(devices: dict[str, list[dict]], name: str) -> str | None:
     for device in every(devices):
         if device["name"] == name and device.get("isAvailable"):
@@ -126,28 +136,8 @@ def derived_data(scope: str | None, cache: Path = BUILD_CACHE) -> Path:
     return cache / simulator_name("iphone", scope)
 
 
-def run(*command: str) -> str:
-    done = subprocess.run(command, capture_output=True, text=True)
-    if done.returncode != 0:
-        said = done.stderr.strip() or done.stdout.strip()
-        raise SystemExit(f"{' '.join(command)} failed: {said}")
-    return done.stdout
-
-
 def git(*arguments: str) -> str:
     return run("git", *arguments).strip()
-
-
-def xcrun(*arguments: str) -> str:
-    return run("xcrun", *arguments)
-
-
-def simctl(*arguments: str) -> str:
-    return xcrun("simctl", *arguments)
-
-
-def listed(what: str) -> dict:
-    return json.loads(simctl("list", what, "--json"))
 
 
 def checkout_scope(environment: dict[str, str]) -> str | None:
@@ -177,13 +167,6 @@ def udid(kind: str, scope: str | None) -> str:
     sdk = xcrun("--sdk", "iphonesimulator", "--show-sdk-version").strip()
     runtime = newest_runtime(listed("runtimes")["runtimes"], sdk)
     return simctl("create", name, newest_device_type(kind, runtime), runtime["identifier"]).strip()
-
-
-def is_booted(udid: str) -> bool:
-    return any(
-        device["udid"] == udid and device.get("state") == "Booted"
-        for device in every(listed("devices")["devices"])
-    )
 
 
 def cpu_idle_percent() -> float:
@@ -222,68 +205,76 @@ def running(scope: str | None, devices: dict[str, list[dict]]) -> list[dict]:
     ]
 
 
-def dead_installs(udid: str, simulators: Path = SIMULATORS) -> Path:
-    return simulators / udid / DEAD_INSTALLS
+def bring_up(name: str, target: str, keepers: Path) -> str:
+    began = time.monotonic()
+    simctl("boot", target)
+    keep(target, keepers)
+    simctl("bootstatus", target, "-b")
+    booted = time.monotonic() - began
+    launched = wait_until_it_launches(target)
+    waited, calm = wait_until_calm()
+    if not is_booted(target):
+        raise SystemExit(
+            f"{name} was shut down while boot waited for it, so it isn't handed over. Find what "
+            "shut it down (a simctl shutdown, or a watchdog short of memory), then run boot "
+            "again; don't let xcodebuild boot it."
+        )
+    return f"booted in {booted:.0f} s, launched an app {launched:.0f} s later, and the Mac " + (
+        f"was calm {waited:.0f} s later" if calm else f"was still busy {waited:.0f} s later"
+    )
 
 
-def size_of(path: Path) -> int:
-    if path.is_symlink() or not path.is_dir():
-        return path.lstat().st_size
-    return sum(entry.lstat().st_size for entry in path.rglob("*") if not entry.is_dir())
+def spawned(target: str, *command: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["xcrun", "simctl", "spawn", target, *command], capture_output=True, text=True
+    )
 
 
-def empty_dead_installs(
-    udid: str, simulators: Path = SIMULATORS, now: Callable[[], float] = time.time
-) -> tuple[int, int]:
-    folder = dead_installs(udid, simulators)
-    if folder.is_symlink() or not folder.is_dir():
-        return 0, 0
-    emptied = 0
-    freed = 0
-    for entry in folder.iterdir():
-        try:
-            if entry.lstat().st_mtime > now() - DEAD_INSTALL_SETTLE_SECONDS:
-                continue
-            freed += size_of(entry)
-        except OSError:
-            continue
-        if entry.is_dir() and not entry.is_symlink():
-            shutil.rmtree(entry, ignore_errors=True)
-        else:
-            entry.unlink(missing_ok=True)
-        emptied += 1
-    return emptied, freed
+def preferences_are_saved(target: str) -> bool:
+    domain, key = PREFERENCES_PROBE
+    written = uuid.uuid4().hex
+    spawned(target, "defaults", "write", domain, key, written)
+    read = spawned(target, "defaults", "read", domain, key)
+    return read.returncode == 0 and read.stdout.strip() == written
 
 
-def said_emptied(emptied: int, freed: int) -> str:
-    if not emptied:
-        return ""
-    return f"; deleted {emptied} old installs of the app ({freed / 1e9:.1f} GB) it had kept"
+def restart_for_preferences(name: str, target: str, keepers: Path) -> str:
+    refusing = f"{name}'s preferences daemon (cfprefsd) refuses every defaults write"
+    if a_command_names(target):
+        raise SystemExit(
+            f"{refusing}, which lasts until the Simulator restarts, but something is using it. "
+            "Stop that run, then run boot again, which restarts it."
+        )
+    simctl("shutdown", target)
+    said = bring_up(name, target, keepers)
+    if not preferences_are_saved(target):
+        raise SystemExit(
+            f"{refusing}, even after a restart. Its own log says why: xcrun simctl spawn "
+            f"{target} log show --last 5m --predicate 'process == \"cfprefsd\"'"
+        )
+    return "was up, but its preferences daemon (cfprefsd) refused writes, so it was restarted: " + said
 
 
-def boot(kind: str, scope: str | None) -> str:
+def boot(kind: str, scope: str | None, keepers: Path = KEEPERS) -> str:
+    name = simulator_name(kind, scope)
     target = udid(kind, scope)
     emptied = said_emptied(*empty_dead_installs(target))
     up = running(scope, listed("devices")["devices"])
     idle_others = [
-        device for device in up if device["udid"] != target and not is_in_use(device["udid"])
+        device
+        for device in up
+        if device["udid"] != target and not is_in_use(device["udid"], keepers)
     ]
     for other in idle_others:
         simctl("shutdown", other["udid"])
-    if any(device["udid"] == target and device.get("state") == "Booted" for device in up):
-        keep(target)
-        said = "was already up"
-    else:
-        began = time.monotonic()
-        simctl("boot", target)
-        keep(target)
-        simctl("bootstatus", target, "-b")
-        booted = time.monotonic() - began
-        launched = wait_until_it_launches(target)
-        waited, calm = wait_until_calm()
-        said = f"booted in {booted:.0f} s, launched an app {launched:.0f} s later, and the Mac " + (
-            f"was calm {waited:.0f} s later" if calm else f"was still busy {waited:.0f} s later"
-        )
+    with booting(target, keepers):
+        if not any(device["udid"] == target and device.get("state") == "Booted" for device in up):
+            said = bring_up(name, target, keepers)
+        elif preferences_are_saved(target):
+            said = "was already up"
+        else:
+            said = restart_for_preferences(name, target, keepers)
+        keep(target, keepers)
     return (
         said
         + emptied
@@ -291,95 +282,6 @@ def boot(kind: str, scope: str | None) -> str:
             f"; {other['name']} was shut down, since nothing was using it" for other in idle_others
         )
     )
-
-
-def keeper_file(udid: str, keepers: Path = KEEPERS) -> Path:
-    return keepers / f"{udid}.pid"
-
-
-def keeper_is_alive(file: Path, udid: str) -> bool:
-    try:
-        pid = int(file.read_text())
-    except (OSError, ValueError):
-        return False
-    shown = subprocess.run(["ps", "-p", str(pid), "-o", "command="], capture_output=True, text=True)
-    return "keeper" in shown.stdout and udid in shown.stdout
-
-
-def keep(udid: str, keepers: Path = KEEPERS) -> None:
-    file = keeper_file(udid, keepers)
-    file.parent.mkdir(parents=True, exist_ok=True)
-    if keeper_is_alive(file, udid):
-        file.touch()
-        return
-    with (keepers / f"{udid}.log").open("a") as log:
-        keeper = subprocess.Popen(
-            [sys.executable, str(Path(__file__).resolve()), "keeper", "--udid", udid],
-            stdin=subprocess.DEVNULL,
-            stdout=log,
-            stderr=log,
-            start_new_session=True,
-        )
-    file.write_text(str(keeper.pid))
-
-
-def is_in_use(udid: str) -> bool:
-    named = f"id={udid}|simctl.*{udid}"
-    return subprocess.run(["pgrep", "-f", named], capture_output=True).returncode == 0
-
-
-def free_memory_percent() -> int:
-    return int(re.search(r"free percentage: (\d+)%", run("memory_pressure", "-Q")).group(1))
-
-
-def swap_megabytes() -> float:
-    return float(re.search(r"used = ([\d.]+)M", run("sysctl", "-n", "vm.swapusage")).group(1))
-
-
-def reason_to_shut_down(in_use: bool, idle_seconds: float, free: int, swap: float) -> str | None:
-    if in_use:
-        return None
-    memory_short = free < LEAST_FREE_MEMORY_PERCENT or swap > MOST_SWAP_MEGABYTES
-    if memory_short and idle_seconds >= MEMORY_IDLE_SECONDS:
-        return f"memory was short ({free}% free, {swap:.0f} MB of swap) and nothing was using it"
-    if idle_seconds >= IDLE_LIMIT_SECONDS:
-        return f"nothing had used it for {IDLE_LIMIT_SECONDS // 60} minutes"
-    return None
-
-
-def keeper(udid: str, keepers: Path = KEEPERS) -> None:
-    file = keeper_file(udid, keepers)
-    last_used = time.time()
-    while True:
-        time.sleep(KEEPER_PERIOD_SECONDS)
-        try:
-            if not is_booted(udid):
-                break
-            in_use = is_in_use(udid)
-            if in_use:
-                last_used = time.time()
-            else:
-                note_emptied(udid)
-                if file.exists():
-                    last_used = max(last_used, file.stat().st_mtime)
-            reason = reason_to_shut_down(
-                in_use, time.time() - last_used, free_memory_percent(), swap_megabytes()
-            )
-        except (SystemExit, Exception) as failed:
-            print(f"{time.strftime('%F %T')} could not look: {failed}", flush=True)
-            continue
-        if reason:
-            subprocess.run(["xcrun", "simctl", "shutdown", udid], capture_output=True)
-            print(f"{time.strftime('%F %T')} shut down: {reason}", flush=True)
-            note_emptied(udid)
-            break
-    file.unlink(missing_ok=True)
-
-
-def note_emptied(udid: str) -> None:
-    emptied = said_emptied(*empty_dead_installs(udid))
-    if emptied:
-        print(f"{time.strftime('%F %T')} {emptied.removeprefix('; ')}", flush=True)
 
 
 def free_once_runs_end(
@@ -412,13 +314,19 @@ def shut_down(
     return said
 
 
-def remove(scope: str, devices: dict[str, list[dict]], cache: Path = BUILD_CACHE) -> list[str]:
+def remove(
+    scope: str,
+    devices: dict[str, list[dict]],
+    cache: Path = BUILD_CACHE,
+    keepers: Path = KEEPERS,
+) -> list[str]:
     removed = []
     for device in every(devices):
         if device["name"] in scope_names(scope):
             if device.get("state") != "Shutdown":
                 simctl("shutdown", device["udid"])
             simctl("delete", device["udid"])
+            boot_lease(device["udid"], keepers).unlink(missing_ok=True)
             removed.append(device["name"])
     folder = derived_data(scope, cache)
     inside = folder.resolve().parent == cache.resolve()
@@ -457,26 +365,25 @@ def main(arguments: list[str]) -> int:
             "missing. The main checkout gets the app's long-lived Simulator; a git worktree gets "
             f"its own, named for the worktree, or for {SCOPE_VARIABLE} when that is set. "
             "derived-data prints this checkout's own build folder. boot starts the Simulator "
-            "when it isn't up, waits for the boot, an app's launch, and a calm Mac, and has a "
+            "when it isn't up, waits for the boot, an app's launch, and a calm Mac, restarts one "
+            "that was up when its preferences daemon no longer saves a write, and has a "
             "keeper shut it down once nothing has used it for "
-            f"{IDLE_LIMIT_SECONDS // 60} minutes, or sooner when memory runs short; shutdown "
-            "stops this checkout's Simulators now. Both, and the keeper, delete the copies of "
-            "the app that earlier installs replaced, which the Simulator keeps. delete removes this worktree's Simulators "
-            "and build folder; prune removes those of worktrees that are gone."
+            f"{IDLE_LIMIT_SECONDS // 60} minutes, or sooner when memory runs short, but never "
+            f"while boot is bringing it up or in the {HANDOVER_SECONDS // 60} minutes after "
+            "boot hands it over; shutdown stops this checkout's Simulators now. Both, and the "
+            "keeper, delete the copies of the app that earlier installs replaced, which the "
+            "Simulator keeps. delete removes this worktree's Simulators and build folder; prune "
+            "removes those of worktrees that are gone."
         )
     )
     parser.add_argument(
         "command",
         nargs="?",
         default="udid",
-        choices=["udid", "derived-data", "boot", "shutdown", "delete", "prune", "keeper"],
+        choices=["udid", "derived-data", "boot", "shutdown", "delete", "prune"],
     )
     parser.add_argument("--device", default="iphone", choices=sorted(KINDS))
-    parser.add_argument("--udid", help=argparse.SUPPRESS)
     options = parser.parse_args(arguments)
-    if options.command == "keeper":
-        keeper(options.udid)
-        return 0
     scope = None if options.command == "prune" else checkout_scope(dict(os.environ))
     if options.command == "udid":
         print(udid(options.device, scope))
