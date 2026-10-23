@@ -27,6 +27,14 @@ describe('compareStrings', () => {
     expect(sign(`x${supplementary}`, `x${fullwidthA}`)).toBe(1)
     expect(sign(supplementary, `${supplementary}a`)).toBe(-1)
   })
+
+  test('reads a lone surrogate as a scalar of its own, as Swift does', () => {
+    const fullwidthA = String.fromCodePoint(0xff21)
+    const supplementary = String.fromCodePoint(0x20000)
+    expect(sign(`\udc00${supplementary}`, `${supplementary}\udc00`)).toBe(-1)
+    expect(sign(`\ud800a${supplementary}`, `\ud800a${fullwidthA}`)).toBe(1)
+    expect(sign(`\ud800${supplementary}`, `\ud800${fullwidthA}`)).toBe(1)
+  })
 })
 
 describe('normalizeQuery', () => {

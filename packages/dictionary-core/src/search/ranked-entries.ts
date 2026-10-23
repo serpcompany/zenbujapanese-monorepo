@@ -22,10 +22,15 @@ export function minimum<Value>(
   return best
 }
 
+const compareIds = (lhs: { id: string }, rhs: { id: string }) => compareStrings(lhs.id, rhs.id)
+
+const comparePresentation = (lhs: RankedEntry, rhs: RankedEntry) =>
+  comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
+
 export function canonicalEntry<Entry extends { id: string }>(
   equivalents: readonly Entry[]
 ): Entry | undefined {
-  return minimum(equivalents, (lhs, rhs) => compareStrings(lhs.id, rhs.id))
+  return minimum(equivalents, compareIds)
 }
 
 export function deduplicated(ranked: RankedEntry[], client: Interruptible = {}): RankedEntry[] {
@@ -39,9 +44,7 @@ export function deduplicated(ranked: RankedEntry[], client: Interruptible = {}):
   }
   return [...groups.values()].map(group => {
     const leading = group[0]
-    const strongest = minimum(group, (lhs, rhs) =>
-      comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
-    )
+    const strongest = minimum(group, comparePresentation)
     const canonical = canonicalEntry(group.map(ranked => ranked.entry)) ?? leading.entry
     return {
       entry: {
