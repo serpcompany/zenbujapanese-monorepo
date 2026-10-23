@@ -15,15 +15,15 @@ were recorded: TUBELEX's and Wikipedia's are pinned by SHA-256 in their import r
 others, Kuromoji's and the historical public catalog's, are records of what was imported.
 
 Sources published only as the latest file at a fixed URL are committed, in Git LFS, beside their
-records: `JMdict_e-2026-08-10.gz`, and the `Tatoeba-2026-10-03/`, `Tatoeba-jpn-indices-2026-10-03/`,
-`KANJIDIC2-2026-10-05/`, and `EDRDG-radicals-2026-08-10/` folders. Jonathan Waller's JLPT kanji
-pages, from a site that no longer resolves, are committed the same way in
-`Kanji-JLPT-Waller-2020-08-06/`, as the Internet Archive captured them. Fixed upstream releases too
+records: `JMdict_e_examp-2026-10-23.gz`, and the `Tatoeba-2026-10-03/`,
+`Tatoeba-jpn-indices-2026-10-03/`, `KANJIDIC2-2026-10-05/`, and `EDRDG-radicals-2026-08-10/`
+folders. Jonathan Waller's JLPT kanji pages, from a site that no longer resolves, are committed the
+same way in `Kanji-JLPT-Waller-2020-08-06/`, as the Internet Archive captured them. Fixed upstream releases too
 large to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and git-ignored.
 
 | Data | Source record | Importer |
 | --- | --- | --- |
-| Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-10-03.source.json` | `import_jmdict.py` |
+| Dictionary entries, examples, and each meaning's checked examples | `JMdict_e_examp-2026-10-23.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-10-03.source.json` | `import_jmdict.py` |
 | Examples for kana-headword words | `Tatoeba-jpn-indices-2026-10-03.source.json` | `import_example_word_index.py` |
 | Estimated pitch for two-part compounds | `UniDic-CWJ-3.1.0.source.json` | `import_compound_pitch.py` |
 | Kanji reference data | `KANJIDIC2-2026-10-05.source.json` | `import_kanjidic.py` |
