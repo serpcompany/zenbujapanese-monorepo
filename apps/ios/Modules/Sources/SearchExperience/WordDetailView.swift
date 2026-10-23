@@ -159,8 +159,8 @@ extension WordDetailView {
       }
     case .frequency:
       Section(title) {
-        ForEach((page?.frequency ?? []).enumerated(), id: \.offset) { _, row in
-          FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
+        ForEach((page?.frequency ?? []).rows(in: .frequency)) { row in
+          FrequencyRankRow(row: row.value) { frequencyDisclosure = $0 }
         }
       }
     case .conjugations:
@@ -228,7 +228,8 @@ private struct PrimaryKanjiSection: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    ForEach(characters, id: \.self) { character in
+    ForEach(characters.rows(in: .kanji)) { row in
+      let character = row.value
       if let kanji = KanjiCharacter(character) {
         WordDetailKanjiLink(
           kanji: kanji,
@@ -247,7 +248,8 @@ private struct AlternativeKanjiSection: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    ForEach(characters, id: \.self) { character in
+    ForEach(characters.rows(in: .alternativeKanji)) { row in
+      let character = row.value
       if let kanji = KanjiCharacter(character) {
         WordDetailKanjiLink(
           kanji: kanji,

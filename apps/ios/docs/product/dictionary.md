@@ -87,10 +87,9 @@ candidate tiles in the same fill as the radical squares, and glass buttons (whit
 
 A candidate from any panel is added to the end of the query, so picking one character after another,
 in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
-show, with the query in the field. In dark mode the strip and pad are black.
-
-A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
-button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
+show, with the query in the field. In dark mode the strip and pad are black. A Mac can't drag a
+sheet away, so there the panel is a sheet with a **Done** button, which Escape presses too, sized
+to stay inside the window ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
 sheet, its three buttons, Grade without **Undo** on iPhone only, and closing it, dragged away on
@@ -240,7 +239,8 @@ Below the top card, sections appear in this order: Meaning, Frequency, Alternati
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
-`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page, and
+each row once in its section) and `TranslateUITests.testAWordSheetListsEachRowOnceInItsOwnSection`.
 
 Each meaning opens a menu. **Speak** reads its glosses, each whole as JMdict gives it, in an English
 voice, leaving out a parenthesis that ends one and reading a leading one as words ("dog (Canis

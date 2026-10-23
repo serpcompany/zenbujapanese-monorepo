@@ -11,7 +11,7 @@ enum SyncRetry {
   ) -> TimeInterval? {
     guard let error = error as? AccountServiceError else { return nil }
     switch error {
-    case .unreachable:
+    case .unreachable, .transportFailed:
       return backoff(failures: failures, jitter: jitter)
     case .refused(let status, _, _, let retryAfter) where status == 429:
       return retryAfter ?? backoff(failures: failures, jitter: jitter)

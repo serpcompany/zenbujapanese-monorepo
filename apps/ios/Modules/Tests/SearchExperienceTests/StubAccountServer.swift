@@ -65,8 +65,10 @@ struct StubSyncRequest: Decodable, Sendable {
 
 enum StubReply: Sendable {
   case answer(status: Int, headers: [String: String], body: Data)
-  case offline
+  case failure(URLError.Code)
   case later(LaterReply)
+
+  static var offline: StubReply { .failure(.notConnectedToInternet) }
 
   static func json(_ status: Int, _ object: Any, headers: [String: String] = [:]) -> StubReply {
     .answer(
@@ -183,8 +185,9 @@ final class StubURLProtocol: URLProtocol {
 
   private func send(_ reply: StubReply, for url: URL) {
     switch reply {
-    case .offline:
-      client?.urlProtocol(self, didFailWithError: URLError(.notConnectedToInternet))
+    case .failure(let code):
+      client?.urlProtocol(
+        self, didFailWithError: URLError(code, userInfo: [NSURLErrorFailingURLErrorKey: url]))
     case .answer(let status, let headers, let body):
       let response = HTTPURLResponse(
         url: url, statusCode: status, httpVersion: "HTTP/1.1", headerFields: headers)!
