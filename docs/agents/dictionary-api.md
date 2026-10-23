@@ -177,38 +177,13 @@ answers, headers, and error codes, and every field of a card and a token. An app
 
 ## How it runs
 
-The main thread hashes the artifact and Sudachi's dictionary once, refuses to start unless the files
-a word card is read from are the pinned language-data release's, checks Sudachi's pins, and serves
-HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
-process's environment, which only the main thread can set, so the main thread sets it
-(`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact read-only,
-checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one at a
-time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the thread
-with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches,
-word examples, a query's examples, kanji details, and word lookups in LRU caches, so a page's first
-request pays for a broad query and the rest don't. The browse routes don't scan the artifact for a
-request: before a thread reports ready, it builds the browse index
-(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana order
-by its first two kana and every category's words in both its orders, keeps the totals, the category
-counts, the kanji and ranked lists' summaries and counts, every kanji list, and the browse sitemaps'
-answer, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A browse page
-then reads only its own words, with statements already prepared. The index holds about 960,000 row
-IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this workstation (load
-average 5 over the last minute, falling from 180 over fifteen), each thread was ready about 9.4
-seconds after it started, and every browse route's first request took at most 28 ms (a JLPT level's
-first page); before the index, the totals took 1 second and the category counts 2. Warming adds
-about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the pages it read;
-the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps answers for 10
-minutes on top.
+The main thread checks the files and serves HTTP, and worker threads answer the calls, each with
+its own caches, a request going to the thread that answered it before.
+[`dictionary-api-threads.md`](dictionary-api-threads.md) has how, with the browse index each thread
+builds and how long a broad query takes.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
-
-A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
-SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
-`s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in
-full. Grapheme counts and string comparisons take exact fast paths
-(`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is the app's SQL.
 
 ## Code layout
 
