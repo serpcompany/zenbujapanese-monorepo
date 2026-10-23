@@ -401,13 +401,14 @@
     return everyUnitIsAGrapheme(value) ? value.split("") : Array.from(graphemeSegmenter.segment(value), (segment) => segment.segment);
   }
   function compareScalars(lhs, rhs) {
-    const left = Array.from(lhs);
-    const right = Array.from(rhs);
-    for (let index = 0; index < Math.min(left.length, right.length); index++) {
-      const difference = (left[index].codePointAt(0) ?? 0) - (right[index].codePointAt(0) ?? 0);
-      if (difference !== 0) return difference;
+    let index = 0;
+    while (index < lhs.length && index < rhs.length) {
+      const left = lhs.codePointAt(index) ?? 0;
+      const right = rhs.codePointAt(index) ?? 0;
+      if (left !== right) return left - right;
+      index += left > 65535 ? 2 : 1;
     }
-    return left.length - right.length;
+    return lhs.length - rhs.length;
   }
   var isSurrogate = (unit) => unit >= 55296 && unit <= 57343;
   function compareStrings(lhs, rhs) {
@@ -1027,7 +1028,11 @@
     if (secondaryMask & loanword) return 5;
     return 9;
   }
-  var bitCount = (value) => value.toString(2).replaceAll("0", "").length;
+  function bitCount(mask) {
+    let count = 0;
+    for (let rest = mask >>> 0; rest !== 0; rest >>>= 1) count += rest & 1;
+    return count;
+  }
   function compareProfiles(lhs, rhs) {
     const categories = category(lhs) - category(rhs);
     if (categories !== 0) return categories;
@@ -1054,44 +1059,37 @@
     writtenContains: 4,
     readingContains: 5
   };
-  function firstDifference(...differences) {
-    for (const difference of differences) {
-      const value = difference();
-      if (value !== 0) return value;
-    }
-    return 0;
-  }
   var isLaterSense = (rank) => rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0;
-  var englishPlacement = (lhs, rhs) => [
-    () => lhs.lane - rhs.lane,
-    () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-    () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
-  ];
+  function compareHeadwordLengthThenFingerprint(lhs, rhs) {
+    const difference = lhs.headwordLength - rhs.headwordLength;
+    if (difference !== 0) return difference;
+    return compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint);
+  }
+  function compareEnglishPlacements(lhs, rhs) {
+    let difference = lhs.lane - rhs.lane;
+    if (difference === 0) difference = lhs.romajiSpecificityRank - rhs.romajiSpecificityRank;
+    if (difference === 0) difference = Number(isLaterSense(lhs)) - Number(isLaterSense(rhs));
+    return difference;
+  }
   function compareEnglishRanks(lhs, rhs) {
-    return firstDifference(
-      ...englishPlacement(lhs, rhs),
-      () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseOrder - rhs.senseOrder,
-      () => lhs.glossOrder - rhs.glossOrder,
-      () => lhs.corroborationRank - rhs.corroborationRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
+    let difference = compareEnglishPlacements(lhs, rhs);
+    if (difference === 0) difference = lhs.priorityPresenceRank - rhs.priorityPresenceRank;
+    if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile);
+    if (difference === 0) difference = lhs.senseOrder - rhs.senseOrder;
+    if (difference === 0) difference = lhs.glossOrder - rhs.glossOrder;
+    if (difference === 0) difference = lhs.corroborationRank - rhs.corroborationRank;
+    if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs);
+    return difference;
   }
   function compareJapaneseRanks(lhs, rhs) {
-    return firstDifference(
-      () => lhs.relation - rhs.relation,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseBreadthRank - rhs.senseBreadthRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
+    let difference = lhs.relation - rhs.relation;
+    if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile);
+    if (difference === 0) difference = lhs.senseBreadthRank - rhs.senseBreadthRank;
+    if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs);
+    return difference;
   }
   function comparePresentationRanks(lhs, rhs) {
-    if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs));
-    }
+    if (lhs.kind === "english" && rhs.kind === "english") return compareEnglishPlacements(lhs, rhs);
     if (lhs.kind === "japanese" && rhs.kind === "japanese") return lhs.relation - rhs.relation;
     return lhs.kind === "english" ? -1 : 1;
   }
@@ -1102,7 +1100,7 @@
   }
   function sameLexicalGroup(lhs, rhs) {
     if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs)) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
+      return compareEnglishPlacements(lhs, rhs) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
     }
     if (lhs.kind === "japanese" && rhs.kind === "japanese") {
       return lhs.relation === rhs.relation && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseBreadthRank === rhs.senseBreadthRank;
@@ -1118,8 +1116,10 @@
     }
     return best;
   }
+  var compareIds = (lhs, rhs) => compareStrings(lhs.id, rhs.id);
+  var comparePresentation = (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank);
   function canonicalEntry(equivalents) {
-    return minimum(equivalents, (lhs, rhs) => compareStrings(lhs.id, rhs.id));
+    return minimum(equivalents, compareIds);
   }
   function deduplicated(ranked, client = {}) {
     const groups = /* @__PURE__ */ new Map();
@@ -1132,10 +1132,7 @@
     }
     return [...groups.values()].map((group) => {
       const leading = group[0];
-      const strongest = minimum(
-        group,
-        (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
-      );
+      const strongest = minimum(group, comparePresentation);
       const canonical = canonicalEntry(group.map((ranked2) => ranked2.entry)) ?? leading.entry;
       return {
         entry: {
@@ -2177,9 +2174,9 @@
     if (endsInNote(value, `to ${query}`)) return GlossRelation.qualifiedInfinitive;
     return token.test(value) ? GlossRelation.glossToken : null;
   }
+  var glossLane = (evidence) => evidence.relation === GlossRelation.glossToken ? 1 : 0;
   function glossEvidencePrecedes(lhs, rhs) {
-    const lane = (evidence) => evidence.relation === GlossRelation.glossToken ? 1 : 0;
-    return lane(lhs) - lane(rhs) || lhs.senseOrder - rhs.senseOrder || lhs.relation - rhs.relation || lhs.glossOrder - rhs.glossOrder;
+    return glossLane(lhs) - glossLane(rhs) || lhs.senseOrder - rhs.senseOrder || lhs.relation - rhs.relation || lhs.glossOrder - rhs.glossOrder;
   }
   async function rankedEnglish(db, query, exactFormOnly = false) {
     const evidence = exactFormOnly ? await exactRomajiEvidence(db, query) : await englishEvidence(db, query);
@@ -2358,6 +2355,11 @@
   function containsFilter(query) {
     return { sql: "instr(f.form, ?) > 0", params: [query] };
   }
+  function compareFormEvidence(lhs, rhs) {
+    if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation;
+    const profiles = compareProfiles(lhs.profile, rhs.profile);
+    return profiles || compareStrings(lhs.form, rhs.form);
+  }
   function rankJapanese(query, rows, client = {}) {
     const byEntry = /* @__PURE__ */ new Map();
     let step = 0;
@@ -2378,11 +2380,7 @@
     const ranked = [];
     for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
       stopIfInterrupted(client, step++);
-      const selected = minimum(evidence, (lhs, rhs) => {
-        if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation;
-        const profiles = compareProfiles(lhs.profile, rhs.profile);
-        return profiles || compareStrings(lhs.form, rhs.form);
-      });
+      const selected = minimum(evidence, compareFormEvidence);
       if (!selected) continue;
       const rank = {
         kind: "japanese",
@@ -3002,9 +3000,9 @@
     return { entries: () => file.entries, row: (character) => byCharacter.get(character) ?? null };
   }
   var codePoint = (character) => character.codePointAt(0) ?? 0;
+  var frequencyRank = (entry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY;
   function byFrequency(left, right) {
-    const rank = (entry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY;
-    return rank(left) - rank(right) || codePoint(left.character) - codePoint(right.character);
+    return frequencyRank(left) - frequencyRank(right) || codePoint(left.character) - codePoint(right.character);
   }
   var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
   var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);

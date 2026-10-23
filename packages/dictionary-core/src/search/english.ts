@@ -70,10 +70,12 @@ interface GlossEvidence {
   meaning: string
 }
 
+const glossLane = (evidence: GlossEvidence) =>
+  evidence.relation === GlossRelation.glossToken ? 1 : 0
+
 function glossEvidencePrecedes(lhs: GlossEvidence, rhs: GlossEvidence): number {
-  const lane = (evidence: GlossEvidence) => (evidence.relation === GlossRelation.glossToken ? 1 : 0)
   return (
-    lane(lhs) - lane(rhs) ||
+    glossLane(lhs) - glossLane(rhs) ||
     lhs.senseOrder - rhs.senseOrder ||
     lhs.relation - rhs.relation ||
     lhs.glossOrder - rhs.glossOrder
