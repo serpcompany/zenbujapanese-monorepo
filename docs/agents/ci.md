@@ -239,7 +239,7 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
   and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon,
   privacy strings, and entitlements), that every Swift package the app links has a license text with
   its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
-  (`test_simulator.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
+  and its keeper (`test_simulator.py`, `test_simulator_keeper.py`, `test_simulator_devices.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
   `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
   and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents
