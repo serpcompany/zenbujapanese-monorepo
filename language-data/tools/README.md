@@ -174,28 +174,31 @@ as its headword. Each entry keeps its best 200 sentences: Word Detail shows at m
 past 50 as "50+".
 
 **`import_compound_pitch.py`** estimates pitch for compounds UniDic doesn't list whole, such as
-記者会見 and クレジットカード, from their parts, with the rule in `compound_accent.py` (#825).
+記者会見 and レンタルビデオ, from their parts, with the rule in `compound_accent.py` (#825).
 `tests/test_compound_pitch_rule.py` runs it on UniDic's real rows for each case below.
 
 - **Parts.** Every UniDic row of a noun, na-adjective, prefix, or suffix is a possible part,
   matched by its spelling and its kana form (`kanaBase`), so suffix rows with no accent of their own
-  (〜者, 〜官) and rendaku forms (運動ぶそく) count. A kana part needs two characters and a
+  (〜者, 〜員) and rendaku forms (運動ぶそく) count. A kana part needs two characters and a
   katakana one three; the only kana affixes are お, ご, 御, さん, さま, ちゃん, くん, and たち. A
   word is split when it has kanji and three characters or more, or is katakana of four or more, so
   a hiragana word such as には never is.
 - **Splits.** A word splits into two to four parts. Only the splits with the fewest parts count,
-  and the word gets a value only when they all give the same one (個人的 gets none).
+  and the word gets a value only when they all give the same one. A split that gives none, such as
+  one ending in a part with no combination type, disagrees with the rest: クレジットカード, whose
+  カード has a row without one, gets none, and so does 個人的.
 - **Combining.** Parts combine left to right by UniDic's `aConType`: C1 keeps the later part's
   downstep (heiban stays heiban), C2 puts it on the later part's first mora, C3 on the earlier
   part's last mora, C4 makes the word heiban, and C5 keeps the earlier part's. A prefix combines by
   its P-type (P1, P2, P4, P6, P13, or P14). A downstep on a special mora (ん, っ, ー, or the second
   half of a long vowel or diphthong) moves one mora left, but never across a part's start:
-  委員長 is いい＼んちょう, and 選挙運動 stays せんきょう＼んどう.
+  関心事 is かんし＼んじ, and 選挙運動 stays せんきょう＼んどう.
 - **The gate.** Words are grouped by script, by the types their splits' last parts have (and
   whether a split starts with a prefix), and by their number of parts (two, or three or more).
-  Only the 24 groups in `SHIPPED_GROUPS` ship: those that agreed with Kanjium's accents on at least
+  Only the 13 groups in `SHIPPED_GROUPS` ship: those that agree with Kanjium's accents on at least
   90% of at least 30 uncommon words. Kanjium was only measured against, never imported, and the
-  list names groups, not accents. 観光客 (C3) and 可能性 (C4) are estimated in groups below it.
+  list names groups, not accents. 観光客 (C3), 可能性 (C4), and 被害者 (a prefix, then C2 or C3) are
+  estimated in groups below it.
 - **The C2 fallback.** Where the rule gives no value, as when its splits disagree (小学校) or its
   group is below the gate (火曜日), a two-part kanji compound keeps the earlier C2 rule's: when it
   splits into two accented UniDic nouns, read by their lemma readings, and every such split's
@@ -208,10 +211,10 @@ past 50 as "50+".
   first as an expression, particle, conjunction, interjection, auxiliary, or affix (立ち入り禁止,
   何時間), so these keep showing no pitch.
 
-The report's `outcomes` count each step's results. On release 2026.10.5's data, 1,554 common
-entries get a value (C2 gave 713): 1,495 from the rule, agreeing with Kanjium on 93.3% of 1,256
-and with English Wiktionary on 91.9% of 528, and 59 from the fallback, agreeing 78.6% of 56 and
-76.9% of 39. UniDic's own accents agree 96.8% and 96.6%.
+The report's `outcomes` count each step's results. On release 2026.10.5's data, 1,268 common
+entries get a value (C2 gave 713): 1,118 from the rule, agreeing with Kanjium on 93.0% of 926 and
+with English Wiktionary on 92.4% of 356, and 150 from the fallback, agreeing 86.5% of 133 and
+82.7% of 81. UniDic's own accents agree 96.8% and 96.6%.
 
 **`import_frequency_pack.py`** builds a rank pack from a curated list. TUBELEX counts UniDic lemmas,
 so a lemma's reading names the word it counted even where JMdict files the spelling under several
