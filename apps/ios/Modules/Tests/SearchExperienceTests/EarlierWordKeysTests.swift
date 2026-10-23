@@ -21,8 +21,8 @@ struct EarlierWordKeysTests {
     #expect(item.id == SavedWords.taberu)
     #expect(item.encounterReference.id == SavedWords.taberu)
 
-    let temporary = try TemporaryDefaults()
-    let notes = try storage(in: temporary, placing: .live)
+    let defaults = MemoryDefaults()
+    let notes = storage(in: defaults, placing: .live)
     await notes.save(LearnerWordNote(text: "毎日食べる"), for: item.id)
     let photos = fixture.launch(placing: .live)
     await photos.save(fixture.photo, for: item.encounterReference)
@@ -35,57 +35,57 @@ struct EarlierWordKeysTests {
     "notes an earlier version saved under a word's note identity move to its Language Reference ID, and a kanji's stay"
   )
   func movesEarlierNotes() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let shoku = SavedItem.kanji(try #require(KanjiCharacter("食")), reading: "ショク").id
     try keep(
       [
         SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "1", text: "毎日食べる")],
         SavedWords.miruNoteIdentity: [LearnerWordNote(id: "2", text: "よく見る")],
         shoku.rawValue: [LearnerWordNote(id: "3", text: "食べ物の食")],
-      ], in: temporary)
-    let storage = try storage(in: temporary, placing: .live)
+      ], in: defaults)
+    let storage = storage(in: defaults, placing: .live)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
     #expect(await storage.load(SavedWords.taberu).first?.headword == "食べる")
     #expect(await storage.load(SavedWords.miru).map(\.text) == ["よく見る"])
     #expect(await storage.load(shoku).map(\.text) == ["食べ物の食"])
     #expect(await storage.withoutAWord().isEmpty)
-    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
-    #expect(try storedKeys(in: temporary) == [SavedWords.taberu, SavedWords.miru, shoku])
+    #expect(defaults.object(forKey: earlierKey) == nil)
+    #expect(try storedKeys(in: defaults) == [SavedWords.taberu, SavedWords.miru, shoku])
   }
 
   @Test("a word JMdict lists twice keeps the notes saved under either entry's note identity")
   func keepsTheNotesOfBothEntries() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let identities = SavedWords.enmaNoteIdentities
     try keep(
       [
         identities[1]: [LearnerWordNote(id: "2", text: "二つ目の閻魔")],
         identities[0]: [LearnerWordNote(id: "1", text: "一つ目の閻魔")],
-      ], in: temporary)
-    let storage = try storage(in: temporary, placing: .live)
+      ], in: defaults)
+    let storage = storage(in: defaults, placing: .live)
 
     #expect(await storage.load(SavedWords.enma).map(\.text) == ["一つ目の閻魔", "二つ目の閻魔"])
-    #expect(try storedKeys(in: temporary) == [SavedWords.enma])
+    #expect(try storedKeys(in: defaults) == [SavedWords.enma])
   }
 
   @Test("a note under the other entry of a word JMdict lists twice moves to the one its page shows")
   func movesANoteToTheEntryItsPageShows() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let note = LearnerWordNote(id: "1", text: "閻魔の別の見出し")
-    try save([SavedWords.enmaOtherEntry.rawValue: [note]], in: temporary)
-    let storage = try storage(in: temporary, placing: .live)
+    try save([SavedWords.enmaOtherEntry.rawValue: [note]], in: defaults)
+    let storage = storage(in: defaults, placing: .live)
 
     #expect(await storage.load(SavedWords.enma) == [note.on("閻魔", reading: "えんま")])
-    #expect(try storedKeys(in: temporary) == [SavedWords.enma])
+    #expect(try storedKeys(in: defaults) == [SavedWords.enma])
   }
 
   @Test("a note without a word names the headword its page saved, a kanji's character, or else its key")
   @MainActor
   func namesTheWordOfANoteWithoutOne() async throws {
-    let temporary = try TemporaryDefaults()
-    try keep([SavedWords.goneNoteIdentity: [SavedWords.goneNote.note]], in: temporary)
-    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+    let defaults = MemoryDefaults()
+    try keep([SavedWords.goneNoteIdentity: [SavedWords.goneNote.note]], in: defaults)
+    let storage = storage(in: defaults, placing: SavedWords.lookup)
     let (store, saves) = SavedWords.observed(storage)
     var saved = saves.makeAsyncIterator()
     let page = SavedItemNotes(store: store)
@@ -100,7 +100,7 @@ struct EarlierWordKeysTests {
     _ = await saved.next()
     await storage.save(LearnerWordNote(text: "辞書にない漢字"), for: SavedWords.droppedKanji)
 
-    let relaunched = try self.storage(in: temporary, placing: SavedWords.lookup)
+    let relaunched = self.storage(in: defaults, placing: SavedWords.lookup)
     let words = await relaunched.withoutAWord().map(\.word)
     #expect(words == ["消えた語", "丢", SavedWords.goneNoteIdentity])
   }
@@ -109,69 +109,69 @@ struct EarlierWordKeysTests {
     "a note whose word this dictionary doesn't have is kept, listed as without a word, and can be deleted"
   )
   func keepsANoteWithoutAWord() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let (gone, note) = (SavedWords.goneNote.key, SavedWords.goneNote.note)
-    try keep([gone.rawValue: [note]], in: temporary)
+    try keep([gone.rawValue: [note]], in: defaults)
 
-    let launched = try storage(in: temporary, placing: .live)
+    let launched = storage(in: defaults, placing: .live)
     let withoutAWord = await launched.withoutAWord()
 
     #expect(withoutAWord == [SavedWords.goneNote])
-    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
-    let relaunched = try storage(in: temporary, placing: .live)
+    #expect(defaults.object(forKey: earlierKey) == nil)
+    let relaunched = storage(in: defaults, placing: .live)
     #expect(await relaunched.withoutAWord() == withoutAWord)
     await relaunched.save(LearnerWordNote(id: note.id, text: ""), for: gone)
     #expect(await relaunched.withoutAWord().isEmpty)
-    #expect(try storedKeys(in: temporary).isEmpty)
+    #expect(try storedKeys(in: defaults).isEmpty)
   }
 
   @Test(
     "notes not placed while the dictionary couldn't be read aren't listed as without a word, and move at the next launch that can"
   )
   func placesNotesOnceTheDictionaryReads() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     try keep(
       [
         SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "1", text: "毎日食べる")]
-      ], in: temporary)
+      ], in: defaults)
 
-    let first = try storage(in: temporary, placing: SavedWords.unreadable)
+    let first = storage(in: defaults, placing: SavedWords.unreadable)
 
     #expect(await first.load(SavedWords.taberu).isEmpty)
     #expect(await first.withoutAWord().isEmpty)
-    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
-    let relaunched = try storage(in: temporary, placing: SavedWords.lookup)
+    #expect(defaults.object(forKey: earlierKey) == nil)
+    let relaunched = storage(in: defaults, placing: SavedWords.lookup)
     #expect(await relaunched.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
   }
 
   @Test("a note in both stores keeps its newer text, and the earlier store's other notes join it")
   func keepsTheNewerText() async throws {
-    let temporary = try TemporaryDefaults()
-    try save([SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]], in: temporary)
+    let defaults = MemoryDefaults()
+    try save([SavedWords.taberu.rawValue: [LearnerWordNote(id: "1", text: "よく食べる")]], in: defaults)
     try keep(
       [
         SavedWords.taberuNoteIdentity: [
           LearnerWordNote(id: "1", text: "毎日食べる"), LearnerWordNote(id: "2", text: "朝ごはん"),
         ]
-      ], in: temporary)
-    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+      ], in: defaults)
+    let storage = storage(in: defaults, placing: SavedWords.lookup)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["よく食べる", "朝ごはん"])
   }
 
   @Test("earlier notes that can't all be read are kept aside, and every readable note moves")
   func keepsUnreadableEarlierNotesAside() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let taberu = SavedWords.taberuNoteIdentity
     let miru = SavedWords.miruNoteIdentity
     let stored = Data(
       #"{"\#(taberu)":[{"id":"1","text":"毎日食べる"}],"\#(miru)":"not notes"}"#.utf8)
-    temporary.defaults.set(stored, forKey: earlierKey)
-    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+    defaults.set(stored, forKey: earlierKey)
+    let storage = storage(in: defaults, placing: SavedWords.lookup)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["毎日食べる"])
-    #expect(temporary.defaults.keptCopies(of: earlierKey) == [stored])
-    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
+    #expect(defaults.keptCopies(of: earlierKey) == [stored])
+    #expect(defaults.object(forKey: earlierKey) == nil)
   }
 
   @Test(
@@ -211,27 +211,27 @@ struct EarlierWordKeysTests {
 
   @Test("an earlier store that isn't data is kept aside, and notes save as before")
   func keepsAnEarlierStoreThatIsntDataAside() async throws {
-    let temporary = try TemporaryDefaults()
-    temporary.defaults.set("not data", forKey: earlierKey)
-    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+    let defaults = MemoryDefaults()
+    defaults.set("not data", forKey: earlierKey)
+    let storage = storage(in: defaults, placing: SavedWords.lookup)
 
     await storage.save(LearnerWordNote(text: "新しいメモ"), for: SavedWords.taberu)
 
     #expect(await storage.load(SavedWords.taberu).map(\.text) == ["新しいメモ"])
-    #expect(temporary.defaults.keptValues(of: earlierKey).compactMap { $0 as? String } == ["not data"])
-    #expect(temporary.defaults.object(forKey: earlierKey) == nil)
+    #expect(defaults.keptValues(of: earlierKey).compactMap { $0 as? String } == ["not data"])
+    #expect(defaults.object(forKey: earlierKey) == nil)
   }
 
   @Test("Notes Without a Word lists each note whose word is gone until it's deleted")
   @MainActor
   func listsNotesWithoutAWordUntilDeleted() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     try keep(
       [
         SavedWords.goneNoteIdentity: [SavedWords.goneNote.note],
         SavedWords.taberuNoteIdentity: [LearnerWordNote(id: "2", text: "毎日食べる")],
-      ], in: temporary)
-    let storage = try storage(in: temporary, placing: SavedWords.lookup)
+      ], in: defaults)
+    let storage = storage(in: defaults, placing: SavedWords.lookup)
     let saved = NotesWithoutAWord(
       store: WordNoteStore(
         load: { await storage.load($0) }, save: { await storage.save($0, for: $1, startedFrom: $2) },
@@ -265,23 +265,20 @@ struct EarlierWordKeysTests {
     }
   }
 
-  private func keep(_ notes: [String: [LearnerWordNote]], in temporary: TemporaryDefaults) throws {
-    temporary.defaults.set(try SavedWords.earlierNotes(notes), forKey: earlierKey)
+  private func keep(_ notes: [String: [LearnerWordNote]], in defaults: MemoryDefaults) throws {
+    defaults.set(try SavedWords.earlierNotes(notes), forKey: earlierKey)
   }
 
-  private func save(_ notes: [String: [LearnerWordNote]], in temporary: TemporaryDefaults) throws {
-    temporary.defaults.set(try SavedWords.earlierNotes(notes), forKey: WordNoteStorage.storageKey)
+  private func save(_ notes: [String: [LearnerWordNote]], in defaults: MemoryDefaults) throws {
+    defaults.set(try SavedWords.earlierNotes(notes), forKey: WordNoteStorage.storageKey)
   }
 
-  private func storage(in temporary: TemporaryDefaults, placing: SavedKeyLookup) throws
-    -> WordNoteStorage
-  {
-    WordNoteStorage(
-      defaults: try #require(UserDefaults(suiteName: temporary.suite)), placing: placing)
+  private func storage(in defaults: MemoryDefaults, placing: SavedKeyLookup) -> WordNoteStorage {
+    WordNoteStorage(defaults: defaults.opened(), placing: placing)
   }
 
-  private func storedKeys(in temporary: TemporaryDefaults) throws -> Set<SavedItemID> {
-    let data = try #require(temporary.defaults.data(forKey: WordNoteStorage.storageKey))
+  private func storedKeys(in defaults: MemoryDefaults) throws -> Set<SavedItemID> {
+    let data = try #require(defaults.data(forKey: WordNoteStorage.storageKey))
     let stored = try JSONDecoder().decode([String: [LearnerWordNote]].self, from: data)
     return Set(stored.keys.map(SavedItemID.init(rawValue:)))
   }

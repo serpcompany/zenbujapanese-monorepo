@@ -14,30 +14,29 @@ struct DroppedWordNotesTests {
     "a note on a word or kanji this dictionary doesn't have is kept and listed as without a word until it's deleted, and one on a word or kanji it has isn't"
   )
   func listsNotesOnDroppedWordsAndKanji() async throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let stored: [String: [LearnerWordNote]] = [
       word.rawValue: [onWord],
       kanji.rawValue: [onKanji],
       "042e07f7052f611fed33ddddf37f55fd": [LearnerWordNote(id: "3", text: "毎日食べる")],
       "kanji:食": [LearnerWordNote(id: "4", text: "食べ物の食")],
     ]
-    temporary.defaults.set(try JSONEncoder().encode(stored), forKey: WordNoteStorage.storageKey)
+    defaults.set(try JSONEncoder().encode(stored), forKey: WordNoteStorage.storageKey)
     let listed = [
       NoteWithoutAWord(key: word, note: onWord), NoteWithoutAWord(key: kanji, note: onKanji),
     ]
 
-    let first = try launch(in: temporary)
+    let first = launch(in: defaults)
 
     #expect(await first.withoutAWord() == listed)
-    let relaunched = try launch(in: temporary)
+    let relaunched = launch(in: defaults)
     #expect(await relaunched.withoutAWord() == listed)
     #expect(await relaunched.load(word).map(\.text) == [onWord.text])
     await relaunched.save(LearnerWordNote(id: onWord.id, text: ""), for: word)
     #expect(await relaunched.withoutAWord() == [NoteWithoutAWord(key: kanji, note: onKanji)])
   }
 
-  private func launch(in temporary: TemporaryDefaults) throws -> WordNoteStorage {
-    WordNoteStorage(
-      defaults: try #require(UserDefaults(suiteName: temporary.suite)), placing: .live)
+  private func launch(in defaults: MemoryDefaults) -> WordNoteStorage {
+    WordNoteStorage(defaults: defaults.opened(), placing: .live)
   }
 }

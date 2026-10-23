@@ -86,7 +86,14 @@ what it waited for and for how long.
   threads waiting for it. Observe the object you own. Every test's memory counts in the process's
   footprint too, which the tests beside one that hashed a file raised by 38 MB, or lowered, while
   it hashed: a test of memory counts what the code under test holds (`DigestTests` counts the
-  chunks alive at once).
+  chunks alive at once). A defaults suite is a plist the Simulator's one `cfprefsd` saves, and it
+  keeps a file open for each suite holding data, 512 at most: a full run held about 190 at once,
+  and when 60 account tests a busy Mac had stalled for 17 s resumed together, it refused every
+  write for 4 s (`Couldn't write values … Path not accessible`), and two note tests read back the
+  earlier notes their store had just removed. Pushed past its limit it also leaks those files and
+  refuses writes until the Simulator restarts. A test keeps its defaults in memory
+  (`MemoryDefaults`), and a store it hands to an actor gets another object on the same values
+  (`opened()`).
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.

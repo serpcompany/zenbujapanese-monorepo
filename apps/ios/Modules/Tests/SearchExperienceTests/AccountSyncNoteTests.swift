@@ -23,20 +23,15 @@ struct AccountSyncNoteTests {
     return (service, phone, pad)
   }
 
-  private func openPage(showing note: LearnerWordNote, thenSynced text: String) async throws
-    -> (SavedItemNotes, WordNoteStorage, TemporaryDefaults)
+  private func openPage(showing note: LearnerWordNote, thenSynced text: String) async
+    -> (SavedItemNotes, WordNoteStorage)
   {
-    let temporary = try TemporaryDefaults()
-    let storage = Self.storage(in: temporary.suite)
+    let storage = WordNoteStorage(defaults: MemoryDefaults(), placing: SavedWords.lookup)
     let page = SavedItemNotes(store: SavedWords.observed(storage).0)
     await storage.save(note, for: SavedWords.taberu)
     await page.load(SavedWords.taberuItem)
     await synced(text, to: storage)
-    return (page, storage, temporary)
-  }
-
-  nonisolated private static func storage(in suite: String) -> WordNoteStorage {
-    WordNoteStorage(defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup)
+    return (page, storage)
   }
 
   private func synced(_ text: String, to storage: WordNoteStorage) async {
@@ -91,8 +86,7 @@ struct AccountSyncNoteTests {
   @Test("an edit on a page that loaded before a sync changed the note becomes a note of its own, beside the newer text")
   func stalePageEdit() async throws {
     let note = LearnerWordNote(id: noteID, text: "朝")
-    let (page, _, temporary) = try await openPage(showing: note, thenSynced: "夜")
-    defer { _ = temporary }
+    let (page, _) = await openPage(showing: note, thenSynced: "夜")
 
     page.beginEditing(note)
     page.draft = "朝ごはん"
@@ -106,8 +100,7 @@ struct AccountSyncNoteTests {
   @Test("an edit the other device already made, however its line breaks are written, isn't saved again; after a split the page edits the new note")
   func sameEditAndASecondEdit() async throws {
     let note = LearnerWordNote(id: noteID, text: "朝")
-    let (page, storage, temporary) = try await openPage(showing: note, thenSynced: "朝ごはん\nです")
-    defer { _ = temporary }
+    let (page, storage) = await openPage(showing: note, thenSynced: "朝ごはん\nです")
 
     page.beginEditing(note)
     page.draft = "朝ごはん\r\nです"
@@ -132,8 +125,7 @@ struct AccountSyncNoteTests {
   @Test("deleting a note on a page left open across a sync deletes it, whatever case its ID is in")
   func deleteAcrossTheSyncedEcho() async throws {
     let legacy = LearnerWordNote(id: noteID.uppercased(), text: "朝")
-    let (page, storage, temporary) = try await openPage(showing: legacy, thenSynced: "朝")
-    defer { _ = temporary }
+    let (page, storage) = await openPage(showing: legacy, thenSynced: "朝")
 
     page.beginEditing(legacy)
     page.draft = ""
@@ -149,7 +141,7 @@ struct AccountSyncNoteTests {
 struct WordNoteBatchTests {
   @Test("notes from the account are written to the store once for a whole answer")
   func notesWriteOnce() async throws {
-    let (storage, writes) = try Self.countedStorage()
+    let (storage, writes) = Self.countedStorage()
     let synced = (0..<200).map {
       KeptNote(id: "n\($0)", item: AccountFixture.taberu, text: "\($0)", headword: nil, reading: nil)
     }
@@ -162,8 +154,8 @@ struct WordNoteBatchTests {
     #expect(await storage.load(SavedItemID(rawValue: AccountFixture.taberu)).count == 200)
   }
 
-  private static func countedStorage() throws -> (WordNoteStorage, WriteCounts) {
-    let defaults = try #require(CountingDefaults())
+  private static func countedStorage() -> (WordNoteStorage, WriteCounts) {
+    let defaults = CountingDefaults()
     let writes = defaults.writes
     return (WordNoteStorage(defaults: defaults, placing: SavedWords.lookup), writes)
   }
@@ -178,18 +170,8 @@ final class WriteCounts: @unchecked Sendable {
   func add(_ key: String) { lock.withLock { counts[key, default: 0] += 1 } }
 }
 
-final class CountingDefaults: UserDefaults {
+final class CountingDefaults: MemoryDefaults {
   let writes = WriteCounts()
-  private let suite: String
-
-  init?(suite: String = "counting-\(UUID().uuidString)") {
-    self.suite = suite
-    super.init(suiteName: suite)
-  }
-
-  deinit {
-    UserDefaults().removePersistentDomain(forName: suite)
-  }
 
   override func set(_ value: Any?, forKey key: String) {
     writes.add(key)

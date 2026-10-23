@@ -8,9 +8,8 @@ import TranslatorCore
 @MainActor
 @Suite("Synced settings")
 struct SyncedSettingsTests {
-  private let suite = "synced-settings-\(UUID().uuidString)"
-
-  private var folder: URL { FileManager.default.temporaryDirectory.appending(path: suite) }
+  private let folder = FileManager.default.temporaryDirectory
+    .appending(path: "synced-settings-\(UUID().uuidString)")
 
   private func noticed() async {
     await withCheckedContinuation { done in OperationQueue.main.addOperation { done.resume() } }
@@ -24,8 +23,7 @@ struct SyncedSettingsTests {
 
   @Test("a Reading Aids value from the account shows in Reading Aids without being sent back, and the learner's change there is told")
   func readingAids() async throws {
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     let preferences = ReadingAidPreferences(defaults: defaults)
     let settings = SyncedSettings(defaults: defaults)
     var told: [KeptLocalChange] = []
@@ -43,8 +41,7 @@ struct SyncedSettingsTests {
 
   @Test("Image Search's view follows a view from the account, where the view reads its choice, and the learner's change is told")
   func imageSearchView() async throws {
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     let settings = SyncedSettings(defaults: defaults)
     var told: [KeptLocalChange] = []
     settings.changeObserver = { told.append($0) }
@@ -60,8 +57,7 @@ struct SyncedSettingsTests {
 
   @Test("Translate's speech speed follows a speed from the account, and its layout is no setting")
   func speechSpeed() async throws {
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     defer { try? FileManager.default.removeItem(at: folder) }
     let experience = translate(on: defaults)
     let settings = SyncedSettings(defaults: defaults)
@@ -74,8 +70,7 @@ struct SyncedSettingsTests {
 
   @Test("a learner's change through Reading Aids, Translate's speed, or a screen's stored choice is told as it's made")
   func everyWriterIsHeard() async throws {
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     defer { try? FileManager.default.removeItem(at: folder) }
     let preferences = ReadingAidPreferences(defaults: defaults)
     let experience = translate(on: defaults)
@@ -97,13 +92,8 @@ struct SyncedSettingsTests {
 
   @Test("another defaults store's change costs Synced settings nothing: it reads again only when its own store changes")
   func hearsOnlyItsOwnStore() async throws {
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    let otherSuite = "\(suite)-other"
-    let other = try #require(UserDefaults(suiteName: otherSuite))
-    defer {
-      defaults.removePersistentDomain(forName: suite)
-      other.removePersistentDomain(forName: otherSuite)
-    }
+    let defaults = MemoryDefaults()
+    let other = MemoryDefaults()
     let reads = CallCount()
     let counted = SyncedSetting(
       name: "counted", standard: .bool(false),
