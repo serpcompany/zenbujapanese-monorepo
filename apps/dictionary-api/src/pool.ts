@@ -26,10 +26,12 @@ interface Thread {
   worker: WorkerPort
   ready: Promise<void>
   pending: Map<number, PendingCall>
+  generation: number
 }
 
 interface Answered {
   thread: number
+  generation: number
   ms: number | null
 }
 
@@ -72,13 +74,23 @@ export function createPool(start: StartWorker, size: number): Pool {
     learnInfo = resolve
   })
 
-  const learnCost = (cacheKey: string, thread: number, ms: number) => {
+  const current = (cacheKey: string) => {
     const known = answered.get(cacheKey)
-    if (known?.thread !== thread) return
-    answered.set(cacheKey, { thread, ms: Math.max(known.ms ?? 0, ms) })
+    return known && known.generation === threads[known.thread].generation ? known : undefined
   }
 
-  const spawn = (index: number): Thread => {
+  const learnCost = (cacheKey: string, thread: number, ms: number) => {
+    const known = current(cacheKey)
+    if (known?.thread !== thread) return
+    answered.set(cacheKey, { ...known, ms: Math.max(known.ms ?? 0, ms) })
+  }
+
+  const forgetFailed = (cacheKey: string, thread: number) => {
+    const known = current(cacheKey)
+    if (known?.thread === thread && known.ms === null) answered.set(cacheKey, { ...known, ms: 0 })
+  }
+
+  const spawn = (index: number, generation: number): Thread => {
     const worker = start()
     const pending: Thread['pending'] = new Map()
     let markReady: () => void = () => {}
@@ -98,6 +110,7 @@ export function createPool(start: StartWorker, size: number): Pool {
       if (!call) return
       pending.delete(message.id)
       if ('error' in message) {
+        if (call.cacheKey !== undefined) forgetFailed(call.cacheKey, index)
         call.reject(new Error(message.error))
         return
       }
@@ -115,12 +128,12 @@ export function createPool(start: StartWorker, size: number): Pool {
       if (closing) return
       loaded = Math.max(0, loaded - 1)
       log('warn', 'worker exited; starting another', { index, code })
-      threads[index] = spawn(index)
+      threads[index] = spawn(index, generation + 1)
     })
-    return { worker, ready, pending }
+    return { worker, ready, pending, generation }
   }
 
-  for (let index = 0; index < size; index++) threads.push(spawn(index))
+  for (let index = 0; index < size; index++) threads.push(spawn(index, 0))
 
   const leastBusy = () => {
     let chosen = 0
@@ -138,12 +151,12 @@ export function createPool(start: StartWorker, size: number): Pool {
   const threadFor = (cacheKey: string | undefined) => {
     const least = leastBusy()
     if (cacheKey === undefined) return least
-    const known = answered.get(cacheKey)
+    const known = current(cacheKey)
     if (known && worthGoingBack(known, least)) {
       answered.set(cacheKey, known)
       return known.thread
     }
-    answered.set(cacheKey, { thread: least, ms: null })
+    answered.set(cacheKey, { thread: least, generation: threads[least].generation, ms: null })
     return least
   }
 

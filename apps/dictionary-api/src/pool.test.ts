@@ -13,6 +13,7 @@ class FakeWorker extends EventEmitter implements WorkerPort {
   readonly received: Call[] = []
   private readonly held: Call[] = []
   private holding = false
+  private failing = false
 
   constructor(private readonly workMs: number) {
     super()
@@ -34,13 +35,24 @@ class FakeWorker extends EventEmitter implements WorkerPort {
     for (const call of this.held.splice(0)) this.answer(call)
   }
 
+  failNext() {
+    this.failing = true
+  }
+
   async terminate() {
     return 0
   }
 
   private answer(call: Call) {
+    const failing = this.failing
+    this.failing = false
     queueMicrotask(() =>
-      this.emit('message', { id: call.id, result: call.method, ms: this.workMs })
+      this.emit(
+        'message',
+        failing
+          ? { id: call.id, error: 'failed' }
+          : { id: call.id, result: call.method, ms: this.workMs }
+      )
     )
   }
 }
@@ -139,6 +151,40 @@ describe('a request for what a thread computed before', () => {
       ['kanji', ['要']],
       ['kanji', ['要']]
     ])
+  })
+})
+
+describe('a request whose earlier answer never came', () => {
+  test('goes to the least busy thread when that answer failed', async () => {
+    const { pool, workers } = await fakePool(2, wildcardExamplesMs)
+    const [failed, other] = workers
+    failed.failNext()
+    await expect(pool.searchExamples('t*', 0)).rejects.toThrow('failed')
+    failed.hold()
+    const busy = pool.search('い')
+    const repeated = pool.searchExamples('t*', 25)
+    failed.release()
+    await Promise.all([busy, repeated])
+    expect(methodsOn(failed)).toEqual([
+      ['searchExamples', ['t*', 0]],
+      ['search', ['い']]
+    ])
+    expect(methodsOn(other)).toEqual([['searchExamples', ['t*', 25]]])
+  })
+
+  test('goes to the least busy thread when the thread that computed it restarted', async () => {
+    const { pool, workers } = await fakePool(2, wildcardExamplesMs)
+    await pool.searchExamples('t*', 0)
+    const [exited, other] = workers
+    exited.emit('exit', 1)
+    const restarted = workers[2]
+    restarted.hold()
+    const busy = pool.search('い')
+    const repeated = pool.searchExamples('t*', 25)
+    restarted.release()
+    await Promise.all([busy, repeated])
+    expect(methodsOn(restarted)).toEqual([['search', ['い']]])
+    expect(methodsOn(other)).toEqual([['searchExamples', ['t*', 25]]])
   })
 })
 

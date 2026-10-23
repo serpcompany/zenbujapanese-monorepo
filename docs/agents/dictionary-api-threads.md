@@ -34,7 +34,9 @@ search (about 1) take. One that took less, such as a kanji's details, goes to th
 fewest calls in flight, as the first request for one and every other call do. A query is matched in
 its normal form (`normalizeQuery`), as the caches keep it. The pool remembers the thread, and the
 longest a call for it took there, of up to 10,000 of them per thread, more than a thread's caches
-hold, and forgets the longest unused first; a thread's replacement computes again what it held.
+hold, and forgets the longest unused first. What a thread computed is forgotten when it exits, since
+its replacement starts with empty caches, and a call that failed doesn't hold its key there: the
+next request for it goes to the thread with the fewest calls in flight (`pool.test.ts`).
 
 No call asks a thread for the build: each thread sends its build, artifact, language data, and
 features with the message that says it has loaded, and the pool answers `/healthz`, `/v1/info`, and
