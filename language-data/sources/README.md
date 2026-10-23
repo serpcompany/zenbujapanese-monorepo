@@ -25,7 +25,7 @@ large to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and
 | --- | --- | --- |
 | Dictionary entries and examples | `JMdict_e-2026-08-10.source.json`, `UniDic-CWJ-3.1.0.source.json`, `Tatoeba-2026-10-03.source.json` | `import_jmdict.py` |
 | Examples for kana-headword words | `Tatoeba-jpn-indices-2026-10-03.source.json` | `import_example_word_index.py` |
-| Estimated pitch for two-part compounds | `UniDic-CWJ-3.1.0.source.json` | `import_compound_pitch.py` |
+| Estimated pitch for compounds UniDic doesn't list whole | `UniDic-CWJ-3.1.0.source.json` | `import_compound_pitch.py` |
 | Kanji reference data | `KANJIDIC2-2026-10-05.source.json` | `import_kanjidic.py` |
 | Radicals and components | `EDRDG-radicals-2026-08-10.source.json` | `import_radicals.py` |
 | Kanji elements | `Kanjium-8a0cdaa.source.json` | `import_kanji_elements.py` |
