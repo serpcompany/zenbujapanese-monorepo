@@ -11,7 +11,7 @@ import Testing
 
   @Test(arguments: [
     ("記者会見", 3), ("高等学校", 5), ("脳梗塞", 3),
-    ("警察官", 4), ("二酸化炭素", 5), ("クレジットカード", 6),
+    ("会社員", 3), ("二酸化炭素", 5), ("レンタルビデオ", 5),
   ])
   func compoundsGetPitchEstimatedFromTheirParts(headword: String, downstep: Int) async throws {
     let pitch = try #require(try await page(headword).pitch)
@@ -19,8 +19,8 @@ import Testing
     #expect(pitch.source.contains("compound accent rule"))
   }
 
-  @Test(arguments: ["弱肉強食", "自問自答", "個人的", "観光客"])
-  func idiomsTekiWordsAndGroupsBelowTheGateShowNoPitch(headword: String) async throws {
+  @Test(arguments: ["弱肉強食", "自問自答", "個人的", "観光客", "クレジットカード"])
+  func wordsTheCompoundRulesLeaveOutShowNoPitch(headword: String) async throws {
     #expect(try await page(headword).pitch == nil)
   }
 
