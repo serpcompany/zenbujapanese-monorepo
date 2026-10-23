@@ -118,7 +118,7 @@ Simulator another checkout made. `apps/ios/Tools/simulator.py` hands out what th
 | `python3 apps/ios/Tools/simulator.py` | The UDID of this checkout's iPhone Simulator, made when it's missing: the newest iPhone Pro Max, on the newest installed iOS the selected Xcode runs |
 | `python3 apps/ios/Tools/simulator.py --device ipad` | The same for its iPad Simulator, the newest iPad Pro 13-inch |
 | `python3 apps/ios/Tools/simulator.py derived-data` | This checkout's build folder, for `-derivedDataPath` |
-| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot, for an app to launch in it, and for the Mac to be calm again, and hands it over with a keeper on it; deletes the old installs of the app the Simulator keeps |
+| `python3 apps/ios/Tools/simulator.py boot` | Starts this checkout's Simulator when it isn't up (`--device ipad` for the iPad), waits for the boot, for an app to launch in it, and for the Mac to be calm again, and hands it over with a keeper on it; restarts one that was up when its preferences daemon refuses writes; deletes the old installs of the app the Simulator keeps |
 | `python3 apps/ios/Tools/simulator.py shutdown` | Shuts down this checkout's Simulators now, and deletes the old installs of the app they keep |
 | `python3 apps/ios/Tools/simulator.py delete` | Removes this worktree's Simulators and build folder |
 | `python3 apps/ios/Tools/simulator.py prune` | Removes those of every worktree that is gone, passing over a worktree with a Simulator still running |
@@ -158,9 +158,10 @@ runs of one piece of work. An idle one holds memory other agents need (two once 
 swap, and this Mac has frozen for want of memory), so nothing stays up unwatched:
 
 - **`simulator.py boot` boots, and nothing else does.** The `verify-app` script calls it, and so
-  does anyone before a command that needs the Simulator up, such as the package's tests. It
-  does nothing to a Simulator that is up. After a boot it waits for `simctl bootstatus` (13 to
-  41 seconds on this Mac), then launches Settings and closes it, waiting for the launch:
+  does anyone before a command that needs the Simulator up, such as the package's tests. To a
+  Simulator that is up it does nothing but check its preferences daemon (below). After a boot
+  it waits for `simctl bootstatus` (13 to 41 seconds on this Mac), then launches Settings and
+  closes it, waiting for the launch:
   `bootstatus` returns before the Simulator's SpringBoard, RunningBoard, and launchd can take in a
   process, and a test process's first use of UIKit waits on them. A package run started into a
   fresh boot beside a Mac run held its main thread there for 94 seconds, and every test with a
@@ -175,6 +176,20 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   Simulator is ready by then (it has launched an app), so `boot` hands it over and says the Mac
   was still busy; a timing-sensitive run can wait for the Mac itself. A Simulator something
   shut down while `boot` waited isn't handed over: `boot` fails and says so.
+- **`boot` restarts a Simulator whose preferences daemon refuses writes.** A Simulator's one
+  `cfprefsd` has 512 files. Too many defaults writes in flight at once (a full package run held
+  about 190; 600 suites written from many threads at once passed 512 on 2026-10-22) make it log
+  "Too many open files", and from then on it refuses every write ("Path not accessible", and
+  `defaults write` fails with "Could not write domain") and keeps the files it had, until the
+  Simulator restarts ([`ios-ui-tests.md`](ios-ui-tests.md)). A Simulator kept up between runs
+  hands that to every later run: one full package run on it logged 1,581 refused writes. So
+  before it hands over a Simulator that was up, `boot` writes a new value with `defaults` in it
+  and reads it back in another process, about a second. When the value doesn't come back it
+  restarts the Simulator, says so, and checks again; one that something is using it leaves up,
+  and fails saying what to do. It checks a write rather than the log: a write is what a test
+  needs, it takes a second where reading the Simulator's last 10 minutes of log took 5 to 9, and
+  the log holds only the window read, while the daemon stays broken as long as the Simulator
+  is up.
 - **A checkout keeps one Simulator up.** Booting the iPad shuts down this checkout's iPhone
   Simulator, and the reverse, unless something is using it.
 - **The run that ends the work shuts it down.** The `verify-app` script shuts the Simulator down
@@ -203,7 +218,8 @@ swap, and this Mac has frozen for want of memory), so nothing stays up unwatched
   Mac's disk. `boot`, `shutdown`, and the keeper whenever nothing is using the Simulator delete
   what has been in that folder for a minute, and say how much.
 - **A Simulator booted any other way** (`simctl boot`, Xcode, a tool) has no keeper and stays up
-  until someone shuts it down. Run `simulator.py boot` on it, which does nothing but set one.
+  until someone shuts it down. Run `simulator.py boot` on it, which sets one and checks its
+  preferences daemon.
 
 ## Toolchain versions
 

@@ -4,8 +4,10 @@ import argparse
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 
@@ -24,6 +26,7 @@ from simulator_keeper import (
     HANDOVER_SECONDS,
     IDLE_LIMIT_SECONDS,
     KEEPERS,
+    a_command_names,
     boot_lease,
     booting,
     is_in_use,
@@ -44,6 +47,7 @@ CALM_SAMPLES = 2
 CALM_SAMPLE_SECONDS = 2
 CALM_LIMIT_SECONDS = 120
 SETTLED_APP = "com.apple.Preferences"
+PREFERENCES_PROBE = ("com.zenbujapanese.simulator-tool", "probe")
 RUN_ENDING_SECONDS = 30
 RUN_ENDING_LOOK_SECONDS = 1
 
@@ -220,6 +224,37 @@ def bring_up(name: str, target: str, keepers: Path) -> str:
     )
 
 
+def spawned(target: str, *command: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["xcrun", "simctl", "spawn", target, *command], capture_output=True, text=True
+    )
+
+
+def preferences_are_saved(target: str) -> bool:
+    domain, key = PREFERENCES_PROBE
+    written = uuid.uuid4().hex
+    spawned(target, "defaults", "write", domain, key, written)
+    read = spawned(target, "defaults", "read", domain, key)
+    return read.returncode == 0 and read.stdout.strip() == written
+
+
+def restart_for_preferences(name: str, target: str, keepers: Path) -> str:
+    refusing = f"{name}'s preferences daemon (cfprefsd) refuses every defaults write"
+    if a_command_names(target):
+        raise SystemExit(
+            f"{refusing}, which lasts until the Simulator restarts, but something is using it. "
+            "Stop that run, then run boot again, which restarts it."
+        )
+    simctl("shutdown", target)
+    said = bring_up(name, target, keepers)
+    if not preferences_are_saved(target):
+        raise SystemExit(
+            f"{refusing}, even after a restart. Its own log says why: xcrun simctl spawn "
+            f"{target} log show --last 5m --predicate 'process == \"cfprefsd\"'"
+        )
+    return "was up, but its preferences daemon (cfprefsd) refused writes, so it was restarted: " + said
+
+
 def boot(kind: str, scope: str | None, keepers: Path = KEEPERS) -> str:
     name = simulator_name(kind, scope)
     target = udid(kind, scope)
@@ -233,10 +268,12 @@ def boot(kind: str, scope: str | None, keepers: Path = KEEPERS) -> str:
     for other in idle_others:
         simctl("shutdown", other["udid"])
     with booting(target, keepers):
-        if any(device["udid"] == target and device.get("state") == "Booted" for device in up):
+        if not any(device["udid"] == target and device.get("state") == "Booted" for device in up):
+            said = bring_up(name, target, keepers)
+        elif preferences_are_saved(target):
             said = "was already up"
         else:
-            said = bring_up(name, target, keepers)
+            said = restart_for_preferences(name, target, keepers)
         keep(target, keepers)
     return (
         said
@@ -328,7 +365,8 @@ def main(arguments: list[str]) -> int:
             "missing. The main checkout gets the app's long-lived Simulator; a git worktree gets "
             f"its own, named for the worktree, or for {SCOPE_VARIABLE} when that is set. "
             "derived-data prints this checkout's own build folder. boot starts the Simulator "
-            "when it isn't up, waits for the boot, an app's launch, and a calm Mac, and has a "
+            "when it isn't up, waits for the boot, an app's launch, and a calm Mac, restarts one "
+            "that was up when its preferences daemon no longer saves a write, and has a "
             "keeper shut it down once nothing has used it for "
             f"{IDLE_LIMIT_SECONDS // 60} minutes, or sooner when memory runs short, but never "
             f"while boot is bringing it up or in the {HANDOVER_SECONDS // 60} minutes after "

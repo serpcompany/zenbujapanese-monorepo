@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import itertools
+import subprocess
 import sys
 import tempfile
 import unittest
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
@@ -47,6 +49,22 @@ def device(name: str, udid: str, state: str = "Shutdown", is_available: bool = T
 
 def launching(udid: str) -> list[tuple[str, ...]]:
     return [("launch", udid, simulator.SETTLED_APP), ("terminate", udid, simulator.SETTLED_APP)]
+
+
+class PreferencesDaemon:
+    def __init__(self, saves: Iterable[bool]) -> None:
+        self.saves = iter(saves)
+        self.saved: dict[tuple[str, ...], str] = {}
+
+    def __call__(self, target: str, *command: str) -> subprocess.CompletedProcess[str]:
+        _, verb, domain, key, *value = command
+        if verb == "write":
+            if next(self.saves, False):
+                self.saved[(target, domain, key)] = value[0]
+            return subprocess.CompletedProcess(command, 0, "", "")
+        if (target, domain, key) in self.saved:
+            return subprocess.CompletedProcess(command, 0, self.saved[(target, domain, key)] + "\n", "")
+        return subprocess.CompletedProcess(command, 1, "", "The domain/default pair does not exist\n")
 
 
 DEVICES = {
@@ -223,7 +241,10 @@ class SimulatorTests(unittest.TestCase):
         calm: Callable[[], tuple[float, bool]] = lambda: (41.0, True),
         still_up: bool = True,
         keepers: Path | None = None,
+        saves: Iterable[bool] = itertools.repeat(True),
+        commands: list[tuple[str, ...]] | None = None,
     ) -> tuple[str, list, list, list]:
+        commands = [] if commands is None else commands
         with tempfile.TemporaryDirectory() as scratch, ExitStack() as stand_ins:
 
             def stand_in(name: str, **how: object) -> mock.Mock:
@@ -231,13 +252,14 @@ class SimulatorTests(unittest.TestCase):
 
             stand_in("listed", return_value={"devices": DEVICES})
             stand_in("is_in_use", return_value=in_use)
+            stand_in("a_command_names", return_value=in_use)
+            stand_in("spawned", side_effect=PreferencesDaemon(saves))
             stand_in("empty_dead_installs", return_value=dead)
             stand_in("is_booted", return_value=still_up)
-            simctl = stand_in("simctl")
+            stand_in("simctl", side_effect=lambda *arguments: commands.append(arguments))
             wait = stand_in("wait_until_calm", side_effect=calm)
             keep = stand_in("keep")
             said = simulator.boot(kind, scope, keepers or Path(scratch))
-        commands = [call.args for call in simctl.call_args_list]
         return said, commands, wait.call_args_list, [call.args[0] for call in keep.call_args_list]
 
     def test_a_simulator_that_is_up_is_not_booted_again_and_gets_no_wait(self) -> None:
@@ -281,6 +303,52 @@ class SimulatorTests(unittest.TestCase):
             "zenbu-japanese--issue-12-sidebar was shut down while boot waited for it",
             str(refused.exception),
         )
+
+    def test_a_simulator_whose_preferences_daemon_refuses_writes_is_restarted_and_says_so(
+        self,
+    ) -> None:
+        said, commands, _, kept = self.booting("ipad", "issue-8-running", saves=[False, True])
+        self.assertEqual(
+            commands,
+            [
+                ("shutdown", "RUNNING-IPAD"),
+                ("boot", "RUNNING-IPAD"),
+                ("bootstatus", "RUNNING-IPAD", "-b"),
+                *launching("RUNNING-IPAD"),
+            ],
+        )
+        self.assertRegex(
+            said,
+            r"^was up, but its preferences daemon \(cfprefsd\) refused writes, so it was restarted: "
+            r"booted in \d+ s, launched an app \d+ s later, and the Mac was calm 41 s later$",
+        )
+        self.assertEqual(kept, ["RUNNING-IPAD", "RUNNING-IPAD"])
+
+    def test_a_simulator_in_use_is_left_up_though_its_preferences_daemon_refuses_writes(
+        self,
+    ) -> None:
+        commands = []
+        with self.assertRaises(SystemExit) as refused:
+            self.booting("ipad", "issue-8-running", in_use=True, saves=[False], commands=commands)
+        self.assertIn("refuses every defaults write", str(refused.exception))
+        self.assertIn("but something is using it", str(refused.exception))
+        self.assertEqual(commands, [])
+
+    def test_a_simulator_whose_preferences_still_refuse_after_a_restart_is_not_handed_over(
+        self,
+    ) -> None:
+        commands = []
+        with self.assertRaises(SystemExit) as refused:
+            self.booting("ipad", "issue-8-running", saves=[False, False], commands=commands)
+        self.assertIn("refuses every defaults write, even after a restart", str(refused.exception))
+        self.assertEqual(commands[:2], [("shutdown", "RUNNING-IPAD"), ("boot", "RUNNING-IPAD")])
+
+    def test_the_preferences_probe_passes_only_when_its_own_write_reads_back(self) -> None:
+        with mock.patch.object(simulator, "spawned", side_effect=PreferencesDaemon([True, False])):
+            self.assertTrue(simulator.preferences_are_saved("LIVE"))
+            self.assertFalse(simulator.preferences_are_saved("LIVE"), "an earlier probe's value")
+        with mock.patch.object(simulator, "spawned", side_effect=PreferencesDaemon([False])):
+            self.assertFalse(simulator.preferences_are_saved("LIVE"))
 
     def test_a_checkout_keeps_one_simulator_up_unless_the_other_is_in_use(self) -> None:
         said, commands, _, _ = self.booting("iphone", "issue-8-running")
