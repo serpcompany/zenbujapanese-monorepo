@@ -4,7 +4,7 @@ import { accountTokens } from './account-tokens'
 import { createApp } from './app'
 import { readConfig } from './config'
 import { verifyFiles } from './load'
-import { createPool } from './pool'
+import { createPool, workerThreads } from './pool'
 import { perMinute } from './rate-limit'
 
 async function main() {
@@ -16,7 +16,7 @@ async function main() {
     artifact: files.artifactSha256,
     sentenceSearch: files.sudachiDictionary !== null
   })
-  const pool = createPool(files, config.workers)
+  const pool = createPool(workerThreads(files), config.workers)
   const app = createApp({
     service: pool,
     token: config.token,

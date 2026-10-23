@@ -124,5 +124,5 @@ export function loadService(files: VerifiedFiles) {
   }
   const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
   browse.warm()
-  return { service: inProcessService(dictionary, browse, info), close: artifact.close }
+  return { service: inProcessService(dictionary, browse, info), info, close: artifact.close }
 }
