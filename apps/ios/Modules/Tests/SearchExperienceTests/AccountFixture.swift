@@ -17,6 +17,19 @@ final class CallCount: @unchecked Sendable {
   }
 }
 
+final class LaterEachTime: @unchecked Sendable {
+  private static let apart: TimeInterval = 0.001
+  private let lock = NSLock()
+  private var last = Date.distantPast
+
+  func next() -> Date {
+    lock.withLock {
+      last = max(Date(), last.addingTimeInterval(Self.apart))
+      return last
+    }
+  }
+}
+
 @MainActor
 final class HeldRetries {
   private(set) var waits: [TimeInterval] = []
@@ -80,6 +93,7 @@ final class AccountFixture {
   var frequency = FrequencyChoice()
   private(set) var account: ZenbuAccount!
   lazy var defaults = UserDefaults(suiteName: defaultsSuite) ?? .standard
+  nonisolated let searchTimes = LaterEachTime()
 
   var sync: AccountSync { account.sync }
 
@@ -102,7 +116,7 @@ final class AccountFixture {
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
     profile = UserProfile(defaults: defaults, photoURL: directory.appending(path: "photo.jpg"))
-    (notes, searches) = Self.stores(in: defaultsSuite)
+    (notes, searches) = Self.stores(in: defaultsSuite, searchedAt: searchTimes)
     media = EncounterMediaStorage(
       directory: directory.appending(path: "Encounter Media"), placing: SavedWords.lookup)
     settings = SyncedSettings(defaults: defaults)
@@ -120,11 +134,13 @@ final class AccountFixture {
     await settle()
   }
 
-  nonisolated private static func stores(in suite: String) -> (WordNoteStorage, RecentSearchHistory) {
+  nonisolated private static func stores(in suite: String, searchedAt times: LaterEachTime)
+    -> (WordNoteStorage, RecentSearchHistory)
+  {
     (
       WordNoteStorage(
         defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup),
-      RecentSearchHistory(defaults: UserDefaults(suiteName: suite) ?? UserDefaults())
+      RecentSearchHistory(defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), now: times.next)
     )
   }
 

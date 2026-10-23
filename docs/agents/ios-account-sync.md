@@ -213,7 +213,9 @@ sync; what the learner sees is in the product docs'
 against a stub server (`StubAccountServer`, a `URLProtocol`, which answers on the one thread
 every stubbed request in the test process shares, so it never waits there: a reply a test holds
 is a `LaterReply`, sent when the test says, and `asked()` awaits its request;
-`StubAccountServerTests`):
+`StubAccountServerTests`; each search a phone records comes a millisecond or more after the
+last, `LaterEachTime`, as a learner's do, since the account keeps a search's time to the
+millisecond and searches within one come back in no order):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410` and full reads dropping only what the account forgets, even
