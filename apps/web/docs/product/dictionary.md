@@ -29,11 +29,11 @@ conformance") and rendered for nine of its cases by
 matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the
 rendered word page matches the app"), which draws every WD case through the word page's components
 and reads back what they draw. **Conjugations rendered** is
-`src/components/dictionary/conjugations.test.tsx` ("the rendered Conjugations section matches the
-app"), which does the same for every WD case's conjugation table and its forms' examples. The
-`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds,
-on pull requests that change the service, the core, the website's dictionary components or data
-code, the app's bundled data, or the suites. Unit tests are named by file and test title.
+`src/components/dictionary/conjugations.test.tsx`: every WD case's table ("the rendered Conjugations
+section matches the app") and forms' examples ("each conjugated form’s examples match the app"). The
+`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds, on
+pull requests that change the service, the core, the website's dictionary components or data code,
+the app's bundled data, or the suites. Unit tests are named by file and test title.
 
 ## Dictionary home
 

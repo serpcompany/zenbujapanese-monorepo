@@ -408,17 +408,17 @@ results' rows do (`components/dictionary/word-row.tsx`).
 
 ### The rendered-page gate
 
-The service's own tests replay the app-recorded suites (`language-data/conformance/`)
-through the core on the real artifact: search retrieval, search results, example search, word
-detail, and kanji detail, every example field included (see
-[`dictionary-api.md`](dictionary-api.md)). The site's gate then renders what a running service
-answers through the pages' components with React's server renderer, linked by the same code as
-`data.ts` (`apps/web/src/lib/dictionary/page-example.ts` and
-`apps/web/src/lib/dictionary/results/links.ts`), and reads back what a reader sees, from the
-drawing itself (such as each pitch dot's position) rather than the data the page was given.
-`apps/web/src/test/rendered.ts` and `rendered-word.ts` do the reading. Their one
-text extractor, `htmlText`, removes tags until none remain and leaves `&lt;` and `&gt;` encoded,
-so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
+The service's own tests replay the app-recorded suites (`language-data/conformance/`) through the
+core on the real artifact: search retrieval, search results, example search, word detail, and kanji
+detail, every example field included (see [`dictionary-api.md`](dictionary-api.md)). The site's gate
+then renders what a running service answers through the pages' components with React's server
+renderer, linked by the same code as `data.ts` (`apps/web/src/lib/dictionary/page-example.ts` and
+`apps/web/src/lib/dictionary/results/links.ts`), and reads back what a reader sees, from the drawing
+itself (such as each pitch dot's position) rather than the data the page was given.
+`apps/web/src/test/rendered.ts` and `rendered-word.ts` do the reading. Their one text extractor,
+`htmlText`, removes tags until none remain and leaves `&lt;` and `&gt;` encoded, so the text it
+reads never holds a `<` (`rendered.test.ts`). A gate test renders one page, as its 30 seconds hold
+that page's work on a shared machine, so each conjugated form is its own test. The gate's tests:
 
 - `components/dictionary/search-results.test.tsx` renders seven search-results cases: sections,
   the Example Sentences row, the refinement, the kanji row, and each row's headword, meaning,
@@ -437,10 +437,10 @@ so the text it reads never holds a `<` (`rendered.test.ts`). The gate's tests:
 ZENBU_DICTIONARY_API=1 ZENBU_DICTIONARY_API_TOKEN=<token> pnpm exec vitest run src/components/dictionary
 ```
 
-`ZENBU_DICTIONARY_API_URL` names another service than this checkout's. The
-`Dictionary API` workflow runs the gate on pull requests against the service it builds, and
-`smoke.sh` checks the deployed pages against the search-results suite's `iru` and `eat` cases, the
-example-search suite's `eat`, and the word-detail suite's 見る and 学校 at run time.
+`ZENBU_DICTIONARY_API_URL` names another service than this checkout's. The `Dictionary API` workflow
+runs the gate on pull requests against the service it builds, and `smoke.sh` checks the deployed
+pages against the search-results suite's `iru` and `eat` cases, the example-search suite's `eat`,
+and the word-detail suite's 見る and 学校 at run time.
 
 ## Account pages
 
