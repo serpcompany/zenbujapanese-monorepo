@@ -154,7 +154,10 @@ actor DictionaryTextData {
   }
 
   func meaningExamples(_ id: LanguageReferenceID) async throws -> [LinkedMeaningExample] {
-    try await answer(
+    if LaunchHarness.failsMeaningExamples {
+      throw ExampleSentenceRetrievalError.retrievalUnavailable(.queryFailed)
+    }
+    return try await answer(
       "meaningExamples", try DictionaryCore.argument(MeaningExamplesRequest(id: id.rawValue)))
   }
 

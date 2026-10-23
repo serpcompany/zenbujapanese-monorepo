@@ -69,6 +69,15 @@ final class WordDetailUITests: ZenbuUITestCase {
 
   private static let howling = "f29411d798656f63e75fe961c4c38a49"
 
+  func testAWordWhoseExamplesFailToLoadStillShowsItsMeanings() {
+    let app = launch(["ZENBU_FAIL_MEANING_EXAMPLES": "1"])
+    openWord("犬", searching: "inu", in: app)
+    assertListedOnceInThisOrder(
+      ["word-detail.pronounce", "word-detail.meaning.1", "word-detail.meaning.2"], in: app)
+    XCTAssertFalse(
+      find("word-detail.meaning-example.1", in: app).exists, "no example shows under a meaning")
+  }
+
   func testAddToListPutsTheWordInFavoritesAndANewList() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))

@@ -227,14 +227,14 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ## Dictionary and kanji details
 
-A kana word's examples are the sentences Tatoeba's word index links to it, so でも in いつでも doesn't
-count; others match their written forms and reading, in either width NFKC reads as one (Ｔシャツ, Tシャツ).
-JMdict's checked examples of its meanings (`JMdict_e_examp`) lead, even one its spelling misses (食べた
-for 食べる), and none drops, so a list can pass 100. Each meaning shows its first, drawn with the page.
+A kana word's examples are the sentences Tatoeba's word index links to it (でも not in いつでも); others
+match their written forms and reading, in either width NFKC reads as one (Ｔシャツ, Tシャツ). JMdict's
+checked examples of its meanings lead, even one the spelling misses (食べた for 食べる), and none drops,
+so a list can pass 100. Each meaning shows its first with the page, which skips them if unreadable.
 
 Check: the recorded `WordDetailConformanceTests` (each sense's `example`) and
-`ExampleSearchConformanceTests`; package `KanaHeadwordExampleTests`; core
-`artifact/example-retrieval.test.ts`; UI `WordDetailUITests.testAMeaningShowsItsCheckedExample`.
+`ExampleSearchConformanceTests`; package `KanaHeadwordExampleTests`, `MeaningExamplesTests`; core
+`artifact/example-retrieval.test.ts`; UI `WordDetailUITests` (a meaning's example, or none).
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
