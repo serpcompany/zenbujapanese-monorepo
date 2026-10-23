@@ -33,6 +33,7 @@ ENTRIES = {
     1180420: ("押し問答", "おしもんどう", ["noun", "takesSuru", "intransitive"], None),
     1391020: ("洗濯物", "せんたくもの", NOUN, None),
     2211340: ("少林寺拳法", "しょうりんじけんぽう", NOUN, None),
+    1252400: ("警察官", "けいさつかん", NOUN, None),
     1198560: ("会社員", "かいしゃいん", NOUN, None),
     1146200: ("レンタルビデオ", "レンタルビデオ", NOUN, None),
     1172980: ("運動不足", "うんどうぶそく", ["noun", "noAdjective"], None),
@@ -40,6 +41,8 @@ ENTRIES = {
     1500400: ("副作用", "ふくさよう", NOUN, None),
     1484370: ("被害者", "ひがいしゃ", NOUN, None),
     1461820: ("二酸化炭素", "にさんかたんそ", NOUN, None),
+    1156120: ("委員長", "いいんちょう", NOUN, None),
+    1283510: ("高校生", "こうこうせい", NOUN, None),
     1215880: ("関心事", "かんしんじ", NOUN, None),
     1336180: ("重工業", "じゅうこうぎょう", NOUN, None),
     1767840: ("私生児", "しせいじ", NOUN, None),
@@ -125,12 +128,17 @@ class CompoundPitchRuleTests(unittest.TestCase):
 
     def test_each_combination_type_gives_the_downstep_its_rule_does(self) -> None:
         self.assertEqual(
-            {"運転免許": 5, "万葉仮名": 0, "株式会社": 5, "少林寺拳法": 6, "レンタルビデオ": 5, "押し問答": 3},
-            self.downsteps("運転免許", "万葉仮名", "株式会社", "少林寺拳法", "レンタルビデオ", "押し問答"),
+            {
+                "運転免許": 5, "万葉仮名": 0, "株式会社": 5, "洗濯物": 0, "少林寺拳法": 6,
+                "クレジットカード": 6, "レンタルビデオ": 5, "押し問答": 3,
+            },
+            self.downsteps(
+                "運転免許", "万葉仮名", "株式会社", "洗濯物", "少林寺拳法", "クレジットカード", "レンタルビデオ", "押し問答"
+            ),
         )
 
     def test_suffix_rows_and_rendaku_forms_count_as_parts(self) -> None:
-        self.assertEqual({"会社員": 3, "運動不足": 5}, self.downsteps("会社員", "運動不足"))
+        self.assertEqual({"警察官": 4, "会社員": 3, "運動不足": 5}, self.downsteps("警察官", "会社員", "運動不足"))
 
     def test_a_prefix_combines_by_its_own_type(self) -> None:
         self.assertEqual({"少人数": 3, "副作用": 3}, self.downsteps("少人数", "副作用"))
@@ -139,26 +147,26 @@ class CompoundPitchRuleTests(unittest.TestCase):
         self.assertEqual((5, 7), self.pitch.get("二酸化炭素"))
 
     def test_the_downstep_moves_off_a_special_mora_but_stays_within_a_part(self) -> None:
+        committee = self.splitter.fewest_part_splits("委員長", READING["委員長"])[0]
         concern = self.splitter.fewest_part_splits("関心事", READING["関心事"])[0]
-        self.assertEqual(3, off_special_morae(concern, 4))
+        self.assertEqual((2, 3), (off_special_morae(committee, 3), off_special_morae(concern, 4)))
         self.assertEqual(
-            {"関心事": 3, "重工業": 3, "私生児": 2, "選挙運動": 4},
-            self.downsteps("関心事", "重工業", "私生児", "選挙運動"),
+            {"委員長": 2, "高校生": 3, "被害者": 2, "関心事": 3, "重工業": 3, "私生児": 2, "選挙運動": 4},
+            self.downsteps("委員長", "高校生", "被害者", "関心事", "重工業", "私生児", "選挙運動"),
         )
 
-    def test_a_split_that_gives_no_downstep_counts_as_disagreeing(self) -> None:
+    def test_a_split_that_gives_no_downstep_is_left_out_and_the_others_decide(self) -> None:
         for headword, downstep in (("クレジットカード", 6), ("洗濯物", 0)):
             with self.subTest(headword=headword):
                 splits = self.splitter.fewest_part_splits(headword, READING[headword])
                 self.assertEqual({downstep, None}, {compound_downstep(split) for split in splits})
-                self.assertIsNone(self.estimate(headword))
-                self.assertNotIn(headword, self.pitch)
+                self.assertEqual(downstep, self.estimate(headword).downstep)
+                self.assertEqual(downstep, self.downsteps(headword)[headword])
 
     def test_the_gate_leaves_out_estimates_in_groups_below_ninety_percent(self) -> None:
         for headword, downstep, group in (
             ("観光客", 3, "kanji, C3, 2 parts"),
             ("可能性", 0, "kanji, C4, 2 parts"),
-            ("被害者", 2, "kanji, prefix C2/C3, 2 parts"),
         ):
             with self.subTest(headword=headword):
                 estimate = self.estimate(headword)
@@ -195,17 +203,17 @@ class CompoundPitchRuleTests(unittest.TestCase):
     def test_the_report_counts_what_each_step_left_out(self) -> None:
         self.assertEqual(
             {
-                "estimated": 15,
-                "estimated_by_the_c2_fallback": 3,
-                "estimated_in_a_group_below_the_gate": 3,
+                "estimated": 22,
+                "estimated_by_the_c2_fallback": 2,
+                "estimated_in_a_group_below_the_gate": 2,
                 "left_out_as_a_four_character_idiom": 1,
                 "left_out_as_ending_in_the_suffix_teki": 3,
                 "left_out_as_listed_first_as_a_function_word_or_affix": 2,
-                "no_estimate": 3,
+                "no_estimate": 1,
             },
             {outcome: count for outcome, count in self.report["outcomes"].items() if not outcome.startswith("common_")},
         )
-        self.assertEqual(18, len(self.pitch))
+        self.assertEqual(24, len(self.pitch))
 
 
 if __name__ == "__main__":

@@ -37,15 +37,26 @@ SHIPPED_GROUPS = frozenset(
         ("kanji", False, "C1", 2),
         ("kanji", False, "C1", 3),
         ("kanji", False, "C2", 2),
+        ("kanji", False, "*/C1", 2),
+        ("kanji", False, "*/C2", 2),
         ("kanji", False, "C1/C3", 2),
         ("kanji", False, "C1/C3", 3),
+        ("kanji", False, "C2/C3", 3),
+        ("kanji", False, "*/C2/C3", 2),
+        ("kanji", False, "*/C3/P", 2),
+        ("kanji", False, "C4/P", 2),
         ("kanji", True, "C1", 2),
+        ("kanji", True, "C1", 3),
         ("kanji", True, "C1/C3", 2),
+        ("kanji", True, "C2", 2),
         ("kanji", True, "C2", 3),
+        ("kanji", True, "C2/C3", 2),
         ("kanji+kana", False, "C2", 2),
+        ("kanji+kana", False, "*/C1", 2),
         ("kanji+kana", False, "C1/C2", 2),
         ("katakana", False, "C1", 2),
         ("katakana", False, "C1", 3),
+        ("katakana", False, "*/C1", 2),
         ("katakana", False, "C1/C2", 2),
     )
 )
@@ -163,8 +174,9 @@ def import_pitch(source: Path, source_manifest: dict, language_data: Path, outpu
         "artifact_schema": ARTIFACT_SCHEMA,
         "rule": "Split the word into two to four UniDic noun, na-adjective, prefix, or suffix rows by spelling "
         "and kana form, keeping the splits with the fewest parts; combine the parts by UniDic's accent "
-        "combination types, moving a downstep off a special mora within a part; give a value only when "
-        "every such split agrees, and only in a shipped group. Where it gives none, a two-part kanji "
+        "combination types, moving a downstep off a special mora within a part. The splits with the "
+        "fewest parts that give a value must all agree; a split that gives no value is left out. Ship "
+        "the value only in a shipped group. Where the rule gives none, a two-part kanji "
         "compound whose second part is C2 keeps that rule's downstep, on the second part's first mora.",
         "left_out": "Four-character idioms, words ending in the suffix 的 (not the noun 目的), and words "
         "listed first as an expression, particle, conjunction, interjection, auxiliary, or affix.",

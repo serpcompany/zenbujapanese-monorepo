@@ -240,8 +240,8 @@ class CompoundSplitter:
 
     def estimate(self, headword: str, reading: str) -> CompoundEstimate | None:
         splits = self.fewest_part_splits(headword, reading)
-        downsteps = {compound_downstep(split) for split in splits}
-        if len(downsteps) != 1 or None in downsteps:
+        downsteps = {compound_downstep(split) for split in splits} - {None}
+        if len(downsteps) != 1:
             return None
         (downstep,) = downsteps
         return CompoundEstimate(downstep, compound_group(headword, reading, splits))
