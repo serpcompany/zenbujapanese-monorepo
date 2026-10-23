@@ -1,7 +1,10 @@
 import { EventEmitter } from 'node:events'
-import { describe, expect, test } from 'vitest'
+import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
+import { describe, expect, test, vi } from 'vitest'
+import { createApp } from './app'
+import { info } from './conformance/fake-service'
 import { createPool, type Pool, type WorkerPort } from './pool'
-import type { Call } from './worker'
+import type { Call, Ready } from './worker'
 
 const wildcardExamplesMs = 3_600
 const kanjiDetailsMs = 5
@@ -13,7 +16,7 @@ class FakeWorker extends EventEmitter implements WorkerPort {
 
   constructor(private readonly workMs: number) {
     super()
-    queueMicrotask(() => this.emit('message', { ready: true }))
+    queueMicrotask(() => this.emit('message', { ready: true, info } satisfies Ready))
   }
 
   postMessage(call: Call) {
@@ -156,5 +159,34 @@ describe('any other call', () => {
       ['word', [1358280]],
       ['browseSummary', []]
     ])
+  })
+})
+
+describe('the build the pool names', () => {
+  test('is the one its threads said they loaded, read without a call to one', async () => {
+    const { pool, workers } = await fakePool(2, kanjiDetailsMs)
+    expect(await pool.info()).toEqual(info)
+    expect(workers.flatMap(worker => worker.received)).toEqual([])
+  })
+
+  test("costs /healthz and a /v1 answer's headers no call to a thread", async () => {
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const { pool, workers } = await fakePool(1, kanjiDetailsMs)
+    const token = 'test-token-0123456789'
+    const app = createApp({ service: pool, token, ready: () => pool.readyCount() === 1 })
+    const health = await app.request('/healthz')
+    expect(await health.json()).toEqual({
+      status: 'ok',
+      build: info.build,
+      contract: dictionaryContract,
+      features: info.features
+    })
+    const answer = await app.request('/v1/search/eat', {
+      headers: { authorization: `Bearer ${token}` }
+    })
+    expect(answer.status).toBe(200)
+    expect(answer.headers.get('x-dictionary-build')).toBe(info.build)
+    expect(answer.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
+    expect(methodsOn(workers[0])).toEqual([['search', ['eat']]])
   })
 })

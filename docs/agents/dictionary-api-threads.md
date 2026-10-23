@@ -36,6 +36,10 @@ its normal form (`normalizeQuery`), as the caches keep it. The pool remembers th
 longest a call for it took there, of up to 10,000 of them per thread, more than a thread's caches
 hold, and forgets the longest unused first; a thread's replacement computes again what it held.
 
+No call asks a thread for the build: each thread sends its build, artifact, language data, and
+features with the message that says it has loaded, and the pool answers `/healthz`, `/v1/info`, and
+the build each answer names (`X-Dictionary-Build`, and an app route's `ETag`) from the first.
+
 ## The browse index
 
 The browse routes don't scan the artifact for a request: before a thread reports ready, it builds

@@ -3,12 +3,12 @@ import { LruCache } from '@zenbu/dictionary-core/artifact/cache'
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { log } from '@zenbu/node-service/log'
 import type { VerifiedFiles } from './load'
-import type { DictionaryService, ServiceMethod } from './service'
-import type { Call, Reply } from './worker'
+import type { DictionaryService, ServiceInfo, ServiceMethod } from './service'
+import type { Call, Ready, Reply } from './worker'
 
 export interface WorkerPort {
   postMessage(call: Call): void
-  on(event: 'message', listener: (message: Reply | { ready: true }) => void): unknown
+  on(event: 'message', listener: (message: Reply | Ready) => void): unknown
   on(event: 'error', listener: (error: Error) => void): unknown
   on(event: 'exit', listener: (code: number) => void): unknown
   terminate(): Promise<unknown>
@@ -67,6 +67,10 @@ export function createPool(start: StartWorker, size: number): Pool {
   let nextId = 0
   let closing = false
   let loaded = 0
+  let learnInfo: (info: ServiceInfo) => void = () => {}
+  const info = new Promise<ServiceInfo>(resolve => {
+    learnInfo = resolve
+  })
 
   const learnCost = (cacheKey: string, thread: number, ms: number) => {
     const known = answered.get(cacheKey)
@@ -86,6 +90,7 @@ export function createPool(start: StartWorker, size: number): Pool {
     worker.on('message', message => {
       if ('ready' in message) {
         loaded++
+        learnInfo(message.info)
         markReady()
         return
       }
@@ -158,7 +163,7 @@ export function createPool(start: StartWorker, size: number): Pool {
       closing = true
       await Promise.all(threads.map(thread => thread.worker.terminate()))
     },
-    info: () => call('info', []),
+    info: () => info,
     search: query => call('search', [query], cachedBy.query(query)),
     searchExamples: (query, from) => call('searchExamples', [query, from], cachedBy.query(query)),
     word: entSeq => call('word', [entSeq], cachedBy.word(entSeq)),
