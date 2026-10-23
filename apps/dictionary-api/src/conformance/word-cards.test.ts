@@ -116,7 +116,7 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
     expect(exported.unresolved).toEqual([missing])
   })
 
-  test('a word UniDic doesn’t list has its pitch estimated from its two parts, and says so', () => {
+  test('a word UniDic doesn’t list has its pitch estimated from its parts, and says so', () => {
     const [card] = readWordCards(
       db,
       kanji,
@@ -126,7 +126,7 @@ describe.runIf(artifactAvailable)('word cards on the app’s data', () => {
       estimated: true,
       downstep: 3,
       moraCount: 6,
-      source: 'UniDic 3.1.0 compound accent rule (C2)'
+      source: 'UniDic 3.1.0 compound accent rules'
     })
   })
 

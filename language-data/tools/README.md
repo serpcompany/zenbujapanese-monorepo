@@ -106,8 +106,9 @@ fails until then: every tool SHA-256 an import report, the ranking contract, or 
 records must be the tool's as it is now, and every import report must be in its list. Analysis
 reports (`*.analysis.json`) record the tools and data as they were when the study ran, so they
 aren't checked. Not every module a tool imports is recorded:
-`import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` not `unidic_adapter.py`,
-and `build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`.
+`import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` its rule,
+`compound_accent.py`, but not `unidic_adapter.py`, and `build_jiten_frequency_packs.py` not
+`analyze_ordered_json_frequency_lists.py`.
 `example_sentence_retrieval_index.py` records its own SHA-256 in the database's retrieval
 metadata, outside the ranking contract's six. `LanguageReferenceData.sqlite3`'s metadata, its import
 report, and `DictionaryRankingArtifactContract.json` record six: `import_tool_sha256`, the
@@ -183,12 +184,47 @@ written in kana, so bare kana such as そう names an entry only when one candid
 as its headword. Each entry keeps its best 200 sentences: Word Detail shows at most 100 and counts
 past 50 as "50+".
 
-**`import_compound_pitch.py`** estimates pitch for two-part noun compounds UniDic doesn't list
-whole, such as 記者会見. When the compound splits one way into two UniDic nouns and the second has
-accent-combination type C2, the downstep falls on the second part's first mora (きしゃか＼いけん).
-Measured against entries UniDic does give pitch for, the rule matches 92% of two-part C2
-compounds; the other types are too unreliable to ship. Candidate parts are tried in sorted order,
-so the result doesn't depend on Python's hash seed.
+**`import_compound_pitch.py`** estimates pitch for compounds UniDic doesn't list whole, such as
+記者会見 and クレジットカード, from their parts, with the rule in `compound_accent.py` (#825).
+`tests/test_compound_pitch_rule.py` runs it on UniDic's real rows for each case below.
+
+- **Parts.** Every UniDic row of a noun, na-adjective, prefix, or suffix is a possible part,
+  matched by its spelling and its kana form (`kanaBase`), so suffix rows with no accent of their own
+  (〜者, 〜官) and rendaku forms (運動ぶそく) count. A kana part needs two characters and a
+  katakana one three; the only kana affixes are お, ご, 御, さん, さま, ちゃん, くん, and たち. A
+  word is split when it has kanji and three characters or more, or is katakana of four or more, so
+  a hiragana word such as には never is.
+- **Splits.** A word splits into two to four parts. The splits with the fewest parts that give a
+  value must all agree; a split that gives no value is left out. クレジットカード gets 6, though
+  one of its splits, through a カード row with no combination type, gives none; 個人的 gets none,
+  since its splits give 2 and 0.
+- **Combining.** Parts combine left to right by UniDic's `aConType`: C1 keeps the later part's
+  downstep (heiban stays heiban), C2 puts it on the later part's first mora, C3 on the earlier
+  part's last mora, C4 makes the word heiban, and C5 keeps the earlier part's. A prefix combines by
+  its P-type (P1, P2, P4, P6, P13, or P14). A downstep on a special mora (ん, っ, ー, or the second
+  half of a long vowel or diphthong) moves one mora left, but never across a part's start:
+  委員長 is いい＼んちょう, and 選挙運動 stays せんきょう＼んどう.
+- **The gate.** Words are grouped by script, by the types their splits' last parts have (and
+  whether a split starts with a prefix), and by their number of parts (two, or three or more).
+  Only the 24 groups in `SHIPPED_GROUPS` ship: those that agreed with Kanjium's accents on at least
+  90% of at least 30 uncommon words. Kanjium was only measured against, never imported, and the
+  list names groups, not accents. 観光客 (C3) and 可能性 (C4) are estimated in groups below it.
+- **The C2 fallback.** Where the rule gives no value, as when its splits disagree (小学校) or its
+  group is below the gate (火曜日), a two-part kanji compound keeps the earlier C2 rule's: when it
+  splits into two accented UniDic nouns, read by their lemma readings, and every such split's
+  second part is C2, the downstep falls on that part's first mora (`two_part_c2_downstep`). The
+  rule's value wins wherever it gives one, and never differs from C2's where both do.
+- **Left out.** Four-character idioms (JMdict's `yojijukugo`) and words ending in the suffix 的 get
+  none from the rule or the fallback, since their estimates mostly disagree with the references
+  (C2 gave 弱肉強食 5; it's heiban). A word ending in the noun 目的 (多目的, 最終目的) isn't one,
+  unless what precedes its 的 is a word itself (盲目的 is 盲目 and 的). Nor does a word JMdict lists
+  first as an expression, particle, conjunction, interjection, auxiliary, or affix (立ち入り禁止,
+  何時間), so these keep showing no pitch.
+
+The report's `outcomes` count each step's results. On release 2026.10.5's data, 1,554 common
+entries get a value (C2 gave 713): 1,495 from the rule, agreeing with Kanjium on 93.3% of 1,256
+and with English Wiktionary on 91.9% of 528, and 59 from the fallback, agreeing 78.6% of 56 and
+76.9% of 39. UniDic's own accents agree 96.8% and 96.6%.
 
 **`import_frequency_pack.py`** builds a rank pack from a curated list. TUBELEX counts UniDic lemmas,
 so a lemma's reading names the word it counted even where JMdict files the spelling under several

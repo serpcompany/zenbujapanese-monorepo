@@ -46,13 +46,6 @@ def first_accent(row: list[str]) -> int | None:
         return None
 
 
-def accented_lexicon_rows(source: Path) -> Iterator[tuple[list[str], int]]:
-    for row in lexicon_rows(source):
-        downstep = first_accent(row)
-        if downstep is not None:
-            yield row, downstep
-
-
 @dataclass(frozen=True)
 class LexiconWord:
     lemma: str

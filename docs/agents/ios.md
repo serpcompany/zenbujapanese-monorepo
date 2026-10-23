@@ -529,8 +529,8 @@ that it matches that database, its pinned source, and its import report. Without
 as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
 index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
-Pitch for two-part compounds UniDic doesn't list whole (記者会見) comes from `CompoundPitch.sqlite3`,
-also built against that database; `test_compound_pitch_contract.py` verifies it.
+Pitch for compounds UniDic doesn't list whole (記者会見) comes from `CompoundPitch.sqlite3`, also
+built against that database; `test_compound_pitch_contract.py` verifies it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so

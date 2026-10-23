@@ -202,7 +202,7 @@ describe('wordDetail', () => {
       compoundPitch: {
         downstep: 3,
         moraCount: 6,
-        sourceIdentity: 'UniDic 3.1.0 compound accent rule (C2)'
+        sourceIdentity: 'UniDic 3.1.0 compound accent rules'
       }
     }
     const detail = wordDetail({ ...rows(1546640), entry })

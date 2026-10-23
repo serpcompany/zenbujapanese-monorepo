@@ -263,11 +263,11 @@ when even that doesn't fit, the pitch accent moves to its own line under a full-
 the right of the headword are the pitch accent (the reading in katakana with an overline across the
 high morae and a hook at the downstep) in a capsule with a speaker, which pronounces the word when
 tapped, and the latest encounter photo. A word without pitch shows a standalone pronounce button.
-Pitch is the word's own UniDic accent, never a homophone's (橋 2, 箸 1, 端 0); a two-part compound
-UniDic lacks, such as 記者会見, is estimated from its parts, and a word with neither shows no pitch. A
-part-of-speech row follows and opens the conjugation table when one exists. It names one word class
-and then its modifiers in sentence case without repeating "verb", for example "Godan verb
-(intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
+Pitch is the word's own UniDic accent, never a homophone's (橋 2, 箸 1, 端 0); a compound UniDic lacks
+(記者会見) is estimated from its parts, but not an idiom, a 〜的 word, or an expression, and a word with
+neither has none. A part-of-speech row follows and opens the conjugation table when one exists. It
+names one word class and then its modifiers in sentence case without repeating "verb", for example
+"Godan verb (intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
 Check: recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
 `UniDicPitchTests`; core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package

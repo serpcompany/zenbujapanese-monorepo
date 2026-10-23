@@ -2,27 +2,27 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed"
+      "sha256" : "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7"
     },
     {
       "name" : "CompoundPitch.sqlite3",
-      "sha256" : "95ac9930870679e632bfb1904ccb305c8ef28bc49d61ecdd3dbb285beffcf915"
+      "sha256" : "3e936b9416a11086ce969c5b7d238d3b4a8a7296215b6d7a586d02f0173cdbac"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "1eb5f1b8545c23522b0e1b6f45d9ef51f632d6451ae64af96f9ed4f0956efb47"
+      "sha256" : "8cfd0c71f07df8438e722da4eac78e790d22bf2cda1cbbcf5e11065cc004d096"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "e1ab385a81e7bf24793bbc5e2036918e750c12b9eadc0f11ecfa1600ac32c579"
+      "sha256" : "49cd2a16f86a142b5e4a0f199a588d80a8e42fb57b7be98add6dd99094910cae"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "a2887c91ebef445b2e90df87deb2e2a8f729d3f5844f8fe49fd425cbf80b79cb"
+      "sha256" : "719f59612b92e2db02fade882598b965938279ebca0da7e4627e0385a7ae7489"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "16bcc1ab1586105d7e5f28b2ddf9f1ce3191b44371e4321e6894e625bdd9f5ed"
+      "sha256" : "529585ff2a052e12ce89177e1abe99e7f0f5e8bf9d57439c6603b6d4d2ebc49a"
     },
     {
       "name" : "KanjiReferenceData.json",
@@ -77659,7 +77659,7 @@
         "levels" : "LHHLLL",
         "moraCount" : 6,
         "particle" : "L",
-        "source" : "UniDic 3.1.0 compound accent rule (C2)"
+        "source" : "UniDic 3.1.0 compound accent rules"
       },
       "reading" : "きしゃかいけん",
       "relatedWords" : [
@@ -77679,6 +77679,1382 @@
             "noun",
             "takesSuru",
             "intransitive"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+        {
+          "kind" : "reading",
+          "labels" : [
+
+          ],
+          "value" : "クレジット・カード"
+        }
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "covers" : "クレジットカード: a katakana compound's pitch from CompoundPitch, one of its splits giving none",
+      "entSeq" : [
+        "1045340"
+      ],
+      "examples" : {
+        "listed" : 20,
+        "reportedCount" : "20",
+        "shown" : [
+          {
+            "english" : "Where are your credit cards?",
+            "id" : "esp1_8ae131f1835c0764cc5830c8c6c881a6",
+            "japanese" : "クレジットカードはどこだ。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "628ff17f0d1999707460fc690ac6dcaa",
+                "surface" : "どこ"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Do you have a credit card?",
+            "id" : "esp1_1c44676847c22db14989123717a83b4c",
+            "japanese" : "クレジットカードはお持ちですか。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "aaf8bdc6758cb9d4d9a7a29a4fee98be",
+                  "0c0e780d265e3a560d3270332554e48c",
+                  "1cd97d33c18101c8b05531a73d66ee50",
+                  "e3fa23da368051f2b816683df256747e",
+                  "81e3d0acc22391b5b3e89453b3befa9b",
+                  "0ca032bd5b17d885f606f010505ff7e9",
+                  "6ee082c655af5e02af613465019a49e4"
+                ],
+                "surface" : "お"
+              },
+              {
+                "entry" : "8733544dc988feb1ec23f180ed1110c8",
+                "surface" : "持ちです"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Credit cards are useful but dangerous.",
+            "id" : "esp1_a103c710f35ed4f6160dfbd6def6bbeb",
+            "japanese" : "クレジットカードは役に立つが危険だ。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "6fb601a334abeb61da5218d211c3ccd7",
+                "surface" : "役に立つ"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "c3ee4fe7aeb163d1fce763968c33d2b3",
+                "surface" : "危険"
+              },
+              {
+                "candidates" : [
+                  "e33ad4f4da88dce059a4b3fc7b2264b4",
+                  "caa0908e5f4b933ebf132299796a1997"
+                ],
+                "surface" : "だ"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Your credit card, please.",
+            "id" : "esp1_3b4a546598e7e3fccf7e94def6405f0f",
+            "japanese" : "クレジットカードをみせていただけるか。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "42c1b6c90f9d98e673b7f8486d4751c6",
+                  "6c3a0d0d1a42cebbbd044089cc2137c7",
+                  "c9413ee0708fdfdcc7c1369d5fd9ff28"
+                ],
+                "surface" : "みせて"
+              },
+              {
+                "entry" : "9bd50e2b36a8dbcf8fa5afdb5cd9089f",
+                "surface" : "いただける"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I'd like to pay by credit card.",
+            "id" : "esp1_82d28862b725eab03377a07044450387",
+            "japanese" : "クレジットカードで支払いたいのですが。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ecbef47365593624670ca4db53481f8c",
+                "surface" : "支払いたい"
+              },
+              {
+                "candidates" : [
+                  "3040e40d02d889316af08f4dd14a15f9",
+                  "132012aaec93e930fd3b41c16f423ca2",
+                  "07d411d1300b50be3e31ed93ab8ed445"
+                ],
+                "surface" : "の"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Please pay cash, not by credit card.",
+            "id" : "esp1_fa97576f3229b80ca72433915ceab11e",
+            "japanese" : "クレジットカードではなく現金でお願いします。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "candidates" : [
+                  "02e929fdbab022412942f7c1e3db49a1",
+                  "f724ef657ec52be63b5fd3e690215576",
+                  "bab61aa3e68ab7e0f8e3f2fed4f99024"
+                ],
+                "surface" : "なく"
+              },
+              {
+                "entry" : "833fc006f46bb7eea2b673a155c6e469",
+                "surface" : "現金"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "89fb6dad30b623021d0992360636a50a",
+                "surface" : "お願い"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "します"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "It makes sense to pay off your credit card balance every month.",
+            "id" : "esp1_ac0637bfa11a65aa27aa96cd8abd48eb",
+            "japanese" : "クレジットカードの負債は毎月返済しておいた方がいい。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "28cebc65f2b1b8dd12871f9062cfd13f",
+                "surface" : "負債"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "5f3227925624de67cd8717b5680ba34d",
+                "surface" : "毎月"
+              },
+              {
+                "entry" : "6c9785d7a7aad467d85da46c87dc606e",
+                "surface" : "返済"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "しておいた"
+              },
+              {
+                "entry" : "51f6004c1f6bb2cdfdc1a56456da5b2f",
+                "surface" : "方"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "candidates" : [
+                  "d04b57414d38acaf22aa7a862d705a1f",
+                  "505eccb6b57001b93198600c71ce2d55",
+                  "d1ea7e28776665a41bf63ea3189a2db7",
+                  "6354f584735eecbc2dae0f61211b891c",
+                  "24a6fe40b78a563072aa36cbfd9ae8e1",
+                  "b81a1df9122db0eda20421e3a3dc4053"
+                ],
+                "surface" : "いい"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I'm calling because I've lost my credit card.",
+            "id" : "esp1_1bee645cdec1679b060bddc73274aa1a",
+            "japanese" : "クレジットカードをなくしてしまったのでお電話したのですが。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "f579592ae654f2fb426da9621587783b",
+                  "ff55830b364b0911e54ced9a1f8b0a72"
+                ],
+                "surface" : "なくしてしまった"
+              },
+              {
+                "entry" : "76f4ac20c0021f2a3a56e695b4212459",
+                "surface" : "ので"
+              },
+              {
+                "candidates" : [
+                  "aaf8bdc6758cb9d4d9a7a29a4fee98be",
+                  "0c0e780d265e3a560d3270332554e48c",
+                  "1cd97d33c18101c8b05531a73d66ee50",
+                  "e3fa23da368051f2b816683df256747e",
+                  "81e3d0acc22391b5b3e89453b3befa9b",
+                  "0ca032bd5b17d885f606f010505ff7e9",
+                  "6ee082c655af5e02af613465019a49e4"
+                ],
+                "surface" : "お"
+              },
+              {
+                "entry" : "391f0f7c8f6aaa4fea13d467f4f86835",
+                "surface" : "電話"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "した"
+              },
+              {
+                "candidates" : [
+                  "3040e40d02d889316af08f4dd14a15f9",
+                  "132012aaec93e930fd3b41c16f423ca2",
+                  "07d411d1300b50be3e31ed93ab8ed445"
+                ],
+                "surface" : "の"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "It's easy to get into debt quickly with charge cards.",
+            "id" : "esp1_b6deeaef0d5f0ad8245932b22f6049ee",
+            "japanese" : "クレジットカードを使うとあっという間に借金をつくりやすい。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "20784baf1a05e4b5bc1bd35109a1ab45",
+                "surface" : "使う"
+              },
+              {
+                "entry" : "d005d8641e912ee4b72714255428699d",
+                "surface" : "と"
+              },
+              {
+                "entry" : "c0315f13cdbf50c1cdf9c69fb135462c",
+                "surface" : "あっという間に"
+              },
+              {
+                "entry" : "b33061f9035f3f3d49082b8f7ee63476",
+                "surface" : "借金"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "candidates" : [
+                  "4949a27f8ea2a7ef0b3d2b342c8d75ee",
+                  "2c044ee7da960cf3c129e4f73da85cf2"
+                ],
+                "surface" : "つくり"
+              },
+              {
+                "candidates" : [
+                  "5c0bd8b9c075dc94c0d8987710d9a223",
+                  "240e83ea091939b4b45f36bba205b955"
+                ],
+                "surface" : "やすい"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I'm calling because my credit card has been stolen.",
+            "id" : "esp1_1a298eba3874f2bd0454556b84be152f",
+            "japanese" : "クレジットカードを盗まれてしまったのでお電話したいのですが。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "630eeab24293f3c6a69f48a7b725a942",
+                "surface" : "盗まれてしまった"
+              },
+              {
+                "entry" : "76f4ac20c0021f2a3a56e695b4212459",
+                "surface" : "ので"
+              },
+              {
+                "candidates" : [
+                  "aaf8bdc6758cb9d4d9a7a29a4fee98be",
+                  "0c0e780d265e3a560d3270332554e48c",
+                  "1cd97d33c18101c8b05531a73d66ee50",
+                  "e3fa23da368051f2b816683df256747e",
+                  "81e3d0acc22391b5b3e89453b3befa9b",
+                  "0ca032bd5b17d885f606f010505ff7e9",
+                  "6ee082c655af5e02af613465019a49e4"
+                ],
+                "surface" : "お"
+              },
+              {
+                "entry" : "391f0f7c8f6aaa4fea13d467f4f86835",
+                "surface" : "電話"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "したい"
+              },
+              {
+                "candidates" : [
+                  "3040e40d02d889316af08f4dd14a15f9",
+                  "132012aaec93e930fd3b41c16f423ca2",
+                  "07d411d1300b50be3e31ed93ab8ed445"
+                ],
+                "surface" : "の"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Credit card companies are not looking so hard at credit ratings.",
+            "id" : "esp1_7f1e1832535c863c9c043979bd5fef81",
+            "japanese" : "クレジットカード会社は信用査定結果をあまり重視していません。",
+            "tokens" : [
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "2ca2d3d17ea13458f7316b205d3071a7",
+                "surface" : "会社"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "4f5e5d73529faf23a0bb757db00aa7a9",
+                "surface" : "信用"
+              },
+              {
+                "entry" : "15daadbe274c71f291b944e64e56093b",
+                "surface" : "査定"
+              },
+              {
+                "entry" : "3fe2761040b9694a35680ad1852c8692",
+                "surface" : "結果"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "2071dcb5be66cd69a2848b70ff78efa1",
+                "surface" : "あまり"
+              },
+              {
+                "entry" : "38315837eef5d40d4b137813fd7e3ab2",
+                "surface" : "重視"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "していません"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I left my card at home.",
+            "id" : "esp1_1e1de537f673f7d93ee9bb53c3dff9e6",
+            "japanese" : "家にクレジットカードを忘れてきた。",
+            "tokens" : [
+              {
+                "entry" : "6f54be67247dcd72328d454c302c328a",
+                "surface" : "家"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "520343884599010d1987c1b33dd0bed9",
+                "surface" : "忘れてきた"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Which credit cards can I use?",
+            "id" : "esp1_c9db9867ea2a4e063f8752d06a0a470f",
+            "japanese" : "どのクレジットカードが使えますか。",
+            "tokens" : [
+              {
+                "entry" : "b49ffbd0e984ea110127aab91a9d7a54",
+                "surface" : "どの"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "candidates" : [
+                  "525af7a87097616e431ac3a1e524f37f",
+                  "6e965c8d5bfa8eb14fc4179abb44aeed"
+                ],
+                "surface" : "が"
+              },
+              {
+                "entry" : "1415de1475d89bb39a794b758e48fd25",
+                "surface" : "使えます"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "All major credit cards are accepted.",
+            "id" : "esp1_5d835987ec1549c02e336f21df5e1707",
+            "japanese" : "主なクレジットカードは全てご利用になれます。",
+            "tokens" : [
+              {
+                "candidates" : [
+                  "7ca700b4ff58113ffcf79486c264ad55",
+                  "d6bb7d67b5c5f09be067b76b84637b5f",
+                  "97a0f09f01355b470b25a50145a9020b",
+                  "81d7d0d82eb339a9618e2e679c7df4f3",
+                  "229eac1bc70b3d55e12df43ffcab2ee4",
+                  "9b8bf264785748dc5b2f7e7026bf66c0"
+                ],
+                "surface" : "主な"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "d57cc8786fd8eb221454f5257f7a5897",
+                "surface" : "全て"
+              },
+              {
+                "candidates" : [
+                  "c2448227d7354e204523882c2a100f5c",
+                  "faeb6401b58d3456a6f4813bda1c980e",
+                  "6eac92af36444ab5069bf950c4d51f05",
+                  "b673b8d252793c2cd4b903b41e278120",
+                  "0e1e98042c318b82bbe492047bf6b33f",
+                  "4987a01e3332466f845ba67e368ea3e6",
+                  "533b7570a6ad211972764d20ddd3fce2",
+                  "f56a25fcf9b30351bf2b8a63965b6122",
+                  "efdd69062fac6075f9fdbb9eb8e3dcbc",
+                  "98b02e9ed7f58b79b575d9732b46952d"
+                ],
+                "surface" : "ご"
+              },
+              {
+                "entry" : "26d8d0484ad93283a2600eeb7ad10c87",
+                "surface" : "利用"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "candidates" : [
+                  "afc1511359c52b23c9f369291f158adb",
+                  "63a664f2647acbd16d14da2bdbe67cfd",
+                  "b8694f989ab616a5972185ed5be75594"
+                ],
+                "surface" : "なれます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "We accept all major credit cards.",
+            "id" : "esp1_63e14454daa6a4ce478117ac3e069f6a",
+            "japanese" : "主なクレジットカードは全てご利用いただけます。",
+            "tokens" : [
+              {
+                "candidates" : [
+                  "7ca700b4ff58113ffcf79486c264ad55",
+                  "d6bb7d67b5c5f09be067b76b84637b5f",
+                  "97a0f09f01355b470b25a50145a9020b",
+                  "81d7d0d82eb339a9618e2e679c7df4f3",
+                  "229eac1bc70b3d55e12df43ffcab2ee4",
+                  "9b8bf264785748dc5b2f7e7026bf66c0"
+                ],
+                "surface" : "主な"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "d57cc8786fd8eb221454f5257f7a5897",
+                "surface" : "全て"
+              },
+              {
+                "candidates" : [
+                  "c2448227d7354e204523882c2a100f5c",
+                  "faeb6401b58d3456a6f4813bda1c980e",
+                  "6eac92af36444ab5069bf950c4d51f05",
+                  "b673b8d252793c2cd4b903b41e278120",
+                  "0e1e98042c318b82bbe492047bf6b33f",
+                  "4987a01e3332466f845ba67e368ea3e6",
+                  "533b7570a6ad211972764d20ddd3fce2",
+                  "f56a25fcf9b30351bf2b8a63965b6122",
+                  "efdd69062fac6075f9fdbb9eb8e3dcbc",
+                  "98b02e9ed7f58b79b575d9732b46952d"
+                ],
+                "surface" : "ご"
+              },
+              {
+                "entry" : "26d8d0484ad93283a2600eeb7ad10c87",
+                "surface" : "利用"
+              },
+              {
+                "entry" : "9bd50e2b36a8dbcf8fa5afdb5cd9089f",
+                "surface" : "いただけます"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "I'd like to pay with my credit card instead.",
+            "id" : "esp1_7ad9e340480ecda24d7937d45aa96779",
+            "japanese" : "では、クレジットカードで支払います。",
+            "tokens" : [
+              {
+                "entry" : "ce25fb720ff9ac793e7d85eaaebd043f",
+                "surface" : "では"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "candidates" : [
+                  "4102685c5ecb52e7276d68ab0ff59f29",
+                  "3906187791ec20829976c57d3c59727d"
+                ],
+                "surface" : "で"
+              },
+              {
+                "entry" : "ecbef47365593624670ca4db53481f8c",
+                "surface" : "支払います"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Cash or credit card?",
+            "id" : "esp1_da11512a7872a3cbea2f45e708518734",
+            "japanese" : "現金ですかクレジットカードですか。",
+            "tokens" : [
+              {
+                "entry" : "833fc006f46bb7eea2b673a155c6e469",
+                "surface" : "現金"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "entry" : "33d0faa67bf3a7a9e5db19dfb32236ed",
+                "surface" : "か"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "My sister has difficulty qualifying for a credit card.",
+            "id" : "esp1_2bfa02b70e6b841d316b0108216ad5b3",
+            "japanese" : "僕の妹はなかなかクレジットカードの資格をもてない。",
+            "tokens" : [
+              {
+                "entry" : "a6af8452cff4495733137e23d2332f7a",
+                "surface" : "僕"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "9321f94de6bda94ce87748e1ca5adf71",
+                "surface" : "妹"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "9a8683f369517cc9e2adda0bc7464c14",
+                "surface" : "なかなか"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "9f767c149dc0bafcd9498c9319a40797",
+                "surface" : "資格"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "8a975df52a1b1b75803cb750ad4bc38b",
+                "surface" : "もてない"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "He usually uses credit cards instead of cash.",
+            "id" : "esp1_3333272502f15cb3ee07606acbe2ea82",
+            "japanese" : "彼は普通現金のかわりにクレジットカードを使います。",
+            "tokens" : [
+              {
+                "entry" : "b8a1958f9405788408b6c8f27cf17aa9",
+                "surface" : "彼"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "864a383a881f68451d1e84545ee7a4f2",
+                "surface" : "普通"
+              },
+              {
+                "entry" : "833fc006f46bb7eea2b673a155c6e469",
+                "surface" : "現金"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "candidates" : [
+                  "45f5c11c972e195b734232c964512074",
+                  "86c255b9bcb3113c3d9f67bea96511a2",
+                  "c3f71c92abe54914e5b0d64ec223707f"
+                ],
+                "surface" : "かわり"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "20784baf1a05e4b5bc1bd35109a1ab45",
+                "surface" : "使います"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          },
+          {
+            "english" : "Please tell the reservation clerk, Mr Ichiro Takahashi, your credit card number to confirm your reservation.",
+            "id" : "esp1_a7e1e5470689a79d13a6501632c02da3",
+            "japanese" : "予約係の高橋一郎氏に、予約確認のためあなたのクレジットカード番号を連絡して下さい。",
+            "tokens" : [
+              {
+                "entry" : "720ac2010634c2d0a3d408087e490e9f",
+                "surface" : "予約"
+              },
+              {
+                "entry" : "064be4cd848de2b0f0d92952eed28af6",
+                "surface" : "係"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "surface" : "高橋"
+              },
+              {
+                "surface" : "一郎"
+              },
+              {
+                "entry" : "1e3c73a212ef38bd5c5b09eec5304ba8",
+                "surface" : "氏"
+              },
+              {
+                "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+                "surface" : "に"
+              },
+              {
+                "surface" : "、"
+              },
+              {
+                "entry" : "720ac2010634c2d0a3d408087e490e9f",
+                "surface" : "予約"
+              },
+              {
+                "entry" : "1c5a930c775fd31b01d9e153323c4a47",
+                "surface" : "確認"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "candidates" : [
+                  "cae38a5a387b0d688d65e138888f23df",
+                  "aa6aeda67548cfb3ed5dbf3e7bced9e7",
+                  "d3ea2d544c8851f6f26a0dc278cba262"
+                ],
+                "surface" : "ため"
+              },
+              {
+                "entry" : "8b1433c550e5f65ce7f35b08d7c6042e",
+                "surface" : "あなた"
+              },
+              {
+                "entry" : "08c0172000564955c420c01ddadc4b63",
+                "surface" : "の"
+              },
+              {
+                "entry" : "843b9081b7c18d13f2e3612761bd8603",
+                "pageWord" : true,
+                "surface" : "クレジットカード"
+              },
+              {
+                "entry" : "c182de9cf4d0b744ccb6e9850295cd14",
+                "surface" : "番号"
+              },
+              {
+                "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+                "surface" : "を"
+              },
+              {
+                "entry" : "f8e007dcedaaaac8f9491b5664e42513",
+                "surface" : "連絡"
+              },
+              {
+                "candidates" : [
+                  "b1a37c51a5860d4f513fdad36e99bca0",
+                  "27b712d1aa61f1de61ebf3c7eb9ef070",
+                  "10c213c9774338580f22d1aea02399a4",
+                  "f3a7628ea368a349bbc30a62f59b9fa0",
+                  "3e403ed3e2b2ac9284f0a155efaaa94e"
+                ],
+                "surface" : "して下さい"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "No rank"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "クレジットカード"
+        }
+      ],
+      "headword" : "クレジットカード",
+      "id" : "843b9081b7c18d13f2e3612761bd8603",
+      "kanji" : [
+
+      ],
+      "languageReferenceID" : "843b9081b7c18d13f2e3612761bd8603",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun",
+      "pitch" : {
+        "downstep" : 6,
+        "graph" : {
+          "morae" : [
+            "ク",
+            "レ",
+            "ジ",
+            "ッ",
+            "ト",
+            "カ",
+            "ー",
+            "ド"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 830
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "H",
+              "x" : 350
+            },
+            {
+              "level" : "H",
+              "x" : 450
+            },
+            {
+              "level" : "H",
+              "x" : 550
+            },
+            {
+              "level" : "L",
+              "x" : 650
+            },
+            {
+              "level" : "L",
+              "x" : 750
+            }
+          ]
+        },
+        "levels" : "LHHHHHLL",
+        "moraCount" : 8,
+        "particle" : "L",
+        "source" : "UniDic 3.1.0 compound accent rules"
+      },
+      "reading" : "クレジットカード",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "glosses" : [
+            "credit card"
+          ],
+          "meaning" : "credit card",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        }
+      ]
+    },
+    {
+      "alternativeForms" : [
+        {
+          "kind" : "reading",
+          "labels" : [
+
+          ],
+          "value" : "レンタル・ビデオ"
+        }
+      ],
+      "alternativeKanji" : [
+
+      ],
+      "covers" : "レンタルビデオ: a katakana compound's pitch from CompoundPitch",
+      "entSeq" : [
+        "1146200"
+      ],
+      "examples" : {
+        "listed" : 1,
+        "reportedCount" : "1",
+        "shown" : [
+          {
+            "english" : "This shop is a rental video shop.",
+            "id" : "esp1_8072f721bbf74db8f138b2181706403d",
+            "japanese" : "この店はレンタルビデオ店です。",
+            "tokens" : [
+              {
+                "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+                "surface" : "この"
+              },
+              {
+                "entry" : "edfdf17adc8f249ed13c84f27d09a637",
+                "surface" : "店"
+              },
+              {
+                "entry" : "ad63532d193fae21a8b73d5d7880b492",
+                "surface" : "は"
+              },
+              {
+                "entry" : "05153971913bc11645b3276c9fcc78c9",
+                "pageWord" : true,
+                "surface" : "レンタルビデオ"
+              },
+              {
+                "entry" : "ca81b6acad7fa9c8e82b0a4373c97eaa",
+                "surface" : "店"
+              },
+              {
+                "entry" : "6033d456195c1da656adf7a1fa431553",
+                "surface" : "です"
+              },
+              {
+                "surface" : "。"
+              }
+            ]
+          }
+        ],
+        "truncated" : false
+      },
+      "frequency" : [
+        {
+          "details" : {
+            "explanation" : "JLPT Levels does not list this entry. JLPT levels are study estimates from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010.",
+            "pack" : {
+              "description" : "Estimated JLPT levels (N5–N1) from Jonathan Waller's vocabulary lists. JLPT has published no official vocabulary list since 2010, so levels are study estimates, not an exam syllabus.",
+              "domain" : "JLPT study levels (unofficial)",
+              "name" : "JLPT Levels",
+              "source" : "JLPT vocabulary lists by Jonathan Waller, with JMdict IDs by stephenmk (CC BY-SA 4.0)",
+              "version" : "2025-08-26"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "JLPT",
+          "pack" : "zenbu.jlpt.waller.levels",
+          "text" : "Not listed"
+        },
+        {
+          "details" : {
+            "explanation" : "YouTube has no mapped frequency rank for this entry.",
+            "pack" : {
+              "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
+              "domain" : "Everyday YouTube Japanese · TUBELEX",
+              "name" : "YouTube",
+              "source" : "TUBELEX Japanese frequency lists by Adam Nohejl and contributors",
+              "version" : "2025.1"
+            },
+            "rows" : [
+
+            ],
+            "section" : "Frequency"
+          },
+          "name" : "YouTube",
+          "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+          "text" : "No rank"
+        }
+      ],
+      "furigana" : [
+        {
+          "base" : "レンタルビデオ"
+        }
+      ],
+      "headword" : "レンタルビデオ",
+      "id" : "05153971913bc11645b3276c9fcc78c9",
+      "kanji" : [
+
+      ],
+      "languageReferenceID" : "05153971913bc11645b3276c9fcc78c9",
+      "opensConjugations" : false,
+      "partOfSpeech" : "Noun",
+      "pitch" : {
+        "downstep" : 5,
+        "graph" : {
+          "morae" : [
+            "レ",
+            "ン",
+            "タ",
+            "ル",
+            "ビ",
+            "デ",
+            "オ"
+          ],
+          "particle" : {
+            "level" : "L",
+            "x" : 730
+          },
+          "points" : [
+            {
+              "level" : "L",
+              "x" : 50
+            },
+            {
+              "level" : "H",
+              "x" : 150
+            },
+            {
+              "level" : "H",
+              "x" : 250
+            },
+            {
+              "level" : "H",
+              "x" : 350
+            },
+            {
+              "level" : "H",
+              "x" : 450
+            },
+            {
+              "level" : "L",
+              "x" : 550
+            },
+            {
+              "level" : "L",
+              "x" : 650
+            }
+          ]
+        },
+        "levels" : "LHHHHLL",
+        "moraCount" : 7,
+        "particle" : "L",
+        "source" : "UniDic 3.1.0 compound accent rules"
+      },
+      "reading" : "レンタルビデオ",
+      "relatedWords" : [
+
+      ],
+      "senses" : [
+        {
+          "glosses" : [
+            "rental video"
+          ],
+          "meaning" : "rental video",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
+          ]
+        },
+        {
+          "glosses" : [
+            "video rental shop"
+          ],
+          "meaning" : "video rental shop",
+          "notes" : [
+
+          ],
+          "partsOfSpeech" : [
+            "noun"
           ]
         }
       ]
@@ -79976,63 +81352,6 @@
       "languageReferenceID" : "b6932cd1e3ffa8d30451994712a1ad0b",
       "opensConjugations" : false,
       "partOfSpeech" : "Noun",
-      "pitch" : {
-        "downstep" : 5,
-        "graph" : {
-          "morae" : [
-            "ジャ",
-            "ク",
-            "ニ",
-            "ク",
-            "キョ",
-            "ウ",
-            "ショ",
-            "ク"
-          ],
-          "particle" : {
-            "level" : "L",
-            "x" : 980
-          },
-          "points" : [
-            {
-              "level" : "L",
-              "x" : 75
-            },
-            {
-              "level" : "H",
-              "x" : 200
-            },
-            {
-              "level" : "H",
-              "x" : 300
-            },
-            {
-              "level" : "H",
-              "x" : 400
-            },
-            {
-              "level" : "H",
-              "x" : 525
-            },
-            {
-              "level" : "L",
-              "x" : 650
-            },
-            {
-              "level" : "L",
-              "x" : 775
-            },
-            {
-              "level" : "L",
-              "x" : 900
-            }
-          ]
-        },
-        "levels" : "LHHHHLLL",
-        "moraCount" : 8,
-        "particle" : "L",
-        "source" : "UniDic 3.1.0 compound accent rule (C2)"
-      },
       "reading" : "じゃくにくきょうしょく",
       "relatedWords" : [
 

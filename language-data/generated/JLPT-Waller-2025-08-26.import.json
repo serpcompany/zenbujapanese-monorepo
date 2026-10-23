@@ -6,10 +6,10 @@
   "unmappedRows": 14,
   "duplicateMappings": 532,
   "mappingSHA256": "7d90e20a578aed3fbe6bae2fdd56e9f2f24cf83f41e5d9d7dfd1ac75262bf2ca",
-  "artifactContentSHA256": "2f95f03738e38dc4bde315b518acf17119ef3a291b3b47283b5091da6a1a0817",
+  "artifactContentSHA256": "403e4afbd9fab3987f0765193b3f78aad53bb214201f56c4cd06243817eaba24",
   "offlineImporterSHA256": "8b2f60568fe0711ee55a435a96182eb943d98aba4b10d46e886424e9684d93e3",
-  "languageDataSHA256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
-  "bundledArtifactSHA256": "e1ab385a81e7bf24793bbc5e2036918e750c12b9eadc0f11ecfa1600ac32c579",
+  "languageDataSHA256": "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7",
+  "bundledArtifactSHA256": "49cd2a16f86a142b5e4a0f199a588d80a8e42fb57b7be98add6dd99094910cae",
   "levelCounts": {
     "N5": 667,
     "N4": 630,
