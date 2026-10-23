@@ -33,9 +33,14 @@ export interface KanjiListResponse {
 
 const codePoint = (character: string) => character.codePointAt(0) ?? 0
 
+const frequencyRank = (entry: KanjiReferenceEntry) =>
+  entry.frequencyRank ?? Number.POSITIVE_INFINITY
+
 function byFrequency(left: KanjiReferenceEntry, right: KanjiReferenceEntry): number {
-  const rank = (entry: KanjiReferenceEntry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY
-  return rank(left) - rank(right) || codePoint(left.character) - codePoint(right.character)
+  return (
+    frequencyRank(left) - frequencyRank(right) ||
+    codePoint(left.character) - codePoint(right.character)
+  )
 }
 
 const listed = (entry: KanjiReferenceEntry, list: KanjiList) =>

@@ -242,7 +242,7 @@ says where the time goes.
 - **Array helpers that take a function are written in JavaScript in this engine.** `map`,
   `filter`, `some`, `every`, `find`, `Array.from`, a `for...of` over `entries()`, and `replace`
   with a function all interpret a call per element. They are fine once per screen; in what runs
-  per character or per word, loop.
+  per character, per word, or per comparison, loop; a comparator allocates nothing (`rank.ts`).
 - **Remember what repeats.** A kanji's reading forms (`kanji-split.ts`), a form in hiragana and
   katakana (`examples/kana.ts`), a kana word's romaji in pieces (`romaji.ts`), and a word's
   dictionary line (`ipadic.ts`) are each worked out once and kept in a bounded table.

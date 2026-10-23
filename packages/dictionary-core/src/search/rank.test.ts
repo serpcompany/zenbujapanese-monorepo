@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest'
 import {
   compareEnglishRanks,
+  compareJapaneseRanks,
   comparePresentationRanks,
+  compareProfiles,
   type EnglishRank,
   EvidenceLane,
   FormRelation,
@@ -61,7 +63,62 @@ describe('comparePresentationRanks', () => {
   })
 })
 
+const markedProfile = { primaryMask: 2, secondaryMask: 0, newsFrequencyBand: null }
+
+function expectEachFirst<Rank>(compare: (lhs: Rank, rhs: Rank) => number, pairs: [Rank, Rank][]) {
+  for (const [first, second] of pairs) {
+    expect(compare(first, second)).toBeLessThan(0)
+    expect(compare(second, first)).toBeGreaterThan(0)
+  }
+}
+
+describe('compareProfiles', () => {
+  test('puts the form with more primary marks first when the strongest mark and news band tie', () => {
+    const one = { primaryMask: 1, secondaryMask: 0, newsFrequencyBand: 3 }
+    const three = { primaryMask: 1 | 2 | 4, secondaryMask: 0, newsFrequencyBand: 3 }
+    expectEachFirst(compareProfiles, [[three, one]])
+    expect(compareProfiles(three, { ...three })).toBe(0)
+  })
+})
+
+describe('compareJapaneseRanks', () => {
+  test('decides by relation, priority, sense count, headword length, then fingerprint', () => {
+    const better = { priorityProfile: markedProfile, senseBreadthRank: -9, headwordLength: 0 }
+    expectEachFirst(compareJapaneseRanks, [
+      [japanese('z'), japanese('a', { ...better, relation: FormRelation.readingExact })],
+      [japanese('z', { priorityProfile: markedProfile }), japanese('a', { senseBreadthRank: -9 })],
+      [japanese('z', { senseBreadthRank: -3, headwordLength: 5 }), japanese('a')],
+      [japanese('z'), japanese('a', { headwordLength: 2 })],
+      [japanese('a'), japanese('b')]
+    ])
+  })
+})
+
 describe('compareEnglishRanks', () => {
+  test('decides by lane, romaji, first sense, priority, sense, gloss, romaji support, length, fingerprint', () => {
+    const token = { lane: EvidenceLane.tokenGloss }
+    const romaji = { lane: EvidenceLane.romajiOnly }
+    const better = { priorityPresenceRank: 0, priorityProfile: markedProfile, corroborationRank: 0 }
+    expectEachFirst(compareEnglishRanks, [
+      [english('z', { headwordLength: 5 }), english('a', { ...token, ...better })],
+      [english('z', romaji), english('a', { ...romaji, ...better, romajiSpecificityRank: 1 })],
+      [english('z'), english('a', { ...better, senseOrder: 2 })],
+      [english('z', { priorityPresenceRank: 0 }), english('a', { priorityProfile: markedProfile })],
+      [
+        english('z', { ...token, priorityProfile: markedProfile, senseOrder: 3 }),
+        english('a', token)
+      ],
+      [
+        english('z', { ...token, senseOrder: 1, glossOrder: 5 }),
+        english('a', { ...token, senseOrder: 2 })
+      ],
+      [english('z'), english('a', { glossOrder: 1, corroborationRank: 0, headwordLength: 0 })],
+      [english('z', { corroborationRank: 0, headwordLength: 5 }), english('a')],
+      [english('z'), english('a', { headwordLength: 2 })],
+      [english('a'), english('b')]
+    ])
+  })
+
   test('leads with priority marks, and lets romaji that resembles the query only break ties', () => {
     const marked = english('marked', { priorityPresenceRank: 0 })
     const corroborated = english('doggu', { corroborationRank: 0 })
