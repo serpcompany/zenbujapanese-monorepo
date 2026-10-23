@@ -131,8 +131,8 @@ struct AccountSignInTests {
   }
 
   @Test("the service URL comes from a launch argument, the environment, or the build")
-  func serviceURL() throws {
-    let defaults = try #require(UserDefaults(suiteName: "account-tests-\(UUID().uuidString)"))
+  func serviceURL() {
+    let defaults = MemoryDefaults()
     #expect(
       AccountServiceConfiguration.resolve(
         bundle: .main, defaults: defaults,
@@ -170,9 +170,8 @@ struct AccountSignInTests {
       try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
         .write(to: bundleURL.appending(path: "Info.plist"))
       let bundle = try #require(Bundle(url: bundleURL))
-      let defaults = try #require(UserDefaults(suiteName: "account-tests-\(UUID().uuidString)"))
       return AccountServiceConfiguration.resolve(
-        bundle: bundle, defaults: defaults, environment: [:])
+        bundle: bundle, defaults: MemoryDefaults(), environment: [:])
     }
 
     #expect(try configuration(suffix: "")?.offersApple == true)

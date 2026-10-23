@@ -72,7 +72,6 @@ final class AccountFixture {
 
   let directory = FileManager.default.temporaryDirectory
     .appending(path: "account-tests-\(UUID().uuidString)", directoryHint: .isDirectory)
-  nonisolated let defaultsSuite = "account-tests-\(UUID().uuidString)"
   let server: StubAccountServer
   let storage: MemorySessionTokenStorage
   nonisolated static let start = Date(timeIntervalSince1970: 1_791_000_000)
@@ -92,7 +91,7 @@ final class AccountFixture {
   private(set) var settings: SyncedSettings!
   var frequency = FrequencyChoice()
   private(set) var account: ZenbuAccount!
-  lazy var defaults = UserDefaults(suiteName: defaultsSuite) ?? .standard
+  let defaults = MemoryDefaults()
   nonisolated let searchTimes = LaterEachTime()
 
   var sync: AccountSync { account.sync }
@@ -104,7 +103,6 @@ final class AccountFixture {
 
   deinit {
     try? FileManager.default.removeItem(at: directory)
-    UserDefaults().removePersistentDomain(forName: defaultsSuite)
   }
 
   func launch() async {
@@ -116,7 +114,8 @@ final class AccountFixture {
       directory: directory.appending(path: "Translate Conversations"),
       now: { [unowned self] in now })
     profile = UserProfile(defaults: defaults, photoURL: directory.appending(path: "photo.jpg"))
-    (notes, searches) = Self.stores(in: defaultsSuite, searchedAt: searchTimes)
+    notes = WordNoteStorage(defaults: defaults.opened(), placing: SavedWords.lookup)
+    searches = RecentSearchHistory(defaults: defaults.opened(), now: searchTimes.next)
     media = EncounterMediaStorage(
       directory: directory.appending(path: "Encounter Media"), placing: SavedWords.lookup)
     settings = SyncedSettings(defaults: defaults)
@@ -132,16 +131,6 @@ final class AccountFixture {
       now: { [weak self] in self?.now ?? Self.start }, retryClock: retries.clock)
     sync.onLocalChange = nil
     await settle()
-  }
-
-  nonisolated private static func stores(in suite: String, searchedAt times: LaterEachTime)
-    -> (WordNoteStorage, RecentSearchHistory)
-  {
-    (
-      WordNoteStorage(
-        defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), placing: SavedWords.lookup),
-      RecentSearchHistory(defaults: UserDefaults(suiteName: suite) ?? UserDefaults(), now: times.next)
-    )
   }
 
   func settle() async {

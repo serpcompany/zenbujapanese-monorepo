@@ -105,10 +105,9 @@ struct PlatformAdapterTests {
   @MainActor
   @Test("a profile photo is cropped to a 512-point square and survives a reload")
   func profilePhoto() async throws {
-    let suite = "platform-profile-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory
+      .appending(path: "platform-profile-\(UUID().uuidString).jpg")
     defer { try? FileManager.default.removeItem(at: photoURL) }
     let png = try pngData(width: 300, height: 200)
 

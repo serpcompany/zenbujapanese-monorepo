@@ -217,9 +217,7 @@ struct AccountSyncWatchHistoryTests {
 
   @Test("videos saved before Recent kept a time are dated in their order, before any watched since")
   func datesOldVideos() throws {
-    let suite = "watch-history-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { UserDefaults().removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     let old = [WatchedVideo(videoID: ramen), WatchedVideo(videoID: sushi)]
     defaults.set(try JSONEncoder().encode(old), forKey: "watch.recent-videos.v1")
     let start = WatchHistory.undatedStart
@@ -235,7 +233,7 @@ struct AccountSyncWatchHistoryTests {
   @Test("a Player's Recent that can't be read is kept aside, and Recent and sync carry on")
   func keepsUnreadableRecentAside() async throws {
     let fixture = try await Fixture.afterSignIn()
-    let defaults = try #require(UserDefaults(suiteName: fixture.defaultsSuite))
+    let defaults = fixture.defaults
     let unreadable = Data(#"{"videos":"not a list of videos"}"#.utf8)
     defaults.set(unreadable, forKey: recentKey)
 
@@ -250,8 +248,7 @@ struct AccountSyncWatchHistoryTests {
 
   @Test("a saved video that can't be read is kept aside, and the others stay in Recent")
   func keepsReadableVideos() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     let readable = try JSONEncoder().encode(WatchedVideo(videoID: ramen))
     let stored = Data("[".utf8) + readable + Data(#",{"videoID":5}]"#.utf8)
     defaults.set(stored, forKey: recentKey)
@@ -263,8 +260,7 @@ struct AccountSyncWatchHistoryTests {
 
   @Test("a length that isn't a finite number is dropped, rather than emptying Recent")
   func dropsNonFiniteNumbers() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     let history = WatchHistory(defaults: defaults)
     history.record(try #require(YouTubeVideoID(rawValue: ramen)))
     history.record(try #require(YouTubeVideoID(rawValue: sushi))) { $0.duration = .infinity }

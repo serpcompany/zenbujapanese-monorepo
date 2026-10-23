@@ -144,9 +144,8 @@ struct SchoolKanjiTests {
 
   @Test("Kanji Meanings are on until the learner turns them off")
   @MainActor
-  func kanjiMeanings() throws {
-    let defaults = try #require(UserDefaults(suiteName: "SchoolKanjiTests.kanjiMeanings"))
-    defaults.removePersistentDomain(forName: "SchoolKanjiTests.kanjiMeanings")
+  func kanjiMeanings() {
+    let defaults = MemoryDefaults()
     #expect(ReadingAidPreferences(defaults: defaults).showsKanjiMeanings)
     ReadingAidPreferences(defaults: defaults).showsKanjiMeanings = false
     #expect(ReadingAidPreferences(defaults: defaults).showsKanjiMeanings == false)
