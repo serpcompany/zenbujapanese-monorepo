@@ -10,7 +10,14 @@ from pathlib import Path
 from contract_checks import FIXTURES, ROOT, unidic_archive
 
 sys.path.insert(0, str(ROOT / "language-data/tools"))
-from compound_accent import CompoundEstimate, CompoundSplitter, lexicon_parts, off_special_morae
+from compound_accent import (
+    CompoundEstimate,
+    CompoundSplitter,
+    lexicon_parts,
+    off_special_morae,
+    two_part_c2_downstep,
+    two_part_lexemes,
+)
 from import_compound_pitch import SHIPPED_GROUPS, SOURCE_IDENTITY, import_pitch
 from language_data_tools import file_sha256
 from unidic_adapter import lexicon_rows
@@ -41,7 +48,14 @@ ENTRIES = {
     1597010: ("立ち入り禁止", "たちいりきんし", ["expression", "noAdjective", "noun"], None),
     1264890: ("個人的", "こじんてき", ["naAdjective"], None),
     2215430: ("には", "には", ["expression", "particle"], None),
+    1194290: ("火曜日", "かようび", ["noun", "adverb"], None),
+    1347870: ("小学校", "しょうがっこう", NOUN, None),
+    1188950: ("何時間", "なんじかん", ["expression"], None),
+    1408090: ("多目的", "たもくてき", ["naAdjective"], None),
+    1534350: ("盲目的", "もうもくてき", ["naAdjective"], None),
 }
+WORD_WITH_ITS_OWN_PITCH = (1534340, ("盲目", "もうもく", ["noun", "noAdjective", "naAdjective"], None))
+OWN_PITCH = json.dumps({"downstep": 0, "moraCount": 4, "sourceIdentity": "UniDic"})
 READING = {headword: reading for headword, reading, *_ in ENTRIES.values()}
 
 
@@ -49,20 +63,24 @@ def sense(parts_of_speech: list[str], usage: list[str] | None) -> dict:
     return {"partsOfSpeech": parts_of_speech, **({"usage": usage} if usage else {})}
 
 
+def entry_row(entry_id: int, entry: tuple, pitch: str | None) -> tuple:
+    headword, reading, pos, usage = entry
+    written = json.dumps([{"value": headword}])
+    return entry_id, headword, reading, written, json.dumps(pos), json.dumps([sense(pos, usage)]), pitch
+
+
 def language_data(folder: Path) -> Path:
     path = folder / "LanguageReferenceData.sqlite3"
     database = sqlite3.connect(path)
     try:
         database.execute(
-            "CREATE TABLE entries (id INTEGER PRIMARY KEY, headword TEXT, reading TEXT, is_common INTEGER, "
-            "parts_of_speech_json TEXT, senses_json TEXT, pitch_accent_json TEXT)"
+            "CREATE TABLE entries (id INTEGER PRIMARY KEY, headword TEXT, reading TEXT, written_forms_json TEXT, "
+            "is_common INTEGER, parts_of_speech_json TEXT, senses_json TEXT, pitch_accent_json TEXT)"
         )
         database.executemany(
-            "INSERT INTO entries VALUES (?, ?, ?, 1, ?, ?, NULL)",
-            [
-                (entry_id, headword, reading, json.dumps(pos), json.dumps([sense(pos, usage)]))
-                for entry_id, (headword, reading, pos, usage) in ENTRIES.items()
-            ],
+            "INSERT INTO entries VALUES (?, ?, ?, ?, 1, ?, ?, ?)",
+            [entry_row(entry_id, entry, None) for entry_id, entry in ENTRIES.items()]
+            + [entry_row(*WORD_WITH_ITS_OWN_PITCH, OWN_PITCH)],
         )
         database.commit()
     finally:
@@ -88,6 +106,7 @@ class CompoundPitchRuleTests(unittest.TestCase):
             folder = Path(scratch)
             archive = unidic_archive(LEXICON_ROWS, folder)
             cls.splitter = CompoundSplitter(lexicon_parts(lexicon_rows(archive)))
+            cls.lexemes = two_part_lexemes(lexicon_rows(archive))
             output = folder / "CompoundPitch.sqlite3"
             cls.report = import_pitch(archive, {"sha256": file_sha256(archive)}, language_data(folder), output)
             cls.pitch = stored_pitch(output)
@@ -97,6 +116,9 @@ class CompoundPitchRuleTests(unittest.TestCase):
 
     def estimate(self, headword: str) -> CompoundEstimate | None:
         return self.splitter.estimate(headword, READING[headword])
+
+    def c2_downstep(self, headword: str) -> int | None:
+        return two_part_c2_downstep(headword, READING[headword], self.lexemes)
 
     def test_each_combination_type_gives_the_downstep_its_rule_does(self) -> None:
         self.assertEqual(
@@ -135,6 +157,22 @@ class CompoundPitchRuleTests(unittest.TestCase):
                 self.assertIn(self.estimate(headword).group, SHIPPED_GROUPS)
                 self.assertNotIn(headword, self.pitch)
 
+    def test_where_the_rule_gives_none_a_two_part_c2_compound_keeps_c2s_downstep(self) -> None:
+        self.assertEqual("kanji, C2/C3, 2 parts", self.estimate("火曜日").group.label())
+        self.assertNotIn(self.estimate("火曜日").group, SHIPPED_GROUPS)
+        self.assertIsNone(self.estimate("小学校"))
+        self.assertEqual({"火曜日": 2, "小学校": 3}, self.downsteps("火曜日", "小学校"))
+
+    def test_the_fallback_leaves_out_what_the_rule_does(self) -> None:
+        for headword in ("何時間", "弱肉強食", "個人的"):
+            with self.subTest(headword=headword):
+                self.assertIsNotNone(self.c2_downstep(headword))
+                self.assertNotIn(headword, self.pitch)
+
+    def test_the_suffix_teki_is_left_out_but_the_noun_mokuteki_is_not(self) -> None:
+        self.assertEqual({"多目的": 2, "盲目的": None, "心理学的": None}, self.downsteps("多目的", "盲目的", "心理学的"))
+        self.assertIsNotNone(self.c2_downstep("盲目的"))
+
     def test_a_word_whose_splits_disagree_and_a_particle_get_no_estimate(self) -> None:
         self.assertEqual({"個人的": None, "には": None}, {word: self.estimate(word) for word in ("個人的", "には")})
         self.assertEqual({"個人的": None, "には": None}, self.downsteps("個人的", "には"))
@@ -142,16 +180,17 @@ class CompoundPitchRuleTests(unittest.TestCase):
     def test_the_report_counts_what_each_step_left_out(self) -> None:
         self.assertEqual(
             {
-                "estimated": 16,
+                "estimated": 17,
+                "estimated_by_the_c2_fallback": 2,
                 "estimated_in_a_group_below_the_gate": 2,
                 "left_out_as_a_four_character_idiom": 1,
-                "left_out_as_ending_in_teki": 1,
-                "left_out_as_listed_first_as_a_function_word_or_affix": 1,
-                "no_estimate": 2,
+                "left_out_as_ending_in_the_suffix_teki": 3,
+                "left_out_as_listed_first_as_a_function_word_or_affix": 2,
+                "no_estimate": 1,
             },
             {outcome: count for outcome, count in self.report["outcomes"].items() if not outcome.startswith("common_")},
         )
-        self.assertEqual(16, len(self.pitch))
+        self.assertEqual(19, len(self.pitch))
 
 
 if __name__ == "__main__":

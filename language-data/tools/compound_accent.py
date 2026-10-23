@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable
+from typing import Iterable, NamedTuple
 
 from unidic_adapter import first_accent, hiragana, mora_count
 
@@ -24,6 +24,13 @@ VOWEL_ROWS = {
 }
 VOWEL = {kana: vowel for vowel, row in VOWEL_ROWS.items() for kana in row}
 LONG_VOWEL_AFTER = {"う": {"o", "u"}, "い": {"e", "a", "o", "u"}}
+
+
+class Lexeme(NamedTuple):
+    reading: str
+    downstep: int
+    combination: str
+    pos: str
 
 
 @dataclass(frozen=True)
@@ -238,3 +245,28 @@ class CompoundSplitter:
             return None
         (downstep,) = downsteps
         return CompoundEstimate(downstep, compound_group(headword, reading, splits))
+
+
+def two_part_lexemes(rows: Iterable[list[str]]) -> dict[str, frozenset[Lexeme]]:
+    lexemes: dict[str, set[Lexeme]] = defaultdict(set)
+    for row in rows:
+        downstep, reading = first_accent(row), hiragana(row[10])
+        if downstep is not None and reading:
+            lexemes[row[14]].add(Lexeme(reading, downstep, row[29].split(",")[0], row[4]))
+    return {spelling: frozenset(found) for spelling, found in lexemes.items()}
+
+
+def two_part_c2_downstep(headword: str, reading: str, lexemes: dict[str, frozenset[Lexeme]]) -> int | None:
+    if not is_kanji(headword):
+        return None
+    splits = [
+        (first, second)
+        for index in range(1, len(headword))
+        for first in sorted(lexemes.get(headword[:index], ()))
+        if reading.startswith(first.reading) and first.pos in NOUN_LIKE
+        for second in sorted(lexemes.get(headword[index:], ()))
+        if first.reading + second.reading == reading and second.pos in NOUN_LIKE
+    ]
+    if {second.combination for _, second in splits} != {"C2"}:
+        return None
+    return mora_count(splits[0][0].reading) + 1

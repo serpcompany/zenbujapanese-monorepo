@@ -5,17 +5,27 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path
 
-from compound_accent import CompoundGroup, CompoundSplitter, lexicon_parts
+from compound_accent import (
+    CompoundGroup,
+    CompoundSplitter,
+    Lexeme,
+    lexicon_parts,
+    two_part_c2_downstep,
+    two_part_lexemes,
+)
 from language_data_tools import built_artifact, file_sha256, run_import
-from unidic_adapter import lexicon_rows, mora_count
+from unidic_adapter import hiragana, lexicon_rows, mora_count
 
 ARTIFACT_SCHEMA = "zenbu.compound-pitch.v1"
 SOURCE_IDENTITY = "UniDic 3.1.0 compound accent rules"
 COMPOUND_ACCENT = Path(__file__).with_name("compound_accent.py")
 FOUR_CHARACTER_IDIOM = "yojijukugo"
-ADJECTIVAL_SUFFIX = "的"
+ADJECTIVAL_SUFFIX = ("的", "てき")
+PURPOSE = ("目的", "もくてき")
+C2_FALLBACK = "C2 where the rule gives none, 2 parts"
 FUNCTION_WORD_CLASSES = {
     "expression", "particle", "conjunction", "interjection",
     "auxiliary", "auxiliaryVerb", "auxiliaryAdjective", "copula",
@@ -52,32 +62,50 @@ SHIPPED_GROUPS = frozenset(
 )
 
 
-def left_out_kind(headword: str, parts_of_speech: list[str], senses: list[dict]) -> str | None:
+@dataclass(frozen=True)
+class Estimators:
+    splitter: CompoundSplitter
+    lexemes: dict[str, frozenset[Lexeme]]
+    words: frozenset[tuple[str, str]]
+
+
+def ends_in_adjectival_suffix(headword: str, reading: str, words: frozenset[tuple[str, str]]) -> bool:
+    (suffix, suffix_reading), (noun, noun_reading) = ADJECTIVAL_SUFFIX, PURPOSE
+    reading = hiragana(reading)
+    if not headword.endswith(suffix) or not reading.endswith(suffix_reading):
+        return False
+    stem = (headword[: -len(suffix)], reading[: -len(suffix_reading)])
+    return not (headword.endswith(noun) and reading.endswith(noun_reading) and stem not in words)
+
+
+def left_out_kind(headword: str, reading: str, entry: tuple[str, str], words: frozenset[tuple[str, str]]) -> str | None:
+    parts_of_speech, senses = (json.loads(column) for column in entry)
     if any(FOUR_CHARACTER_IDIOM in sense.get("usage", ()) for sense in senses):
         return "left_out_as_a_four_character_idiom"
-    if headword.endswith(ADJECTIVAL_SUFFIX):
-        return "left_out_as_ending_in_teki"
+    if ends_in_adjectival_suffix(headword, reading, words):
+        return "left_out_as_ending_in_the_suffix_teki"
     if parts_of_speech and parts_of_speech[0] in FUNCTION_WORD_CLASSES:
         return "left_out_as_listed_first_as_a_function_word_or_affix"
     return None
 
 
-def estimated_pitch(splitter: CompoundSplitter, candidates: list[tuple]) -> tuple[list[tuple], Counter, Counter]:
+def estimated_pitch(estimators: Estimators, candidates: list[tuple]) -> tuple[list[tuple], Counter, Counter]:
     rows, common, outcomes = [], Counter(), Counter()
-    for entry_id, headword, reading, is_common, parts_of_speech_json, senses_json in candidates:
-        estimate = splitter.estimate(headword, reading)
-        left_out = left_out_kind(headword, json.loads(parts_of_speech_json), json.loads(senses_json))
-        if estimate is None:
-            outcome = "no_estimate"
-        elif estimate.group not in SHIPPED_GROUPS:
-            outcome = "estimated_in_a_group_below_the_gate"
+    for entry_id, headword, reading, is_common, *entry in candidates:
+        estimate = estimators.splitter.estimate(headword, reading)
+        shipped = estimate if estimate is not None and estimate.group in SHIPPED_GROUPS else None
+        fallback = None if shipped else two_part_c2_downstep(headword, reading, estimators.lexemes)
+        left_out = left_out_kind(headword, reading, tuple(entry), estimators.words)
+        if shipped is None and fallback is None:
+            outcome = "no_estimate" if estimate is None else "estimated_in_a_group_below_the_gate"
         elif left_out:
             outcome = left_out
         else:
-            outcome = "estimated"
-            pitch = {"downstep": estimate.downstep, "moraCount": mora_count(reading), "sourceIdentity": SOURCE_IDENTITY}
+            outcome = "estimated" if shipped else "estimated_by_the_c2_fallback"
+            downstep, group = (shipped.downstep, shipped.group.label()) if shipped else (fallback, C2_FALLBACK)
+            pitch = {"downstep": downstep, "moraCount": mora_count(reading), "sourceIdentity": SOURCE_IDENTITY}
             rows.append((entry_id, json.dumps(pitch, ensure_ascii=False, separators=(",", ":"))))
-            common[estimate.group.label()] += is_common
+            common[group] += is_common
         outcomes[outcome] += 1
         if is_common:
             outcomes[f"common_{outcome}"] += 1
@@ -111,16 +139,25 @@ def write_artifact(output: Path, rows: list[tuple], metadata: tuple[tuple[str, s
 def import_pitch(source: Path, source_manifest: dict, language_data: Path, output: Path) -> dict:
     if file_sha256(source) != source_manifest["sha256"]:
         raise ValueError("UniDic archive does not match its pinned SHA-256")
-    splitter = CompoundSplitter(lexicon_parts(lexicon_rows(source)))
     database = sqlite3.connect(f"file:{language_data}?mode=ro", uri=True)
     try:
         candidates = database.execute(
             "SELECT id, headword, reading, is_common, parts_of_speech_json, senses_json FROM entries "
             "WHERE pitch_accent_json IS NULL"
         ).fetchall()
+        words = frozenset(
+            (form, hiragana(reading))
+            for headword, reading, written in database.execute(
+                "SELECT headword, reading, written_forms_json FROM entries"
+            )
+            for form in (headword, *(written_form["value"] for written_form in json.loads(written)))
+        )
     finally:
         database.close()
-    rows, common_by_group, outcomes = estimated_pitch(splitter, candidates)
+    estimators = Estimators(
+        CompoundSplitter(lexicon_parts(lexicon_rows(source))), two_part_lexemes(lexicon_rows(source)), words
+    )
+    rows, common_by_group, outcomes = estimated_pitch(estimators, candidates)
     language_data_sha256 = file_sha256(language_data)
     write_artifact(
         output,
@@ -138,9 +175,10 @@ def import_pitch(source: Path, source_manifest: dict, language_data: Path, outpu
         "rule": "Split the word into two to four UniDic noun, na-adjective, prefix, or suffix rows by spelling "
         "and kana form, keeping the splits with the fewest parts; combine the parts by UniDic's accent "
         "combination types, moving a downstep off a special mora within a part; give a value only when "
-        "every such split agrees, and only in a shipped group.",
-        "left_out": "Four-character idioms, words ending in 的, and words listed first as an expression, "
-        "particle, conjunction, interjection, auxiliary, or affix.",
+        "every such split agrees, and only in a shipped group. Where it gives none, a two-part kanji "
+        "compound whose second part is C2 keeps that rule's downstep, on the second part's first mora.",
+        "left_out": "Four-character idioms, words ending in the suffix 的 (not the noun 目的), and words "
+        "listed first as an expression, particle, conjunction, interjection, auxiliary, or affix.",
         "shipped_groups": sorted(group.label() for group in SHIPPED_GROUPS),
         "entries_without_pitch_considered": len(candidates),
         "entries_estimated": len(rows),

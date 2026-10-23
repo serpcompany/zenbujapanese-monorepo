@@ -196,14 +196,22 @@ past 50 as "50+".
   Only the 24 groups in `SHIPPED_GROUPS` ship: those that agreed with Kanjium's accents on at least
   90% of at least 30 uncommon words. Kanjium was only measured against, never imported, and the
   list names groups, not accents. 観光客 (C3) and 可能性 (C4) are estimated in groups below it.
-- **Left out.** Four-character idioms (JMdict's `yojijukugo`) and words ending in 的 get none, even
-  where the gate would ship one, since their estimates mostly disagree with the references (C2 gave
-  弱肉強食 5; it's heiban). Nor does a word JMdict lists first as an expression, particle,
-  conjunction, interjection, auxiliary, or affix (立ち入り禁止), so these keep showing no pitch.
+- **The C2 fallback.** Where the rule gives no value, as when its splits disagree (小学校) or its
+  group is below the gate (火曜日), a two-part kanji compound keeps the earlier C2 rule's: when it
+  splits into two accented UniDic nouns, read by their lemma readings, and every such split's
+  second part is C2, the downstep falls on that part's first mora (`two_part_c2_downstep`). The
+  rule's value wins wherever it gives one, and never differs from C2's where both do.
+- **Left out.** Four-character idioms (JMdict's `yojijukugo`) and words ending in the suffix 的 get
+  none from the rule or the fallback, since their estimates mostly disagree with the references
+  (C2 gave 弱肉強食 5; it's heiban). A word ending in the noun 目的 (多目的, 最終目的) isn't one,
+  unless what precedes its 的 is a word itself (盲目的 is 盲目 and 的). Nor does a word JMdict lists
+  first as an expression, particle, conjunction, interjection, auxiliary, or affix (立ち入り禁止,
+  何時間), so these keep showing no pitch.
 
-The report's `outcomes` count each step's results. On release 2026.10.5's data, 1,494 common
-entries get a value (C2 gave 713), which agree with Kanjium on 93.3% of 1,255 and with English
-Wiktionary on 91.8% of 527; UniDic's own accents agree 96.8% and 96.6%.
+The report's `outcomes` count each step's results. On release 2026.10.5's data, 1,554 common
+entries get a value (C2 gave 713): 1,495 from the rule, agreeing with Kanjium on 93.3% of 1,256
+and with English Wiktionary on 91.9% of 528, and 59 from the fallback, agreeing 78.6% of 56 and
+76.9% of 39. UniDic's own accents agree 96.8% and 96.6%.
 
 **`import_frequency_pack.py`** builds a rank pack from a curated list. TUBELEX counts UniDic lemmas,
 so a lemma's reading names the word it counted even where JMdict files the spelling under several
