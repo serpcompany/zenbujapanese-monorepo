@@ -101,9 +101,9 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
 | `GET /v1/search/<query>` | The results screen. |
-| `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
+| `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`; 404 past its list (`example-positions.test.ts`). |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
-| `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples. |
+| `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples; 404 past its list. |
 | `GET /v1/conjugations/<form>/examples?from=&limit=` | `limit` (25, at most 100) of a conjugated form's examples from `from`, by its spelling as written, with how many it lists. |
 | `GET /v1/kanji/<character>` | A kanji's rows for its details, the slugs of the words it lists, and which of its components and elements have details (`kanjiPages`). |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
