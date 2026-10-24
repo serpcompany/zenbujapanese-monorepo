@@ -32,8 +32,8 @@ dictionary sheet Image Search uses.
   without a video ID, or with text that isn't one, opens Player's home
   ([Links in Zenbu's own scheme](shortcuts.md#links-in-zenbus-own-scheme)).
   Check: package `AppLinkTests.watchLinks`; UI
-  `AppLinkUITests.testWatchOpensItsVideoInPlayerFromAConversationAndFromLookUp`, with YouTube
-  stood in.
+  `AppLinkUITests.testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp`, with YouTube stood
+  in.
 - Below the bar, the tab lists recently watched videos, newest first, each as its own
   full-width card: the thumbnail with a comprehension pill (red under 25%, orange to 50%, yellow
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the

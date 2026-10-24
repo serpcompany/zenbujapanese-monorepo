@@ -68,8 +68,9 @@ Safari extension planned in #967.
 
 Check: package `AppLinkTests.watchLinks` (a valid ID, a missing `v`, and IDs that aren't one),
 `watchLinkOfAnotherBuild`, and `roundTrips`; UI
-`AppLinkUITests.testWatchOpensItsVideoInPlayerFromAConversationAndFromLookUp` (from a running
-conversation, which keeps going, and from Look Up), with YouTube stood in.
+`AppLinkUITests.testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp` (from a running
+conversation, which keeps going, from Player's word sheet, which closes, and from Look Up), with
+YouTube stood in.
 
 ## Checked by hand
 

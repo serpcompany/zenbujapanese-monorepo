@@ -43,19 +43,23 @@ final class AppLinkUITests: ZenbuUITestCase {
     waitUntil(waitFor(find("translate.typed.direction", in: app)), mentions: "English → Japanese")
   }
 
-  func testWatchOpensItsVideoInPlayerFromAConversationAndFromLookUp() throws {
+  func testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp() throws {
     let watch = try link("watch", ["v": PlayerWatchUITests.videoID])
     let youTube = PlayerWatchUITests.standIn().merging(Self.countingDraws) { $1 }
-    let app = startConversation(environment: TestDevice.linkEnvironment(watch).merging(youTube) { $1 })
-    assertWatching(watch, leaving: "translate.conversation.back", in: app)
+    let app = startConversation(
+      environment: TestDevice.linkEnvironment(watch).merging(youTube) { $1 })
+    assertWatching(watch, leaving: find("translate.conversation.back", in: app), in: app)
     waitUntilTheSessionSays("Conversation still listening · Return", in: app)
+    tap(firstElement(identifiedBy: "watch.cue.0.", in: app))
+    let wordSheet = waitForSheet("recognized-word-sheet", in: app)
+    assertWatching(watch, leaving: wordSheet, in: app)
     open(.search, in: app)
-    assertWatching(watch, leaving: AppTab.search.rootIdentifier, in: app)
+    assertWatching(watch, leaving: find(AppTab.search.rootIdentifier, in: app), in: app)
   }
 
-  private func assertWatching(_ watch: URL, leaving screen: String, in app: XCUIApplication) {
+  private func assertWatching(_ watch: URL, leaving screen: XCUIElement, in app: XCUIApplication) {
     TestDevice.open(watch)
-    waitUntilGone(find(screen, in: app))
+    waitUntilGone(screen)
     waitUntil(find("watch.video", in: app), mentions: PlayerWatchUITests.videoID)
     assertOnScreen(find("watch.cue.0", in: app), in: app)
   }
