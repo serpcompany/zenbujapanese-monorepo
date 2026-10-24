@@ -4,10 +4,11 @@ import notify
 extension ZenbuUITestCase {
   func startConversation(
     option: String = "conversation", arguments: [String] = [], inTheSmallestWindow: Bool = false,
-    holding: Bool = false, silent: Bool = false
+    holding: Bool = false, silent: Bool = false, environment: [String: String] = [:]
   ) -> XCUIApplication {
     let held = silent ? ["ZENBU_TRANSLATE_HOLD": "silent"] : holding ? ["ZENBU_TRANSLATE_HOLD": "1"] : [:]
-    let app = launch(TranslateUITests.script.merging(held) { $1 }, arguments: arguments)
+    let app = launch(
+      TranslateUITests.script.merging(held) { $1 }.merging(environment) { $1 }, arguments: arguments)
     if inTheSmallestWindow, device == .mac { shrinkWindow(in: app) }
     open(.translate, in: app)
     tap(find("translate.start.\(option)", in: app))

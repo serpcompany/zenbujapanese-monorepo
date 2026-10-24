@@ -76,6 +76,7 @@ struct WatchSessionView: View {
     .onChange(of: readingAidPreferences.translationSource) {
       Task { await loadCaptions() }
     }
+    .showingUITests(videoID.rawValue, as: "watch.video")
     .countingDraws(as: "watch.draws", in: draws)
   }
 
