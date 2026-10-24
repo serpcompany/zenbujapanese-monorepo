@@ -14,7 +14,7 @@ struct ExampleSearchConformanceTests {
   func exampleSearchMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("example-search.json")
     var suite = try JSONDecoder().decode(ExampleSearchSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = try await ExampleSearchObserver()
 
     if DetailConformance.isRecording {

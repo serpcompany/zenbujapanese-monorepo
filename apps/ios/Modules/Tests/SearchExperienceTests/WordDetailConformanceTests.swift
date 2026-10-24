@@ -16,7 +16,7 @@ struct WordDetailConformanceTests {
   func wordDetailMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("word-detail.json")
     var suite = try JSONDecoder().decode(WordDetailSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = try await WordDetailObserver()
 
     if DetailConformance.isRecording {

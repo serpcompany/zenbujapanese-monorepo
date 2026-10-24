@@ -8,10 +8,10 @@ struct KanjiElementConformanceTests {
   static let artifactNames = ["KanjiElementReferenceData.json"]
 
   @Test("A kanji element's page shows what the suite recorded")
-  func kanjiElementMatchesSuite() throws {
+  func kanjiElementMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("kanji-element.json")
     var suite = try JSONDecoder().decode(KanjiElementSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = KanjiElementObserver()
 
     if DetailConformance.isRecording {

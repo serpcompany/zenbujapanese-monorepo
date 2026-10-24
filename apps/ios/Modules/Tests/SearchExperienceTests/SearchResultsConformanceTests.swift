@@ -16,7 +16,7 @@ struct SearchResultsConformanceTests {
   func searchResultsMatchSuite() async throws {
     let url = DetailConformance.suiteURL("search-results.json")
     var suite = try JSONDecoder().decode(SearchResultsSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = try await SearchResultsObserver()
     let frequencyPacks = try await observer.enabledPackIDs()
     let textAnalysis = await observer.textAnalysis()
