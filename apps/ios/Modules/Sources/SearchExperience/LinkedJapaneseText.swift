@@ -217,10 +217,10 @@ private struct LinkedTokenView: View {
               isVisible: isHighlighted || !wordKnowledge.isKnown(entry.id)
             )
             .modifier(WordMeaning(meaning: meaning(for: entry)))
+            .frame(minHeight: minimumHitRegionHeight, alignment: .bottom)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(minHeight: minimumHitRegionHeight, alignment: .bottom)
-        .contentShape(Rectangle())
         .accessibilityLabel("\(token.surface), \(entry.reading), \(entry.summary)")
         .accessibilityValue(isCurrentEntry ? "Current word" : "")
         .accessibilityAddTraits(isCurrentEntry ? .isSelected : [])

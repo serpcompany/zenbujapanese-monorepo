@@ -115,7 +115,9 @@ what it waited for and for how long.
   reads as the top of the screen. `reveal` scrolls forward, toward the part of the list not yet
   seen, until the row has a real frame above the list, and a frame that is empty for a moment
   keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
-  forth twelve times without reaching the row.
+  forth twelve times without reaching the row. Toward a row in the tree but not laid out,
+  `ExampleRowsUITests` scrolls as far as the rows between it and a row on screen would reach, at
+  that row's height, so it gets there in a few looks however slow each look is.
 - **`reveal` looks both ways for a row it can't see.** A lazy list also lets go of a row that
   scrolls out of view, so a row above the screen is missing from the tree just as a row below
   it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
@@ -154,8 +156,8 @@ what it waited for and for how long.
   closes those; and on the Mac, whose tests send real pointer events. In a
   probe of 250 audits each way, the tap straight after an audit met the race once and the tap
   after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
-  only ones sent directly are the Mac's own: clicks in its Settings window, on a headword's kanji,
-  and on an example's linked word, right-clicks, wheel scrolls, and moving the pointer away.
+  only ones sent directly are the Mac's own: clicks in its Settings window and on a headword's
+  kanji, right-clicks, wheel scrolls, and moving the pointer away.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being
