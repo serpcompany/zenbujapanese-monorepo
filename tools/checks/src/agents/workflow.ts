@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { type ChildProcessWithoutNullStreams, spawn } from 'node:child_process'
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createServer, type IncomingMessage } from 'node:http'
 import { createRequire } from 'node:module'
@@ -241,6 +241,20 @@ export function runNodeModule(
   )
 }
 
+export async function finished(
+  child: ChildProcessWithoutNullStreams
+): Promise<{ status: number | null; output: string }> {
+  let output = ''
+  child.stdout.on('data', (chunk: Buffer) => {
+    output += chunk.toString()
+  })
+  child.stderr.on('data', (chunk: Buffer) => {
+    output += chunk.toString()
+  })
+  const status = await new Promise<number | null>(resolve => child.on('close', resolve))
+  return { status, output }
+}
+
 export function runNodeScript(
   script: { path: string },
   env: Record<string, string>,
@@ -278,15 +292,7 @@ export function runNodeScript(
       const child = spawn(process.execPath, [join(root, script.path)], {
         env: runnerEnvironment(api, env, paths)
       })
-      let output = ''
-      child.stdout.on('data', (chunk: Buffer) => {
-        output += chunk.toString()
-      })
-      child.stderr.on('data', (chunk: Buffer) => {
-        output += chunk.toString()
-      })
-      const status = await new Promise<number | null>(resolve => child.on('close', resolve))
-      return { status, output, requests }
+      return { ...(await finished(child)), requests }
     } finally {
       await new Promise<void>(resolve => server.close(() => resolve()))
     }

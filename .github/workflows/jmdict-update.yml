@@ -1,0 +1,156 @@
+name: JMdict monthly update
+
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: jmdict-update
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: macos-26
+    timeout-minutes: 120
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      UV_PYTHON: "3.14.8"
+      WORK: tmp/jmdict-update
+      LFS_FILES: apps/ios/Modules/Sources/SearchExperience/Resources/**,language-data/sources/**
+      LFS_REPLACED: language-data/sources/JMdict_e_examp-*.gz
+    steps:
+      - name: Skip while an earlier JMdict update is open
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          open=$(gh pr list --repo "$GITHUB_REPOSITORY" --base main --state open --limit 100 --json number,headRefName --jq '[.[] | select(.headRefName | startswith("feat/jmdict-")) | .number] | first // empty')
+          if [ -n "$open" ]; then
+            echo "::warning title=JMdict wasn't updated::The last JMdict update, #$open, is still open. Finish the steps in its Status and merge it, then run this workflow by hand."
+            exit 0
+          fi
+          echo "CHECK=true" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        if: env.CHECK == 'true'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        if: env.CHECK == 'true'
+        with:
+          enable-cache: false
+
+      - name: Download today's JMdict from EDRDG and compare it with the pinned export
+        if: env.CHECK == 'true'
+        run: |
+          if ! result=$(uv run --no-project python language-data/tools/refresh_jmdict.py fetch --work "$WORK" 2>"$RUNNER_TEMP/fetch.log"); then
+            cat "$RUNNER_TEMP/fetch.log"
+            echo "::error title=JMdict wasn't updated::$(tail -n 1 "$RUNNER_TEMP/fetch.log")"
+            exit 1
+          fi
+          pinned=$(jq -r .pinned_export_date <<<"$result")
+          if [ "$(jq -r .changed <<<"$result")" != true ]; then
+            echo "::notice title=JMdict is current::EDRDG's export is still the pinned $pinned one, so nothing changed and no pull request opens."
+            exit 0
+          fi
+          date=$(jq -r .export_date <<<"$result")
+          printf 'UPDATE=true\nEXPORT_DATE=%s\nBRANCH=feat/jmdict-%s\n' "$date" "$date" >> "$GITHUB_ENV"
+          echo "EDRDG's $date export follows the pinned $pinned one."
+
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        if: env.UPDATE == 'true'
+        with:
+          package_json_file: package.json
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        if: env.UPDATE == 'true'
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
+
+      - name: Install every package, running no install script
+        if: env.UPDATE == 'true'
+        run: pnpm install --frozen-lockfile --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+
+      - name: Fetch the Git LFS files the rebuild reads
+        if: env.UPDATE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git lfs install --local
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git -c "http.https://github.com/.extraheader=$header" lfs pull --include="$LFS_FILES" --exclude="$LFS_REPLACED"
+
+      - name: Move the source record and its snapshot to the new export
+        if: env.UPDATE == 'true'
+        run: uv run --no-project python language-data/tools/refresh_jmdict.py apply --work "$WORK"
+
+      - name: Rebuild what JMdict feeds, keeping every entry's note identity
+        if: env.UPDATE == 'true'
+        run: uv run --no-project python language-data/tools/refresh_jmdict.py rebuild --work "$WORK"
+
+      - name: Record again the suites a runner can record
+        if: env.UPDATE == 'true'
+        run: pnpm --filter zenbujapanese-dictionary-api tokenizer-suite
+
+      - name: Start the next release and record the entries it retires
+        if: env.UPDATE == 'true'
+        run: |
+          uv run --no-project python language-data/tools/refresh_jmdict.py release --work "$WORK"
+          uv run --no-project python language-data/pipeline/package.py retire --previous-database "$WORK/PreviousLanguageReferenceData.sqlite3"
+
+      - name: Export the core's fixtures from the rebuilt files
+        if: env.UPDATE == 'true'
+        run: pnpm --filter zenbujapanese-dictionary-api fixtures
+
+      - name: Write the pull request
+        if: env.UPDATE == 'true'
+        run: |
+          uv run --no-project python language-data/tools/refresh_jmdict.py summary --work "$WORK"
+          cat "$WORK/body.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit, push the Git LFS files and the branch, and open the pull request
+        if: env.UPDATE == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title=$(cat "$WORK/title.txt")
+          git switch --create "$BRANCH"
+          git add --all
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --quiet --message "$title" \
+            --message "The JMdict monthly update workflow moved the dictionary to EDRDG's $EXPORT_DATE export. Its pull request says what changed for learners and what a person does before it merges."
+          pointers=$(git lfs ls-files --name-only)
+          git diff-tree --no-commit-id --name-only -r --diff-filter=AM HEAD | while IFS= read -r path; do
+            [ "$(git check-attr filter -- "$path" | sed 's/^.*: filter: //')" = lfs ] || continue
+            if ! grep -qxF "$path" <<<"$pointers"; then
+              echo "::error title=JMdict wasn't updated::$path is committed whole, not as a Git LFS pointer, so nothing was pushed."
+              exit 1
+            fi
+          done
+          header="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 | tr -d '\n')"
+          git -c "http.https://github.com/.extraheader=$header" lfs push origin "$BRANCH"
+          if ! git -c "http.https://github.com/.extraheader=$header" push --no-verify origin "$BRANCH"; then
+            echo "::error title=JMdict wasn't updated::$BRANCH didn't push. If an earlier run pushed it, delete that branch and run this workflow again."
+            exit 1
+          fi
+          if ! gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$BRANCH" --title "$title" --body-file "$WORK/body.md"; then
+            echo "::error title=The JMdict pull request didn't open::$BRANCH is pushed with its Git LFS files. Open its pull request by hand from the text in this run's summary, or let GitHub Actions create pull requests (Settings, Actions, General, Workflow permissions), delete the branch, and run this workflow again."
+            exit 1
+          fi
