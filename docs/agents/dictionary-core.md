@@ -75,9 +75,10 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   `tokenize` does: `word_position` is 1-based, in UTF-16 code units, as the app's `NSRange` reads
   it. Every client's is the core's own ([The tokenizer](#the-tokenizer)): the service builds it
   from the files it read and passes it, and the app hands the embedded host the files.
-- `morphology` is an analyzer such as the app's Sudachi (a 217 MB dictionary). A `MorphologyWord`
-  lists its part-of-speech tags most general first (名詞, 動詞); its `dictionaryForm` is `*` or empty
-  when the analyzer has none, and an analysis that throws finds no words, as in the app.
+- `morphology` is an analyzer such as the app's Sudachi (a 217 MB dictionary). It answers its own
+  morphemes, ranged in code points: Mode C `words`, which search looks up (`lookupSegments`), and
+  the app's Mode A `pieces`, nested in them to link (`analyzedWords`). Tags go most general first
+  (名詞, 動詞), `*` or an empty `dictionaryForm` is none, and an analysis that throws finds no words.
 
 ## Embedded
 
@@ -128,7 +129,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `lookUp` | Text to look up | The one entry it names or deinflects to, else a search; or home |
   | `relatedWord`, `savedWord` | A related word (its target's ID, or how to search for it and how it is written and read); a saved word (its stored ID, writing, and reading) | The ID of the entry a related word opens, or null: with no target, the result written and read alike, else the first. What a saved word opens: its entry, else one written and read alike, else a search for its headword. |
   | `canonicalEntries` | Groups of equivalent IDs | Each group's smallest ID (`canonicalEntry`) |
-  | `normalizeQuery` | What was typed | The query Search reads |
+  | `normalizeQuery`, `searchedWords` | Typed text; an analysis | The query; the words searched |
   | `japaneseCandidates` | What a handwriting recognizer offered | Those written only in Japanese, normalized, each once, in order |
   | `isKanji`, `writtenLanguage`, `japaneseTextRuns` | A string; — | One kanji or not; `ja`, `en` (an ASCII letter), or null; the scalar runs any client's own check counted as Japanese |
   | `romaji`, `sentenceRomaji` | A reading; a sentence's words, each with its surface and reading | The reading in romaji, or null for one with kanji in it; the sentence in romaji, words spaced and punctuation kept with its word, or null when a word has no kana reading |
@@ -172,10 +173,9 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   uses them for what a view asks while it is being drawn: one crossing into the engine, no
   promise, and for a string or a flag no JSON either.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
-  the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore` bundles it with
-  esbuild (`scripts/bundle-javascriptcore.mjs`) into
+  the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore` bundles it into
   `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, checked
-  in so the app builds without Node; `embedded/bundle.test.ts` fails when the file differs.
+  in so the app builds without Node; `embedded/bundle.test.ts` fails when it differs.
 - The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
   real tokenizer and kanji files (the `embedded*.conformance.test.ts` files in
   `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
@@ -519,7 +519,7 @@ ready and a page's first request prepares nothing:
 
 ## Check it
 
-`pnpm check` runs Biome, typecheck, and the unit tests, which need no artifact. The
-`Dictionary core` workflow runs it on pull requests. The app-recorded suites run through the core
-on the real artifact in the service's tests, and the website renders what they answer; the
-`Dictionary API` workflow runs both ([`dictionary-api.md`](dictionary-api.md), Check it).
+`pnpm check` runs Biome, typecheck, and the unit tests, which need no artifact, the sentence suite's
+words among them. The `Dictionary core` workflow runs it on pull requests. The app-recorded suites
+run through the core on the real artifact in the service's tests, and the website renders their
+answers; `Dictionary API` runs both ([`dictionary-api.md`](dictionary-api.md), Check it).

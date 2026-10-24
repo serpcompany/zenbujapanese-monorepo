@@ -16,7 +16,8 @@ generic dual-architecture Simulator build fails at link time.
 The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
 Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
 `ZENBU_SUDACHI_BUILD_CACHE`), and fails with "verified Sudachi build cache is missing" until that
-cache is filled. Fill it once per Mac, online, from the repository root:
+cache is filled; the package's tests read the dictionary there too. Fill it once per Mac, online,
+from the repository root:
 
 ```sh
 python3 apps/ios/Tools/prepare_sudachi_core.py \
@@ -447,10 +448,10 @@ same answer, which the core's `results/ordering.test.ts` and `results/learner.te
 `ResultsScreenTests` and `SearchResultOrderingTests` on the bundled data. Recent lookups and known
 words don't change the recorded list. The suite covers queries that match directly, deinflected
 queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no matches
-that aren't Japanese. It doesn't cover Japanese queries with no direct match or Discovered Words:
-Look Up splits those into words with the Sudachi dictionary the app bundles, which the package's
-test host lacks, so recording fails on them. `DictionaryCoreTests` runs one such sentence with a
-stand-in analysis, which checks the path but not Sudachi's words; check those in the Simulator. The
+that aren't Japanese. Japanese sentences with no direct match, and the Discovered Words they list,
+are `SentenceSearchConformanceTests`'s, in `sentence-search.json`: each query's Sudachi words, the
+words the core searches, and the results, with Sudachi's dictionary from its build cache. Record it
+with `-only-testing:SearchExperienceTests/SentenceSearchConformanceTests`. The
 screen's titles, counts, and which rows it shows are the core's answer, which `ResultsScreen.swift`
 decodes for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
@@ -501,12 +502,10 @@ Foundation's transliteration, which the core's romaji replaced, so the file is e
 not re-recorded; a linked sentence's punctuation is checked in the same suite, and the words
 captions count in `KnownWordCountTests`.
 
-The website's dictionary service replays all seven suites through the shared TypeScript core on the
+The website's dictionary service replays all eight suites through the shared TypeScript core on the
 same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once through the
 entry point the app calls, and the `Dictionary API` workflow runs them on pull requests that change
-a suite, so commit a re-recorded suite with the change to the core it needs. One thing the website
-does isn't recorded yet: sentence search (Discovered Words, above). The service checks it with its
-own test (`sentence-search.test.ts`) until a suite records it.
+a suite, so commit a re-recorded suite with the change to the core it needs.
 
 The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
 that change `apps/ios` or the language data, and, on a macOS runner, `SearchExperienceTests` and
@@ -621,8 +620,8 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   and hands the text itself to `resultsScreen`. Writing the decoded copy out again would drop
   every field the app doesn't know.
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
-  awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
-  lookups can run while it waits.
+  awaits Sudachi (`JapaneseMorphologyClient`), hands back its morphemes as Sudachi gives them, and
+  the call goes on, the core choosing what to search; other lookups can run while it waits.
 - **Examples arrive linked.** A batch is one call (`DictionaryTextData.resultsExamples`,
   `entryExamples`, `formExamples`): the sentences from a position to the end of its page of 25, or
   fewer under a limit (`cutShort`), each with its words linked and accented. `ExampleSentenceClient`

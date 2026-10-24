@@ -240,12 +240,12 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
   privacy strings, and entitlements), that every Swift package the app links has a license text with
   its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
   and its keeper (`test_simulator.py`, `test_simulator_keeper.py`, `test_simulator_devices.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
-- `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
-  `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
-  and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents
-  use ([`verification.md`](verification.md)), and on the Mac; then, after filling the Sudachi build
-  cache (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`) and StoreKit
-  tests (`ZenbuJapaneseStoreKitTests`, run inside the app;
+- `swift`, once `contracts` passes, fills the Sudachi build cache (cached by the catalog's hash) and
+  runs the app's tests on all three platforms, one after another: `SearchExperienceTests` and
+  `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator and an iPad Pro 13-inch
+  Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents use
+  ([`verification.md`](verification.md)), and on the Mac; then the app's UI tests
+  (`ZenbuJapaneseUITests`) and StoreKit tests (`ZenbuJapaneseStoreKitTests`, run inside the app;
   [`ios-subscription.md`](ios-subscription.md)), which build the app as
   `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators and on
   the Mac, each signed to run locally (no team needed), after turning on Automation Mode for the
