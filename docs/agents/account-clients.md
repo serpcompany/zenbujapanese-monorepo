@@ -61,8 +61,7 @@ setting ([`account-api.md`](account-api.md), Settings).
   public client with no secret, and names itself in a header, so a program can claim to be any
   app. Every token is still only the signed-in learner's own account, so what's at stake is that
   learner's own data in an app they chose, not anyone else's.
-- The cursor passes the entities an app can't read. When an app's scopes grow, sync once with no
-  cursor.
+- The cursor passes the entities an app can't read. When its scopes grow, sync once with no cursor.
 
 **Adding an app** takes a pull request to the service and a person in Apple Developer and Google
 Cloud ([`account-api.md`](account-api.md), Set up the server):
@@ -81,8 +80,7 @@ Cloud ([`account-api.md`](account-api.md), Set up the server):
    uses it too), whose client ID goes on the end of the service's `GOOGLE_CLIENT_IDS` in both
    environments. The ID isn't secret: the app ships it.
 4. **Check it on staging:** each way in signs a learner in, `GET /v1/auth/token` answers a token
-   whose `azp` is the new ID and whose `scope` is its scopes, and deleting the account works with
-   an Apple account.
+   whose `azp` is the new ID and whose `scope` is its scopes, and deleting an Apple account works.
 
 ## Signing in
 
