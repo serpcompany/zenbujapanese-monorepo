@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
+import type { Morpheme, MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
 
 const require = createRequire(import.meta.url)
 
@@ -34,12 +34,27 @@ const napiSudachiBuild = {
 
 const sha256 = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex')
 
-interface Morpheme {
+interface SudachiMorpheme {
   surface: string
+  beginC: number
+  endC: number
   partOfSpeech: string[]
   dictionaryForm: string
+  normalizedForm: string
+  readingForm: string
   dictionaryId: number
 }
+
+const morpheme = (found: SudachiMorpheme): Morpheme => ({
+  surface: found.surface,
+  begin: found.beginC,
+  end: found.endC,
+  dictionaryForm: found.dictionaryForm,
+  normalizedForm: found.normalizedForm,
+  reading: found.readingForm,
+  partOfSpeech: found.partOfSpeech,
+  isOutOfVocabulary: found.dictionaryId < 0
+})
 
 export function prepareSudachi(contract: SudachiContract, dictionaryPath: string): void {
   if (
@@ -74,19 +89,14 @@ export function loadSudachi(dictionaryPath: string): MorphologyAnalyzer {
     throw new Error(`Sudachi isn't prepared for ${dictionaryPath}; call prepareSudachi first`)
   }
   const sudachi = require('@nikkei/napi-sudachi') as {
-    Tokenizer: new () => { tokenize(text: string, mode: number): Morpheme[] }
+    Tokenizer: new () => { tokenize(text: string, mode: number): SudachiMorpheme[] }
     SplitMode: { c(): number }
   }
   const tokenizer = new sudachi.Tokenizer()
   const modeC = sudachi.SplitMode.c()
   return {
     async analyze(text) {
-      return tokenizer.tokenize(text, modeC).map(morpheme => ({
-        surface: morpheme.surface,
-        dictionaryForm: morpheme.dictionaryForm,
-        partOfSpeech: morpheme.partOfSpeech,
-        isOutOfVocabulary: morpheme.dictionaryId < 0
-      }))
+      return { words: tokenizer.tokenize(text, modeC).map(morpheme) }
     }
   }
 }

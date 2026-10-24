@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { interruptedSearch } from '../search/database'
+import { morphemes } from '../search/morphology.fixture'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, fakeHost, settled } from './fake-host'
 import { entries, host, linked, sentences } from './text-fixture'
@@ -76,11 +77,7 @@ describe('the embedded text engine’s count of the words a learner can know', (
   })
 
   test('asks a host without a tokenizer for each counted line’s words in turn', async () => {
-    const noun = (surface: string) => ({
-      words: [
-        { surface, dictionaryForm: surface, partOfSpeech: ['名詞'], isOutOfVocabulary: false }
-      ]
-    })
+    const noun = (surface: string) => ({ words: morphemes([[surface, surface, '名詞']]) })
     const call = begin(fakeHost(entries), 'countedWords', JSON.stringify(['日本語', '今日']))
     expect(await settled(call)).toEqual({ analyze: '日本語' })
     call.analyzed(JSON.stringify(noun('日本語')))

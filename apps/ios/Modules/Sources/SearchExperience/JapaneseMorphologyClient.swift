@@ -25,58 +25,43 @@ enum SudachiCoreContract {
   static let unknownDefinitionSHA256 =
     "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79"
 
-  static func validate(_ analysis: JapaneseMorphologyAnalysis) throws {
-    guard analysis.engine == engine,
-      analysis.engineVersion == engineVersion,
-      analysis.dictionary == dictionary,
-      analysis.dictionarySHA256 == dictionarySHA256,
-      analysis.candidates.allSatisfy({ candidate in
-        !candidate.surface.isEmpty && !candidate.dictionaryForm.isEmpty
-          && !candidate.normalizedForm.isEmpty && !candidate.reading.isEmpty
-          && !candidate.partOfSpeech.isEmpty
-      })
-    else { throw JapaneseMorphologyError.providerContractMismatch }
-    try JapaneseMorphologyProviderContract.validate(
-      candidates: analysis.candidates, transcript: analysis.transcript)
-  }
-
   static func validateGoldenOutput(_ analysis: JapaneseMorphologyAnalysis) throws {
-    try validate(analysis)
-    guard analysis.transcript == "日本語を用いる。",
-      analysis.candidates.map(\.surface) == ["日本語", "を", "用いる", "。"],
-      analysis.candidates.map(\.dictionaryForm) == ["日本語", "を", "用いる", "。"],
-      analysis.candidates.map(\.reading) == ["ニホンゴ", "ヲ", "モチイル", "。"],
-      analysis.candidates.map { $0.partOfSpeech.first } == ["名詞", "助詞", "動詞", "補助記号"],
-      analysis.candidates.allSatisfy({ !$0.isOutOfVocabulary })
+    let words = analysis.words
+    let pieces = analysis.pieces
+    let boundaries = Set(pieces.flatMap { [$0.begin, $0.end] })
+    guard words.map(\.surface) == ["日本語", "を", "用いる", "。"],
+      words.map(\.begin) == [0, 3, 4, 7],
+      words.map(\.end) == [3, 4, 7, 8],
+      words.map(\.dictionaryForm) == ["日本語", "を", "用いる", "。"],
+      words.map(\.reading) == ["ニホンゴ", "ヲ", "モチイル", "。"],
+      words.map({ $0.partOfSpeech.first }) == ["名詞", "助詞", "動詞", "補助記号"],
+      words.allSatisfy({ !$0.isOutOfVocabulary && !$0.normalizedForm.isEmpty }),
+      pieces.map(\.surface).joined() == "日本語を用いる。",
+      pieces.first?.begin == 0,
+      zip(pieces, pieces.dropFirst()).allSatisfy({ $0.end == $1.begin }),
+      words.allSatisfy({ boundaries.contains($0.begin) && boundaries.contains($0.end) })
     else { throw JapaneseMorphologyError.providerContractMismatch }
   }
 }
 
-struct JapaneseMorphologyCandidate: Equatable, Sendable {
+struct JapaneseMorpheme: Codable, Equatable, Sendable {
   let surface: String
-  let scalarRange: Range<Int>
+  let begin: Int
+  let end: Int
   let dictionaryForm: String
   let normalizedForm: String
   let reading: String
   let partOfSpeech: [String]
   let isOutOfVocabulary: Bool
-  let children: [JapaneseMorphologyCandidate]
-  var joinsInflection = false
-
 }
 
-struct JapaneseMorphologyAnalysis: Equatable, Sendable {
-  let transcript: String
-  let candidates: [JapaneseMorphologyCandidate]
-  let engine: String
-  let engineVersion: String
-  let dictionary: String
-  let dictionarySHA256: String
+struct JapaneseMorphologyAnalysis: Encodable, Equatable, Sendable {
+  let words: [JapaneseMorpheme]
+  let pieces: [JapaneseMorpheme]
 }
 
 enum JapaneseMorphologyError: Error, Equatable {
   case packUnavailable
-  case invalidProviderRange
   case providerContractMismatch
 }
 
@@ -143,100 +128,22 @@ final class SudachiJapaneseMorphologyAdapter: @unchecked Sendable {
   }
 
   func analyze(_ text: String) throws -> JapaneseMorphologyAnalysis {
-    let coarse = try tokenizer.tokenize(text: text)
-    let fine = try tokenizer.tokenizeWithMode(text: text, mode: .a)
-    let fineCandidates = try fine.map {
-      try Self.candidate($0, transcript: text, scalarOffset: 0, children: [])
-    }
-    let candidates = try coarse.map { morpheme in
-      let coarseRange = Int(morpheme.begin)..<Int(morpheme.end)
-      let children = fineCandidates.filter {
-        $0.scalarRange.lowerBound >= coarseRange.lowerBound
-          && $0.scalarRange.upperBound <= coarseRange.upperBound
-      }
-      return try Self.candidate(
-        morpheme,
-        transcript: text,
-        scalarOffset: 0,
-        children: children
-      )
-    }
-    let analysis = JapaneseMorphologyAnalysis(
-      transcript: text,
-      candidates: candidates,
-      engine: SudachiCoreContract.engine,
-      engineVersion: SudachiCoreContract.engineVersion,
-      dictionary: SudachiCoreContract.dictionary,
-      dictionarySHA256: SudachiCoreContract.dictionarySHA256
-    )
-    try SudachiCoreContract.validate(analysis)
-    return analysis
+    JapaneseMorphologyAnalysis(
+      words: try tokenizer.tokenize(text: text).map(Self.morpheme),
+      pieces: try tokenizer.tokenizeWithMode(text: text, mode: .a).map(Self.morpheme))
   }
 
-  private static func candidate(
-    _ morpheme: Morpheme,
-    transcript: String,
-    scalarOffset: Int,
-    children: [JapaneseMorphologyCandidate]
-  ) throws -> JapaneseMorphologyCandidate {
-    let range = (Int(morpheme.begin) + scalarOffset)..<(Int(morpheme.end) + scalarOffset)
-    guard
-      scalarSlice(transcript, range: Int(morpheme.begin)..<Int(morpheme.end)) == morpheme.surface
-    else { throw JapaneseMorphologyError.invalidProviderRange }
-    return JapaneseMorphologyCandidate(
+  private static func morpheme(_ morpheme: Morpheme) -> JapaneseMorpheme {
+    JapaneseMorpheme(
       surface: morpheme.surface,
-      scalarRange: range,
+      begin: Int(morpheme.begin),
+      end: Int(morpheme.end),
       dictionaryForm: morpheme.dictionaryForm,
       normalizedForm: morpheme.normalizedForm,
       reading: morpheme.readingForm,
       partOfSpeech: morpheme.partOfSpeech,
-      isOutOfVocabulary: morpheme.isOov,
-      children: children
+      isOutOfVocabulary: morpheme.isOov
     )
-  }
-
-  fileprivate static func scalarSlice(_ text: String, range: Range<Int>) -> String? {
-    let scalars = text.unicodeScalars
-    guard
-      let lower = scalars.index(
-        scalars.startIndex, offsetBy: range.lowerBound, limitedBy: scalars.endIndex),
-      let upper = scalars.index(
-        scalars.startIndex, offsetBy: range.upperBound, limitedBy: scalars.endIndex),
-      lower <= upper
-    else { return nil }
-    return String(scalars[lower..<upper])
-  }
-}
-
-enum JapaneseMorphologyProviderContract {
-  static func validate(
-    candidates: [JapaneseMorphologyCandidate],
-    transcript: String
-  ) throws {
-    var previousEnd = 0
-    for candidate in candidates {
-      guard candidate.scalarRange.lowerBound == previousEnd,
-        SudachiJapaneseMorphologyAdapter.scalarSlice(
-          transcript, range: candidate.scalarRange) == candidate.surface,
-        !candidate.children.isEmpty
-      else { throw JapaneseMorphologyError.invalidProviderRange }
-      previousEnd = candidate.scalarRange.upperBound
-      var previousChildEnd = candidate.scalarRange.lowerBound
-      for child in candidate.children {
-        guard child.scalarRange.lowerBound == previousChildEnd,
-          child.scalarRange.upperBound <= candidate.scalarRange.upperBound,
-          SudachiJapaneseMorphologyAdapter.scalarSlice(
-            transcript, range: child.scalarRange) == child.surface
-        else { throw JapaneseMorphologyError.invalidProviderRange }
-        previousChildEnd = child.scalarRange.upperBound
-      }
-      guard previousChildEnd == candidate.scalarRange.upperBound else {
-        throw JapaneseMorphologyError.invalidProviderRange
-      }
-    }
-    guard previousEnd == transcript.unicodeScalars.count else {
-      throw JapaneseMorphologyError.invalidProviderRange
-    }
   }
 }
 

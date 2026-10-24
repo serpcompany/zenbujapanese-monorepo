@@ -10,23 +10,21 @@ struct LinkedWordResolutionTests {
 
   private func analyzed(_ parts: [Part]) -> JapaneseTextAnalysisClient {
     var offset = 0
-    let candidates = parts.map { part in
+    let words = parts.map { part in
       defer { offset += part.surface.unicodeScalars.count }
-      return JapaneseMorphologyCandidate(
+      return JapaneseMorpheme(
         surface: part.surface,
-        scalarRange: offset..<(offset + part.surface.unicodeScalars.count),
+        begin: offset,
+        end: offset + part.surface.unicodeScalars.count,
         dictionaryForm: part.base,
         normalizedForm: part.base,
         reading: Self.readings[part.surface] ?? part.surface,
         partOfSpeech: part.pos,
-        isOutOfVocabulary: false,
-        children: []
+        isOutOfVocabulary: false
       )
     }
-    let morphology = JapaneseMorphologyClient { text in
-      JapaneseMorphologyAnalysis(
-        transcript: text, candidates: candidates, engine: "fixture", engineVersion: "1",
-        dictionary: "fixture", dictionarySHA256: "fixture")
+    let morphology = JapaneseMorphologyClient { _ in
+      JapaneseMorphologyAnalysis(words: words, pieces: [])
     }
     return .live(text: DictionaryTextData(morphology: morphology))
   }
