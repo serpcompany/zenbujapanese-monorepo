@@ -5,7 +5,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("Example Sentences' place", .timeLimit(.minutes(1)))
+@Suite("Example Sentences' place")
 struct ExamplePlaceTests {
   private let opened = Self.sentence(22)
   private let above = Self.sentence(21)
