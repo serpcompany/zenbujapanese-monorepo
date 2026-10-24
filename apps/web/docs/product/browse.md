@@ -289,9 +289,9 @@ dictionary and browse pages: kana pages, kanji lists, frequency dictionaries, an
 number: `…/2/` is its second, `…/1/` redirects (308) to the list's URL, and a page past the last, or
 a list, band, kana, or category the dictionary doesn't have, is 404. A list or band (every page of
 it) of fewer than 10 words or kanji isn't indexed (`noindex, follow`), nor a category in kana order;
-the rest are. The thin lists today are 11 categories (audiovisual and paleontology with 1 word,
+the rest are. The thin lists today are 11 categories (paleontology with 1 word, audiovisual,
 manga, Nagano dialect, and pathology with 2, and Tsugaru dialect, mechanical engineering, Tosa
-dialect, motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana groups (such as
+dialect, motorsport, gardening, and mining with 5 to 9), 3,930 of the 6,525 two-kana groups (such as
 かカ), 14 kana with fewer than 10 words (such as ﾀ, 〜, and ヲ), and five stroke counts (1, 21, 22, 23,
 and 29 strokes). They stay linked from their kana, category list, or kanji lists, so every word
 stays a few links from the dictionary home.

@@ -387,7 +387,7 @@ asks the service's browse routes ([`dictionary-api.md`](dictionary-api.md), Rout
 results do (`linkedWordPath`). Without a service, it answers from the answers `pnpm --filter
 zenbujapanese-dictionary-api fixtures` exports to `packages/dictionary-core/src/fixtures/browse.json`,
 keyed by those paths: the summary, both scripts, い and the いる group, the categories,
-`ichidan-verbs` (two pages most used first and one in kana order) and `audiovisual` (one word, so
+`ichidan-verbs` (two pages most used first and one in kana order) and `audiovisual` (two words, so
 not indexed), the ranked lists, YouTube's and anime's first bands, and JLPT N5, and the kanji
 lists, grade 4, JLPT N5's kanji, and all of jinmeiyō, with its compatibility kanji. Each word list
 is cut to its first 20 words. Any other browse page is a 404 there.
