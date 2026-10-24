@@ -76,8 +76,9 @@ that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's 
 Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
 under them), get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
 (`LaunchHarness.onlySections`), opens the page with only the sections it names (Word Detail's
-examples under its meanings are one, `meaning-example`), at the page's top, and the walk audits them
-there (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
+examples under its meanings are one, `meaning-example`, named with `meaning`, the section that holds
+them, and audited on 日本's page), at the page's top, and the walk audits them there
+(`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
 (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
 height, so the Player page isn't showing behind it.
 

@@ -183,6 +183,9 @@ private let linkedWords = [
   allow(
     .hitRegion, .identifiedBy(prefix: "word-detail.example-token."), on: ["Word Detail", "A word's note"],
     because: Why.inlineWord),
+  allow(
+    .hitRegion, .identifiedBy(prefix: "word-detail.meaning-example-token."), on: ["Word Detail"],
+    because: Why.inlineWord),
   allow(.hitRegion, .identifiedBy(prefix: "image-text.region."), on: ["Image Search"], because: Why.photoWord),
 ]
 
