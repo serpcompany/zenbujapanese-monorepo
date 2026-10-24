@@ -11,9 +11,11 @@ in [`ios.md`](ios.md).
 Every action opens the app with a link, and the app has one place a link lands.
 
 - **The links.** `AppAction` (`apps/ios/Modules/Sources/SearchExperience/AppAction.swift`) writes
-  and reads them: `<scheme>://look-up?text=…` and `<scheme>://translate?text=…`. Text is
-  percent-encoded with only the unreserved characters left as they are, so `&`, `+`, `#`, and `/`
-  come back as they went.
+  and reads them: `<scheme>://look-up?text=…`, `<scheme>://translate?text=…`, and
+  `<scheme>://watch?v=…` (#980). Text is percent-encoded with only the unreserved characters left
+  as they are, so `&`, `+`, `#`, and `/` come back as they went. A watch link's `v` is read with
+  `YouTubeVideoID(rawValue:)`, which a pasted link's ID also goes through, and one that isn't an ID
+  still makes a watch link, without a video.
 - **The scheme is the app's bundle ID**, registered in `apps/ios/App/Info.plist` as
   `$(PRODUCT_BUNDLE_IDENTIFIER)`: `com.zenbujapanese.dictionary`, Zenbu Dev's `.dev`, and the UI
   tests' `.uitests` each open only themselves. A shortcut's **Open URLs**, `simctl openurl`, and
@@ -21,8 +23,10 @@ Every action opens the app with a link, and the app has one place a link lands.
   opens a screen the app already has, with text the learner sees.
 - **Where a link lands.** `AppLinkOpening` (`AppLinkOpening.swift`, on `SearchExperienceRootView`)
   takes the scheme's and the website's links from `onOpenURL`, and the Shortcuts actions' from
-  `AppLinkInbox`. `AppLink` names the screen: the dictionary, or Translate's typed text
-  (`TranslateRoute.text`, as Document opens it).
+  `AppLinkInbox`. `AppLink` names the screen: the dictionary, Translate's typed text
+  (`TranslateRoute.text`, as Document opens it), or Player. A watch link selects Player, which
+  closes the word sheets as any tab change does, and sets Player's stack to its video alone, or to
+  Player's home without one.
 - **The dictionary is the core's.** A look-up asks the core's `lookUp`
   ([`dictionary-core.md`](dictionary-core.md), Embedded), which searches the text and answers
   the word when the text is Japanese written or read as one entry, or deinflects to one, and a
@@ -62,12 +66,16 @@ app target's own sources; what they call is in the package, where it's tested.
   the screens' are made at launch: JavaScriptCore crashed making two contexts at once, so
   `DictionaryCore` makes one at a time. **Core:** `embedded/dictionary.test.ts` for `lookUp`.
 - **UI:** `AppLinkUITests` hands the running app each action's link on iPhone, iPad, and the Mac
-  (`TestDevice.open(_:in:)`). On iPhone and iPad that's `XCUIApplication.open(_:)`, which works only
-  because the app registers its scheme. On the Mac, LaunchServices gives a scheme's link to
-  whichever copy of the app it picks, and a Mac that builds several checkouts has many, so a Debug
-  build launched with `ZENBU_OPEN_LINK=<link>` hands that link to the window, through
-  `AppLinkInbox` as the Shortcuts actions do, when the test posts
-  `com.zenbujapanese.dictionary.uitests.open-link`.
+  (`TestDevice.open(_:)`). On iPhone and iPad that's `XCUIDevice.shared.system.open(_:)`, which
+  works only because the app registers its scheme, and hands the link to the app as it runs.
+  `XCUIApplication.open(_:)` doesn't: on Xcode 27 it quits the app and launches it again with the
+  link, so the tab and a running conversation the test set up are gone (#980). On the Mac,
+  LaunchServices gives a scheme's link to whichever copy of the app it picks, and a Mac that builds
+  several checkouts has many, so a Debug build launched with `ZENBU_OPEN_LINK=<link>` hands that
+  link to the window, through `AppLinkInbox` as the Shortcuts actions do, when the test posts
+  `com.zenbujapanese.dictionary.uitests.open-link`. The watch link's test stands YouTube in with
+  `PlayerWatchUITests.standIn()`, whose captions are the same for any video, so in launches that
+  count draws (`ZENBU_COUNT_DRAWS=1`) Player's video shows its ID on the `watch.video` probe.
 - **The actions' metadata:** after a build, the app's `Metadata.appintents/extract.actionsdata`
   names both intents, their text parameter, and the provider's phrases.
 - To try a link in the Simulator:

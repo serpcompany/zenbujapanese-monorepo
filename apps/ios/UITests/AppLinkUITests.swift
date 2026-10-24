@@ -13,7 +13,7 @@ final class AppLinkUITests: ZenbuUITestCase {
 
   private func launch(opening link: URL, _ environment: [String: String] = [:]) -> XCUIApplication {
     let app = launch(TestDevice.linkEnvironment(link).merging(environment) { $1 })
-    TestDevice.open(link, in: app)
+    TestDevice.open(link)
     return app
   }
 
@@ -26,7 +26,7 @@ final class AppLinkUITests: ZenbuUITestCase {
     let lookUp = try link("look-up", ["text": "見る"])
     let app = launch(TestDevice.linkEnvironment(lookUp))
     open(.translate, in: app)
-    TestDevice.open(lookUp, in: app)
+    TestDevice.open(lookUp)
     assertWordPage(of: miru, in: app)
   }
 
@@ -41,6 +41,23 @@ final class AppLinkUITests: ZenbuUITestCase {
     let app = launch(opening: try link("translate", ["text": text]), TranslateUITests.script)
     waitUntil(waitFor(find("translate.typed.input", in: app)), "value == %@", text)
     waitUntil(waitFor(find("translate.typed.direction", in: app)), mentions: "English → Japanese")
+  }
+
+  func testWatchOpensItsVideoInPlayerFromAConversationAndFromLookUp() throws {
+    let watch = try link("watch", ["v": PlayerWatchUITests.videoID])
+    let youTube = PlayerWatchUITests.standIn().merging(Self.countingDraws) { $1 }
+    let app = startConversation(environment: TestDevice.linkEnvironment(watch).merging(youTube) { $1 })
+    assertWatching(watch, leaving: "translate.conversation.back", in: app)
+    waitUntilTheSessionSays("Conversation still listening · Return", in: app)
+    open(.search, in: app)
+    assertWatching(watch, leaving: AppTab.search.rootIdentifier, in: app)
+  }
+
+  private func assertWatching(_ watch: URL, leaving screen: String, in app: XCUIApplication) {
+    TestDevice.open(watch)
+    waitUntilGone(find(screen, in: app))
+    waitUntil(find("watch.video", in: app), mentions: PlayerWatchUITests.videoID)
+    assertOnScreen(find("watch.cue.0", in: app), in: app)
   }
 
   func testAWebsiteLinkOpensItsWordInTheApp() throws {

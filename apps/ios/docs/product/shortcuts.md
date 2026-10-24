@@ -57,6 +57,20 @@ own link does ([Links from zenbujapanese.com](dictionary.md#links-from-zenbujapa
 Check: package `AppLinkTests.notActions`, `schemes`, and `websiteLinkInTheAppsScheme`; UI
 `AppLinkUITests.testAWebsiteLinkOpensItsWordInTheApp`.
 
+Beside the website's links, the scheme has three routes. `look-up?text=` and `translate?text=` are
+the two actions' links, above. `watch?v=` and a YouTube video's ID, such as
+`com.zenbujapanese.dictionary://watch?v=AQdI1o2D32I`, opens that video in Player from any tab, as
+pasting its link does ([Player](player.md#opening-a-video)). An open word sheet closes, and a
+running Translate conversation keeps going. The ID is read as a pasted link's is: 11 letters,
+digits, `-`, or `_`. A watch link without one opens Player's home. A link in another build's scheme
+opens only that build. No Shortcuts action sends a watch link; it is for other apps, such as the
+Safari extension planned in #967.
+
+Check: package `AppLinkTests.watchLinks` (a valid ID, a missing `v`, and IDs that aren't one),
+`watchLinkOfAnotherBuild`, and `roundTrips`; UI
+`AppLinkUITests.testWatchOpensItsVideoInPlayerFromAConversationAndFromLookUp` (from a running
+conversation, which keeps going, and from Look Up), with YouTube stood in.
+
 ## Checked by hand
 
 XCUITest can't run Siri, Spotlight, or the Shortcuts app. Check these on a device, in a Zenbu Dev
