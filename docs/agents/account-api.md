@@ -4,12 +4,10 @@
 Postgres database, beside the dictionary service on the API servers
 ([ADR 0013](../adr/0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
-the apps and other services use. Signed-in apps read and change the learner's profile at
-`/v1/me`, and keep their copies in step with `/v1/sync`
-([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)), which a subscription
-can unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so
-nothing in an app waits on this service, except that the browser extension saves only signed in
-and with the subscription
+the apps and other services use. Signed-in apps read and change the learner's profile at `/v1/me`,
+and keep their copies in step with `/v1/sync`, which a subscription can unlock
+([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so nothing in an
+app waits on this service, except that the extension saves only with the subscription
 ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
