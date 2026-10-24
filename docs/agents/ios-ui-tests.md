@@ -105,34 +105,31 @@ what it waited for and for how long.
   and the main thread runs every main-actor test. A step that runs for seconds without suspending
   keeps its thread from all of them, and an `await` that doesn't suspend, on an actor that's free,
   keeps it too. The digest test built its 64 MB file a byte at a time (27 s on a calm Mac, 54 s
-  beside a website check); the frequency pack manager installed packs and checked its files inside
-  its actor, and its store opened it in a static's initializer, where every other reader blocks its
-  thread until the first is done; tests started managers on the main actor; four recorded suites
-  hashed the same 484 MB file as they began; and the lookup and text engines ran their
-  JavaScriptCore calls on the pool. Through a run's first minute they held half of it, so a test
-  whose body takes microseconds waited 21 to 32 s for a thread on a calm Mac, 33 s beside a website
-  check, and 70 s beside a Mac package run, and on 2026-10-22 every test with a minute's limit ran
-  out together. Work that takes seconds runs on a queue of its own and is awaited: the pack store
-  and manager and the two engines each have a serial queue for an executor, and a test starts a
-  manager with `FrequencyPackManager.started` and hashes or builds anything slow with
-  `apartFromThePool`. A check that walks every case synchronously gives its thread back between
-  cases (`await Task.yield()`): with the rest off the pool, the crash reporting machine's every
-  order, every kanji record, every scrubber rule, and the romaji suite held three of the four
-  threads from 22 to 54 s of a run on a just-booted Simulator, and every main-actor test without an
-  await finished at 52 s. A fixture is built in bulk, not an element at a time, and a value tests
-  share that takes seconds to make is a `Task` they await, not a `static let`. A test with a time
-  limit reads through engines of its own (`LookupClient.reading(LanguageReferenceData())`), not the
-  shared ones every search test queues on: the meaning examples tests, through `.live`, took 50 to
-  56 s beside a Mac package run, and 16 to 30 s through their own. To find one, `sample` the
-  `xctest` process for 2 s every few seconds through a run's first minute and look for a test on a
-  `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main thread not
-  waiting in `mach_msg`. A line the process logs can wait too, on an XPC send to the Simulator's log
-  stream, and more of them do in the debugging mode `xcodebuild` runs tests in
-  (`OS_ACTIVITY_DT_MODE`); CFNetwork logs each request it starts and ends, so once the pool was free
-  the account tests' requests piled up there, with up to five threads at a time waiting to send a
-  line. A full run sets `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` ([`ios.md`](ios.md)): beside a Mac
-  package run the tests with a limit then took at most 21.3 s, against 36.8 s with it on and 55.7 s
-  on main.
+  beside a website check); tests started frequency pack managers, whose start hashes the 484 MB
+  language data and every row of each pack, on the pool or on the main actor; four recorded suites
+  hashed that file as they began; and the app's own pack installs and its lookup and text engines'
+  JavaScriptCore calls run on the pool too ([`tech-debt.md`](../tech-debt.md)). Through a run's
+  first minute they held half of it, so a test whose body takes microseconds waited 21 to 32 s for a
+  thread on a calm Mac, 33 s beside a website check, and 70 s beside a Mac package run, and on
+  2026-10-22 every test with a minute's limit ran out together. Work a test does that takes seconds
+  runs apart from the pool and is awaited: a test starts a manager with
+  `FrequencyPackManager.started` and hashes or builds anything slow with `apartFromThePool`. A check
+  that walks every case synchronously gives its thread back between cases (`await Task.yield()`):
+  the crash reporting machine's every order, every kanji record, every scrubber rule, and the romaji
+  suite once held three of the four threads from 22 to 54 s of a run on a just-booted Simulator, and
+  every main-actor test without an await finished at 52 s. A fixture is built in bulk, not an
+  element at a time, and a value tests share that takes seconds to make is a `Task` they await, not
+  a `static let`. A test with a time limit reads through engines of its own
+  (`LookupClient.reading(LanguageReferenceData())`), not the shared ones every search test queues
+  on: the meaning examples tests took 50 to 56 s through `.live` beside a Mac package run. To find
+  one, `sample` the `xctest` process for 2 s every few seconds through a run's first minute and look
+  for a test on a `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main
+  thread not waiting in `mach_msg`. A line the process logs can wait too, on an XPC send to the
+  Simulator's log stream, and more of them do in the debugging mode `xcodebuild` runs tests in
+  (`OS_ACTIVITY_DT_MODE`); CFNetwork logs each request it starts and ends, so when many account
+  tests ran at once their requests piled up there, with up to five threads at a time waiting to send
+  a line. A full run sets `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` ([`ios.md`](ios.md)), which prints
+  the same log lines.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
