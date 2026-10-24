@@ -230,8 +230,8 @@ def pull_request(connection: sqlite3.Connection, refreshed: Refreshed) -> tuple[
         "",
         "- The app's suites, which only the app records, on a Mac: "
         + (", ".join(f"`{name}`" for name in on_a_mac) or "none this month")
-        + ". Until they're recorded again, their replays fail here, in the dictionary service's checks and the "
-        "app's, each naming the files it was recorded from, and `package.py build` refuses the release.",
+        + ". Until they're recorded again, their replays fail here, in the app's checks and the dictionary "
+        "service's, which name each file a suite was recorded from, and `package.py build` refuses the release.",
         f"- Release {release}'s pin, which the build writes after the recordings.",
         "- The kanji data, which reads no JMdict, isn't rebuilt.",
         "",

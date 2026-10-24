@@ -10,8 +10,9 @@ token it opens the pull request with, are in
 ## The steps
 
 `language-data/tools/refresh_jmdict.py` holds the steps, one command each. Every command takes
-`--work <folder>`, which the steps share, and runs on the Python the data tools pin, through uv
-([`tools/README.md`](tools/README.md), Rebuild everything):
+`--work <folder>`, which the steps share. The workflow runs each through uv on the Python the data
+tools pin, and `rebuild` refuses any other ([`tools/README.md`](tools/README.md), Rebuild
+everything):
 
 | Command | What it does |
 | --- | --- |
@@ -34,8 +35,9 @@ entry written and read the same, by `retire`'s rule. It counts each meaning's ch
 before and after, and says what a person does before it merges.
 
 A run fails without a pull request when the export or the import needs a person: a download
-fails, EDRDG's two files disagree, the DTD moved, the importer refuses the export (a JMdict code it
-doesn't map, a sense with no English gloss), or an entry would lose its note identity. Fix the
+fails, EDRDG's two files disagree, the DTD moved, the importer or the contract tests refuse the
+export (a JMdict code the importer doesn't map, a sense with no English gloss), or an entry would
+lose its note identity. Fix the
 cause as the refresh by hand would, then run the workflow again from the Actions tab.
 
 ## The suites
@@ -48,10 +50,10 @@ elements and `tokenizer` only Kuromoji's files, which the update leaves alone; t
 comes from kuromoji.js, the one a runner can record, and the workflow records it each time.
 `romaji` is edited by hand.
 
-A suite not yet recorded again can't pass by accident. Its replays, in the dictionary service's
-checks and the app's, fail with "The suite was recorded from other files", naming each file and
-both SHA-256s; `package.py build` refuses the release while a suite pins another file; and
-`check-pin` fails until the release is pinned.
+A suite not yet recorded again can't pass by accident. The dictionary service's replays fail with
+"The suite was recorded from other files", naming each file and both SHA-256s, and the app's with
+"The suite was recorded against different artifacts"; `package.py build` refuses the release while
+a suite pins another file; and `check-pin` fails until the release is pinned.
 
 ## After each monthly pull request
 
