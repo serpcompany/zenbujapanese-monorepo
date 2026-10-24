@@ -11,6 +11,7 @@ struct ExampleSentenceClient: Sendable {
   var entryExamples:
     @Sendable (_ entry: DictionaryEntry, _ batch: ExampleBatch) async throws -> EntryExamples
   var formExamples: @Sendable (_ form: String, _ batch: ExampleBatch) async -> ExamplePage?
+  var meaningExamples: @Sendable (_ entry: DictionaryEntry) async -> MeaningExamples
 
   static let live = ExampleSentenceClient(
     text: .shared, linked: LinkedEntries(lookupClient: .live))
@@ -46,6 +47,16 @@ struct ExampleSentenceClient: Sendable {
       guard let found = try? await text.formExamples(form, batch) else { return nil }
       return await linked.page(found, highlightedEntry: nil)
     }
+    meaningExamples = { entry in
+      guard let found = try? await text.meaningExamples(entry.id) else { return MeaningExamples() }
+      let words = await linked.tokens(found.map(\.example.words), highlightedEntry: entry)
+      return MeaningExamples(
+        bySense: Dictionary(
+          zip(found, words).map { shown, words in
+            (shown.number, LinkedExample(example: shown.example, words: words))
+          },
+          uniquingKeysWith: { first, _ in first }))
+    }
   }
 
   func examples(_ entry: DictionaryEntry, _ batch: ExampleBatch) async throws -> ExamplePage {
@@ -63,6 +74,15 @@ struct ExampleSentenceClient: Sendable {
   }
 }
 
+extension LinkedExample {
+  fileprivate init(example: LinkedExamples.Example, words: [JapaneseTextToken]) {
+    self.init(
+      sentence: ExampleSentence(
+        id: example.id, japanese: example.japanese, english: example.english),
+      words: words)
+  }
+}
+
 extension LinkedEntries {
   fileprivate func page(
     _ linked: LinkedExamples, highlightedEntry: DictionaryEntry?
@@ -70,10 +90,7 @@ extension LinkedEntries {
     let words = await tokens(linked.examples.map(\.words), highlightedEntry: highlightedEntry)
     return ExamplePage(
       examples: zip(linked.examples, words).map { example, words in
-        LinkedExample(
-          sentence: ExampleSentence(
-            id: example.id, japanese: example.japanese, english: example.english),
-          words: words)
+        LinkedExample(example: example, words: words)
       },
       listed: linked.listed,
       countText: linked.countText,

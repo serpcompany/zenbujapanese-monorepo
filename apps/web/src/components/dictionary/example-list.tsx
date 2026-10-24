@@ -44,22 +44,40 @@ function Token({
   )
 }
 
-function ExampleItem({
-  example,
-  locale,
-  text
-}: {
+interface ExampleProps {
   example: PageExample
   locale: Locale
   text: ExampleListText
-}) {
-  let offset = 0
+}
+
+function ExampleItem({ example, locale, text }: ExampleProps) {
   return (
     <li
       className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
       data-example={example.position}
       data-example-pair={example.pairId}
     >
+      <ExampleContent example={example} locale={locale} text={text} />
+    </li>
+  )
+}
+
+export function MeaningExample({ meaning, ...props }: ExampleProps & { meaning: number }) {
+  return (
+    <div
+      className="flex items-start gap-3 pt-2"
+      data-meaning-example={meaning}
+      data-example-pair={props.example.pairId}
+    >
+      <ExampleContent {...props} />
+    </div>
+  )
+}
+
+function ExampleContent({ example, locale, text }: ExampleProps) {
+  let offset = 0
+  return (
+    <>
       <div className="flex flex-1 flex-col gap-1">
         <p lang="ja" className="text-xl leading-[2.2]">
           {example.tokens.map(token => {
@@ -81,7 +99,7 @@ function ExampleItem({
         label={text.examples.pronounce}
         unsupported={text.pronounce.unsupported}
       />
-    </li>
+    </>
   )
 }
 

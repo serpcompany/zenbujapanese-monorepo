@@ -61,7 +61,7 @@ function findWord(
   }
 }
 
-const and = 1008490
+const necessary = 1487660
 const iku = 1578850
 const na = 2029110
 
@@ -116,9 +116,9 @@ describe.runIf(artifactAvailable)('browsing a category on the app’s data', () 
   test('a word labelled only in a later meaning follows, showing that meaning', () => {
     const [noun] = service.categoryWords('nouns', 'used', 1)?.words ?? []
     expect(noun.headword).toBe('事')
-    const promotedPawn = findWord(service, 'nouns', and)
-    expect(promotedPawn?.word.summary).toBe('promoted pawn')
-    expect(promotedPawn?.page).toBeGreaterThan(1)
+    const need = findWord(service, 'nouns', necessary)
+    expect(need?.word.summary).toBe('necessity, need, requirement')
+    expect(need?.page).toBeGreaterThan(1)
     const slang = findWord(service, 'slang', iku)
     expect(slang?.word.summary).toMatch(/^to trip, to get high/)
     expect(slang?.page === 1 && slang.position === 0).toBe(false)

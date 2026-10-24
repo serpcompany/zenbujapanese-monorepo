@@ -64,13 +64,17 @@ the dictionary service's checks with `ZENBU_REQUIRE_ARTIFACT=1`, and the languag
 
 JMdict, Tatoeba, and EDRDG's KANJIDIC2, KRADFILE, and RADKFILE are published only as the latest
 file at a fixed URL, so each snapshot the data is built from is committed in Git LFS beside its
-record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like the record, such as
-`Tatoeba-2026-10-03/` beside `Tatoeba-2026-10-03.source.json`. To move to a newer one:
+record: JMdict's as `JMdict_e_examp-<date>.gz`, and the others in a folder named like the record,
+such as `Tatoeba-2026-10-03/` beside `Tatoeba-2026-10-03.source.json`. To move to a newer one:
 
-1. Download it into a new `<Name>-<date>/` folder (JMdict: `JMdict_e-<date>.gz`) and write
+1. Download it into a new `<Name>-<date>/` folder (JMdict: `JMdict_e_examp-<date>.gz`) and write
    `<Name>-<date>.source.json` from the previous record, with the new date, HTTP `Last-Modified`
    and `ETag`, byte count, and SHA-256.
    Tatoeba's `aggregate_sha256` is the SHA-256 of its seven files' SHA-256s, each followed by LF.
+   JMdict's record also has its `export_date` (the file's `JMdict created` line) and, in
+   `without_examples`, the same day's `JMdict_e.gz`: its HTTP fields, and its XML's bytes and
+   SHA-256. `import_jmdict.py` refuses an export whose XML, with each `<example>` block that
+   starts a line removed, isn't that file, so the examples never change an entry.
 2. Delete the previous record and folder. The rebuild refuses a kind with two records, and
    replaces the previous snapshot's import report.
 3. Name the new records in `language-data/sources/README.md` and, for EDRDG's files,
@@ -78,9 +82,10 @@ record: JMdict's as `JMdict_e-<date>.gz`, and the others in a folder named like 
    the evidence counts in `jmdict_entries.py` to the new export's.
 4. For a new JMdict, keep every existing entry's `note_identity`: the app moves the notes earlier
    versions saved under it to their word (`docs/agents/ios-local-stores.md`), and
-   `test_note_identity_contract.py` fails on any changed value. The importer computes it from the
-   entry today, so it first has to write each entry the previous database has with that
-   database's value. Pin the test again once, after `ATTACH '<previous>.sqlite3' AS old`,
+   `test_note_identity_contract.py` fails on any changed value. The rebuild hands the importer
+   `main`'s database (`--previous-database`), whose value each entry it holds keeps; a new entry
+   takes its computed one, or the next free suffix. Pin the test again once, after `ATTACH
+   '<previous>.sqlite3' AS old`,
    `SELECT count(*) FROM old.entries o JOIN entries e USING (id) WHERE e.note_identity <>
    o.note_identity` answers 0, and list in the pull request the entries the new JMdict drops
    (`SELECT o.id FROM old.entries o LEFT JOIN entries e USING (id) WHERE e.id IS NULL`), whose
@@ -115,8 +120,14 @@ the SHA-256 of each file's name and SHA-256, one per line, in `IMPORT_TOOL_FILES
 ## What each tool does
 
 **`import_jmdict.py`** normalizes the pinned JMdict English export into the Language Reference
-Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships.
+Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships. Its import report's
+`row_delta` counts the entries added, changed, and deleted since the previous database.
 
+- `jmdict_examples.py`: each meaning's examples (`sense_examples`). `JMdict_e_examp` gives a sense
+  the Tatoeba sentences whose word index marks them a good, checked example of it, by Tatoeba
+  Japanese ID. One is linked only to the bundled pair that ID names, and only when that pair's
+  NFC Japanese and English are the example's; any other is counted in the report, not linked.
+  Entries with the same semantic fingerprint share them, in source order.
 - `jmdict_normalization.py`: every JMdict part-of-speech entity code maps to stable app-owned
   category identifiers; the wording belongs to the app's part-of-speech formatter, so stored
   identifiers never carry display text. The retired description-substring labels are reproduced

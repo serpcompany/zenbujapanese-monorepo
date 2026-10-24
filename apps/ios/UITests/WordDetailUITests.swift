@@ -45,6 +45,39 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitUntil(searchField(in: app), "value == %@", "canine")
   }
 
+  func testAMeaningShowsItsCheckedExample() {
+    let app = launch(["ZENBU_SPEECH_STAND_IN": "1"])
+    openWord("犬", searching: "inu", in: app)
+    assertListedOnceInThisOrder(
+      [
+        "word-detail.meaning.1", "word-detail.meaning-example.1", "word-detail.meaning.2",
+        "word-detail.meaning-example.2", "word-detail.meaning.3",
+      ], in: app)
+    XCTAssertFalse(
+      find("word-detail.meaning-example.3", in: app).exists, "meaning 3 has no checked example")
+    let example = find("word-detail.meaning-example.1", in: app)
+    waitUntil(example, mentions: "彼女は吠える犬を怖がる。")
+    waitUntil(example, mentions: "She is afraid of barking dogs.")
+    tap(find("word-detail.meaning-example-speaker.1", in: app))
+    waitUntil(find("speech.spoken", in: app), mentions: "ja-JP 彼女は吠える犬を怖がる。")
+    let bark = NSPredicate(
+      format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
+      "word-detail.meaning-example-token.1.", ".吠える")
+    tap(app.descendants(matching: .any).matching(bark).firstMatch)
+    waitFor(find(Self.howling, in: app))
+  }
+
+  private static let howling = "ruby.吠える.吠=ほ|える"
+
+  func testAWordWhoseExamplesFailToLoadStillShowsItsMeanings() {
+    let app = launch(["ZENBU_FAIL_MEANING_EXAMPLES": "1"])
+    openWord("犬", searching: "inu", in: app)
+    assertListedOnceInThisOrder(
+      ["word-detail.pronounce", "word-detail.meaning.1", "word-detail.meaning.2"], in: app)
+    XCTAssertFalse(
+      find("word-detail.meaning-example.1", in: app).exists, "no example shows under a meaning")
+  }
+
   func testAddToListPutsTheWordInFavoritesAndANewList() {
     let app = openJapan()
     tap(find("word-detail.more-menu", in: app))

@@ -72,7 +72,7 @@ private let iPadSheets = [
   "A frequency dictionary's details", "Stroke Order", "Sign In", "Delete Account", "Subscribe", "Subscribe, its plans",
   "Subscribe, its end", deletingWithAnAppStoreOne, "Delete Account, its App Store subscription",
   deletedWithAnAppStoreOne, "Deleted, its App Store subscription",
-]
+] + problemReports + ["Report a Problem, sent"]
 private let shareCards = ["A shared sentence's card", "A shared photo's card"]
 private let subscriptionStates = [
   "no subscription", "an App Store subscription", "a website subscription", "both stores", "a payment retried",
@@ -182,6 +182,9 @@ private let linkedWords = [
     because: Why.inlineWord),
   allow(
     .hitRegion, .identifiedBy(prefix: "word-detail.example-token."), on: ["Word Detail", "A word's note"],
+    because: Why.inlineWord),
+  allow(
+    .hitRegion, .identifiedBy(prefix: "word-detail.meaning-example-token."), on: ["Word Detail"],
     because: Why.inlineWord),
   allow(.hitRegion, .identifiedBy(prefix: "image-text.region."), on: ["Image Search"], because: Why.photoWord),
 ]

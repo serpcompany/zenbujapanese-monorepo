@@ -37,6 +37,7 @@ import {
   examplesEntries,
   screenAccent,
   segmentText,
+  senseExampleRows,
   wordExampleRows
 } from './word-examples'
 import { canonicalEntryId, jmdictSource, readWord, slugsByEntSeq } from './words'
@@ -124,6 +125,8 @@ export const maximumEntSeq = 99_999_999
 const defaultCacheSize = 2_000
 
 const toRecord = (slugs: Map<number, string>): Slugs => Object.fromEntries(slugs)
+
+const isListedPosition = (from: number, listed: number) => from < listed
 
 export class Dictionary {
   readonly features: SearchFeatures
@@ -216,7 +219,7 @@ export class Dictionary {
   ): Promise<SearchExamplesResponse | null> {
     const query = normalizeQuery(rawQuery)
     const { primary, usesPrimaryEntryExamples, examples } = await this.examplesFor(query)
-    if (!examples || examples.sentences.length === 0) return null
+    if (!examples || !isListedPosition(from, examples.sentences.length)) return null
     const rows = exampleRows(
       this.db,
       examples.sentences.slice(from, from + limit),
@@ -258,9 +261,17 @@ export class Dictionary {
     const examples = retrieved
       ? wordExampleRows(this.db, entSeq, entry, retrieved, 0, examplesPerPage, this.linking)
       : []
+    const senseExamples = senseExampleRows(
+      this.db,
+      entSeq,
+      entry,
+      word.entry.senses.length,
+      this.linking
+    )
+    const shownSenseExamples = senseExamples.flatMap(row => (row ? [row] : []))
     const slugs = new Map([
       ...word.relatedSlugs,
-      ...slugsByEntSeq(this.db, exampleLinkEntSeqs(examples))
+      ...slugsByEntSeq(this.db, exampleLinkEntSeqs([...examples, ...shownSenseExamples]))
     ])
     return {
       rows: {
@@ -268,7 +279,8 @@ export class Dictionary {
         frequency: word.frequency,
         kanji: word.kanji,
         examples,
-        exampleCount: retrieved ? exampleCount(retrieved) : null
+        exampleCount: retrieved ? exampleCount(retrieved) : null,
+        senseExamples
       },
       slug: word.slug,
       slugs: toRecord(slugs),
@@ -285,6 +297,7 @@ export class Dictionary {
     if (!row) return null
     const entry = this.examplesEntry(row.fingerprint)
     const retrieved = this.entryExamples(entry)
+    if (from > 0 && !isListedPosition(from, retrieved?.sentences.length ?? 0)) return null
     const rows = retrieved
       ? wordExampleRows(this.db, entSeq, entry, retrieved, from, limit, this.linking)
       : []

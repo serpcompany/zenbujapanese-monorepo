@@ -58,7 +58,6 @@ describe('GET /dictionary/search/<query>/examples.json', () => {
   test.each([
     ['a query not in its normal form', 'Eat', '?from=25'],
     ['a position between pages', 'eat', '?from=30'],
-    ['a position past the app’s 100', 'eat', '?from=100'],
     ['a position that is no number', 'eat', '?from=x']
   ])('is not found for %s', async (_, segment, query) => {
     const response = await get(segment, query)
@@ -66,7 +65,13 @@ describe('GET /dictionary/search/<query>/examples.json', () => {
     expect(getSearchExamples).not.toHaveBeenCalled()
   })
 
-  test('is not found for a search without examples, or another build', async () => {
+  test('asks the dictionary for a position past 100, as a deinflected query lists its word’s checked examples too', async () => {
+    vi.mocked(getSearchExamples).mockResolvedValue(found)
+    expect((await get('eat', '?build=b1&from=100')).status).toBe(200)
+    expect(getSearchExamples).toHaveBeenCalledWith('eat', 100, 'b1')
+  })
+
+  test('is not found for a search without examples, another build, or a position past its list', async () => {
     vi.mocked(getSearchExamples).mockResolvedValue(null)
     expect((await get('eat', '?build=b0&from=25')).status).toBe(404)
   })

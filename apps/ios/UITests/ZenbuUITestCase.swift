@@ -275,7 +275,7 @@ class ZenbuUITestCase: XCTestCase {
   }
 
   private func wakeTheTouchSystem(before target: XCUIElement?) {
-    guard device != .mac, let app = launched, app.state == .runningForeground,
+    guard device == .phone, let app = launched, app.state == .runningForeground,
       !app.otherElements["PopoverDismissRegion"].exists
     else { return }
     let targetWasThere = target?.exists ?? false

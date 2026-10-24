@@ -1,0 +1,29 @@
+{
+  "resource_id": "SOURCE-COMPONENT-JMDICT",
+  "identity": "JMdict English export with examples",
+  "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e_examp.gz",
+  "export_date": "2026-10-23",
+  "fetched_at_utc": "2026-10-23T04:30:03Z",
+  "http_last_modified": "Fri, 23 Oct 2026 03:30:24 GMT",
+  "http_etag": "\"c7a1b0-65e7999d11e2a\"",
+  "compressed_bytes": 13083056,
+  "sha256": "5fd94895d2d8fece78d9b82910108ed554116f4f143dacc3791588552e875d32",
+  "without_examples": {
+    "identity": "JMdict English export",
+    "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz",
+    "fetched_at_utc": "2026-10-23T04:30:03Z",
+    "http_last_modified": "Fri, 23 Oct 2026 03:30:22 GMT",
+    "http_etag": "\"a18df9-65e7999a6d1e7\"",
+    "compressed_bytes": 10587641,
+    "sha256": "b45f780bd76b56099fe36f1a6d12c7900db687592f3782280bd924dd7f3b2127",
+    "xml_bytes": 63185875,
+    "xml_sha256": "7e7516a6cd0c47e19300083470146438ded2b740b28265e263e147fc5b57a038"
+  },
+  "dtd_revision": "1.09",
+  "included_gloss_languages": ["eng"],
+  "example_source": "Tatoeba sentence pairs EDRDG links to a meaning, by Tatoeba Japanese sentence ID",
+  "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
+  "license_url": "https://www.edrdg.org/edrdg/licence.html",
+  "documentation_url": "https://www.edrdg.org/jmdict/j_jmdict.html",
+  "examples_documentation_url": "https://www.edrdg.org/wiki/Sentence-Dictionary_Linking.html"
+}

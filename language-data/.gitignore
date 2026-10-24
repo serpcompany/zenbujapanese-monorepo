@@ -1,5 +1,5 @@
 sources/*.gz
-!sources/JMdict_e-*.gz
+!sources/JMdict_e_examp-*.gz
 sources/*.bz2
 sources/*.zip
 sources/*.sqlite

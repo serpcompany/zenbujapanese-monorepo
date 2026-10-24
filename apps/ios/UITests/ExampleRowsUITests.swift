@@ -75,16 +75,8 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     guard let word = reachableWord(of: rows, near: 0, in: app) else {
       return XCTFail("no linked word of the form's examples is in the window to be clicked")
     }
-    let page = find("word-detail.screen", in: app)
-    if device == .mac {
-      for _ in 0..<3 {
-        word.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
-        if appears(page, within: Self.patience / 3) { break }
-      }
-    } else {
-      tap(word)
-    }
-    waitFor(page)
+    tap(word)
+    waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitFor(rows.list)
   }
@@ -301,8 +293,12 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let frame = row.exists ? row.frame : .null
     guard !frame.isNull, frame.width > 0, frame.height > 0 else {
       guard device == .mac else { return scroll(toward: number, of: rows, in: app) }
-      let seen = laidOutNumber(of: rows) ?? lastLaidOut
-      return flick(rows, back: seen.map { number < $0 } ?? false, in: app)
+      guard let seen = laidOutRow(of: rows) else {
+        return flick(rows, back: lastLaidOut.map { number < $0 } ?? false, in: app)
+      }
+      let rowsAway = CGFloat(number - seen.number) * seen.frame.height
+      return rows.list.scroll(
+        byDeltaX: 0, deltaY: rows.list.frame.midY - seen.frame.midY - rowsAway)
     }
     guard device == .mac else {
       return scroll(app.windows.firstMatch, back: frame.midY < app.windows.firstMatch.frame.midY)
@@ -310,7 +306,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     rows.list.scroll(byDeltaX: 0, deltaY: rows.list.frame.midY - frame.midY)
   }
 
-  private func laidOutNumber(of rows: Rows) -> Int? {
+  private func laidOutRow(of rows: Rows) -> (number: Int, frame: CGRect)? {
     guard let list = try? rows.list.snapshot() else { return nil }
     var unread: [any XCUIElementSnapshot] = [list]
     while let element = unread.popLast() {
@@ -319,7 +315,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
         frame.height > 0, list.frame.contains(CGPoint(x: frame.midX, y: frame.midY)),
         let number = Int(element.identifier.dropFirst(rows.prefix.count))
       {
-        return number
+        return (number, frame)
       }
       unread.append(contentsOf: element.children)
     }

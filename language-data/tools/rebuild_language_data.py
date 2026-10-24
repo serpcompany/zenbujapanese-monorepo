@@ -151,8 +151,20 @@ def build_kanji(download: bool) -> None:
     )
 
 
-def build_language_reference(unidic: Path) -> None:
-    jmdict = only("JMdict_e-*.source.json")
+def previous_language_data(scratch: Path) -> Path:
+    base = git("merge-base", "HEAD", "origin/main").strip()
+    tracked = (RESOURCES / "LanguageReferenceData.sqlite3").relative_to(REPOSITORY).as_posix()
+    pointer = subprocess.run(
+        ["git", "cat-file", "blob", f"{base}:{tracked}"], cwd=REPOSITORY, capture_output=True, check=True
+    ).stdout
+    previous = scratch / "PreviousLanguageReferenceData.sqlite3"
+    with previous.open("wb") as output:
+        subprocess.run(["git", "lfs", "smudge", tracked], input=pointer, stdout=output, cwd=REPOSITORY, check=True)
+    return previous
+
+
+def build_language_reference(unidic: Path, scratch: Path) -> None:
+    jmdict = only("JMdict_e_examp-*.source.json")
     tatoeba = only("Tatoeba-2*.source.json")
     files = {source["role"]: snapshot(tatoeba, download_name(source["download_url"])) for source in record(tatoeba)["sources"]}
     run(
@@ -173,8 +185,9 @@ def build_language_reference(unidic: Path) -> None:
         "--tatoeba-metadata", tatoeba,
         "--relationship-source", only("Zenbu-Word-Relationships-*.json"),
         "--ranking-contract", RESOURCES / "DictionaryRankingArtifactContract.json",
+        "--previous-database", previous_language_data(scratch),
     )
-    replace_reports("JMdict_e-", report(jmdict))
+    replace_reports("JMdict_e", report(jmdict))
 
 
 def build_dependents(unidic: Path, scratch: Path) -> Path:
@@ -380,7 +393,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory() as directory:
         scratch = Path(directory)
         build_kanji(arguments.download)
-        build_language_reference(unidic)
+        build_language_reference(unidic, scratch)
         wikipedia_artifact = build_dependents(unidic, scratch)
         update_catalog(wikipedia_artifact)
         archives = arguments.jiten_sources or scratch / "jiten"

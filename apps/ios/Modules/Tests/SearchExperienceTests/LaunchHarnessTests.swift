@@ -37,6 +37,13 @@ struct LaunchHarnessTests {
     #expect(LaunchHarness.linkingFailures([:]) == 0)
   }
 
+  @Test("a word's meanings' examples fail to load only in a launch that asks for it")
+  func failedMeaningExamplesAreAskedFor() {
+    #expect(LaunchHarness.meaningExamplesFail([LaunchHarness.failMeaningExamplesKey: "1"]))
+    #expect(!LaunchHarness.meaningExamplesFail([LaunchHarness.failMeaningExamplesKey: "0"]))
+    #expect(!LaunchHarness.meaningExamplesFail([:]))
+  }
+
   @Test("a launch is drawn light or dark only when it asks, and otherwise follows the device")
   func askedAppearance() {
     #expect(LaunchHarness.colorScheme([LaunchHarness.appearanceKey: "dark"]) == .dark)

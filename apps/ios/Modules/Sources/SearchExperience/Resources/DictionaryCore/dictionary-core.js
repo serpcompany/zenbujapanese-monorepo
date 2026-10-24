@@ -961,6 +961,7 @@
     if (!(sentences > 0) || !(Number(main.get("retrieval_provenance_row_count")) >= sentences) || indexed.some((count) => Number(count) !== sentences)) {
       refuse("its example index counts don't match its example sentences");
     }
+    if (!main.has("sense_examples")) refuse("it has no examples linked to meanings (sense_examples)");
   }
   function checkAttached(db, name2) {
     const expected = attachments[name2];
@@ -4134,12 +4135,16 @@ ${sense.noteText}` : sense.meaning
       pronounce: pronounceLabel(entry.reading),
       conjugations: table,
       pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
-      senses: entry.senses.map((sense, index) => ({
-        number: index + 1,
-        meaning: sense.meaning,
-        notes: sense.notes,
-        noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null
-      })),
+      senses: entry.senses.map((sense, index) => {
+        const example2 = rows.senseExamples[index];
+        return {
+          number: index + 1,
+          meaning: sense.meaning,
+          notes: sense.notes,
+          noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null,
+          example: example2 ? wordExample(example2) : null
+        };
+      }),
       frequencyRows,
       alternatives,
       kanji: kanji2,
@@ -4426,7 +4431,8 @@ ${sense.noteText}` : sense.meaning
         frequency: [],
         kanji: this.kanji.glossRows([entry.headword, ...entry.writtenForms.map((form) => form.value)]),
         examples: [],
-        exampleCount: null
+        exampleCount: null,
+        senseExamples: []
       });
       const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
         frequencyLookupRow
@@ -4449,7 +4455,7 @@ ${sense.noteText}` : sense.meaning
           }
         },
         pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-        senses: detail.senses.map((sense, index) => ({
+        senses: detail.senses.map(({ example: _, ...sense }, index) => ({
           ...sense,
           ...meaningActions({ ...sense, glosses: entry.senses[index].glosses })
         })),
@@ -4540,11 +4546,52 @@ ${sense.noteText}` : sense.meaning
   // src/artifact/example-retrieval.ts
   var sentenceColumns = "e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english";
   var storedForm = normalizeQuery;
-  function result(matches) {
+  function senseExamples(db, id) {
+    const rows = db.all(
+      `SELECT s.sense_order AS senseOrder, ${sentenceColumns}
+     FROM sense_examples s
+     JOIN example_sentences e ON e.id = s.pair_id
+     WHERE s.entry_id = unhex(?)
+     ORDER BY s.sense_order, s.example_order`,
+      [id]
+    );
+    const bySense = /* @__PURE__ */ new Map();
+    for (const { senseOrder, ...sentence } of rows) {
+      const listed3 = bySense.get(senseOrder);
+      if (listed3) listed3.push(sentence);
+      else bySense.set(senseOrder, [sentence]);
+    }
+    return bySense;
+  }
+  function shownSenseExamples(db, id) {
+    const shown = /* @__PURE__ */ new Map();
+    for (const [senseOrder, [first]] of senseExamples(db, id)) shown.set(senseOrder, first);
+    return shown;
+  }
+  function checkedSentences(db, id) {
+    const seen = /* @__PURE__ */ new Set();
+    const checked = [];
+    for (const sentences of senseExamples(db, id).values()) {
+      for (const sentence of sentences) {
+        if (seen.has(sentence.pairId)) continue;
+        seen.add(sentence.pairId);
+        checked.push(sentence);
+      }
+    }
+    return checked;
+  }
+  function result(matches, checked) {
+    const leading = new Set(checked.map((sentence) => sentence.pairId));
+    const listedToday = matches.slice(0, exampleLimit);
+    const sentences = [
+      ...checked,
+      ...listedToday.filter((match) => !leading.has(match.pairId)).map((match) => match.sentence)
+    ];
+    const matched = (/* @__PURE__ */ new Set([...leading, ...matches.map((match) => match.pairId)])).size;
     return {
-      sentences: matches.slice(0, exampleLimit).map((match) => match.sentence),
-      count: reportedExampleCount(matches.length),
-      truncated: matches.length > exampleLimit
+      sentences,
+      count: reportedExampleCount(matched),
+      truncated: matched > sentences.length
     };
   }
   function entryEvidence(db, id) {
@@ -4575,7 +4622,7 @@ ${sense.noteText}` : sense.meaning
     );
     return rows.filter((row) => writtenAsSelected(row.writtenForms)).length;
   }
-  function retrieveIndexedEntry(db, id, selectedForm) {
+  function retrieveIndexedEntry(db, id, selectedForm, checked) {
     const rows = db.all(
       `SELECT ${sentenceColumns}, w.surface
      FROM word_index.entry_sentences w
@@ -4596,7 +4643,7 @@ ${sense.noteText}` : sense.meaning
         pairId: sentence.pairId
       });
     }
-    return result(matches.sort(compareRanks));
+    return result(matches.sort(compareRanks), checked);
   }
   function bestEvidence(terms, japanese) {
     let best = null;
@@ -4614,10 +4661,11 @@ ${sense.noteText}` : sense.meaning
     if (entry.id === "" || selectedForm === "" || reading === "") return "missingEntryEvidence";
     const evidence = entryEvidence(db, entry.id);
     if (!evidence || evidence.reading !== reading) return "missingEntryEvidence";
+    const checked = checkedSentences(db, entry.id);
     const isKanaHeadword = selectedForm === reading;
-    if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm);
+    if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm, checked);
     if (!evidence.writtenForms.has(storedForm(selectedForm))) return "missingEntryEvidence";
-    if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([]);
+    if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([], checked);
     const written3 = [entry.headword, ...entry.writtenForms];
     const alternateForms = entry.writtenForms.map(normalizedEntryEvidence).filter((form) => form !== selectedForm && evidence.writtenForms.has(storedForm(form)));
     const evidenceTerms = [
@@ -4650,7 +4698,7 @@ ${sense.noteText}` : sense.meaning
       const existing = byPair.get(sentence.pairId);
       if (!existing || compareRanks(match, existing) < 0) byPair.set(sentence.pairId, match);
     }
-    return result([...byPair.values()].sort(compareRanks));
+    return result([...byPair.values()].sort(compareRanks), checked);
   }
 
   // src/examples/english-inflection.ts
@@ -5863,22 +5911,24 @@ ${sense.noteText}` : sense.meaning
       const nextPage = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage;
       const pageEnd = Math.min(sentences.length, nextPage);
       const end = limit && limit > 0 ? Math.min(pageEnd, from + limit) : pageEnd;
-      const shown = sentences.slice(from, end);
+      return {
+        examples: await this.examples(sentences.slice(from, end), accented, analyze),
+        listed: sentences.length,
+        cutShort: end < pageEnd
+      };
+    }
+    async examples(shown, accented, analyze) {
       const linked = await this.link(
         shown.map((sentence) => sentence.japanese),
         accented,
         analyze
       );
-      return {
-        examples: shown.map(({ pairId, japanese, english }, index) => ({
-          id: `esp1_${pairId}`,
-          japanese,
-          english,
-          words: linked[index]
-        })),
-        listed: sentences.length,
-        cutShort: end < pageEnd
-      };
+      return shown.map(({ pairId, japanese, english }, index) => ({
+        id: `esp1_${pairId}`,
+        japanese,
+        english,
+        words: linked[index]
+      }));
     }
     async resultsExamples(request, analyze) {
       const found = this.listed(request);
@@ -5910,6 +5960,24 @@ ${sense.noteText}` : sense.meaning
         count: examples.count,
         truncated: examples.truncated
       };
+    }
+    async meaningExamples(request, analyze) {
+      const { id } = request;
+      const entry = this.found([id]).get(id);
+      if (!entry) throw new Error("missingEntryEvidence");
+      const shown = shownSenseExamples(this.db, id);
+      const senses = [...shown.keys()].sort((a, b) => a - b);
+      const accented = {
+        query: entry.headword,
+        entry: id,
+        accent: screenAccent.wordExamples
+      };
+      const examples = await this.examples(
+        senses.flatMap((sense) => shown.get(sense) ?? []),
+        accented,
+        analyze
+      );
+      return senses.map((sense, index) => ({ number: sense + 1, example: examples[index] }));
     }
     async candidates(text, analyze) {
       try {
@@ -6088,6 +6156,7 @@ ${sense.noteText}` : sense.meaning
       resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
       resultsExamples: (request, analyze) => text().resultsExamples(JSON.parse(request), analyze),
       entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
+      meaningExamples: (request, analyze) => text().meaningExamples(JSON.parse(request), analyze),
       formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
       linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
       countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),

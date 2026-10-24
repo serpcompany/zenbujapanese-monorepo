@@ -64,6 +64,15 @@ struct ExamplePlaceTests {
     #expect(keeper.check(now: at(10.3)) == nil)
   }
 
+  @Test("a sentence that came back near its place but with its middle past the list's edge is put back")
+  func aSentencePastTheEdgeIsPutBack() {
+    let keeper = returned(from: 780)
+    #expect(keeper.note(opened, at: row(at: 880), now: at(10.1)))
+    #expect(keeper.check(now: at(10.1)) == ExamplePlaceCorrection(row: opened, anchor: .bottom))
+    #expect(keeper.note(opened, at: row(at: 800), now: at(10.3)))
+    #expect(keeper.check(now: at(10.3)) == nil)
+  }
+
   @Test("a sentence whose place another row overlaps, without a word from it, is put back")
   func aSentencePushedAwayIsPutBack() {
     let keeper = returned(from: 400)
