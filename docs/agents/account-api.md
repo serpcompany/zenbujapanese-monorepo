@@ -8,7 +8,9 @@ the apps and other services use. Signed-in apps read and change the learner's pr
 `/v1/me`, and keep their copies in step with `/v1/sync`
 ([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)), which a subscription
 can unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so
-nothing in an app waits on this service.
+nothing in an app waits on this service, except that the browser extension saves only signed in
+and with the subscription
+([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
 service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/photos`, `/v1/health`, and

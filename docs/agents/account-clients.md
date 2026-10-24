@@ -9,7 +9,9 @@ operations, with an example of each. This guide is the order to use them in, and
 schema shows. How the service works inside is [`account-api.md`](account-api.md), and the
 subscription that unlocks sync is [`account-billing.md`](account-billing.md), For apps.
 
-Every app stays local-first: everything works signed out and offline, the device's copy is what the
+Every app stays local-first, except the browser extension, which saves only signed in and with the
+subscription ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)):
+everything works signed out and offline, the device's copy is what the
 app shows, and the account only carries changes between devices and apps (#374).
 
 ## The host
