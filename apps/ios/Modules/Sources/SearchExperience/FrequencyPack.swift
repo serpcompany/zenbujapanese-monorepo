@@ -46,13 +46,13 @@ extension FrequencyLists {
 extension FrequencyChoice {
   static let live = FrequencyChoice(
     relay: FrequencyPackStore.relay,
-    changedFromStandard: { await FrequencyPackStore.shared.manager?.changedFromStandard() },
+    changedFromStandard: { await FrequencyPackStore.shared.manager()?.changedFromStandard() },
     apply: { value in
-      guard let manager = FrequencyPackStore.shared.manager else { return }
+      guard let manager = await FrequencyPackStore.shared.manager() else { return }
       await downloadQuietly(await manager.applySynced(value), with: manager)
     },
     resume: {
-      guard let manager = FrequencyPackStore.shared.manager else { return }
+      guard let manager = await FrequencyPackStore.shared.manager() else { return }
       await downloadQuietly(await manager.pendingSyncedPacks(), with: manager)
     })
 
@@ -76,13 +76,19 @@ extension FrequencyChoice {
 private actor FrequencyPackStore {
   static let shared = FrequencyPackStore()
   static let relay = KeptChangeRelay()
-  let manager: FrequencyPackManager?
+  private let queue = DispatchSerialQueue(label: "com.zenbujapanese.frequency-pack-store")
+  private var openedManager: FrequencyPackManager??
 
-  init() {
-    manager = Self.opened(publishingTo: .live)
+  nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
+
+  func manager() -> FrequencyPackManager? {
+    if let openedManager { return openedManager }
+    let manager = Self.opened(publishingTo: .live)
     if manager == nil {
       FrequencyLists.live.publish(unavailable: "Bundled frequency data unavailable")
     }
+    openedManager = manager
+    return manager
   }
 
   private static func opened(publishingTo lists: FrequencyLists) -> FrequencyPackManager? {
@@ -119,37 +125,39 @@ private actor FrequencyPackStore {
     return data
   }
 
-  func opened() {}
+  func opened() {
+    _ = manager()
+  }
 
   func snapshot() async throws -> FrequencyPackSnapshot {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     return try await manager.snapshot()
   }
 
   func download(
     _ packID: FrequencyPackID, progress: @escaping FrequencyPackManager.Progress
   ) async throws {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     try await manager.download(packID, progress: progress)
   }
 
   func enable(_ packID: FrequencyPackID) async throws {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     try await manager.enable(packID)
   }
 
   func disable(_ packID: FrequencyPackID) async throws {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     try await manager.disable(packID)
   }
 
   func reorderEnabled(_ packIDs: [FrequencyPackID]) async throws {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     try await manager.reorderEnabled(packIDs)
   }
 
   func remove(_ packID: FrequencyPackID) async throws {
-    guard let manager else { throw FrequencyPackError.invalidCatalog }
+    guard let manager = manager() else { throw FrequencyPackError.invalidCatalog }
     try await manager.remove(packID)
   }
 }
