@@ -7,7 +7,7 @@ import { delimiter, join } from 'node:path'
 import { outsideGit, scratchFolder } from './agents/scratch'
 import { readWorkflow, type Step, workflowSteps } from './agents/workflow'
 
-export const workflowPath = '.github/workflows/jmdict-update.yml'
+const workflowPath = '.github/workflows/jmdict-update.yml'
 export const workflow = readWorkflow(workflowPath)
 export const steps = workflowSteps(workflowPath, 'update')
 export const repository = 'serpcompany/zenbujapanese-monorepo'
@@ -58,7 +58,7 @@ export const recordsItsCall = (log: string, status = 0, answer = '') =>
     .filter(Boolean)
     .join('\n')
 
-export interface StepRun {
+interface StepRun {
   status: number | null
   output: string
   githubEnv: string

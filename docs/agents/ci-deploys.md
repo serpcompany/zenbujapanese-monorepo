@@ -198,9 +198,11 @@ on the Python `rebuild_language_data.py` pins (`UV_PYTHON`). It:
   permissions); otherwise the run fails once the branch is pushed, and says how to finish. GitHub
   runs no workflow for a pull request a workflow's token opened, so its checks and review start with
   a person's first push to it.
-- **The token stays out of what the job runs.** The checkout keeps no credentials, the install runs
-  no script, and only the steps that call `gh` or Git LFS, or push, read `GH_TOKEN`, sending it as a
-  header to that one command. The token can push, so its actions are pinned by commit.
+- **The token stays out of what the job runs.** It may push branches and open pull requests
+  (`contents: write`, `pull-requests: write`) and read the packages. The checkout keeps no
+  credentials, the install runs no script, and only the three steps that call `gh`, pull Git LFS
+  files, or push read `GH_TOKEN`; git gets it as a header for the one command. The token can push,
+  so the job's actions are pinned by commit.
 
 `tools/checks/src/jmdict-update-workflow.test.ts` holds the job to this and runs its first and last
 steps against a stand-in for `gh` and a scratch remote with Git LFS, and
