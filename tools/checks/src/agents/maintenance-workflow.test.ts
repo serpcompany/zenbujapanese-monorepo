@@ -130,6 +130,12 @@ describe('the Weekly maintenance workflow', () => {
     }
   })
 
+  test('lets the merge queue start the gardeners, since every scheduled run is its', () => {
+    for (const step of [garden, codeGarden]) {
+      expect(step.with?.allowed_bots).toBe('github-merge-queue[bot]')
+    }
+  })
+
   test('checks each gardening job afterwards, from when it started', () => {
     for (const [jobSteps, gardenAt, guardAt, guardStep] of [
       [steps, gardenIndex, guardIndex, guard],
