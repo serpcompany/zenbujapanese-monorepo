@@ -15,7 +15,7 @@ permissions:
 jobs:
   update:
     runs-on: macos-26
-    timeout-minutes: 150
+    timeout-minutes: 120
     permissions:
       contents: write
       pull-requests: write
