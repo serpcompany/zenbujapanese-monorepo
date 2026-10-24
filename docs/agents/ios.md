@@ -148,7 +148,7 @@ with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
 xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
@@ -419,7 +419,7 @@ deinflection, frequency chips and packs, pitch accent, and parts of speech) on a
 Simulator. Run it from `apps/ios/Modules` with:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```

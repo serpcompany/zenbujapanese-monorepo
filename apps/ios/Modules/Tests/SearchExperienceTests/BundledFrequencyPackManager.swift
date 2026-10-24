@@ -27,4 +27,10 @@ extension FrequencyPackManager {
       download: { _, _ in throw CancellationError() }
     )
   }
+
+  static func started(
+    _ start: @escaping @Sendable () throws -> FrequencyPackManager
+  ) async throws -> FrequencyPackManager {
+    try await apartFromThePool(start)
+  }
 }

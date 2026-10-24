@@ -63,6 +63,8 @@ jobs:
       (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')
     runs-on: macos-26
     timeout-minutes: 240
+    env:
+      TEST_RUNNER_OS_ACTIVITY_DT_MODE: "NO"
     steps:
       - uses: actions/checkout@v5
       - name: Select the pinned Xcode

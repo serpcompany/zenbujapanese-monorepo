@@ -49,6 +49,10 @@ describe('the iOS workflow', () => {
     expect(runsCommand(' test', packageScheme, 'platform=macOS,arch=arm64')).toBe(true)
   })
 
+  test('runs the tests without copying each log line to a log stream nobody reads', () => {
+    expect(workflow.jobs.swift?.env?.TEST_RUNNER_OS_ACTIVITY_DT_MODE).toBe('NO')
+  })
+
   test('selects the pinned Xcode before anything builds, and makes its Simulators with the script agents use', () => {
     expect(readFileSync(join(root, '.xcode-version'), 'utf8')).toMatch(/^\d+\.\d+(\.\d+)?\n$/)
     const select = runs.indexOf(

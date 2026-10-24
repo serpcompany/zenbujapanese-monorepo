@@ -167,7 +167,7 @@ struct SearchLatencyTests {
       "SEARCH-LATENCY the kanji files read in \(Self.milliseconds(files)); an engine starts "
         + "and draws its first furigana in " + Self.summary(starts))
 
-    let listed = try PresentationCore.freshInstall()
+    let listed = try await PresentationCore.freshInstall()
     var byDefault: [Double] = []
     var sorted: [Double] = []
     var entries: [DictionaryEntry] = []

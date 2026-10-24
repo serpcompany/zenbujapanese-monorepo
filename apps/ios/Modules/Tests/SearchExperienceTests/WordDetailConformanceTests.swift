@@ -16,7 +16,7 @@ struct WordDetailConformanceTests {
   func wordDetailMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("word-detail.json")
     var suite = try JSONDecoder().decode(WordDetailSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = try await WordDetailObserver()
 
     if DetailConformance.isRecording {
@@ -52,7 +52,9 @@ private struct WordDetailObserver {
 
   init() async throws {
     core = PresentationCore(
-      listing: try FrequencyPackManager.freshInstall(storagePrefix: "WordDetailConformance").lists)
+      listing: try await FrequencyPackManager.started {
+        try .freshInstall(storagePrefix: "WordDetailConformance")
+      }.lists)
     let availability = await textAnalysisClient.availability()
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }

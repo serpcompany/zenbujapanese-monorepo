@@ -20,7 +20,7 @@ The inner loop, by part:
 | --- | --- |
 | A pnpm package | `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>` with paths from the package's folder. The packages are `zenbujapanese-web`, `zenbujapanese-dictionary-api`, `zenbujapanese-account-api`, `@zenbu/dictionary-core`, `@zenbu/node-service`, and `zenbujapanese-checks`. |
 | The checks | `pnpm verify <checks> <paths>` runs some checks on some paths, such as `pnpm verify sizes,comments apps/web/src`. |
-| The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -only-testing:SearchExperienceTests/<Suite> test` |
+| The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -only-testing:SearchExperienceTests/<Suite> test` |
 | The app's screens | The UI tests that cover the change: the `verify-app` skill. |
 | The language-data tools | `python3 -m unittest discover -s language-data/tools/tests -p '<test file>'` |
 | The app's Python tests (its project settings and Simulator script) | `python3 -m unittest discover -s apps/ios/Tools/tests -p '<test file>'` |

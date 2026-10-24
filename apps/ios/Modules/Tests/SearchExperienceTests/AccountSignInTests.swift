@@ -70,7 +70,7 @@ struct AccountSignInTests {
     try await fixture.signIn()
 
     let syncs = fixture.server.requests(to: "POST /v1/sync")
-    #expect(syncs.count == 2)
+    try #require(syncs.count == 2)
     #expect(syncs[0].sync.mutations == syncs[1].sync.mutations)
     #expect(fixture.server.requests(to: "GET /v1/auth/token").count == 2)
     #expect(fixture.sync.state.queue.isEmpty)

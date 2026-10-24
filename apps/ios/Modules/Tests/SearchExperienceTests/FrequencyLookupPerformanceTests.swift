@@ -16,7 +16,7 @@ struct FrequencyLookupPerformanceTests {
 
   @Test("a results page of lookups uses each list's primary key rather than scanning its table")
   func lookupsStayOnThePrimaryKey() async throws {
-    let lists = try FrequencyLists.freshInstall()
+    let lists = try await FrequencyLists.freshInstall()
     let asked = OSAllocatedUnfairLock(initialState: [(list: String, sql: String)]())
     let core = try DictionaryCore(
       frequencyLists: FrequencyListReading(
