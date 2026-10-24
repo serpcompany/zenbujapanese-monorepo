@@ -148,10 +148,18 @@ with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
-xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
+  -destination 'platform=macOS,arch=arm64' test
 ```
+
+`TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` turns off the debugging mode `xcodebuild` runs the test process
+in, in which more of the lines it logs, CFNetwork's for every request among them, wait to reach a
+log stream as they're written. A command-line run prints the same log lines either way, and its
+result bundle holds no console log either way. Beside a Mac package run, the tests with a time limit
+took at most 36.8 s with it on and 21.3 s with it off ([`ios-ui-tests.md`](ios-ui-tests.md)). The
+`iOS` workflow sets it for every test it runs.
 
 On the Mac they run against its own Vision, Speech, and Foundation Models, so the image
 recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
@@ -419,7 +427,7 @@ deinflection, frequency chips and packs, pitch accent, and parts of speech) on a
 Simulator. Run it from `apps/ios/Modules` with:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```

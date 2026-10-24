@@ -122,10 +122,13 @@ what it waited for and for how long.
   beside a Mac package run, and 16 to 30 s through their own. To find one, `sample` the `xctest`
   process for 2 s every few seconds through a run's first minute and look for a test on a
   `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main thread not
-  waiting in `mach_msg`. Each line the process logs also waits on an XPC send to the Simulator's log
-  stream (`xcodebuild` runs tests with `OS_ACTIVITY_DT_MODE=YES`), and CFNetwork logs each request
-  it starts and ends: in a quiet run, 165 threads waited out whole 2 s samples on it from 6 to 22 s
-  in, as the account tests began. That logging is CFNetwork's and Xcode's to change.
+  waiting in `mach_msg`. A line the process logs can wait too, on an XPC send to the Simulator's log
+  stream, and more of them do in the debugging mode `xcodebuild` runs tests in
+  (`OS_ACTIVITY_DT_MODE`); CFNetwork logs each request it starts and ends, so once the pool was free
+  the account tests' requests piled up there, with up to five threads at a time waiting to send a
+  line. A full run sets `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` ([`ios.md`](ios.md)): beside a Mac
+  package run the tests with a limit then took at most 21.3 s, against 36.8 s with it on and 55.7 s
+  on main.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
