@@ -64,10 +64,10 @@ final class WordDetailUITests: ZenbuUITestCase {
       format: "identifier BEGINSWITH %@ AND identifier ENDSWITH %@",
       "word-detail.meaning-example-token.1.", ".吠える")
     tap(app.descendants(matching: .any).matching(bark).firstMatch)
-    waitFor(find("word-detail.entry.\(Self.howling)", in: app))
+    waitFor(find(Self.howling, in: app))
   }
 
-  private static let howling = "f29411d798656f63e75fe961c4c38a49"
+  private static let howling = "ruby.吠える.吠=ほ|える"
 
   func testAWordWhoseExamplesFailToLoadStillShowsItsMeanings() {
     let app = launch(["ZENBU_FAIL_MEANING_EXAMPLES": "1"])
