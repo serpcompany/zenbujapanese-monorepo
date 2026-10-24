@@ -150,16 +150,8 @@ with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 ```sh
 TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
-TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
-  -destination 'platform=macOS,arch=arm64' test
+xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
-
-`TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` turns off the debugging mode `xcodebuild` runs the test process
-in, in which more of the lines it logs, CFNetwork's for every request among them, wait to reach a
-log stream as they're written. A command-line run prints the same log lines either way, and its
-result bundle holds no console log either way. Beside a Mac package run, the tests with a time limit
-took at most 36.8 s with it on and 21.3 s with it off ([`ios-ui-tests.md`](ios-ui-tests.md)). The
-`iOS` workflow sets it for every test it runs.
 
 On the Mac they run against its own Vision, Speech, and Foundation Models, so the image
 recognition tests are slow on a virtual Mac (about two minutes each). No test there names a
@@ -594,10 +586,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Look Up's notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
-  search takes tens of milliseconds and awaits, so each has an actor, on a serial queue of its
-  own (its `unownedExecutor`): a call holds that queue's thread, not one of the few, one per
-  core, that every task in the app shares, which a slow call (seconds in a Debug build on a busy
-  Mac) would take from all of them ([`ios-ui-tests.md`](ios-ui-tests.md)); a row's furigana or a
+  search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
   page's model takes well under a millisecond and is needed while a view is being built, so
   `PresentationCore` is synchronous and never waits behind the other two. Its slowest answers
   are the input panels', which a tap asks for, not a redraw: Grade's first, about 75 ms to read
