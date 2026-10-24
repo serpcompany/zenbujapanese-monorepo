@@ -39,7 +39,9 @@ struct DigestTests {
   func oneChunkAtATime() throws {
     let file = URL.temporaryDirectory.appending(path: "digest-\(UUID().uuidString).bin")
     defer { try? FileManager.default.removeItem(at: file) }
-    let contents = Data((0..<(16 * fileDigestChunk)).lazy.map { UInt8(truncatingIfNeeded: $0 / 7) })
+    let contents = (0..<16).reduce(into: Data(capacity: 16 * fileDigestChunk)) { file, chunk in
+      file.append(Data(repeating: UInt8(chunk), count: fileDigestChunk))
+    }
     try contents.write(to: file)
     let expected = SHA256.hash(data: contents).hexString
     let chunks = CountedChunks(contents)
