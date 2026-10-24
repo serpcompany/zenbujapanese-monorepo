@@ -102,10 +102,15 @@ player is by hand; the UI tests stand in for it with a local player that answers
   caption lines. When those are at most two lines and 40 characters, they merge into one card;
   otherwise every line keeps its own card and the sentence appears on its last line, where
   YouTube shows it, so no card grows taller than the screen. Apple Translation runs only once its Japanese language is downloaded, and Player
-  never interrupts playback to ask.
+  never interrupts playback to ask. When YouTube refuses its translation or sends one Zenbu can't
+  read, the cards show the Japanese alone, which Apple Translation then fills, and a
+  [crash report](crash-reports.md) says which step failed and, for a refusal, YouTube's HTTP
+  status, never the video, its captions, or the address.
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (each
   card's translation); package `YouTubeCaptionsTests`, `SentenceTranslationPairingTests`,
-  `TranslationSentenceTests`, and `CaptionCardSizeTests`.
+  `TranslationSentenceTests`, `CaptionCardSizeTests`, and `YouTubeTranslationFailureTests` (a
+  refused or unreadable translation is reported with its step and status, and the Japanese cues
+  still load).
 - **Comprehension.** Every caption line is counted when the video opens, and the line reads
   **Counting known words…** until the count is ready. The known share counts each occurrence of
   a dictionary word, leaving out particles, auxiliaries, punctuation, and text the dictionary
