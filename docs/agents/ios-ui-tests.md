@@ -115,12 +115,16 @@ what it waited for and for how long.
   out together. Work that takes seconds runs on a queue of its own and is awaited: the pack store
   and manager and the two engines each have a serial queue for an executor, and a test starts a
   manager with `FrequencyPackManager.started` and hashes or builds anything slow with
-  `apartFromThePool`. A fixture is built in bulk, not an element at a time, and a value tests share
-  that takes seconds to make is a `Task` they await, not a `static let`. A test with a time limit
-  reads through engines of its own (`LookupClient.reading(LanguageReferenceData())`), not the shared
-  ones every search test queues on: the meaning examples tests, through `.live`, took 50 to 56 s
-  beside a Mac package run, and 16 to 30 s through their own. To find one, `sample` the `xctest`
-  process for 2 s every few seconds through a run's first minute and look for a test on a
+  `apartFromThePool`. A check that walks every case synchronously gives its thread back between
+  cases (`await Task.yield()`): with the rest off the pool, the crash reporting machine's every
+  order, every kanji record, every scrubber rule, and the romaji suite held three of the four
+  threads from 22 to 54 s of a run on a just-booted Simulator, and every main-actor test without an
+  await finished at 52 s. A fixture is built in bulk, not an element at a time, and a value tests
+  share that takes seconds to make is a `Task` they await, not a `static let`. A test with a time
+  limit reads through engines of its own (`LookupClient.reading(LanguageReferenceData())`), not the
+  shared ones every search test queues on: the meaning examples tests, through `.live`, took 50 to
+  56 s beside a Mac package run, and 16 to 30 s through their own. To find one, `sample` the
+  `xctest` process for 2 s every few seconds through a run's first minute and look for a test on a
   `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main thread not
   waiting in `mach_msg`. A line the process logs can wait too, on an XPC send to the Simulator's log
   stream, and more of them do in the debugging mode `xcodebuild` runs tests in
