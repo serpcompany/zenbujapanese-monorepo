@@ -586,7 +586,10 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Look Up's notes, credits |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
-  search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
+  search takes tens of milliseconds and awaits, so each has an actor, on a serial queue of its
+  own (its `unownedExecutor`): a call holds that queue's thread, not one of the few, one per
+  core, that every task in the app shares, which a slow call (seconds in a Debug build on a busy
+  Mac) would take from all of them ([`ios-ui-tests.md`](ios-ui-tests.md)); a row's furigana or a
   page's model takes well under a millisecond and is needed while a view is being built, so
   `PresentationCore` is synchronous and never waits behind the other two. Its slowest answers
   are the input panels', which a tap asks for, not a redraw: Grade's first, about 75 ms to read

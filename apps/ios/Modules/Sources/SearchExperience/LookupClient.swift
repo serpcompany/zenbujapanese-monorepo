@@ -81,6 +81,7 @@ actor LanguageReferenceData {
   let databaseURL: URL?
   let validatesBundledArtifact: Bool
   private let morphology: JapaneseMorphologyClient
+  private let queue = DispatchSerialQueue(label: "com.zenbujapanese.language-reference-data")
 
   init(
     databaseURL: URL? = nil,
@@ -91,6 +92,8 @@ actor LanguageReferenceData {
     self.validatesBundledArtifact = validatesBundledArtifact
     self.morphology = morphology
   }
+
+  nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
 
   func search(_ query: SearchQuery) async throws -> LookupSearchResults {
     try Task<Never, Never>.checkCancellation()

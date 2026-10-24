@@ -111,6 +111,9 @@ actor DictionaryTextData {
   private let tokenizerFile: @Sendable (String) -> InflatedBytes?
   private var core: DictionaryCore?
   private var linkingAnswersToFail = LaunchHarness.failsLinkingAnswers
+  private let queue = DispatchSerialQueue(label: "com.zenbujapanese.dictionary-text-data")
+
+  nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
 
   init(
     databaseURL: URL? = nil,
