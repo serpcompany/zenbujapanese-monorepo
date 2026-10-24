@@ -4,8 +4,8 @@ import { createServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
-import { outsideGit, scratchFolder } from './agents/scratch'
-import { finished, readWorkflow, type Step, workflowSteps } from './agents/workflow'
+import { outsideGit, scratchFolder } from './scratch'
+import { finished, readWorkflow, type Step, workflowSteps } from './workflow'
 
 const workflowPath = '.github/workflows/jmdict-update.yml'
 export const workflow = readWorkflow(workflowPath)

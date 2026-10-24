@@ -2,8 +2,6 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import { outsideGit, scratchFolder } from './agents/scratch'
-import { readRepositoryFile } from './agents/workflow'
 import {
   recordsItsCall,
   repository,
@@ -11,7 +9,9 @@ import {
   stepNamed,
   steps,
   workflow
-} from './jmdict-update-world'
+} from './agents/jmdict-update-world'
+import { outsideGit, scratchFolder } from './agents/scratch'
+import { readRepositoryFile } from './agents/workflow'
 
 const job = workflow.jobs.update
 const skip = stepNamed('Skip while an earlier JMdict update is open')

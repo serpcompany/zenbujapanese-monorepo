@@ -3,8 +3,6 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync
 import { join } from 'node:path'
 import { gzipSync } from 'node:zlib'
 import { describe, expect, test } from 'vitest'
-import { scratchFolder } from './agents/scratch'
-import { root } from './files'
 import {
   python,
   runStep,
@@ -12,7 +10,9 @@ import {
   standInEdrdg,
   stepNamed,
   uvRunsPython
-} from './jmdict-update-world'
+} from './agents/jmdict-update-world'
+import { scratchFolder } from './agents/scratch'
+import { root } from './files'
 
 const download = stepNamed(
   "Download today's JMdict from EDRDG and compare it with the pinned export"
