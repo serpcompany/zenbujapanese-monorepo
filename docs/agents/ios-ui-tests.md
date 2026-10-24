@@ -54,7 +54,7 @@ what it waited for and for how long.
   early, so write such a loop with a `break`.
 - **On the Mac, `type` pastes text that isn't ASCII.** XCUITest's `typeText` presses the keys of
   the Mac's keyboard layout, so 日本語を勉強する arrived as "§5 5§¶2ç8åa". `type` puts such text on
-  the pasteboard, presses ⌘V, and then types a closing return.
+  the pasteboard and presses ⌘V; when the text ends in a newline, it then types that return.
 - **Never assert how long something took.** A busy Mac makes everything slow, so a time limit fails
   for the machine as often as for the app. Count what the app did instead: the Player test reads how
   many times the screen, its speed menu, and its captions drew themselves (`ZENBU_COUNT_DRAWS`,
