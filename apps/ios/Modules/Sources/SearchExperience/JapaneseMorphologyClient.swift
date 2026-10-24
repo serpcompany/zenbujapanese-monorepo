@@ -6,7 +6,6 @@ enum SudachiCoreContract {
   static let engineVersion = "0.6.11"
   static let binding = "sudachi-swift"
   static let bindingVersion = "0.1.1"
-  static let dictionary = "SudachiDict Core 20260723"
   static let dictionaryVersion = "20260723"
   static let downloadBytes = 72_275_897
   static let downloadSHA256 =
