@@ -8,7 +8,6 @@ actor FrequencyPackManager {
 
   nonisolated let lists: FrequencyLists
   nonisolated let relay: KeptChangeRelay
-  private let queue = DispatchSerialQueue(label: "com.zenbujapanese.frequency-packs")
   private let catalog: FrequencyPackCatalog
   private let bundledArtifactURLs: [FrequencyPackID: URL]
   private let languageDataURL: URL
@@ -119,8 +118,6 @@ actor FrequencyPackManager {
       Self.enabledLists(
         enabledPackIDs, of: catalog, installed: validatedRecords, verified: verifiedArtifacts))
   }
-
-  nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
 
   private static let stagedExtension = "staged"
 

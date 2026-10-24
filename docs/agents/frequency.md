@@ -85,12 +85,6 @@ view is drawn and can't wait for an actor, and it never calls into the engine.
   ([Trust](#trust)), and `SearchExperienceRootView` starts it at launch, off the main actor.
   `ResultsScreenRequest.screen()` and `SearchView` await `FrequencyLists.ready()` before they ask
   the core, so a results list is drawn once, finished.
-- **The checks run on queues of their own.** The store opens the manager on its own serial queue,
-  the first time something asks for it, and the manager is an actor on another, so its start, an
-  install's SQL, and every check that hashes a file or a pack's rows hold none of the threads
-  Swift's tasks share (one per core), and a task that asks meanwhile waits suspended. When the store
-  opened the manager in its initializer, the first caller's thread of that pool did the work, and
-  every other caller blocked its own thread until it was done.
 - **A view can't wait.** What a view asks while it is drawn (`WordPage(entry)`, a sheet's
   `rowsByEntry()`) has no frequency before the first lists, and is drawn again when they are
   published. That happens only in the moments after a cold launch.
