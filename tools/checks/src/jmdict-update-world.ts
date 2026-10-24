@@ -5,7 +5,7 @@ import type { AddressInfo } from 'node:net'
 import { homedir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { outsideGit, scratchFolder } from './agents/scratch'
-import { readWorkflow, type Step, workflowSteps } from './agents/workflow'
+import { finished, readWorkflow, type Step, workflowSteps } from './agents/workflow'
 
 const workflowPath = '.github/workflows/jmdict-update.yml'
 export const workflow = readWorkflow(workflowPath)
@@ -94,15 +94,7 @@ export async function runStep(
       PATH: `${bin}${delimiter}${process.env.PATH ?? ''}`
     }
   })
-  let output = ''
-  child.stdout.on('data', (chunk: Buffer) => {
-    output += chunk.toString()
-  })
-  child.stderr.on('data', (chunk: Buffer) => {
-    output += chunk.toString()
-  })
-  const status = await new Promise<number | null>(resolve => child.on('close', resolve))
-  return { status, output, githubEnv: readFileSync(githubEnv, 'utf8') }
+  return { ...(await finished(child)), githubEnv: readFileSync(githubEnv, 'utf8') }
 }
 
 export type Served = Record<string, Buffer | number>
