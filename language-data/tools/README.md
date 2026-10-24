@@ -97,6 +97,10 @@ such as `Tatoeba-2026-10-03/` beside `Tatoeba-2026-10-03.source.json`. To move t
 6. Rebuild everything, re-record the suites, and list in the pull request what changed for
    learners: entries, examples added and removed, and kanji.
 
+For JMdict, a monthly job does all this but recording the app's suites: the `JMdict monthly update`
+workflow runs `refresh_jmdict.py` and opens the pull request, and a person records the suites on a
+Mac and pins the release ([`jmdict-updates.md`](../jmdict-updates.md)).
+
 ## Provenance
 
 The importers record their own SHA-256, and some of the modules they use, in what they build, and
@@ -148,6 +152,11 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships. Its
   doesn't decode them, and shows the notes it showed before; the website's browse pages list
   words by them. They aren't in a note's identity or the semantic fingerprint, so saved notes and ranking
   don't change.
+
+**`refresh_jmdict.py`** moves the data to EDRDG's current JMdict export one step at a time
+(`fetch`, `apply`, `rebuild`, `release`, `summary`), for the monthly workflow
+([`jmdict-updates.md`](../jmdict-updates.md)); its `refresh_jmdict_*.py` modules aren't the
+importer's, so changing them rebuilds nothing.
 
 **`tatoeba_adapter.py`** keeps one deterministic lowest-ID English translation per linked Japanese
 sentence. A pair's identity is derived only from its NFC-normalized Japanese and English: stored

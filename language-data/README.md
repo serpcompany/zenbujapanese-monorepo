@@ -25,6 +25,7 @@ here from `apps/ios`). The built files stay in the app's bundle,
 | [`releases/`](releases/) | Each release's pinned manifest, `releases/<release>/manifest.json` ([Pinned releases](#pinned-releases)), and, after the first, its entry changes, `ent-seq-changes.json`. |
 | [`derived/`](derived/) | Release files the pipeline writes: `RetiredEntries.json`. |
 | [`retired-entries.md`](retired-entries.md) | How a release records the entries it retires, and which replaces each. |
+| [`jmdict-updates.md`](jmdict-updates.md) | The monthly JMdict update: what the workflow's pull request holds, and what a person does after it. |
 | [`publishing.md`](publishing.md) | Where releases live in the bucket, and how a release is published there. |
 | [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
 | [`word-cards.md`](word-cards.md) | The word-card format (`zenbu.word-cards.v1`) an app without the language data ships and fetches, and the command that exports cards. |
@@ -221,6 +222,10 @@ A pinned release's content never changes, so new data is a new release:
 5. Commit `releases/<release>/manifest.json`. Its diff names each file whose bytes changed.
 
 Until it merges, a release can be pinned again under the same ID. Merging it publishes it.
+
+JMdict's monthly update does steps 1 to 3 in a pull request of its own, all but recording the
+app's suites, which needs a Mac; a person records them, then does steps 4 and 5
+([`jmdict-updates.md`](jmdict-updates.md)).
 
 ## Changing what's in a release
 
