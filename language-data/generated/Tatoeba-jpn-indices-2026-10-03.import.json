@@ -21,9 +21,9 @@
     "index_lines": 150075,
     "index_lines_without_bundled_pair": 5950,
     "tokens": 1137972,
-    "tokens_resolved_to_one_entry": 1123671,
-    "kana_headword_entries_linked": 4124,
-    "entry_sentence_rows": 57953,
+    "tokens_resolved_to_one_entry": 1109259,
+    "kana_headword_entries_linked": 4128,
+    "entry_sentence_rows": 58293,
     "sentences_per_entry": 200,
     "retained_fields": [
       "sentence-to-entry links",
@@ -35,10 +35,10 @@
       "unresolved tokens"
     ],
     "source_sha256": "6c00f06f5f3a360107a8dff45a9cb602c73ecc754b9a697663a6c579971f9a46",
-    "language_data_sha256": "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7",
+    "language_data_sha256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
     "import_tool_sha256": "ef17f2015bc9a4af82c2ee2ce2f10a7e37c18cfee49da23c550507f86d026913",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
-    "artifact_sha256": "8cfd0c71f07df8438e722da4eac78e790d22bf2cda1cbbcf5e11065cc004d096",
-    "artifact_bytes": 2904064
+    "artifact_sha256": "f49bb8beb88fcfe9f327c8f8a7553cbf02420bb0b94aebe1e763f0792589c9f7",
+    "artifact_bytes": 2920448
   }
 }

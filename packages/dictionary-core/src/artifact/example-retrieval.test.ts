@@ -8,6 +8,7 @@ import { sqliteDatabase } from './sqlite-database'
 interface StoredEntry extends RetrievalEntry {
   storedForms: { written?: string[]; reading: string[] }
   indexed?: { sentence: string; surface: string }[]
+  checked?: { sense: number; sentence: string }[]
 }
 
 const written = 0
@@ -27,6 +28,10 @@ function artifact(entries: readonly StoredEntry[], sentences: readonly string[])
     CREATE TABLE word_index.entry_sentences (
       entry_id BLOB NOT NULL, pair_id BLOB NOT NULL, surface TEXT NOT NULL
     );
+    CREATE TABLE sense_examples (
+      entry_id BLOB NOT NULL, sense_order INTEGER NOT NULL, example_order INTEGER NOT NULL,
+      pair_id BLOB NOT NULL
+    );
   `)
   const pairId = (japanese: string) => Uint8Array.of(sentences.indexOf(japanese) + 1)
   const sentence = database.prepare('INSERT INTO example_sentences VALUES (?, ?, ?)')
@@ -34,11 +39,16 @@ function artifact(entries: readonly StoredEntry[], sentences: readonly string[])
   const entry = database.prepare('INSERT INTO entries VALUES (unhex(?), ?, ?)')
   const form = database.prepare('INSERT INTO forms VALUES (unhex(?), ?, ?)')
   const indexed = database.prepare('INSERT INTO word_index.entry_sentences VALUES (unhex(?), ?, ?)')
-  for (const { id, reading, writtenForms, storedForms, indexed: links = [] } of entries) {
+  const checked = database.prepare('INSERT INTO sense_examples VALUES (unhex(?), ?, ?, ?)')
+  for (const stored of entries) {
+    const { id, reading, writtenForms, storedForms, indexed: links = [] } = stored
     entry.run(id, reading, JSON.stringify(writtenForms.map(value => ({ value }))))
     for (const value of storedForms.written ?? []) form.run(id, value, written)
     for (const value of storedForms.reading) form.run(id, value, spoken)
     for (const link of links) indexed.run(id, pairId(link.sentence), link.surface)
+    for (const [order, link] of (stored.checked ?? []).entries()) {
+      checked.run(id, link.sense, order, pairId(link.sentence))
+    }
   }
   return sqliteDatabase(database)
 }
@@ -165,5 +175,59 @@ describe('a word whose headword or reading NFKC changes finds its examples', () 
       'missingEntryEvidence'
     )
     expect(retrieveEntryExamples(db, { ...tShirt, reading: 'シャツ' })).toBe('missingEntryEvidence')
+  })
+})
+
+describe("a meaning's checked examples lead its word's examples, and none listed before drops", () => {
+  const taberu: StoredEntry = {
+    id: '6b5e4a1f0c2d3e4f5a6b7c8d9e0f1a2b',
+    headword: '食べる',
+    reading: 'たべる',
+    writtenForms: ['食べる'],
+    storedForms: { written: ['食べる'], reading: ['たべる'] }
+  }
+
+  test('checked sentences come first in meaning order, an inflected one too, then the rest', () => {
+    const sentences = ['パンを食べる。', 'ご飯を食べる。', '昨日は寿司を食べた。']
+    const checked = {
+      ...taberu,
+      checked: [
+        { sense: 1, sentence: '昨日は寿司を食べた。' },
+        { sense: 0, sentence: 'ご飯を食べる。' }
+      ]
+    }
+    expect(listed(artifact([checked], sentences), checked)).toEqual([
+      'ご飯を食べる。',
+      '昨日は寿司を食べた。',
+      'パンを食べる。'
+    ])
+  })
+
+  test('a word whose spelling names another entry still lists its own checked sentences', () => {
+    const asciiTShirt: StoredEntry = {
+      ...tShirt,
+      id: '00000000000000000000000000000001',
+      headword: 'Tシャツ',
+      writtenForms: ['Tシャツ']
+    }
+    const checked = { ...tShirt, checked: [{ sense: 0, sentence: 'Ｔシャツを着た。' }] }
+    const db = artifact([checked, asciiTShirt], ['Ｔシャツを着た。', 'Tシャツを買った。'])
+    expect(listed(db, checked)).toEqual(['Ｔシャツを着た。'])
+    expect(listed(db, asciiTShirt)).toEqual([])
+  })
+
+  test('past the 100 a word listed, its checked sentences add to the list rather than replace any', () => {
+    const matching = Array.from({ length: 101 }, (_, index) => `食べる${'あ'.repeat(index)}。`)
+    const inflected = '寿司を食べた。'
+    const checked = { ...taberu, checked: [{ sense: 0, sentence: inflected }] }
+    const before = retrieveEntryExamples(artifact([taberu], matching), taberu)
+    const after = retrieveEntryExamples(artifact([checked], [...matching, inflected]), checked)
+    if (typeof before === 'string' || typeof after === 'string') throw new Error('no examples')
+    expect(before.sentences).toHaveLength(100)
+    expect(after.sentences.map(sentence => sentence.japanese)).toEqual([
+      inflected,
+      ...before.sentences.map(sentence => sentence.japanese)
+    ])
+    expect([after.count, after.truncated]).toEqual([51, true])
   })
 })

@@ -17,6 +17,7 @@ import { listedInJapanese, listedWithLicence, pageSourcesList } from '@/test/cre
 import { pageProps } from '@/test/page-props'
 import { Redirect } from '@/test/redirect'
 import { htmlText, visibleText } from '@/test/rendered'
+import { readMeaningExamples } from '@/test/rendered-word'
 import WordPage, { generateMetadata } from './page'
 
 const serviceEnv: { DICTIONARY_API_URL?: string; DICTIONARY_API_TOKEN?: string } = {}
@@ -284,6 +285,31 @@ describe('the word page, read from the fixtures', () => {
       expect(furigana.filter(reading => !/^\p{scx=Hiragana}+$/u.test(reading))).toEqual([])
     }
     expect(examples.filter(({ paragraphs }) => paragraphs[0].includes('<rt'))).not.toHaveLength(0)
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('a meaning shows its checked example under it (%s)', async locale => {
+    const html = await renderWord('要領-1546850', locale)
+    const [checked, unchecked] =
+      fixtureWordRows.find(rows => rows.entry.entSeq === 1546850)?.senseExamples ?? []
+    expect(unchecked).toBeNull()
+    const shown = readMeaningExamples(sectionHTML(html, coreText('Meaning', locale)))
+    expect(shown.map(({ meaning, pairId }) => [meaning, pairId])).toEqual([
+      [1, checked?.sentence.pairId]
+    ])
+    expect(shown[0].tokens.map(token => token.surface).join('')).toBe(checked?.sentence.japanese)
+    expect(shown[0].tokens.filter(token => token.highlighted)).toEqual([
+      { surface: '要領', href: expect.stringContaining('1546850'), highlighted: true }
+    ])
+    expect(visibleText(sectionHTML(html, coreText('Meaning', locale)))).toContain(
+      checked?.sentence.english
+    )
+    const examples = sectionHTML(html, coreText('Examples', locale))
+    expect(examples.match(/<li[^>]*data-example-pair="([^"]+)"/)?.[1]).toBe(
+      checked?.sentence.pairId
+    )
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {

@@ -78,7 +78,7 @@ export interface EmbeddedWordPage
     | 'related'
     | 'shareText'
   > {
-  senses: (WordDetail['senses'][number] & MeaningActions)[]
+  senses: (Omit<WordDetail['senses'][number], 'example'> & MeaningActions)[]
   noExamples: string
   pitch: (PitchAccent & { source: string }) | null
   conjugations:
@@ -216,7 +216,8 @@ export class EmbeddedPresentation {
       frequency: [],
       kanji: this.kanji.glossRows([entry.headword, ...entry.writtenForms.map(form => form.value)]),
       examples: [],
-      exampleCount: null
+      exampleCount: null,
+      senseExamples: []
     })
     const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
       frequencyLookupRow
@@ -240,7 +241,7 @@ export class EmbeddedPresentation {
         }
       },
       pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-      senses: detail.senses.map((sense, index) => ({
+      senses: detail.senses.map(({ example: _, ...sense }, index) => ({
         ...sense,
         ...meaningActions({ ...sense, glosses: entry.senses[index].glosses })
       })),

@@ -118,6 +118,7 @@ export interface WordRows {
   kanji: KanjiGlossRow[]
   examples: WordExampleRows[]
   exampleCount: ExampleCountRow | null
+  senseExamples: (WordExampleRows | null)[]
 }
 
 export interface KanjiReadingRow {

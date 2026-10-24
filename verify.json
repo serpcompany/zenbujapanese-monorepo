@@ -15,7 +15,8 @@
       "apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**": "Kuromoji",
       "apps/ios/Modules/Sources/SearchExperience/Resources/SudachiRuntime/**": "Sudachi",
       "language-data/notices/**": "the language data sources",
-      "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
+      "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them",
+      "language-data/tools/tests/fixtures/jmdict-*.xml": "excerpts of EDRDG's JMdict_e and JMdict_e_examp exports of 2026-10-23, as published"
     },
     "pinned": {
       "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV{1,2}.sql": "every published frequency pack's mappingPolicySHA256"
@@ -688,7 +689,7 @@
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/dictionary-api.md": {
-        "lines": 518,
+        "lines": 517,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/dictionary-core.md": {

@@ -1,19 +1,19 @@
 {
-  "databaseBytes": 483622912,
-  "databaseSHA256": "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7",
+  "databaseBytes": 486166528,
+  "databaseSHA256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
   "evidenceCounts": {
-    "canonical_senses": 253020,
-    "form_priority_profiles": 56127,
-    "gloss_atoms": 441826,
-    "reading_form_restrictions": 6201,
-    "sense_form_restrictions": 1929
+    "canonical_senses": 253844,
+    "form_priority_profiles": 56153,
+    "gloss_atoms": 443818,
+    "reading_form_restrictions": 6184,
+    "sense_form_restrictions": 1922
   },
-  "mappingSHA256": "ab8ca65cc343d0e34a1761d1bae82af71e97891811b9a610402d2f9e341e7991",
+  "mappingSHA256": "1bd2db6d39cfc65e1c41c0f012147bc908d84623daf5b7e72d492d34cb9e7c6b",
   "policy": "dictionary-best-match-v1",
   "schemaVersion": "zenbu.dictionary-ranking.v1",
   "searchIndex": {
-    "form_rows": 752077,
-    "gloss_rows": 441826,
+    "form_rows": 754202,
+    "gloss_rows": 443818,
     "schema": "zenbu.dictionary-search-index.v1",
     "technology": "sqlite-fts4"
   },
@@ -25,7 +25,7 @@
   "toolSHA256": {
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
-    "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
+    "import_tool_sha256": "1d0301469715d8383ae7c393e1075b411d985a24bd346bed4cfe0268b1f172e3",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
     "unidic_adapter_sha256": "850af85414137aed37f4797968e3b377c66c58287af6461979e8e8e301632a74"

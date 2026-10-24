@@ -67,7 +67,7 @@ describe('routes', () => {
 
   test.each([
     ['a word number that is not a number', '/v1/words/abc'],
-    ['an examples offset past the 100 listed', '/v1/words/1358280/examples?from=100'],
+    ['an examples offset that is no whole number', '/v1/words/1358280/examples?from=1.5'],
     ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`],
     ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`]
   ])('400s %s', async (_, path) => {
@@ -84,6 +84,15 @@ describe('routes', () => {
     const response = await app(fakeService({ word })).request(get(path))
     expect(response.status).toBe(404)
     expect(word).not.toHaveBeenCalled()
+  })
+
+  test('404s an examples offset past what the word lists, which the dictionary answers as none', async () => {
+    const wordExamples = vi.fn(async () => null)
+    const response = await app(fakeService({ wordExamples })).request(
+      get('/v1/words/1358280/examples?from=150')
+    )
+    expect(response.status).toBe(404)
+    expect(wordExamples).toHaveBeenCalledWith(1358280, 150)
   })
 
   test('segments the decoded text, slashes and line breaks included, and answers its tokens', async () => {

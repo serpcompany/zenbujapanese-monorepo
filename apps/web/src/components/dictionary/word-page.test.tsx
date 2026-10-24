@@ -22,9 +22,10 @@ import {
   readFrequencyDetails,
   readFrequencyRows,
   readFurigana,
+  readMeaningExamples,
   readPitchGraph
 } from '@/test/rendered-word'
-import { ExampleList } from './example-list'
+import { ExampleList, MeaningExample } from './example-list'
 import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
 import { WordHeader } from './word-header'
 
@@ -211,15 +212,26 @@ describe('the Frequency section', () => {
   })
 })
 
+interface SuiteExample {
+  id: string
+  tokens: { surface: string; pageWord?: boolean }[]
+}
+
 interface SuiteCase {
   covers: string
   entSeq: string[]
-  senses: { glosses: string[] }[]
+  senses: { glosses: string[]; example?: SuiteExample }[]
   furigana: SuiteFurigana[]
   pitch?: { graph: SuitePitchGraph }
   frequency: { name: string; text: string; details: SuiteFrequencyDetails }[]
-  examples: { shown: { id: string; tokens: { surface: string; pageWord?: boolean }[] }[] }
+  examples: { shown: SuiteExample[] }
 }
+
+const recordedWords = (examples: readonly SuiteExample[]) =>
+  examples.map(shown => shown.tokens.map(token => [token.surface, token.pageWord === true]))
+
+const drawnWords = (examples: readonly { tokens: { surface: string; highlighted: boolean }[] }[]) =>
+  examples.map(example => example.tokens.map(token => [token.surface, token.highlighted]))
 
 const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
@@ -269,12 +281,28 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
     expect(drawn.map(example => `esp1_${example.pairId}`)).toEqual(
       expected.examples.shown.map(shown => shown.id)
     )
-    expect(
-      drawn.map(example => example.tokens.map(token => [token.surface, token.highlighted]))
-    ).toEqual(
-      expected.examples.shown.map(shown =>
-        shown.tokens.map(token => [token.surface, token.pageWord === true])
+    expect(drawnWords(drawn)).toEqual(recordedWords(expected.examples.shown))
+    const meanings = readMeaningExamples(
+      renderToStaticMarkup(
+        detail.senses.map(sense =>
+          sense.example ? (
+            <MeaningExample
+              key={sense.number}
+              example={pageExample(sense.example, links)}
+              meaning={sense.number}
+              locale="en"
+              text={exampleListText('en')}
+            />
+          ) : null
+        )
       )
     )
+    const recorded = expected.senses.flatMap((sense, index) =>
+      sense.example ? [{ meaning: index + 1, example: sense.example }] : []
+    )
+    expect(meanings.map(({ meaning, pairId }) => [meaning, `esp1_${pairId}`])).toEqual(
+      recorded.map(({ meaning, example }) => [meaning, example.id])
+    )
+    expect(drawnWords(meanings)).toEqual(recordedWords(recorded.map(({ example }) => example)))
   })
 })

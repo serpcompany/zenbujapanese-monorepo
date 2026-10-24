@@ -2,23 +2,23 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7"
+      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "8cfd0c71f07df8438e722da4eac78e790d22bf2cda1cbbcf5e11065cc004d096"
+      "sha256" : "f49bb8beb88fcfe9f327c8f8a7553cbf02420bb0b94aebe1e763f0792589c9f7"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "49cd2a16f86a142b5e4a0f199a588d80a8e42fb57b7be98add6dd99094910cae"
+      "sha256" : "40bfd948493b0cc2a230ea457cb483b8978b0dc8435071ee3d34036aaafacd02"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "719f59612b92e2db02fade882598b965938279ebca0da7e4627e0385a7ae7489"
+      "sha256" : "e790648e385cddc3ab8e7b78ba82130a6efe7a13b6da5712cf55d1632a93ff16"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "529585ff2a052e12ce89177e1abe99e7f0f5e8bf9d57439c6603b6d4d2ebc49a"
+      "sha256" : "f5b8d6cdcbcea37e577673fc8e8436b2ea9b714ec1f508b17f9e17dd265c92be"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -30,7 +30,7 @@
     },
     {
       "name" : "DictionaryRankingArtifactContract.json",
-      "sha256" : "7be2f6f0447fb0b054c39594764a6a10970742049d5bf9cf3204f2c5c0b7335c"
+      "sha256" : "9b821bfab5e12052b8c6bb87ed75a3ab7c1162a4bd621563b67ea03aa638cf6b"
     },
     {
       "name" : "LanguageTechnologyPackCatalog.json",
@@ -461,7 +461,7 @@
           "languageReferenceID" : "68a5aab4fa7756577f486b6a3553e5de",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ぬすみみる",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "to steal a glance (at), to look furtively (at), to take a peek (at)"
         },
         {
@@ -480,7 +480,7 @@
           "languageReferenceID" : "de8c988e3429e91bd65505320ef21f1b",
           "match" : "source=0 japanese writtenContains",
           "reading" : "うちみる",
-          "retrievalOrder" : 38,
+          "retrievalOrder" : 39,
           "summary" : "to glance at, to look at"
         },
         {
@@ -499,7 +499,7 @@
           "languageReferenceID" : "27803a13de2c41680b0d240a7f4c77b9",
           "match" : "source=0 japanese writtenContains",
           "reading" : "おもいみる",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "to reflect carefully"
         },
         {
@@ -680,13 +680,27 @@
 
           ],
           "entSeq" : [
+            "2873106"
+          ],
+          "headword" : "先を見る",
+          "languageReferenceID" : "24c6227214c395b40488a9d5f28db2ce",
+          "match" : "source=0 japanese writtenContains",
+          "reading" : "さきをみる",
+          "retrievalOrder" : 37,
+          "summary" : "to look ahead, to foresee, to anticipate"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
             "2853598"
           ],
           "headword" : "時を見る",
           "languageReferenceID" : "2a4ccf8caf48cbe4dc4ee00bd6ac39be",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ときをみる",
-          "retrievalOrder" : 37,
+          "retrievalOrder" : 38,
           "summary" : "to wait for a favorable opportunity, to wait for a chance"
         },
         {
@@ -700,7 +714,7 @@
           "languageReferenceID" : "46d539a5f2d1956157fe120b1750ebfe",
           "match" : "source=0 japanese writtenContains",
           "reading" : "そうをみる",
-          "retrievalOrder" : 39,
+          "retrievalOrder" : 40,
           "summary" : "to read (a person's) physiognomy"
         },
         {
@@ -714,7 +728,7 @@
           "languageReferenceID" : "ab13f65e8c56b62603908833f8176419",
           "match" : "source=0 japanese writtenContains",
           "reading" : "めをみる",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "to experience"
         },
         {
@@ -728,7 +742,7 @@
           "languageReferenceID" : "ee7b26741aa125918683148adbf45cda",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ひとめみる",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "to give a glance (at), to take one look at"
         },
         {
@@ -742,7 +756,7 @@
           "languageReferenceID" : "70b99f614eea5c77638f0efb17f06241",
           "match" : "source=0 japanese writtenContains",
           "reading" : "かたよりみる",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "to show partiality"
         },
         {
@@ -756,7 +770,7 @@
           "languageReferenceID" : "4bbfea65e366682e38c8d0098cd8f2d8",
           "match" : "source=0 japanese writtenContains",
           "reading" : "めんどうみる",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "to care for someone, to look after someone"
         },
         {
@@ -770,7 +784,7 @@
           "languageReferenceID" : "eec5115fb53464af0140582f2c8532f8",
           "match" : "source=0 japanese writtenContains",
           "reading" : "めんどうをみる",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "to care for someone, to look after someone"
         },
         {
@@ -784,7 +798,7 @@
           "languageReferenceID" : "4622335b07f02337c7f138cc60b24a6c",
           "match" : "source=0 japanese writtenContains",
           "reading" : "しさいにみる",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "to look closely"
         },
         {
@@ -798,7 +812,7 @@
           "languageReferenceID" : "5088b87baa1dbed3420a49fa2a9ab25e",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ひとをみるめ",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "eye for people, ability to judge character"
         },
         {
@@ -812,7 +826,7 @@
           "languageReferenceID" : "51264ba351bf1c93d113836dcc9b1d32",
           "match" : "source=0 japanese writtenContains",
           "reading" : "じごくをみる",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "to live through hell, to go to hell and back, to suffer dire straits"
         },
         {
@@ -826,7 +840,7 @@
           "languageReferenceID" : "fae4641d38efcdbca0791c934bc16685",
           "match" : "source=0 japanese writtenContains",
           "reading" : "やってみる",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "to have a go, to try and do (something), to take a chance with something"
         },
         {
@@ -840,7 +854,7 @@
           "languageReferenceID" : "9b695889ccced0d5db1b03149c2dc069",
           "match" : "source=0 japanese writtenContains",
           "reading" : "せいむをみる",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "to administer affairs of state, to attend to government affairs"
         },
         {
@@ -854,7 +868,7 @@
           "languageReferenceID" : "ae8b99bc2c3eb696e7f728c39583f503",
           "match" : "source=0 japanese writtenContains",
           "reading" : "じっとみる",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 53,
           "summary" : "to watch steadily, to stare"
         },
         {
@@ -868,7 +882,7 @@
           "languageReferenceID" : "a144391b0e101860855cb47655c0f07f",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ばかをみる",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 54,
           "summary" : "to feel like an idiot, to make a fool of yourself"
         },
         {
@@ -882,8 +896,22 @@
           "languageReferenceID" : "10c57c9b47d5d56b5ed81ec67854878c",
           "match" : "source=0 japanese writtenContains",
           "reading" : "あしもとをみる",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 55,
           "summary" : "to take advantage (e.g. of a weak situation), to size up (e.g. customer when setting a high price)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2836685"
+          ],
+          "headword" : "傍から見る",
+          "languageReferenceID" : "d3a4d94ca621ed840a222ca81401acd3",
+          "match" : "source=0 japanese writtenContains",
+          "reading" : "はたからみる",
+          "retrievalOrder" : 56,
+          "summary" : "to look at from the outside, to view from an outsider's perspective, to be seen from the point of view of an onlooker"
         },
         {
           "chips" : [
@@ -896,7 +924,7 @@
           "languageReferenceID" : "50050ba2d6aac7bd7fe14af42e54114b",
           "match" : "source=0 japanese writtenContains",
           "reading" : "おおめにみる",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 57,
           "summary" : "to overlook (a mistake, fault, etc.), to tolerate, to let pass, to give someone a break, to let someone off lightly, to be lenient, to be forgiving"
         },
         {
@@ -910,7 +938,7 @@
           "languageReferenceID" : "2ae2567df9ff7484ee783bcca3a1b433",
           "match" : "source=0 japanese writtenContains",
           "reading" : "よくみると",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 58,
           "summary" : "(on a) closer look, closer scrutiny, second look"
         },
         {
@@ -924,36 +952,8 @@
           "languageReferenceID" : "8429da45acf91c81e94922c3b4d97c1b",
           "match" : "source=0 japanese writtenContains",
           "reading" : "なきをみる",
-          "retrievalOrder" : 57,
-          "summary" : "to experience hardship, to suffer a bad experience, to be put in a tough spot"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "2836685"
-          ],
-          "headword" : "傍から見る",
-          "languageReferenceID" : "d3a4d94ca621ed840a222ca81401acd3",
-          "match" : "source=0 japanese writtenContains",
-          "reading" : "はたからみる",
-          "retrievalOrder" : 58,
-          "summary" : "to be seen from the point of view of an onlooker"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1885190"
-          ],
-          "headword" : "事務を見る",
-          "languageReferenceID" : "4e0a8b53b6290f87f45a29ad2ed1a449",
-          "match" : "source=0 japanese writtenContains",
-          "reading" : "じむをみる",
           "retrievalOrder" : 59,
-          "summary" : "to attend to business"
+          "summary" : "to experience hardship, to suffer a bad experience, to be put in a tough spot"
         }
       ],
       "sections" : [
@@ -5897,7 +5897,7 @@
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "すいぞくかん",
           "retrievalOrder" : 14,
-          "summary" : "aquarium (building)"
+          "summary" : "aquarium (building), oceanarium"
         },
         {
           "chips" : [
@@ -8806,7 +8806,7 @@
           "languageReferenceID" : "0d9e4340121640002c815fbdae9ae634",
           "match" : "source=0 japanese writtenContains",
           "reading" : "ききいる",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 52,
           "summary" : "to listen attentively to, to be absorbed in (listening to)"
         },
         {
@@ -9132,12 +9132,12 @@
           "entSeq" : [
             "1453650"
           ],
-          "headword" : "堂にいる",
+          "headword" : "堂に入る",
           "languageReferenceID" : "d4d5ee420728d382a3c868c18caae84c",
           "match" : "source=0 japanese writtenContains",
           "reading" : "どうにいる",
-          "retrievalOrder" : 52,
-          "summary" : "to become an expert, to be master at"
+          "retrievalOrder" : 53,
+          "summary" : "to become an expert, to be a master (of)"
         },
         {
           "chips" : [
@@ -10237,28 +10237,28 @@
 
           ],
           "entSeq" : [
-            "1415110"
+            "2836685"
           ],
-          "headword" : "大目に見る",
-          "languageReferenceID" : "50050ba2d6aac7bd7fe14af42e54114b",
+          "headword" : "傍から見る",
+          "languageReferenceID" : "d3a4d94ca621ed840a222ca81401acd3",
           "match" : "source=0 japanese writtenContains",
-          "reading" : "おおめにみる",
+          "reading" : "はたからみる",
           "retrievalOrder" : 58,
-          "summary" : "to overlook (a mistake, fault, etc.), to tolerate, to let pass, to give someone a break, to let someone off lightly, to be lenient, to be forgiving"
+          "summary" : "to look at from the outside, to view from an outsider's perspective, to be seen from the point of view of an onlooker"
         },
         {
           "chips" : [
 
           ],
           "entSeq" : [
-            "2402700"
+            "1415110"
           ],
-          "headword" : "泣きを見る",
-          "languageReferenceID" : "8429da45acf91c81e94922c3b4d97c1b",
+          "headword" : "大目に見る",
+          "languageReferenceID" : "50050ba2d6aac7bd7fe14af42e54114b",
           "match" : "source=0 japanese writtenContains",
-          "reading" : "なきをみる",
+          "reading" : "おおめにみる",
           "retrievalOrder" : 59,
-          "summary" : "to experience hardship, to suffer a bad experience, to be put in a tough spot"
+          "summary" : "to overlook (a mistake, fault, etc.), to tolerate, to let pass, to give someone a break, to let someone off lightly, to be lenient, to be forgiving"
         }
       ],
       "sections" : [
@@ -10867,7 +10867,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 104,
         "primaryEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
         "title" : "View 50+ Example Sentences"
       },
@@ -11788,7 +11788,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 102,
         "primaryEntry" : "042e07f7052f611fed33ddddf37f55fd",
         "title" : "View 50+ Example Sentences"
       },
@@ -11851,7 +11851,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 102,
         "primaryEntry" : "72309de2d19aa24aa677dfba2428ff13",
         "title" : "View 50+ Example Sentences"
       },
@@ -18775,7 +18775,7 @@
           "languageReferenceID" : "096a3279b135cbec410226f4c14aaddf",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ちん",
-          "retrievalOrder" : 39,
+          "retrievalOrder" : 40,
           "summary" : "Japanese chin (dog breed)"
         },
         {
@@ -18832,7 +18832,7 @@
           "languageReferenceID" : "de82b38b37663c6cb4feb6bfe638c5ae",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "のら",
-          "retrievalOrder" : 29,
+          "retrievalOrder" : 30,
           "summary" : "stray (dog, cat, etc.)"
         },
         {
@@ -18851,7 +18851,7 @@
           "languageReferenceID" : "5b4d438a3e2a4043343dfeef0223923c",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "けんしゅ",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 56,
           "summary" : "dog breed"
         },
         {
@@ -18889,7 +18889,7 @@
           "languageReferenceID" : "2e013eddbbb7eac9514149726dbfd495",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "しばいぬ",
-          "retrievalOrder" : 37,
+          "retrievalOrder" : 38,
           "summary" : "shiba inu (dog breed)"
         },
         {
@@ -18927,7 +18927,7 @@
           "languageReferenceID" : "5df9a5cc159a3fa53492d26e23b6f083",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "けなみ",
-          "retrievalOrder" : 32,
+          "retrievalOrder" : 33,
           "summary" : "lie of (dog's) hair"
         },
         {
@@ -18946,7 +18946,7 @@
           "languageReferenceID" : "d9c1c2bc1eaf3bc70285f207cfa42343",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "のらいぬ",
-          "retrievalOrder" : 31,
+          "retrievalOrder" : 32,
           "summary" : "stray dog"
         },
         {
@@ -18984,7 +18984,7 @@
           "languageReferenceID" : "beb70aa77f0752a7b1ae1bdd8669558d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "どよう",
-          "retrievalOrder" : 34,
+          "retrievalOrder" : 35,
           "summary" : "dog days (of summer)"
         },
         {
@@ -19041,27 +19041,8 @@
           "languageReferenceID" : "4efae4ed43e2a8997774abfcefb95b1c",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "きょうけん",
-          "retrievalOrder" : 35,
+          "retrievalOrder" : 36,
           "summary" : "mad dog"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "34,327",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1537350"
-          ],
-          "headword" : "野犬",
-          "languageReferenceID" : "774280dedcea7ae8160b081e3262f327",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "やけん",
-          "retrievalOrder" : 20,
-          "summary" : "stray dog"
         },
         {
           "chips" : [
@@ -19079,7 +19060,7 @@
           "languageReferenceID" : "35f5bfb9c50d3486699668296cf2e252",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ともぐい",
-          "retrievalOrder" : 33,
+          "retrievalOrder" : 34,
           "summary" : "dog-eat-dog competition"
         },
         {
@@ -19098,7 +19079,7 @@
           "languageReferenceID" : "61eaea7aa69946b642f3a1c5d402e93b",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "はなしがい",
-          "retrievalOrder" : 30,
+          "retrievalOrder" : 31,
           "summary" : "letting (a dog) run loose"
         },
         {
@@ -19136,7 +19117,7 @@
           "languageReferenceID" : "62a58f3f23a8c8e5cdfe0c7a20a0258b",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ろうけん",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 54,
           "summary" : "old dog"
         },
         {
@@ -19163,6 +19144,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "51,501",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2833313"
+          ],
+          "headword" : "ドッグラン",
+          "languageReferenceID" : "ec4535f9fc95189182986ff5c2c76d91",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ドッグラン",
+          "retrievalOrder" : 29,
+          "summary" : "dog park"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "62,389",
               "tier" : "rare"
             }
@@ -19174,27 +19174,8 @@
           "languageReferenceID" : "2d8cfad062cfcb4ffdf851baa3e0669d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "せいけん",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "adult dog"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "62,577",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1956970"
-          ],
-          "headword" : "名犬",
-          "languageReferenceID" : "eddfca65ce6b8a52d2e51d2aaf2ba60a",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "めいけん",
-          "retrievalOrder" : 58,
-          "summary" : "fine dog"
         },
         {
           "chips" : [
@@ -19212,7 +19193,7 @@
           "languageReferenceID" : "8312583a57396de0c30caaf0fbd500fa",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ちゅうけん",
-          "retrievalOrder" : 36,
+          "retrievalOrder" : 37,
           "summary" : "faithful dog"
         },
         {
@@ -19231,7 +19212,7 @@
           "languageReferenceID" : "6cbc63fd8862e86fc2a1912830618f09",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬどし",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "year of the Dog"
         },
         {
@@ -19269,7 +19250,7 @@
           "languageReferenceID" : "eac2ff930f2aba6a863f51bab5f37eba",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬにく",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "dog meat"
         },
         {
@@ -19288,7 +19269,7 @@
           "languageReferenceID" : "2ad121f7b85abcb4ae2fd4da72037f68",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬぶえ",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "dog whistle"
         },
         {
@@ -19307,7 +19288,7 @@
           "languageReferenceID" : "a17df167933b053e1261589659ad73ef",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬがお",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "dog-like face"
         },
         {
@@ -19326,7 +19307,7 @@
           "languageReferenceID" : "25f7367aac54c85ea8fc54bda5ae50dd",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "けんぴ",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "dog skin"
         },
         {
@@ -19345,7 +19326,7 @@
           "languageReferenceID" : "d25cbf30f6837836e89422a8206b69a3",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "おやいぬ",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "parent dog"
         },
         {
@@ -19364,7 +19345,7 @@
           "languageReferenceID" : "1ead0a5862b87986a7c5524771d7868b",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ぼじゅつ",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "Earth Dog (35th term of the sexagenary cycle, e.g. 1958, 2018, 2078)"
         },
         {
@@ -19402,7 +19383,7 @@
           "languageReferenceID" : "51551b6cbf143da937edb68ced9454a1",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ちくけん",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "pet dog"
         },
         {
@@ -19421,7 +19402,7 @@
           "languageReferenceID" : "4b6e7bde16903376ace62864e92f3ef9",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "けものへん",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "kanji \"dog\" or \"animal\" radical at left"
         },
         {
@@ -19437,6 +19418,20 @@
           "reading" : "もうどうけん",
           "retrievalOrder" : 17,
           "summary" : "guide dog"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1537350"
+          ],
+          "headword" : "野犬",
+          "languageReferenceID" : "774280dedcea7ae8160b081e3262f327",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "やけん",
+          "retrievalOrder" : 20,
+          "summary" : "stray dog"
         },
         {
           "chips" : [
@@ -19491,7 +19486,7 @@
           "languageReferenceID" : "5646d16ab91be6cbf0d98624a1541da7",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ろう",
-          "retrievalOrder" : 38,
+          "retrievalOrder" : 39,
           "summary" : "offering ceremony held on the third day of the dog after the winter solstice"
         },
         {
@@ -19505,7 +19500,7 @@
           "languageReferenceID" : "0d6f0f26038a4e6ff76bc4125a9e4d66",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "くと",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "dog slaughter"
         },
         {
@@ -19519,8 +19514,22 @@
           "languageReferenceID" : "93472f9ba48a679f3010e93cca3a68e0",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "きのえいぬ",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "Wood Dog (11th term of the sexagenary cycle, e.g. 1934, 1994, 2054)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2872780"
+          ],
+          "headword" : "野犬",
+          "languageReferenceID" : "b8b8c63d124bb22636940b406b70797e",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ノイヌ",
+          "retrievalOrder" : 53,
+          "summary" : "feral dog"
         },
         {
           "chips" : [
@@ -19533,7 +19542,7 @@
           "languageReferenceID" : "16283fafcbde950a0e7076dc8fb93b28",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬは",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 55,
           "summary" : "dog person"
         },
         {
@@ -19547,7 +19556,7 @@
           "languageReferenceID" : "ae56a368fe276e5b27e311ece1612ee7",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いっけん",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 57,
           "summary" : "one dog"
         },
         {
@@ -19561,7 +19570,7 @@
           "languageReferenceID" : "9c126fce0b83250495a5855baff0a2ae",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "からいぬ",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 58,
           "summary" : "foreign dog (esp. of Chinese origin)"
         },
         {
@@ -19575,22 +19584,8 @@
           "languageReferenceID" : "b83a5490ac26cbdf6a8151b295789457",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "どうわ",
-          "retrievalOrder" : 57,
-          "summary" : "harness (of a dog)"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "2432580"
-          ],
-          "headword" : "パグ",
-          "languageReferenceID" : "a6bbccefa9fe5d2d1c5c1689318f0af7",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "パグ",
           "retrievalOrder" : 59,
-          "summary" : "pug (variety of dog)"
+          "summary" : "harness (of a dog)"
         }
       ],
       "sections" : [
@@ -22674,7 +22669,7 @@
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ノーサンキュー",
           "retrievalOrder" : 55,
-          "summary" : "No, thank you"
+          "summary" : "no, thank you"
         },
         {
           "chips" : [
@@ -22743,7 +22738,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 102,
         "primaryEntry" : "042e07f7052f611fed33ddddf37f55fd",
         "title" : "View 50+ Example Sentences"
       },
@@ -22787,7 +22782,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 104,
         "primaryEntry" : "02b555a06b217e79bca2d442a5a03d86",
         "title" : "View 50+ Example Sentences"
       },
@@ -22831,7 +22826,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 104,
         "primaryEntry" : "7f490a9c9c0da94f4e9474f4efe74be1",
         "title" : "View 50+ Example Sentences"
       },
@@ -22945,7 +22940,7 @@
     {
       "covers" : "A search-retrieval.json query, after the frequency re-sort",
       "examples" : {
-        "count" : 100,
+        "count" : 103,
         "primaryEntry" : "380d957d6f36dc2e2aacdb743198d104",
         "title" : "View 50+ Example Sentences"
       },
@@ -28589,6 +28584,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "18,202",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1397530"
+          ],
+          "headword" : "組み替える",
+          "languageReferenceID" : "84e4b0eef3bd1a67ada2d054c990c910",
+          "match" : "source=2 japanese writtenContains",
+          "reading" : "くみかえる",
+          "retrievalOrder" : 53,
+          "summary" : "to rearrange (classes), to recompose, to reset, to recombine (genes)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "19,126",
               "tier" : "uncommon"
             }
@@ -28619,7 +28633,7 @@
           "languageReferenceID" : "1b5d29760739562a3b87be73e36c71a1",
           "match" : "source=2 japanese writtenContains",
           "reading" : "しずまりかえる",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 52,
           "summary" : "to fall completely silent, to become still as death"
         },
         {
@@ -28767,11 +28781,11 @@
           "entSeq" : [
             "1516390"
           ],
-          "headword" : "抱き抱える",
+          "headword" : "抱きかかえる",
           "languageReferenceID" : "e9b3e13be0b08de7756383baa8f93dc3",
           "match" : "source=2 japanese writtenContains",
           "reading" : "だきかかえる",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 56,
           "summary" : "to hold, to carry, to embrace (in one's arms)"
         },
         {
@@ -28960,7 +28974,7 @@
           "languageReferenceID" : "1fdb430ec339c7d39a4bcc16ff3557d1",
           "match" : "source=2 japanese writtenContains",
           "reading" : "あたまをかかえる",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 57,
           "summary" : "to be at wits' end, to be greatly perplexed, to be troubled"
         },
         {
@@ -28974,7 +28988,7 @@
           "languageReferenceID" : "d017fa285665c246f745883105345d9d",
           "match" : "source=2 japanese writtenContains",
           "reading" : "かしをかえる",
-          "retrievalOrder" : 57,
+          "retrievalOrder" : 58,
           "summary" : "to try a different venue (for drinking, socializing, etc.), to go somewhere else"
         },
         {
@@ -28988,22 +29002,8 @@
           "languageReferenceID" : "1ede2331d16fd950c3d463d00e997ca6",
           "match" : "source=2 japanese writtenContains",
           "reading" : "かたがつかえる",
-          "retrievalOrder" : 58,
-          "summary" : "to have stiff shoulders"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "2629660"
-          ],
-          "headword" : "意識を変える",
-          "languageReferenceID" : "60930192d5084fd9364968b6b55ec37e",
-          "match" : "source=2 japanese writtenContains",
-          "reading" : "いしきをかえる",
           "retrievalOrder" : 59,
-          "summary" : "to alter one's state of consciousness, to change one's mindset, to change one's attitude"
+          "summary" : "to have stiff shoulders"
         }
       ],
       "sections" : [
@@ -32842,7 +32842,7 @@
           "languageReferenceID" : "76f6efa970e554296f423479914286e3",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にっき",
-          "retrievalOrder" : 24,
+          "retrievalOrder" : 25,
           "summary" : "diary, journal"
         },
         {
@@ -32892,7 +32892,7 @@
           "languageReferenceID" : "f4c411fe1954cef51be6f47ef6b9a546",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にちじょう",
-          "retrievalOrder" : 19,
+          "retrievalOrder" : 20,
           "summary" : "everyday, daily, ordinary, usual, routine, regular"
         },
         {
@@ -32917,7 +32917,7 @@
           "languageReferenceID" : "1ea18421742cc23dd14d0ac2d26d5efb",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にちよう",
-          "retrievalOrder" : 23,
+          "retrievalOrder" : 24,
           "summary" : "Sunday"
         },
         {
@@ -32986,7 +32986,7 @@
           "languageReferenceID" : "6d4fe9a5746d12eac68e35ae39f46898",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にっちゅう",
-          "retrievalOrder" : 21,
+          "retrievalOrder" : 22,
           "summary" : "daytime, during the day"
         },
         {
@@ -33011,7 +33011,7 @@
           "languageReferenceID" : "0273a5067e29047335b0bb4b56a7391d",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にってい",
-          "retrievalOrder" : 18,
+          "retrievalOrder" : 19,
           "summary" : "schedule, program, programme, agenda"
         },
         {
@@ -33293,7 +33293,7 @@
           "languageReferenceID" : "13d1abf879376992a0cc3c85f8017776",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にっかん",
-          "retrievalOrder" : 22,
+          "retrievalOrder" : 23,
           "summary" : "Japan and South Korea, Japanese-Korean"
         },
         {
@@ -33318,7 +33318,7 @@
           "languageReferenceID" : "0862b77e126458ff8676ec1ee18ac97d",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "ひび",
-          "retrievalOrder" : 20,
+          "retrievalOrder" : 21,
           "summary" : "daily, everyday"
         },
         {
@@ -33343,8 +33343,8 @@
           "languageReferenceID" : "a49038d18c5030c9891cc3e748dc486a",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "ひごろ",
-          "retrievalOrder" : 26,
-          "summary" : "usually, habitually, always"
+          "retrievalOrder" : 5,
+          "summary" : "usual, normal, everyday, habitual, ordinary, daily"
         },
         {
           "chips" : [
@@ -33418,7 +33418,7 @@
           "languageReferenceID" : "0ca0f3c1b80c707877764826d60d48ad",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "ひのまる",
-          "retrievalOrder" : 25,
+          "retrievalOrder" : 26,
           "summary" : "red or gold circle representing the Sun"
         },
         {
@@ -33462,7 +33462,7 @@
           "languageReferenceID" : "9053fe5cb2e149f2cfbe83d50bb6d9b6",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にちべい",
-          "retrievalOrder" : 17,
+          "retrievalOrder" : 18,
           "summary" : "Japan and the United States, Japanese-American"
         },
         {
@@ -33685,7 +33685,7 @@
           "languageReferenceID" : "6d7011da63dfaa80ff65593d40ea6bf7",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんし",
-          "retrievalOrder" : 5,
+          "retrievalOrder" : 6,
           "summary" : "Japanese history, history of Japan"
         },
         {
@@ -33699,7 +33699,7 @@
           "languageReferenceID" : "bfe49c72bc83e2cff0ed2d753a14b66b",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんせい",
-          "retrievalOrder" : 6,
+          "retrievalOrder" : 7,
           "summary" : "made in Japan, Japanese-made"
         },
         {
@@ -33713,7 +33713,7 @@
           "languageReferenceID" : "0eebd94f427c23432c7983f7b347fcdc",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんじゅう",
-          "retrievalOrder" : 7,
+          "retrievalOrder" : 8,
           "summary" : "throughout Japan"
         },
         {
@@ -33727,7 +33727,7 @@
           "languageReferenceID" : "dfd458bc6f10621156240c24c5bd29b4",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんはつ",
-          "retrievalOrder" : 8,
+          "retrievalOrder" : 9,
           "summary" : "first (of its kind) in Japan"
         },
         {
@@ -33741,7 +33741,7 @@
           "languageReferenceID" : "7ab8229a1d17988e065f0052595a1fe4",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんきぎょう",
-          "retrievalOrder" : 9,
+          "retrievalOrder" : 10,
           "summary" : "Japanese company (business, firm)"
         },
         {
@@ -33755,7 +33755,7 @@
           "languageReferenceID" : "8b6aa8a5b81efa56fa5d8bc9270188a9",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんぜんこく",
-          "retrievalOrder" : 10,
+          "retrievalOrder" : 11,
           "summary" : "all over Japan, throughout Japan"
         },
         {
@@ -33769,7 +33769,7 @@
           "languageReferenceID" : "c02307a391f976c1774c4f4a7ecd9602",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にちじょうせいかつ",
-          "retrievalOrder" : 11,
+          "retrievalOrder" : 12,
           "summary" : "everyday life, daily life"
         },
         {
@@ -33783,7 +33783,7 @@
           "languageReferenceID" : "d11db1a1f442b789e47cd386fd1f35fb",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんりょうり",
-          "retrievalOrder" : 12,
+          "retrievalOrder" : 13,
           "summary" : "Japanese cooking, Japanese cuisine"
         },
         {
@@ -33797,7 +33797,7 @@
           "languageReferenceID" : "cbac5860c930ac6958003018cb70a98f",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんしゃかい",
-          "retrievalOrder" : 13,
+          "retrievalOrder" : 14,
           "summary" : "Japanese society"
         },
         {
@@ -33811,7 +33811,7 @@
           "languageReferenceID" : "8ba67f9f9f3ec68858d3ac13d934999e",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんせいふ",
-          "retrievalOrder" : 14,
+          "retrievalOrder" : 15,
           "summary" : "Japanese government"
         },
         {
@@ -33825,7 +33825,7 @@
           "languageReferenceID" : "03ed644b3e31ad5a23dc35796ad2f240",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "にほんけいざい",
-          "retrievalOrder" : 15,
+          "retrievalOrder" : 16,
           "summary" : "Japanese economy"
         },
         {
@@ -33839,7 +33839,7 @@
           "languageReferenceID" : "574b264a64a4e5311c0f11171307309a",
           "match" : "source=0 japanese writtenPrefix",
           "reading" : "ひやけどめ",
-          "retrievalOrder" : 16,
+          "retrievalOrder" : 17,
           "summary" : "sunscreen, sunblock, sun cream, suntan lotion"
         },
         {
@@ -37773,7 +37773,8 @@
     {
       "covers" : "An English function word matching many glosses",
       "examples" : {
-        "count" : 51,
+        "count" : 100,
+        "primaryEntry" : "a10db4daab6f22cdfe5dbf37595fd5d0",
         "title" : "View 50+ Example Sentences"
       },
       "presentation" : "ranked",
@@ -37980,7 +37981,7 @@
           "languageReferenceID" : "8550b323ceae147b98c302e730552af2",
           "match" : "source=0 english strongGloss romaji=0 sense=later",
           "reading" : "まいる",
-          "retrievalOrder" : 12,
+          "retrievalOrder" : 13,
           "summary" : "to"
         },
         {
@@ -38024,8 +38025,33 @@
           "languageReferenceID" : "56a45fd23dc40cb763455771e34e699a",
           "match" : "source=0 english strongGloss romaji=0 sense=later",
           "reading" : "たい",
-          "retrievalOrder" : 13,
+          "retrievalOrder" : 14,
           "summary" : "to (e.g. score of 4 to 2, ratio of 3 to 1, vote of 320 to 180)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "4",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1008490"
+          ],
+          "headword" : "と",
+          "languageReferenceID" : "d005d8641e912ee4b72714255428699d",
+          "match" : "source=0 english strongGloss romaji=0 sense=later",
+          "reading" : "と",
+          "retrievalOrder" : 12,
+          "summary" : "to"
         },
         {
           "chips" : [
@@ -38043,7 +38069,7 @@
           "languageReferenceID" : "fdb2ead6d61d931ba92c21a6cdd19076",
           "match" : "source=0 english strongGloss romaji=0 sense=later",
           "reading" : "にゃ",
-          "retrievalOrder" : 14,
+          "retrievalOrder" : 15,
           "summary" : "to"
         },
         {
@@ -38068,7 +38094,7 @@
           "languageReferenceID" : "45eefee1383a89cb3c6287032622e6fa",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ある",
-          "retrievalOrder" : 17,
+          "retrievalOrder" : 18,
           "summary" : "to be"
         },
         {
@@ -38093,7 +38119,7 @@
           "languageReferenceID" : "9b750b4e7b92d8a10c706ae8d7f95ee3",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "こたえる",
-          "retrievalOrder" : 28,
+          "retrievalOrder" : 29,
           "summary" : "to answer"
         },
         {
@@ -38118,7 +38144,7 @@
           "languageReferenceID" : "d12d09f1107aef0f7d43b54b62f0b7e1",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いる",
-          "retrievalOrder" : 22,
+          "retrievalOrder" : 23,
           "summary" : "to be needed"
         },
         {
@@ -38137,7 +38163,7 @@
           "languageReferenceID" : "725ad020311fc37bf9f5f4f67073b842",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ひく",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 53,
           "summary" : "to pull"
         },
         {
@@ -38162,7 +38188,7 @@
           "languageReferenceID" : "8d8af9d02a7d3de3d1c6da26be309061",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "かえる",
-          "retrievalOrder" : 29,
+          "retrievalOrder" : 30,
           "summary" : "to change"
         },
         {
@@ -38187,7 +38213,7 @@
           "languageReferenceID" : "4e3e8bed76300db26e5524473fcd3134",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "たてる",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 57,
           "summary" : "to stand (something) up"
         },
         {
@@ -38195,19 +38221,38 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "52",
+              "text" : "218",
               "tier" : "very common"
             }
           ],
           "entSeq" : [
-            "2017560"
+            "2029130"
           ],
-          "headword" : "たい",
-          "languageReferenceID" : "a848c40bd5168f8fc4aa08705686993b",
+          "headword" : "ぞ",
+          "languageReferenceID" : "013d2365502522b431392db297ce8cb7",
           "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "たい",
+          "reading" : "ぞ",
+          "retrievalOrder" : 59,
+          "summary" : "adds force to a statement, decision or conclusion"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "352",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2834812"
+          ],
+          "headword" : "ぜ",
+          "languageReferenceID" : "6f7a63eedc97f07707c8d94c67e679e0",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ぜ",
           "retrievalOrder" : 58,
-          "summary" : "want to do ..."
+          "summary" : "adds light emphasis or insistence to a statement"
         },
         {
           "chips" : [
@@ -38231,7 +38276,7 @@
           "languageReferenceID" : "0800fc347e14f1d71501e463722e0cb6",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "とおす",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "to let pass"
         },
         {
@@ -38256,7 +38301,7 @@
           "languageReferenceID" : "af0d56d53a62d84b212050e7482481ec",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "もちあげる",
-          "retrievalOrder" : 25,
+          "retrievalOrder" : 26,
           "summary" : "to elevate"
         },
         {
@@ -38281,7 +38326,7 @@
           "languageReferenceID" : "f03481c301bdbc8296396e3d14e31c75",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "しめる",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 55,
           "summary" : "to account for"
         },
         {
@@ -38300,7 +38345,7 @@
           "languageReferenceID" : "5fca0d587d22c2e4eae8ff2ae0324b96",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "なにか",
-          "retrievalOrder" : 15,
+          "retrievalOrder" : 16,
           "summary" : "(so) what (are you trying to say)?"
         },
         {
@@ -38325,7 +38370,7 @@
           "languageReferenceID" : "26eeb23599f810614e64270b9c4d2753",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ごらん",
-          "retrievalOrder" : 23,
+          "retrievalOrder" : 24,
           "summary" : "(please) try to"
         },
         {
@@ -38350,7 +38395,7 @@
           "languageReferenceID" : "f4584d06c91cc6ad5f450510eaab6181",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "つながる",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 56,
           "summary" : "to be connected (to)"
         },
         {
@@ -38375,7 +38420,7 @@
           "languageReferenceID" : "b520604eea683f809957bd36a32503d3",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "はなしかける",
-          "retrievalOrder" : 30,
+          "retrievalOrder" : 31,
           "summary" : "to address (someone)"
         },
         {
@@ -38400,7 +38445,7 @@
           "languageReferenceID" : "baf8797a373e1f78e8d356ecce6b33e9",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "とらえる",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "to catch"
         },
         {
@@ -38419,7 +38464,7 @@
           "languageReferenceID" : "2f867dcbbd4a5b48ff4fca2b517cdd82",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "きる",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "to kill (a human) using a blade (sword, machete, knife, etc.)"
         },
         {
@@ -38438,7 +38483,7 @@
           "languageReferenceID" : "fff81760f08f5ba081ae21002eb50839",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "どく",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 54,
           "summary" : "to step aside"
         },
         {
@@ -38457,7 +38502,7 @@
           "languageReferenceID" : "ead3234c56f77b8600990c9acfd9083d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "つくりだす",
-          "retrievalOrder" : 35,
+          "retrievalOrder" : 36,
           "summary" : "to manufacture"
         },
         {
@@ -38476,7 +38521,7 @@
           "languageReferenceID" : "914c49c8c96b630d4ed9a1a870e27d35",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "さしこむ",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "to insert"
         },
         {
@@ -38501,7 +38546,7 @@
           "languageReferenceID" : "fdb9485102e3a111b885acecc6711c56",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ちかづく",
-          "retrievalOrder" : 36,
+          "retrievalOrder" : 37,
           "summary" : "to approach"
         },
         {
@@ -38526,7 +38571,7 @@
           "languageReferenceID" : "b2cb4cc79510c71986a7e7f13af35dc6",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "きりかえる",
-          "retrievalOrder" : 38,
+          "retrievalOrder" : 39,
           "summary" : "to change"
         },
         {
@@ -38551,7 +38596,7 @@
           "languageReferenceID" : "84a59ed560510c270dbbd5b3afe75f20",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "みかける",
-          "retrievalOrder" : 32,
+          "retrievalOrder" : 33,
           "summary" : "to (happen to) see"
         },
         {
@@ -38576,7 +38621,7 @@
           "languageReferenceID" : "d418e58c46f0e84a6df458e97e0502a2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "つぼ",
-          "retrievalOrder" : 16,
+          "retrievalOrder" : 17,
           "summary" : "point that appeals to one's sense of humor"
         },
         {
@@ -38601,7 +38646,7 @@
           "languageReferenceID" : "3dfd8836aeae1e26e54f5addc5722e2b",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "しゅっしゃ",
-          "retrievalOrder" : 26,
+          "retrievalOrder" : 27,
           "summary" : "going to work (e.g. in the morning)"
         },
         {
@@ -38620,7 +38665,7 @@
           "languageReferenceID" : "4d7b6b9d8b6a9ca3e5c0f4dfb917455e",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "おきかえる",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "to move (something) to another location"
         },
         {
@@ -38639,7 +38684,7 @@
           "languageReferenceID" : "9fcfe4aef5eea10343394f5228c03b90",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ぜっさん",
-          "retrievalOrder" : 27,
+          "retrievalOrder" : 28,
           "summary" : "to rave reviews"
         },
         {
@@ -38658,7 +38703,7 @@
           "languageReferenceID" : "36e8eaa8bdf71b612cdfe56a3bb9f590",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "くりひろげる",
-          "retrievalOrder" : 18,
+          "retrievalOrder" : 19,
           "summary" : "to unfold"
         },
         {
@@ -38677,7 +38722,7 @@
           "languageReferenceID" : "595f1f247839d1f329e87310d0d6a72a",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "のりきる",
-          "retrievalOrder" : 24,
+          "retrievalOrder" : 25,
           "summary" : "to weather (a storm, rough seas)"
         },
         {
@@ -38696,7 +38741,7 @@
           "languageReferenceID" : "12723224fe71cf25f488d6138b7952e2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "てんぐ",
-          "retrievalOrder" : 20,
+          "retrievalOrder" : 21,
           "summary" : "red-faced and long-nosed goblin said to reside deep in the mountains"
         },
         {
@@ -38715,7 +38760,7 @@
           "languageReferenceID" : "f06eb9b97205074a58ccbc002fb676fe",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "つづる",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "to spell"
         },
         {
@@ -38734,7 +38779,7 @@
           "languageReferenceID" : "6df0cce1d9540dd92c3e3275fb79d166",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "あみだ",
-          "retrievalOrder" : 21,
+          "retrievalOrder" : 22,
           "summary" : "lottery in which participants trace a line across a lattice pattern to determine the winner"
         },
         {
@@ -38753,7 +38798,7 @@
           "languageReferenceID" : "97faa66ece8e6ebb59b44e36890bede2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "うせつ",
-          "retrievalOrder" : 39,
+          "retrievalOrder" : 40,
           "summary" : "turning to the right"
         },
         {
@@ -38772,7 +38817,7 @@
           "languageReferenceID" : "2976c59d4723f225e3715f00196a9bb2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "たよう",
-          "retrievalOrder" : 33,
+          "retrievalOrder" : 34,
           "summary" : "a lot of things to do"
         },
         {
@@ -38791,7 +38836,7 @@
           "languageReferenceID" : "80ff21639feb4f365c43e803509910d2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "させつ",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "turning to the left"
         },
         {
@@ -38810,7 +38855,7 @@
           "languageReferenceID" : "fdb704559b1ae8fd2b0dfef5a1fea4c2",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "よくばる",
-          "retrievalOrder" : 34,
+          "retrievalOrder" : 35,
           "summary" : "to be greedy"
         },
         {
@@ -38829,7 +38874,7 @@
           "languageReferenceID" : "70659a590bdcb3ec3d602864a3d6494f",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "しのぶ",
-          "retrievalOrder" : 37,
+          "retrievalOrder" : 38,
           "summary" : "to recollect"
         },
         {
@@ -38848,7 +38893,7 @@
           "languageReferenceID" : "b9b5658e52129cf9cc66bab837a53c92",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "みくだす",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "to look down (on)"
         },
         {
@@ -38867,7 +38912,7 @@
           "languageReferenceID" : "3d55893b6914855820a491c9368bf60d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "すけっと",
-          "retrievalOrder" : 19,
+          "retrievalOrder" : 20,
           "summary" : "foreign player (hired to strengthen a team)"
         },
         {
@@ -38886,7 +38931,7 @@
           "languageReferenceID" : "4689d437bc2bcd408a62a05006fa3e4d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "うらづける",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "to support (a theory, claim, etc.)"
         },
         {
@@ -38905,7 +38950,7 @@
           "languageReferenceID" : "779e2353692131e81a60678cdbc4ee3e",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ひえしょう",
-          "retrievalOrder" : 31,
+          "retrievalOrder" : 32,
           "summary" : "sensitivity to cold"
         },
         {
@@ -38924,7 +38969,7 @@
           "languageReferenceID" : "335d7cafac97c8e6f464fd0b61b81bce",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "へんそう",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "return to sender"
         },
         {
@@ -38943,7 +38988,7 @@
           "languageReferenceID" : "5c227182ac8622f0a0a5408367899424",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ほうが",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "starting to appear"
         },
         {
@@ -38957,36 +39002,8 @@
           "languageReferenceID" : "fdabb4a96f87028ad193e2a5ea7508c3",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "じゅうようし",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "attaching importance to"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "2843441"
-          ],
-          "headword" : "訊く",
-          "languageReferenceID" : "1ac2c1b260ff2d2cf31dff8285d520b3",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "きく",
-          "retrievalOrder" : 57,
-          "summary" : "to ask"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "2021030"
-          ],
-          "headword" : "摂る",
-          "languageReferenceID" : "d54065984da2cc95de117b5dfce062ec",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "とる",
-          "retrievalOrder" : 59,
-          "summary" : "to have (e.g. lunch)"
         }
       ],
       "sections" : [
@@ -39113,7 +39130,7 @@
           "languageReferenceID" : "725ad020311fc37bf9f5f4f67073b842",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ひく",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "to go down (e.g. of swelling)"
         },
         {
@@ -39138,7 +39155,7 @@
           "languageReferenceID" : "4e3e8bed76300db26e5524473fcd3134",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "たてる",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "to raise (a cloud of dust, smoke, etc.)"
         },
         {
@@ -39157,7 +39174,7 @@
           "languageReferenceID" : "40d6e4fa1aa90a4025e1edef5d451be5",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "を",
-          "retrievalOrder" : 58,
+          "retrievalOrder" : 59,
           "summary" : "indicates direct object of action"
         },
         {
@@ -39176,7 +39193,7 @@
           "languageReferenceID" : "db0c5961fc8bc9acb9fd427a5a1abb2d",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ふう",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "folk song (genre of the Shi Jing)"
         },
         {
@@ -39201,7 +39218,7 @@
           "languageReferenceID" : "de780c545adbed8770d7c1532847f5cb",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ころ",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "time of year"
         },
         {
@@ -39270,7 +39287,7 @@
           "languageReferenceID" : "f4584d06c91cc6ad5f450510eaab6181",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "つながる",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "to connect (of a telephone call, the internet, etc.)"
         },
         {
@@ -39339,7 +39356,7 @@
           "languageReferenceID" : "fff81760f08f5ba081ae21002eb50839",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "どく",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "to move (out of the way)"
         },
         {
@@ -39377,7 +39394,7 @@
           "languageReferenceID" : "ddec476eed56f6c251360a66bea60ebc",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ぜい",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 53,
           "summary" : "group (of people, competitors, companies, etc.)"
         },
         {
@@ -39502,7 +39519,7 @@
           "languageReferenceID" : "a0887acec4f8cb6c8ba53047ef5dc316",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "う",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 55,
           "summary" : "the Rabbit (fourth sign of the Chinese zodiac)"
         },
         {
@@ -39521,27 +39538,8 @@
           "languageReferenceID" : "611cff21c6baf4c231e226c8aa244357",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ふん",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 54,
           "summary" : "minute (unit of time)"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "1527090"
-          ],
-          "headword" : "未",
-          "languageReferenceID" : "046d9506285dc6bec55c4cec0eb8f64b",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "ひつじ",
-          "retrievalOrder" : 59,
-          "summary" : "the Sheep (eighth sign of the Chinese zodiac)"
         },
         {
           "chips" : [
@@ -39673,7 +39671,7 @@
           "languageReferenceID" : "20fac7a2f8dbcedfc5da34f3e5beb048",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "はえ",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 57,
           "summary" : "fly (any insect of infraorder Muscomorpha)"
         },
         {
@@ -39863,7 +39861,7 @@
           "languageReferenceID" : "eb5dbd064543c074b977de95af13fdef",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "がつ",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "month (of the year)"
         },
         {
@@ -39882,7 +39880,7 @@
           "languageReferenceID" : "8775186b264db56371c45d0bb3ee6ff6",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "すげ",
-          "retrievalOrder" : 57,
+          "retrievalOrder" : 58,
           "summary" : "sedge (Cyperaceae spp., esp. members of genus Carex)"
         },
         {
@@ -39920,7 +39918,7 @@
           "languageReferenceID" : "8002e45af42eed0ccc9d9f55a129c5b7",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "い",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "the Boar (twelfth sign of the Chinese zodiac)"
         },
         {
@@ -39939,7 +39937,7 @@
           "languageReferenceID" : "fe4957c1401df2ebdbfa25ecc1d3fc57",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "いぬ",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "the Dog (eleventh sign of the Chinese zodiac)"
         },
         {
@@ -40092,13 +40090,27 @@
 
           ],
           "entSeq" : [
+            "1118380"
+          ],
+          "headword" : "ヘッド",
+          "languageReferenceID" : "0c8580e8b1e31486c3fd59aaaa6e9990",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ヘッド",
+          "retrievalOrder" : 40,
+          "summary" : "head (of the body)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
             "2243120"
           ],
           "headword" : "相",
           "languageReferenceID" : "76c74e50ecf77e960860f107494e54e5",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "しょう",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "minister (of a government department)"
         },
         {
@@ -40112,7 +40124,7 @@
           "languageReferenceID" : "93a998d61cc5777185bcf6cade6f656a",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "べい",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "(United States of) America"
         },
         {
@@ -40126,7 +40138,7 @@
           "languageReferenceID" : "525af7a87097616e431ac3a1e524f37f",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "が",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "indicates the subject of a sentence"
         },
         {
@@ -40140,7 +40152,7 @@
           "languageReferenceID" : "5e29c737e6b459090b26c80f7e6d935b",
           "match" : "source=0 english tokenGloss romaji=0",
           "reading" : "ね",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 56,
           "summary" : "the Rat (first sign of the Chinese zodiac)"
         }
       ],
@@ -43888,7 +43900,7 @@
     {
       "covers" : "Romaji for homophones",
       "examples" : {
-        "count" : 100,
+        "count" : 101,
         "primaryEntry" : "8d8af9d02a7d3de3d1c6da26be309061",
         "title" : "View 50+ Example Sentences"
       },
@@ -45333,7 +45345,7 @@
           "languageReferenceID" : "d288749512ac75f452f7628076d34d3a",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つく",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "to be attached, to be connected with, to adhere, to stick, to cling"
         },
         {
@@ -45366,6 +45378,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "24",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2831062"
+          ],
+          "headword" : "てる",
+          "languageReferenceID" : "6da9099e05a76b77e2cbc9fb65471803",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "てる",
+          "retrievalOrder" : 23,
+          "summary" : "to be ...-ing"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "29",
               "tier" : "very common"
             }
@@ -45377,7 +45408,7 @@
           "languageReferenceID" : "4dc69a7fe4306cf80cd8208337551951",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "って",
-          "retrievalOrder" : 36,
+          "retrievalOrder" : 37,
           "summary" : "you said, he said, she said, they said"
         },
         {
@@ -45396,7 +45427,7 @@
           "languageReferenceID" : "a848c40bd5168f8fc4aa08705686993b",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たい",
-          "retrievalOrder" : 24,
+          "retrievalOrder" : 25,
           "summary" : "want to do ..., would like to do ..."
         },
         {
@@ -45415,7 +45446,7 @@
           "languageReferenceID" : "a607dd988e4d251ded3703f7737adac0",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たり",
-          "retrievalOrder" : 31,
+          "retrievalOrder" : 32,
           "summary" : "-ing and -ing (e.g. \"coming and going\")"
         },
         {
@@ -45434,7 +45465,7 @@
           "languageReferenceID" : "d569445d945ff026d249763d35f8277e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とく",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "to do something in readiness for, to get something (needful) done"
         },
         {
@@ -45453,8 +45484,27 @@
           "languageReferenceID" : "592ad46e836364832c68dcbb3d1b59e9",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つつ",
-          "retrievalOrder" : 23,
+          "retrievalOrder" : 24,
           "summary" : "while"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,364",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2643980"
+          ],
+          "headword" : "たって",
+          "languageReferenceID" : "2db96752cd235a1e78da1a688a6f600b",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "たって",
+          "retrievalOrder" : 59,
+          "summary" : "even if, even though"
         },
         {
           "chips" : [
@@ -45528,7 +45578,7 @@
           "languageReferenceID" : "bb16bc170693adb071f4c7c7ad5ecd71",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ためいき",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 57,
           "summary" : "sigh"
         },
         {
@@ -45597,7 +45647,7 @@
           "languageReferenceID" : "c213324f1b5a1527ca87a6019ca4d40e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とも",
-          "retrievalOrder" : 35,
+          "retrievalOrder" : 36,
           "summary" : "certainly, of course, to be sure, surely"
         },
         {
@@ -45616,7 +45666,7 @@
           "languageReferenceID" : "e9f59398bab53115e1f35bb6cdf49bea",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たら",
-          "retrievalOrder" : 39,
+          "retrievalOrder" : 40,
           "summary" : "if, when, after"
         },
         {
@@ -45635,7 +45685,7 @@
           "languageReferenceID" : "bd012420c0362c17a978c2d7c955d6ac",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ていばん",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "standard item, usual thing, (a) classic, go-to choice, staple, regular fixture, standard procedure, convention"
         },
         {
@@ -45673,7 +45723,7 @@
           "languageReferenceID" : "d1208f7d58340abc5759af4fa041199c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つまみ",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "knob, handle, button"
         },
         {
@@ -45698,7 +45748,7 @@
           "languageReferenceID" : "d005d8641e912ee4b72714255428699d",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "と",
-          "retrievalOrder" : 21,
+          "retrievalOrder" : 20,
           "summary" : "if, when"
         },
         {
@@ -45723,7 +45773,7 @@
           "languageReferenceID" : "dfda4ceaee180c961c9b9bb3465e6cf3",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とも",
-          "retrievalOrder" : 20,
+          "retrievalOrder" : 21,
           "summary" : "together with"
         },
         {
@@ -45773,7 +45823,7 @@
           "languageReferenceID" : "21ba6572185469c006fca40d3f42d7a5",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つかさどる",
-          "retrievalOrder" : 33,
+          "retrievalOrder" : 34,
           "summary" : "to be in charge of, to manage, to direct, to administer, to preside over"
         },
         {
@@ -45855,7 +45905,7 @@
           "languageReferenceID" : "4f0249c00c89e202e7169587b0ac465e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つみたて",
-          "retrievalOrder" : 38,
+          "retrievalOrder" : 39,
           "summary" : "saving, savings, accumulation, putting aside, reserving"
         },
         {
@@ -45950,7 +46000,7 @@
           "languageReferenceID" : "3bbffecbf6d07d2aca933285f7d69506",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たちあい",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 56,
           "summary" : "presence (e.g. of an observer), observation, observer, witness"
         },
         {
@@ -45969,7 +46019,7 @@
           "languageReferenceID" : "6cdceb34b7e76070faaf72d3e0c4d1ee",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とろ",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "fatty cut (esp. of tuna belly)"
         },
         {
@@ -46026,7 +46076,7 @@
           "languageReferenceID" : "fef06e458c85ef34dd6489c429cb548d",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たいちゅう",
-          "retrievalOrder" : 32,
+          "retrievalOrder" : 33,
           "summary" : "relating to China"
         },
         {
@@ -46045,7 +46095,7 @@
           "languageReferenceID" : "07138c49a9fa3389410bf6a7ab4048f3",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ひとごと",
-          "retrievalOrder" : 37,
+          "retrievalOrder" : 38,
           "summary" : "other people's affairs, someone else's problem"
         },
         {
@@ -46064,7 +46114,7 @@
           "languageReferenceID" : "a639ae2508baa3d371bec0891a02a47c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "てんめい",
-          "retrievalOrder" : 34,
+          "retrievalOrder" : 35,
           "summary" : "store name, shop name, restaurant name"
         },
         {
@@ -46102,7 +46152,7 @@
           "languageReferenceID" : "4a45f5fbb0b85382d3d144eaf36cf364",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たんぱく",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "light (flavor, color, etc.), simple, plain"
         },
         {
@@ -46122,7 +46172,7 @@
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ていちょう",
           "retrievalOrder" : 4,
-          "summary" : "polite, courteous, hospitable"
+          "summary" : "polite, courteous, hospitable, respectful"
         },
         {
           "chips" : [
@@ -46140,7 +46190,7 @@
           "languageReferenceID" : "234ec94427c2c4343a53441f16116a1a",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とうかん",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "mailing, posting"
         },
         {
@@ -46178,7 +46228,7 @@
           "languageReferenceID" : "3ee7a02f97b1955a575164a382ecff1c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とくとく",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "triumphantly, proudly"
         },
         {
@@ -46197,7 +46247,7 @@
           "languageReferenceID" : "594e0589e5d1f852fe2c116b49f1bfc4",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ちょうふ",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "pasting, sticking, attaching, affixing, appending"
         },
         {
@@ -46235,7 +46285,7 @@
           "languageReferenceID" : "c473c394f064ed0a9b543515fcf6ed78",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たたき",
-          "retrievalOrder" : 28,
+          "retrievalOrder" : 29,
           "summary" : "finely chopped fish or meat (sometimes seared first), mince"
         },
         {
@@ -46263,7 +46313,7 @@
           "languageReferenceID" : "9af57aa1a714f5bfccb987f000cbd3db",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "タブ",
-          "retrievalOrder" : 25,
+          "retrievalOrder" : 26,
           "summary" : "tab (character, key)"
         },
         {
@@ -46277,7 +46327,7 @@
           "languageReferenceID" : "5ef60d1a70bf79d44322478e6701f726",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たわごと",
-          "retrievalOrder" : 26,
+          "retrievalOrder" : 27,
           "summary" : "nonsense, silly talk, drivel, rubbish"
         },
         {
@@ -46291,7 +46341,7 @@
           "languageReferenceID" : "714249bc39d7a63013bbc8b45454c8cc",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たびに",
-          "retrievalOrder" : 27,
+          "retrievalOrder" : 28,
           "summary" : "each time, every time, whenever (something happens), on the occasion of"
         },
         {
@@ -46305,7 +46355,7 @@
           "languageReferenceID" : "d54065984da2cc95de117b5dfce062ec",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とる",
-          "retrievalOrder" : 29,
+          "retrievalOrder" : 30,
           "summary" : "to have (e.g. lunch), to take (e.g. vitamins)"
         },
         {
@@ -46319,7 +46369,7 @@
           "languageReferenceID" : "94b27d3d05b82dfa5e0535d683af0389",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ために",
-          "retrievalOrder" : 30,
+          "retrievalOrder" : 31,
           "summary" : "for, for the sake of, to one's advantage, in favor of, in favour of, on behalf of"
         },
         {
@@ -46333,7 +46383,7 @@
           "languageReferenceID" : "29b077042598793f3573f6db428c5bb6",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とか",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "and the like, such as, among other things, and so on"
         },
         {
@@ -46347,7 +46397,7 @@
           "languageReferenceID" : "e201378bbe7b72feea51947ab96ee6ba",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たる",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "(those) who are, (that) which is, in the capacity of"
         },
         {
@@ -46361,7 +46411,7 @@
           "languageReferenceID" : "d9190a45d1eb602a567eff47ecbb100b",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とは",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "indicates word or phrase being defined"
         },
         {
@@ -46375,7 +46425,7 @@
           "languageReferenceID" : "b0e84bfaa21c85da12cfc1a604a48f11",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "てんまんぐう",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 53,
           "summary" : "Tenmangu shrine (shrine dedicated to Sugawara no Michizane's spirit)"
         },
         {
@@ -46389,7 +46439,7 @@
           "languageReferenceID" : "2edbffe1673647d2d7978f82ecfe954f",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とういつかん",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 54,
           "summary" : "sense of unity, sense of oneness"
         },
         {
@@ -46403,7 +46453,7 @@
           "languageReferenceID" : "ace347d82427c448451ae8459861a6a8",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "となる",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 55,
           "summary" : "to become, to be"
         },
         {
@@ -46417,36 +46467,8 @@
           "languageReferenceID" : "6a4409ddd25f76b3ce1b09c4ba473854",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たようせい",
-          "retrievalOrder" : 57,
-          "summary" : "diversity, variety"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1418300"
-          ],
-          "headword" : "探検隊",
-          "languageReferenceID" : "e7101fa492118ae08771cd43232d04db",
-          "match" : "source=0 english romajiOnly romaji=2",
-          "reading" : "たんけんたい",
           "retrievalOrder" : 58,
-          "summary" : "exploration party, expedition team"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1599130"
-          ],
-          "headword" : "取引先",
-          "languageReferenceID" : "ce708bd5dab187c0f0a40197be1fa97c",
-          "match" : "source=0 english romajiOnly romaji=2",
-          "reading" : "とりひきさき",
-          "retrievalOrder" : 59,
-          "summary" : "customer, client, client company, business connection, trade partner"
+          "summary" : "diversity, variety"
         }
       ],
       "sections" : [
@@ -46488,7 +46510,7 @@
           "languageReferenceID" : "d288749512ac75f452f7628076d34d3a",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つく",
-          "retrievalOrder" : 43,
+          "retrievalOrder" : 44,
           "summary" : "to be attached, to be connected with, to adhere, to stick, to cling"
         },
         {
@@ -46521,6 +46543,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "24",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2831062"
+          ],
+          "headword" : "てる",
+          "languageReferenceID" : "6da9099e05a76b77e2cbc9fb65471803",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "てる",
+          "retrievalOrder" : 23,
+          "summary" : "to be ...-ing"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "29",
               "tier" : "very common"
             }
@@ -46532,7 +46573,7 @@
           "languageReferenceID" : "4dc69a7fe4306cf80cd8208337551951",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "って",
-          "retrievalOrder" : 36,
+          "retrievalOrder" : 37,
           "summary" : "you said, he said, she said, they said"
         },
         {
@@ -46551,7 +46592,7 @@
           "languageReferenceID" : "a848c40bd5168f8fc4aa08705686993b",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たい",
-          "retrievalOrder" : 24,
+          "retrievalOrder" : 25,
           "summary" : "want to do ..., would like to do ..."
         },
         {
@@ -46570,7 +46611,7 @@
           "languageReferenceID" : "a607dd988e4d251ded3703f7737adac0",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たり",
-          "retrievalOrder" : 31,
+          "retrievalOrder" : 32,
           "summary" : "-ing and -ing (e.g. \"coming and going\")"
         },
         {
@@ -46589,7 +46630,7 @@
           "languageReferenceID" : "d569445d945ff026d249763d35f8277e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とく",
-          "retrievalOrder" : 49,
+          "retrievalOrder" : 50,
           "summary" : "to do something in readiness for, to get something (needful) done"
         },
         {
@@ -46608,8 +46649,27 @@
           "languageReferenceID" : "592ad46e836364832c68dcbb3d1b59e9",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つつ",
-          "retrievalOrder" : 23,
+          "retrievalOrder" : 24,
           "summary" : "while"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,364",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2643980"
+          ],
+          "headword" : "たって",
+          "languageReferenceID" : "2db96752cd235a1e78da1a688a6f600b",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "たって",
+          "retrievalOrder" : 59,
+          "summary" : "even if, even though"
         },
         {
           "chips" : [
@@ -46683,7 +46743,7 @@
           "languageReferenceID" : "bb16bc170693adb071f4c7c7ad5ecd71",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ためいき",
-          "retrievalOrder" : 56,
+          "retrievalOrder" : 57,
           "summary" : "sigh"
         },
         {
@@ -46752,7 +46812,7 @@
           "languageReferenceID" : "c213324f1b5a1527ca87a6019ca4d40e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とも",
-          "retrievalOrder" : 35,
+          "retrievalOrder" : 36,
           "summary" : "certainly, of course, to be sure, surely"
         },
         {
@@ -46771,7 +46831,7 @@
           "languageReferenceID" : "e9f59398bab53115e1f35bb6cdf49bea",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たら",
-          "retrievalOrder" : 39,
+          "retrievalOrder" : 40,
           "summary" : "if, when, after"
         },
         {
@@ -46790,7 +46850,7 @@
           "languageReferenceID" : "bd012420c0362c17a978c2d7c955d6ac",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ていばん",
-          "retrievalOrder" : 45,
+          "retrievalOrder" : 46,
           "summary" : "standard item, usual thing, (a) classic, go-to choice, staple, regular fixture, standard procedure, convention"
         },
         {
@@ -46828,7 +46888,7 @@
           "languageReferenceID" : "d1208f7d58340abc5759af4fa041199c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つまみ",
-          "retrievalOrder" : 44,
+          "retrievalOrder" : 45,
           "summary" : "knob, handle, button"
         },
         {
@@ -46853,7 +46913,7 @@
           "languageReferenceID" : "d005d8641e912ee4b72714255428699d",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "と",
-          "retrievalOrder" : 21,
+          "retrievalOrder" : 20,
           "summary" : "if, when"
         },
         {
@@ -46878,7 +46938,7 @@
           "languageReferenceID" : "dfda4ceaee180c961c9b9bb3465e6cf3",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とも",
-          "retrievalOrder" : 20,
+          "retrievalOrder" : 21,
           "summary" : "together with"
         },
         {
@@ -46928,7 +46988,7 @@
           "languageReferenceID" : "21ba6572185469c006fca40d3f42d7a5",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つかさどる",
-          "retrievalOrder" : 33,
+          "retrievalOrder" : 34,
           "summary" : "to be in charge of, to manage, to direct, to administer, to preside over"
         },
         {
@@ -47010,7 +47070,7 @@
           "languageReferenceID" : "4f0249c00c89e202e7169587b0ac465e",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "つみたて",
-          "retrievalOrder" : 38,
+          "retrievalOrder" : 39,
           "summary" : "saving, savings, accumulation, putting aside, reserving"
         },
         {
@@ -47105,7 +47165,7 @@
           "languageReferenceID" : "3bbffecbf6d07d2aca933285f7d69506",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たちあい",
-          "retrievalOrder" : 55,
+          "retrievalOrder" : 56,
           "summary" : "presence (e.g. of an observer), observation, observer, witness"
         },
         {
@@ -47124,7 +47184,7 @@
           "languageReferenceID" : "6cdceb34b7e76070faaf72d3e0c4d1ee",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とろ",
-          "retrievalOrder" : 42,
+          "retrievalOrder" : 43,
           "summary" : "fatty cut (esp. of tuna belly)"
         },
         {
@@ -47181,7 +47241,7 @@
           "languageReferenceID" : "fef06e458c85ef34dd6489c429cb548d",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たいちゅう",
-          "retrievalOrder" : 32,
+          "retrievalOrder" : 33,
           "summary" : "relating to China"
         },
         {
@@ -47200,7 +47260,7 @@
           "languageReferenceID" : "07138c49a9fa3389410bf6a7ab4048f3",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ひとごと",
-          "retrievalOrder" : 37,
+          "retrievalOrder" : 38,
           "summary" : "other people's affairs, someone else's problem"
         },
         {
@@ -47219,7 +47279,7 @@
           "languageReferenceID" : "a639ae2508baa3d371bec0891a02a47c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "てんめい",
-          "retrievalOrder" : 34,
+          "retrievalOrder" : 35,
           "summary" : "store name, shop name, restaurant name"
         },
         {
@@ -47257,7 +47317,7 @@
           "languageReferenceID" : "4a45f5fbb0b85382d3d144eaf36cf364",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たんぱく",
-          "retrievalOrder" : 51,
+          "retrievalOrder" : 52,
           "summary" : "light (flavor, color, etc.), simple, plain"
         },
         {
@@ -47277,7 +47337,7 @@
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ていちょう",
           "retrievalOrder" : 4,
-          "summary" : "polite, courteous, hospitable"
+          "summary" : "polite, courteous, hospitable, respectful"
         },
         {
           "chips" : [
@@ -47295,7 +47355,7 @@
           "languageReferenceID" : "234ec94427c2c4343a53441f16116a1a",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とうかん",
-          "retrievalOrder" : 48,
+          "retrievalOrder" : 49,
           "summary" : "mailing, posting"
         },
         {
@@ -47333,7 +47393,7 @@
           "languageReferenceID" : "3ee7a02f97b1955a575164a382ecff1c",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とくとく",
-          "retrievalOrder" : 50,
+          "retrievalOrder" : 51,
           "summary" : "triumphantly, proudly"
         },
         {
@@ -47352,7 +47412,7 @@
           "languageReferenceID" : "594e0589e5d1f852fe2c116b49f1bfc4",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ちょうふ",
-          "retrievalOrder" : 47,
+          "retrievalOrder" : 48,
           "summary" : "pasting, sticking, attaching, affixing, appending"
         },
         {
@@ -47390,7 +47450,7 @@
           "languageReferenceID" : "c473c394f064ed0a9b543515fcf6ed78",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たたき",
-          "retrievalOrder" : 28,
+          "retrievalOrder" : 29,
           "summary" : "finely chopped fish or meat (sometimes seared first), mince"
         },
         {
@@ -47418,7 +47478,7 @@
           "languageReferenceID" : "9af57aa1a714f5bfccb987f000cbd3db",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "タブ",
-          "retrievalOrder" : 25,
+          "retrievalOrder" : 26,
           "summary" : "tab (character, key)"
         },
         {
@@ -47432,7 +47492,7 @@
           "languageReferenceID" : "5ef60d1a70bf79d44322478e6701f726",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たわごと",
-          "retrievalOrder" : 26,
+          "retrievalOrder" : 27,
           "summary" : "nonsense, silly talk, drivel, rubbish"
         },
         {
@@ -47446,7 +47506,7 @@
           "languageReferenceID" : "714249bc39d7a63013bbc8b45454c8cc",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たびに",
-          "retrievalOrder" : 27,
+          "retrievalOrder" : 28,
           "summary" : "each time, every time, whenever (something happens), on the occasion of"
         },
         {
@@ -47460,7 +47520,7 @@
           "languageReferenceID" : "d54065984da2cc95de117b5dfce062ec",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とる",
-          "retrievalOrder" : 29,
+          "retrievalOrder" : 30,
           "summary" : "to have (e.g. lunch), to take (e.g. vitamins)"
         },
         {
@@ -47474,7 +47534,7 @@
           "languageReferenceID" : "94b27d3d05b82dfa5e0535d683af0389",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "ために",
-          "retrievalOrder" : 30,
+          "retrievalOrder" : 31,
           "summary" : "for, for the sake of, to one's advantage, in favor of, in favour of, on behalf of"
         },
         {
@@ -47488,7 +47548,7 @@
           "languageReferenceID" : "29b077042598793f3573f6db428c5bb6",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とか",
-          "retrievalOrder" : 40,
+          "retrievalOrder" : 41,
           "summary" : "and the like, such as, among other things, and so on"
         },
         {
@@ -47502,7 +47562,7 @@
           "languageReferenceID" : "e201378bbe7b72feea51947ab96ee6ba",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たる",
-          "retrievalOrder" : 41,
+          "retrievalOrder" : 42,
           "summary" : "(those) who are, (that) which is, in the capacity of"
         },
         {
@@ -47516,7 +47576,7 @@
           "languageReferenceID" : "d9190a45d1eb602a567eff47ecbb100b",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とは",
-          "retrievalOrder" : 46,
+          "retrievalOrder" : 47,
           "summary" : "indicates word or phrase being defined"
         },
         {
@@ -47530,7 +47590,7 @@
           "languageReferenceID" : "b0e84bfaa21c85da12cfc1a604a48f11",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "てんまんぐう",
-          "retrievalOrder" : 52,
+          "retrievalOrder" : 53,
           "summary" : "Tenmangu shrine (shrine dedicated to Sugawara no Michizane's spirit)"
         },
         {
@@ -47544,7 +47604,7 @@
           "languageReferenceID" : "2edbffe1673647d2d7978f82ecfe954f",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "とういつかん",
-          "retrievalOrder" : 53,
+          "retrievalOrder" : 54,
           "summary" : "sense of unity, sense of oneness"
         },
         {
@@ -47558,7 +47618,7 @@
           "languageReferenceID" : "ace347d82427c448451ae8459861a6a8",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "となる",
-          "retrievalOrder" : 54,
+          "retrievalOrder" : 55,
           "summary" : "to become, to be"
         },
         {
@@ -47572,36 +47632,8 @@
           "languageReferenceID" : "6a4409ddd25f76b3ce1b09c4ba473854",
           "match" : "source=0 english romajiOnly romaji=2",
           "reading" : "たようせい",
-          "retrievalOrder" : 57,
-          "summary" : "diversity, variety"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1418300"
-          ],
-          "headword" : "探検隊",
-          "languageReferenceID" : "e7101fa492118ae08771cd43232d04db",
-          "match" : "source=0 english romajiOnly romaji=2",
-          "reading" : "たんけんたい",
           "retrievalOrder" : 58,
-          "summary" : "exploration party, expedition team"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1599130"
-          ],
-          "headword" : "取引先",
-          "languageReferenceID" : "ce708bd5dab187c0f0a40197be1fa97c",
-          "match" : "source=0 english romajiOnly romaji=2",
-          "reading" : "とりひきさき",
-          "retrievalOrder" : 59,
-          "summary" : "customer, client, client company, business connection, trade partner"
+          "summary" : "diversity, variety"
         }
       ],
       "sections" : [

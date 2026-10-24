@@ -17,7 +17,7 @@ RANKING_TOOLS = {
     "shared_tooling_sha256": SHARED,
 }
 REPORTS = {
-    "JMdict_e-*.import.json": {
+    "JMdict_e_examp-*.import.json": {
         **RANKING_TOOLS,
         "retrieval_importer_sha256": "example_sentence_retrieval_index.py",
     },

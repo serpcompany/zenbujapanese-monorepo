@@ -227,14 +227,14 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
-related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
-information when the corresponding data is available. A kana word's examples, such as それで or でも,
-are the sentences Tatoeba's word index links to it, so でも in いつでも does not count. Other words
-match their written forms and reading, in either width NFKC reads as one (Ｔシャツ and Tシャツ).
+A kana word's examples are the sentences Tatoeba's word index links to it (でも not in いつでも); others
+match their written forms and reading, in either width NFKC reads as one (Ｔシャツ, Tシャツ). JMdict's
+checked examples of its meanings lead, even one the spelling misses (食べた for 食べる), and none drops,
+so a list can pass 100. Each meaning shows its first with the page, which skips them if unreadable.
 
-Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
-`KanaHeadwordExampleTests`; core `artifact/example-retrieval.test.ts`.
+Check: the recorded `WordDetailConformanceTests` (each sense's `example`) and
+`ExampleSearchConformanceTests`; package `KanaHeadwordExampleTests`, `MeaningExamplesTests`; core
+`artifact/example-retrieval.test.ts`; UI `WordDetailUITests` (a meaning's example, or none).
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
@@ -297,7 +297,7 @@ meaning under it, and **Show Sentence Translations** controls whether sentences 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` and
 `linking.test.ts` (which pieces join into one word), `artifact/word-examples.test.ts` (which words
 are accented), and `detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests`
-and `WordMeaningTests`; UI `ImageSearchUITests` (a linked word opens its entry).
+and `WordMeaningTests`; UI `ImageSearchUITests`, `WordDetailUITests` (a linked word opens).
 
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it

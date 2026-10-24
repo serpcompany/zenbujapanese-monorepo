@@ -15,7 +15,7 @@ permissions:
 env:
   LFS_FILES: apps/ios/**,language-data/sources/**
   LFS_RECORDINGS: apps/ios/Tools/TranslateReplay/Recordings/**
-  LFS_SNAPSHOTS: language-data/sources/JMdict_e-*.gz,language-data/sources/Tatoeba-*/*,language-data/sources/KANJIDIC2-*/*,language-data/sources/EDRDG-radicals-*/*,language-data/sources/Kanji-JLPT-Waller-*/*
+  LFS_SNAPSHOTS: language-data/sources/JMdict_e_examp-*.gz,language-data/sources/Tatoeba-*/*,language-data/sources/KANJIDIC2-*/*,language-data/sources/EDRDG-radicals-*/*,language-data/sources/Kanji-JLPT-Waller-*/*
 
 jobs:
   changes:

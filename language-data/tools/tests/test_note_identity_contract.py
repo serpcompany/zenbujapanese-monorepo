@@ -4,9 +4,9 @@ import unittest
 
 from contract_checks import RESOURCES
 
-RELEASED_ENTRIES = 218_382
+RELEASED_ENTRIES = 218_948
 RELEASED_NOTE_IDENTITIES = (
-    "71b6d604f365abff0c813ba05c6ed10f2ee8b7ac1185f75471d5697b076b3bb5"
+    "eccaf3e7e4dff071c9fb2bd48079ec07433597dc8615fe0519e34f8b3b91c9e4"
 )
 KEEP_THEM = (
     "Every entry keeps the note_identity that 1.0.0 to 2.0.0 saved notes and photos under: the app "

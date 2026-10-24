@@ -135,7 +135,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `checkExamples` | — | True, or an error naming the missing or wrong example table or pack |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
-  | `resultsExamples`, `entryExamples`, `formExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated` |
+  | `resultsExamples`, `entryExamples`, `formExamples`, `meaningExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated`; for a word's meanings, each one's first checked example |
   | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and `pickedKanji` for a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A picked one-character query lists only its leading words. |
@@ -410,11 +410,11 @@ The core answers as the Swift it replaced did, which the suites pin.
 - A tokenizer analysis whose tokens don't tile the text is null; the sentence is one unlinked word.
 - **Numerals and their counter** (助数詞) link as one word when that resolves to one entry: 一人 ひとり,
   二十日 はつか, 一日 いちにち (the tokenizer's reading). 二十歳 (two entries), 十一人, or a page's word stay apart.
-- **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも,
-  何でも), so its examples are the sentences Tatoeba's word index (`ExampleWordIndex`) links to the
-  entry; at most 100, counted exactly up to 50, 51 meaning more (`ExampleSentenceResultCount`).
-  Forms are checked as `forms` folds them (`normalizeQuery`), and a sentence counts in either
-  spelling NFKC reads as one word (Ｔシャツ, Tシャツ); entries folded to one form and reading list none.
+- **A word's examples.** A kana headword such as でも also occurs inside other words (いつでも, 何でも), so
+  its examples are the sentences Tatoeba's word index (`ExampleWordIndex`) links to the entry. Forms
+  are checked as `forms` folds them (`normalizeQuery`), and a sentence counts in either spelling
+  NFKC reads as one word (Ｔシャツ, Tシャツ); entries folded to one form and reading list none. Its
+  meanings' checked examples (`sense_examples`) lead, then 100 others.
 - **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed,
   the exact phrase first. Without one, a match needs each word to be the query's in another
   inflection (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything
@@ -440,8 +440,7 @@ records keyed by JMdict entry number. `retired()` answers the release's `Retired
   (`language_data_sha256`). `checkArtifact` checks the example index as the app's
   `validateBaseCorpus` and `validateEnglishIndex` do. Reading a new artifact version is a change to
   `supportedTransforms`, reviewed with the re-recorded suites (ADR 0006).
-- `isUnreadableQuery` matches only FTS4's own query parser errors: a bare "syntax error" would hide
-  a real SQL bug as no results.
+- `isUnreadableQuery` matches only FTS4's query parser errors; "syntax error" would hide SQL bugs.
 - A query's examples are cached, so the results page's row, its sentences section, and each page of
   more share one retrieval. Sentence-list caches hold a quarter as many entries, of up to 100 each.
 - `KanjiData` refuses kanji files that aren't the versions the core reads, and a kanji with no
@@ -465,12 +464,12 @@ ready and a page's first request prepares nothing:
 - **Categories** (`browse/categories.ts`) match any sense's `partsOfSpeech`, `usage`, `fields`, or
   `dialects` labels ([`language-data/tools/README.md`](../../language-data/tools/README.md),
   `jmdict_labels.py`), or JMdict's common marker. A category's row shows the first sense that has
-  its label, so と under Nouns reads "promoted pawn", not "if, when". Most used first, a category
-  lists the words TUBELEX ranks whose first sense has the label, then those that have it only on a
-  later sense, each by TUBELEX rank, then the words TUBELEX doesn't rank, in kana order. TUBELEX
-  ranks a word by all its uses, so ranking a later sense's word among the first would put と at the
-  top of Nouns and 行く at the top of Slang. It also lists them in kana order. Labels the website
-  leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
+  its label, so 必要 under Nouns reads "necessity, need, requirement", not "necessary, needed". Most
+  used first lists the words TUBELEX ranks whose first sense has the label, then those with it only
+  on a later sense, each by TUBELEX rank, then the words TUBELEX doesn't rank, in kana order.
+  TUBELEX ranks a word by all its uses, so ranking a later sense's word among the first would put 必要
+  near the top of Nouns and 行く at the top of Slang. It also lists them in kana order. Labels the
+  website leaves out (names, and vulgar, derogatory, sensitive, or X-rated words) have no category.
 - **Ranked lists** (`browse/lists.ts`) are TUBELEX, and the Wikipedia and Jiten lists in
   `RankedLists.sqlite3`, each to rank 10,000, in bands of 1,000 ranks (`rankBand`); a band lists
   the words ranked in its range, so ranks a source row maps to no entry leave gaps. Wikipedia's and
@@ -508,8 +507,8 @@ ready and a page's first request prepares nothing:
   `tokens` are set only where the page splits the sentence differently, when a joined word the
   page's entry is written as stays whole. A `FormExampleRow` is keyed by the form's spelling alone
   and has no page entry, so its words link as no word page sees them.
-- An `ExampleCountRow`'s `listed` is at most 100, its `count` is exact up to 50 (51 means more),
-  and `truncated` says over 100 matched. A word page shows 25 examples, and more as it scrolls.
+- An `ExampleCountRow`'s `listed` is at most 100 plus a word's checked examples, its `count` exact
+  up to 50 (51 means more), and `truncated` says more matched; a page shows 25 at a time.
 - Each sentence of a Tatoeba pair has its own ID, contributor (null if none is named), and license.
 - A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel` in
   `KanjiReferenceData.json`), shown as `N` and the level, and null for a kanji his lists leave out.

@@ -208,10 +208,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
-- `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
-  or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
-  arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
-  the first that many, so it can see a screen read again what it couldn't (`ExampleRowsUITests`).
+- `ZENBU_HOLD_LINKING=1` holds back the answers linking a page of examples', a caption's, or a
+  line's words until the test posts `HeldAnswers.letGoNotice`, to see rows arrive linked;
+  `ZENBU_FAIL_LINKING=<count>` fails that many, to see a screen read again (`ExampleRowsUITests`);
+  `ZENBU_FAIL_MEANING_EXAMPLES=1` fails Word Detail's meanings' examples (`WordDetailUITests`).
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
@@ -473,11 +473,11 @@ so the website's word pages and kanji details can be checked against the app. Th
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the models the
 views draw (`WordPage`, `KanjiPage`, `FrequencyRow`, and the example clients): for a word, its
 headword, furigana (with each kanji run's per-kanji split), part of speech, pitch (with the contour
-`PitchAccentBadge` draws), senses, default frequency packs (JLPT and TUBELEX, each with the
-Frequency Details it opens), the conjugation table its part of speech opens (each form with the
-words `ConjugationsView` shows, the forms that share its spelling, and the examples its screen
-lists: every pair ID, in order, and the first 3 with their linked tokens and which of them the
-screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
+`PitchAccentBadge` draws), senses and their examples, default frequency packs (JLPT and TUBELEX,
+each with the Frequency Details it opens), the conjugation table its part of speech opens (each form
+with the words `ConjugationsView` shows, the forms that share its spelling, and the examples its
+screen lists: every pair ID, in order, and the first 3 with their linked tokens and which of them
+the screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
 metrics, meanings, readings with words and labels, elements, 24 words, and whether it has stroke
 data. The views and the suite read the same models, so the suite records what the views draw. Each
 file pins the SHA-256 of every bundled artifact it was recorded against. After an intended change to
