@@ -2,14 +2,16 @@
 
 How an app, such as the Zenbu iOS app or Tomodachi, signs a learner in to their Zenbu account and
 keeps its copy of their known words, lists, and other study data in step. The contract is
-[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), and its readable form is the
-[API reference](../api/account-api.md): every route with its auth and scopes, every field's type and
-bounds, every answer and error code, and each synced entity's operations. This guide is the order to
-use them in and the rules no schema shows. Inside the service: [`account-api.md`](account-api.md).
-Sync's subscription: [`account-billing.md`](account-billing.md), For apps.
+[`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and its
+readable form is the [API reference](../api/account-api.md): every route with its auth and scopes,
+every field with its type and bounds, every answer and error code, and each synced entity's
+operations, with an example of each. This guide is the order to use them in, and the rules no
+schema shows. How the service works inside is [`account-api.md`](account-api.md), and the
+subscription that unlocks sync is [`account-billing.md`](account-billing.md), For apps.
 
-Every app stays local-first (#374): everything works signed out and offline, and the device's copy
-is what the app shows, except that the extension saves only with the subscription
+Every app stays local-first: everything works signed out and offline, the device's copy is what the
+app shows, and the account only carries changes between devices and apps (#374). The browser
+extension is the exception: it saves only with the subscription
 ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
 
 ## The host

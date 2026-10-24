@@ -30,10 +30,12 @@ signs in and keeps its copy.
   doesn't empty it. Saving more asks to sign in again.
 - **When another account signs in, its copy replaces the browser's.** Changes not yet synced are
   lost.
-- **It signs in as an app, not as the website.** Its client is `zenbu-extension`, with a bearer
-  session. Better Auth trusts its `chrome-extension://` origin, which is never one of the
-  website's (`ACCOUNT_API_TRUSTED_ORIGINS`): that setting makes the service strip the session token
-  from every answer to the origin (#944, run B).
+- **It signs in as an app, not as the website,** with a bearer session, as `zenbu-extension`: the
+  client the account service is to add, with its scopes
+  ([#960](https://github.com/serpcompany/zenbujapanese-monorepo/issues/960)). The service has no
+  such client yet, and refuses it as `unknown_client`. Better Auth trusts its `chrome-extension://`
+  origin, which is never one of the website's (`ACCOUNT_API_TRUSTED_ORIGINS`): that setting makes
+  the service strip the session token from every answer to the origin (#944, run B).
 - **On iPhone, the Safari extension's saving is the app's, and free.**
 
 ## Why the app differs
