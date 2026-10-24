@@ -104,6 +104,9 @@ what it waited for and for how long.
   `Text`s, became two menu buttons, each as wide as its text and each with the menu's identifier.
   A `Menu` whose label has more than one `Text` gives the label
   `.accessibilityElement(children: .combine)`, so it's one button the width of its row everywhere.
+  A Mac button also hides the identifiers inside its label: a verb's part of speech is the
+  `word-detail.conjugations` button there, without its `word-detail.entry.<id>` text, so a test
+  knows a word's page by its headword (`ruby.吠える.吠=ほ|える`), as `AppLinkUITests` does.
 - **`reveal` scrolls at once toward a row a list hasn't built.** A lazy list builds a row only
   when it scrolls near it, so waiting for one below the screen can't work. `reveal` waits up to
   five seconds for the row, but stops as soon as the list says it goes on below: a vertical
