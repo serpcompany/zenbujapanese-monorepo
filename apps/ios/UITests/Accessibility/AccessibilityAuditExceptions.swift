@@ -235,6 +235,12 @@ private let textThatScales = [
     .dynamicType, .identifier("zenbu-account.photos-wait"), on: ["Zenbu Account, photos waiting for storage"],
     [.phone], because: Why.scales),
   allow(
+    .dynamicType,
+    .label(
+      "Your Zenbu account holds as many photos as it can, so 1 stays on this iPhone. Delete some in the Media Library, and it syncs the next time Zenbu opens."
+    ),
+    on: ["Zenbu Account, a photo refused as too many"], [.phone], because: Why.scales),
+  allow(
     .dynamicType, .label("Managed by the Apple Account that bought it."), on: managedByApple, [.phone],
     because: Why.scales),
   allow(
