@@ -117,6 +117,14 @@ enum TestDevice {
     #endif
   }
 
+  @MainActor static func paste(_ text: String, into field: XCUIElement) {
+    #if os(macOS)
+      NSPasteboard.general.clearContents()
+      NSPasteboard.general.setString(text, forType: .string)
+      field.typeKey("v", modifierFlags: .command)
+    #endif
+  }
+
   @MainActor static func copyImage(_ data: Data) {
     #if os(macOS)
       NSPasteboard.general.clearContents()
