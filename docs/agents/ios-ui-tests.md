@@ -68,9 +68,14 @@ what it waited for and for how long.
 - **A time limit only guards against a hang.** The package's tests that await work they watch or
   hold carry `.timeLimit(.minutes(1))`. Those tests take milliseconds, so the limit trips only when
   an await never returns, which is a defect. It is never a speed limit: put one only on tests whose
-  normal run is under a hundredth of it. The limit cancels the test's task but can't abandon it, so
-  a wait a test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
-  `LaterReply.asked()` do; one that doesn't still holds up the whole run.
+  normal run is under a hundredth of it, and none on a suite that awaits nothing, which can't hang
+  on an await and which the limit can't stop (Example Sentences' place tests had one, and failed it
+  only by waiting for a thread). The limit cancels the test's task but can't abandon it, so a wait a
+  test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
+  `LaterReply.asked()` do; one that doesn't still holds up the whole run. What follows a cancelled
+  await runs too, so it can't trap: a value the await would have filled is read through `#require`.
+  A note test that indexed the notes its cut-short load never read crashed the test process, which
+  ended every test then running.
 - **A test holds nothing the others share.** The package's tests all run at once in one process,
   so a wait on something they share, or a measure of all of them, ties a test to every other.
   Every stubbed request in the process goes through CFNetwork's one thread for custom
@@ -95,6 +100,29 @@ what it waited for and for how long.
   Simulator that was up in that state ([`verification.md`](verification.md)). A test keeps its
   defaults in memory (`MemoryDefaults`), and a store it hands to an actor gets another object on
   the same values (`opened()`).
+- **A test gives its thread back.** Swift's cooperative pool, one thread per core (four on this
+  Mac), runs every package test's async work, the main-actor tests' too, which start and end there,
+  and the main thread runs every main-actor test. A step that runs for seconds without suspending
+  keeps its thread from all of them, and an `await` that doesn't suspend, on an actor that's free,
+  keeps it too. The digest test built its 64 MB file a byte at a time (27 s on a calm Mac, 54 s
+  beside a website check); the frequency pack manager installed packs and checked its files inside
+  its actor, and its store opened it in a static's initializer, where every other reader blocks its
+  thread until the first is done; tests started managers on the main actor; four recorded suites
+  hashed the same 484 MB file as they began; and the lookup and text engines ran their
+  JavaScriptCore calls on the pool. Through a run's first minute they held half of it, so a test
+  whose body takes microseconds waited 21 to 32 s for a thread on a calm Mac, 33 s beside a website
+  check, and 70 s beside a Mac package run, and on 2026-10-22 every test with a minute's limit ran
+  out together. Work that takes seconds runs on a queue of its own and is awaited: the pack store
+  and manager and the two engines each have a serial queue for an executor, and a test starts a
+  manager with `FrequencyPackManager.started` and hashes or builds anything slow with
+  `apartFromThePool`. A fixture is built in bulk, not an element at a time, and a value tests share
+  that takes seconds to make is a `Task` they await, not a `static let`. To find one, `sample` the
+  `xctest` process for 2 s every few seconds through a run's first minute and look for a test on a
+  `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main thread not
+  waiting in `mach_msg`. Each line the process logs also waits on an XPC send to the Simulator's log
+  stream (`xcodebuild` runs tests with `OS_ACTIVITY_DT_MODE=YES`), and CFNetwork logs each request
+  it starts and ends: in a quiet run, 165 threads waited out whole 2 s samples on it from 6 to 22 s
+  in, as the account tests began. That logging is CFNetwork's and Xcode's to change.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
