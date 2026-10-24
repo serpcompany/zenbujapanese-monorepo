@@ -52,7 +52,9 @@ private struct WordDetailObserver {
 
   init() async throws {
     core = PresentationCore(
-      listing: try FrequencyPackManager.freshInstall(storagePrefix: "WordDetailConformance").lists)
+      listing: try await FrequencyPackManager.started {
+        try .freshInstall(storagePrefix: "WordDetailConformance")
+      }.lists)
     let availability = await textAnalysisClient.availability()
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }

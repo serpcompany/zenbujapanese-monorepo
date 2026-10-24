@@ -21,7 +21,7 @@ final class FrequencyPackLifecycleTests {
     let optional = try animePack(in: catalog)
     let source = try animeSource()
 
-    let manager = try makeManager(catalog, storage: storage, source: source)
+    let manager = try await makeManager(catalog, storage: storage, source: source)
     let initial = try await manager.snapshot()
     #expect(initial.enabledPackIDs == bundledIDs)
     #expect(try listed(manager) == bundledIDs)
@@ -55,7 +55,7 @@ final class FrequencyPackLifecycleTests {
     try await manager.reorderEnabled([optional.packID, bundled.packID])
     #expect(try listed(manager) == [optional.packID, bundled.packID])
     quit(manager)
-    let restored = try makeManager(catalog, storage: storage, source: source)
+    let restored = try await makeManager(catalog, storage: storage, source: source)
     #expect(try await restored.snapshot().enabledPackIDs == [optional.packID, bundled.packID])
     #expect(try listed(restored) == [optional.packID, bundled.packID])
     #expect(
@@ -77,7 +77,7 @@ final class FrequencyPackLifecycleTests {
     #expect(
       try restored.lists.read("SELECT 1 AS value", [], from: optional.packID).error
         == "The list is not open")
-    let relaunched = try makeManager(catalog, storage: storage, source: source)
+    let relaunched = try await makeManager(catalog, storage: storage, source: source)
     #expect(try await relaunched.snapshot().enabledPackIDs.isEmpty)
     #expect(try listed(relaunched) == [])
   }
@@ -87,7 +87,7 @@ final class FrequencyPackLifecycleTests {
     let catalog = try FrequencyPackCatalog.bundled()
     let bundledIDs = catalog.packs.filter(\.bundled).map(\.packID)
     let optional = try animePack(in: catalog)
-    let manager = try makeManager(catalog, storage: storage, source: try animeSource())
+    let manager = try await makeManager(catalog, storage: storage, source: try animeSource())
     try await manager.download(optional.packID)
     #expect(try listed(manager) == bundledIDs + [optional.packID])
 
@@ -96,7 +96,7 @@ final class FrequencyPackLifecycleTests {
     #expect(try listed(manager) == [bundledIDs[1], optional.packID])
     #expect(try manager.lists.told()?.lists?.map(\.unavailable) == [nil, "Pack unavailable"])
 
-    let relaunched = try makeManager(catalog, storage: storage, source: try animeSource())
+    let relaunched = try await makeManager(catalog, storage: storage, source: try animeSource())
     #expect(try listed(relaunched) == [bundledIDs[1]])
   }
 
@@ -105,7 +105,7 @@ final class FrequencyPackLifecycleTests {
     let catalog = try FrequencyPackCatalog.bundled()
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
     let optional = try animePack(in: catalog)
-    let manager = try makeManager(catalog, storage: storage, source: try animeSource())
+    let manager = try await makeManager(catalog, storage: storage, source: try animeSource())
     try await manager.download(optional.packID)
     try Data("not a database".utf8).write(to: installedFile(of: optional))
     try await manager.disable(jlpt.packID)
@@ -127,7 +127,7 @@ final class FrequencyPackLifecycleTests {
   func fileThatCannotChange() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
     let optional = try animePack(in: catalog)
-    let manager = try makeManager(catalog, storage: storage, source: try animeSource())
+    let manager = try await makeManager(catalog, storage: storage, source: try animeSource())
     try await manager.download(optional.packID)
     let pinned = LanguageReferenceID(rawValue: optional.smokeTest.languageReferenceID)
     let version = manager.lists.version
@@ -152,13 +152,13 @@ final class FrequencyPackLifecycleTests {
   }
 
   @Test("a staged download a crash left behind is cleared when the manager next starts")
-  func staleStagedDownload() throws {
+  func staleStagedDownload() async throws {
     let catalog = try FrequencyPackCatalog.bundled()
     try FileManager.default.createDirectory(at: storage, withIntermediateDirectories: true)
     try Data("half a download".utf8).write(
       to: installedFile(of: try animePack(in: catalog)).appendingPathExtension("staged"))
     #expect(try stagedFiles().count == 1)
-    _ = try makeManager(catalog, storage: storage, source: Data())
+    _ = try await makeManager(catalog, storage: storage, source: Data())
     #expect(try stagedFiles().isEmpty)
   }
 
@@ -191,7 +191,7 @@ final class FrequencyPackLifecycleTests {
     let optional = try animePack(in: catalog)
     let source = try animeSource()
 
-    let manager = try makeManager(catalog, storage: storage, source: source)
+    let manager = try await makeManager(catalog, storage: storage, source: source)
     try await manager.download(optional.packID)
     let stateURL = storage.appendingPathComponent("state.json")
     let savedState = try JSONSerialization.jsonObject(with: Data(contentsOf: stateURL))
@@ -200,7 +200,7 @@ final class FrequencyPackLifecycleTests {
     state["activePackID"] = optional.packID.rawValue
     try JSONSerialization.data(withJSONObject: state).write(to: stateURL)
 
-    let migrated = try makeManager(catalog, storage: storage, source: source)
+    let migrated = try await makeManager(catalog, storage: storage, source: source)
     #expect(try await migrated.snapshot().enabledPackIDs == [optional.packID])
   }
 
@@ -209,7 +209,7 @@ final class FrequencyPackLifecycleTests {
     let catalog = try FrequencyPackCatalog.bundled()
     let jlpt = try #require(catalog.packs.first { $0.packKind == .level })
 
-    let manager = try makeManager(catalog, storage: storage, source: Data())
+    let manager = try await makeManager(catalog, storage: storage, source: Data())
     #expect(try await manager.snapshot().enabledPackIDs.first == jlpt.packID)
     let meetID = try #require(jmdictID(1_198_180))
     let unlisted = LanguageReferenceID(rawValue: "ffffffffffffffffffffffffffffffff")
@@ -234,11 +234,11 @@ final class FrequencyPackLifecycleTests {
     try Data(#"{"enabledPackIDs":["\#(tubelex.packID.rawValue)"],"installedRecords":[]}"#.utf8)
       .write(to: storage.appendingPathComponent("state.json"))
 
-    let upgraded = try makeManager(catalog, storage: storage, source: Data())
+    let upgraded = try await makeManager(catalog, storage: storage, source: Data())
     #expect(try await upgraded.snapshot().enabledPackIDs == [jlpt.packID, tubelex.packID])
     #expect(try listed(upgraded) == [jlpt.packID, tubelex.packID])
     try await upgraded.disable(jlpt.packID)
-    let relaunched = try makeManager(catalog, storage: storage, source: Data())
+    let relaunched = try await makeManager(catalog, storage: storage, source: Data())
     #expect(try await relaunched.snapshot().enabledPackIDs == [tubelex.packID])
     #expect(try listed(relaunched) == [tubelex.packID])
   }
@@ -250,7 +250,7 @@ final class FrequencyPackLifecycleTests {
     let optional = try animePack(in: catalog)
     let source = try animeSource()
     let told = ToldChoices()
-    let manager = try syncedManager(catalog, told: told, quietly: { _, _ in source })
+    let manager = try await syncedManager(catalog, told: told, quietly: { _, _ in source })
     #expect(await manager.changedFromStandard() == nil)
 
     let choice = "\(optional.packID.rawValue),\(bundled.packID.rawValue),unknown.pack"
@@ -278,7 +278,7 @@ final class FrequencyPackLifecycleTests {
     let bundled = try #require(catalog.packs.first { $0.bundled && $0.packKind == .rank })
     let optional = try animePack(in: catalog)
     let told = ToldChoices()
-    let offline = try syncedManager(
+    let offline = try await syncedManager(
       catalog, told: told, quietly: { _, _ in throw URLError(.notConnectedToInternet) })
     let choice = [optional.packID, jlpt.packID, bundled.packID]
     _ = await offline.applySynced(.string(choice.map(\.rawValue).joined(separator: ",")))
@@ -291,7 +291,7 @@ final class FrequencyPackLifecycleTests {
     quit(offline)
 
     let source = try animeSource()
-    let relaunched = try syncedManager(catalog, told: told, quietly: { _, _ in source })
+    let relaunched = try await syncedManager(catalog, told: told, quietly: { _, _ in source })
     #expect(await relaunched.pendingSyncedPacks() == [optional.packID])
     try await relaunched.download(optional.packID, synced: true)
     #expect(try listed(relaunched) == [optional.packID, bundled.packID])
@@ -301,12 +301,15 @@ final class FrequencyPackLifecycleTests {
   private func syncedManager(
     _ catalog: FrequencyPackCatalog, told: ToldChoices,
     quietly: @escaping FrequencyPackManager.Download
-  ) throws -> FrequencyPackManager {
+  ) async throws -> FrequencyPackManager {
     let relay = KeptChangeRelay()
     relay.observe { told.add($0) }
-    return try FrequencyPackManager.bundled(
-      catalog, storageDirectory: storage, relay: relay,
-      download: { _, _ in throw FrequencyPackError.invalidSource }, quietDownload: quietly)
+    let storage = storage
+    return try await .started {
+      try .bundled(
+        catalog, storageDirectory: storage, relay: relay,
+        download: { _, _ in throw FrequencyPackError.invalidSource }, quietDownload: quietly)
+    }
   }
 
   private func chosen(_ packIDs: [FrequencyPackID]) -> KeptLocalChange {
@@ -332,8 +335,8 @@ final class FrequencyPackLifecycleTests {
 
   private func makeManager(
     _ catalog: FrequencyPackCatalog, storage: URL, source: Data
-  ) throws -> FrequencyPackManager {
-    try .bundled(catalog, storageDirectory: storage, download: { _, _ in source })
+  ) async throws -> FrequencyPackManager {
+    try await .started { try .bundled(catalog, storageDirectory: storage, download: { _, _ in source }) }
   }
 
   private func quit(_ manager: FrequencyPackManager) {

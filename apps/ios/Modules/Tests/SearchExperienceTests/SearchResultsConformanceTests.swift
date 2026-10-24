@@ -117,7 +117,7 @@ private struct SearchResultsObserver {
   let core: PresentationCore
 
   init() async throws {
-    frequency = try .freshInstall(storagePrefix: "SearchResultsConformance")
+    frequency = try await .started { try .freshInstall(storagePrefix: "SearchResultsConformance") }
     core = PresentationCore(listing: frequency.lists)
   }
 

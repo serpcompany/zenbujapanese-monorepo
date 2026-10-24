@@ -27,4 +27,14 @@ extension FrequencyPackManager {
       download: { _, _ in throw CancellationError() }
     )
   }
+
+  static func started(
+    _ start: @escaping @Sendable () throws -> FrequencyPackManager
+  ) async throws -> FrequencyPackManager {
+    try await withCheckedThrowingContinuation { started in
+      DispatchQueue(label: "com.zenbujapanese.tests.frequency-pack-start").async {
+        started.resume(with: Result(catching: start))
+      }
+    }
+  }
 }
