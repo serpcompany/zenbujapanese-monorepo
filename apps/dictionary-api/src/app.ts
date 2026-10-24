@@ -86,7 +86,7 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   app.get('/v1/search/:query/examples', async context => {
     const found = await service.searchExamples(
       text(context.req.param('query'), 'query'),
-      integer(context.req.query('from'), 'from', 0, 99)
+      integer(context.req.query('from'), 'from', 0, Number.MAX_SAFE_INTEGER)
     )
     return found ? context.json(found) : context.json({ error: 'no examples' }, 404)
   })
@@ -106,9 +106,11 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   app.get('/v1/words/:entSeq/examples', async context => {
     const examples = await service.wordExamples(
       entSeq(context.req.param('entSeq')),
-      integer(context.req.query('from'), 'from', 0, 99)
+      integer(context.req.query('from'), 'from', 0, Number.MAX_SAFE_INTEGER)
     )
-    return examples ? context.json(examples) : context.json({ error: 'no such word' }, 404)
+    return examples
+      ? context.json(examples)
+      : context.json({ error: 'no such word, or no examples there' }, 404)
   })
 
   app.get('/v1/conjugations/:form/examples', async context =>

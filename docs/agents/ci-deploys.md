@@ -1,9 +1,9 @@
 # Deploy and release workflows
 
-The workflows that deploy the site, ship the services' images, and publish language data, with the
-action the language-data workflows share and the actions pinned by commit. Every workflow and what
-starts it is in [`ci.md`](ci.md). Change a workflow's section in the same pull request as the
-workflow.
+The workflows that deploy the site, ship the services' images, and publish language data, the
+monthly JMdict update that starts a release, the action the language-data workflows share, and the
+actions pinned by commit. Every workflow and what starts it is in [`ci.md`](ci.md). Change a
+workflow's section in the same pull request as the workflow.
 
 ## A job never deploys over a later run's
 
@@ -167,6 +167,47 @@ action's included, is pinned by commit SHA (see Pinned actions). What a publish 
 nothing published is overwritten, is in
 [`language-data/publishing.md`](../../language-data/publishing.md).
 
+## JMdict monthly update
+
+`.github/workflows/jmdict-update.yml` keeps JMdict current: EDRDG's licence asks sites that serve
+it to update at least once a month, and EDRDG serves only the day's file. It runs at 06:00 UTC on
+the 1st of each month, after EDRDG writes that day's export (at about 03:30), and by hand, one run
+at a time. Its one job runs on `macos-26`, since the data tools rebuild the same files on any Mac
+(uv's Python takes the Mac's zlib, which writes the Jiten ZIPs a rebuild may not change), with uv
+on the Python `rebuild_language_data.py` pins (`UV_PYTHON`). It:
+
+1. stops with a warning while a `feat/jmdict-` pull request is open, which a second would conflict
+   with;
+2. downloads `JMdict_e_examp.gz` and `JMdict_e.gz` and checks them (`refresh_jmdict.py fetch`): it
+   fails, changing nothing, when a download fails, the two are from different days, the first
+   without its example blocks isn't the second, or JMdict's DTD revision moved, and stops with a
+   notice when the export is still the pinned one;
+3. otherwise installs the packages, running no install script, pulls the Git LFS files the rebuild
+   reads, and refreshes the data as [`jmdict-updates.md`](../../language-data/jmdict-updates.md)
+   says: the source, its evidence counts, everything JMdict feeds, rebuilt with each entry's note
+   identity kept, the tokenizer suite (the one suite a runner can record), the next release and its
+   retired entries, and the core's fixtures;
+4. commits as `github-actions[bot]` on `feat/jmdict-<export date>`, refuses to push when a file Git
+   LFS tracks would be committed whole, pushes the Git LFS objects and then the branch, and opens
+   the pull request, whose Status lists what a person does on a Mac before it merges.
+
+- **The job's own token opens the pull request.** No agent identity works in a job that runs no
+  Claude: `claude[bot]`, which opens the gardening jobs' pull requests, is Claude's action's, and
+  `serp-agent[bot]` is for agents on a person's machine ([`ci-agents.md`](ci-agents.md)). So the
+  repository must let GitHub Actions create pull requests (Settings → Actions → General → Workflow
+  permissions); otherwise the run fails once the branch is pushed, and says how to finish. GitHub
+  runs no workflow for a pull request a workflow's token opened, so its checks and review start with
+  a person's first push to it.
+- **The token stays out of what the job runs.** It may push branches and open pull requests
+  (`contents: write`, `pull-requests: write`) and read the packages. The checkout keeps no
+  credentials, the install runs no script, and only the three steps that call `gh`, pull Git LFS
+  files, or push read `GH_TOKEN`; git gets it as a header for the one command. The token can push,
+  so the job's actions are pinned by commit.
+
+`tools/checks/src/jmdict-update-workflow.test.ts` holds the job to this and runs its first and last
+steps against a stand-in for `gh` and a scratch remote with Git LFS, and
+`tools/checks/src/jmdict-update-export.test.ts` runs its download step against a stand-in for EDRDG.
+
 ## The package-language-data action
 
 `.github/actions/package-language-data/action.yml` is shared by both language-data workflows, and
@@ -190,26 +231,29 @@ needs a checkout. It:
 
 ## Pinned actions
 
-A workflow that reads a secret runs every action at a pinned commit. A tag such as `@v5` can be
-moved to new code, which would then run with the bucket's token, the registry's, Cloudflare's, or
-Claude's. Those are the release workflow, the three deploy workflows, and the three that run
-Claude; a workflow with no secret names its actions by major-version tag.
+A workflow that reads a secret, or whose token can push, runs every action at a pinned commit. A
+tag such as `@v5` can be moved to new code, which would then run with the bucket's token, the
+registry's, Cloudflare's, Claude's, or one that pushes. Those are the release workflow, the three
+deploy workflows, the three that run Claude, and the JMdict monthly update; any other names its
+actions by major-version tag.
 `tools/checks/src/workflow-rules.test.ts` holds the pins, and this table, to that.
 
-- `anthropics/claude-code-action` is at v1.0.247. It was pinned there because v1.0.248 seemed to
-  fail every run, but a revoked `CLAUDE_CODE_OAUTH_TOKEN` failed them, and v1.0.247 failed the
-  same way ([`ci-agents.md`](ci-agents.md), Claude's app and token). A review ran with the token
-  again on 2026-10-11, so nothing waits on it now; moving the pin to the latest release is in
-  [`harness-debt.md`](../harness-debt.md).
+- `anthropics/claude-code-action` is at v1.0.258, its latest release on 2026-10-22, which installs
+  Claude Code 2.1.308. The three workflows that run it run only when their file is `main`'s, so a
+  pull request that moves the pin can't try it: the first review after the merge is its test
+  ([`ci-agents.md`](ci-agents.md), Code review). Moving it also moves the Claude Code version a
+  dry run of the review uses ([`ci-review.md`](ci-review.md), Trying a change to the review).
 - `pnpm/action-setup` is at v6.0.10, the commit its `v6` tag named when it was pinned.
+- `astral-sh/setup-uv` is at v10.3.2, its latest release on 2026-10-22; the project keeps no
+  floating major tag. Only the JMdict monthly update uses it, with its cache off.
 
 To update one, pin the new release's commit and change this table in the same pull request.
 
 | Action | Commit | Version | Used in |
 | --- | --- | --- | --- |
-| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/language-data-release.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
-| `actions/setup-node` | `a0853c24544627f65ddf259abe73b1d18a591444` | v5.0.0 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
-| `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/claude.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/checkout` | `fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09` | v5.1.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/jmdict-update.yml`, `.github/workflows/language-data-release.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `actions/setup-node` | `a0853c24544627f65ddf259abe73b1d18a591444` | v5.0.0 | `.github/workflows/claude.yml`, `.github/workflows/jmdict-update.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
+| `pnpm/action-setup` | `0977fd99725f1db4007ccb2928dbb4e90d06cc86` | v6.0.10 | `.github/workflows/claude.yml`, `.github/workflows/jmdict-update.yml`, `.github/workflows/maintenance.yml`, `.github/workflows/web-deploy.yml` |
 | `actions/upload-artifact` | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` | v7.0.2 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
 | `actions/cache` | `caa296126883cff596d87d8935842f9db880ef25` | v5.1.0 | `.github/workflows/dictionary-api-deploy.yml`, `.github/actions/package-language-data/action.yml` |
 | `actions/setup-python` | `ece7cb06caefa5fff74198d8649806c4678c61a1` | v6.3.0 | `.github/actions/package-language-data/action.yml` |
@@ -217,4 +261,5 @@ To update one, pin the new release's commit and change this table in the same pu
 | `docker/build-push-action` | `c3c9e263c25d99ce0380d002d59b67737d91b0dc` | v7.4.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
 | `docker/login-action` | `dbcb813823bdd20940b903addbd779551569679f` | v4.6.0 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml`, `.github/workflows/web-deploy.yml` |
 | `sigstore/cosign-installer` | `6f9f17788090df1f26f669e9d70d6ae9567deba6` | v4.1.2, installing cosign v3.1.3 | `.github/workflows/account-api-deploy.yml`, `.github/workflows/dictionary-api-deploy.yml` |
-| `anthropics/claude-code-action` | `2dca132ff0e0c4094ce6048b422c6915a071210b` | v1.0.247 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |
+| `astral-sh/setup-uv` | `07a047e608db84b3d8c06cd9a7c7dcc9c355c18e` | v10.3.2 | `.github/workflows/jmdict-update.yml` |
+| `anthropics/claude-code-action` | `6b6870e649b5ff408753befeaee5fc7989d4e6a9` | v1.0.258 | `.github/workflows/claude.yml`, `.github/workflows/code-review.yml`, `.github/workflows/maintenance.yml` |

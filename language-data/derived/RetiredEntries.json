@@ -1,5 +1,26 @@
 {
   "schema": "zenbu.retired-entries.v1",
-  "language_data_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
-  "entries": []
+  "language_data_sha256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
+  "entries": [
+    {
+      "ent_seq": 1435240,
+      "retired_in": "2026.10.6",
+      "replacement": null
+    },
+    {
+      "ent_seq": 1498230,
+      "retired_in": "2026.10.6",
+      "replacement": null
+    },
+    {
+      "ent_seq": 1905600,
+      "retired_in": "2026.10.6",
+      "replacement": null
+    },
+    {
+      "ent_seq": 1965620,
+      "retired_in": "2026.10.6",
+      "replacement": null
+    }
+  ]
 }

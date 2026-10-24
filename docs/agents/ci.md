@@ -20,7 +20,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 
 | Workflow | File | Starts on | Section in |
 | --- | --- | --- | --- |
-| `Repository` | `.github/workflows/repository.yml` | Every pull request; the merge queue | This doc |
+| `Repository` | `.github/workflows/repository.yml` | Every pull request; merge queue | This doc |
 | `Pull request` | `.github/workflows/pull-request.yml` | Every pull request, again when its title or body is edited; the merge queue | This doc |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft | [`ci-agents.md`](ci-agents.md), [`ci-review.md`](ci-review.md) |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment | [`ci-agents.md`](ci-agents.md) |
@@ -35,6 +35,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `iOS` | `.github/workflows/ios.yml` | Every pull request and the merge queue, working when `apps/ios` changed; by hand | This doc |
 | `Language data build` | `.github/workflows/language-data-build.yml` | Every pull request and the merge queue, working when a release's inputs changed; pushes to `main` that change them | This doc |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand | [`ci-deploys.md`](ci-deploys.md) |
+| `JMdict monthly update` | `.github/workflows/jmdict-update.yml` | The 1st of each month at 06:00 UTC; by hand | [`ci-deploys.md`](ci-deploys.md) |
 
 "The core" is `packages/dictionary-core`, and a change to the root `package.json`, `pnpm-lock.yaml`,
 `pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
@@ -209,17 +210,16 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
   long as the job, so it has no password. See [`account-api.md`](account-api.md), Check it.
-- **`website`**, once `check` passes, starts the service from its source on a Postgres 18
-  container, with the dev mailbox and the website's local origin, then runs the website's
-  browser test against it (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the
-  desktop width): a learner registers with an emailed code, edits the profile, signs out, signs
-  in again, and deletes the account after a fresh sign-in ([`web.md`](web.md), Account pages).
-  The `Web` workflow can't run it, with no service, so it runs here, as `Dictionary API` runs
-  the website's rendered-page gate against the service it builds. A failed run is not tried
-  again, as in the `Web` workflow, and here it couldn't be: the service sends five codes from one
-  address in 10 minutes, and a run sends three. `ACCOUNT_API_SECRET` is a CI-only value. On a
-  failure it prints the service's log and keeps the test's trace, video, and screenshot as
-  `account-pages-report` for a week.
+- **`website`**, once `check` passes, starts the service from its source on a Postgres 18 container,
+  with the dev mailbox and the website's local origin, then runs the website's browser test against
+  it (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the desktop width): a learner
+  registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
+  account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
+  it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
+  against the service it builds. A failed run is not tried again, as in the `Web` workflow, and here
+  it couldn't be: the service sends five codes from one address in 10 minutes, and a run sends
+  three. `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints the service's log and keeps
+  the test's trace, video, and screenshot as `account-pages-report` for a week.
 
 ## iOS
 
@@ -239,7 +239,7 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
   and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon,
   privacy strings, and entitlements), that every Swift package the app links has a license text with
   its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
-  (`test_simulator.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
+  and its keeper (`test_simulator.py`, `test_simulator_keeper.py`, `test_simulator_devices.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
   `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
   and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents

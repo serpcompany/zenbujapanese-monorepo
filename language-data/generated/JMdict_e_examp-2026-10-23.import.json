@@ -1,61 +1,81 @@
 {
   "source": {
     "resource_id": "SOURCE-COMPONENT-JMDICT",
-    "identity": "JMdict English export",
-    "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz",
-    "fetched_at_utc": "2026-08-10T10:55:52Z",
-    "http_last_modified": "Mon, 10 Aug 2026 03:30:21 GMT",
-    "http_etag": "\"a0ddb6-658a8f95eb0e9\"",
-    "compressed_bytes": 10542518,
-    "sha256": "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e",
+    "identity": "JMdict English export with examples",
+    "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e_examp.gz",
+    "export_date": "2026-10-23",
+    "fetched_at_utc": "2026-10-23T04:30:03Z",
+    "http_last_modified": "Fri, 23 Oct 2026 03:30:24 GMT",
+    "http_etag": "\"c7a1b0-65e7999d11e2a\"",
+    "compressed_bytes": 13083056,
+    "sha256": "5fd94895d2d8fece78d9b82910108ed554116f4f143dacc3791588552e875d32",
+    "without_examples": {
+      "identity": "JMdict English export",
+      "download_url": "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz",
+      "fetched_at_utc": "2026-10-23T04:30:03Z",
+      "http_last_modified": "Fri, 23 Oct 2026 03:30:22 GMT",
+      "http_etag": "\"a18df9-65e7999a6d1e7\"",
+      "compressed_bytes": 10587641,
+      "sha256": "b45f780bd76b56099fe36f1a6d12c7900db687592f3782280bd924dd7f3b2127",
+      "xml_bytes": 63185875,
+      "xml_sha256": "7e7516a6cd0c47e19300083470146438ded2b740b28265e263e147fc5b57a038"
+    },
     "dtd_revision": "1.09",
     "included_gloss_languages": [
       "eng"
     ],
+    "example_source": "Tatoeba sentence pairs EDRDG links to a meaning, by Tatoeba Japanese sentence ID",
     "license": "EDRDG general dictionary licence (CC BY-SA 4.0)",
     "license_url": "https://www.edrdg.org/edrdg/licence.html",
-    "documentation_url": "https://www.edrdg.org/jmdict/j_jmdict.html"
+    "documentation_url": "https://www.edrdg.org/jmdict/j_jmdict.html",
+    "examples_documentation_url": "https://www.edrdg.org/wiki/Sentence-Dictionary_Linking.html"
   },
   "transform": {
     "transform": "jmdict-to-zenbu-language-reference-data-v2",
     "source_resource_id": "SOURCE-COMPONENT-JMDICT",
-    "source_sha256": "54a6ecce385de30776e842b18ca62da7a60dfd923dc5b1f8101ce37f528e1d5e",
-    "source_entries_retained": 218382,
+    "source_sha256": "5fd94895d2d8fece78d9b82910108ed554116f4f143dacc3791588552e875d32",
+    "source_entries_retained": 218948,
     "source_entries_rejected": 0,
     "source_entries_merged": 0,
-    "prior_snapshot_database_sha256": null,
+    "prior_snapshot_database_sha256": "091514376d65b10e67ed4304d4dbe1846beb9d6f0768f11b6e1cf961e36d58b7",
     "row_delta": {
-      "added": 218382,
-      "changed": 0,
-      "deleted": 0,
-      "added_source_record_ids_sha256": "fd10301e6cd9660c8103007cc6b474f2c16f103e72a4e4970f6a4fd1d825e7ca"
+      "added": 570,
+      "changed": 822,
+      "deleted": 4,
+      "added_source_record_ids_sha256": "4e6a69dc7b7db75ec0b29e73e8bead8d1bbecd209d3b6f13ddd0da57fc1b08ad",
+      "deleted_source_record_ids": [
+        1435240,
+        1498230,
+        1905600,
+        1965620
+      ]
     },
-    "normalized_forms": 752077,
+    "normalized_forms": 754202,
     "dictionary_ranking_policy": "dictionary-best-match-v1",
     "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
     "dictionary_ranking_evidence": {
-      "form_priority_profiles": 56127,
-      "canonical_senses": 253020,
-      "gloss_atoms": 441826,
-      "sense_form_restrictions": 1929,
-      "reading_form_restrictions": 6201
+      "form_priority_profiles": 56153,
+      "canonical_senses": 253844,
+      "gloss_atoms": 443818,
+      "sense_form_restrictions": 1922,
+      "reading_form_restrictions": 6184
     },
-    "dictionary_ranking_mapping_sha256": "ab8ca65cc343d0e34a1761d1bae82af71e97891811b9a610402d2f9e341e7991",
+    "dictionary_ranking_mapping_sha256": "1bd2db6d39cfc65e1c41c0f012147bc908d84623daf5b7e72d492d34cb9e7c6b",
     "dictionary_search_index": {
       "schema": "zenbu.dictionary-search-index.v1",
       "technology": "sqlite-fts4",
-      "gloss_rows": 441826,
-      "form_rows": 752077
+      "gloss_rows": 443818,
+      "form_rows": 754202
     },
     "semantic_equivalence": {
       "normalization": "opaque-app-id-lexicographic-min-v1",
       "duplicate_groups": 3,
       "source_rows": 6
     },
-    "normalized_relationships": 36668,
+    "normalized_relationships": 36939,
     "note_identity_duplicate_groups": 3,
     "note_identity_disambiguated_entries": 6,
-    "pitch_entries": 79830,
+    "pitch_entries": 76960,
     "example_sentences": 232774,
     "example_sentence_provenance": {
       "retained_pairs": 232774,
@@ -80,6 +100,21 @@
       "retrieval_pair_id_scheme": "esp1-sha256-128-nfc-length-prefixed",
       "retrieval_provenance_row_count": "232774"
     },
+    "sense_examples": {
+      "source_examples": 32362,
+      "source_entries": 28930,
+      "linked_examples": 31638,
+      "linked_source_entries": 28349,
+      "linked_pairs": 25725,
+      "rows": 31638,
+      "entries": 28349,
+      "senses": 31064,
+      "unlinked_examples": {
+        "english_differs_from_the_bundled_pair": 392,
+        "japanese_differs_from_the_bundled_pair": 74,
+        "sentence_not_bundled": 258
+      }
+    },
     "rejection_reasons": {
       "missing_ent_seq_reading_or_english_gloss": 0
     },
@@ -100,7 +135,9 @@
       "sense/dial",
       "sense/s_inf",
       "sense/xref",
-      "sense/gloss[@xml:lang='eng']"
+      "sense/gloss[@xml:lang='eng']",
+      "sense/example/ex_srce[@exsrc_type='tat']",
+      "sense/example/ex_sent"
     ],
     "documented_transforms": [
       "Unicode NFKC and case-fold searchable forms",
@@ -129,7 +166,10 @@
       "app-owned commonness marker derived from priority on the selected display form",
       "deterministic app-owned rank score derived from documented JMdict priority tags",
       "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
-      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence"
+      "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+      "each sense's examples linked by exact join of their Tatoeba Japanese sentence ID to the bundled pair whose NFC Japanese and English both match; any other example is counted, not linked",
+      "sense examples shared by every entry with the same semantic fingerprint, in source order",
+      "an entry the previous database held keeps its note_identity; a new entry takes its computed one, or the next free suffix"
     ],
     "pitch_source_resource_id": "SOURCE-COMPONENT-UNIDIC",
     "pitch_source_sha256": "340651aa78cc02caf690f94de8809d41c4acda694226517884ecad81c51523fc",
@@ -208,16 +248,16 @@
       "decision_comment_url": "https://github.com/serpcompany/zenbujapanese-monorepo/issues/140#issuecomment-5303558635",
       "statement": "Preserve the full current example-sentence experience for version 1.0, retain all available attribution and not-supplied evidence, disclose the known uncertainty, and do not represent this owner decision as independent legal advice."
     },
-    "example_transform_sha256": "714bc94967c5fb2252635c0a1bc2ea4a963e020307b091a2cc07e1fb5db2d494",
+    "example_transform_sha256": "87fe6d2da7cc0066e32933e87db0717303461f98dc6f29d8f17627b8438ca278",
     "relationship_source_resource_id": "zenbu-word-relationships-v1",
     "relationship_source_sha256": "2c483c933f5a42baad194db9a45c1d6251e09ebcb2a40c6475ca3d984ea2dd38",
-    "import_tool_sha256": "50f6374d4ffd8bbb796f33923251a4f33b0386c3479468a6915393e6c5c3b22e",
+    "import_tool_sha256": "1d0301469715d8383ae7c393e1075b411d985a24bd346bed4cfe0268b1f172e3",
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
-    "unidic_adapter_sha256": "ca6e2c0d83c594072c999ffd600c05e06cedfe98944db0500f948af41496e028",
+    "unidic_adapter_sha256": "850af85414137aed37f4797968e3b377c66c58287af6461979e8e8e301632a74",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "database_sha256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
-    "database_bytes": 483983360
+    "database_sha256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
+    "database_bytes": 486166528
   }
 }

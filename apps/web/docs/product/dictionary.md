@@ -29,11 +29,11 @@ conformance") and rendered for nine of its cases by
 matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the
 rendered word page matches the app"), which draws every WD case through the word page's components
 and reads back what they draw. **Conjugations rendered** is
-`src/components/dictionary/conjugations.test.tsx` ("the rendered Conjugations section matches the
-app"), which does the same for every WD case's conjugation table and its forms' examples. The
-`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds,
-on pull requests that change the service, the core, the website's dictionary components or data
-code, the app's bundled data, or the suites. Unit tests are named by file and test title.
+`src/components/dictionary/conjugations.test.tsx`: every WD case's table ("the rendered Conjugations
+section matches the app") and forms' examples ("each conjugated form’s examples match the app"). The
+`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds, on
+pull requests that change the service, the core, the website's dictionary components or data code,
+the app's bundled data, or the suites. Unit tests are named by file and test title.
 
 ## Dictionary home
 
@@ -152,8 +152,8 @@ count; the line follows the #462 design's wording.
 1 Example Sentence"; "View 50+ Example Sentences" over 50). N counts the sentences that contain the
 query (see [Example Sentences section](#example-sentences-section)), or, for a deinflected or
 romaji query such as `食べた` or `miru`, the examples of the primary entry (the result written as
-the query, else the first), at most 100. With no example sentences, there's no row. A query that
-finds example sentences but no words shows only this row and the sentences.
+the query, else the first), as its page lists them. With no example sentences, there's no row. A
+query that finds example sentences but no words shows only this row and the sentences.
 
 The app's row opens an Example Sentences screen. The website has no page for it (ADR 0010), so the
 row opens the sentences where the site shows them:
@@ -317,7 +317,7 @@ in another form (plural, third person, past, or `ing`): `startled you` finds "st
 starts (`t*`), and needs a sentence with the exact words; `^` before the first matches only a
 sentence's first word (`^the`). Any other query matches the Japanese side as a substring. A
 deinflected or romaji query (`食べた`, `miru`) lists its primary entry's examples instead, the ones
-its word page lists. At most the app's 100 are listed. The dictionary service runs the app's own
+its word page lists; other lists stop at the app's 100. The dictionary service runs the app's own
 search, SQL, and FTS4 indexes, so a search lists what the app lists however many sentences it reads.
 
 - Source: App docs, Search; the core's `artifact/example-search.ts` (`retrieveEnglish`) and
@@ -494,11 +494,11 @@ the reader prefers reduced motion.
   its kana; again clears it, another moves it"; smoke "学校's kanji each highlight their part of the
   furigana".
 
-**Pitch accent.** Pitch comes from UniDic, or for a two-part compound UniDic doesn't list whole,
-such as 記者会見, from CompoundPitch; a word with neither shows no pitch. It is drawn as the app
-draws it: the reading in katakana, one mora wide each (one and a half for a combined mora such as
-キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and a
-hollow dot for the following particle. The capsule is one button that pronounces the word; screen
+**Pitch accent.** Pitch is the word's own UniDic accent, never a homophone's, or CompoundPitch's for
+a compound UniDic lacks; idioms, 〜的 words, expressions, and words with neither have none. It's drawn
+as the app draws it: the reading in katakana, one mora wide each (one and a half for a combined mora
+such as キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and
+a hollow dot for the following particle. The capsule is one button that pronounces the word; screen
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
 say it: M is the source's mora count, even where it differs from the morae drawn (#831 review).
 
@@ -506,7 +506,7 @@ say it: M is the source's mora count, even where it differs from the morae drawn
   which the app's `PitchAccentBadge.swift` draws; #462 design.
 - Check: WD `pitch` (downstep, levels, mora count, particle, source, and `graph`: the morae and each
   dot's position and level); WD rendered reads each dot's position from the drawn SVG;
-  `packages/dictionary-core/src/detail/pitch.test.ts`;
+  `packages/dictionary-core/src/detail/pitch.test.ts`; `UniDicPitchTests`; `CompoundPitchRuleTests`;
   `packages/dictionary-core/src/detail/word.test.ts`, "shows CompoundPitch when UniDic has no pitch,
   and none when neither has"; smoke "見る's pitch graph and Frequency rows match the app".
 
@@ -520,10 +520,13 @@ Frequency, Lists, Notes, and Examples.
 - Check: `packages/dictionary-core/src/detail/word.test.ts`, whose sections the page draws:
   `src/app/[locale]/dictionary/[word]/page.test.tsx`, "its sections follow the core".
 
-**Meaning.** Senses are numbered, each with its notes.
+**Meaning.** Senses are numbered, each with its notes, and under a meaning its first checked example
+(JMdict's `JMdict_e_examp`), drawn as an Examples sentence is, in the page's HTML.
 
-- Source: `MeaningSection` in `WordDetailSections.swift`.
-- Check: WD `senses`.
+- Source: `MeaningSection` in `WordDetailSections.swift`; the owner's decision on #412.
+- Check: WD `senses`, each meaning its recorded JMdict glosses, joined as JMdict joins them, and its
+  `example`, which WD rendered reads back; `src/app/[locale]/dictionary/[word]/page.test.tsx` and
+  `apps/web/e2e/word.spec.ts`, "a meaning shows its checked example under it".
 
 **Frequency.** One row per default dictionary, JLPT then YouTube, with its dot and its level or
 rank. A dictionary without the word says "Not listed" (JLPT) or "No rank" (YouTube). JLPT levels
@@ -603,27 +606,26 @@ get-the-app prompt. The app's ✓ Known capsule and encounter photo aren't shown
   the app has, as a prompt"; `apps/web/e2e/word.spec.ts`, "Lists and Notes each open the get-the-app
   prompt", at a desktop and a phone width.
 
-**Examples.** A word lists the same examples, in the same order, as the app's Word Detail, up to
-the app's 100. The page renders the first 25 and loads 25 more at a time as the learner scrolls,
-or with the Load more examples button. A line above the list gives the count: "N examples", or
-"The first 100 of more than 100 examples" when the app found more than it lists. A word without
-examples says "No source-matched examples". The section is at `#examples`, where a search's
-Example Sentences row opens it. A sentence counts in either width, Ｔシャツ or Tシャツ, as in the app.
+**Examples.** A word lists the same examples, in the same order, as the app's Word Detail: its
+meanings' checked examples, then up to the app's 100 others. The page renders the first 25 and loads
+25 more at a time as the learner scrolls, or with the Load more examples button. A line above the
+list gives the count: "N examples", or "The first N of more than N examples" when there are more. A
+word without examples says "No source-matched examples". The section is at `#examples`, where a
+search's Example Sentences row opens it. A sentence counts in either width, Ｔシャツ or Tシャツ.
 
-- Source: App docs, Dictionary and kanji details; the core's `artifact/example-retrieval.ts`; #464 (25, then
-  load more as you scroll, plus the total); #499 (readings share examples).
+- Source: App docs, Dictionary and kanji details; the core's `artifact/example-retrieval.ts`; #464
+  (25, then load more as you scroll, plus the total); #499 (readings share examples).
 - Check: WD `examples` (`listed`, `reportedCount`, `truncated`, and the first 25 in `shown`);
   `src/lib/dictionary/data.test.ts`, "a word page shows its first 25 examples, and the rest load 25
   at a time"; `src/app/[locale]/dictionary/examples/[file]/route.test.ts`, "returns the next 25 of a
-  word's examples" and "is not found for %s" (a position past the app’s 100);
-  `packages/dictionary-core/src/detail/examples.test.ts`, "exampleCountText"; loading more as the
-  learner scrolls, in a browser: `apps/web/e2e/word.spec.ts`, "loads more examples when the list
-  reaches its end, then has no more"; `#examples`:
-  `src/app/[locale]/dictionary/[word]/page.test.tsx`, "the Examples section sits at #examples, where
-  search results send their sentences", and `apps/web/e2e/word.spec.ts`, "a word's #examples opens
-  the page at its Examples section". The empty message:
+  word's examples" and "asks the dictionary for a position past the 100 sentences it matched";
+  `packages/dictionary-core/src/detail/examples.test.ts`, "exampleCountText"; scrolling for more:
+  `apps/web/e2e/word.spec.ts`, "loads more examples when the list reaches its end, then has no
+  more"; `#examples`: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "the Examples section sits
+  at #examples, where search results send their sentences", and `apps/web/e2e/word.spec.ts`, "a
+  word's #examples opens the page at its Examples section". The empty message:
   `src/app/[locale]/dictionary/[word]/page.test.tsx`, "a word without examples says so, in place of
-  a list" (要所). Either width: WD's Ｔシャツ, Ｈ, and ＮＧ, and
+  a list" (要所). Either width, and checked examples first: WD's Ｔシャツ, Ｈ, and ＮＧ, and
   `packages/dictionary-core/src/artifact/example-retrieval.test.ts`.
 
 **Example words.** Each sentence shows each word underlined, as the app splits it; an inflected
@@ -686,8 +688,7 @@ its meaning, and its class; the section is under the word's own header, so it do
 names the form and shows it with the changed ending in the accent color, with furigana only when
 the ending has kanji (来させる), and opens in place to that form. The website copies the app's
 forms exactly, including its する rule, which appends できる to the noun for the potential (愛する
-gives 愛できる); that is filed as app bug #521, and the website changes with the app when it is
-fixed.
+gives 愛できる), filed as app bug #521; the website changes with the app when it's fixed.
 
 - Source: App docs, Dictionary and kanji details (the conjugation table); `ConjugationsView` in
   `ConjugationsView.swift`, which draws the core's `detail/conjugation.ts` (`rowFurigana`) and

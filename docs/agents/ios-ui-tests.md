@@ -68,9 +68,14 @@ what it waited for and for how long.
 - **A time limit only guards against a hang.** The package's tests that await work they watch or
   hold carry `.timeLimit(.minutes(1))`. Those tests take milliseconds, so the limit trips only when
   an await never returns, which is a defect. It is never a speed limit: put one only on tests whose
-  normal run is under a hundredth of it. The limit cancels the test's task but can't abandon it, so
-  a wait a test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
-  `LaterReply.asked()` do; one that doesn't still holds up the whole run.
+  normal run is under a hundredth of it, and none on a suite that awaits nothing, which can't hang
+  on an await and which the limit can't stop (Example Sentences' place tests had one, and failed it
+  only by waiting for a thread). The limit cancels the test's task but can't abandon it, so a wait a
+  test writes must end when its task is cancelled, as `until`, `HeldRetries`, and
+  `LaterReply.asked()` do; one that doesn't still holds up the whole run. What follows a cancelled
+  await runs too, so it can't trap: a value the await would have filled is read through `#require`.
+  A note test that indexed the notes its cut-short load never read crashed the test process, which
+  ended every test then running.
 - **A test holds nothing the others share.** The package's tests all run at once in one process,
   so a wait on something they share, or a measure of all of them, ties a test to every other.
   Every stubbed request in the process goes through CFNetwork's one thread for custom
@@ -86,10 +91,57 @@ what it waited for and for how long.
   threads waiting for it. Observe the object you own. Every test's memory counts in the process's
   footprint too, which the tests beside one that hashed a file raised by 38 MB, or lowered, while
   it hashed: a test of memory counts what the code under test holds (`DigestTests` counts the
-  chunks alive at once).
+  chunks alive at once). A defaults suite is a plist the Simulator's one `cfprefsd` saves, and it
+  keeps a file open for each suite holding data, 512 at most: a full run held about 190 at once,
+  and when 60 account tests a busy Mac had stalled for 17 s resumed together, it refused every
+  write for 4 s (`Couldn't write values … Path not accessible`), and two note tests read back the
+  earlier notes their store had just removed. Pushed past its limit it also leaks those files and
+  refuses writes until the Simulator restarts, which `simulator.py boot` does when it finds a
+  Simulator that was up in that state ([`verification.md`](verification.md)). A test keeps its
+  defaults in memory (`MemoryDefaults`), and a store it hands to an actor gets another object on
+  the same values (`opened()`).
+- **A test gives its thread back.** Swift's cooperative pool, one thread per core (four on this
+  Mac), runs every package test's async work, the main-actor tests' too, which start and end there,
+  and the main thread runs every main-actor test. A step that runs for seconds without suspending
+  keeps its thread from all of them, and an `await` that doesn't suspend, on an actor that's free,
+  keeps it too. The digest test built its 64 MB file a byte at a time (27 s on a calm Mac, 54 s
+  beside a website check); tests started frequency pack managers, whose start hashes the 484 MB
+  language data and every row of each pack, on the pool or on the main actor; four recorded suites
+  hashed that file as they began; and the app's own pack installs and its lookup and text engines'
+  JavaScriptCore calls run on the pool too ([`tech-debt.md`](../tech-debt.md)). Through a run's
+  first minute they held half of it, so a test whose body takes microseconds waited 21 to 32 s for a
+  thread on a calm Mac, 33 s beside a website check, and 70 s beside a Mac package run, and on
+  2026-10-22 every test with a minute's limit ran out together. Work a test does that takes seconds
+  runs apart from the pool and is awaited: a test starts a manager with
+  `FrequencyPackManager.started` and hashes or builds anything slow with `apartFromThePool`. A check
+  that walks every case synchronously gives its thread back between cases (`await Task.yield()`):
+  the crash reporting machine's every order, every kanji record, every scrubber rule, and the romaji
+  suite once held three of the four threads from 22 to 54 s of a run on a just-booted Simulator, and
+  every main-actor test without an await finished at 52 s. A fixture is built in bulk, not an
+  element at a time, and a value tests share that takes seconds to make is a `Task` they await, not
+  a `static let`. A test with a time limit reads through engines of its own
+  (`LookupClient.reading(LanguageReferenceData())`), not the shared ones every search test queues
+  on: the meaning examples tests took 50 to 56 s through `.live` beside a Mac package run. To find
+  one, `sample` the `xctest` process for 2 s every few seconds through a run's first minute and look
+  for a test on a `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main
+  thread not waiting in `mach_msg`. A line the process logs can wait too, on an XPC send to the
+  Simulator's log stream, and more of them do in the debugging mode `xcodebuild` runs tests in
+  (`OS_ACTIVITY_DT_MODE`); CFNetwork logs each request it starts and ends, so when many account
+  tests ran at once their requests piled up there, with up to five threads at a time waiting to send
+  a line. A full run sets `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO` ([`ios.md`](ios.md)), which prints
+  the same log lines.
 - **Wait for what the next step reads.** A label, a selection, or a frame read the moment after a
   tap reads the screen before the app has answered. `assertOnScreen` waits for the element to
   have a size before it measures where it is, and a Mac sheet is measured once it has opened.
+- **A row is one element.** `assertListedOnceInThisOrder` expects each identifier on exactly one
+  element, and attaches **What was on screen** when it isn't. That's how it found that a Mac `Menu`
+  doesn't fold its label into its button as iPhone and iPad do: a meaning with its note, two
+  `Text`s, became two menu buttons, each as wide as its text and each with the menu's identifier.
+  A `Menu` whose label has more than one `Text` gives the label
+  `.accessibilityElement(children: .combine)`, so it's one button the width of its row everywhere.
+  A Mac button also hides the identifiers inside its label: a verb's part of speech is the
+  `word-detail.conjugations` button there, without its `word-detail.entry.<id>` text, so a test
+  knows a word's page by its headword (`ruby.吠える.吠=ほ|える`), as `AppLinkUITests` does.
 - **`reveal` scrolls at once toward a row a list hasn't built.** A lazy list builds a row only
   when it scrolls near it, so waiting for one below the screen can't work. `reveal` waits up to
   five seconds for the row, but stops as soon as the list says it goes on below: a vertical
@@ -101,7 +153,9 @@ what it waited for and for how long.
   reads as the top of the screen. `reveal` scrolls forward, toward the part of the list not yet
   seen, until the row has a real frame above the list, and a frame that is empty for a moment
   keeps the direction it had. Reading the empty frame as "above" once sent a Mac run back and
-  forth twelve times without reaching the row.
+  forth twelve times without reaching the row. Toward a row in the tree but not laid out,
+  `ExampleRowsUITests` scrolls as far as the rows between it and a row on screen would reach, at
+  that row's height, so it gets there in a few looks however slow each look is.
 - **`reveal` looks both ways for a row it can't see.** A lazy list also lets go of a row that
   scrolls out of view, so a row above the screen is missing from the tree just as a row below
   it not yet built is. With no frame to go by, `reveal` keeps scrolling the way it was going, and
@@ -119,29 +173,32 @@ what it waited for and for how long.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
   middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
-- **A gesture after a pause of 4 s or more follows a warm-up touch.** This works around a race in
-  the iOS 26.2 Simulator (Xcode 26.2), and goes once Apple fixes it. XCUITest sends each gesture
-  through a virtual touchscreen that testmanagerd makes for it, and backboardd sometimes registers
-  that touchscreen too late, so the gesture never reaches the app. The Simulator's log then says
-  `unexpected digitizer usage pair 0xD0000` and `ignoring digitizer event … from unsupported
-  service`, or `unknown senderID`, `unknown digitizer`, and `didn't see a previous touch down or
-  range-in event … skipping event` (`xcrun simctl spawn <udid> log show --predicate 'process ==
-  "backboardd"'`). On 2026-10-20 it hit 5 of about 3,000 gestures, each the first after a pause of
-  5 to 18 s, and none of the roughly 1,500 timed after a pause under 4 s; the dark Account audit
-  lost a Back tap, a swipe, and a tap that way, each right after an audit. So `gesture(on:_:)`
-  (`ZenbuUITestCase.swift`), which every step that taps, swipes, presses, or scrolls goes
-  through, keeps the time of the last gesture. When the next comes 4 s or more after it, it first
-  taps the frontmost navigation bar's title, which does nothing anywhere in the app, then sends
-  the gesture 0.3 s later. The warm-up is sent every time that holds and nothing depends on it
-  landing, so it isn't a retry. It fails the test if the number of bars with that title changed
-  afterwards, or the gesture's element is gone. It's skipped when no title is showing, when the
-  app isn't in front, while a menu or popover is open, and for the gesture right after a step that
-  opens a row's actions or a context menu (`gestureThatOpensActions`), since a touch elsewhere
-  closes those; and on the Mac, whose tests send real pointer events. In a
-  probe of 250 audits each way, the tap straight after an audit met the race once and the tap
-  after a warm-up never did. A test that sends a gesture itself wraps it in `gesture(on:)`; the
-  only ones sent directly are the Mac's own: clicks in its Settings window, on a headword's kanji,
-  and on an example's linked word, right-clicks, wheel scrolls, and moving the pointer away.
+- **On the iPhone, a gesture after a pause of 4 s or more follows a warm-up touch.** This works
+  around a race in the iOS 26.2 Simulator (Xcode 26.2), measured on iPhone runs, and goes once Apple
+  fixes it. XCUITest sends each gesture through a virtual touchscreen that testmanagerd makes for
+  it, and backboardd sometimes registers that touchscreen too late, so the gesture never reaches the
+  app. The Simulator's log then says `unexpected digitizer usage pair 0xD0000` and `ignoring
+  digitizer event … from unsupported service`, or `unknown senderID`, `unknown digitizer`, and
+  `didn't see a previous touch down or range-in event … skipping event` (`xcrun simctl spawn <udid>
+  log show --predicate 'process == "backboardd"'`). On 2026-10-20 it hit 5 of about 3,000 gestures,
+  each the first after a pause of 5 to 18 s, and none of the roughly 1,500 timed after a pause under
+  4 s; the dark Account audit lost a Back tap, a swipe, and a tap that way, each right after an
+  audit. So `gesture(on:_:)` (`ZenbuUITestCase.swift`), which every step that taps, swipes, presses,
+  or scrolls goes through, keeps the time of the last gesture. When the next comes 4 s or more after
+  it, it first taps the frontmost navigation bar's title, which on the iPhone does nothing in the
+  app, then sends the gesture 0.3 s later. The warm-up is sent every time that holds and nothing
+  depends on it landing, so it isn't a retry. It fails the test if the number of bars with that
+  title changed afterwards, or the gesture's element is gone. It's skipped when no title is showing,
+  when the app isn't in front, while a menu or popover is open, and for the gesture right after a
+  step that opens a row's actions or a context menu (`gestureThatOpensActions`), since a touch
+  elsewhere closes those; on the Mac, whose tests send real pointer events; and on the iPad, where a
+  tap on the title isn't nothing: it scrolls the frontmost list to its top. On 日本's page at the
+  largest size a probe's tap there took the kanji 日 row off the screen and out of the tree, while a
+  tap on a section header moved nothing, so the warm-up failed the Look Up audit by taking away the
+  row it was about to tap. In a probe of 250 audits each way, the tap straight after an audit met
+  the race once and the tap after a warm-up never did. A test that sends a gesture itself wraps it
+  in `gesture(on:)`; the only ones sent directly are the Mac's own: clicks in its Settings window
+  and on a headword's kanji, right-clicks, wheel scrolls, and moving the pointer away.
 
 **The conversation tests** run against the scripted conversation of the Translate harness
 ([`translate.md`](translate.md), Simulator harness), which plays in real time. A line being

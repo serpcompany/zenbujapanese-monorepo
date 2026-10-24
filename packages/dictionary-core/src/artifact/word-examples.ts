@@ -18,7 +18,7 @@ import {
 import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
 import { normalizeQuery } from '../search/query'
 import { type ArtifactDatabase, listedIds } from './database'
-import type { EntryExamples, ExampleSentence } from './example-retrieval'
+import { type EntryExamples, type ExampleSentence, shownSenseExamples } from './example-retrieval'
 import type { FormLookup } from './lookup'
 
 export type ExamplesEntry = HighlightedEntry
@@ -286,6 +286,27 @@ export function wordExampleRows(
     capabilities,
     entSeq
   )
+}
+
+export function senseExampleRows(
+  db: ArtifactDatabase,
+  entSeq: number,
+  entry: ExamplesEntry,
+  senseCount: number,
+  capabilities: { tokenize: Tokenize; lookup: FormLookup }
+): (WordExampleRows | null)[] {
+  const shown = shownSenseExamples(db, entry.id)
+  const senses = [...shown.keys()].filter(sense => sense < senseCount).sort((a, b) => a - b)
+  const rows = exampleRows(
+    db,
+    senses.flatMap(sense => shown.get(sense) ?? []),
+    0,
+    { entry, query: normalizeQuery(entry.headword), accent: screenAccent.wordExamples },
+    capabilities,
+    entSeq
+  )
+  const bySense = new Map(senses.map((sense, index) => [sense, rows[index]]))
+  return Array.from({ length: senseCount }, (_, sense) => bySense.get(sense) ?? null)
 }
 
 export function conjugatedFormExamples(

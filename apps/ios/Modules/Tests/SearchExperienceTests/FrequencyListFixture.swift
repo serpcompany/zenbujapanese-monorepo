@@ -132,14 +132,16 @@ extension FrequencyLists {
     return listed
   }
 
-  static func freshInstall() throws -> FrequencyLists {
-    guard let freshInstalled else { throw FrequencyPackError.invalidCatalog }
-    return freshInstalled
+  static func freshInstall() async throws -> FrequencyLists {
+    guard let lists = await freshInstalled.value else { throw FrequencyPackError.invalidCatalog }
+    return lists
   }
 
-  private static let freshInstalled = try? FrequencyPackManager.freshInstall(
-    storagePrefix: "FreshInstallLists"
-  ).lists
+  private static let freshInstalled = Task {
+    try? await FrequencyPackManager.started {
+      try .freshInstall(storagePrefix: "FreshInstallLists")
+    }.lists
+  }
 }
 
 extension PresentationCore {
@@ -147,12 +149,12 @@ extension PresentationCore {
     self.init(kanji: { KanjiFiles.bundled }, frequencyLists: lists)
   }
 
-  static func freshInstall() throws -> PresentationCore {
-    guard let freshInstalled else { throw FrequencyPackError.invalidCatalog }
-    return freshInstalled
+  static func freshInstall() async throws -> PresentationCore {
+    guard let core = await freshInstalled.value else { throw FrequencyPackError.invalidCatalog }
+    return core
   }
 
-  private static let freshInstalled = (try? FrequencyLists.freshInstall()).map {
-    PresentationCore(listing: $0)
+  private static let freshInstalled = Task {
+    (try? await FrequencyLists.freshInstall()).map { PresentationCore(listing: $0) }
   }
 }

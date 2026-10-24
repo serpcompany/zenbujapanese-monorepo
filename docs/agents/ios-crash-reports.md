@@ -151,18 +151,22 @@ in: area)` builds the code from the error's type and case in snake case
 (`account_service_error.refused`), or an `NSError`'s domain and number; other errors give their
 type's name, and a code that isn't short and stable becomes `unknown`. At most four details go
 with it, and only short, stable keys and values (a status or a pack's ID). Cancellation, a lost
-connection (`HandledProblem.expectedURLErrors`: no network, a timeout, a host that can't be found
-or reached, and the like), an unreachable service, an ended session, and a `402`
-(`AccountServiceError.needsSubscription`: an account without a subscription, not a fault) send
-nothing; any other
-URL error, such as a refused certificate or an `http://` address, is sent as
-`nsurlerror_domain.<number>`. Each area and code is sent once a launch, grouped by
-`["handled-problem", area, code]`. `HandledProblemTests` checks the codes, once a launch, and that
-a message, a service's answer, or a payload never reaches the event.
+connection (`URLError.isLostConnection`, in `LostConnection.swift`: no network, data or roaming
+off, a call on the line, a timeout, a dropped connection, or a host that can't be reached), an
+ended session, and a `402` (`AccountServiceError.needsSubscription`: an account without a
+subscription, not a fault) send nothing. Any other URL error, such as a refused certificate, an
+`http://` or malformed address, or a host name that doesn't resolve, is sent as
+`nsurlerror_domain.<number>`. `AccountAPI` tells the two apart for the account: a lost connection
+is `AccountServiceError.unreachable`, and any other transport error `transportFailed`, sent as
+`account_service_error.transport_failed` with the URL error's number (`url_error`), never its
+message or address; to the learner and to sync's backoff, both are the same. Each area and code is
+sent once a launch, grouped by `["handled-problem", area, code]`. `HandledProblemTests` checks the
+codes, once a launch, and that a message, a service's answer, or a payload never reaches the
+event, and `AccountSyncRecoveryTests` which transport errors a sync calls a lost connection.
 
 | Area | Where | Codes |
 | --- | --- | --- |
-| `account_sync` | `AccountSyncScheduler` | The `AccountServiceError` case, with the HTTP status and the service's own code |
+| `account_sync` | `AccountSyncScheduler` | The `AccountServiceError` case, with the HTTP status and the service's own code, or a transport failure's `url_error` |
 | `frequency_pack` | `FrequencyPackManager` | The download's or install's error, with the pack |
 | `language_pack` | `LanguageTechnologyPack` | `bundled_pack_unverified`, `installed_pack_unverified`, or the install's or older pack's removal's error, with the pack |
 | `dictionary_core` | `DictionaryCore` | `bundle_unavailable`, `core_did_not_load` |

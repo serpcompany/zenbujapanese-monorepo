@@ -99,6 +99,7 @@ function checkExampleIndex(db: ArtifactDatabase): void {
   ) {
     refuse("its example index counts don't match its example sentences")
   }
+  if (!main.has('sense_examples')) refuse('it has no examples linked to meanings (sense_examples)')
 }
 
 function checkAttached(db: ArtifactDatabase, name: keyof typeof attachments): Map<string, string> {

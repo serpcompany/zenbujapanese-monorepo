@@ -14,6 +14,7 @@ enum LaunchHarness {
   static let accountRefusesStandInKey = "ZENBU_ACCOUNT_STAND_IN_REFUSES"
   static let holdLinkingKey = "ZENBU_HOLD_LINKING"
   static let failLinkingKey = "ZENBU_FAIL_LINKING"
+  static let failMeaningExamplesKey = "ZENBU_FAIL_MEANING_EXAMPLES"
   static let drawCountKey = "ZENBU_COUNT_DRAWS"
   static let appearanceKey = "ZENBU_APPEARANCE"
   static let openLinkKey = "ZENBU_OPEN_LINK"
@@ -71,6 +72,16 @@ enum LaunchHarness {
   }
 
   static let failsLinkingAnswers = linkingFailures(ProcessInfo.processInfo.environment)
+
+  static func meaningExamplesFail(_ environment: [String: String]) -> Bool {
+    #if DEBUG
+      environment[failMeaningExamplesKey] == "1"
+    #else
+      false
+    #endif
+  }
+
+  static let failsMeaningExamples = meaningExamplesFail(ProcessInfo.processInfo.environment)
 
   static func countsDraws(_ environment: [String: String]) -> Bool {
     #if DEBUG

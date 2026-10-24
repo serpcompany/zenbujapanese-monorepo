@@ -56,6 +56,19 @@ describe('alternativeKanji (DictionaryEntry.alternativeKanji)', () => {
 })
 
 describe('wordDetail', () => {
+  test('each meaning shows its own checked example, linked, with the page’s word marked', () => {
+    const senses = wordDetail(rows(1546850)).senses
+    const example = senses[0].example
+    expect(example?.text).toBe('この報告書は要領をえていない。')
+    expect(example?.tokens.filter(token => token.isPageWord).map(token => token.text)).toEqual([
+      '要領'
+    ])
+    expect(example?.tokens.find(token => token.text === '報告')?.link).toEqual({
+      entSeq: expect.any(Number)
+    })
+    expect(senses[1].example).toBeNull()
+  })
+
   test('要る (1546640)', () => {
     const detail = wordDetail(rows(1546640))
     expect(detail.ruby).toEqual([{ text: '要', reading: 'い' }, { text: 'る' }])
@@ -73,7 +86,11 @@ describe('wordDetail', () => {
         number: 1,
         meaning: 'to be needed, to be necessary, to be required, to be wanted, to need, to want',
         notes: ['Usually written in kana'],
-        noteText: 'Usually written in kana'
+        noteText: 'Usually written in kana',
+        example: expect.objectContaining({
+          text: '今のところお金はいらない。',
+          translation: "I don't need money at present."
+        })
       }
     ])
     expect(detail.sections.map(section => section.title)).toEqual([
@@ -185,7 +202,7 @@ describe('wordDetail', () => {
       compoundPitch: {
         downstep: 3,
         moraCount: 6,
-        sourceIdentity: 'UniDic 3.1.0 compound accent rule (C2)'
+        sourceIdentity: 'UniDic 3.1.0 compound accent rules'
       }
     }
     const detail = wordDetail({ ...rows(1546640), entry })

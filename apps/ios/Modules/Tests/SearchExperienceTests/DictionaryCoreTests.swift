@@ -39,7 +39,7 @@ struct DictionaryCoreTests {
     let screen = try await ResultsScreenRequest(
       query: SearchQuery(Self.sentence), results: results.listed, exampleCount: 0,
       learner: ResultsLearner(sort: "known-words", filter: "known")
-    ).screen(using: try .freshInstall())
+    ).screen(using: try await .freshInstall())
     guard case .results(let list) = screen else {
       Issue.record("The sentence's words have no results screen")
       return
@@ -159,7 +159,7 @@ struct DictionaryCoreTests {
     let screen = try await ResultsScreenRequest(
       query: SearchQuery("猫"), results: results.listed, exampleCount: 0,
       learner: ResultsLearner()
-    ).screen(using: try .freshInstall())
+    ).screen(using: try await .freshInstall())
     guard case .results(let list) = screen else {
       Issue.record("猫 has no results screen")
       return

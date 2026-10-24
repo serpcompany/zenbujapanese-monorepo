@@ -74,13 +74,13 @@ struct UserProfileTests {
   @MainActor
   @Test("a username an earlier version saved stays as it was until it is edited")
   func keepsAnEarlierUsername() throws {
-    let temporary = try TemporaryDefaults()
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
-    let earlier = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
+    let earlier = UserProfile(defaults: defaults, photoURL: photoURL)
     earlier.edit(ProfileFields(username: "kana.fan"))
     #expect(UserProfile.acceptedUsername(earlier.username) == nil)
 
-    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(reloaded.username == "kana.fan")
     var field = ProfileFieldEdit()
     field.show(reloaded.username)
@@ -92,9 +92,9 @@ struct UserProfileTests {
   @MainActor
   @Test("an edit tells sync what changed and what it was, and a synced value doesn't")
   func editsReachSync() throws {
-    let temporary = try TemporaryDefaults()
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
-    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
+    let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     var edits: [ProfileFields] = []
     var previous: [ProfileFields] = []
     profile.changeObserver = { change in
@@ -113,7 +113,7 @@ struct UserProfileTests {
     #expect(previous == [ProfileFields(username: "kana_fan")])
     #expect(profile.fields == ProfileFields(name: "", username: "kana.fan"))
     #expect(profile.refusal == nil)
-    #expect(UserProfile(defaults: temporary.defaults, photoURL: photoURL).username == "kana.fan")
+    #expect(UserProfile(defaults: defaults, photoURL: photoURL).username == "kana.fan")
   }
 
   @Test("signed in, a name is 1 to 100 characters, as the account requires")
@@ -179,11 +179,9 @@ struct UserProfileTests {
 
   @MainActor
   @Test("profile fields survive a reload")
-  func persistence() throws {
-    let suite = "user-profile-tests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
+  func persistence() {
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
 
     let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     profile.edit(ProfileFields(name: "Devin Schumacher", username: "devin"))
@@ -199,16 +197,16 @@ struct UserProfileTests {
   @MainActor
   @Test("a profile that can't be read is kept aside, and new fields save")
   func keepsUnreadableProfileAside() throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let unreadable = Data(#"{"name":"Devin"}"#.utf8)
-    temporary.defaults.set(unreadable, forKey: "user-profile.v1")
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+    defaults.set(unreadable, forKey: "user-profile.v1")
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
 
-    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(profile.isEmpty)
-    #expect(temporary.defaults.keptCopies(of: "user-profile.v1") == [unreadable])
+    #expect(defaults.keptCopies(of: "user-profile.v1") == [unreadable])
     profile.edit(ProfileFields(name: "Devin Schumacher"))
-    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(reloaded.name == "Devin Schumacher")
   }
 

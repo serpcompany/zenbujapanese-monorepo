@@ -67,6 +67,7 @@ struct SearchView: View {
         .dragToCloseSheet(sizeOnMac: AppWindow.inputPanelSize)
         .presentationBackground(SystemColor.panel)
     }
+    .sheetsFitItsHeightOnMac()
     .navigationTitle("Look Up")
     .searchField(
       text: $query,

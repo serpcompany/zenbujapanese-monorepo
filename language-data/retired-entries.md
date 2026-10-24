@@ -25,8 +25,13 @@ or was made for another database, and `/v1/retired` answers it
 whose entry is listed into a 410, or a 308 to its replacement
 ([`web.md`](../docs/agents/web.md), Retired word URLs).
 
-Release 2026.10.1 is the first pinned release. Releases 2026.10.2 and 2026.10.3 hold the same
-entries, so they retire none.
+Release 2026.10.1 is the first pinned release. Releases 2026.10.2 to 2026.10.5 hold the same
+entries, so they retire none. Release 2026.10.6 moves to JMdict's 2026-10-23 export, which drops
+four: 貞はる (1435240), 侮 (1498230), 深い霧 (1905600), and タイアップ番組 (1965620). No entry it holds is written
+and read as any of them, so each has no replacement and answers 410. From then on, each monthly
+JMdict update's pull request lists the entries its release drops and what each one's URL answers
+([`jmdict-updates.md`](jmdict-updates.md)), and its changes file records them, so this list isn't
+kept up by hand.
 
 ## Which entry replaces a retired one
 

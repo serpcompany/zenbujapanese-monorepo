@@ -57,7 +57,7 @@ tab-bar-only style gives each tab its own stack, as on iPhone and iPad, so the M
 no sidebar; `pnpm verify layers` refuses `sidebarAdaptable` outside `Platform/`. A sheet that iPhone
 and iPad close by dragging, as Look Up's Handwriting and Radicals panel does, uses
 `.dragToCloseSheet(sizeOnMac:)`: a Mac can't drag a sheet away, and sizes one from its content, so
-there it gets a fixed size (`AppWindow.inputPanelSize`) and a **Done** button that Escape presses.
+there it gets a **Done** button that Escape presses and a size that fits the window (`AppWindow`).
 On the Mac a click on a `List` row leaves the keyboard with the list, so a field that the click
 shows, such as a note's editor after a click on the note or on **Add Note**, never got it, and
 clicks on the field didn't move it either; the editor takes `.focusedOnceTheClickIsHandled(_:)`,
@@ -79,7 +79,8 @@ a note typed in the sheet would open the full entry), and a page's trailing bar 
 (`sheetSize(onMac:)` says so through the environment) and in the bar everywhere else. That's how a
 word's **Share** and **•••** reach the Mac's word sheet. `.tileIconLabel()` lays a row's icon tile
 beside its title on the Mac, where a `List` gives a label's icon a slot too narrow for the tile and
-the title was drawn over it.
+the title was drawn over it. A Mac `List` gives rows that share an ID, even across sections, one
+row's content, so a word page's rows carry their section (`SectionRow`).
 
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
 anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
@@ -147,7 +148,7 @@ with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 **The package's tests**, `SearchExperienceTests` and `TranslatorCoreTests`, from `apps/ios/Modules`:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<iphone-or-ipad-udid>' ONLY_ACTIVE_ARCH=YES test
 xcodebuild -scheme ZenbuJapaneseModules-Package -destination 'platform=macOS,arch=arm64' test
 ```
@@ -207,10 +208,10 @@ don't contain them), so they need no network, account, camera, or microphone:
   `ZENBU_UI_TEST_FRESH=1`, it writes the JSON, each key's notes, under
   `lookup.word-notes.v4` after the erase, so the app moves them as it would a learner's
   (`WordDetailUITests`, `SavedWordsUITests`; [`ios-local-stores.md`](ios-local-stores.md)).
-- `ZENBU_HOLD_LINKING=1` holds back every answer that links words (a page of examples, a caption's
-  or a line's words) until the test posts `HeldAnswers.letGoNotice`, so it can tell a row that
-  arrives with its words from one linked after it is drawn, and `ZENBU_FAIL_LINKING=<count>` fails
-  the first that many, so it can see a screen read again what it couldn't (`ExampleRowsUITests`).
+- `ZENBU_HOLD_LINKING=1` holds back the answers linking a page of examples', a caption's, or a
+  line's words until the test posts `HeldAnswers.letGoNotice`, to see rows arrive linked;
+  `ZENBU_FAIL_LINKING=<count>` fails that many, to see a screen read again (`ExampleRowsUITests`);
+  `ZENBU_FAIL_MEANING_EXAMPLES=1` fails Word Detail's meanings' examples (`WordDetailUITests`).
 - `ZENBU_YOUTUBE_STAND_IN=<json>` stands in for YouTube: the player page loads a local player
   that answers the IFrame API's calls (play, pause, seek, speed, and its time), and the captions
   come from the JSON's player response and timed text, through the same parsing, track choice,
@@ -418,7 +419,7 @@ deinflection, frequency chips and packs, pitch accent, and parts of speech) on a
 Simulator. Run it from `apps/ios/Modules` with:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES test
 ```
@@ -472,11 +473,11 @@ so the website's word pages and kanji details can be checked against the app. Th
 `word-detail.json` and `kanji-detail.json` in the same folder, reading each case from the models the
 views draw (`WordPage`, `KanjiPage`, `FrequencyRow`, and the example clients): for a word, its
 headword, furigana (with each kanji run's per-kanji split), part of speech, pitch (with the contour
-`PitchAccentBadge` draws), senses, default frequency packs (JLPT and TUBELEX, each with the
-Frequency Details it opens), the conjugation table its part of speech opens (each form with the
-words `ConjugationsView` shows, the forms that share its spelling, and the examples its screen
-lists: every pair ID, in order, and the first 3 with their linked tokens and which of them the
-screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
+`PitchAccentBadge` draws), senses and their examples, default frequency packs (JLPT and TUBELEX,
+each with the Frequency Details it opens), the conjugation table its part of speech opens (each form
+with the words `ConjugationsView` shows, the forms that share its spelling, and the examples its
+screen lists: every pair ID, in order, and the first 3 with their linked tokens and which of them
+the screen accents), kanji, and its first 25 examples with their linked tokens; for a kanji, its
 metrics, meanings, readings with words and labels, elements, 24 words, and whether it has stroke
 data. The views and the suite read the same models, so the suite records what the views draw. Each
 file pins the SHA-256 of every bundled artifact it was recorded against. After an intended change to
@@ -528,8 +529,8 @@ that it matches that database, its pinned source, and its import report. Without
 as with a test database, kana headwords get no examples rather than substring matches. Tatoeba's
 index writes both the adverb 然う and the suffix そう as bare そう, so those sentences link to neither.
 
-Pitch for two-part compounds UniDic doesn't list whole (記者会見) comes from `CompoundPitch.sqlite3`,
-also built against that database; `test_compound_pitch_contract.py` verifies it.
+Pitch for compounds UniDic doesn't list whole (記者会見) comes from `CompoundPitch.sqlite3`, also
+built against that database; `test_compound_pitch_contract.py` verifies it.
 
 Every frequency pack, the example word index, and the compound pitch estimates pin the SHA-256 of
 `LanguageReferenceData.sqlite3`, and each data tool records its own SHA-256 in what it builds, so
@@ -543,8 +544,8 @@ It runs every importer in order, copies each pack's import report into its catal
 moves the previous manifests of downloadable packs into `trustedHistoricalManifests` so packs a
 learner already installed stay trusted, and runs the contract tests. Then re-record the six
 suites above and review their diffs. Its README says what each tool builds, why the Python is
-pinned, how to move to a newer source snapshot, and which two tools the next rebuild first points
-at the new folders ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
+pinned, how to move to a newer source snapshot, and which two tools find their folders from their
+own ([`language-data/tools/README.md`](../../language-data/tools/README.md)).
 
 Downloadable packs are served from `cdn.zenbujapanese.com` (Cloudflare R2 bucket
 `zenbujapanese-cdn`), never from upstream hosts. Point a new or changed manifest's `downloadURL`
@@ -750,8 +751,9 @@ notes and photos an earlier version saved move to their word's Language Referenc
 ## Account and sync
 
 The app signs in to the account service as `zenbu-ios` and syncs known words, lists, watch history,
-Translate's bookmarked sentences, the profile and its photo, word notes, the Media Library, settings,
-and recent searches, as [`account-clients.md`](account-clients.md) says. The code is in `SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
+Translate's bookmarked sentences, the profile and its photo, word notes, the Media Library,
+settings, and recent searches, as [`account-clients.md`](account-clients.md) says. The code is in
+`SearchExperience`: `ZenbuAccount.swift` (sign-in, signing out, deleting),
 `AccountServiceConfiguration.swift`, `AccountAPI.swift` and `AccountSyncModels.swift` (the routes
 and their answers), `AccountTokens.swift`, `AccountSync.swift`, `AccountSyncState.swift`, and
 `ProfileSync.swift` (the queue and how results and changes apply), `AccountSyncScheduler.swift` and

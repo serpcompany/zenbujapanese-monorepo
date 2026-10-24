@@ -19,15 +19,19 @@ from tatoeba_adapter import (
 from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 from jmdict_entries import import_entries
+from jmdict_examples import check_without_examples, link_sense_examples, sense_examples
 from jmdict_normalization import normalized_text
+from jmdict_previous import PreviousDatabase
 from jmdict_relationships import assign_note_identities, link_relationships
 
 
 IMPORT_TOOL_FILES = (
     "import_jmdict.py",
     "jmdict_entries.py",
+    "jmdict_examples.py",
     "jmdict_labels.py",
     "jmdict_normalization.py",
+    "jmdict_previous.py",
     "jmdict_relationships.py",
 )
 
@@ -171,6 +175,7 @@ def import_snapshot(
     tatoeba_metadata: dict[str, object],
     relationship_source: Path,
     relationship_metadata: dict[str, object],
+    previous: PreviousDatabase,
 ) -> dict[str, object]:
     if output.exists():
         output.unlink()
@@ -181,7 +186,7 @@ def import_snapshot(
     try:
         entries = import_entries(database, source)
         note_identity_duplicate_groups, note_identity_disambiguated_entries = assign_note_identities(
-            database, entries.records
+            database, entries.records, previous.note_identities
         )
 
         pitch_entry_count = apply_unidic_pitch(
@@ -203,6 +208,7 @@ def import_snapshot(
         )
         example_sentence_count = example_sentence_summary["retained_pairs"]
         retrieval_metadata = build_indexes(database)
+        sense_example_summary = link_sense_examples(database, sense_examples(source))
 
         relationship_count = link_relationships(
             database, entries.records, entries.form_to_entry_ids, relationship_metadata
@@ -227,13 +233,8 @@ def import_snapshot(
             "source_entries_retained": entries.retained,
             "source_entries_rejected": entries.rejected,
             "source_entries_merged": 0,
-            "prior_snapshot_database_sha256": None,
-            "row_delta": {
-                "added": entries.retained,
-                "changed": 0,
-                "deleted": 0,
-                "added_source_record_ids_sha256": entries.retained_source_ids_sha256,
-            },
+            "prior_snapshot_database_sha256": previous.sha256,
+            "row_delta": previous.row_delta(database, entries.retained_source_ids_sha256),
             "normalized_forms": entries.form_count,
             "dictionary_ranking_policy": "dictionary-best-match-v1",
             "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
@@ -253,6 +254,7 @@ def import_snapshot(
             "example_sentence_provenance": example_sentence_summary,
             "example_sentence_pair_id_scheme": EXAMPLE_PAIR_ID_SCHEME,
             "example_sentence_retrieval": retrieval_metadata,
+            "sense_examples": sense_example_summary,
             "rejection_reasons": {"missing_ent_seq_reading_or_english_gloss": entries.rejected},
             "retained_fields": [
                 "ent_seq",
@@ -272,6 +274,8 @@ def import_snapshot(
                 "sense/s_inf",
                 "sense/xref",
                 "sense/gloss[@xml:lang='eng']",
+                "sense/example/ex_srce[@exsrc_type='tat']",
+                "sense/example/ex_sent",
             ],
             "documented_transforms": [
                 "Unicode NFKC and case-fold searchable forms",
@@ -301,6 +305,9 @@ def import_snapshot(
                 "deterministic app-owned rank score derived from documented JMdict priority tags",
                 "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
                 "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+                "each sense's examples linked by exact join of their Tatoeba Japanese sentence ID to the bundled pair whose NFC Japanese and English both match; any other example is counted, not linked",
+                "sense examples shared by every entry with the same semantic fingerprint, in source order",
+                "an entry the previous database held keeps its note_identity; a new entry takes its computed one, or the next free suffix",
             ],
             "pitch_source_resource_id": unidic_metadata["resource_id"],
             "pitch_source_sha256": unidic_metadata["sha256"],
@@ -355,12 +362,17 @@ def main() -> None:
     parser.add_argument("--tatoeba-metadata", type=Path, required=True)
     parser.add_argument("--relationship-source", type=Path, required=True)
     parser.add_argument("--ranking-contract", type=Path)
+    parser.add_argument("--previous-database", type=Path)
     arguments = parser.parse_args()
 
     source_metadata = json.loads(arguments.source_metadata.read_text())
     actual_sha = file_sha256(arguments.source)
     if actual_sha != source_metadata["sha256"]:
         raise SystemExit(f"source checksum mismatch: expected {source_metadata['sha256']}, got {actual_sha}")
+    try:
+        check_without_examples(arguments.source, source_metadata["without_examples"])
+    except ValueError as mismatch:
+        raise SystemExit(str(mismatch)) from mismatch
     unidic_metadata = json.loads(arguments.unidic_metadata.read_text())
     actual_unidic_sha = file_sha256(arguments.unidic_source)
     if actual_unidic_sha != unidic_metadata["sha256"]:
@@ -402,6 +414,7 @@ def main() -> None:
         tatoeba_metadata,
         arguments.relationship_source,
         relationship_metadata,
+        PreviousDatabase.read(arguments.previous_database),
     )
     arguments.manifest.write_text(
         json.dumps({"source": source_metadata, "transform": transform}, ensure_ascii=False, indent=2) + "\n"

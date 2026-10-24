@@ -7,7 +7,7 @@ import { notFound, permanentRedirect } from 'next/navigation'
 import { Fragment } from 'react'
 import { ConjugationsSection } from '@/components/dictionary/conjugations'
 import { Disclosure } from '@/components/dictionary/disclosure'
-import { ExampleList } from '@/components/dictionary/example-list'
+import { ExampleList, MeaningExample } from '@/components/dictionary/example-list'
 import { FrequencySection } from '@/components/dictionary/frequency-section'
 import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
@@ -189,7 +189,7 @@ function WordPageSection({
             {word.senses.map(sense => (
               <li key={sense.number} className="flex gap-2">
                 <span className="font-medium tabular-nums">{sense.number}.</span>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-medium" lang={sourceLang(locale)}>
                     {sense.meaning}
                   </p>
@@ -197,6 +197,14 @@ function WordPageSection({
                     <p className="text-muted-foreground">
                       <Notes notes={sense.notes} locale={locale} />
                     </p>
+                  ) : null}
+                  {sense.example ? (
+                    <MeaningExample
+                      example={sense.example}
+                      meaning={sense.number}
+                      locale={locale}
+                      text={exampleListText(locale)}
+                    />
                   ) : null}
                 </div>
               </li>

@@ -197,8 +197,10 @@ sync; what the learner sees is in the product docs'
   files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
   `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
   to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
-  failure, `5xx`, or a `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
-  retries by itself at most 10 times, only in the foreground; a local change or becoming active
+  failure (a lost connection, `unreachable`, or any other transport error, `transportFailed`, which
+  is [reported](ios-crash-reports.md#handled-failures) where a lost connection isn't), `5xx`, or a
+  `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at
+  random, and retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
   the sync. `402` (not subscribed), from the sync or a photo's upload or download, keeps every change queued
   and waits for the next change, launch, or **Sync Now**: it's never tried again by itself.
@@ -213,11 +215,14 @@ sync; what the learner sees is in the product docs'
 against a stub server (`StubAccountServer`, a `URLProtocol`, which answers on the one thread
 every stubbed request in the test process shares, so it never waits there: a reply a test holds
 is a `LaterReply`, sent when the test says, and `asked()` awaits its request;
-`StubAccountServerTests`):
+`StubAccountServerTests`; each phone's defaults are in memory, `MemoryDefaults`, and each search it
+records comes a millisecond or more after the last, `LaterEachTime`, as a learner's do, since the
+account keeps a search's time to the millisecond and searches within one come back in no order):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410` and full reads dropping only what the account forgets, even
-when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, and signing out and deleting, which keep
+when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, a transport
+error told from a lost connection, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules (`FakeAccountService+Kept.swift` holds the six newer entities', with emptied
 photos and their `emptied` mark, the search key, the two kinds of `404`, pages, and `410` once it

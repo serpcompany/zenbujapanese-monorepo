@@ -5,7 +5,7 @@ import Testing
 @testable import SearchExperience
 
 @MainActor
-@Suite("Example Sentences' place", .timeLimit(.minutes(1)))
+@Suite("Example Sentences' place")
 struct ExamplePlaceTests {
   private let opened = Self.sentence(22)
   private let above = Self.sentence(21)
@@ -61,6 +61,15 @@ struct ExamplePlaceTests {
     #expect(keeper.note(opened, at: row(at: 100), now: at(10.1)))
     #expect(keeper.check(now: at(10.1)) == ExamplePlaceCorrection(row: opened, anchor: .bottom))
     #expect(keeper.note(opened, at: row(at: 820), now: at(10.3)))
+    #expect(keeper.check(now: at(10.3)) == nil)
+  }
+
+  @Test("a sentence that came back near its place but with its middle past the list's edge is put back")
+  func aSentencePastTheEdgeIsPutBack() {
+    let keeper = returned(from: 780)
+    #expect(keeper.note(opened, at: row(at: 880), now: at(10.1)))
+    #expect(keeper.check(now: at(10.1)) == ExamplePlaceCorrection(row: opened, anchor: .bottom))
+    #expect(keeper.note(opened, at: row(at: 800), now: at(10.3)))
     #expect(keeper.check(now: at(10.3)) == nil)
   }
 

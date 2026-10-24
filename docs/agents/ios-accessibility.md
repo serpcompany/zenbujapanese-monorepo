@@ -50,7 +50,7 @@ them with `xcrun xcresulttool export attachments`.
 | Element description, action, and parent and child | Mac | Reported, not failed: they report SwiftUI's own AppKit elements (unnamed groups for stacks and sections, a List's outline, a NavigationLink row's role, a Picker's pop-up), which no app code names |
 | Contrast | Everywhere | Reported, not failed: its findings are the system's secondary and tertiary text styles, the tint on Liquid Glass, and text under the bars' scroll edge, and raising them recolors the app, a design decision |
 | Text clipped and Dynamic Type | iPad | Not run: they step the text size while the system's floating tab bar lays itself out, and the tab bar can loop in its own layout until the app stops responding. A sample of the hung app shows its main thread in `_UIFloatingTabBar`'s `layoutSubviews`, under the audit's `_axAuditCheckDynamicTextSupport`, with none of the app's code. The iPhone runs both on the same views |
-| Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, Delete Account, and the subscription's paywall and Delete Account with an App Store subscription, before and after deleting, each at the top and scrolled | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
+| Element detection | iPad: Image's sources, a frequency rank's details, Add to List, a word's photo, Handwriting, Radicals, a frequency dictionary's details, Stroke Order, Sign In, Delete Account, Report a Problem (as written, with an email that isn't an address, its details, and sent), and the subscription's paywall and Delete Account with an App Store subscription, before and after deleting, each at the top and scrolled | Not run: each shows a sheet or alert over a page that stays dimmed but legible behind it, and element detection reads that page's text from the screen as text VoiceOver can't reach. VoiceOver rightly skips it while the sheet is up, so there is no element to name. The iPhone audits the same sheets, and finds nothing behind them |
 | Dynamic Type | iPhone: Image's sources | Not run: the Image alert is Apple's, and the system rebuilds it as the audit steps into the accessibility sizes, so the audit loses what it found and can't name it. Apple sizes and scrolls its alerts itself |
 | Dynamic Type | iPhone: Image Search's text | Not run: the Text view sets its text one size larger than the device's, by design, so the audit always reports it, and its list lays every row out again at each size, so the audit often loses what it found and reports it with no element, which no allowance can match. The largest-size pass shows the text whole, and the text-clipped audit still runs there |
 
@@ -71,15 +71,16 @@ the card out again. So the Translate audit holds that clock while it audits the 
 from where it stopped.
 
 On a page scrolled down to a section, that sweep reflows everything above it and slides the
-section's text under the bars, where the audit loses it and can't name the element. So the
-sections that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's
-readings, and the Account page's about part (Help & Support, Report a Problem, the crash
-reports switch, and the links under them), get those two audits on their own:
-`ZENBU_ONLY_SECTION`, a Debug-only harness (`LaunchHarness.onlySections`), opens the page with
-only the sections it names, at the page's top, and the walk audits them there
+section's text under the bars, where the audit loses it and can't name the element. So the sections
+that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, and the
+Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
+under them), get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
+(`LaunchHarness.onlySections`), opens the page with only the sections it names (Word Detail's
+examples under its meanings are one, `meaning-example`, named with `meaning`, the section that holds
+them, and audited on 日本's page), at the page's top, and the walk audits them there
 (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
-(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a
-caption's word sheet at full height, so the Player page isn't showing behind it.
+(`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
+height, so the Player page isn't showing behind it.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show
 ([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App

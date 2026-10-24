@@ -33,7 +33,6 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
   test.each([
     ['a file that is no word number', '見る.json', '?from=25'],
     ['a position between pages', '1259290.json', '?from=30'],
-    ['a position past the app’s 100', '1259290.json', '?from=100'],
     ['a negative position', '1259290.json', '?from=-25'],
     ['a position that is no number', '1259290.json', '?from=x']
   ])('is not found for %s', async (_, file, query) => {
@@ -48,7 +47,13 @@ describe('GET /dictionary/examples/<ent_seq>.json', () => {
     expect(getWordExamples).not.toHaveBeenCalled()
   })
 
-  test('is not found for an unknown word or another build', async () => {
+  test('asks the dictionary for a position past the 100 sentences it matched', async () => {
+    vi.mocked(getWordExamples).mockResolvedValue([example])
+    expect((await get('1259290.json', '?build=b1&from=100')).status).toBe(200)
+    expect(getWordExamples).toHaveBeenCalledWith(1259290, 100, 'b1')
+  })
+
+  test('is not found for an unknown word, another build, or a position past its list', async () => {
     vi.mocked(getWordExamples).mockResolvedValue(null)
     expect((await get('1.json', '?from=25')).status).toBe(404)
   })

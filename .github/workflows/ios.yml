@@ -15,7 +15,7 @@ permissions:
 env:
   LFS_FILES: apps/ios/**,language-data/sources/**
   LFS_RECORDINGS: apps/ios/Tools/TranslateReplay/Recordings/**
-  LFS_SNAPSHOTS: language-data/sources/JMdict_e-*.gz,language-data/sources/Tatoeba-*/*,language-data/sources/KANJIDIC2-*/*,language-data/sources/EDRDG-radicals-*/*,language-data/sources/Kanji-JLPT-Waller-*/*
+  LFS_SNAPSHOTS: language-data/sources/JMdict_e_examp-*.gz,language-data/sources/Tatoeba-*/*,language-data/sources/KANJIDIC2-*/*,language-data/sources/EDRDG-radicals-*/*,language-data/sources/Kanji-JLPT-Waller-*/*
 
 jobs:
   changes:
@@ -63,6 +63,8 @@ jobs:
       (vars.IOS_SWIFT_TESTS == 'on' && needs.changes.outputs.changed == 'true')
     runs-on: macos-26
     timeout-minutes: 240
+    env:
+      TEST_RUNNER_OS_ACTIVITY_DT_MODE: "NO"
     steps:
       - uses: actions/checkout@v5
       - name: Select the pinned Xcode

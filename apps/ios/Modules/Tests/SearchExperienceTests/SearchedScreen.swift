@@ -27,7 +27,12 @@ struct SearchedScreen {
     return SearchedScreen(
       results: results,
       items: try await LanguageReferenceData.shared.coreSearch(query.value).items,
-      screen: try await request.screen(using: try core ?? .freshInstall()))
+      screen: try await request.screen(using: try await presentation(core)))
+  }
+
+  private static func presentation(_ core: PresentationCore?) async throws -> PresentationCore {
+    if let core { return core }
+    return try await .freshInstall()
   }
 
   static func search(

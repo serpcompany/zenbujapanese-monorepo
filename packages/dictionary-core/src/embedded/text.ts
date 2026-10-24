@@ -3,7 +3,8 @@ import { type ArtifactDatabase, checkExamples, searchDatabase } from '../artifac
 import {
   type EntryExamples,
   type ExampleSentence,
-  retrieveEntryExamples
+  retrieveEntryExamples,
+  shownSenseExamples
 } from '../artifact/example-retrieval'
 import { searchExamples } from '../artifact/example-search'
 import { type FormLookup, formLookup } from '../artifact/lookup'
@@ -75,6 +76,11 @@ export interface EmbeddedExamplePage {
   examples: EmbeddedExample[]
   listed: number
   cutShort: boolean
+}
+
+export interface EmbeddedMeaningExample {
+  number: number
+  example: EmbeddedExample
 }
 
 export interface EmbeddedResultsExamples extends EmbeddedExamplePage {
@@ -232,22 +238,29 @@ export class EmbeddedText {
     const nextPage = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage
     const pageEnd = Math.min(sentences.length, nextPage)
     const end = limit && limit > 0 ? Math.min(pageEnd, from + limit) : pageEnd
-    const shown = sentences.slice(from, end)
+    return {
+      examples: await this.examples(sentences.slice(from, end), accented, analyze),
+      listed: sentences.length,
+      cutShort: end < pageEnd
+    }
+  }
+
+  private async examples(
+    shown: readonly ExampleSentence[],
+    accented: Accented,
+    analyze: AnalyzeText
+  ): Promise<EmbeddedExample[]> {
     const linked = await this.link(
       shown.map(sentence => sentence.japanese),
       accented,
       analyze
     )
-    return {
-      examples: shown.map(({ pairId, japanese, english }, index) => ({
-        id: `esp1_${pairId}`,
-        japanese,
-        english,
-        words: linked[index]
-      })),
-      listed: sentences.length,
-      cutShort: end < pageEnd
-    }
+    return shown.map(({ pairId, japanese, english }, index) => ({
+      id: `esp1_${pairId}`,
+      japanese,
+      english,
+      words: linked[index]
+    }))
   }
 
   async resultsExamples(
@@ -287,6 +300,28 @@ export class EmbeddedText {
       count: examples.count,
       truncated: examples.truncated
     }
+  }
+
+  async meaningExamples(
+    request: { id: string },
+    analyze: AnalyzeText
+  ): Promise<EmbeddedMeaningExample[]> {
+    const { id } = request
+    const entry = this.found([id]).get(id)
+    if (!entry) throw new Error('missingEntryEvidence')
+    const shown = shownSenseExamples(this.db, id)
+    const senses = [...shown.keys()].sort((a, b) => a - b)
+    const accented: Accented = {
+      query: entry.headword,
+      entry: id,
+      accent: screenAccent.wordExamples
+    }
+    const examples = await this.examples(
+      senses.flatMap(sense => shown.get(sense) ?? []),
+      accented,
+      analyze
+    )
+    return senses.map((sense, index) => ({ number: sense + 1, example: examples[index] }))
   }
 
   private async candidates(

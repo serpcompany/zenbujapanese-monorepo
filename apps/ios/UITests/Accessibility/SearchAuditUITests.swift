@@ -107,6 +107,9 @@ final class SearchAuditUITests: AccessibilityAuditCase {
     let noteAlone = openJapan(pass, showingOnly: ["word-detail.notes"])
     addNote(Self.note, in: noteAlone)
     audit("A word's note, alone", in: noteAlone, .textSizes)
+    let meaningsAlone = openJapan(pass, showingOnly: ["word-detail.meaning", "word-detail.meaning-example"])
+    waitFor(find("word-detail.meaning-example.1", in: meaningsAlone))
+    audit("Word Detail's meanings' examples, alone", in: meaningsAlone, .textSizes)
     guard pass.size == .largest else { return }
     let app = openJapan(pass, showingOnly: ["word-detail.kanji", "kanji-detail.readings"])
     waitFor(find("word-detail.kanji.日", in: app))

@@ -29,11 +29,13 @@ from jmdict_normalization import (
     text_values,
 )
 
-EXPECTED_PRIORITY_PROFILE_COUNT = 56_127
-EXPECTED_GLOSS_ATOM_COUNT = 441_826
-EXPECTED_SENSE_COUNT = 253_020
-EXPECTED_SENSE_RESTRICTION_COUNT = 1_929
-EXPECTED_READING_RESTRICTION_COUNT = 6_201
+EXPECTED_EVIDENCE_COUNTS = {
+    "form_priority_profiles": 56_153,
+    "canonical_senses": 253_844,
+    "gloss_atoms": 443_818,
+    "sense_form_restrictions": 1_922,
+    "reading_form_restrictions": 6_184,
+}
 
 
 @dataclass
@@ -48,7 +50,11 @@ class ImportedEntries:
     search_index: dict[str, object]
 
 
-def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntries:
+def import_entries(
+    database: sqlite3.Connection,
+    source: Path,
+    expected_counts: dict[str, int] = EXPECTED_EVIDENCE_COUNTS,
+) -> ImportedEntries:
     retained = 0
     rejected = 0
     form_count = 0
@@ -365,13 +371,6 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
         "gloss_atoms": gloss_atom_count,
         "sense_form_restrictions": sense_restriction_count,
         "reading_form_restrictions": reading_restriction_count,
-    }
-    expected_counts = {
-        "form_priority_profiles": EXPECTED_PRIORITY_PROFILE_COUNT,
-        "canonical_senses": EXPECTED_SENSE_COUNT,
-        "gloss_atoms": EXPECTED_GLOSS_ATOM_COUNT,
-        "sense_form_restrictions": EXPECTED_SENSE_RESTRICTION_COUNT,
-        "reading_form_restrictions": EXPECTED_READING_RESTRICTION_COUNT,
     }
     if actual_counts != expected_counts:
         raise ValueError(f"dictionary ranking evidence count mismatch: {actual_counts}")

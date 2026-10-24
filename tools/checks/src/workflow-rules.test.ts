@@ -34,13 +34,22 @@ const versionFiles = [
 ]
 const byCommit = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/
 const pinsTable = readRepositoryFile('docs/agents/ci-deploys.md').split('\n')
-const readsASecret = workflows.filter(path => readRepositoryFile(path).includes('secrets.'))
+const canPush = (path: string) => {
+  const workflow = readWorkflow(path)
+  return [workflow, ...Object.values(workflow.jobs)].some(
+    each => each.permissions?.contents === 'write'
+  )
+}
+const readsASecret = workflows.filter(
+  path => readRepositoryFile(path).includes('secrets.') || canPush(path)
+)
 
 describe('every workflow', () => {
   test('is found, with the actions this repository defines', () => {
     expect(workflows.length).toBeGreaterThan(10)
     expect(actions).toContain(`${actionsFolder}/latest-run/action.yml`)
     expect(readsASecret).toContain('.github/workflows/web-deploy.yml')
+    expect(readsASecret).toContain('.github/workflows/jmdict-update.yml')
     expect(shipsOnPush).toEqual([
       '.github/workflows/account-api-deploy.yml',
       '.github/workflows/dictionary-api-deploy.yml',
@@ -142,7 +151,7 @@ describe('every workflow', () => {
 
   test.each(
     readsASecret
-  )('%s reads a secret, so every action it runs is at a pinned commit', path => {
+  )('%s reads a secret or can push, so every action it runs is at a pinned commit', path => {
     const reached = used(path).flatMap(action =>
       isLocal(action) ? used(fileOf(action)) : [action]
     )

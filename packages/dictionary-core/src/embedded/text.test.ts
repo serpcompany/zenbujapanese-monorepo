@@ -5,6 +5,7 @@ import { ask, begin, fakeHost, settled } from './fake-host'
 import type {
   EmbeddedEntryExamples,
   EmbeddedExamplePage,
+  EmbeddedMeaningExample,
   EmbeddedResultsExamples,
   EmbeddedToken
 } from './text'
@@ -367,6 +368,39 @@ describe('the embedded text engine', () => {
     expect(accents(first.examples[0].words)).toEqual([['見る', 'v1', 'entry']])
     expect(((await page('v1', 25)) as EmbeddedEntryExamples).examples).toHaveLength(5)
     await expect(page('missing', 0)).rejects.toThrow('missingEntryEvidence')
+  })
+
+  test('answers each meaning’s checked example, by meaning number, with the word accented', async () => {
+    const dictionary = host()
+    const checked = [
+      { senseOrder: 0, rowid: 1, pairId: pairId(1), japanese: '見る', english: 'To see.' },
+      { senseOrder: 0, rowid: 2, pairId: pairId(2), japanese: '今日見た', english: 'Saw it.' },
+      { senseOrder: 2, rowid: 3, pairId: pairId(3), japanese: '日本語を見た', english: 'Saw.' }
+    ]
+    const target = {
+      ...dictionary,
+      all: (sql: string, parametersJSON: string) =>
+        sql.includes('FROM sense_examples s')
+          ? { rows: checked }
+          : (dictionary.all?.(sql, parametersJSON) ?? null)
+    }
+    const found = (await ask(
+      target,
+      'meaningExamples',
+      JSON.stringify({ id: 'v1' })
+    )) as EmbeddedMeaningExample[]
+    expect(found.map(({ number, example }) => [number, example.id, example.english])).toEqual([
+      [1, `esp1_${pairId(1)}`, 'To see.'],
+      [3, `esp1_${pairId(3)}`, 'Saw.']
+    ])
+    expect(accents(found[1].example.words)).toEqual([
+      ['日本語', 'a1', null],
+      ['を', null, null],
+      ['見た', 'v1', 'entry']
+    ])
+    await expect(ask(target, 'meaningExamples', JSON.stringify({ id: 'missing' }))).rejects.toThrow(
+      'missingEntryEvidence'
+    )
   })
 
   test('answers a conjugated form’s examples, only where the form is one word, with it accented', async () => {

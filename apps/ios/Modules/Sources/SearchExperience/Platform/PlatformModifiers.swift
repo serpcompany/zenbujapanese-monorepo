@@ -130,9 +130,17 @@ extension View {
   func dragToCloseSheet(sizeOnMac size: CGSize) -> some View {
     #if os(macOS)
       safeAreaInset(edge: .bottom, spacing: 0) { SheetDoneBar() }
-        .sheetSize(onMac: size)
+        .modifier(SheetInsideTheWindow(size: size))
     #else
       presentationDetents([.large]).presentationDragIndicator(.visible)
+    #endif
+  }
+
+  func sheetsFitItsHeightOnMac() -> some View {
+    #if os(macOS)
+      modifier(WindowHeightForSheets())
+    #else
+      self
     #endif
   }
 
@@ -200,6 +208,29 @@ struct SheetCloseAndAction<Close: View, Action: View>: ToolbarContent {
         configuration.icon
         configuration.title
       }
+    }
+  }
+
+  extension EnvironmentValues {
+    @Entry var windowHeightForSheets: CGFloat?
+  }
+
+  private struct WindowHeightForSheets: ViewModifier {
+    @State private var height: CGFloat?
+
+    func body(content: Content) -> some View {
+      content
+        .onGeometryChange(for: CGFloat.self, of: \.size.height) { height = $0 }
+        .environment(\.windowHeightForSheets, height)
+    }
+  }
+
+  private struct SheetInsideTheWindow: ViewModifier {
+    @Environment(\.windowHeightForSheets) private var windowHeight
+    let size: CGSize
+
+    func body(content: Content) -> some View {
+      content.sheetSize(onMac: AppWindow.sheet(size, inWindowOfHeight: windowHeight))
     }
   }
 

@@ -43,6 +43,18 @@ function containsFilter(query: string): { sql: string; params: string[] } {
   return { sql: 'instr(f.form, ?) > 0', params: [query] }
 }
 
+interface FormEvidence {
+  relation: number
+  form: string
+  profile: PriorityProfile
+}
+
+function compareFormEvidence(lhs: FormEvidence, rhs: FormEvidence): number {
+  if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
+  const profiles = compareProfiles(lhs.profile, rhs.profile)
+  return profiles || compareStrings(lhs.form, rhs.form)
+}
+
 export function rankJapanese(
   query: string,
   rows: JapaneseRow[],
@@ -50,12 +62,7 @@ export function rankJapanese(
 ): RankedEntry[] {
   const byEntry = new Map<
     string,
-    {
-      entry: SearchEntry
-      fingerprint: string
-      senseCount: number
-      evidence: { relation: number; form: string; profile: PriorityProfile }[]
-    }
+    { entry: SearchEntry; fingerprint: string; senseCount: number; evidence: FormEvidence[] }
   >()
   let step = 0
   for (const row of rows) {
@@ -76,11 +83,7 @@ export function rankJapanese(
   const ranked: RankedEntry[] = []
   for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
     stopIfInterrupted(client, step++)
-    const selected = minimum(evidence, (lhs, rhs) => {
-      if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
-      const profiles = compareProfiles(lhs.profile, rhs.profile)
-      return profiles || compareStrings(lhs.form, rhs.form)
-    })
+    const selected = minimum(evidence, compareFormEvidence)
     if (!selected) continue
     const rank: JapaneseRank = {
       kind: 'japanese',

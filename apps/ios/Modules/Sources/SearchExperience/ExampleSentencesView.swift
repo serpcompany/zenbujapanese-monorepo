@@ -203,6 +203,7 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
+    case meaning(number: Int)
     case conjugatedForm(String, index: Int)
 
     struct WordSelectorConfiguration {
@@ -249,6 +250,18 @@ struct JapaneseExampleRowContent: View {
           speakerIdentifier: "word-detail.example-speaker.\(index)",
           englishIdentifier: "word-detail.example-english.\(index)",
           rowIdentifier: "word-detail.example.\(index)",
+          combinesRowAccessibility: true
+        )
+      case .meaning(let number):
+        Configuration(
+          tokenPresentation: .standard,
+          tokenIdentifierPrefix: "word-detail.meaning-example-token.\(number)",
+          japaneseIdentifier: nil,
+          wordSelector: nil,
+          speakerLabel: "Speak the example of meaning \(number)",
+          speakerIdentifier: "word-detail.meaning-example-speaker.\(number)",
+          englishIdentifier: "word-detail.meaning-example-english.\(number)",
+          rowIdentifier: "word-detail.meaning-example.\(number)",
           combinesRowAccessibility: true
         )
       case .conjugatedForm(let kind, let index):

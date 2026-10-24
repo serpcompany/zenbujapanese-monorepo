@@ -131,10 +131,11 @@ struct CrashReportScrubberTests {
   }
 
   @Test("every rule is linear: its work on a long text grows no faster than the text")
-  func everyRuleIsLinear() {
+  func everyRuleIsLinear() async {
     let growth = Double(Self.longLength) / Double(Self.shortLength)
     for rule in CrashReportScrubber.rules {
       for shape in Self.longTexts {
+        await Task.yield()
         let short = Self.work(of: rule, on: Self.text(shape, length: Self.shortLength))
         let long = Self.work(of: rule, on: Self.text(shape, length: Self.longLength))
         #expect(

@@ -45,13 +45,16 @@ report that can't be sent, such as with no connection, waits on the device and g
 A failure the app handles sends only its area and a fixed code, such as `account_sync:
 account_service_error.refused`, with at most four short details such as an HTTP status or a pack's
 ID. Each is sent at most once a launch, and never holds the error's message. A cancelled task, a
-lost connection, a session that ended, or a sync or photo file refused because the account has no
-subscription (`402`, the account's state rather than a fault) sends nothing; a download the
-app's setup or its host broke, such as one refused for its certificate, is reported.
+lost connection (no network, data or roaming off, a timeout, or a connection that dropped or
+couldn't be made), a session that ended, or a sync or photo file refused because the account has
+no subscription (`402`, the account's state rather than a fault) sends nothing. A sync or a
+download that the app's setup or its host broke is reported: one refused for its certificate, sent
+to an address that isn't valid, or to a host name that doesn't resolve. Either way, a sync that
+couldn't reach the account service tells the learner the same and tries again the same way.
 
 | Area | Fails when |
 | --- | --- |
-| Account sync | The account service refuses or garbles a sync |
+| Account sync | The account service refuses or garbles a sync, or a sync can't reach it for a reason other than the connection |
 | Frequency dictionaries | A pack's download or install fails |
 | Language-analysis packs | A pack fails its check, or its install or an older pack's removal fails |
 | The dictionary | The app's dictionary files are missing or the core doesn't load |
@@ -69,8 +72,10 @@ paths, which say nothing about the learner.
 Check: package `CrashReporterOptionsTests` (every Sentry option, the install ID as the only user,
 and every report through the scrubber), `CrashReportScrubberTests` (paths, web and email addresses,
 Japanese and quoted text, and a fully populated report), `HandledProblemTests` (each failure's
-code, once a launch, never its message or payload), and `YouTubeTranslationFailureTests` (a
-translation's failed step and status, and never the video, its captions, or the address).
+code, once a launch, never its message or payload), `AccountSyncRecoveryTests` (which of a
+sync's transport errors are a lost connection, and the same message and retry for both kinds), and
+`YouTubeTranslationFailureTests` (a translation's failed step and status, and never the video, its
+captions, or the address).
 
 ## Which builds send
 

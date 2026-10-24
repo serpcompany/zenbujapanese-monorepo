@@ -5,6 +5,7 @@ struct WordDetailView: View {
   @State private var notes: SavedItemNotes
   @State private var photos: SavedItemPhotos
   @State private var examples = LoadedExamples()
+  @State private var meaningExamples = LoadedMeaningExamples()
   @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var showsListPicker = false
@@ -61,9 +62,10 @@ struct WordDetailView: View {
   var body: some View {
     let page = WordPage(entry)
     let frame = WordPage.frame(for: entry, page: page)
+    let shownMeaningExamples = meaningExamples.examples(of: entry.id)
     ScrollViewReader { proxy in
       List {
-        if LaunchHarness.shows("headword", on: "word-detail") {
+        if shownMeaningExamples != nil, LaunchHarness.shows("headword", on: "word-detail") {
           Section {
             WordHeroView(
               entry: entry,
@@ -79,12 +81,12 @@ struct WordDetailView: View {
           }
         }
 
-        if let frame {
+        if let frame, let shownMeaningExamples {
           ForEach(
             frame.sections.filter { LaunchHarness.shows($0.kind.rawValue, on: "word-detail") },
             id: \.kind
           ) { section in
-            pageSection(section, of: page, in: frame)
+            pageSection(section, of: page, in: frame, meaningExamples: shownMeaningExamples)
           }
         }
       }
@@ -131,7 +133,10 @@ struct WordDetailView: View {
       guard !Task.isCancelled else { return }
       analysisAvailability = await japaneseTextAnalysisClient.availability()
     }
-    .screenTask(id: entry.id) { await loadExamples() }
+    .screenTask(id: entry.id) {
+      await meaningExamples.load(entry, read: exampleSentenceClient.meaningExamples)
+      await loadExamples()
+    }
   }
 
   private func loadExamples() async {
@@ -146,7 +151,8 @@ struct WordDetailView: View {
 extension WordDetailView {
   @ViewBuilder
   fileprivate func pageSection(
-    _ section: WordPage.Section, of page: WordPage?, in frame: WordPage.Frame
+    _ section: WordPage.Section, of page: WordPage?, in frame: WordPage.Frame,
+    meaningExamples: MeaningExamples
   ) -> some View {
     let title = section.title.uppercased()
     switch section.kind {
@@ -155,12 +161,14 @@ extension WordDetailView {
         MeaningSection(
           senses: page?.senses ?? [],
           actions: MeaningActions(
-            speechSynthesisClient: speechSynthesisClient, lookUp: AppLinkInbox.shared.lookUp))
+            speechSynthesisClient: speechSynthesisClient, lookUp: AppLinkInbox.shared.lookUp),
+          examples: meaningExamples,
+          openWord: openWord)
       }
     case .frequency:
       Section(title) {
-        ForEach((page?.frequency ?? []).enumerated(), id: \.offset) { _, row in
-          FrequencyRankRow(row: row) { frequencyDisclosure = $0 }
+        ForEach((page?.frequency ?? []).rows(in: .frequency)) { row in
+          FrequencyRankRow(row: row.value) { frequencyDisclosure = $0 }
         }
       }
     case .conjugations:
@@ -228,7 +236,8 @@ private struct PrimaryKanjiSection: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    ForEach(characters, id: \.self) { character in
+    ForEach(characters.rows(in: .kanji)) { row in
+      let character = row.value
       if let kanji = KanjiCharacter(character) {
         WordDetailKanjiLink(
           kanji: kanji,
@@ -247,7 +256,8 @@ private struct AlternativeKanjiSection: View {
   let openKanji: (KanjiCharacter, DictionaryEntry?) -> Void
 
   var body: some View {
-    ForEach(characters, id: \.self) { character in
+    ForEach(characters.rows(in: .alternativeKanji)) { row in
+      let character = row.value
       if let kanji = KanjiCharacter(character) {
         WordDetailKanjiLink(
           kanji: kanji,

@@ -9,13 +9,14 @@ export function graphemes(value: string): string[] {
 }
 
 function compareScalars(lhs: string, rhs: string): number {
-  const left = Array.from(lhs)
-  const right = Array.from(rhs)
-  for (let index = 0; index < Math.min(left.length, right.length); index++) {
-    const difference = (left[index].codePointAt(0) ?? 0) - (right[index].codePointAt(0) ?? 0)
-    if (difference !== 0) return difference
+  let index = 0
+  while (index < lhs.length && index < rhs.length) {
+    const left = lhs.codePointAt(index) ?? 0
+    const right = rhs.codePointAt(index) ?? 0
+    if (left !== right) return left - right
+    index += left > 0xffff ? 2 : 1
   }
-  return left.length - right.length
+  return lhs.length - rhs.length
 }
 
 const isSurrogate = (unit: number) => unit >= 0xd800 && unit <= 0xdfff

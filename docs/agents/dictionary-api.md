@@ -101,9 +101,9 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
 | `GET /v1/search/<query>` | The results screen. |
-| `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`. |
+| `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`; 404 past its list (`example-positions.test.ts`). |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
-| `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples. |
+| `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples; 404 past its list. |
 | `GET /v1/conjugations/<form>/examples?from=&limit=` | `limit` (25, at most 100) of a conjugated form's examples from `from`, by its spelling as written, with how many it lists. |
 | `GET /v1/kanji/<character>` | A kanji's rows for its details, the slugs of the words it lists, and which of its components and elements have details (`kanjiPages`). |
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
@@ -177,38 +177,13 @@ answers, headers, and error codes, and every field of a card and a token. An app
 
 ## How it runs
 
-The main thread hashes the artifact and Sudachi's dictionary once, refuses to start unless the files
-a word card is read from are the pinned language-data release's, checks Sudachi's pins, and serves
-HTTP (Hono on Node's HTTP server). Sudachi's native module reads its configuration from the
-process's environment, which only the main thread can set, so the main thread sets it
-(`prepareSudachi`) before any worker thread starts. Worker threads each open the artifact read-only,
-checking it, its packs, and the tokenizer's pinned files as they load, and answer calls one at a
-time: SQLite is synchronous, so a slow query holds only its own thread. Each call goes to the thread
-with the fewest in flight, and a thread that dies is replaced. Each thread keeps recent searches,
-word examples, a query's examples, kanji details, and word lookups in LRU caches, so a page's first
-request pays for a broad query and the rest don't. The browse routes don't scan the artifact for a
-request: before a thread reports ready, it builds the browse index
-(`packages/dictionary-core/src/artifact/browse-index.ts`) in a few passes, every word in kana order
-by its first two kana and every category's words in both its orders, keeps the totals, the category
-counts, the kanji and ranked lists' summaries and counts, every kanji list, and the browse sitemaps'
-answer, and runs each statement a browse page asks once (`DictionaryBrowse.warm`). A browse page
-then reads only its own words, with statements already prepared. The index holds about 960,000 row
-IDs, the categories' as 32-bit arrays. On 2026-10-07, with two threads on this workstation (load
-average 5 over the last minute, falling from 180 over fifteen), each thread was ready about 9.4
-seconds after it started, and every browse route's first request took at most 28 ms (a JLPT level's
-first page); before the index, the totals took 1 second and the category counts 2. Warming adds
-about 250 MB to a thread's resident memory, nearly all of it SQLite's cache of the pages it read;
-the index itself is under 10 MB of JavaScript heap. The website's edge cache keeps answers for 10
-minutes on top.
+The main thread checks the files and serves HTTP, and worker threads answer the calls, each with
+its own caches, a request going to the thread that answered it before.
+[`dictionary-api-threads.md`](dictionary-api-threads.md) has how, with the browse index each thread
+builds and how long a broad query takes.
 
 Logs are one JSON object per line on stdout (errors on stderr): each request's method, route
 pattern, status, and time. Queries never appear in the logs.
-
-A broad query takes one to two seconds the first time: い reads 73,000 entries with the app's own
-SQL, and "to" matches 50,000 Tatoeba pairs. A one-letter wildcard's examples take longer: `a*`,
-`s*`, and `t*` take 3.5 to 5 seconds, `t*` matching over 100,000 pairs, which the app ranks in
-full. Grapheme counts and string comparisons take exact fast paths
-(`packages/dictionary-core/src/detail/text.ts`, `search/query.ts`); what remains is the app's SQL.
 
 ## Code layout
 
@@ -241,35 +216,35 @@ pnpm check
 ```
 
 runs Biome, typecheck, Vitest, and the bundle. The tests replay the app-recorded suites
-(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real
-files: search retrieval, search results (every row, chip, and special row, the Example Sentences
-row included), example search (every pair ID for 69 queries, 59 count lines, and the first 5
-sentences' words, links, and marks), word detail (the first 25 examples' order, tokens, links, and
-highlights, the counts, the furigana split, the pitch graph, each frequency row's details, and
-every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level among
-them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
+(`language-data/conformance/`, ADR 0006) through the service's dictionary on the real files: search
+retrieval, search results (every row, chip, and special row, the Example Sentences row included),
+example search (every pair ID for 69 queries, 59 count lines, and the first 5 sentences' words,
+links, and marks), word detail (each meaning's checked example, the first 25 examples' order,
+tokens, links, and highlights, the counts, the furigana split, the pitch graph, each frequency row's
+details, and every conjugated form's examples), and kanji detail (its metrics, Waller's JLPT level
+among them). Each is replayed a second time through `embedded/`, the entry point the app calls, on
 `node:sqlite` with the real tokenizer, kanji, and frequency files (`embedded*.conformance.test.ts`),
-where the kanji element suite runs too: the website has no element page yet, so that
-is its only replay. A change that would alter what the app shows fails here before any Swift
-runs. The word-detail suite's furigana, pitch graph, frequency details, and conjugations take
-the shapes in `packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page
-test (`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files
-it was recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare
-nothing useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception:
-it holds readings and sentences with the romaji Foundation gave them, depends on no data file,
-so it pins none, and it is not among a language-data release's suites, whose packager refuses a
-suite that pins nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and
-through the entry point the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the
-app did. The results suite compares a row's first entry number only: the service keeps its
-Language Reference ID's, the first of the entries the app merged into the row. Where the app's
-example retrieval answers an error, the suite records it, and the page lists no examples either;
-none recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
-`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary
-the retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording
-it needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts`
-checks the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's
-examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
-`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
+where the kanji element suite runs too: the website has no element page yet, so that is its only
+replay. A change that would alter what the app shows fails here before any Swift runs. The
+word-detail suite's furigana, pitch graph, frequency details, and conjugations take the shapes in
+`packages/dictionary-core/src/detail/suite.ts`, which the website's rendered-page test
+(`apps/web/src/components/dictionary/word-page.test.tsx`) shares. Each suite pins the files it was
+recorded from, and fails on others (`requirePinnedArtifacts`), since it would compare nothing
+useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the exception: it holds
+readings and sentences with the romaji Foundation gave them, depends on no data file, so it pins
+none, and it is not among a language-data release's suites, whose packager refuses a suite that pins
+nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and through the entry point
+the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the app
+did. The results suite compares a row's first entry number only: the service keeps its Language
+Reference ID's, the first of the entries the app merged into the row. Where the app's example
+retrieval answers an error, the suite records it, and the page lists no examples either; none
+recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
+`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary the
+retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording it
+needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts` checks
+the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's examples.
+`full-text.test.ts` checks English search where FTS4 differs from other engines. `frequency.test.ts`
+reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The

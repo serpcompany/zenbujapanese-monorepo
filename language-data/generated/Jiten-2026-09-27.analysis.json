@@ -1,19 +1,19 @@
 {
-  "builderSHA256": "ab0cb399dd92b0e808c7c639eb6b47affae0720c1af429291e35e67548998e12",
+  "builderSHA256": "1615a2adb7654084f22410929a53be6de27f225e41bd821093967163dd4c7595",
   "candidates": [
     {
       "analysis": {
-        "ambiguousRows": 6593,
-        "artifactContentSHA256": "640ce04070127c1f129a252693fc9425c71a3bf14a887f55f1192d96a60723e7",
+        "ambiguousRows": 6607,
+        "artifactContentSHA256": "ef48dc5cb1fa7aff4e232528e8379560334b603ee8a637ff05aa73acd7df476e",
         "coveredSourceRows": 193752,
-        "duplicateMappings": 28402,
-        "mappedRows": 108209,
-        "mappingSHA256": "def9405094dbae809b4dc081dab7250f9882f05be1123d33f777ae3a768b1983",
+        "duplicateMappings": 28455,
+        "mappedRows": 108316,
+        "mappingSHA256": "fdb2e09c856d6438934955582f737fc460b209d0b80146f08391a5d336286ff9",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 5
         },
-        "unmappedRows": 50548
+        "unmappedRows": 50374
       },
       "packID": "zenbu.jiten.tv-movies.ja.ordered-v2",
       "packVersion": "2026-09-27",
@@ -21,17 +21,17 @@
     },
     {
       "analysis": {
-        "ambiguousRows": 7623,
-        "artifactContentSHA256": "b6c7fc36dabafd088b904b45caeba2d3ea93c3bc2c07ecc023662932d09486ec",
+        "ambiguousRows": 7636,
+        "artifactContentSHA256": "7a1abff356636550bef45bf9c98065981506100a3e7a7bd1e6c0deee49639bc1",
         "coveredSourceRows": 175456,
-        "duplicateMappings": 33553,
-        "mappedRows": 98264,
-        "mappingSHA256": "4006f78d315dab845dce8549dc7986db996921289a7d8dfa2565ea54e91c3fd3",
+        "duplicateMappings": 33621,
+        "mappedRows": 98370,
+        "mappingSHA256": "1957801c4b53fd8d00ef90545d7cebd17c2b1888ce2765fdbe281a8a8029e80d",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 5
         },
-        "unmappedRows": 36016
+        "unmappedRows": 35829
       },
       "packID": "zenbu.jiten.anime.ja.ordered-v2",
       "packVersion": "2026-09-27",
@@ -39,17 +39,17 @@
     },
     {
       "analysis": {
-        "ambiguousRows": 8731,
-        "artifactContentSHA256": "a3236e167ac9a56578eb5fc372a53aa678c186a64ba533afff7b4a8669631fbb",
+        "ambiguousRows": 8750,
+        "artifactContentSHA256": "2ce2bf5ad444913107dce664fcc88ec59f3a1971417b1d4c9dc8a2b1ffcb8db6",
         "coveredSourceRows": 208204,
-        "duplicateMappings": 39794,
-        "mappedRows": 105287,
-        "mappingSHA256": "00eeab21e1b2dd3ae2a3b5dde7d31c61be7541a459e5e427aba999c5476ff77d",
+        "duplicateMappings": 39869,
+        "mappedRows": 105435,
+        "mappingSHA256": "bf069b952cbc914e96ab2683d6c4b7eb7d705fbf3c234ad920628224439c73ac",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 5
         },
-        "unmappedRows": 54392
+        "unmappedRows": 54150
       },
       "packID": "zenbu.jiten.manga.ja.ordered-v2",
       "packVersion": "2026-09-27",
@@ -57,17 +57,17 @@
     },
     {
       "analysis": {
-        "ambiguousRows": 7600,
-        "artifactContentSHA256": "f51babd68e685ed0809fc12a2b727a5e034db04f6b85f210d5d0dcf17ef59b7b",
+        "ambiguousRows": 7617,
+        "artifactContentSHA256": "142bc774eceed0a66d8828ac0960cd17c60367bb878bb71a015476baa280c5a3",
         "coveredSourceRows": 272246,
-        "duplicateMappings": 60591,
-        "mappedRows": 140061,
-        "mappingSHA256": "38d3fe9d3a5ad0500662d58d7eee436722a498436cdde5e4c26530f82ec6b241",
+        "duplicateMappings": 60733,
+        "mappedRows": 140264,
+        "mappingSHA256": "085846eb0731ae9f7b74c33f50a9166211ed7624aa615374d849ffe76df13f48",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 2
         },
-        "unmappedRows": 63994
+        "unmappedRows": 63632
       },
       "packID": "zenbu.jiten.novels.ja.ordered-v2",
       "packVersion": "2026-09-27",
@@ -75,17 +75,17 @@
     },
     {
       "analysis": {
-        "ambiguousRows": 7743,
-        "artifactContentSHA256": "6bbb4f39ec4c9811dfe8869e2e84c743339783100b120079d32c62d4a355cf2e",
+        "ambiguousRows": 7761,
+        "artifactContentSHA256": "0e85a724be4eef7493d2e0d619a04d64732c2f25db1d408e34c024c7ab01301e",
         "coveredSourceRows": 205292,
-        "duplicateMappings": 47730,
-        "mappedRows": 115109,
-        "mappingSHA256": "315085621b340af5caeb60aae438d1b08a3b421023402b27be882bfe01e6907f",
+        "duplicateMappings": 47864,
+        "mappedRows": 115266,
+        "mappingSHA256": "db767ae8b82e48e3eaf6e4b2dc36c54b65e05cc2c949649aab79c47516486204",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 4
         },
-        "unmappedRows": 34710
+        "unmappedRows": 34401
       },
       "packID": "zenbu.jiten.visual-novels.ja.ordered-v2",
       "packVersion": "2026-09-27",
@@ -93,24 +93,24 @@
     },
     {
       "analysis": {
-        "ambiguousRows": 6219,
-        "artifactContentSHA256": "c621e559d0de83d19346da57a8bea97798bf53ffe6a3e0bb7fd1911bd6b62acb",
+        "ambiguousRows": 6231,
+        "artifactContentSHA256": "f91c485199a2494800555a4da6970d9cfc7223c9567a2c4d70d46ef601e72b9e",
         "coveredSourceRows": 141113,
-        "duplicateMappings": 29604,
-        "mappedRows": 89254,
-        "mappingSHA256": "9680e69b248b778bf1173f217144d14de4487fe6386943a54b3a0232f8c0d69e",
+        "duplicateMappings": 29662,
+        "mappedRows": 89357,
+        "mappingSHA256": "cb2b71a785ef0210bc93bb00d36d5e4af0859e7164751ebe4095be836aceeb96",
         "smokeTest": {
           "languageReferenceID": "40d6e4fa1aa90a4025e1edef5d451be5",
           "rank": 3
         },
-        "unmappedRows": 16036
+        "unmappedRows": 15863
       },
       "packID": "zenbu.jiten.video-games.ja.ordered-v2",
       "packVersion": "2026-09-27",
       "sourceSHA256": "58c1ab0ae5d8ac34868a319c52c8c657a5f11b1944a41d69df08446685d6a30b"
     }
   ],
-  "languageDataSHA256": "290ca9d430454cafe77880d89c45500905ad168c825c71bb7676172afccf66f2",
+  "languageDataSHA256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
   "mappingPolicySHA256": "ebc84f6bc0c5170f2c30555453e5436521102e79771321989c97b83ecfcafadf",
   "schema": "zenbu.frequency-candidate-analysis.v2",
   "sourceRecordSHA256": "a89c5fc1f31ab88946ec960d58fe31612611ed53c25eded69db94fdd928e084f"

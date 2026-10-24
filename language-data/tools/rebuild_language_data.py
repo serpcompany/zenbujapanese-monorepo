@@ -26,6 +26,7 @@ CATALOG = RESOURCES / "FrequencyPackCatalog.json"
 ANIME_FIXTURE = IOS / "Modules/Tests/SearchExperienceTests/Fixtures/jiten-anime.json.zip"
 PINNED_PYTHON = (3, 14, 8)
 PINNED_PYTHON_TEXT = ".".join(str(part) for part in PINNED_PYTHON)
+PREVIOUS_LANGUAGE_DATA = "PreviousLanguageReferenceData.sqlite3"
 FIRST_EVIDENCE_ROW = (
     "SELECT lower(hex(language_reference_id)), rank FROM frequency_evidence "
     "ORDER BY rank, language_reference_id LIMIT 1"
@@ -151,8 +152,20 @@ def build_kanji(download: bool) -> None:
     )
 
 
-def build_language_reference(unidic: Path) -> None:
-    jmdict = only("JMdict_e-*.source.json")
+def previous_language_data(scratch: Path) -> Path:
+    base = git("merge-base", "HEAD", "origin/main").strip()
+    tracked = (RESOURCES / "LanguageReferenceData.sqlite3").relative_to(REPOSITORY).as_posix()
+    pointer = subprocess.run(
+        ["git", "cat-file", "blob", f"{base}:{tracked}"], cwd=REPOSITORY, capture_output=True, check=True
+    ).stdout
+    previous = scratch / PREVIOUS_LANGUAGE_DATA
+    with previous.open("wb") as output:
+        subprocess.run(["git", "lfs", "smudge", tracked], input=pointer, stdout=output, cwd=REPOSITORY, check=True)
+    return previous
+
+
+def build_language_reference(unidic: Path, scratch: Path) -> None:
+    jmdict = only("JMdict_e_examp-*.source.json")
     tatoeba = only("Tatoeba-2*.source.json")
     files = {source["role"]: snapshot(tatoeba, download_name(source["download_url"])) for source in record(tatoeba)["sources"]}
     run(
@@ -173,8 +186,9 @@ def build_language_reference(unidic: Path) -> None:
         "--tatoeba-metadata", tatoeba,
         "--relationship-source", only("Zenbu-Word-Relationships-*.json"),
         "--ranking-contract", RESOURCES / "DictionaryRankingArtifactContract.json",
+        "--previous-database", previous_language_data(scratch),
     )
-    replace_reports("JMdict_e-", report(jmdict))
+    replace_reports("JMdict_e", report(jmdict))
 
 
 def build_dependents(unidic: Path, scratch: Path) -> Path:
@@ -362,6 +376,41 @@ def refuse_missing_tool_paths() -> None:
         )
 
 
+def prepare(download: bool, tool: Path = Path(__file__)) -> tuple[dict[str, str], Path]:
+    if sys.version_info[:3] != PINNED_PYTHON:
+        raise SystemExit(
+            f"the data tools are pinned to Python {PINNED_PYTHON_TEXT}: "
+            f"uv run --no-project --python {PINNED_PYTHON_TEXT} python {tool.resolve().relative_to(REPOSITORY)}"
+        )
+    refuse_missing_tool_paths()
+    return published_jiten_sources(), fixed_download(only("UniDic-*.source.json"), download)
+
+
+def build_dictionary(unidic: Path, scratch: Path, published: dict[str, str], kept: Path | None) -> list[str]:
+    build_language_reference(unidic, scratch)
+    wikipedia_artifact = build_dependents(unidic, scratch)
+    update_catalog(wikipedia_artifact)
+    archives = kept or scratch / "jiten"
+    changed = build_jiten(archives, published)
+    build_ranked_lists(wikipedia_artifact, archives)
+    return changed
+
+
+def run_contract_tests() -> None:
+    subprocess.run(
+        [sys.executable, "-m", "unittest", "discover", "--start-directory", str(TOOLS / "tests"), "--pattern", "test_*.py"],
+        check=True,
+        cwd=REPOSITORY,
+    )
+
+
+def refuse_unpublished_jiten(changed: list[str], kept: Path | None) -> None:
+    if changed and not kept:
+        raise SystemExit("Jiten sources changed: run again with --jiten-sources DIR to keep them for publishing")
+    if changed:
+        raise SystemExit("publish the changed Jiten sources before merging: " + ", ".join(changed))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rebuild every artifact the language-data tools write, in dependency order, and update the catalog."
@@ -369,32 +418,12 @@ def main() -> None:
     parser.add_argument("--download", action="store_true", help="fetch missing versioned upstream sources")
     parser.add_argument("--jiten-sources", type=Path, help="keep the Jiten source ZIPs here, for publishing")
     arguments = parser.parse_args()
-    if sys.version_info[:3] != PINNED_PYTHON:
-        raise SystemExit(
-            f"the data tools are pinned to Python {PINNED_PYTHON_TEXT}: "
-            f"uv run --no-project --python {PINNED_PYTHON_TEXT} python {Path(__file__).relative_to(REPOSITORY)}"
-        )
-    refuse_missing_tool_paths()
-    published = published_jiten_sources()
-    unidic = fixed_download(only("UniDic-*.source.json"), arguments.download)
+    published, unidic = prepare(arguments.download)
     with tempfile.TemporaryDirectory() as directory:
-        scratch = Path(directory)
         build_kanji(arguments.download)
-        build_language_reference(unidic)
-        wikipedia_artifact = build_dependents(unidic, scratch)
-        update_catalog(wikipedia_artifact)
-        archives = arguments.jiten_sources or scratch / "jiten"
-        changed = build_jiten(archives, published)
-        build_ranked_lists(wikipedia_artifact, archives)
-    subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "--start-directory", str(TOOLS / "tests"), "--pattern", "test_*.py"],
-        check=True,
-        cwd=REPOSITORY,
-    )
-    if changed and not arguments.jiten_sources:
-        raise SystemExit("Jiten sources changed: run again with --jiten-sources DIR to keep them for publishing")
-    if changed:
-        raise SystemExit("publish the changed Jiten sources before merging: " + ", ".join(changed))
+        changed = build_dictionary(unidic, Path(directory), published, arguments.jiten_sources)
+    run_contract_tests()
+    refuse_unpublished_jiten(changed, arguments.jiten_sources)
 
 
 if __name__ == "__main__":

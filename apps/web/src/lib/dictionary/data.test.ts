@@ -6,6 +6,7 @@ import type {
   SearchResponse,
   WordResponse
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type { FormExampleRows } from '@zenbu/dictionary-core/detail/rows'
 import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
 import { searchResultsScreen } from '@zenbu/dictionary-core/results/results'
@@ -301,6 +302,16 @@ describe('word pages and kanji details', () => {
       Array.from({ length: more?.length ?? 0 }, (_, index) => 25 + index)
     )
     expect(await getWordExamples(taberuWithoutFixture, 25, 'fixtures')).toBeNull()
+  })
+
+  test("a word's last page holds the rest of its examples, and a page past them is none", async () => {
+    const listed = iruRows.examples.length
+    const lastPage = Math.floor((listed - 1) / examplesPerPage) * examplesPerPage
+    const last = await getWordExamples(1546640, lastPage, 'fixtures')
+    expect(last?.map(example => example.position)).toEqual(
+      Array.from({ length: listed - lastPage }, (_, index) => lastPage + index)
+    )
+    expect(await getWordExamples(1546640, lastPage + examplesPerPage, 'fixtures')).toBeNull()
   })
 
   test('more examples come from the service, linked by its slugs', async () => {
