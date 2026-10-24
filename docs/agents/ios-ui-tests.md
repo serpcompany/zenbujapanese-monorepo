@@ -116,8 +116,11 @@ what it waited for and for how long.
   and manager and the two engines each have a serial queue for an executor, and a test starts a
   manager with `FrequencyPackManager.started` and hashes or builds anything slow with
   `apartFromThePool`. A fixture is built in bulk, not an element at a time, and a value tests share
-  that takes seconds to make is a `Task` they await, not a `static let`. To find one, `sample` the
-  `xctest` process for 2 s every few seconds through a run's first minute and look for a test on a
+  that takes seconds to make is a `Task` they await, not a `static let`. A test with a time limit
+  reads through engines of its own (`LookupClient.reading(LanguageReferenceData())`), not the shared
+  ones every search test queues on: the meaning examples tests, through `.live`, took 50 to 56 s
+  beside a Mac package run, and 16 to 30 s through their own. To find one, `sample` the `xctest`
+  process for 2 s every few seconds through a run's first minute and look for a test on a
   `com.apple.root.default-qos.cooperative` thread in sample after sample, or a main thread not
   waiting in `mach_msg`. Each line the process logs also waits on an XPC send to the Simulator's log
   stream (`xcodebuild` runs tests with `OS_ACTIVITY_DT_MODE=YES`), and CFNetwork logs each request
