@@ -28,16 +28,18 @@ What stays on each device on purpose:
   pickers are closed, which suit each device.
 
 **Signing in.** **Sign In to Sync** opens a sheet with **Sign in with Apple**, **Sign in with
-Google** (in builds given a Google client ID, which every build is), and an emailed code: the learner enters their
-email, taps **Email Me a Code**, and enters the 6-digit code. A refused sign-in says why, such as a
+Google** (in builds given a Google client ID, which every build is), and an emailed code: the
+learner enters their email, taps **Email Me a Code**, and enters the 6-digit code; Sign In waits for
+six digits, spaces around them or not, so a typo uses no try. A refused sign-in says why, such as a
 wrong or expired code, or an email whose account signs in with Apple or Google. Sign in with Apple
 asks for the learner's name and email; a new account takes the name Apple shares on the first
-sign-in, which the website's account page shows and lets the learner change. Signed in, the
-Account row shows **Zenbu Account** and the email.
+sign-in, which the website's account page shows and lets the learner change. Signed in, the Account
+row shows **Zenbu Account** and the email.
 
 Check: package `AccountProviderSignInTests` (Apple's and Google's sign-in, with only their sheets
 stood in: the nonce, PKCE, the token exchange, the account's answer, and the session; a closed
-sheet; a refused token) and `AccountSignInTests` (emailed codes, tokens, refused sign-ins); UI
+sheet; a refused token), `AccountSignInTests` (emailed codes, tokens, refused sign-ins), and
+`AccountRulesTests.signInCodes()` (what Sign In sends); UI
 `AccountUITests.testSignInOffersAppleGoogleAndACodeAndSaysWhenTheServiceCantBeReached` and
 `AccountSignedInUITests.testSigningInWithAppleShowsTheZenbuAccountAndSyncs` (iPhone and iPad,
 with the account service and Apple's sheet stood in, and the session kept in the Keychain across a
