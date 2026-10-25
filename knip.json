@@ -9,7 +9,7 @@
       "entry": ["open-next.config.ts", "e2e/**/*.ts", "scripts/*.ts"]
     },
     "apps/dictionary-api": {
-      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
+      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs,d.mts}"]
     },
     "apps/account-api": {
       "entry": ["scripts/*.mjs"]
