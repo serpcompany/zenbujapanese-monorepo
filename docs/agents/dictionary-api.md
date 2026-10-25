@@ -36,16 +36,16 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   ([`dictionary-core.md`](dictionary-core.md), The tokenizer). New files are a new tokenizer:
   record the tokenizer suite again with `pnpm tokenizer-suite`, and the word-detail and
   example-search suites on a Mac.
-- Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
-  `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
-  the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
-  there that checks out (`scripts/fetch-sudachi.mjs` also takes the resources folder and the
-  output path, which the image's build passes). `@nikkei/napi-sudachi` 0.12.0 builds the same
-  sudachi.rs commit the app pins, and the service checks that commit and the app's `char.def` and
-  `unk.def` before it loads. It hands the core Sudachi's Mode C morphemes, as the app does, and the
-  core chooses the words a sentence searches. Without the dictionary the service won't start; set
-  `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
-  direct matches.
+- Sudachi's dictionary, for sentence search: the one pack `LanguageTechnologyPackCatalog.json`
+  bundles (`scripts/sudachi-pack.mjs`), as the app and its build choose it, by the cases in
+  `language-data/conformance/sudachi-pack.json`. `pnpm sudachi` downloads it into `.sudachi/`,
+  checking the download and `system.dic` against the catalog's SHA-256s, and keeps one there that
+  checks out (it takes the resources folder and output path, as the image's build passes them).
+  `@nikkei/napi-sudachi` 0.12.0 builds the same sudachi.rs commit the app pins, and the service
+  checks that commit and the app's `char.def` and `unk.def` before it loads. It hands the core
+  Sudachi's Mode C morphemes, as the app does, and the core chooses the words a sentence searches.
+  Without the dictionary the service won't start; set `SUDACHI_DICTIONARY=` (empty) to run it with
+  sentence search off, where a sentence finds only direct matches.
 - `language-data/release.json`, its pin in `language-data/releases/`, and its retired entries.
 
 ## Run it

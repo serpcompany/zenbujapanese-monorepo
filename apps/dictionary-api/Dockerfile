@@ -19,7 +19,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm --filter zenbujapanese
 FROM ${NODE_IMAGE} AS sudachi
 WORKDIR /fetch
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json resources/
-COPY apps/dictionary-api/scripts/fetch-sudachi.mjs .
+COPY apps/dictionary-api/scripts/fetch-sudachi.mjs apps/dictionary-api/scripts/sudachi-pack.mjs ./
 RUN node fetch-sudachi.mjs resources /sudachi/system_core.dic
 
 FROM ${NODE_IMAGE}
