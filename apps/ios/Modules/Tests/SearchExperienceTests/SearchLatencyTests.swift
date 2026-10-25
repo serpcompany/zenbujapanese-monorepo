@@ -400,6 +400,47 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(checkedAgain)) again")
   }
 
+  static let romajiQueries: KeyValuePairs<String, [String]> = [
+    "stored": [
+      "raamen", "kinen", "tsuzuku", "fuiru", "o", "koohii", "biiru", "konnichiha", "gakkou",
+      "toukyou", "taberu", "sensei", "nihongo", "maccha", "shashin",
+    ],
+    "shown": [
+      "rāmen", "kin'en", "tsudzuku", "fairu", "wo", "kōhī", "bīru", "kon'nichiha", "matcha",
+      "chekku", "āgairu chekku", "tī", "hanadji", "sētā", "dēta",
+    ],
+    "unmarked": ["ramen", "kohi", "biru", "seta", "deta", "konpyuta", "supa", "kare", "pati"],
+    "typing": ["k", "ka", "kin", "kin'", "kin'e", "ts", "tsu", "tsud", "r", "ra", "f", "fa", "w"],
+    "english": ["dog", "water", "the", "a", "to eat", "file", "beer", "coffee"],
+  ]
+
+  @Test("prints how long romaji queries take, by how they are spelled")
+  func measureRomaji() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let clock = ContinuousClock()
+    _ = try await data.search(SearchQuery("zenbu"))
+    var all: [Double] = []
+    for (kind, queries) in Self.romajiQueries {
+      var timings: [Double] = []
+      for _ in 0..<Self.passes {
+        for query in queries {
+          timings.append(
+            Self.value(try await clock.measure { _ = try await data.search(SearchQuery(query)) }))
+        }
+      }
+      all += timings
+      print("SEARCH-LATENCY romaji, \(kind): " + Self.percentiles(timings))
+    }
+    print("SEARCH-LATENCY romaji, all: " + Self.percentiles(all))
+  }
+
+  static func percentiles(_ timings: [Double]) -> String {
+    let sorted = timings.sorted()
+    let at = { (share: Double) in sorted[min(sorted.count - 1, Int(Double(sorted.count) * share))] }
+    return String(
+      format: "median %.2f ms, p95 %.2f ms, total %.0f ms", at(0.5), at(0.95), timings.reduce(0, +))
+  }
+
   static func listed(_ word: String) async -> [LinkedExample] {
     await ExamplePage.every {
       await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false, $0)

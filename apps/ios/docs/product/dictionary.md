@@ -153,15 +153,15 @@ An English query groups its matches, strongest first:
    out and) show" isn't "to"), or, for a verb, "to" and the query;
 2. words where a later meaning is the query;
 3. words whose meanings mention it ("hot dog");
-4. words that match only by romaji: an exact romaji match, then one that starts with the query,
-   then one that contains it, each its own group.
+4. words that match only by romaji: exact, then starting with the query, then containing it, each
+   its own group; then by Romaji's spelling (`rāmen`), then by it without macrons (`ramen`).
 
 Within each group the more common word comes first, so `dog` leads with 犬 and `water` with 水.
 Words the frequency dictionaries don't rank follow, JMdict's common words first, then the earlier
 meaning; romaji that resembles the query (ドッグ for `dog`) only breaks a tie.
 
-Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; the recorded
-`SearchResultsConformanceTests`.
+Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; core
+`search/romaji-search.test.ts`; the recorded `SearchResultsConformanceTests` (`rāmen` to `biru`).
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
