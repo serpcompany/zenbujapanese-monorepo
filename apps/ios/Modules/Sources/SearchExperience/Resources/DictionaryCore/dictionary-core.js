@@ -2768,7 +2768,9 @@
     async search(rawQuery) {
       const query = normalizeQuery(rawQuery);
       const romaji2 = romajiQuery(query);
-      const exactFormEntry = romaji2 !== null && romaji2 !== "" ? (await rankedEnglish(this.db, romaji2, true))[0]?.entry : void 0;
+      const romajiCandidates = romajiDeinflectedCandidates(query);
+      const [exactForm] = romaji2 !== null && romaji2 !== "" ? await rankedEnglish(this.db, romaji2, true) : [];
+      const exactFormEntry = exactForm && (exactForm.hasExactOrPrefixMatch || romajiCandidates.length === 0) ? exactForm.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
         const [hasRefinedResults, literalResults] = await Promise.all([
@@ -2781,7 +2783,6 @@
         }
       }
       const directResults = await this.searchOnce(query);
-      const romajiCandidates = romajiDeinflectedCandidates(query);
       if (!directResults.hasExactOrPrefixMatch && romajiCandidates.length > 0) {
         const deinflectedResults = await Promise.all(
           romajiCandidates.map((candidate2) => this.searchOnce(candidate2))

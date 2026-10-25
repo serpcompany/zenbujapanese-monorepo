@@ -57,9 +57,12 @@ export class DictionarySearch {
   async search(rawQuery: string): Promise<SearchResults> {
     const query = normalizeQuery(rawQuery)
     const romaji = romajiQuery(query)
+    const romajiCandidates = romajiDeinflectedCandidates(query)
+    const [exactForm] =
+      romaji !== null && romaji !== '' ? await rankedEnglish(this.db, romaji, true) : []
     const exactFormEntry =
-      romaji !== null && romaji !== ''
-        ? (await rankedEnglish(this.db, romaji, true))[0]?.entry
+      exactForm && (exactForm.hasExactOrPrefixMatch || romajiCandidates.length === 0)
+        ? exactForm.entry
         : undefined
     if (exactFormEntry) {
       const refinement = normalizeQuery(exactFormEntry.reading)
@@ -76,7 +79,6 @@ export class DictionarySearch {
     }
 
     const directResults = await this.searchOnce(query)
-    const romajiCandidates = romajiDeinflectedCandidates(query)
     if (!directResults.hasExactOrPrefixMatch && romajiCandidates.length > 0) {
       const deinflectedResults = await Promise.all(
         romajiCandidates.map(candidate => this.searchOnce(candidate))

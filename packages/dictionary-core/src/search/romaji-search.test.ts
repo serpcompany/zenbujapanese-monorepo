@@ -31,6 +31,8 @@ const words: Word[] = [
   { headword: 'ビルディング', reading: 'ビルディング', gloss: 'edifice' },
   { headword: '食べる', reading: 'たべる', gloss: 'to eat', partOfSpeech: 'ichidanVerb' },
   { headword: 'タベータ', reading: 'タベータ', gloss: 'an invented word' },
+  { headword: 'ヅタ', reading: 'ヅタ', gloss: 'an invented word, shown dzuta' },
+  { headword: 'ヅル', reading: 'ヅル', gloss: 'an invented verb', partOfSpeech: 'godanVerb' },
   { headword: '動物相', reading: 'どうぶつそう', gloss: 'fauna' },
   { headword: 'ファウナ', reading: 'ファウナ', gloss: 'fauna' },
   { headword: '心', reading: 'こころ', gloss: 'mind' },
@@ -139,6 +141,12 @@ describe('a romaji search', () => {
 
   test('keeps an English query’s order: a shown romaji that is also the meaning moves nothing up', async () => {
     expect(await found('fauna')).toEqual(['動物相', 'ファウナ'])
+  })
+
+  test('a shown spelling that looks conjugated leads with its dictionary form, as a stored spelling does', async () => {
+    const results = await search.search('dzuta')
+    expect(results.items.map(item => item.entry.headword)).toEqual(['ヅル', 'ヅタ'])
+    expect(results.readingRefinement).toBeNull()
   })
 
   test('offers the reading of the word its shown romaji names', async () => {
