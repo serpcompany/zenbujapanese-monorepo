@@ -76,6 +76,9 @@ export function requirePinnedArtifacts(artifacts: { name: string; sha256: string
   }
 }
 
+export const recordedSudachi = (artifacts: { name: string; sha256: string }[]) =>
+  artifacts.find(artifact => artifact.name === 'system_core.dic')?.sha256
+
 let opened: Promise<{
   artifact: OpenedArtifact
   tokenizerFile: ReadIpadicFile
