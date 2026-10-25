@@ -175,7 +175,10 @@ what it waited for and for how long.
   reaches the bar. A tall row whose middle was 8 points above the bar still lost its tap to it.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
-  middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
+  middle of the part of the row between them, and taps again as `tap(_:toShow:)` does. The Search
+  audit opens every row it reveals through it, and the Account audit every Account page row it
+  reveals: back on Account after Known Words, the list kept its place, and Lists, the row below,
+  had its middle under the tab bar (#912).
 - **On the iPhone, a gesture after a pause of 4 s or more follows a warm-up touch.** This works
   around a race in the iOS 26.2 Simulator (Xcode 26.2), measured on iPhone runs, and goes once Apple
   fixes it. XCUITest sends each gesture through a virtual touchscreen that testmanagerd makes for

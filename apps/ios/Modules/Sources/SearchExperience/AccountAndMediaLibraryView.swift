@@ -47,7 +47,7 @@ struct AccountRootView: View {
 
   var body: some View {
     List {
-      if LaunchHarness.shows("library", on: "account") {
+      if LaunchHarness.shows("profile", on: "account") {
         Section {
           NavigationLink(value: AccountRoute.profile) {
             ProfileCardRow()
@@ -57,7 +57,9 @@ struct AccountRootView: View {
             ZenbuAccountRow()
           }
         }
+      }
 
+      if LaunchHarness.shows("library", on: "account") {
         Section {
           NavigationLink(value: AccountRoute.mediaLibrary) {
             SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)

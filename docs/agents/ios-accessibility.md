@@ -72,15 +72,24 @@ from where it stopped.
 
 On a page scrolled down to a section, that sweep reflows everything above it and slides the
 section's text under the bars, where the audit loses it and can't name the element. So the sections
-that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, and the
+that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, the
 Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
-under them), get those two audits on their own: `ZENBU_ONLY_SECTION`, a Debug-only harness
-(`LaunchHarness.onlySections`), opens the page with only the sections it names (Word Detail's
-examples under its meanings are one, `meaning-example`, named with `meaning`, the section that holds
-them, and audited on 日本's page), at the page's top, and the walk audits them there
-(`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
+under them), and at the largest size the Account page's rows below the profile (`library`, Media
+Library to Frequency Dictionaries), get those two audits on their own. `ZENBU_ONLY_SECTION`, a
+Debug-only harness (`LaunchHarness.onlySections`), opens the page with only the sections it names
+(Word Detail's examples under its meanings are one, `meaning-example`, named with `meaning`, the
+section that holds them, and audited on 日本's page), at the page's top, and the walk audits them
+there (`AuditPart.textSizes`). The page scrolled to the section keeps every other audit
 (`AuditPart.allButTextSizes`). On the iPhone the walk also opens a caption's word sheet at full
 height, so the Player page isn't showing behind it.
+
+Account's rows show why (#912). Scrolled to Translations at the largest size, the sweep reported
+Lists, Translations, and both counts as not following the text size, and Lists and Translations as
+clipped, in each of five runs, calm Mac or busy, once with no element for Translations. From the
+page's top it reported none of them, and with the rows alone at the top, only the two clipped
+titles, in each of four. Both titles and counts grow at every size, from 20 points tall at the
+default size to 63 at the largest, and show whole at each, the titles wrapping under their icons as
+the page's other rows do; so the clipped titles are allowed as text that scales.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show
 ([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App
