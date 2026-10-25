@@ -9,7 +9,8 @@ one. This doc holds what is this repository's own: its rules' scope, its layers,
 
 Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
 package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `apps/account-api`,
-`packages/dictionary-core`, `packages/node-service`, `tools/checks`), one after another. A change to
+`packages/account-rules`, `packages/dictionary-core`, `packages/node-service`, `tools/checks`),
+one after another. A change to
 `language-data` also runs the pipeline's tests, and one to its sources, reports, or tools the data
 tools' contract tests ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's

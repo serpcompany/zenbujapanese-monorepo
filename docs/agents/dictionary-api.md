@@ -149,7 +149,7 @@ answers, headers, and error codes, and every field of a card and a token. An app
   No token, or one that fails any of that but the scope, is `401 unauthorized` with
   `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
   scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
-  `src/account-tokens.ts`; the service imports nothing from the account service.
+  `src/account-tokens.ts`, through `packages/node-service`'s, which the account service runs too.
 - **Bounds.** At most 100 IDs, counted as sent, so one sent twice counts twice, and 200
   characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
