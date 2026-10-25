@@ -234,17 +234,18 @@ useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the ex
 readings and sentences with the romaji Foundation gave them, depends on no data file, so it pins
 none, and it is not among a language-data release's suites, whose packager refuses a suite that pins
 nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and through the entry point
-the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the app
-did. The results suite compares a row's first entry number only: the service keeps its Language
-Reference ID's, the first of the entries the app merged into the row. Where the app's example
-retrieval answers an error, the suite records it, and the page lists no examples either; none
-recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
-`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary the
-retrieval suite's sentence-search cases and the sentence suite skip. The sentence suite
+the app calls. A suite that records its `textAnalysis` runs with Sudachi only if the app did. The
+results suite compares a row's first entry number only: the service keeps its Language Reference
+ID's, the first of the entries the app merged into the row. Where the app's example retrieval
+answers an error, the suite records it, and the page lists no examples either; none recorded does
+now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip; `ZENBU_REQUIRE_ARTIFACT=1`
+makes them fail instead, as CI does, and without Sudachi's dictionary the retrieval suite's
+sentence-search cases and the two sentence suites skip. The sentence suite
 (`sentence-search.conformance.test.ts`) holds Sudachi's words for each query, the words searched,
-and the results to the app's; `sentence-search.test.ts` checks the screen of one. `conjugation-examples.test.ts` pages a form's examples.
-`full-text.test.ts` checks English search where FTS4 differs from other engines. `frequency.test.ts`
-reads the bundled lists as the app does, one file each, and as the service does.
+and the results to the app's, and the sentence results suite (`sentence-results.json`) the screen of
+each that lists Discovered Words, with its heading. `conjugation-examples.test.ts` pages a form's
+examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
+`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The

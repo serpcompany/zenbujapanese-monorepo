@@ -105,12 +105,13 @@ Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
 automated check yet". The checks come in
 five kinds:
 
-- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the
-  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
-  `word-detail.json`, and `kanji-detail.json`, and `kanji-element.json` for a page the website
-  doesn't have yet. Each pins, by SHA-256, the app data files it was
-  recorded from. The dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay
-  them through the shared core on the app's own data, as the service answers the pages.
+- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the app on the
+  iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
+  `word-detail.json`, `kanji-detail.json`, `sentence-search.json`, and `sentence-results.json`, and
+  `kanji-element.json` for a page the website doesn't have yet. Each pins, by SHA-256, the app data
+  files it was recorded from. The dictionary service's tests
+  (`apps/dictionary-api/src/conformance/`) replay them through the shared core on the app's own
+  data, as the service answers the pages.
 - **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
   and `apps/dictionary-api/src/`. Each one's `pnpm check` runs them; the `Web`, `Dictionary core`,
   and `Dictionary API` workflows run them on pull requests.
