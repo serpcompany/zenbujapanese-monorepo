@@ -19,7 +19,7 @@ extension AccountSync {
       SavedItemChange.bookmarkAdded($0.shared)
     }
     let kept = await keptUploads(withProfilePhoto: !state.takesAccountProfile)
-    return marks + lists + words + videos + bookmarks + kept
+    return SavedItemChange.forTheAccount(marks + lists + words + videos + bookmarks + kept)
   }
 
   func catchUpOnNewEntities() async {

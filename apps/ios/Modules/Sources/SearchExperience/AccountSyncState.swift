@@ -343,6 +343,20 @@ actor AccountSyncStateFile {
 }
 
 extension SavedItemChange {
+  static func forTheAccount(_ changes: [SavedItemChange]) -> [SavedItemChange] {
+    let watched = changes.compactMap { change -> WatchedVideo? in
+      if case .videoWatched(let video, _) = change { video } else { nil }
+    }
+    guard !watched.isEmpty else { return changes }
+    var sent = AccountRules.shared.sentVideos(watched).makeIterator()
+    return changes.map { change in
+      guard case .videoWatched(_, let previous) = change, let video = sent.next() else {
+        return change
+      }
+      return .videoWatched(video, previous: previous)
+    }
+  }
+
   func queued(in state: AccountSyncState) -> QueuedSyncChange {
     switch self {
     case .known(let change):
@@ -436,15 +450,13 @@ extension SavedItemChange {
   private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
     var fields: [String: SyncFieldValue] = ["watchedAt": moment(video.watchedAt ?? Date())]
     for (name, text) in [("title", video.title), ("author", video.author)] {
-      if let sent = text.flatMap(AccountRules.shared.watchText) { fields[name] = .string(sent) }
+      if let text { fields[name] = .string(text) }
     }
     for (name, number) in [
       ("duration", video.duration), ("position", video.position),
-      ("comprehension", video.comprehension.map { min($0, 1) }),
+      ("comprehension", video.comprehension),
     ] {
-      if let number, AccountRules.shared.fitsTheWatch(name, number) {
-        fields[name] = .decimal(number)
-      }
+      if let number { fields[name] = .decimal(number) }
     }
     return fields
   }

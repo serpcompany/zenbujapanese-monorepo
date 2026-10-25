@@ -23,3 +23,6 @@ export function accountUsername(typed: string): string | null {
 }
 
 export const removesTheUsername = isBlank
+
+export const usernameToSave = (typed: string): string | null =>
+  removesTheUsername(typed) ? '' : accountUsername(typed)

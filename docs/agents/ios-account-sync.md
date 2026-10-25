@@ -7,7 +7,7 @@ service a build signs in to, Apple, Google, and the tokens are in [`ios.md`](ios
 sync; what the learner sees is in the product docs'
 [Zenbu account and sync](../../apps/ios/docs/product/account-sync.md).
 What the app takes as a profile name, a username, a sign-in code, a list's name, a note, or a
-watch's fields it asks the account rules' own JavaScriptCore engine (`AccountRules.swift`, from
+watch's fields (a whole first upload's watches in one call) it asks the account rules' own JavaScriptCore engine (`AccountRules.swift`, from
 `Resources/AccountRules/account-rules.js`; [`account-rules.md`](account-rules.md)), so it holds
 input to the rules the account service and the website do.
 

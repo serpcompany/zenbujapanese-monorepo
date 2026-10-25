@@ -1,19 +1,26 @@
 "use strict";
 (() => {
   // src/text.ts
-  var surrogates = /\p{Cs}/gu;
-  var controls = /\p{Cc}/gu;
+  var unsafe = /[\p{Cc}\p{Cs}]/u;
+  var everyUnsafe = /[\p{Cc}\p{Cs}]/gu;
+  var surrogate = /\p{Cs}/u;
   var invisible = /\p{Cc}|\p{Cf}|\p{Cs}/u;
   var replacement = "�";
+  var madeSafe = (character) => surrogate.test(character) ? replacement : " ";
   var codePoints = (text) => [...text].length;
   var hasInvisibleCharacters = (text) => invisible.test(text);
   var isBlank = (text) => text.trim() === "";
-  var plainText = (raw) => raw.replace(surrogates, replacement).replace(controls, " ").normalize("NFC").trim();
-  var cutText = (raw, most2) => [...plainText(raw)].slice(0, most2).join("").trim();
-  var keptWithin = (text, least, most2) => {
+  var plainText = (raw) => (unsafe.test(raw) ? raw.replace(everyUnsafe, madeSafe) : raw).normalize("NFC").trim();
+  function cutText(raw, most2) {
+    const plain = plainText(raw);
+    return plain.length <= most2 ? plain : [...plain].slice(0, most2).join("").trim();
+  }
+  function keptWithin(text, least, most2) {
+    if (text.length < least) return false;
+    if (text.length <= most2 && text.length >= 2 * least) return true;
     const length = codePoints(text);
     return length >= least && length <= most2;
-  };
+  }
 
   // src/lists.ts
   var listLimits = {
@@ -30,9 +37,9 @@
   // src/notes.ts
   var noteTextLength = 1e4;
   var lineBreaks = /\r\n?/g;
-  var surrogates2 = /\p{Cs}/gu;
+  var surrogates = /\p{Cs}/gu;
   var controlsButLinesAndTabs = /[^\P{Cc}\n\t]/gu;
-  var keptNoteText = (typed) => typed.replace(lineBreaks, "\n").replace(surrogates2, "�").replace(controlsButLinesAndTabs, " ").normalize("NFC").trim();
+  var keptNoteText = (typed) => typed.replace(lineBreaks, "\n").replace(surrogates, "�").replace(controlsButLinesAndTabs, " ").normalize("NFC").trim();
   function noteText(typed) {
     const text = keptNoteText(typed);
     return keptWithin(text, 1, noteTextLength) ? text : null;
@@ -54,6 +61,7 @@
     return usernamePattern.test(username) ? username : null;
   }
   var removesTheUsername = isBlank;
+  var usernameToSave = (typed) => removesTheUsername(typed) ? "" : accountUsername(typed);
 
   // src/sign-in-code.ts
   var digits = "[0-9]{6}";
@@ -77,21 +85,43 @@
     return text === "" ? null : text;
   }
   var fitsTheWatch = (field, value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= most[field];
+  var sentText = (value) => typeof value === "string" ? watchText(value) : null;
+  var sentWatch = ([title, author, duration, position, comprehension]) => [
+    sentText(title),
+    sentText(author),
+    fitsTheWatch("duration", duration) ? duration : null,
+    fitsTheWatch("position", position) ? position : null,
+    fitsTheWatch("comprehension", comprehension) ? comprehension : null
+  ];
+  function sentWatchMarks(watches) {
+    const replaced = [];
+    let marks = "";
+    for (const watch of watches) {
+      const sent = sentWatch(watch);
+      for (let field = 0; field < sent.length; field += 1) {
+        const value = sent[field];
+        if (value === null) marks += "-";
+        else if (value === watch[field]) marks += "k";
+        else {
+          marks += "r";
+          replaced.push(String(value));
+        }
+      }
+    }
+    return replaced.length === 0 ? marks : `${marks}
+${JSON.stringify(replaced)}`;
+  }
 
   // src/embedded/answers.ts
   var answers = {
     accountName,
     accountUsername,
-    removesTheUsername,
+    usernameToSave,
     signInCode: signInCodeOf,
     listName: listNameCutToFit,
     keptNoteText,
     noteText,
-    watchText,
-    fitsTheWatch: (request) => {
-      const [field, value] = JSON.parse(request);
-      return fitsTheWatch(field, value);
-    }
+    sentWatches: (watches) => sentWatchMarks(JSON.parse(watches))
   };
   function answer(rule, argument) {
     const run = Object.hasOwn(answers, rule) ? answers[rule] : void 0;

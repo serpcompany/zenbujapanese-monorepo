@@ -118,7 +118,7 @@ struct SharedAccountRulesTests {
     let watch = try SharedAccountCases.load("watch-fields", as: WatchCases.self)
     for text in watch.texts {
       let video = WatchedVideo(videoID: "dQw4w9WgXcQ", title: text.typed.value, watchedAt: Date())
-      let fields = SavedItemChange.videoWatched(video, previous: nil)
+      let fields = SavedItemChange.forTheAccount([.videoWatched(video, previous: nil)])[0]
         .queued(in: AccountSyncState()).fields
       #expect(fields?["title"] == text.sent.map { .string($0.value) }, "\(text.covers)")
     }
@@ -129,11 +129,29 @@ struct SharedAccountRulesTests {
       case "position": video.position = number.value
       default: video.comprehension = number.value
       }
-      let fields = SavedItemChange.videoWatched(video, previous: nil)
+      let fields = SavedItemChange.forTheAccount([.videoWatched(video, previous: nil)])[0]
         .queued(in: AccountSyncState()).fields
       let reportedAsAll = number.field == "comprehension" && number.value > 1
       #expect((fields?[number.field] != nil) == (number.fits || reportedAsAll), "\(number.covers)")
     }
+  }
+
+  @Test("a batch of watches, as a first upload sends, is held to the rules as each would be alone")
+  func watchBatch() throws {
+    let watch = try SharedAccountCases.load("watch-fields", as: WatchCases.self)
+    let changes = watch.texts.map { text in
+      SavedItemChange.videoWatched(
+        WatchedVideo(
+          videoID: "dQw4w9WgXcQ", title: text.typed.value, author: "Channel", duration: 600,
+          watchedAt: Date()),
+        previous: nil)
+    }
+    let known = KnownWordChange(storedID: "kanji:語", headword: "語", reading: "ご", known: true)
+    let together = SavedItemChange.forTheAccount([.known(known)] + changes)
+    let alone = changes.map { SavedItemChange.forTheAccount([$0])[0] }
+    let fields = { (change: SavedItemChange) in change.queued(in: AccountSyncState()).fields }
+    #expect(together.count == changes.count + 1)
+    #expect(together.dropFirst().map(fields) == alone.map(fields))
   }
 
   @MainActor

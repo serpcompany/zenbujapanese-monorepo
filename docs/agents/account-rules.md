@@ -51,7 +51,8 @@ with `textOf` for a case written as a repeated run (`{ "text": "x", "times": 501
   (`apps/ios/Modules/Sources/SearchExperience/Resources/AccountRules/account-rules.js`) through
   `AccountRules` (`AccountRules.swift`): Profile's name and username, the code's Sign In button,
   a list's name, a note compared as the account keeps it and whether it fits, and a watch's
-  fields. `SharedAccountRulesTests`, `SharedSettingsRulesTests`, `AccountRulesTests`, and
+  fields, a whole batch of watches in one call (`SavedItemChange.forTheAccount`).
+  `SharedAccountRulesTests`, `SharedSettingsRulesTests`, `AccountRulesTests`, and
   `UserProfileTests` replay the cases; the order of tied videos and searches is the app's own sort,
   which `SharedAccountRulesTests.recentOrder()` holds to the case file.
 
@@ -65,9 +66,10 @@ bundler (`packages/dictionary-core/scripts/javascriptcore-bundle.mjs`, `bundleFo
 the bundle in an engine of its own, beside the dictionary's three ([`ios.md`](ios.md), The
 dictionary core in the app), and makes it in the background as its account starts
 (`AccountRules.prepareSoon()`), so a check doesn't wait behind the presentation engine's lock or
-its start. The bundle is under 4 KB: on this repository's virtual Mac, a new engine answered its
+its start. The bundle is about 5 KB: on this repository's virtual Mac, a new engine answered its
 first check in under a millisecond at the median, against about 7 ms for the presentation engine.
-Warm, a check costs a microsecond or less.
+Warm, a call costs about half a microsecond before any rule's own work, so a batch, such as a
+first upload's watches, goes in one call.
 
 ## Changing a rule
 

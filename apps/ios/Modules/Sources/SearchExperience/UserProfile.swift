@@ -130,8 +130,7 @@ final class UserProfile {
 
   nonisolated static func usernameEdit(_ typed: String, over stored: String) -> UsernameEdit {
     if typed == stored { return .keep }
-    if AccountRules.shared.removesTheUsername(typed) { return .save("") }
-    guard let accepted = AccountRules.shared.username(typed) else { return .refuse }
+    guard let accepted = AccountRules.shared.usernameToSave(typed) else { return .refuse }
     return .save(accepted)
   }
 
