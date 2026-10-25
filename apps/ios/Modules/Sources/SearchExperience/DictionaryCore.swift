@@ -6,6 +6,17 @@ enum DictionaryCoreError: Error, Equatable {
   case failed(String)
 }
 
+struct CoreScript: Sendable {
+  let folder: String
+  let name: String
+  let endpoint: String
+
+  static let dictionary = CoreScript(
+    folder: "DictionaryCore", name: "dictionary-core", endpoint: "zenbuDictionary")
+  static let accountRules = CoreScript(
+    folder: "AccountRules", name: "account-rules", endpoint: "zenbuAccountRules")
+}
+
 final class DictionaryCore {
   private static let contextCreation = NSLock()
   private let context: JSContext
@@ -14,6 +25,7 @@ final class DictionaryCore {
   private let answerNowJSON: JSValue
 
   init(
+    script: CoreScript = .dictionary,
     statements: SQLiteStatements? = nil,
     kanji: (@Sendable () -> KanjiFiles?)? = nil,
     radicals: (@Sendable () -> [UInt8]?)? = nil,
@@ -22,8 +34,8 @@ final class DictionaryCore {
   ) throws {
     guard
       let url = BundledData.bundle.url(
-        forResource: "dictionary-core", withExtension: "js", subdirectory: "DictionaryCore")
-        ?? BundledData.bundle.url(forResource: "dictionary-core", withExtension: "js"),
+        forResource: script.name, withExtension: "js", subdirectory: script.folder)
+        ?? BundledData.bundle.url(forResource: script.name, withExtension: "js"),
       let source = try? String(contentsOf: url, encoding: .utf8),
       let context = Self.contextCreation.withLock({ JSContext() }),
       let host = JSValue(newObjectIn: context)
@@ -81,7 +93,7 @@ final class DictionaryCore {
     context.setObject(host, forKeyedSubscript: "zenbuHost" as NSString)
     context.evaluateScript(source, withSourceURL: url)
     guard context.exception == nil,
-      let endpoint = context.objectForKeyedSubscript("zenbuDictionary"), endpoint.isObject,
+      let endpoint = context.objectForKeyedSubscript(script.endpoint), endpoint.isObject,
       let answerNow = endpoint.objectForKeyedSubscript("answer"), answerNow.isObject,
       let answerNowJSON = endpoint.objectForKeyedSubscript("answerJSON"), answerNowJSON.isObject
     else {

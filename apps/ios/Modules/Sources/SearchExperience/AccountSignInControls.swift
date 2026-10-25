@@ -35,6 +35,22 @@ enum AccountMessage {
 
   static let unsyncablePhotoCodes: Set<String> = ["too_large", "unsupported_photo"]
 
+  static func longNotes(_ count: Int) -> String? {
+    switch count {
+    case 0: nil
+    case 1:
+      String(
+        localized:
+          "1 note is over 10,000 characters, so it stays on this \(ThisDevice.name) without syncing. Shorten it, and it syncs."
+      )
+    default:
+      String(
+        localized:
+          "\(count) notes are over 10,000 characters, so they stay on this \(ThisDevice.name) without syncing. Shorten them, and they sync."
+      )
+    }
+  }
+
   static func refusedPhotos(_ refused: [String: String], profilePhoto: String? = nil) -> [String] {
     let full = refused.values.filter { $0 == AccountSync.tooManyPhotos }.count
     let unsyncable = refused.values.filter(unsyncablePhotoCodes.contains).count
@@ -233,10 +249,10 @@ struct EmailCodeForm: View {
         .textEntry(.number)
         .accessibilityIdentifier("account.code")
       Button(submitTitle) {
-        let entered = code
+        guard let entered = AccountRules.shared.signInCode(code) else { return }
         run { try await verify(codeSentTo, entered) }
       }
-      .disabled(code.trimmingCharacters(in: .whitespaces).count < 6)
+      .disabled(AccountRules.shared.signInCode(code) == nil)
       .accessibilityIdentifier("account.verify-code")
     }
   }

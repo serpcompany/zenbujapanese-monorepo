@@ -1,19 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { isSetting, type SettingKind, settingRules, settingValue } from './settings'
-import { cases } from './test/cases'
+import { settingCases } from './test/cases'
 
-interface SharedSetting {
-  name: string
-  kind: SettingKind['kind']
-  choices?: string[]
-  least?: number
-  most?: number
-  pattern?: string
-  accepted: unknown[]
-  refused: unknown[]
-}
-
-const shared = cases<{ settings: SharedSetting[] }>('settings').settings
+const shared = settingCases.settings
 
 const shapeOf = (kind: SettingKind) =>
   kind.kind === 'choice'

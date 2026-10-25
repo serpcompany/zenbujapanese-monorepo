@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { cases } from '@zenbu/account-rules/test/cases'
+import { recentOrderCases } from '@zenbu/account-rules/test/cases'
 import pg from 'pg'
 import { describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
@@ -144,7 +144,7 @@ describe('Postgres, through the driver the service runs', () => {
 
   test('prunes videos watched at the same time in the shared order, whatever the collation', async () => {
     const { database, raw, id, done } = await anAccount('watch-ties')
-    const { videos } = cases<{ videos: { ids: string[]; newestFirst: string[] } }>('recent-order')
+    const { videos } = recentOrderCases
     await raw.query(
       "insert into watched_videos (user_id, video_id, watched_at, status, version) select $1, 'later' || lpad(n::text, 6, '0'), timestamptz '2026-10-01T00:00:00Z' + n * interval '1 second', 'watched', 1 from generate_series(1, 50 - $3::int) as n union all select $1, tied, timestamptz '2000-01-01T00:00:01Z', 'watched', 1 from unnest($2::text[]) as tied",
       [id, videos.ids, videos.ids.length]

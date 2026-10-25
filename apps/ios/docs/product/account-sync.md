@@ -121,7 +121,9 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   edit made on a page that was open while a sync changed the note becomes a note of its own beside
   the newer text, unless it's the same text, and an open page shows what arrived. A note deleted on one device stays on another
   that edited it since. A note the account refuses, such as one over 10,000 characters, stays on
-  the phone untouched, even when the account's copy of it comes down, until the learner changes it.
+  the phone untouched, even when the account's copy of it comes down, until the learner changes it,
+  and Zenbu Account says so: "1 note is over 10,000 characters, so it stays on this iPhone without
+  syncing. Shorten it, and it syncs." (or how many, for more than one). The editor caps nothing.
 - A photo goes up with its file before the change that names it, and another device downloads
   the file once; a device that already holds the same image shows it without downloading. Removing
   a photo's last word removes it everywhere, but a word added on a device that hadn't seen that
@@ -155,7 +157,8 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   again the next time the app opens if they couldn't.
 - A search on two devices is one search, kept at its later time. A search removed on one device is
   removed everywhere, even from a device that searched it again without having heard of the
-  removal; searching it after that brings it back. The account keeps the latest 50. **Clear
+  removal; searching it after that brings it back. The account keeps the latest 50; two searches,
+  or two Recent videos, from the same moment keep one order on every device. **Clear
   Recent Lookups** asks first, and says it clears them from every device signed in to the account,
   or, signed out, from this device.
 - A device away longer than the account remembers a deletion (its latest 1,000 deleted notes or
@@ -167,7 +170,8 @@ and `AccountSyncPhotoTests` (a `402` download); UI
   while the device reads, the sync stops, Zenbu Account says it's reading the account again, and
   it tries again after a wait.
 
-Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`,
+Check: package `AccountSyncConflictTests`, `AccountSyncWatchHistoryTests`, `AccountSyncNoteTests`
+(a long note said), `AccountRulesTests.longNotesMessage()`, `SharedAccountRulesTests.recentOrder()`,
 `AccountSyncBookmarkTests`, `AccountSyncProfileTests`, `AccountSyncKeptTests`,
 `AccountSyncPhotoTests`, and `AccountSyncFullReadTests` (reading everything again); UI
 `AccountSignedInUITests.testSigningInBringsThePhotoSettingsAndSearchesKeptOnAnotherDevice` (iPhone

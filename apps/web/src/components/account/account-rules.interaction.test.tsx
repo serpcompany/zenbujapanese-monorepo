@@ -1,4 +1,10 @@
-import { type Case, cases, type Text, textOf } from '@zenbu/account-rules/test/cases'
+import {
+  signInCodeCases as codes,
+  nameCases as names,
+  type Text,
+  textOf,
+  usernameCases as usernames
+} from '@zenbu/account-rules/test/cases'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountApi, ProfileChange } from '@/lib/account/client'
@@ -9,15 +15,6 @@ import { EmailCodeForm } from './email-code-form'
 import { ProfileForm } from './profile-form'
 
 afterEach(unmount)
-
-const names = cases<{ rule: string; accepted: (Case & { name: Text })[]; refused: Case[] }>('name')
-const usernames = cases<{
-  rule: string
-  accepted: (Case & { username: Text })[]
-  refused: Case[]
-  removes: Case[]
-}>('username')
-const codes = cases<{ accepted: (Case & { code: string })[]; refused: Case[] }>('sign-in-code')
 
 const tokens = { use: call => call('access') } as AccessTokens
 

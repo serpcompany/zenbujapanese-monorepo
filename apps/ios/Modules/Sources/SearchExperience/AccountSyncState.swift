@@ -157,6 +157,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var refusedPhotos: [String: String] = [:]
   var refusedProfilePhoto: String?
   var refusedNotes: [String] = []
+  var longNotes: [String] = []
   var photoRoomFreed = false
   var retryNextLaunch: [QueuedSyncChange] = []
   var rereadSeen: Set<String>?
@@ -198,6 +199,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       try container.decodeIfPresent([String: String].self, forKey: .refusedPhotos) ?? [:]
     refusedProfilePhoto = try container.decodeIfPresent(String.self, forKey: .refusedProfilePhoto)
     refusedNotes = try container.decodeIfPresent([String].self, forKey: .refusedNotes) ?? []
+    longNotes = try container.decodeIfPresent([String].self, forKey: .longNotes) ?? []
     photoRoomFreed = try container.decodeIfPresent(Bool.self, forKey: .photoRoomFreed) ?? false
     retryNextLaunch =
       try container.decodeIfPresent([QueuedSyncChange].self, forKey: .retryNextLaunch) ?? []
@@ -434,15 +436,15 @@ extension SavedItemChange {
   private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
     var fields: [String: SyncFieldValue] = ["watchedAt": moment(video.watchedAt ?? Date())]
     for (name, text) in [("title", video.title), ("author", video.author)] {
-      if let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        fields[name] = .string(text)
-      }
+      if let sent = text.flatMap(AccountRules.shared.watchText) { fields[name] = .string(sent) }
     }
     for (name, number) in [
       ("duration", video.duration), ("position", video.position),
       ("comprehension", video.comprehension.map { min($0, 1) }),
     ] {
-      if let number, number.isFinite, number >= 0 { fields[name] = .decimal(number) }
+      if let number, AccountRules.shared.fitsTheWatch(name, number) {
+        fields[name] = .decimal(number)
+      }
     }
     return fields
   }

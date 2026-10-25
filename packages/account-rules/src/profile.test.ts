@@ -7,15 +7,7 @@ import {
   removesTheUsername,
   usernameRule
 } from './profile'
-import { type Case, cases, type Text, textOf } from './test/cases'
-
-const names = cases<{ rule: string; accepted: (Case & { name: Text })[]; refused: Case[] }>('name')
-const usernames = cases<{
-  rule: string
-  accepted: (Case & { username: Text })[]
-  refused: Case[]
-  removes: Case[]
-}>('username')
+import { type Case, nameCases as names, textOf, usernameCases as usernames } from './test/cases'
 
 const typedLengths = (list: readonly Case[]) => list.map(({ typed }) => [...textOf(typed)].length)
 

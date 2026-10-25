@@ -1,13 +1,12 @@
-import { type Case, cases, type Text, textOf } from '@zenbu/account-rules/test/cases'
+import {
+  nameCases as names,
+  textOf,
+  usernameCases as usernames
+} from '@zenbu/account-rules/test/cases'
 import { describe, expect, test } from 'vitest'
 import { editedProfile, normalizeName, normalizeUsername } from './profile'
 
 const invalid = { code: 'invalid_fields', message: expect.any(String) }
-
-const names = cases<{ rule: string; accepted: (Case & { name: Text })[]; refused: Case[] }>('name')
-const usernames = cases<{ rule: string; accepted: (Case & { username: Text })[]; refused: Case[] }>(
-  'username'
-)
 
 describe('a name', () => {
   test('is kept as the cases shared with the app and the website say', () => {

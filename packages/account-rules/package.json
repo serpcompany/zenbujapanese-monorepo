@@ -2,12 +2,13 @@
   "name": "@zenbu/account-rules",
   "version": "0.0.0",
   "private": true,
-  "description": "The rules a learner's account input is held to, which the account service applies and the website checks before sending, with the cases the app's tests replay.",
+  "description": "The rules a learner's account input is held to: the account service applies them, the website checks with them before sending, and the app runs their bundle in JavaScriptCore, with the cases every client's tests replay.",
   "type": "module",
   "exports": {
     "./*": "./src/*.ts"
   },
   "scripts": {
+    "bundle:javascriptcore": "node scripts/bundle-javascriptcore.mjs",
     "format": "biome format --write",
     "lint": "biome check",
     "typecheck": "tsc --noEmit",

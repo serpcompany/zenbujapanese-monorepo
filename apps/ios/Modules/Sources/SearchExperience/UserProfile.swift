@@ -119,33 +119,8 @@ final class UserProfile {
   nonisolated static let accountNameRule =
     "Your Zenbu account needs a name of \(accountNameLengths.lowerBound) to \(accountNameLengths.upperBound) characters, with no control characters."
 
-  private nonisolated static let refusedInAName: Set<Unicode.GeneralCategory> = [
-    .control, .format, .surrogate,
-  ]
-
-  nonisolated static func isAccountName(_ name: String) -> Bool {
-    let words = name.precomposedStringWithCanonicalMapping.split {
-      $0.isWhitespace && $0 != Character(nextLine)
-    }
-    let scalars = words.joined(separator: " ").unicodeScalars
-    return accountNameLengths.contains(scalars.count)
-      && !scalars.contains { refusedInAName.contains($0.properties.generalCategory) }
-  }
-
   nonisolated static let usernameRule =
     "A username is \(usernameLengths.lowerBound) to \(usernameLengths.upperBound) letters a to z, digits, or underscores."
-
-  nonisolated static func acceptedUsername(_ typed: String) -> String? {
-    let folded = typed.precomposedStringWithCompatibilityMapping.unicodeScalars
-    guard let first = folded.firstIndex(where: { !isTrimmedFromAUsername($0) }),
-      let last = folded.lastIndex(where: { !isTrimmedFromAUsername($0) })
-    else { return nil }
-    let username = String(String.UnicodeScalarView(folded[first...last])).lowercased()
-    guard usernameLengths.contains(username.unicodeScalars.count),
-      username.unicodeScalars.allSatisfy(isAUsernameScalar)
-    else { return nil }
-    return username
-  }
 
   enum UsernameEdit: Equatable, Sendable {
     case keep
@@ -155,22 +130,9 @@ final class UserProfile {
 
   nonisolated static func usernameEdit(_ typed: String, over stored: String) -> UsernameEdit {
     if typed == stored { return .keep }
-    if typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return .save("") }
-    guard let accepted = acceptedUsername(typed) else { return .refuse }
+    if AccountRules.shared.removesTheUsername(typed) { return .save("") }
+    guard let accepted = AccountRules.shared.username(typed) else { return .refuse }
     return .save(accepted)
-  }
-
-  private nonisolated static let usernameLetters: ClosedRange<Unicode.Scalar> = "a"..."z"
-  private nonisolated static let usernameDigits: ClosedRange<Unicode.Scalar> = "0"..."9"
-  private nonisolated static let byteOrderMark: Unicode.Scalar = "\u{FEFF}"
-  private nonisolated static let nextLine: Unicode.Scalar = "\u{85}"
-
-  private nonisolated static func isAUsernameScalar(_ scalar: Unicode.Scalar) -> Bool {
-    usernameLetters.contains(scalar) || usernameDigits.contains(scalar) || scalar == "_"
-  }
-
-  private nonisolated static func isTrimmedFromAUsername(_ scalar: Unicode.Scalar) -> Bool {
-    scalar == byteOrderMark || (scalar.properties.isWhitespace && scalar != nextLine)
   }
 
   nonisolated static func isValidEmail(_ input: String) -> Bool {

@@ -253,13 +253,13 @@ earlier version saved stays as it was until it is edited. Without a photo, the c
 initials. Signed in, name, username, and photo sync with the Zenbu account: each sign-in keeps the
 account's name and username, filling its empty ones from the phone ([The profile at
 sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide My
-Email), the name can't be emptied, and a change the account refuses, such as a taken username,
-goes back and says why. Signed out, edits stay on the phone. One this version can't read is kept
-aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
+Email), the name follows the account's rule, and a change the account refuses, such as a taken
+username, goes back and says why. Signed out, edits stay on the phone. One this version can't read
+is kept aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
-Check: package `UserProfileTests` (the field rules, the username's from the cases the account
-service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
-reload; an earlier username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
+Check: package `SharedAccountRulesTests` (the name and username from the account rules' cases,
+`packages/account-rules/cases/`), `UserProfileTests` (saving on leaving; a reload; an earlier
+username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
 `PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
 (the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
 
@@ -339,16 +339,17 @@ its word count; two lists in one place, as after signing in on a second phone, s
 order on every device. A learner can create a list, swipe a list to rename or delete it (a list that
 has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
 list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
-trimmed, can't be empty, hold at most 500 characters (control characters become spaces), and may
-repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known
-words; the learner can search it by headword or reading, swipe a word to remove it from that list,
-or open its word page, found the same way as in Known Words. Its **•••** menu renames the list,
-deletes it (asking first when it has words), or selects words: while selecting, the top bar offers
-Select All, Remove, and Done. Deleting a list removes its words from that list only.
+trimmed, can't be empty, hold at most 500 characters, cut to fit (control characters become spaces),
+and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on
+known words; the learner can search it by headword or reading, swipe a word to remove it from that
+list, or open its word page, found the same way as in Known Words. Its **•••** menu renames the
+list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
+offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
-Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming,
-deleting, and dragging a list into order) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
-(Favorites at first).
+Check: package `WordListsTests`, `SharedAccountRulesTests.listNames()`, and `SavedKanjiTests`; UI
+`ListsUITests` (making, renaming, deleting, and dragging a list into order) and
+`AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (Favorites at
+first).
 
 A word's page also names the lists holding it; tapping one opens that list here.
 
