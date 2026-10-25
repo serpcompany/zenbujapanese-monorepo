@@ -414,7 +414,7 @@ struct SearchLatencyTests {
     "english": ["dog", "water", "the", "a", "to eat", "file", "beer", "coffee"],
   ]
 
-  @Test("prints how long romaji queries take, by how they are spelled")
+  @Test("prints how long romaji queries take uncached, by how they are spelled")
   func measureRomaji() async throws {
     let data = LanguageReferenceData(validatesBundledArtifact: false)
     let clock = ContinuousClock()
@@ -424,8 +424,10 @@ struct SearchLatencyTests {
       var timings: [Double] = []
       for _ in 0..<Self.passes {
         for query in queries {
-          timings.append(
-            Self.value(try await clock.measure { _ = try await data.search(SearchQuery(query)) }))
+          let elapsed = try await clock.measure {
+            _ = try await data.results(answered: try await data.answeredSearch(SearchQuery(query).value))
+          }
+          timings.append(Self.value(elapsed))
         }
       }
       all += timings

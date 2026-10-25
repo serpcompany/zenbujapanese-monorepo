@@ -2190,7 +2190,6 @@
   var displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
   ON p.entry_id = e.id AND p.form = e.headword
   AND p.kind = CASE WHEN e.headword = e.reading THEN ${FormKind.reading} ELSE ${FormKind.written} END`;
-  var isStoredExactOrPrefix = (relation) => relation === RomajiRelation.exact || relation === RomajiRelation.prefix;
   var hasSearchTerms = (value) => /[\p{L}\p{M}\p{N}]/u.test(value);
   var escapeRegExp = (value) => value.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&");
   var glossToken = (query) => new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, "u");
@@ -2263,14 +2262,14 @@
           entry,
           rank: rank2,
           presentationRank: rank2,
-          hasExactOrPrefixMatch: isStoredExactOrPrefix(romajiRelation2),
+          hasExactOrPrefixMatch: romajiRelation2 <= RomajiRelation.prefix,
           semanticFingerprint: row.semantic_fingerprint,
           matchedSummary: null
         });
         continue;
       }
       const lane = selectedGloss.relation === GlossRelation.glossToken ? EvidenceLane.tokenGloss : EvidenceLane.strongGloss;
-      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some(isStoredExactOrPrefix);
+      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some((relation) => relation <= RomajiRelation.prefix);
       const rank = {
         kind: "english",
         lane,
@@ -2316,40 +2315,83 @@
   }
   async function englishEvidence(db, query) {
     if (!hasSearchTerms(query)) return null;
-    const [glossMatches, romajiMatches] = await Promise.all([
-      glossEvidence(db, query, ftsPhrase(query)),
-      romajiEvidence(db, query, ftsPrefix(query))
+    const glossMatch = ftsPhrase(query);
+    const romajiMatch = ftsPrefix(query);
+    const [rows, glossMatches, romajiMatches] = await Promise.all([
+      db.all(
+        `WITH candidates AS (
+           SELECT g.entry_id FROM dictionary_gloss_fts x JOIN gloss_atoms g ON g.rowid = x.docid
+           WHERE dictionary_gloss_fts MATCH ?
+           UNION
+           SELECT f.entry_id FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
+           WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
+         )
+         SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+         FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
+        [glossMatch, romajiMatch]
+      ),
+      glossEvidence(db, query, glossMatch),
+      storedRomajiEvidence(db, query, romajiMatch)
     ]);
-    const ids = [.../* @__PURE__ */ new Set([...glossMatches.keys(), ...romajiMatches.keys()])];
-    const rows = ids.length === 0 ? [] : await db.all(
-      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-             FROM json_each(?) j JOIN entries e ON e.id = unhex(j.value) ${displayedFormProfileJoin}`,
-      [JSON.stringify(ids)]
-    );
+    if (!listsEveryWordItCan(rows, glossMatches, romajiMatches)) {
+      await addShownRomajiEvidence(db, query, romajiMatch, { rows, glossMatches, romajiMatches });
+    }
     return { rows, glossMatches, romajiMatches };
   }
-  async function senseRestrictions(db, entryIds) {
-    const restrictions = /* @__PURE__ */ new Map();
-    if (entryIds.length === 0) return restrictions;
-    const rows = await db.all(
-      `SELECT lower(hex(r.entry_id)) AS entry_id, r.sense_order, r.kind, r.form
-       FROM json_each(?) j JOIN sense_form_restrictions r ON r.entry_id = unhex(j.value)`,
-      [JSON.stringify(entryIds)]
-    );
+  function listsEveryWordItCan(rows, glossMatches, romajiMatches) {
+    const words2 = /* @__PURE__ */ new Set();
     for (const row of rows) {
-      const key = `${row.entry_id} ${row.sense_order}`;
-      const sense = restrictions.get(key) ?? { writtenForms: [], readings: [] };
-      if (row.kind === FormKind.written) sense.writtenForms.push(row.form);
-      if (row.kind === FormKind.reading) sense.readings.push(row.form);
-      restrictions.set(key, sense);
+      if (!glossMatches.has(row.id) && !romajiMatches.has(row.id)) continue;
+      words2.add(row.semantic_fingerprint);
+      if (words2.size >= searchResultLimit) return true;
     }
-    return restrictions;
+    return false;
   }
-  var unrestricted = { writtenForms: [], readings: [] };
+  async function addShownRomajiEvidence(db, query, match, evidence) {
+    const shown = await db.all(
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form, f.kind
+       FROM shown_romaji_fts x JOIN shown_romaji_forms f ON f.rowid = x.docid
+       WHERE shown_romaji_fts MATCH ?`,
+      [match]
+    );
+    const { rows, glossMatches, romajiMatches } = evidence;
+    const listed3 = /* @__PURE__ */ new Set();
+    for (const row of rows) listed3.add(row.id);
+    const ranked = /* @__PURE__ */ new Set();
+    for (const id of glossMatches.keys()) ranked.add(id);
+    for (const id of romajiMatches.keys()) ranked.add(id);
+    const unlisted = [];
+    let step = 0;
+    for (const row of shown) {
+      stopIfInterrupted(db, step++);
+      if (ranked.has(row.entry_id)) continue;
+      const relation = romajiRelation(row.form, row.kind, query);
+      const relations = romajiMatches.get(row.entry_id);
+      if (relations) {
+        if (!relations.includes(relation)) relations.push(relation);
+        continue;
+      }
+      romajiMatches.set(row.entry_id, [relation]);
+      if (!listed3.has(row.entry_id)) unlisted.push(row.entry_id);
+    }
+    if (unlisted.length === 0) return;
+    const added = await db.all(
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM json_each(?) j JOIN entries e ON e.id = unhex(j.value) ${displayedFormProfileJoin}`,
+      [JSON.stringify(unlisted)]
+    );
+    for (const row of added) rows.push(row);
+  }
   async function glossEvidence(db, query, match) {
     const rows = await db.all(
       `SELECT lower(hex(g.entry_id)) AS entry_id, g.sense_order, g.gloss_order, g.text,
-         e.headword, e.reading
+         e.headword, e.reading,
+         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
+          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
+            AND r.kind = ${FormKind.written}) AS written_forms,
+         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
+          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
+            AND r.kind = ${FormKind.reading}) AS readings
        FROM dictionary_gloss_fts x
        JOIN gloss_atoms g ON g.rowid = x.docid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
@@ -2357,14 +2399,14 @@
        WHERE dictionary_gloss_fts MATCH ?`,
       [match]
     );
-    const restrictions = await senseRestrictions(db, [...new Set(rows.map((row) => row.entry_id))]);
     const token = glossToken(query);
     const result3 = /* @__PURE__ */ new Map();
     let step = 0;
     for (const row of rows) {
       stopIfInterrupted(db, step++);
-      const sense = restrictions.get(`${row.entry_id} ${row.sense_order}`) ?? unrestricted;
-      const appliesToShownForms = (sense.writtenForms.length === 0 || sense.writtenForms.includes(normalizeQuery(row.headword))) && (sense.readings.length === 0 || sense.readings.includes(normalizeQuery(row.reading)));
+      const senseWrittenForms = JSON.parse(row.written_forms);
+      const senseReadings = JSON.parse(row.readings);
+      const appliesToShownForms = (senseWrittenForms.length === 0 || senseWrittenForms.includes(normalizeQuery(row.headword))) && (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)));
       if (!appliesToShownForms) continue;
       const relation = glossRelation(query, row.text, token);
       if (relation === null) continue;
@@ -2379,39 +2421,27 @@
     }
     return result3;
   }
-  var relationsByKind = {
-    [FormKind.romaji]: [RomajiRelation.exact, RomajiRelation.prefix, RomajiRelation.contains],
-    [FormKind.shownRomaji]: [
-      RomajiRelation.shownExact,
-      RomajiRelation.shownPrefix,
-      RomajiRelation.shownContains
-    ],
-    [FormKind.unmarkedRomaji]: [
-      RomajiRelation.unmarkedExact,
-      RomajiRelation.unmarkedPrefix,
-      RomajiRelation.unmarkedContains
-    ]
+  var firstRelationOfKind = {
+    [FormKind.romaji]: RomajiRelation.exact,
+    [FormKind.shownRomaji]: RomajiRelation.shownExact,
+    [FormKind.unmarkedRomaji]: RomajiRelation.unmarkedExact
   };
   function romajiRelation(form, kind, query) {
-    const [exact, prefix, contains] = relationsByKind[kind];
-    return form === query ? exact : form.startsWith(query) ? prefix : contains;
+    const offset = form === query ? RomajiRelation.exact : form.startsWith(query) ? RomajiRelation.prefix : RomajiRelation.contains;
+    return firstRelationOfKind[kind] + offset;
   }
-  async function romajiEvidence(db, query, match) {
+  async function storedRomajiEvidence(db, query, match) {
     const rows = await db.all(
-      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form, f.kind
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
        FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
-       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
-     UNION ALL
-     SELECT lower(hex(f.entry_id)), f.form, f.kind
-       FROM shown_romaji_fts x JOIN shown_romaji_forms f ON f.rowid = x.docid
-       WHERE shown_romaji_fts MATCH ?`,
-      [match, match]
+       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
+      [match]
     );
     const result3 = /* @__PURE__ */ new Map();
     let step = 0;
     for (const row of rows) {
       stopIfInterrupted(db, step++);
-      const relation = romajiRelation(row.form, row.kind, query);
+      const relation = row.form === query ? RomajiRelation.exact : row.form.startsWith(query) ? RomajiRelation.prefix : RomajiRelation.contains;
       const relations = result3.get(row.entry_id) ?? [];
       if (!relations.includes(relation)) relations.push(relation);
       result3.set(row.entry_id, relations);

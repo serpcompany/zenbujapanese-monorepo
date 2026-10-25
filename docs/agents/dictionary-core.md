@@ -355,11 +355,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
-- **Romaji forms** come from `romaji-forms.ts`, which the importer runs through
+- **Romaji forms** come from `romaji-forms.ts`, run by the importer through
   `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII spelling earlier releases
-  stored; kinds 3 and 4 in `shown_romaji_forms` are `romaji`'s and it without macrons.
-  `romajiQuery` sends ASCII and macron vowels to romaji search (・、。〜 as spaces). Kind 3 ranks
-  after all of kind 2, kind 4 after both; neither corroborates nor stops a deinflection.
+  stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without macrons, rank after all
+  of kind 2 (4 after 3), so they are read only while a search lists under 60 words, and never
+  corroborate or stop a deinflection. `romajiQuery` sends ASCII and macron vowels to romaji search.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail
