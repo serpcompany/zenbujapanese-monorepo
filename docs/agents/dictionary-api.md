@@ -109,7 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
-| `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers (Apps, below), for the website's Kanji to Furigana. |
+| `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers and refuses (`isSegmentableText`), for Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |

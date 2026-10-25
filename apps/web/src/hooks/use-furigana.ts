@@ -1,5 +1,6 @@
 'use client'
 
+import { segmentationProblem } from '@zenbu/dictionary-core/cards/segmentable'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { composedText, type FuriganaSample, furiganaReadingsUrl } from '@/lib/tools/furigana-tool'
@@ -8,7 +9,7 @@ const typingPause = 300
 
 export type FuriganaStatus = 'shown' | 'reading' | 'failed' | 'tooLong' | 'empty'
 
-export function useFurigana(text: string, limit: number, sample: FuriganaSample) {
+export function useFurigana(text: string, sample: FuriganaSample) {
   const known = useRef(new Map([[sample.text, sample.furigana]]))
   const pending = useRef<AbortController | null>(null)
   const [shown, setShown] = useState<FuriganaSample>(sample)
@@ -35,12 +36,9 @@ export function useFurigana(text: string, limit: number, sample: FuriganaSample)
     pending.current?.abort()
     const composed = composedText(text)
     const remembered = known.current.get(composed)
-    if (composed.trim() === '') {
-      setStatus('empty')
-      return
-    }
-    if (Array.from(composed).length > limit) {
-      setStatus('tooLong')
+    const problem = segmentationProblem(composed)
+    if (problem) {
+      setStatus(problem)
       return
     }
     if (remembered) {
@@ -51,7 +49,7 @@ export function useFurigana(text: string, limit: number, sample: FuriganaSample)
     setStatus('reading')
     const waiting = setTimeout(() => read(composed), typingPause)
     return () => clearTimeout(waiting)
-  }, [text, limit, read])
+  }, [text, read])
 
   useEffect(() => () => pending.current?.abort(), [])
 
