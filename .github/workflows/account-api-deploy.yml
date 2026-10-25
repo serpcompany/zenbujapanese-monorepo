@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - apps/account-api/**
+      - packages/account-rules/**
       - packages/node-service/**
       - package.json
       - pnpm-lock.yaml
@@ -13,10 +14,12 @@ on:
       - '!**/*.test.ts'
       - '!packages/node-service/src/test/**'
       - '!apps/account-api/deploy/**'
-      - '!apps/account-api/src/domain/username-cases.json'
+      - '!packages/account-rules/src/test/**'
+      - '!packages/account-rules/cases/**'
   pull_request:
     paths:
       - apps/account-api/**
+      - packages/account-rules/**
       - packages/node-service/**
       - package.json
       - pnpm-lock.yaml
@@ -25,7 +28,8 @@ on:
       - '!**/*.test.ts'
       - '!packages/node-service/src/test/**'
       - '!apps/account-api/deploy/**'
-      - '!apps/account-api/src/domain/username-cases.json'
+      - '!packages/account-rules/src/test/**'
+      - '!packages/account-rules/cases/**'
   workflow_dispatch:
     inputs:
       tag:

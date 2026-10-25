@@ -1,0 +1,27 @@
+{
+  "name": "@zenbu/account-rules",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The rules a learner's account input is held to, which the account service applies and the website checks before sending, with the cases the app's tests replay.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "format": "biome format --write",
+    "lint": "biome check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "@types/node": "^22.20.4",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.2"
+  },
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

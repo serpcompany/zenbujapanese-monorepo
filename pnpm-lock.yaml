@@ -23,6 +23,9 @@ importers:
       '@hono/zod-openapi':
         specifier: 1.6.3
         version: 1.6.3(hono@4.13.11)(zod@4.6.5)
+      '@zenbu/account-rules':
+        specifier: workspace:*
+        version: link:../../packages/account-rules
       '@zenbu/node-service':
         specifier: workspace:*
         version: link:../../packages/node-service
@@ -145,6 +148,9 @@ importers:
       '@opennextjs/cloudflare':
         specifier: ^1.20.6
         version: 1.20.6(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(wrangler@4.143.0(@types/node@22.20.4))
+      '@zenbu/account-rules':
+        specifier: workspace:*
+        version: link:../../packages/account-rules
       '@zenbu/dictionary-core':
         specifier: workspace:*
         version: link:../../packages/dictionary-core
@@ -222,6 +228,21 @@ importers:
         specifier: ^4.143.0
         version: 4.143.0(@types/node@22.20.4)
 
+  packages/account-rules:
+    devDependencies:
+      '@biomejs/biome':
+        specifier: 2.4.2
+        version: 2.4.2
+      '@types/node':
+        specifier: ^22.20.4
+        version: 22.20.4
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.0.2
+        version: 5.0.2(@types/node@22.20.4)(happy-dom@20.14.5)(vite@8.3.1(@types/node@22.20.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.16.9)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/dictionary-core:
     devDependencies:
       '@biomejs/biome':
@@ -248,6 +269,9 @@ importers:
       hono:
         specifier: ^4.13.11
         version: 4.13.11
+      jose:
+        specifier: ^6.2.12
+        version: 6.2.12
     devDependencies:
       '@biomejs/biome':
         specifier: 2.4.2
@@ -2478,6 +2502,9 @@ packages:
     hasBin: true
     peerDependencies:
       '@biomejs/biome': 2.4.2
+    peerDependenciesMeta:
+      '@biomejs/biome':
+        optional: true
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -7557,7 +7584,6 @@ snapshots:
 
   '@serpcompany/verify@0.1.1(@biomejs/biome@2.4.2)':
     dependencies:
-      '@biomejs/biome': 2.4.2
       '@secretlint/node': 11.3.1
       '@secretlint/secretlint-rule-preset-recommend': 11.3.1
       ajv: 8.20.0
@@ -7566,6 +7592,8 @@ snapshots:
       knip: 6.39.0
       typescript: 5.9.3
       yaml: 2.9.1
+    optionalDependencies:
+      '@biomejs/biome': 2.4.2
     transitivePeerDependencies:
       - supports-color
 

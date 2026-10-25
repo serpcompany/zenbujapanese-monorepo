@@ -1,3 +1,5 @@
+import type { SettingValue } from '@zenbu/account-rules/settings'
+
 export interface WordNote {
   id: string
   itemId: string | null
@@ -47,8 +49,6 @@ export interface ProfilePhoto {
   version: number
   updatedAt: Date
 }
-
-export type SettingValue = string | number | boolean
 
 export interface Setting {
   name: string

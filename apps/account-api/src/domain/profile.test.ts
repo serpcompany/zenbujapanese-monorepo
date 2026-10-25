@@ -1,67 +1,47 @@
-import { readFileSync } from 'node:fs'
+import { type Case, cases, type Text, textOf } from '@zenbu/account-rules/test/cases'
 import { describe, expect, test } from 'vitest'
-import { editedProfile, normalizeName, normalizeUsername, profileLimits } from './profile'
+import { editedProfile, normalizeName, normalizeUsername } from './profile'
 
 const invalid = { code: 'invalid_fields', message: expect.any(String) }
 
-interface TypedUsername {
-  covers: string
-  typed: string
-}
-
-const usernames = JSON.parse(
-  readFileSync(new URL('./username-cases.json', import.meta.url), 'utf8')
-) as {
-  rule: string
-  accepted: (TypedUsername & { username: string })[]
-  refused: TypedUsername[]
-}
-
-const typedLengths = (cases: readonly TypedUsername[]) => cases.map(({ typed }) => typed.length)
+const names = cases<{ rule: string; accepted: (Case & { name: Text })[]; refused: Case[] }>('name')
+const usernames = cases<{ rule: string; accepted: (Case & { username: Text })[]; refused: Case[] }>(
+  'username'
+)
 
 describe('a name', () => {
-  test('is trimmed, its runs of spaces made one, and stored in NFC', () => {
-    expect(normalizeName('  Kana \t  Fan ')).toBe('Kana Fan')
-    expect(normalizeName('José')).toBe('José')
-    expect(normalizeName('全部')).toBe('全部')
+  test('is kept as the cases shared with the app and the website say', () => {
+    for (const { covers, typed, name } of names.accepted) {
+      expect(normalizeName(textOf(typed)), covers).toBe(textOf(name))
+    }
   })
 
-  test('is 1 to 100 characters, with no control or invisible format characters', () => {
-    expect(normalizeName('x'.repeat(100))).toBe('x'.repeat(100))
-    expect(normalizeName('語'.repeat(100))).toBe('語'.repeat(100))
-    for (const refused of [
-      '',
-      '   ',
-      'x'.repeat(101),
-      'a\u0000b',
-      'a\u200bb',
-      '\ud800ok',
-      42,
-      null
-    ]) {
+  test('is refused, in the sentence the website shows too, as the shared cases say', () => {
+    const refusal = { code: 'invalid_fields', message: names.rule }
+    for (const { covers, typed } of names.refused) {
+      expect(normalizeName(textOf(typed)), covers).toEqual(refusal)
+    }
+  })
+
+  test('is text with no lone surrogate', () => {
+    for (const refused of [`${String.fromCharCode(0xd800)}ok`, 42, null]) {
       expect(normalizeName(refused), String(refused)).toEqual(invalid)
     }
   })
 })
 
 describe('a username', () => {
-  test('is accepted as the cases shared with the app say, once NFKC, trimmed, and lowercased', () => {
+  test('is accepted as the shared cases say, once NFKC, trimmed, and lowercased', () => {
     for (const { covers, typed, username } of usernames.accepted) {
-      expect(normalizeUsername(typed), covers).toBe(username)
+      expect(normalizeUsername(textOf(typed)), covers).toBe(textOf(username))
     }
   })
 
-  test('is refused, in the sentence the app shows too, as the cases shared with the app say', () => {
+  test('is refused, in the sentence the app shows too, as the shared cases say', () => {
     const refusal = { code: 'invalid_fields', message: usernames.rule }
     for (const { covers, typed } of usernames.refused) {
-      expect(normalizeUsername(typed), covers).toEqual(refusal)
+      expect(normalizeUsername(textOf(typed)), covers).toEqual(refusal)
     }
-  })
-
-  test('has shared cases at both ends of its length, and one past each', () => {
-    const { min, max } = profileLimits.usernameLength
-    expect(typedLengths(usernames.accepted)).toEqual(expect.arrayContaining([min, max]))
-    expect(typedLengths(usernames.refused)).toEqual(expect.arrayContaining([min - 1, max + 1]))
   })
 
   test('is text, or null to remove it', () => {

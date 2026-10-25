@@ -535,6 +535,50 @@
         ]
       },
       {
+        "folder": "packages/account-rules",
+        "sources": [
+          "src"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/test/)",
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.ts$|^src/test/)"
+        },
+        "rules": [
+          {
+            "name": "account-rules-need-no-runtime",
+            "severity": "error",
+            "comment": "The account rules run in the account service and in the learner's browser, so they import no runtime, framework, or package (docs/agents/account-rules.md). Take what a rule needs as a parameter, or import only types.",
+            "from": {
+              "path": "^src/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "dependencyTypes": [
+                "core",
+                "npm",
+                "npm-dev",
+                "npm-optional",
+                "npm-peer",
+                "npm-no-pkg"
+              ],
+              "dependencyTypesNot": [
+                "type-only"
+              ]
+            }
+          },
+          {
+            "name": "account-rules-import-no-client",
+            "severity": "error",
+            "comment": "The account rules are shared by the account service and the website, so they import neither, nor any repository tool (ARCHITECTURE.md, Layers). Pass in what a rule needs.",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          }
+        ]
+      },
+      {
         "folder": "packages/node-service",
         "sources": [
           "src"

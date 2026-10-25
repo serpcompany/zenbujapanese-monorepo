@@ -1,0 +1,50 @@
+{
+  "most": 10000,
+  "accepted": [
+    { "covers": "a note", "typed": "note", "text": "note" },
+    { "covers": "spaces around it", "typed": "  note  ", "text": "note" },
+    {
+      "covers": "a Windows line break, made one",
+      "typed": "line1\u000d\u000aline2",
+      "text": "line1\u000aline2"
+    },
+    { "covers": "an old Mac line break, made a newline", "typed": "a\u000db", "text": "a\u000ab" },
+    { "covers": "a null character, made a space", "typed": "a\u0000b", "text": "a b" },
+    { "covers": "a tab, kept", "typed": "a\u0009b", "text": "a\u0009b" },
+    { "covers": "a next-line control, made a space", "typed": "a\u0085b", "text": "a b" },
+    {
+      "covers": "a byte order mark before it, trimmed as JavaScript trims",
+      "typed": "\ufeffnote",
+      "text": "note"
+    },
+    { "covers": "a zero-width space, kept", "typed": "a\u200bb", "text": "a\u200bb" },
+    { "covers": "a decomposed accent, kept in NFC", "typed": "Cafe\u0301", "text": "Café" },
+    {
+      "covers": "ten thousand letters, the most",
+      "typed": { "text": "x", "times": 10000 },
+      "text": { "text": "x", "times": 10000 }
+    },
+    {
+      "covers": "ten thousand letters with spaces around them",
+      "typed": { "text": "x", "times": 10000, "around": " " },
+      "text": { "text": "x", "times": 10000 }
+    },
+    {
+      "covers": "ten thousand emoji, twenty thousand UTF-16 units",
+      "typed": { "text": "😀", "times": 10000 },
+      "text": { "text": "😀", "times": 10000 }
+    }
+  ],
+  "refused": [
+    { "covers": "nothing", "typed": "", "blank": true },
+    { "covers": "only spaces, a newline, and a tab", "typed": " \u000a\u0009 ", "blank": true },
+    {
+      "covers": "ten thousand and one letters, never cut",
+      "typed": { "text": "x", "times": 10001 }
+    },
+    {
+      "covers": "ten thousand and one emoji",
+      "typed": { "text": "😀", "times": 10001 }
+    }
+  ]
+}

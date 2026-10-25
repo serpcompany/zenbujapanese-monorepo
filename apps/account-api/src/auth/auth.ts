@@ -1,3 +1,4 @@
+import { signInCode } from '@zenbu/account-rules/sign-in-code'
 import { log } from '@zenbu/node-service/log'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
@@ -77,7 +78,7 @@ export async function createAuth({ config, db, mailer }: AuthOptions) {
     socialProviders: await socialProviders(config),
     plugins: [
       emailOTP({
-        otpLength: 6,
+        otpLength: signInCode.length,
         expiresIn: codeMinutes * 60,
         allowedAttempts: 5,
         storeOTP: 'encrypted',
