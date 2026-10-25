@@ -58,6 +58,7 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
+          package-manager-cache: false
       - name: Run the data tools' contract tests
         run: python3 -m unittest discover --start-directory language-data/tools/tests --pattern 'test_*.py' --verbose
       - name: Run the tests of the app's project settings and Simulator script
