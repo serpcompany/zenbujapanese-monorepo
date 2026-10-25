@@ -49,8 +49,12 @@ command from `apps/web`.
 - **The core's labels.** The shared core writes the dictionary screens' labels in English, for the
   app and the site alike (`docs/agents/dictionary-core.md`). The website reads them in Japanese
   through `coreText` (`src/lib/i18n/core-text.ts`), keyed by the core's English; a label it doesn't
-  know stays English, and its test fails on any label the fixtures show untranslated. JMdict's
-  meanings and Tatoeba's translations are data, not labels: they stay English, with `lang="en"`.
+  know stays English, and its test fails on any label the fixtures show untranslated. A browse
+  category with a part of speech or usage note is named in Japanese by the label its words show,
+  the core's `wordLabel` (`categoryName`, `src/lib/dictionary/browse/category-names.ts`), which
+  the core's and the service's tests hold to what the word page writes; the rest take their own
+  names. JMdict's meanings and Tatoeba's translations are data, not labels: they stay English, with
+  `lang="en"`.
 - **Account requests name the page's language.** `accountApi(apiUrl, locale)`
   (`src/lib/account/client.ts`) sends `Content-Language: en` or `ja` on every call, a header the
   browser sends cross-origin without a preflight for those values, so the account service writes

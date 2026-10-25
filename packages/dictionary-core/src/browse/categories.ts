@@ -14,16 +14,45 @@ export interface BrowseCategory {
   kind: CategoryKind
   labels: readonly string[]
   name: string
+  wordLabel?: string
+}
+
+const wordLabels: Readonly<Record<string, string>> = {
+  nouns: 'Noun',
+  pronouns: 'Pronoun',
+  'suru-verbs': 'する verb',
+  'godan-verbs': 'Godan verb',
+  'ichidan-verbs': 'Ichidan verb',
+  'transitive-verbs': 'transitive',
+  'intransitive-verbs': 'intransitive',
+  'auxiliary-verbs': 'Auxiliary verb',
+  'i-adjectives': 'I-adjective',
+  'na-adjectives': 'Na-adjective',
+  'no-adjectives': 'Noun (の)',
+  'taru-adjectives': 'Taru adjective',
+  'pre-noun-adjectives': 'Pre-noun adjective',
+  adverbs: 'Adverb',
+  expressions: 'Expression',
+  interjections: 'Interjection',
+  conjunctions: 'Conjunction',
+  particles: 'Particle',
+  counters: 'Counter',
+  prefixes: 'Prefix',
+  suffixes: 'Suffix',
+  numbers: 'Number',
+  'honorific-language': 'Honorific',
+  'humble-language': 'Humble',
+  'archaic-words': 'Archaic',
+  'obsolete-words': 'Obsolete',
+  'kana-words': 'Usually written in kana'
 }
 
 const category =
   (kind: CategoryKind) =>
-  (slug: string, name: string, ...labels: string[]): BrowseCategory => ({
-    slug,
-    kind,
-    labels,
-    name
-  })
+  (slug: string, name: string, ...labels: string[]): BrowseCategory => {
+    const wordLabel = wordLabels[slug]
+    return { slug, kind, labels, name, ...(wordLabel ? { wordLabel } : {}) }
+  }
 
 const partOfSpeech = category('partOfSpeech')
 const usage = category('usage')
