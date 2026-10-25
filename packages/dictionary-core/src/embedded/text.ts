@@ -36,18 +36,17 @@ import {
   type Tokenize
 } from '../examples/morphology'
 import { type SearchDatabase, stopIfInterrupted } from '../search/database'
-import type { MorphologyWord } from '../search/morphology'
+import {
+  type AnalyzedWord,
+  analyzedWords,
+  type Morpheme,
+  type MorphologyAnalysis
+} from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { type EmbeddedHost, hostDatabase } from './host'
 import { entriesMatchingFirstForms } from './lookup'
 
-export interface HostWord extends MorphologyWord {
-  normalizedForm?: string
-  reading?: string
-  children?: HostWord[]
-}
-
-export type AnalyzeText = (text: string) => Promise<HostWord[]>
+export type AnalyzeText = (text: string) => Promise<MorphologyAnalysis>
 
 type Accent = ExampleHighlight['accent']
 
@@ -115,18 +114,24 @@ interface Accented {
   accent: Accent
 }
 
-function hostCandidate(word: HostWord): MorphologyCandidate {
+function candidate(morpheme: Morpheme, children: MorphologyCandidate[]): MorphologyCandidate {
   return {
-    surface: word.surface,
-    dictionaryForm: word.dictionaryForm,
-    normalizedForm: word.normalizedForm ?? word.dictionaryForm,
-    reading: word.reading ?? word.surface,
-    partOfSpeech: [...word.partOfSpeech],
-    isOutOfVocabulary: word.isOutOfVocabulary,
-    children: (word.children ?? []).map(hostCandidate),
+    surface: morpheme.surface,
+    dictionaryForm: morpheme.dictionaryForm,
+    normalizedForm: morpheme.normalizedForm,
+    reading: morpheme.reading,
+    partOfSpeech: [...morpheme.partOfSpeech],
+    isOutOfVocabulary: morpheme.isOutOfVocabulary,
+    children,
     joinsInflection: false
   }
 }
+
+const hostCandidate = (word: AnalyzedWord): MorphologyCandidate =>
+  candidate(
+    word,
+    word.pieces.map(piece => candidate(piece, []))
+  )
 
 const countsTowardComprehension = (
   token: LinkedToken
@@ -330,7 +335,7 @@ export class EmbeddedText {
   ): Promise<MorphologyCandidate[] | null> {
     try {
       if (this.tokenize) return kuromojiCandidates(text, this.tokenize(text))
-      return (await analyze(text)).map(hostCandidate)
+      return analyzedWords(await analyze(text)).map(hostCandidate)
     } catch {
       return null
     }

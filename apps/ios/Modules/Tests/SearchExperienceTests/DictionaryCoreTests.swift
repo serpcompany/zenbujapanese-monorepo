@@ -283,24 +283,20 @@ struct DictionaryCoreTests {
     var start = 0
     let words = [("猫", "名詞"), ("と", "助詞"), ("犬", "名詞"), ("が", "助詞"), ("いる", "動詞")]
     return JapaneseMorphologyAnalysis(
-      transcript: text,
-      candidates: words.map { surface, partOfSpeech in
+      words: words.map { surface, partOfSpeech in
         defer { start += surface.unicodeScalars.count }
-        return JapaneseMorphologyCandidate(
+        return JapaneseMorpheme(
           surface: surface,
-          scalarRange: start..<(start + surface.unicodeScalars.count),
+          begin: start,
+          end: start + surface.unicodeScalars.count,
           dictionaryForm: surface,
           normalizedForm: surface,
           reading: surface,
           partOfSpeech: [partOfSpeech],
-          isOutOfVocabulary: false,
-          children: []
+          isOutOfVocabulary: false
         )
       },
-      engine: "fixture",
-      engineVersion: "1",
-      dictionary: "fixture",
-      dictionarySHA256: ""
+      pieces: []
     )
   }
 

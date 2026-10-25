@@ -187,9 +187,9 @@ export class DictionarySearch {
   private async analyzedItems(query: string): Promise<SearchResultItem[]> {
     const morphology = this.capabilities.morphology
     if (!morphology || query === '') return []
-    let words: MorphologyWord[]
+    let words: readonly MorphologyWord[]
     try {
-      words = await morphology.analyze(query)
+      words = (await morphology.analyze(query)).words
     } catch {
       return []
     }

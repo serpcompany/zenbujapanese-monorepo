@@ -2,6 +2,7 @@ import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter, shortGloss } from '../detail/text'
 import { notesInSearch } from '../results/notes'
+import { lookupSegments, type MorphologyAnalysis } from '../search/morphology'
 import {
   japaneseCandidates,
   japaneseTextRuns,
@@ -12,7 +13,7 @@ import { creditsShownBy } from '../sources/credits'
 import type { EmbeddedHost } from './host'
 import { canonicalEntries, EmbeddedLookup } from './lookup'
 import { EmbeddedPresentation } from './presentation'
-import { type AnalyzeText, EmbeddedText, type HostWord } from './text'
+import { type AnalyzeText, EmbeddedText } from './text'
 
 type Outcome = { value: unknown } | { error: string } | { analyze: string }
 
@@ -52,6 +53,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
     savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
     canonicalEntries: groups => canonicalEntries(JSON.parse(groups)),
+    searchedWords: analysis => lookupSegments((JSON.parse(analysis) as MorphologyAnalysis).words),
     normalizeQuery,
     japaneseCandidates: candidates => japaneseCandidates(JSON.parse(candidates)),
     japaneseTextRuns: () => japaneseTextRuns,
@@ -107,14 +109,15 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       let outcome: Outcome = unfinished
       let answer: ((answerJSON: string) => void) | undefined
       const analyze: AnalyzeText = sentence =>
-        new Promise<HostWord[]>((resolve, reject) => {
+        new Promise<MorphologyAnalysis>((resolve, reject) => {
           outcome = { analyze: sentence }
           answer = answerJSON => {
-            const { words, error } = JSON.parse(answerJSON) as {
-              words?: HostWord[]
+            const { words, pieces, error } = JSON.parse(
+              answerJSON
+            ) as Partial<MorphologyAnalysis> & {
               error?: string
             }
-            if (words) resolve(words)
+            if (words) resolve(pieces ? { words, pieces } : { words })
             else reject(new Error(error ?? 'The host returned no words'))
           }
         })

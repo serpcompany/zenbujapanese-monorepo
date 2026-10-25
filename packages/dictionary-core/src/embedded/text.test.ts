@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
+import { morphemes } from '../search/morphology.fixture'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, fakeHost, settled } from './fake-host'
 import type {
@@ -163,28 +164,16 @@ describe('the embedded text engine', () => {
       JSON.stringify({ text: '見た日本語', query: '', highlightedEntry: null })
     )
     expect(await settled(call)).toEqual({ analyze: '見た日本語' })
-    const piece = (surface: string, dictionaryForm: string, partOfSpeech: string) => ({
-      surface,
-      dictionaryForm,
-      normalizedForm: dictionaryForm,
-      reading: surface,
-      partOfSpeech: [partOfSpeech],
-      isOutOfVocabulary: false
-    })
     call.analyzed(
       JSON.stringify({
-        words: [
-          {
-            ...piece('見た', '見た', '名詞'),
-            children: [piece('見', '見る', '動詞'), piece('た', 'た', '助動詞')]
-          },
-          {
-            surface: '日本語',
-            dictionaryForm: '日本語',
-            partOfSpeech: ['名詞'],
-            isOutOfVocabulary: false
-          }
-        ]
+        words: morphemes([
+          ['見た', '見た', '名詞'],
+          ['日本語', '日本語', '名詞']
+        ]),
+        pieces: morphemes([
+          ['見', '見る', '動詞'],
+          ['た', 'た', '助動詞']
+        ])
       })
     )
     const { value } = await settled(call)
