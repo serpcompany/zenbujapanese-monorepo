@@ -1,6 +1,6 @@
 {
-  "databaseBytes": 486166528,
-  "databaseSHA256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
+  "databaseBytes": 496840704,
+  "databaseSHA256": "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891",
   "evidenceCounts": {
     "canonical_senses": 253844,
     "form_priority_profiles": 56153,
@@ -25,7 +25,7 @@
   "toolSHA256": {
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
-    "import_tool_sha256": "1d0301469715d8383ae7c393e1075b411d985a24bd346bed4cfe0268b1f172e3",
+    "import_tool_sha256": "e07bc6f8764d793d221bb2064707bcb32f0a090a624ced58ffd254b7c5cb4972",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
     "unidic_adapter_sha256": "850af85414137aed37f4797968e3b377c66c58287af6461979e8e8e301632a74"

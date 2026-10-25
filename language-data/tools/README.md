@@ -24,9 +24,8 @@ file it reads and writes, in `apps/ios/Modules/Sources/SearchExperience/Resource
 SHA-256, so moving them again belongs to a rebuild.
 
 A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
-app's old `LanguageData/Sources/` folder, which `apps/ios/.gitignore` still ignores so none is
-committed by mistake. Move them into `language-data/sources/` to use them rather than download
-them again.
+app's old `LanguageData/Sources/`, which `apps/ios/.gitignore` still ignores: move them into
+`language-data/sources/` rather than download them again.
 
 `rebuild_language_data.py` runs every importer in dependency order: the radicals, KANJIDIC2, kanji
 elements, and stroke diagrams; then `LanguageReferenceData.sqlite3` and its ranking contract; then
@@ -41,7 +40,8 @@ checking each against its record.
 It refuses to run on any other Python. The interpreter writes the artifacts' bytes: its SQLite
 version is in every database's header, its Unicode version decides NFKC and case folding, and its
 zlib decides the Jiten ZIPs' bytes. uv's standalone build pins all three, so a rebuild from the
-same sources gives the same files on any Mac.
+same sources gives the same files on any Mac. The romaji search forms come from the shared core,
+so it also needs Node 22.18 or later on the PATH (`jmdict_romaji.py`, below).
 
 The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so a rebuild must not
 change them: the script compares them with the catalog where the branch left `origin/main`. If one
@@ -118,8 +118,9 @@ metadata, outside the ranking contract's six. `LanguageReferenceData.sqlite3`'s 
 report, and `DictionaryRankingArtifactContract.json` record six: `import_tool_sha256`, the
 `tatoeba_adapter.py`, `unidic_adapter.py`, `dictionary_ranking_adapter.py`, and
 `dictionary_ranking_contract.py` hashes, and `shared_tooling_sha256` for `language_data_tools.py`.
-`import_tool_sha256` covers `import_jmdict.py` and the `jmdict_*.py` modules it is split into:
-the SHA-256 of each file's name and SHA-256, one per line, in `IMPORT_TOOL_FILES` order.
+`import_tool_sha256` covers `import_jmdict.py`, the `jmdict_*.py` modules it is split into, and the
+core's files the romaji search forms come from (`CORE_ROMAJI_FILES` in `jmdict_romaji.py`): the
+SHA-256 of each file's name and SHA-256, one per line, in `IMPORT_TOOL_FILES` order, then theirs.
 
 ## What each tool does
 
@@ -146,6 +147,11 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships. Its
   it expects from the pinned export.
 - `jmdict_relationships.py`: note identities, disambiguated in source order, and up to six related
   words per entry, from resolved cross-references and then the editorial relationship facts.
+- `jmdict_romaji.py`: each reading's romaji search forms, from one call to the core's
+  `packages/dictionary-core/scripts/romaji-search-forms.mjs`. The ASCII spelling earlier releases
+  stored (raamen, kinen, o) stays in `forms` (kind 2); the romaji the apps show (rāmen, kin'en, wo;
+  kind 3) and it without macrons (ramen; kind 4) go in `shown_romaji_forms`, which the packs'
+  mapping SQL doesn't read. A core file the command loads that `CORE_ROMAJI_FILES` lacks fails it.
 - `jmdict_labels.py`: every JMdict usage (`misc`), subject-field (`field`), and dialect (`dial`)
   entity code on a sense maps to a stable app-owned identifier, kept in the sense's `usage`,
   `fields`, and `dialects` (left out when empty), and an unmapped code fails the import. The app

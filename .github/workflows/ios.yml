@@ -32,7 +32,11 @@ jobs:
             apps/ios apps/account-api/src/domain/username-cases.json .xcode-version
             language-data/sources language-data/generated language-data/conformance
             language-data/tools .python-version .github/workflows/ios.yml
-            .github/actions/changed-paths
+            .github/actions/changed-paths .node-version
+            packages/dictionary-core/scripts/romaji-search-forms.mjs
+            packages/dictionary-core/src/detail/romaji.ts packages/dictionary-core/src/detail/text.ts
+            packages/dictionary-core/src/examples/kana.ts packages/dictionary-core/src/search/query.ts
+            packages/dictionary-core/src/search/romaji-forms.ts
 
   contracts:
     needs: changes
@@ -51,6 +55,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .node-version
       - name: Run the data tools' contract tests
         run: python3 -m unittest discover --start-directory language-data/tools/tests --pattern 'test_*.py' --verbose
       - name: Run the tests of the app's project settings and Simulator script
