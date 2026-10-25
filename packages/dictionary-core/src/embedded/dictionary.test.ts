@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import { morphemes } from '../search/morphology.fixture'
 import { japaneseTextRuns } from '../search/query'
 import { creditsShownBy } from '../sources/credits'
 import { embeddedEndpoint } from './dictionary'
@@ -12,13 +13,6 @@ const entries: FakeEntry[] = [
 ]
 
 const host = (overrides: Parameters<typeof fakeHost>[1] = {}) => fakeHost(entries, overrides)
-
-const word = (surface: string, partOfSpeech: string) => ({
-  surface,
-  dictionaryForm: surface,
-  partOfSpeech: [partOfSpeech],
-  isOutOfVocabulary: false
-})
 
 describe('the embedded dictionary', () => {
   test('answers a search with each entry as a row, its place by relevance, and its match', async () => {
@@ -347,7 +341,13 @@ describe('the embedded dictionary', () => {
     const call = begin(host(), 'search', '日本と本日')
     expect(await settled(call)).toEqual({ analyze: '日本と本日' })
     call.analyzed(
-      JSON.stringify({ words: [word('日本', '名詞'), word('と', '助詞'), word('本日', '名詞')] })
+      JSON.stringify({
+        words: morphemes([
+          ['日本', '日本', '名詞'],
+          ['と', 'と', '助詞'],
+          ['本日', '本日', '名詞']
+        ])
+      })
     )
     expect(await settled(call)).toMatchObject({
       value: {

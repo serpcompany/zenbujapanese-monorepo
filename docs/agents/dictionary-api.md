@@ -42,8 +42,8 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   there that checks out (`scripts/fetch-sudachi.mjs` also takes the resources folder and the
   output path, which the image's build passes). `@nikkei/napi-sudachi` 0.12.0 builds the same
   sudachi.rs commit the app pins, and the service checks that commit and the app's `char.def` and
-  `unk.def` before it loads. Sentence search looks up Sudachi's Mode C words, as the app's
-  `SudachiJapaneseMorphologyAdapter` does. Without the dictionary the service won't start; set
+  `unk.def` before it loads. It hands the core Sudachi's Mode C morphemes, as the app does, and the
+  core chooses the words a sentence searches. Without the dictionary the service won't start; set
   `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
   direct matches.
 - `language-data/release.json`, its pin in `language-data/releases/`, and its retired entries.
@@ -69,7 +69,7 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
 | `PORT` | `8788` | The HTTP port. `pnpm dev` sets this checkout's unless the shell or `.env` has. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
-| `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
+| `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty runs without it. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 | `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
@@ -240,9 +240,9 @@ Reference ID's, the first of the entries the app merged into the row. Where the 
 retrieval answers an error, the suite records it, and the page lists no examples either; none
 recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
 `ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary the
-retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording it
-needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts` checks
-the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's examples.
+retrieval suite's sentence-search cases and the sentence suite skip. The sentence suite
+(`sentence-search.conformance.test.ts`) holds Sudachi's words for each query, the words searched,
+and the results to the app's; `sentence-search.test.ts` checks the screen of one. `conjugation-examples.test.ts` pages a form's examples.
 `full-text.test.ts` checks English search where FTS4 differs from other engines. `frequency.test.ts`
 reads the bundled lists as the app does, one file each, and as the service does.
 

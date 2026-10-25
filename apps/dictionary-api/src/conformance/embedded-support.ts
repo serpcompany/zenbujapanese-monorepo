@@ -16,6 +16,7 @@ import type {
   EmbeddedExamplePage,
   EmbeddedToken
 } from '@zenbu/dictionary-core/embedded/text'
+import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
 import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
@@ -47,7 +48,16 @@ export interface Embedded {
   presentation<Answer>(method: string, argument: unknown): Promise<Answer>
 }
 
-export function asking(endpoint: EmbeddedEndpoint) {
+async function analysisOf(text: string, analyzer?: MorphologyAnalyzer): Promise<string> {
+  if (!analyzer) return JSON.stringify({ error: 'This host has no analyzer' })
+  try {
+    return JSON.stringify(await analyzer.analyze(text))
+  } catch (error) {
+    return JSON.stringify({ error: error instanceof Error ? error.message : String(error) })
+  }
+}
+
+export function asking(endpoint: EmbeddedEndpoint, analyzer?: MorphologyAnalyzer) {
   return async <Answer>(method: string, argument: unknown): Promise<Answer> => {
     const call = endpoint.begin(
       method,
@@ -58,8 +68,8 @@ export function asking(endpoint: EmbeddedEndpoint) {
       return JSON.parse(call.outcome()) as { value?: Answer; error?: string; analyze?: string }
     }
     let outcome = await settled()
-    if (outcome.analyze !== undefined) {
-      call.analyzed(JSON.stringify({ error: 'This host has no analyzer' }))
+    while (outcome.analyze !== undefined) {
+      call.analyzed(await analysisOf(outcome.analyze, analyzer))
       outcome = await settled()
     }
     if (outcome.error !== undefined) throw new Error(outcome.error)
@@ -139,7 +149,7 @@ function freshInstallLists(): EmbeddedHost {
   }
 }
 
-export async function embedded(): Promise<Embedded> {
+export async function embedded(analyzer?: MorphologyAnalyzer): Promise<Embedded> {
   const all = answering(await artifactDatabase())
   const hosts: Record<keyof Embedded, EmbeddedHost> = {
     lookup: { all },
@@ -147,7 +157,7 @@ export async function embedded(): Promise<Embedded> {
     presentation: { ...kanjiHost(), ...freshInstallLists() }
   }
   return {
-    lookup: asking(embeddedEndpoint(hosts.lookup)),
+    lookup: asking(embeddedEndpoint(hosts.lookup), analyzer),
     text: asking(embeddedEndpoint(hosts.text)),
     presentation: asking(embeddedEndpoint(hosts.presentation))
   }

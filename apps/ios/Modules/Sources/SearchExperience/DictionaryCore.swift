@@ -327,37 +327,11 @@ struct DictionaryLinkCandidate: Decodable, Sendable {
   let id: String
 }
 
-struct DictionaryCoreAnalysis: Encodable {
-  struct Word: Encodable {
-    let surface: String
-    let dictionaryForm: String
-    let normalizedForm: String
-    let reading: String
-    let partOfSpeech: [String]
-    let isOutOfVocabulary: Bool
-    let children: [Word]
-
-    init(_ candidate: JapaneseMorphologyCandidate) {
-      surface = candidate.surface
-      dictionaryForm = candidate.dictionaryForm
-      normalizedForm = candidate.normalizedForm
-      reading = candidate.reading
-      partOfSpeech = candidate.partOfSpeech
-      isOutOfVocabulary = candidate.isOutOfVocabulary
-      children = candidate.children.map(Word.init)
-    }
-  }
-
-  let words: [Word]
-
-  init(_ analysis: JapaneseMorphologyAnalysis) {
-    words = analysis.candidates.map(Word.init)
-  }
-
+enum DictionaryCoreAnalysis {
   static func json(of text: String, by morphology: JapaneseMorphologyClient?) async -> String {
     guard let analysis = try? await morphology?.analyze(text),
-      let words = try? DictionaryCore.argument(DictionaryCoreAnalysis(analysis))
+      let json = try? DictionaryCore.argument(analysis)
     else { return #"{"error":"The text could not be analyzed"}"# }
-    return words
+    return json
   }
 }
