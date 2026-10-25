@@ -63,7 +63,7 @@ const exampleIndexMetadata: Readonly<Record<string, string>> = {
   retrieval_pair_id_scheme: 'esp1-sha256-128-nfc-length-prefixed'
 }
 
-const supportedTransforms: readonly string[] = ['"jmdict-to-zenbu-language-reference-data-v2"']
+const supportedTransforms: readonly string[] = ['"jmdict-to-zenbu-language-reference-data-v3"']
 
 function metadata(db: ArtifactDatabase, schema: string): Map<string, string> {
   const rows = db.all<{ key: string; value: string }>(`SELECT key, value FROM ${schema}.metadata`)

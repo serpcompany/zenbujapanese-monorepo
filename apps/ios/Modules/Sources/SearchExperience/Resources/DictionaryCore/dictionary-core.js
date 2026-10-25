@@ -1025,7 +1025,13 @@
       interrupted: () => db.interrupted?.() ?? false
     };
   }
-  var FormKind = { written: 0, reading: 1, romaji: 2 };
+  var FormKind = {
+    written: 0,
+    reading: 1,
+    romaji: 2,
+    shownRomaji: 3,
+    unmarkedRomaji: 4
+  };
   var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
   e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
   function decodeEntry(row) {
@@ -1083,7 +1089,17 @@
     qualifiedInfinitive: 3,
     glossToken: 4
   };
-  var RomajiRelation = { exact: 0, prefix: 1, contains: 2 };
+  var RomajiRelation = {
+    exact: 0,
+    prefix: 1,
+    contains: 2,
+    shownExact: 3,
+    shownPrefix: 4,
+    shownContains: 5,
+    unmarkedExact: 6,
+    unmarkedPrefix: 7,
+    unmarkedContains: 8
+  };
   var FormRelation = {
     writtenExact: 0,
     readingExact: 1,
@@ -2174,6 +2190,7 @@
   var displayedFormProfileJoin = `LEFT JOIN form_priority_profiles p
   ON p.entry_id = e.id AND p.form = e.headword
   AND p.kind = CASE WHEN e.headword = e.reading THEN ${FormKind.reading} ELSE ${FormKind.written} END`;
+  var isStoredExactOrPrefix = (relation) => relation === RomajiRelation.exact || relation === RomajiRelation.prefix;
   var hasSearchTerms = (value) => /[\p{L}\p{M}\p{N}]/u.test(value);
   var escapeRegExp = (value) => value.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&");
   var glossToken = (query) => new RegExp(`(?:^|[^a-z])${escapeRegExp(query)}(?:$|[^a-z])`, "u");
@@ -2231,13 +2248,13 @@
         semanticFingerprint: row.semantic_fingerprint
       };
       if (!selectedGloss) {
-        const romajiRelation = romaji2.length > 0 ? Math.min(...romaji2) : void 0;
-        if (romajiRelation === void 0) continue;
+        const romajiRelation2 = romaji2.length > 0 ? Math.min(...romaji2) : void 0;
+        if (romajiRelation2 === void 0) continue;
         const rank2 = {
           kind: "english",
           lane: EvidenceLane.romajiOnly,
           corroborationRank: 0,
-          romajiSpecificityRank: romajiRelation,
+          romajiSpecificityRank: romajiRelation2,
           senseOrder: 0,
           glossOrder: 0,
           ...shared2
@@ -2246,16 +2263,14 @@
           entry,
           rank: rank2,
           presentationRank: rank2,
-          hasExactOrPrefixMatch: romajiRelation !== RomajiRelation.contains,
+          hasExactOrPrefixMatch: isStoredExactOrPrefix(romajiRelation2),
           semanticFingerprint: row.semantic_fingerprint,
           matchedSummary: null
         });
         continue;
       }
       const lane = selectedGloss.relation === GlossRelation.glossToken ? EvidenceLane.tokenGloss : EvidenceLane.strongGloss;
-      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some(
-        (relation) => relation === RomajiRelation.exact || relation === RomajiRelation.prefix
-      );
+      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some(isStoredExactOrPrefix);
       const rank = {
         kind: "english",
         lane,
@@ -2282,49 +2297,59 @@
   }
   async function exactRomajiEvidence(db, query) {
     const rows = await db.all(
-      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band, f.kind
        FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
-       WHERE f.kind = ${FormKind.romaji} AND f.form = ?`,
-      [query]
+       WHERE f.kind = ${FormKind.romaji} AND f.form = ?
+     UNION ALL
+     SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band, f.kind
+       FROM shown_romaji_forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
+       WHERE f.kind = ${FormKind.shownRomaji} AND f.form = ?`,
+      [query, query]
     );
     return {
       rows,
       glossMatches: /* @__PURE__ */ new Map(),
-      romajiMatches: new Map(rows.map((row) => [row.id, [RomajiRelation.exact]]))
+      romajiMatches: new Map(
+        rows.map((row) => [row.id, [romajiRelation(query, row.kind, query)]])
+      )
     };
   }
   async function englishEvidence(db, query) {
     if (!hasSearchTerms(query)) return null;
-    const glossMatch = ftsPhrase(query);
-    const romajiMatch = ftsPrefix(query);
-    const [rows, glossMatches, romajiMatches] = await Promise.all([
-      db.all(
-        `WITH candidates AS (
-           SELECT g.entry_id FROM dictionary_gloss_fts x JOIN gloss_atoms g ON g.rowid = x.docid
-           WHERE dictionary_gloss_fts MATCH ?
-           UNION
-           SELECT f.entry_id FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
-           WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
-         )
-         SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
-         FROM candidates c JOIN entries e ON e.id = c.entry_id ${displayedFormProfileJoin}`,
-        [glossMatch, romajiMatch]
-      ),
-      glossEvidence(db, query, glossMatch),
-      romajiEvidence(db, query, romajiMatch)
+    const [glossMatches, romajiMatches] = await Promise.all([
+      glossEvidence(db, query, ftsPhrase(query)),
+      romajiEvidence(db, query, ftsPrefix(query))
     ]);
+    const ids = [.../* @__PURE__ */ new Set([...glossMatches.keys(), ...romajiMatches.keys()])];
+    const rows = ids.length === 0 ? [] : await db.all(
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+             FROM json_each(?) j JOIN entries e ON e.id = unhex(j.value) ${displayedFormProfileJoin}`,
+      [JSON.stringify(ids)]
+    );
     return { rows, glossMatches, romajiMatches };
   }
+  async function senseRestrictions(db, entryIds) {
+    const restrictions = /* @__PURE__ */ new Map();
+    if (entryIds.length === 0) return restrictions;
+    const rows = await db.all(
+      `SELECT lower(hex(r.entry_id)) AS entry_id, r.sense_order, r.kind, r.form
+       FROM json_each(?) j JOIN sense_form_restrictions r ON r.entry_id = unhex(j.value)`,
+      [JSON.stringify(entryIds)]
+    );
+    for (const row of rows) {
+      const key = `${row.entry_id} ${row.sense_order}`;
+      const sense = restrictions.get(key) ?? { writtenForms: [], readings: [] };
+      if (row.kind === FormKind.written) sense.writtenForms.push(row.form);
+      if (row.kind === FormKind.reading) sense.readings.push(row.form);
+      restrictions.set(key, sense);
+    }
+    return restrictions;
+  }
+  var unrestricted = { writtenForms: [], readings: [] };
   async function glossEvidence(db, query, match) {
     const rows = await db.all(
       `SELECT lower(hex(g.entry_id)) AS entry_id, g.sense_order, g.gloss_order, g.text,
-         e.headword, e.reading,
-         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
-          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
-            AND r.kind = ${FormKind.written}) AS written_forms,
-         (SELECT json_group_array(r.form) FROM sense_form_restrictions r
-          WHERE r.entry_id = g.entry_id AND r.sense_order = g.sense_order
-            AND r.kind = ${FormKind.reading}) AS readings
+         e.headword, e.reading
        FROM dictionary_gloss_fts x
        JOIN gloss_atoms g ON g.rowid = x.docid
        JOIN canonical_senses s ON s.entry_id = g.entry_id AND s.sense_order = g.sense_order
@@ -2332,14 +2357,14 @@
        WHERE dictionary_gloss_fts MATCH ?`,
       [match]
     );
+    const restrictions = await senseRestrictions(db, [...new Set(rows.map((row) => row.entry_id))]);
     const token = glossToken(query);
     const result3 = /* @__PURE__ */ new Map();
     let step = 0;
     for (const row of rows) {
       stopIfInterrupted(db, step++);
-      const senseWrittenForms = JSON.parse(row.written_forms);
-      const senseReadings = JSON.parse(row.readings);
-      const appliesToShownForms = (senseWrittenForms.length === 0 || senseWrittenForms.includes(normalizeQuery(row.headword))) && (senseReadings.length === 0 || senseReadings.includes(normalizeQuery(row.reading)));
+      const sense = restrictions.get(`${row.entry_id} ${row.sense_order}`) ?? unrestricted;
+      const appliesToShownForms = (sense.writtenForms.length === 0 || sense.writtenForms.includes(normalizeQuery(row.headword))) && (sense.readings.length === 0 || sense.readings.includes(normalizeQuery(row.reading)));
       if (!appliesToShownForms) continue;
       const relation = glossRelation(query, row.text, token);
       if (relation === null) continue;
@@ -2354,18 +2379,39 @@
     }
     return result3;
   }
+  var relationsByKind = {
+    [FormKind.romaji]: [RomajiRelation.exact, RomajiRelation.prefix, RomajiRelation.contains],
+    [FormKind.shownRomaji]: [
+      RomajiRelation.shownExact,
+      RomajiRelation.shownPrefix,
+      RomajiRelation.shownContains
+    ],
+    [FormKind.unmarkedRomaji]: [
+      RomajiRelation.unmarkedExact,
+      RomajiRelation.unmarkedPrefix,
+      RomajiRelation.unmarkedContains
+    ]
+  };
+  function romajiRelation(form, kind, query) {
+    const [exact, prefix, contains] = relationsByKind[kind];
+    return form === query ? exact : form.startsWith(query) ? prefix : contains;
+  }
   async function romajiEvidence(db, query, match) {
     const rows = await db.all(
-      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form, f.kind
        FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
-       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}`,
-      [match]
+       WHERE dictionary_form_fts MATCH ? AND f.kind = ${FormKind.romaji}
+     UNION ALL
+     SELECT lower(hex(f.entry_id)), f.form, f.kind
+       FROM shown_romaji_fts x JOIN shown_romaji_forms f ON f.rowid = x.docid
+       WHERE shown_romaji_fts MATCH ?`,
+      [match, match]
     );
     const result3 = /* @__PURE__ */ new Map();
     let step = 0;
     for (const row of rows) {
       stopIfInterrupted(db, step++);
-      const relation = row.form === query ? RomajiRelation.exact : row.form.startsWith(query) ? RomajiRelation.prefix : RomajiRelation.contains;
+      const relation = romajiRelation(row.form, row.kind, query);
       const relations = result3.get(row.entry_id) ?? [];
       if (!relations.includes(relation)) relations.push(relation);
       result3.set(row.entry_id, relations);
@@ -2438,17 +2484,20 @@
     });
     return deduplicated(ranked, client);
   }
+  var exactFilter = (query) => ({ sql: "f.form = ?", params: [query] });
   async function hasFormContaining(db, query) {
-    const filter = containsFilter(query);
-    const rows = await db.all(
-      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${filter.sql}
-         AND ${readingRestrictionFilter}
-       LIMIT 1`,
-      filter.params
-    );
-    return rows.length > 0;
+    for (const filter of [exactFilter(query), containsFilter(query)]) {
+      const rows = await db.all(
+        `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
+         WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+           AND ${filter.sql}
+           AND ${readingRestrictionFilter}
+         LIMIT 1`,
+        filter.params
+      );
+      if (rows.length > 0) return true;
+    }
+    return false;
   }
   async function rankedJapanese(db, query) {
     const filter = containsFilter(query);
@@ -2689,6 +2738,20 @@
     return results;
   }
 
+  // src/search/romaji-forms.ts
+  var asciiSyllables = new Map(
+    "あ:a い:i う:u え:e お:o か:ka き:ki く:ku け:ke こ:ko が:ga ぎ:gi ぐ:gu げ:ge ご:go さ:sa し:shi す:su せ:se そ:so ざ:za じ:ji ず:zu ぜ:ze ぞ:zo た:ta ち:chi つ:tsu て:te と:to だ:da ぢ:ji づ:zu で:de ど:do な:na に:ni ぬ:nu ね:ne の:no は:ha ひ:hi ふ:fu へ:he ほ:ho ば:ba び:bi ぶ:bu べ:be ぼ:bo ぱ:pa ぴ:pi ぷ:pu ぺ:pe ぽ:po ま:ma み:mi む:mu め:me も:mo や:ya ゆ:yu よ:yo ら:ra り:ri る:ru れ:re ろ:ro わ:wa ゐ:wi ゑ:we を:o ん:n ゔ:vu きゃ:kya きゅ:kyu きょ:kyo ぎゃ:gya ぎゅ:gyu ぎょ:gyo しゃ:sha しゅ:shu しょ:sho じゃ:ja じゅ:ju じょ:jo ちゃ:cha ちゅ:chu ちょ:cho にゃ:nya にゅ:nyu にょ:nyo ひゃ:hya ひゅ:hyu ひょ:hyo びゃ:bya びゅ:byu びょ:byo ぴゃ:pya ぴゅ:pyu ぴょ:pyo みゃ:mya みゅ:myu みょ:myo りゃ:rya りゅ:ryu りょ:ryo".split(" ").map((rule) => rule.split(":"))
+  );
+  var romajiSeparators = /[・、。〜]/gu;
+  var macronVowels = "āēīōū";
+  var romajiLetters = new RegExp(`^[\\0-\\x7f${macronVowels}\\u{304}]*$`, "u");
+  var latinLetter2 = new RegExp(`[a-z${macronVowels}]`, "u");
+  function romajiQuery(query) {
+    if (isASCII(query)) return query;
+    const separated = query.replace(romajiSeparators, " ").split(" ").filter(Boolean).join(" ");
+    return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
+  }
+
   // src/search/search.ts
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
@@ -2704,7 +2767,8 @@
     db;
     async search(rawQuery) {
       const query = normalizeQuery(rawQuery);
-      const exactFormEntry = isASCII(query) && query !== "" ? (await rankedEnglish(this.db, query, true))[0]?.entry : void 0;
+      const romaji2 = romajiQuery(query);
+      const exactFormEntry = romaji2 !== null && romaji2 !== "" ? (await rankedEnglish(this.db, romaji2, true))[0]?.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
         const [hasRefinedResults, literalResults] = await Promise.all([
@@ -2797,7 +2861,8 @@
     }
     async searchOnce(query) {
       if (query === "") return noResults();
-      const ranked = isASCII(query) ? await rankedEnglish(this.db, query) : await rankedJapanese(this.db, query);
+      const romaji2 = romajiQuery(query);
+      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await rankedJapanese(this.db, query);
       if (ranked.length === 0) return noResults();
       let leadingLexicalEntryCount = 0;
       while (leadingLexicalEntryCount < ranked.length && sameLexicalGroup(ranked[leadingLexicalEntryCount].rank, ranked[0].rank)) {
@@ -2812,7 +2877,7 @@
     }
     async hasResults(query) {
       if (query === "") return false;
-      if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0;
+      if (romajiQuery(query) !== null) return (await this.searchOnce(query)).items.length > 0;
       return hasFormContaining(this.db, query);
     }
     async analyzedItems(query) {
