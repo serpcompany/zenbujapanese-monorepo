@@ -154,7 +154,8 @@ extension AccountSync {
       if !state.refusedNotes.contains(change.key.entityID) {
         state.refusedNotes.append(change.key.entityID)
       }
-      if case .string(let text)? = change.fields?["text"], !state.longNotes.contains(change.key.entityID),
+      if case .string(let text)? = change.fields?["text"],
+        !state.longNotes.contains(change.key.entityID),
         !AccountRules.shared.noteFitsTheAccount(text)
       {
         state.longNotes.append(change.key.entityID)

@@ -67,9 +67,9 @@ actor RecentSearchHistory {
   func applySynced(_ synced: [KeptSearch], removing gone: [String], under key: String) {
     let removed = Set(gone)
     let local = searches()
-    let ids = Dictionary((local + synced).map { ($0.query, KeptChanges.searchID($0.query, under: key) ?? "") }) {
-      first, _ in first
-    }
+    let ids = Dictionary(
+      (local + synced).map { ($0.query, KeptChanges.searchID($0.query, under: key) ?? "") }
+    ) { first, _ in first }
     let kept = local.filter { !removed.contains(ids[$0.query] ?? "") }
     write(synced.reduce(kept) { placing($1, in: $0, ids: ids) })
   }
@@ -84,7 +84,8 @@ actor RecentSearchHistory {
       (others + [KeptSearch(query: search.query, searchedAt: latest)])
         .sorted {
           $0.searchedAt == $1.searchedAt
-            ? ids[$0.query, default: ""] > ids[$1.query, default: ""] : $0.searchedAt > $1.searchedAt
+            ? ids[$0.query, default: ""] > ids[$1.query, default: ""]
+            : $0.searchedAt > $1.searchedAt
         }
         .prefix(Self.kept))
   }
