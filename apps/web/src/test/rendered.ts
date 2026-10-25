@@ -53,6 +53,7 @@ export interface RenderedPage {
   sections: string[]
   examples: { text: string; href: string | null } | null
   refinement: string | null
+  heading: string | null
   kanji: { character: string; text: string } | null
   rows: RenderedRow[]
   noResults: string | null
@@ -62,6 +63,7 @@ export function readRenderedPage(html: string): RenderedPage {
   const sections = [...html.matchAll(/data-section="([^"]+)"/g)].map(match => match[1])
   const refinement = html.match(/data-section="readingRefinement"[\s\S]*?<\/p>/)
   const examples = html.match(/data-section="examples"[\s\S]*?<\/p>/)
+  const heading = html.match(/data-section="discoveredWords"[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>/)
   const kanji = html.match(
     /<span lang="ja" class="[^"]*text-4xl[^"]*">([^<]+)<\/span><span[^>]*data-kanji-row="[^"]*"[^>]*>([\s\S]*?)<\/span><\/span>/
   )
@@ -89,6 +91,7 @@ export function readRenderedPage(html: string): RenderedPage {
         }
       : null,
     refinement: refinement ? visibleText(`<x ${refinement[0]}`) : null,
+    heading: heading ? visibleText(heading[1]) : null,
     kanji: kanji
       ? {
           character: visibleText(kanji[1]),

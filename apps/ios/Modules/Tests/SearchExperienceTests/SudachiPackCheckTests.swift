@@ -8,10 +8,8 @@ struct SudachiPackCheckTests {
   private static let goldenSentence = "日本語を用いる。"
 
   private static func goldenAnalysis() async throws -> JapaneseMorphologyAnalysis {
-    let dictionary = try await SudachiBuildCache.dictionary.value
-    return try await apartFromThePool {
-      try SudachiJapaneseMorphologyAdapter(dictionaryURL: dictionary).analyze(goldenSentence)
-    }
+    let analyzer = try await SudachiBuildCache.analyzer()
+    return try await apartFromThePool { try analyzer.analyze(goldenSentence) }
   }
 
   @Test("the pinned dictionary passes it, so the app's bundled pack is used")

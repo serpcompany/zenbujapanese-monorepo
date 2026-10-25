@@ -81,9 +81,8 @@ candidate tiles in the same fill as the radical squares, and glass buttons (whit
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical, or
   says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
   headers, in the same tiles five to a row, and radicals that can't combine with the selection are
-  hidden. A header opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, the same
-  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed until
-  one is.
+  hidden. A header opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, at the
+  bottom right as in Handwriting, removes the last radical selected and is dimmed until one is.
 
 A candidate from any panel is added to the end of the query, so picking one character after another,
 in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
@@ -201,12 +200,13 @@ says which dictionary is unavailable. Results can also offer a Japanese-reading 
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
 
-Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a
-dictionary that can't be read named, the others still ordering); core `detail/frequency.test.ts`
-(the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
-(which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
-refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
-and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a dictionary
+that can't be read named, the others still ordering); core `detail/frequency.test.ts` (the notice's
+words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts` (which
+sentences an English query finds); the recorded `SearchResultsConformanceTests` (the refinement,
+Example Sentences, and Kanji rows), `SentenceResultsConformanceTests` (discovered words), and
+`ExampleSearchConformanceTests` (`startled you` and `generously`); UI
+`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
 The Example Sentences row opens the query's sentences on a screen titled with the query. Under the

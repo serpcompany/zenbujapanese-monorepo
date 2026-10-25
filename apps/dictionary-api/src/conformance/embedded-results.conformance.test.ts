@@ -8,13 +8,21 @@ import { type Embedded, embedded } from './embedded-support'
 import {
   caseAsShown,
   describeRows,
+  type ResultsSuite,
   recordedCaseAsTheCoreReports,
+  resultsSuite,
   type ShownScreen,
-  resultsSuite as suite,
+  sentenceResultsSuite,
   suiteChip,
   suiteRows
 } from './results-suite'
-import { artifactAvailable, artifactDatabase, requirePinnedArtifacts } from './support'
+import {
+  artifactAvailable,
+  artifactDatabase,
+  requirePinnedArtifacts,
+  sudachiAnalyzer,
+  sudachiAvailable
+} from './support'
 
 type Screen = Extract<LearnerResultsScreen, { state: 'results' }>
 
@@ -30,6 +38,7 @@ function shown(screen: Screen, results: EmbeddedSearchResults): ShownScreen {
         : null
     },
     readingRefinement: screen.readingRefinement,
+    heading: screen.heading,
     kanji: screen.kanji,
     rows: suiteRows(screen.rows, items, (row, item) => ({
       entSeq: [String(item.entSeq)],
@@ -44,41 +53,33 @@ function shown(screen: Screen, results: EmbeddedSearchResults): ShownScreen {
   }
 }
 
-describe.runIf(artifactAvailable)('the app’s results screen on the artifact', () => {
-  let app: Embedded
-  let db: ArtifactDatabase
-
-  beforeAll(async () => {
-    requirePinnedArtifacts(suite.artifacts)
-    app = await embedded()
-    db = await artifactDatabase()
+async function screen(
+  app: Embedded,
+  query: string,
+  learner: Partial<LearnerState> = {}
+): Promise<{ results: EmbeddedSearchResults; screen: LearnerResultsScreen }> {
+  const results = await app.lookup<EmbeddedSearchResults>('search', query)
+  await app.text<number>('exampleCount', query)
+  const exampleCount = await app.text<number>('resultsExampleCount', {
+    query,
+    primaryEntry: results.primaryEntry,
+    usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
   })
-
-  async function screen(
-    query: string,
-    learner: Partial<LearnerState> = {}
-  ): Promise<{ results: EmbeddedSearchResults; screen: LearnerResultsScreen }> {
-    const results = await app.lookup<EmbeddedSearchResults>('search', query)
-    await app.text<number>('exampleCount', query)
-    const exampleCount = await app.text<number>('resultsExampleCount', {
+  const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
+  return {
+    results,
+    screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {
       query,
-      primaryEntry: results.primaryEntry,
-      usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
-    })
-    const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
-    return {
       results,
-      screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {
-        query,
-        results,
-        exampleCount,
-        learner: { ...state, ...learner }
-      })
-    }
+      exampleCount,
+      learner: { ...state, ...learner }
+    })
   }
+}
 
+function showsTheScreens(suite: ResultsSuite, app: () => Embedded) {
   test.each(suite.cases)('shows 「$query」 as the suite records', async expected => {
-    const found = await screen(expected.query)
+    const found = await screen(app(), expected.query)
     const actual = caseAsShown(
       {
         query: expected.query,
@@ -92,14 +93,24 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       actual,
       `「${expected.query}」: expected ${describeRows(wanted.results)} but found ${describeRows(actual.results)}`
     ).toEqual(wanted)
-    if (found.screen.state === 'results') {
-      expect(found.screen.frequencyNotice).toBeNull()
-      expect(found.screen.heading).toBeNull()
-    }
+    if (found.screen.state === 'results') expect(found.screen.frequencyNotice).toBeNull()
+  })
+}
+
+describe.runIf(artifactAvailable)('the app’s results screen on the artifact', () => {
+  let app: Embedded
+  let db: ArtifactDatabase
+
+  beforeAll(async () => {
+    requirePinnedArtifacts(resultsSuite.artifacts)
+    app = await embedded()
+    db = await artifactDatabase()
   })
 
+  showsTheScreens(resultsSuite, () => app)
+
   test('sorts 「iru」 by YouTube rank, by JLPT level, and by the words the learner knows', async () => {
-    const byDefault = await screen('iru')
+    const byDefault = await screen(app, 'iru')
     if (byDefault.screen.state !== 'results') throw new Error('「iru」 has no results')
     const ids = byDefault.screen.rows.map(row => row.id)
     const frequency = bundledFrequency(db, ids)
@@ -108,7 +119,7 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
       return !row ? null : row.pack === 'jlpt' ? row.level : row.rank
     }
     const sorted = async (learner: Partial<LearnerState>) => {
-      const found = (await screen('iru', learner)).screen
+      const found = (await screen(app, 'iru', learner)).screen
       if (found.state !== 'results') throw new Error('「iru」 has no results')
       return found
     }
@@ -140,3 +151,17 @@ describe.runIf(artifactAvailable)('the app’s results screen on the artifact', 
     expect(onlyKnown.menu?.status).toBe('Sorted by Default · 1 filter')
   })
 })
+
+describe.runIf(artifactAvailable && sudachiAvailable)(
+  'the app’s results screen for a sentence, with Sudachi',
+  () => {
+    let app: Embedded
+
+    beforeAll(async () => {
+      requirePinnedArtifacts(sentenceResultsSuite.artifacts)
+      app = await embedded(sudachiAnalyzer())
+    })
+
+    showsTheScreens(sentenceResultsSuite, () => app)
+  }
+)

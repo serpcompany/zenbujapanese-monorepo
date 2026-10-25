@@ -9,6 +9,7 @@ import {
   artifactAvailable,
   dictionary,
   readSuite,
+  recordedSudachi,
   requirePinnedArtifacts,
   resources,
   sudachiAnalyzer,
@@ -69,9 +70,7 @@ describe.runIf(artifactAvailable && sudachiAvailable)('sentence search conforman
   })
 
   test('was recorded with the Sudachi dictionary the app pins', () => {
-    expect(suite.artifacts.find(artifact => artifact.name === 'system_core.dic')?.sha256).toBe(
-      sudachiContract(resources).installedSHA256
-    )
+    expect(recordedSudachi(suite.artifacts)).toBe(sudachiContract(resources).installedSHA256)
   })
 
   test.each(
