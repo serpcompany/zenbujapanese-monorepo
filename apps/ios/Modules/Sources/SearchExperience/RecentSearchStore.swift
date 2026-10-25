@@ -66,11 +66,11 @@ actor RecentSearchHistory {
 
   func applySynced(_ synced: [KeptSearch], removing gone: [String], under key: String) {
     let removed = Set(gone)
-    let local = searches()
+    let kept = searches().filter { !removed.contains(KeptChanges.searchID($0.query, under: key) ?? "") }
+    let tied = Dictionary(grouping: kept + synced, by: \.searchedAt).values.filter { $0.count > 1 }
     let ids = Dictionary(
-      (local + synced).map { ($0.query, KeptChanges.searchID($0.query, under: key) ?? "") }
+      tied.joined().map { ($0.query, KeptChanges.searchID($0.query, under: key) ?? "") }
     ) { first, _ in first }
-    let kept = local.filter { !removed.contains(ids[$0.query] ?? "") }
     write(synced.reduce(kept) { placing($1, in: $0, ids: ids) })
   }
 

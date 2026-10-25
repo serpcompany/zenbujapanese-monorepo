@@ -26,6 +26,14 @@ final class AccountRules: @unchecked Sendable {
     value.isFinite && flag("fitsTheWatch", "[\"\(field)\",\(value)]")
   }
 
+  func prepareSoon() {
+    Task.detached(priority: .utility) { self.prepare() }
+  }
+
+  private func prepare() {
+    lock.withLock { _ = try? prepared() }
+  }
+
   private func text(_ rule: String, _ argument: String) -> String? {
     lock.withLock { try? prepared().text(rule, argument) }
   }

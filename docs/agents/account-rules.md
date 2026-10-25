@@ -63,8 +63,11 @@ the app may ask for. `pnpm bundle:javascriptcore` writes the bundle with the dic
 bundler (`packages/dictionary-core/scripts/javascriptcore-bundle.mjs`, `bundleFor`), and
 `src/embedded/bundle.test.ts` fails until the checked-in bundle matches the source. The app keeps
 the bundle in an engine of its own, beside the dictionary's three ([`ios.md`](ios.md), The
-dictionary core in the app): it's under 4 KB, so it starts in about a millisecond, and a check
-never waits behind the presentation engine's lock or its start.
+dictionary core in the app), and makes it in the background as its account starts
+(`AccountRules.prepareSoon()`), so a check doesn't wait behind the presentation engine's lock or
+its start. The bundle is under 4 KB: on this repository's virtual Mac, a new engine answered its
+first check in under a millisecond at the median, against about 7 ms for the presentation engine.
+Warm, a check costs a microsecond or less.
 
 ## Changing a rule
 

@@ -22,6 +22,7 @@ final class ZenbuAccount {
       store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
     account.startSubscription()
+    AccountRules.shared.prepareSoon()
     return account
   }
 
