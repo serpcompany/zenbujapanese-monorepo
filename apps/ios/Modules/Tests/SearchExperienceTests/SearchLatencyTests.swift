@@ -414,7 +414,7 @@ struct SearchLatencyTests {
     "english": ["dog", "water", "the", "a", "to eat", "file", "beer", "coffee"],
   ]
 
-  @Test("prints how long romaji queries take uncached, by how they are spelled")
+  @Test("prints how long each romaji query takes uncached, and each spelling's queries together")
   func measureRomaji() async throws {
     let data = LanguageReferenceData(validatesBundledArtifact: false)
     let clock = ContinuousClock()
@@ -422,15 +422,23 @@ struct SearchLatencyTests {
     var all: [Double] = []
     for (kind, queries) in Self.romajiQueries {
       var timings: [Double] = []
+      var byQuery: [String: [Double]] = [:]
       for _ in 0..<Self.passes {
         for query in queries {
           let elapsed = try await clock.measure {
             _ = try await data.results(answered: try await data.answeredSearch(SearchQuery(query).value))
           }
           timings.append(Self.value(elapsed))
+          byQuery[query, default: []].append(Self.value(elapsed))
         }
       }
       all += timings
+      for query in queries {
+        let sorted = (byQuery[query] ?? []).sorted()
+        print(
+          "SEARCH-LATENCY romaji query, \(kind)\t\(query)\tmedian "
+            + String(format: "%.2f", sorted[sorted.count / 2]) + " ms")
+      }
       print("SEARCH-LATENCY romaji, \(kind): " + Self.percentiles(timings))
     }
     print("SEARCH-LATENCY romaji, all: " + Self.percentiles(all))
