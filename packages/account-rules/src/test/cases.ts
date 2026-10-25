@@ -1,4 +1,11 @@
-import { readFileSync } from 'node:fs'
+import listName from '../../cases/list-name.json'
+import name from '../../cases/name.json'
+import noteText from '../../cases/note-text.json'
+import recentOrder from '../../cases/recent-order.json'
+import settings from '../../cases/settings.json'
+import signInCode from '../../cases/sign-in-code.json'
+import username from '../../cases/username.json'
+import watchFields from '../../cases/watch-fields.json'
 
 export type Text =
   | string
@@ -14,5 +21,15 @@ export const textOf = (value: Text) =>
     ? value
     : `${value.before ?? value.around ?? ''}${value.text.repeat(value.times)}${value.after ?? value.around ?? ''}`
 
-export const cases = <T>(name: string): T =>
-  JSON.parse(readFileSync(new URL(`../../cases/${name}.json`, import.meta.url), 'utf8')) as T
+const files = {
+  'list-name': listName,
+  name,
+  'note-text': noteText,
+  'recent-order': recentOrder,
+  settings,
+  'sign-in-code': signInCode,
+  username,
+  'watch-fields': watchFields
+}
+
+export const cases = <T>(file: keyof typeof files): T => files[file] as T

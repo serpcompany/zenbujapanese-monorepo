@@ -1,5 +1,12 @@
 'use client'
 
+import {
+  accountName,
+  accountUsername,
+  nameRule,
+  removesTheUsername,
+  usernameRule
+} from '@zenbu/account-rules/profile'
 import { type FormEvent, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +31,12 @@ interface ProfileFormProps {
 const isoDateLength = 'yyyy-mm-dd'.length
 
 const dayMadeOf = (createdAt: string) => new Date(createdAt).toISOString().slice(0, isoDateLength)
+
+function brokenRule({ name, username }: ProfileChange): string | null {
+  if (name !== undefined && accountName(name) === null) return nameRule
+  if (typeof username === 'string' && accountUsername(username) === null) return usernameRule
+  return null
+}
 
 export function ProfileForm({
   api,
@@ -58,10 +71,15 @@ export function ProfileForm({
     event.preventDefault()
     const change: ProfileChange = { baseVersion: profile.version }
     if (name.trim() !== profile.name) change.name = name
-    const wantedUsername = username.trim() === '' ? null : username
+    const wantedUsername = removesTheUsername(username) ? null : username
     if (wantedUsername !== profile.username) change.username = wantedUsername
     if (change.name === undefined && change.username === undefined) {
       return setNotice(words.nothingChanged)
+    }
+    const broken = brokenRule(change)
+    if (broken) {
+      setNotice(null)
+      return setProblem(fill(text.messages.asTheServiceSays, { message: broken }))
     }
     setBusy(true)
     setProblem(null)
@@ -92,7 +110,6 @@ export function ProfileForm({
           <Input
             id="profile-name"
             autoComplete="name"
-            maxLength={100}
             value={name}
             onChange={event => setName(event.target.value)}
           />
@@ -104,7 +121,6 @@ export function ProfileForm({
           <Input
             id="profile-username"
             autoComplete="username"
-            maxLength={30}
             aria-describedby="profile-username-rule"
             value={username}
             onChange={event => setUsername(event.target.value)}

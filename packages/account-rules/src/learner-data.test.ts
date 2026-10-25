@@ -19,6 +19,14 @@ describe('a sign-in code', () => {
     }
     expect(signInCode.length).toBe(codes.length)
   })
+
+  test("is held to the same rule by a field's pattern, which a browser matches against the whole value", () => {
+    const field = new RegExp(`^(?:${signInCode.typedPattern})$`, 'v')
+    for (const { covers, typed } of codes.accepted)
+      expect(field.test(textOf(typed)), covers).toBe(true)
+    for (const { covers, typed } of codes.refused)
+      expect(field.test(textOf(typed)), covers).toBe(false)
+  })
 })
 
 describe('a list name', () => {
