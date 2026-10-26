@@ -149,8 +149,10 @@ during the run, "No doc drift found", or an open one left alone. Code gardening'
 pull request opened, or "Nothing to garden"; a second pull request fails it. Both fail when Claude
 left no log, ended in an error or with subagents running, or reached no outcome, and a denied tool
 only warns when Claude got there anyway, since it often retries a refused command another way
-(`tools/checks/src/agents/maintenance-workflow.test.ts`). `claude[bot]` opens their pull
-requests, so `Code review` and the `Pull request` checks skip them: skim each and merge it.
+(`tools/checks/src/agents/maintenance-workflow.test.ts`). `github-actions[bot]` opens their
+pull requests with the job's token, so GitHub starts no checks on them until a person pushes to
+the branch. That push starts `Code review` and the `Pull request` checks, which skip only
+`claude[bot]`, `dependabot[bot]`, and `renovate[bot]`. Skim each, push, and merge it once green.
 
 Work the issue in small pull requests, one item each:
 
