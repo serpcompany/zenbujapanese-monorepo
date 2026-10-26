@@ -1,7 +1,8 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { wordCardFormat } from '@zenbu/dictionary-core/cards/card'
+import { maximumSegmentedLength } from '@zenbu/dictionary-core/cards/segmentable'
 import { segmentationFormat } from '@zenbu/dictionary-core/cards/segmentation'
-import { maximumCardsPerRequest, maximumSegmentedLength } from '../app-routes'
+import { maximumCardsPerRequest } from '../app-routes'
 
 const tiers = z
   .enum(['veryCommon', 'common', 'moderate', 'uncommon', 'rare'])

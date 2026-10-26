@@ -4832,7 +4832,56 @@
       "query" : "café",
       "resolution" : "direct",
       "results" : [
-
+        {
+          "headword" : "カフェ",
+          "id" : "f21a09bab3edc93cac4707622bd018a4",
+          "reading" : "カフェ"
+        },
+        {
+          "headword" : "バール",
+          "id" : "91a4b46b7509517aabaf8f2695793662",
+          "reading" : "バール"
+        },
+        {
+          "headword" : "コーヒー店",
+          "id" : "1780e7ce8d31f08a943d3b983018d859",
+          "reading" : "コーヒーてん"
+        },
+        {
+          "headword" : "店内",
+          "id" : "70747536044fd3312f410bd7391f51d8",
+          "reading" : "てんない"
+        },
+        {
+          "headword" : "オーレ",
+          "id" : "8ac10411271c7cec667190a77e8bf2cb",
+          "reading" : "オーレ"
+        },
+        {
+          "headword" : "猫喫茶",
+          "id" : "5a44d75f6c2b7878d4635d701093fcb3",
+          "reading" : "ねこきっさ"
+        },
+        {
+          "headword" : "猫カフェ",
+          "id" : "87e44912cc1b0f112835ad491846eebd",
+          "reading" : "ねこカフェ"
+        },
+        {
+          "headword" : "犬カフェ",
+          "id" : "37d32b00a9f95ae0de67997014fb3310",
+          "reading" : "いぬカフェ"
+        },
+        {
+          "headword" : "動物カフェ",
+          "id" : "ad8d87355ac17aee4dd7c3d1b941068a",
+          "reading" : "どうぶつカフェ"
+        },
+        {
+          "headword" : "カフェオレ",
+          "id" : "593f04eaccf3584b44c4b0652c7c9a2a",
+          "reading" : "カフェオレ"
+        }
       ],
       "searched" : [
 
@@ -92005,7 +92054,56 @@
       "query" : "é",
       "resolution" : "direct",
       "results" : [
-
+        {
+          "headword" : "Ｅ",
+          "id" : "1ecc3d64153bc8e464b911c28ace32ef",
+          "reading" : "イー"
+        },
+        {
+          "headword" : "ネイピア数",
+          "id" : "66354c379750389c81d5d542e3f0cbda",
+          "reading" : "ネイピアすう"
+        },
+        {
+          "headword" : "ホ",
+          "id" : "8e5957104b1db7c23104263a46701003",
+          "reading" : "ホ"
+        },
+        {
+          "headword" : "オイラー数",
+          "id" : "5b4814fba6f634bbec779a170ad4b2ad",
+          "reading" : "オイラーすう"
+        },
+        {
+          "headword" : "ミ",
+          "id" : "54879584e4b730cc53e307fe54b10b28",
+          "reading" : "ミ"
+        },
+        {
+          "headword" : "壺",
+          "id" : "d418e58c46f0e84a6df458e97e0502a2",
+          "reading" : "つぼ"
+        },
+        {
+          "headword" : "前夜祭",
+          "id" : "380e3e0662610c529ea22627c874142c",
+          "reading" : "ぜんやさい"
+        },
+        {
+          "headword" : "合流",
+          "id" : "adcc416b3540880624c329e887d747f0",
+          "reading" : "ごうりゅう"
+        },
+        {
+          "headword" : "乗り切る",
+          "id" : "595f1f247839d1f329e87310d0d6a72a",
+          "reading" : "のりきる"
+        },
+        {
+          "headword" : "出社",
+          "id" : "3dfd8836aeae1e26e54f5addc5722e2b",
+          "reading" : "しゅっしゃ"
+        }
       ],
       "searched" : [
 
@@ -92036,7 +92134,16 @@
       "query" : "café au lait",
       "resolution" : "direct",
       "results" : [
-
+        {
+          "headword" : "オーレ",
+          "id" : "8ac10411271c7cec667190a77e8bf2cb",
+          "reading" : "オーレ"
+        },
+        {
+          "headword" : "カフェオレ",
+          "id" : "593f04eaccf3584b44c4b0652c7c9a2a",
+          "reading" : "カフェオレ"
+        }
       ],
       "searched" : [
 
@@ -92067,7 +92174,56 @@
       "query" : "é",
       "resolution" : "direct",
       "results" : [
-
+        {
+          "headword" : "Ｅ",
+          "id" : "1ecc3d64153bc8e464b911c28ace32ef",
+          "reading" : "イー"
+        },
+        {
+          "headword" : "ネイピア数",
+          "id" : "66354c379750389c81d5d542e3f0cbda",
+          "reading" : "ネイピアすう"
+        },
+        {
+          "headword" : "ホ",
+          "id" : "8e5957104b1db7c23104263a46701003",
+          "reading" : "ホ"
+        },
+        {
+          "headword" : "オイラー数",
+          "id" : "5b4814fba6f634bbec779a170ad4b2ad",
+          "reading" : "オイラーすう"
+        },
+        {
+          "headword" : "ミ",
+          "id" : "54879584e4b730cc53e307fe54b10b28",
+          "reading" : "ミ"
+        },
+        {
+          "headword" : "壺",
+          "id" : "d418e58c46f0e84a6df458e97e0502a2",
+          "reading" : "つぼ"
+        },
+        {
+          "headword" : "前夜祭",
+          "id" : "380e3e0662610c529ea22627c874142c",
+          "reading" : "ぜんやさい"
+        },
+        {
+          "headword" : "合流",
+          "id" : "adcc416b3540880624c329e887d747f0",
+          "reading" : "ごうりゅう"
+        },
+        {
+          "headword" : "乗り切る",
+          "id" : "595f1f247839d1f329e87310d0d6a72a",
+          "reading" : "のりきる"
+        },
+        {
+          "headword" : "出社",
+          "id" : "3dfd8836aeae1e26e54f5addc5722e2b",
+          "reading" : "しゅっしゃ"
+        }
       ],
       "searched" : [
 

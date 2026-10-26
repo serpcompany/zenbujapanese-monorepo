@@ -1,4 +1,4 @@
-import { maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
+import { maximumSegmentedLength } from '@zenbu/dictionary-core/cards/segmentable'
 import { segmentationFurigana } from '@zenbu/dictionary-core/cards/segmentation'
 import { fixtureSegmentation } from '@zenbu/dictionary-core/fixtures'
 import { describe, expect, test } from 'vitest'
@@ -54,7 +54,7 @@ describe('Kanji to Furigana', () => {
   })
 
   test.each(['en', 'ja'] as const)('in %s, it states the dictionary service’s limit', locale => {
-    const limit = String(maximumQueryLength)
+    const limit = String(maximumSegmentedLength)
     const [, howMuch] = questionsIn('furigana', locale)
     expect(howMuch.answer).toContain(limit)
     expect(furiganaPageIn(locale).description).toContain(limit)

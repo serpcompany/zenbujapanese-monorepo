@@ -127,6 +127,26 @@ describe.runIf(artifactAvailable)('browsing a category on the app’s data', () 
     expect(kansai.find(word => word.entSeq === na)?.summary).toMatch(/^right\?/)
   })
 
+  test('a usage category’s word label is the note on every meaning it labels', () => {
+    const labelled = browseCategories.filter(
+      category => category.kind === 'usage' && category.wordLabel
+    )
+    expect(labelled.length).toBeGreaterThan(0)
+    for (const category of labelled) {
+      const [{ senses, unlabelled }] = db.all<{ senses: number; unlabelled: number }>(
+        `SELECT count(*) AS senses,
+           count(*) FILTER (WHERE NOT EXISTS (
+             SELECT 1 FROM json_each(s.value, '$.notes') n WHERE n.value = ?)) AS unlabelled
+         FROM entries e, json_each(e.senses_json) s
+         WHERE EXISTS (SELECT 1 FROM json_each(s.value, '$.usage') u
+           WHERE u.value IN (SELECT value FROM json_each(?)))`,
+        [category.wordLabel ?? '', JSON.stringify(category.labels)]
+      )
+      expect(senses, category.slug).toBeGreaterThan(0)
+      expect(unlabelled, `${category.slug}'s meanings without “${category.wordLabel}”`).toBe(0)
+    }
+  })
+
   test('kana order lists the same words by reading', () => {
     const slug = 'onomatopoeia'
     const used = service.categoryWords(slug, 'used', 1)

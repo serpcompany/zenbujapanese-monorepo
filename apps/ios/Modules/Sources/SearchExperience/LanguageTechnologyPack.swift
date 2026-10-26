@@ -18,30 +18,21 @@ struct LanguageTechnologyPackCatalog: Codable, Equatable, Sendable {
     packs + trustedHistoricalManifests
   }
 
+  var bundledDefault: LanguageTechnologyPackManifest? {
+    let bundled = packs.filter { $0.distribution == .bundledDefault }
+    return schemaVersion == 1 && bundled.count == 1 ? bundled.first : nil
+  }
+
   static func bundled() throws -> Self {
     guard
       let url = BundledData.bundle.url(
         forResource: "LanguageTechnologyPackCatalog", withExtension: "json")
     else { throw LanguageTechnologyPackError.invalidCatalog }
-    let catalog = try JSONDecoder().decode(Self.self, from: Data(contentsOf: url))
-    let bundledDefaults = catalog.packs.filter { $0.distribution == .bundledDefault }
-    guard catalog.schemaVersion == 1, bundledDefaults.count == 1,
-      let pack = bundledDefaults.first,
-      pack.packID.rawValue == "sudachi-core-ja-20260723",
-      pack.engine == SudachiCoreContract.engine,
-      pack.engineVersion == SudachiCoreContract.engineVersion,
-      pack.binding == SudachiCoreContract.binding,
-      pack.bindingVersion == SudachiCoreContract.bindingVersion,
-      pack.packVersion == SudachiCoreContract.dictionaryVersion,
-      pack.downloadBytes == SudachiCoreContract.downloadBytes,
-      pack.downloadSHA256 == SudachiCoreContract.downloadSHA256,
-      pack.downloadURL == SudachiCoreContract.downloadURL,
-      pack.installedBytes == SudachiCoreContract.installedBytes,
-      pack.archiveEntry == SudachiCoreContract.archiveEntry,
-      pack.installedSHA256 == SudachiCoreContract.dictionarySHA256,
-      pack.runtimeResourceCommit == SudachiCoreContract.runtimeResourceCommit,
-      pack.characterDefinitionSHA256 == SudachiCoreContract.characterDefinitionSHA256,
-      pack.unknownDefinitionSHA256 == SudachiCoreContract.unknownDefinitionSHA256,
+    return try checked(JSONDecoder().decode(Self.self, from: Data(contentsOf: url)))
+  }
+
+  static func checked(_ catalog: Self) throws -> Self {
+    guard let pack = catalog.bundledDefault, SudachiCoreContract.builds(pack),
       pack.bundledResource == "system_core",
       pack.bundledResourceExtension == "dic",
       BundledData.bundle.url(forResource: pack.licenseResource, withExtension: "txt") != nil,
@@ -181,7 +172,7 @@ actor LanguageTechnologyPackManager {
     self.storageDirectory = storageDirectory
     downloadSource = download
     self.validateProvider = validateProvider
-    let bundledManifest = catalog.packs.first { $0.distribution == .bundledDefault }
+    let bundledManifest = catalog.bundledDefault
     let resolvedBundledURL =
       bundledDictionaryURL
       ?? bundledManifest.flatMap { manifest in

@@ -144,9 +144,9 @@ not match or lifts an incidental match above a direct one. English rows show the
 matched. Matching notes follow ([Notes in Look Up](saved-data.md#notes-in-look-up)).
 
 Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
-`SearchResultOrderingTests`.
+`SearchResultOrderingTests`; core `search/latin-text.test.ts`.
 
-An English query groups its matches, strongest first:
+An English query (`café` too, as typed, then unaccented) groups its matches, strongest first:
 
 1. words whose first meaning is the query, with or without notes in parentheses that end the
    meaning ("dog", "dog (Canis familiaris)", and "soft (and fluffy) (e.g. bed)" count; "to (take

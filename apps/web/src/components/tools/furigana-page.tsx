@@ -1,4 +1,3 @@
-import { maximumQueryLength } from '@zenbu/dictionary-core/artifact/dictionary'
 import { FuriganaConverter } from '@/components/tools/furigana-converter'
 import { ToolPage } from '@/components/tools/tool-page'
 import type { Locale } from '@/lib/i18n/config'
@@ -23,7 +22,6 @@ export function FuriganaPage({ page, locale }: { page: FuriganaContent; locale: 
         <FuriganaConverter
           sample={page.sample}
           tries={page.tries}
-          limit={maximumQueryLength}
           text={t.furigana}
           words={t.converter}
           locale={locale}
