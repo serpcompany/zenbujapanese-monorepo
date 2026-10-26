@@ -34,7 +34,13 @@ final class LinkedRowsUITests: ZenbuUITestCase {
       scroll(list, toward: last, back: false)
       return false
     }
-    if device == .mac { scroll(list, toward: first, back: true) }
+    if device == .mac {
+      waitUntil("the first caption to come back into view") {
+        if isReachable(first, in: app) { return true }
+        scroll(list, toward: first, back: true)
+        return false
+      }
+    }
     _ = reveal(first, in: app, scrolling: list)
     XCTAssertTrue(words.exists, "the first caption came back into view without its words linked")
     XCTAssertEqual(first.frame.height, height, accuracy: 0.5, "the first caption came back at another height")
@@ -73,8 +79,13 @@ final class LinkedRowsUITests: ZenbuUITestCase {
   }
 
   private func scroll(_ list: XCUIElement, toward caption: XCUIElement, back: Bool) {
-    guard device == .mac, caption.exists else { return scroll(list, back: back) }
-    gesture { list.scroll(byDeltaX: 0, deltaY: list.frame.midY - caption.frame.midY) }
+    guard device == .mac else { return scroll(list, back: back) }
+    let area = list.frame
+    let target = caption.exists ? caption.frame : .null
+    let toTarget = area.midY - target.midY
+    let isLaidOut = !target.isEmpty && !target.isInfinite && toTarget.isFinite
+    let distance = isLaidOut ? toTarget : (back ? area.height : -area.height)
+    gesture { list.scroll(byDeltaX: 0, deltaY: distance) }
   }
 
   private func linkedWord(_ prefix: String, in app: XCUIApplication) -> XCUIElement {
