@@ -1,7 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { WatchedVideo } from '../domain/store'
 import type { Drizzle } from './database'
-import { keptRows } from './kept-rows'
+import { inCodePointOrder, keptRows } from './kept-rows'
 import { watchedVideos } from './schema'
 
 const watchedVideoColumns = {
@@ -55,7 +55,7 @@ export function watchedVideoWriter(db: Drizzle, userId: string) {
         .select(watchedVideoColumns)
         .from(watchedVideos)
         .where(recents.live)
-        .orderBy(asc(watchedVideos.watchedAt), asc(watchedVideos.videoId))
+        .orderBy(asc(watchedVideos.watchedAt), asc(inCodePointOrder(watchedVideos.videoId)))
         .limit(1)
       return video ?? null
     },

@@ -4,6 +4,8 @@ import type { EntityType } from '../domain/store'
 import type { Drizzle } from './database'
 import { forgottenVersions, syncChanges } from './schema'
 
+export const inCodePointOrder = (column: PgColumn) => sql`${column} collate "C"`
+
 interface KeptRows {
   table: PgTable
   userId: PgColumn

@@ -99,9 +99,8 @@ Privacy Policy; Sign in links to Create an account; both link "Can't sign in?" t
 learner goes to `/account/`. A browser that already signed in sees "You're signed in. Go to your
 account." above the ways.
 
-- Source: #477 and ADR 0013 (Apple, Google, and an emailed code, through the account service);
-  #468 (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an
-  account.
+- Source: #477 and ADR 0013 (Apple, Google, and an emailed code, through the account service); #468
+  (the #402 sitemap sheet lists `/register/`), here the same flow, worded for making an account.
 - Check: Sign-in form tests, "emails a code, signs in with it, and goes to the account page" and
   "tells a browser that already signed in where its account is";
   `src/app/[locale]/account-pages.test.tsx`, "offer signing in, and lead to each other, with an
@@ -109,8 +108,8 @@ account." above the ways.
   "Sign in's \"Can't sign in?\" leads to signing in by email code"; Account service spec, which
   registers from `/register/`.
 
-**The email code.** The learner enters their email, then the 6-digit code ("It works for 10
-minutes"), with "Send a new code" and "Use another email". A refusal says what to do:
+**The email code.** The learner enters their email, then the 6-digit code, spaces around it or not
+("It works for 10 minutes"), with "Send a new code" and "Use another email". A refusal says:
 
 - a wrong code, an expired one, and too many wrong ones;
 - an email whose account signs in with Apple or Google: sign in that way, then add the email.
@@ -123,11 +122,12 @@ minutes"), with "Send a new code" and "Use another email". A refusal says what t
 
 - Source: the client guide ([`account-clients.md`](../../../../docs/agents/account-clients.md),
   Signing in); `src/lib/account/messages.ts`.
-- Check: Sign-in form tests, "says why a code was refused, and how long to wait after too many"
-  and "sends an Apple or Google account to sign in that way, here only where the site offers it";
-  `src/lib/account/messages.test.ts`, "sends an Apple or Google account to sign in only a way this
-  site offers", and its other tests; `src/lib/account/client.test.ts`, "reads how long to wait
-  from Retry-After, or Better Auth's X-Retry-After".
+- Check: the shared cases in `account-rules.interaction.test.tsx`; Sign-in form tests, "says why a
+  code was refused, and how long to wait after too many" and "sends an Apple or Google account to
+  sign in that way, here only where the site offers it"; `src/lib/account/messages.test.ts`, "sends
+  an Apple or Google account to sign in only a way this site offers", and its other tests;
+  `src/lib/account/client.test.ts`, "reads how long to wait from Retry-After, or Better Auth's
+  X-Retry-After".
 
 **No password needed.** `/forgot-password/` says Zenbu accounts have no password, so there's
 nothing to reset, and offers the email code. Where the site offers Apple or Google, it links to
@@ -207,11 +207,11 @@ which signs nothing in, only names the session to sign out after a fresh sign-in
 
 **Profile.** Name and Username, with Save, and "Member since" the day the account was made. The
 username's hint gives the service's rule: "3 to 30 letters a to z, digits, or underscores". Save
-sends only what changed, with the profile's version; an empty username removes it. When the
-profile changed in another app first, the form shows it as it is now and says so; a taken username
-says to try another; another refusal shows the service's reason. When the page reads a newer
-profile, as after changing how the learner signs in, the form shows it; an older one of the same
-account never replaces it, and another account's always does.
+sends only what changed, uncut, once the account's rules take it, with the profile's version; an
+empty username removes it. When the profile changed in another app first, the form shows it as it is
+now and says so; a taken username says to try another; another refusal shows the service's reason.
+When the page reads a newer profile, as after changing how the learner signs in, the form shows it;
+an older one of the same account never replaces it, and another account's always does.
 
 - Source: `PATCH /v1/me` ([`account-api.md`](../../../../docs/agents/account-api.md), Profiles and
   sync).

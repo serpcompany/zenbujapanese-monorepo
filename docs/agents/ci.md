@@ -122,8 +122,8 @@ that never reports in the merge queue would block every merge, and the pull requ
 
 ## Web
 
-`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, or
-`tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
+`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, the account
+rules, or `tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
 ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in Docker, since the
 runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what `pnpm cf-typegen` writes
 from `wrangler.jsonc`, and that it writes no other file, so a binding changed without regenerating
@@ -196,16 +196,16 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 
 ## Account API
 
-`.github/workflows/account-api.yml` checks the account service on pull requests that change it, what
-the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`, which
-its tests write), or what the website's account pages are built from (`apps/web/src/`, the browser
-test against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what
-gives it its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's
-`next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull
-request's last run. The deployer and the backups script (`deploy/deployer.sh`,
-`apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
+`.github/workflows/account-api.yml` checks the account service on pull requests that change it,
+`node-service`, `account-rules`, its API reference (`docs/api/account-api.md`, which its tests
+write), or what the website's account pages are built from (`apps/web/src/`, the browser test
+against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what gives it
+its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's `next.config.ts`,
+`package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull request's last run.
+The deployer and the backups script (`deploy/deployer.sh`, `apps/account-api/deploy/backups.sh`) are
+ShellChecked by `Repository`'s `pnpm verify`.
 
-- **`check`** runs `pnpm check` for `packages/node-service`, then for `apps/account-api`, with a
+- **`check`** runs `pnpm check` for those two packages, then for `apps/account-api`, with a
   Postgres 18 service container. `ACCOUNT_API_TEST_DATABASE_URL` points the service's database
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
@@ -225,8 +225,8 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 
 `.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, the
 language data it's built from and tested against (`sources/`, `generated/`, `conformance/`, and
-`tools/` in `language-data/`, and the core's files its romaji forms come from), or the username
-cases its tests share with the account service (`username-cases.json`), in two jobs:
+`tools/` in `language-data/`, and the core's files its romaji forms come from), or the account
+rules' cases its tests share (`packages/account-rules/cases/`), in two jobs:
 
 - `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux with Node,
   every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source snapshots

@@ -1,3 +1,4 @@
+import { noteText, noteTextLength } from '@zenbu/account-rules/notes'
 import {
   applied,
   type Change,
@@ -20,7 +21,7 @@ import type { LockedAccount } from './store'
 export const noteLimits = {
   notes: 10_000,
   goneKept: 1_000,
-  textLength: 10_000,
+  textLength: noteTextLength,
   labelLength: itemTextLength
 } as const
 
@@ -56,17 +57,7 @@ const asChange = (note: WordNote): Change =>
       }
     : gone('wordNote', note.id, note.version)
 
-function noteText(raw: unknown): string | null {
-  if (typeof raw !== 'string') return null
-  const text = raw
-    .replace(/\r\n?/g, '\n')
-    .replace(/\p{Cs}/gu, '\uFFFD')
-    .replace(/[^\P{Cc}\n\t]/gu, ' ')
-    .normalize('NFC')
-    .trim()
-  const length = [...text].length
-  return length > 0 && length <= noteLimits.textLength ? text : null
-}
+const noteTextOf = (raw: unknown) => (typeof raw === 'string' ? noteText(raw) : null)
 
 function label(raw: unknown): string | null | Rejection {
   if (raw === undefined || raw === null) return null
@@ -81,7 +72,7 @@ function label(raw: unknown): string | null | Rejection {
 function writtenFields(fields: Record<string, unknown>): Written | Rejection {
   if (Object.keys(fields).some(key => !allowed.has(key))) return badFields
   const itemId = savedItemIdOf(fields.item)
-  const text = noteText(fields.text)
+  const text = noteTextOf(fields.text)
   const headword = label(fields.headword)
   const reading = label(fields.reading)
   if (!itemId || text === null || isRejection(headword) || isRejection(reading)) return badFields

@@ -7,6 +7,7 @@ WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches patches
 COPY apps/web/package.json apps/web/
+COPY packages/account-rules/package.json packages/account-rules/
 COPY apps/dictionary-api/package.json apps/dictionary-api/
 COPY packages/dictionary-core/package.json packages/dictionary-core/
 COPY packages/node-service/package.json packages/node-service/

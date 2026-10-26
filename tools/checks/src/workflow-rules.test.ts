@@ -189,6 +189,7 @@ describe('the version each toolchain is pinned to', () => {
     'apps/web/package.json',
     'apps/dictionary-api/package.json',
     'apps/account-api/package.json',
+    'packages/account-rules/package.json',
     'packages/dictionary-core/package.json',
     'packages/node-service/package.json',
     'tools/checks/package.json'

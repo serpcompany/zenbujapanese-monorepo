@@ -1,0 +1,22 @@
+{
+  "length": 6,
+  "accepted": [
+    { "covers": "six digits", "typed": "123456", "code": "123456" },
+    { "covers": "a space before them", "typed": " 123456", "code": "123456" },
+    { "covers": "a space after them", "typed": "123456 ", "code": "123456" },
+    { "covers": "a newline after them", "typed": "123456\u000a", "code": "123456" },
+    { "covers": "a no-break space before them", "typed": "\u00a0123456", "code": "123456" }
+  ],
+  "refused": [
+    { "covers": "a space inside", "typed": "123 456" },
+    { "covers": "a hyphen inside", "typed": "123-456" },
+    { "covers": "full-width digits", "typed": "１２３４５６" },
+    { "covers": "Arabic-Indic digits", "typed": "١٢٣٤٥٦" },
+    { "covers": "five digits", "typed": "12345" },
+    { "covers": "seven digits", "typed": "1234567" },
+    { "covers": "letters", "typed": "abcdef" },
+    { "covers": "five digits and a letter", "typed": "12345a" },
+    { "covers": "nothing", "typed": "" },
+    { "covers": "six spaces", "typed": "      " }
+  ]
+}

@@ -20,6 +20,10 @@ pre-commit:
       root: packages/node-service/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
       run: pnpm --silent --filter @zenbu/node-service lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    account-rules:
+      root: packages/account-rules/
+      glob: "*.{ts,js,mjs,cjs,json,jsonc}"
+      run: pnpm --silent --filter @zenbu/account-rules lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
     dictionary-core:
       root: packages/dictionary-core/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
@@ -33,7 +37,7 @@ pre-push:
   commands:
     web:
       skip:
-        - run: git diff --quiet origin/main...HEAD -- apps/web packages/dictionary-core tools/checks/ports.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml
+        - run: git diff --quiet origin/main...HEAD -- apps/web packages/dictionary-core packages/account-rules tools/checks/ports.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: >-
         pnpm --silent --filter zenbujapanese-web lint &&
         pnpm --silent --filter zenbujapanese-web typecheck &&
@@ -47,7 +51,7 @@ pre-push:
         pnpm --silent --filter zenbujapanese-dictionary-api test --exclude "src/conformance/**"
     account-api:
       skip:
-        - run: git diff --quiet origin/main...HEAD -- apps/account-api packages/node-service docs/api/account-api.md package.json pnpm-lock.yaml pnpm-workspace.yaml
+        - run: git diff --quiet origin/main...HEAD -- apps/account-api packages/account-rules packages/node-service docs/api/account-api.md package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: >-
         pnpm --silent --filter zenbujapanese-account-api lint &&
         pnpm --silent --filter zenbujapanese-account-api typecheck &&
@@ -57,6 +61,10 @@ pre-push:
       skip:
         - run: git diff --quiet origin/main...HEAD -- packages/node-service package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: pnpm --silent --filter @zenbu/node-service check
+    account-rules:
+      skip:
+        - run: git diff --quiet origin/main...HEAD -- packages/account-rules package.json pnpm-lock.yaml pnpm-workspace.yaml
+      run: pnpm --silent --filter @zenbu/account-rules check
     dictionary-core:
       skip:
         - run: git diff --quiet origin/main...HEAD -- packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml

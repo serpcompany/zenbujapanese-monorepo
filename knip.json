@@ -18,6 +18,10 @@
       "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
+    "packages/account-rules": {
+      "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
+      "includeEntryExports": true
+    },
     "packages/node-service": {
       "includeEntryExports": true,
       "ignoreDependencies": ["tsx"]

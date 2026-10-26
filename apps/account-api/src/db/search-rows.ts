@@ -1,7 +1,7 @@
 import { and, asc, eq, sql } from 'drizzle-orm'
 import type { RecentSearch } from '../domain/kept-store'
 import type { Drizzle } from './database'
-import { keptRows } from './kept-rows'
+import { inCodePointOrder, keptRows } from './kept-rows'
 import { recentSearches } from './schema'
 
 const searchColumns = {
@@ -51,7 +51,7 @@ export function searchWriter(db: Drizzle, userId: string) {
         .select(searchColumns)
         .from(recentSearches)
         .where(recents.live)
-        .orderBy(asc(recentSearches.searchedAt), asc(recentSearches.id))
+        .orderBy(asc(recentSearches.searchedAt), asc(inCodePointOrder(recentSearches.id)))
         .limit(1)
       return search ?? null
     },

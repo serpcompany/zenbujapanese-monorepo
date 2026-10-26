@@ -6,6 +6,10 @@ upload, each entity's own handling, when it syncs, deleting the account, and the
 service a build signs in to, Apple, Google, and the tokens are in [`ios.md`](ios.md), Account and
 sync; what the learner sees is in the product docs'
 [Zenbu account and sync](../../apps/ios/docs/product/account-sync.md).
+What the app takes as a profile name, a username, a sign-in code, a list's name, a note, or a
+watch's fields (a whole first upload's watches in one call) it asks the account rules' own JavaScriptCore engine (`AccountRules.swift`, from
+`Resources/AccountRules/account-rules.js`; [`account-rules.md`](account-rules.md)), so it holds
+input to the rules the account service and the website do.
 
 - **The queue.** `account-sync.json`, beside the stores, holds the account's ID and email, the
   queue, the cursor, the last sync, each entity's server version, and list words waiting for their
@@ -83,7 +87,7 @@ sync; what the learner sees is in the product docs'
     when the store's note changed underneath it, compared as the service keeps text (NFC, one kind
     of line break, other control characters as spaces), the edit is saved as a new note, unless
     it's the newer text already, and a deletion leaves the newer text. The page loads the word's
-    notes again after each save, so after a split it edits the new note. A note refused `invalid_fields` or `too_many_notes` is kept from the
+    notes again after each save, so after a split it edits the new note. Zenbu Account counts the notes refused for their length (`longNotes`). A note refused `invalid_fields` or `too_many_notes` is kept from the
     account's copies, and its version from moving, until the learner changes it (`refusedNotes`).
   - **Photos.** A photo's `add`, or the profile photo's `set`, uploads its file first
     (`PUT /v1/photos/{id}`, the bytes as the Media Library or the profile keeps them). A request
@@ -154,7 +158,8 @@ sync; what the learner sees is in the product docs'
     `FrequencyPackDownloads`, so Frequency Dictionaries shows their progress and a tap never starts
     a second one, with a request that refuses cellular and Low Data Mode (`quietDownload`), and
     without marking a pack failed; each launch's first sync resumes them.
-  - **Recent searches.** A search's ID is the HMAC-SHA256 of its query in NFC under the account's
+  - **Recent searches.** Two searches from one moment sort by their IDs, as the account prunes them.
+    A search's ID is the HMAC-SHA256 of its query in NFC under the account's
     `searchKey`, which each sync answer carries and the file keeps. The store reports searches by
     their query, and `AccountSync` names them under the key; until the first answer brings it,
     nothing about searches is queued, and a removal is held by its query

@@ -1,3 +1,4 @@
+import { listLimits, listName } from '@zenbu/account-rules/lists'
 import {
   applied,
   badItem,
@@ -12,19 +13,13 @@ import {
   listWordEntityId,
   listWordSeparator,
   needsBaseVersion,
-  plainText,
   rejected,
   uuidOf
 } from './entities'
 import { isRejection, type Rejection, rejection } from './profile'
 import type { ListWord, LockedAccount, WordList } from './store'
 
-export const listLimits = {
-  lists: 500,
-  wordsPerList: 5000,
-  position: 100_000,
-  nameLength: 500
-} as const
+export { listLimits }
 
 const badList = rejection('invalid_mutation', "A list's entityId is its UUID.")
 const badListWord = rejection(
@@ -41,6 +36,8 @@ const badFields = rejection(
 )
 
 const listIdOf = uuidOf
+
+const nameOf = (raw: unknown) => (typeof raw === 'string' ? listName(raw) : null)
 
 const listChange = (list: WordList): Change =>
   list.deleted
@@ -70,20 +67,13 @@ const listWordChange = (word: ListWord): Change =>
       }
     : gone('listWord', listWordEntityId(word.listId, word.itemId), word.version)
 
-function listName(raw: unknown): string | null {
-  if (typeof raw !== 'string') return null
-  const name = plainText(raw)
-  const length = [...name].length
-  return length > 0 && length <= listLimits.nameLength ? name : null
-}
-
 function listFields(
   fields: Record<string, unknown>,
   current?: WordList
 ): { name: string; position: number } | Rejection {
   const keys = Object.keys(fields)
   if (keys.length === 0 || keys.some(key => key !== 'name' && key !== 'position')) return badFields
-  const name = 'name' in fields ? listName(fields.name) : (current?.name ?? null)
+  const name = 'name' in fields ? nameOf(fields.name) : (current?.name ?? null)
   const position = 'position' in fields ? fields.position : current?.position
   if (
     name === null ||

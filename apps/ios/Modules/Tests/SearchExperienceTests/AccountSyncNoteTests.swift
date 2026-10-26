@@ -51,13 +51,14 @@ struct AccountSyncNoteTests {
     #expect(await texts(of: phone) == ["朝ごはん"])
   }
 
-  @Test("a note the account refuses for its length stays on the phone untouched, and an edit after keeps the other phone's text too")
+  @Test("a note the account refuses for its length stays on the phone untouched, says so, and an edit after keeps the other phone's text too")
   func refusedNoteStays() async throws {
     let (_, phone, pad) = try await shared("朝")
     let long = String(repeating: "長", count: FakeAccountService.noteLength + 1)
     await phone.notes.save(LearnerWordNote(id: noteID, text: long), for: taberu)
     try await phone.syncNow()
     #expect(phone.sync.state.queue.isEmpty)
+    #expect(phone.sync.state.longNotes == [noteID])
 
     await pad.notes.save(LearnerWordNote(id: noteID, text: "夜"), for: taberu)
     try await pad.syncNow()
@@ -67,6 +68,7 @@ struct AccountSyncNoteTests {
     await phone.notes.save(LearnerWordNote(id: noteID, text: "昼"), for: taberu)
     try await phone.syncNow()
     try await pad.syncNow()
+    #expect(phone.sync.state.longNotes.isEmpty)
     #expect(await texts(of: phone) == ["夜", "昼"])
     #expect(await texts(of: pad) == ["夜", "昼"])
   }
