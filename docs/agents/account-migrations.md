@@ -62,4 +62,6 @@ without its SQL file each fail the check rather than pass it. Quoted text, such 
 Its tests (`tools/checks/src/migrations.test.ts`) run it on what drizzle-kit 0.31 writes when
 `users.language` leaves the schema or becomes `locale`, and when `sync_origin` leaves it or becomes
 `database_origin`, each refused; on every migration on `main` as it was added, each passed; and on
-step 2 above, passed once `main`'s snapshot has left the column out.
+step 2 above, passed once `main`'s snapshot has left the column out. Those refusals start from the
+nine migrations `main` had when the check arrived (`0000` to `0008`), which never change once run,
+so a later drop on `main`, made as above, leaves the tests as they are.

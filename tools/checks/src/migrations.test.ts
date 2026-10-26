@@ -33,8 +33,9 @@ const snapshotFile = (idx: number) => `${String(idx).padStart(4, '0')}_snapshot.
 const journalOf = (repository: string): Entry[] =>
   JSON.parse(readFileSync(join(metaOf(repository), '_journal.json'), 'utf8')).entries
 const realJournal = journalOf(root)
+const arrivedWithTheCheck = realJournal.slice(0, 9)
 const lastSnapshot = (): Snapshot =>
-  JSON.parse(readFileSync(join(metaOf(root), snapshotFile(realJournal.length - 1)), 'utf8'))
+  JSON.parse(readFileSync(join(metaOf(root), snapshotFile(arrivedWithTheCheck.length - 1)), 'utf8'))
 
 function writeJournal(repository: string, entries: Entry[]) {
   writeFileSync(
@@ -60,7 +61,7 @@ function writeMainsMigrations(repository: string, count: number) {
   return commit(repository)
 }
 
-function repositoryWithTheMigrations(count = realJournal.length) {
+function repositoryWithTheMigrations(count = arrivedWithTheCheck.length) {
   const repository = scratchFolder('migrations')
   git(repository, 'init', '--quiet', '--initial-branch=main')
   return { repository, main: writeMainsMigrations(repository, count) }
@@ -114,8 +115,8 @@ describe('what a migration drops or renames', () => {
     expect(changesIn(writtenByDrizzleKit[written])).toEqual(changes)
   })
 
-  test("reads no change from every migration on main, which only add, or from a function's body", () => {
-    for (const entry of realJournal) {
+  test("reads no change from the nine migrations on main when the check arrived, which only add, or from a function's body", () => {
+    for (const entry of arrivedWithTheCheck) {
       const sql = readFileSync(join(root, migrationsFolder, `${entry.tag}.sql`), 'utf8')
       expect(changesIn(sql), entry.tag).toEqual([])
     }
@@ -206,7 +207,7 @@ describe('the migration check', () => {
     const { passed, message } = check(repository, main, head)
     expect(passed).toBe(false)
     expect(message).toContain(
-      `${migrationsFolder}/0009_change.sql ${refusal}, which main's code still reads (${migrationsFolder}/meta/${snapshotFile(realJournal.length - 1)} has it).`
+      `${migrationsFolder}/0009_change.sql ${refusal}, which main's code still reads (${migrationsFolder}/meta/${snapshotFile(arrivedWithTheCheck.length - 1)} has it).`
     )
     expect(message).toContain(migrationRule)
   })
