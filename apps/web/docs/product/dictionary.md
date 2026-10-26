@@ -230,12 +230,11 @@ two lines. Page zoom isn't text size and keeps the clamp.
   `ResultRow.swift` (`lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`);
   `displaySummary` in `DictionaryEntry.swift`; #462.
 - Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
-  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts
-  the clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root
-  font sizes on each side of the threshold);
-  `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
-  `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`;
-  `café`'s words: `sentence-search.json`'s `café`, and
+  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts the
+  clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root font
+  sizes on each side of the threshold); `results.test.ts`, "shows the meaning an English query
+  matched"; headword furigana: `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments";
+  the links: `links.test.ts`; `café`'s words: `sentence-search.json`'s `café`, and
   `packages/dictionary-core/src/search/latin-text.test.ts`.
 
 **Frequency chips.** A row has one chip per default dictionary that ranks or lists the word, as the
@@ -292,8 +291,7 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
   details, credits neither". The base list, with each licence, and none on a search that finds
   nothing: `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "the results page’s Sources".
   The Sources page: `src/app/[locale]/sources/page.test.tsx` and `apps/web/e2e/sources.spec.ts`; the
-  list:
-  `packages/dictionary-core/src/sources/credits.test.ts`.
+  list: `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
@@ -311,24 +309,27 @@ screen lists for the search. The app's screen is a page of its own; the website'
 
 **Which sentences.** An ASCII query matches the English side of every Tatoeba pair the app has
 (232,703) as a phrase of stemmed words, never across the end of a sentence: `eat` finds "eats" and
-"eating". When no sentence has the query's exact words, each word of a match must be the query's
-in another form (plural, third person, past, or `ing`): `startled you` finds "startle you", and
+"eating". When no sentence has the query's exact words, each word of a match must be the query's in
+another form (plural, third person, past, or `ing`): `startled you` finds "startle you", and
 `generously` finds nothing, though "generally" has its stem. `*` after a word matches any word it
 starts (`t*`), and needs a sentence with the exact words; `^` before the first matches only a
-sentence's first word (`^the`). Any other query matches the Japanese side as a substring. A
-deinflected or romaji query (`食べた`, `miru`) lists its primary entry's examples instead, the ones
-its word page lists; other lists stop at the app's 100. The dictionary service runs the app's own
-search, SQL, and FTS4 indexes, so a search lists what the app lists however many sentences it reads.
+sentence's first word (`^the`). Any other query matches the Japanese side as a substring, or, if
+none has it, a query in other Latin letters than romaji's matches the English as typed, then
+unaccented (`café`). A deinflected or romaji query (`食べた`, `miru`) lists its primary entry's
+examples instead, the ones its word page lists; other lists stop at the app's 100. The dictionary
+service runs the app's own search, SQL, and FTS4 indexes, so a search lists what the app lists
+however many sentences it reads.
 
 - Source: App docs, Search; the core's `artifact/example-search.ts` (`retrieveEnglish`) and
   `examples/english-inflection.ts`, which the app asks for the same sentences; ADR 0009 (the app's
   own data and queries in the dictionary service); #428 (the owner's decisions of 2026-10-12).
 - Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 69 queries,
-  including phrases, one in a form no sentence has (`startled you`), a word that only shares a
-  stem (`generously`), apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000
-  candidates), first words (`^tom`, and `^the` with about 70,000), a phrase ending in a prefix
-  (`thank y*`), long numbers that FTS4's stemmer shortens, and refused queries, replayed by the
-  service's example search conformance; the core's `examples/english-inflection.test.ts`.
+  including phrases, one in a form no sentence has (`startled you`), a word that only shares a stem
+  (`generously`), apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000 candidates),
+  first words (`^tom`, and `^the` with about 70,000), a phrase ending in a prefix (`thank y*`), long
+  numbers that FTS4's stemmer shortens, and refused queries, replayed by the service's example
+  search conformance; the core's `examples/english-inflection.test.ts` and
+  `artifact/example-search.test.ts`.
 
 **Order.** English matches with the exact words come first, then those that match only once
 stemmed; within each, by where the match starts, then the English sentence's length in words, the
@@ -398,16 +399,16 @@ is titled with the query, which the results page already shows.
 
 ## Word page
 
-**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page
-has no title row above the header card. Share sends the headword, its reading, and the numbered
-meanings, as the app's does, through the browser's share sheet; without one it copies the link.
-The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
-learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
-on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
-lists and known words on this website comes later, which holds whether or not the site's account
-pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
-on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies the page URL and shows
-"Link copied". There is no back button; the breadcrumbs replace it.
+**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page has
+no title row above the header card. Share sends the headword, its reading, and the numbered
+meanings, as the app's does, through the browser's share sheet; without one it copies the link. The
+menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The learner
+actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer on
+phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving lists
+and known words on this website comes later, which holds whether or not the site's account pages are
+open ([Account pages](account.md)); it promises nothing for notes and photos, which stay on the
+device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies
+the page URL and shows "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs

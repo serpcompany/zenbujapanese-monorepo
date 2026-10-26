@@ -5088,7 +5088,14 @@ ${sense.noteText}` : sense.meaning
   function searchExamples(db, rawQuery) {
     const query = normalizeQuery(rawQuery);
     if (query === "") return "empty";
-    return isASCII(query) ? retrieveEnglish(db, query) : retrieveJapanese(db, query);
+    if (isASCII(query)) return retrieveEnglish(db, query);
+    const japanese = retrieveJapanese(db, query);
+    if (japanese.sentences.length > 0) return japanese;
+    for (const spelling of latinSpellings(query)) {
+      const english = retrieveEnglish(db, spelling);
+      if (typeof english !== "string" && english.sentences.length > 0) return english;
+    }
+    return japanese;
   }
 
   // src/artifact/lookup.ts
