@@ -108,7 +108,7 @@ with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The apps
 add one, is the [client guide](account-clients.md).
 
 `/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as `Authorization:
-Bearer <token>`, checked against its own JWKS by the dictionary service's check
+Bearer <token>`, checked against its own JWKS by the check the two services share
 (`packages/node-service`). They refuse the session token, so the long-lived token only ever goes to
 `/v1/auth`, and they answer every refusal alike: `401 unauthorized`, with `WWW-Authenticate:
 Bearer`. Their bodies, and those sent to `/v1/auth`, are at most 64 KB (`413 too_large`), a photo's
