@@ -245,7 +245,7 @@ kept in the browser's local storage under the id the app syncs it by (`readingAi
 `readingAids.romaji`, `readingAids.wordMeanings`, `readingAids.translations`), so it holds across
 pages, visits, and tabs on the device. Every dictionary page holds every aid in its HTML; a script
 at the top of the page sets an attribute on `<html>` for each kept setting before anything is
-drawn, and the stylesheet shows or hides each aid from it, so the server's HTML and the browser's
+drawn, and again when another tab changes one, and the stylesheet shows or hides each aid from it, so the server's HTML and the browser's
 first render are the same, and nothing moves after the first paint, as a page loads or a link opens
 the next. Where each applies is under each page in [Dictionary](dictionary.md). Hide Furigana on
 Known Words waits for the learner's known words ([Required, not built yet](not-built-yet.md)), and
@@ -256,7 +256,7 @@ Kanji Meanings for Look Up's Grade panel, which the website doesn't have.
 - Check: `src/lib/reading-aids.test.ts` (the defaults and ids, held to the Swift sources, a kept
   value, and the script); `src/hooks/use-reading-aid.interaction.test.tsx`;
   `apps/web/e2e/reading-aids.spec.ts`, "are the app’s by default…", "a setting survives a
-  reload…", "the Japanese pages name the settings in Japanese", "with the defaults…" and "with
+  reload…", "a change in another tab shows in this one, with its menus closed", "the Japanese pages name the settings in Japanese", "with the defaults…" and "with
   every one flipped, no page moves as it loads or as a link opens the next", and "they are already
   applied, so the page never shows the defaults first"; `apps/web/e2e/header.spec.ts`, "signed
   out, the menu offers Log in and Create an account, then the Reading Aids and the theme, by

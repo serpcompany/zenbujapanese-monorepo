@@ -64,14 +64,10 @@ export function showReadingAid(id: ReadingAid, shown: boolean): void {
 
 export function onReadingAidsChange(listener: () => void): () => void {
   listeners.add(listener)
-  const fromAnotherTab = (event: StorageEvent) => {
-    const changed = readingAids.find(aid => event.key === readingAidStorageKey(aid.id))
-    if (changed) applied(changed.id, shownFromStored(changed.id, event.newValue))
-  }
-  window.addEventListener('storage', fromAnotherTab)
+  window.addEventListener('storage', listener)
   return () => {
     listeners.delete(listener)
-    window.removeEventListener('storage', fromAnotherTab)
+    window.removeEventListener('storage', listener)
   }
 }
 
@@ -81,4 +77,4 @@ const scriptAids = readingAids.map(aid => [
   aid.shownByDefault
 ])
 
-export const readingAidsScript = `(function(aids){var root=document.documentElement;for(var i=0;i<aids.length;i++){var stored=null;try{stored=localStorage.getItem(aids[i][0])}catch(e){}var shown=stored==="true"||(stored!=="false"&&aids[i][2]);root.setAttribute(aids[i][1],shown?"on":"off")}})(${JSON.stringify(scriptAids)})`
+export const readingAidsScript = `(function(aids){var root=document.documentElement;function apply(aid,stored){root.setAttribute(aid[1],stored==="true"||(stored!=="false"&&aid[2])?"on":"off")}for(var i=0;i<aids.length;i++){var stored=null;try{stored=localStorage.getItem(aids[i][0])}catch(e){}apply(aids[i],stored)}addEventListener("storage",function(event){for(var i=0;i<aids.length;i++)if(event.key===aids[i][0])apply(aids[i],event.newValue)})})(${JSON.stringify(scriptAids)})`

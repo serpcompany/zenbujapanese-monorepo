@@ -61,8 +61,9 @@ describe('a kept setting', () => {
 
 type Kept = Partial<Record<ReadingAid, string>>
 
-function attributesAfterTheScript(kept: Kept | 'unreadable') {
+function runTheScript(kept: Kept | 'unreadable') {
   const attributes: Record<string, string> = {}
+  const storageListeners: ((event: { key: string; newValue: string | null }) => void)[] = []
   const localStorage = {
     getItem(key: string) {
       if (kept === 'unreadable') throw new Error('The storage is blocked')
@@ -75,8 +76,17 @@ function attributesAfterTheScript(kept: Kept | 'unreadable') {
       attributes[name] = value
     }
   }
-  runInNewContext(readingAidsScript, { localStorage, document: { documentElement } })
-  return attributes
+  runInNewContext(readingAidsScript, {
+    localStorage,
+    document: { documentElement },
+    addEventListener(type: string, listener: (typeof storageListeners)[number]) {
+      if (type === 'storage') storageListeners.push(listener)
+    }
+  })
+  const storageChanged = (key: string, newValue: string | null) => {
+    for (const listener of storageListeners) listener({ key, newValue })
+  }
+  return { attributes, storageChanged }
 }
 
 describe('the script in the head', () => {
@@ -89,7 +99,7 @@ describe('the script in the head', () => {
   ]
 
   test.each(cases)('sets every aid’s attribute as the store reads %j', kept => {
-    expect(attributesAfterTheScript(kept)).toEqual(
+    expect(runTheScript(kept).attributes).toEqual(
       Object.fromEntries(
         readingAids.map(aid => [
           aid.attribute,
@@ -99,5 +109,20 @@ describe('the script in the head', () => {
         ])
       )
     )
+  })
+
+  test('follows a kept setting another tab changes, and nothing else', () => {
+    const { attributes, storageChanged } = runTheScript({})
+    storageChanged(readingAidStorageKey('romaji'), 'true')
+    storageChanged(readingAidStorageKey('furigana'), 'false')
+    storageChanged('theme', 'dark')
+    expect(attributes).toEqual({
+      'data-furigana': 'off',
+      'data-romaji': 'on',
+      'data-word-meanings': 'off',
+      'data-translations': 'on'
+    })
+    storageChanged(readingAidStorageKey('romaji'), null)
+    expect(attributes['data-romaji']).toBe('off')
   })
 })

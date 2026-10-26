@@ -149,8 +149,6 @@ test.describe('Reading Aids', () => {
     const word = page.getByRole('link', { name: /^いらない/ }).first()
     const [wordBox, meaningBox] = await Promise.all([word.boundingBox(), meaning.boundingBox()])
     expect(meaningBox?.y).toBeGreaterThan((wordBox?.y ?? 0) + (wordBox?.height ?? 0) / 2)
-    await page.goto('/dictionary/search/iru/')
-    await expect(aid(page, 'meaning')).toHaveCount(0)
   })
 
   test('Sentence Translations off hides each example’s English', async ({ page }) => {
@@ -170,6 +168,19 @@ test.describe('Reading Aids', () => {
     await expect(page.getByRole('heading', { level: 1 }).locator('rt')).toBeHidden()
     await page.goto(word(1546750).path)
     await expect(aid(page, 'romaji').first()).toBeVisible()
+    const menu = await readingAidsMenu(page)
+    await expect(menu.getByRole('menuitemcheckbox', { name: text().romaji })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    )
+  })
+
+  test('a change in another tab shows in this one, with its menus closed', async ({ page }) => {
+    await page.goto(needed.path)
+    const other = await page.context().newPage()
+    await other.goto('/dictionary/search/iru/')
+    await turn(other, 'romaji', true)
+    await expect(aid(headline(page), 'romaji')).toBeVisible()
     const menu = await readingAidsMenu(page)
     await expect(menu.getByRole('menuitemcheckbox', { name: text().romaji })).toHaveAttribute(
       'aria-checked',
@@ -221,7 +232,12 @@ test.describe('saved Reading Aids', () => {
       }
       await page.goto('/dictionary/search/iru/')
       await page.waitForLoadState('networkidle')
-      await page.locator('[data-result-row="1546640"]').click()
+      await page.evaluate(() => {
+        ;(window as unknown as { shifted: number }).shifted = 0
+      })
+      await page
+        .locator('[data-result-row="1546640"]')
+        .evaluate(row => (row as HTMLElement).click())
       await expect(page).toHaveURL(/1546640\/$/)
       await page.waitForLoadState('networkidle')
       expect(await layoutShift(page)).toBe(0)

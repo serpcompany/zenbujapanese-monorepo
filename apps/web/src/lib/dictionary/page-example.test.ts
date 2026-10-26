@@ -12,7 +12,7 @@ test('a word’s example keeps each linked word’s short meaning and the senten
   expect(example.tokens.flatMap(token => token.meaning ?? [])).toEqual(
     row.example.links.flatMap(link => (link.entSeqs.length === 1 ? (link.meaning ?? []) : []))
   )
-  expect(example.tokens.some(token => token.meaning !== null)).toBe(true)
+  expect(example.tokens.filter(token => token.meaning)).not.toHaveLength(0)
   expect(example.romaji).toBe(row.example.romaji)
 })
 

@@ -23,7 +23,7 @@ function Romaji() {
 
 function romajiSwitch() {
   const holder = document.createElement('section')
-  document.body.append(holder)
+  document.body.appendChild(holder)
   const switchRoot = createRoot(holder)
   act(() => switchRoot.render(<Romaji />))
   unmounts.push(() => {
@@ -65,15 +65,19 @@ describe('a Reading Aid setting', () => {
     expect(documentRoot().getAttribute('data-romaji')).toBe('on')
   })
 
-  test('follows a change made in another tab', () => {
+  test('follows a change made in another tab, whether or not its switch is shown', () => {
     runTheHeadScript()
-    const button = romajiSwitch()
-    act(() => {
-      window.dispatchEvent(
-        new StorageEvent('storage', { key: readingAidStorageKey('romaji'), newValue: 'true' })
-      )
-    })
+    const changedElsewhere = (newValue: string) =>
+      act(() => {
+        window.dispatchEvent(
+          new StorageEvent('storage', { key: readingAidStorageKey('romaji'), newValue })
+        )
+      })
+    changedElsewhere('true')
     expect(documentRoot().getAttribute('data-romaji')).toBe('on')
+    const button = romajiSwitch()
     expect(button.getAttribute('aria-pressed')).toBe('true')
+    changedElsewhere('false')
+    expect(button.getAttribute('aria-pressed')).toBe('false')
   })
 })
