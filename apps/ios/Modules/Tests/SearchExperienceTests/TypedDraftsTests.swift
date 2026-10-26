@@ -111,8 +111,10 @@ struct TypedDraftsTests {
     #expect(edits.withLock { $0 } == 1)
   }
 
-  @Test("a username the rule refuses isn't saved as Zenbu leaves, and is refused once its field is left")
-  func leavesARefusedUsernameToItsField() async {
+  @Test(
+    "a username being typed waits for its field to be left, so a half-typed one is never claimed",
+    arguments: ["kana_fan", "has.period"])
+  func leavesAUsernameToItsField(typed: String) async {
     let drafts = TypedDrafts()
     let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
     let profile = UserProfile(defaults: MemoryDefaults(), photoURL: photoURL)
@@ -120,13 +122,14 @@ struct TypedDraftsTests {
     editing.profile = profile
     editing.showSaved()
     editing.focusMoved(from: nil, to: .username)
-    editing.username.text = "has.period"
+    editing.username.text = typed
 
     await drafts.sceneChanged(to: .inactive)
     #expect(profile.username.isEmpty)
     #expect(!editing.showsUsernameError)
     editing.focusMoved(from: .username, to: nil)
-    #expect(profile.username.isEmpty)
-    #expect(editing.showsUsernameError)
+    let accepted = typed == "kana_fan"
+    #expect(profile.username == (accepted ? typed : ""))
+    #expect(editing.showsUsernameError == !accepted)
   }
 }

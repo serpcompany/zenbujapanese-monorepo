@@ -10,16 +10,29 @@ import os
 struct LinkedRowsTests {
   private struct Recording {
     let asked = OSAllocatedUnfairLock(initialState: [[String]]())
+    var failures = 0
+    var answersShort = false
 
     var analysis: JapaneseTextAnalysisClient {
-      let asked = asked
+      let (asked, failures, answersShort) = (asked, failures, answersShort)
       return JapaneseTextAnalysisClient(
         availability: { .full },
         linkedTexts: { texts, _ in
-          asked.withLock { $0.append(texts) }
-          return texts.map(JapaneseTextToken.unlinked)
+          let calls = asked.withLock {
+            $0.append(texts)
+            return $0.count
+          }
+          guard calls > failures else { return nil }
+          return answersShort ? [] : texts.map(Self.linked)
         },
         countedWords: { _ in [] })
+    }
+
+    static func linked(_ text: String) -> [JapaneseTextToken] {
+      let entry = LinkedWordEntry(
+        id: LanguageReferenceID(rawValue: "e1"), headword: text, reading: text, summary: text,
+        gloss: nil)
+      return [JapaneseTextToken(id: 0, surface: text, entry: entry)]
     }
 
     var calls: [[String]] { asked.withLock { $0 } }
@@ -36,6 +49,7 @@ struct LinkedRowsTests {
     #expect(lines.linksMore)
     await lines.linkTheRest(using: recording.analysis)
     #expect(lines.words.map { $0.map(\.surface) } == Self.captions.map { [$0] })
+    #expect(lines.words.allSatisfy { $0.first?.entry != nil })
     #expect(!lines.linksMore)
     #expect(recording.calls.map(\.count) == [8, 25, 25, 2])
 
@@ -43,6 +57,31 @@ struct LinkedRowsTests {
     #expect(recording.calls.count == 4)
     await lines.begin(["別の動画"], showing: 8, using: recording.analysis)
     #expect(lines.words.map { $0.map(\.surface) } == [["別の動画"]])
+  }
+
+  @Test("captions a link can't answer are listed unlinked, and the list still ends")
+  func captionsListedUnlinkedWhenLinkingFails() async {
+    var recording = Recording()
+    recording.answersShort = true
+    let lines = LinkedLines()
+    await lines.begin(Self.captions, showing: 8, using: recording.analysis)
+    await lines.linkTheRest(using: recording.analysis)
+    #expect(lines.words.map { $0.map(\.surface) } == Self.captions.map { [$0] })
+    #expect(lines.words.allSatisfy { $0.first?.entry == nil })
+    #expect(recording.calls.count == 4)
+  }
+
+  @Test("a word with no entry still opens, and one whose entry can't be read doesn't")
+  func entryLessWordsOpen() async {
+    let unreadable = LinkedEntryReader { _ in [] }
+    var shown: [[DictionaryEntry]] = []
+    await unreadable.open([]) { shown.append($0) }.value
+    #expect(shown == [[]])
+    let word = LinkedWordEntry(
+      id: LanguageReferenceID(rawValue: "e1"), headword: "本", reading: "ほん", summary: "book",
+      gloss: "book")
+    await unreadable.open([word]) { shown.append($0) }.value
+    #expect(shown == [[]])
   }
 
   @Test("Image Search links every line and paragraph of a page in one call before it shows")
@@ -82,6 +121,27 @@ struct LinkedRowsTests {
     #expect(texts.isReady(spoken, spokenIn: .japanese))
     #expect(texts.isReady(heard, spokenIn: .english))
     #expect(recording.calls == [["こんにちは", "ありがとう"]])
+  }
+
+  @Test("Translate shows a sentence it couldn't link as it is, and links it when asked again")
+  func translateAsksAgainAfterAFailure() async {
+    var recording = Recording()
+    recording.failures = 1
+    let texts = LinkedTexts()
+    let spoken = TranslatedSentence(text: "こんにちは")
+    await texts.request([(spoken, .japanese)], using: recording.analysis)?.value
+    guard case .linked(let unlinked) = texts.shown("こんにちは", in: .japanese) else {
+      Issue.record("the sentence wasn't shown after its link failed")
+      return
+    }
+    #expect(unlinked.first?.entry == nil)
+    await texts.request([(spoken, .japanese)], using: recording.analysis)?.value
+    guard case .linked(let linked) = texts.shown("こんにちは", in: .japanese) else {
+      Issue.record("the sentence wasn't shown once linked")
+      return
+    }
+    #expect(linked.first?.entry != nil)
+    #expect(recording.calls.count == 2)
     guard case .plain = texts.shown("Thank you", in: .english) else {
       Issue.record("English was linked")
       return

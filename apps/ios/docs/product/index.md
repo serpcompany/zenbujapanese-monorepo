@@ -245,11 +245,11 @@ Rows use Settings-style tinted icon tiles in grouped cards without section headi
 Check: UI `LayoutUITests` (Account's rows on screen at each size).
 
 The profile card opens Profile, where a learner adds or changes a photo and edits their name,
-username, and email in place. Each field saves as it's left, and as Zenbu leaves the screen. A
-username follows the account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded,
-trimmed, and lowercased, or empty for none. An email is a single valid address or empty. A username
-the rule refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a
-username an earlier version saved stays as it was until it is edited. Without a photo, the card
+username, and email in place. Each field saves as it's left; the name and email also as Zenbu leaves
+the screen. A username follows the account's rule: 3 to 30 of `a–z`, digits, and `_`, once
+NFKC-folded, trimmed, and lowercased, or empty for none. An email is a single valid address or
+empty. A username the rule refuses (a period, a leading `@`, kana) or an invalid email shows why and
+isn't saved; a username an earlier version saved stays until it's edited. Without a photo, the card
 shows the name's initials. Signed in, name, username, and photo sync with the Zenbu account: each
 sign-in keeps the account's name and username, filling its empty ones from the phone ([The profile
 at sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide

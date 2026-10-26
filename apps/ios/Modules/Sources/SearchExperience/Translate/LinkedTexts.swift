@@ -44,8 +44,13 @@ final class LinkedTexts {
     guard !unasked.isEmpty else { return nil }
     asked.formUnion(unasked)
     return Task {
-      let words = await analysis.linkedTexts(unasked, nil)
-      for (text, found) in zip(unasked, words) { linked[text] = found }
+      var words = unasked.map(JapaneseTextToken.unlinked)
+      if let found = await analysis.linkedTexts(unasked, nil), found.count == unasked.count {
+        words = found
+      } else {
+        asked.subtract(unasked)
+      }
+      for (text, shown) in zip(unasked, words) { linked[text] = shown }
     }
   }
 }

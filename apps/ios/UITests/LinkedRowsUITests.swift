@@ -23,7 +23,7 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     open(.player, in: app)
     type(PlayerWatchUITests.link + "\n", into: waitFor(app.searchFields.firstMatch))
     let first = find("watch.cue.0", in: app)
-    let words = firstElement(identifiedBy: "watch.cue.0.", in: app)
+    let words = linkedWord("watch.cue.0.", in: app)
     assertArrivesLinked(first, plainly: labeled(Self.manyLines[0].0, in: app), words: words)
     let height = first.frame.height
     let list = find("watch.captions", in: app)
@@ -42,7 +42,7 @@ final class LinkedRowsUITests: ZenbuUITestCase {
   func testAnImageLineArrivesLinkedAtItsFinalHeight() throws {
     let app = try openFixtureImage(Self.holdLinking)
     let line = find("image-text.line.0", in: app)
-    assertArrivesLinked(line, words: firstElement(identifiedBy: "image-text.line.0.", in: app))
+    assertArrivesLinked(line, words: linkedWord("image-text.line.0.", in: app))
     assertStaysPut(Placed(line, under: find("image-text.lines", in: app)))
   }
 
@@ -52,7 +52,7 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     tap(find("translate.start.text", in: app))
     type("Where can I buy a Suica card?", into: waitFor(find("translate.typed.input", in: app)))
     let direction = find("translate.typed.direction", in: app)
-    let word = firstElement(identifiedBy: "translate.typed.result.", in: app)
+    let word = linkedWord("translate.typed.result.", in: app)
     assertArrivesLinked(
       direction, plainly: labeled("Suicaカードはどこで買えますか？", in: app), words: word)
     assertStaysPut(Placed(word, under: direction))
@@ -69,6 +69,12 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     assertArrivesLinked(word, plainly: plainly, words: word)
     let source = word.identifier.split(separator: ".").prefix(4).joined(separator: ".")
     assertStaysPut(Placed(word, under: firstElement(identifiedBy: source + ".0.", in: app)))
+  }
+
+  private func linkedWord(_ prefix: String, in app: XCUIApplication) -> XCUIElement {
+    app.buttons.matching(
+      NSPredicate(format: "identifier BEGINSWITH %@ AND label CONTAINS ', '", prefix)
+    ).firstMatch
   }
 
   private func assertArrivesLinked(

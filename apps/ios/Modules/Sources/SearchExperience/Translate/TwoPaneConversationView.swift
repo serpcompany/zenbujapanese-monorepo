@@ -66,8 +66,9 @@ private struct ConversationPane: View {
   @State private var shownLines: [PaneLine]?
 
   var body: some View {
-    let ready = lines.allSatisfy { shown($0) != nil }
-    let displayed = ready ? lines : shownLines ?? lines.filter { shown($0) != nil }
+    let current = currentLines
+    let ready = current.allSatisfy { shown($0) != nil }
+    let displayed = ready ? current : shownLines ?? current.filter { shown($0) != nil }
     ScrollViewReader { proxy in
       ScrollView {
         VStack(alignment: .leading, spacing: 10) {
@@ -88,10 +89,22 @@ private struct ConversationPane: View {
     .accessibilityElement(children: .contain)
     .accessibilityLabel(language.name)
     .accessibilityIdentifier("translate.pane.\(language.rawValue)")
-    .onChange(of: ready ? lines : nil, initial: true) { _, linked in
+    .onChange(of: ready ? current : nil, initial: true) { _, linked in
       if let linked { shownLines = linked }
     }
+    .onChange(of: liveText) { previous, _ in
+      if previous == nil { live = nil }
+    }
     .task(id: liveText) { await link(liveText) }
+  }
+
+  private var currentLines: [PaneLine] {
+    lines.compactMap { line in
+      guard line.style == .live, language == .japanese else { return line }
+      return live.map {
+        PaneLine(id: line.id, text: $0.text, style: .live, isSpeaking: line.isSpeaking)
+      }
+    }
   }
 
   private var liveText: String? {
@@ -100,7 +113,7 @@ private struct ConversationPane: View {
   }
 
   private func link(_ text: String?) async {
-    guard let text, let tokens = await words.analysisClient.linkedTexts([text], nil).first,
+    guard let text, let tokens = await words.analysisClient.linkedTexts([text], nil)?.first,
       !Task.isCancelled
     else { return }
     live = LiveWords(text: text, tokens: tokens)

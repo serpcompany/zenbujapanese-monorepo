@@ -36,7 +36,7 @@ struct LinkedWordResolutionTests {
   private func linked(
     _ text: String, by client: JapaneseTextAnalysisClient, onThePageOf page: DictionaryEntry? = nil
   ) async -> [JapaneseTextToken] {
-    await client.linkedTexts([text], page?.id).first ?? []
+    await client.linkedTexts([text], page?.id)?.first ?? []
   }
 
   @Test("a joined verb links to its dictionary form, not a same-spelled headword")
@@ -100,7 +100,7 @@ struct LinkedWordResolutionTests {
   @Test("a screen's lines link in one call, each answered in the order asked")
   func linksLinesTogether() async {
     let lines = await JapaneseTextAnalysisClient.live().linkedTexts(["猫", "", "魚を食べた"], nil)
-    #expect(lines.map { $0.map(\.surface) } == [["猫"], [], ["魚", "を", "食べた"]])
+    #expect(lines?.map { $0.map(\.surface) } == [["猫"], [], ["魚", "を", "食べた"]])
   }
 
   @Test("the core's tokenizer splits a sentence into its words and links each")

@@ -9,10 +9,13 @@ struct LinkedEntryReader: Sendable {
   }
 
   @MainActor
-  func open(_ words: [LinkedWordEntry], _ show: @escaping @MainActor ([DictionaryEntry]) -> Void) {
+  @discardableResult
+  func open(
+    _ words: [LinkedWordEntry], _ show: @escaping @MainActor ([DictionaryEntry]) -> Void
+  ) -> Task<Void, Never> {
     Task { @MainActor in
       let read = await entries(words.map(\.id))
-      guard !read.isEmpty else { return }
+      guard !read.isEmpty || words.isEmpty else { return }
       show(read)
     }
   }

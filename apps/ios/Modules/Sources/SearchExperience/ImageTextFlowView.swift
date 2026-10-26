@@ -437,6 +437,7 @@ struct ImageTextFlowView: View {
     model.selectedRegion = region
     activeLineID = region.lineID
     linkedEntries.open(region.candidateEntries) { read in
+      guard model.selectedRegion?.id == region.id else { return }
       presentedWord = region.sheetRequest(asset: page.asset, read: read)
     }
   }

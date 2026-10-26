@@ -326,7 +326,7 @@ final class ImageTextFlowModel {
   ) async -> ImageTextPage {
     let texts = ImageTextPage(asset: asset, observations: observations).shownTexts
     let words = Dictionary(
-      zip(texts, await textAnalysisClient.linkedTexts(texts, nil)),
+      zip(texts, await textAnalysisClient.linked(texts)),
       uniquingKeysWith: { first, _ in first })
     var regions: [ImageTextRegion] = []
     for observation in observations {

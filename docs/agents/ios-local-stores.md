@@ -49,9 +49,10 @@ focus or is left unchanged, and keeps a rejected email as typed until it's focus
 
 A note or profile field being typed is saved as it stands, and stays open, when the scene goes
 inactive or to the background (`TypedDrafts`, which `AppLifecycle` tells of each phase): a note
-through `SavedItemNotes.keepDraft`, a field through `ProfileEditing.keepDraft`, each once per
-change, and only what the rules accept, so an emptied note or a refused username waits for the
-field to be left. That covers an iPhone app killed from the app switcher, since opening the
+through `SavedItemNotes.keepDraft`, the name or email through `ProfileEditing.keepDraft`, each
+once per change, and only what the rules accept, so an emptied note or a refused email waits for
+the field to be left. A username waits too: it's checked and claimed on the account as it's saved,
+so a half-typed one could be taken, or held, by mistake. That covers an iPhone app killed from the app switcher, since opening the
 switcher makes the scene inactive before it can be swiped away. Saving as the learner typed was
 the other way: each save is a note's `write` or a profile edit, which sync sends a second after
 it's made (`AccountSyncScheduler`), so a note typed with pauses would have reached the account as

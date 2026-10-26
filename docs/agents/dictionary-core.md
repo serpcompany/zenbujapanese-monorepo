@@ -257,7 +257,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `lookUp`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a look-up, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
 | `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTexts`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
-| `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
+| `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseWords`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`), `SchoolKanjiClient.swift` (`GradeInputView`) | `radicalPanel`, `schoolKanjiPanel` | The Radicals and Grade panels |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
 | `ImageTextFlowModel.swift`, `ImageTextRecognitionClient.swift`, `Translate/TypedTranslationCard.swift` | `japaneseTextRuns`, `writtenLanguage` | Image Search's Japanese; typed text's language |

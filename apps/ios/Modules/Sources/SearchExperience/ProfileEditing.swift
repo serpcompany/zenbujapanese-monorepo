@@ -94,11 +94,7 @@ final class ProfileEditing: TypedDraft {
       profile.edit(ProfileFields(name: accepted))
       name.keptAsTyped()
     case .username:
-      guard let typed = username.typedSinceFocus,
-        case .save(let accepted) = UserProfile.usernameEdit(typed, over: profile.username)
-      else { return }
-      profile.edit(ProfileFields(username: accepted))
-      username.keptAsTyped()
+      return
     case .email:
       guard let typed = email.typedSinceFocus, let accepted = acceptedEmail(typed) else { return }
       profile.email = accepted

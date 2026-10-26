@@ -20,7 +20,7 @@ final class HighlightedWords {
 
   func link(_ highlight: Highlight?, using analysis: JapaneseTextAnalysisClient) async {
     guard let highlight, shown?.highlight != highlight,
-      let words = await analysis.linkedTexts([highlight.text], highlight.entry).first,
+      let words = await analysis.linkedTexts([highlight.text], highlight.entry)?.first,
       !Task.isCancelled
     else { return }
     shown = (highlight, words)

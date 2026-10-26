@@ -98,7 +98,7 @@ struct JapaneseTextAnalysisClient: Sendable {
   var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
   var linkedTexts:
     @Sendable (_ texts: [String], _ highlightedEntry: LanguageReferenceID?) async
-      -> [[JapaneseTextToken]]
+      -> [[JapaneseTextToken]]?
   var countedWords: @Sendable (_ lines: [String]) async -> [LanguageReferenceID]
 
   static func live(text: DictionaryTextData = .shared) -> JapaneseTextAnalysisClient {
@@ -108,7 +108,7 @@ struct JapaneseTextAnalysisClient: Sendable {
         guard !texts.isEmpty else { return [] }
         let request = TextsToLink(texts: texts, highlightedEntry: highlightedEntry?.rawValue)
         guard let linked = try? await text.linkedTexts(request), linked.count == texts.count
-        else { return texts.map(JapaneseTextToken.unlinked) }
+        else { return nil }
         return linked.map(JapaneseTextToken.words)
       },
       countedWords: { lines in
@@ -118,6 +118,13 @@ struct JapaneseTextAnalysisClient: Sendable {
   }
 
   func linkedTokens(_ text: String) async -> [JapaneseTextToken] {
-    await linkedTexts([text], nil).first ?? []
+    await linked([text])[0]
+  }
+
+  func linked(_ texts: [String]) async -> [[JapaneseTextToken]] {
+    guard let linked = await linkedTexts(texts, nil), linked.count == texts.count else {
+      return texts.map(JapaneseTextToken.unlinked)
+    }
+    return linked
   }
 }

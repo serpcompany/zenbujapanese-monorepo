@@ -22,8 +22,8 @@ devices, by the rules in [Zenbu account and sync](account-sync.md).
 Tapping a note, or **Add Note** under a word's or kanji's notes, opens its field with the keyboard
 ready to type, on the Mac too, where a click on a note used to leave the keyboard with the page.
 A note is saved when the learner taps **Done**, opens another, or leaves the page, and also, as far
-as it's typed, whenever Zenbu leaves the screen (the Home Screen, the app switcher, another app on
-the Mac) or the Mac app quits, with its field still open to go on. Text cleared from a note is kept
+as it's typed, whenever Zenbu leaves the screen (the Home Screen or the app switcher on iPhone and
+iPad) or the Mac app quits, with its field still open to go on. Text cleared from a note is kept
 until editing ends, so leaving mid-change never deletes a note. So a note survives Zenbu being
 swiped away or quit mid-sentence, and syncs once each time it's saved, not as it's typed.
 

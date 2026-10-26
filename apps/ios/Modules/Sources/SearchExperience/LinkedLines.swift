@@ -30,7 +30,7 @@ final class LinkedLines {
     let (texts, from) = (texts, words.count)
     guard from < texts.count else { return }
     let page = Array(texts[from..<min(texts.count, from + max(1, size))])
-    let linked = await analysis.linkedTexts(page, nil)
+    let linked = await analysis.linked(page)
     guard !Task.isCancelled, texts == self.texts, words.count == from else { return }
     words += linked
   }
