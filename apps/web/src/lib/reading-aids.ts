@@ -77,4 +77,10 @@ const scriptAids = readingAids.map(aid => [
   aid.shownByDefault
 ])
 
-export const readingAidsScript = `(function(aids){var root=document.documentElement;function apply(aid,stored){root.setAttribute(aid[1],stored==="true"||(stored!=="false"&&aid[2])?"on":"off")}for(var i=0;i<aids.length;i++){var stored=null;try{stored=localStorage.getItem(aids[i][0])}catch(e){}apply(aids[i],stored)}addEventListener("storage",function(event){for(var i=0;i<aids.length;i++)if(event.key===aids[i][0])apply(aids[i],event.newValue)})})(${JSON.stringify(scriptAids)})`
+const codeSafeJson = (value: unknown) =>
+  JSON.stringify(value).replace(
+    /[<>/\u{2028}\u{2029}]/gu,
+    character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`
+  )
+
+export const readingAidsScript = `(function(aids){var root=document.documentElement;function apply(aid,stored){root.setAttribute(aid[1],stored==="true"||(stored!=="false"&&aid[2])?"on":"off")}for(var i=0;i<aids.length;i++){var stored=null;try{stored=localStorage.getItem(aids[i][0])}catch(e){}apply(aids[i],stored)}addEventListener("storage",function(event){for(var i=0;i<aids.length;i++)if(event.key===aids[i][0])apply(aids[i],event.newValue)})})(${codeSafeJson(scriptAids)})`
