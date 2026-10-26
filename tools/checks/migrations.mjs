@@ -52,13 +52,20 @@ function actionsOf(text) {
   const actions = []
   let depth = 0
   let start = 0
-  for (const [at, character] of [...text].entries()) {
-    if (character === '(') depth += 1
-    if (character === ')') depth -= 1
-    if (character === ',' && depth === 0) {
+  let at = 0
+  while (at < text.length) {
+    quoted.lastIndex = at
+    if (quoted.test(text)) {
+      at = quoted.lastIndex
+      continue
+    }
+    if (text[at] === '(') depth += 1
+    if (text[at] === ')') depth -= 1
+    if (text[at] === ',' && depth === 0) {
       actions.push(text.slice(start, at).trim())
       start = at + 1
     }
+    at += 1
   }
   return [...actions, text.slice(start).trim()]
 }
@@ -183,18 +190,28 @@ export function check(repository, base, head = 'HEAD') {
     }
   const tables = tablesIn(JSON.parse(kept))
   const known = new Set(onMain.map(entry => entry.tag))
-  const added = journalOf(repository, head).filter(entry => !known.has(entry.tag))
-  const refused = added.flatMap(entry => {
-    const file = `${migrationsFolder}/${entry.tag}.sql`
-    return refusalsOf(changesIn(read(repository, head, file) ?? ''), tables).map(
+  const added = journalOf(repository, head)
+    .filter(entry => !known.has(entry.tag))
+    .map(entry => {
+      const file = `${migrationsFolder}/${entry.tag}.sql`
+      return { tag: entry.tag, file, sql: read(repository, head, file) }
+    })
+  const lost = added.filter(migration => migration.sql === undefined).map(({ file }) => file)
+  if (lost.length)
+    return {
+      passed: false,
+      message: `The journal names ${lost.join(', ')}, which ${head} doesn't have, so nothing says what ${lost.length === 1 ? 'it changes' : 'they change'}. Commit the SQL drizzle-kit wrote, or take the entry out of meta/_journal.json.`
+    }
+  const refused = added.flatMap(({ file, sql }) =>
+    refusalsOf(changesIn(sql), tables).map(
       refusal => `${file} ${refusal}, which main's code still reads (${snapshot} has it).`
     )
-  })
+  )
   if (refused.length) return { passed: false, message: `${refused.join('\n')}\n\n${migrationRule}` }
   return {
     passed: true,
     message: added.length
-      ? `Checked ${added.map(entry => entry.tag).join(', ')}: none drops or renames a table or column main's code reads.`
+      ? `Checked ${added.map(migration => migration.tag).join(', ')}: none drops or renames a table or column main's code reads.`
       : `This change adds no migration to ${migrationsFolder}.`
   }
 }

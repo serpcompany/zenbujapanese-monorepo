@@ -151,9 +151,29 @@ describe('what a migration drops or renames', () => {
       `ALTER TABLE "users" ADD COLUMN "x" text DEFAULT 'a--b;'; ALTER TABLE "users" DROP COLUMN "image";`,
       'public.users',
       'image'
+    ],
+    [
+      'after an action whose default is a closing bracket',
+      `ALTER TABLE "users" ADD COLUMN "x" text DEFAULT ')', DROP COLUMN "language";`,
+      'public.users',
+      'language'
+    ],
+    [
+      'after an action whose quoted name holds an opening bracket',
+      `ALTER TABLE "users" ADD COLUMN "x(" text, DROP COLUMN "language";`,
+      'public.users',
+      'language'
     ]
   ])('reads a dropped column written %s', (_, sql, table, column) => {
     expect(changesIn(sql)).toContainEqual({ kind: 'drops', table, column })
+  })
+
+  test("splits an ALTER TABLE's actions only at commas outside quotes", () => {
+    expect(
+      changesIn(
+        `ALTER TABLE "users" ADD COLUMN "x" text DEFAULT 'a, DROP COLUMN "image"', DROP COLUMN "language";`
+      )
+    ).toEqual([{ kind: 'drops', table: 'public.users', column: 'language' }])
   })
 
   test.each([
@@ -220,6 +240,16 @@ describe('the migration check', () => {
       withoutColumn('users', 'language')
     )
     expect(check(repository, main, head).passed).toBe(true)
+  })
+
+  test('refuses a migration the journal names whose SQL file is missing, naming the file', () => {
+    const { repository, main } = repositoryWithTheMigrations()
+    addMigration(repository, '0009_lost', 'ALTER TABLE "users" ADD COLUMN "locale" text;')
+    rmSync(join(repository, migrationsFolder, '0009_lost.sql'))
+    const head = commit(repository)
+    const { passed, message } = check(repository, main, head)
+    expect(passed).toBe(false)
+    expect(message).toContain(`${migrationsFolder}/0009_lost.sql`)
   })
 
   test('says when a change adds no migration, and refuses a base it cannot read', () => {

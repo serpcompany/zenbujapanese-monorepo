@@ -55,8 +55,9 @@ SQL names only the schema's tables (`src/db/restores.ts`, `src/db/billing.ts`).
 
 It also reads statements in a block that runs at once (`DO $$ … $$`) and in a function's body, and
 ignores comments, constraints, indexes, and a column's `DROP NOT NULL` or `DROP DEFAULT`. A base it
-can't read, or a base whose journal names a snapshot it lacks, fails the check rather than passes
-it.
+can't read, a base whose journal names a snapshot it lacks, and a migration the journal names
+without its SQL file each fail the check rather than pass it. Quoted text, such as a default of
+`')'` or `','`, never splits an `ALTER TABLE`'s actions.
 
 Its tests (`tools/checks/src/migrations.test.ts`) run it on what drizzle-kit 0.31 writes when
 `users.language` leaves the schema or becomes `locale`, and when `sync_origin` leaves it or becomes
