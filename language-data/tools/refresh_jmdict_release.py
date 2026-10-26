@@ -39,6 +39,7 @@ RECORDED_ON_A_MAC = {
 RECORDED_WITHOUT_A_MAC = {
     "tokenizer": "`pnpm --filter zenbujapanese-dictionary-api tokenizer-suite`, from kuromoji.js",
     "romaji": "by hand",
+    "sudachi-pack": "by hand",
 }
 
 

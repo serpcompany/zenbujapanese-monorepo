@@ -2782,6 +2782,15 @@
     return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
   }
 
+  // src/search/latin-text.ts
+  var latinLetter3 = /\p{Script=Latin}/u;
+  var combiningMark = /\p{Mn}/gu;
+  function latinSpellings(text) {
+    if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
+    const unaccented = text.normalize("NFD").replace(combiningMark, "").normalize("NFC");
+    return unaccented === text ? [text] : [text, unaccented];
+  }
+
   // src/search/search.ts
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
@@ -2893,7 +2902,7 @@
     async searchOnce(query) {
       if (query === "") return noResults();
       const romaji2 = romajiQuery(query);
-      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await rankedJapanese(this.db, query);
+      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await this.rankedJapaneseOrLatin(query);
       if (ranked.length === 0) return noResults();
       let leadingLexicalEntryCount = 0;
       while (leadingLexicalEntryCount < ranked.length && sameLexicalGroup(ranked[leadingLexicalEntryCount].rank, ranked[0].rank)) {
@@ -2905,6 +2914,15 @@
         leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, searchResultLimit),
         hasExactOrPrefixMatch: ranked.some((entry) => entry.hasExactOrPrefixMatch)
       };
+    }
+    async rankedJapaneseOrLatin(query) {
+      const spellings = latinSpellings(query);
+      if (spellings.length === 0) return rankedJapanese(this.db, query);
+      for (const spelling of spellings) {
+        const english = await rankedEnglish(this.db, spelling);
+        if (english.length > 0) return english;
+      }
+      return [];
     }
     async hasResults(query) {
       if (query === "") return false;
@@ -5072,7 +5090,14 @@ ${sense.noteText}` : sense.meaning
   function searchExamples(db, rawQuery) {
     const query = normalizeQuery(rawQuery);
     if (query === "") return "empty";
-    return isASCII(query) ? retrieveEnglish(db, query) : retrieveJapanese(db, query);
+    if (isASCII(query)) return retrieveEnglish(db, query);
+    const japanese = retrieveJapanese(db, query);
+    if (japanese.sentences.length > 0) return japanese;
+    for (const spelling of latinSpellings(query)) {
+      const english = retrieveEnglish(db, spelling);
+      if (typeof english !== "string" && english.sentences.length > 0) return english;
+    }
+    return japanese;
   }
 
   // src/artifact/lookup.ts

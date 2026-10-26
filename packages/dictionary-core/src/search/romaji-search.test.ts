@@ -36,7 +36,9 @@ const words: Word[] = [
   { headword: '動物相', reading: 'どうぶつそう', gloss: 'fauna' },
   { headword: 'ファウナ', reading: 'ファウナ', gloss: 'fauna' },
   { headword: '心', reading: 'こころ', gloss: 'mind' },
-  { headword: 'こゝろ', reading: 'こゝろ', gloss: 'heart, in old writing', common: true }
+  { headword: 'こゝろ', reading: 'こゝろ', gloss: 'heart, in old writing', common: true },
+  { headword: 'カフェ', reading: 'カフェ', gloss: 'café' },
+  { headword: 'エリート', reading: 'エリート', gloss: 'elite' }
 ]
 
 const ichi1 = 2
@@ -154,7 +156,9 @@ describe('a romaji search', () => {
     expect((await search.search('tsudzuku')).readingRefinement).toBe('つづく')
   })
 
-  test('a word written with letters other than romaji’s is searched as Japanese, as before', async () => {
-    expect(await found('café')).toEqual([])
+  test('a word in other Latin letters than romaji’s is searched in English when Japanese finds nothing, as typed, then without its accents', async () => {
+    expect(await found('café')).toEqual(['カフェ'])
+    expect(await found('Café')).toEqual(['カフェ'])
+    expect(await found('élite')).toEqual(['エリート'])
   })
 })

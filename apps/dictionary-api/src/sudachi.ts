@@ -3,27 +3,18 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
 import type { Morpheme, MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
+import { bundledSudachiPack, type SudachiPack } from '../scripts/sudachi-pack.mjs'
 
 const require = createRequire(import.meta.url)
 
-export interface SudachiContract {
+export interface SudachiContract extends SudachiPack {
   packId: string
-  engineVersion: string
-  runtimeResourceCommit: string
-  downloadURL: string
-  downloadSHA256: string
-  archiveEntry: string
-  installedSHA256: string
-  characterDefinitionSHA256: string
-  unknownDefinitionSHA256: string
 }
 
 export function sudachiContract(resources: string): SudachiContract {
-  const catalog = JSON.parse(
-    readFileSync(join(resources, 'LanguageTechnologyPackCatalog.json'), 'utf8')
-  ) as { packs: (SudachiContract & { packID: string; engine: string })[] }
-  const pack = catalog.packs.find(candidate => candidate.engine === 'sudachi.rs')
-  if (!pack) throw new Error('The app catalogs no Sudachi pack')
+  const pack = bundledSudachiPack(
+    JSON.parse(readFileSync(join(resources, 'LanguageTechnologyPackCatalog.json'), 'utf8'))
+  )
   return { ...pack, packId: pack.packID }
 }
 
