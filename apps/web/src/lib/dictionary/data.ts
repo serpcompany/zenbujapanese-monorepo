@@ -36,6 +36,7 @@ import {
   type Links,
   type PageExample,
   pageExample,
+  sentencesScreen,
   serviceLinks,
   storedWordPath
 } from './page-example'
@@ -313,7 +314,7 @@ export function searchExamplesData(found: Answer<SearchExamplesResponse>): Searc
   const links = serviceLinks(found.data.slugs, [])
   return {
     query: found.data.query,
-    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
+    examples: found.data.rows.map(row => pageExample(wordExample(row), links, sentencesScreen)),
     listed: found.data.listed,
     truncated: found.data.truncated,
     examplesPath: moreSearchExamplesPath(found.data.query, found.build)

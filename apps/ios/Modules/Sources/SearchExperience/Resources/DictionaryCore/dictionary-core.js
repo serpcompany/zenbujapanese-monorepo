@@ -3706,9 +3706,11 @@
           text: token.text,
           ruby: entry !== null && reading ? rubySegments(token.text, reading) : [{ text: token.text }],
           link: link ? entry !== null ? { entSeq: entry } : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text } : null,
+          ...link?.meaning ? { meaning: link.meaning } : {},
           isPageWord: highlights.has(index)
         };
       }),
+      ...example2.romaji === void 0 ? {} : { romaji: example2.romaji },
       translation: sentence.english,
       japanese: {
         id: sentence.japaneseTatoebaId,

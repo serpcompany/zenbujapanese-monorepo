@@ -331,7 +331,8 @@ export class Dictionary {
         position: example.position,
         sentenceId: example.sentenceId,
         highlights: example.highlights,
-        links: example.links
+        links: example.links,
+        romaji: example.romaji
       }
     }))
     return {

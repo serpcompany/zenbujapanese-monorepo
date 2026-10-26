@@ -16,7 +16,7 @@ desktop and a phone width, and **Claims spec** is `e2e/claims.spec.ts`. The cata
 `src/lib/products/zenbu-japanese-for-iphone.ts`. The catalog is the site's one list of products:
 the header's Products and Tools menus and the footer take each product's name and page from it,
 so a product without its page yet is a `#` placeholder there while the catalog shows it as Coming
-soon ([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Placeholder links;
+soon ([Site-wide](site-wide.md), Menus and Placeholder links;
 `src/lib/products/catalog.test.ts`, "the … menus and footer name and link each product as the
 catalog does").
 

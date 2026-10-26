@@ -794,6 +794,13 @@
       "dark": "ダーク",
       "system": "システム"
     },
+    "readingAids": {
+      "label": "読みの補助",
+      "furigana": "ふりがなを表示",
+      "romaji": "ローマ字を表示",
+      "wordMeanings": "単語の意味を表示",
+      "translations": "例文の英訳を表示"
+    },
     "account": {
       "account": "アカウント",
       "signedIn": "アカウント（ログイン中）",
@@ -864,7 +871,8 @@
     "stale": "ページを開いた後に例文が更新されました。",
     "reload": "再読み込みして続きを見る",
     "retry": "もう一度試す",
-    "sentencesTitle": "例文"
+    "sentencesTitle": "例文",
+    "romajiUnavailable": "この文はローマ字で表示できません"
   },
   "footer": {
     "products": "製品",

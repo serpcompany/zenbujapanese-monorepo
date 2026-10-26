@@ -16,6 +16,7 @@ export interface ExampleToken {
   text: string
   ruby: RubySegment[]
   link: ExampleLink | null
+  meaning?: string
   isPageWord: boolean
 }
 
@@ -30,12 +31,13 @@ export interface Example {
   pairId: string
   text: string
   tokens: ExampleToken[]
+  romaji?: string | null
   translation: string
   japanese: TatoebaSentence
   english: TatoebaSentence
 }
 
-type ExampleRow = Pick<WordExampleRow, 'position' | 'highlights' | 'links'> & {
+type ExampleRow = Pick<WordExampleRow, 'position' | 'highlights' | 'links' | 'romaji'> & {
   tokens?: ExampleSentenceTokenRow[] | null
 }
 
@@ -74,9 +76,11 @@ function example({
             ? { entSeq: entry }
             : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text }
           : null,
+        ...(link?.meaning ? { meaning: link.meaning } : {}),
         isPageWord: highlights.has(index)
       }
     }),
+    ...(example.romaji === undefined ? {} : { romaji: example.romaji }),
     translation: sentence.english,
     japanese: {
       id: sentence.japaneseTatoebaId,

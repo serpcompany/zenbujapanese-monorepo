@@ -10,7 +10,8 @@ const recordedShapes: Readonly<Record<number, string>> = {
   3: '522e94ded6e3cb07',
   4: 'acfc34f62f117cab',
   5: '1e133385cedb33be',
-  6: 'e5e51fb836b6c804'
+  6: 'e5e51fb836b6c804',
+  7: 'c9c541ff887c1871'
 }
 
 const plainFlags =

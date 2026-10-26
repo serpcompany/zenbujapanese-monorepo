@@ -386,8 +386,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   SQL, in the same order, so a kanji written in thousands of words (日) hands `kanjiWords` a few
   dozen rows; change the two orders together, which the kanji-detail suite checks. Stroke data
   that doesn't decode shows no stroke order rather than failing the page, since clients read
-  `KanjiStrokeData.sqlite3` as the app ships it. A character with a variation selector has no
-  kanji details, as in the app.
+  `KanjiStrokeData.sqlite3` as the app ships it. With a variation selector, a kanji has no details.
 - **Kanji elements** (`kanji-element.ts`). An element's page stands alone the most frequent
   kanji among the element and its alternatives (a ranked kanji before an unranked one, then by
   code point), and lists the kanji containing it without that one. A kanji shows its first three
@@ -421,8 +420,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything else matches
   pairs whose Japanese contains it, or else Latin text's English. FTS4's `offsets()` reports UTF-8
   byte offsets, which `example-search.ts` maps to UTF-16, then grapheme positions. The results'
-  primary entry is highlighted for every search, and its own examples are listed for a romaji or
-  deinflected query.
+  primary entry is highlighted for every search; a romaji or deinflected query lists its examples.
 - **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
   (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
   as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
@@ -503,11 +501,13 @@ ready and a page's first request prepares nothing:
 - An `ExampleLinkRow` with one entry in `entSeqs` is the word-detail suite's `entry`; two or more
   are its `candidates`, a word the app can't resolve to one entry (such as だ). A token with no
   dictionary word has no link. A link's `reading` replaces the token's: the entry's own reading,
-  which the app shows over a word written as one of the entry's forms.
+  which the app shows over a word written as one of the entry's forms. A one-entry link's `meaning`
+  is its short meaning (`examples/word-meaning.ts`).
 - A `WordExampleRow`'s `highlights` are the page word's tokens (the suite's `pageWord`); its
   `tokens` are set only where the page splits the sentence differently, when a joined word the
   page's entry is written as stays whole. A `FormExampleRow` is keyed by the form's spelling alone
-  and has no page entry, so its words link as no word page sees them.
+  and has no page entry, so its words link as no word page sees them. Each row's `romaji` is its
+  words' `sentenceRomaji`.
 - An `ExampleCountRow`'s `listed` is at most 100 plus a word's checked examples, its `count` exact
   up to 50 (51 means more), and `truncated` says more matched; a page shows 25 at a time.
 - Each sentence of a Tatoeba pair has its own ID, contributor (null if none is named), and license.
