@@ -204,10 +204,11 @@ export interface RenderedExample {
 }
 
 const exampleToken =
-  /(<a([^>]*)>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/a>)?/g
+  /(<a([^>]*)>)?(?:<span data-aid-word="">)?(?:<span>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/span>){0,2}(?:<\/a>)?/g
 
 function renderedExample(pairId: string, item: string): RenderedExample {
-  const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
+  const sentence =
+    withDefaultReadingAids(item).match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
   const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
     surface: htmlText(inner),
     href: link ? attribute(linkTag, 'href') : null,

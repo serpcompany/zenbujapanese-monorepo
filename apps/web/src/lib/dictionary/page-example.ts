@@ -39,9 +39,9 @@ export function pageExample(
 ): PageExample {
   return {
     ...example,
-    tokens: example.tokens.map(token => ({
+    tokens: example.tokens.map(({ meaning, ...token }) => ({
       ...token,
-      meaning: wordMeanings ? token.meaning : null,
+      ...(wordMeanings && meaning ? { meaning } : {}),
       path: !token.link
         ? null
         : 'entSeq' in token.link

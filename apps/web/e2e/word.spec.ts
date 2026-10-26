@@ -89,7 +89,9 @@ test.describe('word page', () => {
     const example = page.locator('[data-meaning-example="1"]')
     const meaning = page.getByRole('listitem').filter({ has: example }).locator('p').first()
     await expect(meaning).toHaveText(/^to be needed, to be necessary/)
-    await expect(example.locator('p[lang="ja"]')).toHaveText('今いまのところお金かねはいらない。')
+    await expect(example.locator('p[lang="ja"]')).toHaveText('今いまのところお金かねはいらない。', {
+      useInnerText: true
+    })
     await expect(example).toContainText("I don't need money at present.")
     await expect(example.locator('[data-page-word]')).toHaveText('いらない')
     await expect(example.getByRole('link').first()).toHaveAttribute('href', /\/dictionary\//)

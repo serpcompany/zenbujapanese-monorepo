@@ -101,7 +101,7 @@ export function AccountMenu({
         <AccountMark initials={initials} />
         <span className="sr-only">{signedIn ? text.signedIn : text.account}</span>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-64">
         {signedIn ? (
           <MenuLink
             to={{ href: accountPages.account.path }}
@@ -121,9 +121,9 @@ export function AccountMenu({
           </>
         )}
         <DropdownMenuSeparator />
-        <ThemeMenuRow text={theme} />
-        <DropdownMenuSeparator />
         <ReadingAidsMenuGroup text={readingAids} />
+        <DropdownMenuSeparator />
+        <ThemeMenuRow text={theme} />
         {signedIn ? (
           <>
             <DropdownMenuSeparator />

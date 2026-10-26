@@ -148,12 +148,12 @@ describe('wordDetail', () => {
     const example = wordDetail(rows(1546640)).senses[0].example
     expect(example?.tokens.map(token => [token.text, token.meaning])).toEqual([
       ['今', 'now'],
-      ['の', null],
-      ['ところ', null],
+      ['の', undefined],
+      ['ところ', undefined],
       ['お金', 'money'],
-      ['は', null],
+      ['は', undefined],
       ['いらない', 'be needed'],
-      ['。', null]
+      ['。', undefined]
     ])
     expect(example?.romaji).toBe('ima no tokoro okane ha iranai。')
   })

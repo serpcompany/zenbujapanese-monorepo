@@ -16,7 +16,7 @@ export interface ExampleToken {
   text: string
   ruby: RubySegment[]
   link: ExampleLink | null
-  meaning: string | null
+  meaning?: string
   isPageWord: boolean
 }
 
@@ -76,7 +76,7 @@ function example({
             ? { entSeq: entry }
             : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text }
           : null,
-        meaning: link?.meaning ?? null,
+        ...(link?.meaning ? { meaning: link.meaning } : {}),
         isPageWord: highlights.has(index)
       }
     }),

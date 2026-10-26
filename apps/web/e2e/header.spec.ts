@@ -5,7 +5,7 @@ import {
   signedInService,
   standInForTheAccountService
 } from './account-stand-in'
-import { accountButton, accountMenu, expect, needed, onPhone, test } from './test'
+import { accountButton, accountMenu, expect, needed, onPhone, readingAidLabels, test } from './test'
 
 const getTheApp = (page: Page) =>
   page.getByRole('banner').getByRole('button', { name: 'Get the app' })
@@ -45,7 +45,7 @@ test.describe('the account menu from 1024 pixels', () => {
     expect(await headerActionBoxes(page)).toEqual(signedOut)
   })
 
-  test('signed out, the menu offers Log in and Create an account, then the theme, by keyboard', async ({
+  test('signed out, the menu offers Log in and Create an account, then the Reading Aids and the theme, by keyboard', async ({
     page
   }) => {
     await page.goto('/about/')
@@ -53,6 +53,7 @@ test.describe('the account menu from 1024 pixels', () => {
     await page.keyboard.press('Enter')
     const menu = accountMenu(page)
     await expect(menu.getByRole('menuitem')).toHaveText(['Log in', 'Create an account'])
+    await expect(menu.getByRole('menuitemcheckbox')).toHaveText(readingAidLabels())
     await expect(menu.getByRole('menuitemradio')).toHaveText(['Light', 'Dark', 'System'])
     await expect(menu.getByRole('menuitem', { name: 'Log in' })).toBeFocused()
     await page.keyboard.press('Escape')
@@ -72,7 +73,7 @@ test.describe('the account menu from 1024 pixels', () => {
     await expect(menu).toBeHidden()
   })
 
-  test('signed in, the menu leads to the account, then the theme, then Sign out, by keyboard', async ({
+  test('signed in, the menu leads to the account, then the Reading Aids and the theme, then Sign out, by keyboard', async ({
     page
   }) => {
     await standInForTheAccountService(page, { 'POST /v1/auth/sign-out': { success: true } })
@@ -82,6 +83,7 @@ test.describe('the account menu from 1024 pixels', () => {
     await page.keyboard.press('Enter')
     const menu = accountMenu(page)
     await expect(menu.getByRole('menuitem')).toHaveText(['Your account', 'Sign out'])
+    await expect(menu.getByRole('menuitemcheckbox')).toHaveText(readingAidLabels())
     await expect(menu.getByRole('menuitemradio')).toHaveText(['Light', 'Dark', 'System'])
     await expect(menu.getByRole('menuitem', { name: 'Your account' })).toHaveAttribute(
       'href',

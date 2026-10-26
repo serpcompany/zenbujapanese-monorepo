@@ -120,7 +120,7 @@ drawing's furigana keeps its drawn size.
 - A link whose page or address doesn't exist yet points at `#`, and is listed once, by what it
   stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
-  ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
+  ([product docs](../../apps/web/docs/product/site-wide.md),
   Placeholder links). When a page ships, give its entry the page's path, as the products pages'
   entries have, so every link to it changes at once, or link it directly and drop the entry. Log
   in's and Create an account's entries have `/login/` and `/register/` only in a build whose
@@ -138,7 +138,7 @@ drawing's furigana keeps its drawn size.
   (`src/components/site-brand.tsx`) and the SVG favicon. `siteIcons` and `siteManifest` in
   `src/lib/metadata.ts` name them in every page's head; copy a file again when the brand's
   changes.
-- The theme ([product docs](../../apps/web/docs/product/dictionary.md#header-footer-and-site-wide),
+- The theme ([product docs](../../apps/web/docs/product/site-wide.md),
   Theme): `next-themes`' `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and
   placed in `src/components/site-document.tsx`, puts `light` or `dark` on `<html>` (which has
   `suppressHydrationWarning`, since its script changes the class before React hydrates), from the
@@ -177,10 +177,9 @@ drawing's furigana keeps its drawn size.
   `apps/web/src/components/showcase-stage.tsx`); its arrows, dots, and fade show only when Embla
   says the screens overflow, and before it loads, when an area has more than three. A video is the
   product page's `VideoCard`; a hidden area's screens mount again, so a playing video stops.
-- `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in
-  `apps/web/src/components/json-ld.tsx`, which writes structured data (the dictionary breadcrumbs'
-  `BreadcrumbList` and the converter pages' `FAQPage`) and escapes `<` so the JSON can't close its
-  script tag (the Next.js JSON-LD guide).
+- `apps/web/biome.json` allows `dangerouslySetInnerHTML` only in `src/components/json-ld.tsx`,
+  for structured data whose JSON escapes `<` (the Next.js JSON-LD guide), and in
+  `src/components/reading-aids-script.tsx`, the Reading Aids' script, built from constants.
 - The scripts in `apps/web/scripts/` read a command's output whole before searching it:
   `curl | grep -q` fails under `pipefail` when grep exits early. Their `.shellcheckrc` turns off
   ShellCheck's SC2329: `smoke.sh`'s checks are functions that `eventually` calls by name, which

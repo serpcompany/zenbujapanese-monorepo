@@ -719,7 +719,7 @@
         "reason": "over its budget when the check arrived"
       },
       "apps/web/docs/product/dictionary.md": {
-        "lines": 1286,
+        "lines": 1076,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/account-api.md": {
@@ -751,7 +751,7 @@
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/web.md": {
-        "lines": 808,
+        "lines": 807,
         "reason": "over its budget when the check arrived"
       }
     },

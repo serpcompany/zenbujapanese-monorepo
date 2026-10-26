@@ -33,7 +33,7 @@ function Token({
   const ruby = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
   const shown = token.meaning ? (
     <>
-      {ruby}
+      <span>{ruby}</span>
       <span
         data-aid="meaning"
         lang={sourceLang(locale)}
