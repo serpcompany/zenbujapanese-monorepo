@@ -59,7 +59,6 @@ struct WatchSessionView: View {
     .toolbar {
       ToolbarItem(placement: .barTrailing) { PlayerMoreMenu(videoID: videoID) }
     }
-    .task { _ = await japaneseTextAnalysisClient.availability() }
     .task(id: videoID) {
       history.record(videoID)
       await loadCaptions()

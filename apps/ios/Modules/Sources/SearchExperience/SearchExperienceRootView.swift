@@ -259,6 +259,7 @@ struct SearchExperienceRootView: View {
         openVideo: { videoID in watchPath.append(PlayerRoute.video(videoID)) },
         search: { search in watchPath.append(PlayerRoute.search(search)) }
       )
+      .task { _ = await japaneseTextAnalysisClient.availability() }
       .navigationDestination(for: PlayerRoute.self) { route in
         switch route {
         case .video(let videoID):
@@ -291,6 +292,7 @@ struct SearchExperienceRootView: View {
         push: { translatePath.append($0) },
         chooseImage: chooseImageSource
       )
+      .task { _ = await japaneseTextAnalysisClient.availability() }
       .navigationDestination(for: SearchExperienceRoute.self) {
         dictionaryDestination($0, in: .translate)
       }

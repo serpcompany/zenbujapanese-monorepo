@@ -631,9 +631,9 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   ms per ten new lines on a Mac (the core: 3.2). `LoadedExamples` asks for the rows that fit the
   window (`ExampleRowsOnScreen`), a page's rest, then the next page at the end; Player lists
   captions as `LinkedLines` links them, the window's first, then 25 at a time; Image Search links a
-  page as it finds its words; Translate holds a sentence back until `LinkedTexts` links it. Player,
-  typed text, and a conversation ready the engine as they open (`availability`), as Image Search
-  does, so a first line needn't wait on the tokenizer. A row scrolled back draws at once.
+  page as it finds its words; Translate holds a sentence back until `LinkedTexts` links it. The
+  Player and Translate tabs ready the engine as they open (`availability`), as Image Search does, so
+  a first line needn't wait on the tokenizer. A row scrolled back draws at once.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
