@@ -42,8 +42,9 @@ Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one p
 feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and `SystemColor`,
 `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`, `WebViewRepresentable`,
 `PagedView`, `CameraCapture` and `ImageCameraPicker`, `ImagePhotoLibraryPicker`,
-`importsImagesFromDevices`, `BackgroundRefresh`, `keyWindowAnchor`, `AppleSignInButton`,
-`ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in `PlatformModifiers.swift`
+`importsImagesFromDevices`, `BackgroundRefresh`, `ApplicationDelegateAdaptor`, `keyWindowAnchor`,
+`AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in
+`PlatformModifiers.swift`
 (`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`, `.barLeading` and `.barTrailing`,
 `.bottomAccessory`, `.rowActions`, `.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`,
 `.sheetClose`, `SheetCloseAndAction`, `.barTrailingItems`, `.tileIconLabel()`,
@@ -101,9 +102,9 @@ commands (`AppCommands`) go through `AppCommandRouter` to the window that was la
 view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The scene also
 shares one `TranslateExperience` between windows, since they share the one microphone, and pauses a
 conversation when the whole app goes to the background, or pauses it and drops a start still waiting
-when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
-lets an open window take a website link (`handlesExternalEvents`), where the Mac would otherwise
-open a new window for each.
+when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); keeps
+[what's being typed](ios-local-stores.md#whats-being-typed); and lets an open window take a
+website link (`handlesExternalEvents`), where the Mac would otherwise open a window for each.
 
 ### Build and run for iPad
 
@@ -622,18 +623,17 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
   awaits Sudachi (`JapaneseMorphologyClient`), hands back its morphemes as Sudachi gives them, and
   the call goes on, the core choosing what to search; other lookups can run while it waits.
-- **Examples arrive linked.** A batch is one call (`DictionaryTextData.resultsExamples`,
-  `entryExamples`, `formExamples`): the sentences from a position to the end of its page of 25, or
-  fewer under a limit (`cutShort`), each with its words linked and accented. `ExampleSentenceClient`
-  reads a batch's entries in one statement first, so a row (`LinkedJapaneseWords`) draws once.
-  `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), then the rest of a
-  page cut short, then the next page at the list's end; later reads share one task.
-- **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
-  sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
-  call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
-  statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
-  read entries through `LinkedEntries`, which keeps 4,000, or a batch's own when it would pass
-  that; the core keeps the last 512 texts.
+- **Rows arrive linked.** Examples come a batch a call (`resultsExamples`, `entryExamples`,
+  `formExamples`: to the end of a page of 25, or fewer under a limit, `cutShort`), and captions,
+  an image's lines, and translated sentences a list of texts a call (`linkedTexts`), each word
+  with its place, entry or candidates and what a row shows of each (reading, summary, gloss),
+  furigana, and `accent`. A row (`LinkedJapaneseWords`) draws once, from that; a tapped word's entry
+  is read as it opens (`LinkedEntryReader`), since reading them all for the row took 2.7 ms per ten
+  new lines on a Mac, beside the core's 3.2 ms. `LoadedExamples` asks for the rows that fit the
+  window (`ExampleRowsOnScreen`), the rest of a page cut short, then the next page at the list's
+  end; Player lists captions as `LinkedLines` links them, the window's worth first, then 25 at a
+  time; Image Search links a page as it finds its words; Translate holds a sentence back until
+  `LinkedTexts` has linked it. Words live in those models, so a row scrolled back draws at once.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
@@ -647,7 +647,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   with a full parse of the files. Grade's tiles are keyed by scalar too
   (`SchoolKanjiPanel.Tile.id`).
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
-  entry (64, until the frequency lists change), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
+  entry (64, until the frequency lists change), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
   a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
   would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive,

@@ -54,24 +54,33 @@ struct PaneLine: Identifiable, Equatable {
 }
 
 private struct ConversationPane: View {
+  private struct LiveWords {
+    let text: String
+    let tokens: [JapaneseTextToken]
+  }
+
   let language: SpokenLanguage
   let lines: [PaneLine]
   let words: TranslateWordLinks
+  @State private var live: LiveWords?
+  @State private var shownLines: [PaneLine]?
 
   var body: some View {
+    let ready = lines.allSatisfy { shown($0) != nil }
+    let displayed = ready ? lines : shownLines ?? lines.filter { shown($0) != nil }
     ScrollViewReader { proxy in
       ScrollView {
         VStack(alignment: .leading, spacing: 10) {
-          ForEach(lines) { line in
-            lineView(line, isNewest: line.id == lines.last?.id).id(line.id)
+          ForEach(displayed) { line in
+            lineView(line, isNewest: line.id == displayed.last?.id).id(line.id)
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
       }
       .defaultScrollAnchor(.bottom)
-      .onChange(of: lines) {
-        guard let last = lines.last else { return }
+      .onChange(of: displayed) {
+        guard let last = displayed.last else { return }
         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
       }
     }
@@ -79,6 +88,31 @@ private struct ConversationPane: View {
     .accessibilityElement(children: .contain)
     .accessibilityLabel(language.name)
     .accessibilityIdentifier("translate.pane.\(language.rawValue)")
+    .onChange(of: ready ? lines : nil, initial: true) { _, linked in
+      if let linked { shownLines = linked }
+    }
+    .task(id: liveText) { await link(liveText) }
+  }
+
+  private var liveText: String? {
+    guard language == .japanese else { return nil }
+    return lines.first { $0.style == .live }?.text
+  }
+
+  private func link(_ text: String?) async {
+    guard let text, let tokens = await words.analysisClient.linkedTexts([text], nil).first,
+      !Task.isCancelled
+    else { return }
+    live = LiveWords(text: text, tokens: tokens)
+  }
+
+  private func shown(_ line: PaneLine) -> ShownText? {
+    switch line.style {
+    case .provisional: .plain
+    case .finished: words.shown(line.text, in: language)
+    case .live:
+      language != .japanese ? .plain : live.flatMap { $0.text == line.text ? .linked($0.tokens) : nil }
+    }
   }
 
   @ViewBuilder
@@ -86,9 +120,11 @@ private struct ConversationPane: View {
     Group {
       switch line.style {
       case .finished, .live:
-        TranslateLinkedText(
-          text: line.text, language: language,
-          identifier: "translate.pane.\(language.rawValue).\(line.id)", words: words)
+        if let shown = shown(line) {
+          TranslateLinkedText(
+            text: line.text, shown: shown,
+            identifier: "translate.pane.\(language.rawValue).\(line.id)", words: words)
+        }
       case .provisional:
         Text(line.text + "…").italic()
       }

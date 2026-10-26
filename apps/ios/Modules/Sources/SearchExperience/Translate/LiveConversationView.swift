@@ -10,6 +10,7 @@ struct LiveConversationView: View {
   let isOnScreen: Bool
   @State private var isFollowingLatest = true
   @State private var heldRows = ConversationRowFloor()
+  @State private var shownRows: [ConversationRow]?
   @State private var isConfirmingExit = false
   @State private var wasListeningBeforeExit = false
 
@@ -26,6 +27,9 @@ struct LiveConversationView: View {
       .frame(maxHeight: .infinity)
       ConversationControlBar(session: session, experience: experience)
         .dynamicTypeSize(...DynamicTypeSize.large)
+    }
+    .onChange(of: session.conversation.spokenSentences.map(\.sentence), initial: true) {
+      words.request(session.conversation.spokenSentences)
     }
     .tabBarVisibility(
       TranslateChromeLayout(isSessionLive: true, isConversationOnScreen: isOnScreen).tabBar)
@@ -54,7 +58,9 @@ struct LiveConversationView: View {
   }
 
   private var cards: some View {
-    let rows = ConversationRow.rows(for: session)
+    let current = ConversationRow.rows(for: session)
+    let ready = current.allSatisfy(isShown)
+    let rows = ready ? current : shownRows ?? current.filter(isShown)
     let showsPrompt =
       session.conversation.turns.isEmpty && session.liveSentence == nil && session.isLive
     let rowCount = rows.count + (showsPrompt ? 1 : 0)
@@ -84,7 +90,10 @@ struct LiveConversationView: View {
       .onChange(of: rowCount, initial: true) {
         heldRows.hold(rowCount, of: conversation)
       }
-      .onChange(of: contentVersion) {
+      .onChange(of: ready ? current : nil, initial: true) { _, linked in
+        if let linked { shownRows = linked }
+      }
+      .onChange(of: contentVersion(of: rows)) {
         guard isFollowingLatest else { return }
         withAnimation { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
       }
@@ -170,10 +179,26 @@ struct LiveConversationView: View {
     Task { await experience.leave(saving: saving) }
   }
 
-  private var contentVersion: String {
-    let sentences = session.conversation.turns.reduce(0) { $0 + $1.sentences.count }
-    let translated = session.conversation.sentences.filter { $0.translation != nil }.count
-    return "\(sentences).\(translated).\(session.liveSentence?.text.count ?? -1).\(session.status)"
+  private func isShown(_ row: ConversationRow) -> Bool {
+    guard case .sentence(let sentence, let language, _) = row else { return true }
+    return words.shown(sentence.text, in: language) != nil
+  }
+
+  private func contentVersion(of rows: [ConversationRow]) -> String {
+    var translated = 0
+    var live = -1
+    for row in rows {
+      switch row {
+      case .sentence(let sentence, let language, _):
+        if let translation = sentence.translation,
+          words.shown(translation, in: language.counterpart) != nil
+        {
+          translated += 1
+        }
+      case .live(let sentence, _): live = sentence.text.count
+      }
+    }
+    return "\(rows.count).\(translated).\(live).\(session.status)"
   }
 
   private func requestExit() {

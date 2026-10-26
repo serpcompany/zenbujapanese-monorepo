@@ -1,6 +1,6 @@
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
-import { isKanjiCharacter, shortGloss } from '../detail/text'
+import { isKanjiCharacter } from '../detail/text'
 import { notesInSearch } from '../results/notes'
 import { lookupSegments, type MorphologyAnalysis } from '../search/morphology'
 import {
@@ -69,7 +69,7 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
     meaningExamples: (request, analyze) => text().meaningExamples(JSON.parse(request), analyze),
     formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
-    linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
+    linkedTexts: (request, analyze) => text().linkedTexts(JSON.parse(request), analyze),
     countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
     resultsScreen: request => presentation().resultsScreen(JSON.parse(request)),
     wordRows: request => presentation().wordRows(JSON.parse(request)),
@@ -84,7 +84,6 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
     kanjiStrokes: row => presentation().kanjiStrokes(JSON.parse(row)),
     radicalPanel: selected => presentation().radicalPanel(JSON.parse(selected)),
     schoolKanjiPanel: request => presentation().schoolKanjiPanel(JSON.parse(request)),
-    gloss: shortGloss,
     phraseNote: request => {
       const { phrase, ...entry } = JSON.parse(request) as PhraseEntry & { phrase: string }
       return phraseNote(phrase, entry)

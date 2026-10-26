@@ -1,5 +1,32 @@
 import SwiftUI
 
+@MainActor
+@Observable
+final class HighlightedWords {
+  struct Highlight: Hashable {
+    let text: String
+    let entry: LanguageReferenceID
+  }
+
+  private var shown: (highlight: Highlight, words: [JapaneseTextToken])?
+
+  func words(
+    of text: String, in page: ImageTextPage, highlighting entry: DictionaryEntry?
+  ) -> [JapaneseTextToken] {
+    guard let entry, let shown, shown.highlight == Highlight(text: text, entry: entry.id)
+    else { return page.words(of: text) }
+    return shown.words
+  }
+
+  func link(_ highlight: Highlight?, using analysis: JapaneseTextAnalysisClient) async {
+    guard let highlight, shown?.highlight != highlight,
+      let words = await analysis.linkedTexts([highlight.text], highlight.entry).first,
+      !Task.isCancelled
+    else { return }
+    shown = (highlight, words)
+  }
+}
+
 struct ImageTextLineCards: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   let page: ImageTextPage
@@ -13,6 +40,7 @@ struct ImageTextLineCards: View {
   let openWord: (DictionaryEntry, Int) -> Void
   let openCandidates: (String, [DictionaryEntry], Int) -> Void
   @State private var scrollTarget: Int?
+  @State private var highlighted = HighlightedWords()
 
   var body: some View {
     GeometryReader { geometry in
@@ -36,9 +64,9 @@ struct ImageTextLineCards: View {
               let isActive = line.id == activeLineID
               CaptionCard(
                 text: line.text,
+                words: highlighted.words(
+                  of: line.text, in: page, highlighting: isActive ? highlightedEntry : nil),
                 translation: model.translation(of: line.text),
-                highlightedEntry: isActive ? highlightedEntry : nil,
-                japaneseTextAnalysisClient: textAnalysisClient,
                 identifierPrefix: "image-text.line.\(line.id)",
                 openCandidates: { surface, candidates in openCandidates(surface, candidates, line.id) },
                 openWord: { entry in openWord(entry, line.id) }
@@ -69,6 +97,13 @@ struct ImageTextLineCards: View {
       if activeLineID == nil { activeLineID = page.lines.first?.id }
     }
     .task(id: model.selectedPage) { translateIfReady() }
+    .task(id: highlight) { await highlighted.link(highlight, using: textAnalysisClient) }
+  }
+
+  private var highlight: HighlightedWords.Highlight? {
+    guard let highlightedEntry, let line = page.lines.first(where: { $0.id == activeLineID })
+    else { return nil }
+    return HighlightedWords.Highlight(text: line.text, entry: highlightedEntry.id)
   }
 
   private func translateIfReady() {
@@ -90,6 +125,7 @@ struct ImageTextReader: View {
   let isWordSheetPresented: Bool
   let openWord: (DictionaryEntry, Int) -> Void
   let openCandidates: (String, [DictionaryEntry], Int) -> Void
+  @State private var highlighted = HighlightedWords()
 
   var body: some View {
     GeometryReader { geometry in
@@ -98,9 +134,9 @@ struct ImageTextReader: View {
           let isActive = isWordSheetPresented && paragraph.id == activeParagraphID
           CaptionCard(
             text: paragraph.text,
+            words: highlighted.words(
+              of: paragraph.text, in: page, highlighting: isActive ? highlightedEntry : nil),
             translation: model.translation(of: paragraph.text),
-            highlightedEntry: isActive ? highlightedEntry : nil,
-            japaneseTextAnalysisClient: textAnalysisClient,
             identifierPrefix: "image-text.paragraph.\(paragraph.id)",
             openCandidates: { surface, candidates in
               openCandidates(surface, candidates, paragraph.id)
@@ -125,6 +161,14 @@ struct ImageTextReader: View {
         model.requestTranslation(preparesIfNeeded: false)
       }
     }
+    .task(id: highlight) { await highlighted.link(highlight, using: textAnalysisClient) }
+  }
+
+  private var highlight: HighlightedWords.Highlight? {
+    guard isWordSheetPresented, let highlightedEntry,
+      let paragraph = page.paragraphs.first(where: { $0.id == activeParagraphID })
+    else { return nil }
+    return HighlightedWords.Highlight(text: paragraph.text, entry: highlightedEntry.id)
   }
 }
 

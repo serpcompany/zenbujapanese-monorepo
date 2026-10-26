@@ -136,8 +136,8 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `checkExamples` | — | True, or an error naming the missing or wrong example table or pack |
   | `tokenizerReady` | — | Whether the text part can tokenize. With the host's files it reads them now, so the first sentence doesn't wait for them, and is false when one is missing or wrong. |
   | `exampleCount`, `resultsExampleCount` | A query, or a query with the results' primary entry | The Example Sentences row's count |
-  | `resultsExamples`, `entryExamples`, `formExamples`, `meaningExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTokens` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated`; for a word's meanings, each one's first checked example |
-  | `linkedTokens` | A text, the page's query, and its entry | Each word with its place in the text, its entry or candidates, the furigana to draw, its `accent` (`entry` on the page entry's word here; an example page says `query` on the words of its query), and which neighbour a punctuation mark stays with on a line (`attaches`) |
+  | `resultsExamples`, `entryExamples`, `formExamples`, `meaningExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTexts` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated`; for a word's meanings, each one's first checked example |
+  | `linkedTexts` | Texts, and an entry to accent or null | Each text's words in order: place, entry or candidates as a row shows them (ID, headword, reading, summary, `shortGloss` of the first meaning), furigana, `accent` (`entry` on that entry's word; examples say `query` on the query's), and punctuation's neighbour (`attaches`): all a row, or the website's Reading Aids, needs |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
   | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and `pickedKanji` for a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A picked one-character query lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
@@ -149,12 +149,13 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `kanjiElementPage` | A glyph | `KanjiElementDetail`, or null for a kanji that is no element |
   | `kanjiStrokes` | A stroke diagram's row as the host read it (the kanji, viewport, stroke count, and KanjiVG's packed strokes) | `StrokeDiagram`: each stroke as the points to draw through, a move then curves with two control points, and the player's labels; an error for a broken diagram |
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
-  | `gloss`, `phraseNote` | A meaning; a phrase with its entry's meanings and parts of speech | The gloss under a linked word, or null; a set phrase's first three meanings, or null |
+  | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
-  host reads each from the artifact itself. A page's method takes the entry the host read.
-- **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
+  host reads each from the artifact itself. A page's method takes the entry the host read. A linked
+  word carries what its row shows of its entry, so the host reads that only to open the word.
+- **A list of texts costs one or two statements.** `linkedTexts` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
   page mostly asks nothing. `countedWords` looks all its lines up together and keeps 4,000 lines.
 - **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
@@ -162,11 +163,11 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   text}` when it needs a sentence's words from a host with no `tokenize`, which analyzes the text,
   answers `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads it again. The
   database is synchronous, so a call settles before `begin` or `analyzed` returns, and calls keep
-  their outcomes apart. `{"value": null}` is an answer (`kanjiElementPage`, `gloss`), and `value()`
+  their outcomes apart. `{"value": null}` is an answer (`kanjiElementPage`, `romaji`), and `value()`
   is a finished call's value alone, as its own JSON text.
 - **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` returns
   the method's value, and `answerJSON(method, argument)` it as JSON (`null` for nothing). Both throw
-  for a method that would wait (`search`, `linkedTokens`, and the others that read through the async
+  for a method that would wait (`search`, `linkedTexts`, and the others that read through the async
   search database) or that the core lacks. A host uses them for what a view asks while it is drawn:
   one crossing into the engine, no promise, and for a string or a flag no JSON either.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
@@ -255,7 +256,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | --- | --- | --- |
 | `LookupClient.swift` (`LanguageReferenceData`) | `search`, `entriesMatchingFirstForms`, `entriesContainingKanji`, `websiteRoute`, `lookUp`, `relatedWord`, `savedWord`, `canonicalEntries` | Search, a form's entries, a kanji's words, what a link, a look-up, a related or a saved word opens, which entry stands for equivalents (it reads entries) |
 | `SearchQuery.swift` | `normalizeQuery` | The query every screen holds |
-| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTokens`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
+| `DictionaryTextData.swift` (`ExampleSentenceClient`, `JapaneseTextAnalysisClient`) | `checkExamples`, `tokenizerReady`, the example methods, `linkedTexts`, `countedWords` | Example sentences, linked words with each word's line-breaking, and the words `Comprehension` counts. It hands the core the tokenizer's files (`TokenizerDictionary.swift`). |
 | `PresentationCore.swift` (`RomajiReadingAidText`, `LinkedJapaneseText`) | `romaji`, `sentenceRomaji` | The Romaji reading aid, for a reading and for a sentence |
 | `RadicalLookupClient.swift` (`RadicalInputView`), `SchoolKanjiClient.swift` (`GradeInputView`) | `radicalPanel`, `schoolKanjiPanel` | The Radicals and Grade panels |
 | `KanjiStrokeOrderClient.swift` | `kanjiStrokes` | The strokes Kanji Detail draws |
@@ -266,7 +267,7 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `JapaneseRuby.swift` | `ruby` | Furigana wherever a word is drawn |
 | `WordPage.swift` (`WordDetailView`, `WordDetailSections`, `WordHeadline`, `PitchAccentBadge`, `ConjugationsView`) | `wordPage` | The word page, with its frequency rows, and its conjugations |
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |
-| `DictionaryEntry.swift` (`shortMeaning`), `ImageTextExplanationClient.swift` | `gloss`, `phraseNote` | The meaning under a linked word; an Image Search note |
+| `ImageTextExplanationClient.swift` | `phraseNote` | An Image Search note |
 | `SourceCredits.swift` (`CreditsView`) | `sourceCredits` | Credits & Attributions and Licenses |
 
 The core began as a port of the Swift these files replaced: `LookupClient`'s search and ranking,
@@ -400,7 +401,7 @@ The core answers as the Swift it replaced did, which the suites pin.
 
 ## Examples
 
-- **Linking** (`linkedTokens`). A word the page's entry is written with, in either width, is that
+- **Linking** (`linkedTexts`). A word the page's entry is written with, in either width, is that
   entry; any other is looked up by its forms, narrowed by part of speech and reading, and links to
   its one entry or lists its candidates. A joined inflection is looked up by its dictionary form,
   never its surface, which can be an unrelated headword (しまった is also "darn it!"); one that resolves

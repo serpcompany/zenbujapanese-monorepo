@@ -71,10 +71,15 @@ struct TranslateHistoryView: View {
   }
 
   private var bookmarks: some View {
-    ForEach(history.bookmarks) { bookmark in
+    let bookmarks = history.bookmarks
+    return ForEach(bookmarks.prefix { transcript.isReady($0.sentence, spokenIn: $0.language) }) {
+      bookmark in
       TranscriptSentence(
         sentence: bookmark.sentence, language: bookmark.language,
         conversationID: bookmark.conversationID, history: history, actions: transcript)
+    }
+    .onChange(of: bookmarks.map(\.sentence), initial: true) {
+      transcript.words.request(bookmarks.map { ($0.sentence, $0.language) })
     }
   }
 

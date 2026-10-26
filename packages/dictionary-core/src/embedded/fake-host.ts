@@ -9,6 +9,7 @@ export interface FakeEntry {
   reading: string
   partsOfSpeech?: string[]
   readingForms?: string[]
+  meanings?: string[]
 }
 
 function formRows(entries: readonly FakeEntry[], matches: (form: string) => boolean) {
@@ -45,6 +46,8 @@ function entryRows(entries: readonly FakeEntry[], ids: readonly string[]) {
       id: entry.id,
       headword: entry.headword,
       reading: entry.reading,
+      summary: `${entry.headword} summary`,
+      meaning: entry.meanings?.[0] ?? null,
       parts_of_speech_json: JSON.stringify(entry.partsOfSpeech ?? ['noun']),
       written_forms_json: values([entry.headword]),
       reading_forms_json: values([entry.reading, ...(entry.readingForms ?? [])])

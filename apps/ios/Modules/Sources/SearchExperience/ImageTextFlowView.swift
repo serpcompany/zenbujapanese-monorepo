@@ -12,6 +12,7 @@ struct ImageTextFlowView: View {
   let clipboardClient: ImageTextClipboardClient
   let endSession: () -> Void
   @Environment(\.dismiss) private var dismiss
+  @Environment(\.linkedEntryReader) private var linkedEntries
 
   init(
     session: ImageTextSession,
@@ -435,7 +436,9 @@ struct ImageTextFlowView: View {
   private func select(_ region: ImageTextRegion, in page: ImageTextPage) {
     model.selectedRegion = region
     activeLineID = region.lineID
-    presentedWord = region.sheetRequest(asset: page.asset)
+    linkedEntries.open(region.candidateEntries) { read in
+      presentedWord = region.sheetRequest(asset: page.asset, read: read)
+    }
   }
 
   private func open(_ entry: DictionaryEntry, in page: ImageTextPage, lineID: Int?) {

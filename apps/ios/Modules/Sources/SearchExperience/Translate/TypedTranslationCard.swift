@@ -79,39 +79,13 @@ struct TypedTranslationCard: View {
     case .idle:
       EmptyView()
     case .translating:
-      Divider()
-      Text("Translating…")
-        .font(.title3)
-        .foregroundStyle(.tertiary)
+      translating
     case .translated(let result):
-      Divider()
-      HStack(spacing: 16) {
-        Text(result.source.translationDirection)
-          .font(.subheadline)
-          .foregroundStyle(.secondary)
-          .accessibilityIdentifier("translate.typed.direction")
-        Spacer()
-        Button("Copy", systemImage: "doc.on.doc") {
-          Pasteboard.copy(result.translation)
-          copyCount += 1
-        }
-        .outsetHitTarget()
-        Button("Speak", systemImage: "speaker.wave.2") {
-          Task {
-            await experience.services.clients.playback.speak(
-              result.translation, result.source.counterpart)
-          }
-        }
-        .outsetHitTarget()
+      if let shown = words.shown(result.translation, in: result.source.counterpart) {
+        translated(result, shown: shown)
+      } else {
+        translating
       }
-      .buttonStyle(.borderless)
-      TranslateLinkedText(
-        text: result.translation, language: result.source.counterpart,
-        identifier: "translate.typed.result",
-        words: TranslateWordLinks(analysisClient: words.analysisClient) { request in
-          isEditing = false
-          words.open(request)
-        })
     case .needsDownload:
       Divider()
       VStack(alignment: .leading, spacing: 6) {
@@ -124,6 +98,45 @@ struct TypedTranslationCard: View {
       Text("Couldn't translate this. Try again.")
         .foregroundStyle(.secondary)
     }
+  }
+
+  @ViewBuilder
+  private var translating: some View {
+    Divider()
+    Text("Translating…")
+      .font(.title3)
+      .foregroundStyle(.tertiary)
+  }
+
+  @ViewBuilder
+  private func translated(_ result: Result, shown: ShownText) -> some View {
+    Divider()
+    HStack(spacing: 16) {
+      Text(result.source.translationDirection)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .accessibilityIdentifier("translate.typed.direction")
+      Spacer()
+      Button("Copy", systemImage: "doc.on.doc") {
+        Pasteboard.copy(result.translation)
+        copyCount += 1
+      }
+      .outsetHitTarget()
+      Button("Speak", systemImage: "speaker.wave.2") {
+        Task {
+          await experience.services.clients.playback.speak(
+            result.translation, result.source.counterpart)
+        }
+      }
+      .outsetHitTarget()
+    }
+    .buttonStyle(.borderless)
+    TranslateLinkedText(
+      text: result.translation, shown: shown, identifier: "translate.typed.result",
+      words: words.opening { request in
+        isEditing = false
+        words.open(request)
+      })
   }
 
   private func translate(_ source: String) async {
@@ -146,6 +159,9 @@ struct TypedTranslationCard: View {
       ).trimmingCharacters(in: .whitespacesAndNewlines)
       try Task.checkCancellation()
       guard !translation.isEmpty else { throw TranslatorFailure.translationUnavailable }
+      if language.counterpart == .japanese {
+        words.texts.request([translation], using: words.analysisClient)
+      }
       status = .translated(Result(source: language, translation: translation))
     } catch is CancellationError {
       return

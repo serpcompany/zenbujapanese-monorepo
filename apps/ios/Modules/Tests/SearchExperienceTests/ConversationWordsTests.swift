@@ -9,7 +9,7 @@ import TranslatorCore
 struct ConversationWordsTests {
   private let analysis = JapaneseTextAnalysisClient(
     availability: { .full },
-    linkedTokens: { _, _, _ in [] },
+    linkedTexts: { _, _ in [] },
     countedWords: { lines in
       lines.flatMap { $0.split(separator: " ") }.filter { $0 != "は" }
         .map { LanguageReferenceID(rawValue: String($0)) }

@@ -9,26 +9,17 @@ import {
 import { searchExamples } from '../artifact/example-search'
 import { type FormLookup, formLookup } from '../artifact/lookup'
 import {
-  accentedPositions,
   type ExampleHighlight,
   type ExamplesEntry,
   exampleCount,
-  examplesEntries,
-  screenAccent,
-  tokenSpans
+  type LinkedWordEntry,
+  linkedWordEntries,
+  screenAccent
 } from '../artifact/word-examples'
 import { exampleCountText, examplesPerPage } from '../detail/examples'
-import { type Attachment, attachment } from '../detail/romaji'
-import { type RubySegment, rubySegments } from '../detail/ruby'
 import { usesForm } from '../examples/forms'
 import { ipadicTokenizer } from '../examples/ipadic'
-import {
-  displayReading,
-  formsLookedUp,
-  type LinkEntry,
-  type LinkedToken,
-  linkedTokens
-} from '../examples/linking'
+import { formsLookedUp, type LinkEntry, type LinkedToken, linkedTokens } from '../examples/linking'
 import {
   isFunctionWord,
   kuromojiCandidates,
@@ -44,25 +35,12 @@ import {
 } from '../search/morphology'
 import { isASCII, normalizeQuery } from '../search/query'
 import { type EmbeddedHost, hostDatabase } from './host'
+import { type EmbeddedToken, linkedWords } from './linked-words'
 import { entriesMatchingFirstForms } from './lookup'
 
 export type AnalyzeText = (text: string) => Promise<MorphologyAnalysis>
 
 type Accent = ExampleHighlight['accent']
-
-export interface EmbeddedToken {
-  surface: string
-  start: number
-  end: number
-  reading: string | null
-  isFunctionWord: boolean
-  entry: string | null
-  candidates: string[]
-  furigana: string | null
-  ruby: RubySegment[] | null
-  accent: Accent | null
-  attaches: Attachment | null
-}
 
 export interface EmbeddedExample {
   id: string
@@ -103,8 +81,7 @@ interface BatchRequest {
 }
 
 interface LinkRequest {
-  text: string
-  query: string
+  texts: string[]
   highlightedEntry: string | null
 }
 
@@ -142,7 +119,7 @@ export class EmbeddedText {
   private readonly searchDb: SearchDatabase
   private readonly forms = new LruCache<string, LinkEntry[]>(20_000)
   private readonly lookup: FormLookup
-  private readonly entries = new LruCache<string, ExamplesEntry>(4_000)
+  private readonly entries = new LruCache<string, LinkedWordEntry>(4_000)
   private readonly linked = new LruCache<string, EmbeddedToken[]>(512)
   private readonly counted = new LruCache<string, readonly string[]>(4_000)
   private readonly searched = new LruCache<string, EntryExamples | string>(32)
@@ -166,15 +143,15 @@ export class EmbeddedText {
         })
   }
 
-  private found(ids: readonly string[]): Map<string, ExamplesEntry> {
-    const found = new Map<string, ExamplesEntry>()
+  private found(ids: readonly string[]): Map<string, LinkedWordEntry> {
+    const found = new Map<string, LinkedWordEntry>()
     const unread: string[] = []
     for (const id of new Set(ids)) {
       const cached = this.entries.get(id)
       if (cached) found.set(id, cached)
       else unread.push(id)
     }
-    for (const [id, entry] of examplesEntries(this.db, unread)) {
+    for (const [id, entry] of linkedWordEntries(this.db, unread)) {
       this.entries.set(id, entry)
       found.set(id, entry)
     }
@@ -381,14 +358,12 @@ export class EmbeddedText {
     await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms)
   }
 
-  async linkedTokens(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[]> {
-    const accented: Accented = {
-      query: request.query,
-      entry: request.highlightedEntry,
-      accent: 'entry'
-    }
-    const [linked] = await this.link([request.text], accented, analyze)
-    return linked
+  linkedTexts(request: LinkRequest, analyze: AnalyzeText): Promise<EmbeddedToken[][]> {
+    return this.link(
+      request.texts,
+      { query: '', entry: request.highlightedEntry, accent: 'entry' },
+      analyze
+    )
   }
 
   private async link(
@@ -421,12 +396,20 @@ export class EmbeddedText {
       for (const [text, candidates] of unlinked) {
         const linked = linkedTokens(text, candidates, highlighted, this.lookup)
         tokens.set(text, linked)
-        for (const token of linked) if (token.entry) named.push(token.entry.id)
+        for (const token of linked) {
+          for (const shown of token.entry ? [token.entry] : token.candidates) named.push(shown.id)
+        }
       }
       const entries = this.found(named)
       const highlight = { entry, query, accent: accented.accent }
       for (const [text, candidates] of unlinked) {
-        const answer = words(text, tokens.get(text) ?? [], candidates !== null, entries, highlight)
+        const answer = linkedWords(
+          text,
+          tokens.get(text) ?? [],
+          candidates !== null,
+          entries,
+          highlight
+        )
         if (candidates) this.linked.set(key(text), answer)
         answers.set(text, answer)
       }
@@ -466,32 +449,4 @@ export class EmbeddedText {
     }
     return counted
   }
-}
-
-function words(
-  text: string,
-  tokens: readonly LinkedToken[],
-  analyzed: boolean,
-  entries: ReadonlyMap<string, ExamplesEntry>,
-  highlight: ExampleHighlight
-): EmbeddedToken[] {
-  const accents = new Set(accentedPositions(text, tokens, highlight))
-  return tokenSpans(tokens).map(({ start, end }, index): EmbeddedToken => {
-    const token = tokens[index]
-    const target = token.entry ? entries.get(token.entry.id) : undefined
-    const furigana = target ? displayReading(token, target) : null
-    return {
-      surface: token.surface,
-      start,
-      end,
-      reading: analyzed ? token.reading : null,
-      isFunctionWord: isFunctionWord(token),
-      entry: token.entry?.id ?? null,
-      candidates: token.entry ? [] : token.candidates.map(candidate => candidate.id),
-      furigana,
-      ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-      accent: accents.has(index) ? highlight.accent : null,
-      attaches: attachment(token.surface)
-    }
-  })
 }

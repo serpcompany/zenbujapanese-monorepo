@@ -15,6 +15,7 @@ struct SearchExperienceRootView: View {
   @Environment(TranslateExperience.self) private var translateExperience
   @State private var kanjiScroll = KanjiScrollMemory()
   @State private var screenReturns = ScreenReturns()
+  @State private var translateTexts = LinkedTexts()
   private let lookupClient: LookupClient
   private let exampleSentenceClient: ExampleSentenceClient
   private let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
@@ -35,9 +36,8 @@ struct SearchExperienceRootView: View {
     let text =
       ProcessInfo.processInfo.environment["ZENBU_MORPHOLOGY_ENGINE"] == "sudachi"
       ? DictionaryTextData(morphology: .live) : DictionaryTextData.shared
-    let linked = LinkedEntries(lookupClient: .live)
-    exampleSentenceClient = ExampleSentenceClient(text: text, linked: linked)
-    japaneseTextAnalysisClient = .live(text: text, linked: linked)
+    exampleSentenceClient = ExampleSentenceClient(text: text)
+    japaneseTextAnalysisClient = .live(text: text)
     kanjiLookupClient = .live(lookupClient: .live)
     handwritingRecognitionClient = .live
     cameraAuthorizationClient = .live
@@ -321,7 +321,9 @@ struct SearchExperienceRootView: View {
   }
 
   private func translateWords(opening sheet: WordSheetPresentation) -> TranslateWordLinks {
-    TranslateWordLinks(analysisClient: japaneseTextAnalysisClient, open: { sheet.request = $0 })
+    TranslateWordLinks(
+      analysisClient: japaneseTextAnalysisClient, texts: translateTexts,
+      open: { sheet.request = $0 })
   }
 
   private func wordSheetHost(_ presentation: WordSheetPresentation, in stack: DictionaryStack)

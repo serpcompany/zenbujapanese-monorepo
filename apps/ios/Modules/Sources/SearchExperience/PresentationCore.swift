@@ -58,7 +58,6 @@ final class PresentationCore: @unchecked Sendable {
   private var core: DictionaryCore?
   private var ruby = Memo<Pair, [JapaneseRubySegment]>(capacity: 4_000)
   private var queries = Memo<Written, String>(capacity: 1_000)
-  private var glosses = Memo<Written, String?>(capacity: 4_000)
   private var readings = Memo<Written, String?>(capacity: 4_000)
   private var sentences = Memo<[Written], String?>(capacity: 512)
   private var kanjiChecks = Memo<Written, Bool>(capacity: 4_000)
@@ -103,10 +102,6 @@ final class PresentationCore: @unchecked Sendable {
     remembered(\.queries, Written(rawValue), otherwise: rawValue) {
       try $0.text("normalizeQuery", rawValue) ?? rawValue
     }
-  }
-
-  func gloss(_ meaning: String) -> String? {
-    remembered(\.glosses, Written(meaning), otherwise: nil) { try $0.text("gloss", meaning) }
   }
 
   func romaji(_ reading: String) -> String? {

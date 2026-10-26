@@ -1,58 +1,25 @@
 import SwiftUI
 
-struct LinkedJapaneseText: View {
-  private struct AnalysisIdentity: Hashable {
-    let text: String
-    let highlightedEntryID: LanguageReferenceID?
+struct LinkedEntryReader: Sendable {
+  var entries: @Sendable ([LanguageReferenceID]) async -> [DictionaryEntry]
+
+  static let live = LinkedEntryReader { ids in
+    let read = (try? await LookupClient.live.entries(ids)) ?? [:]
+    return ids.compactMap { read[$0] }
   }
 
-  @State private var tokens: [JapaneseTextToken] = []
-  @State private var didFinishAnalysis = false
-
-  let text: String
-  let highlightedEntry: DictionaryEntry?
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
-  let identifierPrefix: String
-  let presentation: LinkedJapaneseWords.Presentation
-  let openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)?
-  let openWord: (DictionaryEntry) -> Void
-
-  init(
-    text: String,
-    highlightedEntry: DictionaryEntry?,
-    japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
-    identifierPrefix: String,
-    presentation: LinkedJapaneseWords.Presentation = .standard,
-    openCandidates: ((_ surface: String, _ candidates: [DictionaryEntry]) -> Void)? = nil,
-    openWord: @escaping (DictionaryEntry) -> Void
-  ) {
-    self.text = text
-    self.highlightedEntry = highlightedEntry
-    self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
-    self.identifierPrefix = identifierPrefix
-    self.presentation = presentation
-    self.openCandidates = openCandidates
-    self.openWord = openWord
-  }
-
-  var body: some View {
-    LinkedJapaneseWords(
-      text: text,
-      tokens: tokens,
-      isAnalyzed: didFinishAnalysis,
-      identifierPrefix: identifierPrefix,
-      presentation: presentation,
-      japaneseIdentifier: nil,
-      openCandidates: openCandidates,
-      openWord: openWord
-    )
-    .task(id: AnalysisIdentity(text: text, highlightedEntryID: highlightedEntry?.id)) {
-      didFinishAnalysis = false
-      tokens = await japaneseTextAnalysisClient.linkedTokens(
-        text, SearchQuery(""), highlightedEntry)
-      didFinishAnalysis = true
+  @MainActor
+  func open(_ words: [LinkedWordEntry], _ show: @escaping @MainActor ([DictionaryEntry]) -> Void) {
+    Task { @MainActor in
+      let read = await entries(words.map(\.id))
+      guard !read.isEmpty else { return }
+      show(read)
     }
   }
+}
+
+extension EnvironmentValues {
+  @Entry var linkedEntryReader = LinkedEntryReader.live
 }
 
 struct LinkedJapaneseWords: View {
@@ -71,7 +38,6 @@ struct LinkedJapaneseWords: View {
 
   let text: String
   let tokens: [JapaneseTextToken]
-  let isAnalyzed: Bool
   let identifierPrefix: String
   let presentation: Presentation
   let japaneseIdentifier: String?
@@ -92,7 +58,7 @@ struct LinkedJapaneseWords: View {
       } else {
         japaneseContent
       }
-      if readingAidPreferences.showsRomaji, isAnalyzed {
+      if readingAidPreferences.showsRomaji {
         if let romaji = PresentationCore.shared.romaji(
           of: tokens.map { ($0.surface, $0.reading) })
         {
@@ -113,35 +79,27 @@ struct LinkedJapaneseWords: View {
     .accessibilityElement(children: .contain)
   }
 
-  @ViewBuilder
   private var japaneseContent: some View {
-    Group {
-      if tokens.isEmpty {
-        Text(text)
-          .font(.title3)
-      } else {
-        LinkedTokenLayout(
-          itemSpacing: 0,
-          lineSpacing: readingAidPreferences.showsWordMeanings ? lineSpacing * 3 : lineSpacing
-        ) {
-          ForEach(tokens) { token in
-            LinkedTokenView(
-              token: token,
-              identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
-              presentation: presentation,
-              openWord: openWord,
-              openCandidates: openCandidates
-            )
-            .layoutValue(
-              key: JapaneseTokenLineBreakBehaviorKey.self,
-              value: token.lineBreak
-            )
-            .layoutValue(
-              key: JapaneseTokenAllowsInternalWrappingKey.self,
-              value: token.entry == nil && token.candidateEntries.isEmpty
-            )
-          }
-        }
+    LinkedTokenLayout(
+      itemSpacing: 0,
+      lineSpacing: readingAidPreferences.showsWordMeanings ? lineSpacing * 3 : lineSpacing
+    ) {
+      ForEach(tokens) { token in
+        LinkedTokenView(
+          token: token,
+          identifier: "\(identifierPrefix).\(token.id).\(token.surface)",
+          presentation: presentation,
+          openWord: openWord,
+          openCandidates: openCandidates
+        )
+        .layoutValue(
+          key: JapaneseTokenLineBreakBehaviorKey.self,
+          value: token.lineBreak
+        )
+        .layoutValue(
+          key: JapaneseTokenAllowsInternalWrappingKey.self,
+          value: token.entry == nil && token.candidateEntries.isEmpty
+        )
       }
     }
   }
@@ -150,6 +108,7 @@ struct LinkedJapaneseWords: View {
 private struct LinkedTokenView: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(\.linkedEntryReader) private var linkedEntries
   let token: JapaneseTextToken
   let identifier: String
   let presentation: LinkedJapaneseWords.Presentation
@@ -159,15 +118,15 @@ private struct LinkedTokenView: View {
   private var isCurrentEntry: Bool { token.accent == .entry }
   private var isHighlighted: Bool { token.accent != nil }
 
-  private func meaning(for entry: DictionaryEntry) -> String? {
+  private func meaning(for entry: LinkedWordEntry) -> String? {
     guard readingAidPreferences.showsWordMeanings,
       !token.isFunctionWord,
       !wordKnowledge.isKnown(entry.id)
     else { return nil }
-    return entry.shortMeaning
+    return entry.gloss
   }
 
-  private func hidesFurigana(for entry: DictionaryEntry) -> Bool {
+  private func hidesFurigana(for entry: LinkedWordEntry) -> Bool {
     readingAidPreferences.hidesFuriganaOnKnownWords && !isHighlighted
       && wordKnowledge.isKnown(entry.id)
   }
@@ -180,7 +139,7 @@ private struct LinkedTokenView: View {
     presentation.usesMinimumHitRegionHeight ? 44 : nil
   }
 
-  private func rubyText(for entry: DictionaryEntry) -> some View {
+  private func rubyText(for entry: LinkedWordEntry) -> some View {
     JapaneseRubyText(
       ruby: token.ruby ?? JapaneseRuby(surface: token.surface, reading: entry.reading),
       exposesAccessibility: false,
@@ -209,7 +168,7 @@ private struct LinkedTokenView: View {
           .accessibilityIdentifier(identifier)
       } else {
         Button {
-          openWord(entry)
+          linkedEntries.open([entry]) { openWord($0[0]) }
         } label: {
           rubyText(for: entry)
             .wordUnderline(
@@ -233,7 +192,7 @@ private struct LinkedTokenView: View {
           .accessibilityIdentifier(identifier)
       } else if let openCandidates {
         Button {
-          openCandidates(token.surface, token.candidateEntries)
+          linkedEntries.open(token.candidateEntries) { openCandidates(token.surface, $0) }
         } label: {
           candidateLabel
         }
@@ -243,7 +202,7 @@ private struct LinkedTokenView: View {
         Menu {
           ForEach(token.candidateEntries) { candidate in
             Button {
-              openWord(candidate)
+              linkedEntries.open([candidate]) { openWord($0[0]) }
             } label: {
               Text("\(candidate.headword) (\(candidate.reading)) — \(candidate.summary)")
             }
