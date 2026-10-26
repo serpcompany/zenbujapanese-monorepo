@@ -524,7 +524,7 @@ as the app draws it: the reading in katakana, one mora wide each (one and a half
 such as キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and
 a hollow dot for the following particle. The capsule is one button that pronounces the word; screen
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
-say it: M is the source's mora count, even where it differs from the morae drawn (#831 review).
+say it: M is the number of morae drawn, and N is never past them.
 
 - Source: App docs, Dictionary and kanji details; `pitchGraph` in the core's `detail/pitch.ts`,
   which the app's `PitchAccentBadge.swift` draws; #462 design.

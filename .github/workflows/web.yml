@@ -73,11 +73,20 @@ jobs:
           node -e '
           const { readdirSync, readFileSync } = require("node:fs");
           const chunks = readdirSync(".next/static", { recursive: true }).filter(file => file.endsWith(".js"));
+          const escaped = text => text.replace(/[^\x00-\x7f]/g, c => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
           for (const language of ["en", "ja"]) {
-          const start = JSON.stringify(require("./src/lib/i18n/dictionaries/" + language + ".json")).slice(0, 60);
-          for (const chunk of chunks) if (readFileSync(".next/static/" + chunk, "utf8").includes(start)) {
+          const dictionary = require("./src/lib/i18n/dictionaries/" + language + ".json");
+          const values = [];
+          const collect = node => Object.values(node).forEach(value => typeof value === "string" ? values.push(value) : collect(value));
+          collect(dictionary);
+          const phrases = values.filter(value => !/[\\"\x27`$]/.test(value)).sort((a, b) => b.length - a.length).slice(0, 5);
+          const markers = [JSON.stringify(dictionary).slice(0, 60), ...phrases].flatMap(marker => [marker, escaped(marker)]);
+          for (const chunk of chunks) {
+          const text = readFileSync(".next/static/" + chunk, "utf8");
+          if (markers.some(marker => text.includes(marker))) {
           console.log("::error::.next/static/" + chunk + " holds " + language + ".json. A client component gets its strings from its server parent, never the dictionary (docs/agents/web-languages.md, Strings).");
           process.exitCode = 1;
+          }
           }
           }'
       - name: Build for staging
