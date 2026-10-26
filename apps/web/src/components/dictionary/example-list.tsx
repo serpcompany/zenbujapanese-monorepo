@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { Fragment } from 'react'
-import { accent } from '@/components/dictionary/accent'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -34,21 +33,14 @@ function Token({
   const shown = token.meaning ? (
     <>
       <span>{ruby}</span>
-      <span
-        data-aid="meaning"
-        lang={sourceLang(locale)}
-        className={cn('max-w-24 truncate text-xs leading-snug', accent)}
-      >
+      <span data-aid="meaning" lang={sourceLang(locale)}>
         {token.meaning}
       </span>
     </>
   ) : (
     ruby
   )
-  const word = token.meaning ? '' : undefined
-  if (!token.path || !token.link) {
-    return token.meaning ? <span data-aid-word={word}>{shown}</span> : ruby
-  }
+  if (!token.path || !token.link) return token.meaning ? <span>{shown}</span> : ruby
   const title =
     'entSeqs' in token.link
       ? fill(text.examples.possibleEntries, {
@@ -56,12 +48,7 @@ function Token({
         })
       : undefined
   return (
-    <Link
-      href={localizedPath(token.path, locale)}
-      className={linkClass}
-      title={title}
-      data-aid-word={word}
-    >
+    <Link href={localizedPath(token.path, locale)} className={linkClass} title={title}>
       {shown}
     </Link>
   )
@@ -106,11 +93,11 @@ function ExampleRomaji({
 }) {
   if (romaji === undefined) return null
   return romaji === null ? (
-    <p data-aid="romaji" className="text-sm text-muted-foreground">
+    <p data-aid="romaji" className="text-sm">
       {unavailable}
     </p>
   ) : (
-    <p data-aid="romaji" lang="ja-Latn" className="text-muted-foreground">
+    <p data-aid="romaji" lang="ja-Latn">
       {romaji}
     </p>
   )

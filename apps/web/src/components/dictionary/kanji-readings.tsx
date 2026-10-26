@@ -26,7 +26,7 @@ function ReadingContent({
       <span className="font-medium">{coreText(reading.label, locale)}</span>
       <span lang="ja" className="text-right text-lg">
         {reading.value}
-        <RomajiLine romaji={romaji(reading.value)} className="block text-sm" />
+        <RomajiLine romaji={romaji(reading.value)} className="text-sm" />
       </span>
       <span className="flex w-4 justify-end">
         {opens ? <ChevronRightIcon className="size-4 text-muted-foreground" /> : null}

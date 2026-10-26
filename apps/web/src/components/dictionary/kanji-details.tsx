@@ -116,12 +116,12 @@ function KanjiDetailsPart({
                   className="shrink-0 underline-offset-4 hover:underline"
                 >
                   <RubyText segments={word.ruby} className="text-xl" />
-                  <RomajiLine romaji={romaji(word.reading)} className="block text-sm" />
+                  <RomajiLine romaji={romaji(word.reading)} className="text-sm" />
                 </Link>
               ) : (
                 <span className="shrink-0">
                   <RubyText segments={word.ruby} className="text-xl" />
-                  <RomajiLine romaji={romaji(word.reading)} className="block text-sm" />
+                  <RomajiLine romaji={romaji(word.reading)} className="text-sm" />
                 </span>
               )}
               <span className="ml-auto text-right text-muted-foreground" lang={sourceLang(locale)}>

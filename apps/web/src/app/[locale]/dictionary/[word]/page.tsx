@@ -145,7 +145,7 @@ function AlternativeForms({
           <span className={labels ? 'text-muted-foreground' : undefined}>
             {form.value}
             {form.kind === 'reading' ? (
-              <RomajiLine romaji={romaji(form.value)} className="ml-1 text-base" />
+              <RomajiLine romaji={romaji(form.value)} className="ml-1 inline text-base" />
             ) : null}
             {labels ? (
               <span lang={locale === 'ja' ? undefined : locale} className="text-sm">
@@ -277,7 +277,7 @@ function WordPageSection({
                 ) : (
                   <RubyText segments={related.ruby} className="text-lg font-medium" />
                 )}
-                <RomajiLine romaji={romaji(related.reading)} className="block text-sm" />
+                <RomajiLine romaji={romaji(related.reading)} className="text-sm" />
                 <p className="text-sm text-muted-foreground">
                   {coreText(related.relation, locale)}
                   {glossSeparator}

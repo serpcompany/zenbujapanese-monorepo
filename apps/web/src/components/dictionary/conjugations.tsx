@@ -61,9 +61,9 @@ export function ConjugatedFormContent({
             highlightedEnding={row.ending}
             className="text-4xl font-medium leading-tight"
           />
-          <RomajiLine romaji={row.romaji} className="block text-base" />
+          <RomajiLine romaji={row.romaji} className="text-base" />
           {row.reading === row.surface ? null : (
-            <ReadingLine reading={row.reading} className="block text-xl" />
+            <ReadingLine reading={row.reading} className="text-xl" />
           )}
         </div>
         <PronounceButton text={row.reading} label={row.pronounce} unsupported={unsupported} />
@@ -178,7 +178,7 @@ function ConjugatedFormDisclosure({
                   highlightedEnding={row.ending}
                   highlightsKanji={false}
                 />
-                <RomajiLine romaji={row.romaji} className="block text-right text-sm" />
+                <RomajiLine romaji={row.romaji} className="text-right text-sm" />
               </>
             ) : (
               <EndingText surface={row.surface} ending={row.ending} />

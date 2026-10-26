@@ -47,10 +47,8 @@ export function WordHeader({
                 className="block text-5xl font-medium leading-tight"
               />
             </h1>
-            <RomajiLine romaji={romaji(reading)} className="block text-base" />
-            {reading === headword ? null : (
-              <ReadingLine reading={reading} className="block text-2xl" />
-            )}
+            <RomajiLine romaji={romaji(reading)} className="text-base" />
+            {reading === headword ? null : <ReadingLine reading={reading} className="text-2xl" />}
           </div>
           {pitch ? (
             <PitchAccent

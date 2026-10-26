@@ -204,7 +204,7 @@ export interface RenderedExample {
 }
 
 const exampleToken =
-  /(<a([^>]*)>)?(?:<span data-aid-word="">)?(?:<span>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/span>){0,2}(?:<\/a>)?/g
+  /(<a([^>]*)>)?(?:<span>){0,2}<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/span>){0,2}(?:<\/a>)?/g
 
 function renderedExample(pairId: string, item: string): RenderedExample {
   const sentence =
