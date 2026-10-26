@@ -25,7 +25,7 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/account-api packages/node-service apps/web/src
+            apps/account-api packages/account-rules packages/node-service apps/web/src
             apps/web/e2e/account-service.spec.ts apps/web/e2e/test.ts apps/web/next.config.ts
             apps/web/package.json apps/web/playwright.config.ts apps/web/wrangler.jsonc
             apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
@@ -68,6 +68,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ github.token }}
       - name: Check what the services share
         run: pnpm --filter @zenbu/node-service check
+      - name: Check the account rules
+        run: pnpm --filter @zenbu/account-rules check
       - name: Check the service, against Postgres 18
         working-directory: apps/account-api
         run: pnpm check

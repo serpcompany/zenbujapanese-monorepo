@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { recentOrderCases } from '@zenbu/account-rules/test/cases'
 import pg from 'pg'
 import { describe, expect, test, vi } from 'vitest'
 import { migrationsFolder as migrations } from '../config'
@@ -140,6 +141,46 @@ describe('Postgres, through the driver the service runs', () => {
       await done()
     }
   )
+
+  test('prunes videos watched at the same time in the shared order, whatever the collation', async () => {
+    const { database, raw, id, done } = await anAccount('watch-ties')
+    const { videos } = recentOrderCases
+    await raw.query(
+      "insert into watched_videos (user_id, video_id, watched_at, status, version) select $1, 'later' || lpad(n::text, 6, '0'), timestamptz '2026-10-01T00:00:00Z' + n * interval '1 second', 'watched', 1 from generate_series(1, 50 - $3::int) as n union all select $1, tied, timestamptz '2000-01-01T00:00:01Z', 'watched', 1 from unnest($2::text[]) as tied",
+      [id, videos.ids, videos.ids.length]
+    )
+    const accounts = createAccounts(
+      accountStore(database.db),
+      cursors(cursorKey('test')),
+      searchKeys('test')
+    )
+    const pruned: string[] = []
+    for (const n of videos.ids.keys()) {
+      await accounts.sync(
+        id,
+        {
+          mutations: [
+            {
+              id: `tie-${n}`,
+              entity: 'watchedVideo',
+              operation: 'watch',
+              entityId: `newer${String(n).padStart(6, '0')}`,
+              baseVersion: 0,
+              fields: { watchedAt: new Date(Date.UTC(2026, 9, 2) + n * 1000).toISOString() }
+            }
+          ]
+        },
+        everyScope
+      )
+      const gone = await raw.query(
+        "select video_id from watched_videos where user_id = $1 and status = 'pruned' and not video_id = any($2)",
+        [id, pruned]
+      )
+      pruned.push(...gone.rows.map(row => row.video_id))
+    }
+    expect(pruned).toEqual([...videos.newestFirst].reverse())
+    await done()
+  })
 
   test.skipIf(realPostgres === '')(
     'keeps one file when one photo is uploaded several times at once, and deletes the other copies',

@@ -19,7 +19,7 @@ extension AccountSync {
       SavedItemChange.bookmarkAdded($0.shared)
     }
     let kept = await keptUploads(withProfilePhoto: !state.takesAccountProfile)
-    return marks + lists + words + videos + bookmarks + kept
+    return SavedItemChange.forTheAccount(marks + lists + words + videos + bookmarks + kept)
   }
 
   func catchUpOnNewEntities() async {
@@ -197,7 +197,9 @@ extension AccountSyncState {
   mutating func forgetRefusal(of change: SavedItemChange) {
     guard case .kept(let kept) = change else { return }
     switch kept.key.entity {
-    case SyncEntity.wordNote: refusedNotes.removeAll { $0 == kept.key.entityID }
+    case SyncEntity.wordNote:
+      refusedNotes.removeAll { $0 == kept.key.entityID }
+      longNotes.removeAll { $0 == kept.key.entityID }
     case SyncEntity.photo where kept.operation == "delete": refusedPhotos[kept.key.entityID] = nil
     case SyncEntity.profilePhoto: refusedProfilePhoto = nil
     default: return

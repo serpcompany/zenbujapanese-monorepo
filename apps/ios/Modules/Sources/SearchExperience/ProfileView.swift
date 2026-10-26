@@ -253,9 +253,10 @@ struct ProfileView: View {
     switch field {
     case .name:
       if let edited = name.unfocus() {
-        let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
-        if accountEmail == nil || UserProfile.isAccountName(trimmed) {
-          profile.edit(ProfileFields(name: trimmed))
+        if accountEmail == nil {
+          profile.edit(ProfileFields(name: edited.trimmingCharacters(in: .whitespacesAndNewlines)))
+        } else if let accepted = AccountRules.shared.name(edited) {
+          profile.edit(ProfileFields(name: accepted))
         } else {
           showsNameError = true
         }

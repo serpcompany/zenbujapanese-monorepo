@@ -1,3 +1,11 @@
+import {
+  accountName,
+  accountUsername,
+  nameRule,
+  profileLimits,
+  usernameRule
+} from '@zenbu/account-rules/profile'
+
 export interface Profile {
   id: string
   name: string
@@ -37,11 +45,7 @@ export type RejectionCode =
   | 'unknown_setting'
   | 'not_allowed'
 
-export const profileLimits = { nameLength: 100, usernameLength: { min: 3, max: 30 } } as const
-
-const { min, max } = profileLimits.usernameLength
-const usernamePattern = new RegExp(`^[a-z0-9_]{${min},${max}}$`)
-const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
+export { profileLimits }
 
 export const rejection = (code: RejectionCode, message: string): Rejection => ({ code, message })
 
@@ -50,29 +54,14 @@ export const isRejection = (value: unknown): value is Rejection =>
 
 export function normalizeName(raw: unknown): string | Rejection {
   if (typeof raw !== 'string') return rejection('invalid_fields', 'A name must be text.')
-  const name = raw.normalize('NFC').trim().replace(/\s+/gu, ' ')
-  const length = [...name].length
-  if (length === 0 || length > profileLimits.nameLength || controlCharacters.test(name)) {
-    return rejection(
-      'invalid_fields',
-      `A name is 1 to ${profileLimits.nameLength} characters, with no control characters.`
-    )
-  }
-  return name
+  return accountName(raw) ?? rejection('invalid_fields', nameRule)
 }
 
 export function normalizeUsername(raw: unknown): string | null | Rejection {
   if (raw === null) return null
   if (typeof raw !== 'string')
     return rejection('invalid_fields', 'A username must be text, or null to remove it.')
-  const username = raw.normalize('NFKC').trim().toLowerCase()
-  if (!usernamePattern.test(username)) {
-    return rejection(
-      'invalid_fields',
-      `A username is ${min} to ${max} letters a to z, digits, or underscores.`
-    )
-  }
-  return username
+  return accountUsername(raw) ?? rejection('invalid_fields', usernameRule)
 }
 
 const editable = new Set(['name', 'username'])

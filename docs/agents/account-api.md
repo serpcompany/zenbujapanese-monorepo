@@ -107,16 +107,17 @@ in 10 minutes, from any address, counting only codes sent; the next gets `429 to
 with `Retry-After` and `X-Retry-After`, the seconds until one ages out. The apps' side, and how to
 add one, is the [client guide](account-clients.md).
 
-`/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as
-`Authorization: Bearer <token>`, checked against the service's own JWKS. They refuse the session
-token, so the long-lived token only ever goes to `/v1/auth`, and they answer every refusal alike:
-`401 unauthorized`, with `WWW-Authenticate: Bearer`. Their bodies, and those sent to `/v1/auth`,
-are at most 64 KB (`413 too_large`), a photo's file 12 MB. Each account may send 60 requests a
-minute to `/v1/me`, 120 to `/v1/sync`, and 300 to `/v1/photos` from each app, and each app 30,000 a minute from all its accounts together
-(`429 too_many_requests`, with `Retry-After`), counted in each slot's memory, so an app stuck in a
-loop, or a stolen access token, can't flood the service. A browser can call the
-service only from the origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`,
-and lets the page read `Retry-After` and Better Auth's `X-Retry-After`.
+`/v1/me` and `/v1/sync` take only an access token from `GET /v1/auth/token`, as `Authorization:
+Bearer <token>`, checked against its own JWKS by the check the two services share
+(`packages/node-service`). They refuse the session token, so the long-lived token only ever goes to
+`/v1/auth`, and they answer every refusal alike: `401 unauthorized`, with `WWW-Authenticate:
+Bearer`. Their bodies, and those sent to `/v1/auth`, are at most 64 KB (`413 too_large`), a photo's
+file 12 MB. Each account may send 60 requests a minute to `/v1/me`, 120 to `/v1/sync`, and 300 to
+`/v1/photos` from each app, and each app 30,000 a minute from all its accounts together (`429
+too_many_requests`, with `Retry-After`), counted in each slot's memory, so an app stuck in a loop,
+or a stolen access token, can't flood the service. A browser can call the service only from the
+origins in `ACCOUNT_API_TRUSTED_ORIGINS`: CORS names each one, never `*`, and lets the page read
+`Retry-After` and Better Auth's `X-Retry-After`.
 
 **The contract** for every route above is
 [`apps/account-api/openapi.json`](../../apps/account-api/openapi.json), OpenAPI 3.1, and its
@@ -213,8 +214,8 @@ decides what a stale one does ([`account-entities.md`](account-entities.md) has 
 profile's). `PATCH /v1/me` and a sync mutation change the profile through the same rule:
 
 - **A name** is 1 to 100 characters once trimmed, with runs of spaces made one and no control or
-  invisible format characters, kept in Unicode NFC. A name given at sign-up, by the learner or by
-  Apple or Google, is held to the same rule, and is left empty if it fails it. So is a picture's
+  invisible format character (a byte order mark inside one too), in NFC. A name from sign-up, the
+  learner's or Apple's or Google's, is held to it, and left empty if it fails, as is a picture's
   address, which must be `https` and at most 2,048 characters, or is left out.
 - **A username** is 3 to 30 letters a to z, digits, or underscores, after Unicode NFKC, trimming,
   and lowercasing (`Kana_Fan` is `kana_fan`), unique across accounts, or `null`.
@@ -323,7 +324,8 @@ belongs; tests may import anything.
   check the other routes use (`access-tokens.ts`). It imports nothing of the HTTP layer.
 - **`src/email`** writes and sends a message, and imports neither sign-in, the database, nor HTTP.
 - **`src/domain`** holds the account's rules: the apps and their scopes (`clients.ts`), a
-  profile's fields, each synced entity's rule, versions and conflicts, the cursor, and the results
+  profile's fields and each synced entity's rule (each field's from `packages/account-rules`,
+  [`account-rules.md`](account-rules.md)), versions and conflicts, the cursor, and the results
   kept by mutation ID. It works through the store it's handed
   (`store.ts`), so it imports no other layer, nor Hono, nor a database driver.
 - **`src/db`** is the database layer: Drizzle ORM over `pg`, the schema, the migrations, and the
@@ -453,9 +455,8 @@ offline changes on each until they hold the same state as a new device. `src/htt
 holds each app to its scopes: only `zenbu-ios` reads or changes watch history, bookmarks, notes,
 photos, settings, and recent searches.
 
-The domain's own tests (`src/domain/`) cover the name and username rules and the cursor. The
-username's cases are `src/domain/username-cases.json`, beside the rule, which the app's
-`UserProfileTests`, run by hand, read too. `src/db/database.test.ts` covers the journal's trigger
+The domain's tests replay the account rules' name and username cases and cover the cursor.
+`src/db/database.test.ts` covers the journal's trigger
 and backfill, the sync tables' rules, and fencing two restored copies of one backup; and
 `src/http/openapi.test.ts` keeps `openapi.json` and the API reference in step with the routes and
 checks each route's scope, `src/http/sync-entities.test.ts` sends each documented sync example, and

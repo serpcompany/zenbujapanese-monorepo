@@ -52,6 +52,7 @@ let package = Package(
       exclude: ["RankedLists.sqlite3"],
       sources: ["DictionaryData.swift"],
       resources: [
+        .process("AccountRules"),
         .process("CompoundPitch.sqlite3"),
         .process("DAKANJI-MIT.txt"),
         .process("DaKanji.mlpackage"),

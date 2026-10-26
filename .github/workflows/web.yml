@@ -24,7 +24,8 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/web packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
+            apps/web packages/dictionary-core packages/account-rules package.json pnpm-lock.yaml
+            pnpm-workspace.yaml
             .node-version tools/checks/ports.mjs .github/workflows/web.yml
             .github/actions/changed-paths
 

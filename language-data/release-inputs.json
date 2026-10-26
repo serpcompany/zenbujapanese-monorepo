@@ -93,6 +93,10 @@
       "why": "The Swift source the folder needs to be its own package target, which only the app links (ADR 0017)."
     },
     {
+      "path": "resources/AccountRules",
+      "why": "The app's bundle of the account rules, built from packages/account-rules."
+    },
+    {
       "path": "resources/DictionaryCore",
       "why": "The app's bundle of the shared core, built from packages/dictionary-core."
     },

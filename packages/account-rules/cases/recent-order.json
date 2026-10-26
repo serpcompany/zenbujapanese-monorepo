@@ -1,0 +1,27 @@
+{
+  "kept": 50,
+  "rule": "Newest first; at the same time, the greater ID first, compared by code point. The account prunes the last.",
+  "videos": {
+    "ids": [
+      "Zzzzzzzzzzz",
+      "aaaaaaaaaaa",
+      "-aaaaaaaaaa",
+      "_aaaaaaaaaa",
+      "0aaaaaaaaaa",
+      "Aaaaaaaaaaa"
+    ],
+    "newestFirst": [
+      "aaaaaaaaaaa",
+      "_aaaaaaaaaa",
+      "Zzzzzzzzzzz",
+      "Aaaaaaaaaaa",
+      "0aaaaaaaaaa",
+      "-aaaaaaaaaa"
+    ]
+  },
+  "searches": {
+    "searchKey": "0000000000000000000000000000000000000000000000000000000000000000",
+    "queries": ["b", "a", "c", "日本", "A", "食べる"],
+    "newestFirst": ["食べる", "c", "a", "A", "日本", "b"]
+  }
+}

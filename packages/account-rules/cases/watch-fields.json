@@ -1,0 +1,46 @@
+{
+  "textLength": 200,
+  "texts": [
+    { "covers": "a title", "typed": "A title", "sent": "A title" },
+    { "covers": "spaces around it", "typed": "  A title  ", "sent": "A title" },
+    { "covers": "a control character, made a space", "typed": "A\u0000title", "sent": "A title" },
+    {
+      "covers": "two hundred letters, the most",
+      "typed": { "text": "x", "times": 200 },
+      "sent": { "text": "x", "times": 200 }
+    },
+    {
+      "covers": "two hundred and one letters, cut",
+      "typed": { "text": "x", "times": 201 },
+      "sent": { "text": "x", "times": 200 }
+    },
+    {
+      "covers": "two hundred and one emoji, cut by characters",
+      "typed": { "text": "😀", "times": 201 },
+      "sent": { "text": "😀", "times": 200 }
+    },
+    {
+      "covers": "a cut that ends on a space",
+      "typed": { "text": "x", "times": 199, "after": " x" },
+      "sent": { "text": "x", "times": 199 }
+    },
+    { "covers": "only spaces, left out", "typed": "   ", "sent": null },
+    { "covers": "nothing, left out", "typed": "", "sent": null }
+  ],
+  "numbers": [
+    { "covers": "no time", "field": "duration", "value": 0, "fits": true },
+    {
+      "covers": "ten million seconds, the most",
+      "field": "duration",
+      "value": 10000000,
+      "fits": true
+    },
+    { "covers": "one second more", "field": "duration", "value": 10000001, "fits": false },
+    { "covers": "a negative position", "field": "position", "value": -1, "fits": false },
+    { "covers": "a fraction of a second", "field": "position", "value": 3600.5, "fits": true },
+    { "covers": "no words known", "field": "comprehension", "value": 0, "fits": true },
+    { "covers": "every word known", "field": "comprehension", "value": 1, "fits": true },
+    { "covers": "more than every word", "field": "comprehension", "value": 1.01, "fits": false },
+    { "covers": "less than none", "field": "comprehension", "value": -0.1, "fits": false }
+  ]
+}

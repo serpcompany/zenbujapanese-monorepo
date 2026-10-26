@@ -67,22 +67,53 @@ actor RecentSearchHistory {
   func applySynced(_ synced: [KeptSearch], removing gone: [String], under key: String) {
     let removed = Set(gone)
     let kept = searches().filter { !removed.contains(KeptChanges.searchID($0.query, under: key) ?? "") }
-    write(synced.reduce(kept) { placing($1, in: $0) })
+    let ids = TieBreakingIDs(key: key)
+    write(synced.reduce(kept) { placing($1, in: $0, ids: ids) })
   }
 
-  private func placing(_ search: KeptSearch, in searches: [KeptSearch]) -> [KeptSearch] {
+  private func placing(
+    _ search: KeptSearch, in searches: [KeptSearch], ids: TieBreakingIDs? = nil
+  ) -> [KeptSearch] {
     let earlier = searches.first { $0.query == search.query }
     let latest = max(search.searchedAt, earlier?.searchedAt ?? search.searchedAt)
     let others = searches.filter { $0.query != search.query }
-    return Array(
-      (others + [KeptSearch(query: search.query, searchedAt: latest)])
-        .sorted { $0.searchedAt > $1.searchedAt }
-        .prefix(Self.kept))
+    var placed = (others + [KeptSearch(query: search.query, searchedAt: latest)])
+      .sorted { $0.searchedAt > $1.searchedAt }
+    ids?.breakTies(in: &placed)
+    return Array(placed.prefix(Self.kept))
   }
 
   private func write(_ searches: [KeptSearch]) {
     defaults.set(searches.map(\.query), forKey: storageKey)
     defaults.set(
       Dictionary(searches.map { ($0.query, $0.searchedAt) }) { first, _ in first }, forKey: timesKey)
+  }
+}
+
+private final class TieBreakingIDs {
+  private let key: String
+  private var known: [String: String] = [:]
+
+  init(key: String) {
+    self.key = key
+  }
+
+  func breakTies(in searches: inout [KeptSearch]) {
+    var start = searches.startIndex
+    while start < searches.endIndex {
+      var end = start + 1
+      while end < searches.endIndex, searches[end].searchedAt == searches[start].searchedAt {
+        end += 1
+      }
+      if end - start > 1 { searches[start..<end].sort { id(of: $0.query) > id(of: $1.query) } }
+      start = end
+    }
+  }
+
+  private func id(of query: String) -> String {
+    if let id = known[query] { return id }
+    let id = KeptChanges.searchID(query, under: key) ?? ""
+    known[query] = id
+    return id
   }
 }
