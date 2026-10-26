@@ -7,12 +7,16 @@ import { root } from './files'
 
 const path = '.github/workflows/ios.yml'
 const workflow = readWorkflow(path)
-const runs = workflowSteps(path, 'swift').map(step =>
-  (step.run ?? '').replace(/\\\n\s*/g, '').trimEnd()
-)
+const swiftSteps = workflowSteps(path, 'swift')
+const runs = swiftSteps.map(step => (step.run ?? '').replace(/\\\n\s*/g, '').trimEnd())
+const results = '$RUNNER_TEMP/ios-results'
+const keptOutput = new RegExp(` 2>&1 \\| tee "\\${results}/([\\w-]+)\\.log"$`)
+const commandOf = (run: string) => run.replace(keptOutput, '')
 
 function runsCommand(ending: string, ...parts: string[]): boolean {
-  return runs.some(run => run.endsWith(ending) && parts.every(part => run.includes(part)))
+  return runs.some(
+    run => commandOf(run).endsWith(ending) && parts.every(part => commandOf(run).includes(part))
+  )
 }
 
 describe('the iOS workflow', () => {
@@ -62,7 +66,7 @@ describe('the iOS workflow', () => {
     expect(
       runs.findIndex(run => /\b(xcodebuild|xcrun|swift|simulator\.py)\b/.test(run))
     ).toBeGreaterThan(select)
-    const made = runs.find(run => run.includes('>>"$GITHUB_ENV"')) ?? ''
+    const made = runs.find(run => run.includes('simulator.py') && run.includes('$GITHUB_ENV')) ?? ''
     expect(made).toContain('simulator=$(python3 apps/ios/Tools/simulator.py)')
     expect(made).toContain('ipad=$(python3 apps/ios/Tools/simulator.py --device ipad)')
     expect(made).toContain('SIMULATOR=%s\\nIPAD_SIMULATOR=%s\\n')
@@ -85,5 +89,36 @@ describe('the iOS workflow', () => {
       runsCommand(' CODE_SIGN_ENTITLEMENTS= test', app, uiTestBuild, 'platform=macOS,arch=arm64')
     ).toBe(true)
     expect(runs).toContain('sudo automationmodetool enable-automationmode-without-authentication')
+  })
+
+  test("keeps every test run's output, and each xcodebuild run's result bundle, in one folder", () => {
+    const tests = runs.filter(run => /^(xcodebuild|swift)\b.* test\b/.test(run))
+    expect(tests).toHaveLength(7)
+    const named = tests.map(run => keptOutput.exec(run)?.[1])
+    expect(named).not.toContain(undefined)
+    expect(new Set(named).size).toBe(7)
+    for (const [index, run] of tests.entries()) {
+      if (!run.startsWith('xcodebuild')) continue
+      expect(run).toContain(`-resultBundlePath "${results}/${named[index]}.xcresult"`)
+    }
+    const made = runs.indexOf(`mkdir -p "${results}"`)
+    expect(made).toBeGreaterThan(-1)
+    expect(made).toBeLessThan(runs.indexOf(tests[0]))
+  })
+
+  test('runs its steps in bash with pipefail, so a test run that fails still fails through tee', () => {
+    expect(workflow.jobs.swift?.defaults?.run?.shell).toBe('bash')
+    expect(swiftSteps.every(step => step.shell === undefined)).toBe(true)
+  })
+
+  test('keeps that folder as an artifact for a week, whether the tests passed or failed', () => {
+    const kept = swiftSteps.at(-1)
+    expect(kept?.uses).toMatch(/^actions\/upload-artifact@[0-9a-f]{40}$/)
+    expect(kept?.if).toBe('always()')
+    expect(kept?.with).toEqual({
+      name: 'ios-results',
+      path: '${{ runner.temp }}/ios-results',
+      'retention-days': 7
+    })
   })
 })

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: github.event_name == 'pull_request'
         with:
           sparse-checkout: tools/checks/pull-request.mjs
@@ -33,6 +33,25 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: node tools/checks/pull-request.mjs title
 
+  branch:
+    if: >-
+      github.event_name != 'pull_request' ||
+      !contains(fromJSON('["claude[bot]","dependabot[bot]","renovate[bot]"]'), github.event.pull_request.user.login)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        if: github.event_name == 'pull_request'
+        with:
+          sparse-checkout: tools/checks/pull-request.mjs
+          sparse-checkout-cone-mode: false
+      - name: The branch is named for its type and its work
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node tools/checks/pull-request.mjs branch
+
   issue-link:
     if: >-
       github.event_name != 'pull_request' ||
@@ -40,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: github.event_name == 'pull_request'
         with:
           sparse-checkout: tools/checks/pull-request.mjs
@@ -62,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         if: github.event_name == 'pull_request'
         with:
           sparse-checkout: tools/checks/pull-request.mjs
