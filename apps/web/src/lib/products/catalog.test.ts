@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
+import { locales } from '@/lib/i18n/config'
 import { sitePaths } from '@/lib/pages'
-import { linkTo } from '@/lib/site'
+import { linkTo, placeholderHref } from '@/lib/site'
+import { footerColumnsIn } from '@/lib/site-footer'
+import { drawerLinks } from '@/lib/site-menu-links'
+import { siteMenusIn } from '@/lib/site-menus'
 import { type ProductFilter, productFilterFrom, productFilterPath, productShown } from './catalog'
 import { catalogIn } from './localized-catalog'
 import { iphoneAppPageIn, iphoneAppPath } from './zenbu-japanese-for-iphone'
@@ -93,6 +97,32 @@ test('a product without a page of its own is coming soon, and the others link to
     expect(product.href).toMatch(/^\/ja\/(dictionary\/(browse\/[a-z-]+\/)?|tools\/)$/)
   }
   expect(products.find(product => product.id === 'converters')?.href).toBe('/tools/')
+})
+
+test.each(
+  locales
+)('the %s menus and footer name and link each product as the catalog does', locale => {
+  const catalog = catalogIn(locale)
+  const links = [
+    ...siteMenusIn(locale).flatMap(menu => (menu.kind === 'mega' ? drawerLinks(menu) : [])),
+    ...footerColumnsIn(locale).flatMap(column => column.links)
+  ]
+  const named = (title: string) => links.filter(link => link.title === title)
+  expect(named(catalog.featuredApp.title).map(link => link.href)).toEqual([
+    catalog.featuredApp.page.href,
+    catalog.featuredApp.page.href
+  ])
+  const listed = catalog.products.filter(product => named(product.title).length > 0)
+  expect(listed.map(product => product.id)).toEqual([
+    'browser-extension',
+    'dictionary',
+    'kana-charts',
+    'kanji-lists',
+    'frequency-lists'
+  ])
+  for (const product of listed) {
+    for (const link of named(product.title)) expect(link.href).toBe(product.href ?? placeholderHref)
+  }
 })
 
 test('the iPhone app’s page links its question and related products in its own language', () => {
