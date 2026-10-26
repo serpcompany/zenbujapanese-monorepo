@@ -12,7 +12,9 @@ export const test = base.extend<{ allowedConsoleErrors: RegExp[]; consoleErrors:
     async ({ page, allowedConsoleErrors }, use) => {
       const errors: string[] = []
       page.on('console', message => {
-        if (message.type() === 'error') errors.push(message.text())
+        if (message.type() !== 'error') return
+        const { url } = message.location()
+        errors.push(url ? `${message.text()} at ${url}` : message.text())
       })
       page.on('pageerror', error => errors.push(`${error.name}: ${error.message}`))
       await use(errors)
