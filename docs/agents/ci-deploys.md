@@ -194,8 +194,8 @@ on the Python `rebuild_language_data.py` pins (`UV_PYTHON`). It:
    the pull request, whose Status lists what a person does on a Mac before it merges.
 
 - **The job's own token opens the pull request.** No agent identity works in a job that runs no
-  Claude: `claude[bot]`, which opens the gardening jobs' pull requests, is Claude's action's, and
-  `serp-agent[bot]` is for agents on a person's machine ([`ci-agents.md`](ci-agents.md)). So the
+  Claude: `claude[bot]` is Claude's action's (the gardening jobs, too, open theirs with the job's
+  token), and `serp-agent[bot]` is for agents on a person's machine ([`ci-agents.md`](ci-agents.md)). So the
   repository must let GitHub Actions create pull requests (Settings → Actions → General → Workflow
   permissions); otherwise the run fails once the branch is pushed, and says how to finish. GitHub
   runs no workflow for a pull request a workflow's token opened, so its checks and review start with
