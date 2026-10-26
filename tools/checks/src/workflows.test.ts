@@ -67,7 +67,7 @@ describe('the workflows a merge can be made to wait for', () => {
 
   test('the pull request rules pass in the merge queue without running', () => {
     const workflow = readWorkflow('.github/workflows/pull-request.yml')
-    expect(Object.keys(workflow.jobs)).toEqual(['title', 'issue-link', 'fix-test'])
+    expect(Object.keys(workflow.jobs)).toEqual(['title', 'branch', 'issue-link', 'fix-test'])
     for (const job of Object.values(workflow.jobs)) {
       for (const step of job.steps ?? [])
         expect(step.if).toBe("github.event_name == 'pull_request'")
@@ -153,6 +153,7 @@ describe('whose pull requests the rules and the review check', () => {
   test.each(checked)('checks a pull request %s opened, and starts its review', author => {
     expect(opened(rules, author)).toEqual({
       title: 'success',
+      branch: 'success',
       'issue-link': 'success',
       'fix-test': 'success'
     })
@@ -160,13 +161,18 @@ describe('whose pull requests the rules and the review check', () => {
   })
 
   test.each(unchecked)('leaves a pull request %s opened to the person who skims it', author => {
-    expect(Object.values(opened(rules, author))).toEqual(['skipped', 'skipped', 'skipped'])
+    expect(Object.values(opened(rules, author))).toEqual([
+      'skipped',
+      'skipped',
+      'skipped',
+      'skipped'
+    ])
     expect(opened(review, author).changes).toBe('skipped')
   })
 
   test.each(unchecked)('passes %s in the merge queue, whose event names no author', author => {
     const results = opened(rules, author, { event: 'merge_group' })
-    expect(Object.values(results)).toEqual(['success', 'success', 'success'])
+    expect(Object.values(results)).toEqual(['success', 'success', 'success', 'success'])
   })
 
   test('reviews no draft, whoever opened it', () => {

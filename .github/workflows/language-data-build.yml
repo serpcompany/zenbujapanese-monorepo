@@ -27,7 +27,7 @@ jobs:
     outputs:
       changed: ${{ steps.paths.outputs.changed }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - id: paths
         uses: ./.github/actions/changed-paths
         with:
@@ -44,8 +44,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version-file: .python-version
       - name: Check the committed files against the pinned manifest
@@ -68,7 +68,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: ./.github/actions/package-language-data
         with:
           out: ${{ runner.temp }}/language-data
@@ -78,7 +78,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/language-data-summary"
           cp manifest.json "$RUNNER_TEMP/language-data-summary/"
           find files -type f -printf '%s\t%p\n' | LC_ALL=C sort -k2 > "$RUNNER_TEMP/language-data-summary/files.tsv"
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: language-data-manifest-${{ github.sha }}
           path: ${{ runner.temp }}/language-data-summary

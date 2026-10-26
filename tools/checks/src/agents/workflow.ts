@@ -31,6 +31,7 @@ interface Job {
   permissions?: Record<string, string>
   outputs?: Record<string, string>
   env?: Record<string, string>
+  defaults?: { run?: { shell?: string } }
   steps?: Step[]
 }
 

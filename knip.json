@@ -27,7 +27,13 @@
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["pull-request.mjs", "ports.mjs", "review-context.mjs", "review-dry-run.mjs"]
+      "entry": [
+        "pull-request.mjs",
+        "migrations.mjs",
+        "ports.mjs",
+        "review-context.mjs",
+        "review-dry-run.mjs"
+      ]
     }
   }
 }

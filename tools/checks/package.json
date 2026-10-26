@@ -2,7 +2,7 @@
   "name": "zenbujapanese-checks",
   "version": "0.0.0",
   "private": true,
-  "description": "This repository's own checks and tools, beside the shared ones that @serpcompany/verify runs: the tests that hold the workflows, git hooks, agent settings, and the server's deployer to their rules, the port claims, the pull request checks, the code review's scripts, and the weekly maintenance report.",
+  "description": "This repository's own checks and tools, beside the shared ones that @serpcompany/verify runs: the tests that hold the workflows, git hooks, agent settings, and the server's deployer to their rules, the port claims, the pull request checks, the account migration check, the code review's scripts, and the weekly maintenance report.",
   "type": "module",
   "scripts": {
     "report": "tsx src/report.ts",
