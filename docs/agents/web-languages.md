@@ -39,7 +39,11 @@ command from `apps/web`.
   namespace per area (`chrome`, `menus`, `footer`, `pages`, `home`, `products`, …).
   `getDictionary(locale)` returns `en.json`'s type, so a key missing from `ja.json` fails `tsc`.
   Server components load it; a client component gets the strings it shows from its server parent
-  (typed `Dictionary['<namespace>']`), never the dictionary.
+  (typed `Dictionary['<namespace>']`), never the dictionary. A client component imports only
+  modules that don't read it, such as `src/lib/site-menu-links.ts` rather than
+  `src/lib/site-menus.ts`, which builds the menus: Turbopack can keep a module's imports in the
+  browser's JavaScript even when the browser runs none of it, and the `Web` workflow fails when a
+  page's JavaScript holds either dictionary ([`ci.md`](ci.md), Web).
 - **Templates, not fragments:** `fill` and `countOf` in `src/lib/i18n/format.ts` (plurals keyed
   by CLDR category, numbers and dates through `Intl`), and `<Fill>` (`src/components/fill.tsx`)
   for a sentence with a link in it.

@@ -29,12 +29,8 @@ import { useMediaQuery } from '@/hooks/use-media-query'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { site } from '@/lib/site'
-import {
-  drawerLinks,
-  isCurrentPage,
-  isCurrentSection,
-  type SiteMenu as Menu
-} from '@/lib/site-menus'
+import { drawerLinks, isCurrentPage, isCurrentSection } from '@/lib/site-menu-links'
+import type { SiteMenu as Menu } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
 function useMenuOpenOnThisPage() {

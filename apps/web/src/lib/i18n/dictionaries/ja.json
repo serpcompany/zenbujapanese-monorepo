@@ -872,9 +872,6 @@
     "company": "会社情報",
     "legal": "規約",
     "dictionary": "辞書",
-    "kanaCharts": "五十音表",
-    "kanjiLists": "漢字リスト",
-    "frequencyLists": "頻出語リスト",
     "allTools": "すべてのツール",
     "dmca": "DMCA著作権ポリシー",
     "sitemap": "サイトマップ",
@@ -1065,7 +1062,6 @@
     }
   },
   "menus": {
-    "iphoneApp": "iPhone版 Zenbu Japanese",
     "dictionary": {
       "label": "辞書",
       "link": {
@@ -1122,16 +1118,13 @@
       },
       "reference": "資料",
       "kanaCharts": {
-        "title": "五十音表",
         "description": "ひらがなとカタカナ"
       },
       "lists": "リスト",
       "kanjiLists": {
-        "title": "漢字リスト",
         "description": "学年別、JLPT、人名用漢字"
       },
       "frequencyLists": {
-        "title": "頻出語リスト",
         "description": "JLPT、YouTube、アニメ"
       },
       "converters": "変換ツール",
@@ -1159,30 +1152,15 @@
         "action": "アプリを入手"
       },
       "apps": "アプリ",
-      "iphoneApp": {
-        "description": "辞書・画像検索・翻訳・プレイヤー"
-      },
-      "browserExtension": {
-        "title": "ブラウザ拡張機能",
-        "description": "どのウェブページでも日本語を調べられる"
-      },
       "free": "無料",
-      "dictionary": {
-        "title": "{name} 和英辞典",
-        "description": "ウェブで無料"
-      },
-      "freeTools": {
-        "title": "無料ツール",
-        "description": "かな・漢字・頻出語のリスト"
-      },
       "learn": "学ぶ",
-      "referenceGuides": {
-        "title": "学習ガイド",
-        "description": "印刷できるシート"
-      },
-      "courses": {
-        "title": "講座",
-        "description": "実際の映像から作ったレッスン"
+      "lines": {
+        "app": "辞書・画像検索・翻訳・プレイヤー",
+        "browser-extension": "どのウェブページでも日本語を調べられる",
+        "dictionary": "ウェブで無料",
+        "free-tools": "かな・漢字・頻出語のリスト",
+        "reference-guides": "印刷できるシート",
+        "courses": "実際の映像から作ったレッスン"
       },
       "footer": {
         "note": "アプリ、拡張機能、無料ツール、ガイド、講座。",
@@ -1612,6 +1590,7 @@
       "comingSoon": "近日公開"
     },
     "featuredApp": {
+      "title": "iPhone版 Zenbu Japanese",
       "tags": {
         "platform": "iPhone",
         "offline": "オフライン対応"

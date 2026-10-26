@@ -3,7 +3,8 @@ import { searchPath } from '@/lib/dictionary/urls'
 import type { Locale } from '@/lib/i18n/config'
 import { localizedPath } from '@/lib/i18n/paths'
 import { placeholderHref } from '@/lib/site'
-import { drawerLinks, type MegaMenu, type SiteMenu, siteMenusIn } from '@/lib/site-menus'
+import { drawerLinks } from '@/lib/site-menu-links'
+import { type MegaMenu, type SiteMenu, siteMenusIn } from '@/lib/site-menus'
 
 const exampleQueries = [
   { query: '大丈夫', lang: 'ja' },

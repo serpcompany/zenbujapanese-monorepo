@@ -13,7 +13,12 @@ Abbreviations: Web paths are under `apps/web/`. **Products spec** and **Product 
 `e2e/products.spec.ts` and `e2e/product-page.spec.ts`, the browser tests of these pages at a
 desktop and a phone width, and **Claims spec** is `e2e/claims.spec.ts`. The catalog's data is in
 `src/lib/products/catalog.ts`, and the iPhone app's page's in
-`src/lib/products/zenbu-japanese-for-iphone.ts`.
+`src/lib/products/zenbu-japanese-for-iphone.ts`. The catalog is the site's one list of products:
+the header's Products and Tools menus and the footer take each product's name and page from it,
+so a product without its page yet is a `#` placeholder there while the catalog shows it as Coming
+soon ([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Placeholder links;
+`src/lib/products/catalog.test.ts`, "the … menus and footer name and link each product as the
+catalog does").
 
 ## Products catalog
 
