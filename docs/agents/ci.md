@@ -150,8 +150,8 @@ draws, so `src/lib/site.test.ts` checks its address with the account pages open 
 step, not the job, names `apps/web` as its working directory, because the dead-code check reads a
 step's working directory, not a job's, to find the scripts and binaries a step runs.
 
-Its `e2e` job starts once those checks pass (about 15 minutes of browser tests, behind about 1.5
-of checks). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
+Its `e2e` job starts once those checks pass (about 23 minutes of browser tests, behind about 1.5
+of checks, under a 35-minute limit). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once
