@@ -28,6 +28,7 @@ struct LiveConversationView: View {
       ConversationControlBar(session: session, experience: experience)
         .dynamicTypeSize(...DynamicTypeSize.large)
     }
+    .task { _ = await words.analysisClient.availability() }
     .onChange(of: session.conversation.spokenSentences.map(\.sentence), initial: true) {
       words.request(session.conversation.spokenSentences)
     }

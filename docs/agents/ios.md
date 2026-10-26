@@ -623,17 +623,17 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
   awaits Sudachi (`JapaneseMorphologyClient`), hands back its morphemes as Sudachi gives them, and
   the call goes on, the core choosing what to search; other lookups can run while it waits.
-- **Rows arrive linked.** Examples come a batch a call (`resultsExamples`, `entryExamples`,
-  `formExamples`: to the end of a page of 25, or fewer under a limit, `cutShort`), and captions,
-  an image's lines, and translated sentences a list of texts a call (`linkedTexts`), each word
-  with its place, entry or candidates and what a row shows of each (reading, summary, gloss),
-  furigana, and `accent`. A row (`LinkedJapaneseWords`) draws once, from that; a tapped word's entry
-  is read as it opens (`LinkedEntryReader`), since reading them all for the row took 2.7 ms per ten
-  new lines on a Mac, beside the core's 3.2 ms. `LoadedExamples` asks for the rows that fit the
-  window (`ExampleRowsOnScreen`), the rest of a page cut short, then the next page at the list's
-  end; Player lists captions as `LinkedLines` links them, the window's worth first, then 25 at a
-  time; Image Search links a page as it finds its words; Translate holds a sentence back until
-  `LinkedTexts` has linked it. Words live in those models, so a row scrolled back draws at once.
+- **Rows arrive linked.** Examples come a batch a call (`entryExamples` and its kin, to a page of
+  25's end, or fewer), and captions, an image's lines, and translated sentences a list of texts a
+  call (`linkedTexts`), each word with its place, entry or candidates and what a row shows of each
+  (reading, summary, gloss), furigana, and `accent`. A row (`LinkedJapaneseWords`) draws once, from
+  that; a tapped word's entry is read as it opens (`LinkedEntryReader`): reading them all took 2.7
+  ms per ten new lines on a Mac (the core: 3.2). `LoadedExamples` asks for the rows that fit the
+  window (`ExampleRowsOnScreen`), a page's rest, then the next page at the end; Player lists
+  captions as `LinkedLines` links them, the window's first, then 25 at a time; Image Search links a
+  page as it finds its words; Translate holds a sentence back until `LinkedTexts` links it. Player,
+  typed text, and a conversation ready the engine as they open (`availability`), as Image Search
+  does, so a first line needn't wait on the tokenizer. A row scrolled back draws at once.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
