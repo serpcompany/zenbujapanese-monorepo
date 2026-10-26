@@ -53,7 +53,7 @@ content-addressed, so an unchanged file keeps its object across releases. The ma
     - `plan`: the file declares none, so `release-inputs.json` names it without changing its
       bytes:
       - `LanguageReferenceData.sqlite3`: `zenbu.language-reference.v2`
-      - `KanjiReferenceData.json`: `zenbu.kanji-reference.v1`
+      - `KanjiReferenceData.json`: `zenbu.kanji-reference.v2`
       - `RadicalReferenceData.json`: `zenbu.radical-reference.v1`
       - `DictionaryRankingArtifactContract.json`: `zenbu.dictionary-ranking-contract.v1`. Its own
         `schemaVersion` names the ranking it checks, not the file's format.

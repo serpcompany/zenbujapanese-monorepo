@@ -12,6 +12,9 @@ from pathlib import Path
 from typing import Callable, Iterator
 
 PROPER_NOUN = "固有名詞"
+COMBINING_KANA = frozenset("ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ")
+HEIBAN = 0
+ATAMADAKA = 1
 
 
 def hiragana(value: str) -> str:
@@ -22,8 +25,11 @@ def hiragana(value: str) -> str:
 
 
 def mora_count(value: str) -> int:
-    combining_kana = set("ぁぃぅぇぉゃゅょゎァィゥェォャュョヮ")
-    return sum(1 for character in unicodedata.normalize("NFKC", value) if character not in combining_kana)
+    count = 0
+    for character in unicodedata.normalize("NFKC", value):
+        if character not in COMBINING_KANA or count == 0:
+            count += 1
+    return count
 
 
 def lexicon_rows(source: Path) -> Iterator[list[str]]:
@@ -37,13 +43,22 @@ def lexicon_rows(source: Path) -> Iterator[list[str]]:
                     yield row
 
 
+def accent_types(row: list[str]) -> list[int]:
+    types: list[int] = []
+    for value in row[28].split(","):
+        if not value.isdigit():
+            break
+        types.append(int(value))
+    return types
+
+
 def first_accent(row: list[str]) -> int | None:
-    if row[28] == "*":
-        return None
-    try:
-        return int(row[28].split(",", maxsplit=1)[0])
-    except ValueError:
-        return None
+    return next(iter(accent_types(row)), None)
+
+
+def pronounced_accent(row: list[str]) -> int | None:
+    morae = mora_count(row[15])
+    return next((downstep for downstep in accent_types(row) if downstep <= morae), None)
 
 
 @dataclass(frozen=True)
@@ -62,6 +77,7 @@ class EntryWord:
     reading: str
     written: frozenset[str]
     kana_readings: frozenset[str]
+    reading_morae: int
 
     def spellings(self) -> frozenset[str]:
         return self.written | self.kana_readings
@@ -73,7 +89,7 @@ def entry_word(record: dict[str, object], normalize: Callable[[str], str]) -> En
     written = frozenset(normalize(str(form)) for form in record["written_values"])
     kana_word = not written or headword == reading
     readings = frozenset(normalize(str(form)) for form in record["reading_values"]) if kana_word else frozenset()
-    return EntryWord(normalize(headword), normalize(hiragana(reading)), written, readings)
+    return EntryWord(normalize(headword), normalize(hiragana(reading)), written, readings, mora_count(reading))
 
 
 def common_first(words: set[LexiconWord]) -> set[LexiconWord]:
@@ -103,7 +119,7 @@ class LexiconIndex:
             if not any(table_keys for _, table_keys in keys):
                 continue
             word = LexiconWord(
-                lemma, normalize(row[14]), row[5] == PROPER_NOUN, int(row[3]), first_accent(row),
+                lemma, normalize(row[14]), row[5] == PROPER_NOUN, int(row[3]), pronounced_accent(row),
                 mora_count(pronunciation),
             )
             for table, table_keys in keys:
@@ -132,6 +148,10 @@ class LexiconIndex:
         return accented(candidates)
 
 
+def describes_reading(word: LexiconWord, entry: EntryWord) -> bool:
+    return word.mora_count == entry.reading_morae or word.downstep in (HEIBAN, ATAMADAKA)
+
+
 def chosen_word(entry: EntryWord, words: list[LexiconWord]) -> LexiconWord:
     shown = [word for word in words if word.spelling == entry.headword] or words
     return min(shown, key=lambda word: (word.cost, word.downstep, word.mora_count, word.spelling, word.lemma))
@@ -148,13 +168,13 @@ def apply_unidic_pitch(
     index = LexiconIndex(source, [entry for _, entry in entries], normalize)
     pitched = 0
     for entry_id, entry in entries:
-        words = index.own_words(entry)
+        words = [word for word in index.own_words(entry) if describes_reading(word, entry)]
         if not words:
             continue
         word = chosen_word(entry, words)
         database.execute(
             "UPDATE entries SET pitch_accent_json = ? WHERE id = ?",
-            (json.dumps({"downstep": word.downstep, "moraCount": word.mora_count,
+            (json.dumps({"downstep": word.downstep, "moraCount": entry.reading_morae,
                          "sourceIdentity": str(source_metadata["identity"])},
                         ensure_ascii=False, separators=(",", ":")), entry_id),
         )

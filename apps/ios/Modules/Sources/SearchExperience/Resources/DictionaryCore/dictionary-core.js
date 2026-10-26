@@ -2781,13 +2781,14 @@
     const separated = query.replace(romajiSeparators, " ").split(" ").filter(Boolean).join(" ");
     return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
   }
+  var combiningMarks = /\p{Mn}/gu;
+  var withoutMarks = (form) => form.normalize("NFD").replace(combiningMarks, "").normalize("NFC");
 
   // src/search/latin-text.ts
   var latinLetter3 = /\p{Script=Latin}/u;
-  var combiningMark = /\p{Mn}/gu;
   function latinSpellings(text) {
     if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
-    const unaccented = text.normalize("NFD").replace(combiningMark, "").normalize("NFC");
+    const unaccented = withoutMarks(text);
     return unaccented === text ? [text] : [text, unaccented];
   }
 

@@ -21,7 +21,7 @@
     {
       "name": "KanjiReferenceData.json",
       "path": "resources/KanjiReferenceData.json",
-      "artifact_schema": "zenbu.kanji-reference.v1"
+      "artifact_schema": "zenbu.kanji-reference.v2"
     },
     { "name": "KanjiElementReferenceData.json", "path": "resources/KanjiElementReferenceData.json" },
     {

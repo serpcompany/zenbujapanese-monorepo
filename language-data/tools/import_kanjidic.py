@@ -100,7 +100,6 @@ def import_snapshot(
                     "strokeCount": stroke_counts[0],
                     "commonMiscounts": stroke_counts[1:],
                     "grade": optional_int(element, "misc/grade"),
-                    "jlpt": optional_int(element, "misc/jlpt"),
                     "wallerJlptLevel": waller_levels.get(literal),
                     "frequencyRank": optional_int(element, "misc/freq"),
                     "classicalRadicalNumber": classical_radical,
@@ -124,7 +123,7 @@ def import_snapshot(
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(artifact, ensure_ascii=False, separators=(",", ":")) + "\n")
     return {
-        "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v1",
+        "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v2",
         "header": header,
         "entry_count": len(entries),
         "entries_with_meanings": sum(bool(entry["meanings"]) for entry in entries),
@@ -137,7 +136,6 @@ def import_snapshot(
             "misc/grade",
             "misc/stroke_count",
             "misc/freq",
-            "misc/jlpt",
             "reading_meaning/rmgroup/reading[@r_type='ja_on' or @r_type='ja_kun']",
             "reading_meaning/rmgroup/meaning[not(@m_lang) or @m_lang='en']",
             "reading_meaning/nanori",
@@ -148,6 +146,7 @@ def import_snapshot(
             "non-English meanings",
             "non-Japanese readings",
             "dictionary-reference identifiers",
+            "misc/jlpt, the pre-2010 JLPT level, which Waller's lists replace",
         ],
         "metadata_source_sha256": file_sha256(source),
         "component_artifact_sha256": file_sha256(radical_artifact),

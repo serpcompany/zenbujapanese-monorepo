@@ -24,24 +24,24 @@ file it reads and writes, in `apps/ios/Modules/Sources/SearchExperience/Resource
 SHA-256, so moving them again belongs to a rebuild.
 
 A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
-app's old `LanguageData/Sources/`, which `apps/ios/.gitignore` still ignores: move them into
-`language-data/sources/` rather than download them again.
+app's old `LanguageData/Sources/`, which `apps/ios/.gitignore` still ignores: copy them into
+`language-data/sources/`.
 
 `rebuild_language_data.py` runs every importer in dependency order: the radicals, KANJIDIC2, kanji
 elements, and stroke diagrams; then `LanguageReferenceData.sqlite3` and its ranking contract; then
 everything that pins that database's SHA-256: the example word index, compound pitch, the TUBELEX,
-Wikipedia, JLPT, and Jiten packs, and the website's ranked lists. It copies each pack's import report into its manifest in
-`FrequencyPackCatalog.json`, moves a downloadable pack's previous manifest into
-`trustedHistoricalManifests` so packs a learner already installed stay trusted, and runs the
-contract tests in `language-data/tools/tests/`. `--download` fetches the sources that are fixed upstream
-releases and too large to commit (UniDic 3.1.0, KanjiVG r20250816, and Kanjium at a pinned commit),
-checking each against its record.
+Wikipedia, JLPT, and Jiten packs, and the website's ranked lists. It copies each pack's import
+report into its manifest in `FrequencyPackCatalog.json`, moves a downloadable pack's previous
+manifest into `trustedHistoricalManifests` so packs a learner already installed stay trusted, and
+runs the contract tests in `language-data/tools/tests/`. `--download` fetches the sources that are
+fixed upstream releases and too large to commit (UniDic 3.1.0, KanjiVG r20250816, and Kanjium at a
+pinned commit), checking each against its record.
 
 It refuses to run on any other Python. The interpreter writes the artifacts' bytes: its SQLite
 version is in every database's header, its Unicode version decides NFKC and case folding, and its
 zlib decides the Jiten ZIPs' bytes. uv's standalone build pins all three, so a rebuild from the
-same sources gives the same files on any Mac. The romaji search forms come from the shared core,
-so it also needs Node 22.18 or later on the PATH (`jmdict_romaji.py`, below).
+same sources gives the same files on any Mac. The romaji search forms and stored folds come from
+the shared core, so it also needs Node 22.18 or later on the PATH (`jmdict_romaji.py`, below).
 
 The Jiten source ZIPs are served from the CDN at URLs named by their SHA-256, so a rebuild must not
 change them: the script compares them with the catalog where the branch left `origin/main`. If one
@@ -111,8 +111,8 @@ records must be the tool's as it is now, and every import report must be in its 
 reports (`*.analysis.json`) record the tools and data as they were when the study ran, so they
 aren't checked. Not every module a tool imports is recorded:
 `import_jlpt_level_pack.py` records only itself, `import_compound_pitch.py` its rule,
-`compound_accent.py`, but not `unidic_adapter.py`, and `build_jiten_frequency_packs.py` not
-`analyze_ordered_json_frequency_lists.py`.
+`compound_accent.py`, and `unidic_adapter.py`, whose accents its parts take, and
+`build_jiten_frequency_packs.py` not `analyze_ordered_json_frequency_lists.py`.
 `example_sentence_retrieval_index.py` records its own SHA-256 in the database's retrieval
 metadata, outside the ranking contract's six. `LanguageReferenceData.sqlite3`'s metadata, its import
 report, and `DictionaryRankingArtifactContract.json` record six: `import_tool_sha256`, the
@@ -147,17 +147,17 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships. Its
   it expects from the pinned export.
 - `jmdict_relationships.py`: note identities, disambiguated in source order, and up to six related
   words per entry, from resolved cross-references and then the editorial relationship facts.
-- `jmdict_romaji.py`: each reading's romaji search forms, from one call to the core's
-  `packages/dictionary-core/scripts/romaji-search-forms.mjs`. The ASCII spelling earlier releases
-  stored (raamen, kinen, o) stays in `forms` (kind 2); the romaji the apps show (rāmen, kin'en, wo;
-  kind 3) and it without macrons (ramen; kind 4) go in `shown_romaji_forms`, which the packs'
-  mapping SQL doesn't read. A core file the command loads that `CORE_ROMAJI_FILES` lacks fails it.
+- `jmdict_romaji.py`: each reading's romaji search forms, and each form and gloss folded as a query
+  is, from one call to the core's `packages/dictionary-core/scripts/romaji-search-forms.mjs`. The
+  ASCII spelling earlier releases stored (raamen, kinen, o) stays in `forms` (kind 2); the shown
+  romaji (rāmen, kin'en, wo; kind 3) and it without macrons (ramen; kind 4) are in
+  `shown_romaji_forms`. An unfolded text, or a core file not in `CORE_ROMAJI_FILES`, fails it.
 - `jmdict_labels.py`: every JMdict usage (`misc`), subject-field (`field`), and dialect (`dial`)
   entity code on a sense maps to a stable app-owned identifier, kept in the sense's `usage`,
   `fields`, and `dialects` (left out when empty), and an unmapped code fails the import. The app
-  doesn't decode them, and shows the notes it showed before; the website's browse pages list
-  words by them. They aren't in a note's identity or the semantic fingerprint, so saved notes and ranking
-  don't change.
+  doesn't decode them; the website's browse pages list words by them. They aren't in a note's
+  identity or the semantic fingerprint, so saved notes and ranking don't change. A sense's notes
+  go by code too (`USAGE_NOTES`), since JMdict rewords descriptions (`col` is now "colloquial").
 
 **`refresh_jmdict.py`** moves the data to EDRDG's current JMdict export one step at a time
 (`fetch`, `apply`, `rebuild`, `release`, `summary`), for the monthly workflow
@@ -177,9 +177,11 @@ reading. Only when no lemma matches does a row spelled exactly like the entry co
 that spelling and reading name one lemma; a kana spelling never brings in a proper noun. Proper
 nouns count only when no common noun does. Where the word's rows disagree, those spelled like the
 headword come first, and the one UniDic's word cost rates likeliest gives the accent, the first of
-its `aType` values, the lower downstep breaking a tie. The choice reads only the entry's own rows,
-so homophones such as 橋, 箸, and 端 never share one, and a word UniDic gives no accent, such as a
-particle, has none. `tests/test_unidic_pitch.py` runs it on UniDic's real ハシ and カミ rows.
+its `aType` values within its pronunciation's morae, the lower downstep breaking a tie. The choice
+reads only the entry's own rows, so homophones such as 橋, 箸, and 端 never share one, and a word
+UniDic gives no accent, such as a particle, has none. The mora count is the reading's, as the apps
+draw it, so a row with other morae (こないだ for このあいだ) lends only a flat or first-mora accent.
+`tests/test_unidic_pitch.py` runs it on UniDic's real rows.
 
 **`example_sentence_retrieval_index.py`** builds the example retrieval indexes in one transaction
 and validates them, failing closed unless the artifact meets the v1 contract; validation runs the
@@ -218,7 +220,8 @@ past 50 as "50+".
   part's last mora, C4 makes the word heiban, and C5 keeps the earlier part's. A prefix combines by
   its P-type (P1, P2, P4, P6, P13, or P14). A downstep on a special mora (ん, っ, ー, or the second
   half of a long vowel or diphthong) moves one mora left, but never across a part's start:
-  委員長 is いい＼んちょう, and 選挙運動 stays せんきょう＼んどう.
+  委員長 is いい＼んちょう, and 選挙運動 stays せんきょう＼んどう. One past the word's last mora gives none
+  (シーサーペント, from ペント's 4 on its 3 morae).
 - **The gate.** Words are grouped by script, by the types their splits' last parts have (and
   whether a split starts with a prefix), and by their number of parts (two, or three or more).
   Only the 24 groups in `SHIPPED_GROUPS` ship: those that agreed with Kanjium's accents on at least
@@ -265,10 +268,10 @@ and keeps each pack's mapped evidence beside its ZIP (`<packID>.sqlite3`), mappe
 **`build_ranked_lists.py`** collects the Wikipedia and Jiten packs' mapped ranks into
 `RankedLists.sqlite3` (`zenbu.ranked-lists.v1`), for the website's dictionary service: each
 pack's evidence must hash to the `mappingSHA256` its manifest pins, which the app checks when it
-installs the pack, so the service ranks words exactly as the app does. The file sits in the app's
-`Resources` beside the other artifacts but `Package.swift` leaves it out of the app. The
-language-data release carries it, with Jiten's notice and Wikipedia's license
-([`language-data/README.md`](../README.md));
+installs the pack, so the service ranks words exactly as the app does; an index by Language
+Reference ID finds a word card's ranks. The file sits in the app's `Resources` beside the other
+artifacts but `Package.swift` leaves it out of the app. The language-data release carries it, with
+Jiten's notice and Wikipedia's license ([`language-data/README.md`](../README.md));
 `tests/test_ranked_lists_contract.py` checks it against the catalog and the language data.
 
 **`analyze_frequency_candidates.py`** (#376) and **`analyze_ordered_json_frequency_lists.py`**
@@ -288,8 +291,8 @@ EDRDG's radical files, KANJIDIC2, and Kanjium into the kanji reference data, in 
 pages: the one table on each page whose header is Kanji, Onyomi, Kunyomi, English. A page whose
 size, SHA-256, or kanji count differs from its record, or a kanji KANJIDIC2 lacks, fails the
 import. The app's and the website's kanji details show it as the JLPT level, and the website's
-JLPT kanji lists use it. KANJIDIC2's own `jlpt`, its pre-2010 level, stays in the file, and
-nothing reads it.
+JLPT kanji lists use it. KANJIDIC2's own `jlpt`, its pre-2010 level, is left out
+(`zenbu.kanji-reference.v2`).
 
 **`publish_frequency_pack_sources.py`** uploads downloadable pack sources to the CDN bucket. It
 matches each file to manifests by byte count and SHA-256, never by name, uploads it to the key its

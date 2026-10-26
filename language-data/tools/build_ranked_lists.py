@@ -90,6 +90,10 @@ def write_artifact(
                     "INSERT INTO ranked_evidence VALUES (?, ?, ?)",
                     ((list_id, rank, identifier) for rank, identifier in rows),
                 )
+            database.execute(
+                "CREATE INDEX ranked_evidence_language_reference_id_index "
+                "ON ranked_evidence(language_reference_id)"
+            )
             database.commit()
             database.execute("VACUUM")
         finally:

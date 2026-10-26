@@ -58,7 +58,7 @@ Wikipedia Word Frequency Clean, and Jiten. Tatoeba isn't one: a card holds no ex
 | `entSeq` | Its JMdict entry number. |
 | `headword`, `reading` | As the app's Word Detail shows them. |
 | `furigana` | The headword split into `base` text, each with its `reading` where Word Detail shows furigana over it, and `kanjiReadings`, the reading of each kanji, when the kanji's own readings split it exactly one way. |
-| `pitch` | `null`, or `downstep` (0 for flat), `moraCount` (UniDic's, as the app reads it aloud), `morae` (the reading in katakana morae, as the graph draws them), `levels` (`H` or `L` for each of `morae`), `particle` (the level of a particle after it), `estimated` (true when UniDic doesn't list the word and the pitch is estimated from its parts), and the `source`. |
+| `pitch` | `null`, or `downstep` (0 for flat), `moraCount` (how many `morae` there are, as the app reads it aloud), `morae` (the reading in katakana morae, as the graph draws them), `levels` (`H` or `L` for each of `morae`), `particle` (the level of a particle after it), `estimated` (true when UniDic doesn't list the word and the pitch is estimated from its parts), and the `source`. |
 | `partOfSpeech` | The part of speech as Word Detail writes it, such as `Ichidan verb (transitive)`. |
 | `meanings` | Each sense in order: its `meaning`, `notes`, and `partsOfSpeech`, the app's identifiers for JMdict's part-of-speech codes, such as `ichidanVerb` and `transitive`; `packages/dictionary-core/src/detail/part-of-speech.ts` writes them as words. |
 | `jlpt` | `null`, or the JLPT chip: `source` (`JLPT`), `value` (`N5`), `level` (5), `tier`, and `spokenTier` (`null`). The levels are estimates from Jonathan Waller's lists. |

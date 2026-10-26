@@ -2,31 +2,31 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "CompoundPitch.sqlite3",
-      "sha256" : "a58152c4016c82c38700fdc4a69c72d6b405894caefcb5f137b1d25ad0f6487d"
+      "sha256" : "0024905f84576fb85dc1a005480a22ec45e662621674236237a149dac9b41188"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "742fbbb8742a1ee7b922a3741a7da2d38738e6cf04009831c185875d5124e9f2"
+      "sha256" : "ff13abffeede7746111120f7c0b1150ada6273454039b55c4bf80a0574df39ba"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "67c23c90760f3eee31f81d96d1baa637837c5ef4b40b681117cd16a0919f1222"
+      "sha256" : "4e0c030d6d8d3176eb571578aefc24c768cbbf7adf6b6a69063ab94ca2a5f9ab"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "22b25f4e8f8ec37cca4a647516ed091539c34cbc8d82f26c97f0be2445899d24"
+      "sha256" : "7b62147b6c3ea51d1ddcc3ce9cf2df2f74a8bf99e7f8213888e1f5769fc5ae58"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "7196707c2f0c5a14ae406382c9e7b04b1f8928432a04054502de80c25383c431"
+      "sha256" : "77e222bd5364a29a76cd8814369245a3d7307de03fda1bd87422c7c6670d10e5"
     },
     {
       "name" : "KanjiReferenceData.json",
-      "sha256" : "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad"
+      "sha256" : "c42701153068b7f0a9252dd3311c8810a36325749f3bdbe391c0a752eb6e866b"
     },
     {
       "name" : "Kuromoji/base.dat.gz",
@@ -29618,6 +29618,7 @@
           "meaning" : "to have an orgasm, to come, to cum",
           "notes" : [
             "Usually written in kana",
+            "Colloquial",
             "oft. written as イク"
           ],
           "partsOfSpeech" : [
@@ -77904,6 +77905,7 @@
           ],
           "meaning" : "a little more than (a week, month, etc.), slightly more than",
           "notes" : [
+            "Colloquial",
             "Usually written in kana",
             "after an amount"
           ],
@@ -126603,7 +126605,8 @@
           ],
           "meaning" : "(having) sex",
           "notes" : [
-            "Usually written in kana"
+            "Usually written in kana",
+            "Colloquial"
           ],
           "partsOfSpeech" : [
             "noun",
@@ -127257,7 +127260,7 @@
           ],
           "meaning" : "no good, not allowed, not acceptable",
           "notes" : [
-
+            "Colloquial"
           ],
           "partsOfSpeech" : [
             "naAdjective",

@@ -42,6 +42,7 @@ const wordLabels: Readonly<Record<string, string>> = {
   numbers: 'Number',
   'honorific-language': 'Honorific',
   'humble-language': 'Humble',
+  colloquialisms: 'Colloquial',
   'archaic-words': 'Archaic',
   'obsolete-words': 'Obsolete',
   'kana-words': 'Usually written in kana'
