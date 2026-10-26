@@ -1,0 +1,53 @@
+{
+  "covers": "Which Sudachi pack of LanguageTechnologyPackCatalog.json every client analyzes with: the catalog's one bundledDefault pack, wherever it lists it, and none when it lists no such pack, several, or a schema other than 1. Each case is the committed catalog with its packs replaced: each pack is the catalog's own with the fields given, and analyzesWith is the packID chosen, or null when the catalog is refused.",
+  "cases": [
+    {
+      "covers": "the catalog as committed",
+      "packs": [{}],
+      "analyzesWith": "sudachi-core-ja-20260723"
+    },
+    {
+      "covers": "an optional pack listed before the bundled one",
+      "packs": [
+        { "packID": "sudachi-full-ja-20260723", "distribution": "optionalDownload" },
+        {}
+      ],
+      "analyzesWith": "sudachi-core-ja-20260723"
+    },
+    {
+      "covers": "the bundled pack listed before an optional one",
+      "packs": [
+        {},
+        { "packID": "sudachi-full-ja-20260723", "distribution": "optionalDownload" }
+      ],
+      "analyzesWith": "sudachi-core-ja-20260723"
+    },
+    {
+      "covers": "a newer bundled dictionary, which every client takes from the catalog",
+      "packs": [
+        {
+          "packID": "sudachi-core-ja-20270101",
+          "packVersion": "20270101",
+          "installedSHA256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "analyzesWith": "sudachi-core-ja-20270101"
+    },
+    {
+      "covers": "only an optional pack",
+      "packs": [{ "packID": "sudachi-full-ja-20260723", "distribution": "optionalDownload" }],
+      "analyzesWith": null
+    },
+    {
+      "covers": "two bundled packs",
+      "packs": [{}, { "packID": "sudachi-small-ja-20260723" }],
+      "analyzesWith": null
+    },
+    {
+      "covers": "a catalog of another schema",
+      "schemaVersion": 2,
+      "packs": [{}],
+      "analyzesWith": null
+    }
+  ]
+}

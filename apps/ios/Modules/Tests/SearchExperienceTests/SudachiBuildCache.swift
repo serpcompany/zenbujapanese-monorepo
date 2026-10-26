@@ -5,8 +5,10 @@ import Foundation
 enum SudachiBuildCache {
   static let dictionary = Task { try await apartFromThePool { try located() } }
 
+  private static let pack = try? LanguageTechnologyPackCatalog.bundled().bundledDefault
+
   static let artifact = ConformanceArtifact(
-    name: "system_core.dic", sha256: SudachiCoreContract.dictionarySHA256)
+    name: "system_core.dic", sha256: pack?.installedSHA256 ?? "")
 
   static func analyzer() async throws -> SudachiJapaneseMorphologyAdapter {
     let dictionary = try await dictionary.value
@@ -33,8 +35,8 @@ enum SudachiBuildCache {
     for folder in folders.sorted(by: { $0.path < $1.path }) {
       let candidate = folder.appending(path: "system_core.dic")
       let size = try? candidate.resourceValues(forKeys: [.fileSizeKey]).fileSize
-      if size == SudachiCoreContract.installedBytes,
-        try fileSHA256(candidate) == SudachiCoreContract.dictionarySHA256
+      if let pack, size == pack.installedBytes,
+        try fileSHA256(candidate) == pack.installedSHA256
       {
         return candidate
       }

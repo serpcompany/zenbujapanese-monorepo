@@ -6,23 +6,19 @@ enum SudachiCoreContract {
   static let engineVersion = "0.6.11"
   static let binding = "sudachi-swift"
   static let bindingVersion = "0.1.1"
-  static let dictionaryVersion = "20260723"
-  static let downloadBytes = 72_275_897
-  static let downloadSHA256 =
-    "b3869ce6b12b4bfa09575dc19030703bb669ab41bac12a74cafcbb28c6be2498"
-  static let downloadURL = URL(
-    string:
-      "https://github.com/WorksApplications/SudachiDict/releases/download/v20260723/sudachidict_core-20260723-py3-none-any.whl"
-  )!
-  static let installedBytes = 217_466_039
-  static let archiveEntry = "sudachidict_core/resources/system.dic"
-  static let dictionarySHA256 =
-    "53fa281d11eef3769712fe1c3c892117338f9892bee6daf4dad51daa5281bb6f"
   static let runtimeResourceCommit = "90fd6068c80c2fc3b63e0dbab0e341475bad4d8f"
   static let characterDefinitionSHA256 =
     "b549ec56ad67359f535c80b7efa150538af2a78b7609d0d6bae796dd89f4f29d"
   static let unknownDefinitionSHA256 =
     "4e8c4c15e18af6a9fc5d636e3dc73fde55d50941b93a6c8835d4653d3f54ba79"
+
+  static func builds(_ pack: LanguageTechnologyPackManifest) -> Bool {
+    pack.engine == engine && pack.engineVersion == engineVersion && pack.binding == binding
+      && pack.bindingVersion == bindingVersion
+      && pack.runtimeResourceCommit == runtimeResourceCommit
+      && pack.characterDefinitionSHA256 == characterDefinitionSHA256
+      && pack.unknownDefinitionSHA256 == unknownDefinitionSHA256
+  }
 
   static func validateGoldenOutput(_ analysis: JapaneseMorphologyAnalysis) throws {
     let words = analysis.words

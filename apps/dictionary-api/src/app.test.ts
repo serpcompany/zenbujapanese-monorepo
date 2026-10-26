@@ -69,7 +69,8 @@ describe('routes', () => {
     ['a word number that is not a number', '/v1/words/abc'],
     ['an examples offset that is no whole number', '/v1/words/1358280/examples?from=1.5'],
     ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`],
-    ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`]
+    ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`],
+    ['a text to segment that is only white space', '/v1/segmentation/%20%E3%80%80%0A']
   ])('400s %s', async (_, path) => {
     expect((await app().request(get(path))).status).toBe(400)
   })

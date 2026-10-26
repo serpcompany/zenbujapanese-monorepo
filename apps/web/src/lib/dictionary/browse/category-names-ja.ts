@@ -8,6 +8,7 @@ export const japaneseCategoryNames: Readonly<Record<string, string>> = {
   slang: 'スラング',
   'internet-slang': 'ネットスラング',
   'manga-slang': 'マンガ・アニメのスラング',
+  colloquialisms: '口語',
   'familiar-language': 'くだけた言葉',
   'formal-language': '改まった言葉・文語',
   'poetic-words': '詩的な言葉',

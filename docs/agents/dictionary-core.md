@@ -19,7 +19,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 
 | Folder | What it does | Who asks in the app |
 | --- | --- | --- |
-| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, and sentence search through a supplied analyzer; which handwriting candidates are kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
+| `search/` | Search retrieval: query normalization, deinflection, ranking, full-text phrases, Latin text as English (`latin-text.ts`), and sentence search with a supplied analyzer; the handwriting candidates kept (`japaneseCandidates`); and the radical panel (`radicals.ts`). | `LookupClient`; `SearchQuery` is `normalizeQuery`'s answer; `RadicalLookupClient`; the handwriting recognizer's adapter |
 | `embedded/` | The entry point for a client that runs the core inside a JavaScript engine, as the app does: every answer the app's screens show, as JSON, and the bundle the app loads. | `DictionaryCore`, and the three engines that each own one |
 | `results/` | The results screen: the frequency re-sort, Sort By and Filter, rows, chips, what VoiceOver says, and Example Sentences, reading-refinement, kanji, and notes rows. | `ResultsScreen` |
 | `detail/` | Word, kanji, and kanji element pages from their rows: furigana, pitch, Frequency Details, conjugations, kanji, elements, share text, a linked word's gloss, and a meaning's glosses, as the entry gives them, to speak and look up (`meaning-actions.ts`). Also romaji (`romaji.ts`), strokes as points to draw (`strokes.ts`), the one-kanji check, the website's links (`links.ts`), and Image Search's notes (`phrase-note.ts`). | `WordPage`, `KanjiPage`, `KanjiElementPage`, `JapaneseRuby`, `FrequencyRow`, `KanjiCharacter`, `KanjiStrokeOrderClient`, `RomajiReadingAidText` |
@@ -355,7 +355,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   The frequency re-sort orders within a group, and `compareEnglishRanks` breaks ties by JMdict
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
-  and stagr) only when the entry is shown with one of them.
+  and stagr, a row's `restrictions`, never shown) only when the entry is shown with one of them.
 - **Romaji forms** come from `romaji-forms.ts`, run by the importer through
   `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII spelling earlier releases
   stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without macrons, rank after all
@@ -416,12 +416,13 @@ The core answers as the Swift it replaced did, which the suites pin.
   are checked as `forms` folds them (`normalizeQuery`), and a sentence counts in either spelling
   NFKC reads as one word (Ｔシャツ, Tシャツ); entries folded to one form and reading list none. Its
   meanings' checked examples (`sense_examples`) lead, then 100 others.
-- **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed,
-  the exact phrase first. Without one, a match needs each word to be the query's in another
-  inflection (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything
-  else matches pairs whose Japanese contains it. FTS4's `offsets()` reports UTF-8 byte offsets,
-  which `example-search.ts` maps to UTF-16, then grapheme positions. The results' primary entry is
-  highlighted for every search, and its own examples are listed for a romaji or deinflected query.
+- **A query's examples.** An English query matches pairs by its English phrase, Porter-stemmed, the
+  exact phrase first. Without one, a match needs each word to be the query's in another inflection
+  (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything else matches
+  pairs whose Japanese contains it, or else Latin text's English. FTS4's `offsets()` reports UTF-8
+  byte offsets, which `example-search.ts` maps to UTF-16, then grapheme positions. The results'
+  primary entry is highlighted for every search, and its own examples are listed for a romaji or
+  deinflected query.
 - **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
   (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
   as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
@@ -494,7 +495,6 @@ ready and a page's first request prepares nothing:
 
 - Every ID is a Language Reference ID in lowercase hex, as the artifact's BLOB IDs read. `entSeq`
   is `source_record_id`, the JMdict entry number in word page URLs (ADR 0007).
-- A sense's `restrictions` (JMdict's stagk and stagr) are for Search; the app doesn't show them.
 - A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
   is UniDic's; `compoundPitch`, CompoundPitch's estimate, shows when UniDic has none (`shownPitch`).
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.

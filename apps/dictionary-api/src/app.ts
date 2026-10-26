@@ -7,6 +7,7 @@ import { maximumEntSeq, maximumQueryLength } from '@zenbu/dictionary-core/artifa
 import { categoryOrders, isCategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import { isKanaScript, type KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import { maximumBrowsePage } from '@zenbu/dictionary-core/browse/lists'
+import { isSegmentableText, maximumSegmentedLength } from '@zenbu/dictionary-core/cards/segmentable'
 import type { SegmentationResponse } from '@zenbu/dictionary-core/cards/segmentation'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import { logRequests } from '@zenbu/node-service/http'
@@ -38,6 +39,13 @@ function integer(value: string | undefined, name: string, fallback: number, maxi
 function text(value: string, name: string): string {
   if (value === '' || Array.from(value).length > maximumQueryLength) {
     throw new BadRequest(`${name} must be 1 to ${maximumQueryLength} characters`)
+  }
+  return value
+}
+
+function segmentable(value: string): string {
+  if (!isSegmentableText(value)) {
+    throw new BadRequest(`text must be 1 to ${maximumSegmentedLength} characters, not all blank`)
   }
   return value
 }
@@ -150,7 +158,7 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
 
   app.get('/v1/segmentation/:text', async context => {
     const segmented: SegmentationResponse = {
-      tokens: await service.segment(text(context.req.param('text'), 'text'))
+      tokens: await service.segment(segmentable(context.req.param('text')))
     }
     return context.json(segmented)
   })
