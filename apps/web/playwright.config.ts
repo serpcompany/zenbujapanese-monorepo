@@ -15,6 +15,8 @@ const appleTeamId = 'ABCDE12345'
 const server = onProductionBuild
   ? `pnpm exec opennextjs-cloudflare preview --port ${port} --var APPLE_TEAM_ID:${appleTeamId}`
   : `pnpm exec next dev --port ${port}`
+const serverLog = process.env.E2E_SERVER_LOG
+const plainText = { FORCE_COLOR: '0' }
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${port}`
 const inCI = Boolean(process.env.CI)
 
@@ -43,8 +45,8 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: server,
-        env: { ZENBU_DICTIONARY_FIXTURES: '1' },
+        command: serverLog ? `${server} > ${serverLog} 2>&1` : server,
+        env: { ZENBU_DICTIONARY_FIXTURES: '1', ...(serverLog ? plainText : {}) },
         url: `${baseURL}/`,
         reuseExistingServer: !inCI,
         timeout: 240_000

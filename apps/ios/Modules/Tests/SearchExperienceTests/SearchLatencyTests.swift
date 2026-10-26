@@ -400,6 +400,57 @@ struct SearchLatencyTests {
         + "\(Self.milliseconds(checkedAgain)) again")
   }
 
+  static let romajiQueries: KeyValuePairs<String, [String]> = [
+    "stored": [
+      "raamen", "kinen", "tsuzuku", "fuiru", "o", "koohii", "biiru", "konnichiha", "gakkou",
+      "toukyou", "taberu", "sensei", "nihongo", "maccha", "shashin",
+    ],
+    "shown": [
+      "rāmen", "kin'en", "tsudzuku", "fairu", "wo", "kōhī", "bīru", "kon'nichiha", "matcha",
+      "chekku", "āgairu chekku", "tī", "hanadji", "sētā", "dēta",
+    ],
+    "unmarked": ["ramen", "kohi", "biru", "seta", "deta", "konpyuta", "supa", "kare", "pati"],
+    "typing": ["k", "ka", "kin", "kin'", "kin'e", "ts", "tsu", "tsud", "r", "ra", "f", "fa", "w"],
+    "english": ["dog", "water", "the", "a", "to eat", "file", "beer", "coffee"],
+  ]
+
+  @Test("prints how long each romaji query takes uncached, and each spelling's queries together")
+  func measureRomaji() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let clock = ContinuousClock()
+    _ = try await data.search(SearchQuery("zenbu"))
+    var all: [Double] = []
+    for (kind, queries) in Self.romajiQueries {
+      var timings: [Double] = []
+      var byQuery: [String: [Double]] = [:]
+      for _ in 0..<Self.passes {
+        for query in queries {
+          let elapsed = try await clock.measure {
+            _ = try await data.results(answered: try await data.answeredSearch(SearchQuery(query).value))
+          }
+          timings.append(Self.value(elapsed))
+          byQuery[query, default: []].append(Self.value(elapsed))
+        }
+      }
+      all += timings
+      for query in queries {
+        let sorted = (byQuery[query] ?? []).sorted()
+        print(
+          "SEARCH-LATENCY romaji query, \(kind)\t\(query)\tmedian "
+            + String(format: "%.2f", sorted[sorted.count / 2]) + " ms")
+      }
+      print("SEARCH-LATENCY romaji, \(kind): " + Self.percentiles(timings))
+    }
+    print("SEARCH-LATENCY romaji, all: " + Self.percentiles(all))
+  }
+
+  static func percentiles(_ timings: [Double]) -> String {
+    let sorted = timings.sorted()
+    let at = { (share: Double) in sorted[min(sorted.count - 1, Int(Double(sorted.count) * share))] }
+    return String(
+      format: "median %.2f ms, p95 %.2f ms, total %.0f ms", at(0.5), at(0.95), timings.reduce(0, +))
+  }
+
   static func listed(_ word: String) async -> [LinkedExample] {
     await ExamplePage.every {
       await ExampleSentenceClient.live.listed(SearchQuery(word), nil, false, $0)

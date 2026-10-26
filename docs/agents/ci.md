@@ -145,8 +145,8 @@ deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the b
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once
 and passes the next time is a failing test ([`verification.md`](verification.md), Three levels),
-and a retry would hide it. On a failure it uploads the report, traces, videos, and screenshots as
-the `playwright-report` artifact, kept for a week.
+and a retry would hide it. On a failure it uploads the report, traces, videos, screenshots, and the
+server's output (`server.log`) as the `playwright-report` artifact, kept for a week.
 
 ## Dictionary core
 
@@ -225,10 +225,10 @@ request's last run. The deployer and the backups script (`deploy/deployer.sh`,
 
 `.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, the
 language data it's built from and tested against (`sources/`, `generated/`, `conformance/`, and
-`tools/` in `language-data/`), or the username cases its tests share with the account service
-(`apps/account-api/src/domain/username-cases.json`), in two jobs:
+`tools/` in `language-data/`, and the core's files its romaji forms come from), or the username
+cases its tests share with the account service (`username-cases.json`), in two jobs:
 
-- `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux, with
+- `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux with Node,
   every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source snapshots
   (`LFS_SNAPSHOTS`), which only a rebuild reads, and the recorded-audio check's recordings
   (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
@@ -238,8 +238,9 @@ language data it's built from and tested against (`sources/`, `generated/`, `con
   App Store record ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad,
   and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon,
   privacy strings, and entitlements), that every Swift package the app links has a license text with
-  its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
-  and its keeper (`test_simulator.py`, `test_simulator_keeper.py`, `test_simulator_devices.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
+  its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script and its
+  keeper (`test_simulator.py`, `test_simulator_keeper.py`, `test_simulator_devices.py`). Its LFS
+  cache is keyed on the pointers of the LFS patterns it fetches.
 - `swift`, once `contracts` passes, fills the Sudachi build cache (cached by the catalog's hash) and
   runs the app's tests on all three platforms, one after another: `SearchExperienceTests` and
   `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator and an iPad Pro 13-inch

@@ -663,10 +663,10 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
-  each query's uncached time, how long linking, a video's known-word count, and an abandoned search
-  take, how long the presentation engine takes to start and to build each screen, how long the
-  frequency lists take to be ready, how long romaji, the input panels, a stroke diagram, and the
-  kanji check take, and the memory a session reaches step by step; it runs only when asked:
+  each query's uncached time (romaji ones also by spelling), how long linking, a video's known-word
+  count, and an abandoned search take, how long the presentation engine takes to start and to build
+  each screen, the frequency lists to be ready, and romaji, the input panels, a stroke diagram, and
+  the kanji check, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \

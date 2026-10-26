@@ -1,7 +1,7 @@
 {
   "artifact" : {
     "name" : "LanguageReferenceData.sqlite3",
-    "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
+    "sha256" : "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891"
   },
   "cases" : [
     {
@@ -1579,6 +1579,336 @@
           "headword" : "高い",
           "id" : "380d957d6f36dc2e2aacdb743198d104",
           "reading" : "たかい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "rāmen",
+      "readingRefinement" : "ラーメン",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "ラーメン",
+          "id" : "28f8dec190c2347fa5a796abcde4f88e",
+          "reading" : "ラーメン"
+        },
+        {
+          "headword" : "ラーメン",
+          "id" : "48bfe3d25b076670469bd4fd3b0536be",
+          "reading" : "ラーメン"
+        },
+        {
+          "headword" : "ラーメン屋",
+          "id" : "851980e46727faeb08aba2f4f1558498",
+          "reading" : "ラーメンや"
+        },
+        {
+          "headword" : "ラーメン店",
+          "id" : "26dd5119a7f72a96ff2deb23dffc8812",
+          "reading" : "ラーメンてん"
+        },
+        {
+          "headword" : "ラーメン橋",
+          "id" : "31754e57a7ec05c58e3e475b5d7c6243",
+          "reading" : "ラーメンきょう"
+        },
+        {
+          "headword" : "ラーメン構造",
+          "id" : "18eaaefaa1ed01180e0c9f6d2939844f",
+          "reading" : "ラーメンこうぞう"
+        },
+        {
+          "headword" : "ラーメンライス",
+          "id" : "2f1678a3e06301fb431a70a7fb1e173f",
+          "reading" : "ラーメンライス"
+        },
+        {
+          "headword" : "カップラーメン",
+          "id" : "3834cac1ce5745126554800b4def07e3",
+          "reading" : "カップラーメン"
+        },
+        {
+          "headword" : "インスタントラーメン",
+          "id" : "994ca29ae33e33f1408b9cdd4c1359c0",
+          "reading" : "インスタントラーメン"
+        },
+        {
+          "headword" : "ベビースターラーメン",
+          "id" : "4ac69406d4cb465b54400ad35f61a4a8",
+          "reading" : "ベビースターラーメン"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "ramen",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "ラーメン",
+          "id" : "28f8dec190c2347fa5a796abcde4f88e",
+          "reading" : "ラーメン"
+        },
+        {
+          "headword" : "支那そば",
+          "id" : "a80a2025664434d12b43f82129a49874",
+          "reading" : "しなそば"
+        },
+        {
+          "headword" : "ちゅるちゅる",
+          "id" : "6b823975adbd0fcc7423295894899d26",
+          "reading" : "ちゅるちゅる"
+        },
+        {
+          "headword" : "即席",
+          "id" : "7d7dc911640ef4041b8c9504a3d51353",
+          "reading" : "そくせき"
+        },
+        {
+          "headword" : "替え玉",
+          "id" : "6eaf25de1e2b1b6a3726bcd614034635",
+          "reading" : "かえだま"
+        },
+        {
+          "headword" : "叉焼",
+          "id" : "718e82ed32db993db59ece113aa47afa",
+          "reading" : "チャーシュー"
+        },
+        {
+          "headword" : "白湯",
+          "id" : "260f6053d4593ee21a833926e1abd417",
+          "reading" : "パイタン"
+        },
+        {
+          "headword" : "満龍",
+          "id" : "9ea08f0f992f3d050e3fc11534b99be6",
+          "reading" : "まんりゅう"
+        },
+        {
+          "headword" : "家系",
+          "id" : "be80a48bd94d5010f971df897e78068a",
+          "reading" : "いえけい"
+        },
+        {
+          "headword" : "着丼",
+          "id" : "ae8264d1e9e6d3d07030c3cbe6916ee6",
+          "reading" : "ちゃくどん"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "kin'en",
+      "readingRefinement" : "きんえん",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "禁煙",
+          "id" : "568514bdcdf8e7cf52a5d278d866531b",
+          "reading" : "きんえん"
+        },
+        {
+          "headword" : "筋炎",
+          "id" : "ad8172c8345d55c08e68fdacd11eee59",
+          "reading" : "きんえん"
+        },
+        {
+          "headword" : "金円",
+          "id" : "5a6f6895b38223ac356fbc761296b7f6",
+          "reading" : "きんえん"
+        },
+        {
+          "headword" : "近縁",
+          "id" : "75d660c83906ef9b36d8a81c4568e0db",
+          "reading" : "きんえん"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "tsudzuku",
+      "readingRefinement" : "つづく",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "続く",
+          "id" : "a8835c1a8a34400768e77ae9e7fd1941",
+          "reading" : "つづく"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "fairu",
+      "readingRefinement" : "ファイル",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "ファイル",
+          "id" : "9e1c46f98640a43dfebae8df9434f486",
+          "reading" : "ファイル"
+        },
+        {
+          "headword" : "ファイル句",
+          "id" : "e02c60de9f21dd2846e862000fc4491c",
+          "reading" : "ファイルく"
+        },
+        {
+          "headword" : "ファイル名",
+          "id" : "fd9a2cb73aadb153b95e89835eb2b06c",
+          "reading" : "ファイルめい"
+        },
+        {
+          "headword" : "ファイル節",
+          "id" : "4b410d70afefeaef4c8c70693a253b79",
+          "reading" : "ファイルせつ"
+        },
+        {
+          "headword" : "ファイル共有",
+          "id" : "80cc191ee923077e764bc18ff5d22762",
+          "reading" : "ファイルきょうゆう"
+        },
+        {
+          "headword" : "ファイル記述",
+          "id" : "f748b4afd5579242671e02454f79976a",
+          "reading" : "ファイルきじゅつ"
+        },
+        {
+          "headword" : "ファイル分割",
+          "id" : "b59a1aea5a32e2847ffa058ef4004a06",
+          "reading" : "ファイルぶんかつ"
+        },
+        {
+          "headword" : "ファイル属性",
+          "id" : "e1880c30908e02ebb703409e70ed4cf9",
+          "reading" : "ファイルぞくせい"
+        },
+        {
+          "headword" : "ファイル管理",
+          "id" : "82d266232a6099e901914bac79ba716a",
+          "reading" : "ファイルかんり"
+        },
+        {
+          "headword" : "ファイル編成",
+          "id" : "dc94f67a2a7023bca6c88a2f72f738da",
+          "reading" : "ファイルへんせい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "wo",
+      "readingRefinement" : "を",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "Ｎ国",
+          "id" : "ae70491097198a0b0fb53b117130b9c8",
+          "reading" : "エヌこく"
+        },
+        {
+          "headword" : "わ行",
+          "id" : "ea3f0eab19f58dff4d401f64df540a0f",
+          "reading" : "わぎょう"
+        },
+        {
+          "headword" : "格助詞",
+          "id" : "5cf43519bf687798544899e632ecd190",
+          "reading" : "かくじょし"
+        },
+        {
+          "headword" : "ＮＨＫから国民を守る党",
+          "id" : "3220fd6d7cd925c3cbee7c283d403c39",
+          "reading" : "エヌエイチケーからこくみんをまもるとう"
+        },
+        {
+          "headword" : "を",
+          "id" : "40d6e4fa1aa90a4025e1edef5d451be5",
+          "reading" : "を"
+        },
+        {
+          "headword" : "オタク",
+          "id" : "4b1f772a98b9ae85837bea93cc73d379",
+          "reading" : "オタク"
+        },
+        {
+          "headword" : "ウォッカ",
+          "id" : "c92be673b9e4a5ade7d302f0dc463106",
+          "reading" : "ウォッカ"
+        },
+        {
+          "headword" : "ヲタ",
+          "id" : "24ff2377d94a88d2a12d34a7911c83ef",
+          "reading" : "ヲタ"
+        },
+        {
+          "headword" : "遠方",
+          "id" : "1e9b46685d7e1292d6d735a4059d4a8e",
+          "reading" : "おちかた"
+        },
+        {
+          "headword" : "ヲチ",
+          "id" : "09eba6b76d491d5bade27de8cfa2e627",
+          "reading" : "ヲチ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "biru",
+      "readingRefinement" : "ビル",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "ビル",
+          "id" : "a339e09cdf1da77ac90de31fa878f180",
+          "reading" : "ビル"
+        },
+        {
+          "headword" : "ビル",
+          "id" : "8c2e279afd3e939664c0c2b7bdffef1e",
+          "reading" : "ビル"
+        },
+        {
+          "headword" : "びる",
+          "id" : "d6056f01a1521ca6e12cb4b61ef7ebe4",
+          "reading" : "びる"
+        },
+        {
+          "headword" : "ビルトイン",
+          "id" : "bf6c70211a71e2e113e54c58df0c92c5",
+          "reading" : "ビルトイン"
+        },
+        {
+          "headword" : "ビルボード",
+          "id" : "6c5a0563e31d79146507d5c604dd3814",
+          "reading" : "ビルボード"
+        },
+        {
+          "headword" : "ビルディング",
+          "id" : "3b266358c172b2c6133b8e38cc54d113",
+          "reading" : "ビルディング"
+        },
+        {
+          "headword" : "緬甸",
+          "id" : "85e5384a4a2498c896d8d9dd2f145871",
+          "reading" : "めんでん"
+        },
+        {
+          "headword" : "ビルダ",
+          "id" : "591972175eff62fb19c999c4742e93cd",
+          "reading" : "ビルダ"
+        },
+        {
+          "headword" : "鼻涙管",
+          "id" : "aee69f9b3033d1f0ab6cfd6dce9bb490",
+          "reading" : "びるいかん"
+        },
+        {
+          "headword" : "ビル街",
+          "id" : "79c2a87ae17637a85280aae219dd93f9",
+          "reading" : "ビルがい"
         }
       ]
     }
