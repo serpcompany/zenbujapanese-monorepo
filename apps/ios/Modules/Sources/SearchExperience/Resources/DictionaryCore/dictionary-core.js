@@ -2786,7 +2786,7 @@
   var latinLetter3 = /\p{Script=Latin}/u;
   var combiningMark = /\p{Mn}/gu;
   function latinSpellings(text) {
-    if (romajiQuery(text) !== null || !latinLetter3.test(text) || containsJapaneseText(text)) return [];
+    if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
     const unaccented = text.normalize("NFD").replace(combiningMark, "").normalize("NFC");
     return unaccented === text ? [text] : [text, unaccented];
   }
