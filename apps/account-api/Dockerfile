@@ -5,6 +5,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
 COPY apps/account-api/package.json apps/account-api/
 COPY packages/node-service/package.json packages/node-service/
 RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm install --frozen-lockfile --filter zenbujapanese-account-api...

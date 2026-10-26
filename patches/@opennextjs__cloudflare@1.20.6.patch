@@ -1,0 +1,127 @@
+diff --git a/dist/cli/build/open-next/createServerBundle.js b/dist/cli/build/open-next/createServerBundle.js
+index d5437f5ed8222d29e14603ed82f918953ea87f84..dfc61d3c93e2de49b84783b2e367def3fd252b35 100644
+--- a/dist/cli/build/open-next/createServerBundle.js
++++ b/dist/cli/build/open-next/createServerBundle.js
+@@ -20,6 +20,7 @@ import { openNextResolvePlugin } from "@opennextjs/aws/plugins/resolve.js";
+ import { getCrossPlatformPathRegex } from "@opennextjs/aws/utils/regex.js";
+ import { getOpenNextConfig } from "../../../api/config.js";
+ import { normalizePath } from "../../utils/normalize-path.js";
++import { patchCloseRscStreams } from "../patches/plugins/close-rsc-streams.js";
+ import { patchResRevalidate } from "../patches/plugins/res-revalidate.js";
+ import { patchTurbopackRuntime } from "../patches/plugins/turbopack.js";
+ import { patchUseCacheIO } from "../patches/plugins/use-cache.js";
+@@ -144,6 +145,7 @@ async function generateBundle(name, options, fnOptions, codeCustomization) {
+         patchResRevalidate,
+         patchUseCacheIO,
+         patchTurbopackRuntime,
++        patchCloseRscStreams,
+         ...additionalCodePatches,
+     ]);
+     // Build Lambda code
+diff --git a/dist/cli/build/patches/plugins/close-rsc-streams.js b/dist/cli/build/patches/plugins/close-rsc-streams.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..414af66d42e3c7ab5b4d18fe1553796c6c270d16
+--- /dev/null
++++ b/dist/cli/build/patches/plugins/close-rsc-streams.js
+@@ -0,0 +1,101 @@
++import path from "node:path";
++import { loadConfig } from "@opennextjs/aws/adapters/config/util.js";
++import { applyRule, parseCode } from "@opennextjs/aws/build/patch/astCodePatcher.js";
++import { getCrossPlatformPathRegex } from "@opennextjs/aws/utils/regex.js";
++export const closeUnclosingStreamRule = `
++rule:
++  pattern: $INDEX < $CHUNKS.length && $CONTROLLER.enqueue($CHUNKS[$INDEX++])
++  inside:
++    kind: method_definition
++    regex: ^async pull\\s*\\(
++    stopBy: end
++fix: |-
++  $INDEX < $CHUNKS.length ? $CONTROLLER.enqueue($CHUNKS[$INDEX++]) : $CONTROLLER.close()
++`;
++export const closePrefetchStreamRule = `
++rule:
++  kind: return_statement
++  regex: ^return;?$
++  follows:
++    kind: if_statement
++    has:
++      kind: continue_statement
++      stopBy: end
++    stopBy: end
++  inside:
++    kind: method_definition
++    regex: ^async pull\\s*\\(
++    stopBy: end
++    has:
++      field: parameters
++      has:
++        kind: identifier
++        pattern: $CONTROLLER
++        stopBy: end
++    all:
++      - has:
++          pattern: await $READER.read()
++          stopBy: end
++      - not:
++          has:
++            kind: call_expression
++            regex: \\.close\\(\\)$
++            stopBy: end
++fix: |-
++  $CONTROLLER.close();
++  return;
++`;
++export const closePageDataStreamRule = `
++rule:
++  pattern: $CONTROLLER.enqueue($BUFFER.subarray($LENGTH))
++  inside:
++    kind: method_definition
++    regex: ^async start\\s*\\(
++    stopBy: end
++    all:
++      - has:
++          pattern: $CONTROLLER.enqueue($BUFFER.subarray(0, $LENGTH))
++          stopBy: end
++      - has:
++          kind: await_expression
++          stopBy: end
++      - not:
++          has:
++            kind: call_expression
++            regex: \\.close\\(\\)$
++            stopBy: end
++fix: ($CONTROLLER.enqueue($BUFFER.subarray($LENGTH)), $CONTROLLER.close())
++`;
++export function usesPartialPrerendering(nextConfig) {
++    const { ppr, dynamicIO, cacheComponents } = nextConfig.experimental ?? {};
++    return Boolean(nextConfig.cacheComponents || cacheComponents || ppr || dynamicIO);
++}
++export function closeRscStreams(code, rules) {
++    const root = parseCode(code);
++    const edits = rules.flatMap((rule) => applyRule(rule, root).edits);
++    return edits.length === 0 ? code : root.commitEdits(edits);
++}
++function isPartialPrerenderingApp(appBuildOutputPath) {
++    return usesPartialPrerendering(loadConfig(path.join(appBuildOutputPath, ".next")));
++}
++export const patchCloseRscStreams = {
++    name: "close-rsc-streams",
++    patches: [
++        {
++            versions: ">=15.0.0",
++            pathFilter: getCrossPlatformPathRegex(String.raw `next/dist/compiled/next-server/app-page(-turbo)?(-experimental)?\.runtime\.prod\.js$`, { escape: false }),
++            contentFilter: /async pull\([\w$]+\)\{[\w$]+<[\w$]+\.length&&/,
++            patchCode: async ({ code, buildOptions }) => isPartialPrerenderingApp(buildOptions.appBuildOutputPath)
++                ? code
++                : closeRscStreams(code, [closeUnclosingStreamRule]),
++        },
++        {
++            versions: ">=15.0.0",
++            pathFilter: getCrossPlatformPathRegex(String.raw `/\.next/server/chunks/.+\.js$`, { escape: false }),
++            contentFilter: /\.getReader\(\)/,
++            patchCode: async ({ code, buildOptions }) => isPartialPrerenderingApp(buildOptions.appBuildOutputPath)
++                ? code
++                : closeRscStreams(code, [closePrefetchStreamRule, closePageDataStreamRule]),
++        },
++    ],
++};
