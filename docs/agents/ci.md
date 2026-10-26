@@ -127,17 +127,17 @@ rules, or `tools/checks/ports.mjs`, which hands the browser tests their port. In
 ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in Docker, since the
 runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what `pnpm cf-typegen` writes
 from `wrangler.jsonc`, and that it writes no other file, so a binding changed without regenerating
-the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice
-more, with `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without
+the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify), and that the
+JavaScript it built holds no dictionary ([`web-languages.md`](web-languages.md)); then it builds
+twice more, with `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without
 `SITE_ENV`, but static pages and prerendering differ by environment, so a route that reads a binding
 at build time fails only in that environment's build. Neither build reaches the dictionary service:
 deployed pages read it only at request time. After each, it checks the prerendered `/about/` has the
 footer's Sign in linking `/login/`, since staging's and production's account pages are open
 ([`web.md`](web.md), Account pages); the header's Log in is in the account menu, which the browser
 draws, so `src/lib/site.test.ts` checks its address with the account pages open and closed. Each
-step names `apps/web` as its working directory, rather than the jobs setting it as a default,
-because the dead-code check reads a step's working directory to find the scripts and binaries a
-step runs, and not a job's.
+step, not the job, names `apps/web` as its working directory, because the dead-code check reads a
+step's working directory, not a job's, to find the scripts and binaries a step runs.
 
 Its `e2e` job starts once those checks pass (about 15 minutes of browser tests, behind about 1.5
 of checks). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it

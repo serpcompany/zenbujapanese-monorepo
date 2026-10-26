@@ -3,17 +3,21 @@ import {
   categoryIndexes,
   frequencyDictionariesPath,
   jlptVocabularyPath,
-  kanaChartsPath,
   kanjiListsPath,
   scriptPath
 } from '@/lib/dictionary/browse/paths'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
-import { withoutDefaultLocale } from '@/lib/i18n/routing'
 import { pageFor, type SitePath } from '@/lib/pages'
-import { type LinkTargetId, type LinkTo, linkTo, site } from '@/lib/site'
+import {
+  catalogEntry,
+  featuredApp,
+  type ProductWithPage,
+  productTypePages
+} from '@/lib/products/catalog'
+import { productNameIn } from '@/lib/products/localized-catalog'
+import { type LinkTargetId, type LinkTo, linkTo, localizedLink, site } from '@/lib/site'
 
 export type MenuSymbol =
   | 'search'
@@ -67,16 +71,35 @@ export function pageLinkTo(path: SitePath, locale: Locale, title = pageFor(path,
   return { title, href: localizedPath(path, locale) }
 }
 
+type ProductTypeWithPage = keyof typeof productTypePages
+
 export function siteMenusIn(locale: Locale): SiteMenu[] {
-  const t = getDictionary(locale).menus
+  const text = getDictionary(locale)
+  const t = text.menus
   const page = (href: string): LinkTo => ({ href: localizedPath(href, locale) })
-  const target = (id: LinkTargetId): LinkTo => {
-    const link = linkTo(id)
-    return { ...link, href: localizedPath(link.href, locale) }
-  }
+  const target = (id: LinkTargetId): LinkTo => localizedLink(linkTo(id), locale)
+  const productPage = (id: ProductWithPage['id']) => localizedLink(catalogEntry(id).page, locale)
+  const listed = (
+    id: ProductWithPage['id'],
+    description: string,
+    mark: MenuLink['mark']
+  ): MenuLink => ({
+    title: productNameIn(id, locale),
+    description,
+    ...productPage(id),
+    mark
+  })
+  const productType = (type: ProductTypeWithPage, mark: MenuLink['mark']): MenuLink => ({
+    title: text.products.filters[type].label,
+    description: t.products.lines[type],
+    mark,
+    ...localizedLink(productTypePages[type], locale)
+  })
+  const appName = text.products.featuredApp.title
+  const appPage = localizedLink(featuredApp.page, locale)
   const dictionaryLink: MenuLink = {
     ...t.dictionary.link,
-    ...page('/dictionary/'),
+    ...productPage('dictionary'),
     mark: { symbol: 'search' }
   }
   const dictionaryMenu: MegaMenu = {
@@ -140,18 +163,14 @@ export function siteMenusIn(locale: Locale): SiteMenu[] {
         heading: t.tools.reference,
         links: [
           dictionaryLink,
-          { ...t.tools.kanaCharts, ...page(kanaChartsPath), mark: { symbol: 'type' } }
+          listed('kana-charts', t.tools.kanaCharts.description, { symbol: 'type' })
         ]
       },
       {
         heading: t.tools.lists,
         links: [
-          { ...t.tools.kanjiLists, ...page(kanjiListsPath), mark: { symbol: 'grid' } },
-          {
-            ...t.tools.frequencyLists,
-            ...page(frequencyDictionariesPath),
-            mark: { symbol: 'chart' }
-          }
+          listed('kanji-lists', t.tools.kanjiLists.description, { symbol: 'grid' }),
+          listed('frequency-lists', t.tools.frequencyLists.description, { symbol: 'chart' })
         ]
       },
       {
@@ -175,50 +194,42 @@ export function siteMenusIn(locale: Locale): SiteMenu[] {
     label: t.products.label,
     section: localizedPath('/products/', locale),
     feature: {
-      title: t.iphoneApp,
+      title: appName,
       ...t.products.feature,
       symbol: 'phone',
       art: { screenshot: '/screenshots/word-detail.webp' },
-      ...target('iphone-app')
+      ...appPage
     },
     columns: [
       {
         heading: t.products.apps,
         links: [
           {
-            title: t.iphoneApp,
-            ...t.products.iphoneApp,
+            title: appName,
+            description: t.products.lines.app,
             mark: { image: '/app-icon.webp' },
-            ...target('iphone-app')
+            ...appPage
           },
           {
-            ...t.products.browserExtension,
+            title: productNameIn('browser-extension', locale),
+            description: t.products.lines['browser-extension'],
             mark: { symbol: 'puzzle' },
-            ...target('browser-extension')
+            ...productPage('browser-extension')
           }
         ]
       },
       {
         heading: t.products.free,
         links: [
-          {
-            title: fill(t.products.dictionary.title, { name: site.name }),
-            description: t.products.dictionary.description,
-            ...page('/dictionary/'),
-            mark: { glyph: site.mark, solid: true }
-          },
-          { ...t.products.freeTools, mark: { symbol: 'grid' }, ...target('tools') }
+          listed('dictionary', t.products.lines.dictionary, { glyph: site.mark, solid: true }),
+          productType('free-tools', { symbol: 'grid' })
         ]
       },
       {
         heading: t.products.learn,
         links: [
-          {
-            ...t.products.referenceGuides,
-            mark: { symbol: 'file' },
-            ...target('reference-guides')
-          },
-          { ...t.products.courses, mark: { symbol: 'play' }, ...target('courses') }
+          productType('reference-guides', { symbol: 'file' }),
+          productType('courses', { symbol: 'play' })
         ]
       }
     ],
@@ -234,21 +245,3 @@ export function siteMenusIn(locale: Locale): SiteMenu[] {
   }
   return [dictionaryMenu, toolsMenu, productsMenu, companyMenu]
 }
-
-const withSlash = (path: string) => (path.endsWith('/') ? path : `${path}/`)
-
-const publicPath = (pathname: string) => withSlash(withoutDefaultLocale(pathname) ?? pathname)
-
-export const drawerLinks = (menu: MegaMenu): MenuLink[] => [
-  ...(menu.lead ? [menu.lead] : []),
-  ...menu.columns.flatMap(column => column.links)
-]
-
-export function isCurrentSection(menu: SiteMenu, pathname: string): boolean {
-  const path = publicPath(pathname)
-  return menu.kind === 'mega'
-    ? path.startsWith(menu.section)
-    : menu.links.some(link => path.startsWith(link.href))
-}
-
-export const isCurrentPage = (href: string, pathname: string) => publicPath(pathname) === href
