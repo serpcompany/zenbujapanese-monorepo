@@ -420,9 +420,9 @@ itself (such as each pitch dot's position) rather than the data the page was giv
 reads never holds a `<` (`rendered.test.ts`). A gate test renders one page, as its 30 seconds hold
 that page's work on a shared machine, so each conjugated form is its own test. The gate's tests:
 
-- `components/dictionary/search-results.test.tsx` renders seven search-results cases: sections,
-  the Example Sentences row, the refinement, the kanji row, and each row's headword, meaning,
-  chips, and link.
+- `components/dictionary/search-results.test.tsx` renders seven search-results cases and three
+  sentence-results cases: sections, the Example Sentences row, the refinement, the Discovered Words
+  heading, the kanji row, and each row's headword, meaning, chips, and link.
 - `components/dictionary/search-examples.test.tsx` holds every recorded Example Sentences row to
   the page it opens (as many examples as its count promises, 25 first, and a Japanese query
   accented in each sentence), and renders nine example-search cases: the count line, every pair

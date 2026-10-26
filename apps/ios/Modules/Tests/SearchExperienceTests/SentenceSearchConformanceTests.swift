@@ -9,19 +9,15 @@ struct SentenceSearchConformanceTests {
   func sentencesMatchSuite() async throws {
     let url = DetailConformance.suiteURL("sentence-search.json")
     var suite = try JSONDecoder().decode(SentenceSuite.self, from: Data(contentsOf: url))
-    let dictionary = try await SudachiBuildCache.dictionary.value
-    let analyzer = try await apartFromThePool {
-      try SudachiJapaneseMorphologyAdapter(dictionaryURL: dictionary)
-    }
+    let analyzer = try await SudachiBuildCache.analyzer()
     let observer = SentenceObserver(
       analyzer: analyzer,
       data: LanguageReferenceData(morphology: JapaneseMorphologyClient { try analyzer.analyze($0) }),
       core: try DictionaryCore(),
       resultLimit: suite.resultLimit)
     let artifacts =
-      try await DetailConformance.artifacts(["LanguageReferenceData.sqlite3"]) + [
-        ConformanceArtifact(name: "system_core.dic", sha256: SudachiCoreContract.dictionarySHA256)
-      ]
+      try await DetailConformance.artifacts(["LanguageReferenceData.sqlite3"])
+      + [SudachiBuildCache.artifact]
 
     if DetailConformance.isRecording {
       suite.artifacts = artifacts

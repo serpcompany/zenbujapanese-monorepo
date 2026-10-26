@@ -2,7 +2,7 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
+      "sha256" : "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891"
     },
     {
       "name" : "system_core.dic",
@@ -93146,6 +93146,16 @@
           "headword" : "エアターミナル",
           "id" : "034087dfd0206298b3001c6c53935465",
           "reading" : "エアターミナル"
+        },
+        {
+          "headword" : "ハードウェアＴ＆Ｌ",
+          "id" : "f2dbaa96dbbf4a53901936360f3882c8",
+          "reading" : "ハードウェアティーアンドエル"
+        },
+        {
+          "headword" : "日本エアーテック株式会社",
+          "id" : "67d1a8753b4490d22fc7812ba1e3ed95",
+          "reading" : "にほんエアーテックかぶしきがいしゃ"
         }
       ],
       "searched" : [

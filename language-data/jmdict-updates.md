@@ -43,12 +43,14 @@ cause as the refresh by hand would, then run the workflow again from the Actions
 ## The suites
 
 A JMdict update moves every suite recorded from `LanguageReferenceData.sqlite3`: `search-retrieval`,
-`search-results`, `example-search`, `word-detail`, and `kanji-detail`. The app records all five, in
-`SearchExperienceTests` on an iPhone Simulator ([`ios.md`](../docs/agents/ios.md), Current
-verification boundary), so the workflow records none of them. `kanji-element` reads only the kanji
-elements and `tokenizer` only Kuromoji's files, which the update leaves alone; the tokenizer suite
-comes from kuromoji.js, the one a runner can record, and the workflow records it each time.
-`romaji` is edited by hand.
+`search-results`, `example-search`, `word-detail`, `kanji-detail`, `sentence-search`, and
+`sentence-results`. The app records all seven, in `SearchExperienceTests` on an iPhone Simulator
+([`ios.md`](../docs/agents/ios.md), Current verification boundary), so the workflow records none of
+them. The two sentence suites also pin Sudachi's dictionary, which isn't among the app's files and
+which the update leaves alone, so the pull request names them for `LanguageReferenceData.sqlite3`
+alone. `kanji-element` reads only the kanji elements and `tokenizer` only Kuromoji's files, which
+the update leaves alone; the tokenizer suite comes from kuromoji.js, the one a runner can record,
+and the workflow records it each time. `romaji` is edited by hand.
 
 A suite not yet recorded again can't pass by accident. The dictionary service's replays fail with
 "The suite was recorded from other files", naming each file and both SHA-256s, and the app's with

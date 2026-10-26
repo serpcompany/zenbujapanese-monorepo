@@ -5,6 +5,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
 COPY apps/account-api/package.json apps/account-api/
 COPY packages/account-rules/package.json packages/account-rules/
 COPY packages/node-service/package.json packages/node-service/

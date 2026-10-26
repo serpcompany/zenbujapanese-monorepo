@@ -308,6 +308,7 @@ describe('the search results page', () => {
     })
     const page = readRenderedPage(html)
     expect(page.sections).toEqual(['examples', 'discoveredWords'])
+    expect(page.heading).toBe('Discovered Words')
     expect(page.examples?.href).toBe('/dictionary/日本語-1464530/#examples')
     expect(page.rows.map(row => row.headword)).toEqual(['日本語'])
   })
@@ -319,6 +320,7 @@ interface SuiteCase {
   sections?: string[]
   examples?: { title: string; count: number }
   readingRefinement?: { title: string }
+  heading?: string
   kanji?: { character: string; label: string; summary: string }
   results?: {
     entSeq: string[]
@@ -330,9 +332,20 @@ interface SuiteCase {
 
 const renderedQueries = ['iru', 'いる', '日', 'eat', 'かえる', 'い', 'qzxvkj']
 
-const suiteCases = recordedCases<SuiteCase>('search-results.json').filter(expected =>
-  renderedQueries.includes(expected.query)
-)
+const renderedSentences = [
+  '猫が好き',
+  '悪い子ね！',
+  '現段階では、ソフトのバグ改修のみ行っています。機能強化については承っておりません。'
+]
+
+const suiteCases = [
+  ...recordedCases<SuiteCase>('search-results.json').filter(expected =>
+    renderedQueries.includes(expected.query)
+  ),
+  ...recordedCases<SuiteCase>('sentence-results.json').filter(expected =>
+    renderedSentences.includes(expected.query)
+  )
+]
 
 async function serviceKanji(character: string): Promise<KanjiDetailsData | null> {
   const found = await gateService().kanji(character)
@@ -347,7 +360,9 @@ async function inlineExamples(data: SearchData): Promise<SearchExamplesData | nu
 
 describe.runIf(gateEnabled)('the rendered search results page matches the app', () => {
   test('renders every chosen case', () => {
-    expect(suiteCases.map(expected => expected.query).sort()).toEqual([...renderedQueries].sort())
+    expect(suiteCases.map(expected => expected.query).sort()).toEqual(
+      [...renderedQueries, ...renderedSentences].sort()
+    )
   })
 
   test.each(suiteCases)('「$query」', async expected => {
@@ -382,6 +397,7 @@ describe.runIf(gateEnabled)('the rendered search results page matches the app', 
     if (target?.kind === 'word') expect(target.path).toMatch(/^\/dictionary\/[^/]+-\d+\/#examples$/)
     expect(page.sections.includes('searchExamples')).toBe(target?.kind === 'inline')
     expect(page.refinement).toBe(expected.readingRefinement?.title ?? null)
+    expect(page.heading).toBe(expected.heading ?? null)
     expect(page.kanji).toEqual(
       expected.kanji
         ? {

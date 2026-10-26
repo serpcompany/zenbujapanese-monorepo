@@ -157,21 +157,18 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
 - **A text's words cost one or two statements.** `linkedTokens` looks every word's forms up in one
   round (`entriesMatchingFirstForms`), then the forms still unmatched, and caches by form, so a
   page mostly asks nothing. `countedWords` looks all its lines up together and keeps 4,000 lines.
-- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and returns
-  it. Its `outcome()` is a JSON string: `{"value": ...}`, `{"error": message}`, or `{"analyze":
-  text}` when a call needs the words of a sentence from a host that gave no `tokenize`. The host
-  then analyzes the text with whatever it has, answers `analyzed('{"words": [...]}')` or
-  `analyzed('{"error": ...}')`, and reads the outcome again. The host's database is synchronous, so
-  a call settles before `begin` or `analyzed` returns to the host and nothing is polled; calls keep
-  their outcomes apart, so a second can start while the first waits for its analysis. A method may
-  answer null (`kanjiElementPage`, `gloss`): `{"value": null}` is an answer. `value()` is a
-  finished call's value alone, as its own JSON text.
-- **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` runs
-  the method and returns its value, and `answerJSON(method, argument)` returns it as JSON
-  (`null` for nothing). Both throw for a method that would wait (`search`, `linkedTokens`, and the
-  others that read through the async search database) or that the core doesn't have. A host
-  uses them for what a view asks while it is being drawn: one crossing into the engine, no
-  promise, and for a string or a flag no JSON either.
+- **A call is an object.** `embeddedEndpoint(...).begin(method, argument)` starts a call and
+  returns it. Its `outcome()` is JSON: `{"value": ...}`, `{"error": message}`, or `{"analyze":
+  text}` when it needs a sentence's words from a host with no `tokenize`, which analyzes the text,
+  answers `analyzed('{"words": [...]}')` or `analyzed('{"error": ...}')`, and reads it again. The
+  database is synchronous, so a call settles before `begin` or `analyzed` returns, and calls keep
+  their outcomes apart. `{"value": null}` is an answer (`kanjiElementPage`, `gloss`), and `value()`
+  is a finished call's value alone, as its own JSON text.
+- **An answer that needs no waiting can be asked for at once.** `answer(method, argument)` returns
+  the method's value, and `answerJSON(method, argument)` it as JSON (`null` for nothing). Both throw
+  for a method that would wait (`search`, `linkedTokens`, and the others that read through the async
+  search database) or that the core lacks. A host uses them for what a view asks while it is drawn:
+  one crossing into the engine, no promise, and for a string or a flag no JSON either.
 - **The bundle.** `embedded/javascriptcore.ts` reads the host from the global `zenbuHost` and sets
   the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore` bundles it into
   `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, checked
@@ -315,17 +312,15 @@ The core answers as the Swift it replaced did, which the suites pin.
 - **Bound text.** The app's Swift search bound text as C strings (`sqlite3_bind_text` with length
   -1), so SQLite read a parameter up to its first NUL; `DictionarySearch` truncates its parameters
   there, whatever the client binds.
-- **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, which is ICU's
-  Any-Latin. `detail/romaji.ts` is that transform for kana, rule for rule, from the rules and
-  filters the system's ICU 78 holds: the text is taken a run of one script at a time; a hiragana run
-  is turned to katakana first, and only its kana, its voiced mark, and the long mark are touched; a
-  katakana run also turns 、 and 。 into a comma and a full stop; a rule sees the text on either side
-  of its run, so っ before a katakana syllable still doubles it. It keeps ICU's spellings as they
-  were shown: kon'nichiha, toukyou, hanadji, and a tilde before a small kana that forms no syllable
-  (ウィ is u~i). On the bundled data it differs from Foundation for no reading and no example
-  sentence; it differs where a string holds another writing system, which Foundation also turned to
-  Latin letters (α to a, 한 to han, and 〇 to the Chinese líng) and the core leaves as written.
-  `language-data/conformance/romaji.json` holds the recorded cases.
+- **Romaji.** The app's romaji was Foundation's `applyingTransform(.toLatin)`, ICU's Any-Latin.
+  `detail/romaji.ts` is that transform for kana, rule for rule, from ICU 78's rules and filters: the
+  text is taken a run of one script at a time; a hiragana run is turned to katakana first, and only
+  its kana, voiced mark, and long mark are touched; a katakana run also turns 、 and 。 into a comma
+  and a full stop; a rule sees the text either side of its run, so っ before a katakana syllable
+  still doubles it. It keeps ICU's spellings: kon'nichiha, toukyou, hanadji, and a tilde before a
+  small kana that forms no syllable (ウィ is u~i). On the bundled data it differs from Foundation
+  only in another writing system, which Foundation turned to Latin letters (α to a, 한 to han) and
+  the core leaves as written. `language-data/conformance/romaji.json` holds the recorded cases.
 - **Links.** `websitePage` in `detail/links.ts` reads a zenbujapanese.com link as the app's
   `WebsiteLink` did, and the website reads a word segment with the same `parseWordSegment`. A
   word link's entry number must be one JavaScript holds exactly; the Swift accepted any that fit
@@ -360,6 +355,11 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr) only when the entry is shown with one of them.
+- **Romaji forms** come from `romaji-forms.ts`, run by the importer through
+  `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII spelling earlier releases
+  stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without macrons, rank after all
+  of kind 2 (4 after 3), so they are read only while a search lists under 60 words, and never
+  corroborate or stop a deinflection. `romajiQuery` sends ASCII and macron vowels to romaji search.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail

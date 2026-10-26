@@ -448,14 +448,14 @@ same answer, which the core's `results/ordering.test.ts` and `results/learner.te
 `ResultsScreenTests` and `SearchResultOrderingTests` on the bundled data. Recent lookups and known
 words don't change the recorded list. The suite covers queries that match directly, deinflected
 queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no matches
-that aren't Japanese. Japanese sentences with no direct match, and the Discovered Words they list,
-are `SentenceSearchConformanceTests`'s, in `sentence-search.json`: each query's Sudachi words, the
-words the core searches, and the results, with Sudachi's dictionary from its build cache. Record it
-with `-only-testing:SearchExperienceTests/SentenceSearchConformanceTests`. The
-screen's titles, counts, and which rows it shows are the core's answer, which `ResultsScreen.swift`
-decodes for the view and the suite alike. Record it with
+that aren't Japanese. The screen's titles, counts, and which rows it shows are the core's answer,
+which `ResultsScreen.swift` decodes for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
-`query` and `covers` fields and recording.
+`query` and `covers` fields and recording. Japanese sentences with no direct match have two suites,
+with Sudachi's dictionary from its build cache: `SentenceSearchConformanceTests` records each one's
+Sudachi words, the words the core searches, and the results (`sentence-search.json`), and
+`SentenceResultsConformanceTests` the results screen, as above, of each that lists Discovered
+Words, their heading included (`sentence-results.json`). Record each with its `-only-testing:` name.
 
 `ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen that
 Look Up's "View N Example Sentences" row opens: for each query, the row's count and title, the
@@ -663,10 +663,10 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
-  each query's uncached time, how long linking, a video's known-word count, and an abandoned search
-  take, how long the presentation engine takes to start and to build each screen, how long the
-  frequency lists take to be ready, how long romaji, the input panels, a stroke diagram, and the
-  kanji check take, and the memory a session reaches step by step; it runs only when asked:
+  each query's uncached time (romaji ones also by spelling), how long linking, a video's known-word
+  count, and an abandoned search take, how long the presentation engine takes to start and to build
+  each screen, the frequency lists to be ready, and romaji, the input panels, a stroke diagram, and
+  the kanji check, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \

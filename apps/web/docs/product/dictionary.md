@@ -11,29 +11,31 @@ its own, the conjugation table and its forms, a kanji's details, and the example
 the word page, in sections that open and close and stay in the page's HTML while closed.
 
 Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift files are in
-`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`; paths that start
-with `packages/` or `apps/` are from the repository root. **SR**, **WD**, and **KD** are the
-app-recorded suites `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`, with the
-field they record. The dictionary service replays them on the app's own data: SR by
+`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`; paths that start with
+`packages/` or `apps/` are from the repository root. **SR**, **WD**, and **KD** are the app-recorded
+suites `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`, with the field they
+record. The dictionary service replays them on the app's own data: SR by
 `apps/dictionary-api/src/conformance/search.conformance.test.ts` ("search conformance"), WD and KD
 by `apps/dictionary-api/src/conformance/detail.conformance.test.ts` ("word and kanji detail
 conformance"). **SRR** is `search-results.json`, the results screen after the frequency re-sort,
 replayed field by field by `apps/dictionary-api/src/conformance/results.conformance.test.ts`
 ("search results conformance"), and rendered for seven of its cases by
 `src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
-app"). **ES** is `example-search.json`, what the Example Sentences screen that Look Up's examples
-row opens lists for 69 queries, replayed by
+app"). **SSR** is `sentence-results.json`, that screen for each sentence the app lists Discovered
+Words for, recorded and replayed with Sudachi ("sentence results conformance"), and rendered for
+three of its cases by the same test. **ES** is `example-search.json`, what the Example Sentences
+screen that Look Up's examples row opens lists for 69 queries, replayed by
 `apps/dictionary-api/src/conformance/example-search.conformance.test.ts` ("example search
 conformance") and rendered for nine of its cases by
 `src/components/dictionary/search-examples.test.tsx` ("the rendered Example Sentences section
-matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the
-rendered word page matches the app"), which draws every WD case through the word page's components
-and reads back what they draw. **Conjugations rendered** is
-`src/components/dictionary/conjugations.test.tsx`: every WD case's table ("the rendered Conjugations
-section matches the app") and forms' examples ("each conjugated form’s examples match the app"). The
-`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds, on
-pull requests that change the service, the core, the website's dictionary components or data code,
-the app's bundled data, or the suites. Unit tests are named by file and test title.
+matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the rendered
+word page matches the app"), which draws every WD case through the word page's components and reads
+back what they draw. **Conjugations rendered** is `src/components/dictionary/conjugations.test.tsx`:
+every WD case's table ("the rendered Conjugations section matches the app") and forms' examples
+("each conjugated form’s examples match the app"). The `Dictionary API` workflow runs the suites,
+then the rendered tests against the service it builds, on pull requests that change the service, the
+core, the website's dictionary components or data code, the app's bundled data, or the suites. Unit
+tests are named by file and test title.
 
 ## Dictionary home
 
@@ -88,18 +90,17 @@ types; the website searches on Enter so that each search is its own page.
   waits, and a plain `GET` form).
 
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
-the app's own queries and full-text indexes, on the app's own data in the dictionary service. It
-finds what the app finds for Japanese, kana, romaji, and English queries, including inflected
-queries such as `食べた` or `見ない`, and glosses for a long number such as 9999999, which the
-app's stemmer shortens. `*` after a word matches any word it starts (`t*`), and `^` before a word
-matches only a form's or meaning's first word, as in the app. It lists at most 60 words, the app's
-limit.
+its queries and full-text indexes, on the app's data in the dictionary service. It finds what the
+app finds for Japanese, kana, romaji (`raamen`, then the app's `rāmen` and the titles' `ramen`),
+and English queries, inflected ones such as `食べた` or `見ない` included, and glosses for a long number
+such as 9999999, which the app's stemmer shortens. `*` after a word matches any word it starts
+(`t*`), and `^` before a word only a form's or meaning's first word. It lists at most 60 words.
 
 - Source: App docs, Search; `LookupClient.swift`; ADR 0006, ADR 0008, and ADR 0009.
-- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 32
+- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 39
   queries; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a long number finds glosses,
   as FTS4 stems it"; SRR's `t*` and `^t*` cases, every row. The 60-word limit: SRR `results`,
-  every row, for the 40 queries that reach it (い, `eat`, 見る, and others), and the rendered い
+  every row, for the 43 queries that reach it (い, `eat`, 見る, and others), and the rendered い
   and いる cases in `search-results.test.tsx`; SR records only the first 10 (`resultLimit: 10`).
 
 **Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
@@ -110,10 +111,9 @@ with the dictionary the app pins.
 - Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app
   runs too; `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
-- Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "「日本語を勉強する」 lists
-  its words as Discovered Words" and "a word the dictionary holds is still searched as itself". SR
-  records no sentence cases yet (none with the `analyzed` resolution): recording them needs the
-  app's Japanese Text Analysis pack in the Simulator.
+- Check: SSR, every field, for 325 sentences: the Discovered Words heading, each row with its chips,
+  and the Example Sentences row; `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "a
+  word the dictionary holds is still searched as itself".
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
 re-sorted by the default dictionaries, as the core's `orderedByFrequency` sorts them. Within each
@@ -127,7 +127,7 @@ TUBELEX packs, read by the dictionary service for all of a search's results, one
 - Source: App docs, Search; `orderedByFrequency` in the core's `results/ordering.ts`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  56 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
+  63 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
   "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and
   its first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -170,7 +170,7 @@ row opens the sentences where the site shows them:
 - Source: App docs, Search; the examples row of the core's `results/results.ts` and
   `artifact/search-examples.ts`, which the app's results screen reads too; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
-- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 56 queries;
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 63 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences when only sentences match",
   "an English search lists its Example Sentences below the words, and its row links down to them",
@@ -243,7 +243,7 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `frequencyLookupChips` in the core's `detail/frequency.ts`; the app
   draws a chip in `FrequencyRankChip.swift`.
-- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 56 queries;
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 63 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or
   list the word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))".

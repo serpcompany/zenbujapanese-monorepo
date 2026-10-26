@@ -5,6 +5,16 @@ import Foundation
 enum SudachiBuildCache {
   static let dictionary = Task { try await apartFromThePool { try located() } }
 
+  static let artifact = ConformanceArtifact(
+    name: "system_core.dic", sha256: SudachiCoreContract.dictionarySHA256)
+
+  static func analyzer() async throws -> SudachiJapaneseMorphologyAdapter {
+    let dictionary = try await dictionary.value
+    return try await apartFromThePool {
+      try SudachiJapaneseMorphologyAdapter(dictionaryURL: dictionary)
+    }
+  }
+
   private static var root: URL {
     let environment = ProcessInfo.processInfo.environment
     if let cache = environment["ZENBU_SUDACHI_BUILD_CACHE"] {

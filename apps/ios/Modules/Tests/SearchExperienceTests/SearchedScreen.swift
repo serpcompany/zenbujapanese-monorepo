@@ -10,6 +10,7 @@ struct SearchedScreen {
   static func search(
     _ text: String,
     using core: PresentationCore? = nil,
+    in data: LanguageReferenceData = .shared,
     sort: String = ResultsLearner.defaultSort,
     filter: String = ResultsLearner.noFilter,
     known: [LanguageReferenceID] = [],
@@ -17,7 +18,7 @@ struct SearchedScreen {
   ) async throws -> SearchedScreen {
     let query = SearchQuery(text)
     let examples = ExampleSentenceClient.live
-    let results = try await LookupClient.live.search(query)
+    let results = try await data.search(query)
     let request = ResultsScreenRequest(
       query: query,
       results: results.listed,
@@ -26,7 +27,7 @@ struct SearchedScreen {
         sort: sort, filter: filter, known: known.map(\.rawValue), pickedKanji: pickedKanji))
     return SearchedScreen(
       results: results,
-      items: try await LanguageReferenceData.shared.coreSearch(query.value).items,
+      items: try DictionaryCoreSearchResults(answered: results.listed).items,
       screen: try await request.screen(using: try await presentation(core)))
   }
 
@@ -98,8 +99,13 @@ struct SearchedScreen {
 
 extension LanguageReferenceData {
   func coreSearch(_ query: String) async throws -> DictionaryCoreSearchResults {
-    try JSONDecoder().decode(
-      DictionaryCoreSearchResults.self, from: Data(try await answeredSearch(query).utf8))
+    try DictionaryCoreSearchResults(answered: try await answeredSearch(query))
+  }
+}
+
+extension DictionaryCoreSearchResults {
+  init(answered: String) throws {
+    self = try JSONDecoder().decode(Self.self, from: Data(answered.utf8))
   }
 }
 

@@ -5,6 +5,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
 COPY apps/web/package.json apps/web/
 COPY apps/dictionary-api/package.json apps/dictionary-api/
 COPY packages/dictionary-core/package.json packages/dictionary-core/

@@ -114,6 +114,7 @@ jobs:
         working-directory: apps/web
         env:
           E2E_SERVER: preview
+          E2E_SERVER_LOG: e2e/server.log
         run: pnpm test:e2e
       - name: Keep the report
         if: failure()
@@ -123,6 +124,7 @@ jobs:
           path: |
             apps/web/e2e/report
             apps/web/e2e/results
+            apps/web/e2e/server.log
           retention-days: 7
 
   web:

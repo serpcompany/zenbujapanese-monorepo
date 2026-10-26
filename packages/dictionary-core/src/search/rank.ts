@@ -52,7 +52,17 @@ export const GlossRelation = {
   qualifiedInfinitive: 3,
   glossToken: 4
 } as const
-export const RomajiRelation = { exact: 0, prefix: 1, contains: 2 } as const
+export const RomajiRelation = {
+  exact: 0,
+  prefix: 1,
+  contains: 2,
+  shownExact: 3,
+  shownPrefix: 4,
+  shownContains: 5,
+  unmarkedExact: 6,
+  unmarkedPrefix: 7,
+  unmarkedContains: 8
+} as const
 export const FormRelation = {
   writtenExact: 0,
   readingExact: 1,
