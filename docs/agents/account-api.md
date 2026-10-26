@@ -379,19 +379,11 @@ Better Auth names its models `user`, `account`, `session`, `verification`, and `
 maps them to these tables, and `account` to #374's `user_identities`, whose `provider` and
 `subject` are Better Auth's `providerId` and `accountId`.
 
-The migrations are in `apps/account-api/migrations/`, in Drizzle's format. To change the schema,
-change `src/db/schema.ts` or billing's `src/db/billing-schema.ts`, then run `pnpm db:generate --name <what it does>` and commit the SQL and
-`meta/` files it writes. Never edit or regenerate a migration once it has run anywhere: Drizzle
-runs only those dated after the last one a database ran, so an edited one never runs where the old
-one did, and a regenerated one, with a new date, runs again over the tables it made: add a new
-one. For SQL drizzle-kit doesn't write, such as the journal's trigger, run `pnpm db:generate
---custom --name <what it does>` and fill in the empty file. They're drizzle-kit's, comments and
-formatting included, so Biome and the comments check leave the folder alone.
-
-The service applies the migrations when it starts, before it listens, holding a Postgres advisory
-lock so two starts take them one after the other. A deploy starts the new image while the old one
-still serves, so **every migration keeps the running code working**: add a column or table first,
-and remove the old one only in a later release (#374's planning notes of 2026-09-28).
+The migrations are in `apps/account-api/migrations/`, in Drizzle's format, and the service applies
+them when it starts. A deploy starts the new image while the old one still serves, so every
+migration keeps the running code working: add first, and remove in a later release. How to write
+one, and the check that refuses a drop or rename of what `main`'s code reads, are in
+[`account-migrations.md`](account-migrations.md).
 
 ## Check it
 

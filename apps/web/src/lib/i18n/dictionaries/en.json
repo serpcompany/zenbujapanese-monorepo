@@ -794,6 +794,13 @@
       "dark": "Dark",
       "system": "System"
     },
+    "readingAids": {
+      "label": "Reading Aids",
+      "furigana": "Show Furigana",
+      "romaji": "Show Romaji",
+      "wordMeanings": "Show Word Meanings",
+      "translations": "Show Sentence Translations"
+    },
     "account": {
       "account": "Account",
       "signedIn": "Account, signed in",
@@ -864,7 +871,8 @@
     "stale": "These examples have been updated since the page loaded.",
     "reload": "Reload for more examples",
     "retry": "Try again",
-    "sentencesTitle": "Example Sentences"
+    "sentencesTitle": "Example Sentences",
+    "romajiUnavailable": "Romaji unavailable for this text"
   },
   "footer": {
     "products": "Products",
@@ -872,9 +880,6 @@
     "company": "Company",
     "legal": "Legal",
     "dictionary": "Dictionary",
-    "kanaCharts": "Kana charts",
-    "kanjiLists": "Kanji lists",
-    "frequencyLists": "Frequency lists",
     "allTools": "All tools",
     "dmca": "DMCA",
     "sitemap": "Sitemap",
@@ -1065,7 +1070,6 @@
     }
   },
   "menus": {
-    "iphoneApp": "Zenbu Japanese for iPhone",
     "dictionary": {
       "label": "Dictionary",
       "link": {
@@ -1122,16 +1126,13 @@
       },
       "reference": "Reference",
       "kanaCharts": {
-        "title": "Kana charts",
         "description": "Hiragana and katakana"
       },
       "lists": "Lists",
       "kanjiLists": {
-        "title": "Kanji lists",
         "description": "Grades, JLPT, jinmeiyō"
       },
       "frequencyLists": {
-        "title": "Frequency lists",
         "description": "JLPT, YouTube, anime"
       },
       "converters": "Converters",
@@ -1159,30 +1160,15 @@
         "action": "Get the app"
       },
       "apps": "Apps",
-      "iphoneApp": {
-        "description": "Dictionary, Image Search, Translate, Player"
-      },
-      "browserExtension": {
-        "title": "Browser extension",
-        "description": "Look up Japanese on any web page"
-      },
       "free": "Free",
-      "dictionary": {
-        "title": "{name} Dictionary",
-        "description": "Free on the web"
-      },
-      "freeTools": {
-        "title": "Free tools",
-        "description": "Kana, kanji, and frequency lists"
-      },
       "learn": "Learn",
-      "referenceGuides": {
-        "title": "Reference guides",
-        "description": "Printable sheets"
-      },
-      "courses": {
-        "title": "Courses",
-        "description": "Lessons built from real clips"
+      "lines": {
+        "app": "Dictionary, Image Search, Translate, Player",
+        "browser-extension": "Look up Japanese on any web page",
+        "dictionary": "Free on the web",
+        "free-tools": "Kana, kanji, and frequency lists",
+        "reference-guides": "Printable sheets",
+        "courses": "Lessons built from real clips"
       },
       "footer": {
         "note": "Apps, extensions, free tools, guides, and courses.",
@@ -1612,6 +1598,7 @@
       "comingSoon": "Coming soon"
     },
     "featuredApp": {
+      "title": "Zenbu Japanese for iPhone",
       "tags": {
         "platform": "iPhone",
         "offline": "Works offline"

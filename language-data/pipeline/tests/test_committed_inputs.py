@@ -72,7 +72,7 @@ class RealInputsTests(unittest.TestCase):
             planned,
             {
                 "LanguageReferenceData.sqlite3": "zenbu.language-reference.v2",
-                "KanjiReferenceData.json": "zenbu.kanji-reference.v1",
+                "KanjiReferenceData.json": "zenbu.kanji-reference.v2",
                 "RadicalReferenceData.json": "zenbu.radical-reference.v1",
                 "DictionaryRankingArtifactContract.json": "zenbu.dictionary-ranking-contract.v1",
             },

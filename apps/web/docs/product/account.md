@@ -50,13 +50,13 @@ Create an account in the header's account menu (Log in in the phone menu below 1
 (`src/lib/site.ts`), which the build points at the pages only where they're open
 (`ZENBU_ACCOUNT_PAGES`, [`web.md`](../../../../docs/agents/web.md), Account pages), as they are on
 staging and in production. Where they're closed, Log in and Create an account stay `#` placeholders
-([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links) and the footer has
+([Site-wide](site-wide.md), Placeholder links) and the footer has
 no Sign in, so nothing links to the account pages. In a browser that signed in on the site, the
 footer says Account and leads to `/account/`; the header's account button shows the learner's
 initials, its menu leads to Your account (`/account/`) and ends with Sign out, which signs this
 browser out through the account service (the address the build names, `ZENBU_ACCOUNT_SERVICE`),
 and the phone menu has Your account in Log in's place
-([Dictionary](dictionary.md#header-footer-and-site-wide), Account menu). The browser remembers
+([Site-wide](site-wide.md), Account menu). The browser remembers
 that in local storage: `zenbu-signed-in`, and `zenbu-initials`, the initials of the name the
 account page shows (or its email's first letter), which the account page sets as it shows the
 account, after a sign-in or a change to the name; a sign-in clears the initials of any account

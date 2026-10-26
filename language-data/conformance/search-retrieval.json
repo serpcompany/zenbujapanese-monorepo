@@ -1,7 +1,7 @@
 {
   "artifact" : {
     "name" : "LanguageReferenceData.sqlite3",
-    "sha256" : "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891"
+    "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
   },
   "cases" : [
     {
@@ -1909,6 +1909,30 @@
           "headword" : "ビル街",
           "id" : "79c2a87ae17637a85280aae219dd93f9",
           "reading" : "ビルがい"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "ς",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "Σ",
+          "id" : "a8febc1674e58b8408fda8754ecd46b8",
+          "reading" : "シグマ"
+        }
+      ]
+    },
+    {
+      "presentation" : "ranked",
+      "query" : "spaß",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "headword" : "音楽の冗談",
+          "id" : "d82f2d175b3fec17c755ec8d1c2b4bff",
+          "reading" : "おんがくのじょうだん"
         }
       ]
     }

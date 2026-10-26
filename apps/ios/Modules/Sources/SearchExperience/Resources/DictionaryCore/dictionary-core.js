@@ -2781,13 +2781,14 @@
     const separated = query.replace(romajiSeparators, " ").split(" ").filter(Boolean).join(" ");
     return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
   }
+  var combiningMarks = /\p{Mn}/gu;
+  var withoutMarks = (form) => form.normalize("NFD").replace(combiningMarks, "").normalize("NFC");
 
   // src/search/latin-text.ts
   var latinLetter3 = /\p{Script=Latin}/u;
-  var combiningMark = /\p{Mn}/gu;
   function latinSpellings(text) {
     if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
-    const unaccented = text.normalize("NFD").replace(combiningMark, "").normalize("NFC");
+    const unaccented = withoutMarks(text);
     return unaccented === text ? [text] : [text, unaccented];
   }
 
@@ -3705,9 +3706,11 @@
           text: token.text,
           ruby: entry !== null && reading ? rubySegments(token.text, reading) : [{ text: token.text }],
           link: link ? entry !== null ? { entSeq: entry } : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text } : null,
+          ...link?.meaning ? { meaning: link.meaning } : {},
           isPageWord: highlights.has(index)
         };
       }),
+      ...example2.romaji === void 0 ? {} : { romaji: example2.romaji },
       translation: sentence.english,
       japanese: {
         id: sentence.japaneseTatoebaId,

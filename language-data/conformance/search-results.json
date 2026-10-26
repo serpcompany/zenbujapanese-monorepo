@@ -2,23 +2,23 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "af0820cdaa35d8b7dd23a0e3c74bb5ec0b1ed4b34b246ef2d3fb12916d03c891"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "742fbbb8742a1ee7b922a3741a7da2d38738e6cf04009831c185875d5124e9f2"
+      "sha256" : "ff13abffeede7746111120f7c0b1150ada6273454039b55c4bf80a0574df39ba"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "67c23c90760f3eee31f81d96d1baa637837c5ef4b40b681117cd16a0919f1222"
+      "sha256" : "4e0c030d6d8d3176eb571578aefc24c768cbbf7adf6b6a69063ab94ca2a5f9ab"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "22b25f4e8f8ec37cca4a647516ed091539c34cbc8d82f26c97f0be2445899d24"
+      "sha256" : "7b62147b6c3ea51d1ddcc3ce9cf2df2f74a8bf99e7f8213888e1f5769fc5ae58"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "7196707c2f0c5a14ae406382c9e7b04b1f8928432a04054502de80c25383c431"
+      "sha256" : "77e222bd5364a29a76cd8814369245a3d7307de03fda1bd87422c7c6670d10e5"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -30,7 +30,7 @@
     },
     {
       "name" : "DictionaryRankingArtifactContract.json",
-      "sha256" : "15214c70468ee5cd8d359ca79add90bba8206dc0fe385a672923cfc11ae554d4"
+      "sha256" : "bbc5e577b436151c26e52de39eecd0f4067b90eac8dd9fd15cd661ab671a5582"
     },
     {
       "name" : "LanguageTechnologyPackCatalog.json",
@@ -50981,6 +50981,65 @@
       ],
       "state" : "results",
       "voiceOverCount" : 60
+    },
+    {
+      "covers" : "Σ's final form, stored as the core folds a query, where Python's casefold stored σ",
+      "presentation" : "ranked",
+      "query" : "ς",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "50,857",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1060200"
+          ],
+          "headword" : "Σ",
+          "languageReferenceID" : "a8febc1674e58b8408fda8754ecd46b8",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "シグマ",
+          "retrievalOrder" : 0,
+          "summary" : "sigma"
+        }
+      ],
+      "sections" : [
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
+    },
+    {
+      "covers" : "A gloss with ß, stored as the core folds a query, where Python's casefold stored ss",
+      "presentation" : "ranked",
+      "query" : "spaß",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "5741246"
+          ],
+          "headword" : "音楽の冗談",
+          "languageReferenceID" : "d82f2d175b3fec17c755ec8d1c2b4bff",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "おんがくのじょうだん",
+          "retrievalOrder" : 0,
+          "summary" : "Ein Musikalischer Spaß (Mozart)"
+        }
+      ],
+      "sections" : [
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
     }
   ],
   "formatVersion" : 1,

@@ -20,7 +20,7 @@ import type {
   WordSitemap
 } from './dictionary'
 
-export const dictionaryContract = 6
+export const dictionaryContract = 7
 
 export const firstDictionaryContract = 1
 

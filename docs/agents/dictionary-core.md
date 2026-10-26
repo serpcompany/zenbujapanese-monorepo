@@ -356,11 +356,12 @@ The core answers as the Swift it replaced did, which the suites pin.
   priority, sense, gloss order, romaji corroboration, headword length, and fingerprint (#701).
 - An English query matches a sense restricted to some written forms or readings (JMdict's stagk
   and stagr, a row's `restrictions`, never shown) only when the entry is shown with one of them.
-- **Romaji forms** come from `romaji-forms.ts`, run by the importer through
-  `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII spelling earlier releases
-  stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without macrons, rank after all
-  of kind 2 (4 after 3), so they are read only while a search lists under 60 words, and never
-  corroborate or stop a deinflection. `romajiQuery` sends ASCII and macron vowels to romaji search.
+- **Romaji forms** come from `romaji-forms.ts`, and stored forms and glosses are `normalizeQuery`'s,
+  both through the importer's `scripts/romaji-search-forms.mjs`: kind 2 in `forms` is the ASCII
+  spelling earlier releases stored; kinds 3 and 4 in `shown_romaji_forms`, `romaji`'s and it without
+  macrons, rank after all of kind 2 (4 after 3), so they are read only while a search lists under 60
+  words, and never corroborate or stop a deinflection. `romajiQuery` sends ASCII and macron vowels
+  to romaji search.
 - `literalQuery` is the app's literal query policy: `mondai` searches as `monday`.
 
 ## Detail
@@ -386,8 +387,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   SQL, in the same order, so a kanji written in thousands of words (日) hands `kanjiWords` a few
   dozen rows; change the two orders together, which the kanji-detail suite checks. Stroke data
   that doesn't decode shows no stroke order rather than failing the page, since clients read
-  `KanjiStrokeData.sqlite3` as the app ships it. A character with a variation selector has no
-  kanji details, as in the app.
+  `KanjiStrokeData.sqlite3` as the app ships it. With a variation selector, a kanji has no details.
 - **Kanji elements** (`kanji-element.ts`). An element's page stands alone the most frequent
   kanji among the element and its alternatives (a ranked kanji before an unranked one, then by
   code point), and lists the kanji containing it without that one. A kanji shows its first three
@@ -421,8 +421,7 @@ The core answers as the Swift it replaced did, which the suites pin.
   (`sameWordInAnyForm`), and a `*` query lists none (#428, unlike the Swift). Anything else matches
   pairs whose Japanese contains it, or else Latin text's English. FTS4's `offsets()` reports UTF-8
   byte offsets, which `example-search.ts` maps to UTF-16, then grapheme positions. The results'
-  primary entry is highlighted for every search, and its own examples are listed for a romaji or
-  deinflected query.
+  primary entry is highlighted for every search; a romaji or deinflected query lists its examples.
 - **A conjugated form's examples** are the sentences the app's search for the form finds, normalized
   (a full-width Ｈ searches English), that contain it as written and in which the tokenizer reads it
   as one word, so 見たかった and 見た目 aren't examples of 見た. The screen accents the query as normalized.
@@ -483,9 +482,9 @@ ready and a page's first request prepares nothing:
   words that are content words (`browse/content-words.ts`): not ones whose first sense is a
   particle, auxiliary, conjunction, or copula, nor ones that are only a prefix or suffix.
 - **Kanji lists** are KANJIDIC2's school grades 1 to 6, secondary school (grade 8), jinmeiyō (grades
-  9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists, not
-  KANJIDIC2's `jlpt`), and the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent
-  first by KANJIDIC2's newspaper frequency, then by code point. Jinmeiyō has 57 twins (see Twins).
+  9 and 10), the JLPT levels N5 to N1 (`wallerJlptLevel`, from Jonathan Waller's kanji lists), and
+  the jōyō kanji (grades 1 to 6 and 8) by stroke count, each most frequent first by KANJIDIC2's
+  newspaper frequency, then by code point. Jinmeiyō has 57 twins (see Twins).
 - **Thin lists.** The sitemap answer gives every list's word count, so the website can leave out
   of the browse sitemaps the lists of fewer than `minimumIndexedWords` (10).
 
@@ -495,28 +494,29 @@ ready and a page's first request prepares nothing:
 
 - Every ID is a Language Reference ID in lowercase hex, as the artifact's BLOB IDs read. `entSeq`
   is `source_record_id`, the JMdict entry number in word page URLs (ADR 0007).
-- A pitch's `downstep` is 0 for flat (heiban), otherwise the mora after which pitch falls. `pitch`
-  is UniDic's; `compoundPitch`, CompoundPitch's estimate, shows when UniDic has none (`shownPitch`).
+- A pitch's `downstep` is 0 for flat, else the mora after which pitch falls, at most `moraCount`,
+  the morae its reading draws. `pitch` is UniDic's; `compoundPitch`, the estimate, shows without it.
 - No `FrequencyRow` for a pack means it doesn't rank or list the entry.
 - An example token's `reading` is the tokenizer's, in hiragana, when the token has kanji, and its
   `dictionaryForm` is set when it differs from the surface: what an ambiguous word searches for.
 - An `ExampleLinkRow` with one entry in `entSeqs` is the word-detail suite's `entry`; two or more
   are its `candidates`, a word the app can't resolve to one entry (such as だ). A token with no
   dictionary word has no link. A link's `reading` replaces the token's: the entry's own reading,
-  which the app shows over a word written as one of the entry's forms.
+  which the app shows over a word written as one of the entry's forms. A one-entry link's `meaning`
+  is its short meaning (`examples/word-meaning.ts`).
 - A `WordExampleRow`'s `highlights` are the page word's tokens (the suite's `pageWord`); its
   `tokens` are set only where the page splits the sentence differently, when a joined word the
   page's entry is written as stays whole. A `FormExampleRow` is keyed by the form's spelling alone
-  and has no page entry, so its words link as no word page sees them.
+  and has no page entry, so its words link as no word page sees them. Each row's `romaji` is its
+  words' `sentenceRomaji`.
 - An `ExampleCountRow`'s `listed` is at most 100 plus a word's checked examples, its `count` exact
   up to 50 (51 means more), and `truncated` says more matched; a page shows 25 at a time.
 - Each sentence of a Tatoeba pair has its own ID, contributor (null if none is named), and license.
-- A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel` in
-  `KanjiReferenceData.json`), shown as `N` and the level, and null for a kanji his lists leave out.
-  KANJIDIC2's own pre-2010 `jlpt` is still in the file, and nothing reads it. `structure` is null
-  when Kanjium has none, and `words` holds at most 24. `strokes` is KanjiVG's, in a square of
-  `viewportSize` (109): each stroke is opcode 0 then a point to move to, or opcode 1 then the three
-  points of a cubic curve.
+- A kanji's `jlpt` is the level Jonathan Waller's kanji lists give it (`wallerJlptLevel`, the only
+  level in `KanjiReferenceData.json` since `zenbu.kanji-reference.v2`), shown as `N` and the level,
+  and null for a kanji his lists leave out. `structure` is null when Kanjium has none, and `words`
+  holds at most 24. `strokes` is KanjiVG's, in a square of `viewportSize` (109): each stroke is
+  opcode 0 then a point to move to, or opcode 1 then the three points of a cubic curve.
 
 ## Check it
 

@@ -87,7 +87,7 @@ row's content, so a word page's rows carry their section (`SectionRow`).
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
 anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
 names the adapter to use (`layers.platforms` in `verify.json`), so feature code stays the same on
-every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays
+every platform while CI's iPad and Mac builds are off ([`ci-ios.md`](ci-ios.md)). Image data stays
 `Data` or `CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
@@ -143,7 +143,7 @@ Zenbu Dev's under `com.zenbujapanese.dictionary.dev`.
 ### Tests on every platform
 
 Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
-`swift` job does ([`ci.md`](ci.md), iOS). The Simulators are this checkout's own, an iPhone Pro
+`swift` job does ([`ci-ios.md`](ci-ios.md)). The Simulators are this checkout's own, an iPhone Pro
 Max and an iPad Pro 13-inch: `python3 apps/ios/Tools/simulator.py` prints the iPhone's UDID, and
 with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 
@@ -508,7 +508,7 @@ same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path 
 entry point the app calls, and the `Dictionary API` workflow runs them on pull requests that change
 a suite, so commit a re-recorded suite with the change to the core it needs.
 
-The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
+The `iOS` workflow ([`ci-ios.md`](ci-ios.md)) runs the data tools' contract tests on pull requests
 that change `apps/ios` or the language data, and, on a macOS runner, `SearchExperienceTests` and
 `TranslatorCoreTests` on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on
 all three, and the recorded-audio check's scoring tests, only once the owners turn that on. Until

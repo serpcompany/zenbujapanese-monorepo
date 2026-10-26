@@ -1,6 +1,9 @@
 import { test as base, expect, type Page } from '@playwright/test'
 import { wordSlug } from '@zenbu/dictionary-core/detail/slug'
 import { fixtureSearchOrder, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import type { Locale } from '../src/lib/i18n/config'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { readingAids } from '../src/lib/reading-aids'
 
 export { expect }
 
@@ -61,6 +64,9 @@ export const footerAccountLink = (page: Page) =>
   page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
 
 export const onPhone = () => test.info().project.name === 'phone'
+
+export const readingAidLabels = (locale: Locale = 'en') =>
+  readingAids.map(aid => getDictionary(locale).chrome.readingAids[aid.id])
 
 export const accountButton = (page: Page) =>
   page.getByRole('banner').getByRole('button', { name: /^(Account|アカウント)/ })

@@ -147,8 +147,10 @@ type (`chore`, `docs`).
 - **Agents use GitHub as `serp-agent[bot]`,** not `gh auth switch` ([`ci-agents.md`](ci-agents.md)):
   `eval "$(bash ~/dev/repos/serp/skills/serp-github-app/scripts/env.sh)" && <command>`.
 
-The `Pull request` workflow checks the title, the closing issue, and the test in a fix
-([`ci.md`](ci.md), Pull request).
+The `Pull request` workflow checks the title, the branch's name and that its type is the title's,
+the closing issue, and the test in a fix ([`ci.md`](ci.md), Pull request). Merging rather than
+rebasing, and grouping, are held by review alone: a rebased branch's commits look like a new
+branch's ([`harness-debt.md`](../harness-debt.md), Harness).
 
 ## Docs
 

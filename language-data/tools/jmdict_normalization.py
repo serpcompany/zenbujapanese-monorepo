@@ -15,10 +15,31 @@ FORM_KIND_SHOWN_ROMAJI = 3
 FORM_KIND_UNMARKED_ROMAJI = 4
 PRIORITY_PRIMARY_BITS = {"spec1": 1, "ichi1": 2, "news1": 4, "gai1": 8}
 PRIORITY_SECONDARY_BITS = {"spec2": 1, "ichi2": 2, "news2": 4, "gai2": 8}
+XML_LANGUAGE = "{http://www.w3.org/XML/1998/namespace}lang"
+USAGE_NOTES = {
+    "uk": "Usually written in kana",
+    "arch": "Archaic",
+    "obs": "Obsolete",
+    "hon": "Honorific",
+    "hum": "Humble",
+    "col": "Colloquial",
+}
 
 
-def normalized_text(value: str) -> str:
+def casefolded_text(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
+def english_glosses(sense: ET.Element) -> list[str]:
+    return [
+        text
+        for gloss in sense.findall("gloss")
+        if (text := (gloss.text or "").strip()) and gloss.attrib.get(XML_LANGUAGE, "eng") == "eng"
+    ]
+
+
+def gloss_search_text(glosses: list[str]) -> str:
+    return " | ".join(glosses)
 
 
 ARCHAIC_VERB_CODES = (
@@ -152,20 +173,12 @@ def normalize_form_labels(provider_labels: list[str]) -> list[str]:
     return labels
 
 
-def normalize_usage_notes(provider_labels: list[str]) -> list[str]:
+def normalize_usage_notes(provider_labels: list[str], entity_codes: dict[str, str]) -> list[str]:
     notes: list[str] = []
-    rules = {
-        "word usually written using kana alone": "Usually written in kana",
-        "archaic": "Archaic",
-        "obsolete term": "Obsolete",
-        "honorific or respectful (sonkeigo) language": "Honorific",
-        "humble (kenjougo) language": "Humble",
-        "colloquialism": "Colloquial",
-    }
     for provider_label in provider_labels:
-        if normalized := rules.get(provider_label.casefold()):
-            if normalized not in notes:
-                notes.append(normalized)
+        if note := USAGE_NOTES.get(entity_codes.get(provider_label, "")):
+            if note not in notes:
+                notes.append(note)
     return notes
 
 
@@ -188,8 +201,8 @@ def language_reference_id(source_identity: str, source_record_id: str) -> bytes:
 
 def word_note_identity(record: dict[str, object]) -> str:
     signature = {
-        "headword": normalized_text(str(record["headword"])),
-        "reading": normalized_text(str(record["reading"])),
+        "headword": casefolded_text(str(record["headword"])),
+        "reading": casefolded_text(str(record["reading"])),
         "writtenForms": record["written_forms"],
         "readingForms": record["reading_forms"],
         "senses": record["note_senses"],
