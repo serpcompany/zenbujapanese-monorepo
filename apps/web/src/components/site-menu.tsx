@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { DrawerAccountButton } from '@/components/account-menu'
 import { ModeToggle } from '@/components/mode-toggle'
+import { ReadingAidsToggle } from '@/components/reading-aids-menu'
 import { GetAppButton } from '@/components/site-actions'
 import { SiteLogo } from '@/components/site-brand'
 import { menuItemClassName, SiteMenuItem } from '@/components/site-menu-item'
@@ -109,6 +110,7 @@ export function SiteMenu({
             {site.name}
           </DrawerTitle>
           <div className="-mr-2 flex items-center gap-1">
+            <ReadingAidsToggle text={text.readingAids} />
             <ModeToggle text={text.theme} />
             <DrawerClose render={<Button variant="ghost" size="icon-lg" aria-label={text.close} />}>
               <XIcon aria-hidden="true" />

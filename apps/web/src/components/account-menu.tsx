@@ -10,6 +10,7 @@ import {
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { ThemeMenuRow, type ThemeText } from '@/components/mode-toggle'
+import { ReadingAidsMenuGroup, type ReadingAidsText } from '@/components/reading-aids-menu'
 import { LogInButton } from '@/components/site-actions'
 import { Button } from '@/components/ui/button'
 import {
@@ -77,12 +78,14 @@ export function AccountMenu({
   locale,
   text,
   theme,
+  readingAids,
   messages,
   className
 }: {
   locale: Locale
   text: AccountText
   theme: ThemeText
+  readingAids: ReadingAidsText
   messages: AccountMessages
   className?: string
 }) {
@@ -119,6 +122,8 @@ export function AccountMenu({
         )}
         <DropdownMenuSeparator />
         <ThemeMenuRow text={theme} />
+        <DropdownMenuSeparator />
+        <ReadingAidsMenuGroup text={readingAids} />
         {signedIn ? (
           <>
             <DropdownMenuSeparator />

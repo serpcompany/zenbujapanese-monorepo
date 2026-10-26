@@ -138,9 +138,24 @@ describe('wordDetail', () => {
       text: '要る',
       ruby: [{ text: '要', reading: 'い' }, { text: 'る' }],
       link: { entSeq: 1546640 },
+      meaning: 'be needed',
       isPageWord: true
     })
     expect(detail.exampleCount?.listed).toBe(detail.examples.length)
+  })
+
+  test('要る: a linked word carries its short meaning, but not a particle or a word with several entries, and each example its romaji', () => {
+    const example = wordDetail(rows(1546640)).senses[0].example
+    expect(example?.tokens.map(token => [token.text, token.meaning])).toEqual([
+      ['今', 'now'],
+      ['の', null],
+      ['ところ', null],
+      ['お金', 'money'],
+      ['は', null],
+      ['いらない', 'be needed'],
+      ['。', null]
+    ])
+    expect(example?.romaji).toBe('ima no tokoro okane ha iranai。')
   })
 
   test('いる (1577980): the first sense’s word class, kana only, a rare written form, shared without a reading', () => {

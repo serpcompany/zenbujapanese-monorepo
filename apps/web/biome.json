@@ -59,7 +59,7 @@
       }
     },
     {
-      "includes": ["src/components/json-ld.tsx"],
+      "includes": ["src/components/json-ld.tsx", "src/components/reading-aids-script.tsx"],
       "linter": {
         "rules": {
           "security": {

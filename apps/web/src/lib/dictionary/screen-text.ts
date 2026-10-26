@@ -5,6 +5,7 @@ import {
   sharedSpellingNote
 } from '@zenbu/dictionary-core/detail/conjugation'
 import type { FrequencyDetails, FrequencyRowDetail } from '@zenbu/dictionary-core/detail/frequency'
+import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import { type StrokeOrderLabels, strokeOrderLabels } from '@zenbu/dictionary-core/detail/strokes'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
@@ -26,6 +27,7 @@ export function conjugationsText(locale: Locale): ConjugationsText {
 
 export interface ShownConjugationRow extends Omit<ConjugationRow, 'sharedSpellings'> {
   sharedSpelling: string | null
+  romaji: string | null
 }
 
 export interface ShownConjugations extends Omit<Conjugations, 'modes' | 'rows'> {
@@ -40,7 +42,8 @@ export function conjugationsIn(conjugations: Conjugations, locale: Locale): Show
     title: text(form.title),
     explanation: text(form.explanation),
     pronounce: text(form.pronounce),
-    sharedSpelling: sharedSpellings.length > 0 ? text(sharedSpellingNote(sharedSpellings)) : null
+    sharedSpelling: sharedSpellings.length > 0 ? text(sharedSpellingNote(sharedSpellings)) : null,
+    romaji: romaji(form.reading)
   })
   return {
     title: text(conjugations.title),

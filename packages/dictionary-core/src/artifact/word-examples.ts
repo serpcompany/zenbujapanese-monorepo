@@ -1,4 +1,5 @@
 import type { SegmentedToken } from '../cards/segmentation'
+import { sentenceRomaji } from '../detail/romaji'
 import type {
   ExampleCountRow,
   ExampleLinkRow,
@@ -16,6 +17,7 @@ import {
   linkedTokens
 } from '../examples/linking'
 import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
+import { wordMeaning } from '../examples/word-meaning'
 import { normalizeQuery } from '../search/query'
 import { type ArtifactDatabase, listedIds } from './database'
 import { type EntryExamples, type ExampleSentence, shownSenseExamples } from './example-retrieval'
@@ -87,6 +89,16 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
       }
     ])
   )
+}
+
+function firstMeanings(db: ArtifactDatabase, ids: readonly string[]): Map<string, string | null> {
+  if (ids.length === 0) return new Map()
+  const rows = db.all<{ id: string; meaning: string | null }>(
+    `SELECT lower(hex(id)) AS id, json_extract(meanings_json, '$[0]') AS meaning
+     FROM entries WHERE id IN (${listedIds})`,
+    [JSON.stringify(ids)]
+  )
+  return new Map(rows.map(row => [row.id, row.meaning]))
 }
 
 export const examplesEntries: (
@@ -226,6 +238,9 @@ export function exampleRows(
     }
   }
   const entries = linkedEntries(db, [...ids])
+  const meanings = firstMeanings(db, [
+    ...new Set(linked.flatMap(({ page }) => page.flatMap(token => token.entry?.id ?? [])))
+  ])
   const entSeqOf = (id: string) => {
     const found = entries.get(id)
     if (!found) throw new Error(`An example links to ${id}, which the artifact doesn't hold`)
@@ -247,6 +262,8 @@ export function exampleRows(
           const reading = displayReading(token, target)
           if (reading !== rows[position].reading) link.reading = reading
         }
+        const meaning = wordMeaning(token, meanings.get(token.entry.id) ?? null)
+        if (meaning !== null) link.meaning = meaning
         links.push(link)
       } else if (token.candidates.length > 0) {
         links.push({
@@ -263,6 +280,7 @@ export function exampleRows(
         sentenceId: sentence.rowid,
         highlights: accentedPositions(sentence.japanese, page, highlight),
         links,
+        romaji: sentenceRomaji(page),
         tokens: sameWordsAsElsewhere ? null : rows
       }
     }

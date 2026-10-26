@@ -152,3 +152,17 @@
 [data-drawing] {
   --smallest-furigana: 0px;
 }
+
+html[data-furigana="off"] [data-reading-aids] rt,
+html:not([data-furigana="off"]) [data-aid="reading"],
+html:not([data-romaji="on"]) [data-aid="romaji"],
+html:not([data-word-meanings="on"]) [data-aid="meaning"],
+html[data-translations="off"] [data-aid="translation"] {
+  display: none;
+}
+
+html[data-word-meanings="on"] [data-aid-word] {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+}

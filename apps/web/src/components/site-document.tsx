@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Analytics } from '@/components/analytics'
+import { ReadingAidsScript } from '@/components/reading-aids-script'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { ThemeProvider } from '@/components/theme-provider'
@@ -22,6 +23,7 @@ export function SiteDocument({
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
+        <ReadingAidsScript />
         <ThemeProvider>
           <SiteHeader locale={locale} />
           {children}

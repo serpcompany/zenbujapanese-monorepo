@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Fragment } from 'react'
+import { accent } from '@/components/dictionary/accent'
 import { LoadMoreFooter, useLoadMore } from '@/components/dictionary/load-more'
 import { PronounceButton } from '@/components/dictionary/pronounce-button'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -29,8 +30,25 @@ function Token({
       ? 'mr-0.5 border-b-2 border-foreground font-medium'
       : token.link && 'mr-0.5 border-b border-border'
   )
-  const shown = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
-  if (!token.path || !token.link) return shown
+  const ruby = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
+  const shown = token.meaning ? (
+    <>
+      {ruby}
+      <span
+        data-aid="meaning"
+        lang={sourceLang(locale)}
+        className={cn('max-w-24 truncate text-xs leading-snug', accent)}
+      >
+        {token.meaning}
+      </span>
+    </>
+  ) : (
+    ruby
+  )
+  const word = token.meaning ? '' : undefined
+  if (!token.path || !token.link) {
+    return token.meaning ? <span data-aid-word={word}>{shown}</span> : ruby
+  }
   const title =
     'entSeqs' in token.link
       ? fill(text.examples.possibleEntries, {
@@ -38,7 +56,12 @@ function Token({
         })
       : undefined
   return (
-    <Link href={localizedPath(token.path, locale)} className={linkClass} title={title}>
+    <Link
+      href={localizedPath(token.path, locale)}
+      className={linkClass}
+      title={title}
+      data-aid-word={word}
+    >
       {shown}
     </Link>
   )
@@ -74,6 +97,25 @@ export function MeaningExample({ meaning, ...props }: ExampleProps & { meaning: 
   )
 }
 
+function ExampleRomaji({
+  romaji,
+  unavailable
+}: {
+  romaji: string | null | undefined
+  unavailable: string
+}) {
+  if (romaji === undefined) return null
+  return romaji === null ? (
+    <p data-aid="romaji" className="text-sm text-muted-foreground">
+      {unavailable}
+    </p>
+  ) : (
+    <p data-aid="romaji" lang="ja-Latn" className="text-muted-foreground">
+      {romaji}
+    </p>
+  )
+}
+
 function ExampleContent({ example, locale, text }: ExampleProps) {
   let offset = 0
   return (
@@ -90,7 +132,8 @@ function ExampleContent({ example, locale, text }: ExampleProps) {
             )
           })}
         </p>
-        <p className="text-muted-foreground" lang={sourceLang(locale)}>
+        <ExampleRomaji romaji={example.romaji} unavailable={text.examples.romajiUnavailable} />
+        <p className="text-muted-foreground" lang={sourceLang(locale)} data-aid="translation">
           {example.translation}
         </p>
       </div>

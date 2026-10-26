@@ -21,6 +21,7 @@ export function SiteHeader({ locale }: { locale: Locale }) {
             locale={locale}
             text={t.account}
             theme={t.theme}
+            readingAids={t.readingAids}
             messages={getDictionary(locale).account.messages}
             className="max-lg:hidden"
           />

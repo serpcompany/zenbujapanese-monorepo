@@ -1,4 +1,5 @@
 import { exampleCountText, noExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
+import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import { glossSeparator, type Section as WordSection } from '@zenbu/dictionary-core/detail/sections'
 import type { WordSectionKind } from '@zenbu/dictionary-core/detail/word'
 import type { Metadata } from 'next'
@@ -12,6 +13,7 @@ import { FrequencySection } from '@/components/dictionary/frequency-section'
 import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { LearnerPrompt } from '@/components/dictionary/learner-prompt'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
+import { RomajiLine } from '@/components/dictionary/reading-aid-lines'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
@@ -142,6 +144,9 @@ function AlternativeForms({
         const label = (
           <span className={labels ? 'text-muted-foreground' : undefined}>
             {form.value}
+            {form.kind === 'reading' ? (
+              <RomajiLine romaji={romaji(form.value)} className="ml-1 text-base" />
+            ) : null}
             {labels ? (
               <span lang={locale === 'ja' ? undefined : locale} className="text-sm">
                 {' '}
@@ -272,6 +277,7 @@ function WordPageSection({
                 ) : (
                   <RubyText segments={related.ruby} className="text-lg font-medium" />
                 )}
+                <RomajiLine romaji={romaji(related.reading)} className="block text-sm" />
                 <p className="text-sm text-muted-foreground">
                   {coreText(related.relation, locale)}
                   {glossSeparator}
@@ -318,7 +324,7 @@ function WordPageSection({
 export default async function WordPage({ params }: Props) {
   const { locale, word } = await load(params)
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 pt-4 pb-6" data-reading-aids>
       <PageToolbar
         page={{ label: word.headword, path: word.path, lang: 'ja' }}
         shareText={word.shareText}

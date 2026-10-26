@@ -30,14 +30,18 @@ export function serviceLinks(slugs: Slugs, kanjiPages: readonly string[]): Links
   }
 }
 
+export const sentencesScreen = { wordMeanings: false }
+
 export function pageExample(
   { japanese: _japanese, english: _english, ...example }: Example,
-  links: Links
+  links: Links,
+  { wordMeanings } = { wordMeanings: true }
 ): PageExample {
   return {
     ...example,
     tokens: example.tokens.map(token => ({
       ...token,
+      meaning: wordMeanings ? token.meaning : null,
       path: !token.link
         ? null
         : 'entSeq' in token.link
