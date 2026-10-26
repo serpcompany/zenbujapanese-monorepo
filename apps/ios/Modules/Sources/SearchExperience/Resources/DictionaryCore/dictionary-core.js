@@ -2916,13 +2916,13 @@
       };
     }
     async rankedJapaneseOrLatin(query) {
-      const japanese = await rankedJapanese(this.db, query);
-      if (japanese.length > 0) return japanese;
-      for (const spelling of latinSpellings(query)) {
+      const spellings = latinSpellings(query);
+      if (spellings.length === 0) return rankedJapanese(this.db, query);
+      for (const spelling of spellings) {
         const english = await rankedEnglish(this.db, spelling);
         if (english.length > 0) return english;
       }
-      return japanese;
+      return [];
     }
     async hasResults(query) {
       if (query === "") return false;
