@@ -103,8 +103,8 @@ No keyword volumes are measured yet.
   `pnpm sitemaps` refuses a larger one. The tools sitemap lists each tools page in both languages
   too.
 - The header marks the current section from the public path: on the server, a page reads the
-  rewritten `/en/…`, so `isCurrentSection` and `isCurrentPage` (`src/lib/site-menus.ts`) drop the
-  prefix first, and the server's HTML and the browser's agree.
+  rewritten `/en/…`, so `isCurrentSection` and `isCurrentPage` (`src/lib/site-menu-links.ts`) drop
+  the prefix first, and the server's HTML and the browser's agree.
 
 ## The switcher
 
