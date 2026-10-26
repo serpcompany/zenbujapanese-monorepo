@@ -31,9 +31,10 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     waitUntil("the last caption to be listed as held answers are let go") {
       if last.exists, isReachable(last, in: app) { return true }
       letLinkingGo(heldBefore: .now)
-      scroll(list, back: false)
+      scroll(list, toward: last, back: false)
       return false
     }
+    if device == .mac { scroll(list, toward: first, back: true) }
     _ = reveal(first, in: app, scrolling: list)
     XCTAssertTrue(words.exists, "the first caption came back into view without its words linked")
     XCTAssertEqual(first.frame.height, height, accuracy: 0.5, "the first caption came back at another height")
@@ -69,6 +70,11 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     assertArrivesLinked(word, plainly: plainly, words: word)
     let source = word.identifier.split(separator: ".").prefix(4).joined(separator: ".")
     assertStaysPut(Placed(word, under: firstElement(identifiedBy: source + ".0.", in: app)))
+  }
+
+  private func scroll(_ list: XCUIElement, toward caption: XCUIElement, back: Bool) {
+    guard device == .mac, caption.exists else { return scroll(list, back: back) }
+    gesture { list.scroll(byDeltaX: 0, deltaY: list.frame.midY - caption.frame.midY) }
   }
 
   private func linkedWord(_ prefix: String, in app: XCUIApplication) -> XCUIElement {
