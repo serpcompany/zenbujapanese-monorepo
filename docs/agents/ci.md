@@ -145,8 +145,8 @@ deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the b
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once
 and passes the next time is a failing test ([`verification.md`](verification.md), Three levels),
-and a retry would hide it. On a failure it uploads the report, traces, videos, and screenshots as
-the `playwright-report` artifact, kept for a week.
+and a retry would hide it. On a failure it uploads the report, traces, videos, screenshots, and the
+server's output (`server.log`) as the `playwright-report` artifact, kept for a week.
 
 ## Dictionary core
 

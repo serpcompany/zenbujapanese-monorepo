@@ -2,6 +2,7 @@
 !package.json
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
+!patches/**
 !apps/web/package.json
 !packages/dictionary-core/**
 !packages/node-service/**
