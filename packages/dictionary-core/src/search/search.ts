@@ -11,6 +11,7 @@ import { type SearchDatabase, withParametersTruncatedAtNul } from './database'
 import { acceptsPartsOfSpeech, deinflect } from './deinflect'
 import { rankedEnglish } from './english'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
+import { latinSpellings } from './latin-text'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
   isJapaneseOnly,
@@ -164,7 +165,9 @@ export class DictionarySearch {
     if (query === '') return noResults()
     const romaji = romajiQuery(query)
     const ranked =
-      romaji !== null ? await rankedEnglish(this.db, romaji) : await rankedJapanese(this.db, query)
+      romaji !== null
+        ? await rankedEnglish(this.db, romaji)
+        : await this.rankedJapaneseOrLatin(query)
     if (ranked.length === 0) return noResults()
     let leadingLexicalEntryCount = 0
     while (
@@ -179,6 +182,16 @@ export class DictionarySearch {
       leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, searchResultLimit),
       hasExactOrPrefixMatch: ranked.some(entry => entry.hasExactOrPrefixMatch)
     }
+  }
+
+  private async rankedJapaneseOrLatin(query: string): Promise<RankedEntry[]> {
+    const spellings = latinSpellings(query)
+    if (spellings.length === 0) return rankedJapanese(this.db, query)
+    for (const spelling of spellings) {
+      const english = await rankedEnglish(this.db, spelling)
+      if (english.length > 0) return english
+    }
+    return []
   }
 
   private async hasResults(query: string): Promise<boolean> {

@@ -1,5 +1,30 @@
 import { describe, expect, test } from 'vitest'
+import { isSegmentableText, maximumSegmentedLength, segmentationProblem } from './segmentable'
 import { segmentationFurigana } from './segmentation'
+
+describe('a text to segment', () => {
+  test('takes 1 to 200 characters, counted by code point', () => {
+    expect(maximumSegmentedLength).toBe(200)
+    expect(isSegmentableText('今')).toBe(true)
+    expect(isSegmentableText('あ'.repeat(maximumSegmentedLength))).toBe(true)
+    expect(isSegmentableText('𠮟'.repeat(maximumSegmentedLength))).toBe(true)
+    expect(isSegmentableText('あ'.repeat(maximumSegmentedLength + 1))).toBe(false)
+  })
+
+  test('refuses no text and text that is only white space, but keeps the space around words', () => {
+    for (const blank of ['', ' ', '\u{3000}', '\n\t', ' \u{3000}\n']) {
+      expect(isSegmentableText(blank)).toBe(false)
+    }
+    expect(isSegmentableText(' 今日\n')).toBe(true)
+  })
+
+  test('says which it is, a blank text before a long one, so a page can say why', () => {
+    expect(segmentationProblem('')).toBe('empty')
+    expect(segmentationProblem(' '.repeat(maximumSegmentedLength + 1))).toBe('empty')
+    expect(segmentationProblem('あ'.repeat(maximumSegmentedLength + 1))).toBe('tooLong')
+    expect(segmentationProblem('今日')).toBeNull()
+  })
+})
 
 describe('segmentationFurigana', () => {
   test('puts each word’s reading over its kanji, the kana after them left bare', () => {

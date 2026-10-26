@@ -26,8 +26,8 @@ python3 apps/ios/Tools/prepare_sudachi_core.py \
   --cache-only
 ```
 
-It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
-its SHA-256; later builds reuse it.
+It downloads the pack the catalog bundles (72 MB, from GitHub) and checks its SHA-256, the pack the
+app and the service choose too (`sudachi-pack.json`'s cases); later builds reuse it.
 
 ## iPad and Mac
 

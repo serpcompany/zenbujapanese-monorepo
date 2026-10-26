@@ -80,7 +80,7 @@ describe.runIf(artifactAvailable)('the app’s example sentences on the artifact
       }
     }
     expect(counted).toEqual(linked)
-    expect(counted).toHaveLength(659)
-    expect(new Set(counted).size).toBe(335)
+    expect(counted).toHaveLength(685)
+    expect(new Set(counted).size).toBe(350)
   })
 })

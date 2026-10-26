@@ -1,6 +1,7 @@
 import { graphemeCount, graphemes } from '../detail/text'
 import { sameWordInAnyForm } from '../examples/english-inflection'
 import { exampleLimit, reportedExampleCount } from '../examples/retrieval'
+import { latinSpellings } from '../search/latin-text'
 import { isASCII, normalizeQuery } from '../search/query'
 import type { ArtifactDatabase } from './database'
 import type { EntryExamples, ExampleSentence } from './example-retrieval'
@@ -290,5 +291,12 @@ export function searchExamples(
 ): EntryExamples | ExampleSearchError {
   const query = normalizeQuery(rawQuery)
   if (query === '') return 'empty'
-  return isASCII(query) ? retrieveEnglish(db, query) : retrieveJapanese(db, query)
+  if (isASCII(query)) return retrieveEnglish(db, query)
+  const japanese = retrieveJapanese(db, query)
+  if (japanese.sentences.length > 0) return japanese
+  for (const spelling of latinSpellings(query)) {
+    const english = retrieveEnglish(db, spelling)
+    if (typeof english !== 'string' && english.sentences.length > 0) return english
+  }
+  return japanese
 }
