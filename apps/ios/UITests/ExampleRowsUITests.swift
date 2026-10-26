@@ -16,7 +16,6 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   private static let pastTheFirstScreen = 22
   private static let onTheNextPage = 25
   private static let checkedRows = [0, pastTheFirstScreen, onTheNextPage]
-  private static let settling: TimeInterval = 1
   private static let failLinking = "ZENBU_FAIL_LINKING"
   private var lastLaidOut: Int?
 
@@ -40,8 +39,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitUntilStill(find("example-list.screen", in: app))
-    letLinkingGo(heldBefore: .now)
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    letLinkingGoAndSettle()
     let list = rows.list.frame
     let back = laidOutFrame(of: opened, within: device == .mac ? rows.list : nil, in: app)
     XCTAssertEqual(
@@ -339,8 +337,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     _ measured: [Measured], of rows: Rows, in app: XCUIApplication,
     file: StaticString = #filePath, line: UInt = #line
   ) {
-    letLinkingGo(heldBefore: .now)
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    letLinkingGoAndSettle()
     for shown in measured.reversed() {
       guard let frame = laidOut(shown.number, of: rows, in: app) else {
         XCTFail("row \(shown.number) wasn't laid out again", file: file, line: line)
@@ -350,5 +347,14 @@ final class ExampleRowsUITests: ZenbuUITestCase {
         frame.height, shown.height, accuracy: 0.5,
         "row \(shown.number) changed height after it appeared", file: file, line: line)
     }
+  }
+}
+
+extension ZenbuUITestCase {
+  static let settling: TimeInterval = 1
+
+  func letLinkingGoAndSettle() {
+    letLinkingGo(heldBefore: .now)
+    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
   }
 }

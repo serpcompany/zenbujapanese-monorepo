@@ -761,12 +761,8 @@
         "proves": "nothing: they are comesTrue's wait between two looks, waitUntilStill's second between two looks at a frame, and the 0.3 s between the warm-up touch and the gesture it wakes the Simulator's touch system for"
       },
       "apps/ios/UITests/ExampleRowsUITests.swift": {
-        "pauses": 2,
-        "proves": "no row changes its height, and the opened sentence keeps its place, once held answers are let go"
-      },
-      "apps/ios/UITests/LinkedRowsUITests.swift": {
         "pauses": 1,
-        "proves": "a caption's, a line's, or a sentence's words neither move nor change height once held answers are let go"
+        "proves": "no row changes its height, and the opened sentence keeps its place, once held answers are let go, in ExampleRowsUITests and LinkedRowsUITests"
       },
       "apps/ios/UITests/LayoutUITests.swift": {
         "pauses": 1,

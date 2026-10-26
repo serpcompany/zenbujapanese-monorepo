@@ -12,7 +12,7 @@ import { isFunctionWord } from '../examples/morphology'
 
 type Accent = ExampleHighlight['accent']
 
-export interface EmbeddedWordEntry {
+interface EmbeddedWordEntry {
   id: string
   headword: string
   reading: string

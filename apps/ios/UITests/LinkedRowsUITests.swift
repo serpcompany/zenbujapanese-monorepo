@@ -13,7 +13,6 @@ final class LinkedRowsUITests: ZenbuUITestCase {
     }
   }
 
-  private static let settling: TimeInterval = 1
   private static let manyLines = (1...30).map {
     ("駅の近くに本屋が\($0)軒あります", "There are \($0) bookstores near the station.")
   }
@@ -91,8 +90,7 @@ final class LinkedRowsUITests: ZenbuUITestCase {
   private func assertStaysPut(
     _ placed: Placed, file: StaticString = #filePath, line: UInt = #line
   ) {
-    letLinkingGo(heldBefore: .now)
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    letLinkingGoAndSettle()
     let now = placed.element.frame.offsetBy(dx: 0, dy: -placed.anchor.frame.minY)
     XCTAssertEqual(
       now.height, placed.frame.height, accuracy: 0.5,
