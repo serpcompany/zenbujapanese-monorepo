@@ -135,9 +135,11 @@ ignores: a Markdown file at the repository root would fail the docs check the re
   (`tools/checks/src/review-findings.ts`). The other jobs' reports, and one built by hand, say the
   findings weren't collected.
 
-A scheduled run's actor is whoever last changed `main`, which the merge queue always is, so both
-gardening steps name `github-merge-queue[bot]` in the action's `allowed_bots`; without it the action
-refuses the run before Claude starts, as it did every week through 2026-10-19.
+A scheduled run's actor is whoever last changed `main`, which the merge queue always is. The Claude
+app gives its token only to an actor with write access, so both gardening steps pass the job's own
+`github.token` instead, and name `github-merge-queue[bot]` in `allowed_bots`. Without both the
+action refuses the run before Claude starts, as it did every week through 2026-10-26. A pull request
+that token opens starts no checks until someone pushes to it.
 
 Both gardening jobs pin the model (`--model`), keep subagents in the foreground, give each Bash
 command 15 minutes (`BASH_DEFAULT_TIMEOUT_MS`), leave the MCP servers out, and keep their

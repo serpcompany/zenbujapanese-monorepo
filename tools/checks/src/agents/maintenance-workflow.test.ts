@@ -130,9 +130,10 @@ describe('the Weekly maintenance workflow', () => {
     }
   })
 
-  test('lets the merge queue start the gardeners, since every scheduled run is its', () => {
+  test("lets the merge queue start the gardeners, with the job's own token, since every scheduled run is its", () => {
     for (const step of [garden, codeGarden]) {
       expect(step.with?.allowed_bots).toBe('github-merge-queue[bot]')
+      expect(step.with?.github_token).toBe('${{ github.token }}')
     }
   })
 
