@@ -13,7 +13,6 @@ import { rankedEnglish } from './english'
 import { hasFormContaining, rankedJapanese, rankedJapaneseForms } from './japanese'
 import { lookupSegments, type MorphologyAnalyzer, type MorphologyWord } from './morphology'
 import {
-  isASCII,
   isJapaneseOnly,
   isMixedScript,
   japaneseSegments,
@@ -23,6 +22,7 @@ import {
 } from './query'
 import { sameLexicalGroup } from './rank'
 import type { RankedEntry } from './ranked-entries'
+import { romajiQuery } from './romaji-forms'
 
 export type { SearchResultItem, SearchResults } from './composition'
 export type { SearchDatabase, SearchEntry } from './database'
@@ -56,9 +56,13 @@ export class DictionarySearch {
 
   async search(rawQuery: string): Promise<SearchResults> {
     const query = normalizeQuery(rawQuery)
+    const romaji = romajiQuery(query)
+    const romajiCandidates = romajiDeinflectedCandidates(query)
+    const [exactForm] =
+      romaji !== null && romaji !== '' ? await rankedEnglish(this.db, romaji, true) : []
     const exactFormEntry =
-      isASCII(query) && query !== ''
-        ? (await rankedEnglish(this.db, query, true))[0]?.entry
+      exactForm && (exactForm.hasExactOrPrefixMatch || romajiCandidates.length === 0)
+        ? exactForm.entry
         : undefined
     if (exactFormEntry) {
       const refinement = normalizeQuery(exactFormEntry.reading)
@@ -75,7 +79,6 @@ export class DictionarySearch {
     }
 
     const directResults = await this.searchOnce(query)
-    const romajiCandidates = romajiDeinflectedCandidates(query)
     if (!directResults.hasExactOrPrefixMatch && romajiCandidates.length > 0) {
       const deinflectedResults = await Promise.all(
         romajiCandidates.map(candidate => this.searchOnce(candidate))
@@ -159,9 +162,9 @@ export class DictionarySearch {
 
   private async searchOnce(query: string): Promise<SearchResults> {
     if (query === '') return noResults()
-    const ranked = isASCII(query)
-      ? await rankedEnglish(this.db, query)
-      : await rankedJapanese(this.db, query)
+    const romaji = romajiQuery(query)
+    const ranked =
+      romaji !== null ? await rankedEnglish(this.db, romaji) : await rankedJapanese(this.db, query)
     if (ranked.length === 0) return noResults()
     let leadingLexicalEntryCount = 0
     while (
@@ -180,7 +183,7 @@ export class DictionarySearch {
 
   private async hasResults(query: string): Promise<boolean> {
     if (query === '') return false
-    if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0
+    if (romajiQuery(query) !== null) return (await this.searchOnce(query)).items.length > 0
     return hasFormContaining(this.db, query)
   }
 

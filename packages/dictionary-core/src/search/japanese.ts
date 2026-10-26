@@ -109,17 +109,21 @@ export function rankJapanese(
   return deduplicated(ranked, client)
 }
 
+const exactFilter = (query: string) => ({ sql: 'f.form = ?', params: [query] })
+
 export async function hasFormContaining(db: SearchDatabase, query: string): Promise<boolean> {
-  const filter = containsFilter(query)
-  const rows = await db.all(
-    `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${filter.sql}
-         AND ${readingRestrictionFilter}
-       LIMIT 1`,
-    filter.params
-  )
-  return rows.length > 0
+  for (const filter of [exactFilter(query), containsFilter(query)]) {
+    const rows = await db.all(
+      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
+         WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+           AND ${filter.sql}
+           AND ${readingRestrictionFilter}
+         LIMIT 1`,
+      filter.params
+    )
+    if (rows.length > 0) return true
+  }
+  return false
 }
 
 export async function rankedJapanese(db: SearchDatabase, query: string): Promise<RankedEntry[]> {

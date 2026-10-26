@@ -24,10 +24,10 @@ from jmdict_normalization import (
     normalized_priority_profile,
     normalized_text,
     priority_score,
-    romanize_kana,
     semantic_fingerprint,
     text_values,
 )
+from jmdict_romaji import romaji_search_forms
 
 EXPECTED_EVIDENCE_COUNTS = {
     "form_priority_profiles": 56_153,
@@ -68,6 +68,7 @@ def import_entries(
     entry_records: list[dict[str, object]] = []
     form_to_entry_ids: dict[str, list[bytes]] = {}
     lexical_payload_by_fingerprint: dict[bytes, str] = {}
+    romaji_forms = romaji_search_forms(source)
     with gzip.open(source, "rb") as xml_source:
         for _, entry in ET.iterparse(xml_source, events=("end",)):
             if entry.tag != "entry":
@@ -205,16 +206,15 @@ def import_entries(
                     parsed_reference = normalized_cross_reference(reference)
                     if parsed_reference and parsed_reference not in cross_references:
                         cross_references.append(parsed_reference)
+            romaji = romaji_forms[tuple(reading_values)]
             form_records = list(
                 dict.fromkeys(
                     [(normalized_text(value), FORM_KIND_WRITTEN) for value in written_values]
                     + [(normalized_text(value), FORM_KIND_READING) for value in reading_values]
-                    + [
-                        (romanize_kana(value), FORM_KIND_ROMAJI)
-                        for value in reading_values if romanize_kana(value)
-                    ]
+                    + [(form, kind) for form, kind in romaji if kind == FORM_KIND_ROMAJI]
                 )
             )
+            shown_romaji_records = [(form, kind) for form, kind in romaji if kind != FORM_KIND_ROMAJI]
 
             priority_records = []
             for element, form_tag, priority_tag, kind in (
@@ -284,6 +284,10 @@ def import_entries(
                     (entry_id, form, kind)
                     for form, kind in form_records
                 ],
+            )
+            database.executemany(
+                "INSERT INTO shown_romaji_forms(entry_id, form, kind) VALUES (?, ?, ?)",
+                [(entry_id, form, kind) for form, kind in shown_romaji_records],
             )
             database.executemany(
                 "INSERT INTO form_priority_profiles VALUES (?, ?, ?, ?, ?, ?)",
@@ -392,6 +396,14 @@ def import_entries(
             );
             INSERT INTO dictionary_form_fts(docid, form)
             SELECT rowid, form FROM forms ORDER BY rowid;
+
+            CREATE VIRTUAL TABLE shown_romaji_fts USING fts4(
+              form,
+              content='shown_romaji_forms',
+              tokenize=simple
+            );
+            INSERT INTO shown_romaji_fts(docid, form)
+            SELECT rowid, form FROM shown_romaji_forms ORDER BY rowid;
             """
     )
     dictionary_search_index = {
