@@ -2782,6 +2782,15 @@
     return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
   }
 
+  // src/search/latin-text.ts
+  var latinLetter3 = /\p{Script=Latin}/u;
+  var combiningMark = /\p{Mn}/gu;
+  function latinSpellings(text) {
+    if (romajiQuery(text) !== null || !latinLetter3.test(text) || containsJapaneseText(text)) return [];
+    const unaccented = text.normalize("NFD").replace(combiningMark, "").normalize("NFC");
+    return unaccented === text ? [text] : [text, unaccented];
+  }
+
   // src/search/search.ts
   function searchFeatures(capabilities) {
     return { sentenceSearch: capabilities.morphology !== void 0 };
@@ -2893,7 +2902,7 @@
     async searchOnce(query) {
       if (query === "") return noResults();
       const romaji2 = romajiQuery(query);
-      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await rankedJapanese(this.db, query);
+      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await this.rankedJapaneseOrLatin(query);
       if (ranked.length === 0) return noResults();
       let leadingLexicalEntryCount = 0;
       while (leadingLexicalEntryCount < ranked.length && sameLexicalGroup(ranked[leadingLexicalEntryCount].rank, ranked[0].rank)) {
@@ -2905,6 +2914,15 @@
         leadingLexicalEntryCount: Math.min(leadingLexicalEntryCount, searchResultLimit),
         hasExactOrPrefixMatch: ranked.some((entry) => entry.hasExactOrPrefixMatch)
       };
+    }
+    async rankedJapaneseOrLatin(query) {
+      const japanese = await rankedJapanese(this.db, query);
+      if (japanese.length > 0) return japanese;
+      for (const spelling of latinSpellings(query)) {
+        const english = await rankedEnglish(this.db, spelling);
+        if (english.length > 0) return english;
+      }
+      return japanese;
     }
     async hasResults(query) {
       if (query === "") return false;

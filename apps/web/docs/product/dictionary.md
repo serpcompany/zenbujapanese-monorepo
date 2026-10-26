@@ -216,7 +216,7 @@ dictionary service couldn't answer, is a row that doesn't open.
 
 **Result rows.** Each row shows the headword with furigana, its meaning clamped to two lines, and
 its frequency chips, and opens the word page. The meaning is the one that matched for an English
-query (`displaySummary`), and the word's summary otherwise.
+query, `café` too (`displaySummary`), and the word's summary otherwise.
 
 At the app's accessibility text sizes the meaning isn't clamped (`ResultRow`'s `lineLimit`). The
 browser's text size stands in for Dynamic Type: it sets the root font size (16px by default) as
@@ -234,7 +234,9 @@ two lines. Page zoom isn't text size and keeps the clamp.
   the clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root
   font sizes on each side of the threshold);
   `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
-  `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
+  `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`;
+  `café`'s words: `sentence-search.json`'s `café`, and
+  `packages/dictionary-core/src/search/latin-text.test.ts`.
 
 **Frequency chips.** A row has one chip per default dictionary that ranks or lists the word, as the
 app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBELEX ranks it. Each
@@ -297,17 +299,15 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
 the app.
 
-- Source: #462 (Recent list and camera button left out; learner actions open a get-the-app
-  prompt).
+- Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
 
 ## Example Sentences section
 
-When a search's Example Sentences row has no word page to open (see
-[Search results](#search-results)), the results page lists the search's sentences itself, in an
-Example Sentences section below its results, at `#examples`. It lists what the app's Example
-Sentences screen lists for the search. The app's screen is a page of its own; the website's isn't
-(ADR 0010).
+When a search's Example Sentences row has no word page to open (see [Search
+results](#search-results)), the results page lists the search's sentences itself, in an Example
+Sentences section below its results, at `#examples`. It lists what the app's Example Sentences
+screen lists for the search. The app's screen is a page of its own; the website's isn't (ADR 0010).
 
 **Which sentences.** An ASCII query matches the English side of every Tatoeba pair the app has
 (232,703) as a phrase of stemmed words, never across the end of a sentence: `eat` finds "eats" and
