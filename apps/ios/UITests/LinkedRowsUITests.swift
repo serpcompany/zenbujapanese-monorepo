@@ -61,7 +61,7 @@ final class LinkedRowsUITests: ZenbuUITestCase {
   func testASpokenSentenceArrivesLinkedAtItsFinalHeight() {
     let app = launch(TranslateUITests.script.merging(Self.holdLinking) { $1 })
     open(.translate, in: app)
-    tap(find("translate.start.conversation", in: app))
+    tap(find("translate.start.conversation", in: app), toShow: find("translate.conversation.back", in: app))
     let plainly = labeled("この先の階段を下りて、右に曲がってください。", in: app)
     let word = app.descendants(matching: .any).matching(
       NSPredicate(format: "identifier CONTAINS '.source.' AND identifier ENDSWITH '.階段'")
