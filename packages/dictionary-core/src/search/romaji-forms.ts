@@ -73,11 +73,10 @@ export function romajiQuery(query: string): string | null {
   return romajiLetters.test(separated) && latinLetter.test(separated) ? separated : null
 }
 
-const withoutMarks = (form: string) =>
-  form
-    .normalize('NFD')
-    .replace(/\p{Mn}/gu, '')
-    .normalize('NFC')
+const combiningMarks = /\p{Mn}/gu
+
+export const withoutMarks = (form: string) =>
+  form.normalize('NFD').replace(combiningMarks, '').normalize('NFC')
 
 function shownForm(reading: string): string | null {
   const shown = romaji(reading)

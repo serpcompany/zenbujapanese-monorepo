@@ -42,6 +42,7 @@ REPORTS = {
     "UniDic-CWJ-*-compound-pitch.import.json": {
         "import_tool_sha256": "import_compound_pitch.py",
         "compound_accent_sha256": "compound_accent.py",
+        "unidic_adapter_sha256": "unidic_adapter.py",
         "shared_tooling_sha256": SHARED,
     },
     "JLPT-Waller-*.import.json": {"offlineImporterSHA256": "import_jlpt_level_pack.py"},

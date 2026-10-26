@@ -18,9 +18,11 @@ registerHooks({
 })
 
 const { romajiSearchForms } = await import('../src/search/romaji-forms.ts')
+const { normalizeQuery } = await import('../src/search/query.ts')
 
 const chunks = []
 for await (const chunk of process.stdin) chunks.push(chunk)
-const readings = JSON.parse(Buffer.concat(chunks).toString('utf8'))
+const { readings, texts } = JSON.parse(Buffer.concat(chunks).toString('utf8'))
 const forms = readings.map(entryReadings => romajiSearchForms(entryReadings))
-process.stdout.write(JSON.stringify({ files: [...loaded].sort(), forms }))
+const folded = texts.map(text => normalizeQuery(text))
+process.stdout.write(JSON.stringify({ files: [...loaded].sort(), forms, folded }))

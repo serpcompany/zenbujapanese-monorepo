@@ -22,6 +22,7 @@ from unidic_adapter import hiragana, lexicon_rows, mora_count
 ARTIFACT_SCHEMA = "zenbu.compound-pitch.v1"
 SOURCE_IDENTITY = "UniDic 3.1.0 compound accent rules"
 COMPOUND_ACCENT = Path(__file__).with_name("compound_accent.py")
+UNIDIC_ADAPTER = Path(__file__).with_name("unidic_adapter.py")
 FOUR_CHARACTER_IDIOM = "yojijukugo"
 ADJECTIVAL_SUFFIX = ("的", "てき")
 PURPOSE = ("目的", "もくてき")
@@ -189,6 +190,7 @@ def import_pitch(source: Path, source_manifest: dict, language_data: Path, outpu
         "source_sha256": source_manifest["sha256"],
         "language_data_sha256": language_data_sha256,
         "compound_accent_sha256": file_sha256(COMPOUND_ACCENT),
+        "unidic_adapter_sha256": file_sha256(UNIDIC_ADAPTER),
         **built_artifact(Path(__file__), output),
     }
 

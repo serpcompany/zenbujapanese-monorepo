@@ -20,7 +20,7 @@ from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 from jmdict_entries import import_entries
 from jmdict_examples import check_without_examples, link_sense_examples, sense_examples
-from jmdict_normalization import normalized_text
+from jmdict_normalization import casefolded_text
 from jmdict_previous import PreviousDatabase
 from jmdict_relationships import assign_note_identities, link_relationships
 from jmdict_romaji import CORE_ROMAJI_FILES, REPOSITORY
@@ -202,7 +202,7 @@ def import_snapshot(
         )
 
         pitch_entry_count = apply_unidic_pitch(
-            database, entries.records, unidic_source, unidic_metadata, normalized_text
+            database, entries.records, unidic_source, unidic_metadata, casefolded_text
         )
         example_sentence_summary = import_tatoeba_examples(
             database,
@@ -223,7 +223,7 @@ def import_snapshot(
         sense_example_summary = link_sense_examples(database, sense_examples(source))
 
         relationship_count = link_relationships(
-            database, entries.records, entries.form_to_entry_ids, relationship_metadata
+            database, entries.records, entries.form_to_entry_ids, relationship_metadata, entries.forms.fold
         )
 
         dictionary_ranking_mapping = dictionary_ranking_mapping_sha256(database)
@@ -290,7 +290,7 @@ def import_snapshot(
                 "sense/example/ex_sent",
             ],
             "documented_transforms": [
-                "Unicode NFKC and case-fold searchable forms",
+                "searchable forms and glosses folded by the shared core as a query is (NFKC, lowercase, white space collapsed)",
                 "romaji search forms from the shared core: each reading in ASCII as typed (long vowels doubled), in forms as before; its romaji as the apps show it, and that romaji without macrons, in shown_romaji_forms, which the frequency packs' mapping never reads",
                 "stable first-priority written form and reading display selection",
                 "English-only gloss retention",
