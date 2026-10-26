@@ -45,6 +45,24 @@ text changed while it had focus, shows the newest saved value whenever the field
 focus or is left unchanged, and keeps a rejected email as typed until it's focused again
 (`ProfileFieldEdit`), so the Mac's Settings and an Account tab don't write over each other.
 
+## What's being typed
+
+A note or profile field being typed is saved as it stands, and stays open, when the scene goes
+inactive or to the background (`TypedDrafts`, which `AppLifecycle` tells of each phase): a note
+through `SavedItemNotes.keepDraft`, a field through `ProfileEditing.keepDraft`, each once per
+change, and only what the rules accept, so an emptied note or a refused username waits for the
+field to be left. That covers an iPhone app killed from the app switcher, since opening the
+switcher makes the scene inactive before it can be swiped away. Saving as the learner typed was
+the other way: each save is a note's `write` or a profile edit, which sync sends a second after
+it's made (`AccountSyncScheduler`), so a note typed with pauses would have reached the account as
+several versions, where leaving the screen makes one. On the Mac, ⌘Q doesn't change the phase,
+and the app exits as soon as `NSApplication.willTerminateNotification` returns, before an async
+save could run; so `ApplicationDelegate` (`Platform/AppDelegate.swift`) answers
+`applicationShouldTerminate` with `.terminateLater`, and `AppLifecycle.finishSaving` saves what's
+typed and waits for the note, known-word, list, and sync files to be written before the app quits.
+AppKit runs the main run loop in its modal panel mode meanwhile, one of the common modes the main
+queue, and so the main actor, is served in. iPhone and iPad need nothing from their delegate.
+
 ## A deleted photo's image
 
 The Media Library deletes only images the learner deleted. When a kept copy of the index names

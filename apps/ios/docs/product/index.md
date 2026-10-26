@@ -245,21 +245,21 @@ Rows use Settings-style tinted icon tiles in grouped cards without section headi
 Check: UI `LayoutUITests` (Account's rows on screen at each size).
 
 The profile card opens Profile, where a learner adds or changes a photo and edits their name,
-username, and email in place. Each field saves when the learner leaves it. A username follows the
-account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, trimmed, and
-lowercased, or empty for none. An email is a single valid address or empty. A username the rule
-refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username an
-earlier version saved stays as it was until it is edited. Without a photo, the card shows the name's
-initials. Signed in, name, username, and photo sync with the Zenbu account: each sign-in keeps the
-account's name and username, filling its empty ones from the phone ([The profile at
-sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide My
-Email), the name follows the account's rule, and a change the account refuses, such as a taken
+username, and email in place. Each field saves as it's left, and as Zenbu leaves the screen. A
+username follows the account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded,
+trimmed, and lowercased, or empty for none. An email is a single valid address or empty. A username
+the rule refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a
+username an earlier version saved stays as it was until it is edited. Without a photo, the card
+shows the name's initials. Signed in, name, username, and photo sync with the Zenbu account: each
+sign-in keeps the account's name and username, filling its empty ones from the phone ([The profile
+at sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide
+My Email), the name follows the account's rule, and a change the account refuses, such as a taken
 username, goes back and says why. Signed out, edits stay on the phone. One this version can't read
 is kept aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
 Check: package `SharedAccountRulesTests` (the name and username from the account rules' cases,
-`packages/account-rules/cases/`), `UserProfileTests` (saving on leaving; a reload; an earlier
-username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
+`packages/account-rules/cases/`), `TypedDraftsTests`, `UserProfileTests` (saving on leaving; a
+reload; an earlier username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
 `PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
 (the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
 
