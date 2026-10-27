@@ -112,6 +112,12 @@ file's copy comes in parts a stopped download can restart from.
   publish with nothing uploaded. Parts are uploaded as files are, and `compressed.json` last: a
   client that finds it finds every part it names. A release with a `compressed.json` is skipped, so
   it's never rewritten, and a rerun publishes nothing new.
+- **A listed release can have no `compressed.json` yet.** On every run, the newest release is in
+  `releases.json` for a minute or so before its copies are written. Releases are packed oldest
+  first, so one that can't be packed (a file missing or changed in the bucket) leaves it and every
+  release listed after it without copies until the bucket is fixed and the workflow runs again. A
+  client that gets a 404 for a listed release's `compressed.json` uses the newest listed release
+  that has one, or, if none has, tries again later.
 - **Verify** fails without the release's `compressed.json`. The file must match its schema, the
   manifest, and its SQLite and JSON files, cut into parts of `part_bytes`, each part at its
   content-addressed key with its size and SHA-256. With `--hash all`, as the workflow runs it, each

@@ -105,6 +105,24 @@ class VerifyTests(unittest.TestCase):
         with self.assertRaisesRegex(Refusal, r"Data\.json\.part1\.gz doesn't exist"):
             self.verify(hash_files=False)
 
+    def test_a_compressed_json_for_another_release_or_manifest_fails(self):
+        key = "releases/2026.11.1/compressed.json"
+        published = dict(self.store.objects[key])
+        for field, value in (("release", "2026.10.1"), ("manifest_sha256", "0" * 64)):
+            with self.subTest(field=field):
+                self.store.objects[key] = dict(published)
+                self.rewrite_compressed(lambda d: d.update({field: value}))
+                with self.assertRaisesRegex(Refusal, "isn't for release 2026.11.1's manifest"):
+                    self.verify(hash_files=False)
+
+    def test_a_part_at_another_key_than_its_content_addressed_one_fails(self):
+        part = self.data_part()
+        moved = part["key"].replace("Data.json.part1", "Other.json.part1")
+        self.store.objects[moved] = dict(self.store.objects[part["key"]])
+        self.rewrite_compressed(lambda d: d["files"][0]["parts"][0].update(key=moved))
+        with self.assertRaisesRegex(Refusal, "isn't its content-addressed key"):
+            self.verify(hash_files=False)
+
     def test_compressed_copies_of_other_files_than_the_manifests_fail(self):
         self.rewrite_compressed(lambda d: d["files"][0].update(sha256="0" * 64))
         with self.assertRaisesRegex(Refusal, "lists other files than"):

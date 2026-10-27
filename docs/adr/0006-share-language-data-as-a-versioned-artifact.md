@@ -26,18 +26,19 @@ Amended (issue 828, step 3): the `language-data-release` environment has no requ
 by the owner's decision, as for website production deploys; a reviewer can be added without
 changing the workflow. The index of releases, `releases.json`, lives in the bucket beside them
 rather than in the repository, and is only ever appended to. The bucket is
-`zenbujapanese-language-data`; its public domain isn't set up yet. The layout and rules are in
-[`language-data/README.md`](../../language-data/README.md).
+`zenbujapanese-language-data`. Its public address is chosen in the issue 955 amendment below,
+and the owner adds it by hand, as [`publishing.md`](../../language-data/publishing.md) says. The
+layout and rules are in [`language-data/README.md`](../../language-data/README.md).
 
 Amended (issue 473): the app and the dictionary service's image hold a release's files from the
 repository rather than downloading them. Each release's manifest, without the fields that depend on
 the run or the bucket, is committed in `language-data/releases/`, and checks before merge hold the
-committed files to it. So no check reads the bucket, and none waits for its public domain.
+committed files to it. So no check reads the bucket or its public address.
 
 Amended (issue 955): the bucket's public address is `https://data.zenbujapanese.com`, an R2 custom
 domain, for the browser extension, which downloads releases from it. The name is
 [issue 941](https://github.com/serpcompany/zenbujapanese-monorepo/issues/941)'s Open question 18,
-which waits on Francis. Each release also gets gzipped copies of its SQLite and JSON files, in
+chosen and waiting on Francis's confirmation. Each release also gets gzipped copies of its SQLite and JSON files, in
 parts a stopped download restarts from, listed in `releases/<release>/compressed.json`. The
 extension downloads them as published, with no cut of its own (Open question 17).
 [`publishing.md`](../../language-data/publishing.md) has the address, the parts, and the bucket's
