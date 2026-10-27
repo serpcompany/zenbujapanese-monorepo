@@ -22,7 +22,7 @@ import {
   textAnswer,
   trueAnswer
 } from './answers'
-import { kindPageOf, mutationResultsOf } from './synced-answers'
+import { kindPageOf, mutationResultsOf, searchKeyOf } from './synced-answers'
 
 export type Failure =
   | { kind: 'offline' }
@@ -284,6 +284,10 @@ export function accountApi(
         '/v1/sync',
         { method: 'POST', accessToken, body: { mutations, limit: 1 } },
         (value, status) => checked<MutationResult[]>(mutationResultsOf(value), status)
+      ),
+    searchKey: (accessToken: string) =>
+      call('/v1/sync', { method: 'POST', accessToken, body: { limit: 1 } }, (value, status) =>
+        checked<string>(searchKeyOf(value), status)
       ),
     portal: (accessToken: string, returnUrl: string) =>
       call(

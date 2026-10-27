@@ -509,7 +509,11 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
 - **What an account syncs** ([product doc](../../apps/web/docs/product/synced-data.md)):
   `src/components/account/synced/`, reading and changing it through `src/lib/account/synced.ts`.
   Its words' pages come from `/dictionary/pages.json` (`src/lib/dictionary/pages-answer.ts`, the
-  service's `/v1/pages`), which `src/lib/account/item-pages.ts` asks before a page draws.
+  service's `/v1/pages`), which `src/lib/account/item-pages.ts` asks before a page draws. A
+  search the learner asks for (`src/lib/account/asked-search.ts`, marked by the search box, the
+  radical panel, the reading refinement, and Recent searches) goes into the account's Recent
+  searches from `components/dictionary/record-search.tsx` once its results page draws
+  (`src/lib/account/recent-searches.ts`, loaded only then).
 - **Code:** the routes in `src/app/[locale]/` (`login/`, `register/`, `forgot-password/`, and
   `account/`); the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the

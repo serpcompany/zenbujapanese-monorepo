@@ -59,7 +59,7 @@ export function linkedItems(
 export const needsASubscription = (failure: Failure) =>
   failure.kind === 'refused' && failure.status === 402
 
-function syncedCopy(
+export function syncedCopy(
   api: AccountApi,
   tokens: AccessTokens,
   newId: () => string = () => crypto.randomUUID()

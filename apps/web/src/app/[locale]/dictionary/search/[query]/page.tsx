@@ -1,6 +1,7 @@
 import { isASCII } from '@zenbu/dictionary-core/search/query'
 import type { Metadata } from 'next'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
+import { RecordSearch } from '@/components/dictionary/record-search'
 import { SearchForm } from '@/components/dictionary/search-form'
 import { SearchResults } from '@/components/dictionary/search-results'
 import { SourceCredits } from '@/components/dictionary/source-credits'
@@ -65,6 +66,11 @@ export default async function SearchResultsPage({ params, searchParams }: Props)
         {snippetOf(data, locale).heading}
       </h1>
       <SearchResults data={data} examples={examples} locale={locale} />
+      <RecordSearch
+        query={data.query}
+        refinement={data.state === 'results' ? (data.readingRefinement?.query ?? null) : null}
+        locale={locale}
+      />
       {data.state === 'results' ? (
         <SourceCredits
           locale={locale}

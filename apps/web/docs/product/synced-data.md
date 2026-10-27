@@ -133,11 +133,27 @@ bookmarked sentence, newest first, with its translation and language.
   bookmarks, newest first, with nothing to change".
 
 **Recent searches.** The account's 50 most recent searches, newest first, each linking to its
-search, with Remove, and Clear All, which asks first. Searching on the website doesn't add to them.
+search, with Remove, and Clear All, which asks first.
 
+A subscriber's searches on the website go into them as the app's do: each search the learner asks
+for, as the box submits it, a reading refinement, a kanji picked from radicals (the box's text with
+the kanji), or a recent search picked here, normalized as the core normalizes a query, once the
+results page has drawn. A search page reached any other way (a link, the address bar, a reload, or
+Back) adds nothing, as a link opened in the app adds nothing. Recording draws nothing and changes
+nothing the page shows, so its HTML and cache stay as they were: in the browser, it asks the
+account for its search key (a `POST /v1/sync` with no changes), then sends the search under its ID
+through `AccountCopy`; the account keeps the later time of a query searched again and the 50
+latest. Signed out, nothing is kept or sent, and without a subscription the account refuses the key
+before any search is sent.
+
+- Source: the app's Recent searches (`RecentSearchStore`, `SearchView.completeSubmission`); the
+  client rules ([`account-client-rules.md`](../../../../docs/agents/account-client-rules.md),
+  Recent searches and Keeping no copy); #934.
 - Check: Data page tests, "lists them newest first, linked to their search, removes one, and
-  clears the rest after asking"; Synced spec, "a note is changed, a recent search cleared, and a
-  frequency dictionary chosen".
+  clears the rest after asking" and "picking one searches it again, as the app does, so it goes up
+  as the newest"; `src/components/dictionary/record-search.interaction.test.tsx`; the search box's
+  and radical panel's tests; Synced spec, "a note is changed, a recent search cleared, and a
+  frequency dictionary chosen"; `e2e/recent-searches.spec.ts`.
 
 **Settings.** The frequency dictionaries the app ranks words by, in their order, with Move up,
 Move down, and Remove on each, and Add on the others; until the learner chooses, it says the app

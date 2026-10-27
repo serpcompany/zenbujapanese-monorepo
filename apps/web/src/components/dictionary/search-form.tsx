@@ -6,6 +6,7 @@ import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'
 import { RadicalInput } from './radical-input'
+import { SearchSubmission } from './search-submission'
 import { SourceCreditLine } from './source-credits'
 
 const searchAction = '/dictionary/search/'
@@ -24,7 +25,7 @@ export function SearchForm({
 }) {
   return (
     <search>
-      <form action={localizedPath(searchAction, locale)} method="get">
+      <SearchSubmission action={localizedPath(searchAction, locale)}>
         <ButtonGroup className="w-full">
           <Input
             name="q"
@@ -45,7 +46,7 @@ export function SearchForm({
             {text.submit}
           </Button>
         </ButtonGroup>
-      </form>
+      </SearchSubmission>
     </search>
   )
 }

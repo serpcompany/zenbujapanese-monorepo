@@ -50,3 +50,10 @@ export function mutationResultsOf(value: unknown): MutationResult[] | null {
   const results = value.results.map(resultOf)
   return results.some(result => result === null) ? null : (results as MutationResult[])
 }
+
+const searchKeyPattern = /^[0-9a-f]{64}$/
+
+export function searchKeyOf(value: unknown): string | null {
+  if (!isFields(value) || typeof value.searchKey !== 'string') return null
+  return searchKeyPattern.test(value.searchKey) ? value.searchKey : null
+}

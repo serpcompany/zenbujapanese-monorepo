@@ -201,4 +201,29 @@ describe('the website, editing what an app syncs', () => {
     })
     expect(websiteState(website)).toEqual(phoneState(phone))
   })
+
+  test('a search the website sends without a copy, after the app removed it, is the newest search again on both', async () => {
+    const { app, phone, website, readAll } = await onBoth('website-search-again@example.com')
+    const cat = searchIdFor(app, '猫')
+    phone.change('recentSearch', 'search', cat, {
+      query: '猫',
+      searchedAt: '2026-10-01T00:00:00.000Z'
+    })
+    await phone.sync()
+    phone.change('recentSearch', 'remove', cat)
+    await phone.sync()
+    const searchedAt = '2026-10-27T00:00:00.000Z'
+    const searched = await website.change(
+      'recentSearch',
+      'search',
+      cat,
+      { query: '猫', searchedAt },
+      null
+    )
+    expect(searched).toEqual({ status: 'applied' })
+    await phone.sync()
+    await readAll()
+    expect(phoneState(phone).get(`recentSearch:${cat}`)).toMatchObject({ query: '猫', searchedAt })
+    expect(websiteState(website)).toEqual(phoneState(phone))
+  })
 })

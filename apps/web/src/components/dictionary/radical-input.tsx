@@ -4,6 +4,7 @@ import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { Grid3x3Icon, Undo2Icon } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { askForSearch } from '@/lib/account/asked-search'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { Sheet } from './sheet'
@@ -66,7 +67,9 @@ export function RadicalInput({
     )
   const pick = (kanji: string) => {
     const input = box()
-    if (input) input.value = normalizeQuery(boxText + kanji)
+    const picked = normalizeQuery(boxText + kanji)
+    if (input) input.value = picked
+    askForSearch(picked)
     setOpen(false)
   }
   return (

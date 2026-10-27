@@ -44,8 +44,10 @@ export class SyncedStandIn {
   readonly sent: Mutation[] = []
   readonly reads: string[] = []
   readonly pagesAsked: string[] = []
+  readonly syncsAsked: { mutations?: Mutation[] }[] = []
   subscribed = true
   added = '2026-10-01T00:00:00.000Z'
+  readonly searchKey = 'ab'.repeat(32)
 
   private kind(entity: string) {
     const found = this.kinds.get(entity) ?? new Map<string, Entity>()
@@ -163,6 +165,11 @@ export class SyncedStandIn {
       const { item, ...rest } = fields
       return { id: entityId, itemId: item, ...rest }
     }
+    if (entity === 'recentSearch') {
+      const before = String(held?.data?.searchedAt ?? '')
+      const searchedAt = before > String(fields.searchedAt) ? before : fields.searchedAt
+      return { id: entityId, query: fields.query, searchedAt }
+    }
     return { ...held?.data, ...fields }
   }
 
@@ -184,7 +191,8 @@ export class SyncedStandIn {
     if (JSON.stringify(next) === JSON.stringify(held?.data ?? null) && entity !== 'listWord') {
       return { id, status: 'applied', version }
     }
-    const alwaysApplies = operation === 'add' || operation === 'create'
+    const searchedAgain = operation === 'search' && Boolean(held?.data)
+    const alwaysApplies = operation === 'add' || operation === 'create' || searchedAgain
     const overADelete = entity === 'wordNote' && operation === 'write' && held?.data === null
     if (!alwaysApplies && !overADelete && mutation.baseVersion !== version) {
       return { id, status: 'conflict', version, current: this.changeOf(entity, entityId, held) }
@@ -195,6 +203,7 @@ export class SyncedStandIn {
   }
 
   sync(body: { mutations?: Mutation[] }): Answered {
+    this.syncsAsked.push(body)
     if (!this.subscribed) return refused(402, 'subscription_required')
     const mutations = body.mutations ?? []
     this.sent.push(...mutations)
@@ -204,7 +213,8 @@ export class SyncedStandIn {
         results: mutations.map(each => this.apply(each)),
         changes: [],
         cursor: 'c',
-        hasMore: false
+        hasMore: false,
+        searchKey: this.searchKey
       }
     }
   }

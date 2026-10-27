@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
+import { askForSearch } from '@/lib/account/asked-search'
 import { shownMoment, textIn } from '@/lib/account/synced-views'
 import { countOf, fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
@@ -59,7 +60,12 @@ export function RecentSearches({ copy, locale, text, change, changeAll }: AreaPr
               <ItemContent>
                 <ItemTitle>
                   {hasSearchPath(query) ? (
-                    <Link href={localizedPath(searchPath(query), locale)}>{query}</Link>
+                    <Link
+                      href={localizedPath(searchPath(query), locale)}
+                      onClick={() => askForSearch(query)}
+                    >
+                      {query}
+                    </Link>
                   ) : (
                     query
                   )}

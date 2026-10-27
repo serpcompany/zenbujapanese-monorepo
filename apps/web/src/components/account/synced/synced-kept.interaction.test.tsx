@@ -175,6 +175,23 @@ describe('Recent searches', () => {
       ['remove', 's1']
     ])
   })
+
+  test('picking one searches it again, as the app does, so it goes up as the newest', async () => {
+    vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open')
+    vi.stubEnv('ZENBU_ACCOUNT_SERVICE', 'https://api.example.com')
+    const stay = (event: Event) => event.preventDefault()
+    document.addEventListener('click', stay)
+    try {
+      const { page } = openArea('recentSearches', searches())
+      await shows(page, 'cat')
+      page.querySelector<HTMLAnchorElement>('[data-slot="item-title"] a')?.click()
+      expect(window.sessionStorage.getItem('search.asked')).toBe('cat')
+    } finally {
+      document.removeEventListener('click', stay)
+      vi.unstubAllEnvs()
+      window.sessionStorage.clear()
+    }
+  })
 })
 
 describe('Settings', () => {
