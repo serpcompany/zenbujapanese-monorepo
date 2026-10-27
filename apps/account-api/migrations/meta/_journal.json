@@ -64,6 +64,13 @@
       "when": 1792476590779,
       "tag": "0008_notes_photos_settings_searches",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793085298361,
+      "tag": "0009_kind_reads_index",
+      "breakpoints": true
     }
   ]
 }

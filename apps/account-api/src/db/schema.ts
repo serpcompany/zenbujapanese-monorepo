@@ -131,6 +131,7 @@ export const syncChanges = pgTable(
   },
   table => [
     index('sync_changes_user_sequence').on(table.userId, table.sequence),
+    index('sync_changes_user_kind_sequence').on(table.userId, table.entityType, table.sequence),
     uniqueIndex('sync_changes_entity').on(table.userId, table.entityType, table.entityId)
   ]
 )
