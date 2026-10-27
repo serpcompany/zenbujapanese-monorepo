@@ -30,23 +30,24 @@ outside the first version. The Store listing, its ID, and the version and builds
 #986's.
 
 Besides `offscreen` and `sidePanel`, the manifest asks for `storage`, for the settings, and
-`activeTab`, so the toolbar popup can read the tab's address and icon. It asks for no site at
-install: `http://*/*` and `https://*/*` are `optional_host_permissions`, and the popup's Allow on
-This Site asks Chrome for one site with `chrome.permissions.request`.
+`activeTab`, so the side panel's header can read the tab's address after a click on the toolbar
+icon. Neither adds an install warning. It asks for no site at install: `http://*/*` and
+`https://*/*` are `optional_host_permissions`, and the header menu's Allow on This Site asks Chrome
+for one site with `chrome.permissions.request`. It never asks for `tabs`, which would warn that it
+reads the browsing history.
 
 ## Code layout
 
 | Folder | What it holds |
 | --- | --- |
-| `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
+| `src/pages/` | The side panel and the Settings page (the manifest's `options_ui`, opened in a tab); there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
 | `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), answers and passes on the settings (`settings.ts`), and opens the side panel on a route (`side-panel.ts`). |
-| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's site switch and menu (`header-controls.tsx`) and the active tab's site (`active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
-| `src/popup/` | The toolbar popup: the site's row and which sites Zenbu can't run on (`site.ts`), the dictionary's download, and the switches. |
-| `src/settings/` | Settings: the sidebar and its five pages, the switch row both surfaces use (`setting-switch.tsx`), and the frequency dictionaries' order (`frequency-order.ts`). |
-| `src/shared/` | The messages and their types, the settings (`settings.ts`) and the hook pages read them with (`use-settings.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
+| `src/settings/` | Settings: the sidebar and its five pages, the switch row and when Hide Furigana on Known Words waits (`setting-switch.tsx`), which the header's menu shares, the frequency dictionaries' order (`frequency-order.ts`), and the text both use (`labels.ts`). |
+| `src/shared/` | The messages and their types, the settings (`settings.ts`) and the hook pages read them with (`use-settings.ts`), the site a content script tells the header it is on (`page-site.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and follows the settings (`settings-follower.tsx`). |
@@ -72,13 +73,23 @@ document it's waiting on, since Chrome stops it when it's idle.
 
 Each setting is a key of its own in `chrome.storage.local`, with its default in
 `settingDefaults` (`src/shared/settings.ts`); a stored value of the wrong kind reads as the
-default. The popup and Settings read and write the storage directly, with `useSettings`, and
+default. The side panel's header and Settings read and write the storage directly, with `useSettings`, and
 redraw on `chrome.storage.onChanged`. A content script never reads the storage: it asks the
 service worker with `askSettings()` (`{ target: 'service-worker', settings: 'read' }`), and the
 service worker, which watches the storage, sends `{ target: 'settings', settings }` to every open
 tab when one changes, which `onSettingsChanged` hears. A tab that can't take the message (a closed
 tab, a page with no content script) stops none of the others. Whether Zenbu runs on a site is
 `isZenbuOn(host, settings)`, from `sites.off`.
+
+The header's site switch is for the active tab's site (`src/side-panel/active-site.ts`). The
+header reads the tab's address when Chrome shows it, after a click on the toolbar icon or on a site
+Zenbu may open, and checks the site with `chrome.permissions.contains`. Otherwise it asks the
+tab's top frame, `chrome.tabs.sendMessage(tabId, { target: 'content-script', site: 'read' },
+{ frameId: 0 })`, which a content script answers with its host through `answerSiteRequests()`
+(`src/shared/page-site.ts`). A tab with no answer is a page Zenbu can't run on. The header reads
+the site again when another tab comes to the front (`tabs.onActivated`) or a tab finishes loading
+(`tabs.onUpdated`). Every content script calls `answerSiteRequests()`: the test one does, and the
+release one must when it comes.
 
 ### Drawing on a page
 
@@ -110,14 +121,18 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 `Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
 
-- **`openPanel(route)` opens it, from a click.** An extension page, the popup, or a content
+- **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
+  calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
+  (owner, 2026-10-28). The header's trailing side is `HeaderControls`: the site switch and the
+  menu, which has the reading aids, Zenbu Captions, and Settings.
+- **`openPanel(route)` opens it, from a click.** An extension page or a content
   script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
   in response to a user gesture, and the gesture lasts through one message only if the service
   worker calls `chrome.sidePanel.open` before it awaits anything: checked in Chrome 156 on
-  2026-10-28 from a content script, an extension page in a tab, and the popup, and refused after
+  2026-10-28 from a content script, an extension page in a tab, and a toolbar popup, and refused after
   awaiting `chrome.storage`, `chrome.windows.getLastFocused`, or a timer. So the service worker
   (`src/service-worker/side-panel.ts`) calls `open` first, on the sender tab's window or, from
-  the popup, the current one. Then it saves the route in `chrome.storage.session` under
+  a page with no tab, the current one. Then it saves the route in `chrome.storage.session` under
   `sidePanel.route.<windowId>` and sends `{ target: 'side-panel', windowId, route }`.
 - **The panel takes a route once.** An open panel takes the message; one still loading reads the
   key. It listens before it reads, and removes the key when it takes a route. Opening an open
@@ -128,8 +143,17 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 - **The test page** (`{ page: 'test' }`) is the test build's: `isPanelRoute` refuses it unless
   `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
 - **Before the dictionary is ready,** while `useDataState()` says it is checking, downloading, or
-  failed, the panel draws `DictionaryProgress` (`src/shared/dictionary-progress.tsx`) instead of
-  the tabs.
+  failed, every tab but Translate, which doesn't need it, draws `DictionaryProgress`
+  (`src/shared/dictionary-progress.tsx`) instead of its content, and the tab bar stays. A failure
+  adds Try Again, which calls `useDataState()`'s second item to start again.
+- **Focus follows the page shown.** Opening a page focuses its Back row; Back focuses the Back row
+  of the page it reveals, or the tab's panel.
+- **The tab bar is compact, an exception to stock sizes.** Its triggers set `px-0.5 py-1 text-xs`
+  and stack the icon over the label, and its list drops the stock `h-8`. Measured in Chrome 156
+  at 320 px (`tmp/agent/verify/978/tab-bar-sizes.json`): each trigger is 60 px wide; at the stock
+  `text-sm` and padding, Translate's label needs 61 px and gets 46, and Images' needs 48 and gets
+  46, so both are cut (Translate still at 380 px), and with the icon beside the label every label
+  gets 24 px. The compact bar shows all five whole at 320 px.
 
 ## Test pages
 
@@ -170,20 +194,21 @@ release build has no content script; `build/manifest.test.ts` checks that.
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
   again; the settings' defaults, storage, and channel (`src/shared/settings.test.ts`); and, in
-  happy-dom on one fake Chrome, the toolbar popup and Settings with the test content script beside
-  them, each behavior their [product docs](../../apps/extension/docs/product/index.md) list.
-  The popup and Settings in a real Chrome, at 420 pixels wide with no sideways scroll, wait for
-  #952's Playwright specs.
-  For the side panel: routes and tab stacks; the service worker calling `open` before it
-  awaits anything, handing the route over, and leaving none when Chrome refuses; and, in
-  happy-dom, the five tabs and their empty states, the arrow keys, pages over a tab and Back, the
-  last tab, the sign-up links, the dictionary progress, and `openPanel` through a fake Chrome to
-  the panel, closed and open.
-- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the test surface, close the
+  happy-dom on one fake Chrome, the side panel's header and Settings with the test content script
+  beside them, each behavior their [product docs](../../apps/extension/docs/product/index.md) list.
+  The header and Settings in a real Chrome wait for #952's Playwright specs.
+  For the side panel: the manifest with no popup; routes and tab stacks; the service
+  worker opening the panel from the toolbar icon, calling `open` before it awaits anything,
+  handing the route over, and leaving none when Chrome refuses; and, in happy-dom, the five tabs
+  and their empty states, the arrow keys, pages over a tab and Back, focus after each, the last
+  tab, the sign-up links, the dictionary progress on every tab but Translate, Try Again, and
+  `openPanel` through a fake Chrome to the panel, closed and open.
+- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel from the toolbar icon,
+  and Settings, in light and dark, see "The dictionary is ready." from the test surface, close the
   offscreen document from `chrome://extensions` (Inspect views) and check again, and on both
   test pages open the menu and the dialog, Tab through it, and close it with Esc and with a click
-  outside. Open the side panel with `openPanel` from a click, closed and open, and check that
+  outside. In the header, turn a reading aid and the site's switch off and on from a test page,
+  and switch to another tab and to `chrome://extensions`. Open the side panel with `openPanel` from a click, closed and open, and check that
   nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
   `side-panel.html` waits for the tab to come to the front before it hides the tab it left.
   Until #952 moves it into the repository, agents use the agent

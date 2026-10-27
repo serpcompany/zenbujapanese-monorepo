@@ -55,7 +55,8 @@ export function openPanelListener(windows: PanelWindows) {
   }
 }
 
-export function listenForOpenPanel(): void {
+export function startSidePanel(): void {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
   chrome.runtime.onMessage.addListener(
     openPanelListener({
       open: windowId =>

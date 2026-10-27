@@ -30,7 +30,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
-| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
+| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, the core, or `assets/brand` changed | This doc |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
@@ -174,7 +174,8 @@ the app-recorded suites run through the core in
 
 `.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
 rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
-extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
+extension, `packages/ui`, which draws it, the core, or `assets/brand`, whose mark the side panel
+shows. Nothing loads the built extension in a
 browser yet. See [`extension.md`](extension.md).
 
 ## Dictionary API

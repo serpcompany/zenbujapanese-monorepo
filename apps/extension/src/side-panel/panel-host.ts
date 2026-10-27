@@ -8,7 +8,6 @@ export type PanelHost = {
   readRoute(windowId: number): Promise<PanelRoute | null>
   clearRoute(windowId: number): void
   watchRoutes(windowId: number, listener: (route: PanelRoute) => void): () => void
-  openSettings(): void
 }
 
 const noWindow = -1
@@ -37,8 +36,5 @@ export const chromePanelHost: PanelHost = {
   clearRoute: windowId => {
     clearPendingRoute(windowId)
   },
-  watchRoutes,
-  openSettings: () => {
-    chrome.runtime.openOptionsPage().catch(() => undefined)
-  }
+  watchRoutes
 }

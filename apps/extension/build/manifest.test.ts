@@ -28,4 +28,12 @@ describe('manifest', () => {
     expect(release.optional_host_permissions).toEqual(['http://*/*', 'https://*/*'])
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
+
+  it('has no toolbar popup, so a click on the toolbar icon opens the side panel', () => {
+    for (const variant of ['release', 'test'] as const) {
+      const built = manifest(variant)
+      expect(built.action).toEqual({ default_title: 'Zenbu Japanese' })
+      expect(built.side_panel).toEqual({ default_path: 'pages/side-panel.html' })
+    }
+  })
 })
