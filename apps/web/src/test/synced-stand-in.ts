@@ -40,8 +40,10 @@ export class SyncedStandIn {
   private sequence = 0
   private refusals: string[] = []
   private failedReads: number[] = []
+  private pages: Map<string, string> | null = null
   readonly sent: Mutation[] = []
   readonly reads: string[] = []
+  readonly pagesAsked: string[] = []
   subscribed = true
   added = '2026-10-01T00:00:00.000Z'
 
@@ -54,6 +56,33 @@ export class SyncedStandIn {
   holds(entity: string, entityId: string, data: Data | null, version = 1): this {
     this.kind(entity).set(entityId, { version, data, sequence: ++this.sequence })
     return this
+  }
+
+  hasPage(itemId: string, path: string): this {
+    this.pages = (this.pages ?? new Map()).set(itemId, path)
+    return this
+  }
+
+  private pagesOf(query: URLSearchParams): Answered {
+    const pages = this.pages
+    if (!pages) return { status: 502, body: { error: 'The dictionary service didn’t answer' } }
+    const found = (asked: string | null, itemOf: (each: string) => string) => {
+      const listed = asked ? asked.split(',') : []
+      this.pagesAsked.push(...listed.map(itemOf))
+      return Object.fromEntries(
+        listed.flatMap(each => {
+          const path = pages.get(itemOf(each))
+          return path === undefined ? [] : [[each, path]]
+        })
+      )
+    }
+    return {
+      status: 200,
+      body: {
+        words: found(query.get('words'), each => each),
+        kanji: found(query.get('kanji'), each => `kanji:${each}`)
+      }
+    }
   }
 
   dataOf(entity: string, entityId: string) {
@@ -181,6 +210,9 @@ export class SyncedStandIn {
   }
 
   answer(method: string, url: URL, body: unknown): Answered | null {
+    if (method === 'GET' && url.pathname === '/dictionary/pages.json') {
+      return this.pagesOf(url.searchParams)
+    }
     if (method === 'POST' && url.pathname === '/v1/sync')
       return this.sync(body as { mutations?: Mutation[] })
     const kind = /^\/v1\/sync\/([A-Za-z]+)$/.exec(url.pathname)?.[1]

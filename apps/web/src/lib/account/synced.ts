@@ -1,4 +1,5 @@
 import { AccountCopy } from '@zenbu/account-rules/account-copy'
+import { wordsOfList } from '@zenbu/account-rules/account-views'
 import type { AccessTokens } from './access-tokens'
 import type { AccountSession } from './answers'
 import type { AccountApi, Failure } from './client'
@@ -10,6 +11,7 @@ export type SyncedCopy = AccountCopy<Failure>
 export interface KindRead {
   kind: string
   item?: string
+  linked?: true
 }
 
 export type LoadedSynced =
@@ -19,10 +21,10 @@ export type LoadedSynced =
   | { kind: 'failed'; failure: Failure }
 
 export const syncedAreas = {
-  knownWords: [{ kind: 'knownWord' }],
-  lists: [{ kind: 'list' }, { kind: 'listWord' }, { kind: 'knownWord' }],
-  notes: [{ kind: 'wordNote' }],
-  mediaLibrary: [{ kind: 'photo' }, { kind: 'photoWord' }],
+  knownWords: [{ kind: 'knownWord', linked: true }],
+  lists: [{ kind: 'list' }, { kind: 'listWord', linked: true }, { kind: 'knownWord' }],
+  notes: [{ kind: 'wordNote', linked: true }],
+  mediaLibrary: [{ kind: 'photo' }, { kind: 'photoWord', linked: true }],
   recentVideos: [{ kind: 'watchedVideo' }],
   bookmarks: [{ kind: 'bookmarkedSentence' }],
   recentSearches: [{ kind: 'recentSearch' }],
@@ -36,6 +38,22 @@ export const syncedAreaNames = Object.keys(syncedAreas) as SyncedArea[]
 export function syncedAreaAt(segment: string): SyncedArea | null {
   const path = `/account/${segment}/`
   return syncedAreaNames.find(area => accountPages[area].path === path) ?? null
+}
+
+function linkedHere(copy: SyncedCopy, kind: string, listId: string | null) {
+  if (kind !== 'listWord') return copy.held(kind)
+  return listId === null ? [] : wordsOfList(copy.held(kind), listId)
+}
+
+export function linkedItems(
+  copy: SyncedCopy,
+  reads: readonly KindRead[],
+  listId: string | null
+): string[] {
+  return reads
+    .filter(read => read.linked)
+    .flatMap(({ kind }) => linkedHere(copy, kind, listId))
+    .flatMap(({ data }) => (typeof data?.itemId === 'string' ? [data.itemId] : []))
 }
 
 export const needsASubscription = (failure: Failure) =>

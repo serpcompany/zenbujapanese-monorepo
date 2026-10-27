@@ -6,12 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { accessTokens } from '@/lib/account/access-tokens'
 import { accountApi, type Failure } from '@/lib/account/client'
+import { type ItemPages, readItemPages } from '@/lib/account/item-pages'
 import type { AccountText } from '@/lib/account/messages'
 import { accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
 import { onSignedInChange, rememberSignedIn, seemsSignedIn } from '@/lib/account/signed-in'
 import {
   type SyncedArea as Area,
+  linkedItems,
   loadSynced,
   type SyncedCopy,
   syncedAreas
@@ -30,6 +32,12 @@ type View =
   | { kind: 'subscription-required' }
   | { kind: 'unreachable'; failure: Failure }
   | { kind: 'shown'; copy: SyncedCopy }
+
+interface Drawn {
+  copy: SyncedCopy
+  listId: string | null
+  pages: ItemPages
+}
 
 function NeedsASubscription({ locale, text }: { locale: Locale; text: AccountText }) {
   return (
@@ -61,6 +69,7 @@ export function SyncedAreaView({
   const api = useMemo(() => accountApi(settings.apiUrl, locale), [settings.apiUrl, locale])
   const tokens = useMemo(() => accessTokens(api), [api])
   const [view, setView] = useState<View>({ kind: 'loading' })
+  const [drawn, setDrawn] = useState<Drawn | null>(null)
   const [, setRevision] = useState(0)
 
   const signedOut = useCallback(() => {
@@ -94,6 +103,19 @@ export function SyncedAreaView({
     [api, tokens]
   )
   const copy = view.kind === 'shown' ? view.copy : null
+
+  useEffect(() => {
+    if (!copy) return
+    let current = true
+    void readItemPages(linkedItems(copy, syncedAreas[area], listId)).then(pages => {
+      if (current) setDrawn({ copy, listId, pages })
+    })
+    return () => {
+      current = false
+    }
+  }, [copy, area, listId])
+
+  const shown = drawn !== null && drawn.copy === copy ? drawn : null
   const settled = useCallback(
     (outcomes: Parameters<typeof changeMessage>[0][]) => {
       setRevision(revision => revision + 1)
@@ -107,14 +129,15 @@ export function SyncedAreaView({
     [signedOut, text, locale]
   )
 
-  const props: AreaProps | null = copy && {
-    copy,
+  const props: AreaProps | null = shown && {
+    copy: shown.copy,
     locale,
     text,
-    listId,
+    listId: shown.listId,
+    pages: shown.pages,
     change: async (entity, operation, entityId, fields, base) =>
-      settled([await copy.change(entity, operation, entityId, fields, base)]),
-    changeAll: async (changes: Change[]) => settled(await copy.changeAll(changes)),
+      settled([await shown.copy.change(entity, operation, entityId, fields, base)]),
+    changeAll: async (changes: Change[]) => settled(await shown.copy.changeAll(changes)),
     photoFile
   }
   const AreaView = areaViews[area]
@@ -124,7 +147,7 @@ export function SyncedAreaView({
       <Link href={localizedPath(accountPages.account.path, locale)} className="self-start text-sm">
         {text.synced.backToAccount}
       </Link>
-      {view.kind === 'loading' ? <Notice>{text.synced.loading}</Notice> : null}
+      {view.kind === 'loading' || (copy && !shown) ? <Notice>{text.synced.loading}</Notice> : null}
       {view.kind === 'signed-out' ? <SignedOut notice={null} locale={locale} text={text} /> : null}
       {view.kind === 'subscription-required' ? (
         <NeedsASubscription locale={locale} text={text} />

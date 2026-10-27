@@ -6,7 +6,7 @@ import { matchesTyped } from '@/lib/account/synced-views'
 import { countOf } from '@/lib/i18n/format'
 import { type AreaProps, useChanging, WordRows } from './parts'
 
-export function KnownWords({ copy, locale, text, change }: AreaProps) {
+export function KnownWords({ copy, locale, text, pages, change }: AreaProps) {
   const words = text.synced.knownWords
   const [typed, setTyped] = useState('')
   const { busy, problem, run } = useChanging()
@@ -26,6 +26,7 @@ export function KnownWords({ copy, locale, text, change }: AreaProps) {
         empty={empty}
         problem={problem}
         locale={locale}
+        pages={pages}
         busy={busy}
         action={{
           label: words.markUnknown,

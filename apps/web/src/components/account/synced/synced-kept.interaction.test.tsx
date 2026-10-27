@@ -112,6 +112,34 @@ describe('Notes', () => {
     await click(page, 'Copy your note on 閻魔')
     expect(copied).toHaveBeenCalledWith('Kept.')
   })
+
+  test('lists a note on a word or kanji a dictionary update dropped under Notes Without a Word too, and links the others to their pages', async () => {
+    const dropped = '2b9a0c7e-3b5d-4c2e-9a8f-1d2e3f4a5b6c'
+    const onKanji = '3b9a0c7e-3b5d-4c2e-9a8f-1d2e3f4a5b6c'
+    const standIn = notes()
+      .holds('wordNote', dropped, {
+        id: dropped,
+        itemId: word(2),
+        text: 'An old name.',
+        headword: '貞はる',
+        reading: 'さだはる'
+      })
+      .holds('wordNote', onKanji, { id: onKanji, itemId: 'kanji:丢', text: 'Lost.' })
+      .hasPage(word(1), '/dictionary/見る-1259290/')
+    const { page } = openArea('notes', standIn)
+    await shows(page, 'Notes Without a Word')
+    const onWords = page.querySelector('section[aria-label="Notes"]')
+    expect(onWords?.textContent).toContain('Seen on a menu.')
+    expect(onWords?.textContent).not.toContain('An old name.')
+    expect(onWords?.querySelector('a')?.getAttribute('href')).toBe('/dictionary/見る-1259290/')
+    const without = page.querySelector('[aria-labelledby="notes-without-a-word"]')
+    expect(without?.textContent).toContain('An old name.')
+    expect(without?.textContent).toContain('Saved on 貞はる（さだはる）')
+    expect(without?.textContent).toContain('Lost.')
+    expect(without?.textContent).toContain('Kept.')
+    expect(without?.querySelector('a')).toBeNull()
+    expect(standIn.pagesAsked.sort()).toEqual([word(1), word(2), 'kanji:丢'])
+  })
 })
 
 describe('Recent searches', () => {

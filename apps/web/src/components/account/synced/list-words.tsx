@@ -12,7 +12,7 @@ import { ListActions } from './lists'
 import { type AreaProps, useChanging, WordRows } from './parts'
 
 export function ListWords(props: AreaProps & { listId: string }) {
-  const { copy, locale, text, change, listId } = props
+  const { copy, locale, text, pages, change, listId } = props
   const words = text.synced.lists
   const [typed, setTyped] = useState('')
   const { busy, problem, run } = useChanging()
@@ -57,6 +57,7 @@ export function ListWords(props: AreaProps & { listId: string }) {
         empty={empty}
         problem={problem}
         locale={locale}
+        pages={pages}
         busy={busy}
         badge={word =>
           isKnown(textIn(word.data, 'itemId')) ? (

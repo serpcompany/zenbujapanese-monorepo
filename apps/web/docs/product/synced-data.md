@@ -70,8 +70,19 @@ too long) and changes nothing.
 
 ## Each kind
 
-A word or kanji names its headword and reading, and links to the website's search for its
-headword, which lists the word, or to the kanji's search, which opens its details.
+A word or kanji names its headword and reading, and links to its page: a word's own page, or the
+kanji's search, which opens its details. The page asks the website where the words and kanji it
+shows have pages (`/dictionary/pages.json`, which asks the dictionary service's `/v1/pages`, at
+most 100 of each at a time) before it draws them, so a link never changes once drawn, and one list
+asks only for its own words. While the dictionary can't answer, a word links to the search for its
+headword, and a kanji to its search.
+
+- Source: #934, the app's Word Detail from a saved word.
+- Check: Data page tests, "draws no word until the dictionary has said where each word's page
+  is" and "links a word to its search while the dictionary can't say where its page is";
+  `src/lib/account/item-pages.test.ts`; `src/app/[locale]/dictionary/pages.json/route.test.ts`;
+  Synced spec, "a word opens its own page, and a note on a word the dictionary dropped is listed
+  without a word".
 
 **Known Words.** Every word and kanji marked known, most recently marked first, with how many, a
 box that narrows them by headword or reading, and Mark as Unknown on each.
@@ -96,14 +107,18 @@ no longer has says so.
 
 **Notes.** Every note on a word or kanji, newest change first, each with Edit, which saves a text
 by the account's rule (1 to 10,000 characters, never cut), and Delete, which asks first. Under
-**Notes Without a Word**, the notes an earlier version saved on a word no dictionary entry has,
-each with the headword it was saved on, Copy, and Delete, as the app's list has.
+**Notes Without a Word**, the notes on a word or kanji the dictionary has no page for (one a
+dictionary update dropped, which `RetiredEntries.json` names, or a kanji it lacks) and those an
+earlier version saved under a note identity, each with the headword it was saved on, Copy, and
+Delete, as the app's list has.
 
 - Source: the app's notes and Notes Without a Word (`apps/ios/docs/product/saved-data.md`).
 - Check: Data page tests, "changes a note's text, holding it to the rule, and asks before deleting
-  one" and "lists a note whose word has no page under Notes Without a Word, with the word it was
-  saved on, to copy or delete"; Synced spec, "a note is changed, a recent search cleared, and a
-  frequency dictionary chosen".
+  one", "lists a note whose word has no page under Notes Without a Word, with the word it was saved
+  on, to copy or delete", and "lists a note on a word or kanji a dictionary update dropped under
+  Notes Without a Word too, and links the others to their pages"; Synced spec, "a note is changed,
+  a recent search cleared, and a frequency dictionary chosen", and "a word opens its own page, and
+  a note on a word the dictionary dropped is listed without a word".
 
 **Media Library, Recent videos, and Bookmarked sentences.** As they are, with nothing to change,
 since only the app has these features: each photo with its image, read from the account as it

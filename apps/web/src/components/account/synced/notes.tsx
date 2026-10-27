@@ -1,10 +1,6 @@
 'use client'
 
-import {
-  isNoteWithoutAWord,
-  newestChangedFirst,
-  type Shown
-} from '@zenbu/account-rules/account-views'
+import { newestChangedFirst, type Shown } from '@zenbu/account-rules/account-views'
 import { noteText } from '@zenbu/account-rules/notes'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -12,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { itemName, textIn } from '@/lib/account/synced-views'
+import { hasNoWord, itemName, textIn } from '@/lib/account/synced-views'
 import { fill } from '@/lib/i18n/format'
 import { FormMessage } from '../form-message'
 import { type AreaProps, AskFirst, ItemLink, Rows, useChanging } from './parts'
@@ -25,7 +21,7 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
   const [refused, setRefused] = useState<string | null>(null)
   const { busy, problem, run } = useChanging()
   const itemId = textIn(note.data, 'itemId')
-  const withoutAWord = isNoteWithoutAWord(itemId)
+  const withoutAWord = hasNoWord(itemId, props.pages)
   const name = itemName(note.data)
   async function save() {
     const text = noteText(typed)
@@ -54,7 +50,7 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
       <ItemContent>
         {withoutAWord ? null : (
           <ItemTitle>
-            <ItemLink data={note.data} locale={props.locale} />
+            <ItemLink data={note.data} locale={props.locale} pages={props.pages} />
           </ItemTitle>
         )}
         {step === 'editing' ? (
@@ -137,11 +133,12 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
 }
 
 export function Notes(props: AreaProps) {
-  const { copy, text } = props
+  const { copy, text, pages } = props
   const words = text.synced.notes
   const notes = newestChangedFirst(copy.held('wordNote'))
-  const onWords = notes.filter(note => !isNoteWithoutAWord(textIn(note.data, 'itemId')))
-  const withoutAWord = notes.filter(note => isNoteWithoutAWord(textIn(note.data, 'itemId')))
+  const isWithoutAWord = (note: Shown) => hasNoWord(textIn(note.data, 'itemId'), pages)
+  const onWords = notes.filter(note => !isWithoutAWord(note))
+  const withoutAWord = notes.filter(isWithoutAWord)
   return (
     <>
       <section className="flex flex-col gap-4" aria-label={text.pages.notes.title}>

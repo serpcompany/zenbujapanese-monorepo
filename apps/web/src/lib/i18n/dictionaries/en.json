@@ -345,7 +345,7 @@
       },
       "notes": {
         "withoutAWord": "Notes Without a Word",
-        "withoutAWordWhy": "These notes were saved on a word the dictionary has no page for, so no word’s page shows them.",
+        "withoutAWordWhy": "These notes were saved on a word or kanji the dictionary has no page for, so no page shows them.",
         "savedOn": "Saved on {name}",
         "edit": "Edit",
         "editNamed": "Edit your note on {name}",

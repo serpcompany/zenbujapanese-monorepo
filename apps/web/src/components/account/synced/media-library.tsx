@@ -74,7 +74,7 @@ function PhotoFile({
   )
 }
 
-export function MediaLibrary({ copy, locale, text, photoFile }: AreaProps) {
+export function MediaLibrary({ copy, locale, text, pages, photoFile }: AreaProps) {
   const words = text.synced.mediaLibrary
   const load = useMemo(() => photoQueue(photoFile), [photoFile])
   const photos = recentFirst(copy.held('photo'), 'savedAt')
@@ -94,7 +94,7 @@ export function MediaLibrary({ copy, locale, text, photoFile }: AreaProps) {
               <ul className="flex flex-wrap gap-x-3 gap-y-1">
                 {wordsOfPhoto(photoWords, photo.entityId).map(word => (
                   <li key={word.entityId}>
-                    <ItemLink data={word.data} locale={locale} />
+                    <ItemLink data={word.data} locale={locale} pages={pages} />
                   </li>
                 ))}
               </ul>

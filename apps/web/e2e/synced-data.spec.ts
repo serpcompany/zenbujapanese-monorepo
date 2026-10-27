@@ -6,27 +6,36 @@ import { phoneLayoutProblems } from './phone-checks'
 import { expect, sidewaysOverflow, test } from './test'
 
 const food = '2177c773-9e88-410f-9348-6cefaebe0a93'
-const word = (n: number) => n.toString(16).padStart(32, '0')
-const miru = { headword: '見る', reading: 'みる' }
-const taberu = { headword: '食べる', reading: 'たべる' }
+const iru = 'd12d09f1107aef0f7d43b54b62f0b7e1'
+const hairu = 'e36e4bdfdf4b6535e82b863470af9499'
+const dropped = 'f'.repeat(32)
+const needed = { headword: '要る', reading: 'いる' }
+const entered = { headword: '入る', reading: 'いる' }
 
 const anAccount = () =>
   new SyncedStandIn()
     .holds('list', food, { id: food, name: 'Food', position: 0, createdAt: '2026-10-01T12:00:00Z' })
-    .holds('listWord', `${food}/${word(1)}`, {
+    .holds('listWord', `${food}/${iru}`, {
       listId: food,
-      itemId: word(1),
-      ...miru,
+      itemId: iru,
+      ...needed,
       addedAt: '2026-10-01T12:00:00Z'
     })
-    .holds('listWord', `${food}/${word(2)}`, {
+    .holds('listWord', `${food}/${hairu}`, {
       listId: food,
-      itemId: word(2),
-      ...taberu,
+      itemId: hairu,
+      ...entered,
       addedAt: '2026-10-02T12:00:00Z'
     })
-    .holds('knownWord', word(2), { itemId: word(2), ...taberu, known: true })
-    .holds('wordNote', 'n1', { id: 'n1', itemId: word(1), text: 'Seen on a menu.', ...miru })
+    .holds('knownWord', hairu, { itemId: hairu, ...entered, known: true })
+    .holds('wordNote', 'n1', { id: 'n1', itemId: iru, text: 'Seen on a menu.', ...needed })
+    .holds('wordNote', 'n2', {
+      id: 'n2',
+      itemId: dropped,
+      text: 'An old name.',
+      headword: '貞はる',
+      reading: 'さだはる'
+    })
     .holds('recentSearch', 's1', { id: 's1', query: '猫', searchedAt: '2026-10-01T12:00:00Z' })
 
 async function signedInWith(page: Page, standIn = anAccount()) {
@@ -78,16 +87,34 @@ test.describe("an account's synced data", () => {
     await page.goto(`/account/lists/?list=${food}`)
     const words = main(page).getByRole('region', { name: 'Food' })
     await expect(words.getByRole('link', { name: /（/ })).toHaveText([
-      '食べる（たべる）',
-      '見る（みる）'
+      '入る（いる）',
+      '要る（いる）'
     ])
     await expect(words.getByText('Known', { exact: true })).toHaveCount(1)
-    await words.getByRole('button', { name: 'Remove 見る（みる） from this list' }).click()
+    await words.getByRole('button', { name: 'Remove 要る（いる） from this list' }).click()
     await expect(words.getByText('1 word', { exact: true })).toBeVisible()
     expect(standIn.sent).toMatchObject([
-      { entity: 'listWord', operation: 'remove', entityId: `${food}/${word(1)}`, baseVersion: 1 }
+      { entity: 'listWord', operation: 'remove', entityId: `${food}/${iru}`, baseVersion: 1 }
     ])
     expect(await sidewaysOverflow(page)).toBe(0)
+  })
+
+  test('a word opens its own page, and a note on a word the dictionary dropped is listed without a word', async ({
+    page
+  }) => {
+    await signedInWith(page)
+    await page.goto(`/account/lists/?list=${food}`)
+    await main(page).getByRole('link', { name: '要る（いる）' }).click()
+    await expect(page).toHaveURL(new RegExp(`/dictionary/${encodeURI('要る')}-1546640/$`))
+    await expect(page.getByRole('heading', { level: 1, name: /要る/ })).toBeVisible()
+    await page.goto('/ja/account/notes/')
+    await expect(main(page).getByRole('link', { name: '要る（いる）' })).toHaveAttribute(
+      'href',
+      `/ja/dictionary/${encodeURI('要る')}-1546640/`
+    )
+    const without = main(page).getByRole('region', { name: '単語のないメモ' })
+    await expect(without.getByText('An old name.')).toBeVisible()
+    await expect(without.getByRole('button', { name: /編集/ })).toHaveCount(0)
   })
 
   test('a new list is made, and Known Words marks a word unknown', async ({ page }) => {
@@ -97,7 +124,7 @@ test.describe("an account's synced data", () => {
     await main(page).getByRole('button', { name: 'Create List' }).click()
     await expect(main(page).getByRole('link', { name: 'Verbs' })).toBeVisible()
     await page.goto('/account/known-words/')
-    await main(page).getByRole('button', { name: 'Mark 食べる（たべる） as Unknown' }).click()
+    await main(page).getByRole('button', { name: 'Mark 入る（いる） as Unknown' }).click()
     await expect(
       main(page).getByText('You haven’t marked a word or kanji known yet.')
     ).toBeVisible()
@@ -112,7 +139,7 @@ test.describe("an account's synced data", () => {
   }) => {
     const standIn = await signedInWith(page)
     await page.goto('/account/notes/')
-    await main(page).getByRole('button', { name: 'Edit your note on 見る（みる）' }).click()
+    await main(page).getByRole('button', { name: 'Edit your note on 要る（いる）' }).click()
     await main(page).getByRole('textbox', { name: 'Note' }).fill('Seen on a menu in Kyoto.')
     await main(page).getByRole('button', { name: 'Save' }).click()
     await expect(main(page).getByText('Seen on a menu in Kyoto.')).toBeVisible()

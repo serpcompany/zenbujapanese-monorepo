@@ -508,6 +508,8 @@ the account service ([`account-api.md`](account-api.md); the website's side of i
   `client.ts` opens Checkout, which comes back with `?subscribed=1`, and the portal.
 - **What an account syncs** ([product doc](../../apps/web/docs/product/synced-data.md)):
   `src/components/account/synced/`, reading and changing it through `src/lib/account/synced.ts`.
+  Its words' pages come from `/dictionary/pages.json` (`src/lib/dictionary/pages-answer.ts`, the
+  service's `/v1/pages`), which `src/lib/account/item-pages.ts` asks before a page draws.
 - **Code:** the routes in `src/app/[locale]/` (`login/`, `register/`, `forgot-password/`, and
   `account/`); the components in `src/components/account/`; the hooks
   `src/hooks/use-apple-sign-in.ts`, `src/hooks/use-busy.ts`, which frees the buttons when the

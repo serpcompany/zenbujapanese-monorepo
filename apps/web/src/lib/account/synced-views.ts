@@ -1,3 +1,4 @@
+import { isNoteWithoutAWord } from '@zenbu/account-rules/account-views'
 import { rankedLists } from '@zenbu/dictionary-core/browse/lists'
 import { defaultFrequencyPacks, frequencyFamily } from '@zenbu/dictionary-core/detail/frequency'
 import { kanjiSearchPath, searchPath } from '@zenbu/dictionary-core/detail/links'
@@ -5,6 +6,7 @@ import type { Locale } from '../i18n/config'
 import { coreText } from '../i18n/core-text'
 import { fill, formatMoment } from '../i18n/format'
 import { localizedPath } from '../i18n/paths'
+import { type ItemPages, noItemPages } from './item-pages'
 import type { AccountText } from './messages'
 import { accountPages } from './pages'
 
@@ -15,10 +17,20 @@ export const textIn = (data: Data, field: string) =>
 
 const kanjiItem = 'kanji:'
 
-export function itemPath(itemId: string, headword: string, locale: Locale): string | null {
+export function itemPath(
+  itemId: string,
+  headword: string,
+  locale: Locale,
+  pages: ItemPages = noItemPages
+): string | null {
+  const page = pages.paths.get(itemId)
+  if (page !== undefined) return localizedPath(page, locale)
   if (itemId.startsWith(kanjiItem)) return localizedPath(kanjiSearchPath(itemId.slice(6)), locale)
   return headword === '' ? null : localizedPath(searchPath(headword), locale)
 }
+
+export const hasNoWord = (itemId: string, pages: ItemPages) =>
+  isNoteWithoutAWord(itemId) || pages.missing.has(itemId)
 
 export function itemName(data: Data): string {
   const headword = textIn(data, 'headword') || textIn(data, 'itemId').replace(kanjiItem, '')

@@ -4,6 +4,7 @@ import {
   dictionaryContract,
   dictionaryContractHeader
 } from '@zenbu/dictionary-core/artifact/contract'
+import type { PagesAsked } from '@zenbu/dictionary-core/artifact/pages'
 import type { BrowseAnswer, BrowsePath } from '@zenbu/dictionary-core/browse/service-paths'
 import { edgeCache } from '../edge-cache'
 import { log } from '../log'
@@ -112,6 +113,10 @@ export function dictionaryApi(
         `/v1/sitemaps/words/${number}?after=${after}&limit=${limit}`
       ),
     retired: () => required<DictionaryContract['retired']>('/v1/retired'),
+    pages: ({ words, kanji }: PagesAsked) =>
+      required<DictionaryContract['pages']>(
+        `/v1/pages?${new URLSearchParams({ words: words.join(','), kanji: kanji.join(',') })}`
+      ),
     radicals: () => get<DictionaryContract['radicals']>('/v1/radicals'),
     segmentation: (text: string) =>
       required<DictionaryContract['segmentation']>(`/v1/segmentation/${segment(text)}`),

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
   answer,
   click,
@@ -74,14 +74,13 @@ describe('Known Words', () => {
       .holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
       .holds('knownWord', word(3), { itemId: word(3), ...taberu, known: false }, 2)
       .holds('knownWord', 'kanji:日', { itemId: 'kanji:日', headword: '日', known: true })
+      .hasPage(word(1), '/dictionary/見る-1259290/')
+      .hasPage('kanji:日', '/dictionary/search/%E6%97%A5/')
     const { page } = openArea('knownWords', standIn)
     await shows(page, '2 words and kanji')
     const links = [...page.querySelectorAll('section a')].map(a => a.getAttribute('href'))
     expect(linkTexts(page, 'section')).toEqual(['日', '見る（みる）'])
-    expect(links).toEqual([
-      '/dictionary/search/%E6%97%A5/',
-      '/dictionary/search/%E8%A6%8B%E3%82%8B/'
-    ])
+    expect(links).toEqual(['/dictionary/search/%E6%97%A5/', '/dictionary/見る-1259290/'])
     await fill(page, 'Search your known words', 'みる')
     expect(linkTexts(page, 'section')).toEqual(['見る（みる）'])
     await click(page, 'Mark 見る（みる） as Unknown')
@@ -90,6 +89,42 @@ describe('Known Words', () => {
       { entity: 'knownWord', operation: 'clear', entityId: word(1), baseVersion: 1 }
     ])
     expect(standIn.dataOf('knownWord', word(1))).toMatchObject({ known: false })
+  })
+
+  test("draws no word until the dictionary has said where each word's page is", async () => {
+    const { promise: answered, resolve: answer } = Promise.withResolvers<void>()
+    const standIn = new SyncedStandIn()
+      .holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
+      .hasPage(word(1), '/dictionary/見る-1259290/')
+    const { page } = openArea('knownWords', standIn)
+    const reachesTheService = globalThis.fetch
+    let asked = false
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url.startsWith('/dictionary/pages.json')) {
+        asked = true
+        await answered
+      }
+      return reachesTheService(url, init)
+    })
+    await vi.waitFor(() => expect(asked).toBe(true))
+    await shows(page, 'Loading')
+    expect(page.textContent).not.toContain('見る')
+    answer()
+    await shows(page, '見る（みる）')
+    expect(page.querySelector('section a')?.getAttribute('href')).toBe('/dictionary/見る-1259290/')
+  })
+
+  test("links a word to its search while the dictionary can't say where its page is", async () => {
+    const standIn = new SyncedStandIn().holds('knownWord', word(1), {
+      itemId: word(1),
+      ...miru,
+      known: true
+    })
+    const { page } = openArea('knownWords', standIn)
+    await shows(page, '見る（みる）')
+    expect(page.querySelector('section a')?.getAttribute('href')).toBe(
+      '/dictionary/search/%E8%A6%8B%E3%82%8B/'
+    )
   })
 
   test('says a change went through but the page could not read the account again, and never sends it twice', async () => {
@@ -177,12 +212,22 @@ describe('Lists', () => {
 
   test('opens one list: its words most recently added first, Known marked, one removed, and a refusal said', async () => {
     const standIn = twoLists()
+      .holds(
+        'listWord',
+        `${verbs}/${word(3)}`,
+        onList(verbs, word(3), miru, '2026-10-03T00:00:00Z')
+      )
+      .hasPage(word(1), '/dictionary/見る-1259290/')
     const { page } = openArea('lists', standIn, { listId: food })
     await shows(page, '2 words')
     expect(linkTexts(page, '[data-slot="item-title"]')).toEqual([
       '食べる（たべる）',
       '見る（みる）'
     ])
+    expect(
+      [...page.querySelectorAll('[data-slot="item-title"] a')].map(a => a.getAttribute('href'))
+    ).toEqual(['/dictionary/search/%E9%A3%9F%E3%81%B9%E3%82%8B/', '/dictionary/見る-1259290/'])
+    expect(standIn.pagesAsked.sort()).toEqual([word(1), word(2)])
     const known = page.querySelector('[data-slot="badge"]')?.closest('[data-slot="item"]')
     expect(known?.textContent).toContain('食べる')
     await click(page, 'Remove 見る（みる） from this list')

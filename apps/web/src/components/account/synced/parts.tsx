@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item'
 import { Label } from '@/components/ui/label'
 import type { Result } from '@/lib/account/client'
+import type { ItemPages } from '@/lib/account/item-pages'
 import type { AccountText } from '@/lib/account/messages'
 import type { SyncedCopy } from '@/lib/account/synced'
 import { itemName, itemPath, textIn } from '@/lib/account/synced-views'
@@ -29,6 +30,7 @@ export interface AreaProps {
   locale: Locale
   text: AccountText
   listId: string | null
+  pages: ItemPages
   change: (
     entity: string,
     operation: string,
@@ -54,9 +56,17 @@ export function useChanging() {
   return { busy, problem, setProblem, run }
 }
 
-export function ItemLink({ data, locale }: { data: Fields; locale: Locale }) {
+export function ItemLink({
+  data,
+  locale,
+  pages
+}: {
+  data: Fields
+  locale: Locale
+  pages: ItemPages
+}) {
   const name = itemName(data)
-  const path = itemPath(textIn(data, 'itemId'), textIn(data, 'headword'), locale)
+  const path = itemPath(textIn(data, 'itemId'), textIn(data, 'headword'), locale, pages)
   return path ? <Link href={path}>{name}</Link> : <span>{name}</span>
 }
 
@@ -172,6 +182,7 @@ export function WordRows({
   empty,
   problem,
   locale,
+  pages,
   busy,
   badge,
   action
@@ -181,6 +192,7 @@ export function WordRows({
   empty: string | null
   problem: string | null
   locale: Locale
+  pages: ItemPages
   busy: boolean
   badge?: (word: Shown) => ReactNode
   action: { label: string; named: string; on: (word: Shown) => void }
@@ -200,7 +212,7 @@ export function WordRows({
           <Item key={word.entityId} variant="outline">
             <ItemContent>
               <ItemTitle>
-                <ItemLink data={word.data} locale={locale} />
+                <ItemLink data={word.data} locale={locale} pages={pages} />
                 {badge?.(word)}
               </ItemTitle>
             </ItemContent>
