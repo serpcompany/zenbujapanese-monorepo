@@ -153,7 +153,8 @@ and HEAD from any origin, with the `Range` request header, exposing `Content-Len
 `test_bucket_cors.py` holds it. A change to it reaches the bucket when the second command runs
 again. The browser extension doesn't need it: it lists the address in its `host_permissions`
 (#943). The zone's Bot Fight Mode challenges clients that aren't browsers, such as CI runners, so a
-check of the address from CI may get a challenge, not the object (#985).
+check of the address from CI may get a challenge, not the object. That is why
+[Checking the download](#checking-the-download) runs by hand.
 
 ## Checking the download
 
