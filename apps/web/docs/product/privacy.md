@@ -131,10 +131,11 @@ included.
 The account service emails only sign-in codes, a way to sign in added or removed, and a deletion's
 confirmation. Where the website offers sign-in, the account there changes the name and username,
 manages how the learner signs in, subscribes and manages a subscription bought there, signs out,
-and deletes the account, and doesn't read study data
-yet; signing in uses cookies only to sign in and stay signed in, and the website remembers the
-theme and that the learner is signed in. The page says it will change before an app or the website
-syncs anything else.
+and deletes the account, and, with a subscription, shows the study data the account syncs, which
+the browser reads from the account and keeps nowhere else, and changes the known words, lists,
+notes, recent searches, and chosen frequency dictionaries in the account (#934); signing in uses
+cookies only to sign in and stay signed in, and the website remembers the theme and that the
+learner is signed in.
 
 - Source: [`account-api.md`](../../../../docs/agents/account-api.md) (Sign-in, Email, Profiles and
   sync); [`account-billing.md`](../../../../docs/agents/account-billing.md) (the subscription, the
