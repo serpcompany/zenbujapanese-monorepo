@@ -140,7 +140,9 @@ with one difference below. There are no usage analytics.
   it once with `reportFailure(code)`, a message holding only the code and grouped by it:
   `offscreen-document` (the document couldn't be opened), `offscreen-message` (it couldn't be
   reached), or `dictionary-answer` (it answered with a failure, such as a worker that failed or
-  didn't answer). Never the failure's text or the request.
+  didn't answer). Never the failure's text or the request. A code that fails again and again is
+  reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
+  before it.
 - **What an event holds.** Only the integrations that find a fault run: event filters, function
   names, linked errors, dedupe, the `User-Agent` header, and, outside content scripts, the global
   handlers. Breadcrumbs, sessions, client reports, cookies, query strings, frame variables, and
