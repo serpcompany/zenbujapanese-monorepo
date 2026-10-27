@@ -552,7 +552,7 @@
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$|^e2e/|^agent-chrome/)",
+        "testCode": "(\\.test\\.tsx?$|^src/test/|^e2e/|^agent-chrome/)",
         "entries": [
           "^src/pages/(side-panel|popup|settings)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",

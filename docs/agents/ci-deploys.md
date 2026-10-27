@@ -155,8 +155,9 @@ in `apps/extension`:
    (`pnpm package unpacked`), and checked (`pnpm check-package unpacked staging`).
 2. **The Chrome Web Store package:** `pnpm build` with production's hosts and
    `ZENBU_SENTRY_ENVIRONMENT=production`, then `pnpm run --if-present upload-source-maps dist`,
-   which uploads the source maps to Sentry once #953 adds the script, then every `.map` deleted,
-   zipped without the `key` (`pnpm package store`), and checked
+   which uploads the source maps to Sentry (`build/upload-source-maps.ts`,
+   [`extension.md`](extension.md)), then every `.map` deleted, zipped without the `key`
+   (`pnpm package store`), and checked
    (`pnpm check-package store production`). The upload runs only on `main`, so a pull request's
    maps never land under the release's version. It reads the `SENTRY_AUTH_TOKEN` secret; with
    none, the script warns and passes (#987 adds it).
