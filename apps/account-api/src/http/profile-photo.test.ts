@@ -213,6 +213,18 @@ describe('an app with `profile` and no `photos:read`, as the website is with its
   })
 })
 
+test('the website, which reads photos but writes none, sets any photo it reads and is held to two files of its own', async () => {
+  const email = 'profile-photo-website@example.com'
+  const zenbu = await accounts.learner(email)
+  const library = await inTheLibrary(zenbu, aJpeg())
+  const web = await accounts.learner(email, 'zenbu-web')
+  expect(outcomesOf(await results(web, set(library, 0)))).toEqual(['applied'])
+  const statuses: number[] = []
+  for (const bytes of [aJpeg(), aJpeg(), aJpeg()])
+    statuses.push((await webSends(web, bytes)).status)
+  expect(statuses).toEqual([201, 201, 409])
+})
+
 test('a file no photo names a day after its upload is deleted', async () => {
   const learner = await accounts.learner('photo-unnamed@example.com')
   const [old, fresh, named] = [
