@@ -7,6 +7,8 @@ import { needsASubscription } from './synced'
 
 type Refusal = keyof AccountText['synced']['refusals']
 
+export type SyncedText = Pick<AccountText, 'synced' | 'messages'>
+
 const refusals = new Map<string, Refusal>([
   ['unknown_list', 'unknownList'],
   ['list_full', 'listFull'],
@@ -16,14 +18,14 @@ const refusals = new Map<string, Refusal>([
   ['invalid_fields', 'invalidFields']
 ])
 
-export function failedMessage(failure: Failure, text: AccountText, locale: Locale): string {
+export function failedMessage(failure: Failure, text: SyncedText, locale: Locale): string {
   if (needsASubscription(failure)) return text.synced.needsSubscription
   return failureMessage(failure, text.messages, locale)
 }
 
 export function changeMessage(
   outcome: ChangeOutcome<Failure>,
-  text: AccountText,
+  text: SyncedText,
   locale: Locale
 ): string | null {
   const words = text.synced

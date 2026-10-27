@@ -19,6 +19,8 @@ import { Section } from '@/components/dictionary/section'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { SourceText } from '@/components/dictionary/source-text'
 import { WordHeader } from '@/components/dictionary/word-header'
+import { syncedTextIn } from '@/lib/account/learner-text'
+import { wordItem } from '@/lib/account/saved-item'
 import {
   getWordPage,
   type WordPageData,
@@ -292,7 +294,13 @@ function WordPageSection({
     case 'notes':
       return (
         <Section title={title}>
-          <LearnerPrompt kind={section.kind} locale={locale} text={t.learner} />
+          <LearnerPrompt
+            kind={section.kind}
+            item={wordItem(word)}
+            locale={locale}
+            text={t.learner}
+            account={syncedTextIn(locale)}
+          />
         </Section>
       )
     case 'examples': {
@@ -328,6 +336,7 @@ export default async function WordPage({ params }: Props) {
       <PageToolbar
         page={{ label: word.headword, path: word.path, lang: 'ja' }}
         shareText={word.shareText}
+        item={wordItem(word)}
         locale={locale}
       />
 

@@ -238,7 +238,7 @@ describe('the word page, read from the fixtures', () => {
   test.each([
     ['en', 'Add to List', 'Add Note'],
     ['ja', prompts.lists.title, prompts.notes.title]
-  ] as const)('Lists and Notes each offer the action the app has, as a prompt (%s)', async (locale, addToList, addNote) => {
+  ] as const)('Lists and Notes each offer the action the app has (%s)', async (locale, addToList, addNote) => {
     const html = await renderWord('要る-1546640', locale)
     for (const [title, action] of [
       [coreText('Lists', locale), addToList],

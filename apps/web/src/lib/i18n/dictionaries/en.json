@@ -1276,8 +1276,9 @@
       "addPhoto": "Add Photo works in the app",
       "openInApp": "Open in App works in the app"
     },
-    "appDescription": "Save words to lists, mark them known, and add notes and photos in the Zenbu app. Saving lists and known words on this website comes later.",
+    "appDescription": "Save words to lists, mark them Known, and write notes in the Zenbu app. With a subscription, you can do the same on this website once you’re signed in. Photos stay in the app.",
     "getTheApp": "Get the app",
+    "signIn": "Sign in",
     "close": "Close",
     "prompts": {
       "lists": {
@@ -1287,6 +1288,27 @@
       "notes": {
         "title": "Add Note",
         "description": "Write notes and attach photos in the Zenbu app."
+      }
+    },
+    "synced": {
+      "done": "Done",
+      "signedOut": "This browser isn’t signed in to your Zenbu account anymore. Sign in to see and change your lists, Known words, and notes here.",
+      "tryAgain": "Try again",
+      "known": {
+        "title": "Known",
+        "known": "{name} is marked Known.",
+        "unknown": "{name} isn’t marked Known."
+      },
+      "lists": {
+        "open": "Open",
+        "openNamed": "Open {name}"
+      },
+      "notes": {
+        "title": "Notes",
+        "numbered": "Note {number}",
+        "saveNumbered": "Save note {number}",
+        "deleteNumbered": "Delete note {number}",
+        "newNote": "New note"
       }
     }
   },
