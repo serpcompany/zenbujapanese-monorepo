@@ -68,8 +68,8 @@ a red check stops no merge. The workflows are built so the owners can require th
   `dictionary-api`, `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
-- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
-  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
+- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `browser`
+  needs `check` (`Extension`), `website` needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
   `contracts` (`iOS`), and `build` needs `pins` (`Language data build`), on a pull request and in
   the queue alike. A failed fast check then spends no runner time on the browser tests, the suites
   or the release on the real files, or a Mac: the heavy job is skipped, and the last job fails for
@@ -174,8 +174,16 @@ the app-recorded suites run through the core in
 
 `.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
 rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
-extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
-browser yet. See [`extension.md`](extension.md).
+extension, `packages/ui`, which draws it, or the core. See [`extension.md`](extension.md).
+
+Its `browser` job starts once `check` passes, under a 20-minute limit. It loads the test build in
+Playwright's Chromium and runs the browser tests (`pnpm test:browser`, [`extension.md`](extension.md),
+Browser tests), all offline, against a local language-data server. That server serves one real
+release file, `JLPTLevelPack.sqlite3`, so the job restores `Dictionary API`'s Git LFS cache
+(`actions/cache/restore`, the same key, never saving: a cache with one file under that key would
+leave `Dictionary API` without the rest) and pulls that one file, which a cache miss fetches from
+Git LFS. A test that fails isn't tried again. On a failure it uploads the report, traces, and
+screenshots as the `extension-playwright-report` artifact, kept for a week.
 
 ## Dictionary API
 

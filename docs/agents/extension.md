@@ -19,6 +19,9 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm test:browser` | The test build, then the Playwright browser tests (below) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
+| `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
+| `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
@@ -40,6 +43,8 @@ outside the first version. The Store listing, its ID, and the version and builds
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
+| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local language-data server (`local-server.ts`, `language-data.ts`). |
+| `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
 ### Messages
 
@@ -117,12 +122,37 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
   again.
-- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the side panel and the test
-  surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
-  again, and on both test pages open the menu and the dialog, Tab through it, and close it with
-  Esc and with a click outside. Until #952 moves it into the repository, agents use the agent
-  Chrome harness in the main checkout's `tmp/agent/agent-chrome`, whose daemon must resume the
-  targets it attaches to, or the dictionary worker stays paused and every request fails after
-  10 seconds (#1057). Proof goes under
-  `tmp/agent/verify/`.
+- **Browser tests,** with `pnpm test:browser` (below), in Playwright's Chromium, in CI.
+- **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's
+  return, the test content script, and the language-data download, with screenshots in light and
+  dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
+  test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
+  a click outside are still checked by hand.
+
+## Browser tests
+
+`playwright.config.ts` runs `e2e/*.spec.ts` against `dist-test/` (`pnpm test:browser` builds it
+first). One persistent Chromium context per run loads the build with `--load-extension`, since
+Playwright can't open the browser-level CDP session `Extensions.loadUnpacked` needs, and
+Playwright's Chromium, unlike branded Chrome 137 and later, still honors the switch.
+
+- **Pages:** each page the manifest names (`side_panel.default_path`, `action.default_popup`,
+  `options_ui.page`) is in the build, opens, and shows its title and text, so a build missing a
+  page fails. The side panel answers again after `chrome.offscreen.closeDocument()`.
+- **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
+  "The dictionary is ready."
+- **Language data:** an extension page downloads `releases.json`, the pinned release's manifest,
+  and `JLPTLevelPack.sqlite3` from the local server, and each SHA-256 matches.
+- **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1`, and the
+  `outsideRequests` fixture fails any test whose context asks anything but the local server and
+  this extension. `outside-requests.spec.ts` asks `example.com` from the service worker and is
+  marked to fail, so it passes only while the guard catches it. A page that logs an error, or
+  throws, fails its test too.
+
+The local server (`e2e/local-server.ts`) serves the test pages and the language-data bucket's
+layout from the checkout: `releases.json`, written from `language-data/releases/` up to the
+release `language-data/release.json` pins, with each manifest's SHA-256 and its commit from Git;
+`releases/<release>/manifest.json`; and `files/<sha256>/<name>`, read through
+`language-data/release-inputs.json`'s roots. A file still a Git LFS pointer answers 503 with the
+`git lfs pull --include` that fetches it. A failed run keeps its trace and screenshot in
+`e2e`'s `results` folder, which Git ignores.
