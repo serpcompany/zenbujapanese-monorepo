@@ -189,7 +189,10 @@ const KnownWordSchema = z
     itemId: z.string(),
     headword: z.string(),
     reading: z.string(),
-    state: z.enum(wordStates).openapi({ description: "The learner's state for the word." }),
+    state: z.enum(wordStates).optional().openapi({
+      description:
+        "The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead."
+    }),
     known: z.boolean().openapi({
       description:
         'Whether `state` is `known`, for an app that reads only this: a Learning word is not known.'

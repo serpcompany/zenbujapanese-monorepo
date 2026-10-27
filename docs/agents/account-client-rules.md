@@ -16,6 +16,10 @@ in the API reference's [Sync entities](../api/account-api.md#sync-entities).
     Unknown as a `set`. One that doesn't reads `known`, which is false for a Learning word, and
     sends `mark` and `clear`: its clear leaves a Learning word Learning. A word with no `state`
     comes from a service from before Learning, during a deploy or after a rollback: read `known`.
+  - A `set` rejected with `unknown_operation` reached a service from before Learning, after a
+    rollback: keep the word's state on the device. Send a Known or Unknown word as a new `mark` or
+    `clear`, with a new `id`, and send a Learning word's `set` again later, with a new `id`, as a
+    first upload does.
   - `set`, `mark`, and `clear` take the version your app had. If the word changed since, it's a
     conflict.
   - Setting the state a word has, marking a known word, or clearing one not known is applied and

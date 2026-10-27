@@ -756,7 +756,7 @@ Fields ([`WordStateFields`](#wordstatefields)):
 
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
-- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
 
 ```json
 {
@@ -1350,7 +1350,7 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 
 - `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
 - `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
-- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.
 
 ### ListCreateFields
 
@@ -1567,7 +1567,7 @@ One of:
 - `itemId` (string, required)
 - `headword` (string, required)
 - `reading` (string, required)
-- `state` (`"unknown"`, `"learning"`, or `"known"`, required): The learner's state for the word.
+- `state` (`"unknown"`, `"learning"`, or `"known"`, optional): The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead.
 - `known` (boolean, required): Whether `state` is `known`, for an app that reads only this: a Learning word is not known.
 
 ### WordList

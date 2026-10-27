@@ -112,7 +112,7 @@
           "reading": {
             "type": "string",
             "maxLength": 200,
-            "description": "Its reading, held as `headword` is. Empty when left out."
+            "description": "Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has."
           }
         },
         "required": [
@@ -1140,7 +1140,7 @@
               "learning",
               "known"
             ],
-            "description": "The learner's state for the word."
+            "description": "The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead."
           },
           "known": {
             "type": "boolean",
@@ -1151,7 +1151,6 @@
           "itemId",
           "headword",
           "reading",
-          "state",
           "known"
         ]
       },

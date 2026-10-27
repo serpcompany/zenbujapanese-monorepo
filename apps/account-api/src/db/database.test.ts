@@ -107,7 +107,7 @@ describe('the migrations', () => {
     await client.close()
   })
 
-  test('keep each saved word known or not known when words gain Learning, and read what an older service writes', async () => {
+  test('keep each saved word known or not known when words gain Learning, read what an older service writes, and write both columns from the state', async () => {
     const { client, db } = await migratedUpTo('_known_words_learning')
     await client.exec(`
       insert into users (id, name, email) values ('u1', '', 'u1@example.com');
@@ -121,10 +121,11 @@ describe('the migrations', () => {
       cursors(cursorKey('test')),
       searchKeys('test')
     )
+    let sent = 0
     const words = async (mutations: Omit<ClientMutation, 'id'>[] = []) => {
       const answer = await accounts.sync(
         'u1',
-        { mutations: mutations.map((mutation, n) => ({ id: `m-${n}`, ...mutation })) },
+        { mutations: mutations.map(mutation => ({ id: `m-${sent++}`, ...mutation })) },
         everyScope
       )
       if (answer.status !== 'synced') return expect.unreachable()
@@ -162,6 +163,25 @@ describe('the migrations', () => {
       { version: 1, ...sun, state: 'known', known: true },
       { version: 4, ...moon, state: 'known', known: true }
     ])
+    const columns = async () =>
+      (await client.query("select known, learning from known_words where item_id = 'kanji:月'"))
+        .rows
+    const moonAt = (baseVersion: number, operation: string, fields?: Record<string, string>) =>
+      words([{ entity: 'knownWord', operation, entityId: 'kanji:月', baseVersion, fields }])
+    expect(await moonAt(4, 'clear')).toContainEqual({
+      version: 5,
+      ...moon,
+      state: 'unknown',
+      known: false
+    })
+    expect(await columns()).toEqual([{ known: false, learning: false }])
+    expect(await moonAt(5, 'set', learning)).toContainEqual({
+      version: 6,
+      ...moon,
+      state: 'learning',
+      known: false
+    })
+    expect(await columns()).toEqual([{ known: false, learning: true }])
     await client.close()
   })
 

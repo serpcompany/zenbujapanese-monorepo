@@ -23,7 +23,14 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
   known does: it can't end a state it can't see, and an app that shows Learning ends it with
   `set`. The table keeps Known in `known`, which a service from before Learning still reads and
   writes during a deploy or after a rollback, and Learning in `learning` beside it, and Known wins
-  when both are set, as after that service's mark of a Learning word.
+  when both are set, as after that service's mark of a Learning word. This service writes both
+  from the state, so its next change to the word settles them.
+- **While an older service runs,** its mark and then its clear of a Learning word write only
+  `known`, so `learning` stays true and the word comes back Learning once this service returns,
+  though the learner's last act was a clear. An app that shows Learning and pulled that clear then
+  got `known: false` with no `state`, read it as Unknown, and keeps Unknown, as no later change
+  touches the word, until the word changes again or the app's next full read. This is left as is:
+  it needs a rollback with both acts inside it, and the word stays one the learner can set.
 - **List** (`list`, by its UUID, in either case, as Swift writes it uppercase; answers name it in
   lowercase): `create` with a name and a position, then `update` at the current version, so two
   renames conflict and the second gets the name as it is now. An update that already matches the

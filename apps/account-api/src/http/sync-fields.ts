@@ -27,7 +27,10 @@ const WordStateFields = z.object({
     description:
       'The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.'
   }),
-  reading: ItemFields.shape.reading
+  reading: ItemFields.shape.reading.openapi({
+    description:
+      'Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.'
+  })
 })
 
 const ProfileFields = z.strictObject({
