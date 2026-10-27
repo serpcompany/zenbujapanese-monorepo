@@ -34,7 +34,7 @@ screenshots:
     variables:
       tint: pink
       headline: Hear it.<br><em>See the pitch.</em>
-      subtitle: Pitch accent, audio, and how common each word is
+      subtitle: Pitch accent and audio, with meanings and examples
     assets:
       screen: en-US/iphone-63/08-word-detail-pitch.png
   05-handwriting:

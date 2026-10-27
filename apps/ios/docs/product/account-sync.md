@@ -279,7 +279,7 @@ A signed-in learner can delete their Zenbu account from **Zenbu Account → Dele
 - An App Store subscription doesn't end with the account: the sheet says so before and after, with
   **Manage in the App Store**, since Apple keeps billing until the learner cancels it. One bought on
   the website is canceled with the account.
-- Afterwards the app is signed out and keeps everything on the phone: Known Words, lists,
+- Afterwards the app is signed out and keeps everything on the phone: Known Words, Learning, lists,
   Recent, Translations and their bookmarks, notes, and media stay, and every feature works. Signing in again makes a new account, which gets
   everything on the phone, as a first sync does.
 

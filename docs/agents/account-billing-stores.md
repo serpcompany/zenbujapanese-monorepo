@@ -77,8 +77,9 @@ with online revocation checks, then the bundle ID (`appSellingTheSubscription` i
 - **Environments** (`APP_STORE_ENVIRONMENTS`): staging takes `Sandbox`; production takes
   `Production` and `Sandbox`, since App Review and TestFlight buy in the sandbox. With
   `APP_STORE_SANDBOX_ACCOUNTS` set, production counts a Sandbox subscription only for those
-  accounts' emails, such as App Review's demo account, in what the account sees, the gate,
-  Checkout, and the check for a second subscription alike; unset, every TestFlight tester's counts.
+  accounts' emails, in what the account sees, the gate, Checkout, and the check for a second
+  subscription alike; unset, every TestFlight tester's and App Review's counts. App Review has no
+  demo account (#932), so its purchase counts only while the variable is unset.
   `Xcode`, for a StoreKit configuration file's purchases, which Apple doesn't sign, is refused but
   at localhost.
 - **The App Store Server API**, when its key is set: a purchase the app sends is answered with
@@ -159,8 +160,9 @@ Stripe's test mode and Apple's sandbox, and production's keys never reach stagin
    - **Users and Access → Integrations → In-App Purchase**: a key for the App Store Server API, if
      the service should read Apple's status and missed notifications: `APP_STORE_KEY_ID`,
      `APP_STORE_ISSUER_ID`, and the `.p8`, which downloads once.
-   - **Users and Access → Sandbox**: test accounts for staging's purchases, and App Review's demo
-     account's email in production's `APP_STORE_SANDBOX_ACCOUNTS`.
+   - **Users and Access → Sandbox**: test accounts for staging's purchases. App Review has no demo
+     account (#932), so its sandbox purchase counts in production only while
+     `APP_STORE_SANDBOX_ACCOUNTS` is unset.
 5. **The environment files**: the settings above, then check the start's log line names them.
 6. **Before production**, on staging: a sandbox purchase in the app and a test-mode purchase on the
    website each unlock sync, and a test-mode refund appears in `billing_ledger`, in the email the

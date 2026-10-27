@@ -2,7 +2,7 @@ import { Badge } from '@zenbu/ui/components/badge'
 import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
 import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
 import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
-import { CheckIcon, GripVerticalIcon, PointerIcon } from 'lucide-react'
+import { CheckIcon, ContrastIcon, GripVerticalIcon, PointerIcon } from 'lucide-react'
 import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
 import { frequencyBadgesIn } from '@/lib/dictionary/screen-text'
 import { appScreenText, frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
@@ -31,10 +31,16 @@ export function ListPreview({ locale }: { locale: Locale }) {
             className="flex items-center justify-between gap-2 border-t px-3.5 py-1"
           >
             <RubyText segments={word.ruby} className="text-[1.0625rem] leading-[1.9]" />
-            {word.known ? (
+            {word.state === 'known' ? (
               <Badge className="bg-green-500/15 text-green-800 dark:text-green-400">
                 <CheckIcon data-icon="inline-start" className="stroke-3" />
                 {appScreenText.known}
+              </Badge>
+            ) : null}
+            {word.state === 'learning' ? (
+              <Badge className="bg-yellow-500/15 text-yellow-800 dark:text-yellow-400">
+                <ContrastIcon data-icon="inline-start" />
+                {appScreenText.learning}
               </Badge>
             ) : null}
           </li>

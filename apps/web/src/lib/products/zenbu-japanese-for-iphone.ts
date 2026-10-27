@@ -51,10 +51,11 @@ const features: readonly { id: keyof PageText['features']; symbol: ProductPageSy
 const related: readonly ProductId[] = ['dictionary', 'browser-extension', 'kana-charts']
 
 function questionsIn(t: PageText, locale: Locale): Question[] {
-  const { offline, frequency, web } = t.questions
+  const { offline, frequency, subscription, web } = t.questions
   return [
     offline,
     frequency,
+    subscription,
     { ...web, link: { title: web.link, href: localizedPath('/dictionary/', locale) } }
   ]
 }

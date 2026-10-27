@@ -179,21 +179,23 @@ paywall), `Platform/SubscriptionSettings.swift`, and `DeleteAccountView.swift`.
 Besides the service's setup ([`account-billing-stores.md`](account-billing-stores.md), Set it up):
 
 - **App Store Connect:** the subscription group and its products, each with a review screenshot
-  and notes, submitted with the first version that sells them; the Terms of Use (the standard EULA
-  or the website's) linked in the app's description or License Agreement; App Review's demo account
-  in the review notes; and the App Privacy answers in
+  and notes, submitted with 2.1.0, the first version that sells them; Apple's standard EULA as the
+  Terms of Use, linked at the end of the description (`asc metadata validate --dir
+  apps/ios/metadata --subscription-app` checks it), while the paywall links the website's terms,
+  whose iPhone app section takes the EULA in (#932); review notes that say to sign in with Apple
+  or an emailed code; and the App Privacy answers in
   [`app-store-privacy-labels.md`](../../apps/web/docs/app-store-privacy-labels.md), which now
   include Purchase History.
-- **App Review's demo account** must be one the gate applies to, so the reviewer sees **Subscribe
-  to Sync…**: with the gate on, an account with no subscription, and its email in
-  `APP_STORE_SANDBOX_ACCOUNTS` so the reviewer's sandbox purchase counts. The app offers nothing
-  while sync is free.
+- **App Review has no demo account** (#932, 2026-10-25): the reviewer signs in with Apple or an
+  emailed code, so the account is new. It sees **Subscribe to Sync…** only if the gate applies to
+  new accounts, and its sandbox purchase counts only while production's
+  `APP_STORE_SANDBOX_ACCOUNTS` is unset, since the reviewer's email isn't known before. The app
+  offers nothing while sync is free.
 - **Don't promote the subscription on the App Store:** in App Store Connect, give its products no
   App Store promotion (no promotional image, so the product page doesn't list them). The app doesn't take a purchase started on the product page (StoreKit's
   `PurchaseIntent`), since that purchase would have no Zenbu account's token and might come before
   the learner signs in.
-- **The listing:** keep the current one (`apps/ios/metadata/version/1.0/`) until the version that
-  turns the gate on; that version's description, What's New, and promotional text are drafted in
-  `apps/ios/metadata/drafts/subscription/en-US.json`, with the Terms of Use and the Privacy
-  Policy's links at the end of the description.
+- **The listing:** `apps/ios/metadata/version/2.1.0/` says what the subscription syncs and that the
+  rest stays free, with the Terms of Use and the Privacy Policy's links at the end of the
+  description ([`ios.md`](ios.md#the-app-store-record), The App Store record).
 - **Nothing in the project:** in-app purchase needs no entitlement, and the App ID has it already.

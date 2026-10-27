@@ -4,7 +4,8 @@ What a learner keeps on a word or kanji besides marking it known and adding it t
 photos, and the Media Library that holds the photos, which a word's or kanji's **•••** menu adds
 ([Dictionary](dictionary.md#dictionary-and-kanji-details)); how Look Up finds a word by its notes;
 what happens to the notes and photos an earlier version saved; and what the app does with saved
-data it can't read. Known Words and Lists are under [Account](index.md#account).
+data it can't read. Known Words and Learning are in [Known Words and Learning](known-words.md),
+and Lists under [Account](index.md#account).
 
 ## Notes and photos
 

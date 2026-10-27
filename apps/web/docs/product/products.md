@@ -99,7 +99,8 @@ note).
 
 **Demo.** Under the hero, a panel shows one feature at a time: its icon and name, a heading, a
 line, and its App Store screenshot, side by side from 768 pixels and stacked on phones. The five
-are Search, Image Search, Handwriting, Conjugations, and Translate. Previous and next arrows step
+are Look Up, Image Search, Handwriting, Conjugations, and Translate, Look Up named for the app's
+tab since 2.1.0 (#932). Previous and next arrows step
 through them, wrapping from the last to the first; a dot for each, named for its feature, opens
 it and is marked current, each with a 24-pixel target; and a count says which it is (2 / 5), and
 is announced as it changes. Only the shown feature is in the accessibility tree, under a heading,
@@ -160,18 +161,21 @@ until it's clicked; the click puts YouTube's privacy-enhanced player
   YouTube for nothing".
 
 **What's inside, Questions, and More from Zenbu.** What's inside lists eight features (Offline
-dictionary, Image Search, Handwriting, Translate, Player, Lists and Known Words, Frequency
-dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Questions is
-centered: three questions that open and close (Does it work offline?, Which frequency lists does
-it use?, and Is the web dictionary the same?), the first open, with every answer in the page's
-HTML while closed; the last says the web dictionary has the app's entries, and which features are
-only in the app, and links to the dictionary. The offline dictionary's "more than
+dictionary, Image Search, Handwriting, Translate, Player, Lists, Learning, and Known Words,
+Frequency dictionaries, and Furigana kanji highlight), four to a row from 1024 pixels. Questions
+is centered: four questions that open and close (Does it work offline?, Which frequency lists does
+it use?, What does a subscription add?, and Is the web dictionary the same?), the first open, with
+every answer in the page's HTML while closed. The subscription's answer is sync, and what it
+keeps the same on every device, as the app's listing says (#932); the last says the web
+dictionary has the app's entries, and which features are only in the app, and links to the
+dictionary. The offline dictionary's "more than
 200,000 words" is the app's own dictionary, which the site's word pages are built from (218,382
 words, [`docs/agents/web.md`](../../../../docs/agents/web.md), Sitemaps). More from Zenbu shows the
 dictionary, the browser extension, and kana charts as catalog cards, with All products. The
 questions are the stock accordion (`src/components/question-list.tsx`), as the tools pages' are.
 
-- Source: #844 mockups (Product page); the app's product docs for every claim.
+- Source: #844 mockups (Product page); the app's product docs for every claim; #932 (2.1.0:
+  Learning, Grade, and the subscription).
 - Check: Product page spec, "lists what’s inside and the questions, the first one open" and "More
   from Zenbu leads to the other products and the catalog".
 
