@@ -1,5 +1,5 @@
 export const labels = {
-  tryAgain: 'Try Again',
+  tryAgain: 'Try again',
   tabBar: 'Side panel tabs',
   backTo: (tab: string) => `Back to ${tab}`,
   tabs: {

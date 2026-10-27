@@ -35,7 +35,7 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 - **Before the dictionary is ready,** while `useDataState()` says it is checking, downloading, or
   failed, every tab but Translate, which doesn't need it, draws `DictionaryProgress`
   (`src/shared/dictionary-progress.tsx`) instead of its content, and the tab bar stays. A failure
-  adds Try Again, which calls `useDataState()`'s second item to start again.
+  adds Try again, which calls `useDataState()`'s second item to start again.
 - **Focus follows the page shown.** Opening a page focuses its Back row; Back focuses the Back row
   of the page it reveals, or the tab's panel.
 - **The tab bar is compact, an exception to stock sizes.** Its triggers set `px-0.5 py-1 text-xs`
@@ -52,7 +52,7 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
   `open` before it awaits anything, handing the route over, and leaving none when Chrome refuses;
   and, in happy-dom, the five tabs and their empty states, the arrow keys, pages over a tab and
   Back, focus after each, the last tab, the sign-up links, the dictionary progress on every tab
-  but Translate, Try Again, and `openPanel` through a fake Chrome to the panel, closed and open.
+  but Translate, Try again, and `openPanel` through a fake Chrome to the panel, closed and open.
 - **In Chrome,** in the agent Chrome harness ([`extension.md`](extension.md), Checks): open the
   side panel from the toolbar icon and with `openPanel` from a click, closed and open, and check
   that nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
