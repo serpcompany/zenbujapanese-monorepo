@@ -20,9 +20,8 @@ Two tools don't take their paths on the command line, and find them from their o
 file it reads and writes, in `apps/ios/Modules/Sources/SearchExperience/Resources/`,
 `language-data/sources/`, and `language-data/generated/` (#929's rebuild pointed them there after
 #469's move). `rebuild_language_data.py` refuses to start, naming each path it can't find
-(`tools_built_in_paths`), so a later move fails before anything is built, and
-`tests/test_rebuild_start.py` holds each to this checkout. Each records its own SHA-256, so moving
-them again belongs to a rebuild.
+(`tools_built_in_paths`), so a later move fails before anything is built. Each records its own
+SHA-256, so moving them again belongs to a rebuild.
 
 A checkout from before the move keeps its earlier downloads (UniDic, KanjiVG, and Kanjium) in the
 app's old `LanguageData/Sources/`, which `apps/ios/.gitignore` still ignores: copy them into
