@@ -19,6 +19,22 @@ The dictionary answers even after Chrome has closed the document that holds it: 
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`).
 
+## Error reports
+
+Reporting is built, and off in every build until Zenbu's Sentry project for the extension exists.
+Then the extension sends its own errors to it, so they can be fixed: never the text of the page a
+learner reads, its address, or a word they select in Japanese, and never an error from the page's
+own code. A content script sends nothing from the page itself; the extension's background sends
+its reports (`src/error-reports/scrub.test.ts`,
+`src/error-reports/error-reports.interaction.test.tsx`; that one arrives, in Chrome by hand).
+There are no usage analytics.
+
+Reports are on until the learner turns them off, as in the app: the setting is
+`crashReports.send`, and the switch for it comes with Settings (#959). Turning it off stops
+reports at once, with no reload, and drops any not yet sent; turning it on starts them again
+(`src/error-reports/report-setting.test.ts`). Sentry keeps a report for the project's retention,
+set in Sentry.
+
 ## Not built yet
 
 Looking words up, the word popup on a page, saving, and translating aren't built, so the side

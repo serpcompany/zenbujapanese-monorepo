@@ -58,7 +58,7 @@ doesn't sign in yet (#961).
 
 While the dictionary is being checked or downloaded, or has failed, every tab but Translate shows
 the dictionary's progress instead of its content, and the tab bar stays. Translate doesn't need
-the dictionary. When it has failed, Try Again starts it again, and the tab comes back once the
+the dictionary. When it has failed, Try again starts it again, and the tab comes back once the
 dictionary is ready (`panel.interaction.test.tsx`). Until #956 draws that progress, the panel
 shows its tabs.
 
