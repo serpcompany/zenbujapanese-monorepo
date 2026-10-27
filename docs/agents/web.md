@@ -221,9 +221,10 @@ so every page looks like one design system:
 - **Use the stock component.** A table is `Table`, a filter or a set of views is `Tabs` or
   `ToggleGroup`, a check box is `Checkbox` with `Label`, a text box is `Input` or `Textarea`, a
   question list is `Accordion`, and an action is `Button`. Add one that's missing with the shadcn
-  CLI (`pnpm dlx shadcn@latest add <name>` in `packages/ui`), and keep it as the CLI wrote it,
-  removing only exports nothing uses, which the dead-code check requires. Never hand-roll a pill,
-  chip, segmented control, table, or check box that a stock component covers.
+  CLI (`pnpm dlx shadcn@latest add <name>` in `packages/ui`) and keep it as the CLI wrote it, less
+  exports nothing uses (the dead-code check). An update drops the `container` that `dialog.tsx`,
+  `drawer.tsx`, and `dropdown-menu.tsx` pass their `Portal`: put it back ([`ui.md`](ui.md)). Never
+  hand-roll a pill, chip, segmented control, table, or check box that a stock component covers.
 - **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
   margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
   variants and sizes instead. Colours come only from the shadcn tokens in `@zenbu/ui`'s theme,
@@ -232,8 +233,7 @@ so every page looks like one design system:
 - **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
   breadcrumb follow `/products/` and the browse pages; reuse their components rather than drawing
   new ones. Size a table to its content at the stock density, not stretched across the page.
-- **A prototype sets the structure and the words, not the styling.** Build a mockup's sections from
-  the stock components, never from its CSS.
+- **A prototype sets structure and words, not styling.** Build its sections from stock components.
 
 Before a pull request that changes how pages look, the `finish-change` skill has a fresh agent
 review the pages against these rules (Review the UI with fresh eyes).

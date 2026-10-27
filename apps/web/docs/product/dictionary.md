@@ -443,7 +443,7 @@ the page URL and shows "Link copied". There is no back button; the breadcrumbs r
   actions at the end of the breadcrumb row"; the menu and the prompt, at a desktop and a phone
   width: `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions" and
   "copies the link from the More actions menu"; Share:
-  `src/components/dictionary/item-actions.interaction.test.tsx`, "sends the page it is on".
+  `src/components/dictionary/site-item-actions.interaction.test.tsx`, "sends the page it is on".
 
 **Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
 is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
@@ -847,7 +847,7 @@ actions and Open in App open the get-the-app prompt. Each button is named for it
   (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462 (the
   menu items and the get-the-app prompt).
 - Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
-  `src/components/dictionary/item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
+  `src/components/dictionary/site-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
   the kanji, its share text, and its search page, not the page it is on" and "copies the kanji's
   search page where the browser has no share sheet"; the buttons' names:
   `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the

@@ -12,10 +12,16 @@ Run every command below from `packages/ui`, after `pnpm install` at the reposito
 
 | Folder | What it holds |
 | --- | --- |
-| `src/components/` | The stock shadcn primitives (style `base-nova`, base colour neutral), as the CLI wrote them. Add one with `pnpm dlx shadcn@latest add <name>` here; `components.json` points the CLI at this package. |
+| `src/components/` | The stock shadcn primitives (style `base-nova`, base colour neutral), as the CLI wrote them but for one edit (below). Add one with `pnpm dlx shadcn@latest add <name>` here; `components.json` points the CLI at this package. |
 | `src/dictionary/` | The word components: the word header, the word page's sections (`WordSections`), kanji details, example lists and their paging, conjugations, frequency, source credits, and the pieces they share, such as furigana, pitch, and the pronounce button. |
 | `src/styles/theme.css` | The theme: the shadcn tokens on `:root`, `.dark` redefining them, and the utilities `muted-surface`, `meaning-clamp`, and `furigana`. |
 | `src/lib/`, `src/hooks/` | `Fill`, which puts components into a template's slots; `PortalContainer`, which sends menus and dialogs into a shadow root; and `useMediaQuery`. |
+
+One edit to the CLI's files: `dialog.tsx` (`DialogPortal`), `drawer.tsx` (`DrawerPortal`), and
+`dropdown-menu.tsx` (`DropdownMenuContent`) pass `container={usePortalContainer()}` (from
+`../lib/portal`) to their primitive's `Portal`, so a menu or dialog opens inside an extension's
+shadow root. The CLI drops it when it adds one of these again with `--overwrite`: put it back,
+then run `pnpm check`.
 
 The package ships its TypeScript source: a client compiles it (the website lists it in
 `transpilePackages`, `apps/web/next.config.ts`). Inside the package, imports are relative, and
@@ -67,7 +73,7 @@ And the other way: neither service imports the package (`service-draws-no-ui`,
 - `site-examples.tsx` (client) wraps the example lists and conjugations with the site's fetches
   (`apps/web/src/lib/dictionary/page-fetch.ts`), adding each new page's links to the map;
   `kanji-props.tsx` and `word-page-props.tsx` build the props of kanji details, the word header,
-  and the word page's sections; `item-actions.tsx` wraps `SavedItemActions` with Share, Copy
+  and the word page's sections; `site-item-actions.tsx` (`SiteItemActions`) wraps `SavedItemActions` with Share, Copy
   link, and the toasts; `site-actions.ts` holds the callbacks a server component may pass.
 - `apps/web/src/app/globals.css` imports the theme and adds `@source` for the package's source,
   so Tailwind writes the classes its components use; the page-level rules stay in the website.

@@ -32,7 +32,7 @@ its reason, in the pull request that turns another off.
 | Where | What is off | Why |
 | --- | --- | --- |
 | `apps/web/scripts/.shellcheckrc` | ShellCheck's SC2329, for the scripts in that folder | `smoke.sh` hands its checks to `expect` and `eventually` by name, which ShellCheck reads as functions nothing calls |
-| `packages/ui/biome.json`, for `src/components/**` | `useSemanticElements`, `useKeyWithClickEvents`, and `useFocusableInteractive` | Those files are shadcn/ui's, kept as its CLI wrote them ([`web.md`](web.md)) |
+| `packages/ui/biome.json`, for `src/components/**` | `useSemanticElements`, `useKeyWithClickEvents`, and `useFocusableInteractive` | Those files are shadcn/ui's, kept as its CLI wrote them but for the portal container three of them pass ([`ui.md`](ui.md)) |
 | `apps/web/biome.json`, for `dictionary-breadcrumbs.tsx` | `noDangerouslySetInnerHtml` | The breadcrumbs' JSON-LD is the text of a `script` element, written through `jsonThatCannotCloseItsScript` |
 | `tools/checks/biome.json`, for the checks' tests | `noTemplateCurlyInString` | The tests quote workflow expressions, which are written `${{ … }}` |
 | `knip.json` | `apps/ios/**` isn't read, `tsx` isn't reported as unused in `packages/node-service`, and `lefthook` isn't reported as unused at the root | The app's copy of the core is a built file; `tsx` is loaded by name, by `node --import`; knip counts `lefthook` as used only under CI's setting or with git hooks installed, and the weekly report runs on a runner with neither |

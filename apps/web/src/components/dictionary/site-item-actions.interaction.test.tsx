@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { ItemActions } from './item-actions'
+import { SiteItemActions } from './site-item-actions'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -38,7 +38,7 @@ function button(name: string): HTMLButtonElement {
 function renderKanjiActions() {
   act(() =>
     root.render(
-      <ItemActions
+      <SiteItemActions
         title="要"
         shareText={shareText}
         path="/dictionary/search/%E8%A6%81/"
@@ -86,7 +86,7 @@ describe("a page's Share", () => {
     stubNavigator(share)
     act(() =>
       root.render(
-        <ItemActions
+        <SiteItemActions
           title="要る"
           shareText="要る【いる】"
           locale="en"

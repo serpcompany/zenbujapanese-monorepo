@@ -8,13 +8,15 @@ import { ConjugationsLink } from '@zenbu/ui/dictionary/conjugations'
 import { FrequencySection } from '@zenbu/ui/dictionary/frequency-section'
 import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
 import { WordHeader } from '@zenbu/ui/dictionary/word-header'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { SiteConjugationsSection } from '@/components/dictionary/site-examples'
 import { wordHeaderIn } from '@/components/dictionary/word-page-props'
+import { Toaster } from '@/components/ui/sonner'
 import { pageExample } from '@/lib/dictionary/page-example'
 import { conjugationsIn, conjugationsText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
+import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
 
@@ -118,6 +120,38 @@ describe('the Frequency section', () => {
   })
 })
 
+const capsule = pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: 'unidic' })
+
+function renderHeader(pitch: typeof capsule | null, locale: Locale, toaster?: ReactNode) {
+  act(() =>
+    root.render(
+      <>
+        <WordHeader
+          {...wordHeaderIn(
+            {
+              headword: '今日',
+              ruby: rubySegments('今日', 'きょう'),
+              reading: 'きょう',
+              pronounce: pronounceLabel('きょう'),
+              pitch,
+              partOfSpeechRow: 'Noun',
+              conjugations: null
+            },
+            locale
+          )}
+        />
+        {toaster}
+      </>
+    )
+  )
+  const label = coreText(pronounceLabel('きょう'), locale)
+  const speaker = [...container.querySelectorAll('button')].find(button =>
+    (button.getAttribute('aria-label') ?? button.textContent ?? '').startsWith(label)
+  )
+  if (!speaker) throw new Error('No speaker')
+  return speaker
+}
+
 describe('pronouncing the word', () => {
   const said: { text: string; lang: string }[] = []
 
@@ -138,40 +172,32 @@ describe('pronouncing the word', () => {
 
   afterEach(() => vi.unstubAllGlobals())
 
-  const capsule = pitchAccent('きょう', { downstep: 1, moraCount: 2, sourceIdentity: 'unidic' })
-
   test.each([
     ['the pitch capsule', capsule, 'en'],
     ['the speaker of a word without pitch', null, 'en'],
     ['on a Japanese page, the pitch capsule', capsule, 'ja'],
     ['on a Japanese page, the speaker of a word without pitch', null, 'ja']
   ] as const)('%s says the reading in the browser’s Japanese voice', (_, pitch, locale) => {
-    act(() =>
-      root.render(
-        <WordHeader
-          {...wordHeaderIn(
-            {
-              headword: '今日',
-              ruby: rubySegments('今日', 'きょう'),
-              reading: 'きょう',
-              pronounce: pronounceLabel('きょう'),
-              pitch,
-              partOfSpeechRow: 'Noun',
-              conjugations: null
-            },
-            locale
-          )}
-        />
-      )
-    )
-    const label = coreText(pronounceLabel('きょう'), locale)
-    const speaker = [...container.querySelectorAll('button')].find(button =>
-      (button.getAttribute('aria-label') ?? button.textContent ?? '').startsWith(label)
-    )
-    expect(speaker).toBeDefined()
+    const speaker = renderHeader(pitch, locale)
     expect(said).toEqual([])
-    act(() => speaker?.click())
+    act(() => speaker.click())
     expect(said).toEqual([{ text: 'きょう', lang: 'ja-JP' }])
+  })
+
+  test('a browser that can’t speak shows the page’s unsupported toast', async () => {
+    vi.unstubAllGlobals()
+    const voice = Object.getOwnPropertyDescriptor(window, 'speechSynthesis')
+    Reflect.deleteProperty(window, 'speechSynthesis')
+    try {
+      expect('speechSynthesis' in window).toBe(false)
+      const speaker = renderHeader(capsule, 'en', <Toaster />)
+      await act(async () => speaker.click())
+      await vi.waitFor(() =>
+        expect(document.body.textContent).toContain(getDictionary('en').pronounce.unsupported)
+      )
+    } finally {
+      if (voice) Object.defineProperty(window, 'speechSynthesis', voice)
+    }
   })
 })
 
@@ -251,7 +277,7 @@ describe('the Conjugations section', () => {
     expect(element('[data-opens-conjugations]').getAttribute('href')).toBe('#conjugations')
     await click('[data-opens-conjugations]')
     expect(window.location.hash).toBe('#conjugations')
-    expect(isOpen(sectionButton)).toBe(true)
+    await vi.waitFor(() => expect(isOpen(sectionButton)).toBe(true))
     await click(sectionButton)
     expect(isOpen(sectionButton)).toBe(false)
     await click('[data-opens-conjugations]')

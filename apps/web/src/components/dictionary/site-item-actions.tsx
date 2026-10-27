@@ -25,7 +25,7 @@ const learnerActions = [
 
 const ignoreClosedShareSheet = () => undefined
 
-export function ItemActions({
+export function SiteItemActions({
   title,
   shareText,
   path,
