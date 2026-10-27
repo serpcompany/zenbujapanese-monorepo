@@ -146,7 +146,8 @@ in [`account-api.md`](account-api.md), How a deploy works.
 
 `.github/workflows/extension-packages.yml` builds the browser extension's two packages
 ([`extension.md`](extension.md), Builds and packages) on a push to `main` that changes the
-extension, `packages/ui`, or the core, on a pull request that changes them, and by hand. One job,
+extension, `packages/ui`, the core, or `assets/brand`, on a pull request that changes them, and
+by hand. One job,
 in `apps/extension`:
 
 1. **The staging package:** `pnpm build` with `ZENBU_ENVIRONMENT=staging` and Sentry's `qa`
@@ -159,9 +160,10 @@ in `apps/extension`:
    (`pnpm check-package store production`). The upload runs only on `main`, so a pull request's
    maps never land under the release's version. It reads the `SENTRY_AUTH_TOKEN` secret; with
    none, the script warns and passes (#987 adds it).
-3. **On `main` and by hand,** it keeps both zips as artifacts named
+3. **On `main`, by a push or by hand,** it keeps both zips as artifacts named
    `zenbujapanese-extension-staging-<commit>` and `zenbujapanese-extension-store-<commit>`, for
-   30 days. A pull request's run keeps nothing. Run it by hand to make them again.
+   30 days. A pull request's run, or one by hand on another branch, keeps nothing. Run it by
+   hand on `main` to make them again.
 
 It uploads nothing to the Chrome Web Store: the owner uploads the store package (#972). A check
 that fails names each problem in the job's log. It starts on paths, so it isn't a check a merge

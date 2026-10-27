@@ -25,6 +25,7 @@ type BuiltManifest = {
 
 const manifestFile = 'manifest.json'
 const textFile = /\.(js|html|css|json)$/
+const buildSettingMark = '__ZENBU_'
 const releaseScripts = contentScripts('release').map(contentScriptFile)
 const testOnlyScripts = contentScripts('test')
   .map(contentScriptFile)
@@ -147,6 +148,15 @@ function hostProblems(
   ]
 }
 
+function buildSettingProblems(files: Map<string, Buffer>): string[] {
+  const unfilled = [...files]
+    .filter(([file, data]) => file.endsWith('.js') && data.includes(buildSettingMark))
+    .map(([file]) => file)
+  return unfilled.length === 0
+    ? []
+    : [`The build left a ${buildSettingMark} setting unfilled in ${unfilled.join(', ')}.`]
+}
+
 export function packageProblems(
   zip: Buffer,
   kind: PackageKind,
@@ -160,6 +170,7 @@ export function packageProblems(
     ...versionProblems(manifest),
     ...keyProblems(kind, manifest),
     ...fileProblems(files, manifest),
-    ...hostProblems(files, manifest, environment)
+    ...hostProblems(files, manifest, environment),
+    ...buildSettingProblems(files)
   ]
 }

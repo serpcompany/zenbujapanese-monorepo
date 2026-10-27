@@ -121,6 +121,16 @@ describe('the check of a package', () => {
     ])
   })
 
+  it('fails a package whose build left a host setting unfilled', () => {
+    const files = {
+      ...built('staging'),
+      'assets/side-panel.js': 'var e=__ZENBU_WEBSITE_ORIGIN__;open(e)'
+    }
+    expect(problemsOf(files, 'unpacked', 'staging')).toEqual([
+      'The build left a __ZENBU_ setting unfilled in assets/side-panel.js.'
+    ])
+  })
+
   it("fails an unpacked package with no key, or with another item's key", () => {
     const otherKey = storeKey.replace('MIIBIjAN', 'MIIBIjAM')
     expect(

@@ -35,12 +35,17 @@ outside the first version.
   has the store item's ID, `kaalpflpefadijdemimciikalgpgjmok`, on any computer. The store
   refuses a `key` in an upload, so the store package leaves it out.
 - **The version** is `apps/extension/package.json`'s, from 2.0.0. The store has 1.1.0, the
-  prototype, and refuses an update that isn't above it. Raise it before each upload.
+  prototype, and refuses an update that isn't above it. Before each upload, raise it; after
+  one, set `publishedVersion` in `build/packages.ts` to the uploaded version, in the change that
+  records the release, so `pnpm check-package` keeps refusing a version the store would.
 - **The hosts.** One build setting, `ZENBU_ENVIRONMENT`, names the website and API hosts
   (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com` and
   `api-staging.zenbujapanese.com`). The code reads them from `src/shared/hosts.ts`, which the build
-  fills in, and the manifest's `homepage_url` is the website. Nothing else writes a Zenbu host. No
-  API host is in `host_permissions` until the extension calls one (#961).
+  fills in, and the manifest's `homepage_url` is the website. Nothing in `apps/extension` writes
+  the website or API host. The core can: `detail/links.ts` writes the website's, and #956's
+  language data host is `https://data.zenbujapanese.com`; a bundle that takes the website's from
+  the core fails the staging package's check (#958). No API host is in `host_permissions` until
+  the extension calls one (#961).
 - **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
   `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
   package, from the production build, for the owner to upload (#972). Agents never upload to the
@@ -56,7 +61,7 @@ outside the first version.
   store zip with a `key` or an unpacked one whose `key` gives another ID, a zip missing a page or
   a file the manifest names, one holding the test content script or a source map, and one whose
   `homepage_url` isn't its environment's website or whose files name the other environment's
-  hosts.
+  hosts, or any `.js` that still holds a `__ZENBU_` setting the build didn't fill in.
 
 ## Code layout
 

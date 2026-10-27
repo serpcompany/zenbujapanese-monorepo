@@ -4,7 +4,7 @@ export type Environment = (typeof environments)[number]
 
 export const defaultEnvironment: Environment = 'production'
 
-export type Hosts = { website: string; api: string }
+type Hosts = { website: string; api: string }
 
 export const hosts: Record<Environment, Hosts> = {
   production: { website: 'https://zenbujapanese.com', api: 'https://api.zenbujapanese.com' },
