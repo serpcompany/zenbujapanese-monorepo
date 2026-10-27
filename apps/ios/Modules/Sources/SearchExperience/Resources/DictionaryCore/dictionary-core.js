@@ -1005,8 +1005,9 @@
   }
 
   // src/sources/credits.ts
-  var creditClients = ["app", "website"];
+  var creditClients = ["app", "website", "extension"];
   var everyClient = creditClients;
+  var appAndWebsite = ["app", "website"];
   var ccBySa4 = { name: "CC BY-SA 4.0", url: "https://creativecommons.org/licenses/by-sa/4.0/" };
   var bsd3 = { name: "BSD-3-Clause", url: "https://opensource.org/license/bsd-3-clause" };
   var edrdgLicence = {
@@ -1093,7 +1094,7 @@
       url: "https://github.com/adno/wikipedia-word-frequency-clean",
       credit: "Wikipedia frequency data by Adam Nohejl and contributors.",
       license: bsd3,
-      clients: everyClient
+      clients: appAndWebsite
     },
     jiten: {
       id: "jiten",
@@ -1102,7 +1103,7 @@
       credit: "TV and movie, anime, manga, novel, visual novel, and video game frequency data by Jiten (jiten.moe), modified.",
       license: ccBySa4,
       notice: "The rankings from Jiten are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.",
-      clients: everyClient
+      clients: appAndWebsite
     },
     sudachi: {
       id: "sudachi",
@@ -1110,7 +1111,7 @@
       url: "https://github.com/WorksApplications/SudachiDict",
       credit: "Japanese word analysis by Sudachi.rs and SudachiDict.",
       license: { name: "Apache-2.0 · BSD-3-Clause · MIT" },
-      clients: everyClient
+      clients: appAndWebsite
     },
     kuromoji: {
       id: "kuromoji",
@@ -1322,6 +1323,7 @@
     checkExampleIndex(db);
     checkAttached(db, "word_index");
   }
+  var allAttachments = Object.keys(attachments);
 
   // src/search/database.ts
   var interruptedSearch = "The search was interrupted";

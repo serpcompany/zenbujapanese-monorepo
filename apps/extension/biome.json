@@ -35,7 +35,14 @@
   },
   "overrides": [
     {
-      "includes": ["src/**", "test-pages/**", "!src/worker/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "includes": [
+        "src/**",
+        "test-pages/**",
+        "!src/worker/**",
+        "!src/test/**",
+        "!**/*.test.ts",
+        "!**/*.test.tsx"
+      ],
       "linter": {
         "rules": {
           "style": {

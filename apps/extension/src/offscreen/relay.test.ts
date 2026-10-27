@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { DictionaryRequest } from '../shared/messages'
+import { installing } from '../test/fake-language-data'
 import { answer } from '../worker/answer'
 import { askWorker, type DictionaryWorker } from './relay'
 
@@ -14,7 +15,7 @@ class FakeWorker extends EventTarget implements DictionaryWorker {
   }
 
   postMessage(request: DictionaryRequest, [port]: Transferable[]) {
-    ;(port as MessagePort).postMessage(answer(request))
+    ;(port as MessagePort).postMessage(answer(request, installing))
   }
 }
 

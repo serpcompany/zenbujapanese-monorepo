@@ -12,14 +12,30 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
 | Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
-| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | In Chrome, by hand |
-| Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | In Chrome, by hand |
+| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; screenshots by the `verify-extension` skill (#952) |
+| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words.", with Show Welcome Tab while the dictionary isn't ready. | In Chrome, by hand |
+| Settings | "Settings", in a tab of its own: the dictionary's state, with Check for Updates (and a line saying why the last update didn't download, when it didn't), and the Credits: each source the extension uses, its credit, and its license, from the core's list. | `src/shared/credits.interaction.test.tsx`; in Chrome, by hand |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`).
 
+## First run
+
+Installing the extension opens the welcome tab once and starts downloading the dictionary, about
+237 MB. Closing the tab doesn't stop it. A download cut by a closed browser or a lost connection
+goes on from where it was, and a damaged file fails with why, with Try Again. Once the dictionary
+is in, the extension works offline (`src/worker/installer.test.ts`).
+
+## Updates
+
+When the browser starts, once a day, and on Settings' Check for Updates, the extension looks for
+a newer dictionary and downloads only what changed. The learner keeps looking words up from the
+dictionary they have until the new one is ready; an update that fails leaves it in place
+(`src/worker/installer.test.ts`, `src/service-worker/language-data-updates.test.ts`).
+
 ## Not built yet
 
-Looking words up, the word popup on a page, saving, and translating aren't built. The release
-build adds nothing to the pages a learner reads.
+The dictionary answers lookups, but no surface asks it yet: the word popup on a page, underlining,
+Word Detail, saving, and translating aren't built. The release build adds nothing to the pages a
+learner reads.

@@ -9,7 +9,7 @@ const fromPackage = (path: string) => fileURLToPath(new URL(path, new URL('..', 
 
 const outputFolders: Record<Variant, string> = { release: 'dist', test: 'dist-test' }
 
-const pages = ['side-panel', 'popup', 'settings']
+const pages = ['side-panel', 'popup', 'settings', 'welcome']
 
 const isShadowRootStylesheet = (file: string) =>
   file.split('?')[0] === fromPackage('src/styles/shadow.css')

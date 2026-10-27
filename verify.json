@@ -549,9 +549,9 @@
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$)",
+        "testCode": "(\\.test\\.tsx?$|^src/test/)",
         "entries": [
-          "^src/pages/(side-panel|popup|settings)\\.tsx$",
+          "^src/pages/(side-panel|popup|settings|welcome)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
@@ -561,7 +561,7 @@
         ],
         "runtime": {
           "path": "^src/",
-          "pathNot": "(\\.test\\.tsx?$)"
+          "pathNot": "(\\.test\\.tsx?$|^src/test/)"
         },
         "rules": [
           {
@@ -593,6 +593,7 @@
               "path": "^(src|test-pages)/",
               "pathNot": [
                 "^src/worker/",
+                "^src/test/",
                 "(\\.test\\.tsx?$)"
               ]
             },
@@ -612,6 +613,7 @@
               "path": "^(src|test-pages)/",
               "pathNot": [
                 "^src/worker/",
+                "^src/test/",
                 "(\\.test\\.tsx?$)"
               ]
             },
@@ -636,7 +638,7 @@
             "comment": "The service worker, the offscreen document, and the dictionary worker draw nothing, so nothing they import, however indirectly, loads React or @zenbu/ui (docs/agents/extension.md, Layers).",
             "from": {
               "path": "^src/(service-worker|offscreen|worker)/",
-              "pathNot": "(\\.test\\.tsx?$)"
+              "pathNot": "(\\.test\\.tsx?$|^src/test/)"
             },
             "to": {
               "path": [

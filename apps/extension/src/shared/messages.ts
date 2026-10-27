@@ -1,6 +1,25 @@
-export type DictionaryRequest = { type: 'ping' }
+import type { PopupCard } from '@zenbu/dictionary-core/cards/popup-card'
+import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
+import type { KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
+import type { DataState } from './data-state'
 
-export type DictionaryAnswer = { type: 'pong'; from: 'dictionary-worker' }
+export type DictionaryRequest =
+  | { type: 'ping' }
+  | { type: 'state' }
+  | { type: 'update' }
+  | { type: 'segment'; text: string }
+  | { type: 'popup'; languageReferenceID: string; frequency: readonly string[] }
+  | { type: 'word'; entSeq: number }
+  | { type: 'kanji'; character: string }
+
+export type DictionaryAnswer =
+  | { type: 'pong'; from: 'dictionary-worker' }
+  | { type: 'state'; data: DataState }
+  | { type: 'not-ready'; data: DataState }
+  | { type: 'segment'; tokens: SegmentedToken[]; romaji: string | null }
+  | { type: 'popup'; card: PopupCard | null }
+  | { type: 'word'; rows: WordRows | null }
+  | { type: 'kanji'; rows: KanjiRows | null }
 
 export type Failure = { type: 'failed'; reason: string }
 

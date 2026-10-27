@@ -1,4 +1,5 @@
 import type { WordCard } from '../cards/card'
+import type { PopupCard } from '../cards/popup-card'
 import type { SegmentedToken } from '../cards/segmentation'
 import { examplesPerPage } from '../detail/examples'
 import type { FormExampleRows, KanjiRows, WordExampleRows, WordRows } from '../detail/rows'
@@ -25,6 +26,7 @@ import { bundledFrequency } from './frequency'
 import { readKanji } from './kanji'
 import type { KanjiData } from './kanji-data'
 import { formLookup } from './lookup'
+import { bundledFrequencyLists, readPopupCard } from './popup-card'
 import type { RetiredEntries } from './retired'
 import { primaryExamplesEntry, resultsExampleCount, resultsExamples } from './search-examples'
 import { readWordCards } from './word-cards'
@@ -35,6 +37,7 @@ import {
   exampleLinkEntSeqs,
   exampleRows,
   examplesEntries,
+  type SegmentedText,
   screenAccent,
   segmentText,
   senseExampleRows,
@@ -422,6 +425,19 @@ export class Dictionary {
   }
 
   segment(text: string): SegmentedToken[] {
+    return this.segmentation(text).tokens
+  }
+
+  segmentation(text: string): SegmentedText {
     return segmentText(this.db, text, this.linking)
+  }
+
+  popupCard(languageReferenceID: string, packIds: readonly string[]): PopupCard | null {
+    return readPopupCard(
+      this.db,
+      this.kanjiData,
+      languageReferenceID,
+      bundledFrequencyLists(this.db, packIds)
+    )
   }
 }

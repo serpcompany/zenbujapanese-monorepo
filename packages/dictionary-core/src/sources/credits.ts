@@ -1,4 +1,4 @@
-const creditClients = ['app', 'website'] as const
+const creditClients = ['app', 'website', 'extension'] as const
 
 type CreditClient = (typeof creditClients)[number]
 
@@ -23,6 +23,7 @@ interface CreditsShown {
 }
 
 const everyClient: readonly CreditClient[] = creditClients
+const appAndWebsite: readonly CreditClient[] = ['app', 'website']
 const ccBySa4 = { name: 'CC BY-SA 4.0', url: 'https://creativecommons.org/licenses/by-sa/4.0/' }
 const bsd3 = { name: 'BSD-3-Clause', url: 'https://opensource.org/license/bsd-3-clause' }
 const edrdgLicence = {
@@ -113,7 +114,7 @@ export const sourceCredits = {
     url: 'https://github.com/adno/wikipedia-word-frequency-clean',
     credit: 'Wikipedia frequency data by Adam Nohejl and contributors.',
     license: bsd3,
-    clients: everyClient
+    clients: appAndWebsite
   },
   jiten: {
     id: 'jiten',
@@ -124,7 +125,7 @@ export const sourceCredits = {
     license: ccBySa4,
     notice:
       'The rankings from Jiten are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.',
-    clients: everyClient
+    clients: appAndWebsite
   },
   sudachi: {
     id: 'sudachi',
@@ -132,7 +133,7 @@ export const sourceCredits = {
     url: 'https://github.com/WorksApplications/SudachiDict',
     credit: 'Japanese word analysis by Sudachi.rs and SudachiDict.',
     license: { name: 'Apache-2.0 · BSD-3-Clause · MIT' },
-    clients: everyClient
+    clients: appAndWebsite
   },
   kuromoji: {
     id: 'kuromoji',

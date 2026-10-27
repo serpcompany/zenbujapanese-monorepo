@@ -48,7 +48,7 @@ _Avoid_: studying, in progress, a "Learning list" (it's a state, not a list)
 
 **Word card**:
 The short form of a dictionary entry, keyed by Language Reference ID, that an app without the
-language data shows.
+language data shows, and that the browser extension's word popup reads.
 _Avoid_: flashcard, entry, word page
 
 **Browser extension**:

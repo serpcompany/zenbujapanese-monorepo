@@ -8,6 +8,8 @@ draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in
 `src/shared/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup).
+How the dictionary worker downloads the language data, keeps it current, and answers from it is in
+[`extension-language-data.md`](extension-language-data.md).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -15,7 +17,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, and Geist. No content script yet. |
+| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker with `sqlite3.wasm`, and Geist. No content script yet. |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
@@ -31,13 +33,14 @@ outside the first version. The Store listing, its ID, and the version and builds
 
 | Folder | What it holds |
 | --- | --- |
-| `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`). |
+| `src/pages/` | The side panel, the toolbar popup, the Settings page (the manifest's `options_ui`, opened in a tab), and the welcome tab. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and opens the welcome tab on install and asks for updates (`language-data-updates.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
-| `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
+| `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
-| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
+| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, the data's status, and the credits. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
+| `src/test/` | Helpers only tests import: a fake of the language-data bucket, file storage, and the database pool (`fake-language-data.ts`). The layer rules treat it as test code. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
 
@@ -116,7 +119,9 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again.
+  again; the welcome tab's progress, ready, failed, and Try Again, and the credits; and the
+  language data's download, resume, checks, and updates
+  ([`extension-language-data.md`](extension-language-data.md), Checks).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
