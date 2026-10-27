@@ -46,7 +46,8 @@ export function askWorker(
     const run: Running = {
       worker,
       started: new Promise<void>(resolve => {
-        worker.addEventListener('message', () => {
+        worker.addEventListener('message', event => {
+          if ((event as MessageEvent).data !== 'started') return
           run.hasStarted = true
           resolve()
         })

@@ -52,6 +52,15 @@ describe('askWorker', () => {
     await expect(asked).resolves.toEqual(pong)
   })
 
+  it("doesn't take the worker's error report for its start", async () => {
+    const worker = new WorkerThatAnswersOnceStarted()
+    const asked = askWorker(() => worker, 1_000)(ping)
+    const report = { target: 'service-worker', errorReport: [{}, []] }
+    worker.dispatchEvent(new MessageEvent('message', { data: report }))
+    setTimeout(() => worker.start())
+    await expect(asked).resolves.toEqual(pong)
+  })
+
   it('fails every request, not only the first, when the worker cannot start', async () => {
     const startWorker = vi.fn(() => new WorkerThatFailsToStart())
     const ask = askWorker(startWorker)

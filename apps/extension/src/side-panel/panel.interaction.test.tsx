@@ -200,7 +200,7 @@ describe('SidePanel', () => {
     expect(emptyTitles()).toEqual([labels.empty.translate.title])
   })
 
-  it('offers Try Again when the dictionary failed, and shows the tab once it is ready', async () => {
+  it('offers Try again when the dictionary failed, and shows the tab once it is ready', async () => {
     const host = fakeHost()
     const again = await draw(host, { state: 'failed', reason: 'offline' })
     const tryAgain = () => shown('button').find(each => each.textContent === labels.tryAgain)
