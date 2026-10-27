@@ -1,3 +1,4 @@
+import { ConnectionClosedError, TargetCloseError } from 'puppeteer-core'
 import { readJson, writeAtomically } from './files.mjs'
 import { youtubeLedgerPath } from './paths.mjs'
 
@@ -85,13 +86,22 @@ export function note429(url, now = Date.now()) {
   if (isYouTube(url)) saveLedger({ ...readLedger(), last429: new Date(now).toISOString() })
 }
 
-export async function holdToYouTubeBudget(session, log) {
-  session.on('Fetch.requestPaused', ({ requestId, request, resourceType }) => {
-    const reason = decide(request.url, resourceType)
-    if (!reason) return session.send('Fetch.continueRequest', { requestId }).catch(() => {})
-    log(`[budget] refused ${request.url.slice(0, 200)}: ${reason}`)
-    return session.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' })
+const closed = error => error instanceof TargetCloseError || error instanceof ConnectionClosedError
+
+export function answerPaused(session, log, { requestId, request, resourceType }) {
+  const reason = decide(request.url, resourceType)
+  if (reason) log(`[budget] refused ${request.url.slice(0, 200)}: ${reason}`)
+  const answer = reason
+    ? session.send('Fetch.failRequest', { requestId, errorReason: 'BlockedByClient' })
+    : session.send('Fetch.continueRequest', { requestId })
+  return answer.catch(error => {
+    if (!closed(error))
+      log(`[budget] could not answer ${request.url.slice(0, 200)}: ${error.message}`)
   })
+}
+
+export async function holdToYouTubeBudget(session, log) {
+  session.on('Fetch.requestPaused', paused => answerPaused(session, log, paused))
   session.on('Network.responseReceived', ({ response }) => {
     if (response.status === 429) note429(response.url)
   })

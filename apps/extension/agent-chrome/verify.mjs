@@ -5,6 +5,7 @@ import {
   dictionaryLabels,
   downloadReleaseFile,
   extensionPages,
+  releaseCheckFailures,
   testPage
 } from '../e2e/expected.ts'
 import { startLocalServer } from '../e2e/local-server.ts'
@@ -107,9 +108,7 @@ export async function verifyExtension({ name, skipBuild = false } = {}) {
       (context, result, failures) => drive(context, result, failures, server, folder)
     )
     const languageData = result.results?.languageData
-    if (languageData && languageData.fileSha256 !== languageData.pinnedSha256) {
-      failures.push('the downloaded file does not match the manifest SHA-256')
-    }
+    if (languageData) failures.push(...releaseCheckFailures(languageData))
     const report = {
       folder,
       ...result,

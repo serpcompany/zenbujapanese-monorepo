@@ -1,4 +1,4 @@
-import { checkedReleaseFile, downloadReleaseFile } from './expected.ts'
+import { checkedReleaseFile, downloadReleaseFile, releaseCheckFailures } from './expected.ts'
 import { expect, extensionUrl, test } from './fixtures.ts'
 
 test('an extension page downloads releases.json, the pinned manifest, and a file from the local server, and each SHA-256 matches', async ({
@@ -11,7 +11,6 @@ test('an extension page downloads releases.json, the pinned manifest, and a file
     release: extension.server.release.release,
     name: checkedReleaseFile
   })
-  expect(check.manifestSha256).toBe(check.listedSha256)
-  expect(check.fileSha256).toBe(check.pinnedSha256)
+  expect(releaseCheckFailures(check)).toEqual([])
   expect(check.bytes).toBeGreaterThan(0)
 })

@@ -1,9 +1,18 @@
+import { ProtocolError, TargetCloseError } from 'puppeteer-core'
 import { describe, expect, it } from 'vitest'
 import { isolateHarness } from './test-env.mjs'
 
 await isolateHarness()
-const { decide, emptyLedger, note429, readLedger, recorded, refusal, youtubeRequestKind } =
-  await import('./youtube-budget.mjs')
+const {
+  answerPaused,
+  decide,
+  emptyLedger,
+  note429,
+  readLedger,
+  recorded,
+  refusal,
+  youtubeRequestKind
+} = await import('./youtube-budget.mjs')
 
 const minute = 60_000
 const now = Date.parse('2026-10-28T12:00:00Z')
@@ -80,5 +89,28 @@ describe('decide', () => {
     expect(readLedger().last429).toBeNull()
     note429('https://www.youtube.com/watch?v=x', now)
     expect(decide('https://www.youtube.com/api/timedtext?v=x', 'XHR', now + 1)).toContain('429')
+  })
+})
+
+describe('answerPaused', () => {
+  const paused = { requestId: '1', request: { url: 'https://www.youtube.com/watch?v=x' } }
+  const answer = async error => {
+    note429(paused.request.url)
+    const lines = []
+    const session = { send: async () => Promise.reject(error) }
+    await answerPaused(session, line => lines.push(line), { ...paused, resourceType: 'Document' })
+    return lines
+  }
+
+  it('ignores a refusal whose tab has closed', async () => {
+    const lines = await answer(new TargetCloseError('Session closed.'))
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toContain('[budget] refused')
+  })
+
+  it('logs any other failure to answer instead of throwing', async () => {
+    const lines = await answer(new ProtocolError('Invalid InterceptionId.'))
+    expect(lines[1]).toContain('could not answer')
+    expect(lines[1]).toContain('Invalid InterceptionId.')
   })
 })

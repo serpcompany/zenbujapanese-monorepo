@@ -145,9 +145,9 @@ Playwright's Chromium, unlike branded Chrome 137 and later, still honors the swi
   and `JLPTLevelPack.sqlite3` from the local server, and each SHA-256 matches.
 - **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1`, and the
   `outsideRequests` fixture fails any test whose context asks anything but the local server and
-  this extension. `outside-requests.spec.ts` asks `example.com` from the service worker and is
-  marked to fail, so it passes only while the guard catches it. A page that logs an error, or
-  throws, fails its test too.
+  this extension. `outside-requests.spec.ts` asks `example.com` from the service worker, waits
+  for the guard to record it, then clears it, so it passes only while the guard catches it. A
+  page that logs an error, or throws, fails its test too.
 
 The local server (`e2e/local-server.ts`) serves the test pages and the language-data bucket's
 layout from the checkout: `releases.json`, written from `language-data/releases/` up to the

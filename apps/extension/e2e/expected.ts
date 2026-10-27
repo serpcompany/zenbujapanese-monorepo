@@ -59,6 +59,17 @@ export type ReleaseCheck = {
   bytes: number
 }
 
+export function releaseCheckFailures(check: ReleaseCheck): string[] {
+  return [
+    ...(check.manifestSha256 === check.listedSha256
+      ? []
+      : ['the manifest does not match the SHA-256 releases.json lists']),
+    ...(check.fileSha256 === check.pinnedSha256
+      ? []
+      : ['the downloaded file does not match the manifest SHA-256'])
+  ]
+}
+
 export async function downloadReleaseFile({
   base,
   release,
