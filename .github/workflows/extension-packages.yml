@@ -1,0 +1,104 @@
+name: Extension packages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/extension/**
+      - packages/ui/**
+      - packages/dictionary-core/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .node-version
+      - .github/workflows/extension-packages.yml
+  pull_request:
+    paths:
+      - apps/extension/**
+      - packages/ui/**
+      - packages/dictionary-core/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .node-version
+      - .github/workflows/extension-packages.yml
+  workflow_dispatch:
+
+concurrency:
+  group: extension-packages-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
+      - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+      - name: Build for staging
+        working-directory: apps/extension
+        run: pnpm build
+        env:
+          ZENBU_ENVIRONMENT: staging
+      - name: Delete the staging build's source maps
+        working-directory: apps/extension
+        run: find dist -name '*.map' -delete
+      - name: Zip the staging package, with the key
+        working-directory: apps/extension
+        run: pnpm package unpacked dist "$RUNNER_TEMP/packages/zenbujapanese-extension-staging.zip"
+      - name: Check the staging package
+        working-directory: apps/extension
+        run: pnpm check-package unpacked staging "$RUNNER_TEMP/packages/zenbujapanese-extension-staging.zip"
+      - name: Build for production
+        working-directory: apps/extension
+        run: pnpm build
+        env:
+          ZENBU_ENVIRONMENT: production
+          ZENBU_SENTRY_ENVIRONMENT: production
+      - name: Upload the production build's source maps to Sentry
+        if: github.ref == 'refs/heads/main'
+        working-directory: apps/extension
+        run: pnpm run --if-present upload-source-maps dist
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      - name: Delete the production build's source maps
+        working-directory: apps/extension
+        run: find dist -name '*.map' -delete
+      - name: Zip the Chrome Web Store package, without the key
+        working-directory: apps/extension
+        run: pnpm package store dist "$RUNNER_TEMP/packages/zenbujapanese-extension-store.zip"
+      - name: Check the Chrome Web Store package
+        working-directory: apps/extension
+        run: pnpm check-package store production "$RUNNER_TEMP/packages/zenbujapanese-extension-store.zip"
+      - name: Keep the staging package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: zenbujapanese-extension-staging-${{ github.sha }}
+          path: ${{ runner.temp }}/packages/zenbujapanese-extension-staging.zip
+          if-no-files-found: error
+          retention-days: 30
+      - name: Keep the Chrome Web Store package
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: zenbujapanese-extension-store-${{ github.sha }}
+          path: ${{ runner.temp }}/packages/zenbujapanese-extension-store.zip
+          if-no-files-found: error
+          retention-days: 30
