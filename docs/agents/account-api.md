@@ -369,7 +369,7 @@ are in `src/db/schema.ts`:
 - `word_notes`, `photos` (shown, emptied, or deleted), `photo_words`, `profile_photos`,
   `learner_settings`, and `recent_searches`: #867's entities, each with its version;
   `forgotten_versions`: the highest version and journal sequence forgotten of each; `photo_files`:
-  each file an account holds, by SHA-256, its R2 key, and when an app with only `profile` sent it;
+  each file an account holds by SHA-256, its R2 key, and when an app without `photos:write` sent it;
   `photo_file_deletions`: the keys to delete ([`account-photos.md`](account-photos.md));
 - `sync_changes`: the journal, read by account and sequence, or by account, kind, and sequence;
 - `sync_mutations`: each sync mutation's result, by account and the client's mutation ID;
