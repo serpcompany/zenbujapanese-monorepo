@@ -5,10 +5,11 @@ repository to read the shared language data (ADR 0006) and replaces the 1.1.0 pr
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
 draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in each surface's
-`labels.ts`: `src/shared/labels.ts` for what several share, `src/popup/labels.ts`, and
+`labels.ts`: `src/shared/labels.ts` for what several share, `src/side-panel/labels.ts`, and
 `src/settings/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
-behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup).
+behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
+panel, Word popup).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -38,7 +39,8 @@ This Site asks Chrome for one site with `chrome.permissions.request`.
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and answers and passes on the settings (`settings.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), answers and passes on the settings (`settings.ts`), and opens the side panel on a route (`side-panel.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
@@ -101,6 +103,34 @@ root, and draws inside it:
   set to the surface, so a dialog or menu portals into the shadow root, where its styles are.
 - **`.dark` follows the system setting** on the surface, never on the page.
 
+### The side panel
+
+The panel draws its header, the tab bar, and the Back row over a page; a tab or a page draws only
+its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, label, icon, and
+`Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
+`pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
+
+- **`openPanel(route)` opens it, from a click.** An extension page, the popup, or a content
+  script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
+  in response to a user gesture, and the gesture lasts through one message only if the service
+  worker calls `chrome.sidePanel.open` before it awaits anything: checked in Chrome 156 on
+  2026-10-28 from a content script, an extension page in a tab, and the popup, and refused after
+  awaiting `chrome.storage`, `chrome.windows.getLastFocused`, or a timer. So the service worker
+  (`src/service-worker/side-panel.ts`) calls `open` first, on the sender tab's window or, from
+  the popup, the current one. Then it saves the route in `chrome.storage.session` under
+  `sidePanel.route.<windowId>` and sends `{ target: 'side-panel', windowId, route }`.
+- **The panel takes a route once.** An open panel takes the message; one still loading reads the
+  key. It listens before it reads, and removes the key when it takes a route. Opening an open
+  panel doesn't reload it. When Chrome refuses to open the panel, the service worker removes the
+  key and answers `{ type: 'failed', reason }`.
+- **The last tab** is `sidePanel.lastTab` in `chrome.storage.local` (the manifest asks for
+  `storage`), `video` until a tab is chosen. Nothing syncs.
+- **The test page** (`{ page: 'test' }`) is the test build's: `isPanelRoute` refuses it unless
+  `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
+- **Before the dictionary is ready,** while `useDataState()` says it is checking, downloading, or
+  failed, the panel draws `DictionaryProgress` (`src/shared/dictionary-progress.tsx`) instead of
+  the tabs.
+
 ## Test pages
 
 `pnpm test-pages` serves `hostile.html`, whose styles fight the extension (a 10px root font size,
@@ -144,11 +174,19 @@ release build has no content script; `build/manifest.test.ts` checks that.
   them, each behavior their [product docs](../../apps/extension/docs/product/index.md) list.
   The popup and Settings in a real Chrome, at 420 pixels wide with no sideways scroll, wait for
   #952's Playwright specs.
+  For the side panel: routes and tab stacks; the service worker calling `open` before it
+  awaits anything, handing the route over, and leaving none when Chrome refuses; and, in
+  happy-dom, the five tabs and their empty states, the arrow keys, pages over a tab and Back, the
+  last tab, the sign-up links, the dictionary progress, and `openPanel` through a fake Chrome to
+  the panel, closed and open.
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the side panel and the test
-  surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
-  again, and on both test pages open the menu and the dialog, Tab through it, and close it with
-  Esc and with a click outside. Until #952 moves it into the repository, agents use the agent
+  Settings in light and dark, see "The dictionary is ready." from the test surface, close the
+  offscreen document from `chrome://extensions` (Inspect views) and check again, and on both
+  test pages open the menu and the dialog, Tab through it, and close it with Esc and with a click
+  outside. Open the side panel with `openPanel` from a click, closed and open, and check that
+  nothing scrolls sideways at 320 px. Check it in the side panel itself: in a background tab,
+  `side-panel.html` waits for the tab to come to the front before it hides the tab it left.
+  Until #952 moves it into the repository, agents use the agent
   Chrome harness in the main checkout's `tmp/agent/agent-chrome`, whose daemon must resume the
   targets it attaches to, or the dictionary worker stays paused and every request fails after
   10 seconds (#1057). Proof goes under

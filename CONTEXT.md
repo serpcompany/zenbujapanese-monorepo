@@ -57,6 +57,11 @@ popup, Settings page, and what it draws on the pages a learner reads. The app's 
 extension, `ZenbuShare`, is another thing.
 _Avoid_: extension (alone, where the Share extension could be meant), plugin, add-on
 
+**Side panel**:
+The browser extension's panel beside the page, Chrome's side panel: a tab bar with Video,
+Translate, Images, Words, and Recent, each tab with its own pages, such as a word's.
+_Avoid_: sidebar, drawer, popup (the toolbar popup and the Word popup are other things)
+
 **Word popup**:
 What the browser extension shows over a page for the word a learner points at.
 _Avoid_: word card (a Word card is the short entry an app without the data shows), tooltip
