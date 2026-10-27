@@ -177,7 +177,8 @@ export class EmbeddedPresentation {
       request.results,
       request.exampleCount,
       request.learner,
-      this.frequency
+      this.frequency,
+      character => this.kanji.row(character)?.meanings
     )
   }
 

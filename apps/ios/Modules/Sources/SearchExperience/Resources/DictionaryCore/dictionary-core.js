@@ -2091,10 +2091,14 @@
   }
   var discoveredWordLimit = 12;
   var primary = (items, headword, query) => items.find((item) => headword(item) === query) ?? items[0];
+  var noKanjiMeanings = () => void 0;
+  function kanjiSummary(meanings, found) {
+    return meanings?.length ? meanings.join(", ") : found?.entrySummary ?? "Kanji detail";
+  }
   function primaryItem(results, query) {
     return primary(results.items, (item) => item.entry.headword, normalizeQuery(query));
   }
-  function resultsLayout(rawQuery, results, exampleCount2, pickedKanji = false) {
+  function resultsLayout(rawQuery, results, exampleCount2, pickedKanji = false, kanjiMeanings = noKanjiMeanings) {
     const query = normalizeQuery(rawQuery);
     const leadingOnly = pickedKanji && graphemeCount(query) === 1;
     const singleKanji = isKanjiCharacter(query);
@@ -2117,7 +2121,7 @@
       kanji: singleKanji && !isDiscovered ? {
         character: query,
         label: "KANJI",
-        summary: found?.entrySummary ?? "Kanji detail",
+        summary: kanjiSummary(kanjiMeanings(query), found),
         entryId: found?.id ?? null
       } : null,
       primary: found,
@@ -4349,8 +4353,8 @@ ${sense.noteText}` : sense.meaning
       }
     };
   }
-  function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency) {
-    const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.pickedKanji);
+  function learnerResultsScreen(rawQuery, results, exampleCount2, learner2, frequency, kanjiMeanings) {
+    const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.pickedKanji, kanjiMeanings);
     if (layout.isEmpty) return { state: "noResults", query: layout.query, ...noMatches };
     const known = new Set(learner2.known);
     const learning = new Set(learner2.learning);
@@ -4526,7 +4530,8 @@ ${sense.noteText}` : sense.meaning
         request.results,
         request.exampleCount,
         request.learner,
-        this.frequency
+        this.frequency,
+        (character) => this.kanji.row(character)?.meanings
       );
     }
     wordRows(request) {

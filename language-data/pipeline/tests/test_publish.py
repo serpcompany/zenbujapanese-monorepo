@@ -17,6 +17,7 @@ from publish_fixtures import (
     FILES_1,
     FILES_2,
     PublishTestCase,
+    data_part_key,
     pinned_of,
     quiet,
     sha256,
@@ -25,13 +26,20 @@ from refusal import Refusal
 
 
 class PublishTests(PublishTestCase):
-    def test_a_first_release_uploads_files_then_the_manifest_then_releases_json(self):
+    def test_a_first_release_uploads_files_then_the_manifest_then_releases_json_then_copies(self):
         result = self.publish(self.staged())
         data_key = f"files/{sha256(FILES_1['Data.json'])}/Data.json"
         notice_key = f"files/{sha256(FILES_1['NOTICE.txt'])}/NOTICE.txt"
         self.assertEqual(
             self.store.puts,
-            [data_key, notice_key, "releases/2026.10.1/manifest.json", "releases.json"],
+            [
+                data_key,
+                notice_key,
+                "releases/2026.10.1/manifest.json",
+                "releases.json",
+                data_part_key(FILES_1),
+                "releases/2026.10.1/compressed.json",
+            ],
         )
         manifest_body = self.store.objects["releases/2026.10.1/manifest.json"]["body"]
         manifest = json.loads(manifest_body)
@@ -137,6 +145,8 @@ class PublishTests(PublishTestCase):
                 f"files/{sha256(FILES_2['Data.json'])}/Data.json",
                 "releases/2026.11.1/manifest.json",
                 "releases.json",
+                data_part_key(FILES_2),
+                "releases/2026.11.1/compressed.json",
             ],
         )
         manifest = json.loads(self.store.objects["releases/2026.11.1/manifest.json"]["body"])
@@ -171,7 +181,10 @@ class PublishTests(PublishTestCase):
         self.store.before_put = None
         self.store.puts.clear()
         self.publish(self.staged(commit=COMMIT_B))
-        self.assertEqual(self.store.puts, ["releases.json"])
+        self.assertEqual(
+            self.store.puts,
+            ["releases.json", data_part_key(FILES_1), "releases/2026.10.1/compressed.json"],
+        )
         entry = self.store.index()["releases"][0]
         manifest_body = self.store.objects["releases/2026.10.1/manifest.json"]["body"]
         self.assertEqual(entry["manifest_sha256"], sha256(manifest_body))

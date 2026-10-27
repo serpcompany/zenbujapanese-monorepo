@@ -49,6 +49,14 @@ final class SearchResultsUITests: ZenbuUITestCase {
       list["with chips"] ?? 0, 0, "the results were drawn as \(drawn)", file: file, line: line)
   }
 
+  func testAOneKanjiSearchLeadsWithTheKanjisOwnMeanings() {
+    let app = launch()
+    search("日", in: app)
+    let kanji = waitFor(find("result.kanji-primary.日", in: app))
+    waitUntil(kanji, "label == %@", "日, KANJI, day, sun, Japan, counter for days")
+    assertOnScreen(kanji, in: app)
+  }
+
   func testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared() {
     let app = launch()
     search("japan", in: app)

@@ -7,6 +7,7 @@ from typing import Callable
 
 from bucket_objects import MUTABLE, check_object, file_key, manifest_key, put_immutable
 from committed_files import sha256_of
+from compressed_copies import publish_compressed_copies
 from object_store import PreconditionFailed, Store, StoreError
 from pinned_release import PROVENANCE, check_pinned
 from refusal import Refusal
@@ -152,10 +153,12 @@ def publish(
             log(f"Listed {release} in releases.json, after {after}")
     else:
         log(f"releases.json already lists {release}.")
+    compressed, compressed_uploads = publish_compressed_copies(store, staged, log=log)
     return {
         "release": release,
         "manifest_sha256": manifest_sha256,
         "previous_release": manifest["previous_release"],
-        "uploaded": uploaded,
+        "uploaded": [*uploaded, *compressed_uploads],
         "listed": listed,
+        "compressed": compressed,
     }

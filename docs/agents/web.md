@@ -298,8 +298,8 @@ dictionary's value in priority order (lower first, ranked before unranked), then
 order, then the Language Reference ID. Discovered Words keep their order.
 `searchResultsScreen` adds what `SearchResultsView` shows: the "View N Example Sentences" row, each
 row's meaning (the matched meaning for an English query), its chips, the "Search for「…」" reading
-refinement, the KANJI row that leads a one-kanji query with the meaning of the entry written as
-that kanji (chosen before the re-sort, "Kanji detail" without one), and No Dictionary Matches.
+refinement, the KANJI row that leads a one-kanji query with the kanji's own meanings (else its
+entry's meaning, or "Kanji detail"), and No Dictionary Matches.
 
 The page's component, `components/dictionary/search-results.tsx`, only renders it, every word at
 once (at most the app's 60). `results/links.ts` adds links (`linkSearchScreen`, shared by

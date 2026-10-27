@@ -2675,7 +2675,7 @@
         "character" : "静",
         "entry" : "fdfd4b61e060b36b5416c578de4bfec3",
         "label" : "KANJI",
-        "summary" : "stillness"
+        "summary" : "quiet"
       },
       "presentation" : "ranked",
       "query" : "静",
@@ -3698,7 +3698,7 @@
         "character" : "家",
         "entry" : "6f54be67247dcd72328d454c302c328a",
         "label" : "KANJI",
-        "summary" : "house, residence, dwelling, home"
+        "summary" : "house, home, family, professional, expert, performer"
       },
       "presentation" : "ranked",
       "query" : "家",
@@ -4856,7 +4856,7 @@
         "character" : "水",
         "entry" : "722c94624b09c10ca07a96c1cb03701f",
         "label" : "KANJI",
-        "summary" : "water (esp. cool or cold)"
+        "summary" : "water"
       },
       "presentation" : "ranked",
       "query" : "水",
@@ -6055,7 +6055,7 @@
         "character" : "前",
         "entry" : "e407cd7d59cb9766a7640cd0a5a29bfe",
         "label" : "KANJI",
-        "summary" : "in front (of), before (e.g. a building)"
+        "summary" : "in front, before"
       },
       "presentation" : "ranked",
       "query" : "前",
@@ -33045,7 +33045,7 @@
         "character" : "日",
         "entry" : "ad7071d79b9e8e3719514d8121d3699f",
         "label" : "KANJI",
-        "summary" : "Sunday"
+        "summary" : "day, sun, Japan, counter for days"
       },
       "presentation" : "ranked",
       "query" : "日",
@@ -34251,7 +34251,7 @@
         "character" : "見",
         "entry" : "0465f3b3a4d566d90f0ff3630385e18e",
         "label" : "KANJI",
-        "summary" : "looking, viewing"
+        "summary" : "see, hopes, chances, idea, opinion, look at, visible"
       },
       "presentation" : "ranked",
       "query" : "見",
@@ -35582,7 +35582,7 @@
         "character" : "上",
         "entry" : "70f4ab00bf38722867ef3ffafbdb70be",
         "label" : "KANJI",
-        "summary" : "above, over, up"
+        "summary" : "above, up"
       },
       "presentation" : "ranked",
       "query" : "上",
@@ -36843,7 +36843,7 @@
         "character" : "生",
         "entry" : "09c5bab8609be31bd6684c117066e971",
         "label" : "KANJI",
-        "summary" : "raw, uncooked, fresh"
+        "summary" : "life, genuine, birth"
       },
       "presentation" : "ranked",
       "query" : "生",

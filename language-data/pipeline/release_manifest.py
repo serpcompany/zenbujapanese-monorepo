@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from committed_files import CHUNK
+from json_schemas import check_against_schema
 from locations import LANGUAGE_DATA
 from refusal import Refusal
 
@@ -48,22 +49,7 @@ def validate(out: Path, schema_path: Path = SCHEMA_PATH) -> dict:
 
 
 def validate_manifest(manifest: dict, schema_path: Path = SCHEMA_PATH) -> None:
-    import jsonschema
-
-    schema = json.loads(schema_path.read_text())
-    jsonschema.Draft202012Validator.check_schema(schema)
-    errors = sorted(
-        jsonschema.Draft202012Validator(schema).iter_errors(manifest),
-        key=lambda e: list(e.absolute_path),
-    )
-    if errors:
-        raise Refusal(
-            "manifest.json doesn't match the schema:\n"
-            + "\n".join(
-                f"  {'/'.join(map(str, e.absolute_path)) or '(root)'}: {e.message}" for e in errors
-            )
-        )
-
+    check_against_schema(manifest, schema_path, "manifest.json")
     names = [f["name"] for f in manifest["files"]] + [s["name"] for s in manifest["sources"]]
     duplicates = sorted({name for name in names if names.count(name) > 1})
     if duplicates:
