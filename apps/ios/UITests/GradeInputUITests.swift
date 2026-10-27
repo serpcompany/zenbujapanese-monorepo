@@ -23,12 +23,12 @@ final class GradeInputUITests: ZenbuUITestCase {
     let header = find("grade.section.grade-1", in: app)
     waitUntil(header, "label == %@", "Grade 1, 80 kanji")
     tap(find("grade.kanji.日", in: app))
-    mark("Mark as Known", kanji: "日", in: app)
+    mark("Known", kanji: "日", in: app)
     openGrades(in: app)
     waitUntil(header, "label == %@", "Grade 1, 80 kanji, 1 known")
     assertTile("日", "value == 'Known'", in: app)
     closeInputPanel(in: app)
-    mark("Mark as Unknown", kanji: "日", in: app)
+    mark("Unknown", kanji: "日", in: app)
     openGrades(in: app)
     waitUntil(header, "label == %@", "Grade 1, 80 kanji")
     assertTile("日", "NOT (value == 'Known')", in: app)
@@ -112,11 +112,10 @@ final class GradeInputUITests: ZenbuUITestCase {
     if device != .mac { waitUntil(header, "value == 'Collapsed'") }
   }
 
-  private func mark(_ choice: String, kanji: String, in app: XCUIApplication) {
+  private func mark(_ status: String, kanji: String, in app: XCUIApplication) {
     let menu = find("kanji-detail.more-menu", in: app)
     tap(find("result.kanji-primary.\(kanji)", in: app), toShow: menu)
-    tap(menu)
-    tap(menuChoice(choice, in: app))
+    chooseStatus(status, from: menu, in: app)
     goBack(in: app)
     waitFor(find("search.results", in: app))
   }

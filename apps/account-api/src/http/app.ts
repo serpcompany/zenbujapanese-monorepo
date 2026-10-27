@@ -13,6 +13,7 @@ import { failureFields } from '../failure'
 import { accountRoutes } from './accounts'
 import type { AccountEnv } from './env'
 import { errorBody, errorCode, inErrorFormat } from './errors'
+import { kindReadRoutes } from './kind-reads'
 import { type PhotoRoutesFiles, photoBodyLimit, photoRoutes } from './photos'
 import {
   atMostAtOnce,
@@ -59,7 +60,7 @@ function isLocal(url: string): boolean {
 }
 
 const subscriptionPaths = [subscriptionPath, `${subscriptionPath}/*`] as const
-const accountPaths = ['/v1/me', '/v1/sync', '/v1/photos/*', ...subscriptionPaths] as const
+const accountPaths = ['/v1/me', '/v1/sync/*', '/v1/photos/*', ...subscriptionPaths] as const
 
 function forTheWebsite(response: Response): Response {
   const headers = new Headers(response.headers)
@@ -102,7 +103,7 @@ export function createApp(options: AppOptions) {
   app.on(['GET', 'PATCH'], '/v1/me', requireScope('profile'))
   app.delete('/v1/me', requireScope('account:delete'))
   app.use('/v1/me', perAccountLimit(requestsPerMinute.profile))
-  app.use('/v1/sync', perAccountLimit(requestsPerMinute.sync))
+  app.use('/v1/sync/*', perAccountLimit(requestsPerMinute.sync))
   const subscriptionLimit = perAccountLimit(requestsPerMinute.subscription)
   for (const path of subscriptionPaths) {
     app.use(path, requireScope('subscription'))
@@ -138,6 +139,7 @@ export function createApp(options: AppOptions) {
   )
 
   accountRoutes(app, options.accounts, options.deleteAccount, databaseReady, options.allowedOrigins)
+  kindReadRoutes(app, options.accounts)
   subscriptionRoutes(app, options.billing, options.allowedOrigins)
   webhookRoutes(app, options.billing)
   photoRoutes(app, options.photoFiles)

@@ -68,7 +68,11 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     reveal(find("account.credits", in: app), in: app)
     audit("Account, at its end", in: app, .allButTextSizes)
-    if pass.size == .largest { auditAlone("Account's rows, alone", "library", showing: "account.translations", pass) }
+    if pass.size == .largest {
+      auditAlone("Account's library rows, alone", "library", showing: "account.learning", pass)
+      auditAlone("Account's collection rows, alone", "collections", showing: "account.translations", pass)
+      auditAlone("Account's settings rows, alone", "settings", showing: "account.frequency-dictionaries", pass)
+    }
     auditAlone("Account, its about rows", "about", showing: "account.about", pass)
   }
 
@@ -89,6 +93,9 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     open(.account, in: app)
     openAccountRow("account.known-words", showing: find("known-words.empty", in: app), in: app)
     audit("Known Words, empty", in: app)
+    goBack(in: app)
+    openAccountRow("account.learning", showing: find("learning.empty", in: app), in: app)
+    audit("Learning, empty", in: app)
     goBack(in: app)
     openAccountRow("account.media-library", showing: find("media-library.empty", in: app), in: app)
     audit("Media Library, empty", in: app)

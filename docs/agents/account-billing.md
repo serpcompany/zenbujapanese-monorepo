@@ -152,8 +152,9 @@ The [API reference](../api/account-api.md) has every field and error code.
 
 `cloudDataPaths` in `src/http/subscription.ts` lists the routes that hold cloud data, and
 `requireCloudAccess` gates each, after the access token and before anything applies. Today they
-are `POST /v1/sync`, which every synced entity passes through, so a new entity is gated with no
-change here, and `/v1/photos/*`, which Hono matches for `/v1/photos` and every path under it, so
+are `/v1/sync/*`: `POST /v1/sync`, which every synced entity passes through, so a new entity is
+gated with no change here, and `GET /v1/sync/{entity}`, which the website reads them with; and
+`/v1/photos/*`, which Hono matches for `/v1/photos` and every path under it, so
 every photo file's upload and download ([`account-photos.md`](account-photos.md)). A test walks
 every route in the contract and fails on one neither under `cloudDataPaths` nor on its list of
 routes kept free (signing in, the profile, the subscription, the webhooks), so a new route must be
