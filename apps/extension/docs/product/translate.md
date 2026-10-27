@@ -39,24 +39,29 @@ Japanese or English…"; `src/translate/selection.test.ts` for where the selecti
 A card with the direction, such as **Japanese → English** or **English → Japanese**, the text as
 it was, its translation, "Translated on this device", and **Copy** and **Speak**. **Copy** copies
 the translation and then reads **Copied**. **Speak** reads the translation aloud in its language
-with the browser's voices. A new translation replaces the last one, and an answer that comes after
-**Clear** is dropped.
+with a voice on this computer, never one of Chrome's online voices, which would send the text to a
+server. With no such voice for the language, **Speak** is off and the card says "There's no
+English voice on this computer to speak it." (or Japanese). A new translation replaces the last
+one, and an answer that comes after **Clear** is dropped.
 
 Check: the tab's test, "…from Japanese to English", "translates English typed in the box to
-Japanese", "copies the translation…", "speaks the translation…", "replaces the last result…",
-and "drops an answer that comes after Clear".
+Japanese", "copies the translation…", "speaks the translation…", "turns Speak off…", "replaces
+the last result…", and "drops an answer that comes after Clear"; `src/translate/speech.test.ts`
+for the voice.
 
 ## Downloading and unavailable
 
 The first translation in a direction downloads Chrome's model for it, from that click on
-**Translate**: "Downloading Japanese for Translate… 42%" with a progress bar, then the
-translation. **Translate** waits while it downloads. If the download doesn't finish: "The download
-didn't finish. Try again." On a computer without the Translator: "Translate isn't available on
+**Translate**, which starts it straight away: "Downloading Japanese for Translate… 42%" with a
+progress bar, then the translation. **Translate** waits while it downloads. If the download
+doesn't finish, or makes no progress for a minute: "The download didn't finish. Try again.", and
+**Translate** tries again. On a computer without the Translator: "Translate isn't available on
 this computer.", and nothing is translated. Any other failure: "Translate didn't answer. Try
 again."
 
 Check: the tab's test, "downloads the model from the click…", "says Translate isn't available…",
-"says the download didn't finish…", and "says Translate didn't answer…".
+"says the download didn't finish…", and "says Translate didn't answer…";
+`src/service-worker/translation.test.ts`, "gives up on a download that makes no progress…".
 
 ## Not built yet
 

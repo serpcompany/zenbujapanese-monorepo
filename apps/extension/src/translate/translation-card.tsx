@@ -6,14 +6,14 @@ import {
   CardFooter,
   CardHeader
 } from '@zenbu/ui/components/card'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import type { Direction } from '../translation/messages'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
 
 export type Translated = { source: string; translation: string; direction: Direction }
 
-type CardServices = Pick<TranslateServices, 'copy' | 'speak'>
+type CardServices = Pick<TranslateServices, 'copy' | 'speak' | 'localVoice' | 'watchVoices'>
 
 export function TranslationCard({
   translated: { source, translation, direction },
@@ -23,6 +23,7 @@ export function TranslationCard({
   services: CardServices
 }) {
   const [copied, setCopied] = useState(false)
+  const voice = useSyncExternalStore(services.watchVoices, () => services.localVoice(direction.to))
   const copy = () =>
     services.copy(translation).then(
       () => setCopied(true),
@@ -41,6 +42,11 @@ export function TranslationCard({
         <p lang={direction.to} data-translation className="whitespace-pre-wrap text-base">
           {translation}
         </p>
+        {voice === null && (
+          <p data-no-voice className="text-xs text-muted-foreground">
+            {translateLabels.noVoice(direction.to)}
+          </p>
+        )}
       </CardContent>
       <CardFooter className="justify-between gap-2">
         <span className="text-xs text-muted-foreground">{translateLabels.onThisDevice}</span>
@@ -51,6 +57,7 @@ export function TranslationCard({
           <Button
             variant="outline"
             size="sm"
+            disabled={voice === null}
             onClick={() => services.speak(translation, direction.to)}
           >
             {translateLabels.speak}

@@ -1,6 +1,7 @@
 import { Button } from '@zenbu/ui/components/button'
 import { Textarea } from '@zenbu/ui/components/textarea'
 import { useRef, useState } from 'react'
+import type { PanelTabProps } from '../side-panel/route'
 import { translateLabels } from './labels'
 import { onDeviceServices, type TranslateServices } from './services'
 import { TranslationCard } from './translation-card'
@@ -42,7 +43,9 @@ function ResultView({ result, services }: { result: Result; services: TranslateS
   }
 }
 
-export function TranslateTab({ services = onDeviceServices }: { services?: TranslateServices }) {
+type TranslateTabProps = Partial<PanelTabProps> & { services?: TranslateServices }
+
+export function TranslateTab({ services = onDeviceServices }: TranslateTabProps) {
   const [text, setText] = useState('')
   const [selectionNotice, setSelectionNotice] = useState<Notice | null>(null)
   const { result, translate, clear } = useTranslation(services)

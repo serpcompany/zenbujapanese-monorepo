@@ -1,9 +1,14 @@
-import { act } from 'react'
+import { act, type ComponentType } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Failure } from '../shared/messages'
+import type { PanelTabProps } from '../side-panel/route'
 import type { TranslationAnswer, TranslatorState } from '../translation/messages'
-import { downloadTranslator, onDeviceTranslation } from '../translation/translator'
+import {
+  downloadTranslator,
+  onDeviceTranslation,
+  translatorAvailability
+} from '../translation/translator'
 import { translateLabels } from './labels'
 import type { TranslateServices } from './services'
 import { TranslateTab } from './translate-tab'
@@ -49,9 +54,12 @@ function servicesWith(selection: string | null = '') {
   const translateOnDevice = onDeviceTranslation()
   return {
     translate: vi.fn<TranslateServices['translate']>(request => translateOnDevice(request)),
+    availability: vi.fn<TranslateServices['availability']>(translatorAvailability),
     download: vi.fn<TranslateServices['download']>(downloadTranslator),
     readSelection: vi.fn(async () => selection),
     copy: vi.fn(async (_text: string) => {}),
+    localVoice: vi.fn<TranslateServices['localVoice']>(() => 'Kyoko'),
+    watchVoices: vi.fn(() => () => {}),
     speak: vi.fn()
   } satisfies TranslateServices
 }
@@ -92,6 +100,11 @@ async function showTab(services: TranslateServices) {
 }
 
 describe('the Translate tab', () => {
+  it('fits the side panel’s tab contract', () => {
+    const content: ComponentType<PanelTabProps> = TranslateTab
+    expect(content).toBe(TranslateTab)
+  })
+
   it('takes in the selection with Use Selection and translates it from Japanese to English', async () => {
     standInTranslator()
     const services = servicesWith('駅まで歩いて何分ですか？')
@@ -136,6 +149,21 @@ describe('the Translate tab', () => {
     await tab.click(translateLabels.translate)
     await tab.click(translateLabels.speak)
     expect(services.speak).toHaveBeenCalledWith('Where is the toilet?', 'en')
+    expect(tab.text('[data-no-voice]')).toBeUndefined()
+  })
+
+  it('turns Speak off, and says why, when no voice on this computer speaks the language', async () => {
+    standInTranslator()
+    const services = servicesWith()
+    services.localVoice.mockReturnValue(null)
+    const tab = await showTab(services)
+    await tab.type('トイレはどこですか')
+    await tab.click(translateLabels.translate)
+    expect(services.localVoice).toHaveBeenCalledWith('en')
+    expect(tab.button(translateLabels.speak)?.disabled).toBe(true)
+    expect(tab.text('[data-no-voice]')).toBe(
+      "There's no English voice on this computer to speak it."
+    )
   })
 
   it('downloads the model from the click, showing its progress, then shows the translation', async () => {
@@ -148,10 +176,12 @@ describe('the Translate tab', () => {
     expect(tab.progress()?.value).toBe(0.42)
     expect(tab.button(translateLabels.translate)?.disabled).toBe(true)
     expect(tab.card()).toBeNull()
+    expect(services.download).toHaveBeenCalledOnce()
+    expect(services.translate).not.toHaveBeenCalled()
     await act(async () => finishDownload())
     expect(tab.progress()).toBeNull()
     expect(tab.text('[data-translation]')).toBe('Where is the toilet?')
-    expect(services.download).toHaveBeenCalledOnce()
+    expect(services.translate).toHaveBeenCalledOnce()
     expect(Translator.create).toHaveBeenCalledTimes(2)
   })
 
@@ -167,14 +197,19 @@ describe('the Translate tab', () => {
     expect(Translator.create).not.toHaveBeenCalled()
   })
 
-  it('says the download didn’t finish when the model stays downloadable', async () => {
-    standInTranslator('downloadable')
+  it.each([
+    'downloadable',
+    'downloading'
+  ] as const)('says the download didn’t finish, and lets it be tried again, when the model stays %s', async state => {
+    standInTranslator(state)
     const services = servicesWith()
-    services.download.mockResolvedValue('downloadable')
+    services.download.mockResolvedValue(state)
     const tab = await showTab(services)
     await tab.type('トイレはどこですか')
     await tab.click(translateLabels.translate)
     expect(tab.notice()).toBe(translateLabels.notices.downloadFailed)
+    expect(tab.button(translateLabels.translate)?.disabled).toBe(false)
+    expect(services.translate).not.toHaveBeenCalled()
   })
 
   it('removes the result on Clear, and empties the box', async () => {

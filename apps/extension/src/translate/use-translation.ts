@@ -47,7 +47,9 @@ function resultOf(
   }
 }
 
-export function useTranslation(services: Pick<TranslateServices, 'translate' | 'download'>) {
+export function useTranslation(
+  services: Pick<TranslateServices, 'translate' | 'availability' | 'download'>
+) {
   const [result, setResult] = useState<Result>(none)
   const latest = useRef(0)
 
@@ -69,17 +71,15 @@ export function useTranslation(services: Pick<TranslateServices, 'translate' | '
       if (!direction) return show({ state: 'notice', notice: 'noLanguage' })
       show({ state: 'translating' })
       const request: TranslationRequest = { type: 'translate', direction, texts: [source] }
-      const answer = await services.translate(request)
-      if (!isLatest()) return
-      if (answer.type !== 'not-available' || answer.state === 'unavailable') {
-        return show(resultOf(answer, id, source, direction))
+      const here = await services.availability(direction).catch(() => null)
+      if (here === 'downloadable' || here === 'downloading') {
+        show({ state: 'downloading', fraction: 0 })
+        const downloaded = await services
+          .download(direction, fraction => show({ state: 'downloading', fraction }))
+          .catch(() => null)
+        if (downloaded === null) return show({ state: 'notice', notice: 'failed' })
+        if (downloaded !== 'available') return show(noticeFor(downloaded))
       }
-      show({ state: 'downloading', fraction: 0 })
-      const downloaded = await services
-        .download(direction, fraction => show({ state: 'downloading', fraction }))
-        .catch(() => null)
-      if (downloaded === null) return show({ state: 'notice', notice: 'failed' })
-      if (downloaded !== 'available') return show(noticeFor(downloaded))
       show(resultOf(await services.translate(request), id, source, direction))
     },
     [services]

@@ -7,30 +7,26 @@ import {
   type TranslatorState,
   translate
 } from '../translation/messages'
-import { downloadTranslator } from '../translation/translator'
+import { downloadTranslator, translatorAvailability } from '../translation/translator'
 import { readSelection } from './selection'
+import { onDeviceSpeech } from './speech'
 
 export type TranslateServices = {
   translate(request: TranslationRequest): Promise<TranslationAnswer | Failure>
+  availability(direction: Direction): Promise<TranslatorState>
   download(direction: Direction, onProgress: (fraction: number) => void): Promise<TranslatorState>
   readSelection(): Promise<string | null>
   copy(text: string): Promise<void>
+  localVoice(language: Language): string | null
+  watchVoices(onChange: () => void): () => void
   speak(text: string, language: Language): void
-}
-
-const voiceLanguages: Record<Language, string> = { ja: 'ja-JP', en: 'en-US' }
-
-function speak(text: string, language: Language) {
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = voiceLanguages[language]
-  speechSynthesis.cancel()
-  speechSynthesis.speak(utterance)
 }
 
 export const onDeviceServices: TranslateServices = {
   translate: request => translate(request),
+  availability: translatorAvailability,
   download: downloadTranslator,
   readSelection,
   copy: text => navigator.clipboard.writeText(text),
-  speak
+  ...onDeviceSpeech
 }

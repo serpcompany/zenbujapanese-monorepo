@@ -15,6 +15,7 @@ type Listener = (
 type Options = {
   sourceLanguage: string
   targetLanguage: string
+  signal?: AbortSignal
   monitor?(target: EventTarget): void
 }
 
@@ -61,7 +62,7 @@ function extension({ timeoutMs = 1_000, open = async () => {} } = {}) {
     ensureOpen: vi.fn(async () => {
       await open()
       if (offscreen.length === 0)
-        offscreen.push(answerTranslation(onDeviceTranslation(), timeoutMs) as Listener)
+        offscreen.push(answerTranslation(onDeviceTranslation(timeoutMs)) as Listener)
     })
   }
   const serviceWorker = [routeTranslation(offscreenDocument, toOffscreen) as Listener]
@@ -69,6 +70,7 @@ function extension({ timeoutMs = 1_000, open = async () => {} } = {}) {
 }
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -180,15 +182,32 @@ describe('a content script translates through the service worker and the offscre
       texts: ['Where is the toilet?']
     })
     expect(Translator.create).toHaveBeenCalledTimes(2)
+    const failed = await Translator.create.mock.results[0]?.value
+    expect(failed?.destroy).toHaveBeenCalledOnce()
   })
 
-  it('answers with a failure when the translator does not answer in time', async () => {
-    const { lines } = standInTranslator()
-    lines.mockReturnValue(new Promise(() => {}))
+  it.each([
+    'translating',
+    'making the translator'
+  ] as const)('answers with a failure when %s does not finish in time, then makes a new translator', async stuckAt => {
+    const { Translator, lines } = standInTranslator()
+    if (stuckAt === 'translating') lines.mockReturnValueOnce(new Promise(() => {}))
+    else Translator.create.mockReturnValueOnce(new Promise(() => {}))
     const { contentScript } = extension({ timeoutMs: 10 })
-    await expect(
-      translate(translating(japaneseToEnglish, 'トイレはどこですか'), contentScript)
-    ).resolves.toEqual({ type: 'failed', reason: 'The translator did not answer.' })
+    const toilet = translating(japaneseToEnglish, 'トイレはどこですか')
+    await expect(translate(toilet, contentScript)).resolves.toEqual({
+      type: 'failed',
+      reason: 'The translator did not answer.'
+    })
+    if (stuckAt === 'translating') {
+      const stuck = await Translator.create.mock.results[0]?.value
+      expect(stuck?.destroy).toHaveBeenCalledOnce()
+    }
+    await expect(translate(toilet, contentScript)).resolves.toEqual({
+      type: 'translated',
+      texts: ['Where is the toilet?']
+    })
+    expect(Translator.create).toHaveBeenCalledTimes(2)
   })
 
   it('answers with a failure when the offscreen document cannot open', async () => {
@@ -272,5 +291,31 @@ describe('downloadTranslator, which a page calls from a click', () => {
 
   it('says unavailable when the browser has no Translator', async () => {
     await expect(downloadTranslator(japaneseToEnglish, vi.fn())).resolves.toBe('unavailable')
+  })
+
+  it('gives up on a download that makes no progress for a minute, and stops it', async () => {
+    vi.useFakeTimers()
+    const { Translator } = standInTranslator({ 'ja-en': 'downloading' })
+    let progressed = (_loaded: number) => {}
+    let signal: AbortSignal | undefined
+    Translator.create.mockImplementation(options => {
+      const monitor = new EventTarget()
+      options.monitor?.(monitor)
+      signal = options.signal
+      progressed = loaded =>
+        monitor.dispatchEvent(Object.assign(new Event('downloadprogress'), { loaded }))
+      return new Promise(() => {})
+    })
+    const progress = vi.fn()
+    let state: TranslatorState | undefined
+    downloadTranslator(japaneseToEnglish, progress).then(answer => (state = answer))
+    await vi.advanceTimersByTimeAsync(59_000)
+    progressed(0.3)
+    await vi.advanceTimersByTimeAsync(59_000)
+    expect(state).toBeUndefined()
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(state).toBe('downloading')
+    expect(signal?.aborted).toBe(true)
+    expect(progress.mock.calls).toEqual([[0.3]])
   })
 })

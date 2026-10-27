@@ -13,6 +13,8 @@ export const translateLabels = {
   copy: 'Copy',
   copied: 'Copied',
   speak: 'Speak',
+  noVoice: (language: Language) =>
+    `There's no ${languageNames[language]} voice on this computer to speak it.`,
   direction: ({ from, to }: Direction) => `${languageNames[from]} → ${languageNames[to]}`,
   downloading: (fraction: number) =>
     `Downloading Japanese for Translate… ${Math.round(fraction * 100)}%`,

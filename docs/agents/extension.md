@@ -38,7 +38,7 @@ listing, its ID, and the version and builds that ship are #986's.
 | `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
-| `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), and its labels. |
+| `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
@@ -73,12 +73,16 @@ dictionary's listeners never answer it, nor the translation listeners a dictiona
 each direction once Chrome says it is `available`, keeps it, and translates each line, leaving a
 blank one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes
 nothing then; a translation that fails, or doesn't answer within 30 seconds, comes back as
-`{ type: 'failed', reason }`, and the next one makes a new Translator. A page's text never goes
-in an error's message.
+`{ type: 'failed', reason }`, and the offscreen document drops that Translator, destroying it, so
+the next one makes a new one. A page's text never goes in an error's message.
 
-Chrome downloads a model only from a click, so a page calls `downloadTranslator(direction,
-onProgress)` in that click, which reports the download's progress from 0 to 1 and answers the
-state, and then translates again through the offscreen document. The offscreen document
+Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
+page asks `translatorAvailability(direction)` itself in that click and, while the model is
+`downloadable` or `downloading`, calls `downloadTranslator(direction, onProgress)` at once, before
+any message. It reports the download's progress from 0 to 1 and answers the state; a download with
+no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
+through the offscreen document, which makes its own Translator once the model is `available`. The
+offscreen document
 translates with no click once the model is `available`: checked on 2026-10-27 in Chrome 156, in
 the headful agent Chrome, by sending a translation from the test content script's world, with no
 user gesture, in a Chrome just started. Each direction has its own model. The model is Chrome's,
@@ -149,9 +153,12 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   with the app's `WrittenLanguageTests` cases; a line from a content script through the service
   worker and the offscreen document and back, each way, its availability, one Translator for
   each direction, `not-available` with nothing made, each failure, and the listeners kept apart
-  from the dictionary's; `downloadTranslator`'s progress; Use Selection's reading; and, in
-  happy-dom, the Translate tab: Use Selection, both directions, Copy, Speak, the download's
-  progress then the result, the notices, Clear, an emptied box, and a late answer dropped.
+  from the dictionary's, a Translator dropped after a failure or a timeout; `downloadTranslator`'s
+  progress and its limit on a stalled download; Use Selection's reading; Speak's voice, only one
+  on this computer; and, in happy-dom, the Translate tab: its fit to the panel's tab props, Use
+  Selection, both directions, Copy, Speak and Speak with no local voice, the download started
+  before any message and its progress then the result, the notices, Clear, an emptied box, and a
+  late answer dropped.
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
