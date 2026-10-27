@@ -1,7 +1,7 @@
 'use client'
 
 import type { Example, ExampleToken } from '@zenbu/dictionary-core/detail/examples'
-import { fill } from '@zenbu/dictionary-core/detail/text'
+import { fill } from '@zenbu/dictionary-core/detail/template'
 import { cn } from 'cn'
 import { Fragment } from 'react'
 import { type LoadMore, LoadMoreFooter, type LoadMoreLabels, useLoadMore } from './load-more'

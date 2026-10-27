@@ -1,4 +1,4 @@
-import { templateParts } from '@zenbu/dictionary-core/detail/text'
+import { templateParts } from '@zenbu/dictionary-core/detail/template'
 import { Fragment, type ReactNode } from 'react'
 
 export function Fill({

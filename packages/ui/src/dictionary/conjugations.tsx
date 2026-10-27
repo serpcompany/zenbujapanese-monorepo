@@ -5,7 +5,8 @@ import type {
   ConjugationRow,
   Conjugations
 } from '@zenbu/dictionary-core/detail/conjugation'
-import { fill, graphemes } from '@zenbu/dictionary-core/detail/text'
+import { fill } from '@zenbu/dictionary-core/detail/template'
+import { graphemes } from '@zenbu/dictionary-core/detail/text'
 import { ChevronRightIcon, EqualIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Tabs, TabsList, TabsTrigger } from '../components/tabs'

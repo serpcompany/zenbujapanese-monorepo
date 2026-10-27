@@ -1,7 +1,7 @@
 'use client'
 
 import type { PitchAccent as PitchAccentData } from '@zenbu/dictionary-core/detail/pitch'
-import { fill } from '@zenbu/dictionary-core/detail/text'
+import { fill } from '@zenbu/dictionary-core/detail/template'
 import { Volume2Icon } from 'lucide-react'
 import { type OnUnsupported, speakJapanese } from './pronounce-button'
 

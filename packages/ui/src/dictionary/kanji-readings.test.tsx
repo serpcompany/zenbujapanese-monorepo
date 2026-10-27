@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { type KanjiReading, kanjiReadingText } from '@zenbu/dictionary-core/detail/kanji'
+import { Window } from 'happy-dom'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { KanjiReadings } from './kanji-readings'
@@ -53,15 +54,6 @@ function readings(kanji: KanjiCase): KanjiReading[] {
   }))
 }
 
-function shownText(html: string): string {
-  return html
-    .replace(/<span\b[^>]*\bdata-aid="romaji"[^>]*>[^<]*<\/span>/g, '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&#x27;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 interface RenderedRow {
   row: string
   href: string | null
@@ -70,17 +62,16 @@ interface RenderedRow {
 }
 
 function renderedRows(html: string): RenderedRow[] {
-  const opening = /<(a|div) ([^>]*data-kanji-reading="([^"]+)"[^>]*)>/g
-  const matches = [...html.matchAll(opening)]
-  return matches.map((match, index) => {
-    const [, tag, attributes, row] = match
-    const start = (match.index ?? 0) + match[0].length
-    const end = matches[index + 1]?.index ?? html.length
+  const { document } = new Window()
+  document.body.innerHTML = html
+  return [...document.querySelectorAll('[data-kanji-reading]')].map(row => {
+    for (const romaji of row.querySelectorAll('[data-aid="romaji"]')) romaji.remove()
+    for (const span of row.querySelectorAll('span')) span.after(' ')
     return {
-      row,
-      href: tag === 'a' ? (attributes.match(/href="([^"]+)"/)?.[1] ?? '') : null,
-      label: attributes.match(/aria-label="([^"]+)"/)?.[1]?.replace(/&#x27;/g, "'") ?? null,
-      text: shownText(html.slice(start, end).replaceAll('</span>', '</span> '))
+      row: row.getAttribute('data-kanji-reading') ?? '',
+      href: row.tagName === 'A' ? (row.getAttribute('href') ?? '') : null,
+      label: row.getAttribute('aria-label'),
+      text: (row.textContent ?? '').replace(/\s+/g, ' ').trim()
     }
   })
 }

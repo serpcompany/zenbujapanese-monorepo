@@ -36,7 +36,7 @@ jobs:
         with:
           paths: >-
             apps/dictionary-api packages/dictionary-core packages/node-service
-            docs/api/dictionary-api.md apps/web/src/lib/dictionary
+            docs/api/dictionary-api.md apps/web/src/lib/dictionary packages/ui
             apps/web/src/components/dictionary apps/web/src/test apps/web/vitest.config.ts
             apps/web/e2e/server.ts tools/checks/ports.mjs .node-version
             package.json pnpm-lock.yaml pnpm-workspace.yaml language-data/conformance

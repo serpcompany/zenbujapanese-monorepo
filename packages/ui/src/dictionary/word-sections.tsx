@@ -1,6 +1,6 @@
 import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import { glossSeparator, type Section as WordSection } from '@zenbu/dictionary-core/detail/sections'
-import { fill } from '@zenbu/dictionary-core/detail/text'
+import { fill } from '@zenbu/dictionary-core/detail/template'
 import type {
   AlternativeForm,
   RelatedWord,

@@ -30,7 +30,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
-| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed; pushes to `main` that change its cached files; by hand | This doc |
+| `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
@@ -175,7 +175,7 @@ the app-recorded suites run through the core in
 the service, the core, what the services share (`packages/node-service/`), its API reference
 (`docs/api/dictionary-api.md`, which its tests write), the website's dictionary code
 (`apps/web/src/lib/dictionary/`, `apps/web/src/components/dictionary/`, `apps/web/src/test/`,
-`apps/web/vitest.config.ts`, and what gives the gate its address, `apps/web/e2e/server.ts` and
+`apps/web/vitest.config.ts`, the word components it draws pages with, `packages/ui/`, and what gives the gate its address, `apps/web/e2e/server.ts` and
 `tools/checks/ports.mjs`), the conformance suites (`language-data/conformance/`), the app's
 resources (`apps/ios/Modules/Sources/SearchExperience/Resources/`), or `language-data/release.json`
 (the release the service names), its pins (`language-data/releases/`), and its retired entries
@@ -211,7 +211,7 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 
 `.github/workflows/account-api.yml` checks the account service on pull requests that change it,
 `node-service`, `account-rules`, its API reference (`docs/api/account-api.md`, which its tests
-write), or what the website's account pages are built from (`apps/web/src/`, the browser test
+write), or what the website's account pages are built from (`apps/web/src/` and `packages/ui/`, the browser test
 against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what gives it
 its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's `next.config.ts`,
 `package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull request's last run.
