@@ -1,5 +1,8 @@
+import { startErrorReports } from '../error-reports/error-reports'
 import type { DictionaryRequest } from '../shared/messages'
 import { answer } from './answer'
+
+startErrorReports('worker', message => self.postMessage(message))
 
 self.addEventListener('message', (event: MessageEvent<DictionaryRequest>) => {
   const [port] = event.ports

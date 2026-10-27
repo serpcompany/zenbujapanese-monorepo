@@ -242,7 +242,8 @@ describe('a content script translates through the service worker and the offscre
     const dictionaryRouter = routeToOffscreen({
       ensureOffscreenDocument: vi.fn(),
       offscreenDocumentStarted: vi.fn(),
-      sendMessage: vi.fn()
+      sendMessage: vi.fn(),
+      reportFailure: vi.fn()
     })
     const dictionaryRelay = relayToWorker(vi.fn())
     const ping = { type: 'ping' }

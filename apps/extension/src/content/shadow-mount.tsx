@@ -13,6 +13,7 @@ type Options = {
   document?: Document
   darkQuery?: Parameters<typeof followSystemColorScheme>[1]
   fonts?: Parameters<typeof addGeist>[0]
+  report?: (error: unknown) => void
 }
 
 export type ShadowMount = { host: HTMLElement; shadowRoot: ShadowRoot; unmount(): void }
@@ -30,7 +31,12 @@ export function mountInShadowRoot(content: ReactNode, options: Options = {}): Sh
   shadowRoot.append(style, surface)
   ;(doc.body ?? doc.documentElement).append(host)
   const stopFollowing = followSystemColorScheme(surface, options.darkQuery ?? systemDarkQuery())
-  const root = createRoot(container)
+  const { report } = options
+  const handle = (error: unknown) => {
+    report?.(error)
+    console.error(error)
+  }
+  const root = createRoot(container, { onUncaughtError: handle, onCaughtError: handle })
   root.render(<PortalContainer value={surface}>{content}</PortalContainer>)
   return {
     host,

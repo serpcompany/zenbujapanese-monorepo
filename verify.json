@@ -549,7 +549,7 @@
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$)",
+        "testCode": "(\\.test\\.tsx?$|^src/test/)",
         "entries": [
           "^src/pages/(side-panel|popup|settings)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",

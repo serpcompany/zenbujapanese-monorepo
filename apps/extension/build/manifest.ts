@@ -49,7 +49,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     side_panel: { default_path: 'pages/side-panel.html' },
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },
-    permissions: ['offscreen', 'sidePanel', 'scripting'],
+    permissions: ['offscreen', 'sidePanel', 'storage', 'scripting'],
     ...onPages(contentScripts(variant))
   }
 }

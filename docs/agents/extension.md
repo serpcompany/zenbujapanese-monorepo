@@ -21,6 +21,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
 
@@ -77,9 +78,10 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
+| `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), and the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`). |
+| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
 
 ### Messages
@@ -153,8 +155,8 @@ root, and draws inside it:
 Comic Sans, letter spacing, uppercase, dashed borders on every element, `button { all: unset }`,
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
-test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, and
-a Dialog. The release build has no content script; `build/manifest.test.ts` checks that.
+test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
+Dialog, and Test error, which throws while drawing so the content script reports it. The release build has no content script; `build/manifest.test.ts` checks that.
 
 ## Layers
 
@@ -187,17 +189,22 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   the first ask after the document closed, and each failure; the relay waiting for the worker to
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
-  the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again. Translation, with a stand-in Translator on `globalThis.Translator`: a text's direction,
-  with the app's `WrittenLanguageTests` cases; a line from a content script through the service
-  worker and the offscreen document and back, each way, its availability, one Translator for
-  each direction, `not-available` with nothing made, each failure, and the listeners kept apart
-  from the dictionary's, a Translator dropped after a failure or a timeout; `downloadTranslator`'s
-  progress and its limit on a stalled download; Use Selection's reading; Speak's voice, only one
-  on this computer; and, in happy-dom, the Translate tab: its fit to the panel's tab props, Use
-  Selection, both directions, Copy, Speak and Speak with no local voice, the download started
-  before any message and its progress then the result, the notices, Clear, an emptied box, and a
-  late answer dropped.
+  the shadow root, an error in its content handed to its reporter, and unmounting, and
+  `DictionaryStatus` checking, ready, failed, and Check again. Translation, with a stand-in
+  Translator on `globalThis.Translator`: a text's direction, with the app's `WrittenLanguageTests`
+  cases; a line from a content script through the service worker and the offscreen document and
+  back, each way, its availability, one Translator for each direction, `not-available` with nothing
+  made, each failure, and the listeners kept apart from the dictionary's, a Translator dropped after
+  a failure or a timeout; `downloadTranslator`'s progress and its limit on a stalled download; Use
+  Selection's reading; Speak's voice, only one on this computer; and, in happy-dom, the Translate
+  tab: its fit to the panel's tab props, Use Selection, both directions, Copy, Speak and Speak with
+  no local voice, the download started before any message and its progress then the result, the
+  notices, Clear, an emptied box, and a late answer dropped. Error reports: `scrub.test.ts` (page
+  text, a page URL, and a selected word gone from every part of an event), the content script's
+  client sending its own error but never the page's, with no global handler, the pages' and a
+  worker's uncaught errors sent with their part, all through a recording transport
+  (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
+  taken out (`build/upload-source-maps.test.ts`).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check

@@ -27,7 +27,7 @@ describe('manifest', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
-    expect(release.permissions).toEqual(['offscreen', 'sidePanel', 'scripting'])
+    expect(release.permissions).toEqual(['offscreen', 'sidePanel', 'storage', 'scripting'])
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
 
