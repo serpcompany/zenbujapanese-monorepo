@@ -186,15 +186,17 @@ class ReleaseTests(unittest.TestCase):
 
 
 class StaleSuiteTests(unittest.TestCase):
-    def test_names_each_suite_recorded_from_a_file_that_changed(self) -> None:
+    def test_names_each_suite_recorded_from_an_app_file_that_changed(self) -> None:
         resources, conformance = scratch(self), scratch(self)
         (resources / "Kuromoji").mkdir()
         (resources / "Kuromoji/base.dat.gz").write_bytes(b"kuromoji")
         (resources / "LanguageReferenceData.sqlite3").write_bytes(b"rebuilt")
         kept = {"name": "Kuromoji/base.dat.gz", "sha256": hashlib.sha256(b"kuromoji").hexdigest()}
         moved = {"name": "LanguageReferenceData.sqlite3", "sha256": hashlib.sha256(b"before").hexdigest()}
+        sudachi = {"name": "system_core.dic", "sha256": hashlib.sha256(b"sudachi").hexdigest()}
         suites = {
             "word-detail": {"artifacts": [moved, kept]},
+            "sentence-results": {"artifacts": [moved, sudachi]},
             "search-retrieval": {"artifact": moved},
             "tokenizer": {"artifacts": [kept]},
             "romaji": {"artifacts": []},
@@ -202,13 +204,16 @@ class StaleSuiteTests(unittest.TestCase):
         for name, suite in suites.items():
             (conformance / f"{name}.json").write_text(json.dumps(suite), encoding="utf-8")
         self.assertEqual(
-            {"search-retrieval": ["LanguageReferenceData.sqlite3"], "word-detail": ["LanguageReferenceData.sqlite3"]},
+            {
+                "search-retrieval": ["LanguageReferenceData.sqlite3"],
+                "sentence-results": ["LanguageReferenceData.sqlite3"],
+                "word-detail": ["LanguageReferenceData.sqlite3"],
+            },
             stale_suites(conformance, resources),
         )
 
-    def test_every_suite_a_release_holds_says_how_it_is_recorded(self) -> None:
-        inputs = json.loads((ROOT / "language-data/release-inputs.json").read_text(encoding="utf-8"))
-        suites = {Path(path).stem for path in inputs["conformance"]}
+    def test_every_suite_says_how_it_is_recorded(self) -> None:
+        suites = {path.stem for path in (ROOT / "language-data/conformance").glob("*.json")}
         self.assertTrue(suites)
         self.assertLessEqual(suites, {*RECORDED_ON_A_MAC, *RECORDED_WITHOUT_A_MAC})
 

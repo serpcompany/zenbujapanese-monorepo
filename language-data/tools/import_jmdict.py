@@ -20,9 +20,10 @@ from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 from jmdict_entries import import_entries
 from jmdict_examples import check_without_examples, link_sense_examples, sense_examples
-from jmdict_normalization import normalized_text
+from jmdict_normalization import casefolded_text
 from jmdict_previous import PreviousDatabase
 from jmdict_relationships import assign_note_identities, link_relationships
+from jmdict_romaji import CORE_ROMAJI_FILES, REPOSITORY
 
 
 IMPORT_TOOL_FILES = (
@@ -33,6 +34,7 @@ IMPORT_TOOL_FILES = (
     "jmdict_normalization.py",
     "jmdict_previous.py",
     "jmdict_relationships.py",
+    "jmdict_romaji.py",
 )
 
 
@@ -40,6 +42,8 @@ def import_tool_files_sha256() -> str:
     digest = hashlib.sha256()
     for name in IMPORT_TOOL_FILES:
         digest.update(f"{name}\n{file_sha256(Path(__file__).with_name(name))}\n".encode())
+    for name in CORE_ROMAJI_FILES:
+        digest.update(f"{name}\n{file_sha256(REPOSITORY / name)}\n".encode())
     return digest.hexdigest()
 
 
@@ -79,7 +83,15 @@ def create_schema(database: sqlite3.Connection) -> None:
           FOREIGN KEY(entry_id) REFERENCES entries(id)
         );
 
+        CREATE TABLE shown_romaji_forms (
+          entry_id BLOB NOT NULL,
+          form TEXT NOT NULL,
+          kind INTEGER NOT NULL,
+          FOREIGN KEY(entry_id) REFERENCES entries(id)
+        );
+
         CREATE INDEX forms_form_index ON forms(form, entry_id);
+        CREATE INDEX shown_romaji_forms_form_index ON shown_romaji_forms(form, entry_id);
         CREATE UNIQUE INDEX entries_source_provenance_index ON entries(source_identity, source_record_id);
         CREATE INDEX entries_common_index ON entries(is_common DESC, id);
         CREATE INDEX entries_semantic_fingerprint_index ON entries(semantic_fingerprint, id);
@@ -190,7 +202,7 @@ def import_snapshot(
         )
 
         pitch_entry_count = apply_unidic_pitch(
-            database, entries.records, unidic_source, unidic_metadata, normalized_text
+            database, entries.records, unidic_source, unidic_metadata, casefolded_text
         )
         example_sentence_summary = import_tatoeba_examples(
             database,
@@ -211,7 +223,7 @@ def import_snapshot(
         sense_example_summary = link_sense_examples(database, sense_examples(source))
 
         relationship_count = link_relationships(
-            database, entries.records, entries.form_to_entry_ids, relationship_metadata
+            database, entries.records, entries.form_to_entry_ids, relationship_metadata, entries.forms.fold
         )
 
         dictionary_ranking_mapping = dictionary_ranking_mapping_sha256(database)
@@ -227,7 +239,7 @@ def import_snapshot(
         for value in (import_tool_sha256, tatoeba_adapter_sha256):
             example_transform_digest.update(f"{value}\n".encode())
         transform = {
-            "transform": "jmdict-to-zenbu-language-reference-data-v2",
+            "transform": "jmdict-to-zenbu-language-reference-data-v3",
             "source_resource_id": source_metadata["resource_id"],
             "source_sha256": source_metadata["sha256"],
             "source_entries_retained": entries.retained,
@@ -278,8 +290,8 @@ def import_snapshot(
                 "sense/example/ex_sent",
             ],
             "documented_transforms": [
-                "Unicode NFKC and case-fold searchable forms",
-                "deterministic app-owned Hepburn-style romaji reading index",
+                "searchable forms and glosses folded by the shared core as a query is (NFKC, lowercase, white space collapsed)",
+                "romaji search forms from the shared core: each reading in ASCII as typed (long vowels doubled), in forms as before; its romaji as the apps show it, and that romaji without macrons, in shown_romaji_forms, which the frequency packs' mapping never reads",
                 "stable first-priority written form and reading display selection",
                 "English-only gloss retention",
                 "same-sense English gloss grouping with source sense order retained",

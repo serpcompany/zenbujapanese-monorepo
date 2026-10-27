@@ -5,12 +5,13 @@ extension ShareCardReader {
   static func onDevice(unpackingTokenizerInto folder: URL) -> ShareCardReader {
     let dictionary = LanguageReferenceData(morphology: .unavailable)
     let analysis = JapaneseTextAnalysisClient.live(
-      text: DictionaryTextData(tokenizerFile: TokenizerFiles.mapped(unpackingInto: folder)),
-      linked: LinkedEntries(lookupClient: .reading(dictionary)))
+      text: DictionaryTextData(tokenizerFile: TokenizerFiles.mapped(unpackingInto: folder)))
+    let lookup = LookupClient.reading(dictionary)
     return ShareCardReader(
       lookUp: { await dictionary.route(lookingUp: $0) },
       search: { try await dictionary.search($0) },
-      linkedTokens: { await analysis.linkedTokens($0, SearchQuery(""), nil) },
+      linkedTokens: { await analysis.linkedTokens($0) },
+      entries: { (try? await lookup.entries($0)) ?? [:] },
       recognize: ImageTextRecognitionClient.live.recognize)
   }
 }

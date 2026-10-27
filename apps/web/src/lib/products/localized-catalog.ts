@@ -5,6 +5,7 @@ import { fill } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
 import {
   featuredApp,
+  livePage,
   type ProductFilter,
   type ProductId,
   type ProductMark,
@@ -14,7 +15,7 @@ import {
   productFilters,
   products
 } from '@/lib/products/catalog'
-import { type LinkTo, linkTo, site } from '@/lib/site'
+import { type LinkTo, localizedLink, site } from '@/lib/site'
 
 export interface CatalogFilter {
   id: ProductFilter
@@ -56,20 +57,22 @@ export interface Catalog {
 
 const searchText = (...parts: readonly string[]) => parts.join(' ').toLowerCase()
 
+export const productNameIn = (id: ProductId, locale: Locale) =>
+  fill(getDictionary(locale).products.items[id].title, { name: site.name })
+
 export function catalogIn(locale: Locale): Catalog {
   const t = getDictionary(locale)
   const text = t.products
   const typeLabel = (type: ProductType) => text.filters[type].label
-  const appPage = linkTo('iphone-app')
   const shots = appScreenshotsIn(locale)
   const app = {
     type: featuredApp.type,
-    title: t.menus.iphoneApp,
+    title: text.featuredApp.title,
     description: text.featuredApp.description,
     tags: featuredApp.tags.map(tag => text.featuredApp.tags[tag]),
     includes: featuredApp.includes.map(item => text.featuredApp.includes[item]),
     icon: featuredApp.icon,
-    page: { ...appPage, href: localizedPath(appPage.href, locale) },
+    page: localizedLink(featuredApp.page, locale),
     screenshots: featuredApp.screenshots.map(key => shots[key])
   }
   return {
@@ -84,9 +87,10 @@ export function catalogIn(locale: Locale): Catalog {
         typeLabel(app.type)
       )
     },
-    products: products.map(({ href, ...product }) => {
-      const { title, description } = text.items[product.id]
-      const filled = fill(title, { name: site.name })
+    products: products.map(({ page, ...product }) => {
+      const href = livePage(page)?.href
+      const filled = productNameIn(product.id, locale)
+      const { description } = text.items[product.id]
       return {
         ...product,
         title: filled,

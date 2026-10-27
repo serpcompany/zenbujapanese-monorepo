@@ -69,10 +69,66 @@ already ranks to a worse-ranked row. Rows V1 places are unchanged.
 No entry lost its rank or got a worse one; 105 got a better one (色 75,248 → 245, from the
 romaji row "iro" to 色). The remaining 331 are spellings UniDic also files under several
 readings (家: イエ, ウチ, ヤ; 下, 子, 気, 前, 後), whose counts mix words, and kana such as て, だ,
-and で that several entries share. They stay unranked rather than guessed.
+and で that several entries share. They stay unranked rather than guessed, unless a reviewed
+reading clearly dominates (#826, below).
 
 Wikipedia is unchanged. Its rows are surface forms with no part of speech, and most of its
 skipped top-5,000 rows are kana (ある, いる, もの), where a reading can't choose either.
+
+## YouTube spellings UniDic reads several ways (#826)
+
+Those 331 rows, 332 on JMdict's 2026-10-23 export, can't be placed from UniDic: 家's row counts
+いえ, うち, and や together. Letting Jiten's per-reading ranks choose was 89–92% right on the rows
+UniDic does place, missing common words (様 → さま for よう, 風 → かぜ for ふう), so each row was
+reviewed by hand instead, with the owner's approval of Jiten's pinned `sources/Jiten-2026-09-27/`
+as the evidence. `sources/TUBELEX-ja-310-lemma-pos.reviewed-readings.json` holds all 332, each with
+its decision, the reason, and Jiten's rank, in each of its seven lists, for every reading UniDic
+gives the row. A row takes a reading only when (its `rule` says it in full):
+
+- it's a content word, a common noun, verb, adjective, or adverb. Pronouns, numerals, names,
+  affixes, auxiliary verbs, and grammar words such as て, だ, and で stay out;
+- Jiten ranks the reading at least 10× above every other reading UniDic files under the row's
+  lemma and part of speech, in all seven lists, by the row's own spelling and over every spelling
+  UniDic files under the reading. TUBELEX counts a lemma, so its other spellings count too:
+  止める's row holds やめる and 辞める, a near-tie;
+- no expression UniDic splits reads the spelling another way within 10× of it, and all of them
+  together leave it 3× ahead: お母さん (お, 母 read かあ, さん) keeps 母 out, as 気に入る keeps 入る;
+- UniDic's own word costs prefer the same reading (to UniDic, 他 is た, as in その他); and
+- the reading names one dictionary entry with that spelling (元's もと names two).
+
+Three rows that pass are left out by hand: 開く (あく is everyday too), 空 (から, as in 空になる),
+and 刃 (やいば, as in 鬼滅の刃, which YouTube names far more than anime subtitles do).
+
+`language-data/tools/review_tubelex_readings.py` computes each row's `jiten` and `verdict`, through
+`language-data/tools/tubelex_reading_evidence.py`, from the pinned TUBELEX source, Jiten's snapshot
+(each list held to its recorded SHA-256), UniDic's lexicon, and the language data, placing a reading
+with the importer's own mapping. `check` compares them with the list, and `write` writes them,
+keeping each row's reading, entry, and reason, which are the reviewer's; `--scope`, with all of
+UniDic, also holds the rows to the top 5,000's unplaced ones. A row keeps a reading only when its
+verdict ranks that reading on that entry, and a reviewer may leave out a row the verdict ranks, as
+for the three above. `excerpt` writes the UniDic rows the review reads, cut to the 15 columns it
+reads, to `language-data/tools/tests/fixtures/unidic-cwj-3.1.0-reviewed-readings.csv`.
+`test_reviewed_readings_evidence.py` runs the tool on that excerpt with the other contract tests,
+in CI too, so a changed snapshot or rule fails rather than drifts; with all of UniDic, as the
+rebuild has it, it also checks the excerpt and the rows.
+
+| TUBELEX top 5,000 | UniDic readings | And reviewed readings |
+| --- | ---: | ---: |
+| Rows ranked | 3,582 | 3,667 |
+| Rows matched but unranked | 332 | 246 |
+| Mapped entries, whole pack | 58,109 | 58,174 |
+
+86 rows take a reading. 65 entries gain a YouTube rank (家 いえ 181, 水 みず 270), and 21 get a
+better one (前 まえ 61,540 → 113, 体 からだ 274,312 → 258); 木's earlier row, 4,039, now ranks
+nothing, so the top 5,000 rank 85 more rows. No entry loses its rank or gets a worse one: the
+importer refuses a list that would, or whose reading doesn't rank the entry it names. The 246 left
+out include the near-ties 後 (あと, ご) and 金 (かね, きん), the grammar words, and spellings the
+evidence can't settle.
+
+TUBELEX is BSD-3-Clause, and the pack still holds only its counts and ranks: Jiten's ranks chose
+which entry 86 rows count, and the pack holds none of them, so it needs no CC BY-SA terms. The list
+holds an extract of Jiten's ranks, so it credits Jiten and is shared under CC BY-SA 4.0, as its
+`evidence` says, and the release's `JITEN-NOTICE.txt` names the YouTube pack's use.
 
 ## #376 candidate results
 

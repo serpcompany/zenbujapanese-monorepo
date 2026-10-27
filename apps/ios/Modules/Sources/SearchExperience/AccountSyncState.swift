@@ -157,6 +157,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
   var refusedPhotos: [String: String] = [:]
   var refusedProfilePhoto: String?
   var refusedNotes: [String] = []
+  var longNotes: [String] = []
   var photoRoomFreed = false
   var retryNextLaunch: [QueuedSyncChange] = []
   var rereadSeen: Set<String>?
@@ -198,6 +199,7 @@ struct AccountSyncState: Codable, Sendable, Equatable {
       try container.decodeIfPresent([String: String].self, forKey: .refusedPhotos) ?? [:]
     refusedProfilePhoto = try container.decodeIfPresent(String.self, forKey: .refusedProfilePhoto)
     refusedNotes = try container.decodeIfPresent([String].self, forKey: .refusedNotes) ?? []
+    longNotes = try container.decodeIfPresent([String].self, forKey: .longNotes) ?? []
     photoRoomFreed = try container.decodeIfPresent(Bool.self, forKey: .photoRoomFreed) ?? false
     retryNextLaunch =
       try container.decodeIfPresent([QueuedSyncChange].self, forKey: .retryNextLaunch) ?? []
@@ -341,6 +343,20 @@ actor AccountSyncStateFile {
 }
 
 extension SavedItemChange {
+  static func forTheAccount(_ changes: [SavedItemChange]) -> [SavedItemChange] {
+    let watched = changes.compactMap { change -> WatchedVideo? in
+      if case .videoWatched(let video, _) = change { video } else { nil }
+    }
+    guard !watched.isEmpty else { return changes }
+    var sent = AccountRules.shared.sentVideos(watched).makeIterator()
+    return changes.map { change in
+      guard case .videoWatched(_, let previous) = change, let video = sent.next() else {
+        return change
+      }
+      return .videoWatched(video, previous: previous)
+    }
+  }
+
   func queued(in state: AccountSyncState) -> QueuedSyncChange {
     switch self {
     case .known(let change):
@@ -434,15 +450,13 @@ extension SavedItemChange {
   private static func fields(of video: WatchedVideo) -> [String: SyncFieldValue] {
     var fields: [String: SyncFieldValue] = ["watchedAt": moment(video.watchedAt ?? Date())]
     for (name, text) in [("title", video.title), ("author", video.author)] {
-      if let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-        fields[name] = .string(text)
-      }
+      if let text { fields[name] = .string(text) }
     }
     for (name, number) in [
       ("duration", video.duration), ("position", video.position),
-      ("comprehension", video.comprehension.map { min($0, 1) }),
+      ("comprehension", video.comprehension),
     ] {
-      if let number, number.isFinite, number >= 0 { fields[name] = .decimal(number) }
+      if let number { fields[name] = .decimal(number) }
     }
     return fields
   }

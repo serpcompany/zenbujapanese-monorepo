@@ -10,23 +10,15 @@ page's section in [Dictionary](dictionary.md), with its check, in the same PR.
 
 ## Search results
 
-**Handwriting and radical input.** The search box offers handwriting and radical selection, as the
-app does.
+**Handwriting input.** The search box offers handwriting, as the app does. Radical input is built
+([Radical input](radical-input.md)).
 
-- App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`,
-  `RadicalInputView.swift`, `RadicalLookupClient.swift`. The radical panel's kanji and radicals are
-  already the core's (`RadicalLookup` in `packages/dictionary-core/src/search/radicals.ts`), and
-  so is which handwriting candidates are kept (`japaneseCandidates`); recognizing the strokes is
-  the app's.
-- Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
-  handwriting samples and their candidates, replayed against the website.
-
-**Radical searches keep the strongest matches.** A search started from radical input lists only
-its leading group of equally strong matches, as the app limits it (`rankedEntryLimit`).
-
-- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchResultsView.swift`.
-- Check it will get: radical-origin cases in the planned search results suite, recording the rows
-  the app lists.
+- Waits on: the owners deciding to run recognition models on the API server or call paid APIs, for
+  subscribers only (the owner's decision of 2026-10-26 on #832).
+- App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`.
+  Which handwriting candidates are kept is already the core's (`japaneseCandidates`); recognizing
+  the strokes is the app's.
+- Check it will get: handwriting samples and their candidates, replayed against the website.
 
 ## Kanji details
 
@@ -39,34 +31,15 @@ its leading group of equally strong matches, as the app limits it (`rankedEntryL
 
 ## Site-wide
 
-**Reading Aids.** The website offers the app's Reading Aids settings and applies them wherever the
-app does:
+**Hide Furigana on Known Words.** The Reading Aids setting the website doesn't offer yet: known
+words in examples lose their furigana, as in the app. It needs the learner's known words, which the
+website doesn't have yet (#934); the other Reading Aids are built ([Site-wide](site-wide.md)).
 
-- **Furigana** over headwords and linked words. With it off, a word page shows the reading under
-  the headword instead, as in the app.
-- **Romaji** alongside the Japanese on word pages, kanji details, and example sentences.
-- **Word Meanings:** a short meaning under each linked word the learner hasn't marked known.
-- **Sentence Translations:** whether examples show their English.
-- **Hide Furigana on Known Words:** known words in examples lose their furigana.
-
-The defaults are the app's: Furigana and Sentence Translations on, Romaji, Word Meanings, and Hide
-Furigana on Known Words off. The app keeps the settings on the device; the website keeps them in
-the browser until accounts exist.
-
-Hide Furigana on Known Words depends on which words the learner knows, so it needs accounts (#468)
-and ships with them. Furigana, Romaji, Word Meanings, and Sentence Translations can ship before
-then: without an account every word counts as unknown, as it does in the app until the learner
-marks it, so Word Meanings shows under every linked word.
-
-- App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details
-  (furigana off, Word Meanings, Sentence Translations); `ReadingAidPreferences.swift`,
-  `ReadingAidPresentation.swift`. Romaji itself is the core's (`romaji` and `sentenceRomaji` in
-  `packages/dictionary-core/src/detail/romaji.ts`), with the app's recorded cases in
-  `romaji.json`.
-- Check it will get: a unit test pinning the defaults to `ReadingAidPreferences.swift`'s, and a
-  rendered-page check of a word page (such as 見る) under each setting: ruby present or absent, the
-  reading under the headword, romaji, meanings under example words, and translations. Hide Furigana
-  on Known Words gets its check with #468.
+- App source: App docs index, Account (Reading Aids); App docs, Dictionary and kanji details;
+  `ReadingAidPreferences.swift` (`hidesFuriganaOnKnownWords`, off by default) and
+  `LinkedJapaneseText.swift` (`hidesFurigana(for:)`).
+- Check it will get: a browser test that a known word in a word page's example loses its furigana
+  with the setting on, and keeps it with it off.
 
 ## URLs and SEO
 

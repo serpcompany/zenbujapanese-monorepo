@@ -1,6 +1,6 @@
 {
-  "databaseBytes": 486166528,
-  "databaseSHA256": "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf",
+  "databaseBytes": 496881664,
+  "databaseSHA256": "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32",
   "evidenceCounts": {
     "canonical_senses": 253844,
     "form_priority_profiles": 56153,
@@ -8,11 +8,11 @@
     "reading_form_restrictions": 6184,
     "sense_form_restrictions": 1922
   },
-  "mappingSHA256": "1bd2db6d39cfc65e1c41c0f012147bc908d84623daf5b7e72d492d34cb9e7c6b",
+  "mappingSHA256": "4084f338b6f35df689fb99fd8e727e938810c831d9dbc6e3367dee24de3f76ef",
   "policy": "dictionary-best-match-v1",
   "schemaVersion": "zenbu.dictionary-ranking.v1",
   "searchIndex": {
-    "form_rows": 754202,
+    "form_rows": 754203,
     "gloss_rows": 443818,
     "schema": "zenbu.dictionary-search-index.v1",
     "technology": "sqlite-fts4"
@@ -25,9 +25,9 @@
   "toolSHA256": {
     "dictionary_ranking_adapter_sha256": "c8efea2701988d854a7b18bfa53062ab196958ad9196e044202a43e28fa7573a",
     "dictionary_ranking_contract_sha256": "b7df18edcc9b20a0c961c2be913f9e12816a69fdea6522ecd11610570f41e59e",
-    "import_tool_sha256": "1d0301469715d8383ae7c393e1075b411d985a24bd346bed4cfe0268b1f172e3",
+    "import_tool_sha256": "fec572350c1fbc8e3833003c5e37a65eca08fe702659b11890efd22a607083af",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
     "tatoeba_adapter_sha256": "65e5d32fe6b20ca18cf95cf1b9d6167f89d7c3cc1cf54f9a245f0743c421f584",
-    "unidic_adapter_sha256": "850af85414137aed37f4797968e3b377c66c58287af6461979e8e8e301632a74"
+    "unidic_adapter_sha256": "96cc954502f5a3c7a5cf40389412314f9bfe529d8de2a1c615f8b232575a0ba2"
   }
 }

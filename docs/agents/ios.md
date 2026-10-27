@@ -16,7 +16,8 @@ generic dual-architecture Simulator build fails at link time.
 The app's **Prepare bundled Sudachi Core** build phase runs offline: it copies the pinned Sudachi
 Core dictionary from `~/Library/Caches/com.zenbujapanese.build/SudachiCore` (or
 `ZENBU_SUDACHI_BUILD_CACHE`), and fails with "verified Sudachi build cache is missing" until that
-cache is filled. Fill it once per Mac, online, from the repository root:
+cache is filled; the package's tests read the dictionary there too. Fill it once per Mac, online,
+from the repository root:
 
 ```sh
 python3 apps/ios/Tools/prepare_sudachi_core.py \
@@ -25,8 +26,8 @@ python3 apps/ios/Tools/prepare_sudachi_core.py \
   --cache-only
 ```
 
-It downloads the release `LanguageTechnologyPackCatalog.json` names from GitHub (72 MB) and checks
-its SHA-256; later builds reuse it.
+It downloads the pack the catalog bundles (72 MB, from GitHub) and checks its SHA-256, the pack the
+app and the service choose too (`sudachi-pack.json`'s cases); later builds reuse it.
 
 ## iPad and Mac
 
@@ -41,8 +42,9 @@ Every `#if os(...)`, every `UIKit` and `AppKit` import, and every API only one p
 feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and `SystemColor`,
 `Pasteboard`, `SystemSettings`, `ScreenAwake`, `ConversationAudioSession`, `WebViewRepresentable`,
 `PagedView`, `CameraCapture` and `ImageCameraPicker`, `ImagePhotoLibraryPicker`,
-`importsImagesFromDevices`, `BackgroundRefresh`, `keyWindowAnchor`, `AppleSignInButton`,
-`ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in `PlatformModifiers.swift`
+`importsImagesFromDevices`, `BackgroundRefresh`, `ApplicationDelegateAdaptor`, `keyWindowAnchor`,
+`AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in
+`PlatformModifiers.swift`
 (`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`, `.barLeading` and `.barTrailing`,
 `.bottomAccessory`, `.rowActions`, `.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`,
 `.sheetClose`, `SheetCloseAndAction`, `.barTrailingItems`, `.tileIconLabel()`,
@@ -85,7 +87,7 @@ row's content, so a word page's rows carry their section (`SectionRow`).
 `pnpm verify layers` refuses a platform condition, UIKit, AppKit, or an iPhone-only API it knows
 anywhere else in `apps/ios/Modules/Sources/`, `apps/ios/Modules/Tests/`, or `apps/ios/App/`, and
 names the adapter to use (`layers.platforms` in `verify.json`), so feature code stays the same on
-every platform while CI's iPad and Mac builds are off ([`ci.md`](ci.md), iOS). Image data stays
+every platform while CI's iPad and Mac builds are off ([`ci-ios.md`](ci-ios.md)). Image data stays
 `Data` or `CGImage` in models (`ImageCoding.swift` encodes and draws without UIKit).
 
 The app target is `ZenbuJapaneseApp.swift`, which starts `CrashReporter` first, and the Shortcuts
@@ -100,9 +102,9 @@ commands (`AppCommands`) go through `AppCommandRouter` to the window that was la
 view with keyboard focus, so ⌘F did nothing in a window where nothing had focus yet. The scene also
 shares one `TranslateExperience` between windows, since they share the one microphone, and pauses a
 conversation when the whole app goes to the background, or pauses it and drops a start still waiting
-when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); and it
-lets an open window take a website link (`handlesExternalEvents`), where the Mac would otherwise
-open a new window for each.
+when its last window closes (`AppLifecycle`, with `AppCommandRouter` counting open windows); keeps
+[what's being typed](ios-local-stores.md#whats-being-typed); and lets an open window take a
+website link (`handlesExternalEvents`), where the Mac would otherwise open a window for each.
 
 ### Build and run for iPad
 
@@ -141,7 +143,7 @@ Zenbu Dev's under `com.zenbujapanese.dictionary.dev`.
 ### Tests on every platform
 
 Every suite runs on the iPhone Simulator, an iPad Simulator, and the Mac, as the `iOS` workflow's
-`swift` job does ([`ci.md`](ci.md), iOS). The Simulators are this checkout's own, an iPhone Pro
+`swift` job does ([`ci-ios.md`](ci-ios.md)). The Simulators are this checkout's own, an iPhone Pro
 Max and an iPad Pro 13-inch: `python3 apps/ios/Tools/simulator.py` prints the iPhone's UDID, and
 with `--device ipad` the iPad's ([`verification.md`](verification.md)).
 
@@ -447,14 +449,14 @@ same answer, which the core's `results/ordering.test.ts` and `results/learner.te
 `ResultsScreenTests` and `SearchResultOrderingTests` on the bundled data. Recent lookups and known
 words don't change the recorded list. The suite covers queries that match directly, deinflected
 queries (食べた, 見ない), romaji and English queries, wildcards (`t*`, `^t*`), and queries with no matches
-that aren't Japanese. It doesn't cover Japanese queries with no direct match or Discovered Words:
-Look Up splits those into words with the Sudachi dictionary the app bundles, which the package's
-test host lacks, so recording fails on them. `DictionaryCoreTests` runs one such sentence with a
-stand-in analysis, which checks the path but not Sudachi's words; check those in the Simulator. The
-screen's titles, counts, and which rows it shows are the core's answer, which `ResultsScreen.swift`
-decodes for the view and the suite alike. Record it with
+that aren't Japanese. The screen's titles, counts, and which rows it shows are the core's answer,
+which `ResultsScreen.swift` decodes for the view and the suite alike. Record it with
 `-only-testing:SearchExperienceTests/SearchResultsConformanceTests`; add a query by adding its
-`query` and `covers` fields and recording.
+`query` and `covers` fields and recording. Japanese sentences with no direct match have two suites,
+with Sudachi's dictionary from its build cache: `SentenceSearchConformanceTests` records each one's
+Sudachi words, the words the core searches, and the results (`sentence-search.json`), and
+`SentenceResultsConformanceTests` the results screen, as above, of each that lists Discovered
+Words, their heading included (`sentence-results.json`). Record each with its `-only-testing:` name.
 
 `ExampleSearchConformanceTests` records, in `example-search.json`, the Example Sentences screen that
 Look Up's "View N Example Sentences" row opens: for each query, the row's count and title, the
@@ -501,14 +503,12 @@ Foundation's transliteration, which the core's romaji replaced, so the file is e
 not re-recorded; a linked sentence's punctuation is checked in the same suite, and the words
 captions count in `KnownWordCountTests`.
 
-The website's dictionary service replays all seven suites through the shared TypeScript core on the
+The website's dictionary service replays all eight suites through the shared TypeScript core on the
 same data ([`dictionary-api.md`](dictionary-api.md)), once through its own path and once through the
 entry point the app calls, and the `Dictionary API` workflow runs them on pull requests that change
-a suite, so commit a re-recorded suite with the change to the core it needs. One thing the website
-does isn't recorded yet: sentence search (Discovered Words, above). The service checks it with its
-own test (`sentence-search.test.ts`) until a suite records it.
+a suite, so commit a re-recorded suite with the change to the core it needs.
 
-The `iOS` workflow ([`ci.md`](ci.md), iOS) runs the data tools' contract tests on pull requests
+The `iOS` workflow ([`ci-ios.md`](ci-ios.md)) runs the data tools' contract tests on pull requests
 that change `apps/ios` or the language data, and, on a macOS runner, `SearchExperienceTests` and
 `TranslatorCoreTests` on an iPhone Simulator, an iPad Simulator, and the Mac, the app's UI tests on
 all three, and the recorded-audio check's scoring tests, only once the owners turn that on. Until
@@ -516,12 +516,12 @@ then, run them on a Mac ([Tests on every platform](#tests-on-every-platform)).
 
 The data tools' contract tests are in `language-data/tools/tests/`; run one with
 `python3 -m unittest discover -s language-data/tools/tests -p <file>`. Frequency-pack selection
-has one, `test_frequency_pack_runtime_contract.py`. It verifies
-that every selectable manifest pins a known evidence row and rank, each ordered source agrees
-with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
-the bundled JLPT level pack matches its pinned source files and import report. It also checks
-that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict files them under several
-entries, carry their rank on the one entry their UniDic lemma reading names (#440).
+has one, `test_frequency_pack_runtime_contract.py`. It verifies that every selectable manifest pins
+a known evidence row and rank, each ordered source agrees with the generated mapping analysis, the
+bundled TUBELEX artifact contains its pinned row, and the bundled JLPT level pack matches its pinned
+source files and import report. It also checks that 事, 時, 上, and 先生, which JMdict files under
+several entries, rank the entry their UniDic reading names (#440), and that 家 (いえ) and the other
+reviewed readings rank the entry their list names, and no row it leaves out has a rank (#826).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. `test_example_word_index_contract.py` verifies
@@ -621,20 +621,19 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   and hands the text itself to `resultsScreen`. Writing the decoded copy out again would drop
   every field the app doesn't know.
 - **Sentences.** A search that needs a sentence's words says so in its call's outcome. The actor
-  awaits Sudachi (`JapaneseMorphologyClient`), hands the words back, and the call goes on; other
-  lookups can run while it waits.
-- **Examples arrive linked.** A batch is one call (`DictionaryTextData.resultsExamples`,
-  `entryExamples`, `formExamples`): the sentences from a position to the end of its page of 25, or
-  fewer under a limit (`cutShort`), each with its words linked and accented. `ExampleSentenceClient`
-  reads a batch's entries in one statement first, so a row (`LinkedJapaneseWords`) draws once.
-  `LoadedExamples` asks for the rows that fit the window (`ExampleRowsOnScreen`), then the rest of a
-  page cut short, then the next page at the list's end; later reads share one task.
-- **Linked words.** Text that isn't the dictionary's (a caption, an image's line, a translated
-  sentence) links a row at a time (`LinkedJapaneseText`): `DictionaryTextData.linkedWords` is one
-  call for a text: the core tokenizes it from the app's files, reads its words' forms in one or two
-  statements, and answers each word's place, entry or candidates, furigana, and `accent`. Both paths
-  read entries through `LinkedEntries`, which keeps 4,000, or a batch's own when it would pass
-  that; the core keeps the last 512 texts.
+  awaits Sudachi (`JapaneseMorphologyClient`), hands back its morphemes as Sudachi gives them, and
+  the call goes on, the core choosing what to search; other lookups can run while it waits.
+- **Rows arrive linked.** Examples come a batch a call (`entryExamples` and its kin, to a page of
+  25's end, or fewer), and captions, an image's lines, and translated sentences a list of texts a
+  call (`linkedTexts`), each word with its place, entry or candidates and what a row shows of each
+  (reading, summary, gloss), furigana, and `accent`. A row (`LinkedJapaneseWords`) draws once, from
+  that; a tapped word's entry is read as it opens (`LinkedEntryReader`): reading them all took 2.7
+  ms per ten new lines on a Mac (the core: 3.2). `LoadedExamples` asks for the rows that fit the
+  window (`ExampleRowsOnScreen`), a page's rest, then the next page at the end; Player lists
+  captions as `LinkedLines` links them, the window's first, then 25 at a time; Image Search links a
+  page as it finds its words; Translate holds a sentence back until `LinkedTexts` links it. The
+  Player and Translate tabs ready the engine as they open (`availability`), as Image Search does, so
+  a first line needn't wait on the tokenizer. A row scrolled back draws at once.
 - **Counted words.** `DictionaryTextData.countedWords` is one call for a list of lines: the IDs
   of the words that count toward comprehension, with no entry read. `Comprehension` asks twenty
   lines at a time (about 5 ms a call), so a caption card's own link never waits on a whole video.
@@ -648,7 +647,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   with a full parse of the files. Grade's tiles are keyed by scalar too
   (`SchoolKanjiPanel.Tile.id`).
 - **Memoized where a view asks again.** Furigana by surface and reading (4,000), a word page by
-  entry (64, until the frequency lists change), a gloss by meaning (4,000), romaji by reading (4,000) and by sentence (512), the
+  entry (64, until the frequency lists change), romaji by reading (4,000) and by sentence (512), the
   kanji check by string (4,000), and a query by what was typed (1,000), since SwiftUI rebuilds
   a row many times. The keys compare, and hash, byte for byte: Swift's own string equality
   would hand one compatibility kanji's answer to its twin. `PresentationCore`'s lock is recursive,
@@ -664,10 +663,10 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   package's tests on a Mac run the core as a device does. The iOS Simulator does not: its
   JavaScriptCore has the JIT, which makes JavaScript several times faster and holds several times
   the memory, so add `TEST_RUNNER_JSC_useJIT=false` to measure there. `SearchLatencyTests` prints
-  each query's uncached time, how long linking, a video's known-word count, and an abandoned search
-  take, how long the presentation engine takes to start and to build each screen, how long the
-  frequency lists take to be ready, how long romaji, the input panels, a stroke diagram, and the
-  kanji check take, and the memory a session reaches step by step; it runs only when asked:
+  each query's uncached time (romaji ones also by spelling), how long linking, a video's known-word
+  count, and an abandoned search take, how long the presentation engine takes to start and to build
+  each screen, the frequency lists to be ready, and romaji, the input panels, a stroke diagram, and
+  the kanji check, and the memory a session reaches step by step; it runs only when asked:
 
   ```sh
   TEST_RUNNER_ZENBU_MEASURE_SEARCH=1 xcodebuild -scheme ZenbuJapaneseModules-Package \

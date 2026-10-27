@@ -239,6 +239,26 @@ describe('searchResultsScreen (SearchResultsView)', () => {
     })
   })
 
+  test('lists only the leading entries of a kanji picked from the radicals, re-sorted, with its kanji row', () => {
+    const kanji = item('要', { id: 'e'.repeat(32) })
+    const reading = item('要', { id: 'f'.repeat(32) })
+    const compound = item('要点')
+    const found = results([kanji, reading, compound], { leadingLexicalEntryCount: 2 })
+    const frequency = frequencyOf([
+      [reading, [jlpt(5)]],
+      [compound, [jlpt(5)]]
+    ])
+    const picked = searchResultsScreen('要', found, frequency, 0, true)
+    expect(picked).toMatchObject({ kanji: { character: '要', entryId: kanji.entry.id } })
+    if (picked.state !== 'results') throw new Error('The pick found nothing')
+    expect(picked.rows.map(row => row.id)).toEqual([reading.entry.id, kanji.entry.id])
+    expect(picked.resultCount).toBe(3)
+    const typed = searchResultsScreen('要', found, frequency)
+    expect(typed.state === 'results' && typed.rows).toHaveLength(3)
+    const longer = searchResultsScreen('要点', found, frequency, 0, true)
+    expect(longer.state === 'results' && longer.rows).toHaveLength(3)
+  })
+
   test('shows a kanji row even without words, and No Dictionary Matches otherwise', () => {
     expect(searchResultsScreen('㐂', results([]), new Map())).toMatchObject({
       state: 'results',

@@ -1,12 +1,8 @@
-import {
-  frequencyDictionariesPath,
-  kanaChartsPath,
-  kanjiListsPath
-} from '@/lib/dictionary/browse/paths'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { localizedPath } from '@/lib/i18n/paths'
-import { type LinkTargetId, type LinkTo, linkTo } from '@/lib/site'
+import { catalogEntry, featuredApp, type ProductWithPage } from '@/lib/products/catalog'
+import { productNameIn } from '@/lib/products/localized-catalog'
+import { type LinkTo, linkTo, localizedLink } from '@/lib/site'
 import { pageLinkTo } from '@/lib/site-menus'
 
 type FooterLink = LinkTo & { title: string }
@@ -20,18 +16,18 @@ export type FooterColumn = {
 
 export function footerColumnsIn(locale: Locale): readonly FooterColumn[] {
   const t = getDictionary(locale)
-  const page = (href: string) => ({ href: localizedPath(href, locale) })
-  const target = (id: LinkTargetId): LinkTo => {
-    const link = linkTo(id)
-    return { ...link, href: localizedPath(link.href, locale) }
-  }
+  const productPage = (id: ProductWithPage['id']) => localizedLink(catalogEntry(id).page, locale)
+  const product = (id: ProductWithPage['id']): FooterLink => ({
+    title: productNameIn(id, locale),
+    ...productPage(id)
+  })
   return [
     {
       id: 'Products',
       heading: t.footer.products,
       links: [
-        { title: t.menus.iphoneApp, ...target('iphone-app') },
-        pageLinkTo('/dictionary/', locale, t.footer.dictionary)
+        { title: t.products.featuredApp.title, ...localizedLink(featuredApp.page, locale) },
+        { title: t.footer.dictionary, ...productPage('dictionary') }
       ],
       account: true
     },
@@ -39,10 +35,10 @@ export function footerColumnsIn(locale: Locale): readonly FooterColumn[] {
       id: 'Tools',
       heading: t.footer.tools,
       links: [
-        { title: t.footer.kanaCharts, ...page(kanaChartsPath) },
-        { title: t.footer.kanjiLists, ...page(kanjiListsPath) },
-        { title: t.footer.frequencyLists, ...page(frequencyDictionariesPath) },
-        { title: t.footer.allTools, ...target('tools') }
+        product('kana-charts'),
+        product('kanji-lists'),
+        product('frequency-lists'),
+        { title: t.footer.allTools, ...localizedLink(linkTo('tools'), locale) }
       ]
     },
     {

@@ -11,29 +11,31 @@ its own, the conjugation table and its forms, a kanji's details, and the example
 the word page, in sections that open and close and stay in the page's HTML while closed.
 
 Abbreviations: **App docs** is `apps/ios/docs/product/dictionary.md`. Swift files are in
-`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`; paths that start
-with `packages/` or `apps/` are from the repository root. **SR**, **WD**, and **KD** are the
-app-recorded suites `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`, with the
-field they record. The dictionary service replays them on the app's own data: SR by
+`apps/ios/Modules/Sources/SearchExperience/`. Web paths are under `apps/web/`; paths that start with
+`packages/` or `apps/` are from the repository root. **SR**, **WD**, and **KD** are the app-recorded
+suites `search-retrieval.json`, `word-detail.json`, and `kanji-detail.json`, with the field they
+record. The dictionary service replays them on the app's own data: SR by
 `apps/dictionary-api/src/conformance/search.conformance.test.ts` ("search conformance"), WD and KD
 by `apps/dictionary-api/src/conformance/detail.conformance.test.ts` ("word and kanji detail
 conformance"). **SRR** is `search-results.json`, the results screen after the frequency re-sort,
 replayed field by field by `apps/dictionary-api/src/conformance/results.conformance.test.ts`
 ("search results conformance"), and rendered for seven of its cases by
 `src/components/dictionary/search-results.test.tsx` ("the rendered search results page matches the
-app"). **ES** is `example-search.json`, what the Example Sentences screen that Look Up's examples
-row opens lists for 69 queries, replayed by
+app"). **SSR** is `sentence-results.json`, that screen for each sentence the app lists Discovered
+Words for, recorded and replayed with Sudachi ("sentence results conformance"), and rendered for
+three of its cases by the same test. **ES** is `example-search.json`, what the Example Sentences
+screen that Look Up's examples row opens lists for 69 queries, replayed by
 `apps/dictionary-api/src/conformance/example-search.conformance.test.ts` ("example search
 conformance") and rendered for nine of its cases by
 `src/components/dictionary/search-examples.test.tsx` ("the rendered Example Sentences section
-matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the
-rendered word page matches the app"), which draws every WD case through the word page's components
-and reads back what they draw. **Conjugations rendered** is
-`src/components/dictionary/conjugations.test.tsx`: every WD case's table ("the rendered Conjugations
-section matches the app") and forms' examples ("each conjugated form’s examples match the app"). The
-`Dictionary API` workflow runs the suites, then the rendered tests against the service it builds, on
-pull requests that change the service, the core, the website's dictionary components or data code,
-the app's bundled data, or the suites. Unit tests are named by file and test title.
+matches the app"). **WD rendered** is `src/components/dictionary/word-page.test.tsx` ("the rendered
+word page matches the app"), which draws every WD case through the word page's components and reads
+back what they draw. **Conjugations rendered** is `src/components/dictionary/conjugations.test.tsx`:
+every WD case's table ("the rendered Conjugations section matches the app") and forms' examples
+("each conjugated form’s examples match the app"). The `Dictionary API` workflow runs the suites,
+then the rendered tests against the service it builds, on pull requests that change the service, the
+core, the website's dictionary components or data code, the app's bundled data, or the suites. Unit
+tests are named by file and test title.
 
 ## Dictionary home
 
@@ -87,19 +89,21 @@ types; the website searches on Enter so that each search is its own page.
   the form submits it to the search page" (no request, navigation, or history entry however long it
   waits, and a plain `GET` form).
 
+**Radical input.** The box's Radicals button finds a kanji by its radicals, as the app's panel
+does, and a kanji picked there lists only its strongest matches ([Radical input](radical-input.md)).
+
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
-the app's own queries and full-text indexes, on the app's own data in the dictionary service. It
-finds what the app finds for Japanese, kana, romaji, and English queries, including inflected
-queries such as `食べた` or `見ない`, and glosses for a long number such as 9999999, which the
-app's stemmer shortens. `*` after a word matches any word it starts (`t*`), and `^` before a word
-matches only a form's or meaning's first word, as in the app. It lists at most 60 words, the app's
-limit.
+its queries and full-text indexes, on the app's data in the dictionary service. It finds what the
+app finds for Japanese, kana, romaji (`raamen`, then the app's `rāmen` and the titles' `ramen`),
+and English queries, inflected ones such as `食べた` or `見ない` included, and glosses for a long number
+such as 9999999, which the app's stemmer shortens. `*` after a word matches any word it starts
+(`t*`), and `^` before a word only a form's or meaning's first word. It lists at most 60 words.
 
 - Source: App docs, Search; `LookupClient.swift`; ADR 0006, ADR 0008, and ADR 0009.
-- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 32
+- Check: SR `results` (the first 10 IDs, in order), `resolution`, and `presentation`, for 39
   queries; `apps/dictionary-api/src/conformance/full-text.test.ts`, "a long number finds glosses,
   as FTS4 stems it"; SRR's `t*` and `^t*` cases, every row. The 60-word limit: SRR `results`,
-  every row, for the 40 queries that reach it (い, `eat`, 見る, and others), and the rendered い
+  every row, for the 43 queries that reach it (い, `eat`, 見る, and others), and the rendered い
   and いる cases in `search-results.test.tsx`; SR records only the first 10 (`resultLimit: 10`).
 
 **Sentence search.** A Japanese sentence that isn't a word the dictionary holds, such as
@@ -110,10 +114,9 @@ with the dictionary the app pins.
 - Source: App docs, Search (Discovered Words); `results/results.ts` in the core, which the app
   runs too; `JapaneseMorphologyClient.swift`;
   ADR 0009 (the owner's decision to build what the website couldn't analyze before).
-- Check: `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "「日本語を勉強する」 lists
-  its words as Discovered Words" and "a word the dictionary holds is still searched as itself". SR
-  records no sentence cases yet (none with the `analyzed` resolution): recording them needs the
-  app's Japanese Text Analysis pack in the Simulator.
+- Check: SSR, every field, for 325 sentences: the Discovered Words heading, each row with its chips,
+  and the Example Sentences row; `apps/dictionary-api/src/conformance/sentence-search.test.ts`, "a
+  word the dictionary holds is still searched as itself".
 
 **Result order.** Words appear in the app's order: its retrieval, then equally strong matches
 re-sorted by the default dictionaries, as the core's `orderedByFrequency` sorts them. Within each
@@ -127,7 +130,7 @@ TUBELEX packs, read by the dictionary service for all of a search's results, one
 - Source: App docs, Search; `orderedByFrequency` in the core's `results/ordering.ts`; #462 (rows in
   the order the app shows with its default dictionaries).
 - Check: SRR `results` (every row's ID, in order, with its `match` group and `retrievalOrder`) for
-  56 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
+  63 queries, including `iru` and いる; `packages/dictionary-core/src/results/results.test.ts`,
   "orderedByFrequency (SearchResultFrequencyOrdering.ordered)"; smoke "iru shows the refinement and
   its first rows with their chips, as the app does", which reads the rows from SRR's `iru` case.
 
@@ -170,7 +173,7 @@ row opens the sentences where the site shows them:
 - Source: App docs, Search; the examples row of the core's `results/results.ts` and
   `artifact/search-examples.ts`, which the app's results screen reads too; ADR 0010 and
   the owner's decision on #544 (where the row leads, with no Example Sentences page).
-- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 56 queries;
+- Check: SRR `examples` (title, count, and primary entry) and `sections` for all 63 queries;
   `search-results.test.tsx`, "shows the Example Sentences row, the reading refinement, then the
   rows in order with their chips", "shows only the Example Sentences when only sentences match",
   "an English search lists its Example Sentences below the words, and its row links down to them",
@@ -216,7 +219,7 @@ dictionary service couldn't answer, is a row that doesn't open.
 
 **Result rows.** Each row shows the headword with furigana, its meaning clamped to two lines, and
 its frequency chips, and opens the word page. The meaning is the one that matched for an English
-query (`displaySummary`), and the word's summary otherwise.
+query, `café` too (`displaySummary`), and the word's summary otherwise.
 
 At the app's accessibility text sizes the meaning isn't clamped (`ResultRow`'s `lineLimit`). The
 browser's text size stands in for Dynamic Type: it sets the root font size (16px by default) as
@@ -230,11 +233,12 @@ two lines. Page zoom isn't text size and keeps the clamp.
   `ResultRow.swift` (`lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)`);
   `displaySummary` in `DictionaryEntry.swift`; #462.
 - Check: SRR `results[].headword`, `reading`, and `summary`; `search-results.test.tsx` (each row's
-  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts
-  the clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root
-  font sizes on each side of the threshold);
-  `results.test.ts`, "shows the meaning an English query matched"; headword furigana:
-  `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments"; the links: `links.test.ts`.
+  headword, meaning, and link in the SRR cases, and "clamps each meaning to two lines, and lifts the
+  clamp with large text, as the app does", which evaluates the `meaning-clamp` rule at root font
+  sizes on each side of the threshold); `results.test.ts`, "shows the meaning an English query
+  matched"; headword furigana: `packages/dictionary-core/src/detail/ruby.test.ts`, "rubySegments";
+  the links: `links.test.ts`; `café`'s words: `sentence-search.json`'s `café`, and
+  `packages/dictionary-core/src/search/latin-text.test.ts`.
 
 **Frequency chips.** A row has one chip per default dictionary that ranks or lists the word, as the
 app picks them: `JLPT N5` when the JLPT list has it, and `YouTube 812` when TUBELEX ranks it. Each
@@ -243,7 +247,7 @@ rare. Screen readers hear the tier after a rank, as the app's labels speak it.
 
 - Source: App docs, Search; `frequencyLookupChips` in the core's `detail/frequency.ts`; the app
   draws a chip in `FrequencyRankChip.swift`.
-- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 56 queries;
+- Check: SRR `results[].chips` (dictionary, text, and tier) for every row of 63 queries;
   `search-results.test.tsx` (the chips as rendered in the SRR cases); smoke (iru's chips);
   `packages/dictionary-core/src/detail/frequency.test.ts`, "shows only dictionaries that rank or
   list the word, since JLPT is a level list" and "tierForRank (FrequencyTier(rank:))".
@@ -290,45 +294,54 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
   details, credits neither". The base list, with each licence, and none on a search that finds
   nothing: `src/app/[locale]/dictionary/search/[query]/page.test.ts`, "the results page’s Sources".
   The Sources page: `src/app/[locale]/sources/page.test.tsx` and `apps/web/e2e/sources.spec.ts`; the
-  list:
-  `packages/dictionary-core/src/sources/credits.test.ts`.
+  list: `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
 has no ✓ Known capsule and no swipe or long-press to mark a word known, since learner data lives in
 the app.
 
-- Source: #462 (Recent list and camera button left out; learner actions open a get-the-app
-  prompt).
+- Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
+
+**Reading Aids on a row.** A row's headword has furigana while Show Furigana is on, and plain text
+while it's off; with Show Romaji on, the row's reading in romaji is under it, as the app's result
+rows draw it. The browse pages' rows are the same rows ([Site-wide](site-wide.md), Reading Aids).
+
+- Source: `ResultRow.swift` and `JapaneseRubyText.swift`; the core's `romaji` (`detail/romaji.ts`).
+- Check: `apps/web/e2e/reading-aids.spec.ts`, "Furigana off leaves the search results and a kanji’s
+  words plain" and "Romaji shows under the headword, each example, the results, and a kanji’s
+  readings".
 
 ## Example Sentences section
 
-When a search's Example Sentences row has no word page to open (see
-[Search results](#search-results)), the results page lists the search's sentences itself, in an
-Example Sentences section below its results, at `#examples`. It lists what the app's Example
-Sentences screen lists for the search. The app's screen is a page of its own; the website's isn't
-(ADR 0010).
+When a search's Example Sentences row has no word page to open (see [Search
+results](#search-results)), the results page lists the search's sentences itself, in an Example
+Sentences section below its results, at `#examples`. It lists what the app's Example Sentences
+screen lists for the search. The app's screen is a page of its own; the website's isn't (ADR 0010).
 
 **Which sentences.** An ASCII query matches the English side of every Tatoeba pair the app has
 (232,703) as a phrase of stemmed words, never across the end of a sentence: `eat` finds "eats" and
-"eating". When no sentence has the query's exact words, each word of a match must be the query's
-in another form (plural, third person, past, or `ing`): `startled you` finds "startle you", and
+"eating". When no sentence has the query's exact words, each word of a match must be the query's in
+another form (plural, third person, past, or `ing`): `startled you` finds "startle you", and
 `generously` finds nothing, though "generally" has its stem. `*` after a word matches any word it
 starts (`t*`), and needs a sentence with the exact words; `^` before the first matches only a
-sentence's first word (`^the`). Any other query matches the Japanese side as a substring. A
-deinflected or romaji query (`食べた`, `miru`) lists its primary entry's examples instead, the ones
-its word page lists; other lists stop at the app's 100. The dictionary service runs the app's own
-search, SQL, and FTS4 indexes, so a search lists what the app lists however many sentences it reads.
+sentence's first word (`^the`). Any other query matches the Japanese side as a substring, or, if
+none has it, a query in other Latin letters than romaji's matches the English as typed, then
+unaccented (`café`). A deinflected or romaji query (`食べた`, `miru`) lists its primary entry's
+examples instead, the ones its word page lists; other lists stop at the app's 100. The dictionary
+service runs the app's own search, SQL, and FTS4 indexes, so a search lists what the app lists
+however many sentences it reads.
 
 - Source: App docs, Search; the core's `artifact/example-search.ts` (`retrieveEnglish`) and
   `examples/english-inflection.ts`, which the app asks for the same sentences; ADR 0009 (the app's
   own data and queries in the dictionary service); #428 (the owner's decisions of 2026-10-12).
 - Check: ES `ids` (every listed pair ID, in order) and `usesPrimaryEntryExamples` for 69 queries,
-  including phrases, one in a form no sentence has (`startled you`), a word that only shares a
-  stem (`generously`), apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000
-  candidates), first words (`^tom`, and `^the` with about 70,000), a phrase ending in a prefix
-  (`thank y*`), long numbers that FTS4's stemmer shortens, and refused queries, replayed by the
-  service's example search conformance; the core's `examples/english-inflection.test.ts`.
+  including phrases, one in a form no sentence has (`startled you`), a word that only shares a stem
+  (`generously`), apostrophes, hyphens, prefixes (`run*`, and `t*` with over 100,000 candidates),
+  first words (`^tom`, and `^the` with about 70,000), a phrase ending in a prefix (`thank y*`), long
+  numbers that FTS4's stemmer shortens, and refused queries, replayed by the service's example
+  search conformance; the core's `examples/english-inflection.test.ts` and
+  `artifact/example-search.test.ts`.
 
 **Order.** English matches with the exact words come first, then those that match only once
 stemmed; within each, by where the match starts, then the English sentence's length in words, the
@@ -396,18 +409,31 @@ is titled with the query, which the results page already shows.
 - Check: `data.test.ts`, "a search without examples, or without a service, has none"; ES cases
   without sentences in `search-examples.test.tsx`.
 
+**Reading Aids.** A sentence's linked words have furigana while Show Furigana is on. With Show
+Romaji on, the sentence in romaji is under it, written by the core's `sentenceRomaji` over the
+words the page shows, as the app writes it, or "Romaji unavailable for this text" when the core
+can't write it. Show Sentence Translations shows or hides its English. Its words show no short
+meanings, as the app's Example Sentences screen shows none. The service sends each sentence's
+romaji with it (contract 7), so a page that loads more examples shows theirs too.
+
+- Source: `LinkedJapaneseText.swift` and `ExampleSentencesView.swift` (the `.dedicated` rows);
+  `PresentationCore.swift`, `romaji(of:)`.
+- Check: `src/lib/dictionary/page-example.test.ts`, "the Example Sentences section shows no word
+  meanings, as the app’s Example Sentences screen"; the word page's examples share the list, and
+  its checks below. English example search needs the service, so no browser test reaches it.
+
 ## Word page
 
-**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page
-has no title row above the header card. Share sends the headword, its reading, and the numbered
-meanings, as the app's does, through the browser's share sheet; without one it copies the link.
-The menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The
-learner actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer
-on phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving
-lists and known words on this website comes later, which holds whether or not the site's account
-pages are open ([Account pages](account.md)); it promises nothing for notes and photos, which stay
-on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies the page URL and shows
-"Link copied". There is no back button; the breadcrumbs replace it.
+**Toolbar.** Share and a ••• menu sit at the end of the breadcrumb row, at every width; the page has
+no title row above the header card. Share sends the headword, its reading, and the numbered
+meanings, as the app's does, through the browser's share sheet; without one it copies the link. The
+menu lists Mark as Known, Add to List…, Add Note, Add Photo, Open in App, and Copy Link. The learner
+actions and Open in App open the get-the-app prompt, a dialog on wide screens and a drawer on
+phones. The prompt says lists, Known, notes, and photos are in the Zenbu app, and that saving lists
+and known words on this website comes later, which holds whether or not the site's account pages are
+open ([Account pages](account.md)); it promises nothing for notes and photos, which stay on the
+device ([Privacy Policy](privacy.md)). Open in App doesn't open the app yet (#829). Copy Link copies
+the page URL and shows "Link copied". There is no back button; the breadcrumbs replace it.
 
 - Source: App docs, Dictionary and kanji details (Share and the ••• menu); `SavedItemActions.swift`;
   #462 (toolbar and menu items, get-the-app prompt, `Sonner` for Link copied); #484 (breadcrumbs
@@ -423,11 +449,11 @@ on the device ([Privacy Policy](privacy.md)). Open in App doesn't open the app y
 is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
 (`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
 keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
-enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside
-it is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
-Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names one word
-class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a
-name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
+enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside it
+is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has
+no pitch. Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names
+one word class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class
+has a name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
 with a conjugation table the row links to the page's Conjugations section (see Conjugations).
 
 - Source: App docs, Dictionary and kanji details; the app's `WordHeadline.swift` and
@@ -500,7 +526,7 @@ as the app draws it: the reading in katakana, one mora wide each (one and a half
 such as キョ), with a dot per mora at the top when high and the bottom when low, joined by a line, and
 a hollow dot for the following particle. The capsule is one button that pronounces the word; screen
 readers hear "Pronounce «reading». Pitch accent, downstep N, M mora", as the app's label and value
-say it: M is the source's mora count, even where it differs from the morae drawn (#831 review).
+say it: M is the number of morae drawn, and N is never past them.
 
 - Source: App docs, Dictionary and kanji details; `pitchGraph` in the core's `detail/pitch.ts`,
   which the app's `PitchAccentBadge.swift` draws; #462 design.
@@ -562,8 +588,8 @@ their labels, leaving out Search only forms and repeats. A form with a kanji lin
 for its first kanji, which leads with that kanji's row and its details, as the app's form line
 opens that kanji.
 
-- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in `WordDetailSections.swift`;
-  ADR 0010 (a kanji's details open from its search).
+- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in
+  `WordDetailSections.swift`; ADR 0010 (a kanji's details open from its search).
 - Check: WD `alternativeForms`; `packages/dictionary-core/src/detail/word.test.ts`, "leaves out
   Search only forms and repeats from the alternatives"; where a kanji links:
   `src/lib/dictionary/urls.test.ts`, "open the kanji’s search, which leads with its KANJI row". The
@@ -675,6 +701,28 @@ and links in the page's HTML.
   neither". The base list, with each licence: `src/app/[locale]/dictionary/[word]/page.test.tsx`,
   "credits JMdict, UniDic, KANJIDIC2, the JLPT lists, TUBELEX, and Tatoeba, each with its licence".
 
+**Reading Aids.** The headword has furigana while Show Furigana is on; while it's off the headword
+is plain and its reading is under it, unless the two are the same. With Show Romaji on, the reading
+in romaji is under the headword, after each reading among the other forms, and under each related
+word. The examples, and each meaning's example, follow the Example Sentences section's aids, and
+with Show Word Meanings on, a short meaning in the accent colour is under each word linked to one
+entry, at most 6rem wide and cut with an ellipsis: the entry's first meaning shortened by the
+core's `shortGloss`, as in the app, and none under a particle, an auxiliary, or a
+symbol (`wordMeaning`, `examples/word-meaning.ts`). Every word counts as unknown: the website has no
+known words yet.
+
+- Source: `WordHeadline.swift`, `WordDetailSections.swift` (other forms, related words),
+  `LinkedJapaneseText.swift` (`meaning(for:)`), and the core's `shortGloss` (`detail/text.ts`).
+- Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "draws every Reading Aid, and the page
+  lets the settings show or hide each" (the reading and romaji under the headword, and each
+  example's romaji, translation, and short meanings, as the service sends them);
+  `packages/dictionary-core/src/detail/word.test.ts`, "要る: a linked word carries its short
+  meaning…" and `packages/dictionary-core/src/examples/word-meaning.test.ts`;
+  `apps/web/e2e/reading-aids.spec.ts`,
+  "Furigana off leaves the word page’s headword plain, with its reading under it", "Word Meanings
+  shows a short meaning under each word of the word page’s examples", and "Sentence Translations off
+  hides each example’s English".
+
 ## Conjugations section
 
 A word page's Conjugations section holds what the app's Conjugations screen, and each form's
@@ -753,6 +801,14 @@ the list; like the app, it finds a form's examples by its spelling alone.
   explanation, its pronounced form, and its examples" and "a form without examples says so"; smoke
   "見る's conjugations and its past's examples match the app". WD has two forms that search English, Ｈ
   (which finds 3 examples) and ＮＧ (which finds none).
+
+**Reading Aids.** A form's headline follows the word's headword: furigana, its reading under it
+while furigana is off, and its romaji. A row that shows furigana shows its romaji too; the others
+are plain, as in the app. A form's examples follow the word page's.
+
+- Source: `ConjugationsView.swift` (`ConjugationRow`, `rowFurigana`, the form's `WordHeadline`).
+- Check: `apps/web/e2e/reading-aids.spec.ts`, "Romaji shows under the headword, each example, the
+  results, and a kanji’s readings" (a form's romaji).
 
 ## Kanji details
 
@@ -866,274 +922,14 @@ Detail in the app, so its row doesn't open.
 - Source: #499.
 - Check: KD case 々 (`opensDetail: false`).
 
-## Header, footer, and site-wide
+**Reading Aids.** With Show Romaji on, each reading is in romaji under it, written by the core's
+`romaji` from the reading as KANJIDIC gives it (い.る is i.ru), and each of the kanji's words has
+furigana and its reading in romaji, as in the app.
 
-**Header.** The logo and the site name link home. From 1024 pixels the header shows the logo and
-name, the Dictionary, Tools, Products, and Company menus, then Get the app and the round account
-button (Account menu, below); the languages are in the footer ([Languages](languages.md)). Below
-1024 pixels it shows the logo, the name left to screen readers, and a menu button (lucide `Menu`).
-The header has no search and no email address: the Dictionary menu leads to the dictionary home,
-whose box searches (#561). It stays pinned to the top of the window while the page scrolls, on the
-page's background with its bottom rule, and a link to a heading on the page (such as a word's
-`#conjugations`) stops below it.
-
-- Source: #844 decision and mockups (Header switch); #650; #561 (no search in the header); #664
-  and its mockups (v50, Header actions A: pinned, two items).
-- Check: `src/components/site-header.test.tsx`, "below 1024 pixels the header has a menu button,
-  and from 1024 the menus", "the header on %s has no search and no email address", and "the header
-  stays pinned to the top as the page scrolls"; `apps/web/e2e/site.spec.ts`, "the header has the
-  name, four menus, Get the app, and the account button, and no search" and "the header shows only
-  the logo and the menu button, and fits a 320-pixel phone"; `apps/web/e2e/header.spec.ts`, "stays
-  pinned to the top while the page scrolls"; smoke "the header links to the dictionary and has no
-  search"; `apps/web/e2e/layout.spec.ts`, which checks that no page scrolls sideways at either
-  width.
-
-**Logo and icons.** The header, the phone menu, and the footer show the Zenbu mark,
-`assets/brand/vector/zenbu-icon-flat-vector.svg` (served as `/zenbu-icon-flat-vector.svg`), in its
-own colours in both themes, beside the site name. The favicon (`favicon.ico`, the SVG mark, and 16
-and 32 pixel PNGs), the Apple touch icon, and the web app manifest (`site.webmanifest`, with its
-192 and 512 pixel icons, plain and maskable, under `/icons/`) are copies of the files in
-`assets/brand/web/`, named in every page's head (`siteIcons` and `siteManifest` in
-`src/lib/metadata.ts`).
-
-- Source: #664.
-- Check: No automated check yet; checked by hand with `verify-web`.
-
-**Account menu.** From 1024 pixels the round account button ends the header. Signed out it shows a
-person (lucide `UserRound`) and is named "Account"; in a browser that signed in on the site, it
-shows the learner's initials (from their name, or their email's first letter) and is named
-"Account, signed in". The button keeps its size, so Get the app and the button stay in the same
-places either way. Its menu, signed out, holds Log in and Create an account (the `login` and
-`register` entries in `linkTargets`: `/login/` and `/register/` where the account pages are open,
-`#` placeholders where they're closed); signed in, Your account (`/account/`), then Sign out, which
-signs this browser out through the account service; an account page open in the browser, in this
-tab or another, then shows signed out ([Account pages](account.md#your-account)). A sign-out the
-service refuses, or can't be reached for, shows a toast with the reason and stays signed in. Both
-end with the Theme row (Theme, below). It opens with a click, Enter, Space, or the Up and Down
-keys; Up, Down, Home, and End move through its items, the Theme row's three icons among them, Enter
-follows one, and Escape closes it and returns focus to the button. The
-server draws it signed out, as it draws the footer's Sign in; the browser then reads the note it
-keeps when signed in ([Account pages](account.md#pages)).
-
-- Source: #664 and its mockups (v50, Header actions A); #468 (the account pages).
-- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
-  button end the header, Get the app opening the iPhone app’s page"; `apps/web/e2e/header.spec.ts`,
-  "Get the app and the account button keep their places signed out and signed in", "signed out,
-  the menu offers Log in and Create an account, then the theme, by keyboard", and "signed in, the
-  menu leads to the account, then the theme, then Sign out, by keyboard", "signing out from the
-  menu on the account page shows it signed out, with no reload", and "says so, and stays signed
-  in" (when the service can't sign the browser out); `apps/web/e2e/account.spec.ts`, "the footer leads to signing in, and to the account once signed
-  in, as the header shows the initials"; `src/lib/account/flows.test.ts`, "signing out of this
-  browser counts a session already gone as signed out, and keeps any other failure";
-  `src/lib/account/signed-in.test.ts`.
-
-**Theme.** Light, Dark, and System, with System the default: the site follows the operating
-system's setting, as it changes, until the learner chooses. The choice is kept in the browser's
-local storage (`theme`), so it holds across pages and visits on that device. From 1024 pixels the
-choice is the account menu's Theme row, three icons (lucide `Sun`, `Moon`, `Monitor`) whose
-current one is marked, which stays open as the theme changes; below 1024 pixels it is the phone
-menu's Theme button beside Close (shadcn's mode toggle: a sun that turns into a moon), whose menu
-lists the three with the current one ticked and closes on a choice. A script in the page's HTML
-applies the saved choice before anything is drawn, so a page never shows the other theme first
-(next-themes, which the site's toasts already read). Every page uses the stock shadcn tokens in both
-themes; text on the muted grey (the footer, the product page's demo, the homepage's previews) uses
-`muted-surface` (`src/app/globals.css`), a slightly darker grey in light mode, so it keeps 4.5:1.
-
-- Source: #664 and its mockups (v50, Theme switch).
-- Check: `apps/web/e2e/theme.spec.ts`, "System is the default, and follows the operating system as
-  it changes", "the choice survives a reload, whatever the operating system says", "the choice
-  changes by keyboard, in the account menu or, on phones, the drawer", and "a saved choice is
-  already applied, so the page never shows the other theme first"; `apps/web/e2e/contrast.spec.ts`,
-  which runs axe's colour-contrast rule on every page type in `apps/web/e2e/page-types.ts` (every
-  page in `src/lib/pages.ts`, the account pages, the tools pages, search, a word with its
-  conjugation form and kanji open, kanji details, every kind of browse page, and a missing page), in
-  both themes, at both widths, and on phones on the phone menu and each of its groups.
-
-**Menus.** Dictionary, Tools, and Products are mega menus: a featured card, three columns, and a
-footer line with a link. Company is a plain dropdown.
-
-- **Dictionary:** a card with the App Store search screenshot that opens the dictionary home; Kana
-  (Hiragana, Katakana), Word lists (JLPT vocabulary, which opens N5, and Frequency lists), and Kanji
-  and grammar (Kanji by grade, Parts of speech); then Browse everything (`/dictionary/browse/`).
-- **Tools:** a card drawn with kana that leads to all tools (`/tools/`); Reference (Dictionary, Kana
-  charts), Lists (Kanji lists, Frequency lists), and Converters (Hiragana to Katakana, Romaji to
-  Kana, and Kanji to Furigana, which open their pages); then All free tools
-  ([Tools pages](tools.md)).
-- **Products:** a card with the App Store word screenshot for Zenbu Japanese for iPhone, with Get
-  the app; Apps (Zenbu Japanese for iPhone, Browser extension), Free (Zenbu Japanese Dictionary,
-  Free tools), and Learn (Reference guides, Courses); then All products.
-- **Company:** About, Sources, Support, Contact, and Legal.
-
-A menu opens on click, hover, Enter, or Space, and closes on a second click, a click outside it,
-Escape (focus goes back to its button), or following one of its links. Tab moves into the open menu.
-Every menu link is in the page's HTML while the menu is closed, so search engines see them. The
-menus sit under their buttons, as shadcn's navigation menu places them, and slide to stay inside the
-window.
-
-- Source: #844 decision and mockups (Header switch); #650.
-- Check: `src/components/site-header.test.tsx`, "the Dictionary menu leads to the dictionary and its
-  browse pages", "the Tools menu leads to the tools, the reference pages, and the converters,
-  Kanji to Furigana among them", "the Products menu leads to the products pages and the web
-  dictionary, and its planned pages are placeholders", and "the Company menu leads to About,
-  Sources, Support, Contact, and Legal"; `apps/web/e2e/site.spec.ts`, for each menu, "the … menu
-  opens and closes with a click", "the … menu opens with the keyboard and Escape closes it", and "a
-  link in the … menu opens its page and closes the menu", and "every link in the header menus opens
-  a page the site has, with no redirect" and "the Dictionary menu leads to the search box".
-
-**Placeholder links.** The pages the menus, footer, and [homepage](home.md) name that don't exist
-yet, and the outside addresses that aren't known yet, link to `#` for now: Browser extension,
-Reference guides, Courses, Log in (`/login/`) and Create an account (`/register/`) in a build whose
-account pages are closed, and See all videos (`/videos/`), which shows only once the product page
-has videos. Zenbu Japanese for iPhone and All products now open their pages,
-`/products/zenbu-japanese-app/` and `/products/` ([Products pages](products.md)), from the same
-entries, as do All free tools, Free tools, and All tools (`/tools/`) and the Hiragana to Katakana,
-Romaji to Kana, and Kanji to Furigana converters ([Tools pages](tools.md)); so do Log in and
-Create an account where the account pages are open, as on staging and in production ([Account
-pages](account.md#pages)), the build choosing their addresses as it does the footer's Sign in. #650
-asked for menu items to appear only once their page exists; the owner chose to show them now as `#`
-placeholders instead (#844). Every one is in one list, `linkTargets` in `src/lib/site.ts`, named for
-what it stands for, and its links carry `data-link-target` with its id. A browser test lists every
-`#` link the site renders and fails on one that isn't in that list, so none reaches production
-unnoticed; replacing a placeholder means giving its entry the real address, or linking the page
-directly once it exists.
-
-- Source: #844 decision (placeholder links), and the owner's decision on #650 (show planned items
-  as placeholders).
-- Check: `apps/web/e2e/placeholders.spec.ts`, "every # link the site renders is a placeholder listed
-  in src/lib/site.ts", which visits every page in `src/lib/pages.ts`, the tools index, a converter,
-  and a search, word, and browse page at both widths, with the account menu open from 1024 pixels
-  and the phone menu open below, and prints the placeholders it found; `apps/web/e2e/site.spec.ts`,
-  "the Tools menu opens the tools and three converters, the Products menu’s planned pages are #
-  placeholders, and All products opens the catalog"; `src/lib/site.test.ts`, "%s
-  opens its page in a build whose account pages are open, and isn't a placeholder" and "%s stays a #
-  placeholder in a build whose account pages are closed", for Log in and Create an account.
-
-**Current section.** The menu button of the section the page is in is in the foreground color on a
-muted background, where the others are muted text, and screen readers hear it as current
-(`aria-current="true"`): every page under `/dictionary/` is in Dictionary, every page under
-`/tools/` in Tools, and About, Sources, Support, Contact, and the legal pages are in Company. Home
-and the sitemap are in none. In the open menu and in the phone menu, the link to the page itself is
-marked as the current page (`aria-current="page"`).
-
-- Source: #462 design; #650.
-- Check: `src/components/site-header.test.tsx`, "the header marks the section the page is in";
-  `apps/web/e2e/site.spec.ts`, "the header marks the section the page is in, and the page in its
-  menu" and "the drawer marks the current page, and closes with its close button"; smoke "the
-  header marks Dictionary current on the dictionary home".
-
-**Phone menu.** Below 1024 pixels the menu button opens a sheet from the right, nine-tenths of the
-screen's width and at most 384 pixels (#682: at three-quarters, a 360-pixel phone left its items'
-lines a word or two long), titled with the logo and the site name, with the Theme button beside its
-close button (Theme, above). It holds the four menus as groups that open and close (one at a time),
-the current section's group open, then Log in, or Your account in a browser that
-signed in, and Get the app. A mega menu's group lists its columns' links, with the Dictionary group
-led by Search. A group opens and closes with a click, Enter, or Space. Following a link, its close
-button (lucide `X`), Escape, going back or forward, or widening the window to 1024 pixels closes the
-sheet; choosing a theme keeps it open.
-
-- Source: #844 decision and mockups (Phone width); #650; #561 (the phone menu); #664 (the theme
-  beside Close, and the profile in Log in's place).
-- Check: `apps/web/e2e/site.spec.ts`, "the drawer has the theme beside Close, then the menus as
-  groups, then Log in and Get the app", "a drawer group opens and closes with a click, and its link
-  opens the page", "the drawer
-  opens and its groups toggle with the keyboard, and Escape closes it", "following Log in or Get the
-  app in the drawer closes it, and opens its page", "the drawer closes when the
-  browser goes back, and stays closed going forward", and "the drawer closes when the window reaches
-  1024 pixels, and stays closed when it narrows"; `apps/web/e2e/phone-layout.spec.ts`, "About,
-  /about/, fits a 360px phone" (the open menu and each group, Phone layout below); its width:
-  `apps/web/e2e/site.spec.ts`, "at 360 pixels the drawer is 324 wide" and "at 768 pixels the drawer
-  is 384 wide".
-
-**Get the app and Log in.** Get the app leads with a phone icon (lucide `Smartphone`); it opens the
-iPhone app's page (`/products/zenbu-japanese-app/`), whose own Get the app opens the app's App
-Store listing. It is the same button in the header, the
-phone menu, and the prompt that actions needing the app open; following it closes the phone menu
-or the prompt. Log in, in the account menu from 1024 pixels and in the phone menu below, opens the
-login page, `/login/`, where the account pages are open, as on staging and in production, and is
-a `#` placeholder in a build where they're closed ([Account pages](account.md#pages)).
-
-- Source: #844 decision and the Product page mockup's note (Get the app opens the product page);
-  #650; #652; #831 (the phone icon); #468 (the login page); #664 (Log in moves into the account
-  menu); #798 (production's account pages open).
-- Check: `src/components/site-header.test.tsx`, "from 1024 pixels Get the app and the account
-  button end the header, Get the app opening the iPhone app’s page" and "the Get the app button
-  leads with a phone icon"; `src/lib/site.test.ts`, "%s opens its page in a build whose account
-  pages are open, and isn't a placeholder" and "%s stays a # placeholder in a build whose account
-  pages are closed"; `apps/web/e2e/account.spec.ts`, "the account menu's Log in, or the drawer's on phones, opens
-  the login page"; `apps/web/e2e/product-page.spec.ts`, "the header’s Get the app
-  opens this page"; `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's
-  actions".
-
-**Footer.** The footer sits on the muted grey in light mode (`bg-muted`) and a slightly lighter grey
-than the page in dark mode, after a rule, so the page, the homepage's closing card, and the footer
-read as three areas; its secondary text is the `muted-surface` grey, at 4.5:1 or more in both themes
-(Theme, above). It has no theme toggle. It starts with the logo and the site name, linking home, and
-the site's one-line description. Four labelled columns follow: Products (Zenbu Japanese for iPhone,
-Dictionary, and, where the account pages are open, Sign in, or Account once signed in:
-[Account pages](account.md#pages)), Tools (Kana charts, Kanji lists, Frequency lists, All tools),
-Company (About, Support, Contact, Sources), and Legal (Privacy Policy, Terms of Use, DMCA, Affiliate
-Disclosure). From 768 pixels the brand and the columns sit side by side; on phones they stack into
-one column. After a rule comes the bottom row: the copyright, the social accounts, the language
-menu, and Sitemap, on one line from 768 pixels; at 320 and 375 pixels the copyright fills a line and
-the rest wrap below it. The accounts (YouTube, GitHub, X, Facebook, Reddit, Instagram, TikTok,
-LinkedIn, Medium) are a group named "Zenbu Japanese elsewhere", each the brand's 16-pixel mark in
-the text color: Simple Icons' paths (CC0), and for LinkedIn a trace of the In bug from LinkedIn's
-brand downloads (`components/social-links.tsx`). From 768 pixels they are 28-pixel ghost targets 4
-pixels apart, each named "Zenbu Japanese on" its network, then a decorative divider screen readers
-skip. Below 768 the row is hidden (out of the Tab order and the accessibility tree) and a Socials
-menu ("SNS" in Japanese), built as the language menu is, opens upward with each network's mark and
-name. Nothing scrolls sideways at 320 pixels, and every target is at least 24 pixels (WCAG 2.5.8).
-The legal index (`/legal/`) is in the Company menu, not the footer.
-
-- Source: #844 decision and mockups (footer); #650; #614 (the browse links); #664 (the background
-  and the text's contrast); #902 (round 2's option D: the Socials menu and 16-pixel marks), which
-  replaces the owner's call on #679 for one row of icons on phones.
-- Check: `apps/web/e2e/contrast.spec.ts` (the footer's contrast, every page, both themes);
-  `src/components/site-footer.test.tsx`, "the footer groups its links…", "the footer stacks its
-  columns…", "the footer leads with the brand…", "from 768 pixels the bottom row shows the nine
-  brand marks…", "from 768 pixels a divider sits between the icons…", "below 768 pixels a Socials
-  menu takes…", and "the footer ends with the copyright…"; `apps/web/e2e/footer.spec.ts`, "the
-  footer groups its links…", "the footer lays its columns…", "from 768 pixels the nine social
-  icons…" (768 and 1280, with the divider), "below 768 pixels the icons fold…" (opened at 320 and
-  375), and "Tab reaches the Socials menu…" (Enter, Space, Down Arrow); smoke "the footer links the
-  Privacy Policy".
-
-**Reading Aids.** The website has no Reading Aids settings yet. It shows what the app shows with
-its defaults: headwords and linked example words have furigana, examples show their translation,
-and there is no romaji and no word meanings under example words. The settings are required; see
-[Required, not built yet](not-built-yet.md).
-
-- Source: App docs index, Account (Reading Aids); `ReadingAidPreferences.swift` (the defaults).
-- Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "shows the Reading Aids the app has on
-  by default, and none of those it has off" (the headword's furigana; each example's furigana in
-  kana, its sentence and translation as the dictionary has them, and nothing else).
-
-**Phone layout.** Every page fits a 360-pixel phone. No text is smaller than 12 pixels: furigana
-is 0.45 of its word's size, as in the app, but never under 12 pixels, so it spreads a short word
-a little rather than shrink. The homepage's drawings of the app are pictures, like its
-screenshots, and keep their drawn size, and may crop their text, as the page end's collage does.
-Nothing is wider than the screen, no text is cut off by its box (a line clamped with an ellipsis,
-and a carousel's screens beyond its edge, are meant to be), and a grid of kana, kanji, or links
-keeps each cell with text at least 44 pixels wide. Tap targets meet WCAG 2.2's 2.5.8: 24 by 24
-pixels, or spaced so a 24-pixel circle around each touches no other; the homepage showcase's dots
-are 24 by 24. The same holds in the phone menu, with each of its groups open.
-
-- Source: #682 (the owner's review on a phone).
-- Check: `apps/web/e2e/phone-layout.spec.ts`, "… fits a 360px phone", on every page type in
-  `apps/web/e2e/page-types.ts` (the account and tools pages among them), each homepage area, the
-  phone menu and each of its groups, and a missing page, with axe's `target-size` rule for the tap
-  targets.
-
-**App links.** The shipped iOS app, Tomodachi, and their App Store metadata link to `/privacy` and
-`/support`, so both keep working. `/privacy` redirects (308) to `/legal/privacy/` in one hop, with its query, as
-does `/privacy/`; `/support` redirects to `/support/`, as every page without its slash does.
-
-- Source: the shipped apps' links (Tomodachi's in
-  [tomodachi-app#105](https://github.com/serpcompany/tomodachi-app/issues/105)); the one hop found
-  by the browser tests.
-- Check: `src/lib/moved-pages.test.ts`; `apps/web/e2e/urls.spec.ts`, "/privacy redirects to the
-  privacy policy in one hop" (on the production build) and "/support redirects to /support/ in one
-  hop"; smoke `308 /privacy -> /legal/privacy/`.
+- Source: `KanjiDetailSections.swift`.
+- Check: `apps/web/e2e/reading-aids.spec.ts`, "Furigana off leaves the search results and a kanji’s
+  words plain" and "Romaji shows under the headword, each example, the results, and a kanji’s
+  readings".
 
 ## URLs, SEO, and indexing
 

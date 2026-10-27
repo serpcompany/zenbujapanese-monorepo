@@ -1,5 +1,6 @@
+import type { SettingValue } from '@zenbu/account-rules/settings'
+import { hasInvisibleCharacters } from '@zenbu/account-rules/text'
 import type { Scope } from './clients'
-import type { SettingValue } from './kept-store'
 import { type Profile, type Rejection, rejection } from './profile'
 import type { EntityReader, EntityType, LockedAccount } from './store'
 
@@ -168,7 +169,6 @@ const languageReferenceId = /^[0-9a-f]{32}$/
 const kanjiItem = /^kanji:\p{Script=Han}$/u
 const noteIdentity = /^wn1:[0-9a-f]{64}(:\d{1,3})?$/
 const sha256Hex = /^[0-9a-f]{64}$/
-const controlCharacters = /\p{Cc}|\p{Cf}|\p{Cs}/u
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -186,16 +186,6 @@ export function momentOf(raw: unknown): Date | null {
   const now = new Date()
   return moment > now ? now : moment
 }
-
-export const plainText = (raw: string) =>
-  raw
-    .replace(/\p{Cs}/gu, '\uFFFD')
-    .replace(/\p{Cc}/gu, ' ')
-    .normalize('NFC')
-    .trim()
-
-export const cutText = (raw: string, most: number) =>
-  [...plainText(raw)].slice(0, most).join('').trim()
 
 export const sha256IdOf = (raw: string | undefined) => (raw && sha256Hex.test(raw) ? raw : null)
 
@@ -239,7 +229,7 @@ export function itemText(
     if (typeof value !== 'string') return null
     const normalized = value.normalize('NFC').trim()
     const length = [...normalized].length
-    return length >= least && length <= itemTextLength && !controlCharacters.test(normalized)
+    return length >= least && length <= itemTextLength && !hasInvisibleCharacters(normalized)
       ? normalized
       : null
   }

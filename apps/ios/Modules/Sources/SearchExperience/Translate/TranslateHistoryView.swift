@@ -33,6 +33,9 @@ struct TranslateHistoryView: View {
       }
     }
     .groupedList()
+    .onChange(of: history.bookmarks.map(\.sentence), initial: true) {
+      transcript.words.request(history.bookmarks.map { ($0.sentence, $0.language) })
+    }
     .overlay {
       if filter == .bookmarked, history.bookmarks.isEmpty, history.isLoaded {
         ContentUnavailableView(
@@ -71,7 +74,8 @@ struct TranslateHistoryView: View {
   }
 
   private var bookmarks: some View {
-    ForEach(history.bookmarks) { bookmark in
+    ForEach(history.bookmarks.prefix { transcript.isReady($0.sentence, spokenIn: $0.language) }) {
+      bookmark in
       TranscriptSentence(
         sentence: bookmark.sentence, language: bookmark.language,
         conversationID: bookmark.conversationID, history: history, actions: transcript)

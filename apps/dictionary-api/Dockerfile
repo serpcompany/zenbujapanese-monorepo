@@ -5,7 +5,9 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN corepack enable
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches patches
 COPY apps/web/package.json apps/web/
+COPY packages/account-rules/package.json packages/account-rules/
 COPY apps/dictionary-api/package.json apps/dictionary-api/
 COPY packages/dictionary-core/package.json packages/dictionary-core/
 COPY packages/node-service/package.json packages/node-service/
@@ -19,7 +21,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc pnpm --filter zenbujapanese
 FROM ${NODE_IMAGE} AS sudachi
 WORKDIR /fetch
 COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json resources/
-COPY apps/dictionary-api/scripts/fetch-sudachi.mjs .
+COPY apps/dictionary-api/scripts/fetch-sudachi.mjs apps/dictionary-api/scripts/sudachi-pack.mjs ./
 RUN node fetch-sudachi.mjs resources /sudachi/system_core.dic
 
 FROM ${NODE_IMAGE}
@@ -43,6 +45,7 @@ COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.s
   apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json \
+  apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
   resources/
 COPY --from=sudachi /sudachi sudachi

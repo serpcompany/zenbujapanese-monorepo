@@ -26,6 +26,7 @@ import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
 import type { WordCard } from '@zenbu/dictionary-core/cards/card'
 import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
+import type { RadicalFile } from '@zenbu/dictionary-core/search/radicals'
 
 interface AppCaller {
   account: string
@@ -45,7 +46,7 @@ export interface ServiceInfo {
 
 export interface DictionaryService {
   info(): Promise<ServiceInfo>
-  search(query: string): Promise<SearchResponse>
+  search(query: string, pickedKanji?: boolean): Promise<SearchResponse>
   searchExamples(query: string, from: number): Promise<SearchExamplesResponse | null>
   word(entSeq: number): Promise<WordResponse | null>
   wordExamples(entSeq: number, from: number): Promise<ExamplesResponse | null>
@@ -71,6 +72,7 @@ export interface DictionaryService {
   browseSitemap(): Promise<BrowseSitemapResponse>
   wordCards(languageReferenceIDs: string[]): Promise<WordCard[]>
   segment(text: string): Promise<SegmentedToken[]>
+  radicals(): Promise<RadicalFile>
 }
 
 export type ServiceMethod = keyof DictionaryService
@@ -78,11 +80,12 @@ export type ServiceMethod = keyof DictionaryService
 export function inProcessService(
   dictionary: Dictionary,
   browse: DictionaryBrowse,
-  info: ServiceInfo
+  info: ServiceInfo,
+  radicals: RadicalFile
 ): DictionaryService {
   return {
     info: async () => info,
-    search: query => dictionary.search(query),
+    search: (query, pickedKanji) => dictionary.search(query, pickedKanji),
     searchExamples: (query, from) => dictionary.searchExamples(query, from),
     word: async entSeq => dictionary.word(entSeq),
     wordExamples: async (entSeq, from) => dictionary.wordExamples(entSeq, from),
@@ -106,6 +109,7 @@ export function inProcessService(
     kanjiList: async slug => browse.kanjiList(slug),
     browseSitemap: async () => browse.sitemap(),
     wordCards: async ids => dictionary.wordCards(ids),
-    segment: async text => dictionary.segment(text)
+    segment: async text => dictionary.segment(text),
+    radicals: async () => radicals
   }
 }

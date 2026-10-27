@@ -193,7 +193,9 @@ def compound_downstep(split: tuple[Part, ...]) -> int | None:
             return None
         downstep = joined_downstep(part, earlier_morae, downstep)
         earlier_morae += mora_count(part.kana)
-    return None if downstep is None else off_special_morae(split, downstep)
+    if downstep is None or downstep > earlier_morae:
+        return None
+    return off_special_morae(split, downstep)
 
 
 def compound_group(headword: str, reading: str, splits: list[tuple[Part, ...]]) -> CompoundGroup:

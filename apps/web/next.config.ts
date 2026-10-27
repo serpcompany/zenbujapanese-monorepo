@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
   },
   trailingSlash: true,
   experimental: { globalNotFound: true },
-  transpilePackages: ['@zenbu/dictionary-core'],
+  transpilePackages: ['@zenbu/account-rules', '@zenbu/dictionary-core'],
   turbopack: { root: join(process.cwd(), '../..') },
   async redirects() {
     return [

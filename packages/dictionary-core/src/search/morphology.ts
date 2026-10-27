@@ -7,8 +7,36 @@ export interface MorphologyWord {
   isOutOfVocabulary: boolean
 }
 
+export interface Morpheme extends MorphologyWord {
+  begin: number
+  end: number
+  normalizedForm: string
+  reading: string
+}
+
+export interface MorphologyAnalysis {
+  words: readonly Morpheme[]
+  pieces?: readonly Morpheme[]
+}
+
 export interface MorphologyAnalyzer {
-  analyze(text: string): Promise<MorphologyWord[]>
+  analyze(text: string): Promise<MorphologyAnalysis>
+}
+
+export interface AnalyzedWord extends Morpheme {
+  pieces: Morpheme[]
+}
+
+export function analyzedWords({ words, pieces = [] }: MorphologyAnalysis): AnalyzedWord[] {
+  const analyzed: AnalyzedWord[] = []
+  for (const word of words) {
+    const inside: Morpheme[] = []
+    for (const piece of pieces) {
+      if (piece.begin >= word.begin && piece.end <= word.end) inside.push(piece)
+    }
+    analyzed.push({ ...word, pieces: inside })
+  }
+  return analyzed
 }
 
 const linkablePartsOfSpeech = new Set([

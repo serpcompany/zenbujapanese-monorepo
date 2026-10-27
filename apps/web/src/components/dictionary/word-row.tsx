@@ -1,9 +1,11 @@
 import type { FrequencyResult } from '@zenbu/dictionary-core/detail/frequency'
+import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Fragment, type ReactNode } from 'react'
 import { FrequencyBadges } from '@/components/dictionary/frequency'
+import { RomajiLine } from '@/components/dictionary/reading-aid-lines'
 import { RubyText } from '@/components/dictionary/ruby-text'
 import { Card } from '@/components/ui/card'
 import { Item, ItemActions, ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
@@ -42,6 +44,7 @@ export interface RowWord {
   entSeq: number
   path: string | null
   ruby: RubySegment[]
+  reading: string
   summary: string
   chips: FrequencyResult[]
   rank?: number | null
@@ -57,6 +60,7 @@ export function WordRow({ word, locale }: { word: RowWord; locale: Locale }) {
       ) : null}
       <ItemContent className="gap-1.5" data-result-row={word.entSeq}>
         <RubyText segments={word.ruby} className="text-2xl font-medium leading-tight" />
+        <RomajiLine romaji={romaji(word.reading)} className="text-sm" />
         <p className="meaning-clamp text-sm" lang={sourceLang(locale)}>
           {word.summary}
         </p>

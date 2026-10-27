@@ -16,10 +16,18 @@ export function withoutScreenReaderText(html: string): string {
 
 const furiganaTag = /<rt\b[^>]*>[\s\S]*?<\/rt>/g
 
+const aidHiddenByDefault =
+  /<(p|span)\b[^>]*\bdata-aid="(?:romaji|meaning|reading)"[^>]*>[^<]*<\/\1>/g
+
+export function withDefaultReadingAids(html: string): string {
+  return html.replace(aidHiddenByDefault, '')
+}
+
 const blockEnd = /<\/(?:p|div|h\d)>/g
 
 export function htmlText(html: string, { furigana = false }: { furigana?: boolean } = {}): string {
-  const text = furigana ? html : removeUntilNoneRemain(html, furiganaTag)
+  const shown = withDefaultReadingAids(html)
+  const text = furigana ? shown : removeUntilNoneRemain(shown, furiganaTag)
   return removeUntilNoneRemain(text, /<[^>]*>/g)
     .replace(/</g, '')
     .replace(/&quot;/g, '"')
@@ -28,7 +36,7 @@ export function htmlText(html: string, { furigana = false }: { furigana?: boolea
 }
 
 export function visibleText(html: string): string {
-  let text = removeUntilNoneRemain(html, furiganaTag)
+  let text = removeUntilNoneRemain(withDefaultReadingAids(html), furiganaTag)
   text = removeUntilNoneRemain(text, screenReaderOnly)
   text = removeUntilNoneRemain(text, blockEnd, ' ')
   return htmlText(text).replace(/\s+/g, ' ').trim()
@@ -53,6 +61,7 @@ export interface RenderedPage {
   sections: string[]
   examples: { text: string; href: string | null } | null
   refinement: string | null
+  heading: string | null
   kanji: { character: string; text: string } | null
   rows: RenderedRow[]
   noResults: string | null
@@ -62,23 +71,26 @@ export function readRenderedPage(html: string): RenderedPage {
   const sections = [...html.matchAll(/data-section="([^"]+)"/g)].map(match => match[1])
   const refinement = html.match(/data-section="readingRefinement"[\s\S]*?<\/p>/)
   const examples = html.match(/data-section="examples"[\s\S]*?<\/p>/)
+  const heading = html.match(/data-section="discoveredWords"[\s\S]*?<h2[^>]*>([\s\S]*?)<\/h2>/)
   const kanji = html.match(
     /<span lang="ja" class="[^"]*text-4xl[^"]*">([^<]+)<\/span><span[^>]*data-kanji-row="[^"]*"[^>]*>([\s\S]*?)<\/span><\/span>/
   )
-  const rows = segments(html, /data-result-row="(\d+)"/g).map(({ value, html: row }) => {
-    const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
-    const summary = row.match(/<p class="meaning-clamp[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const shown = withoutScreenReaderText(row)
-    const chips = segments(shown, /data-chip="([^"]+)"/g).map(chip =>
-      visibleText(`<x ${chip.html.split('</span></span>')[0]}`)
-    )
-    return {
-      entSeq: Number(value),
-      headword: visibleText(headword),
-      summary: visibleText(summary),
-      chips
+  const rows = segments(withDefaultReadingAids(html), /data-result-row="(\d+)"/g).map(
+    ({ value, html: row }) => {
+      const headword = row.match(/<span lang="ja"[^>]*>([\s\S]*?)<\/span>\s*<p/)?.[1] ?? ''
+      const summary = row.match(/<p class="meaning-clamp[^"]*">([\s\S]*?)<\/p>/)?.[1] ?? ''
+      const shown = withoutScreenReaderText(row)
+      const chips = segments(shown, /data-chip="([^"]+)"/g).map(chip =>
+        visibleText(`<x ${chip.html.split('</span></span>')[0]}`)
+      )
+      return {
+        entSeq: Number(value),
+        headword: visibleText(headword),
+        summary: visibleText(summary),
+        chips
+      }
     }
-  })
+  )
   const empty = html.match(/data-slot="empty"[^>]*>([\s\S]*)$/)
   return {
     sections,
@@ -89,6 +101,7 @@ export function readRenderedPage(html: string): RenderedPage {
         }
       : null,
     refinement: refinement ? visibleText(`<x ${refinement[0]}`) : null,
+    heading: heading ? visibleText(heading[1]) : null,
     kanji: kanji
       ? {
           character: visibleText(kanji[1]),
@@ -141,7 +154,10 @@ export function readRenderedExamples(html: string): RenderedExample[] {
       href: element.startsWith('<a ') ? (element.match(/href="([^"]*)"/)?.[1] ?? null) : null,
       marked: /class="[^"]*border-b-2/.test(element)
     }))
-    const translation = item.match(/<p class="text-muted-foreground">([\s\S]*?)<\/p>/)?.[1] ?? ''
+    const translation =
+      item.match(
+        /<p class="text-muted-foreground"[^>]*data-aid="translation"[^>]*>([\s\S]*?)<\/p>/
+      )?.[1] ?? ''
     return {
       position: Number(value),
       words,

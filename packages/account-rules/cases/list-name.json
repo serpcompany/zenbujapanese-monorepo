@@ -1,0 +1,83 @@
+{
+  "most": 500,
+  "accepted": [
+    { "covers": "a name", "typed": "Favorites", "name": "Favorites" },
+    { "covers": "spaces around it", "typed": "  Favorites  ", "name": "Favorites" },
+    {
+      "covers": "a newline after it",
+      "typed": "  Anime S1 vocab \u000a",
+      "name": "Anime S1 vocab"
+    },
+    {
+      "covers": "a byte order mark before it, trimmed as JavaScript trims",
+      "typed": "\ufeffFavorites",
+      "name": "Favorites"
+    },
+    {
+      "covers": "a null character, made a space",
+      "typed": "Fav\u0000orites",
+      "name": "Fav orites"
+    },
+    {
+      "covers": "a tab and a bell, made spaces",
+      "typed": "Anime\u0009S1\u0007",
+      "name": "Anime S1"
+    },
+    {
+      "covers": "a next-line control before it, made a space and trimmed",
+      "typed": "\u0085Favorites",
+      "name": "Favorites"
+    },
+    {
+      "covers": "a zero-width space, which a list name keeps",
+      "typed": "Fav\u200borites",
+      "name": "Fav\u200borites"
+    },
+    { "covers": "a decomposed accent, kept in NFC", "typed": "Cafe\u0301", "name": "Café" },
+    {
+      "covers": "five hundred letters, the most",
+      "typed": { "text": "x", "times": 500 },
+      "name": { "text": "x", "times": 500 }
+    },
+    {
+      "covers": "five hundred emoji, a thousand UTF-16 units",
+      "typed": { "text": "😀", "times": 500 },
+      "name": { "text": "😀", "times": 500 }
+    },
+    {
+      "covers": "three hundred decomposed accents, counted once in NFC",
+      "typed": { "text": "e\u0301", "times": 300 },
+      "name": { "text": "é", "times": 300 }
+    },
+    {
+      "covers": "a space, then five hundred letters, counted once trimmed",
+      "typed": { "text": "x", "times": 500, "before": " " },
+      "name": { "text": "x", "times": 500 }
+    },
+    {
+      "covers": "five hundred and one letters, cut to fit",
+      "typed": { "text": "x", "times": 501 },
+      "name": { "text": "x", "times": 500 },
+      "cutToFit": true
+    },
+    {
+      "covers": "six hundred kanji, cut to fit",
+      "typed": { "text": "語", "times": 600 },
+      "name": { "text": "語", "times": 500 },
+      "cutToFit": true
+    },
+    {
+      "covers": "a cut that ends on a space, trimmed after the cut",
+      "typed": { "text": "x", "times": 499, "after": " x" },
+      "name": { "text": "x", "times": 499 },
+      "cutToFit": true
+    }
+  ],
+  "refused": [
+    { "covers": "nothing", "typed": "" },
+    { "covers": "only spaces", "typed": "   " },
+    { "covers": "only a byte order mark", "typed": "\ufeff" },
+    { "covers": "a byte order mark between spaces", "typed": " \ufeff " },
+    { "covers": "only control characters", "typed": "\u0007\u0008" }
+  ]
+}

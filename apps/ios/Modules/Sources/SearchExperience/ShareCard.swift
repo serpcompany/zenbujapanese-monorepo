@@ -55,6 +55,7 @@ struct ShareCardReader: Sendable {
   var lookUp: @Sendable (String) async -> WebsiteLinkRoute
   var search: @Sendable (SearchQuery) async throws -> LookupSearchResults
   var linkedTokens: @Sendable (String) async -> [JapaneseTextToken]
+  var entries: @Sendable ([LanguageReferenceID]) async -> [LanguageReferenceID: DictionaryEntry]
   var recognize: @Sendable (ImageTextAsset) async throws -> [RecognizedImageTextObservation]
   var isJapanese: @Sendable (String) -> Bool = { PresentationCore.shared.containsJapaneseText($0) }
   var presentationReady: @Sendable () async -> Void = {
@@ -82,14 +83,16 @@ struct ShareCardReader: Sendable {
           source: .shared, text: text, isJapanese: false, words: await searchedWords(text)))
     }
     let tokens = await tokens(of: text)
-    if let entry = Self.onlyWord(of: text, in: tokens) { return .word(entry) }
+    if let entry = await onlyWord(of: text, in: tokens) { return .word(entry) }
     return .text(
-      ShareCardText(source: .shared, text: text, isJapanese: true, words: Self.words(in: tokens)))
+      ShareCardText(source: .shared, text: text, isJapanese: true, words: await words(in: tokens)))
   }
 
-  static func onlyWord(of text: String, in tokens: [JapaneseTextToken]) -> DictionaryEntry? {
-    guard tokens.count == 1, let token = tokens.first, token.surface == text else { return nil }
-    return token.entry
+  private func onlyWord(of text: String, in tokens: [JapaneseTextToken]) async -> DictionaryEntry? {
+    guard tokens.count == 1, let token = tokens.first, token.surface == text,
+      let word = token.entry
+    else { return nil }
+    return await entries([word.id])[word.id]
   }
 
   private func card(forPhoto data: Data) async -> ShareCard {
@@ -104,7 +107,7 @@ struct ShareCardReader: Sendable {
     return .text(
       ShareCardText(
         source: .photo, text: text, isJapanese: true,
-        words: Self.words(in: await tokens(of: text))))
+        words: await words(in: await tokens(of: text))))
   }
 
   private func tokens(of text: String) async -> [JapaneseTextToken] {
@@ -118,14 +121,18 @@ struct ShareCardReader: Sendable {
     }
   }
 
-  static func words(in tokens: [JapaneseTextToken]) -> [ShareCardWord] {
+  private func words(in tokens: [JapaneseTextToken]) async -> [ShareCardWord] {
     var seen = Set<LanguageReferenceID>()
-    return tokens.filter { !$0.isFunctionWord }
+    let shown = tokens.filter { !$0.isFunctionWord }
       .flatMap { token in
-        (token.entry.map { [$0] } ?? Array(token.candidateEntries.prefix(candidatesShown)))
-          .map { ShareCardWord(entry: $0, surface: token.surface) }
+        (token.entry.map { [$0] } ?? Array(token.candidateEntries.prefix(Self.candidatesShown)))
+          .map { (id: $0.id, surface: token.surface) }
       }
       .filter { seen.insert($0.id).inserted }
+    let read = await entries(shown.map(\.id))
+    return shown.compactMap { word in
+      read[word.id].map { ShareCardWord(entry: $0, surface: word.surface) }
+    }
   }
 
   static func downscaled(_ data: Data) -> Data? {

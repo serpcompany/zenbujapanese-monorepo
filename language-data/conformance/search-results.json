@@ -2,23 +2,23 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "f49bb8beb88fcfe9f327c8f8a7553cbf02420bb0b94aebe1e763f0792589c9f7"
+      "sha256" : "ff13abffeede7746111120f7c0b1150ada6273454039b55c4bf80a0574df39ba"
     },
     {
       "name" : "JLPTLevelPack.sqlite3",
-      "sha256" : "40bfd948493b0cc2a230ea457cb483b8978b0dc8435071ee3d34036aaafacd02"
+      "sha256" : "4e0c030d6d8d3176eb571578aefc24c768cbbf7adf6b6a69063ab94ca2a5f9ab"
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "e790648e385cddc3ab8e7b78ba82130a6efe7a13b6da5712cf55d1632a93ff16"
+      "sha256" : "83a194a0cbdbf2b3f49deaaf4c19275bf0e9a1f03e6a8f188e0a6561854bcbce"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "f5b8d6cdcbcea37e577673fc8e8436b2ea9b714ec1f508b17f9e17dd265c92be"
+      "sha256" : "1b366dd10305e0af380b69025a628cb79281eb49bf11934dc8ed5243c224c44e"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -30,7 +30,7 @@
     },
     {
       "name" : "DictionaryRankingArtifactContract.json",
-      "sha256" : "9b821bfab5e12052b8c6bb87ed75a3ab7c1162a4bd621563b67ea03aa638cf6b"
+      "sha256" : "bbc5e577b436151c26e52de39eecd0f4067b90eac8dd9fd15cd661ab671a5582"
     },
     {
       "name" : "LanguageTechnologyPackCatalog.json",
@@ -3711,6 +3711,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -4862,6 +4868,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "270",
               "tier" : "very common"
             }
           ],
@@ -6060,6 +6072,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "113",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1392580"
+          ],
+          "headword" : "前",
+          "languageReferenceID" : "e407cd7d59cb9766a7640cd0a5a29bfe",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "まえ",
+          "retrievalOrder" : 0,
+          "summary" : "in front (of), before (e.g. a building)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "262",
               "tier" : "very common"
             }
@@ -6073,31 +6110,6 @@
           "reading" : "さき",
           "retrievalOrder" : 2,
           "summary" : "point, tip, end, nozzle"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N5",
-              "tier" : "very common"
-            },
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1392580"
-          ],
-          "headword" : "前",
-          "languageReferenceID" : "e407cd7d59cb9766a7640cd0a5a29bfe",
-          "match" : "source=0 japanese writtenExact",
-          "reading" : "まえ",
-          "retrievalOrder" : 0,
-          "summary" : "in front (of), before (e.g. a building)"
         },
         {
           "chips" : [
@@ -15982,6 +15994,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -17230,6 +17248,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "270",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -17622,6 +17646,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,719",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1404320"
+          ],
+          "headword" : "息",
+          "languageReferenceID" : "f3da72a3de21ea5fdb0f9d17b0b3013c",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "いき",
+          "retrievalOrder" : 15,
+          "summary" : "(water) vapor"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "1,781",
               "tier" : "common"
             }
@@ -17660,25 +17709,6 @@
           "reading" : "すいじゅん",
           "retrievalOrder" : 12,
           "summary" : "water level"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N3",
-              "tier" : "common"
-            }
-          ],
-          "entSeq" : [
-            "1404320"
-          ],
-          "headword" : "息",
-          "languageReferenceID" : "f3da72a3de21ea5fdb0f9d17b0b3013c",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "いき",
-          "retrievalOrder" : 15,
-          "summary" : "(water) vapor"
         },
         {
           "chips" : [
@@ -23643,6 +23673,291 @@
           "reading" : "いるをはかりていずるをせいす",
           "retrievalOrder" : 39,
           "summary" : "cut your coat according to your cloth"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "83,764",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2506780"
+          ],
+          "headword" : "アンビル",
+          "languageReferenceID" : "29109eef177cc1c6be76dbf6e252c75b",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "アンビル",
+          "retrievalOrder" : 45,
+          "summary" : "anvil"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2124820"
+          ],
+          "headword" : "コロナウイルス",
+          "languageReferenceID" : "fa92ba8b613bed4db0d5b7cfb1290f1b",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "コロナウイルス",
+          "retrievalOrder" : 40,
+          "summary" : "coronavirus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1025450"
+          ],
+          "headword" : "ウイルス",
+          "languageReferenceID" : "521e4acf8ce8819ccaefc62c2f2a62af",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ウイルス",
+          "retrievalOrder" : 41,
+          "summary" : "virus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1083660"
+          ],
+          "headword" : "デビル",
+          "languageReferenceID" : "d209320912a2c7614cc31c01cf8f2264",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "デビル",
+          "retrievalOrder" : 42,
+          "summary" : "devil, demon"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2717400"
+          ],
+          "headword" : "うぃる",
+          "languageReferenceID" : "359c78847608a428257a62b9342ee3a6",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "うぃる",
+          "retrievalOrder" : 43,
+          "summary" : "I will ..., I'm going to ..."
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2715710"
+          ],
+          "headword" : "ウイル",
+          "languageReferenceID" : "84386a07f2a9cfa088379bb27aaae76a",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ウイル",
+          "retrievalOrder" : 44,
+          "summary" : "will, intent, desire, ambition"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2839614"
+          ],
+          "headword" : "ブラザビル",
+          "languageReferenceID" : "7817352c25f75922b323dfb00a8b2c46",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ブラザビル",
+          "retrievalOrder" : 46,
+          "summary" : "Brazzaville (Republic of the Congo)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2433130"
+          ],
+          "headword" : "ワイアーム",
+          "languageReferenceID" : "64c7a8c45a1c5c1c14cc98a08c825173",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ワイアーム",
+          "retrievalOrder" : 47,
+          "summary" : "wyrm (limbless dragon)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2839612"
+          ],
+          "headword" : "リーブルビル",
+          "languageReferenceID" : "d6fecd5648d6033e64a1e06e705cadf8",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "リーブルビル",
+          "retrievalOrder" : 48,
+          "summary" : "Libreville (Gabon)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2865633"
+          ],
+          "headword" : "スコヴィル値",
+          "languageReferenceID" : "c2cc1e1f1b1d114ce76afaf2b3ec008d",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "スコヴィルち",
+          "retrievalOrder" : 49,
+          "summary" : "Scoville scale"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2123520"
+          ],
+          "headword" : "ノロウイルス",
+          "languageReferenceID" : "4e2989284d14a508d3b38e658c92a1e5",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ノロウイルス",
+          "retrievalOrder" : 50,
+          "summary" : "norovirus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2828227"
+          ],
+          "headword" : "ジカウィルス",
+          "languageReferenceID" : "1dff2263289a64a15164407503704754",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ジカウィルス",
+          "retrievalOrder" : 51,
+          "summary" : "Zika virus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1046220"
+          ],
+          "headword" : "グッドウィル",
+          "languageReferenceID" : "7c82c43836404aaf155160ec1f1ad18b",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "グッドウィル",
+          "retrievalOrder" : 52,
+          "summary" : "good will"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2284260"
+          ],
+          "headword" : "ウイルス隔離",
+          "languageReferenceID" : "4d05f0a17bb13fb4b931d07c4fc9d7d0",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ウイルスかくり",
+          "retrievalOrder" : 53,
+          "summary" : "virus removal, virus sweep"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2789680"
+          ],
+          "headword" : "ブルナンイルカ",
+          "languageReferenceID" : "d336e4086688ed0919f68a945e8bc478",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ブルナンイルカ",
+          "retrievalOrder" : 54,
+          "summary" : "Burrunan dolphin (Tursiops australis)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1988640"
+          ],
+          "headword" : "リビングウィル",
+          "languageReferenceID" : "841e6e73e8a95ca325b28f104b4009f4",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "リビングウィル",
+          "retrievalOrder" : 55,
+          "summary" : "living will"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2281730"
+          ],
+          "headword" : "アンチウィルス",
+          "languageReferenceID" : "a0f89344e5c68a6af4d09e64863f35de",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "アンチウィルス",
+          "retrievalOrder" : 56,
+          "summary" : "anti-virus (e.g. software)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2434980"
+          ],
+          "headword" : "ハンタウイルス",
+          "languageReferenceID" : "9e51699fbc3205be4e4d84405e29bd64",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ハンタウイルス",
+          "retrievalOrder" : 57,
+          "summary" : "hantavirus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2331660"
+          ],
+          "headword" : "マクロウイルス",
+          "languageReferenceID" : "3fc8d1fe165b71966ce5f84208f696f7",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "マクロウイルス",
+          "retrievalOrder" : 58,
+          "summary" : "macro virus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1987850"
+          ],
+          "headword" : "ピコルナウィルス",
+          "languageReferenceID" : "0ff8fc7d666051c82a6c1aafdae195b0",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ピコルナウィルス",
+          "retrievalOrder" : 59,
+          "summary" : "picornavirus"
         }
       ],
       "sections" : [
@@ -23651,7 +23966,7 @@
         "results"
       ],
       "state" : "results",
-      "voiceOverCount" : 40
+      "voiceOverCount" : 60
     },
     {
       "covers" : "A one-kana query with many exact readings, ordered by frequency",
@@ -29493,6 +29808,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,569",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1426480"
+          ],
+          "headword" : "柱",
+          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
+          "match" : "source=0 japanese readingPrefix",
+          "reading" : "はしら",
+          "retrievalOrder" : 23,
+          "summary" : "pillar, post"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "22,641",
               "tier" : "uncommon"
             }
@@ -29506,25 +29846,6 @@
           "reading" : "はしわたし",
           "retrievalOrder" : 31,
           "summary" : "mediation, good offices, go-between, intermediary, mediator, bridge (between)"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "1426480"
-          ],
-          "headword" : "柱",
-          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
-          "match" : "source=0 japanese readingPrefix",
-          "reading" : "はしら",
-          "retrievalOrder" : 23,
-          "summary" : "pillar, post"
         },
         {
           "chips" : [
@@ -34030,6 +34351,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "178",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1259140"
+          ],
+          "headword" : "見える",
+          "languageReferenceID" : "d1dda94ed540e50532c9d61d1e420375",
+          "match" : "source=0 japanese writtenPrefix",
+          "reading" : "みえる",
+          "retrievalOrder" : 23,
+          "summary" : "to be seen, to be visible, to be in sight"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "581",
               "tier" : "very common"
             }
@@ -34093,25 +34439,6 @@
           "reading" : "けんぶつ",
           "retrievalOrder" : 21,
           "summary" : "sightseeing, watching, viewing"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N4",
-              "tier" : "very common"
-            }
-          ],
-          "entSeq" : [
-            "1259140"
-          ],
-          "headword" : "見える",
-          "languageReferenceID" : "d1dda94ed540e50532c9d61d1e420375",
-          "match" : "source=0 japanese writtenPrefix",
-          "reading" : "みえる",
-          "retrievalOrder" : 23,
-          "summary" : "to be seen, to be visible, to be in sight"
         },
         {
           "chips" : [
@@ -39364,6 +39691,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,568",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1365330"
+          ],
+          "headword" : "親父",
+          "languageReferenceID" : "240e69eeed8bd3928fd7e72ec6d5d83b",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "おやじ",
+          "retrievalOrder" : 12,
+          "summary" : "proprietor (of a restaurant, store, etc.)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "4,051",
               "tier" : "common"
             }
@@ -40000,20 +40346,6 @@
           "reading" : "こくむだいじん",
           "retrievalOrder" : 10,
           "summary" : "minister of state"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1365330"
-          ],
-          "headword" : "親父",
-          "languageReferenceID" : "240e69eeed8bd3928fd7e72ec6d5d83b",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "おやじ",
-          "retrievalOrder" : 12,
-          "summary" : "proprietor (of a restaurant, store, etc.)"
         },
         {
           "chips" : [
@@ -43464,6 +43796,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "195",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1236070"
+          ],
+          "headword" : "強い",
+          "languageReferenceID" : "8ad5873587e02706554d675649759099",
+          "match" : "source=0 english strongGloss romaji=0 sense=later",
+          "reading" : "つよい",
+          "retrievalOrder" : 39,
+          "summary" : "good (at)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "310",
               "tier" : "very common"
             }
@@ -43502,31 +43859,6 @@
           "reading" : "ええ",
           "retrievalOrder" : 43,
           "summary" : "good"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N5",
-              "tier" : "very common"
-            },
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "336,638",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1236070"
-          ],
-          "headword" : "強い",
-          "languageReferenceID" : "8ad5873587e02706554d675649759099",
-          "match" : "source=0 english strongGloss romaji=0 sense=later",
-          "reading" : "つよい",
-          "retrievalOrder" : 39,
-          "summary" : "good (at)"
         },
         {
           "chips" : [
@@ -44493,6 +44825,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,569",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1426480"
+          ],
+          "headword" : "柱",
+          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "はしら",
+          "retrievalOrder" : 8,
+          "summary" : "pillar, post"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "22,641",
               "tier" : "uncommon"
             }
@@ -44506,25 +44863,6 @@
           "reading" : "はしわたし",
           "retrievalOrder" : 13,
           "summary" : "mediation, good offices, go-between, intermediary, mediator, bridge (between)"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "1426480"
-          ],
-          "headword" : "柱",
-          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
-          "match" : "source=0 english romajiOnly romaji=1",
-          "reading" : "はしら",
-          "retrievalOrder" : 8,
-          "summary" : "pillar, post"
         },
         {
           "chips" : [
@@ -47649,6 +47987,3112 @@
       "query" : "qzxvkj",
       "resolution" : "direct",
       "state" : "noResults"
+    },
+    {
+      "covers" : "Romaji as the app shows it, with a macron for the long mark",
+      "examples" : {
+        "count" : 1,
+        "primaryEntry" : "28f8dec190c2347fa5a796abcde4f88e",
+        "title" : "View 1 Example Sentence"
+      },
+      "presentation" : "ranked",
+      "query" : "rāmen",
+      "readingRefinement" : {
+        "query" : "ラーメン",
+        "title" : "Search for「ラーメン」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1137720"
+          ],
+          "headword" : "ラーメン",
+          "languageReferenceID" : "28f8dec190c2347fa5a796abcde4f88e",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "ラーメン",
+          "retrievalOrder" : 0,
+          "summary" : "ramen, Chinese-style noodles"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2207500"
+          ],
+          "headword" : "ラーメン",
+          "languageReferenceID" : "48bfe3d25b076670469bd4fd3b0536be",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "ラーメン",
+          "retrievalOrder" : 1,
+          "summary" : "rigid frame"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2688030"
+          ],
+          "headword" : "ラーメン屋",
+          "languageReferenceID" : "851980e46727faeb08aba2f4f1558498",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ラーメンや",
+          "retrievalOrder" : 2,
+          "summary" : "ramen restaurant, noodle restaurant"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2683350"
+          ],
+          "headword" : "ラーメン店",
+          "languageReferenceID" : "26dd5119a7f72a96ff2deb23dffc8812",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ラーメンてん",
+          "retrievalOrder" : 3,
+          "summary" : "ramen restaurant"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1969480"
+          ],
+          "headword" : "ラーメン橋",
+          "languageReferenceID" : "31754e57a7ec05c58e3e475b5d7c6243",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ラーメンきょう",
+          "retrievalOrder" : 4,
+          "summary" : "rigid-frame bridge"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1969490"
+          ],
+          "headword" : "ラーメン構造",
+          "languageReferenceID" : "18eaaefaa1ed01180e0c9f6d2939844f",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ラーメンこうぞう",
+          "retrievalOrder" : 5,
+          "summary" : "Rahmen, rigid-frame structure"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2865481"
+          ],
+          "headword" : "ラーメンライス",
+          "languageReferenceID" : "2f1678a3e06301fb431a70a7fb1e173f",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ラーメンライス",
+          "retrievalOrder" : 6,
+          "summary" : "ramen served with rice, ramen and rice"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2516190"
+          ],
+          "headword" : "カップラーメン",
+          "languageReferenceID" : "3834cac1ce5745126554800b4def07e3",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "カップラーメン",
+          "retrievalOrder" : 7,
+          "summary" : "cup noodles, cup ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1959580"
+          ],
+          "headword" : "インスタントラーメン",
+          "languageReferenceID" : "994ca29ae33e33f1408b9cdd4c1359c0",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "インスタントラーメン",
+          "retrievalOrder" : 8,
+          "summary" : "instant ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "5743594"
+          ],
+          "headword" : "ベビースターラーメン",
+          "languageReferenceID" : "4ac69406d4cb465b54400ad35f61a4a8",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "ベビースターラーメン",
+          "retrievalOrder" : 9,
+          "summary" : "Baby Star Ramen"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 10
+    },
+    {
+      "covers" : "Romaji without macrons, as the website's titles write it",
+      "examples" : {
+        "count" : 36,
+        "title" : "View 36 Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "ramen",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1137720"
+          ],
+          "headword" : "ラーメン",
+          "languageReferenceID" : "28f8dec190c2347fa5a796abcde4f88e",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "ラーメン",
+          "retrievalOrder" : 0,
+          "summary" : "ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2094870"
+          ],
+          "headword" : "支那そば",
+          "languageReferenceID" : "a80a2025664434d12b43f82129a49874",
+          "match" : "source=0 english strongGloss romaji=0 sense=first",
+          "reading" : "しなそば",
+          "retrievalOrder" : 1,
+          "summary" : "ramen"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "90,265",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2866176"
+          ],
+          "headword" : "ちゅるちゅる",
+          "languageReferenceID" : "6b823975adbd0fcc7423295894899d26",
+          "match" : "source=0 english strongGloss romaji=0 sense=later",
+          "reading" : "ちゅるちゅる",
+          "retrievalOrder" : 2,
+          "summary" : "ramen"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "6,963",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "2012280"
+          ],
+          "headword" : "叉焼",
+          "languageReferenceID" : "718e82ed32db993db59ece113aa47afa",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "チャーシュー",
+          "retrievalOrder" : 5,
+          "summary" : "roasted pork fillet (often used in ramen)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "20,016",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1404240"
+          ],
+          "headword" : "即席",
+          "languageReferenceID" : "7d7dc911640ef4041b8c9504a3d51353",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "そくせき",
+          "retrievalOrder" : 3,
+          "summary" : "instant (e.g. ramen)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "20,889",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "1410840"
+          ],
+          "headword" : "替え玉",
+          "languageReferenceID" : "6eaf25de1e2b1b6a3726bcd614034635",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "かえだま",
+          "retrievalOrder" : 4,
+          "summary" : "second serving of noodles (to add to one's remaining ramen broth)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "51,920",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2610830"
+          ],
+          "headword" : "チャーシュー麺",
+          "languageReferenceID" : "5aff4c42a28674acaa9b23f9067eb1ba",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "チャーシューメン",
+          "retrievalOrder" : 23,
+          "summary" : "ramen soup topped with slices of roasted pork"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "104,935",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2853255"
+          ],
+          "headword" : "白湯",
+          "languageReferenceID" : "260f6053d4593ee21a833926e1abd417",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "パイタン",
+          "retrievalOrder" : 6,
+          "summary" : "white broth (esp. for ramen)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "131,062",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2867035"
+          ],
+          "headword" : "家系",
+          "languageReferenceID" : "be80a48bd94d5010f971df897e78068a",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "いえけい",
+          "retrievalOrder" : 8,
+          "summary" : "ramen variety with pork bone and soy sauce broth"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "144,684",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2185680"
+          ],
+          "headword" : "担々麺",
+          "languageReferenceID" : "10775efdbe7611c6eb583ed5b6de7ff1",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "タンタンめん",
+          "retrievalOrder" : 10,
+          "summary" : "tan tan ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "5657095"
+          ],
+          "headword" : "満龍",
+          "languageReferenceID" : "9ea08f0f992f3d050e3fc11534b99be6",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "まんりゅう",
+          "retrievalOrder" : 7,
+          "summary" : "Man'ryū (chain of ramen shops)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2837985"
+          ],
+          "headword" : "着丼",
+          "languageReferenceID" : "ae8264d1e9e6d3d07030c3cbe6916ee6",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ちゃくどん",
+          "retrievalOrder" : 9,
+          "summary" : "arrival of food at one's table (esp. ramen)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2432260"
+          ],
+          "headword" : "硬メン",
+          "languageReferenceID" : "372a0d878bf175b30a92321c7ca0a7c4",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "かたメン",
+          "retrievalOrder" : 11,
+          "summary" : "dried ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2850574"
+          ],
+          "headword" : "ラオタ",
+          "languageReferenceID" : "ac3e15bc0c7479c00e9c3df92234cfea",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ラオタ",
+          "retrievalOrder" : 12,
+          "summary" : "ramen enthusiast"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2094880"
+          ],
+          "headword" : "中華そば",
+          "languageReferenceID" : "825e7927affbbf0e31cca50db5945b1c",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ちゅうかそば",
+          "retrievalOrder" : 13,
+          "summary" : "Chinese noodles (esp. ramen)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2826441"
+          ],
+          "headword" : "味付け玉子",
+          "languageReferenceID" : "495d76fab8a196c3c582f271c7250e0b",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "あじつけたまご",
+          "retrievalOrder" : 14,
+          "summary" : "soft-boiled egg marinated in soy and mirin (usu. topping on ramen)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2688030"
+          ],
+          "headword" : "ラーメン屋",
+          "languageReferenceID" : "851980e46727faeb08aba2f4f1558498",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ラーメンや",
+          "retrievalOrder" : 15,
+          "summary" : "ramen restaurant"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2683350"
+          ],
+          "headword" : "ラーメン店",
+          "languageReferenceID" : "26dd5119a7f72a96ff2deb23dffc8812",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ラーメンてん",
+          "retrievalOrder" : 16,
+          "summary" : "ramen restaurant"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2836012"
+          ],
+          "headword" : "塩ラーメン",
+          "languageReferenceID" : "2ce54756819ad7955fdf7e11d83138b2",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "しおラーメン",
+          "retrievalOrder" : 17,
+          "summary" : "shio ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2685590"
+          ],
+          "headword" : "Ｂ級グルメ",
+          "languageReferenceID" : "14500c45a50d1a61e91f95873760d808",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ビーきゅうグルメ",
+          "retrievalOrder" : 18,
+          "summary" : "cheap everyday food that most people enjoy (e.g. ramen, curry)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2836013"
+          ],
+          "headword" : "醤油ラーメン",
+          "languageReferenceID" : "b673f1a7369029247eb3ec7788b80a81",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "しょうゆラーメン",
+          "retrievalOrder" : 19,
+          "summary" : "soy sauce ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2836011"
+          ],
+          "headword" : "味噌ラーメン",
+          "languageReferenceID" : "ceb53363c30b2c46a88013f4d1a265b7",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "みそラーメン",
+          "retrievalOrder" : 20,
+          "summary" : "miso ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2836010"
+          ],
+          "headword" : "豚骨ラーメン",
+          "languageReferenceID" : "3d6531424365c306a957df0d3dcf845e",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "とんこつラーメン",
+          "retrievalOrder" : 21,
+          "summary" : "tonkotsu ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2865481"
+          ],
+          "headword" : "ラーメンライス",
+          "languageReferenceID" : "2f1678a3e06301fb431a70a7fb1e173f",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ラーメンライス",
+          "retrievalOrder" : 22,
+          "summary" : "ramen served with rice"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1959580"
+          ],
+          "headword" : "インスタントラーメン",
+          "languageReferenceID" : "994ca29ae33e33f1408b9cdd4c1359c0",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "インスタントラーメン",
+          "retrievalOrder" : 24,
+          "summary" : "instant ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "5743594"
+          ],
+          "headword" : "ベビースターラーメン",
+          "languageReferenceID" : "4ac69406d4cb465b54400ad35f61a4a8",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "ベビースターラーメン",
+          "retrievalOrder" : 25,
+          "summary" : "Baby Star Ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2860918"
+          ],
+          "headword" : "麺処",
+          "languageReferenceID" : "14762a91b673e7368585937df020b4f2",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "めんどころ",
+          "retrievalOrder" : 26,
+          "summary" : "ramen (udon, soba) restaurant"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2869770"
+          ],
+          "headword" : "カップラ",
+          "languageReferenceID" : "36c3f3a59b4814540f353f614949ef54",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "カップラ",
+          "retrievalOrder" : 27,
+          "summary" : "cup ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2236220"
+          ],
+          "headword" : "即席ラーメン",
+          "languageReferenceID" : "0eb6333e6a8688fa1120778521c53d9b",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "そくせきラーメン",
+          "retrievalOrder" : 28,
+          "summary" : "instant ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2516190"
+          ],
+          "headword" : "カップラーメン",
+          "languageReferenceID" : "3834cac1ce5745126554800b4def07e3",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "カップラーメン",
+          "retrievalOrder" : 29,
+          "summary" : "cup ramen"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2829515"
+          ],
+          "headword" : "ラメンタービレ",
+          "languageReferenceID" : "6f6d262802369c1b7f654839cb63f3f8",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ラメンタービレ",
+          "retrievalOrder" : 30,
+          "summary" : "lamentabile"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1139880"
+          ],
+          "headword" : "ラメネートスキー",
+          "languageReferenceID" : "dda99d3bae323b43e914f0163d74f95c",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ラメネートスキー",
+          "retrievalOrder" : 31,
+          "summary" : "laminated ski"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2207500"
+          ],
+          "headword" : "ラーメン",
+          "languageReferenceID" : "48bfe3d25b076670469bd4fd3b0536be",
+          "match" : "source=0 english romajiOnly romaji=6",
+          "reading" : "ラーメン",
+          "retrievalOrder" : 32,
+          "summary" : "rigid frame"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1969480"
+          ],
+          "headword" : "ラーメン橋",
+          "languageReferenceID" : "31754e57a7ec05c58e3e475b5d7c6243",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ラーメンきょう",
+          "retrievalOrder" : 33,
+          "summary" : "rigid-frame bridge"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1969490"
+          ],
+          "headword" : "ラーメン構造",
+          "languageReferenceID" : "18eaaefaa1ed01180e0c9f6d2939844f",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ラーメンこうぞう",
+          "retrievalOrder" : 34,
+          "summary" : "Rahmen, rigid-frame structure"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 35
+    },
+    {
+      "covers" : "Romaji as the app shows it: n' for ん before a vowel",
+      "examples" : {
+        "count" : 98,
+        "primaryEntry" : "568514bdcdf8e7cf52a5d278d866531b",
+        "title" : "View 50+ Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "kin'en",
+      "readingRefinement" : {
+        "query" : "きんえん",
+        "title" : "Search for「きんえん」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "13,844",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1241490"
+          ],
+          "headword" : "禁煙",
+          "languageReferenceID" : "568514bdcdf8e7cf52a5d278d866531b",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "きんえん",
+          "retrievalOrder" : 0,
+          "summary" : "abstaining from smoking, quitting smoking"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "57,118",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1242180"
+          ],
+          "headword" : "近縁",
+          "languageReferenceID" : "75d660c83906ef9b36d8a81c4568e0db",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "きんえん",
+          "retrievalOrder" : 3,
+          "summary" : "close relation (association)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "106,486",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1869470"
+          ],
+          "headword" : "筋炎",
+          "languageReferenceID" : "ad8172c8345d55c08e68fdacd11eee59",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "きんえん",
+          "retrievalOrder" : 1,
+          "summary" : "myositis"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2633510"
+          ],
+          "headword" : "金円",
+          "languageReferenceID" : "5a6f6895b38223ac356fbc761296b7f6",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "きんえん",
+          "retrievalOrder" : 2,
+          "summary" : "money"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 4
+    },
+    {
+      "covers" : "Romaji as the app shows it: dzu for づ",
+      "examples" : {
+        "count" : 67,
+        "primaryEntry" : "a8835c1a8a34400768e77ae9e7fd1941",
+        "title" : "View 50+ Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "tsudzuku",
+      "readingRefinement" : {
+        "query" : "つづく",
+        "title" : "Search for「つづく」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "311",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1405790"
+          ],
+          "headword" : "続く",
+          "languageReferenceID" : "a8835c1a8a34400768e77ae9e7fd1941",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "つづく",
+          "retrievalOrder" : 0,
+          "summary" : "to continue, to last, to go on"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
+    },
+    {
+      "covers" : "Romaji as the app shows it: a small ァ joined to the kana before",
+      "examples" : {
+        "count" : 21,
+        "primaryEntry" : "9e1c46f98640a43dfebae8df9434f486",
+        "title" : "View 21 Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "fairu",
+      "readingRefinement" : {
+        "query" : "ファイル",
+        "title" : "Search for「ファイル」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "1107800"
+          ],
+          "headword" : "ファイル",
+          "languageReferenceID" : "9e1c46f98640a43dfebae8df9434f486",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "ファイル",
+          "retrievalOrder" : 0,
+          "summary" : "file (for holding papers)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323650"
+          ],
+          "headword" : "ファイル句",
+          "languageReferenceID" : "e02c60de9f21dd2846e862000fc4491c",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルく",
+          "retrievalOrder" : 1,
+          "summary" : "file clause"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2275860"
+          ],
+          "headword" : "ファイル名",
+          "languageReferenceID" : "fd9a2cb73aadb153b95e89835eb2b06c",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルめい",
+          "retrievalOrder" : 2,
+          "summary" : "file name, filename"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323780"
+          ],
+          "headword" : "ファイル節",
+          "languageReferenceID" : "4b410d70afefeaef4c8c70693a253b79",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルせつ",
+          "retrievalOrder" : 3,
+          "summary" : "file section"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323630"
+          ],
+          "headword" : "ファイル共有",
+          "languageReferenceID" : "80cc191ee923077e764bc18ff5d22762",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきょうゆう",
+          "retrievalOrder" : 4,
+          "summary" : "file sharing"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323590"
+          ],
+          "headword" : "ファイル記述",
+          "languageReferenceID" : "f748b4afd5579242671e02454f79976a",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきじゅつ",
+          "retrievalOrder" : 5,
+          "summary" : "file description"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323880"
+          ],
+          "headword" : "ファイル分割",
+          "languageReferenceID" : "b59a1aea5a32e2847ffa058ef4004a06",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルぶんかつ",
+          "retrievalOrder" : 6,
+          "summary" : "file section"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323810"
+          ],
+          "headword" : "ファイル属性",
+          "languageReferenceID" : "e1880c30908e02ebb703409e70ed4cf9",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルぞくせい",
+          "retrievalOrder" : 7,
+          "summary" : "file attributes"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323560"
+          ],
+          "headword" : "ファイル管理",
+          "languageReferenceID" : "82d266232a6099e901914bac79ba716a",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルかんり",
+          "retrievalOrder" : 8,
+          "summary" : "file management, file-control"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323890"
+          ],
+          "headword" : "ファイル編成",
+          "languageReferenceID" : "dc94f67a2a7023bca6c88a2f72f738da",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルへんせい",
+          "retrievalOrder" : 9,
+          "summary" : "file organization"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2839433"
+          ],
+          "headword" : "ファイル交換",
+          "languageReferenceID" : "902b8c643a7960be7589c65d5cadb31c",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルこうかん",
+          "retrievalOrder" : 10,
+          "summary" : "file exchange, file swapping, file sharing"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323660"
+          ],
+          "headword" : "ファイル形式",
+          "languageReferenceID" : "ae5a10d5846597fe474141fadeffdf45",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルけいしき",
+          "retrievalOrder" : 11,
+          "summary" : "file format"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323720"
+          ],
+          "headword" : "ファイル指定",
+          "languageReferenceID" : "d4f32e9bf81bf7e9e0858a51dfb2b66e",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルしてい",
+          "retrievalOrder" : 12,
+          "summary" : "file specification"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323640"
+          ],
+          "headword" : "ファイル共用",
+          "languageReferenceID" : "b25ab7d19f8ad9882fd5bd120fb58b43",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきょうよう",
+          "retrievalOrder" : 13,
+          "summary" : "file sharing"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323520"
+          ],
+          "headword" : "ファイル圧縮",
+          "languageReferenceID" : "03bd205fb157dbf22fb8fc00427dcc50",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルあっしゅく",
+          "retrievalOrder" : 14,
+          "summary" : "file compression"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323790"
+          ],
+          "headword" : "ファイル掃除",
+          "languageReferenceID" : "583145ceaff0e51b969cf4f5370bb759",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルそうじ",
+          "retrievalOrder" : 15,
+          "summary" : "file clean-up"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323800"
+          ],
+          "headword" : "ファイル送信",
+          "languageReferenceID" : "7ff1ea51036130252b5594de1a5e1106",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルそうしん",
+          "retrievalOrder" : 16,
+          "summary" : "file transfer, transmission"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323850"
+          ],
+          "headword" : "ファイル転送",
+          "languageReferenceID" : "4d9120ecb71f15da6390480f78b2e3d0",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルてんそう",
+          "retrievalOrder" : 17,
+          "summary" : "file transfer"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1107820"
+          ],
+          "headword" : "ファイルネーム",
+          "languageReferenceID" : "8d3970707b648f20fe289c0283f7d620",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルネーム",
+          "retrievalOrder" : 18,
+          "summary" : "filename"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323700"
+          ],
+          "headword" : "ファイル作成時",
+          "languageReferenceID" : "fa15a5d920749d03674863ae87549182",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルさくせいじ",
+          "retrievalOrder" : 19,
+          "summary" : "file creation time"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323610"
+          ],
+          "headword" : "ファイル記述子",
+          "languageReferenceID" : "e0dff0ad41bd8c81b63519e65654dafd",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきじゅつし",
+          "retrievalOrder" : 20,
+          "summary" : "file descriptor"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323140"
+          ],
+          "headword" : "ファイルの更新",
+          "languageReferenceID" : "3bbc5d5da2b1fb698e11e27af1e71c13",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのこうしん",
+          "retrievalOrder" : 21,
+          "summary" : "file updating"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323510"
+          ],
+          "headword" : "ファイルモデル",
+          "languageReferenceID" : "a36c6956ece8b6f1cbae33419d25752a",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルモデル",
+          "retrievalOrder" : 22,
+          "summary" : "file model"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323540"
+          ],
+          "headword" : "ファイル拡張子",
+          "languageReferenceID" : "0cb75b382ae621b082882c96b17771a4",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルかくちょうし",
+          "retrievalOrder" : 23,
+          "summary" : "file extension"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323120"
+          ],
+          "headword" : "ファイルＤＳＮ",
+          "languageReferenceID" : "7280f4fcfb9702517524b9c93f2d3cc0",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルディーエスエヌ",
+          "retrievalOrder" : 24,
+          "summary" : "file DSN"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323870"
+          ],
+          "headword" : "ファイル入出力",
+          "languageReferenceID" : "899b1c5fde0eb62dc49869364f5b3103",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルにゅうしゅつりょく",
+          "retrievalOrder" : 25,
+          "summary" : "file input-output"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323160"
+          ],
+          "headword" : "ファイルの修復",
+          "languageReferenceID" : "ad4f7b1e07e064a7d3c336d85eb6adfc",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのしゅうふく",
+          "retrievalOrder" : 26,
+          "summary" : "file recovery"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323420"
+          ],
+          "headword" : "ファイルテスト",
+          "languageReferenceID" : "95d1dac94bb1d84ce50e957c32338def",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルテスト",
+          "retrievalOrder" : 27,
+          "summary" : "file test"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323500"
+          ],
+          "headword" : "ファイルモード",
+          "languageReferenceID" : "dc37c18992cf8383147fec6d45f8491d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルモード",
+          "retrievalOrder" : 28,
+          "summary" : "file mode"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323670"
+          ],
+          "headword" : "ファイル結合子",
+          "languageReferenceID" : "fbe92f5b764594631c9508a933c891fe",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルけつごうし",
+          "retrievalOrder" : 29,
+          "summary" : "file connector"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323190"
+          ],
+          "headword" : "ファイルの保護",
+          "languageReferenceID" : "761701a797f91293ea0829966d7f7121",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのほご",
+          "retrievalOrder" : 30,
+          "summary" : "file protection"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323930"
+          ],
+          "headword" : "ファイル名置換",
+          "languageReferenceID" : "87397b3b9eea5e7854890f9cfa8fc789",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルめいちかん",
+          "retrievalOrder" : 31,
+          "summary" : "filename substitution"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323410"
+          ],
+          "headword" : "ファイルセット",
+          "languageReferenceID" : "69167373cf6df6cfc8ab9692ea050e3a",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルセット",
+          "retrievalOrder" : 32,
+          "summary" : "file set"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323130"
+          ],
+          "headword" : "ファイルの圧縮",
+          "languageReferenceID" : "4d7c88530caafea2286e7c0b1096b6cc",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのあっしゅく",
+          "retrievalOrder" : 33,
+          "summary" : "file compression"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323150"
+          ],
+          "headword" : "ファイルの削除",
+          "languageReferenceID" : "69553019ecfae50805112022ce5cfa63",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのさくじょ",
+          "retrievalOrder" : 34,
+          "summary" : "file deletion"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323940"
+          ],
+          "headword" : "ファイル名展開",
+          "languageReferenceID" : "acc8a3923637786333c8a05df300cb6e",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルめいてんかい",
+          "retrievalOrder" : 35,
+          "summary" : "filename expansion"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323200"
+          ],
+          "headword" : "ファイルの保守",
+          "languageReferenceID" : "63fe420d245f29a22a60bb0457bdec38",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのほしゅ",
+          "retrievalOrder" : 36,
+          "summary" : "file maintenance"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323370"
+          ],
+          "headword" : "ファイルサイズ",
+          "languageReferenceID" : "3d0ff595b2ed5e39a145dd0765f18b7b",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルサイズ",
+          "retrievalOrder" : 37,
+          "summary" : "file size"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323600"
+          ],
+          "headword" : "ファイル記述項",
+          "languageReferenceID" : "4437e419d40d003468a04e53bdb6d111",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきじゅつこう",
+          "retrievalOrder" : 38,
+          "summary" : "file description entry"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323340"
+          ],
+          "headword" : "ファイルサーバ",
+          "languageReferenceID" : "c38144c5c842466141edbd453ebeaf21",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルサーバ",
+          "retrievalOrder" : 39,
+          "summary" : "file server"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323180"
+          ],
+          "headword" : "ファイルの変換",
+          "languageReferenceID" : "edf1a203480188b69287c9bc49c2a464",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのへんかん",
+          "retrievalOrder" : 40,
+          "summary" : "file conversion"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323750"
+          ],
+          "headword" : "ファイル終了条件",
+          "languageReferenceID" : "482e89eb2319b02b3aff52e4df6e9c71",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルしゅうりょうじょうけん",
+          "retrievalOrder" : 41,
+          "summary" : "at end condition"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323440"
+          ],
+          "headword" : "ファイルハンドル",
+          "languageReferenceID" : "512c83fed3318cd3ba7f3b821ae45b6d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルハンドル",
+          "retrievalOrder" : 42,
+          "summary" : "file handle"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323680"
+          ],
+          "headword" : "ファイル固有属性",
+          "languageReferenceID" : "6e1e29dcc05fd4015625287ddd102f0d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルこゆうぞくせい",
+          "retrievalOrder" : 43,
+          "summary" : "fixed file attributes"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323580"
+          ],
+          "headword" : "ファイル記憶装置",
+          "languageReferenceID" : "8deb9d5e3030276a150af43a9a22d081",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルきおくそうち",
+          "retrievalOrder" : 44,
+          "summary" : "file storage"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1107810"
+          ],
+          "headword" : "ファイルシステム",
+          "languageReferenceID" : "da5d76f9f03d756189f3b5eaeb2dbffb",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルシステム",
+          "retrievalOrder" : 45,
+          "summary" : "file system"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323920"
+          ],
+          "headword" : "ファイル名拡張子",
+          "languageReferenceID" : "84b9425523e0be2a5ff402e5b9598398",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルめいかくちょうし",
+          "retrievalOrder" : 46,
+          "summary" : "filename extension"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323170"
+          ],
+          "headword" : "ファイルの断片化",
+          "languageReferenceID" : "972b559727442b7c8e471d3fc6758e40",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルのだんぺんか",
+          "retrievalOrder" : 47,
+          "summary" : "file fragmentation"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323210"
+          ],
+          "headword" : "ファイルアクセス",
+          "languageReferenceID" : "e8828f5f9286ebee3cb72d7e5d92010f",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルアクセス",
+          "retrievalOrder" : 48,
+          "summary" : "file access"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323250"
+          ],
+          "headword" : "ファイルアダプタ",
+          "languageReferenceID" : "82c661a18ad130c9235ca1864e2fb000",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルアダプタ",
+          "retrievalOrder" : 49,
+          "summary" : "file adapter"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323840"
+          ],
+          "headword" : "ファイル通し番号",
+          "languageReferenceID" : "0cf340e9c9e49386d0ff298a8365b09f",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルとおしばんごう",
+          "retrievalOrder" : 50,
+          "summary" : "file serial number"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323400"
+          ],
+          "headword" : "ファイルスロット",
+          "languageReferenceID" : "2501c5a4ddfc8ee3ac1dbb47b54bbc6d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルスロット",
+          "retrievalOrder" : 51,
+          "summary" : "file-slot"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323530"
+          ],
+          "headword" : "ファイル位置指示子",
+          "languageReferenceID" : "f9e5984285151fe7d14ca6e294f8ba87",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルいちしじし",
+          "retrievalOrder" : 52,
+          "summary" : "file position indicator"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323320"
+          ],
+          "headword" : "ファイルコンテンツ",
+          "languageReferenceID" : "d8381b3e3675b06807a13aaca69140fe",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルコンテンツ",
+          "retrievalOrder" : 53,
+          "summary" : "file contents"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2839432"
+          ],
+          "headword" : "ファイル交換ソフト",
+          "languageReferenceID" : "9e60eb73e0c2be029f17dfa5653538fe",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルこうかんソフト",
+          "retrievalOrder" : 54,
+          "summary" : "file exchange software"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323390"
+          ],
+          "headword" : "ファイルストア動作",
+          "languageReferenceID" : "2e584efa422b665bf7f1d8d7193bc583",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルストアどうさ",
+          "retrievalOrder" : 55,
+          "summary" : "filestore action"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323900"
+          ],
+          "headword" : "ファイル保護リング",
+          "languageReferenceID" : "55fb13b09dec1cd59fb81d7a6fe015c4",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルほごリング",
+          "retrievalOrder" : 56,
+          "summary" : "write-enable ring, write ring, file-protection ring, file protect ring, safety ring"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323280"
+          ],
+          "headword" : "ファイルキャッシュ",
+          "languageReferenceID" : "72b580907e0db146bbb0be8545f61934",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルキャッシュ",
+          "retrievalOrder" : 57,
+          "summary" : "file cache"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323480"
+          ],
+          "headword" : "ファイルプロパティ",
+          "languageReferenceID" : "4ba680a85818b0c7c9d0bf070bba4f7d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルプロパティ",
+          "retrievalOrder" : 58,
+          "summary" : "file property"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2323330"
+          ],
+          "headword" : "ファイルコンバータ",
+          "languageReferenceID" : "1674e269f25c16a1347bd94886413dc8",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ファイルコンバータ",
+          "retrievalOrder" : 59,
+          "summary" : "file converter"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 60
+    },
+    {
+      "covers" : "Romaji as the app shows it: wo for を",
+      "presentation" : "ranked",
+      "query" : "wo",
+      "readingRefinement" : {
+        "query" : "を",
+        "title" : "Search for「を」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "62,944",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2835547"
+          ],
+          "headword" : "わ行",
+          "languageReferenceID" : "ea3f0eab19f58dff4d401f64df540a0f",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "わぎょう",
+          "retrievalOrder" : 1,
+          "summary" : "the \"wa\" column of the Japanese syllabary table (wa, wi, we, wo)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2841064"
+          ],
+          "headword" : "Ｎ国",
+          "languageReferenceID" : "ae70491097198a0b0fb53b117130b9c8",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "エヌこく",
+          "retrievalOrder" : 0,
+          "summary" : "NHK Kara Kokumin wo Mamoru Tō (political party)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2027930"
+          ],
+          "headword" : "格助詞",
+          "languageReferenceID" : "5cf43519bf687798544899e632ecd190",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "かくじょし",
+          "retrievalOrder" : 2,
+          "summary" : "case-marking particle (e.g. \"ga\", \"no\", \"wo\", \"ni\")"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2841063"
+          ],
+          "headword" : "ＮＨＫから国民を守る党",
+          "languageReferenceID" : "3220fd6d7cd925c3cbee7c283d403c39",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "エヌエイチケーからこくみんをまもるとう",
+          "retrievalOrder" : 3,
+          "summary" : "NHK Kara Kokumin wo Mamoru Tō (political party)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "9",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "2029010"
+          ],
+          "headword" : "を",
+          "languageReferenceID" : "40d6e4fa1aa90a4025e1edef5d451be5",
+          "match" : "source=0 english romajiOnly romaji=3",
+          "reading" : "を",
+          "retrievalOrder" : 4,
+          "summary" : "indicates direct object of action"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "22,984",
+              "tier" : "uncommon"
+            }
+          ],
+          "entSeq" : [
+            "2120820"
+          ],
+          "headword" : "をば",
+          "languageReferenceID" : "9c68b28ffa038c72597755f546623370",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をば",
+          "retrievalOrder" : 10,
+          "summary" : "emphasizes direct object of action"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "47,623",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1034420"
+          ],
+          "headword" : "オタク",
+          "languageReferenceID" : "4b1f772a98b9ae85837bea93cc73d379",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "オタク",
+          "retrievalOrder" : 5,
+          "summary" : "otaku, geek, nerd, enthusiast"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "84,501",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2136700"
+          ],
+          "headword" : "ヲタ",
+          "languageReferenceID" : "24ff2377d94a88d2a12d34a7911c83ef",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ヲタ",
+          "retrievalOrder" : 7,
+          "summary" : "otaku, geek, nerd, enthusiast"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "92,273",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2856608"
+          ],
+          "headword" : "ヲチ",
+          "languageReferenceID" : "09eba6b76d491d5bade27de8cfa2e627",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ヲチ",
+          "retrievalOrder" : 9,
+          "summary" : "watching, observing"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1026610"
+          ],
+          "headword" : "ウォッカ",
+          "languageReferenceID" : "c92be673b9e4a5ade7d302f0dc463106",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ウォッカ",
+          "retrievalOrder" : 6,
+          "summary" : "vodka"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2864080"
+          ],
+          "headword" : "遠方",
+          "languageReferenceID" : "1e9b46685d7e1292d6d735a4059d4a8e",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "おちかた",
+          "retrievalOrder" : 8,
+          "summary" : "distant place, faraway land"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2786910"
+          ],
+          "headword" : "をも",
+          "languageReferenceID" : "02e93251e677ea1046297d1aad3bcb47",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をも",
+          "retrievalOrder" : 11,
+          "summary" : "even"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2531080"
+          ],
+          "headword" : "ヲタ車",
+          "languageReferenceID" : "44cdabcfbe7d7b11ec20d645be7e1da3",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ヲタしゃ",
+          "retrievalOrder" : 12,
+          "summary" : "otaku car (painted with anime characters, loaded with figures and stuffed dolls, etc.)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2525370"
+          ],
+          "headword" : "ヲタ芸",
+          "languageReferenceID" : "a7cbbf7a6618d6530000c5498ee98660",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "ヲタげい",
+          "retrievalOrder" : 13,
+          "summary" : "type of dancing and shouting performed by fans at concerts (usu. idol concerts)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2825955"
+          ],
+          "headword" : "をして",
+          "languageReferenceID" : "87e898b68d73bae55aa77360a7482b25",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をして",
+          "retrievalOrder" : 14,
+          "summary" : "indicates patient of a causative expression"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2215420"
+          ],
+          "headword" : "を以て",
+          "languageReferenceID" : "68bc031fc30fc6a5a497b7b181e16374",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をもって",
+          "retrievalOrder" : 15,
+          "summary" : "with, by, by means of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2100520"
+          ],
+          "headword" : "を通して",
+          "languageReferenceID" : "4b3e869a112fa3d8f378f18fc24d74a8",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をとおして",
+          "retrievalOrder" : 16,
+          "summary" : "through, throughout, through (the good offices of), by way of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1264720"
+          ],
+          "headword" : "ヲコト点",
+          "languageReferenceID" : "af34920ff21404ad9105e4a8dab911ab",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をことてん",
+          "retrievalOrder" : 17,
+          "summary" : "diacritical marks used for interpreting classical Chinese"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2136880"
+          ],
+          "headword" : "をおいて",
+          "languageReferenceID" : "2ed362f8ec7360f7e5fb9173f82d9d5d",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をおいて",
+          "retrievalOrder" : 18,
+          "summary" : "other than, excluding, without"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2158120"
+          ],
+          "headword" : "を介して",
+          "languageReferenceID" : "aa9a05aa02ae78a9467de8268a2d6bee",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をかいして",
+          "retrievalOrder" : 19,
+          "summary" : "through (e.g. an intermediary, a medium), via, over (e.g. a network), across, by way of, by means of"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2156830"
+          ],
+          "headword" : "を巡って",
+          "languageReferenceID" : "db1ada6eb8ae88ce6e1909225f2070c1",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をめぐって",
+          "retrievalOrder" : 20,
+          "summary" : "concerning ..., over ..., about ..., centering on ..."
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2402090"
+          ],
+          "headword" : "を限りに",
+          "languageReferenceID" : "e875d08e3f16fe6b8c0d08a5dca20fdf",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をかぎりに",
+          "retrievalOrder" : 21,
+          "summary" : "as of the end of (today, this month, etc.), to make (today, etc.) the last (day)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2136780"
+          ],
+          "headword" : "を基として",
+          "languageReferenceID" : "3a36c049282d1b556042efabdb618698",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をもととして",
+          "retrievalOrder" : 22,
+          "summary" : "based on, built on, made from"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2859145"
+          ],
+          "headword" : "をいい事に",
+          "languageReferenceID" : "d86c9bd8b49cb722c259acc730e1c7aa",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をいいことに",
+          "retrievalOrder" : 23,
+          "summary" : "taking advantage of ..., using ... as an excuse"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2136770"
+          ],
+          "headword" : "を元にして",
+          "languageReferenceID" : "19d9990ecf25493f8079ce37fc5289dd",
+          "match" : "source=0 english romajiOnly romaji=4",
+          "reading" : "をもとにして",
+          "retrievalOrder" : 24,
+          "summary" : "based on, built on, made from"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "91,992",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2741990"
+          ],
+          "headword" : "アイドルオタク",
+          "languageReferenceID" : "a6d113dc2af0f87092f0c8320d548d10",
+          "match" : "source=0 english romajiOnly romaji=5",
+          "reading" : "アイドルオタク",
+          "retrievalOrder" : 25,
+          "summary" : "(male) otaku obsessed with (female) idols"
+        }
+      ],
+      "sections" : [
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 26
+    },
+    {
+      "covers" : "A spelling of ビル, and of ビール without its macron",
+      "examples" : {
+        "count" : 77,
+        "primaryEntry" : "a339e09cdf1da77ac90de31fa878f180",
+        "title" : "View 50+ Example Sentences"
+      },
+      "presentation" : "ranked",
+      "query" : "biru",
+      "readingRefinement" : {
+        "query" : "ビル",
+        "title" : "Search for「ビル」"
+      },
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1106010"
+          ],
+          "headword" : "ビル",
+          "languageReferenceID" : "a339e09cdf1da77ac90de31fa878f180",
+          "match" : "source=0 english romajiOnly romaji=0",
+          "reading" : "ビル",
+          "retrievalOrder" : 0,
+          "summary" : "multi-floor building, multi-storey building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2856006"
+          ],
+          "headword" : "ビル",
+          "languageReferenceID" : "8c2e279afd3e939664c0c2b7bdffef1e",
+          "match" : "source=0 english romajiOnly romaji=0",
+          "reading" : "ビル",
+          "retrievalOrder" : 1,
+          "summary" : "bill, check, invoice"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2409210"
+          ],
+          "headword" : "びる",
+          "languageReferenceID" : "d6056f01a1521ca6e12cb4b61ef7ebe4",
+          "match" : "source=0 english romajiOnly romaji=0",
+          "reading" : "びる",
+          "retrievalOrder" : 2,
+          "summary" : "to seem ..., to look ..., to appear ..., to feel ..., to behave like ..."
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N2",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1106040"
+          ],
+          "headword" : "ビルディング",
+          "languageReferenceID" : "3b266358c172b2c6133b8e38cc54d113",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルディング",
+          "retrievalOrder" : 5,
+          "summary" : "multi-floor building, multi-storey building, tall building"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "85,698",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "5741683"
+          ],
+          "headword" : "ビルケンシュトック",
+          "languageReferenceID" : "1c5b914c9197010f5ab741a6049551d5",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルケンシュトック",
+          "retrievalOrder" : 30,
+          "summary" : "Birkenstock (German shoe and sandal manufacturer)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "227,152",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2322090"
+          ],
+          "headword" : "ビルド",
+          "languageReferenceID" : "034e7b73bdd71a9dff81b8ce8e861469",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルド",
+          "retrievalOrder" : 13,
+          "summary" : "build"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "330,398",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "2718160"
+          ],
+          "headword" : "ビルドゥングスロマン",
+          "languageReferenceID" : "c62f7a701693247b766ff18278e24fe3",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルドゥングスロマン",
+          "retrievalOrder" : 31,
+          "summary" : "Bildungsroman, novel about one's education, spiritual growth, etc., coming-of-age story"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106050"
+          ],
+          "headword" : "ビルトイン",
+          "languageReferenceID" : "bf6c70211a71e2e113e54c58df0c92c5",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルトイン",
+          "retrievalOrder" : 3,
+          "summary" : "built-in"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106070"
+          ],
+          "headword" : "ビルボード",
+          "languageReferenceID" : "6c5a0563e31d79146507d5c604dd3814",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルボード",
+          "retrievalOrder" : 4,
+          "summary" : "billboard"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2826694"
+          ],
+          "headword" : "緬甸",
+          "languageReferenceID" : "85e5384a4a2498c896d8d9dd2f145871",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "めんでん",
+          "retrievalOrder" : 6,
+          "summary" : "Burma"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106020"
+          ],
+          "headword" : "ビルダ",
+          "languageReferenceID" : "591972175eff62fb19c999c4742e93cd",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルダ",
+          "retrievalOrder" : 7,
+          "summary" : "builder"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2434770"
+          ],
+          "headword" : "鼻涙管",
+          "languageReferenceID" : "aee69f9b3033d1f0ab6cfd6dce9bb490",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "びるいかん",
+          "retrievalOrder" : 8,
+          "summary" : "nasolacrimal duct, tear duct"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2822630"
+          ],
+          "headword" : "ビル街",
+          "languageReferenceID" : "79c2a87ae17637a85280aae219dd93f9",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルがい",
+          "retrievalOrder" : 9,
+          "summary" : "downtown high-rise area, street of office buildings, area of medium to tall business buildings"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1983440"
+          ],
+          "headword" : "ビル風",
+          "languageReferenceID" : "4332d1d5a9c634d511bb1c9262c116f0",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルかぜ",
+          "retrievalOrder" : 10,
+          "summary" : "eddies of wind around high buildings"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2479160"
+          ],
+          "headword" : "ビルジ",
+          "languageReferenceID" : "c3e2ef72de17e58b398b74abe1acee2a",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルジ",
+          "retrievalOrder" : 11,
+          "summary" : "bilge"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106080"
+          ],
+          "headword" : "ビルマ",
+          "languageReferenceID" : "58b4653d07869ebda2c7094fc941803d",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルマ",
+          "retrievalOrder" : 12,
+          "summary" : "Burma"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2100920"
+          ],
+          "headword" : "毘盧遮那",
+          "languageReferenceID" : "ea0514c3a1d04066ff424601478c4ad6",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "びるしゃな",
+          "retrievalOrder" : 14,
+          "summary" : "Vairocana (Buddha who symbolizes the entirety of the phenomenological world)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2769520"
+          ],
+          "headword" : "ビルマ語",
+          "languageReferenceID" : "4efe6f567dc8e5e2d73dc7f983378334",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルマご",
+          "retrievalOrder" : 15,
+          "summary" : "Burmese (language)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2453130"
+          ],
+          "headword" : "ビルゼン",
+          "languageReferenceID" : "91e6add47354faa4ff3073109d3c2dfb",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルゼン",
+          "retrievalOrder" : 16,
+          "summary" : "virgin (esp. the Virgin Mary)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2398750"
+          ],
+          "headword" : "ビルベリー",
+          "languageReferenceID" : "4da27ca8bc62946cd29874c628ee87ca",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルベリー",
+          "retrievalOrder" : 17,
+          "summary" : "bilberry, European blueberry"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2322100"
+          ],
+          "headword" : "ビルド番号",
+          "languageReferenceID" : "8320e6d9c05fdfef67ed47f1631e6d07",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルドばんごう",
+          "retrievalOrder" : 18,
+          "summary" : "build number"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2214560"
+          ],
+          "headword" : "ビルマ戦争",
+          "languageReferenceID" : "6c7192e511e9ade40bc5793a415bc722",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルマせんそう",
+          "retrievalOrder" : 19,
+          "summary" : "Burmese Wars (1823-1826, 1852-1853, 1885-1887)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1905380"
+          ],
+          "headword" : "毘盧遮那仏",
+          "languageReferenceID" : "8dcfb686f4104370088b5c7213cd7cf7",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "びるしゃなぶつ",
+          "retrievalOrder" : 20,
+          "summary" : "Vairocana-Buddha"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2834184"
+          ],
+          "headword" : "ビリニュス",
+          "languageReferenceID" : "8925a178700d381ace9c6ef01227a185",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビリニュス",
+          "retrievalOrder" : 21,
+          "summary" : "Vilnius (Lithuania)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2321160"
+          ],
+          "headword" : "ビィルトイン",
+          "languageReferenceID" : "8eb5d8d716850ea3ad62b780bcf65db0",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビィルトイン",
+          "retrievalOrder" : 22,
+          "summary" : "built-in"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2479150"
+          ],
+          "headword" : "ビルジキール",
+          "languageReferenceID" : "d5fb18ade46b0658232430ef60e7719d",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルジキール",
+          "retrievalOrder" : 23,
+          "summary" : "bilge-keel"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1924750"
+          ],
+          "headword" : "ビルジャック",
+          "languageReferenceID" : "753d8c704b512121a9c09c1116c7bce0",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルジャック",
+          "retrievalOrder" : 24,
+          "summary" : "building highjack (hostage situation)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106060"
+          ],
+          "headword" : "ビルブローカー",
+          "languageReferenceID" : "7cbe39b155e2976440f2480502908383",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルブローカー",
+          "retrievalOrder" : 25,
+          "summary" : "bill broker"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2466090"
+          ],
+          "headword" : "ビルダーリング",
+          "languageReferenceID" : "789762ae54a92c11c4deb8f7bb2896a1",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルダーリング",
+          "retrievalOrder" : 26,
+          "summary" : "buildering"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2622010"
+          ],
+          "headword" : "ヴィルトゥオーソ",
+          "languageReferenceID" : "d22f9a6fa44329970b5b8a550ecf564d",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ヴィルトゥオーソ",
+          "retrievalOrder" : 27,
+          "summary" : "virtuoso"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1106090"
+          ],
+          "headword" : "ビルメンテナンス",
+          "languageReferenceID" : "b5f8ebfd3b21d72ce127cd92877041cd",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルメンテナンス",
+          "retrievalOrder" : 28,
+          "summary" : "building maintenance"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2851886"
+          ],
+          "headword" : "ビルトインガレージ",
+          "languageReferenceID" : "35310f14600f8664e1cd0682bb5a5601",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルトインガレージ",
+          "retrievalOrder" : 29,
+          "summary" : "built-in garage"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2161850"
+          ],
+          "headword" : "ビルトインスタビライザー",
+          "languageReferenceID" : "88f9e2b614199ffc0c77a5802b239d22",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルトインスタビライザー",
+          "retrievalOrder" : 32,
+          "summary" : "built-in stabilizer"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2502810"
+          ],
+          "headword" : "ビルディングオートメーション",
+          "languageReferenceID" : "82e83a06ca7c69f62408e89020902d4b",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "ビルディングオートメーション",
+          "retrievalOrder" : 33,
+          "summary" : "building automation"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1129060"
+          ],
+          "headword" : "マネービル",
+          "languageReferenceID" : "dfacca7a23c8d64666229ceeb0ae531a",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "マネービル",
+          "retrievalOrder" : 34,
+          "summary" : "moneymaking, amassing money, asset-creation, asset-building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2487390"
+          ],
+          "headword" : "ハウスビル",
+          "languageReferenceID" : "b642bb958656dd29fb18a8d3cb375f17",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ハウスビル",
+          "retrievalOrder" : 35,
+          "summary" : "house bill"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2260060"
+          ],
+          "headword" : "レジャービル",
+          "languageReferenceID" : "0a7889bf01ecbb729f10aaa5e737bb53",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "レジャービル",
+          "retrievalOrder" : 36,
+          "summary" : "leisure centre (center)"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2466860"
+          ],
+          "headword" : "クリーンビル",
+          "languageReferenceID" : "0975e49912e838d4c117e12348590960",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "クリーンビル",
+          "retrievalOrder" : 37,
+          "summary" : "clean bill"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1073580"
+          ],
+          "headword" : "スマートビル",
+          "languageReferenceID" : "bcc6787c5de4a8d881bd3f9903b33a66",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "スマートビル",
+          "retrievalOrder" : 38,
+          "summary" : "smart building, intelligent building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2002830"
+          ],
+          "headword" : "オフィスビル",
+          "languageReferenceID" : "fd4aa7319031f6e473abc0b387e646f3",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "オフィスビル",
+          "retrievalOrder" : 39,
+          "summary" : "office building, office complex"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2847899"
+          ],
+          "headword" : "セルフビルド",
+          "languageReferenceID" : "dbdefb6af53663a6ba5706fc8b466e6a",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "セルフビルド",
+          "retrievalOrder" : 40,
+          "summary" : "self-build, building one's own home"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2837520"
+          ],
+          "headword" : "ホームビルダー",
+          "languageReferenceID" : "9d446476555317865e7f0227dd631955",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ホームビルダー",
+          "retrievalOrder" : 41,
+          "summary" : "home builder"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1136660"
+          ],
+          "headword" : "ユーザンスビル",
+          "languageReferenceID" : "277b953da24ab28f531fc14ba39f5a4f",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ユーザンスビル",
+          "retrievalOrder" : 42,
+          "summary" : "usance bill"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2308140"
+          ],
+          "headword" : "チェックビルド",
+          "languageReferenceID" : "c82570e7e0159bad256f3fbe4ea24d88",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "チェックビルド",
+          "retrievalOrder" : 43,
+          "summary" : "checked build"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2300670"
+          ],
+          "headword" : "システムビルダ",
+          "languageReferenceID" : "dc0f772c553b600bb626aa2486b60758",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "システムビルダ",
+          "retrievalOrder" : 44,
+          "summary" : "system builder"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1075770"
+          ],
+          "headword" : "ターミナルビル",
+          "languageReferenceID" : "ef7f2c9a6b769a559563d5bac3d9a579",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ターミナルビル",
+          "retrievalOrder" : 45,
+          "summary" : "(airport) terminal building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2744290"
+          ],
+          "headword" : "ファッションビル",
+          "languageReferenceID" : "6d9e389ff363ca205107d75a73634f07",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ファッションビル",
+          "retrievalOrder" : 46,
+          "summary" : "(multi-floor) shopping center primarily containing clothing stores, fashion mall"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2466970"
+          ],
+          "headword" : "コレクションビル",
+          "languageReferenceID" : "d102e599fb5a0e8ccd8c90bd97824cd9",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "コレクションビル",
+          "retrievalOrder" : 47,
+          "summary" : "bill for collection"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2833474"
+          ],
+          "headword" : "ボディビルディング",
+          "languageReferenceID" : "260127df7cf761a75aaa83467acbb4a0",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "ボディビルディング",
+          "retrievalOrder" : 48,
+          "summary" : "bodybuilding"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2864763"
+          ],
+          "headword" : "チームビルディング",
+          "languageReferenceID" : "71dccc66557d4624cc41142ad9e52080",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "チームビルディング",
+          "retrievalOrder" : 49,
+          "summary" : "team building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1023550"
+          ],
+          "headword" : "インテリジェントビル",
+          "languageReferenceID" : "488f3c78b09b4b7ad91b5bfc34f04ea7",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "インテリジェントビル",
+          "retrievalOrder" : 50,
+          "summary" : "intelligent building"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1085910"
+          ],
+          "headword" : "トラフィックビルダー",
+          "languageReferenceID" : "07464a02a53797ffe97cd5dc1d21db2f",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "トラフィックビルダー",
+          "retrievalOrder" : 51,
+          "summary" : "traffic builder"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2283470"
+          ],
+          "headword" : "インターフェースビルダ",
+          "languageReferenceID" : "fa6cab9f6f4ec07f6304fc1c2b76cab0",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "インターフェースビルダ",
+          "retrievalOrder" : 52,
+          "summary" : "interface builder"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2647410"
+          ],
+          "headword" : "キャパシティビルディング",
+          "languageReferenceID" : "008c4e5e00c2d1de93958dbd04c0144f",
+          "match" : "source=0 english romajiOnly romaji=2",
+          "reading" : "キャパシティビルディング",
+          "retrievalOrder" : 53,
+          "summary" : "capacity building"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "2796520"
+          ],
+          "headword" : "ビール",
+          "languageReferenceID" : "871e08abdaa385fb2ffa15ddcec2735a",
+          "match" : "source=0 english romajiOnly romaji=6",
+          "reading" : "ビール",
+          "retrievalOrder" : 54,
+          "summary" : "beer"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1104550"
+          ],
+          "headword" : "麦酒",
+          "languageReferenceID" : "f312a867c080e2c0c5995ebd2ca7de79",
+          "match" : "source=0 english romajiOnly romaji=6",
+          "reading" : "ばくしゅ",
+          "retrievalOrder" : 55,
+          "summary" : "beer"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            }
+          ],
+          "entSeq" : [
+            "2843940"
+          ],
+          "headword" : "ビールス",
+          "languageReferenceID" : "97909cc358067faf23cfa7948e4518aa",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ビールス",
+          "retrievalOrder" : 56,
+          "summary" : "virus"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "1104570"
+          ],
+          "headword" : "ビール券",
+          "languageReferenceID" : "67f40e624931980323ce4fb3cdd7de54",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ビールけん",
+          "retrievalOrder" : 57,
+          "summary" : "beer coupon"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2778110"
+          ],
+          "headword" : "ビール腹",
+          "languageReferenceID" : "ff59aba1737824b6c876268c738ee767",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ビールばら",
+          "retrievalOrder" : 58,
+          "summary" : "beer belly, potbelly"
+        },
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "2865176"
+          ],
+          "headword" : "ビール缶",
+          "languageReferenceID" : "27da72e56b2ef51202319ebba6761de7",
+          "match" : "source=0 english romajiOnly romaji=7",
+          "reading" : "ビールかん",
+          "retrievalOrder" : 59,
+          "summary" : "beer can"
+        }
+      ],
+      "sections" : [
+        "examples",
+        "readingRefinement",
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 60
+    },
+    {
+      "covers" : "Σ's final form, stored as the core folds a query, where Python's casefold stored σ",
+      "presentation" : "ranked",
+      "query" : "ς",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "50,857",
+              "tier" : "rare"
+            }
+          ],
+          "entSeq" : [
+            "1060200"
+          ],
+          "headword" : "Σ",
+          "languageReferenceID" : "a8febc1674e58b8408fda8754ecd46b8",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "シグマ",
+          "retrievalOrder" : 0,
+          "summary" : "sigma"
+        }
+      ],
+      "sections" : [
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
+    },
+    {
+      "covers" : "A gloss with ß, stored as the core folds a query, where Python's casefold stored ss",
+      "presentation" : "ranked",
+      "query" : "spaß",
+      "resolution" : "direct",
+      "results" : [
+        {
+          "chips" : [
+
+          ],
+          "entSeq" : [
+            "5741246"
+          ],
+          "headword" : "音楽の冗談",
+          "languageReferenceID" : "d82f2d175b3fec17c755ec8d1c2b4bff",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "おんがくのじょうだん",
+          "retrievalOrder" : 0,
+          "summary" : "Ein Musikalischer Spaß (Mozart)"
+        }
+      ],
+      "sections" : [
+        "results"
+      ],
+      "state" : "results",
+      "voiceOverCount" : 1
     }
   ],
   "formatVersion" : 1,

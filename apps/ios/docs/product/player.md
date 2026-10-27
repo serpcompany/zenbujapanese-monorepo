@@ -74,12 +74,18 @@ player is by hand; the UI tests stand in for it with a local player that answers
   hidden, and tapping the video plays or pauses it. YouTube still shows its title, share button,
   and logo when a video starts, buffers, or is paused.
 - **Caption cards follow the video.** Below the player, the video's Japanese captions appear as
-  one card per line. The card for the line being spoken gets a tinted fill and an accent-colored
+  one card per line, each with its words already linked, at the height it keeps: the cards that fit
+  the screen appear together, and the rest join the end of the list as they're linked, so a card
+  never changes height as its words link, nor when it scrolls back into view. The card for the line
+  being spoken gets a tinted fill and an accent-colored
   outline, and is scrolled to the center as the video plays. One line is always highlighted:
   between lines, the last spoken line stays highlighted, and before the first line starts, the
   first line is.
-  Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown`; package
-  `YouTubeCaptionsTests` (cues from timed text, without overlaps).
+  Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` and
+  `LinkedRowsUITests.testACaptionArrivesLinkedAndIsStillLinkedWhenItScrollsBack` (linking held,
+  a card is never listed unlinked, and comes back linked at its height); package
+  `YouTubeCaptionsTests` (cues from timed text, without overlaps) and `LinkedRowsTests` (the cards
+  that fit first, then 25 at a time, each linked once).
 - **Tapping a card jumps to it.** Tapping a card anywhere outside its words plays the video from
   the start of that line. Each card shows its time range, small, in its top corner.
 - **Words link to the dictionary.** Each card shows the line as linked Japanese text that
@@ -100,9 +106,8 @@ player is by hand; the UI tests stand in for it with a local player that answers
   (`ImageSearchUITests.testAWordSheetsKanjiOpensItsPageOnTranslate`) and Translate
   (`ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns` and
   `testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate`); package
-  `WordSheetPresentationTests`, `PlayerReadingAidTests`, and `LinkedEntriesTests` (a line linked
-  as the app's cache of 4,000 entries fills, or while another line's read empties it, keeps its
-  own words).
+  `WordSheetPresentationTests`, `PlayerReadingAidTests`, and `LinkedWordResolutionTests` (each
+  linked word carries its entry's reading, summary, and gloss).
 - **Translations.** With Sentence Translations on, each card shows a translation beneath the
   Japanese. By default YouTube's translation is used, and Apple Translation fills lines it leaves
   out. Choosing Apple in Reading Aids translates every line on the device instead, so each

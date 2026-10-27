@@ -3,6 +3,8 @@ import SwiftUI
 
 @main
 struct ZenbuJapaneseApp: App {
+  @ApplicationDelegateAdaptor private var delegate: ApplicationDelegate
+
   init() {
     CrashReporter.startAtLaunch()
   }

@@ -16,14 +16,8 @@ import {
   NavigationMenuTrigger
 } from '@/components/ui/navigation-menu'
 import type { LinkTo } from '@/lib/site'
-import {
-  isCurrentPage,
-  isCurrentSection,
-  type LinkMenu,
-  type MegaMenu,
-  type MenuLink,
-  type SiteMenu
-} from '@/lib/site-menus'
+import { isCurrentPage, isCurrentSection } from '@/lib/site-menu-links'
+import type { LinkMenu, MegaMenu, MenuLink, SiteMenu } from '@/lib/site-menus'
 import { cn } from '@/lib/utils'
 
 function NavLink({

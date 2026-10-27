@@ -30,6 +30,7 @@ struct PlaybackTimeText: View {
 
 struct LiveCaptionList<Row: View>: View {
   let cues: [SubtitleCue]
+  let linksMore: Bool
   let player: YouTubePlayerController
   @ViewBuilder let row: (SubtitleCue) -> Row
   @State private var activeCueID: Int?
@@ -42,6 +43,12 @@ struct LiveCaptionList<Row: View>: View {
           row(cue)
             .captionCardRow(isActive: cue.id == activeCueID)
             .id(cue.id)
+        }
+        if linksMore {
+          ProgressView()
+            .frame(maxWidth: .infinity)
+            .listRowSeparator(.hidden)
+            .accessibilityIdentifier("watch.captions-linking")
         }
       }
       .listStyle(.plain)

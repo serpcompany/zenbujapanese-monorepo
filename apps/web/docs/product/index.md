@@ -35,7 +35,9 @@ photos) still open a prompt to get the app (#468).
 The dictionary has these page types (ADR 0010, amended for #614); the kanji, conjugation, and
 Example Sentences pages that came before it redirect to the nearest of them. The shared header and
 footer, and the URL, indexing, and sitemap rules, apply to all of them.
-[Dictionary](dictionary.md) describes every behavior, page by page, [Browse pages](browse.md)
+[Dictionary](dictionary.md) describes every behavior, page by page, [Radical
+input](radical-input.md) the search box's radical panel, [Header, footer, and
+site-wide](site-wide.md) what every page shares, [Browse pages](browse.md)
 the browse pages, [Products pages](products.md) the catalog and the product page, and
 [Tools pages](tools.md) the tools index and the converters, and [Kanji to
 Furigana](kanji-to-furigana.md) the furigana converter.
@@ -99,18 +101,19 @@ its app source and planned check, and is then built with its check in the same P
 
 ## How behavior is verified
 
-Each behavior in [Dictionary](dictionary.md), [Account pages](account.md),
+Each behavior in [Dictionary](dictionary.md), [Site-wide](site-wide.md), [Account pages](account.md),
 [The subscription](subscription.md), [Languages](languages.md), [Privacy Policy](privacy.md), and
 [Kanji to Furigana](kanji-to-furigana.md) names its automated check, or says "No
 automated check yet". The checks come in
 five kinds:
 
-- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the
-  app on the iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
-  `word-detail.json`, and `kanji-detail.json`, and `kanji-element.json` for a page the website
-  doesn't have yet. Each pins, by SHA-256, the app data files it was
-  recorded from. The dictionary service's tests (`apps/dictionary-api/src/conformance/`) replay
-  them through the shared core on the app's own data, as the service answers the pages.
+- **App-recorded conformance suites** in `language-data/conformance/`, recorded from the app on the
+  iOS Simulator: `search-retrieval.json`, `search-results.json`, `example-search.json`,
+  `word-detail.json`, `kanji-detail.json`, `sentence-search.json`, and `sentence-results.json`, and
+  `kanji-element.json` for a page the website doesn't have yet. Each pins, by SHA-256, the app data
+  files it was recorded from. The dictionary service's tests
+  (`apps/dictionary-api/src/conformance/`) replay them through the shared core on the app's own
+  data, as the service answers the pages.
 - **Unit tests** (Vitest) next to the code, under `apps/web/src/`, `packages/dictionary-core/src/`,
   and `apps/dictionary-api/src/`. Each one's `pnpm check` runs them; the `Web`, `Dictionary core`,
   and `Dictionary API` workflows run them on pull requests.

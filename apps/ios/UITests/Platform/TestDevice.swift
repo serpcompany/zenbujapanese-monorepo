@@ -77,6 +77,14 @@ enum TestDevice {
     #endif
   }
 
+  @MainActor static func quit(_ app: XCUIApplication) {
+    #if os(macOS)
+      app.typeKey("q", modifierFlags: .command)
+    #else
+      XCUIDevice.shared.press(.home)
+    #endif
+  }
+
   @MainActor static func comeBack(to app: XCUIApplication) {
     app.activate()
     #if os(macOS)
@@ -114,6 +122,14 @@ enum TestDevice {
       field.typeKey("a", modifierFlags: .command)
     #else
       field.tap(withNumberOfTaps: 3, numberOfTouches: 1)
+    #endif
+  }
+
+  @MainActor static func paste(_ text: String, into field: XCUIElement) {
+    #if os(macOS)
+      NSPasteboard.general.clearContents()
+      NSPasteboard.general.setString(text, forType: .string)
+      field.typeKey("v", modifierFlags: .command)
     #endif
   }
 

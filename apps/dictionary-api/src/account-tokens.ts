@@ -1,3 +1,4 @@
+import { scopesOf, verifiedAccessToken } from '@zenbu/node-service/access-tokens'
 import { errorFields, log } from '@zenbu/node-service/log'
 import {
   createLocalJWKSet,
@@ -5,8 +6,7 @@ import {
   customFetch,
   errors,
   type FetchImplementation,
-  type JWTVerifyGetKey,
-  jwtVerify
+  type JWTVerifyGetKey
 } from 'jose'
 import { AccountKeysUnavailable, type AccountTokens } from './service'
 
@@ -75,15 +75,8 @@ export function accountTokens(options: {
   const keys = accountKeys(new URL(options.jwksUrl), options.fetch ?? fetch)
   return async token => {
     try {
-      const { payload } = await jwtVerify(token, keys, {
-        issuer: options.accountUrl,
-        audience: options.accountUrl,
-        algorithms: ['EdDSA'],
-        requiredClaims: ['exp', 'sub', 'azp', 'scope']
-      })
-      const { sub, scope } = payload
-      if (typeof sub !== 'string' || sub === '' || typeof scope !== 'string') return null
-      return { account: sub, scopes: new Set(scope.split(' ').filter(Boolean)) }
+      const claims = await verifiedAccessToken(token, keys, options.accountUrl)
+      return claims ? { account: claims.sub, scopes: scopesOf(claims) } : null
     } catch (error) {
       if (refused(error)) return null
       throw error instanceof AccountKeysUnavailable ? error : unavailable(error)

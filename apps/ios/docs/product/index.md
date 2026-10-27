@@ -245,20 +245,20 @@ Rows use Settings-style tinted icon tiles in grouped cards without section headi
 Check: UI `LayoutUITests` (Account's rows on screen at each size).
 
 The profile card opens Profile, where a learner adds or changes a photo and edits their name,
-username, and email in place. Each field saves when the learner leaves it. A username follows the
-account service's rule: 3 to 30 of `a–z`, digits, and `_`, once NFKC-folded, trimmed, and
-lowercased, or empty for none. An email is a single valid address or empty. A username the rule
-refuses (a period, a leading `@`, kana) or an invalid email shows why and isn't saved; a username an
-earlier version saved stays as it was until it is edited. Without a photo, the card shows the name's
-initials. Signed in, name, username, and photo sync with the Zenbu account: each sign-in keeps the
-account's name and username, filling its empty ones from the phone ([The profile at
-sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide My
-Email), the name can't be emptied, and a change the account refuses, such as a taken username,
-goes back and says why. Signed out, edits stay on the phone. One this version can't read is kept
-aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
+username, and email in place. Each field saves as it's left; the name and email also as Zenbu leaves
+the screen. A username follows the account's rule: 3 to 30 of `a–z`, digits, and `_`, once
+NFKC-folded, trimmed, and lowercased, or empty for none. An email is a single valid address or
+empty. A username the rule refuses (a period, a leading `@`, kana) or an invalid email shows why and
+isn't saved; a username an earlier version saved stays until it's edited. Without a photo, the card
+shows the name's initials. Signed in, name, username, and photo sync with the Zenbu account: each
+sign-in keeps the account's name and username, filling its empty ones from the phone ([The profile
+at sign-in](account-sync.md)). Email shows the account's, read-only (Apple's relay address for Hide
+My Email), the name follows the account's rule, and a change the account refuses, such as a taken
+username, goes back and says why. Signed out, edits stay on the phone. One this version can't read
+is kept aside ([Saved data that can't be read](saved-data.md#saved-data-that-cant-be-read)).
 
-Check: package `UserProfileTests` (the field rules, the username's from the cases the account
-service's tests share, `apps/account-api/src/domain/username-cases.json`; saving on leaving; a
+Check: package `SharedAccountRulesTests` (the name and username from the account rules' cases,
+`packages/account-rules/cases/`), `TypedDraftsTests`, `UserProfileTests` (saving on leaving; a
 reload; an earlier username kept; an unreadable profile; the first sync), `AccountSyncProfileTests`,
 `PlatformAdapterTests` (the photo); UI `AccountUITests.testTheProfileKeepsANameAndShowsItOnTheCard`
 (the card, and both fields' errors) and `AccountSignedInUITests` (signed in).
@@ -270,13 +270,13 @@ packs download on request, or on their own when chosen on another signed-in devi
 ([sync](account-sync.md)), and are mapped locally into Zenbu's dictionary; Jiten packs match words
 by reading as well as spelling. YouTube counts words by spelling, so a spelling shared by several
 dictionary words (時 is とき and じ) ranks the one UniDic's reading for it names (とき); a spelling
-UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube rank. A pack an update drops
-from the catalog is deleted on the next launch. A learner can enable any number of installed packs,
-or none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled
-but not removed, and removing an optional pack also disables it. A new install enables JLPT Levels
-first and YouTube second. JLPT Levels marks words with an estimated N5–N1
-level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
-presents levels as unofficial study estimates.
+UniDic also reads several ways ranks the reading a reviewed list chose where one clearly dominates
+(家 is いえ) and has no YouTube rank otherwise (後, あと or ご). A pack an update drops from the catalog
+is deleted on the next launch. A learner can enable any number of installed packs, or none. A newly
+downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled but not removed,
+and removing an optional pack also disables it. A new install enables JLPT Levels first and YouTube
+second. JLPT Levels marks words with an estimated N5–N1 level from Jonathan Waller's lists; JLPT
+publishes no official vocabulary list, so the app presents levels as unofficial study estimates.
 
 Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and `ResultsScreenTests`;
 core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
@@ -289,7 +289,7 @@ The screen lists one row per pack in three sections. **Enabled** holds packs tha
 switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Look Up
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
 from Look Up's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
-places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
+places by how common the next pack that ranks it says it is (後, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. Several packs can download at
 once: each row shows its own progress ring with a stop button, and stopping one leaves the others
@@ -339,16 +339,17 @@ its word count; two lists in one place, as after signing in on a second phone, s
 order on every device. A learner can create a list, swipe a list to rename or delete it (a list that
 has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
 list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
-trimmed, can't be empty, hold at most 500 characters (control characters become spaces), and may
-repeat. A list shows its words most recently added first, with the **✓ Known** capsule on known
-words; the learner can search it by headword or reading, swipe a word to remove it from that list,
-or open its word page, found the same way as in Known Words. Its **•••** menu renames the list,
-deletes it (asking first when it has words), or selects words: while selecting, the top bar offers
-Select All, Remove, and Done. Deleting a list removes its words from that list only.
+trimmed, can't be empty, hold at most 500 characters, cut to fit (control characters become spaces),
+and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on
+known words; the learner can search it by headword or reading, swipe a word to remove it from that
+list, or open its word page, found the same way as in Known Words. Its **•••** menu renames the
+list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
+offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
-Check: package `WordListsTests` and `SavedKanjiTests`; UI `ListsUITests` (making, renaming,
-deleting, and dragging a list into order) and `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites`
-(Favorites at first).
+Check: package `WordListsTests`, `SharedAccountRulesTests.listNames()`, and `SavedKanjiTests`; UI
+`ListsUITests` (making, renaming, deleting, and dragging a list into order) and
+`AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (Favorites at
+first).
 
 A word's page also names the lists holding it; tapping one opens that list here.
 

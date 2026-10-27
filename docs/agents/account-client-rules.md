@@ -51,7 +51,8 @@ What the iOS app's Player lists under Recent, as `watchedVideo`, by YouTube vide
   applies only at the removal's version: one made before the device saw the removal conflicts,
   and `current` is the delete. Take it. Watching it again afterwards brings it back. Keep a removed
   video's version while the account remembers it: the latest 100 videos removed or pruned.
-- **The account keeps the 50 latest by `watchedAt`.** A watch past that removes the oldest, which
+- **The account keeps the 50 latest by `watchedAt`,** and of two at one time the greater ID, by
+  code point ([`account-rules.md`](account-rules.md)). A watch past that removes the oldest, which
   comes down as a `delete`; drop it. Keep 50 on the device the same way, by `watchedAt`, so a
   device that missed an old prune still shows what the account has. Don't send a `remove` for one
   your device drops for being past 50.
@@ -87,7 +88,7 @@ and `notes:write`.
   as a new note, under a new UUID, on the same word, beside `current`.
 - **A delete that conflicts** means the note was written elsewhere since: take `current`, and show
   the note. A write of a note deleted elsewhere brings it back.
-- **A note the service refuses** stays on the device, untouched: one over 10,000 characters
+- **A note the service refuses** stays on the device, untouched, and the app says so: one over 10,000 characters
   (`invalid_fields`), and one past 10,000 notes an account (`too_many_notes`). Never delete or cut
   what the learner wrote; stop sending that note, and send it again when it next changes.
 
@@ -178,7 +179,7 @@ The searches the learner made, as `recentSearch`. It needs `searches:read` and `
   A search the device made before it saw a removal conflicts, and `current` is the delete: take
   it. Keep a removed search's version while the account remembers it: the latest 100 removed or
   pruned.
-- **The account keeps the 50 latest by `searchedAt`**: a search past that removes the oldest,
+- **The account keeps the 50 latest by `searchedAt`**, ties broken as videos' are, by ID: a search past that removes the oldest,
   which comes down as a `delete`. Keep 50 on the device the same way, don't send a `remove` for
   one your device drops for being past 50, and order them newest first.
 - **A query over 1,000 characters** is refused (`invalid_fields`): keep it on the device only.

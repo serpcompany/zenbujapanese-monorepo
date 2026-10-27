@@ -32,7 +32,16 @@ enum AppLifecycle {
   }
 
   @MainActor
+  static func finishSaving() async {
+    await TypedDrafts.shared.keep()
+    await WordKnowledge.shared.flush()
+    await WordLists.shared.flush()
+    await ZenbuAccount.shared?.sync.flush()
+  }
+
+  @MainActor
   static func sceneChanged(to phase: ScenePhase, translate: TranslateExperience) {
+    Task { await TypedDrafts.shared.sceneChanged(to: phase) }
     switch phase {
     case .active:
       WordKnowledge.shared.saveIfNeeded()

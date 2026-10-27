@@ -29,7 +29,7 @@ The inner loop, by part:
   every package's tests.
 - **Run the finish gate once per tree.** If nothing changed since the last green run, cite it.
 - **CI on the final commit is the record** of what CI runs. It doesn't run the app's tests on a
-  Simulator or the Mac while `IOS_SWIFT_TESTS` is off ([`ci.md`](ci.md), iOS), so a change under
+  Simulator or the Mac while `IOS_SWIFT_TESTS` is off ([`ci-ios.md`](ci-ios.md)), so a change under
   `apps/ios` runs the package's tests and the UI tests it touches here, on the final commit, and
   the pull request cites them.
 - **A fix re-runs what it could have broken:** the check that failed and the tests for the changed

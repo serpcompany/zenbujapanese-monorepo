@@ -1,4 +1,5 @@
 import type { SegmentationResponse } from '../cards/segmentation'
+import type { RadicalFile } from '../search/radicals'
 import type {
   BrowseSitemapResponse,
   BrowseSummaryResponse,
@@ -20,7 +21,7 @@ import type {
   WordSitemap
 } from './dictionary'
 
-export const dictionaryContract = 6
+export const dictionaryContract = 8
 
 export const firstDictionaryContract = 1
 
@@ -51,6 +52,7 @@ export interface DictionaryContract {
   kanjiList: KanjiListResponse
   browseSitemap: BrowseSitemapResponse
   segmentation: SegmentationResponse
+  radicals: RadicalFile
 }
 
 export function answeredContract(answered: string | number | null | undefined): number {

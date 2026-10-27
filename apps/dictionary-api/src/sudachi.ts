@@ -2,28 +2,19 @@ import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
+import type { Morpheme, MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
+import { bundledSudachiPack, type SudachiPack } from '../scripts/sudachi-pack.mjs'
 
 const require = createRequire(import.meta.url)
 
-export interface SudachiContract {
+export interface SudachiContract extends SudachiPack {
   packId: string
-  engineVersion: string
-  runtimeResourceCommit: string
-  downloadURL: string
-  downloadSHA256: string
-  archiveEntry: string
-  installedSHA256: string
-  characterDefinitionSHA256: string
-  unknownDefinitionSHA256: string
 }
 
 export function sudachiContract(resources: string): SudachiContract {
-  const catalog = JSON.parse(
-    readFileSync(join(resources, 'LanguageTechnologyPackCatalog.json'), 'utf8')
-  ) as { packs: (SudachiContract & { packID: string; engine: string })[] }
-  const pack = catalog.packs.find(candidate => candidate.engine === 'sudachi.rs')
-  if (!pack) throw new Error('The app catalogs no Sudachi pack')
+  const pack = bundledSudachiPack(
+    JSON.parse(readFileSync(join(resources, 'LanguageTechnologyPackCatalog.json'), 'utf8'))
+  )
   return { ...pack, packId: pack.packID }
 }
 
@@ -34,12 +25,27 @@ const napiSudachiBuild = {
 
 const sha256 = (path: string) => createHash('sha256').update(readFileSync(path)).digest('hex')
 
-interface Morpheme {
+interface SudachiMorpheme {
   surface: string
+  beginC: number
+  endC: number
   partOfSpeech: string[]
   dictionaryForm: string
+  normalizedForm: string
+  readingForm: string
   dictionaryId: number
 }
+
+const morpheme = (found: SudachiMorpheme): Morpheme => ({
+  surface: found.surface,
+  begin: found.beginC,
+  end: found.endC,
+  dictionaryForm: found.dictionaryForm,
+  normalizedForm: found.normalizedForm,
+  reading: found.readingForm,
+  partOfSpeech: found.partOfSpeech,
+  isOutOfVocabulary: found.dictionaryId < 0
+})
 
 export function prepareSudachi(contract: SudachiContract, dictionaryPath: string): void {
   if (
@@ -74,19 +80,14 @@ export function loadSudachi(dictionaryPath: string): MorphologyAnalyzer {
     throw new Error(`Sudachi isn't prepared for ${dictionaryPath}; call prepareSudachi first`)
   }
   const sudachi = require('@nikkei/napi-sudachi') as {
-    Tokenizer: new () => { tokenize(text: string, mode: number): Morpheme[] }
+    Tokenizer: new () => { tokenize(text: string, mode: number): SudachiMorpheme[] }
     SplitMode: { c(): number }
   }
   const tokenizer = new sudachi.Tokenizer()
   const modeC = sudachi.SplitMode.c()
   return {
     async analyze(text) {
-      return tokenizer.tokenize(text, modeC).map(morpheme => ({
-        surface: morpheme.surface,
-        dictionaryForm: morpheme.dictionaryForm,
-        partOfSpeech: morpheme.partOfSpeech,
-        isOutOfVocabulary: morpheme.dictionaryId < 0
-      }))
+      return { words: tokenizer.tokenize(text, modeC).map(morpheme) }
     }
   }
 }

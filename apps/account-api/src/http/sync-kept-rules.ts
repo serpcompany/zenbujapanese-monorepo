@@ -1,6 +1,6 @@
+import { settingRules, valueText } from '@zenbu/account-rules/settings'
 import { photoLimits } from '../domain/photo-limits'
 import { searchIdOf, searchLimits } from '../domain/recent-searches'
-import { settingRules, valueText } from '../domain/settings'
 import { noteLimits } from '../domain/word-notes'
 import { type EntityRule, itemId, word } from './sync-entity-rules'
 import { count } from './sync-fields'

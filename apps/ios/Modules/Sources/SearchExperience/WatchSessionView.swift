@@ -9,7 +9,9 @@ struct WatchSessionView: View {
 
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @State private var player = YouTubePlayerController()
+  @State private var captionLines = LinkedLines()
   @State private var captionWords: [LanguageReferenceID]?
   @State private var captionState = CaptionState.loading
   @State private var isTranslatingMissingLines = false
@@ -169,16 +171,19 @@ struct WatchSessionView: View {
     VStack(spacing: 0) {
       comprehensionSummary
       Divider()
-      LiveCaptionList(cues: captions.cues, player: player) { cue in cueRow(cue) }
+      LiveCaptionList(
+        cues: Array(captions.cues.prefix(captionLines.words.count)),
+        linksMore: captionLines.linksMore, player: player
+      ) { cue in cueRow(cue, words: captionLines.words[cue.id]) }
     }
   }
 
-  private func cueRow(_ cue: SubtitleCue) -> some View {
+  private func cueRow(_ cue: SubtitleCue, words: [JapaneseTextToken]) -> some View {
     CaptionCard(
       text: cue.text,
+      words: words,
       translation: cue.translation,
       label: timeRange(cue),
-      japaneseTextAnalysisClient: japaneseTextAnalysisClient,
       identifierPrefix: "watch.cue.\(cue.id)",
       openCandidates: { surface, candidates in open(surface, candidates: candidates, from: cue) },
       openWord: { entry in open(entry, from: cue) }
@@ -330,12 +335,15 @@ struct WatchSessionView: View {
       if readingAidPreferences.translationSource == .apple {
         captions = captions.withoutTranslations
       }
+      await captionLines.begin(
+        captions.cues.map(\.text), showing: rowsOnScreen, using: japaneseTextAnalysisClient)
       captionState = .loaded(captions)
       history.record(videoID) { video in
         video.title = captions.title ?? video.title
         video.author = captions.author ?? video.author
       }
       requestMissingTranslations()
+      await captionLines.linkTheRest(using: japaneseTextAnalysisClient)
     } catch {
       captionState = .failed(error as? YouTubeCaptionError)
     }

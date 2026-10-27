@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from typing import Callable
 
-from jmdict_normalization import normalized_text, word_note_identity
+from jmdict_normalization import word_note_identity
 
 
 def _free_identity(base_identity: str, computed: str, taken: set[str]) -> str:
@@ -55,6 +56,7 @@ def link_relationships(
     entry_records: list[dict[str, object]],
     form_to_entry_ids: dict[str, list[bytes]],
     relationship_metadata: dict[str, object],
+    fold: Callable[[str], str],
 ) -> int:
     relationship_count = 0
     records_by_id = {record["id"]: record for record in entry_records}
@@ -68,7 +70,7 @@ def link_relationships(
         seen_ids: set[bytes] = set()
 
         for reference in record["cross_references"]:
-            target_ids = form_to_entry_ids.get(normalized_text(str(reference["form"])), [])
+            target_ids = form_to_entry_ids.get(fold(str(reference["form"])), [])
             supplied_reading = reference["reading"]
             target = next(
                 (
@@ -77,9 +79,9 @@ def link_relationships(
                     if target_id != record["id"]
                     and (
                         supplied_reading is None
-                        or normalized_text(str(supplied_reading))
+                        or fold(str(supplied_reading))
                         in {
-                            normalized_text(str(reading))
+                            fold(str(reading))
                             for reading in records_by_id[target_id]["reading_values"]
                         }
                     )

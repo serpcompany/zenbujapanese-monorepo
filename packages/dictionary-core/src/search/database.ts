@@ -26,7 +26,13 @@ export function withParametersTruncatedAtNul(db: SearchDatabase): SearchDatabase
   }
 }
 
-export const FormKind = { written: 0, reading: 1, romaji: 2 } as const
+export const FormKind = {
+  written: 0,
+  reading: 1,
+  romaji: 2,
+  shownRomaji: 3,
+  unmarkedRomaji: 4
+} as const
 
 export interface SearchEntry {
   id: string

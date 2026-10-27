@@ -120,7 +120,7 @@ struct KnownWordCountTests {
   ) -> JapaneseTextAnalysisClient {
     JapaneseTextAnalysisClient(
       availability: { .full },
-      linkedTokens: { _, _, _ in [] },
+      linkedTexts: { _, _ in [] },
       countedWords: { lines in
         asked(lines)
         return lines.map(LanguageReferenceID.init(rawValue:))
@@ -132,7 +132,7 @@ extension JapaneseTextAnalysisClient {
   func countedALineAtATime(_ lines: [String]) async -> [LanguageReferenceID] {
     var words: [LanguageReferenceID] = []
     for line in lines {
-      let tokens = await linkedTokens(line, SearchQuery(""), nil)
+      let tokens = await linkedTokens(line)
       words += tokens.compactMap { $0.isFunctionWord ? nil : $0.entry?.id }
     }
     return words

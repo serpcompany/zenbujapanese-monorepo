@@ -262,7 +262,7 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 
 **Footer.** The footer's Tools column links Kana charts, Kanji lists, and Frequency lists, and the
 header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
-([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
+([Site-wide](site-wide.md), Menus and Footer).
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)"; #844 decision and mockups (the footer's
   columns).
