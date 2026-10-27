@@ -1,3 +1,4 @@
+import { startErrorReports } from '../error-reports/error-reports'
 import type { DictionaryRequest } from '../shared/messages'
 import { answer, type WorkerData } from './answer'
 import { installer } from './installer'
@@ -29,6 +30,8 @@ const worker: WorkerData = {
     languageData.update()
   }
 }
+
+startErrorReports('worker', message => self.postMessage(message))
 
 self.addEventListener('message', (event: MessageEvent<DictionaryRequest>) => {
   const [port] = event.ports

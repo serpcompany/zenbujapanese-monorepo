@@ -1,12 +1,15 @@
 {
   "name": "zenbujapanese-extension",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "The Zenbu Japanese browser extension for Chrome: its pages, its service worker, the offscreen document that hosts the dictionary's worker, and the helper that draws on a page in a shadow root.",
   "type": "module",
   "scripts": {
     "build": "vite build",
     "build:test": "vite build --mode test",
+    "upload-source-maps": "node build/upload-source-maps.ts",
+    "package": "node build/package.ts",
+    "check-package": "node build/check-package.ts",
     "test-pages": "node ../../tools/checks/ports.mjs run site -- vite --config test-pages/vite.config.ts --port @port --strictPort",
     "format": "biome format --write",
     "lint": "biome check",
@@ -16,6 +19,7 @@
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
+    "@sentry/browser": "11.7.0",
     "@sqlite.org/sqlite-wasm": "3.54.1-build1",
     "@zenbu/dictionary-core": "workspace:*",
     "@zenbu/ui": "workspace:*",
@@ -39,6 +43,6 @@
   },
   "packageManager": "pnpm@10.17.0",
   "engines": {
-    "node": ">=22.13.0"
+    "node": ">=22.18.0"
   }
 }

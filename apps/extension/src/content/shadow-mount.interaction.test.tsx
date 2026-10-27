@@ -1,6 +1,6 @@
 import { act } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { TestSurface } from '../../test-pages/test-surface'
+import { TestSurface, testErrorMessage } from '../../test-pages/test-surface'
 import { hostElementName, mountInShadowRoot, type ShadowMount } from './shadow-mount'
 
 declare global {
@@ -45,13 +45,15 @@ afterEach(() => {
   mounted = undefined
   document.body.replaceChildren()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
-function mount(query = darkQuery(false)) {
+function mount(query = darkQuery(false), report?: (error: unknown) => void) {
   act(() => {
     mounted = mountInShadowRoot(<TestSurface read={() => new Promise(() => {})} />, {
       darkQuery: query,
-      fonts: { add: font => fonts.push(font as unknown as FakeFontFace) }
+      fonts: { add: font => fonts.push(font as unknown as FakeFontFace) },
+      report
     })
   })
   return mounted as ShadowMount
@@ -87,6 +89,37 @@ describe('mountInShadowRoot', () => {
     await act(async () => trigger?.click())
     expect(shadowRoot.querySelector('[data-test="dialog"]')).not.toBeNull()
     expect(document.querySelector('[data-test="dialog"]')).toBeNull()
+  })
+
+  async function throwFromTheSurface(report?: (error: unknown) => void) {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const pageErrors = vi.fn()
+    window.addEventListener('error', pageErrors)
+    const { shadowRoot } = mount(darkQuery(false), report)
+    const trigger = shadowRoot.querySelector<HTMLButtonElement>('[data-test="test-error"]')
+    globalThis.IS_REACT_ACT_ENVIRONMENT = false
+    try {
+      trigger?.click()
+      await vi.waitFor(() => expect(logged).toHaveBeenCalled())
+    } finally {
+      globalThis.IS_REACT_ACT_ENVIRONMENT = true
+      window.removeEventListener('error', pageErrors)
+    }
+    return { logged, pageErrors }
+  }
+
+  it("hands an error in its content to the content script's reporter and the console, not to the page", async () => {
+    const report = vi.fn()
+    const { logged, pageErrors } = await throwFromTheSurface(report)
+    expect(report).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
+    expect(pageErrors).not.toHaveBeenCalled()
+  })
+
+  it('still logs an error in its content when no reporter is given', async () => {
+    const { logged, pageErrors } = await throwFromTheSurface()
+    expect(logged).toHaveBeenCalledWith(expect.objectContaining({ message: testErrorMessage }))
+    expect(pageErrors).not.toHaveBeenCalled()
   })
 
   it('takes everything out of the page when it unmounts', () => {
