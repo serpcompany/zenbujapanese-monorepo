@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import compressed_copies
 import publish_release
 import release_manifest
 from object_store import Head, PreconditionFailed
@@ -45,10 +46,12 @@ class FakeStore:
         return None if obj is None else (obj["body"], obj["etag"])
 
     def download(self, key, path):
+        if key not in self.objects:
+            raise FileNotFoundError(f"An error occurred (NoSuchKey): {key}")
         path.write_bytes(self.objects[key]["body"])
 
     def put(self, key, body, *, sha256, content_type, cache_control, if_none_match=False,
-            if_match=None):
+            if_match=None, **other_headers):
         if self.before_put:
             self.before_put(key)
         data = body if isinstance(body, bytes) else body.read_bytes()
@@ -66,6 +69,7 @@ class FakeStore:
             "etag": f'"{self.version}"',
             "content_type": content_type,
             "cache_control": cache_control,
+            "other_headers": other_headers,
         }
         self.puts.append(key)
         if self.after_put:
@@ -89,6 +93,7 @@ def stage(directory: Path, release: str, files: dict[str, bytes], commit=COMMIT_
                 "sha256": sha256(data),
                 "bytes": len(data),
                 "depends_on": [],
+                **({"row_counts": {"entries": 1}} if name.endswith(".sqlite3") else {}),
             }
         )
     manifest = {
@@ -119,6 +124,11 @@ def pinned_of(staged: Path) -> dict:
 
 def publish(store, staged: Path, **options) -> dict:
     return publish_release.publish(store, staged, pinned_of(staged), log=quiet, **options)
+
+
+def data_part_key(files: dict[str, bytes]) -> str:
+    packed = compressed_copies.pack(files["Data.json"])
+    return compressed_copies.part_key("Data.json", sha256(packed), 1)
 
 
 FILES_1 = {"Data.json": b'{"a": 1}\n', "NOTICE.txt": b"notice\n"}

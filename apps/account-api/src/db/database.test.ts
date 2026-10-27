@@ -9,6 +9,7 @@ import { migrationsFolder as migrations } from '../config'
 import { type Accounts, createAccounts } from '../domain/accounts'
 import { scopes } from '../domain/clients'
 import { cursorKey, cursors, searchKeys } from '../domain/cursor'
+import type { ClientMutation } from '../domain/entities'
 import { accountStore } from './accounts'
 import { answers } from './database'
 import { billingRecordsKeptYears, purgeExpired } from './housekeeping'
@@ -26,6 +27,23 @@ async function migrated() {
   const client = new PGlite()
   await migrate(drizzle(client), { migrationsFolder: migrations })
   return client
+}
+
+async function migratedUpTo(nextTag: string) {
+  const earlier = mkdtempSync(join(tmpdir(), 'account-migrations-'))
+  cpSync(migrations, earlier, { recursive: true })
+  const journal = journalOf(earlier)
+  const before = journal.entries.findIndex(entry => entry.tag.endsWith(nextTag))
+  expect(before).toBeGreaterThan(0)
+  writeFileSync(
+    join(earlier, 'meta/_journal.json'),
+    JSON.stringify({ ...journal, entries: journal.entries.slice(0, before) })
+  )
+  const client = new PGlite()
+  const db = drizzle(client)
+  await migrate(db, { migrationsFolder: earlier })
+  rmSync(earlier, { recursive: true })
+  return { client, db }
 }
 
 describe('the migrations', () => {
@@ -70,19 +88,7 @@ describe('the migrations', () => {
   })
 
   test('journal every account as it is made, and every account made before the journal', async () => {
-    const earlier = mkdtempSync(join(tmpdir(), 'account-migrations-'))
-    cpSync(migrations, earlier, { recursive: true })
-    const journal = journalOf(earlier)
-    const before = journal.entries.findIndex(entry => entry.tag.endsWith('_journal_accounts'))
-    expect(before).toBeGreaterThan(0)
-    writeFileSync(
-      join(earlier, 'meta/_journal.json'),
-      JSON.stringify({ ...journal, entries: journal.entries.slice(0, before) })
-    )
-    const client = new PGlite()
-    const db = drizzle(client)
-    await migrate(db, { migrationsFolder: earlier })
-    rmSync(earlier, { recursive: true })
+    const { client, db } = await migratedUpTo('_journal_accounts')
     await client.query("insert into users (id, name, email) values ('old', '', 'old@example.com')")
     await migrate(db, { migrationsFolder: migrations })
     await client.query("insert into users (id, name, email) values ('new', '', 'new@example.com')")
@@ -98,6 +104,84 @@ describe('the migrations', () => {
         operation: 'create'
       }))
     )
+    await client.close()
+  })
+
+  test('keep each saved word known or not known when words gain Learning, read what an older service writes, and write both columns from the state', async () => {
+    const { client, db } = await migratedUpTo('_known_words_learning')
+    await client.exec(`
+      insert into users (id, name, email) values ('u1', '', 'u1@example.com');
+      insert into known_words (user_id, item_id, headword, reading, known, version) values
+        ('u1', 'kanji:日', '日', 'にち', true, 1), ('u1', 'kanji:月', '月', 'つき', false, 2);
+      insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) values
+        ('u1', 'knownWord', 'kanji:日', 1, 'mark'), ('u1', 'knownWord', 'kanji:月', 2, 'clear')`)
+    await migrate(db, { migrationsFolder: migrations })
+    const accounts = createAccounts(
+      accountStore(db),
+      cursors(cursorKey('test')),
+      searchKeys('test')
+    )
+    let sent = 0
+    const words = async (mutations: Omit<ClientMutation, 'id'>[] = []) => {
+      const answer = await accounts.sync(
+        'u1',
+        { mutations: mutations.map(mutation => ({ id: `m-${sent++}`, ...mutation })) },
+        everyScope
+      )
+      if (answer.status !== 'synced') return expect.unreachable()
+      return answer.changes
+        .filter(change => change.entity === 'knownWord')
+        .map(({ version, data }) => ({ version, ...data }))
+    }
+    const sun = { itemId: 'kanji:日', headword: '日', reading: 'にち' }
+    const moon = { itemId: 'kanji:月', headword: '月', reading: 'つき' }
+    expect(await words()).toEqual([
+      { version: 1, ...sun, state: 'known', known: true },
+      { version: 2, ...moon, state: 'unknown', known: false }
+    ])
+    const learning = { state: 'learning', headword: '月', reading: 'つき' }
+    expect(
+      await words([
+        {
+          entity: 'knownWord',
+          operation: 'set',
+          entityId: 'kanji:月',
+          baseVersion: 2,
+          fields: learning
+        }
+      ])
+    ).toEqual([
+      { version: 1, ...sun, state: 'known', known: true },
+      { version: 3, ...moon, state: 'learning', known: false }
+    ])
+    await client.exec(`
+      update known_words set known = true, version = 4 where item_id = 'kanji:月';
+      delete from sync_changes where entity_id = 'kanji:月';
+      insert into sync_changes (user_id, entity_type, entity_id, entity_version, operation) values
+        ('u1', 'knownWord', 'kanji:月', 4, 'mark')`)
+    expect(await words()).toEqual([
+      { version: 1, ...sun, state: 'known', known: true },
+      { version: 4, ...moon, state: 'known', known: true }
+    ])
+    const columns = async () =>
+      (await client.query("select known, learning from known_words where item_id = 'kanji:月'"))
+        .rows
+    const moonAt = (baseVersion: number, operation: string, fields?: Record<string, string>) =>
+      words([{ entity: 'knownWord', operation, entityId: 'kanji:月', baseVersion, fields }])
+    expect(await moonAt(4, 'clear')).toContainEqual({
+      version: 5,
+      ...moon,
+      state: 'unknown',
+      known: false
+    })
+    expect(await columns()).toEqual([{ known: false, learning: false }])
+    expect(await moonAt(5, 'set', learning)).toContainEqual({
+      version: 6,
+      ...moon,
+      state: 'learning',
+      known: false
+    })
+    expect(await columns()).toEqual([{ known: false, learning: true }])
     await client.close()
   })
 

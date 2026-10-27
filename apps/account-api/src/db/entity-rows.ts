@@ -24,6 +24,7 @@ const knownWordColumns = {
   headword: knownWords.headword,
   reading: knownWords.reading,
   known: knownWords.known,
+  learning: knownWords.learning,
   version: knownWords.version,
   updatedAt: knownWords.updatedAt
 }
@@ -61,11 +62,13 @@ export function readerOn(db: Drizzle, userId: string): EntityReader {
       return profile ?? null
     },
     async knownWord(itemId) {
-      const [word] = await db
+      const [row] = await db
         .select(knownWordColumns)
         .from(knownWords)
         .where(and(eq(knownWords.userId, userId), eq(knownWords.itemId, itemId)))
-      return word ?? null
+      if (!row) return null
+      const { known, learning, ...word } = row
+      return { ...word, state: known ? 'known' : learning ? 'learning' : 'unknown' }
     },
     async wordList(listId) {
       const [list] = await db
@@ -97,13 +100,14 @@ export function writerOn(db: Drizzle, userId: string) {
     ...noteWriter(db, userId),
     ...photoWriter(db, userId),
     ...searchWriter(db, userId),
-    async saveKnownWord(word: Omit<KnownWord, 'updatedAt'>) {
+    async saveKnownWord({ state, ...word }: Omit<KnownWord, 'updatedAt'>) {
+      const row = { ...word, known: state === 'known', learning: state === 'learning' }
       await db
         .insert(knownWords)
-        .values({ userId, ...word })
+        .values({ userId, ...row })
         .onConflictDoUpdate({
           target: [knownWords.userId, knownWords.itemId],
-          set: { ...word, updatedAt: sql`now()` }
+          set: { ...row, updatedAt: sql`now()` }
         })
     },
     async wordListCount() {

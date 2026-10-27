@@ -49,6 +49,11 @@ class RebuildStartTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertIsInstance(path, Path)
 
+    def test_every_frequency_tools_built_in_path_exists_in_this_checkout(self) -> None:
+        for name, path in rebuild_language_data.tools_built_in_paths().items():
+            with self.subTest(name=name):
+                self.assertTrue(path.exists(), path)
+
 
 if __name__ == "__main__":
     unittest.main()

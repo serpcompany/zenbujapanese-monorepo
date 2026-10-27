@@ -47,7 +47,7 @@ Every label in use is here. A new one is added to this table when it is created.
 | `ready-for-agent` | The issue is fully specified and ready for an autonomous agent. |
 | `ready-for-human` | The issue requires human implementation or a human decision. |
 | `wontfix` | The issue will not be worked on. |
-| `brainstorm` | An idea with no acceptance criteria yet, so ready for nobody. It loses the label when it gets criteria. The repository has no such label yet: `gh label create brainstorm` with the first issue that needs it. |
+| `brainstorm` | An idea with no acceptance criteria yet, so ready for nobody. It loses the label when it gets criteria. |
 | `decision:agent-led` | The agent owns the technical defaults, and escalates a material product, privacy, cost, or irreversible choice. |
 | `research-needed` | The issue can't be specified until something is found out. |
 | `iOS`, `macOS`, `product:website`, `product:browser-extension-chromium`, `product:browser-extension-safari` | The product or platform the issue is about. |

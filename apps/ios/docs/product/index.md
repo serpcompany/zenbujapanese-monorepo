@@ -214,11 +214,7 @@ It provides:
 - **Translations**, with how many conversations Translate has saved, which opens the same
   **Translations** screen as the Translate tab;
 - [**Notes Without a Word**](saved-data.md#notes-without-a-word), only while there are any;
-- Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
-  meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
-  kanji in Look Up's Grade panel); and Sentence Translations, with a translation language (English
-  so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
-  Reading Aids offers to download;
+- [Reading Aids](reading-aids.md), the switches for furigana, romaji, meanings, and translations;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description; Help & Support (the website), [**Report a
   Problem…**](problem-reports.md), [**Send Crash Reports**](crash-reports.md), and the Privacy
@@ -229,16 +225,13 @@ It provides:
   the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, what Sign In to Sync names, and
-the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
-`testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
-sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
-first credit, Jiten's notice, and the KanjiVG, Sentry, and ZIPFoundation texts), and
+the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`, and
+`testTranslationsAndCreditsOpenFromAccount` (the first credit, Jiten's notice, and the KanjiVG,
+Sentry, and ZIPFoundation texts), and
 `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a Word); contract
 `test_account_service_settings.py` (production in TestFlight and App Store builds, staging in
-Debug) and `test_package_licenses.py` (a text for each package); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits,
-none it can't read, and every text bundled), and the recorded `RomajiConformanceTests` with core
-`detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
+Debug) and `test_package_licenses.py` (a text for each package); package `SourceCreditsTests` (the
+core's credits, none it can't read, and every text bundled).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 
@@ -310,19 +303,20 @@ right-click, and its switch). A real download needs the network: by hand
 
 ### Known Words
 
-Known Words shows its count on the Account row and lists every word and kanji the learner marked
-known, most recent first. A learner can search the list by headword or reading, swipe an item to
-mark it unknown, or open its word or kanji page in Look Up. A word whose entry ID changed opens the entry with the
-same headword and reading, and looks the headword up only when there is none.
-Known words are stored on the device, and sync through the Zenbu account while the learner is
-signed in ([Zenbu account and sync](account-sync.md)). If the saved known words
-came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
-can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
-can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
-it, and Known Words asks the learner to reopen Zenbu.
+Known Words shows its count on the Account row and lists every word and kanji marked known, most
+recent first, with no dates: Look Up's result rows, with meanings and the Known badge, and its Kanji
+rows. A word the dictionary dropped keeps its headword, reading, and badge. A learner can search it
+by headword or reading, mark a row unknown by a right swipe or its context menu, or open its page in
+Look Up. A word whose entry ID changed opens the entry written and read the same, else searches its
+headword. Known words stay on the device and sync through the Zenbu account while signed in ([Zenbu
+account and sync](account-sync.md)). If they came from a newer Zenbu, or a damaged file couldn't be
+kept aside, they are shown but can't be changed: Known Words says so, and each swipe and menu, a
+page's too, offer only a disabled Known Words Can't Be Changed. If the file can't be read at launch,
+as before the first unlock, nothing is shown or saved over it, and Known Words asks to reopen Zenbu.
 
-Check: package `WordKnowledgeTests`, `SavedKanjiTests`, and `WordResolutionTests` (the entry a saved
-word opens); UI `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
+Check: package `WordKnowledgeTests` (and the disabled choice), `SavedKanjiTests`,
+`KnowledgeRowsTests`, and `WordResolutionTests` (the entry a saved word opens); UI
+`SavedWordsUITests` (Look Up's rows and chips, opened and marked unknown there),
 `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
 `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).
 

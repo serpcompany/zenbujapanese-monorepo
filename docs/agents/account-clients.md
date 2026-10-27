@@ -10,7 +10,9 @@ schema shows. How the service works inside is [`account-api.md`](account-api.md)
 subscription that unlocks sync is [`account-billing.md`](account-billing.md), For apps.
 
 Every app stays local-first: everything works signed out and offline, the device's copy is what the
-app shows, and the account only carries changes between devices and apps (#374).
+app shows, and the account only carries changes between devices and apps (#374). The browser
+extension is the exception: it saves only with the subscription
+([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
 
 ## The host
 
@@ -42,7 +44,7 @@ setting ([`account-api.md`](account-api.md), Settings).
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
   `GET /v1/auth/get-session`, which shows the email and name.
-- `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
+- `known:mark` marks a word Known, never Unknown or Learning: only the learner sets those.
 - `watch:*` reads and changes the videos the learner watched in the iOS app's Player,
   `translations:*` the sentences they bookmarked in its Translate tab, `notes:*` their word and
   kanji notes, `photos:*` their Media Library photos and the files under them, `settings:*` their
@@ -59,8 +61,7 @@ setting ([`account-api.md`](account-api.md), Settings).
   public client with no secret, and names itself in a header, so a program can claim to be any
   app. Every token is still only the signed-in learner's own account, so what's at stake is that
   learner's own data in an app they chose, not anyone else's.
-- The cursor passes the entities an app can't read. When an app's scopes grow, sync once with no
-  cursor.
+- The cursor passes the entities an app can't read. When its scopes grow, sync once with no cursor.
 
 **Adding an app** takes a pull request to the service and a person in Apple Developer and Google
 Cloud ([`account-api.md`](account-api.md), Set up the server):
@@ -79,8 +80,7 @@ Cloud ([`account-api.md`](account-api.md), Set up the server):
    uses it too), whose client ID goes on the end of the service's `GOOGLE_CLIENT_IDS` in both
    environments. The ID isn't secret: the app ships it.
 4. **Check it on staging:** each way in signs a learner in, `GET /v1/auth/token` answers a token
-   whose `azp` is the new ID and whose `scope` is its scopes, and deleting the account works with
-   an Apple account.
+   whose `azp` is the new ID and whose `scope` is its scopes, and deleting an Apple account works.
 
 ## Signing in
 
@@ -407,7 +407,7 @@ Content-Type: application/json
         "itemId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
         "headword": "見る",
         "reading": "みる",
-        "known": true
+        "state": "known", "known": true
       }
     }
   ],

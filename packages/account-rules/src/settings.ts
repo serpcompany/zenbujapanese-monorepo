@@ -48,7 +48,7 @@ export const settingRules: Readonly<Record<string, SettingRule>> = {
       "Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family."
   },
   'search.filter': {
-    value: { kind: 'choice', choices: ['all', 'known', 'unknown'] },
+    value: { kind: 'choice', choices: ['all', 'known', 'unknown', 'learning'] },
     means: "Search results' filter."
   },
   'imageSearch.textView': {

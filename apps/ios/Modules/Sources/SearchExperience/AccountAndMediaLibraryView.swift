@@ -6,6 +6,7 @@ struct AccountTabRoot: View {
   let store: EncounterMediaStore
   let translate: TranslateExperience
   let words: TranslateWordLinks
+  let lookupClient: LookupClient
   let openItem: (String, String, String) -> Void
 
   var body: some View {
@@ -23,7 +24,9 @@ struct AccountTabRoot: View {
         case .notesWithoutAWord:
           NotesWithoutAWordView()
         case .knownWords:
-          KnownWordsView { openItem($0.entryID, $0.headword, $0.reading) }
+          KnownWordsView(lookupClient: lookupClient) {
+            openItem($0.entryID, $0.headword, $0.reading)
+          }
         case .wordLists:
           WordListsView()
         case .wordList(let listID):

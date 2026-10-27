@@ -12,10 +12,55 @@ final class WordDetailUITests: ZenbuUITestCase {
     tap(menuChoice("Mark as Known", in: app))
     open(.account, in: app)
     tap(find("account.known-words", in: app))
-    waitFor(firstElement(identifiedBy: "known-words.item.", in: app))
+    waitFor(find("result.japan", in: app))
     tap(tabItem(.search, in: app))
     tap(find("word-detail.more-menu", in: app))
     waitFor(menuChoice("Mark as Unknown", in: app))
+  }
+
+  func testTheMenuTurnsReadingAidsOffForTheExamplesAndAccount() {
+    let app = openJapan()
+    let menu = find("word-detail.more-menu", in: app)
+    let example = find("word-detail.example.0", in: app)
+    let withTranslation = reveal(example, in: app).label
+    for aid in ["Word Meanings", "Word Meanings", "Furigana", "Translations"] {
+      let before = picture(of: reveal(example, in: app), in: app)
+      flipShowSwitch(aid, from: menu, in: app)
+      waitUntil("the example to redraw after \(aid) flipped") {
+        Self.pixelsThatDiffer(picture(of: example, in: app), before) > 50
+      }
+    }
+    waitUntil("the example to drop its translation") {
+      withTranslation.hasPrefix(example.label + ", ")
+    }
+    assertReadingAidsAreOff(["show-furigana", "show-word-meanings", "show-translations"], in: app)
+  }
+
+  func testAShowSwitchLeavesTheMenuOpenAndAnotherChoiceClosesIt() throws {
+    try XCTSkipIf(device == .mac, "the Mac's menus close on every choice")
+    let app = openJapan()
+    tap(find("word-detail.more-menu", in: app))
+    let furigana = waitFor(menuChoice("Furigana", in: app))
+    let onKnownWords = menuChoice("Furigana on Known Words", in: app)
+    waitUntil(onKnownWords, "isEnabled == true")
+    tap(furigana)
+    waitUntil(furigana, "isSelected == false")
+    waitUntil(onKnownWords, "isEnabled == false")
+    tap(furigana)
+    waitUntil(furigana, "isSelected == true")
+    tap(menuChoice("Add to List…", in: app))
+    waitForSheet("word-list-picker.screen", in: app)
+    XCTAssertFalse(furigana.exists, "the menu stayed open after Add to List…")
+  }
+
+  func testAKanjisMenuHasTheShowSwitches() {
+    let app = openJapan()
+    let menu = find("kanji-detail.more-menu", in: app)
+    tap(find("word-detail.kanji.日", in: app), toShow: menu)
+    tap(menu)
+    for aid in ["Furigana", "Furigana on Known Words", "Word Meanings", "Translations"] {
+      waitFor(menuChoice(aid, in: app))
+    }
   }
 
   func testEachRowIsListedOnceInItsOwnSection() {

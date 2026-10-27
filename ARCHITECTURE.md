@@ -11,7 +11,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. It keeps the subscription a learner buys in the App Store or through Stripe, which can unlock sync (ADR 0019). | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
-| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, and examples. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
+| `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, examples, and caption rules. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/node-service` | What the two Node services share: JSON-line logs, the request log, a server that stops cleanly, the check of an account's access token, and the writer of their API references (`docs/api/`). | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout |
 | `packages/account-rules` | The one definition of each rule a learner's account input is held to (a name, a username, a sign-in code, a list's name, a note, a watch, a setting), with a case file of inputs and outcomes for each: the account service applies them, the website checks with them before sending, and the app runs their bundle in JavaScriptCore. It also holds how a client that keeps no copy reads and changes the account's synced data, which the website runs. | [`docs/agents/account-rules.md`](docs/agents/account-rules.md) |
 | `deploy` | The API servers' deployer, which swaps each service's signed image into its slots, and can tell a Slack channel what it deployed and what failed. Its tests are in `tools/checks/src/deployer/`. | [`docs/agents/api-servers.md`](docs/agents/api-servers.md), [`docs/agents/deployer-alerts.md`](docs/agents/deployer-alerts.md) |
@@ -63,9 +63,11 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 holds what learners keep across devices, and the one subscription that unlocks syncing it, which
 Stripe and the App Store report to it at `/v1/webhooks`. Its Postgres database sits on the same
 server, on a network only the service's slots reach, learners' photo files are in R2 (ADR 0020),
-and every app keeps its own copy and works offline (ADR 0013). The website's account pages call it
-from the learner's browser, not from the Worker, whose requests to the API host Bot Fight Mode
-challenges
+and every app keeps its own copy and works offline (ADR 0013), except that the browser extension
+saves only with the subscription
+([ADR 0022](docs/adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)). The
+website's account pages call it from the learner's browser, not from the Worker, whose requests to
+the API host Bot Fight Mode challenges
 ([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
 The dictionary service's answers are a contract, typed and numbered in the core (`DictionaryContract`,

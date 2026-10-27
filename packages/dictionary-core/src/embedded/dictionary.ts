@@ -1,3 +1,5 @@
+import type { Caption } from '../captions/lines'
+import { youTubeCaptions, youTubeTranslatedCaptions, youTubeVideo } from '../captions/youtube'
 import { type PhraseEntry, phraseNote } from '../detail/phrase-note'
 import { romaji, sentenceRomaji } from '../detail/romaji'
 import { isKanjiCharacter } from '../detail/text'
@@ -88,7 +90,16 @@ export function embeddedEndpoint(host: EmbeddedHost): EmbeddedEndpoint {
       const { phrase, ...entry } = JSON.parse(request) as PhraseEntry & { phrase: string }
       return phraseNote(phrase, entry)
     },
-    sourceCredits: creditsShownBy
+    sourceCredits: creditsShownBy,
+    youTubeVideo,
+    youTubeCaptions,
+    youTubeTranslatedCaptions: request => {
+      const { captions, timedText } = JSON.parse(request) as {
+        captions: Caption[]
+        timedText: string
+      }
+      return youTubeTranslatedCaptions(captions, timedText)
+    }
   }
   const unanalyzed: AnalyzeText = () => {
     throw new Error('An answer asked for at once cannot wait for an analysis')

@@ -3,14 +3,20 @@ import SwiftUI
 struct ResultRow<Link: Hashable>: View {
   let entry: DictionaryEntry
   let row: ListedWord
-  let link: Link
+  let opening: RowOpening<Link>
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
   @Environment(WordKnowledge.self) private var wordKnowledge
   @ScaledMetric(relativeTo: .caption) private var chipSpacing = 6.0
 
+  init(entry: DictionaryEntry, row: ListedWord, link: Link) {
+    self.entry = entry
+    self.row = row
+    opening = .link(link)
+  }
+
   var body: some View {
     let isKnown = wordKnowledge.isKnown(entry.id)
-    NavigationLink(value: link) {
+    RowOpener(opening: opening) {
       VStack(alignment: .leading, spacing: 6) {
         HStack(alignment: .lastTextBaseline, spacing: 8) {
           titleBlock
@@ -31,13 +37,7 @@ struct ResultRow<Link: Hashable>: View {
       .contentShape(Rectangle())
       .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
     }
-    .swipeActions(edge: .leading) {
-      KnownWordMenuButton(item: .word(entry), identifierPrefix: resultIdentifier)
-        .tint(isKnown ? .orange : .green)
-    }
-    .contextMenu {
-      KnownWordMenuButton(item: .word(entry), identifierPrefix: resultIdentifier)
-    }
+    .knownWordActions(.word(entry), identifierPrefix: resultIdentifier)
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(row.summary)")
     .accessibilityValue(row.spoken)
     .accessibilityIdentifier(resultIdentifier)
@@ -75,5 +75,13 @@ struct ResultRow<Link: Hashable>: View {
     case "日本": "result.japan"
     default: "result.\(entry.id.rawValue)"
     }
+  }
+}
+
+extension ResultRow where Link == Never {
+  init(entry: DictionaryEntry, row: ListedWord, open: @escaping @MainActor () -> Void) {
+    self.entry = entry
+    self.row = row
+    opening = .action(open)
   }
 }

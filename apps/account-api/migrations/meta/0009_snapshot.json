@@ -1,5 +1,5 @@
 {
-  "id": "be60c903-140a-47ef-a461-6346d62809a6",
+  "id": "a91411ce-61bc-4157-8dbd-73fe6442cd71",
   "prevId": "7108f8d3-6824-47b6-9c41-c581793a44d9",
   "version": "7",
   "dialect": "postgresql",
@@ -96,6 +96,13 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true
+        },
+        "learning": {
+          "name": "learning",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "version": {
           "name": "version",
@@ -998,33 +1005,6 @@
           "columns": [
             {
               "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sequence",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "sync_changes_user_kind_sequence": {
-          "name": "sync_changes_user_kind_sequence",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "entity_type",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

@@ -179,7 +179,7 @@ export async function appResultsScreen(
     primaryEntry: results.primaryEntry,
     usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
   })
-  const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
+  const state = { sort: 'default', filter: 'all', known: [], learning: [], pickedKanji: false }
   return {
     results,
     screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {

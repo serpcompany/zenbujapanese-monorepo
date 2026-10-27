@@ -103,11 +103,11 @@ enum TestDevice {
     #endif
   }
 
-  @MainActor static func open(_ link: URL, in app: XCUIApplication) {
+  @MainActor static func open(_ link: URL) {
     #if os(macOS)
       notify_post(openLinkNotice)
     #else
-      app.open(link)
+      XCUIDevice.shared.system.open(link)
     #endif
   }
 

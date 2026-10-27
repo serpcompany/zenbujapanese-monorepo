@@ -72,8 +72,9 @@ through Cloudflare.
 **Crash and problem reports.** Its own section, `/legal/privacy/#reports`, written before any
 build sends a report (#904, Wave 0 of #864). Crash reports (#859) go to Sentry when the app
 crashes, freezes, or is closed by iOS (a watchdog termination) while in use, and a handled failure
-in account sync, an optional dictionary's install, the dictionary core, or Translate's start
-checks sends a code for the step and how it failed, never the error's message. They're on by
+in account sync, an optional dictionary's install, the dictionary core, Translate's start
+checks, or Player's request for YouTube's English translation (#976) sends a code for the step and
+how it failed, never the error's message. They're on by
 default, and the **Send Crash Reports** switch in the app's Account tab turns them off. A report holds
 the stack trace, version and build, iOS version, device model and state, and a random install ID
 that a crash report doesn't link to the account; never what the learner reads, types, says, or photographs, nor
