@@ -28,7 +28,7 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `build_ranked_lists.py`). The app doesn't bundle it. With TUBELEX, which the app bundles, the
   service has all eight of the app's ranked frequency dictionaries; `checkArtifact` refuses a file
   that lacks one the core lists (`packages/dictionary-core/src/browse/lists.ts`).
-- `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
+- `KanjiReferenceData.json`, `KanjiElementReferenceData.json`, and `RadicalReferenceData.json`.
 - The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
   for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
   SHA-256 against its pin, unpacks it, and hands the files to the core's tokenizer
@@ -100,7 +100,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
-| `GET /v1/search/<query>` | The results screen. |
+| `GET /v1/search/<query>?picked=` | The results screen; `picked=1`, a radical pick's leading words. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`; 404 past its list (`example-positions.test.ts`). |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
 | `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples; 404 past its list. |
@@ -109,6 +109,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
+| `GET /v1/radicals` | The radical file the website's radical panel reads (`checkedRadicalFile`). |
 | `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers and refuses (`isSegmentableText`), for Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
@@ -145,21 +146,20 @@ answers, headers, and error codes, and every field of a card and a token. An app
   reads the keys (`jose`'s remote key set) again once they're ten minutes old, so a key the account
   service drops stops working within ten minutes, and for a key it doesn't know at most every 30
   seconds. While the account service is down, it keeps checking tokens with the keys it last read,
-  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try.
-  No token, or one that fails any of that but the scope, is `401 unauthorized` with
-  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
+  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try. No
+  token, or one that fails any of that but the scope, is `401 unauthorized` with `WWW-Authenticate:
+  Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
   scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
   `src/account-tokens.ts`, through `packages/node-service`'s, which the account service runs too.
 - **Bounds.** At most 100 IDs, counted as sent, so one sent twice counts twice, and 200
   characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
-- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
-  each file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as
-  its `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an
-  answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
-  `304` before any work. Cards stay right while `languageData` does: an app fetches again when
-  any of it changes.
+- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of each
+  file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as its
+  `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an answer a
+  day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is `304` before any
+  work. Cards stay right while `languageData` does: an app fetches again when any of it changes.
 - **The contract.** The routes are plain Hono, so their contract is declared beside their tests,
   in `src/conformance/app-contract.ts`, with `@hono/zod-openapi` (a dev dependency, never in the
   image). `src/openapi.test.ts` writes `openapi.json` and the API reference and fails when either
@@ -169,11 +169,10 @@ answers, headers, and error codes, and every field of a card and a token. An app
   answers is the one declared for its status. On the app's data, every word card and segmentation
   answer the conformance suite asks for is checked against its schema.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
-  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish
-  that proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
-  redirect (Set up the server, step 2). Then
-  they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
-  server, step 1). Until then the app routes answer 503.
+  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish that
+  proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
+  redirect (Set up the server, step 2). Then they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to
+  each environment's settings (Set up the server, step 1). Until then the app routes answer 503.
 
 ## How it runs
 
@@ -260,7 +259,8 @@ meant to answer differently, and read the diff.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
 for `pnpm dev` without a service: the いる homographs and the words written with 要, with two pages of
-examples for each and for each of their conjugated forms, the kanji 要, and Kanji to Furigana's
+examples for each and for each of their conjugated forms, the kanji 要, the radical panel's file for
+the kanji sharing a radical with 要, each fixture search's leading words, and Kanji to Furigana's
 sample and Try texts' segmentation. The code the service answers with reads them from the app's
 files (or the `Resources` folder given), so their shapes can't drift from what staging and
 production render. It writes one row per line, so a regenerated fixture diffs by row.
