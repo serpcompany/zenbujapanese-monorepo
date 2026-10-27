@@ -19,7 +19,14 @@ The dictionary answers even after Chrome has closed the document that holds it: 
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`).
 
+## On pages
+
+- [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
+  Japanese captions, what happens when YouTube refuses them, and following the video. Nothing
+  shows them yet.
+
 ## Not built yet
 
-Looking words up, the word popup on a page, saving, and translating aren't built. The release
-build adds nothing to the pages a learner reads.
+Looking words up, the word popup on a page, saving, and translating aren't built, nor the Video
+tab and the caption on the player that show a YouTube video's lines. The release build draws
+nothing on the pages a learner reads.

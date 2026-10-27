@@ -1,3 +1,4 @@
+import { serveCaptions } from '../captions/serve-captions'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
 
@@ -14,3 +15,5 @@ chrome.runtime.onMessage.addListener(
     sendMessage: message => chrome.runtime.sendMessage(message)
   })
 )
+
+serveCaptions()

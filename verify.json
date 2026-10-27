@@ -549,19 +549,20 @@
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$)",
+        "testCode": "(\\.test\\.tsx?$|^src/captions/fixtures/)",
         "entries": [
           "^src/pages/(side-panel|popup|settings)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
+          "^src/content/youtube\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
           "^(test-pages/)?vite\\.config\\.ts$",
           "^vitest\\.config\\.ts$"
         ],
         "runtime": {
           "path": "^src/",
-          "pathNot": "(\\.test\\.tsx?$)"
+          "pathNot": "(\\.test\\.tsx?$|^src/captions/fixtures/)"
         },
         "rules": [
           {

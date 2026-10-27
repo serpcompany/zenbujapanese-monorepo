@@ -7,7 +7,8 @@ only, offline, with no account: nothing signs in. It looks like zenbujapanese.co
 draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in
 `src/shared/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
-behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup).
+behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup, Zenbu
+Captions, Video follower).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -15,7 +16,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, and Geist. No content script yet. |
+| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
@@ -35,7 +36,9 @@ outside the first version. The Store listing, its ID, and the version and builds
 | `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
-| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
+| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`). |
+| `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
+| `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
@@ -56,6 +59,46 @@ a send that throws, an unknown request, a document that doesn't start within 10 
 that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
 one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
+
+### Captions and the video
+
+The YouTube content script (`followYouTubePage`) reads the video from the URL at start, on
+YouTube's `yt-navigate-finish`, and on `popstate`, and sends `{ type: 'video-opened', videoId }`
+through `askCaptions`. A page asks for a tab's captions with `{ type: 'captions', tabId }` and
+`{ type: 'try-again', tabId }`. The service worker answers each with a `CaptionsState`, `{ state:
+'no-video' }` when the tab's URL (`chrome.tabs.get`, through the host permission) isn't a watch
+page, or a Failure, and announces each change of a tab's state as `{ target: 'captions', tabId,
+captions }`, to the extension's pages and to that tab. For this the manifest asks for `storage`,
+`declarativeNetRequestWithHostAccess`, and `https://www.youtube.com/*`.
+
+- **YouTube's two requests** go from the service worker: the `ANDROID` player request to
+  `/youtubei/v1/player`, then the Japanese track's `timedtext`, with `fmt` and `tlang` dropped,
+  only on `www.youtube.com`. The core's rules (`captions/youtube.ts`) pick the track and read it.
+  A `declarativeNetRequest` session rule (`originRule`) removes `Origin` from the extension's own
+  requests to `www.youtube.com/youtubei/`, as the spike (#945) did.
+- **One request at a time.** Every request to YouTube goes through one queue, and each tab's
+  requests through its own, so a tab never asks for a video it's already asking for.
+- **What it keeps,** in `chrome.storage.session`: each tab's video, its state, and whether the
+  Video tab asked (`captions.tab.<id>`), forgotten when the tab closes, and the wait after a 429
+  (`captions.rateLimit`), shared by every tab. Chrome stops the service worker when it's idle, so
+  nothing lives only in memory but the requests in flight.
+- **The waits** (`backoff.ts`): 15, 30, then 60 minutes after each 429 in a row, each up to 20%
+  longer at random. The service worker sets no timer: the content script asks again once the
+  wait is over, so YouTube is asked only while a watch page is open. Try again asks at once.
+- **Zenbu Captions off** (`videos.zenbuCaptions`): `video-opened` answers `loading` and asks
+  nothing until a page sends `captions` for that tab. From then on the tab's next videos are
+  fetched too. The service worker reads the setting through `settings.ts`, and when Settings
+  change with it on, opens each tab's video again (`openVideosAgain`), which asks only for what
+  it lacks. The content script never reads settings.
+
+A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
+play, pause, or a speed. The content script starts the `VideoFollower` on the first one and stops
+it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
+`<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
+holds the time and ignores the controls while the player has `ad-showing`, then puts the
+learner's speed back, and hides YouTube's own captions with an attribute on the player and one
+style rule. `currentLine` (`follower.ts`) finds the line playing at a time. Netflix's follower
+(#966) implements the same interface.
 
 ### Drawing on a page
 
@@ -87,7 +130,8 @@ Comic Sans, letter spacing, uppercase, dashed borders on every element, `button 
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, and
-a Dialog. The release build has no content script; `build/manifest.test.ts` checks that.
+a Dialog. The release build's only content script is the YouTube one; `build/manifest.test.ts`
+checks that.
 
 ## Layers
 
@@ -117,6 +161,14 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
   again.
+- **Captions and the video,** with YouTube's answers from `src/captions/fixtures/` through a
+  stand-in `fetch`, never the network: the two requests and the core's rules, No Japanese
+  Captions, each failure, and a track on another host refused (`youtube-requests.test.ts`); one
+  request per video, kept for the session, the waits after a 429 on a fake clock, Try again, and
+  Zenbu Captions off (`captions-service.test.ts`); and, in happy-dom, a watch page asking once per
+  video and nothing for seeking, line moves, Repeat, or speed, and asking again only once the wait
+  is over (`youtube-page.interaction.test.tsx`), and the follower's controls, ads, the learner's
+  speed, and hiding YouTube's captions (`youtube-follower.interaction.test.tsx`).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check

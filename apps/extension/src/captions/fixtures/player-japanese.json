@@ -1,0 +1,30 @@
+{
+  "playabilityStatus": { "status": "OK" },
+  "videoDetails": {
+    "videoId": "zenbuJa0001",
+    "title": "Zenbu stand-in: a morning walk",
+    "author": "Zenbu Japanese"
+  },
+  "captions": {
+    "playerCaptionsTracklistRenderer": {
+      "captionTracks": [
+        {
+          "baseUrl": "https://www.youtube.com/api/timedtext?v=zenbuJa0001&lang=en&fmt=srv3",
+          "languageCode": "en",
+          "isTranslatable": true
+        },
+        {
+          "baseUrl": "https://www.youtube.com/api/timedtext?v=zenbuJa0001&lang=ja&kind=asr&fmt=srv3",
+          "languageCode": "ja",
+          "kind": "asr",
+          "isTranslatable": true
+        },
+        {
+          "baseUrl": "https://www.youtube.com/api/timedtext?v=zenbuJa0001&lang=ja&fmt=srv3&tlang=en",
+          "languageCode": "ja",
+          "isTranslatable": true
+        }
+      ]
+    }
+  }
+}

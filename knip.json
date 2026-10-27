@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": ["apps/ios/**"],
+  "ignoreIssues": { "apps/extension/src/shared/settings.ts": ["exports", "types"] },
   "workspaces": {
     ".": {
       "entry": [".github/actions/*/*.cjs"],
@@ -21,6 +22,7 @@
         "src/service-worker/service-worker.ts",
         "src/offscreen/offscreen.ts",
         "src/worker/dictionary-worker.ts",
+        "src/content/youtube.ts",
         "test-pages/test-content-script.tsx",
         "test-pages/*.css",
         "test-pages/vite.config.ts"
