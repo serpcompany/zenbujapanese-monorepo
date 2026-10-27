@@ -2,14 +2,15 @@ import type { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type { Hono } from 'hono'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { createApp } from '../app'
-import { inProcessService } from '../service'
 import { wordSuite } from './detail-suite'
 import { exampleSearchSuite } from './example-search-suite'
-import { info } from './fake-service'
-import { artifactAvailable, browse, dictionary, requirePinnedArtifacts } from './support'
-
-const token = 'service-token-0123456789'
+import {
+  artifactAvailable,
+  dictionary,
+  requirePinnedArtifacts,
+  serviceOnTheData,
+  serviceToken as token
+} from './support'
 
 function recordedWord(headword: string) {
   const found = wordSuite.cases.find(word => word.covers.startsWith(`${headword}:`))
@@ -35,11 +36,7 @@ describe.runIf(artifactAvailable)('a position past the examples listed, on the a
     requirePinnedArtifacts([...wordSuite.artifacts, ...exampleSearchSuite.artifacts])
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     service = await dictionary({ morphology: false })
-    app = createApp({
-      service: inProcessService(service, await browse(), info),
-      token,
-      ready: () => true
-    })
+    app = await serviceOnTheData(service)
   })
 
   test('a word lists its last example at its last position, past 100, and none after it', () => {

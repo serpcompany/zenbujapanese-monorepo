@@ -17,6 +17,8 @@ import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import {
   fixtureFormExamples,
   fixtureKanjiRows,
+  fixtureLeadingEntries,
+  fixtureRadicals,
   fixtureSearchOrder,
   fixtureWordRows
 } from '@zenbu/dictionary-core/fixtures'
@@ -24,6 +26,7 @@ import {
   type SearchResultsScreen,
   searchResultsScreen
 } from '@zenbu/dictionary-core/results/results'
+import type { RadicalFile } from '@zenbu/dictionary-core/search/radicals'
 import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
@@ -255,10 +258,10 @@ export const getKanjiDetails = cache(
   }
 )
 
-function searchResults(items: SearchResults['items']): SearchResults {
+function searchResults(items: SearchResults['items'], leading: number): SearchResults {
   return {
     items,
-    leadingLexicalEntryCount: items.length,
+    leadingLexicalEntryCount: leading,
     presentation: 'ranked',
     resolution: 'direct',
     readingRefinement: null,
@@ -267,7 +270,7 @@ function searchResults(items: SearchResults['items']): SearchResults {
   }
 }
 
-function fixtureScreen(query: string): SearchResultsScreen {
+function fixtureScreen(query: string, pickedKanji: boolean): SearchResultsScreen {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches: WordRows[] = ordered
     ? ordered.flatMap(entSeq => wordRowsBySeq.get(entSeq) ?? [])
@@ -291,24 +294,35 @@ function fixtureScreen(query: string): SearchResultsScreen {
       },
       fallbackOrder: position,
       matchedSummary: null
-    }))
+    })),
+    Object.hasOwn(fixtureLeadingEntries, query) ? fixtureLeadingEntries[query] : matches.length
   )
   const frequency = new Map<string, FrequencyRow[]>(
     matches.map(rows => [rows.entry.id, rows.frequency])
   )
-  return searchResultsScreen(query, results, frequency)
+  return searchResultsScreen(query, results, frequency, 0, pickedKanji)
 }
 
-export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
+export const searchDictionary = cache(
+  async (query: string, pickedKanji = false): Promise<SearchData> => {
+    const api = await dictionaryService()
+    if (!isReadableLength(query)) return { state: 'noResults', query }
+    const screen = api
+      ? (await api.search(query, pickedKanji)).data.screen
+      : fixtureScreen(query, pickedKanji)
+    const kanji =
+      screen.state === 'results' && screen.kanji
+        ? await detailsIfAvailable(screen.kanji.character)
+        : null
+    return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
+  }
+)
+
+export async function getRadicals(): Promise<RadicalFile | null> {
   const api = await dictionaryService()
-  if (!isReadableLength(query)) return { state: 'noResults', query }
-  const screen = api ? (await api.search(query)).data.screen : fixtureScreen(query)
-  const kanji =
-    screen.state === 'results' && screen.kanji
-      ? await detailsIfAvailable(screen.kanji.character)
-      : null
-  return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
-})
+  if (!api) return fixtureRadicals
+  return (await api.radicals())?.data ?? null
+}
 
 export function searchExamplesData(found: Answer<SearchExamplesResponse>): SearchExamplesData {
   const links = serviceLinks(found.data.slugs, [])

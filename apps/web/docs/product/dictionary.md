@@ -89,6 +89,9 @@ types; the website searches on Enter so that each search is its own page.
   the form submits it to the search page" (no request, navigation, or history entry however long it
   waits, and a plain `GET` form).
 
+**Radical input.** The box's Radicals button finds a kanji by its radicals, as the app's panel
+does, and a kanji picked there lists only its strongest matches ([Radical input](radical-input.md)).
+
 **Which words are found.** The website runs a TypeScript port of the app's search retrieval, with
 its queries and full-text indexes, on the app's data in the dictionary service. It finds what the
 app finds for Japanese, kana, romaji (`raamen`, then the app's `rāmen` and the titles' `ramen`),
@@ -300,10 +303,9 @@ the app.
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
 
-**Reading Aids on a row.** A row's headword has furigana while Show Furigana is on, and plain
-text while it's off; with Show Romaji on, the row's reading in romaji is under it, as the app's
-result rows draw it. The browse pages' rows are the same rows ([Site-wide](site-wide.md), Reading
-Aids).
+**Reading Aids on a row.** A row's headword has furigana while Show Furigana is on, and plain text
+while it's off; with Show Romaji on, the row's reading in romaji is under it, as the app's result
+rows draw it. The browse pages' rows are the same rows ([Site-wide](site-wide.md), Reading Aids).
 
 - Source: `ResultRow.swift` and `JapaneseRubyText.swift`; the core's `romaji` (`detail/romaji.ts`).
 - Check: `apps/web/e2e/reading-aids.spec.ts`, "Furigana off leaves the search results and a kanji’s
@@ -447,11 +449,11 @@ the page URL and shows "Link copied". There is no back button; the breadcrumbs r
 is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
 (`::before`), so the readings look the same but aren't in the text search engines read. The `h1`
 keeps an `aria-label` of the headword, since the kanji toggles' labels ("要, よう") would otherwise
-enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside
-it is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has no pitch.
-Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names one word
-class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class has a
-name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
+enter its name. Ruby elsewhere, such as in example sentences, keeps its readings as text. Beside it
+is the pitch accent in a capsule that pronounces the word, or a standalone speaker when the word has
+no pitch. Either uses the browser's Japanese voice. Under a separator, the part-of-speech row names
+one word class and its modifiers, such as "Godan verb (intransitive)", and is left out when no class
+has a name. It comes from the first sense's parts of speech, falling back to the entry's. For a word
 with a conjugation table the row links to the page's Conjugations section (see Conjugations).
 
 - Source: App docs, Dictionary and kanji details; the app's `WordHeadline.swift` and
@@ -586,8 +588,8 @@ their labels, leaving out Search only forms and repeats. A form with a kanji lin
 for its first kanji, which leads with that kanji's row and its details, as the app's form line
 opens that kanji.
 
-- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in `WordDetailSections.swift`;
-  ADR 0010 (a kanji's details open from its search).
+- Source: `DictionaryEntry.alternativeForms`; `AlternativeFormsSection` in
+  `WordDetailSections.swift`; ADR 0010 (a kanji's details open from its search).
 - Check: WD `alternativeForms`; `packages/dictionary-core/src/detail/word.test.ts`, "leaves out
   Search only forms and repeats from the alternatives"; where a kanji links:
   `src/lib/dictionary/urls.test.ts`, "open the kanji’s search, which leads with its KANJI row". The

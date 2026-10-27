@@ -74,7 +74,7 @@ Environments and deploys.
 (`apps/dictionary-api/Dockerfile`, ADR 0009). It runs on a push to `main` that changes what the
 image holds: the service, the core, what the services share, the package files it installs from
 (the root ones and `apps/web/package.json`), the app's files it copies (the `.sqlite3` files, the
-`Kanji*ReferenceData.json` files, the pack catalog, and Kuromoji's),
+`Kanji*ReferenceData.json` files, `RadicalReferenceData.json`, the pack catalog, and Kuromoji's),
 `language-data/release.json`, the release the app routes name, the pinned manifests
 (`language-data/releases/*/manifest.json`), which the service checks its files against, and the
 release's retired entries (`language-data/derived/RetiredEntries.json`). Tests and the service's

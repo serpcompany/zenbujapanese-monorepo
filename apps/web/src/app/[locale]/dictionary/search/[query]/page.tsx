@@ -6,6 +6,7 @@ import { SearchResults } from '@/components/dictionary/search-results'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { getSearchExamples, type SearchData, searchDictionary } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
+import { startedFromRadicals } from '@/lib/dictionary/radical-input'
 import { isIndexable } from '@/lib/dictionary/results/links'
 import { searchSnippet, showsExampleSentences } from '@/lib/dictionary/search-snippet'
 import { pageSources, withShownData } from '@/lib/dictionary/sources'
@@ -18,9 +19,10 @@ import { searchQuery } from './query'
 
 type Props = PageProps<'/[locale]/dictionary/search/[query]'>
 
-async function load(params: Props['params'], decoded: boolean) {
+async function load(params: Props['params'], decoded: boolean, pickedKanji = false) {
   const locale = await localeOf(params)
-  const data = await searchDictionary(searchQuery((await params).query, decoded, locale))
+  const query = searchQuery((await params).query, decoded, locale)
+  const data = await searchDictionary(query, pickedKanji)
   return { locale, data }
 }
 
@@ -44,8 +46,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   })
 }
 
-export default async function SearchResultsPage({ params }: Props) {
-  const { locale, data } = await load(params, false)
+export default async function SearchResultsPage({ params, searchParams }: Props) {
+  const { locale, data } = await load(params, false, startedFromRadicals(await searchParams))
   const t = getDictionary(locale)
   const examples = showsExampleSentences(data) ? await getSearchExamples(data.query) : null
   return (

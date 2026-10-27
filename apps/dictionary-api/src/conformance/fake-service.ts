@@ -1,3 +1,4 @@
+import type { RadicalFile } from '@zenbu/dictionary-core/search/radicals'
 import type { DictionaryService } from '../service'
 
 export const info = {
@@ -8,6 +9,17 @@ export const info = {
     files: { 'LanguageReferenceData.sqlite3': 'e13452e70d34' }
   },
   features: { sentenceSearch: true }
+}
+
+export const radicals: RadicalFile = {
+  components: [
+    { id: '一', glyph: '一', strokeCount: 1 },
+    { id: '女', glyph: '女', strokeCount: 3 }
+  ],
+  characters: [
+    { value: '一', components: ['一'] },
+    { value: '要', components: ['女', '西'] }
+  ]
 }
 
 export function fakeService(overrides: Partial<DictionaryService> = {}): DictionaryService {
@@ -41,6 +53,7 @@ export function fakeService(overrides: Partial<DictionaryService> = {}): Diction
     }),
     wordCards: async () => [],
     segment: async () => [],
+    radicals: async () => radicals,
     ...overrides
   }
 }
