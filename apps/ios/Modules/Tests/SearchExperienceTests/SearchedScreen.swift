@@ -14,6 +14,7 @@ struct SearchedScreen {
     sort: String = ResultsLearner.defaultSort,
     filter: String = ResultsLearner.noFilter,
     known: [LanguageReferenceID] = [],
+    learning: [LanguageReferenceID] = [],
     pickedKanji: Bool = false
   ) async throws -> SearchedScreen {
     let query = SearchQuery(text)
@@ -24,7 +25,8 @@ struct SearchedScreen {
       results: results.listed,
       exampleCount: await examples.count(query, results),
       learner: ResultsLearner(
-        sort: sort, filter: filter, known: known.map(\.rawValue), pickedKanji: pickedKanji))
+        sort: sort, filter: filter, known: known.map(\.rawValue),
+        learning: learning.map(\.rawValue), pickedKanji: pickedKanji))
     return SearchedScreen(
       results: results,
       items: try DictionaryCoreSearchResults(answered: results.listed).items,

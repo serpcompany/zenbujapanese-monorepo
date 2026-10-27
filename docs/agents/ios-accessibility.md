@@ -74,8 +74,9 @@ On a page scrolled down to a section, that sweep reflows everything above it and
 section's text under the bars, where the audit loses it and can't name the element. So the sections
 that sit low on their pages, Word Detail's kanji, a word's note, Kanji Detail's readings, the
 Account page's about part (Help & Support, Report a Problem, the crash reports switch, and the links
-under them), and at the largest size the Account page's rows below the profile (`library`, Media
-Library to Frequency Dictionaries), get those two audits on their own. `ZENBU_ONLY_SECTION`, a
+under them), and at the largest size the Account page's rows below the profile, in three launches
+(`library`, Media Library to Learning, `collections`, Lists to Notes Without a Word, and `settings`,
+Reading Aids and Frequency Dictionaries), get those two audits on their own. `ZENBU_ONLY_SECTION`, a
 Debug-only harness (`LaunchHarness.onlySections`), opens the page with only the sections it names
 (Word Detail's examples under its meanings are one, `meaning-example`, named with `meaning`, the
 section that holds them, and audited on 日本's page), at the page's top, and the walk audits them
@@ -89,7 +90,15 @@ clipped, in each of five runs, calm Mac or busy, once with no element for Transl
 page's top it reported none of them, and with the rows alone at the top, only the two clipped
 titles, in each of four. Both titles and counts grow at every size, from 20 points tall at the
 default size to 63 at the largest, and show whole at each, the titles wrapping under their icons as
-the page's other rows do; so the clipped titles are allowed as text that scales.
+the page's other rows do; so the clipped titles are allowed as text that scales. Known Words and
+Learning are two rows written out, not a `ForEach`: built by a `ForEach`, iOS 27's audit reported
+their clipped titles with no element, in every pass, and a finding with no element can't be allowed.
+With Learning added (#1037), the five rows alone put Translations under the tab bar at the largest
+size, where the sweep reported a clipped title with no element; so the rows are audited in three
+launches, `library`, `collections`, and `settings`, each short enough to sit clear of the bar.
+There the sweep names the clipped titles, Media Library, Known Words, and Learning in the first, and
+Reading Aids and Frequency Dictionaries in the third, each whole on the screen at 63 to 198 points
+tall, so they are allowed as Lists and Translations are.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show
 ([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App

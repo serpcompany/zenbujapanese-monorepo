@@ -68,10 +68,7 @@ final class SavedWordsUITests: ZenbuUITestCase {
     if device != .mac {
       waitUntil(japan, "value CONTAINS 'JLPT level N' AND value CONTAINS 'YouTube frequency rank'")
     }
-    let screen = XCTAttachment(screenshot: app.screenshot())
-    screen.name = "Known Words"
-    screen.lifetime = .keepAlways
-    add(screen)
+    keepScreenshot(named: "Known Words", of: app)
     tap(japan)
     waitFor(find("word-detail.kanji.日", in: app))
     waitUntilGone(find("kanji-detail.more-menu", in: app))
@@ -87,14 +84,12 @@ final class SavedWordsUITests: ZenbuUITestCase {
     let app = launch()
     search("japan", in: app)
     markNichiKnownFromJapan(in: app)
-    tap(find("kanji-detail.more-menu", in: app))
-    waitFor(menuChoice("Mark as Unknown", in: app))
+    waitForTag("Known", on: "kanji-detail.status", in: app)
   }
 
   private func markNichiKnownFromJapan(in app: XCUIApplication) {
     tap(find("result.japan", in: app))
     tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
-    tap(find("kanji-detail.more-menu", in: app))
-    tap(menuChoice("Mark as Known", in: app))
+    chooseStatus("Known", from: find("kanji-detail.more-menu", in: app), in: app)
   }
 }

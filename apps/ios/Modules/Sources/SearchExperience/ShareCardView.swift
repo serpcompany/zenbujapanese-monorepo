@@ -125,7 +125,7 @@ struct ShareTextCard: View {
     let entries = text.words.map(\.entry)
     let rows = WordRowsRequest(
       entries: entries.map { WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary) },
-      known: entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue)
+      known: wordKnowledge.ids(.known, among: entries)
     ).rowsByEntry()
     if entries.isEmpty {
       Text("No dictionary words found in this text.")

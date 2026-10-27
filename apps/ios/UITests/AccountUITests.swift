@@ -3,7 +3,7 @@ import XCTest
 final class AccountUITests: ZenbuUITestCase {
   static let rows = [
     "account.profile", "account.sign-in", "account.media-library", "account.known-words",
-    "account.lists", "account.translations", "account.reading-aids",
+    "account.learning", "account.lists", "account.translations", "account.reading-aids",
     "account.frequency-dictionaries", "account.about", "account.support",
     "account.report-a-problem", "account.send-crash-reports", "account.privacy-policy",
     "account.credits",
@@ -30,6 +30,9 @@ final class AccountUITests: ZenbuUITestCase {
     open(.account, in: app)
     tap(reveal(find("account.known-words", in: app), in: app))
     assertOnScreen(find("known-words.empty", in: app), in: app)
+    goBack(in: app)
+    tap(reveal(find("account.learning", in: app), in: app))
+    assertOnScreen(find("learning.empty", in: app), in: app)
     goBack(in: app)
     tap(reveal(find("account.lists", in: app), in: app))
     waitFor(labeled("Favorites", in: app))

@@ -30,7 +30,7 @@ final class SavedKanjiTests {
     let fileURL = directory.appending(path: "word-knowledge.json")
     let knowledge = WordKnowledge(fileURL: fileURL)
     await knowledge.flush()
-    knowledge.toggleKnown(sai)
+    knowledge.setStatus(.known, for: sai)
     await knowledge.flush()
 
     let reloaded = WordKnowledge(fileURL: fileURL)
