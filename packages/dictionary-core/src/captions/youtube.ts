@@ -2,13 +2,13 @@ import { type Caption, japaneseCaptions, type TimedLine, translationSentences } 
 import { pairedCaptions } from './pairing'
 import { readXML } from './xml'
 
-export interface YouTubeCaptionTrack {
+interface YouTubeCaptionTrack {
   url: string
   isAutomatic: boolean
   isTranslatable: boolean
 }
 
-export interface YouTubeVideo {
+interface YouTubeVideo {
   playable: boolean
   title: string | null
   author: string | null

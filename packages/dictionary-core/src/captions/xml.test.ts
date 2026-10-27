@@ -55,6 +55,20 @@ describe('readXML (what XMLParser read for YouTubeCaptionParsing)', () => {
     for (const document of malformed) expect(events(document), document).toBeNull()
   })
 
+  test('ends a comment at --!> as at -->', () => {
+    expect(events('<a><!-- x --!>y<!-- z --></a>')).toEqual(['<a[]', 'y', '</a'])
+  })
+
+  test('reads a doctype’s internal subset', () => {
+    expect(events('<!DOCTYPE a [<!ENTITY e "v">]><a/>')).toEqual(['<a[]', '</a'])
+  })
+
+  test('refuses an unclosed doctype of repeated brackets in linear time', () => {
+    const started = performance.now()
+    expect(events(`<!DOCTYPE[${']['.repeat(20_000)}`)).toBeNull()
+    expect(performance.now() - started).toBeLessThan(1000)
+  })
+
   test('accepts an empty root, space around it, and processing instructions', () => {
     expect(events(' <a/> ')).toEqual(['<a[]', '</a'])
     expect(events('<?xml-stylesheet href="s"?><a ></a >')).toEqual(['<a[]', '</a'])

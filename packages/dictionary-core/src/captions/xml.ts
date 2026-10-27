@@ -1,11 +1,11 @@
-export interface XMLReading {
+interface XMLReading {
   opened(name: string, attributes: ReadonlyMap<string, string>): void
   closed(name: string): void
   text(value: string): void
 }
 
 const tokens =
-  /(<!--[\s\S]*?-->)|<!\[CDATA\[([\s\S]*?)\]\]>|<\?([\s\S]*?)\?>|(<!DOCTYPE(?:[^<>[\]]|\[[\s\S]*?\])*>)|(<[^<>"']*(?:(?:"[^"]*"|'[^']*')[^<>"']*)*>)|[^<]+/y
+  /(<!--[\s\S]*?--!?>)|<!\[CDATA\[([\s\S]*?)\]\]>|<\?([\s\S]*?)\?>|(<!DOCTYPE(?:[^<>[\]]|\[[^\]]*\])*>)|(<[^<>"']*(?:(?:"[^"]*"|'[^']*')[^<>"']*)*>)|[^<]+/y
 const name = '[A-Za-z_:\\u00c0-\\uffff][\\w.:\\u00b7\\u00c0-\\uffff-]*'
 const tag = new RegExp(`^<(/?)(${name})([^]*?)[ \\t\\r\\n]*(/?)>$`)
 const attribute = new RegExp(
