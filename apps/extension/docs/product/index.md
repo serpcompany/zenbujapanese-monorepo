@@ -11,14 +11,15 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
+| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
 | Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
-| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | In Chrome, by hand |
-| Settings | "Settings", in a tab of its own, and "Nothing to set yet." | In Chrome, by hand |
+| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | `e2e/pages.spec.ts` |
+| Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
-(`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`).
+(`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`,
+`e2e/pages.spec.ts`).
 
 ## First run
 

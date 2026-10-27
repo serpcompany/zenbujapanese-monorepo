@@ -21,6 +21,9 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
+| `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
+| `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([Error reports](#error-reports)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
@@ -78,25 +81,27 @@ outside the first version.
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([Error reports](#error-reports)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `src/test/` | Helpers only tests import: a fake of the language-data bucket, file storage, and the database pool (`fake-language-data.ts`), and the error reports' recording transport and storage. The layer rules treat it as test code. |
+| `src/test/` | Test-only helpers: fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
+| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local language-data server (`local-server.ts`, `language-data.ts`). |
+| `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
 ### Messages
 
 A page or content script calls `askDictionary(request)`, which sends `{ target: 'service-worker',
 request }` with `chrome.runtime.sendMessage`. The service worker opens the offscreen document if
-Chrome has closed it (it checks `chrome.runtime.getContexts`, and several requests at once share
-one `createDocument`), waits until the new document says it has started (`offscreenStarted`,
-which it sends once its listener is in place), then sends `{ target: 'offscreen', request }`.
-The offscreen document starts the worker on its first request,
-waits for the worker's first message, which says it has loaded, and then posts each request to it
-with a port; the worker answers on it. Each listener answers only its own `target`, and every
-failure on the way comes back as `{ type: 'failed', reason }`, never as a thrown error or a hang:
-a send that throws, an unknown request, a document that doesn't start within 10 seconds, a worker
-that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
-one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
-document it's waiting on, since Chrome stops it when it's idle.
+Chrome has closed it (it checks `chrome.runtime.getContexts`, and several requests at once share one
+`createDocument`), waits until the new document says it has started (`offscreenStarted`, which it
+sends once its listener is in place), then sends `{ target: 'offscreen', request }`. The offscreen
+document starts the worker on its first request, waits for the worker's first message, which says it
+has loaded, and then posts each request to it with a port; the worker answers on it. Each listener
+answers only its own `target`, and every failure on the way comes back as `{ type: 'failed', reason
+}`, never as a thrown error or a hang: a send that throws, an unknown request, a document that
+doesn't start within 10 seconds, a worker that fails or doesn't start within 10 seconds (the
+offscreen document ends it and starts a new one for the next request), and a worker that doesn't
+answer within 10 seconds. The service worker keeps nothing between messages but a document it's
+waiting on, since Chrome stops it when it's idle.
 
 ### Drawing on a page
 
@@ -124,11 +129,12 @@ root, and draws inside it:
 ## Test pages
 
 `pnpm test-pages` serves `hostile.html`, whose styles fight the extension (a 10px root font size,
-Comic Sans, letter spacing, uppercase, dashed borders on every element, `button { all: unset }`,
-and the theme's own token names set to other values), and `tailwind.html`, built with its own
-Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
-test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
-Dialog, and Test error, which throws while drawing so the content script reports it. The release build has no content script; `build/manifest.test.ts` checks that.
+Comic Sans, letter spacing, uppercase, dashed borders on every element, `button { all: unset }`, and
+the theme's own token names set to other values), and `tailwind.html`, built with its own Tailwind
+v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the test
+content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a Dialog,
+and Test error, which throws while drawing so the content script reports it. The release build has
+no content script; `build/manifest.test.ts` checks that.
 
 ## Error reports
 
@@ -232,33 +238,28 @@ with one difference below. There are no usage analytics.
 
 ## Checks
 
-- **Unit and DOM tests,** with `pnpm test`: the manifest of each build, with the store item's ID
-  from its `key`, `package.json`'s version, and its environment's website; each environment's
-  hosts in a bundle built with them, and not the other's; each package and each way
-  `pnpm check-package` fails one; the zips, which the system's `unzip` opens; the rem conversion and
-  the `@supports` unwrapping; the shadow root's stylesheet as the build makes it, with no rem and
-  the `--tw-*` fallback outside any `@supports`, and the pages' with rem kept; the offscreen
-  document opened once and again after Chrome closes it, once it says it has started; a ping from
-  a page through the service worker and the offscreen document to the worker and back, also on
-  the first ask after the document closed, and each failure; the relay waiting for the worker to
-  load, starting a new one after a failure, and its time limit; and, in happy-dom,
-  `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
-  the shadow root, an error in its content handed to its reporter, and unmounting, and
-  `DictionaryStatus` drawing the data's state, never ready while it downloads or failed, and Check
-  again; the welcome tab's progress, ready, updating, failed, and Try Again; the lookup helpers;
-  and the language data's download, resume, checks, and updates
-  ([`extension-language-data.md`](extension-language-data.md), Checks). Error reports:
-  `scrub.test.ts` (page text, a page URL, and a selected word gone from every part of an event),
-  the content script's client sending its own error but never the page's, with no global
-  handler, the pages' and a worker's uncaught errors sent with their part, all through a
-  recording transport (`src/test/recording-settings.ts`), and the upload script's steps, token,
-  warnings, and the maps taken out (`build/upload-source-maps.test.ts`).
-- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the side panel and the test
-  surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
-  again, and on both test pages open the menu and the dialog, Tab through it, and close it with
-  Esc and with a click outside. Until #952 moves it into the repository, agents use the agent
-  Chrome harness in the main checkout's `tmp/agent/agent-chrome`, whose daemon must resume the
-  targets it attaches to, or the dictionary worker stays paused and every request fails after
-  10 seconds (#1057). Proof goes under
-  `tmp/agent/verify/`.
+- **Unit and DOM tests,** with `pnpm test`: each build's manifest, with the store item's ID from its
+  `key`, `package.json`'s version, and its environment's website; each environment's hosts in a
+  bundle built with them, not the other's; each package and each way `pnpm check-package` fails one;
+  the zips, which `unzip` opens; the rem conversion and `@supports` unwrapping; the shadow root's
+  stylesheet as built (no rem, the `--tw-*` fallback outside any `@supports`), and the pages' with
+  rem kept; the offscreen document opened once and again after Chrome closes it, once it has
+  started; a ping from a page to the worker and back, also first after a close, and each failure;
+  the relay's wait for the worker, its restart, and its time limit; in happy-dom,
+  `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into the
+  shadow root, an error in it handed to its reporter, and unmounting, `DictionaryStatus` drawing the
+  data's state, never ready while it downloads or failed, and Check again, and the welcome tab's
+  progress, ready, updating, failed, and Try Again; the lookup helpers; the language data's
+  download, resume, checks, and updates ([`extension-language-data.md`](extension-language-data.md),
+  Checks). Error reports: `scrub.test.ts` (page text, a page URL, and a selected word gone from all
+  of an event), the content script sending only its own errors, with no global handler, the pages'
+  and a worker's uncaught errors sent with their part, via a recording transport
+  (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
+  taken out (`build/upload-source-maps.test.ts`).
+- **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
+  ([`extension-browser-tests.md`](extension-browser-tests.md)).
+- **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's
+  return, the test content script, and the language-data download, with screenshots in light and
+  dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
+  test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
+  a click outside are still checked by hand.
