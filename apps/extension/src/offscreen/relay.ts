@@ -18,6 +18,7 @@ type Answer = DictionaryAnswer | Failure
 type Running = {
   worker: DictionaryWorker
   started: Promise<void>
+  hasStarted: boolean
   waiting: Set<(error: Error) => void>
 }
 
@@ -34,29 +35,40 @@ export function askWorker(
 ): (request: DictionaryRequest) => Promise<Answer> {
   let running: Running | undefined
 
+  function end(run: Running, error: Error) {
+    if (running === run) running = undefined
+    run.worker.terminate()
+    for (const fail of run.waiting) fail(error)
+  }
+
   function start(): Running {
     const worker = startWorker()
-    const started = new Promise<void>(resolve => {
-      worker.addEventListener('message', () => resolve())
-    })
-    const run: Running = { worker, started, waiting: new Set() }
-    worker.addEventListener('error', event => {
-      if (running === run) running = undefined
-      worker.terminate()
-      for (const fail of run.waiting) fail(workerError(event))
-    })
+    const run: Running = {
+      worker,
+      started: new Promise<void>(resolve => {
+        worker.addEventListener('message', () => {
+          run.hasStarted = true
+          resolve()
+        })
+      }),
+      hasStarted: false,
+      waiting: new Set()
+    }
+    worker.addEventListener('error', event => end(run, workerError(event)))
     return run
   }
 
   return request => {
     running ??= start()
-    const { worker, started, waiting } = running
+    const run = running
+    const { worker, started, waiting } = run
     return new Promise((resolve, reject) => {
       const channel = new MessageChannel()
-      const timer = setTimeout(
-        () => fail(new Error('The dictionary worker did not answer.')),
-        timeoutMs
-      )
+      const timer = setTimeout(() => {
+        const error = new Error('The dictionary worker did not answer.')
+        if (run.hasStarted) fail(error)
+        else end(run, error)
+      }, timeoutMs)
       function settle() {
         clearTimeout(timer)
         waiting.delete(fail)

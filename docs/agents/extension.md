@@ -53,8 +53,8 @@ waits for the worker's first message, which says it has loaded, and then posts e
 with a port; the worker answers on it. Each listener answers only its own `target`, and every
 failure on the way comes back as `{ type: 'failed', reason }`, never as a thrown error or a hang:
 a send that throws, an unknown request, a document that doesn't start within 10 seconds, a worker
-that fails (the offscreen document starts a new one for the next request), and a worker that
-doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
+that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
+one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
 
 ### Drawing on a page
@@ -122,5 +122,7 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
   again, and on both test pages open the menu and the dialog, Tab through it, and close it with
   Esc and with a click outside. Until #952 moves it into the repository, agents use the agent
-  Chrome harness in the main checkout's `tmp/agent/agent-chrome`. Proof goes under
+  Chrome harness in the main checkout's `tmp/agent/agent-chrome`, whose daemon must resume the
+  targets it attaches to, or the dictionary worker stays paused and every request fails after
+  10 seconds (#1057). Proof goes under
   `tmp/agent/verify/`.

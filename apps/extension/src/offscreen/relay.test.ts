@@ -74,6 +74,22 @@ describe('askWorker', () => {
     await expect(asked).resolves.toEqual(pong)
   })
 
+  it('ends a worker that never starts, so the next request starts a fresh one', async () => {
+    const stuck = new FakeWorker()
+    const working = new FakeWorker()
+    const startWorker = vi
+      .fn<() => DictionaryWorker>()
+      .mockReturnValueOnce(stuck)
+      .mockReturnValueOnce(working)
+    const ask = askWorker(startWorker, 10)
+    await expect(ask(ping)).rejects.toThrow('The dictionary worker did not answer.')
+    expect(stuck.terminate).toHaveBeenCalled()
+    const asked = ask(ping)
+    working.start()
+    await expect(asked).resolves.toEqual(pong)
+    expect(startWorker).toHaveBeenCalledTimes(2)
+  })
+
   it('fails a request the worker never answers', async () => {
     const worker = new SilentWorker()
     const asked = askWorker(() => worker, 10)(ping)
