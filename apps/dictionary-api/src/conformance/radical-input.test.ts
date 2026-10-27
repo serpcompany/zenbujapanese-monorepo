@@ -8,13 +8,8 @@ import {
 } from '@zenbu/dictionary-core/search/radicals'
 import type { Hono } from 'hono'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { createApp } from '../app'
-import { inProcessService } from '../service'
 import { appResultsScreen, type Embedded, embedded } from './embedded-support'
-import { info } from './fake-service'
-import { artifactAvailable, artifactRadicals, browse, dictionary } from './support'
-
-const token = 'service-token-0123456789'
+import { artifactAvailable, dictionary, serviceOnTheData, serviceToken as token } from './support'
 
 const offered = (panel: RadicalPanel) =>
   panel.groups.flatMap(group => group.radicals.map(radical => radical.id))
@@ -27,11 +22,7 @@ describe.runIf(artifactAvailable)('radical input on the app’s data', () => {
   beforeAll(async () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     service = await dictionary({ morphology: false })
-    app = createApp({
-      service: inProcessService(service, await browse(), info, await artifactRadicals()),
-      token,
-      ready: () => true
-    })
+    app = await serviceOnTheData(service)
     theApp = await embedded()
   })
 

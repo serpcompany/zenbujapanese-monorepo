@@ -14,6 +14,8 @@ import {
 import { ipadicTokenizer, type ReadIpadicFile } from '@zenbu/dictionary-core/examples/ipadic'
 import type { Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
+import type { Hono } from 'hono'
+import { createApp } from '../app'
 import {
   artifactFile,
   fileSha256,
@@ -21,8 +23,10 @@ import {
   openArtifact,
   rejectGitLfsPointer
 } from '../artifact'
+import { inProcessService } from '../service'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 import { tokenizerFiles } from '../tokenizer'
+import { info } from './fake-service'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
@@ -148,4 +152,14 @@ export async function browse(watch?: (sql: string) => void): Promise<DictionaryB
       }
     : artifact.db
   return new DictionaryBrowse(db, artifact.kanji)
+}
+
+export const serviceToken = 'service-token-0123456789'
+
+export async function serviceOnTheData(service: Dictionary): Promise<Hono> {
+  return createApp({
+    service: inProcessService(service, await browse(), info, await artifactRadicals()),
+    token: serviceToken,
+    ready: () => true
+  })
 }
