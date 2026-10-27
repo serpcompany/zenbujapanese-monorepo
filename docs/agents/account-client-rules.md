@@ -220,3 +220,7 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   keeps the learner's text as the app does (Notes), as a new note under one ID however often the
   learner saves; a rejection changes nothing and says why. A change that applied says so even when
   the read after it fails (`unread`), so a retry never sends it twice.
+- **Known words** are shown as the iOS app shows them, which doesn't show Learning: a word is Known
+  only when the read says `known` (`isMarkedKnown`), so a Learning word is not, and the website
+  sends `mark` and `clear`. Only the learner's Mark as Known ends Learning; a clear of a word that
+  became Learning since the read applies and changes nothing (Known words, above).

@@ -61,6 +61,8 @@ export const recentFirst = (held: readonly Held[], timeField: string): Shown[] =
       ascending(other.entityId, one.entityId)
   )
 
+export const isMarkedKnown = (data: EntityData | null | undefined) => data?.known === true
+
 const noteIdentity = /^wn1:/
 
 export const isNoteWithoutAWord = (itemId: string) => noteIdentity.test(itemId)

@@ -6,6 +6,7 @@ import {
   type MutationResult
 } from '@zenbu/account-rules/account-copy'
 import {
+  isMarkedKnown,
   listMoves,
   listsInOrder,
   nextListPosition,
@@ -199,6 +200,25 @@ describe('the website, editing what an app syncs', () => {
       version: 3,
       data: { known: true }
     })
+    expect(websiteState(website)).toEqual(phoneState(phone))
+  })
+
+  test('a word an app set Learning stays Learning through the website, which shows it not known, until the learner marks it Known there', async () => {
+    const { phone, website, readAll } = await onBoth('website-learning@example.com')
+    phone.change('knownWord', 'set', word(1), { state: 'learning', ...text })
+    phone.change('knownWord', 'mark', word(2), text)
+    await phone.sync()
+    await readAll()
+    expect(isMarkedKnown(website.heldOne('knownWord', word(1))?.data)).toBe(false)
+    expect(isMarkedKnown(website.heldOne('knownWord', word(2))?.data)).toBe(true)
+    phone.change('knownWord', 'set', word(2), { state: 'learning', ...text })
+    await phone.sync()
+    expect(await website.change('knownWord', 'clear', word(2))).toEqual({ status: 'applied' })
+    expect(website.heldOne('knownWord', word(2))?.data).toMatchObject({ state: 'learning' })
+    expect(await website.change('knownWord', 'mark', word(1), text)).toEqual({ status: 'applied' })
+    await phone.sync()
+    expect(phoneState(phone).get(`knownWord:${word(1)}`)).toMatchObject({ state: 'known' })
+    expect(phoneState(phone).get(`knownWord:${word(2)}`)).toMatchObject({ state: 'learning' })
     expect(websiteState(website)).toEqual(phoneState(phone))
   })
 })
