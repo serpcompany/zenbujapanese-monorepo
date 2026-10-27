@@ -20,6 +20,10 @@ struct ExampleSentencesView: View {
       screen(proxy)
         .navigationTitle(query.value)
         .inlineNavigationTitle()
+        .barTrailingItems {
+          Menu("More", systemImage: "ellipsis") { ReadingAidShowSection() }
+            .accessibilityIdentifier("example-list.more")
+        }
         .onChange(of: returns?.count) { comeBack(.closed, with: proxy) }
         .screenTask(id: query) {
           analysisAvailability = await japaneseTextAnalysisClient.availability()
@@ -289,12 +293,17 @@ struct JapaneseExampleRowContent: View {
   let speak: () -> Void
   let openWord: (DictionaryEntry) -> Void
 
+  private var rowLabel: String {
+    guard readingAidPreferences.showsTranslations else { return example.sentence.japanese }
+    return "\(example.sentence.japanese), \(example.sentence.english)"
+  }
+
   @ViewBuilder
   var body: some View {
     if configuration.combinesRowAccessibility {
       content
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("\(example.sentence.japanese), \(example.sentence.english)")
+        .accessibilityLabel(rowLabel)
         .accessibilityIdentifier(configuration.rowIdentifier)
     } else {
       content

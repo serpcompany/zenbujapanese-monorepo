@@ -41,6 +41,11 @@ A learner's own mark that they know a word or kanji. A linked app may set it, bu
 learner clears it.
 _Avoid_: learned, mastered, "knows it" (Tomo's stage, which can set Known but isn't it)
 
+**Learning**:
+A word or kanji the learner marked as one they're learning: one of its three states, with
+Unknown and Known. An app that shows only Known counts it as not known.
+_Avoid_: studying, in progress, a "Learning list" (it's a state, not a list)
+
 **Word card**:
 The short form of a dictionary entry, keyed by Language Reference ID, that an app without the
 language data shows.

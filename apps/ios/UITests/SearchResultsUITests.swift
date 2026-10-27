@@ -112,6 +112,14 @@ final class SearchResultsUITests: ZenbuUITestCase {
     }
   }
 
+  func testExampleSentencesMenuHidesAndShowsTheirTranslations() {
+    let app = launch()
+    search("iru", in: app)
+    tap(find("search.examples", in: app))
+    assertTheMenuHidesAndShowsTranslations(
+      find("example.english.0", in: app), from: find("example-list.more", in: app), in: app)
+  }
+
   func testARomajiQueryOffersItsJapaneseReading() {
     let app = launch()
     search("sensei", in: app)

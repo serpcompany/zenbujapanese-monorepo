@@ -1,5 +1,6 @@
 import type { KeptReader, KeptWriter, PhotoDeletions } from './kept-store'
 import type { EditableProfile, Profile, RejectionCode } from './profile'
+import type { WordState } from './word-states'
 
 export type EntityType =
   | 'profile'
@@ -27,7 +28,7 @@ export interface KnownWord {
   itemId: string
   headword: string
   reading: string
-  known: boolean
+  state: WordState
   version: number
   updatedAt: Date
 }

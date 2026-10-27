@@ -214,11 +214,7 @@ It provides:
 - **Translations**, with how many conversations Translate has saved, which opens the same
   **Translations** screen as the Translate tab;
 - [**Notes Without a Word**](saved-data.md#notes-without-a-word), only while there are any;
-- Reading Aids: Furigana, Romaji, and Hide Furigana on Known Words; Word Meanings (a short
-  meaning under each linked word the learner hasn't marked known) and Kanji Meanings (under each
-  kanji in Look Up's Grade panel); and Sentence Translations, with a translation language (English
-  so far) and who translates Player captions — YouTube, or Apple Translation on the device, which
-  Reading Aids offers to download;
+- [Reading Aids](reading-aids.md), the switches for furigana, romaji, meanings, and translations;
 - management of optional frequency dictionaries; and
 - the app's name, version, and description; Help & Support (the website), [**Report a
   Problem…**](problem-reports.md), [**Send Crash Reports**](crash-reports.md), and the Privacy
@@ -229,16 +225,13 @@ It provides:
   the app can't read the core's list, Credits says so, and Licenses still lists every text.
 
 Check: UI `AccountUITests.testAccountListsEveryArea` (every row, what Sign In to Sync names, and
-the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`,
-`testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
-sentence and a kanji's reading written in it), and `testTranslationsAndCreditsOpenFromAccount` (the
-first credit, Jiten's notice, and the KanjiVG, Sentry, and ZIPFoundation texts), and
+the small title on iPhone and iPad), `testReadingAidsAndFrequencyDictionariesOpen`, and
+`testTranslationsAndCreditsOpenFromAccount` (the first credit, Jiten's notice, and the KanjiVG,
+Sentry, and ZIPFoundation texts), and
 `SavedWordsUITests.testANoteWhoseWordIsGoneIsListedUntilItsDeleted` (Notes Without a Word); contract
 `test_account_service_settings.py` (production in TestFlight and App Store builds, staging in
-Debug) and `test_package_licenses.py` (a text for each package); package `PlayerReadingAidTests`
-and `WordMeaningTests` (the Reading Aids preferences), `SourceCreditsTests` (the core's credits,
-none it can't read, and every text bundled), and the recorded `RomajiConformanceTests` with core
-`detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
+Debug) and `test_package_licenses.py` (a text for each package); package `SourceCreditsTests` (the
+core's credits, none it can't read, and every text bundled).
 
 Rows use Settings-style tinted icon tiles in grouped cards without section headings.
 

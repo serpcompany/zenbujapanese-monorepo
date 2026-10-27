@@ -228,6 +228,7 @@ struct SavedItemMenu: View {
           photos.showsPhotoPicker = true
         }
       }
+      ReadingAidShowSection()
     } label: {
       Label("More", systemImage: "ellipsis")
         .labelStyle(.iconOnly)

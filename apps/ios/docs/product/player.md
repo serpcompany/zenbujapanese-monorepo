@@ -56,14 +56,16 @@ dictionary sheet Image Search uses.
 ## Watching
 
 The video plays in YouTube's embedded player at the top of the screen, and the tab bar stays
-visible. The navigation bar reads **Player**, with a **•••** menu of quick switches for Furigana,
-Furigana on Known Words, Word Meanings, and Translations, and **Share Video**. Between the
+visible. The navigation bar reads **Player**, with a **•••** menu of the
+[**Show**](reading-aids.md#the-show-menus) switches, Furigana, Furigana on Known Words, Word
+Meanings, and Translations, then **Share Video**. Between the
 controls and the caption cards, a fixed line with a divider below it reports how many of the
 captions' words the learner knows: the percentage, colored like the Recent pill, then the counts,
 such as **73%** 38 of 52 words known. If the video's owner doesn't allow other apps to play it,
 the player shows **Video Unavailable**.
 
-Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` and
+Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown`,
+`testTheMenuHidesAndShowsACaptionsTranslation`, and
 `testAVideoItsOwnerWontShareSaysItsUnavailable`; package `PlayerReadingAidTests` (comprehension and
 the reading aids' switches) and `YouTubeCaptionsTests` (an unplayable video). YouTube's real
 player is by hand; the UI tests stand in for it with a local player that answers the same calls.

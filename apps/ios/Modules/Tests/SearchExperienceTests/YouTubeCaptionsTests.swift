@@ -209,6 +209,19 @@ struct PlayerReadingAidTests {
     #expect(reloaded.hidesFuriganaOnKnownWords)
   }
 
+  @Test("the menus' Furigana on Known Words is Hide Furigana on Known Words turned around")
+  @MainActor
+  func furiganaOnKnownWords() {
+    let defaults = MemoryDefaults()
+    let menu = ReadingAidPreferences(defaults: defaults)
+    #expect(menu.showsFuriganaOnKnownWords)
+    menu.showsFuriganaOnKnownWords = false
+    #expect(menu.hidesFuriganaOnKnownWords)
+    #expect(ReadingAidPreferences(defaults: defaults).hidesFuriganaOnKnownWords)
+    menu.hidesFuriganaOnKnownWords = false
+    #expect(menu.showsFuriganaOnKnownWords)
+  }
+
   @Test("Translate's furigana starts off and is stored apart from the app's reading aids")
   @MainActor
   func translateFurigana() throws {

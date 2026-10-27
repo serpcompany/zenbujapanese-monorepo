@@ -125,6 +125,11 @@
           "use": ".inlineNavigationTitle()"
         },
         {
+          "pattern": "\\bmenuActionDismissBehavior\\b",
+          "name": "menuActionDismissBehavior",
+          "use": ".keepsItsMenuOpen()"
+        },
+        {
           "pattern": "\\.topBar(?:Leading|Trailing)\\b",
           "name": ".topBarLeading or .topBarTrailing",
           "use": ".barLeading or .barTrailing"
@@ -703,7 +708,7 @@
         "reason": "over its budget when the check arrived"
       },
       "apps/ios/docs/product/index.md": {
-        "lines": 407,
+        "lines": 400,
         "reason": "over its budget when the check arrived"
       },
       "apps/ios/docs/product/translate.md": {
