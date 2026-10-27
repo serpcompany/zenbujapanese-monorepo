@@ -63,9 +63,11 @@ service's paths to it and the rest to the dictionary service, so they deploy apa
 holds what learners keep across devices, and the one subscription that unlocks syncing it, which
 Stripe and the App Store report to it at `/v1/webhooks`. Its Postgres database sits on the same
 server, on a network only the service's slots reach, learners' photo files are in R2 (ADR 0020),
-and every app keeps its own copy and works offline (ADR 0013). The website's account pages call it
-from the learner's browser, not from the Worker, whose requests to the API host Bot Fight Mode
-challenges
+and every app keeps its own copy and works offline (ADR 0013), except that the browser extension
+saves only with the subscription
+([ADR 0022](docs/adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)). The
+website's account pages call it from the learner's browser, not from the Worker, whose requests to
+the API host Bot Fight Mode challenges
 ([`docs/agents/web.md`](docs/agents/web.md), Account pages).
 
 The dictionary service's answers are a contract, typed and numbered in the core (`DictionaryContract`,

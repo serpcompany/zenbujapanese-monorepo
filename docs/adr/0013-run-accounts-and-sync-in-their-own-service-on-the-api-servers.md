@@ -2,6 +2,8 @@
 status: accepted
 ---
 
+Superseded in part by ADR 0022: the browser extension saves only signed in, with the subscription.
+
 # Run accounts and sync in their own service on the API servers
 
 Zenbu accounts, sign-in, and sync run in `apps/account-api/`, a Node service beside the
