@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/postcss'
 import { build, type InlineConfig, type Plugin, type UserConfig } from 'vite'
 import { errorReportDefines } from './error-reports.ts'
+import { defaultEnvironment, type Environment, hostDefines } from './hosts.ts'
 import {
   type ContentScript,
   contentScripts,
@@ -18,6 +19,10 @@ const outputFolders: Record<Variant, string> = { release: 'dist', test: 'dist-te
 
 const pages = ['side-panel', 'popup', 'settings']
 
+const offscreenDocument = 'offscreen/offscreen.html'
+
+export const builtPages = [...pages.map(page => `pages/${page}.html`), offscreenDocument]
+
 const isShadowRootStylesheet = (file: string) =>
   file.split('?')[0] === fromPackage('src/styles/shadow.css')
 
@@ -33,13 +38,13 @@ const dropClientDirectives: NonNullable<RolldownOptions['onLog']> = (level, log,
   if (log.code !== 'MODULE_LEVEL_DIRECTIVE') next(level, log)
 }
 
-function shared(variant: Variant): UserConfig {
+function shared(variant: Variant, environment: Environment): UserConfig {
   return {
     root: fromPackage('src'),
     base: './',
     publicDir: false,
     logLevel: 'warn',
-    define: errorReportDefines(extensionVersion, process.env),
+    define: { ...hostDefines(environment), ...errorReportDefines(extensionVersion, process.env) },
     css: {
       postcss: {
         plugins: [tailwindcss({ base: packageFolder }), shadowSafeCss(isShadowRootStylesheet)]
@@ -55,8 +60,12 @@ function shared(variant: Variant): UserConfig {
   }
 }
 
-function contentScriptBuild(variant: Variant, script: ContentScript): InlineConfig {
-  const base = shared(variant)
+function contentScriptBuild(
+  variant: Variant,
+  environment: Environment,
+  script: ContentScript
+): InlineConfig {
+  const base = shared(variant, environment)
   return {
     ...base,
     configFile: false,
@@ -72,7 +81,7 @@ function contentScriptBuild(variant: Variant, script: ContentScript): InlineConf
   }
 }
 
-function extensionFiles(variant: Variant): Plugin {
+function extensionFiles(variant: Variant, environment: Environment): Plugin {
   return {
     name: 'zenbu-extension-files',
     apply: 'build',
@@ -80,22 +89,25 @@ function extensionFiles(variant: Variant): Plugin {
       this.emitFile({
         type: 'asset',
         fileName: 'manifest.json',
-        source: `${JSON.stringify(manifest(variant), null, 2)}\n`
+        source: `${JSON.stringify(manifest(variant, environment), null, 2)}\n`
       })
     },
     async closeBundle() {
       for (const script of contentScripts(variant)) {
-        await build(contentScriptBuild(variant, script))
+        await build(contentScriptBuild(variant, environment, script))
       }
     }
   }
 }
 
-export function extensionConfig(variant: Variant): UserConfig {
-  const base = shared(variant)
+export function extensionConfig(
+  variant: Variant,
+  environment: Environment = defaultEnvironment
+): UserConfig {
+  const base = shared(variant, environment)
   return {
     ...base,
-    plugins: [extensionFiles(variant)],
+    plugins: [extensionFiles(variant, environment)],
     worker: { format: 'es' },
     build: {
       ...base.build,
@@ -104,7 +116,7 @@ export function extensionConfig(variant: Variant): UserConfig {
         onLog: dropClientDirectives,
         input: {
           ...Object.fromEntries(pages.map(page => [page, fromPackage(`src/pages/${page}.html`)])),
-          offscreen: fromPackage('src/offscreen/offscreen.html'),
+          offscreen: fromPackage(`src/${offscreenDocument}`),
           'service-worker': fromPackage('src/service-worker/service-worker.ts')
         },
         output: {
