@@ -1,10 +1,10 @@
 # Translate
 
-Translate is in the side panel, under the dictionary's status, until the panel has tabs (#978),
-when it becomes the Translate tab. A learner types or pastes Japanese or English, or takes in the
-text selected on the page, and reads its translation. It translates either way without choosing a
-language: text with any Japanese in it goes from Japanese to English, and text with only Latin
-letters from English to Japanese, as in the app's Translate.
+Translate is the side panel's Translate tab ([`side-panel.md`](side-panel.md)). A learner types
+or pastes Japanese or English, or takes in the text selected on the page, and reads its
+translation. It translates either way without choosing a language: text with any Japanese in it
+goes from Japanese to English, and text with only Latin letters from English to Japanese, as in
+the app's Translate.
 
 Everything runs on this computer, with Chrome's own on-device Translator. Nothing is sent to a
 server and nothing costs money. It needs a Chrome that has the Translator (138 or later, on a

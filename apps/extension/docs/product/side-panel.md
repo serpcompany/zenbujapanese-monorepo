@@ -11,12 +11,13 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 - **A tab bar at the bottom,** always in view: Video, Translate, Images, Words, and Recent, in
   that order, each an icon over its name. A click chooses a tab. The arrow keys move along the
   bar and choose the tab they land on, wrapping at the ends (`panel.interaction.test.tsx`).
-- **Each tab on its empty state,** until the issue that fills it (`panel.interaction.test.tsx`):
+- **Translate on its box,** to translate Japanese or English: [`translate.md`](translate.md)
+  (`panel.interaction.test.tsx`, "opens Translate from its tab").
+- **Each other tab on its empty state,** until the issue that fills it (`panel.interaction.test.tsx`):
 
 | Tab | Empty state |
 | --- | --- |
 | Video | "No video on this tab", and that a video with Japanese captions shows its transcript here. |
-| Translate | "Nothing to translate yet", and that Japanese or English translated shows here. |
 | Images | "Reading text in pictures is coming soon", with no button. |
 | Words | "No words yet", that a Zenbu account keeps known words, lists and notes on all devices, and "Sign up or sign in". |
 | Recent | "No recent videos", that a Zenbu account keeps the videos watched on all devices, and "Sign up or sign in". |
@@ -58,9 +59,10 @@ doesn't sign in yet (#961).
 
 While the dictionary is being checked or downloaded, or has failed, every tab but Translate shows
 the dictionary's progress instead of its content, and the tab bar stays. Translate doesn't need
-the dictionary. When it has failed, Try again starts it again, and the tab comes back once the
-dictionary is ready (`panel.interaction.test.tsx`). Until #956 draws that progress, the panel
-shows its tabs.
+the dictionary, but a word, kanji, or form page opened from it does: it shows the progress under
+its Back row, and Back finds Translate as it was. When it has failed, Try again starts it again,
+and the tab comes back once the dictionary is ready (`panel.interaction.test.tsx`). Until #956
+draws that progress, the panel shows its tabs.
 
 ## Width
 

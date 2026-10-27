@@ -31,4 +31,4 @@ chrome.runtime.onMessage.addListener(
   routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
 )
 
-startSidePanel()
+startSidePanel(reportFailure)
