@@ -552,12 +552,13 @@
           "vite.config.ts",
           "vitest.config.ts"
         ],
-        "testCode": "(\\.test\\.tsx?$|^src/test/|^e2e/|^agent-chrome/)",
+        "testCode": "(\\.test\\.tsx?$|^src/test/|^src/captions/fixtures/|^e2e/|^agent-chrome/)",
         "entries": [
           "^src/pages/(side-panel|settings)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
+          "^src/content/youtube\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
           "^e2e/[\\w-]+\\.spec\\.ts$",
           "^e2e/serve\\.ts$",
@@ -569,7 +570,7 @@
         ],
         "runtime": {
           "path": "^src/",
-          "pathNot": "(\\.test\\.tsx?$)"
+          "pathNot": "(\\.test\\.tsx?$|^src/captions/fixtures/)"
         },
         "rules": [
           {

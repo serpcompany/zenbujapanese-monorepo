@@ -5,7 +5,13 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { builtPages } from './extension-config.ts'
 import { type Environment, hosts } from './hosts.ts'
 import { extensionIdOf, storeKey } from './key.ts'
-import { extensionVersion, manifest, type Variant } from './manifest.ts'
+import {
+  contentScriptFile,
+  contentScripts,
+  extensionVersion,
+  manifest,
+  type Variant
+} from './manifest.ts'
 import { type PackageKind, packageFolder, packageProblems } from './packages.ts'
 import { unzipFiles, zipFiles } from './zip.ts'
 
@@ -17,6 +23,7 @@ function built(environment: Environment, variant: Variant = 'release', changes =
   return {
     'manifest.json': JSON.stringify({ ...manifest(variant, environment), ...changes }),
     'service-worker.js': 'chrome.runtime.onMessage.addListener(() => false)',
+    ...Object.fromEntries(contentScripts('release').map(script => [contentScriptFile(script), ''])),
     'assets/popup.js': `fetch(${JSON.stringify(`${hosts[environment].api}/v1/health`)})`,
     ...Object.fromEntries(builtPages.map(page => [page, '<!doctype html>']))
   }

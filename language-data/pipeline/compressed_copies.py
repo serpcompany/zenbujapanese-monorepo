@@ -143,9 +143,7 @@ def publish_compressed_copies(
     return releases, uploaded
 
 
-def verify_compressed_copies(
-    store: Store, manifest: dict, manifest_sha256: str, *, hash_files: bool, workdir: Path
-) -> int:
+def read_compressed_copies(store: Store, manifest: dict, manifest_sha256: str) -> dict:
     release = manifest["release"]
     key = compressed_key(release)
     got = store.get(key)
@@ -158,6 +156,14 @@ def verify_compressed_copies(
     listed = [(f["name"], f["sha256"], f["bytes"]) for f in document["files"]]
     if listed != [(r["name"], r["sha256"], r["bytes"]) for r in compressible(manifest)]:
         raise Refusal(f"{key} lists other files than the manifest's SQLite and JSON files")
+    return document
+
+
+def verify_compressed_copies(
+    store: Store, manifest: dict, manifest_sha256: str, *, hash_files: bool, workdir: Path
+) -> int:
+    document = read_compressed_copies(store, manifest, manifest_sha256)
+    key = compressed_key(manifest["release"])
     size = document["part_bytes"]
     for file in document["files"]:
         if len(file["parts"]) != max(1, -(-file["bytes"] // size)):

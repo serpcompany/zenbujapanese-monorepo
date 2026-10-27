@@ -1,0 +1,19 @@
+{
+  "playabilityStatus": { "status": "OK" },
+  "videoDetails": {
+    "videoId": "zenbuEn0001",
+    "title": "Zenbu stand-in: English only",
+    "author": "Zenbu Japanese"
+  },
+  "captions": {
+    "playerCaptionsTracklistRenderer": {
+      "captionTracks": [
+        {
+          "baseUrl": "https://www.youtube.com/api/timedtext?v=zenbuEn0001&lang=en",
+          "languageCode": "en",
+          "isTranslatable": true
+        }
+      ]
+    }
+  }
+}

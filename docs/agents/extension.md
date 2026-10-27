@@ -9,7 +9,7 @@ and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.
 `src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
-panel, Word popup, Translation module).
+panel, Word popup, Zenbu Captions, Video follower, Translation module).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -17,7 +17,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, and Geist. No content script yet. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
+| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, Geist, and the YouTube content script, which runs only on `https://www.youtube.com/*`. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
@@ -81,7 +81,9 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
-| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
+| `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`). |
+| `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
+| `src/video/` | The video follower's interface (`follower.ts`) and its controls (`controls.ts`), YouTube's follower (`youtube-follower.ts`), and the content script's side on a watch page (`youtube-page.ts`). |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
@@ -105,6 +107,11 @@ a send that throws, an unknown request, a document that doesn't start within 10 
 that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
 one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
+
+### Captions and the video
+
+How the service worker gets a YouTube video's captions and the content script follows the video
+is in [`extension-captions.md`](extension-captions.md).
 
 ### Translation
 
@@ -166,7 +173,9 @@ Comic Sans, letter spacing, uppercase, dashed borders on every element, `button 
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
-Dialog, and Test error, which throws while drawing so the content script reports it. The release build has no content script; `build/manifest.test.ts` checks that.
+Dialog, and Test error, which throws while drawing so the content script reports it. The release
+build's only content script is the YouTube one; `build/manifest.test.ts` checks that. How each part
+reports its errors is in [`extension-error-reports.md`](extension-error-reports.md).
 
 ## Layers
 
@@ -216,6 +225,14 @@ Dialog, and Test error, which throws while drawing so the content script reports
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
   taken out (`build/upload-source-maps.test.ts`). The side panel's are in
   [`extension-side-panel.md`](extension-side-panel.md).
+- **Captions and the video,** with YouTube's answers from `src/captions/fixtures/` through a
+  stand-in `fetch`, never the network: the two requests and the core's rules, No Japanese
+  Captions, each failure, and a track on another host refused (`youtube-requests.test.ts`); one
+  request per video, kept for the session, the waits after a 429 on a fake clock, Try again, and
+  Zenbu Captions off (`captions-service.test.ts`); and, in happy-dom, a watch page asking once per
+  video and nothing for seeking, line moves, Repeat, or speed, and asking again only once the wait
+  is over (`youtube-page.interaction.test.tsx`), and the follower's controls, ads, the learner's
+  speed, and hiding YouTube's captions (`youtube-follower.interaction.test.tsx`).
 - **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
   ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's
