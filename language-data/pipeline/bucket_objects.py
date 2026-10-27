@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from committed_files import sha256_of
 from object_store import Head, PreconditionFailed, Store, StoreError
 from refusal import Refusal
 
@@ -36,6 +37,23 @@ def check_object(key: str, head: Head, sha256: str, size: int, what: str) -> Non
             f"{key} {what} with {head.size} bytes and {source} {reported}, not {size} bytes and "
             f"sha256 {sha256}. Published objects are never overwritten: find out how it got there."
         )
+
+
+def check_published(store: Store, key: str, sha256: str, size: int) -> None:
+    head = store.head(key)
+    if head is None:
+        raise Refusal(f"{key} doesn't exist")
+    check_object(key, head, sha256, size, "reads back")
+
+
+def download_checked(store: Store, key: str, path: Path, sha256: str, size: int) -> None:
+    try:
+        store.download(key, path)
+    except FileNotFoundError:
+        raise Refusal(f"{key} disappeared while it was being verified") from None
+    if path.stat().st_size != size or sha256_of(path) != sha256:
+        path.unlink()
+        raise Refusal(f"{key}'s bytes don't match the size and sha256 listed for it")
 
 
 def put_immutable(store: Store, key: str, body: bytes | Path, sha256: str, size: int) -> bool:

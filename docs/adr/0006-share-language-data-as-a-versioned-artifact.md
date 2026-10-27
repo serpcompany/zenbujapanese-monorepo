@@ -34,6 +34,15 @@ repository rather than downloading them. Each release's manifest, without the fi
 the run or the bucket, is committed in `language-data/releases/`, and checks before merge hold the
 committed files to it. So no check reads the bucket, and none waits for its public domain.
 
+Amended (issue 955): the bucket's public address is `https://data.zenbujapanese.com`, an R2 custom
+domain, for the browser extension, which downloads releases from it. The name is
+[issue 941](https://github.com/serpcompany/zenbujapanese-monorepo/issues/941)'s Open question 18,
+which waits on Francis. Each release also gets gzipped copies of its SQLite and JSON files, in
+parts a stopped download restarts from, listed in `releases/<release>/compressed.json`. The
+extension downloads them as published, with no cut of its own (Open question 17).
+[`publishing.md`](../../language-data/publishing.md) has the address, the parts, and the bucket's
+CORS rule.
+
 ## Language Reference IDs are permanent
 
 A rebuild never changes or reuses a Language Reference ID. Anything a learner saves about a
