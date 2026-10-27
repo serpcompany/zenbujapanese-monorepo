@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import { git, outsideGit, scratchFolder } from './agents/scratch'
@@ -41,18 +41,41 @@ test('keeps what a check that failed without a finding said, or that it failed',
   ])
 })
 
+const serpVerify = (checkout: string, names: readonly string[], env = outsideGit()) =>
+  spawnSync(join(root, 'node_modules', '.bin', 'serp-verify'), [names.join(',')], {
+    cwd: checkout,
+    encoding: 'utf8',
+    env
+  })
+
 test('reads what the installed serp-verify prints', () => {
   const checkout = scratchFolder('shared-checks')
   git(checkout, 'init', '--quiet')
   writeFileSync(join(checkout, 'kept.ts'), 'export const kept = 1 // a comment\n')
-  const run = spawnSync(join(root, 'node_modules', '.bin', 'serp-verify'), ['comments,sizes'], {
-    cwd: checkout,
-    encoding: 'utf8',
-    env: outsideGit()
-  })
+  const run = serpVerify(checkout, ['comments', 'sizes'])
   expect(run.status).toBe(1)
   expect(checkProblems(run.stdout, ['comments', 'sizes'])).toEqual([
     { name: 'comments', problems: ['kept.ts:1:23  // a comment'] },
     { name: 'sizes', problems: [] }
   ])
+})
+
+test('counts lefthook as used on a runner with no git hooks and no CI setting, as the report runs', () => {
+  const checkout = scratchFolder('shared-checks-lefthook')
+  git(checkout, 'init', '--quiet')
+  const knip = JSON.parse(readFileSync(join(root, 'knip.json'), 'utf8'))
+  writeFileSync(
+    join(checkout, 'knip.json'),
+    JSON.stringify({ workspaces: { '.': knip.workspaces['.'] } })
+  )
+  writeFileSync(
+    join(checkout, 'package.json'),
+    JSON.stringify({ name: 'hooked', private: true, devDependencies: { lefthook: '2.0.15' } })
+  )
+  writeFileSync(
+    join(checkout, 'lefthook.yml'),
+    'pre-commit:\n  commands:\n    hello:\n      run: echo hello\n'
+  )
+  const run = serpVerify(checkout, ['deadcode'], outsideGit({ CI: '' }))
+  expect(checkProblems(run.stdout, ['deadcode'])).toEqual([{ name: 'deadcode', problems: [] }])
 })
