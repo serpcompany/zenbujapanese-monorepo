@@ -11,6 +11,7 @@ on:
       - packages/node-service/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
       - language-data/release.json

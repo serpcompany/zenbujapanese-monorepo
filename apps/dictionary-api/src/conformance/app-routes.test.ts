@@ -9,7 +9,14 @@ import { inProcessService } from '../service'
 import { type TestAccountKeys, testAccountKeys } from './account-keys'
 import { SegmentationAnswerSchema, WordCardsAnswerSchema } from './app-contract'
 import { expectCardsAsRecorded } from './cards'
-import { artifactAvailable, browse, dictionary, readSuite, requirePinnedArtifacts } from './support'
+import {
+  artifactAvailable,
+  artifactRadicals,
+  browse,
+  dictionary,
+  readSuite,
+  requirePinnedArtifacts
+} from './support'
 
 interface RecordedSentence {
   japanese: string
@@ -52,12 +59,17 @@ describe.runIf(artifactAvailable)('the app routes on the app’s data', () => {
     requirePinnedArtifacts(wordSuite.artifacts)
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     keys = await testAccountKeys()
-    const service = inProcessService(await dictionary({ morphology: false }), await browse(), {
-      build: 'conformance',
-      artifact: { name: 'LanguageReferenceData.sqlite3', sha256 },
-      languageData,
-      features: { sentenceSearch: false }
-    })
+    const service = inProcessService(
+      await dictionary({ morphology: false }),
+      await browse(),
+      {
+        build: 'conformance',
+        artifact: { name: 'LanguageReferenceData.sqlite3', sha256 },
+        languageData,
+        features: { sentenceSearch: false }
+      },
+      await artifactRadicals()
+    )
     app = createApp({
       service,
       token: 'service-token-0123456789',

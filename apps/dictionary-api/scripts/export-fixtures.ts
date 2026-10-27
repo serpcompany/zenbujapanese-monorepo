@@ -12,6 +12,7 @@ import type {
   FormExampleRows,
   WordExampleRows
 } from '@zenbu/dictionary-core/detail/rows'
+import { fixtureSearchOrder } from '@zenbu/dictionary-core/fixtures'
 import { artifactFile, fileSha256, openArtifact } from '../src/artifact'
 import { loadTokenizer } from '../src/tokenizer'
 
@@ -118,6 +119,27 @@ for (const character of kanjiCharacters) {
 }
 writeOneRowPerLine('kanji.json', kanji)
 writeOneRowPerLine('kanji-words.json', kanjiWords)
+
+const fixtureRadicals = new Set(
+  artifact.radicals.characters
+    .filter(({ value }) => kanjiCharacters.includes(value))
+    .flatMap(({ components }) => components)
+)
+const radicalKanji = artifact.radicals.characters.filter(({ components }) =>
+  components.some(radical => fixtureRadicals.has(radical))
+)
+const heldRadicals = new Set(radicalKanji.flatMap(({ components }) => components))
+writeOneRowPerLine(
+  'radicals.json',
+  artifact.radicals.components.filter(({ id }) => heldRadicals.has(id))
+)
+writeOneRowPerLine('radical-kanji.json', radicalKanji)
+
+const leadingEntries: [string, unknown][] = []
+for (const query of Object.keys(fixtureSearchOrder)) {
+  leadingEntries.push([query, (await dictionary.searchResults(query)).leadingLexicalEntryCount])
+}
+writeOneEntryPerLine('search-leading.json', leadingEntries)
 
 const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
 const wordsPerList = 20

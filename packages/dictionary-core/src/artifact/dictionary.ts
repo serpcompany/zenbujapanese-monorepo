@@ -194,9 +194,10 @@ export class Dictionary {
     return examples
   }
 
-  async search(rawQuery: string): Promise<SearchResponse> {
+  async search(rawQuery: string, pickedKanji = false): Promise<SearchResponse> {
     const query = normalizeQuery(rawQuery)
-    const cached = this.searches.get(query)
+    const key = `${pickedKanji ? 'picked' : 'typed'}:${query}`
+    const cached = this.searches.get(key)
     if (cached) return cached
     const results = await this.readableResults(query)
     const frequency = bundledFrequency(
@@ -206,9 +207,9 @@ export class Dictionary {
     const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
     const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {
-      screen: searchResultsScreen(query, results, frequency, count)
+      screen: searchResultsScreen(query, results, frequency, count, pickedKanji)
     }
-    this.searches.set(query, response)
+    this.searches.set(key, response)
     return response
   }
 

@@ -45,6 +45,7 @@ COPY apps/ios/Modules/Sources/SearchExperience/Resources/LanguageReferenceData.s
   apps/ios/Modules/Sources/SearchExperience/Resources/ExampleWordIndex.sqlite3 \
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/KanjiElementReferenceData.json \
+  apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json \
   apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json \
   resources/
 COPY --from=sudachi /sudachi sudachi
