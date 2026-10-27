@@ -11,14 +11,13 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. Under it, [Translate](translate.md). | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
-| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | `e2e/pages.spec.ts` |
+| Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). Its Translate tab: [`translate.md`](translate.md). | The tests and Chrome checks there; `e2e/pages.spec.ts` |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
 
 The dictionary answers even after Chrome has closed the document that holds it: the extension
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`,
-`e2e/pages.spec.ts`).
+`e2e/content-script.spec.ts`).
 
 ## Error reports
 
@@ -45,5 +44,5 @@ set in Sentry.
 ## Not built yet
 
 Looking words up, the word popup on a page, and saving aren't built, nor the Video tab and the
-caption on the player that show a YouTube video's lines. The release build draws nothing on the
-pages a learner reads.
+caption on the player that show a YouTube video's lines, so the side panel's tabs but Translate
+show only their empty states. The release build draws nothing on the pages a learner reads.

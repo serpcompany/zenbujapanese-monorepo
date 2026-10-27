@@ -72,7 +72,7 @@ export function TranslateTab({ services = onDeviceServices }: TranslateTabProps)
   }
 
   return (
-    <section className="flex flex-col gap-3">
+    <section className="flex flex-col gap-3 p-4">
       <Textarea
         ref={box}
         aria-label={translateLabels.box}

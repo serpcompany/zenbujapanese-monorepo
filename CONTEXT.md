@@ -52,10 +52,15 @@ language data shows.
 _Avoid_: flashcard, entry, word page
 
 **Browser extension**:
-The Zenbu Japanese extension for Chrome, built from `apps/extension`: its side panel, toolbar
-popup, Settings page, and what it draws on the pages a learner reads. The app's share-sheet
+The Zenbu Japanese extension for Chrome, built from `apps/extension`: its side panel, Settings
+page, and what it draws on the pages a learner reads. The app's share-sheet
 extension, `ZenbuShare`, is another thing.
 _Avoid_: extension (alone, where the Share extension could be meant), plugin, add-on
+
+**Side panel**:
+The browser extension's panel beside the page, Chrome's side panel: a tab bar with Video,
+Translate, Images, Words, and Recent, each tab with its own pages, such as a word's.
+_Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is no toolbar popup)
 
 **Word popup**:
 What the browser extension shows over a page for the word a learner points at.

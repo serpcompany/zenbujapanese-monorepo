@@ -52,8 +52,8 @@ pnpm --silent agent-chrome stop
   stops Chrome.
 - **`verify`** builds `dist-test/` and starts the local language-data server
   (`e2e/local-server.ts`) and a fresh, headless, offline Chrome with the build. It opens the side
-  panel, the popup, and Settings in light and dark, closes the offscreen document and checks
-  again, sees the test content script's surface on `hostile.html`, downloads `releases.json`, the
+  panel and Settings in light and dark, sees the test content script's surface on `hostile.html`,
+  closes the offscreen document and checks again from that surface, downloads `releases.json`, the
   pinned manifest, and one file from the local server and checks their SHA-256, then stops Chrome.
 - **Proof** goes to `tmp/agent/verify/<name>/`: `console.log` (the run's log lines), `run.json`
   (each expected line, each result, and the failures), and the screenshots, also when a step

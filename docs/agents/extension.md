@@ -5,11 +5,11 @@ repository to read the shared language data (ADR 0006) and replaces the 1.1.0 pr
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
 draws with `@zenbu/ui` ([`ui.md`](ui.md)). It keeps its interface text in `src/shared/labels.ts`,
-and a surface's own in its folder's `labels.ts`, such as `src/translate/labels.ts`. What it does
-for a learner, and the check for each behavior, is in its
+and a surface's own in its folder's `labels.ts`, such as `src/side-panel/labels.ts` and
+`src/translate/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
-behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word
-popup, Zenbu Captions, Video follower, Translation module).
+behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
+panel, Word popup, Zenbu Captions, Video follower, Translation module).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -74,8 +74,9 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 
 | Folder | What it holds |
 | --- | --- |
-| `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`). |
+| `src/pages/` | The side panel and the Settings page (the manifest's `options_ui`, opened in a tab); there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`), and opens the side panel on a route (`side-panel.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, #959's), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
 | `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
 | `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
@@ -161,6 +162,10 @@ root, and draws inside it:
   set to the surface, so a dialog or menu portals into the shadow root, where its styles are.
 - **`.dark` follows the system setting** on the surface, never on the page.
 
+### The side panel
+
+How the panel is built, opened, and checked is in [`extension-side-panel.md`](extension-side-panel.md).
+
 ## Test pages
 
 `pnpm test-pages` serves `hostile.html`, whose styles fight the extension (a 10px root font size,
@@ -218,7 +223,8 @@ reports its errors is in [`extension-error-reports.md`](extension-error-reports.
   client sending its own error but never the page's, with no global handler, the pages' and a
   worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
-  taken out (`build/upload-source-maps.test.ts`).
+  taken out (`build/upload-source-maps.test.ts`). The side panel's are in
+  [`extension-side-panel.md`](extension-side-panel.md).
 - **Captions and the video,** with YouTube's answers from `src/captions/fixtures/` through a
   stand-in `fetch`, never the network: the two requests and the core's rules, No Japanese
   Captions, each failure, and a track on another host refused (`youtube-requests.test.ts`); one

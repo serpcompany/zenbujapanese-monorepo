@@ -52,7 +52,8 @@ with one difference below. There are no usage analytics.
   grouped by it: `offscreen-document` (the document couldn't be opened), `offscreen-message` (it
   couldn't be reached), `dictionary-answer` (it answered with a failure, such as a worker that
   failed or didn't answer), or `translation-answer` (the Translator failed or didn't answer in
-  time). A translator that isn't available is an answer, not a failure. Never the failure's text,
+  time). It reports `side-panel-behavior` when Chrome refuses, as the service worker starts, to
+  open the side panel from the toolbar icon (`src/service-worker/side-panel.test.ts`). A translator that isn't available is an answer, not a failure. Never the failure's text,
   the request, the selected text, or the translation. A code that fails again and again is
   reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
   before it.

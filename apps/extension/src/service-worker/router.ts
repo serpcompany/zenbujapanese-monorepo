@@ -12,6 +12,7 @@ export type FailureCode =
   | 'offscreen-message'
   | 'dictionary-answer'
   | 'translation-answer'
+  | 'side-panel-behavior'
 
 type Relay = {
   ensureOffscreenDocument(): Promise<void>
