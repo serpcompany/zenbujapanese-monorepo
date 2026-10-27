@@ -26,4 +26,6 @@ chrome.runtime.onMessage.addListener(
   })
 )
 
-chrome.runtime.onMessage.addListener(routeTranslation(offscreenDocument, chrome.runtime))
+chrome.runtime.onMessage.addListener(
+  routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
+)

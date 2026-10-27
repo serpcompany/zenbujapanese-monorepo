@@ -1,14 +1,16 @@
-import { type Failure, failure } from '../shared/messages'
+import type { Failure } from '../shared/messages'
 import {
   isTranslationFor,
   type TranslationAnswer,
   type TranslationSender
 } from '../translation/messages'
 import type { OffscreenDocumentKeeper } from './offscreen-document'
+import { type FailureCode, relayReportingFailures } from './router'
 
 export function routeTranslation(
   offscreenDocument: Pick<OffscreenDocumentKeeper, 'ensureOpen'>,
-  runtime: TranslationSender
+  runtime: TranslationSender,
+  reportFailure: (code: FailureCode) => void
 ) {
   return (
     message: unknown,
@@ -17,10 +19,13 @@ export function routeTranslation(
   ): boolean => {
     if (!isTranslationFor('service-worker', message)) return false
     const { translation } = message
-    offscreenDocument
-      .ensureOpen()
-      .then(() => runtime.sendMessage({ target: 'offscreen', translation }))
-      .then(sendResponse, (error: unknown) => sendResponse(failure(error)))
+    relayReportingFailures({
+      open: () => offscreenDocument.ensureOpen(),
+      send: () => runtime.sendMessage({ target: 'offscreen', translation }),
+      answerCode: 'translation-answer',
+      reportFailure,
+      sendResponse
+    })
     return true
   }
 }

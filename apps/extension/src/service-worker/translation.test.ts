@@ -55,7 +55,7 @@ function runtimeFor(listeners: Listener[]) {
   }
 }
 
-function extension({ timeoutMs = 1_000, open = async () => {} } = {}) {
+function extension({ timeoutMs = 1_000, open = async () => {}, reportFailure = vi.fn() } = {}) {
   const offscreen: Listener[] = []
   const toOffscreen = runtimeFor(offscreen)
   const offscreenDocument = {
@@ -65,7 +65,9 @@ function extension({ timeoutMs = 1_000, open = async () => {} } = {}) {
         offscreen.push(answerTranslation(onDeviceTranslation(timeoutMs)) as Listener)
     })
   }
-  const serviceWorker = [routeTranslation(offscreenDocument, toOffscreen) as Listener]
+  const serviceWorker = [
+    routeTranslation(offscreenDocument, toOffscreen, reportFailure) as Listener
+  ]
   return { contentScript: runtimeFor(serviceWorker), offscreenDocument }
 }
 
@@ -237,7 +239,7 @@ describe('a content script translates through the service worker and the offscre
   it('keeps its messages apart from the dictionary’s, and from the other part’s', () => {
     const sendResponse = vi.fn()
     const toilet = translating(japaneseToEnglish, 'トイレはどこですか')
-    const serviceWorker = routeTranslation({ ensureOpen: vi.fn() }, runtimeFor([]))
+    const serviceWorker = routeTranslation({ ensureOpen: vi.fn() }, runtimeFor([]), vi.fn())
     const offscreen = answerTranslation(vi.fn())
     const dictionaryRouter = routeToOffscreen({
       ensureOffscreenDocument: vi.fn(),
@@ -266,6 +268,42 @@ describe('a content script translates through the service worker and the offscre
       false
     )
     expect(sendResponse).not.toHaveBeenCalled()
+  })
+})
+
+describe('the service worker reports a translation failure it answers', () => {
+  const toilet = translating(japaneseToEnglish, 'トイレはどこですか')
+
+  it('once, by the step that failed, never by its message or its text', async () => {
+    const { lines } = standInTranslator()
+    lines.mockRejectedValueOnce(new Error('Could not translate トイレはどこですか'))
+    const reportFailure = vi.fn()
+    const unopened = extension({
+      open: () => Promise.reject(new Error('No document for トイレはどこですか')),
+      reportFailure
+    })
+    const unreachable = routeTranslation(
+      { ensureOpen: async () => {} },
+      runtimeFor([]),
+      reportFailure
+    )
+    await translate(toilet, unopened.contentScript)
+    await translate(toilet, runtimeFor([unreachable as Listener]))
+    await translate(toilet, extension({ reportFailure }).contentScript)
+    expect(reportFailure.mock.calls).toEqual([
+      ['offscreen-document'],
+      ['offscreen-message'],
+      ['translation-answer']
+    ])
+  })
+
+  it('and nothing when the translator answers, or is not available', async () => {
+    standInTranslator({ 'en-ja': 'downloadable' })
+    const reportFailure = vi.fn()
+    const { contentScript } = extension({ reportFailure })
+    await translate(toilet, contentScript)
+    await translate(translating(englishToJapanese, 'Where can I buy a Suica card?'), contentScript)
+    expect(reportFailure).not.toHaveBeenCalled()
   })
 })
 
