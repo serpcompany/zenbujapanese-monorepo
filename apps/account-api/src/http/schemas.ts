@@ -255,7 +255,7 @@ const put = <E extends string, D extends z.ZodType>(entity: E, data: D) =>
     data
   })
 
-const ChangeSchema = z
+export const ChangeSchema = z
   .union([
     put('profile', ProfileSchema),
     put('knownWord', KnownWordSchema),

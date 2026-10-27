@@ -2037,6 +2037,31 @@
           "not_allowed": "The app's scopes don't include the operation's."
         }
       },
+      "KindAnswer": {
+        "type": "object",
+        "properties": {
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            },
+            "description": "Each entity of the kind, once, as it is now, in the order the account last changed them, oldest first: a `put`, or a `delete` for one removed, as sync answers them."
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque, and at most 200 characters. Send it to read the rest, or, later, what changed since."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "More are waiting: read again with the new cursor."
+          }
+        },
+        "required": [
+          "changes",
+          "cursor",
+          "hasMore"
+        ]
+      },
       "Subscription": {
         "type": "object",
         "properties": {
@@ -3633,6 +3658,322 @@
           },
           "500": {
             "description": "`internal`: The service failed, and nothing says why. The mutations before the failure stand: send the same request again later, backing off, and those answer as before.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "internal"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sync/{entity}": {
+      "get": {
+        "summary": "The account's entities of one kind, as they are now",
+        "description": "Reads what sync would answer of one kind alone, for a client that keeps no copy of its own, such as the website: every list, say, or every list word of one word. Changes go through POST /v1/sync, as every app's do. It needs the kind's read scope (`x-sync-entities`), and counts against sync's limit.",
+        "security": [
+          {
+            "accessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "profile",
+                "knownWord",
+                "list",
+                "listWord",
+                "watchedVideo",
+                "bookmarkedSentence",
+                "wordNote",
+                "photo",
+                "photoWord",
+                "profilePhoto",
+                "setting",
+                "recentSearch"
+              ],
+              "description": "The kind, as `x-sync-entities` names it."
+            },
+            "required": true,
+            "description": "The kind, as `x-sync-entities` names it.",
+            "name": "entity",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "The `cursor` the last read of this kind answered, to read what changed since. Leave it out to read every one. A sync's cursor isn't one, nor another kind's."
+            },
+            "required": false,
+            "description": "The `cursor` the last read of this kind answered, to read what changed since. Leave it out to read every one. A sync's cursor isn't one, nor another kind's.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "description": "The most entities to answer this time. Default 100."
+            },
+            "required": false,
+            "description": "The most entities to answer this time. Default 100.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under. For `knownWord`, `listWord`, `photoWord`, `wordNote` only."
+            },
+            "required": false,
+            "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under. For `knownWord`, `listWord`, `photoWord`, `wordNote` only.",
+            "name": "item",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The entities.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KindAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`bad_request`: The kind isn't one the service syncs, or the query is out of bounds. `item` is only for `knownWord`, `listWord`, `photoWord`, `wordNote`, and must be in the form the kind's entity ID names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "bad_request"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "`unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "unauthorized"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "`subscription_required`: Syncing and the account's other cloud features need a subscription, and this account has none that is active. Nothing was applied: keep the changes on the device, and show the paywall. GET /v1/me/subscription says what to offer.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "subscription_required"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "`insufficient_scope`: This app's access to the account doesn't include the kind's read scope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "insufficient_scope"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "`invalid_cursor`: The cursor isn't one this service gave this account for this kind, or the account has since forgotten a deletion past it. Read again with no cursor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "invalid_cursor"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "`too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "too_many_requests"
+                          ]
+                        },
+                        "message": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The service failed, and nothing says why. Try again later, backing off.",
             "content": {
               "application/json": {
                 "schema": {

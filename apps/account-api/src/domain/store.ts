@@ -23,6 +23,18 @@ export interface JournalEntry {
   operation: string
 }
 
+export type AboutItem =
+  | { by: 'id'; entityId: string }
+  | { by: 'idEnd'; suffix: string }
+  | { by: 'noteItem'; itemId: string }
+
+interface KindRead {
+  entityType: EntityType
+  after: number
+  limit: number
+  about?: AboutItem
+}
+
 export interface KnownWord {
   itemId: string
   headword: string
@@ -139,6 +151,7 @@ export interface AccountStore {
     work: (account: LockedAccount) => Promise<T>
   ): Promise<T | null>
   changesAfter(userId: string, sequence: number, limit: number): Promise<JournalEntry[]>
+  kindChangesAfter(userId: string, read: KindRead): Promise<JournalEntry[]>
   journalHead(): Promise<number>
   accountJournalHead(userId: string): Promise<number>
   forgottenThrough(userId: string): Promise<number>

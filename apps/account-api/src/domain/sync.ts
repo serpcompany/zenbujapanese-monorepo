@@ -211,7 +211,7 @@ function applyMutation(
 const childEntities = new Set<Change['entity']>(['listWord', 'photoWord'])
 const parentsFirst = (change: Change) => (childEntities.has(change.entity) ? 1 : 0)
 
-async function changesIn(
+export async function changesIn(
   reader: EntityReader,
   page: JournalEntry[],
   granted: ReadonlySet<Scope>
@@ -230,8 +230,21 @@ async function changesIn(
   return changes.sort((one, other) => parentsFirst(one) - parentsFirst(other))
 }
 
-const floorFor = async (store: AccountStore, userId: string, from: Position | undefined) =>
+export const floorFor = async (store: AccountStore, userId: string, from: Position | undefined) =>
   from ? Math.max(from.floor, from.sequence) : store.accountJournalHead(userId)
+
+export async function readingFrom(
+  store: AccountStore,
+  cursors: Cursors,
+  userId: string,
+  cursor: string | null | undefined,
+  kind?: EntityType
+): Promise<Position | undefined | null> {
+  const from = cursor ? cursors.decode(userId, cursor, kind) : undefined
+  if (!from) return from
+  if (from.sequence > (await store.journalHead())) return null
+  return (await store.forgottenThrough(userId)) > from.floor ? null : from
+}
 
 export function syncer(
   store: AccountStore,
@@ -245,12 +258,8 @@ export function syncer(
     granted: ReadonlySet<Scope>
   ): Promise<SyncAnswer> {
     if (!(await store.profile(userId))) return { status: 'no_account' }
-    const from = request.cursor ? cursors.decode(userId, request.cursor) : undefined
+    const from = await readingFrom(store, cursors, userId, request.cursor)
     if (from === null) return { status: 'invalid_cursor' }
-    if (from && from.sequence > (await store.journalHead())) return { status: 'invalid_cursor' }
-    if (from && (await store.forgottenThrough(userId)) > from.floor) {
-      return { status: 'invalid_cursor' }
-    }
     const after = from?.sequence ?? 0
     const results: MutationResult[] = []
     const context = { granted, searchKey: searchKeys(userId) }

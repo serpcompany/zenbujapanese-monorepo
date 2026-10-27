@@ -183,3 +183,23 @@ The searches the learner made, as `recentSearch`. It needs `searches:read` and `
   which comes down as a `delete`. Keep 50 on the device the same way, don't send a `remove` for
   one your device drops for being past 50, and order them newest first.
 - **A query over 1,000 characters** is refused (`invalid_fields`): keep it on the device only.
+
+## Keeping no copy
+
+The website keeps none of the account's data in the browser: each page reads what it shows from
+the account and changes it there (#934). `AccountCopy` in `packages/account-rules/src/account-copy.ts`
+does this for it, with the order each kind is shown in from `account-views.ts`, and the service's
+`website-copy.test.ts` holds it and a `SyncClient` to the same state.
+
+- **Read one kind** with `GET /v1/sync/{entity}`, from no cursor for all of it, page by page while
+  `hasMore`: each entity once, as sync answers it, a removed one as a `delete`, in the order the
+  account last changed them, oldest first (Known Words lists them newest first from it). With
+  `item`, only those about one word or kanji: its Known mark (`knownWord`), its place in each list
+  (`listWord`), its photos (`photoWord`), or its notes (`wordNote`). The answer's cursor is this
+  kind's alone: sync refuses it, as this read refuses sync's or another kind's (`410`).
+- **Change** through `POST /v1/sync`, one mutation at a time, at the version the read gave (0 for
+  none), then read the kind again from its cursor, with its list or photo, or its words, when the
+  page holds them, so the page shows the account as it is, a change from elsewhere included. A
+  deleted list or photo drops its words. A `410` reads the kind again from no cursor.
+- **Results** follow the rules above: a conflict shows the account's copy, and a note's conflict
+  keeps the learner's text as the app does (Notes); a rejection changes nothing and says why.

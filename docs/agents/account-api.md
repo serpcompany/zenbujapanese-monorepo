@@ -72,19 +72,20 @@ which only the log records.
 | `GET /v1/me` | With an access token, the learner's profile: `id`, `name`, `username`, `email`, `version`, `createdAt`, and `updatedAt`. |
 | `PATCH /v1/me` | With an access token, changes the name, the username, or both: `{ "baseVersion": 3, "name": "...", "username": "..." }`. It answers `409 version_conflict`, with the profile as it is now in `current`, if the profile has moved past `baseVersion`, and `409 username_taken`. |
 | `POST /v1/sync` | With an access token, applies the device's changes and answers what changed after its cursor (Profiles and sync, below). |
+| `GET /v1/sync/{entity}` | With an access token, one kind as it is now (Profiles and sync). |
 | `PUT /v1/photos/{photoId}`, `GET /v1/photos/{photoId}` | With an access token, uploads and downloads a photo's file by its SHA-256 ([`account-photos.md`](account-photos.md)). |
 | `DELETE /v1/me` | With an access token from a sign-in in the last 10 minutes, deletes the account: `{ "confirm": true }`, and for an account that signs in with Apple, `"appleAuthorizationCode"` from that sign-in, with the website's `"appleRedirectUri"` (Deleting an account, below). |
 | `POST /v1/auth/email-otp/send-verification-otp` | Emails a sign-in code: `{ "email": "...", "type": "sign-in" }`. It answers the same whether or not the email has an account. |
-| `POST /v1/auth/sign-in/email-otp` | Signs in with the code: `{ "email": "...", "otp": "123456" }`. |
+| `POST /v1/auth/sign-in/email-otp` | Signs in with a code: `{ "email": "...", "otp": "123456" }`. |
 | `POST /v1/auth/sign-in/nonce` | A nonce for one Apple or Google sign-in: `{ "nonce": "...", "expiresIn": 600 }`. |
-| `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on the device, with the nonce: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. Without an ID token, it starts the web sign-in, which comes back to `/v1/auth/callback/<provider>`. |
-| `POST /v1/auth/link-social` | Signed in within the last 10 minutes, adds another way to sign in, the same way. |
+| `POST /v1/auth/sign-in/social` | Signs in with an ID token from Sign in with Apple or Google on a device, with the nonce: `{ "provider": "apple", "idToken": { "token": "...", "nonce": "..." } }`. Without an ID token, it starts the web sign-in, which comes back to `/v1/auth/callback/<provider>`. |
+| `POST /v1/auth/link-social` | Signed in in the last 10 minutes, adds a way in, the same way. |
 | `GET /v1/auth/list-accounts`, `POST /v1/auth/unlink-account` | Signed in, the ways the learner signs in, and removing one by its `id` from the list: `{ "accountId": "..." }`, within 10 minutes of signing in, never the last, and the account's email is told. |
 | `GET /v1/auth/token` | Signed in, a 15-minute access token for the other services. |
 | `GET /v1/auth/jwks` | The keys an access token is checked with. |
 | `GET /v1/auth/get-session`, `POST /v1/auth/sign-out` | The session, and signing out of it. |
 | `GET /v1/auth/list-sessions`, `POST /v1/auth/revoke-session`, `/revoke-sessions`, `/revoke-other-sessions` | Signed in, where the learner is signed in, and signing out of those. |
-| `GET /dev/mail` | On a local run with the dev mailbox, the codes it would have sent. Elsewhere, `404`. |
+| `GET /dev/mail` | On a local run with the dev mailbox, the codes it would send. Else `404`. |
 | `/v1/me/subscription`, `/v1/webhooks/stripe`, `/v1/webhooks/apple` | The subscription, and the stores' events ([`account-billing.md`](account-billing.md), Routes). |
 
 The routes under `/v1/auth/` are Better Auth's, with its errors put in the format above, such as
@@ -260,6 +261,8 @@ profile's). `PATCH /v1/me` and a sync mutation change the profile through the sa
   before its page. So a full read is refused only if a deletion made after it began is forgotten
   before it's read, or, past that head, an entry it read is forgotten before its next request.
 - **Request limits:** 50 mutations, a 64 KB body, and 500 journal entries a request.
+- **One kind**, `GET /v1/sync/{entity}`, is a read of that kind alone, gated and limited as sync,
+  for the website, which keeps no copy ([client rules](account-client-rules.md#keeping-no-copy)).
 
 ## Deleting an account
 
@@ -444,8 +447,9 @@ fields. `word-notes.test.ts`, `photos.test.ts`, `photo-files.test.ts`, `photo-bo
 and files to their rules ([`account-photos.md`](account-photos.md), Check it). Both run two or
 three `SyncClient`s (`src/test/sync-client.ts`, the iOS app's client in TypeScript) through
 offline changes on each until they hold the same state as a new device. `src/http/clients.test.ts`
-holds each app to its scopes: only `zenbu-ios` reads or changes watch history, bookmarks, notes,
-photos, settings, and recent searches.
+holds each app to its scopes: only `zenbu-ios` changes watch history, bookmarks, and photos; the
+website reads them, and reads and changes notes, settings, and searches. `kind-reads.test.ts`
+reads one kind, and `website-copy.test.ts` has the website's copy and a `SyncClient` converge.
 
 The domain's tests replay the account rules' name and username cases and cover the cursor.
 `src/db/database.test.ts` covers the journal's trigger

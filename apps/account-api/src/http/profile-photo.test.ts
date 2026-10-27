@@ -2,6 +2,7 @@ import { drizzle } from 'drizzle-orm/pglite'
 import { describe, expect, test, vi } from 'vitest'
 import { housekeepingBatch, purgeExpired } from '../db/housekeeping'
 import { type Learner, outcomesOf, useAccountService } from '../test/accounts'
+import { withoutScopes } from '../test/clients'
 import { aJpeg, photoIdOf, uploaded } from '../test/photos'
 import { SyncClient } from '../test/sync-client'
 
@@ -128,6 +129,10 @@ describe('the profile photo', () => {
       'invalid_mutation'
     ])
   })
+})
+
+describe('an app with `profile` and no `photos:read`, as the website is with its photo scope taken', () => {
+  withoutScopes('zenbu-web', 'photos:read')
 
   test('an app with only `profile` reads the profile photo, and no other file', async () => {
     const email = 'profile-photo-web@example.com'
