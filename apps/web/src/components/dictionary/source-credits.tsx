@@ -42,6 +42,14 @@ export function SourceCreditItem({
   )
 }
 
+export function SourceCreditLine({ source, locale }: { source: SourceCredit; locale: Locale }) {
+  return (
+    <ul className="shrink-0 text-xs text-muted-foreground">
+      <SourceCreditItem source={source} locale={locale} linkClassName={linkClass} />
+    </ul>
+  )
+}
+
 export function SourceCredits({ sources, locale }: { sources: SourceCredit[]; locale: Locale }) {
   return (
     <footer className="border-t pt-4 text-xs text-muted-foreground">

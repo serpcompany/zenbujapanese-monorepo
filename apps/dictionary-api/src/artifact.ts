@@ -13,6 +13,11 @@ import {
   type KanjiElementFile,
   type KanjiReferenceFile
 } from '@zenbu/dictionary-core/artifact/kanji-data'
+import {
+  checkedRadicalFile,
+  type RadicalFile,
+  radicalReferenceFile
+} from '@zenbu/dictionary-core/search/radicals'
 
 export const artifactFile = 'LanguageReferenceData.sqlite3'
 
@@ -53,6 +58,7 @@ class SqliteArtifact implements ArtifactDatabase {
 export interface OpenedArtifact {
   db: ArtifactDatabase
   kanji: KanjiData
+  radicals: RadicalFile
   close(): void
 }
 
@@ -76,5 +82,6 @@ export function openArtifact(resources: string, artifactSha256: string): OpenedA
     json<KanjiReferenceFile>('KanjiReferenceData.json'),
     json<KanjiElementFile>('KanjiElementReferenceData.json')
   )
-  return { db, kanji, close: () => database.close() }
+  const radicals = checkedRadicalFile(json<unknown>(radicalReferenceFile))
+  return { db, kanji, radicals, close: () => database.close() }
 }

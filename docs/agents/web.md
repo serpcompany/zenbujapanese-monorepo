@@ -102,59 +102,56 @@ drawing's furigana keeps its drawn size.
   `apps/web/worker.ts` although `tsconfig.json` leaves it out. Its import of
   `.open-next/worker.js` resolves only after an OpenNext build; until then
   `apps/web/open-next-worker.d.ts` types it, so a fresh checkout typechecks too.
-- `apps/web/playwright.config.ts` names the browser tests' two projects, `desktop` and `phone`,
-  and their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first
-  use; the production build keeps Playwright's 5, and runs on one worker, as one workerd process
-  renders every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the
-  build (Account pages, below), from the run's `SITE_ENV`, so the `placeholderLinks` the tests
-  import list Log in only where the build's account pages are closed. Run the tests with the
-  `SITE_ENV` the build had, or `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts`
-  holds the console check and the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts` answers the account
-  service's routes in the browser, and marks a browser signed in, for the specs that need it.
-  `apps/web/e2e/contrast.spec.ts` runs axe's colour-contrast rule (`@axe-core/playwright`) on
-  every page type in `apps/web/e2e/page-types.ts`, in the light and dark themes (Phone layout,
-  above).
+- `apps/web/playwright.config.ts` names the browser tests' two projects, `desktop` and `phone`, and
+  their server. Dev assertions wait 15 seconds, since `next dev` compiles each route on first use;
+  the production build keeps Playwright's 5, and runs on one worker, as one workerd process renders
+  every page. It sets `ZENBU_ACCOUNT_PAGES` for the tests as `next.config.ts` does for the build
+  (Account pages, below), from the run's `SITE_ENV`, so the `placeholderLinks` the tests import list
+  Log in only where the build's account pages are closed. Run the tests with the `SITE_ENV` the
+  build had, or `placeholders.spec.ts` reads the wrong list. `apps/web/e2e/test.ts` holds the
+  console check and the fixture helpers every spec imports; `apps/web/e2e/account-stand-in.ts`
+  answers the account service's routes in the browser, and marks a browser signed in, for the specs
+  that need it. `apps/web/e2e/contrast.spec.ts` runs axe's colour-contrast rule
+  (`@axe-core/playwright`) on every page type in `apps/web/e2e/page-types.ts`, in the light and dark
+  themes (Phone layout, above).
 - `apps/web/vitest.config.ts` has two projects: `*.interaction.test.tsx` run in happy-dom, the
   other tests in Node. Both set `__NEXT_TRAILING_SLASH`, so `next/link` draws links with their
   trailing slash, as the build does with `trailingSlash`.
 - A link whose page or address doesn't exist yet points at `#`, and is listed once, by what it
   stands for, in `linkTargets` in `apps/web/src/lib/site.ts`; its links carry `data-link-target`.
   `apps/web/e2e/placeholders.spec.ts` fails on any other `#` link and prints the listed ones
-  ([product docs](../../apps/web/docs/product/site-wide.md),
-  Placeholder links). When a page ships, give its entry the page's path, as the products pages'
-  entries have, so every link to it changes at once, or link it directly and drop the entry. Log
-  in's and Create an account's entries have `/login/` and `/register/` only in a build whose
-  account pages are open (Account pages, below).
+  ([product docs](../../apps/web/docs/product/site-wide.md), Placeholder links). When a page ships,
+  give its entry the page's path, as the products pages' entries have, so every link to it changes
+  at once, or link it directly and drop the entry. Log in's and Create an account's entries have
+  `/login/` and `/register/` only in a build whose account pages are open (Account pages, below).
 - `apps/web/public/` holds the header's images (App Store screenshot crops and the app icon), a
   larger app icon (`app-icon-192.webp`) and, in `apps/web/public/screenshots/app-store/`, whole App
   Store screenshots for the homepage and the products pages, each named for its file in
   `apps/ios/screenshots/app-store/en-US/iphone-63/` and made with `cwebp -q 80 -resize 600 0`.
   `apps/web/src/lib/app-screenshots.ts` lists them with their alt text, and
-  `apps/web/src/components/app-screenshot.tsx` draws one without a device frame.
-  `next/image` renders them `unoptimized`, since the site sets up no image optimization on Workers.
-  It also holds copies of the brand's web files from `assets/brand/`: `favicon.ico`, the 16 and 32
-  pixel PNGs, `apple-touch-icon.png`, `site.webmanifest` with its icons in `icons/`, and
+  `apps/web/src/components/app-screenshot.tsx` draws one without a device frame. `next/image`
+  renders them `unoptimized`, since the site sets up no image optimization on Workers. It also holds
+  copies of the brand's web files from `assets/brand/`: `favicon.ico`, the 16 and 32 pixel PNGs,
+  `apple-touch-icon.png`, `site.webmanifest` with its icons in `icons/`, and
   `zenbu-icon-flat-vector.svg`, the logo in the header, phone menu, and footer
   (`src/components/site-brand.tsx`) and the SVG favicon. `siteIcons` and `siteManifest` in
-  `src/lib/metadata.ts` name them in every page's head; copy a file again when the brand's
-  changes.
-- The theme ([product docs](../../apps/web/docs/product/site-wide.md),
-  Theme): `next-themes`' `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and
-  placed in `src/components/site-document.tsx`, puts `light` or `dark` on `<html>` (which has
+  `src/lib/metadata.ts` name them in every page's head; copy a file again when the brand's changes.
+- The theme ([product docs](../../apps/web/docs/product/site-wide.md), Theme): `next-themes`'
+  `ThemeProvider`, wrapped in `src/components/theme-provider.tsx` and placed in
+  `src/components/site-document.tsx`, puts `light` or `dark` on `<html>` (which has
   `suppressHydrationWarning`, since its script changes the class before React hydrates), from the
-  choice in local storage (`theme`) or the system's, and its inline script does that before the
-  page paints. The wrapper gives the script `type="text/plain"` once in the browser, as the Next.js
-  guide on preventing a flash before hydration does, so React doesn't warn about a script it renders
-  there, and `data-cfasync="false"`, so Cloudflare's Rocket Loader never defers it. That script is a function `next-themes` turns into a
-  string, so `apps/web/wrangler.jsonc` sets `keep_names` to `false`: with esbuild's default, the
-  Worker's bundle adds `__name` calls to it that the browser doesn't have, and it fails with
-  `ReferenceError: __name is not defined` (OpenNext's
-  [keep names](https://opennext.js.org/cloudflare/howtos/keep_names) how-to). The browser tests
-  run on the Worker build in CI, so the theme tests catch it. The site's toasts read the same
-  theme. Colours come only
-  from the shadcn tokens in `src/app/globals.css`, with `.dark` redefining them; text on the muted
-  grey takes the `muted-surface` utility, which swaps in `--muted-surface-foreground`, a darker grey
-  in light mode, since stock `muted-foreground` on `muted` is 4.35:1. The account menu
+  choice in local storage (`theme`) or the system's, and its inline script does that before the page
+  paints. The wrapper gives the script `type="text/plain"` once in the browser, as the Next.js guide
+  on preventing a flash before hydration does, so React doesn't warn about a script it renders
+  there, and `data-cfasync="false"`, so Cloudflare's Rocket Loader never defers it. That script is a
+  function `next-themes` turns into a string, so `apps/web/wrangler.jsonc` sets `keep_names` to
+  `false`: with esbuild's default, the Worker's bundle adds `__name` calls to it that the browser
+  doesn't have, and it fails with `ReferenceError: __name is not defined` (OpenNext's [keep
+  names](https://opennext.js.org/cloudflare/howtos/keep_names) how-to). The browser tests run on the
+  Worker build in CI, so the theme tests catch it. The site's toasts read the same theme. Colours
+  come only from the shadcn tokens in `src/app/globals.css`, with `.dark` redefining them; text on
+  the muted grey takes the `muted-surface` utility, which swaps in `--muted-surface-foreground`, a
+  darker grey in light mode, since stock `muted-foreground` on `muted` is 4.35:1. The account menu
   (`src/components/account-menu.tsx`) and the phone menu's theme button (`ModeToggle` in
   `src/components/mode-toggle.tsx`) set it.
 - The products pages ([product docs](../../apps/web/docs/product/products.md)): `/products/` is
@@ -310,6 +307,11 @@ once (at most the app's 60). `results/links.ts` adds links (`linkSearchScreen`, 
 a word or its kanji row has details to show. The KANJI row opens in place to the kanji's details
 (`components/dictionary/kanji-details.tsx`, from `getKanjiDetails`), as the word page's kanji do.
 A query full-text search can't read is answered as finding nothing by the service.
+
+The box's Radicals (`components/dictionary/radical-input.tsx`, [product
+docs](../../apps/web/docs/product/radical-input.md)) loads `radical-panel.tsx` and
+`/dictionary/radicals.json` on first intent, and runs the core's `RadicalLookup` in the browser; a
+pick's `?input=radicals` reaches the service as `?picked=1`, and metadata reads the typed search.
 
 With Sudachi, the service analyzes a sentence as the app does and lists its Discovered Words.
 The Example Sentences row goes where the sentences are (`examplesTarget` in `results/links.ts`,

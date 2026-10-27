@@ -177,7 +177,8 @@ export function createPool(start: StartWorker, size: number): Pool {
       await Promise.all(threads.map(thread => thread.worker.terminate()))
     },
     info: () => info,
-    search: query => call('search', [query], cachedBy.query(query)),
+    search: (query, pickedKanji = false) =>
+      call('search', [query, pickedKanji], cachedBy.query(query)),
     searchExamples: (query, from) => call('searchExamples', [query, from], cachedBy.query(query)),
     word: entSeq => call('word', [entSeq], cachedBy.word(entSeq)),
     wordExamples: (entSeq, from) => call('wordExamples', [entSeq, from], cachedBy.word(entSeq)),
@@ -199,6 +200,7 @@ export function createPool(start: StartWorker, size: number): Pool {
     kanjiList: slug => call('kanjiList', [slug]),
     browseSitemap: () => call('browseSitemap', []),
     wordCards: ids => call('wordCards', [ids]),
-    segment: text => call('segment', [text])
+    segment: text => call('segment', [text]),
+    radicals: () => call('radicals', [])
   }
 }

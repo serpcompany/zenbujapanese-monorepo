@@ -10,23 +10,15 @@ page's section in [Dictionary](dictionary.md), with its check, in the same PR.
 
 ## Search results
 
-**Handwriting and radical input.** The search box offers handwriting and radical selection, as the
-app does.
+**Handwriting input.** The search box offers handwriting, as the app does. Radical input is built
+([Radical input](radical-input.md)).
 
-- App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`,
-  `RadicalInputView.swift`, `RadicalLookupClient.swift`. The radical panel's kanji and radicals are
-  already the core's (`RadicalLookup` in `packages/dictionary-core/src/search/radicals.ts`), and
-  so is which handwriting candidates are kept (`japaneseCandidates`); recognizing the strokes is
-  the app's.
-- Check it will get: an app-recorded suite of radical selections and their candidate kanji, and
-  handwriting samples and their candidates, replayed against the website.
-
-**Radical searches keep the strongest matches.** A search started from radical input lists only
-its leading group of equally strong matches, as the app limits it (`rankedEntryLimit`).
-
-- App source: `SearchResultsView` and its `rankedEntryLimit` in `SearchResultsView.swift`.
-- Check it will get: radical-origin cases in the planned search results suite, recording the rows
-  the app lists.
+- Waits on: the owners deciding to run recognition models on the API server or call paid APIs, for
+  subscribers only (the owner's decision of 2026-10-26 on #832).
+- App source: App docs, Search; `HandwritingInputView.swift`, `OfflineHandwritingRecognizer.swift`.
+  Which handwriting candidates are kept is already the core's (`japaneseCandidates`); recognizing
+  the strokes is the app's.
+- Check it will get: handwriting samples and their candidates, replayed against the website.
 
 ## Kanji details
 

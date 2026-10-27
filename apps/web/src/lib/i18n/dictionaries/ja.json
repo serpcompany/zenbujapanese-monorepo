@@ -1716,7 +1716,19 @@
   },
   "searchForm": {
     "placeholder": "日本語か英語で検索",
-    "submit": "検索"
+    "submit": "検索",
+    "radicals": {
+      "open": "部首",
+      "title": "部首",
+      "prompt": "部首を1つ以上選んでください",
+      "candidates": "選んだ部首をすべて含む漢字",
+      "radical": "部首「{glyph}」",
+      "undo": "最後に選んだ部首を取り消す",
+      "done": "完了",
+      "loading": "部首を読み込み中…",
+      "unavailable": "部首のデータを読み込めません",
+      "retry": "もう一度試す"
+    }
   },
   "site": {
     "description": "iPhone向けの、オフラインで使える和英辞典・画像テキストリーダー・翻訳アプリ。",

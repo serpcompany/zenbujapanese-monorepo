@@ -10,12 +10,16 @@ import type {
   WordExampleRow,
   WordRows
 } from '../detail/rows'
+import type { RadicalFile } from '../search/radicals'
 import browse from './browse.json'
 import exampleCounts from './example-counts.json'
 import exampleSentences from './example-sentences.json'
 import formExamples from './form-examples.json'
 import kanji from './kanji.json'
 import kanjiWords from './kanji-words.json'
+import radicalKanji from './radical-kanji.json'
+import radicals from './radicals.json'
+import searchLeading from './search-leading.json'
 import segmentation from './segmentation.json'
 import wordExamples from './word-examples.json'
 import words from './words.json'
@@ -67,6 +71,13 @@ export const fixtureSearchOrder: Record<string, number[]> = {
   いる: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   iru: [1546640, 1577980, 1391500, 1465580, 1322180, 1587780],
   要: [1609600, 2188720, 1546640, 1546750, 1546680, 1546850, 1612150]
+}
+
+export const fixtureLeadingEntries: Readonly<Record<string, number>> = searchLeading
+
+export const fixtureRadicals: RadicalFile = {
+  components: radicals as RadicalFile['components'],
+  characters: radicalKanji as RadicalFile['characters']
 }
 
 export const fixtureBrowseAnswers: Readonly<Record<string, unknown>> = browse
