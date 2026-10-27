@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-from bucket_objects import check_object, file_key, manifest_key
-from committed_files import sha256_of
+from bucket_objects import check_published, download_checked, file_key, manifest_key
+from compressed_copies import verify_compressed_copies
 from object_store import Store
 from pinned_release import check_pinned
 from refusal import Refusal
-from release_manifest import validate_manifest
-from releases_index import read_index
+from releases_index import read_index, read_listed_manifest
 
 
 def verify(
@@ -26,14 +24,7 @@ def verify(
     previous = entries[position - 1] if position > 0 else None
 
     key = manifest_key(release)
-    got = store.get(key)
-    if got is None:
-        raise Refusal(f"{key} doesn't exist")
-    body = got[0]
-    if sha256_of(body) != entry["manifest_sha256"]:
-        raise Refusal(f"{key}'s sha256 isn't the {entry['manifest_sha256']} releases.json lists")
-    manifest = json.loads(body)
-    validate_manifest(manifest)
+    body, manifest = read_listed_manifest(store, entry)
     expected = {
         "release": release,
         "git_commit": entry["git_commit"],
@@ -44,31 +35,26 @@ def verify(
         if manifest[field] != value:
             raise Refusal(f"{key}'s {field} is {manifest[field]!r}, not {value!r}")
     check_pinned(manifest, pinned, key)
-    head = store.head(key)
-    if head is None:
-        raise Refusal(f"{key} doesn't exist")
-    check_object(key, head, entry["manifest_sha256"], len(body), "reads back")
+    check_published(store, key, entry["manifest_sha256"], len(body))
 
     for record in manifest["files"]:
         object_key = file_key(record)
-        head = store.head(object_key)
-        if head is None:
-            raise Refusal(f"{object_key} doesn't exist")
-        check_object(object_key, head, record["sha256"], record["bytes"], "reads back")
+        check_published(store, object_key, record["sha256"], record["bytes"])
         if hash_files:
             path = workdir / "object"
-            try:
-                store.download(object_key, path)
-            except FileNotFoundError:
-                raise Refusal(f"{object_key} disappeared while it was being verified") from None
-            try:
-                if path.stat().st_size != record["bytes"] or sha256_of(path) != record["sha256"]:
-                    raise Refusal(f"{object_key}'s bytes don't match its manifest entry")
-            finally:
-                path.unlink(missing_ok=True)
+            download_checked(store, object_key, path, record["sha256"], record["bytes"])
+            path.unlink()
+    parts = verify_compressed_copies(
+        store, manifest, entry["manifest_sha256"], hash_files=hash_files, workdir=workdir
+    )
     how = "size, SHA-256 metadata and bytes" if hash_files else "size and SHA-256 metadata"
     log(
-        f"Release {release} is published: releases.json, {key} (sha256 {entry['manifest_sha256']}) "
-        f"and {len(manifest['files'])} files, each checked for its {how}."
+        f"Release {release} is published: releases.json, {key} (sha256 {entry['manifest_sha256']}), "
+        f"{len(manifest['files'])} files and {parts} gzipped parts, each checked for its {how}."
     )
-    return {"release": release, "files": len(manifest["files"]), "hashed": hash_files}
+    return {
+        "release": release,
+        "files": len(manifest["files"]),
+        "compressed_parts": parts,
+        "hashed": hash_files,
+    }

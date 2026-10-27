@@ -73,7 +73,8 @@ class PublishConflictTests(PublishTestCase):
 
         def another_publish(key):
             if key == data_file:
-                self._another_publish_lists("2026.10.2")
+                self.store.before_put = None
+                self.publish(self.staged("2026.10.2", FILES_1, COMMIT_B))
 
         self.store.before_put = another_publish
         with self.assertRaisesRegex(Refusal, "before its manifest was written.*again"):

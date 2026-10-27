@@ -4,7 +4,8 @@ Every Zenbu app will read one versioned language-data release from R2
 ([ADR 0006](../docs/adr/0006-share-language-data-as-a-versioned-artifact.md),
 [issue 828](https://github.com/serpcompany/zenbujapanese-monorepo/issues/828)). This folder
 holds the pipeline that packages a release and publishes it to the `zenbujapanese-language-data`
-R2 bucket, and each release's pinned manifest. No app reads the bucket: what the app bundles, and
+R2 bucket, and each release's pinned manifest. Only the browser extension will read the bucket,
+at [its public address](publishing.md#the-public-address) (#941): what the app bundles, and
 what ADR 0009's dictionary service copies into its image, are files of the release `release.json`
 names, and checks hold both to that release's pinned manifest before merge
 ([Pinned releases](#pinned-releases), [issue 473](https://github.com/serpcompany/zenbujapanese-monorepo/issues/473)).
@@ -26,15 +27,14 @@ here from `apps/ios`). The built files stay in the app's bundle,
 | [`derived/`](derived/) | Release files the pipeline writes: `RetiredEntries.json`. |
 | [`retired-entries.md`](retired-entries.md) | How a release records the entries it retires, and which replaces each. |
 | [`jmdict-updates.md`](jmdict-updates.md) | The monthly JMdict update: what the workflow's pull request holds, and what a person does after it. |
-| [`publishing.md`](publishing.md) | Where releases live in the bucket, and how a release is published there. |
+| [`publishing.md`](publishing.md), [`bucket-cors.json`](bucket-cors.json) | Where releases live in the bucket, the address it's served at, and how a release and its gzipped copies are published there; and the bucket's CORS rule. |
 | [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`, and the entries its ranks chose for `TUBELEXFrequencyPack.sqlite3`'s reviewed readings), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
 | [`word-cards.md`](word-cards.md) | The word-card format (`zenbu.word-cards.v1`) an app without the language data ships and fetches, and the command that exports cards. |
-| [`schemas/language-data-manifest.v1.schema.json`](schemas/language-data-manifest.v1.schema.json) | The manifest's JSON Schema, `zenbu.language-data-manifest.v1`. |
-| [`schemas/language-data-releases.v1.schema.json`](schemas/language-data-releases.v1.schema.json) | The JSON Schema of the bucket's `releases.json`, `zenbu.language-data-releases.v1`. |
+| [`schemas/`](schemas/) | The JSON Schemas of the manifest (`zenbu.language-data-manifest.v1`), and of the bucket's `releases.json` (`zenbu.language-data-releases.v1`) and each release's `compressed.json` (`zenbu.language-data-compressed.v1`). |
 | [`pipeline/package.py`](pipeline/package.py) | The packager's command line: `build`, `lfs-paths`, `validate`, `retire`, `pin`, and `check-pin`. |
 | [`pipeline/publish.py`](pipeline/publish.py) | The publisher's command line: `publish`, and `verify`, the check that reads a published release back. |
 | [`pipeline/`](pipeline/) | The modules the two command lines run, one for each job (see [The pipeline](#the-pipeline)). |
-| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the schemas, and the committed inputs. |
+| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the schemas, the bucket's CORS rule, and the committed inputs. |
 
 ## A release
 
@@ -187,7 +187,9 @@ import one another by name:
 | [`core_provenance.py`](pipeline/core_provenance.py) | Hashes the core's bundle and source as HEAD commits them, for `core_sha256` and `core`. |
 | [`object_store.py`](pipeline/object_store.py) | The bucket, through the AWS CLI's S3 API. The publisher's tests put a fake bucket in its place. |
 | [`bucket_objects.py`](pipeline/bucket_objects.py) | Object keys, content types, and cache headers, and the upload that never overwrites an object. |
-| [`releases_index.py`](pipeline/releases_index.py) | Reads, checks, and writes the bucket's `releases.json`. |
+| [`releases_index.py`](pipeline/releases_index.py) | Reads, checks, and writes the bucket's `releases.json`, and reads a release it lists. |
+| [`compressed_copies.py`](pipeline/compressed_copies.py) | Packs a release's SQLite and JSON files into gzipped parts, publishes them with `compressed.json`, and checks them. |
+| [`json_schemas.py`](pipeline/json_schemas.py) | Checks a document against its JSON Schema. |
 | [`publish_release.py`](pipeline/publish_release.py) | Publishes a staged release ([`publishing.md`](publishing.md)). |
 | [`verify_release.py`](pipeline/verify_release.py) | Reads a published release back and checks it. |
 | [`refusal.py`](pipeline/refusal.py), [`locations.py`](pipeline/locations.py) | `Refusal`, the error a failed check raises, and where this folder and the repository are. |
@@ -199,8 +201,9 @@ publisher's tests publish.
 
 ## Publishing
 
-Where releases live in the bucket, how the `Language data release` workflow publishes one, and
-why nothing published is overwritten are in [`publishing.md`](publishing.md).
+Where releases live in the bucket, the address it's served at, how the `Language data release`
+workflow publishes one and its gzipped copies, and why nothing published is overwritten are in
+[`publishing.md`](publishing.md).
 
 ## Changing the data
 
