@@ -52,7 +52,8 @@ export function kindReader(store: AccountStore, cursors: Cursors) {
     const about = request.item === undefined ? undefined : aboutItem?.(request.item)
     if (about === null) return { status: 'bad_item' }
     if (!(await store.profile(userId))) return { status: 'no_account' }
-    const from = await readingFrom(store, cursors, userId, request.cursor, entityType)
+    const bound = request.item === undefined ? entityType : `${entityType}/${request.item}`
+    const from = await readingFrom(store, cursors, userId, request.cursor, bound)
     if (from === null) return { status: 'invalid_cursor' }
     const after = from?.sequence ?? 0
     const floor = await floorFor(store, userId, from)
@@ -70,7 +71,7 @@ export function kindReader(store: AccountStore, cursors: Cursors) {
     return {
       status: 'read',
       changes,
-      cursor: cursors.encode(userId, { sequence, floor }, entityType),
+      cursor: cursors.encode(userId, { sequence, floor }, bound),
       hasMore: entries.length > limit
     }
   }

@@ -3755,10 +3755,10 @@
               "type": "string",
               "minLength": 1,
               "maxLength": 200,
-              "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under. For `knownWord`, `listWord`, `photoWord`, `wordNote` only."
+              "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under, and every deleted note, which keeps no item (a note moved to another word since isn't in a later read about the first). For `knownWord`, `listWord`, `photoWord`, `wordNote` only. A cursor from a read with `item` reads only that item."
             },
             "required": false,
-            "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under. For `knownWord`, `listWord`, `photoWord`, `wordNote` only.",
+            "description": "Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under, and every deleted note, which keeps no item (a note moved to another word since isn't in a later read about the first). For `knownWord`, `listWord`, `photoWord`, `wordNote` only. A cursor from a read with `item` reads only that item.",
             "name": "item",
             "in": "query"
           }
@@ -3907,7 +3907,7 @@
             }
           },
           "410": {
-            "description": "`invalid_cursor`: The cursor isn't one this service gave this account for this kind, or the account has since forgotten a deletion past it. Read again with no cursor.",
+            "description": "`invalid_cursor`: The cursor isn't one this service gave this account for this kind and item, or the account has since forgotten a deletion past it. Read again with no cursor.",
             "content": {
               "application/json": {
                 "schema": {

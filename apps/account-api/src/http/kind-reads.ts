@@ -40,7 +40,7 @@ const KindQuerySchema = z.object({
     .max(200)
     .optional()
     .openapi({
-      description: `Only those about one word or kanji: a Language Reference ID, \`kanji:\` and the kanji, or, for a note, the \`wn1:\` note identity it was saved under. For ${itemKinds} only.`
+      description: `Only those about one word or kanji: a Language Reference ID, \`kanji:\` and the kanji, or, for a note, the \`wn1:\` note identity it was saved under, and every deleted note, which keeps no item (a note moved to another word since isn't in a later read about the first). For ${itemKinds} only. A cursor from a read with \`item\` reads only that item.`
     })
 })
 
@@ -82,7 +82,7 @@ const readKind = createRoute({
     }),
     410: refusal({
       invalid_cursor:
-        "The cursor isn't one this service gave this account for this kind, or the account has since forgotten a deletion past it. Read again with no cursor."
+        "The cursor isn't one this service gave this account for this kind and item, or the account has since forgotten a deletion past it. Read again with no cursor."
     }),
     429: tooMany(requestsPerMinute.sync),
     500: failed

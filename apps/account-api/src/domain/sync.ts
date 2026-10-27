@@ -238,7 +238,7 @@ export async function readingFrom(
   cursors: Cursors,
   userId: string,
   cursor: string | null | undefined,
-  kind?: EntityType
+  kind?: string
 ): Promise<Position | undefined | null> {
   const from = cursor ? cursors.decode(userId, cursor, kind) : undefined
   if (!from) return from

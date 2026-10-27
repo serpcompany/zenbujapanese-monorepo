@@ -18,7 +18,8 @@ import {
   newestChangedFirst,
   nextListPosition,
   recentFirst,
-  wordsOfList
+  wordsOfList,
+  wordsOfPhoto
 } from './account-views'
 import { recentOrderCases } from './test/cases'
 
@@ -152,7 +153,7 @@ describe("a client's copy of the account", () => {
         entityId: `s${n}`
       }))
     )
-    expect(removed.ok && removed.value.map(outcome => outcome.status)).toEqual([
+    expect(removed.map(outcome => outcome.status)).toEqual([
       ...Array(50).fill('applied'),
       'conflict'
     ])
@@ -160,10 +161,41 @@ describe("a client's copy of the account", () => {
     expect(reads.map(read => read.query.cursor)).toEqual([undefined, 'searches'])
     expect(
       await copy.changeAll([{ entity: 'recentSearch', operation: 'remove', entityId: 's0' }])
-    ).toEqual({
-      ok: false,
-      failure: 'offline'
+    ).toEqual([{ status: 'failed', failure: 'offline' }])
+  })
+
+  test('says a change applied even when the read after it fails, and keeps what it showed when a read from the start fails', async () => {
+    const { copy, answer, page, pages } = scripted()
+    page('lists', false, put('list', food, 1, list(0)))
+    await copy.read('list')
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 2 }))
+    pages.push({ ok: false, failure: 'offline' })
+    expect(await copy.change('list', 'update', food, { name: 'Meals' })).toEqual({
+      status: 'applied',
+      unread: 'offline'
     })
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 3 }))
+    pages.push({ ok: false, failure: 'gone' }, { ok: false, failure: 'offline' })
+    expect(await copy.change('list', 'update', food, { name: 'Food' })).toEqual({
+      status: 'applied',
+      unread: 'offline'
+    })
+    expect(copy.held('list')).toEqual([{ entityId: food, version: 1, data: list(0) }])
+  })
+
+  test('sends one change at a time, each reading the account before the next is sent', async () => {
+    const { copy, sent, reads, answer, page } = scripted()
+    page('lists', false, put('list', food, 1, list(0)))
+    await copy.read('list')
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 2 }))
+    page('lists-2', false, put('list', food, 2, list(1)))
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 3 }))
+    await Promise.all([
+      copy.change('list', 'update', food, { position: 1 }),
+      copy.change('list', 'update', food, { position: 2 })
+    ])
+    expect(sent.map(mutation => mutation.baseVersion)).toEqual([1, 2])
+    expect(reads.map(read => read.query.cursor)).toEqual([undefined, 'lists', 'lists-2'])
   })
 
   test('says why a change was refused, and passes on a failure to send it', async () => {
@@ -236,6 +268,49 @@ describe("a note written over another device's change", () => {
     })
   })
 
+  async function editingMyNote() {
+    const harness = scripted()
+    harness.page('notes', false, put('wordNote', 'n', 1, note('Mine before.')))
+    await harness.copy.read('wordNote', word)
+    const theirs = put('wordNote', 'n', 2, note('Theirs.'))
+    const conflictsThenApplies = () => {
+      harness.answer(mutation => ({
+        id: mutation.id,
+        status: 'conflict',
+        version: 2,
+        current: theirs
+      }))
+      harness.answer(mutation => ({ id: mutation.id, status: 'applied', version: 1 }))
+    }
+    return { ...harness, began: harness.copy.heldOne('wordNote', 'n'), conflictsThenApplies }
+  }
+
+  test('sends a change from the version an edit began on, whatever the copy read since', async () => {
+    const { copy, sent, answer, page, began, conflictsThenApplies } = await editingMyNote()
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 1 }))
+    page('notes-2', false, put('wordNote', 'n', 2, note('Theirs.')))
+    await copy.change('wordNote', 'write', 'other', written('Another.'))
+    conflictsThenApplies()
+    expect(
+      await copy.change('wordNote', 'write', 'n', written('Mine after.'), began)
+    ).toMatchObject({ status: 'kept-as-new' })
+    expect(sent.slice(1).map(each => [each.entityId, each.baseVersion])).toEqual([
+      ['n', 1],
+      ['id-3', 0]
+    ])
+  })
+
+  test('keeps a note it kept as new under the same ID when the learner saves again', async () => {
+    const { copy, sent, began, conflictsThenApplies } = await editingMyNote()
+    for (let attempt = 0; attempt < 2; attempt++) {
+      conflictsThenApplies()
+      await copy.change('wordNote', 'write', 'n', written('Mine after.'), began)
+    }
+    const keptAs = sent.filter(each => each.entityId !== 'n').map(each => each.entityId)
+    expect(keptAs).toHaveLength(2)
+    expect(new Set(keptAs).size).toBe(1)
+  })
+
   test('sends nothing more when theirs already says what the learner wrote', async () => {
     const { copy, sent } = await conflicted(put('wordNote', 'n', 2, note('Same.')))
     expect(await copy.change('wordNote', 'write', 'n', written('Same.'))).toEqual({
@@ -286,6 +361,11 @@ describe("the account's data, shown as the apps show it", () => {
       held(`${food}/4`, null)
     ]
     expect(wordsOfList(words, food).map(each => each.entityId)).toEqual([`${food}/2`, `${food}/1`])
+    const onAPhoto = [
+      held('p/1', { savedAt: '2026-10-01T00:00:00.000Z' }),
+      held('p/2', { savedAt: '2026-10-02T00:00:00.000Z' })
+    ]
+    expect(wordsOfPhoto(onAPhoto, 'p').map(each => each.entityId)).toEqual(['p/2', 'p/1'])
     const { ids, newestFirst } = recentOrderCases.videos
     const videos = ids.map(id => held(id, { watchedAt: '2026-10-01T00:00:00.000Z' }))
     expect(recentFirst(videos, 'watchedAt').map(each => each.entityId)).toEqual(newestFirst)

@@ -43,10 +43,16 @@ export function listMoves(
   )
 }
 
-export const wordsOfList = (words: readonly Held[], listId: string): Shown[] =>
+const newestOn = (words: readonly Held[], ownerId: string, timeField: string): Shown[] =>
   present(words)
-    .filter(word => word.entityId.startsWith(`${listId}/`))
-    .sort((one, other) => ascending(textOf(other.data, 'addedAt'), textOf(one.data, 'addedAt')))
+    .filter(word => word.entityId.startsWith(`${ownerId}/`))
+    .sort((one, other) => ascending(textOf(other.data, timeField), textOf(one.data, timeField)))
+
+export const wordsOfList = (words: readonly Held[], listId: string) =>
+  newestOn(words, listId, 'addedAt')
+
+export const wordsOfPhoto = (words: readonly Held[], photoId: string) =>
+  newestOn(words, photoId, 'savedAt')
 
 export const recentFirst = (held: readonly Held[], timeField: string): Shown[] =>
   present(held).sort(

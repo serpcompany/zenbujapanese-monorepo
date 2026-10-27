@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, lt, lte, max, type SQL, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull, lt, lte, max, or, type SQL, sql } from 'drizzle-orm'
 import { accountFolder } from '../domain/photo-files'
 import type { AboutItem, AccountStore, LockedAccount } from '../domain/store'
 import { deletedAccounts } from './billing-schema'
@@ -34,7 +34,12 @@ function aboutTheItem(db: Drizzle, userId: string, about: AboutItem): SQL {
     db
       .select({ id: wordNotes.id })
       .from(wordNotes)
-      .where(and(eq(wordNotes.userId, userId), eq(wordNotes.itemId, about.itemId)))
+      .where(
+        and(
+          eq(wordNotes.userId, userId),
+          or(eq(wordNotes.itemId, about.itemId), isNull(wordNotes.itemId))
+        )
+      )
   )
 }
 
