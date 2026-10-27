@@ -11,7 +11,10 @@ says where it fits beside the Playwright tests, which use Playwright's Chromium 
   checkout sees another's Chrome. `start`, `selftest`, and `verify` take the `lock` file before
   they spawn a daemon (`lock.mjs`), so two agents starting at once can't both get one: the second
   fails at once with "Chrome is in use by pid N" and leaves the first running. The lock names the
-  daemon's pid, goes when it stops, and is taken over once its pid is dead. A start also refuses
+  daemon's pid, goes when it stops, and is taken over once its pid is dead: under `lock.break`,
+  only if it still names that dead pid, so two agents that find it stale can't remove each
+  other's fresh lock. If an agent died holding `lock.break`, the error names the file to remove.
+  Taking the lock also removes `lock.<pid>` files a dead agent left. A start also refuses
   a Chrome on 9339 that this harness didn't start, and a daemon that finds 9340 taken exits with
   the holder's pid, touching nothing. A run accepts only the state its own daemon wrote, stops
   only that daemon, and on any failed start stops its daemon and Chrome. Check `status`, and
