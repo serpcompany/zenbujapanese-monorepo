@@ -186,7 +186,7 @@ Reads what sync would answer of one kind alone, for a client that keeps no copy 
 
 - `cursor` (string, optional, 1 to 200 characters): The `cursor` the last read of this kind answered, to read what changed since. Leave it out to read every one. A sync's cursor isn't one, nor another kind's.
 - `limit` (integer, optional, 1 to 500): The most entities to answer this time. Default 100.
-- `item` (string, optional, 1 to 200 characters): Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under. For `knownWord`, `listWord`, `photoWord`, `wordNote` only.
+- `item` (string, optional, 1 to 200 characters): Only those about one word or kanji: a Language Reference ID, `kanji:` and the kanji, or, for a note, the `wn1:` note identity it was saved under, and every deleted note, which keeps no item (a note moved to another word since isn't in a later read about the first). For `knownWord`, `listWord`, `photoWord`, `wordNote` only. A cursor from a read with `item` reads only that item.
 
 **Answers:**
 
@@ -195,7 +195,7 @@ Reads what sync would answer of one kind alone, for a client that keeps no copy 
 - **401** `unauthorized`: No access token, or one that is expired, forged, or for an account that no longer exists. Get a new one from GET /v1/auth/token.
 - **402** `subscription_required`: Syncing and the account's other cloud features need a subscription, and this account has none that is active. Nothing was applied: keep the changes on the device, and show the paywall. GET /v1/me/subscription says what to offer.
 - **403** `insufficient_scope`: This app's access to the account doesn't include the kind's read scope.
-- **410** `invalid_cursor`: The cursor isn't one this service gave this account for this kind, or the account has since forgotten a deletion past it. Read again with no cursor.
+- **410** `invalid_cursor`: The cursor isn't one this service gave this account for this kind and item, or the account has since forgotten a deletion past it. Read again with no cursor.
 - **429** `too_many_requests`: This account sent more than 120 requests here from this app in the current minute, or the app more than its limit from all its accounts together. Wait the seconds `Retry-After` says.
 - **500** `internal`: The service failed, and nothing says why. Try again later, backing off.
 

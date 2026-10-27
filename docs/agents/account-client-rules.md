@@ -195,12 +195,17 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   `hasMore`: each entity once, as sync answers it, a removed one as a `delete`, in the order the
   account last changed them, oldest first (Known Words lists them newest first from it). With
   `item`, only those about one word or kanji: its Known mark (`knownWord`), its place in each list
-  (`listWord`), its photos (`photoWord`), or its notes (`wordNote`). The answer's cursor is this
-  kind's alone: sync refuses it, as this read refuses sync's or another kind's (`410`).
-- **Change** through `POST /v1/sync`, one mutation at a time, or up to 50 at once to clear every
-  search or move lists (`changeAll`), at the version the read gave (0 for none), then read the kind
-  again from its cursor, with its list or photo, or its words, when the
-  page holds them, so the page shows the account as it is, a change from elsewhere included. A
-  deleted list or photo drops its words. A `410` reads the kind again from no cursor.
+  (`listWord`), its photos (`photoWord`), or its notes (`wordNote`) with every deleted note, which
+  keeps no item; a note moved to another word since drops out of a later read about the first. The
+  answer's cursor is this kind's and item's alone: sync refuses it, as this read refuses sync's or
+  another kind's or item's (`410`).
+- **Change** through `POST /v1/sync`, one mutation at a time and each after the last, or up to 50
+  at once to clear every search or move lists (`changeAll`), at the version the read gave (0 for
+  none), or, for a note or a name being edited, the one its edit began from, then read the kind
+  again from its cursor, with its list or photo, or its words, when the page holds them, so the
+  page shows the account as it is, a change from elsewhere included. A deleted list or photo drops
+  its words. A `410` reads the kind again from no cursor, and shows it only once every page came.
 - **Results** follow the rules above: a conflict shows the account's copy, and a note's conflict
-  keeps the learner's text as the app does (Notes); a rejection changes nothing and says why.
+  keeps the learner's text as the app does (Notes), as a new note under one ID however often the
+  learner saves; a rejection changes nothing and says why. A change that applied says so even when
+  the read after it fails (`unread`), so a retry never sends it twice.

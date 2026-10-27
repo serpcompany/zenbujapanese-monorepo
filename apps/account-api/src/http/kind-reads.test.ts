@@ -142,6 +142,25 @@ describe('reading one kind', () => {
     expect(await about('wordNote', `wn1:${'a'.repeat(64)}`)).toEqual([earlierNote.entityId])
     expect(await about('photoWord', wordItem(1))).toEqual([`${photoId}/${wordItem(1)}`])
     expect(await about('knownWord', wordItem(3))).toEqual([])
+    const notes = page(await accounts.readKind(learner.token, 'wordNote', { item: wordItem(1) }))
+    await send(learner, {
+      entity: 'wordNote',
+      operation: 'delete',
+      entityId: note.entityId,
+      baseVersion: 1
+    })
+    const since = await accounts.readKind(learner.token, 'wordNote', {
+      item: wordItem(1),
+      cursor: notes.cursor
+    })
+    expect(page(since).changes).toEqual([deleted('wordNote', note.entityId, 2)])
+    for (const query of [{}, { item: wordItem(2) }] as Record<string, string>[]) {
+      const refused = await accounts.readKind(learner.token, 'wordNote', {
+        ...query,
+        cursor: notes.cursor
+      })
+      expect(refused.status, JSON.stringify(query)).toBe(410)
+    }
   })
 
   test('refuses an item for a kind no item names, and one in no form an item takes', async () => {

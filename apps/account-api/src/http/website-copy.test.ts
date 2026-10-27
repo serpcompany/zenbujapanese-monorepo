@@ -129,7 +129,7 @@ describe('the website, editing what an app syncs', () => {
           fields: { position }
         }))
       )
-    ).toEqual({ ok: true, value: moves.map(() => ({ status: 'applied' })) })
+    ).toEqual(moves.map(() => ({ status: 'applied' })))
     expect(listsInOrder(website.held('list')).map(list => list.entityId)).toEqual([verbs, food])
     await phone.sync()
     expect(phoneState(phone)).toEqual(websiteState(website))
