@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  holdsList,
+  listHolds,
   listPage,
   listRows,
   newListHolding,
@@ -35,7 +35,7 @@ function NewList({ copy, synced, item, account }: SyncedPartProps) {
     const id = creating.current ?? crypto.randomUUID()
     creating.current = id
     await synced.run(held => newListHolding(held, { id, typed: name }, item), words.nameRule)
-    if (!holdsList(copy, id)) return
+    if (!listHolds(copy, id, item)) return
     creating.current = null
     setNaming(false)
     setName('')

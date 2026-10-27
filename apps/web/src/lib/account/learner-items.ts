@@ -63,7 +63,7 @@ export const listRows = (copy: SyncedCopy, item: SavedItem): ListRow[] =>
   listsInOrder(copy.held('list')).map(list => ({
     id: list.entityId,
     name: String(list.data.name ?? ''),
-    holds: Boolean(copy.heldOne('listWord', listWordId(list.entityId, item))?.data)
+    holds: listHolds(copy, list.entityId, item)
   }))
 
 export const putInList = (copy: SyncedCopy, listId: string, item: SavedItem, holds: boolean) =>
@@ -71,8 +71,8 @@ export const putInList = (copy: SyncedCopy, listId: string, item: SavedItem, hol
     ? copy.change('listWord', 'add', listWordId(listId, item), labelsOf(item))
     : copy.change('listWord', 'remove', listWordId(listId, item))
 
-export const holdsList = (copy: SyncedCopy, listId: string) =>
-  Boolean(copy.heldOne('list', listId)?.data)
+export const listHolds = (copy: SyncedCopy, listId: string, item: SavedItem) =>
+  Boolean(copy.heldOne('listWord', listWordId(listId, item))?.data)
 
 export async function newListHolding(
   copy: SyncedCopy,

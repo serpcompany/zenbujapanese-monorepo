@@ -127,7 +127,7 @@ describe('signed in with a subscription, Add to List', () => {
     expect(standIn.dataOf('listWord', `${food}/${word.id}`)).toBeNull()
   })
 
-  test('with no lists, says so, and a list made whose word then fails to go in shows unchecked, with why', async () => {
+  test('with no lists, says so, and a list made whose word then fails to go in keeps its name to try again, which puts the word in that list', async () => {
     const standIn = standingIn()
     const service = globalThis.fetch
     let changes = 0
@@ -143,7 +143,17 @@ describe('signed in with a subscription, Add to List', () => {
     await submit(page(), syncedText.lists.create)
     await loaded(getDictionary('en').account.messages.offline)
     expect(shownLists()).toEqual([['Travel', 'false']])
-    expect(named('button', syncedText.lists.newList)).toBeTruthy()
+    expect(named<HTMLInputElement>('input', syncedText.lists.name).value).toBe('Travel')
     expect(standIn.sent.map(each => each.operation)).toEqual(['create'])
+    await submit(page(), syncedText.lists.create)
+    await vi.waitFor(() => expect(checkbox('Travel').getAttribute('aria-checked')).toBe('true'))
+    expect(shownLists()).toEqual([['Travel', 'true']])
+    expect(named('button', syncedText.lists.newList)).toBeTruthy()
+    const [created, ...rest] = standIn.sent
+    expect(rest.map(each => [each.operation, each.entityId])).toEqual([
+      ['create', created?.entityId],
+      ['add', `${created?.entityId}/${word.id}`]
+    ])
+    expect(standIn.dataOf('list', created?.entityId ?? '')).toMatchObject({ name: 'Travel' })
   })
 })
