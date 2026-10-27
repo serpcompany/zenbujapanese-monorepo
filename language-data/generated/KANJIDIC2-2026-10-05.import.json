@@ -16,7 +16,7 @@
     "documentation_url": "https://www.edrdg.org/wiki/index.php/KANJIDIC_Project"
   },
   "transform": {
-    "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v1",
+    "identity": "edrdg-kanjidic2-radicals-to-zenbu-kanji-reference-data-v2",
     "header": {
       "fileVersion": "4",
       "databaseVersion": "2026-278",
@@ -45,7 +45,6 @@
       "misc/grade",
       "misc/stroke_count",
       "misc/freq",
-      "misc/jlpt",
       "reading_meaning/rmgroup/reading[@r_type='ja_on' or @r_type='ja_kun']",
       "reading_meaning/rmgroup/meaning[not(@m_lang) or @m_lang='en']",
       "reading_meaning/nanori"
@@ -55,13 +54,14 @@
       "query_code (including commercial-incompatible SKIP fields)",
       "non-English meanings",
       "non-Japanese readings",
-      "dictionary-reference identifiers"
+      "dictionary-reference identifiers",
+      "misc/jlpt, the pre-2010 JLPT level, which Waller's lists replace"
     ],
     "metadata_source_sha256": "d9184343a8ce9e999ce9d22d45ca7201f906f80064073fb210faff436e7fa7e4",
     "component_artifact_sha256": "f7c9eed0f56739c79e7970af916567fbe9d7c04ab084dbc24fac4bd0a6bd2a3c",
-    "import_tool_sha256": "6d2c5bee0dc7a35651cb7b841a62806ae9ac46771dbc7ba4aeac034f13eeee59",
+    "import_tool_sha256": "046d32c9f1d1870232df85a0e25745cef0cce65f8e25949684580c1820669f06",
     "shared_tooling_sha256": "0c0dec180f4f11f49c6d1ee6048d9a3dc4986d88ef5fc4bc6aa9302e62743b39",
-    "artifact_sha256": "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad",
-    "artifact_bytes": 4340453
+    "artifact_sha256": "c42701153068b7f0a9252dd3311c8810a36325749f3bdbe391c0a752eb6e866b",
+    "artifact_bytes": 4189847
   }
 }

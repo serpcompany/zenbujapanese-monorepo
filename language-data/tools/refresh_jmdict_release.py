@@ -25,6 +25,7 @@ PINNED_DIGEST = re.compile(r'^RELEASED_NOTE_IDENTITIES = \(\n    "[0-9a-f]{64}"\
 CHANGED_NOTE_IDENTITIES = (
     "SELECT count(*) FROM previous.entries o JOIN main.entries e USING (id) WHERE e.note_identity <> o.note_identity"
 )
+SUDACHI_DICTIONARY = "system_core.dic"
 RECORDED_ON_A_MAC = {
     "search-retrieval": "SearchConformanceTests",
     "search-results": "SearchResultsConformanceTests",
@@ -32,10 +33,13 @@ RECORDED_ON_A_MAC = {
     "word-detail": "WordDetailConformanceTests",
     "kanji-detail": "KanjiDetailConformanceTests",
     "kanji-element": "KanjiElementConformanceTests",
+    "sentence-search": "SentenceSearchConformanceTests",
+    "sentence-results": "SentenceResultsConformanceTests",
 }
 RECORDED_WITHOUT_A_MAC = {
     "tokenizer": "`pnpm --filter zenbujapanese-dictionary-api tokenizer-suite`, from kuromoji.js",
     "romaji": "by hand",
+    "sudachi-pack": "by hand",
 }
 
 
@@ -97,7 +101,8 @@ def start_release(today: date, releases: Path = RELEASES, release_file: Path = R
 
 
 def suite_pins(suite: dict) -> list[dict]:
-    return suite.get("artifacts") or ([suite["artifact"]] if suite.get("artifact") else [])
+    pins = suite.get("artifacts") or ([suite["artifact"]] if suite.get("artifact") else [])
+    return [pin for pin in pins if pin["name"] != SUDACHI_DICTIONARY]
 
 
 def stale_suites(conformance: Path = CONFORMANCE, resources: Path = RESOURCES) -> dict[str, list[str]]:

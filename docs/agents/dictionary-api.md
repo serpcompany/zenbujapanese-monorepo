@@ -28,7 +28,7 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   `build_ranked_lists.py`). The app doesn't bundle it. With TUBELEX, which the app bundles, the
   service has all eight of the app's ranked frequency dictionaries; `checkArtifact` refuses a file
   that lacks one the core lists (`packages/dictionary-core/src/browse/lists.ts`).
-- `KanjiReferenceData.json` and `KanjiElementReferenceData.json`.
+- `KanjiReferenceData.json`, `KanjiElementReferenceData.json`, and `RadicalReferenceData.json`.
 - The tokenizer's dictionary files (`Resources/Kuromoji/`, kuromoji.js's build of MeCab IPADIC),
   for example word links and conjugated form examples. `src/tokenizer.ts` checks each file's
   SHA-256 against its pin, unpacks it, and hands the files to the core's tokenizer
@@ -36,16 +36,16 @@ git lfs pull --include="apps/ios/Modules/Sources/SearchExperience/Resources/**"
   ([`dictionary-core.md`](dictionary-core.md), The tokenizer). New files are a new tokenizer:
   record the tokenizer suite again with `pnpm tokenizer-suite`, and the word-detail and
   example-search suites on a Mac.
-- Sudachi's dictionary, for sentence search: the SudachiDict Core the app pins in
-  `LanguageTechnologyPackCatalog.json`. `pnpm sudachi` downloads it into `.sudachi/`, checking
-  the download and `system.dic` against the catalog's SHA-256s, and keeps a dictionary already
-  there that checks out (`scripts/fetch-sudachi.mjs` also takes the resources folder and the
-  output path, which the image's build passes). `@nikkei/napi-sudachi` 0.12.0 builds the same
-  sudachi.rs commit the app pins, and the service checks that commit and the app's `char.def` and
-  `unk.def` before it loads. Sentence search looks up Sudachi's Mode C words, as the app's
-  `SudachiJapaneseMorphologyAdapter` does. Without the dictionary the service won't start; set
-  `SUDACHI_DICTIONARY=` (empty) to run it with sentence search off, where a sentence finds only
-  direct matches.
+- Sudachi's dictionary, for sentence search: the one pack `LanguageTechnologyPackCatalog.json`
+  bundles (`scripts/sudachi-pack.mjs`), as the app and its build choose it, by the cases in
+  `language-data/conformance/sudachi-pack.json`. `pnpm sudachi` downloads it into `.sudachi/`,
+  checking the download and `system.dic` against the catalog's SHA-256s, and keeps one there that
+  checks out (it takes the resources folder and output path, as the image's build passes them).
+  `@nikkei/napi-sudachi` 0.12.0 builds the same sudachi.rs commit the app pins, and the service
+  checks that commit and the app's `char.def` and `unk.def` before it loads. It hands the core
+  Sudachi's Mode C morphemes, as the app does, and the core chooses the words a sentence searches.
+  Without the dictionary the service won't start; set `SUDACHI_DICTIONARY=` (empty) to run it with
+  sentence search off, where a sentence finds only direct matches.
 - `language-data/release.json`, its pin in `language-data/releases/`, and its retired entries.
 
 ## Run it
@@ -69,7 +69,7 @@ against it, name it in `.dev.vars` in `apps/web` (see [`web.md`](web.md), Dictio
 | `DICTIONARY_API_TOKEN` | required | The bearer token every `/v1` request but the app routes' must carry, at least 16 characters. The website's Worker holds the same value. |
 | `PORT` | `8788` | The HTTP port. `pnpm dev` sets this checkout's unless the shell or `.env` has. |
 | `DICTIONARY_RESOURCES` | the app's `Resources` | Where the app's files are. |
-| `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty turns sentence search off. |
+| `SUDACHI_DICTIONARY` | `.sudachi/system_core.dic` | Sudachi's dictionary; empty runs without it. |
 | `DICTIONARY_API_WORKERS` | CPU cores, at most 4 | How many worker threads answer requests. |
 | `DICTIONARY_API_RELEASE` | `local` | A name for this build of the code, such as its commit. |
 | `LANGUAGE_DATA_RELEASE_FILE` | `language-data/release.json` | The language-data release the files belong to, which the app routes name (the image copies it to `/service/language-data/release.json`). |
@@ -100,7 +100,7 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | --- | --- |
 | `GET /healthz` | No token. 503 while starting; then the build, contract, and features. |
 | `GET /v1/info` | The build, the artifact's name and SHA-256, the features, and `languageData`: the language-data release and the SHA-256 of each file a word card is read from. |
-| `GET /v1/search/<query>` | The results screen. |
+| `GET /v1/search/<query>?picked=` | The results screen; `picked=1`, a radical pick's leading words. |
 | `GET /v1/search/<query>/examples?from=` | 25 of the examples the Example Sentences row opens, from `from`; 404 past its list (`example-positions.test.ts`). |
 | `GET /v1/words/<ent_seq>` | A word page's rows, its slug, the slugs it links to, and which kanji have details (`kanjiPages`). |
 | `GET /v1/words/<ent_seq>/examples?from=` | 25 more of a word's examples; 404 past its list. |
@@ -109,7 +109,8 @@ wrong; a 503 means the service is still starting; a 500 says nothing more and lo
 | `GET /v1/sitemaps/words` | Each word sitemap's `ent_seq` range. |
 | `GET /v1/sitemaps/words/<n>?after=&limit=` | A sitemap's words after `after`, with their slugs. |
 | `GET /v1/retired` | The release's retired entries, each with its replacement or `null`. |
-| `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers (Apps, below), for the website's Kanji to Furigana. |
+| `GET /v1/radicals` | The radical file the website's radical panel reads (`checkedRadicalFile`). |
+| `GET /v1/segmentation/<text>` | `tokens`: the text split into words, as `/v1/apps/segmentation` answers and refuses (`isSegmentableText`), for Kanji to Furigana. |
 | `GET /v1/browse` | The browse pages' totals: entries, each kana script's words, common words and the 24 most used content words among them (no particles, auxiliaries, conjunctions, copulas, or bare prefixes and suffixes), the kanji lists' sizes and grade 1's kanji, and the JLPT levels' words. |
 | `GET /v1/browse/kana/<script>` | `hiragana` or `katakana`: how many words start with each kana. |
 | `GET /v1/browse/kana/<script>/<kana>` | A kana's two-kana groups with their counts, the words read as that kana alone, and the kanas before and after it. |
@@ -145,21 +146,20 @@ answers, headers, and error codes, and every field of a card and a token. An app
   reads the keys (`jose`'s remote key set) again once they're ten minutes old, so a key the account
   service drops stops working within ten minutes, and for a key it doesn't know at most every 30
   seconds. While the account service is down, it keeps checking tokens with the keys it last read,
-  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try.
-  No token, or one that fails any of that but the scope, is `401 unauthorized` with
-  `WWW-Authenticate: Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
+  and tries again at most every 30 seconds, logging `account keys unavailable` once for each try. No
+  token, or one that fails any of that but the scope, is `401 unauthorized` with `WWW-Authenticate:
+  Bearer`; a token without the scope is `403 insufficient_scope`, whose `WWW-Authenticate` names the
   scope; and a token signed by a key the service can't read is `503 unavailable`. The check is in
-  `src/account-tokens.ts`; the service imports nothing from the account service.
+  `src/account-tokens.ts`, through `packages/node-service`'s, which the account service runs too.
 - **Bounds.** At most 100 IDs, counted as sent, so one sent twice counts twice, and 200
   characters (`400 bad_request` past them), and
   `APP_REQUESTS_PER_MINUTE` requests a minute for each account (`sub`), counted by each server
   process, after which a request is `429 rate_limited` with `Retry-After`.
-- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of
-  each file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as
-  its `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an
-  answer a day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is
-  `304` before any work. Cards stay right while `languageData` does: an app fetches again when
-  any of it changes.
+- **Caching.** An answer carries `languageData`, the language-data release and the SHA-256 of each
+  file a card is read from, and is `Cache-Control: private, max-age=86400` with the build as its
+  `ETag`; an error carries neither. The build changes with each deploy, so an app keeps an answer a
+  day and then revalidates with `If-None-Match`; a matching tag, strong or weak, is `304` before any
+  work. Cards stay right while `languageData` does: an app fetches again when any of it changes.
 - **The contract.** The routes are plain Hono, so their contract is declared beside their tests,
   in `src/conformance/app-contract.ts`, with `@hono/zod-openapi` (a dev dependency, never in the
   image). `src/openapi.test.ts` writes `openapi.json` and the API reference and fails when either
@@ -169,11 +169,10 @@ answers, headers, and error codes, and every field of a card and a token. An app
   answers is the one declared for its status. On the app's data, every word card and segmentation
   answer the conformance suite asks for is checked against its schema.
 - **On the server.** A person makes the account service's JWKS reachable from the dictionary
-  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish
-  that proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
-  redirect (Set up the server, step 2). Then
-  they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to each environment's settings (Set up the
-  server, step 1). Until then the app routes answer 503.
+  service's slots, which reach only nginx: an nginx site on a port the server doesn't publish that
+  proxies to the account service's `/v1/auth/jwks`, so the slots read it straight, without a
+  redirect (Set up the server, step 2). Then they add `ACCOUNT_API_URL` and `ACCOUNT_JWKS_URL` to
+  each environment's settings (Set up the server, step 1). Until then the app routes answer 503.
 
 ## How it runs
 
@@ -234,17 +233,18 @@ useful. The romaji suite (`romaji.json`, `romaji.conformance.test.ts`) is the ex
 readings and sentences with the romaji Foundation gave them, depends on no data file, so it pins
 none, and it is not among a language-data release's suites, whose packager refuses a suite that pins
 nothing. It is replayed through the core's `romaji` and `sentenceRomaji` and through the entry point
-the app calls. A suite the app recorded with reduced text analysis runs without Sudachi, as the app
-did. The results suite compares a row's first entry number only: the service keeps its Language
-Reference ID's, the first of the entries the app merged into the row. Where the app's example
-retrieval answers an error, the suite records it, and the page lists no examples either; none
-recorded does now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip;
-`ZENBU_REQUIRE_ARTIFACT=1` makes them fail instead, as CI does, and without Sudachi's dictionary the
-retrieval suite's sentence-search cases skip. No suite records sentence search yet (recording it
-needs the app's Japanese Text Analysis pack in the Simulator), so `sentence-search.test.ts` checks
-the cases the app's manual checks name. `conjugation-examples.test.ts` pages a form's examples.
-`full-text.test.ts` checks English search where FTS4 differs from other engines. `frequency.test.ts`
-reads the bundled lists as the app does, one file each, and as the service does.
+the app calls. A suite that records its `textAnalysis` runs with Sudachi only if the app did. The
+results suite compares a row's first entry number only: the service keeps its Language Reference
+ID's, the first of the entries the app merged into the row. Where the app's example retrieval
+answers an error, the suite records it, and the page lists no examples either; none recorded does
+now: Ｈ, ＮＧ, and Ｔシャツ list theirs. Without the files the suites skip; `ZENBU_REQUIRE_ARTIFACT=1`
+makes them fail instead, as CI does, and without Sudachi's dictionary the retrieval suite's
+sentence-search cases and the two sentence suites skip. The sentence suite
+(`sentence-search.conformance.test.ts`) holds Sudachi's words for each query, the words searched,
+and the results to the app's, and the sentence results suite (`sentence-results.json`) the screen of
+each that lists Discovered Words, with its heading. `conjugation-examples.test.ts` pages a form's
+examples. `full-text.test.ts` checks English search where FTS4 differs from other engines.
+`frequency.test.ts` reads the bundled lists as the app does, one file each, and as the service does.
 
 The `Dictionary API` workflow runs `pnpm check` on pull requests with the Git LFS files and
 Sudachi's dictionary cached, then the website's rendered-page gate against the built service. The
@@ -259,7 +259,8 @@ meant to answer differently, and read the diff.
 
 `pnpm fixtures` regenerates the core's local fixtures (`packages/dictionary-core/src/fixtures/`),
 for `pnpm dev` without a service: the いる homographs and the words written with 要, with two pages of
-examples for each and for each of their conjugated forms, the kanji 要, and Kanji to Furigana's
+examples for each and for each of their conjugated forms, the kanji 要, the radical panel's file for
+the kanji sharing a radical with 要, each fixture search's leading words, and Kanji to Furigana's
 sample and Try texts' segmentation. The code the service answers with reads them from the app's
 files (or the `Resources` folder given), so their shapes can't drift from what staging and
 production render. It writes one row per line, so a regenerated fixture diffs by row.

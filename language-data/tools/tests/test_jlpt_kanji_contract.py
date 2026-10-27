@@ -20,6 +20,10 @@ class JlptKanjiContractTests(unittest.TestCase):
         )
         self.assertEqual({file["level"]: file["kanji"] for file in record["files"]}, dict(levels))
 
+    def test_no_kanji_keeps_kanjidic2s_pre_2010_level_beside_wallers(self) -> None:
+        reference = json.loads(KANJI_REFERENCE.read_text(encoding="utf-8"))
+        self.assertEqual([], [entry["character"] for entry in reference["entries"] if "jlpt" in entry])
+
     def test_the_kanji_reference_records_the_lists_it_was_built_from(self) -> None:
         report = json.loads(KANJIDIC2_REPORT.read_text(encoding="utf-8"))["transform"]
         self.assertEqual(sha256(RECORD), report["jlpt_kanji_levels"]["record_sha256"])

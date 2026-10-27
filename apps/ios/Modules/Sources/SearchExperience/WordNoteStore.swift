@@ -129,13 +129,7 @@ actor WordNoteStorage {
   }
 
   static func normalized(_ text: String) -> String {
-    let lines = text.precomposedStringWithCanonicalMapping
-      .replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n")
-    let spaced = lines.unicodeScalars.map { scalar -> Character in
-      scalar.properties.generalCategory == .control && scalar != "\n" && scalar != "\t"
-        ? " " : Character(scalar)
-    }
-    return String(spaced).trimmingCharacters(in: .whitespacesAndNewlines)
+    AccountRules.shared.keptNoteText(text)
   }
 
   func keptNotes() async -> [KeptNote] {

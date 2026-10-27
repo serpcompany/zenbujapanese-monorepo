@@ -1,0 +1,96 @@
+{
+  "rule": "A name is 1 to 100 characters, with no control characters.",
+  "accepted": [
+    {
+      "covers": "spaces and a tab around and inside, made one space",
+      "typed": "  Kana \u0009  Fan ",
+      "name": "Kana Fan"
+    },
+    { "covers": "a precomposed accent", "typed": "José", "name": "José" },
+    { "covers": "a decomposed accent, kept in NFC", "typed": "Jose\u0301", "name": "José" },
+    { "covers": "kanji", "typed": "全部", "name": "全部" },
+    {
+      "covers": "a byte order mark before it, which is trimmed as JavaScript trims",
+      "typed": "\ufeffKana",
+      "name": "Kana"
+    },
+    { "covers": "a byte order mark after it, trimmed too", "typed": "Kana\ufeff", "name": "Kana" },
+    {
+      "covers": "a no-break space inside, made a space",
+      "typed": "Kana\u00a0Fan",
+      "name": "Kana Fan"
+    },
+    { "covers": "ideographic spaces around it", "typed": "\u3000Kana\u3000", "name": "Kana" },
+    {
+      "covers": "a line separator inside, made a space",
+      "typed": "Kana\u2028Fan",
+      "name": "Kana Fan"
+    },
+    {
+      "covers": "a hundred spaces inside, made one",
+      "typed": "Kana                                                                                                     Fan",
+      "name": "Kana Fan"
+    },
+    {
+      "covers": "a combining mark on a space, which stays and counts",
+      "typed": "Kana \u0301Fan",
+      "name": "Kana \u0301Fan"
+    },
+    { "covers": "an emoji", "typed": "😀 Kana", "name": "😀 Kana" },
+    {
+      "covers": "an emoji with a variation selector",
+      "typed": "❤\ufe0f Kana",
+      "name": "❤\ufe0f Kana"
+    },
+    { "covers": "a kanji outside the basic plane", "typed": "𠮷野", "name": "𠮷野" },
+    {
+      "covers": "a hundred letters, the most",
+      "typed": { "text": "a", "times": 100 },
+      "name": { "text": "a", "times": 100 }
+    },
+    {
+      "covers": "a hundred kanji",
+      "typed": { "text": "語", "times": 100 },
+      "name": { "text": "語", "times": 100 }
+    },
+    {
+      "covers": "a hundred emoji, counted as characters, not UTF-16 units",
+      "typed": { "text": "😀", "times": 100 },
+      "name": { "text": "😀", "times": 100 }
+    },
+    {
+      "covers": "a hundred letters with spaces around them, counted once trimmed",
+      "typed": { "text": "a", "times": 100, "around": " " },
+      "name": { "text": "a", "times": 100 }
+    },
+    {
+      "covers": "a hundred decomposed accents, counted once in NFC",
+      "typed": { "text": "e\u0301", "times": 100 },
+      "name": { "text": "é", "times": 100 }
+    }
+  ],
+  "refused": [
+    { "covers": "nothing", "typed": "" },
+    { "covers": "only spaces", "typed": "   " },
+    { "covers": "only a byte order mark", "typed": "\ufeff" },
+    { "covers": "a byte order mark inside, an invisible format character", "typed": "Ka\ufeffna" },
+    { "covers": "a zero-width space inside", "typed": "Ka\u200bna" },
+    { "covers": "a zero-width space before it, which is not trimmed", "typed": "\u200bKana" },
+    { "covers": "a soft hyphen", "typed": "Ka\u00adna" },
+    { "covers": "a null character", "typed": "a\u0000b" },
+    { "covers": "a next-line control, which JavaScript does not trim", "typed": "Kana\u0085Fan" },
+    { "covers": "an emoji joined by a zero-width joiner", "typed": "👩\u200d💻 Kana" },
+    {
+      "covers": "a hundred and one letters",
+      "typed": { "text": "a", "times": 101 }
+    },
+    {
+      "covers": "a hundred and one emoji",
+      "typed": { "text": "😀", "times": 101 }
+    },
+    {
+      "covers": "ninety-nine letters and a space carrying a combining mark: 101 characters",
+      "typed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \u0301"
+    }
+  ]
+}

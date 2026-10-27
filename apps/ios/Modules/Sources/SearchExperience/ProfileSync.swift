@@ -8,9 +8,9 @@ struct ProfileFields: Codable, Hashable, Sendable {
 
   var uploadable: ProfileFields {
     ProfileFields(
-      name: name.flatMap { UserProfile.isAccountName($0) ? $0 : nil },
+      name: name.flatMap { AccountRules.shared.name($0) == nil ? nil : $0 },
       username: username.flatMap {
-        $0.isEmpty || UserProfile.acceptedUsername($0) == $0 ? $0 : nil
+        $0.isEmpty || AccountRules.shared.username($0) == $0 ? $0 : nil
       })
   }
 

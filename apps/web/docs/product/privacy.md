@@ -2,7 +2,7 @@
 
 `/legal/privacy/` is the privacy policy for the Zenbu Japanese iPhone app, Tomodachi for iPhone
 and Mac, the website, and the Zenbu account. The shipped apps and their App Store listings reach it
-through `/privacy` ([App links](dictionary.md#header-footer-and-site-wide)). Its text is
+through `/privacy` ([App links](site-wide.md)). Its text is
 `apps/web/src/app/[locale]/legal/privacy/page.tsx`. Each behavior below says what the page says, where it
 comes from, and the automated check that enforces it (see
 [How behavior is verified](index.md#how-behavior-is-verified)).

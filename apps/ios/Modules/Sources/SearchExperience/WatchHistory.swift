@@ -24,6 +24,10 @@ struct WatchedVideo: Codable, Hashable, Identifiable, Sendable {
     video.position = position.flatMap { $0.isFinite ? $0 : nil }
     return video
   }
+  var withNothingToSend: WatchedVideo {
+    WatchedVideo(videoID: videoID, watchedAt: watchedAt)
+  }
+
   var thumbnailURL: URL? { URL(string: "https://i.ytimg.com/vi/\(videoID)/mqdefault.jpg") }
 
   func isNewer(than other: WatchedVideo) -> Bool {

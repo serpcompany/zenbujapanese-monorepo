@@ -1,4 +1,5 @@
 import type { KanjiSectionKind } from '@zenbu/dictionary-core/detail/kanji'
+import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
@@ -10,6 +11,7 @@ import { getDictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'
 import { KanjiReadings } from './kanji-readings'
 import { LearnerPrompt } from './learner-prompt'
+import { RomajiLine } from './reading-aid-lines'
 import { RubyText } from './ruby-text'
 import { SavedItemActions } from './saved-item-actions'
 import { StrokeOrder } from './stroke-order'
@@ -114,9 +116,13 @@ function KanjiDetailsPart({
                   className="shrink-0 underline-offset-4 hover:underline"
                 >
                   <RubyText segments={word.ruby} className="text-xl" />
+                  <RomajiLine romaji={romaji(word.reading)} className="text-sm" />
                 </Link>
               ) : (
-                <RubyText segments={word.ruby} className="shrink-0 text-xl" />
+                <span className="shrink-0">
+                  <RubyText segments={word.ruby} className="text-xl" />
+                  <RomajiLine romaji={romaji(word.reading)} className="text-sm" />
+                </span>
               )}
               <span className="ml-auto text-right text-muted-foreground" lang={sourceLang(locale)}>
                 {word.summary}

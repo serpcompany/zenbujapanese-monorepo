@@ -9,7 +9,8 @@ one. This doc holds what is this repository's own: its rules' scope, its layers,
 
 Before opening a pull request, run `pnpm check` from the repository root: `pnpm verify`, then each
 package's `pnpm check` (`apps/web`, `apps/dictionary-api`, `apps/account-api`,
-`packages/dictionary-core`, `packages/node-service`, `tools/checks`), one after another. A change to
+`packages/account-rules`, `packages/dictionary-core`, `packages/node-service`, `tools/checks`),
+one after another. A change to
 `language-data` also runs the pipeline's tests, and one to its sources, reports, or tools the data
 tools' contract tests ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's
@@ -146,8 +147,10 @@ type (`chore`, `docs`).
 - **Agents use GitHub as `serp-agent[bot]`,** not `gh auth switch` ([`ci-agents.md`](ci-agents.md)):
   `eval "$(bash ~/dev/repos/serp/skills/serp-github-app/scripts/env.sh)" && <command>`.
 
-The `Pull request` workflow checks the title, the closing issue, and the test in a fix
-([`ci.md`](ci.md), Pull request).
+The `Pull request` workflow checks the title, the branch's name and that its type is the title's,
+the closing issue, and the test in a fix ([`ci.md`](ci.md), Pull request). Merging rather than
+rebasing, and grouping, are held by review alone: a rebased branch's commits look like a new
+branch's ([`harness-debt.md`](../harness-debt.md), Harness).
 
 ## Docs
 

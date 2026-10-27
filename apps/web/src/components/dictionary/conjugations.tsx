@@ -18,6 +18,7 @@ import { Disclosure, DisclosureSection } from './disclosure'
 import { ExampleList } from './example-list'
 import { HeadwordRuby } from './headword-ruby'
 import { PronounceButton } from './pronounce-button'
+import { ReadingLine, RomajiLine } from './reading-aid-lines'
 
 const conjugationsAnchor = 'conjugations'
 
@@ -54,11 +55,17 @@ export function ConjugatedFormContent({
         </p>
       ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
-        <HeadwordRuby
-          segments={row.ruby}
-          highlightedEnding={row.ending}
-          className="text-4xl font-medium leading-tight"
-        />
+        <div className="flex flex-col gap-1">
+          <HeadwordRuby
+            segments={row.ruby}
+            highlightedEnding={row.ending}
+            className="text-4xl font-medium leading-tight"
+          />
+          <RomajiLine romaji={row.romaji} className="text-base" />
+          {row.reading === row.surface ? null : (
+            <ReadingLine reading={row.reading} className="text-xl" />
+          )}
+        </div>
         <PronounceButton text={row.reading} label={row.pronounce} unsupported={unsupported} />
       </div>
     </div>
@@ -165,11 +172,14 @@ function ConjugatedFormDisclosure({
           <span className="text-muted-foreground">{row.title}</span>
           <span lang="ja" className="ml-auto text-xl" data-conjugation-surface>
             {row.rowFurigana ? (
-              <HeadwordRuby
-                segments={row.ruby}
-                highlightedEnding={row.ending}
-                highlightsKanji={false}
-              />
+              <>
+                <HeadwordRuby
+                  segments={row.ruby}
+                  highlightedEnding={row.ending}
+                  highlightsKanji={false}
+                />
+                <RomajiLine romaji={row.romaji} className="text-right text-sm" />
+              </>
             ) : (
               <EndingText surface={row.surface} ending={row.ending} />
             )}

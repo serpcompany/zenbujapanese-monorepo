@@ -1,5 +1,6 @@
 'use client'
 
+import { signInCode, signInCodeOf } from '@zenbu/account-rules/sign-in-code'
 import { type FormEvent, useId, useState } from 'react'
 import { Fill } from '@/components/fill'
 import { Button } from '@/components/ui/button'
@@ -58,10 +59,11 @@ export function EmailCodeForm({
 
   async function verify(event: FormEvent) {
     event.preventDefault()
-    if (!sentTo || (mayVerify && !mayVerify())) return
+    const typed = signInCodeOf(code)
+    if (!sentTo || typed === null || (mayVerify && !mayVerify())) return
     setBusy(true)
     setProblem(null)
-    const signedIn = await api.signInWithCode(sentTo, code.trim())
+    const signedIn = await api.signInWithCode(sentTo, typed)
     if (signedIn.ok) await onSignedIn()
     else if (!onRefusal?.(signedIn.failure)) setProblem(say(signedIn.failure))
     setBusy(false)
@@ -110,8 +112,7 @@ export function EmailCodeForm({
           id={`${id}-code`}
           inputMode="numeric"
           autoComplete="one-time-code"
-          pattern="[0-9]{6}"
-          maxLength={6}
+          pattern={signInCode.typedPattern}
           required
           value={code}
           onChange={event => setCode(event.target.value)}

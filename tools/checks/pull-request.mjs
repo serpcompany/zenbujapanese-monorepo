@@ -8,6 +8,19 @@ export const isConventionalTitle = title => conventional.test(title)
 
 export const titleRule = `A pull request's title is a Conventional Commit that names the outcome a user notices, such as "fix: Escape closes the Settings window" (docs/agents/code.md, Pull requests). Start it with one of ${types.join(', ')}, then an optional scope in brackets, a colon, and a space.`
 
+const branchName = new RegExp(`^(${types.join('|')})/[a-z0-9]+(?:[.-][a-z0-9]+)*$`)
+
+export function branchProblem(branch, title) {
+  const named = branchName.exec(branch)
+  if (!named) return `${branch} isn't <type>/<issue>-<slug> or <type>/<slug>.`
+  const titled = /^[a-z]+/.exec(title)?.[0]
+  if (isConventionalTitle(title) && titled !== named[1])
+    return `${branch} is a ${named[1]} branch, and the title's type is ${titled}.`
+  return ''
+}
+
+export const branchRule = `A branch is named <type>/<issue>-<slug>, such as fix/701-english-default-sort, or <type>/<slug> when no issue covers the work, in lowercase letters, digits, dots, and hyphens, and its type is the title's (docs/agents/code.md, Pull requests). The types are ${types.join(', ')}. When only the type differs, retitle the pull request. A pull request can't change its branch, and renaming the branch on GitHub closes it, so a branch named otherwise is pushed again under a name that fits, such as git push origin HEAD:fix/701-english-default-sort, and opened as a new pull request.`
+
 export const noIssueReason = body => /^No issue: *\S.*$/im.exec(body)?.[0]
 
 export const issueRule =
@@ -114,6 +127,12 @@ async function check(name, environment) {
     if (isConventionalTitle(title)) return { passed: true, message: `"${title}" names its type.` }
     return { passed: false, message: `"${title}"\n\n${titleRule}` }
   }
+  if (name === 'branch') {
+    const branch = environment.PR_BRANCH ?? ''
+    const problem = branchProblem(branch, environment.PR_TITLE ?? '')
+    if (!problem) return { passed: true, message: `${branch} names its type and work.` }
+    return { passed: false, message: `${problem}\n\n${branchRule}` }
+  }
   if (name === 'issue-link') {
     const reason = noIssueReason(environment.PR_BODY ?? '')
     if (reason) return { passed: true, message: reason }
@@ -134,7 +153,7 @@ async function check(name, environment) {
   }
   return {
     passed: false,
-    message: 'Run it as: node tools/checks/pull-request.mjs title, issue-link, or fix-test.'
+    message: 'Run it as: node tools/checks/pull-request.mjs title, branch, issue-link, or fix-test.'
   }
 }
 

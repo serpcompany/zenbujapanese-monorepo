@@ -37,18 +37,25 @@ before and after, and says what a person does before it merges.
 A run fails without a pull request when the export or the import needs a person: a download
 fails, EDRDG's two files disagree, the DTD moved, the importer or the contract tests refuse the
 export (a JMdict code the importer doesn't map, a sense with no English gloss), or an entry would
-lose its note identity. Fix the
-cause as the refresh by hand would, then run the workflow again from the Actions tab.
+lose its note identity. A YouTube reviewed reading fails it too when the new export changes its
+entries: the reading no longer ranks the entry its row names, or would cost an entry its rank, or
+`test_reviewed_readings_evidence.py` finds a row's verdict moved. Run
+`language-data/tools/review_tubelex_readings.py write --scope` with UniDic, which rewrites every
+row's evidence and verdict, then decide each row it flags: keep a reading only where its verdict
+ranks it ([`FREQUENCY_SOURCE_DECISIONS.md`](FREQUENCY_SOURCE_DECISIONS.md), #826). Fix the cause
+as the refresh by hand would, then run the workflow again from the Actions tab.
 
 ## The suites
 
 A JMdict update moves every suite recorded from `LanguageReferenceData.sqlite3`: `search-retrieval`,
-`search-results`, `example-search`, `word-detail`, and `kanji-detail`. The app records all five, in
-`SearchExperienceTests` on an iPhone Simulator ([`ios.md`](../docs/agents/ios.md), Current
-verification boundary), so the workflow records none of them. `kanji-element` reads only the kanji
-elements and `tokenizer` only Kuromoji's files, which the update leaves alone; the tokenizer suite
-comes from kuromoji.js, the one a runner can record, and the workflow records it each time.
-`romaji` is edited by hand.
+`search-results`, `example-search`, `word-detail`, `kanji-detail`, `sentence-search`, and
+`sentence-results`. The app records all seven, in `SearchExperienceTests` on an iPhone Simulator
+([`ios.md`](../docs/agents/ios.md), Current verification boundary), so the workflow records none of
+them. The two sentence suites also pin Sudachi's dictionary, which isn't among the app's files and
+which the update leaves alone, so the pull request names them for `LanguageReferenceData.sqlite3`
+alone. `kanji-element` reads only the kanji elements and `tokenizer` only Kuromoji's files, which
+the update leaves alone; the tokenizer suite comes from kuromoji.js, the one a runner can record,
+and the workflow records it each time. `romaji` is edited by hand.
 
 A suite not yet recorded again can't pass by accident. The dictionary service's replays fail with
 "The suite was recorded from other files", naming each file and both SHA-256s, and the app's with

@@ -324,12 +324,14 @@ final class ImageTextFlowModel {
     observations: [RecognizedImageTextObservation],
     textAnalysisClient: JapaneseTextAnalysisClient
   ) async -> ImageTextPage {
+    let texts = ImageTextPage(asset: asset, observations: observations).shownTexts
+    let words = Dictionary(
+      zip(texts, await textAnalysisClient.linked(texts)),
+      uniquingKeysWith: { first, _ in first })
     var regions: [ImageTextRegion] = []
     for observation in observations {
-      let tokens = await textAnalysisClient.linkedTokens(observation.text, SearchQuery(""), nil)
       var indexInLine = 0
-      for token in tokens {
-        let entries = token.entry.map { [$0] } ?? token.candidateEntries
+      for token in words[observation.text] ?? [] {
         guard PresentationCore.shared.containsJapaneseText(token.surface),
           let box = boundingBox(forScalarRange: token.scalarRange, in: observation)
         else { continue }
@@ -339,7 +341,7 @@ final class ImageTextFlowModel {
             surface: token.surface,
             boundingBox: box,
             entry: token.entry,
-            candidateEntries: entries,
+            candidateEntries: token.candidateEntries,
             lineID: observation.id,
             isVertical: observation.isVertical,
             indexInLine: indexInLine
@@ -347,7 +349,7 @@ final class ImageTextFlowModel {
         indexInLine += 1
       }
     }
-    return ImageTextPage(asset: asset, observations: observations, regions: regions)
+    return ImageTextPage(asset: asset, observations: observations, regions: regions, words: words)
   }
 
   private static func boundingBox(
@@ -389,19 +391,31 @@ struct ImageTextPage {
   let regions: [ImageTextRegion]
   let lines: [ImageTextLine]
   let paragraphs: [ImageTextParagraph]
+  private let words: [String: [JapaneseTextToken]]
 
   init(
     asset: ImageTextAsset,
     observations: [RecognizedImageTextObservation],
-    regions: [ImageTextRegion]
+    regions: [ImageTextRegion] = [],
+    words: [String: [JapaneseTextToken]] = [:]
   ) {
     self.asset = asset
     self.observations = observations
     self.regions = regions
+    self.words = words
     lines = observations.filter { PresentationCore.shared.containsJapaneseText($0.text) }
       .map(ImageTextLine.init)
     paragraphs = ImageTextParagraph.group(lines)
   }
 
   var hasJapaneseText: Bool { !lines.isEmpty }
+
+  var shownTexts: [String] {
+    var seen = Set<String>()
+    return (lines.map(\.text) + paragraphs.map(\.text)).filter { seen.insert($0).inserted }
+  }
+
+  func words(of text: String) -> [JapaneseTextToken] {
+    words[text] ?? JapaneseTextToken.unlinked(text)
+  }
 }

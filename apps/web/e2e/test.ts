@@ -1,6 +1,9 @@
 import { test as base, expect, type Page } from '@playwright/test'
 import { wordSlug } from '@zenbu/dictionary-core/detail/slug'
 import { fixtureSearchOrder, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import type { Locale } from '../src/lib/i18n/config'
+import { getDictionary } from '../src/lib/i18n/dictionary'
+import { readingAids } from '../src/lib/reading-aids'
 
 export { expect }
 
@@ -12,7 +15,9 @@ export const test = base.extend<{ allowedConsoleErrors: RegExp[]; consoleErrors:
     async ({ page, allowedConsoleErrors }, use) => {
       const errors: string[] = []
       page.on('console', message => {
-        if (message.type() === 'error') errors.push(message.text())
+        if (message.type() !== 'error') return
+        const { url } = message.location()
+        errors.push(url ? `${message.text()} at ${url}` : message.text())
       })
       page.on('pageerror', error => errors.push(`${error.name}: ${error.message}`))
       await use(errors)
@@ -59,6 +64,9 @@ export const footerAccountLink = (page: Page) =>
   page.getByRole('contentinfo').getByRole('link', { name: /^(Sign in|Account)$/ })
 
 export const onPhone = () => test.info().project.name === 'phone'
+
+export const readingAidLabels = (locale: Locale = 'en') =>
+  readingAids.map(aid => getDictionary(locale).chrome.readingAids[aid.id])
 
 export const accountButton = (page: Page) =>
   page.getByRole('banner').getByRole('button', { name: /^(Account|アカウント)/ })

@@ -27,6 +27,7 @@ import { strokeOrderLabels } from '@zenbu/dictionary-core/detail/strokes'
 import { wordDetail, wordSections } from '@zenbu/dictionary-core/detail/word'
 import {
   fixtureKanjiRows,
+  fixtureRadicals,
   fixtureSearchOrder,
   fixtureWordRows
 } from '@zenbu/dictionary-core/fixtures'
@@ -43,6 +44,7 @@ import {
   readingRefinementSpoken,
   resultsLayout
 } from '@zenbu/dictionary-core/results/results'
+import { RadicalLookup } from '@zenbu/dictionary-core/search/radicals'
 import { creditsShownBy } from '@zenbu/dictionary-core/sources/credits'
 import type { SearchData } from '@/lib/dictionary/data'
 
@@ -330,6 +332,10 @@ function everyExamplesLabel(): Label[] {
   ])
 }
 
+function everyRadicalLabel(): Label[] {
+  return plain(new RadicalLookup(fixtureRadicals).panel([]).groups.map(group => group.label))
+}
+
 function creditLabels(): Label[] {
   const { conversionNotice, credits } = creditsShownBy('website')
   return plain([
@@ -371,6 +377,7 @@ export function everyCoreLabel(): Label[] {
     ...everyKanjiLabel(),
     ...everyResultsLabel(),
     ...everyExamplesLabel(),
+    ...everyRadicalLabel(),
     ...creditLabels()
   ]
 }

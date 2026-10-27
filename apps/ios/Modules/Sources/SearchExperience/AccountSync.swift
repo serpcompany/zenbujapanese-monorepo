@@ -263,7 +263,7 @@ final class AccountSync: LocalFileStore {
     }
     guard !isUnavailable, state.keepsChanges, let change = identifyingSearch(change) else { return }
     state.forgetRefusal(of: change)
-    state.enqueue(change.queued(in: state))
+    state.enqueue(SavedItemChange.forTheAccount([change])[0].queued(in: state))
     persist()
     if account != nil, !change.ridesAlong { onLocalChange?() }
   }

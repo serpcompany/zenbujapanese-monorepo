@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "ExampleWordIndex.sqlite3",
-      "sha256" : "f49bb8beb88fcfe9f327c8f8a7553cbf02420bb0b94aebe1e763f0792589c9f7"
+      "sha256" : "ff13abffeede7746111120f7c0b1150ada6273454039b55c4bf80a0574df39ba"
     },
     {
       "name" : "Kuromoji/base.dat.gz",
@@ -4836,15 +4836,332 @@
       "usesPrimaryEntryExamples" : false
     },
     {
-      "count" : 0,
-      "covers" : "A non-ASCII Latin query takes the Japanese route",
+      "count" : 14,
+      "countText" : "14 examples",
+      "covers" : "A query in other Latin letters than romaji's, which no Japanese sentence has, is searched in English",
+      "highlightedEntry" : "f21a09bab3edc93cac4707622bd018a4",
       "ids" : [
-
+        "esp1_c4df282b74ee481673d9a801b0c2f79f",
+        "esp1_406c9a10adfab66e0bbeb485ac11c755",
+        "esp1_f8d8dbdaea063a61750034dc56d8cbc5",
+        "esp1_47138b6d6d7f4e1df72cc2e1c8bbc7c1",
+        "esp1_5390b487f6488c204288905b2557f6e8",
+        "esp1_11d9466f1b907880f51cfc7b12ce47b6",
+        "esp1_748910a87e0c2b0b74f6d83c88c11c20",
+        "esp1_cc882cdda0759f5b55cd1e42c8a27a03",
+        "esp1_d0ee15a9a97d6896e29168c6db528939",
+        "esp1_19551868a62b6449fd0c1f9fbe1f0921",
+        "esp1_9d003c56b78d94a0874206fd932ac42d",
+        "esp1_39e9bbfbb4f1732fc63d08d962f455d4",
+        "esp1_a759f9c51ed0f4a667ae8aa5ba37ce70",
+        "esp1_ddc69c7d18371243257861d627969df8"
       ],
       "query" : "café",
       "shown" : [
-
+        {
+          "english" : "The café nearer to the school is closed at lunch hours.",
+          "id" : "esp1_c4df282b74ee481673d9a801b0c2f79f",
+          "japanese" : "学校の最寄りのカフェはお昼の時間には閉まっている。",
+          "tokens" : [
+            {
+              "entry" : "6a612ccf4b94b5318d3c9badc0b32f1e",
+              "surface" : "学校"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "e5e9c456e29c214be9835c5dcbeeac27",
+              "surface" : "最寄り"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "f21a09bab3edc93cac4707622bd018a4",
+              "surface" : "カフェ"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "4454db2c15499146dd4fe99a1c3c9d34",
+              "surface" : "お昼"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "05bdb8e2a85ec93ecc4ce862072329b5",
+              "surface" : "時間"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "entry" : "a1f2d18f1ea0b70433f6f066f5936655",
+              "surface" : "閉まっている"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "This café has a nice and chill atmosphere. It's just perfect for doing work.",
+          "id" : "esp1_406c9a10adfab66e0bbeb485ac11c755",
+          "japanese" : "このカフェは、落ち着いてて、仕事するのにちょうどいいなぁ。",
+          "tokens" : [
+            {
+              "entry" : "3235c8e2260b0a0b20f83d7469bfbfec",
+              "surface" : "この"
+            },
+            {
+              "entry" : "f21a09bab3edc93cac4707622bd018a4",
+              "surface" : "カフェ"
+            },
+            {
+              "entry" : "ad63532d193fae21a8b73d5d7880b492",
+              "surface" : "は"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "a86207b3865ffab6fa27f93e10f2f2a2",
+              "surface" : "落ち着いてて"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "52d0eab895319d9bd11f8d66f2f0a60b",
+              "surface" : "仕事"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "する"
+            },
+            {
+              "entry" : "323b0fbddedf5f1afce96d889e376175",
+              "surface" : "のに"
+            },
+            {
+              "entry" : "69413171433daab4ee4c02878694b583",
+              "surface" : "ちょうど"
+            },
+            {
+              "candidates" : [
+                "d04b57414d38acaf22aa7a862d705a1f",
+                "505eccb6b57001b93198600c71ce2d55",
+                "d1ea7e28776665a41bf63ea3189a2db7",
+                "6354f584735eecbc2dae0f61211b891c",
+                "24a6fe40b78a563072aa36cbfd9ae8e1",
+                "b81a1df9122db0eda20421e3a3dc4053"
+              ],
+              "surface" : "いい"
+            },
+            {
+              "entry" : "6ccb3397987eac083e3d6f48bd2466b9",
+              "surface" : "なぁ"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "There is a café on the second floor.",
+          "id" : "esp1_f8d8dbdaea063a61750034dc56d8cbc5",
+          "japanese" : "2階にカフェがあるんだ。",
+          "tokens" : [
+            {
+              "surface" : "2"
+            },
+            {
+              "entry" : "7b14aca4281002f808408b86343bfb5c",
+              "surface" : "階"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "f21a09bab3edc93cac4707622bd018a4",
+              "surface" : "カフェ"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "45eefee1383a89cb3c6287032622e6fa",
+              "surface" : "ある"
+            },
+            {
+              "entry" : "8f56c1b057a85aee7857f7dbca279a7d",
+              "surface" : "ん"
+            },
+            {
+              "candidates" : [
+                "e33ad4f4da88dce059a4b3fc7b2264b4",
+                "caa0908e5f4b933ebf132299796a1997"
+              ],
+              "surface" : "だ"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "I hung out at a café with a friend.",
+          "id" : "esp1_47138b6d6d7f4e1df72cc2e1c8bbc7c1",
+          "japanese" : "友達と一緒にカフェでゆっくりした。",
+          "tokens" : [
+            {
+              "entry" : "8437a68ce392574a87fc48a74e1d7409",
+              "surface" : "友達"
+            },
+            {
+              "entry" : "d005d8641e912ee4b72714255428699d",
+              "surface" : "と"
+            },
+            {
+              "entry" : "e27cc8c4dd9ea4d5cd8ef8df7f7002db",
+              "surface" : "一緒"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "entry" : "f21a09bab3edc93cac4707622bd018a4",
+              "surface" : "カフェ"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "df6f92f3a708f194560eeec5dbdc30ae",
+              "surface" : "ゆっくり"
+            },
+            {
+              "candidates" : [
+                "b1a37c51a5860d4f513fdad36e99bca0",
+                "27b712d1aa61f1de61ebf3c7eb9ef070",
+                "10c213c9774338580f22d1aea02399a4",
+                "f3a7628ea368a349bbc30a62f59b9fa0",
+                "3e403ed3e2b2ac9284f0a155efaaa94e"
+              ],
+              "surface" : "した"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        },
+        {
+          "english" : "As I entered the café, I found two young men watching a wrestling match on television.",
+          "id" : "esp1_5390b487f6488c204288905b2557f6e8",
+          "japanese" : "喫茶店に入ったら、二人の青年がテレビでレスリングの試合を見ていた。",
+          "tokens" : [
+            {
+              "entry" : "38db60e9689fcb40f1cbcb23be60da4d",
+              "surface" : "喫茶店"
+            },
+            {
+              "entry" : "6cd24556d9ab2c8aa1ce0de4efcbf8a9",
+              "surface" : "に"
+            },
+            {
+              "candidates" : [
+                "c78ae645968bfa3a8b664c3652e1a533",
+                "e36e4bdfdf4b6535e82b863470af9499"
+              ],
+              "surface" : "入ったら"
+            },
+            {
+              "surface" : "、"
+            },
+            {
+              "entry" : "fe952ccb85b8fe77e01ce0f111fdc8fb",
+              "surface" : "二人"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "8c3f9ecb12c0d51dc695fa593d8fc537",
+              "surface" : "青年"
+            },
+            {
+              "candidates" : [
+                "525af7a87097616e431ac3a1e524f37f",
+                "6e965c8d5bfa8eb14fc4179abb44aeed"
+              ],
+              "surface" : "が"
+            },
+            {
+              "entry" : "8fba7d1668c6ef8b821ac01d5071b24c",
+              "surface" : "テレビ"
+            },
+            {
+              "candidates" : [
+                "4102685c5ecb52e7276d68ab0ff59f29",
+                "3906187791ec20829976c57d3c59727d"
+              ],
+              "surface" : "で"
+            },
+            {
+              "entry" : "4e33827cab1f62453f6cd6c878d02c27",
+              "surface" : "レスリング"
+            },
+            {
+              "entry" : "08c0172000564955c420c01ddadc4b63",
+              "surface" : "の"
+            },
+            {
+              "entry" : "84c03f9415ff229cf0a9d6b4fd3f0df8",
+              "surface" : "試合"
+            },
+            {
+              "entry" : "40d6e4fa1aa90a4025e1edef5d451be5",
+              "surface" : "を"
+            },
+            {
+              "entry" : "7f490a9c9c0da94f4e9474f4efe74be1",
+              "surface" : "見ていた"
+            },
+            {
+              "surface" : "。"
+            }
+          ]
+        }
       ],
+      "title" : "View 14 Example Sentences",
       "usesPrimaryEntryExamples" : false
     },
     {

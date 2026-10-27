@@ -2,6 +2,8 @@ import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { expect, test } from 'vitest'
 import {
+  branchProblem,
+  branchRule,
   closingReferences,
   isConventionalTitle,
   issueRule,
@@ -32,6 +34,96 @@ test.each([
   expect(isConventionalTitle(title)).toBe(false)
 })
 
+const lastFiftyMerged: [branch: string, type: string][] = [
+  ['fix/account-input-rules', 'fix:'],
+  ['fix/1015-close-prerender-streams', 'fix:'],
+  ['fix/romaji-search-matches-shown', 'fix:'],
+  ['test/1011-sentence-results-screen', 'test:'],
+  ['refactor/830-sentence-analysis-in-core', 'refactor:'],
+  ['fix/912-account-audit-largest', 'fix(ios):'],
+  ['fix/557-scheduled-gardening-runs', 'fix(ci):'],
+  ['test/mac-ui-paste-japanese', 'test(ios):'],
+  ['fix/app-tests-under-load-2', 'fix:'],
+  ['ci/jmdict-monthly-update', 'ci:'],
+  ['feat/412-meaning-linked-examples', 'feat:'],
+  ['feat/825-compound-pitch-rule', 'feat(language-data):'],
+  ['perf/dictionary-service-shared-cache', 'perf(dictionary-api):'],
+  ['perf/core-rank-comparator', 'perf(core):'],
+  ['fix/website-gate-under-load', 'fix(web):'],
+  ['fix/simulator-keeper-boot-and-prefs', 'fix:'],
+  ['fix/note-tests-under-load', 'fix(ios):'],
+  ['fix/ios-transport-errors-and-mac-sheet-rows', 'fix(ios):'],
+  ['fix/929-pitch-from-own-lemma', 'fix(language-data):'],
+  ['ci/799-review-action-pin', 'ci:'],
+  ['fix/ios-crash-reports-tests-and-picked-kanji', 'fix(ios):'],
+  ['feat/website-privacy-and-furigana', 'feat(web):'],
+  ['build/verify-0.1.1', 'build:'],
+  ['build/shared-checks-and-test-fixes', 'build:'],
+  ['fix/reveal-scrolls-both-ways', 'fix:'],
+  ['build/931-iphone-only-2.0.1', 'build:'],
+  ['fix/921-913-whole-glosses', 'fix(ios):'],
+  ['feat/sync-and-subscription-app', 'feat(ios):'],
+  ['feat/860-report-a-problem', 'feat:'],
+  ['fix/868-subscribe-after-back', 'fix(web):'],
+  ['feat/sync-and-subscription-web', 'feat(web):'],
+  ['feat/917-package-license-notices', 'feat:'],
+  ['feat/sync-and-subscription-service', 'feat:'],
+  ['feat/900-speak-meaning', 'feat:'],
+  ['fix/908-search-leftover-copy', 'fix:'],
+  ['fix/909-rename-list-uitest', 'fix:'],
+  ['feat/859-crash-reports', 'feat(ios):'],
+  ['feat/899-look-up', 'feat:'],
+  ['feat/902-footer-socials', 'feat:'],
+  ['feat/904-privacy-app-reports', 'feat:'],
+  ['chore/build-8-of-2.0.1', 'chore:'],
+  ['fix/ios27-menu-choices-by-label', 'fix:'],
+  ['feat/394-share-sheet-card', 'feat:'],
+  ['chore/build-7-of-2.0.1', 'chore:'],
+  ['feat/394-siri-pronunciation-hint', 'feat:'],
+  ['chore/build-6-of-2.0.1', 'chore:'],
+  ['feat/888-word-page-romaji-titles', 'feat:'],
+  ['feat/886-search-phrases-in-titles', 'feat:'],
+  ['feat/847-languages-in-the-footer', 'feat:'],
+  ['feat/829-app-store-banner', 'feat:']
+]
+
+test.each(lastFiftyMerged)('takes %s, one of the last 50 merged, titled %s', (branch, type) => {
+  expect(branchProblem(branch, `${type} the outcome`)).toBe('')
+})
+
+test.each([
+  [
+    'feat/jmdict-2026-11-01',
+    "feat(language-data): the dictionary moves to JMdict's 2026-11-01 export"
+  ],
+  ['docs/gardening-2026-10-26', 'Weekly doc gardening (2026-10-26)'],
+  ['chore/code-gardening-2026-10-26', 'Split the website guide by task (#516)']
+])('takes %s, a branch a workflow names, whatever its title', (branch, title) => {
+  expect(branchProblem(branch, title)).toBe('')
+})
+
+test.each([
+  ['feature/417-watch-and-listen', 'a type the titles have no word for'],
+  ['experiment/migaku-parsing-comparison', 'no type at all'],
+  ['claude/issue-12-20261025', "Claude's own name for a branch"],
+  ['Fix/701-english-default-sort', 'capitals'],
+  ['fix/701_english_default_sort', 'underscores'],
+  ['fix/701-english-', 'a slug ending in a hyphen'],
+  ['fix/web/701-english', 'a second slash'],
+  ['fix/', 'no slug']
+])('refuses %s, with %s', branch => {
+  expect(branchProblem(branch, 'fix: the outcome')).toBe(
+    `${branch} isn't <type>/<issue>-<slug> or <type>/<slug>.`
+  )
+})
+
+test("refuses a branch whose type is not the title's, and says what each says", () => {
+  expect(
+    branchProblem('feat/481-shared-core', 'refactor(core): the app runs the shared core')
+  ).toBe("feat/481-shared-core is a feat branch, and the title's type is refactor.")
+  expect(branchRule).toContain('<type>/<issue>-<slug>')
+})
+
 test('reads the reason from a line that says there is no issue', () => {
   expect(noIssueReason('No issue: a typo in a workflow name\n\n## Why')).toBe(
     'No issue: a typo in a workflow name'
@@ -56,6 +148,21 @@ test('the title check passes a typed title and explains a plain one', () => {
   expect(plain.status).toBe(1)
   expect(plain.stdout).toContain('"Say the stage in AGENTS.md; $(rm -rf .)"')
   expect(plain.stdout).toContain(titleRule)
+})
+
+test('the branch check passes a branch named for its title and explains one that is not', () => {
+  const named = run('branch', {
+    PR_BRANCH: 'ci/381-pinned-actions',
+    PR_TITLE: 'ci: every action is pinned'
+  })
+  expect(named.status).toBe(0)
+  expect(named.stdout).toContain('ci/381-pinned-actions names its type and work.')
+  const unnamed = run('branch', {
+    PR_BRANCH: 'pinned-actions',
+    PR_TITLE: 'ci: every action is pinned'
+  })
+  expect(unnamed.status).toBe(1)
+  expect(unnamed.stdout).toContain(branchRule)
 })
 
 test('the issue-link check takes a stated reason without asking GitHub', () => {

@@ -1,9 +1,14 @@
 import {
+  fitsTheWatch,
+  watchLimits as sharedLimits,
+  watchNumbers,
+  watchText
+} from '@zenbu/account-rules/watch'
+import {
   applied,
   type Change,
   type ClientMutation,
   conflict,
-  cutText,
   type Entity,
   gone,
   journaled,
@@ -19,8 +24,8 @@ import type { LockedAccount, WatchedVideo } from './store'
 export const watchLimits = {
   videos: recentLimits.kept,
   goneKept: recentLimits.goneKept,
-  textLength: 200,
-  seconds: 10_000_000
+  textLength: sharedLimits.textLength,
+  seconds: sharedLimits.seconds
 } as const
 
 type Details = Pick<WatchedVideo, 'title' | 'author' | 'duration' | 'position' | 'comprehension'>
@@ -36,12 +41,7 @@ const badFields = rejection(
 )
 
 const textFields = ['title', 'author'] as const
-const numberFields = [
-  ['duration', watchLimits.seconds],
-  ['position', watchLimits.seconds],
-  ['comprehension', 1]
-] as const
-const allowed = new Set<string>(['watchedAt', ...textFields, ...numberFields.map(([key]) => key)])
+const allowed = new Set<string>(['watchedAt', ...textFields, ...watchNumbers])
 
 const videoIdOf = (raw: string | undefined) => (raw && videoIdPattern.test(raw) ? raw : null)
 
@@ -75,9 +75,7 @@ const detailsOf = (video: WatchedVideo | null): Details => ({
 const emptied = (videoId: string) => ({ videoId, ...detailsOf(null), watchedAt: null })
 
 function shortText(raw: unknown): string | null | Rejection {
-  if (typeof raw !== 'string') return badFields
-  const text = cutText(raw, watchLimits.textLength)
-  return text === '' ? null : text
+  return typeof raw === 'string' ? watchText(raw) : badFields
 }
 
 function watchFields(
@@ -93,12 +91,10 @@ function watchFields(
     if (isRejection(text)) return text
     if (text !== null) details[key] = text
   }
-  for (const [key, most] of numberFields) {
+  for (const key of watchNumbers) {
     if (!(key in fields)) continue
     const value = fields[key]
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > most) {
-      return badFields
-    }
+    if (!fitsTheWatch(key, value)) return badFields
     details[key] = value
   }
   return { details, watchedAt }

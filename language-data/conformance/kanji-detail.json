@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "461a63ba98f93c6705d1536506486a8e701d8495c2bf44827c8a12b8ff89bdcf"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "KanjiReferenceData.json",
-      "sha256" : "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad"
+      "sha256" : "c42701153068b7f0a9252dd3311c8810a36325749f3bdbe391c0a752eb6e866b"
     },
     {
       "name" : "KanjiElementReferenceData.json",

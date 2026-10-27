@@ -38,8 +38,9 @@ what it waited for and for how long.
   `apps/ios/UITests/`.
 - **Never pause to let something happen;** wait for the thing itself. The fixed pauses left are
   proofs that something does not happen (the input panel stays open, the iPhone doesn't turn, the
-  word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
-  which no row may change its height and the opened sentence may not leave its place), the long
+  word sheet stays up, and in `ExampleRowsUITests` and `LinkedRowsUITests` a second after the held
+  answers are let go, in which no row may change its height and the opened sentence may not leave
+  its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
   looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between the warm-up touch and
   the gesture after it (below), and three on the iPad and the Mac with
@@ -52,6 +53,9 @@ what it waited for and for how long.
   `press`, `tap(_:toShow:)`, `focus`, `choose`, `pause`, and `resume` tap again only after a wait
   for what the tap should bring runs out. `for … where` tests its condition on every pass and never leaves
   early, so write such a loop with a `break`.
+- **On the Mac, `type` pastes text that isn't ASCII.** XCUITest's `typeText` presses the keys of
+  the Mac's keyboard layout, so 日本語を勉強する arrived as "§5 5§¶2ç8åa". `type` puts such text on
+  the pasteboard and presses ⌘V; when the text ends in a newline, it then types that return.
 - **Never assert how long something took.** A busy Mac makes everything slow, so a time limit fails
   for the machine as often as for the app. Count what the app did instead: the Player test reads how
   many times the screen, its speed menu, and its captions drew themselves (`ZENBU_COUNT_DRAWS`,
@@ -172,7 +176,10 @@ what it waited for and for how long.
   reaches the bar. A tall row whose middle was 8 points above the bar still lost its tap to it.
   `tapClearOfTheBars` scrolls on until the row's middle is between the navigation bar and the tab
   bar (`isClearOfTheBars`, what `ExampleRowsUITests` checks before it opens a word), then taps the
-  middle of the part of the row between them, and taps again as `tap(_:toShow:)` does.
+  middle of the part of the row between them, and taps again as `tap(_:toShow:)` does. The Search
+  audit opens every row it reveals through it, and the Account audit every Account page row it
+  reveals: back on Account after Known Words, the list kept its place, and Lists, the row below,
+  had its middle under the tab bar (#912).
 - **On the iPhone, a gesture after a pause of 4 s or more follows a warm-up touch.** This works
   around a race in the iOS 26.2 Simulator (Xcode 26.2), measured on iPhone runs, and goes once Apple
   fixes it. XCUITest sends each gesture through a virtual touchscreen that testmanagerd makes for

@@ -132,7 +132,7 @@ describe('a request for what a thread computed before', () => {
     await busy
     expect(methodsOn(answered)).toEqual([
       ['kanji', ['要']],
-      ['search', ['い']]
+      ['search', ['い', false]]
     ])
     expect(methodsOn(other)).toEqual([['kanji', ['要']]])
   })
@@ -146,7 +146,7 @@ describe('a request for what a thread computed before', () => {
     first.release()
     await busy
     await pool.kanji('要')
-    expect(methodsOn(first)).toEqual([['search', ['い']]])
+    expect(methodsOn(first)).toEqual([['search', ['い', false]]])
     expect(methodsOn(second)).toEqual([
       ['kanji', ['要']],
       ['kanji', ['要']]
@@ -167,7 +167,7 @@ describe('a request whose earlier answer never came', () => {
     await Promise.all([busy, repeated])
     expect(methodsOn(failed)).toEqual([
       ['searchExamples', ['t*', 0]],
-      ['search', ['い']]
+      ['search', ['い', false]]
     ])
     expect(methodsOn(other)).toEqual([['searchExamples', ['t*', 25]]])
   })
@@ -183,7 +183,7 @@ describe('a request whose earlier answer never came', () => {
     const repeated = pool.searchExamples('t*', 25)
     restarted.release()
     await Promise.all([busy, repeated])
-    expect(methodsOn(restarted)).toEqual([['search', ['い']]])
+    expect(methodsOn(restarted)).toEqual([['search', ['い', false]]])
     expect(methodsOn(other)).toEqual([['searchExamples', ['t*', 25]]])
   })
 })
@@ -233,6 +233,6 @@ describe('the build the pool names', () => {
     expect(answer.status).toBe(200)
     expect(answer.headers.get('x-dictionary-build')).toBe(info.build)
     expect(answer.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
-    expect(methodsOn(workers[0])).toEqual([['search', ['eat']]])
+    expect(methodsOn(workers[0])).toEqual([['search', ['eat', false]]])
   })
 })

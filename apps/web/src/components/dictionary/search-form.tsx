@@ -1,9 +1,12 @@
+import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import { Button } from '@/components/ui/button'
 import { ButtonGroup } from '@/components/ui/button-group'
 import { Input } from '@/components/ui/input'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { localizedPath } from '@/lib/i18n/paths'
+import { RadicalInput } from './radical-input'
+import { SourceCreditLine } from './source-credits'
 
 const searchAction = '/dictionary/search/'
 const typeWithoutBrowserClearButton = 'text'
@@ -32,6 +35,11 @@ export function SearchForm({
             aria-label={text.placeholder}
             autoFocus={autoFocus}
             className="h-11 bg-background text-base"
+          />
+          <RadicalInput
+            locale={locale}
+            text={text.radicals}
+            credit={<SourceCreditLine source={sourceCredits.radkfile} locale={locale} />}
           />
           <Button type="submit" variant="outline" className="h-11">
             {text.submit}

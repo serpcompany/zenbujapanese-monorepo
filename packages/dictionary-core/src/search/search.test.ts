@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
 import { interruptedSearch } from './database'
 import { deinflect } from './deinflect'
-import { lookupSegments, type MorphologyWord } from './morphology'
+import { lookupSegments, type MorphologyAnalysis } from './morphology'
+import { morphemes } from './morphology.fixture'
 import { DictionarySearch, type SearchDatabase } from './search'
 
 interface FakeEntry {
@@ -81,17 +82,17 @@ function japaneseFormsDatabase() {
   return { db, params }
 }
 
-const words: MorphologyWord[] = [
-  { surface: '日本語', dictionaryForm: '日本語', partOfSpeech: ['名詞'], isOutOfVocabulary: false },
-  { surface: 'を', dictionaryForm: 'を', partOfSpeech: ['助詞'], isOutOfVocabulary: false },
-  { surface: '勉強', dictionaryForm: '勉強', partOfSpeech: ['名詞'], isOutOfVocabulary: false },
-  { surface: 'し', dictionaryForm: 'する', partOfSpeech: ['動詞'], isOutOfVocabulary: false },
-  { surface: 'た', dictionaryForm: 'た', partOfSpeech: ['助動詞'], isOutOfVocabulary: false }
-]
+const words = morphemes([
+  ['日本語', '日本語', '名詞'],
+  ['を', 'を', '助詞'],
+  ['勉強', '勉強', '名詞'],
+  ['し', 'する', '動詞'],
+  ['た', 'た', '助動詞']
+])
 
 describe('capabilities', () => {
   test('sentence search is on only with an analyzer', () => {
-    const analyze = async () => words
+    const analyze = async () => ({ words })
     expect(new DictionarySearch(japaneseFormsDatabase().db).features.sentenceSearch).toBe(false)
     expect(
       new DictionarySearch(japaneseFormsDatabase().db, { morphology: { analyze } }).features
@@ -102,7 +103,7 @@ describe('capabilities', () => {
 
   test('with an analyzer, a sentence lists its words as Discovered Words', async () => {
     const search = new DictionarySearch(japaneseFormsDatabase().db, {
-      morphology: { analyze: async () => words }
+      morphology: { analyze: async () => ({ words }) }
     })
     const results = await search.search('日本語を勉強した')
     expect(results.items.map(item => item.entry.headword)).toEqual(['日本語', '勉強', 'する'])
@@ -118,7 +119,7 @@ describe('capabilities', () => {
   })
 
   test('the analyzer only runs when nothing matches directly, and its failures find nothing', async () => {
-    const analyze = vi.fn(async (): Promise<MorphologyWord[]> => {
+    const analyze = vi.fn(async (): Promise<MorphologyAnalysis> => {
       throw new Error('analyzer unavailable')
     })
     const search = new DictionarySearch(japaneseFormsDatabase().db, { morphology: { analyze } })

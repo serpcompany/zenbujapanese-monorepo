@@ -138,6 +138,11 @@ struct ZenbuAccountView: View {
         Text($0)
           .foregroundStyle(.secondary)
       }
+      if let longNotes = AccountMessage.longNotes(zenbuAccount.sync.state.longNotes.count) {
+        Text(longNotes)
+          .foregroundStyle(.secondary)
+          .accessibilityIdentifier("zenbu-account.long-notes")
+      }
       if let problem = zenbuAccount.sync.bookmarksProblem {
         Text(AccountMessage.syncPaused(by: problem))
           .foregroundStyle(.secondary)

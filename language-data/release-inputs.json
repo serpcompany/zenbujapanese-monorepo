@@ -21,7 +21,7 @@
     {
       "name": "KanjiReferenceData.json",
       "path": "resources/KanjiReferenceData.json",
-      "artifact_schema": "zenbu.kanji-reference.v1"
+      "artifact_schema": "zenbu.kanji-reference.v2"
     },
     { "name": "KanjiElementReferenceData.json", "path": "resources/KanjiElementReferenceData.json" },
     {
@@ -91,6 +91,10 @@
     {
       "path": "resources/DictionaryData.swift",
       "why": "The Swift source the folder needs to be its own package target, which only the app links (ADR 0017)."
+    },
+    {
+      "path": "resources/AccountRules",
+      "why": "The app's bundle of the account rules, built from packages/account-rules."
     },
     {
       "path": "resources/DictionaryCore",

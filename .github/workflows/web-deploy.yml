@@ -7,9 +7,11 @@ on:
       - apps/web/**
       - packages/dictionary-core/**
       - apps/dictionary-api/**
+      - packages/account-rules/**
       - packages/node-service/**
       - apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kanji*ReferenceData.json
+      - apps/ios/Modules/Sources/SearchExperience/Resources/RadicalReferenceData.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/LanguageTechnologyPackCatalog.json
       - apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**
       - language-data/release.json
@@ -22,6 +24,9 @@ on:
       - .github/workflows/web-deploy.yml
       - '!apps/dictionary-api/**/*.test.ts'
       - '!apps/dictionary-api/src/conformance/**'
+      - '!packages/account-rules/**/*.test.ts'
+      - '!packages/account-rules/src/test/**'
+      - '!packages/account-rules/cases/**'
       - '!packages/node-service/**/*.test.ts'
       - '!packages/node-service/src/test/**'
   workflow_dispatch:

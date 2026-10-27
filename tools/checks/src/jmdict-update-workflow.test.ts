@@ -87,6 +87,17 @@ describe('the JMdict monthly update workflow', () => {
     for (const step of steps.slice(download + 1)) expect(step.if).toBe("env.UPDATE == 'true'")
   })
 
+  test("sets up the repository's Node before the importer runs, since the core writes its romaji forms", () => {
+    const node = steps.find(step => step.uses?.startsWith('actions/setup-node@'))
+    expect(node?.with).toMatchObject({ 'node-version-file': '.node-version' })
+    expect(at('actions/setup-node')).toBeLessThan(
+      at('Move the source record and its snapshot to the new export')
+    )
+    expect(readRepositoryFile('language-data/tools/jmdict_romaji.py')).toContain(
+      'packages/dictionary-core/scripts/romaji-search-forms.mjs'
+    )
+  })
+
   test('records the tokenizer suite, the one a runner can record, and retires entries with retire', () => {
     expect(stepNamed('Record again the suites a runner can record').run).toBe(
       'pnpm --filter zenbujapanese-dictionary-api tokenizer-suite'

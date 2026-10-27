@@ -2,6 +2,8 @@
 !package.json
 !pnpm-lock.yaml
 !pnpm-workspace.yaml
+!packages/account-rules/**
+!patches/**
 !packages/node-service/**
 !apps/account-api/**
 **/node_modules

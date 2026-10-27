@@ -3,13 +3,14 @@
   "ignore": ["apps/ios/**"],
   "workspaces": {
     ".": {
-      "entry": [".github/actions/*/*.cjs"]
+      "entry": [".github/actions/*/*.cjs"],
+      "ignoreDependencies": ["lefthook"]
     },
     "apps/web": {
       "entry": ["open-next.config.ts", "e2e/**/*.ts", "scripts/*.ts"]
     },
     "apps/dictionary-api": {
-      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs}"]
+      "entry": ["src/server.ts", "src/worker-dev.mjs", "scripts/*.{ts,mjs,d.mts}"]
     },
     "apps/account-api": {
       "entry": ["scripts/*.mjs"]
@@ -18,12 +19,22 @@
       "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
+    "packages/account-rules": {
+      "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
+      "includeEntryExports": true
+    },
     "packages/node-service": {
       "includeEntryExports": true,
       "ignoreDependencies": ["tsx"]
     },
     "tools/checks": {
-      "entry": ["pull-request.mjs", "ports.mjs", "review-context.mjs", "review-dry-run.mjs"]
+      "entry": [
+        "pull-request.mjs",
+        "migrations.mjs",
+        "ports.mjs",
+        "review-context.mjs",
+        "review-dry-run.mjs"
+      ]
     }
   }
 }

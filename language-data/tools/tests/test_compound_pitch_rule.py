@@ -59,6 +59,8 @@ ENTRIES = {
     1188950: ("何時間", "なんじかん", ["expression"], None),
     1408090: ("多目的", "たもくてき", ["naAdjective"], None),
     1534350: ("盲目的", "もうもくてき", ["naAdjective"], None),
+    2595760: ("シーサーペント", "シーサーペント", NOUN, None),
+    1987920: ("フェデラルファンド", "フェデラルファンド", NOUN, None),
 }
 WORD_WITH_ITS_OWN_PITCH = (1534340, ("盲目", "もうもく", ["noun", "noAdjective", "naAdjective"], None))
 OWN_PITCH = json.dumps({"downstep": 0, "moraCount": 4, "sourceIdentity": "UniDic"})
@@ -200,20 +202,29 @@ class CompoundPitchRuleTests(unittest.TestCase):
         self.assertEqual({"個人的": None, "には": None}, {word: self.estimate(word) for word in ("個人的", "には")})
         self.assertEqual({"個人的": None, "には": None}, self.downsteps("個人的", "には"))
 
+    def test_a_downstep_past_the_words_last_mora_gives_none(self) -> None:
+        sea_serpent = self.splitter.fewest_part_splits("シーサーペント", READING["シーサーペント"])
+        self.assertEqual([("シーサー", 1), ("ペント", 4)], [(part.spelling, part.downstep) for part in sea_serpent[0]])
+        self.assertIsNone(self.estimate("シーサーペント"))
+        self.assertNotIn("シーサーペント", self.pitch)
+
+    def test_a_parts_accent_past_its_own_last_mora_never_stops_a_rule_that_doesnt_read_it(self) -> None:
+        self.assertEqual((5, 7), self.pitch.get("フェデラルファンド"))
+
     def test_the_report_counts_what_each_step_left_out(self) -> None:
         self.assertEqual(
             {
-                "estimated": 22,
+                "estimated": 23,
                 "estimated_by_the_c2_fallback": 2,
                 "estimated_in_a_group_below_the_gate": 2,
                 "left_out_as_a_four_character_idiom": 1,
                 "left_out_as_ending_in_the_suffix_teki": 3,
                 "left_out_as_listed_first_as_a_function_word_or_affix": 2,
-                "no_estimate": 1,
+                "no_estimate": 2,
             },
             {outcome: count for outcome, count in self.report["outcomes"].items() if not outcome.startswith("common_")},
         )
-        self.assertEqual(24, len(self.pitch))
+        self.assertEqual(25, len(self.pitch))
 
 
 if __name__ == "__main__":

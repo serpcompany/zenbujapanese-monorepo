@@ -1,4 +1,5 @@
-import { createLocalJWKSet, errors, type JSONWebKeySet, jwtVerify } from 'jose'
+import { verifiedAccessToken } from '@zenbu/node-service/access-tokens'
+import { createLocalJWKSet, errors, type JSONWebKeySet } from 'jose'
 import { type Principal, principalOf } from '../domain/clients'
 
 const reloadAfterMs = 30_000
@@ -24,14 +25,8 @@ export function accessTokenVerifier(
   }
 
   const principalFrom = async (token: string, keySet: ReturnType<typeof createLocalJWKSet>) => {
-    const { payload } = await jwtVerify(token, keySet, {
-      issuer,
-      audience: issuer,
-      algorithms: ['EdDSA']
-    })
-    return typeof payload.sub === 'string' && payload.sub !== ''
-      ? principalOf(payload.sub, payload)
-      : null
+    const claims = await verifiedAccessToken(token, keySet, issuer)
+    return claims ? principalOf(claims.sub, claims) : null
   }
 
   return async token => {

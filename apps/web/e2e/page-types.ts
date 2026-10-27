@@ -98,11 +98,30 @@ function phoneMenuViews(locale: Locale): PageView[] {
   ]
 }
 
+export const radicalPanel = (page: Page, locale: Locale) =>
+  page.getByRole('dialog', { name: getDictionary(locale).searchForm.radicals.title })
+
+export async function openRadicalPanel(page: Page, locale: Locale) {
+  const panel = radicalPanel(page, locale)
+  const button = page
+    .getByRole('main')
+    .getByRole('button', { name: getDictionary(locale).searchForm.radicals.open, exact: true })
+  await expect(async () => {
+    if (!(await panel.isVisible())) await button.click()
+    await expect(panel).toBeVisible(clickBeforeHydrationIsLost)
+  }).toPass(untilItTakes)
+  await expect(panel.getByRole('group').first()).toBeVisible()
+  await settle(page)
+}
+
 const viewsIn = (locale: Locale): Record<string, PageView[]> => ({
   '/': appAreasIn(locale)
     .slice(1)
     .map(({ name }) => showcaseArea(name)),
-  '/about/': phoneMenuViews(locale)
+  '/about/': phoneMenuViews(locale),
+  '/dictionary/search/iru/': [
+    { name: 'Radicals panel', overlay: true, show: page => openRadicalPanel(page, locale) }
+  ]
 })
 
 const viewsOf = viewsIn('en')
@@ -114,7 +133,11 @@ export const pageTypes: PageType[] = [
   ...accountPages.map(({ title, path }) => ({ name: title, path })),
   ...toolPagesIn('en').map(({ title, path }) => ({ name: title, path })),
   { name: 'Search', path: '/dictionary/search/' },
-  { name: 'Search results', path: '/dictionary/search/iru/' },
+  {
+    name: 'Search results',
+    path: '/dictionary/search/iru/',
+    views: viewsOf['/dictionary/search/iru/']
+  },
   {
     name: 'Kanji details',
     path: japanese('/dictionary/search/要/'),

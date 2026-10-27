@@ -1,6 +1,8 @@
 import { accountPagesOpen } from './account/availability'
 import { accountPages } from './account/pages'
 import { iosAppStoreUrl } from './app-links'
+import type { Locale } from './i18n/config'
+import { localizedPath } from './i18n/paths'
 import { productionOrigin, stagingOrigin } from './origins'
 import { converterPath, toolsPath } from './tools/paths'
 
@@ -112,6 +114,11 @@ export function linkTo(id: LinkTargetId): LinkTo {
   if (!link) throw new Error(`Unknown link target: ${id}`)
   return { href: link.href, target: id }
 }
+
+export const localizedLink = (link: LinkTo, locale: Locale): LinkTo => ({
+  ...link,
+  href: localizedPath(link.href, locale)
+})
 
 export const placeholderLinks: readonly LinkTarget[] = linkTargets.filter(
   link => link.href === placeholderHref

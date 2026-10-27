@@ -17,7 +17,6 @@ function converter(locale: Locale = 'en') {
     <FuriganaConverter
       sample={furiganaTool.sample}
       tries={furiganaTool.tries}
-      limit={200}
       text={t.furigana}
       words={t.converter}
       locale={locale}

@@ -27,7 +27,7 @@ here from `apps/ios`). The built files stay in the app's bundle,
 | [`retired-entries.md`](retired-entries.md) | How a release records the entries it retires, and which replaces each. |
 | [`jmdict-updates.md`](jmdict-updates.md) | The monthly JMdict update: what the workflow's pull request holds, and what a person does after it. |
 | [`publishing.md`](publishing.md) | Where releases live in the bucket, and how a release is published there. |
-| [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
+| [`notices/`](notices/) | Notices the release needs that the app has no file for: Kanjium's, Jiten's (for `RankedLists.sqlite3`, and the entries its ranks chose for `TUBELEXFrequencyPack.sqlite3`'s reviewed readings), and Waller's JLPT kanji levels' (for `KanjiReferenceData.json`), each worded as the app's Credits screen worded it when the notice was written. The credits every client shows now are the core's list ([`data-sources.md`](../docs/data-sources.md)). |
 | [`word-cards.md`](word-cards.md) | The word-card format (`zenbu.word-cards.v1`) an app without the language data ships and fetches, and the command that exports cards. |
 | [`schemas/language-data-manifest.v1.schema.json`](schemas/language-data-manifest.v1.schema.json) | The manifest's JSON Schema, `zenbu.language-data-manifest.v1`. |
 | [`schemas/language-data-releases.v1.schema.json`](schemas/language-data-releases.v1.schema.json) | The JSON Schema of the bucket's `releases.json`, `zenbu.language-data-releases.v1`. |
@@ -53,7 +53,7 @@ content-addressed, so an unchanged file keeps its object across releases. The ma
     - `plan`: the file declares none, so `release-inputs.json` names it without changing its
       bytes:
       - `LanguageReferenceData.sqlite3`: `zenbu.language-reference.v2`
-      - `KanjiReferenceData.json`: `zenbu.kanji-reference.v1`
+      - `KanjiReferenceData.json`: `zenbu.kanji-reference.v2`
       - `RadicalReferenceData.json`: `zenbu.radical-reference.v1`
       - `DictionaryRankingArtifactContract.json`: `zenbu.dictionary-ranking-contract.v1`. Its own
         `schemaVersion` names the ranking it checks, not the file's format.
