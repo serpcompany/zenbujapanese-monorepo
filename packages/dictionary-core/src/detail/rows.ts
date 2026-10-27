@@ -11,6 +11,7 @@ export interface SenseRestrictionRow {
 
 interface SenseRow {
   meaning: string
+  glosses: string[]
   notes: string[]
   partsOfSpeech: string[]
   restrictions: SenseRestrictionRow[]

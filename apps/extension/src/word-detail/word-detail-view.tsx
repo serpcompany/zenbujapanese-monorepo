@@ -44,12 +44,12 @@ export function WordDetailView({
   const actions = useMemo(
     () =>
       new Map(
-        detail.senses.map(sense => [
+        detail.senses.map((sense, index) => [
           sense.number,
-          meaningActions({ meaning: sense.meaning, glosses: [], noteText: sense.noteText })
+          meaningActions({ ...sense, glosses: rows.entry.senses[index]?.glosses ?? [] })
         ])
       ),
-    [detail]
+    [detail, rows]
   )
   const loadExamples = useCallback(
     async (from: number) =>
