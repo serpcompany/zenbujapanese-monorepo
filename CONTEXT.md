@@ -72,6 +72,12 @@ The browser extension's view of the video on a page: its time, whether it plays,
 whether an ad shows, with seek, play, pause, and speed. YouTube has one; Netflix's is to come.
 _Avoid_: player (the site's own, or the app's Player tab)
 
+**Translation module**:
+The browser extension's one way to translate (`apps/extension/src/translation/`), on Chrome's
+on-device Translator, which its Translate tab uses and its other surfaces will. The app's
+Translate uses Apple Translation instead.
+_Avoid_: translator (Chrome's Translator is the API under it), Translate (the tab)
+
 **Linked app**:
 An app outside the Zenbu apps, such as Tomodachi, in which a learner links their Zenbu
 account.

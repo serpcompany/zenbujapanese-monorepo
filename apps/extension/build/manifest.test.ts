@@ -29,7 +29,7 @@ describe('manifest', () => {
     expect(test.web_accessible_resources?.[0]?.resources).toEqual(['assets/*.woff2'])
   })
 
-  it('needs a Chrome with the Translator API and asks only for the offscreen document, the side panel, storage and YouTube', () => {
+  it('needs a Chrome with the Translator API and asks only for the offscreen document, the side panel, storage, scripting and YouTube', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
@@ -37,6 +37,7 @@ describe('manifest', () => {
       'offscreen',
       'sidePanel',
       'storage',
+      'scripting',
       'declarativeNetRequestWithHostAccess'
     ])
     expect(release.host_permissions).toEqual(['https://www.youtube.com/*'])

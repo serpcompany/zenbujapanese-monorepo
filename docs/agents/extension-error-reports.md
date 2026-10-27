@@ -1,7 +1,8 @@
 # The extension's error reports
 
-How the extension sends its own errors to Sentry, from every part, and what an event may hold.
-The rest of the extension's guide is in [`extension.md`](extension.md).
+How the browser extension ([`extension.md`](extension.md)) reports its errors: its Sentry
+project, what each part sends and scrubs, the setting that stops it, the source maps, and the
+check that one arrives.
 
 Every part reports its errors to Sentry's `zenbujapanese-extension` in `serpcompany`, the
 extension's own project, set up as the app's is ([`ios-crash-reports.md`](ios-crash-reports.md)),
@@ -46,11 +47,13 @@ with one difference below. There are no usage analytics.
   draws the switch on the Settings page; until then, set the key from the service worker's
   console. Sentry keeps an event for the project's retention, which is set in Sentry (see the
   owner steps).
-- **Handled failures.** When the router answers a dictionary request with a failure, it reports
-  it once with `reportFailure(code)`, a message holding only the code and grouped by it:
-  `offscreen-document` (the document couldn't be opened), `offscreen-message` (it couldn't be
-  reached), or `dictionary-answer` (it answered with a failure, such as a worker that failed or
-  didn't answer). Never the failure's text or the request. A code that fails again and again is
+- **Handled failures.** When the service worker answers a dictionary or translation request with
+  a failure, it reports it once with `reportFailure(code)`, a message holding only the code and
+  grouped by it: `offscreen-document` (the document couldn't be opened), `offscreen-message` (it
+  couldn't be reached), `dictionary-answer` (it answered with a failure, such as a worker that
+  failed or didn't answer), or `translation-answer` (the Translator failed or didn't answer in
+  time). A translator that isn't available is an answer, not a failure. Never the failure's text,
+  the request, the selected text, or the translation. A code that fails again and again is
   reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
   before it.
 - **What an event holds.** Only the integrations that find a fault run: event filters, function

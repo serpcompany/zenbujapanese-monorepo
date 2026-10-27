@@ -1,6 +1,8 @@
 import { startErrorReports } from '../error-reports/error-reports'
 import { isErrorReport, toServiceWorker } from '../error-reports/forwarding'
+import { onDeviceTranslation } from '../translation/translator'
 import { announceStarted, askWorker, relayToWorker } from './relay'
+import { answerTranslation } from './translation'
 
 const forward = toServiceWorker(chrome.runtime)
 
@@ -17,4 +19,5 @@ function startWorker() {
 }
 
 chrome.runtime.onMessage.addListener(relayToWorker(askWorker(startWorker)))
+chrome.runtime.onMessage.addListener(answerTranslation(onDeviceTranslation()))
 announceStarted(chrome.runtime)

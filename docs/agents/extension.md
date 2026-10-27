@@ -4,11 +4,12 @@
 repository to read the shared language data (ADR 0006) and replaces the 1.1.0 prototype, whose
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
-draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in
-`src/shared/labels.ts`. What it does for a learner, and the check for each behavior, is in its
+draws with `@zenbu/ui` ([`ui.md`](ui.md)). It keeps its interface text in `src/shared/labels.ts`,
+and a surface's own in its folder's `labels.ts`, such as `src/translate/labels.ts`. What it does
+for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
-behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup, Zenbu
-Captions, Video follower).
+behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word
+popup, Zenbu Captions, Video follower, Translation module).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -30,8 +31,9 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
 asks for Chrome 138 (`minimumChromeVersion` in `build/manifest.ts`), the first with the Translator
-API that the extension's translations are to use (#967); on-device speech recognition (#968) is
-outside the first version.
+API that the extension's translations use (#967); on-device speech recognition (#968) is
+outside the first version. It asks for `scripting` so the Translate tab's Use Selection can read
+the selected text on the active tab; reaching that tab also needs `activeTab` (#959).
 
 ## Builds and packages
 
@@ -73,8 +75,10 @@ outside the first version.
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`). |
-| `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`). |
+| `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
+| `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
+| `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root, and the content scripts' entries (`youtube.ts`). |
 | `src/captions/` | A video's captions: the messages and their types (`messages.ts`), YouTube's two requests (`youtube-requests.ts`), the waits after a refusal (`backoff.ts`), and the service worker's side, which fetches, keeps, and announces them (`captions-service.ts`, `serve-captions.ts`). `fixtures/` holds YouTube's answers and a stand-in `fetch` for the tests. |
@@ -105,55 +109,34 @@ document it's waiting on, since Chrome stops it when it's idle.
 
 ### Captions and the video
 
-The YouTube content script (`followYouTubePage`) reads the video from the URL at start, on
-YouTube's `yt-navigate-finish`, and on `popstate`, and sends `{ type: 'video-opened', videoId }`
-through `askCaptions`. A page asks for a tab's captions with `{ type: 'captions', tabId }` and
-`{ type: 'try-again', tabId }`. The service worker answers each with a `CaptionsState`, `{ state:
-'no-video' }` when the tab's URL (`chrome.tabs.get`, through the host permission) isn't a watch
-page, or a Failure, and announces each change of a tab's state as `{ target: 'captions', tabId,
-captions }`, to the extension's pages and to that tab. For this the manifest asks for `storage`,
-`declarativeNetRequestWithHostAccess`, and `https://www.youtube.com/*`.
+How the service worker gets a YouTube video's captions and the content script follows the video
+is in [`extension-captions.md`](extension-captions.md).
 
-- **YouTube's two requests** go from the service worker: the `ANDROID` player request to
-  `/youtubei/v1/player`, then the Japanese track's `timedtext`, with `fmt` and `tlang` dropped,
-  only on `www.youtube.com`. The core's rules (`captions/youtube.ts`) pick the track and read it.
-  A `declarativeNetRequest` session rule (`originRule`) removes `Origin` from the extension's own
-  requests to `www.youtube.com/youtubei/`, as the spike (#945) did: POSTs only, from no tab, and
-  with the extension as initiator. The service worker adds it before its first request
-  (`prepareRequests`); if Chrome refuses it, no request goes, the video fails with "Zenbu couldn't
-  get ready to ask YouTube.", and the next request tries again. Whether `initiatorDomains`
-  matches the service worker's own requests is for #952's stand-in check, before any request to
-  YouTube.
-- **A 15-second timeout** (`AbortSignal.timeout`) on each request, so a request YouTube leaves
-  unanswered fails as "Zenbu couldn't reach YouTube." and frees the queue for the other tabs.
-- **One request at a time.** Every request to YouTube goes through one queue, and each tab's
-  requests through its own, so a tab never asks for a video it's already asking for.
-- **What it keeps,** in `chrome.storage.session`: each tab's video, its state, and whether the
-  Video tab asked (`captions.tab.<id>`), forgotten when the tab closes, and the wait after a 429
-  (`captions.rateLimit`), shared by every tab. Chrome stops the service worker when it's idle, so
-  nothing lives only in memory but the requests in flight.
-- **The waits** (`backoff.ts`): 15, 30, then 60 minutes after each 429 in a row, each up to 20%
-  longer at random. The service worker sets no timer: the content script asks again once the
-  wait is over, so YouTube is asked only while a watch page is open. It sets its timer only for a
-  wait still to come, never for one that is over. Try again asks at once.
-- **Zenbu Captions off** (`videos.zenbuCaptions`): `video-opened` answers `loading` and asks
-  nothing until a page sends `captions` for that tab. It never hands the content script a wait,
-  so that page sets no timer: a tab's stored wait is dropped, and the shared one in
-  `captions.rateLimit` still holds for when the captions are asked for. From then on the tab's next videos are
-  fetched too. The service worker reads the setting through `settings.ts`, and when Settings
-  change with it on, opens each tab's video again (`openVideosAgain`), which asks only for what
-  it lacks. The content script never reads settings.
+### Translation
 
-A page drives the video with `{ target: 'video', control }` sent to the tab (`controls.ts`): seek,
-play, pause, or a speed. The content script starts the `VideoFollower` on the first one and stops
-it when the video changes. The follower (`youtube-follower.ts`) follows `#movie_player`'s
-`<video>`: it reports the time frame by frame only while the video plays and someone subscribes,
-holds the time and ignores the controls while the player has `ad-showing`, then puts the
-learner's speed back, and hides YouTube's own captions with an attribute on the player and one
-style rule. `currentLine` (`follower.ts`) finds the line playing at a time, and `playingLine` the
-line playing in a `Playback`: none while an ad shows (`ad: true`), whatever the held time. Every
-consumer of a follower uses `playingLine`. Netflix's follower
-(#966) implements the same interface.
+Any surface translates with `translate(request)` (`src/translation/messages.ts`): it asks how
+available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines
+of text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
+offscreen document as for the dictionary and passes it on as
+`{ target: 'offscreen', translation }`. The key is `translation`, not `request`, so the
+dictionary's listeners never answer it, nor the translation listeners a dictionary request. The offscreen document makes one Translator for
+each direction once Chrome says it is `available`, keeps it, and translates each line, leaving a
+blank one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes
+nothing then; a translation that fails, or doesn't answer within 30 seconds, comes back as
+`{ type: 'failed', reason }`, and the offscreen document drops that Translator, destroying it, so
+the next one makes a new one. A page's text never goes in an error's message.
+
+Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
+page asks `translatorAvailability(direction)` itself in that click and, while the model is
+`downloadable` or `downloading`, calls `downloadTranslator(direction, onProgress)` at once, before
+any message. It reports the download's progress from 0 to 1 and answers the state; a download with
+no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
+through the offscreen document, which makes its own Translator once the model is `available`. The
+offscreen document
+translates with no click once the model is `available`: checked on 2026-10-27 in Chrome 156, in
+the headful agent Chrome, by sending a translation from the test content script's world, with no
+user gesture, in a Chrome just started. Each direction has its own model. The model is Chrome's,
+on this computer, and nothing is sent anywhere to translate.
 
 ### Drawing on a page
 
@@ -194,7 +177,9 @@ reports its errors is in [`extension-error-reports.md`](extension-error-reports.
 - **Only the dictionary worker opens the dictionary.** Nothing outside `src/worker/` may load the
   core's `artifact/`, `search/`, `embedded/`, or `examples/` modules or SQLite, however indirectly
   (`only-the-worker-opens-the-dictionary`), or import `src/worker/` at all
-  (`nothing-imports-the-worker`): the offscreen document starts the worker by its URL.
+  (`nothing-imports-the-worker`): the offscreen document starts the worker by its URL. The one
+  exception is `search/query`, the core's text checks, which loads none of them: the translation
+  module takes a text's direction from its `writtenLanguage`, as the app does.
 - **Pages and content scripts draw with `@zenbu/ui`,** never the Base UI or Radix primitives under
   it (`extension-draws-with-zenbu-ui`). Add what's missing to `@zenbu/ui`.
 - **The service worker, the offscreen document, and the worker draw nothing:** nothing they
@@ -219,10 +204,19 @@ reports its errors is in [`extension-error-reports.md`](extension-error-reports.
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, an error in its content handed to its reporter, and unmounting, and
-  `DictionaryStatus` checking, ready, failed, and Check again. Error reports: `scrub.test.ts`
-  (page text, a page URL, and a selected word gone from every part of an event), the content
-  script's client sending its own error but never the page's, with no global handler, the pages'
-  and a worker's uncaught errors sent with their part, all through a recording transport
+  `DictionaryStatus` checking, ready, failed, and Check again. Translation, with a stand-in
+  Translator on `globalThis.Translator`: a text's direction, with the app's `WrittenLanguageTests`
+  cases; a line from a content script through the service worker and the offscreen document and
+  back, each way, its availability, one Translator for each direction, `not-available` with nothing
+  made, each failure, and the listeners kept apart from the dictionary's, a Translator dropped after
+  a failure or a timeout; `downloadTranslator`'s progress and its limit on a stalled download; Use
+  Selection's reading; Speak's voice, only one on this computer; and, in happy-dom, the Translate
+  tab: its fit to the panel's tab props, Use Selection, both directions, Copy, Speak and Speak with
+  no local voice, the download started before any message and its progress then the result, the
+  notices, Clear, an emptied box, and a late answer dropped. Error reports: `scrub.test.ts` (page
+  text, a page URL, and a selected word gone from every part of an event), the content script's
+  client sending its own error but never the page's, with no global handler, the pages' and a
+  worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
   taken out (`build/upload-source-maps.test.ts`).
 - **Captions and the video,** with YouTube's answers from `src/captions/fixtures/` through a
@@ -239,4 +233,6 @@ reports its errors is in [`extension-error-reports.md`](extension-error-reports.
   return, the test content script, and the language-data download, with screenshots in light and
   dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
   test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
-  a click outside are still checked by hand.
+  a click outside are still checked by hand, and so is Translate: in the side panel, translate a
+  Japanese line and an English one. The Translator needs a branded Chrome, headful, since a
+  headless one reports the model `downloadable`.

@@ -11,7 +11,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
+| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. Under it, [Translate](translate.md). | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
 | Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | `e2e/pages.spec.ts` |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
 
@@ -44,6 +44,6 @@ set in Sentry.
 
 ## Not built yet
 
-Looking words up, the word popup on a page, saving, and translating aren't built, nor the Video
-tab and the caption on the player that show a YouTube video's lines. The release build draws
-nothing on the pages a learner reads.
+Looking words up, the word popup on a page, and saving aren't built, nor the Video tab and the
+caption on the player that show a YouTube video's lines. The release build draws nothing on the
+pages a learner reads.

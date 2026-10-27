@@ -67,7 +67,7 @@ pre-push:
         pnpm --silent --filter zenbujapanese-account-api test
     extension:
       skip:
-        - run: git diff --quiet origin/main...HEAD -- apps/extension packages/ui packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
+        - run: git diff --quiet origin/main...HEAD -- apps/extension packages/dictionary-core packages/ui package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: >-
         pnpm --silent --filter zenbujapanese-extension lint &&
         pnpm --silent --filter zenbujapanese-extension typecheck &&

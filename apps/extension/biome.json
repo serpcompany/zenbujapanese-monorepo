@@ -47,6 +47,7 @@
                     "group": [
                       "@zenbu/dictionary-core/artifact/**",
                       "@zenbu/dictionary-core/search/**",
+                      "!@zenbu/dictionary-core/search/query",
                       "@zenbu/dictionary-core/embedded/**",
                       "@zenbu/dictionary-core/examples/**",
                       "**/worker/**"
