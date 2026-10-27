@@ -14,11 +14,11 @@
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "7b62147b6c3ea51d1ddcc3ce9cf2df2f74a8bf99e7f8213888e1f5769fc5ae58"
+      "sha256" : "83a194a0cbdbf2b3f49deaaf4c19275bf0e9a1f03e6a8f188e0a6561854bcbce"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "77e222bd5364a29a76cd8814369245a3d7307de03fda1bd87422c7c6670d10e5"
+      "sha256" : "1b366dd10305e0af380b69025a628cb79281eb49bf11934dc8ed5243c224c44e"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -262,8 +262,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "332,073",
-              "tier" : "rare"
+              "text" : "271",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -590,8 +590,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "48,873",
-              "tier" : "rare"
+              "text" : "356",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -761,8 +761,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "149,823",
-              "tier" : "rare"
+              "text" : "314",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -1239,6 +1239,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N4",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "121",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -1290,6 +1296,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "270",
               "tier" : "very common"
             }
           ],
@@ -3014,6 +3026,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,913",
+              "tier" : "common"
             }
           ],
           "entSeq" : [
@@ -4067,6 +4085,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "910",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -4958,6 +4982,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "121",
               "tier" : "very common"
             }
           ],
@@ -8706,8 +8736,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "332,073",
-              "tier" : "rare"
+              "text" : "271",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -8793,8 +8823,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "332,073",
-              "tier" : "rare"
+              "text" : "271",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -9477,6 +9507,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "565",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -9824,6 +9860,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N1",
               "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "636",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -10335,6 +10377,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
               "tier" : "very common"
             }
           ],
@@ -11370,6 +11418,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "565",
               "tier" : "very common"
             }
           ],
@@ -13531,6 +13585,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "337",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -13941,6 +14001,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "156",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -14342,6 +14408,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "565",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -14365,8 +14437,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "173,010",
-              "tier" : "rare"
+              "text" : "603",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -14459,8 +14531,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "5,234",
-              "tier" : "moderately common"
+              "text" : "440",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -14661,6 +14733,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "156",
               "tier" : "very common"
             }
           ],
@@ -19048,8 +19126,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "47,859",
-              "tier" : "rare"
+              "text" : "177",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -19224,8 +19302,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "48,873",
-              "tier" : "rare"
+              "text" : "356",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -19726,8 +19804,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "47,859",
-              "tier" : "rare"
+              "text" : "177",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -24013,6 +24091,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -24747,8 +24831,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
+              "text" : "113",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -24767,6 +24851,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "156",
               "tier" : "very common"
             }
           ],
@@ -25565,6 +25655,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "204",
               "tier" : "very common"
             }
           ],
@@ -26373,6 +26469,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "736",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -26454,8 +26556,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
+              "text" : "113",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -26853,6 +26955,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,913",
+              "tier" : "common"
             }
           ],
           "entSeq" : [
@@ -28091,6 +28199,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N4",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,282",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -28172,6 +28286,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "400",
               "tier" : "very common"
             }
           ],
@@ -29244,8 +29364,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "274,312",
-              "tier" : "rare"
+              "text" : "258",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -30441,6 +30561,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N3",
               "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "378",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -31179,8 +31305,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
+              "text" : "113",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -31986,6 +32112,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "337",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -32388,8 +32520,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "332,073",
-              "tier" : "rare"
+              "text" : "271",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -32688,8 +32820,8 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
+              "text" : "113",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -33402,6 +33534,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "565",
               "tier" : "very common"
             }
           ],

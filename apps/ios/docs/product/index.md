@@ -270,13 +270,13 @@ packs download on request, or on their own when chosen on another signed-in devi
 ([sync](account-sync.md)), and are mapped locally into Zenbu's dictionary; Jiten packs match words
 by reading as well as spelling. YouTube counts words by spelling, so a spelling shared by several
 dictionary words (時 is とき and じ) ranks the one UniDic's reading for it names (とき); a spelling
-UniDic also reads several ways, such as 家 (いえ, うち), has no YouTube rank. A pack an update drops
-from the catalog is deleted on the next launch. A learner can enable any number of installed packs,
-or none. A newly downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled
-but not removed, and removing an optional pack also disables it. A new install enables JLPT Levels
-first and YouTube second. JLPT Levels marks words with an estimated N5–N1
-level from Jonathan Waller's lists; JLPT publishes no official vocabulary list, so the app
-presents levels as unofficial study estimates.
+UniDic also reads several ways ranks the reading a reviewed list chose where one clearly dominates
+(家 is いえ) and has no YouTube rank otherwise (後, あと or ご). A pack an update drops from the catalog
+is deleted on the next launch. A learner can enable any number of installed packs, or none. A newly
+downloaded pack is enabled automatically. JLPT Levels and YouTube can be disabled but not removed,
+and removing an optional pack also disables it. A new install enables JLPT Levels first and YouTube
+second. JLPT Levels marks words with an estimated N5–N1 level from Jonathan Waller's lists; JLPT
+publishes no official vocabulary list, so the app presents levels as unofficial study estimates.
 
 Check: package `FrequencyPackLifecycleTests`, `SearchResultOrderingTests`, and `ResultsScreenTests`;
 core `detail/frequency.test.ts`; contract `test_frequency_pack_runtime_contract.py` (each pack's
@@ -289,7 +289,7 @@ The screen lists one row per pack in three sections. **Enabled** holds packs tha
 switched on, in priority order; Edit reorders them (on the Mac, they're dragged directly). Ranks appear in this order, and Look Up
 sorts by the first pack, breaking ties with each next pack, unless the learner sorts by one pack
 from Look Up's **Sorted by** row ([Sorting results](results.md#sorting-results)). A word the first pack doesn't rank
-places by how common the next pack that ranks it says it is (家, which YouTube doesn't rank, places
+places by how common the next pack that ranks it says it is (後, which YouTube doesn't rank, places
 by its JLPT N5 level), rather than after every ranked word. **Installed** holds downloaded packs that are switched off, and
 **Available** offers a download button for each remaining pack. Several packs can download at
 once: each row shows its own progress ring with a stop button, and stopping one leaves the others

@@ -37,8 +37,13 @@ before and after, and says what a person does before it merges.
 A run fails without a pull request when the export or the import needs a person: a download
 fails, EDRDG's two files disagree, the DTD moved, the importer or the contract tests refuse the
 export (a JMdict code the importer doesn't map, a sense with no English gloss), or an entry would
-lose its note identity. Fix the
-cause as the refresh by hand would, then run the workflow again from the Actions tab.
+lose its note identity. A YouTube reviewed reading fails it too when the new export changes its
+entries: the reading no longer ranks the entry its row names, or would cost an entry its rank, or
+`test_reviewed_readings_evidence.py` finds a row's verdict moved. Run
+`language-data/tools/review_tubelex_readings.py write --scope` with UniDic, which rewrites every
+row's evidence and verdict, then decide each row it flags: keep a reading only where its verdict
+ranks it ([`FREQUENCY_SOURCE_DECISIONS.md`](FREQUENCY_SOURCE_DECISIONS.md), #826). Fix the cause
+as the refresh by hand would, then run the workflow again from the Actions tab.
 
 ## The suites
 

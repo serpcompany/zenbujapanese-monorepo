@@ -7,3 +7,7 @@ Project: https://jiten.moe/frequency-dictionaries
 RankedLists.sqlite3 holds these six lists' ranks, mapped to dictionary entries. It adapts Jiten's
 data and is shared under the same license. The license's full text is
 JLPT-VOCABULARY-CC-BY-SA-4.0.txt in this release, the same CC BY-SA 4.0 text.
+
+TUBELEXFrequencyPack.sqlite3 holds TUBELEX's ranks only. For 86 spellings UniDic reads several
+ways, such as 家 (いえ), Jiten's ranks for each reading were the evidence a person read to choose the
+dictionary entry the row's rank goes to; the pack holds none of Jiten's data.

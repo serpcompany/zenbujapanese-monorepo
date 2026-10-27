@@ -516,12 +516,12 @@ then, run them on a Mac ([Tests on every platform](#tests-on-every-platform)).
 
 The data tools' contract tests are in `language-data/tools/tests/`; run one with
 `python3 -m unittest discover -s language-data/tools/tests -p <file>`. Frequency-pack selection
-has one, `test_frequency_pack_runtime_contract.py`. It verifies
-that every selectable manifest pins a known evidence row and rank, each ordered source agrees
-with the generated mapping analysis, the bundled TUBELEX artifact contains its pinned row, and
-the bundled JLPT level pack matches its pinned source files and import report. It also checks
-that 事, 時, 上, and 先生, spellings TUBELEX counts once although JMdict files them under several
-entries, carry their rank on the one entry their UniDic lemma reading names (#440).
+has one, `test_frequency_pack_runtime_contract.py`. It verifies that every selectable manifest pins
+a known evidence row and rank, each ordered source agrees with the generated mapping analysis, the
+bundled TUBELEX artifact contains its pinned row, and the bundled JLPT level pack matches its pinned
+source files and import report. It also checks that 事, 時, 上, and 先生, which JMdict files under
+several entries, rank the entry their UniDic reading names (#440), and that 家 (いえ) and the other
+reviewed readings rank the entry their list names, and no row it leaves out has a rank (#826).
 
 Examples for kana-headword words come from `ExampleWordIndex.sqlite3`, which is built against the
 bundled `LanguageReferenceData.sqlite3`. `test_example_word_index_contract.py` verifies
