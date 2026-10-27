@@ -26,6 +26,14 @@ dictionary sheet Image Search uses.
   out like YouTube's results: its bars hidden with no gap left for them, the last result clear of
   the tab bar, and a result opening in Player). YouTube's live results page is by hand
   ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
+- A link in Zenbu's own scheme, `com.zenbujapanese.dictionary://watch?v=` and a video's ID, opens
+  that video from any tab, as pasting its link does, with Player's home under it; Back returns to
+  the home. An open word sheet closes, and a running Translate conversation keeps going. A link
+  without a video ID, or with text that isn't one, opens Player's home
+  ([Links in Zenbu's own scheme](shortcuts.md#links-in-zenbus-own-scheme)).
+  Check: package `AppLinkTests.watchLinks`; UI
+  `AppLinkUITests.testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp`, with YouTube stood
+  in.
 - Below the bar, the tab lists recently watched videos, newest first, each as its own
   full-width card: the thumbnail with a comprehension pill (red under 25%, orange to 50%, yellow
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the
