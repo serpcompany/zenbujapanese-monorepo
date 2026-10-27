@@ -9,6 +9,7 @@ import {
   startContentScript,
   startExtension
 } from '../test/extension'
+import { allSites } from '../test/fake-chrome'
 import {
   byText,
   click,
@@ -26,7 +27,8 @@ vi.mock('../shared/dictionary', () => import('../test/dictionary'))
 vi.mock('../shared/dictionary-progress', () => import('../test/dictionary'))
 
 const host = 'www3.nhk.or.jp'
-const article = { id: 7 }
+const article = { id: 7, url: `https://${host}/news/easy/k10014.html` }
+const granted = [`https://${host}/*`]
 const siteSwitchName = `[role="switch"][aria-label="Zenbu on ${host}"]`
 
 let opened: Rendered[] = []
@@ -71,7 +73,7 @@ afterEach(() => {
 
 describe("the side panel's header", () => {
   it('turns each reading aid on and off from its menu, Settings shows the same, and the open page hears it without a reload', async () => {
-    const fake = startExtension({ tabs: [article] })
+    const fake = startExtension({ tabs: [article], granted })
     await loadContentScript(fake)
     const header = await drawHeader()
     const settings = await openSettings('#reading-aids')
@@ -92,7 +94,7 @@ describe("the side panel's header", () => {
   })
 
   it('turns Zenbu Captions on and off from its menu, as Settings does', async () => {
-    const fake = startExtension({ tabs: [article] })
+    const fake = startExtension({ tabs: [article], granted })
     const header = await drawHeader()
     const settings = await openSettings('#reading-aids')
     const menu = await openMenu(header)
@@ -102,7 +104,7 @@ describe("the side panel's header", () => {
   })
 
   it('waits for Furigana before Hide Furigana on Known Words can change', async () => {
-    const fake = startExtension({ tabs: [article] })
+    const fake = startExtension({ tabs: [article], granted })
     const menu = await openMenu(await drawHeader())
     await click(menuSwitch(menu, 'readingAids.furigana'))
     const hide = menuSwitch(menu, 'readingAids.furiganaHiddenOnKnownWords')
@@ -112,7 +114,7 @@ describe("the side panel's header", () => {
   })
 
   it("turns Zenbu off for the tab's site, keeps it off after a reload, lists it under Sites, and Turn On brings it back", async () => {
-    const fake = startExtension({ tabs: [article] })
+    const fake = startExtension({ tabs: [article], granted })
     const stopFirstLoad = await loadContentScript(fake)
     expect(contentScriptShown()).not.toBeNull()
 
@@ -139,10 +141,13 @@ describe("the side panel's header", () => {
     expect(isOn(find(header, siteSwitchName))).toBe(true)
   })
 
-  it('follows the active tab to another site, to a page Zenbu has no part in, and back', async () => {
-    const other = { id: 8 }
-    const settingsTab = { id: 9 }
-    const fake = startExtension({ tabs: [article, other, settingsTab] })
+  it('follows the active tab to another site, to a page Chrome hides from Zenbu, and back', async () => {
+    const other = { id: 8, url: 'https://www.asahi.com/articles/' }
+    const extensionsPage = { id: 9, url: 'chrome://extensions/' }
+    const fake = startExtension({
+      tabs: [article, other, extensionsPage],
+      granted: [...granted, 'https://www.asahi.com/*']
+    })
     await loadContentScript(fake)
     startContentScript(fake, other.id, 'www.asahi.com')
     const header = await drawHeader()
@@ -155,26 +160,43 @@ describe("the side panel's header", () => {
     ).not.toBeNull()
     expect(header.querySelector(siteSwitchName)).toBeNull()
 
-    fake.switchTo(settingsTab.id)
+    fake.switchTo(extensionsPage.id)
     await settle()
     expect(header.querySelector('[role="switch"]')).toBeNull()
-    expect(find(await openMenu(header), '[data-site="cant-run"]').textContent).toContain(
-      "Zenbu can't run here"
-    )
+    expect(find(await openMenu(header), '[data-site]').getAttribute('data-site')).toBe('unseen')
 
-    fake.load({ id: settingsTab.id, url: `https://${host}/news/easy/` })
+    fake.load({ id: extensionsPage.id, url: article.url })
     await settle()
     expect(header.querySelector(siteSwitchName)).not.toBeNull()
   })
 
-  it.each([
-    { name: 'a tab no content script answers from, such as chrome://extensions/', tab: { id: 2 } },
-    {
-      name: 'the Chrome Web Store',
-      tab: { id: 2, url: 'https://chromewebstore.google.com/detail/zenbu/abc' }
-    }
-  ])("says Zenbu can't run on $name, with no switch", async ({ tab }) => {
-    startExtension({ tabs: [tab] })
+  it("says Zenbu can't see a page whose address Chrome withholds, and how to let Zenbu in, with no switch and no Allow", async () => {
+    startExtension({ tabs: [article] })
+    const header = await drawHeader()
+    expect(header.querySelector('[role="switch"]')).toBeNull()
+    const menu = await openMenu(header)
+    const site = find(menu, '[data-site]')
+    expect(site.getAttribute('data-site')).toBe('unseen')
+    expect(site.textContent).toContain("Zenbu can't see this page")
+    expect(site.textContent).toContain('change its site access')
+    expect(site.textContent).not.toContain(host)
+    expect(menu.textContent).not.toContain('Allow')
+  })
+
+  it("shows the switch once Chrome's site access lets Zenbu in, without a reload", async () => {
+    const fake = startExtension({ tabs: [article] })
+    const header = await drawHeader()
+    expect(header.querySelector('[role="switch"]')).toBeNull()
+    fake.grant(granted)
+    await settle()
+    expect(find(header, siteSwitchName)).toBeTruthy()
+  })
+
+  it("says Zenbu can't run on the Chrome Web Store, where Chrome shows the address, with no switch", async () => {
+    startExtension({
+      tabs: [{ id: 2, url: 'https://chromewebstore.google.com/detail/zenbu/abc' }],
+      granted: allSites
+    })
     const header = await drawHeader()
     expect(header.querySelector('[role="switch"]')).toBeNull()
     const site = find(await openMenu(header), '[data-site]')
@@ -182,31 +204,29 @@ describe("the side panel's header", () => {
     expect(site.textContent).toContain("Zenbu can't run here")
   })
 
-  it("asks Chrome for the site where Chrome's site access keeps Zenbu out", async () => {
-    const fake = startExtension({
-      tabs: [{ id: 7, url: `https://${host}/news/easy/k10014.html` }],
-      allowed: false
-    })
+  it("names the site and asks Chrome for it where the toolbar icon shows the address but Chrome's site access keeps Zenbu off", async () => {
+    const fake = startExtension({ tabs: [article] })
+    fake.clickIcon(article.id)
     const header = await drawHeader()
     expect(header.querySelector('[role="switch"]')).toBeNull()
     const menu = await openMenu(header)
-    expect(find(menu, '[data-site="no-access"]').textContent).toContain(
-      "Chrome's site access keeps Zenbu off this site"
-    )
+    const site = find(menu, '[data-site="no-access"]')
+    expect(site.textContent).toContain(host)
+    expect(site.textContent).toContain("Chrome's site access keeps Zenbu off this site")
     await click(byText(menu, '[role="menuitem"]', 'Allow on This Site'))
-    expect(fake.requested).toEqual([[`https://${host}/*`]])
+    expect(fake.requested).toEqual([granted])
     expect(find(header, siteSwitchName)).toBeTruthy()
   })
 
   it('opens Settings from its menu', async () => {
-    const fake = startExtension({ tabs: [article] })
+    const fake = startExtension({ tabs: [article], granted })
     const menu = await openMenu(await drawHeader())
     await click(byText(menu, '[role="menuitem"]', 'Settings'))
     expect(fake.opened.optionsPage).toBe(1)
   })
 
   it('offers Show Welcome Tab only while the dictionary downloads', async () => {
-    startExtension({ tabs: [article] })
+    startExtension({ tabs: [article], granted })
     resetDictionary({ state: 'ready', release: '2026-10-01', bytes: 1, checkedAt: null })
     const ready = await openMenu(await drawHeader())
     expect(ready.textContent).not.toContain('Show Welcome Tab')

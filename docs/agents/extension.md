@@ -5,8 +5,7 @@ repository to read the shared language data (ADR 0006) and replaces the 1.1.0 pr
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
 draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in each surface's
-`labels.ts`: `src/shared/labels.ts` for what several share, `src/side-panel/labels.ts`, and
-`src/settings/labels.ts`. What it does for a learner, and the check for each behavior, is in its
+`labels.ts` (`src/shared/` for what several share). What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Side
 panel, Word popup).
@@ -66,30 +65,22 @@ outside the first version.
   `homepage_url` isn't its environment's website or whose files name the other environment's
   hosts, or any `.js` that still holds a `__ZENBU_` setting the build didn't fill in.
 
-Besides `offscreen` and `sidePanel`, the manifest asks for `storage`, for the settings, and
-`activeTab`, so the side panel's header can read the tab's address after a click on the toolbar
-icon. Neither adds an install warning. It asks for no site at install: `http://*/*` and
-`https://*/*` are `optional_host_permissions`, and the header menu's Allow on This Site asks Chrome
-for one site with `chrome.permissions.request`. It never asks for `tabs`, which would warn that it
-reads the browsing history.
-
 ## Code layout
 
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel and the Settings page (the manifest's `options_ui`, opened in a tab); there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), answers and passes on the settings (`settings.ts`), and opens the side panel on a route (`side-panel.ts`). |
-| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's site switch and menu (`header-controls.tsx`) and the active tab's site (`active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), passes on the settings (`settings.ts`), and opens the side panel on a route (`side-panel.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, `active-site.ts`), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([Error reports](#error-reports)). |
-| `src/settings/` | Settings: the sidebar and its five pages, the switch row and when Hide Furigana on Known Words waits (`setting-switch.tsx`), which the header's menu shares, the frequency dictionaries' order (`frequency-order.ts`), and the text both use (`labels.ts`). |
-| `src/shared/` | The messages and their types, the settings (`settings.ts`) and the hook pages read them with (`use-settings.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
+| `src/settings/` | Settings and its pages ([`extension-settings.md`](extension-settings.md)). |
+| `src/shared/` | The messages and their types, the settings (`settings.ts`, `use-settings.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and follows the settings (`settings-follower.tsx`). |
-| `src/test/` | What the DOM tests share: a fake `chrome` (`fake-chrome.ts`), rendering and clicking (`render.tsx`), the extension's pages and a content script on one fake Chrome (`extension.tsx`), and a stand-in for the dictionary's state (`dictionary.tsx`). It imports nothing from Vitest, so the layer rules hold it like runtime code. |
 
 ### Messages
 
@@ -106,18 +97,6 @@ a send that throws, an unknown request, a document that doesn't start within 10 
 that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
 one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
-
-### Settings
-
-Each setting is a key of its own in `chrome.storage.local`, with its default in
-`settingDefaults` (`src/shared/settings.ts`); a stored value of the wrong kind reads as the
-default. The side panel's header and Settings read and write the storage directly, with `useSettings`, and
-redraw on `chrome.storage.onChanged`. A content script never reads the storage: it asks the
-service worker with `askSettings()` (`{ target: 'service-worker', settings: 'read' }`), and the
-service worker, which watches the storage, sends `{ target: 'settings', settings }` to every open
-tab when one changes, which `onSettingsChanged` hears. A tab that can't take the message (a closed
-tab, a page with no content script) stops none of the others. Whether Zenbu runs on a site is
-`isZenbuOn(host, settings)`, from `sites.off`.
 
 ### Drawing on a page
 
@@ -153,10 +132,9 @@ Comic Sans, letter spacing, uppercase, dashed borders on every element, `button 
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
-Dialog, and Test error, which throws while drawing so the content script reports it, and under it
-each reading aid and whether it's on. It follows the settings: it draws nothing on a site Zenbu is
-off on, and draws again when a setting changes, without a reload. The release build has no
-content script; `build/manifest.test.ts` checks that.
+Dialog, Test error, which throws while drawing so the content script reports it, and each reading
+aid's state ([`extension-settings.md`](extension-settings.md)). The release build has no content
+script; `build/manifest.test.ts` checks that.
 
 ## Error reports
 
@@ -277,10 +255,8 @@ with one difference below. There are no usage analytics.
   script's client sending its own error but never the page's, with no global handler, the pages'
   and a worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
-  taken out (`build/upload-source-maps.test.ts`). The settings' defaults, storage, and channel
-  (`src/shared/settings.test.ts`), and, in happy-dom on one fake Chrome, Settings with the test
-  content script beside it, each behavior its [product docs](../../apps/extension/docs/product/index.md)
-  list. The side panel's, its header among them, are in
+  taken out (`build/upload-source-maps.test.ts`). The settings' are in
+  [`extension-settings.md`](extension-settings.md), and the side panel's in
   [`extension-side-panel.md`](extension-side-panel.md).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel from the toolbar
   icon, and Settings, in light and dark, see "The dictionary is ready." from the test surface,

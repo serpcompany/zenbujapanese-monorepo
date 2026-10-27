@@ -44,9 +44,15 @@ export const settingsLabels = {
     off: 'Zenbu is off for this site',
     switchName: (host: string) => `Zenbu on ${host}`,
     thisPage: 'This page',
-    cantRun: "Zenbu can't run here",
-    cantRunDetail:
-      'Chrome keeps extensions off its own pages, the Chrome Web Store, and sites they may not open. A page opened before Zenbu was added runs it after a reload.',
+    unseen: {
+      status: "Zenbu can't see this page",
+      detail:
+        "Chrome hides a page from Zenbu until its site access lets Zenbu in. To let Zenbu in, open Extensions in Chrome's toolbar, then Zenbu Japanese's menu, and change its site access."
+    },
+    'cant-run': {
+      status: "Zenbu can't run here",
+      detail: 'Chrome keeps every extension off its own pages and the Chrome Web Store.'
+    },
     noAccess: "Chrome's site access keeps Zenbu off this site",
     allow: 'Allow on This Site'
   },

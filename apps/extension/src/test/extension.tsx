@@ -1,7 +1,6 @@
 import { followSettings, ReadingAidStates } from '../../test-pages/settings-follower'
 import { hostElementName, mountInShadowRoot } from '../content/shadow-mount'
 import { startSettingsChannel } from '../service-worker/settings'
-import { answerSiteRequests } from '../shared/page-site'
 import { fakeChrome } from './fake-chrome'
 
 class FakeFontFace {
@@ -18,20 +17,14 @@ export function startExtension(options?: Parameters<typeof fakeChrome>[0]): Fake
 }
 
 export function startContentScript(fake: FakeExtension, tabId: number, host: string): () => void {
-  const runtime = fake.inTab(tabId)
-  const stopAnswering = answerSiteRequests(host, runtime.onMessage)
-  const stopFollowing = followSettings(
+  return followSettings(
     settings =>
       mountInShadowRoot(<ReadingAidStates settings={settings} />, {
         fonts: { add: () => undefined }
       }),
     host,
-    runtime
+    fake.inTab(tabId)
   )
-  return () => {
-    stopAnswering()
-    stopFollowing()
-  }
 }
 
 export const contentScriptShown = () =>

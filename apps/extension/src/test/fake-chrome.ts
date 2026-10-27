@@ -3,7 +3,7 @@ type MessageListener = (message: unknown, sender: unknown, respond: Respond) => 
 type Changes = Record<string, { oldValue?: unknown; newValue?: unknown }>
 type ChangeListener = (changes: Changes) => void
 type TabUpdated = (tabId: number, change: { status?: string }) => void
-type Tab = { id: number; url?: string }
+type Tab = { id: number; url: string }
 
 function chromeEvent<Listener>() {
   const listeners = new Set<Listener>()
@@ -25,17 +25,29 @@ const deliver = (listeners: Set<MessageListener>, message: unknown, sender: unkn
     if (!answering) reject(new Error('Receiving end does not exist.'))
   })
 
-export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {}) {
+const covers = (pattern: string, address: string) => {
+  const [scheme, host] = pattern.split(/:\/\/|\//)
+  const url = URL.parse(address)
+  return url !== null && url.protocol === `${scheme}:` && (host === '*' || host === url.hostname)
+}
+
+export const allSites = ['http://*/*', 'https://*/*']
+
+export function fakeChrome({ tabs = [] as Tab[], granted = [] as string[] } = {}) {
   const items: Record<string, unknown> = {}
   const changed = chromeEvent<ChangeListener>()
   const messages = chromeEvent<MessageListener>()
   const activated = chromeEvent<() => void>()
   const updated = chromeEvent<TabUpdated>()
+  const added = chromeEvent<() => void>()
   const inTabs = new Map<number, ReturnType<typeof chromeEvent<MessageListener>>>()
   const sent: unknown[] = []
   const requested: string[][] = []
   const opened = { optionsPage: 0 }
-  const site = { tabs, active: tabs[0]?.id, allowed }
+  const site = { tabs, active: tabs[0]?.id, granted, clicked: new Set<number>() }
+
+  const shows = (tab: Tab) =>
+    site.clicked.has(tab.id) || site.granted.some(pattern => covers(pattern, tab.url))
 
   const tabMessages = (tabId: number) => {
     const known = inTabs.get(tabId) ?? chromeEvent<MessageListener>()
@@ -80,7 +92,9 @@ export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {})
     tabs: {
       query: ({ active }: { active?: boolean }) =>
         Promise.resolve(
-          site.tabs.filter(tab => !active || tab.id === site.active).map(tab => ({ ...tab }))
+          site.tabs
+            .filter(tab => !active || tab.id === site.active)
+            .map(tab => (shows(tab) ? { ...tab } : { id: tab.id }))
         ),
       sendMessage: (tabId: number, message: unknown) =>
         deliver(tabMessages(tabId).listeners, message, {}),
@@ -88,13 +102,25 @@ export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {})
       onUpdated: updated.event
     },
     permissions: {
-      contains: () => Promise.resolve(site.allowed),
+      contains: ({ origins }: { origins: string[] }) =>
+        Promise.resolve(
+          origins.every(origin =>
+            site.granted.some(pattern => covers(pattern, origin.replace('/*', '/')))
+          )
+        ),
       request: ({ origins }: { origins: string[] }) => {
         requested.push(origins)
-        site.allowed = true
+        grant(origins)
         return Promise.resolve(true)
-      }
+      },
+      onAdded: added.event,
+      onRemoved: chromeEvent<() => void>().event
     }
+  }
+
+  const grant = (origins: string[]) => {
+    site.granted = [...site.granted, ...origins]
+    for (const listener of [...added.listeners]) listener()
   }
 
   const inTab = (tabId: number) => ({
@@ -110,7 +136,12 @@ export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {})
     for (const listener of [...activated.listeners]) listener()
   }
 
+  const clickIcon = (tabId: number) => {
+    site.clicked.add(tabId)
+  }
+
   const load = (tab: Tab) => {
+    site.clicked.delete(tab.id)
     site.tabs = [...site.tabs.filter(({ id }) => id !== tab.id), tab]
     for (const listener of [...updated.listeners]) {
       listener(tab.id, { status: 'loading' })
@@ -118,5 +149,17 @@ export function fakeChrome({ tabs = [{ id: 1 }] as Tab[], allowed = true } = {})
     }
   }
 
-  return { chrome, items, sent, requested, opened, site, inTab, switchTo, load }
+  return {
+    chrome,
+    items,
+    sent,
+    requested,
+    opened,
+    site,
+    inTab,
+    switchTo,
+    load,
+    clickIcon,
+    grant
+  }
 }

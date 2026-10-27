@@ -63,12 +63,13 @@ function sameKind(value: unknown, fallback: unknown): boolean {
   return typeof value === typeof fallback
 }
 
+export function settingFrom<K extends SettingKey>(key: K, value: unknown): Settings[K] {
+  return sameKind(value, settingDefaults[key]) ? (value as Settings[K]) : settingDefaults[key]
+}
+
 export function settingsFrom(stored: Stored): Settings {
   return Object.fromEntries(
-    settingKeys.map(key => [
-      key,
-      sameKind(stored[key], settingDefaults[key]) ? stored[key] : settingDefaults[key]
-    ])
+    settingKeys.map(key => [key, settingFrom(key, stored[key])])
   ) as Settings
 }
 

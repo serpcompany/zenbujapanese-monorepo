@@ -23,9 +23,7 @@ import {
   writeSettings
 } from '../shared/settings'
 import { useSettings } from '../shared/use-settings'
-import { allowSite, readActiveSite, type Site, watchActiveTab } from './active-site'
-
-const cantRun: Site = { kind: 'cant-run' }
+import { allowSite, readActiveSite, type Site, unseen, watchActiveSite } from './active-site'
 
 function useActiveSite(): [Site | null, () => void] {
   const [site, setSite] = useState<Site | null>(null)
@@ -34,14 +32,14 @@ function useActiveSite(): [Site | null, () => void] {
     latest.current += 1
     const asked = latest.current
     readActiveSite()
-      .catch(() => cantRun)
+      .catch(() => unseen)
       .then(next => {
         if (asked === latest.current) setSite(next)
       })
   }, [])
   useEffect(() => {
     read()
-    const stopWatching = watchActiveTab(read)
+    const stopWatching = watchActiveSite(read)
     return () => {
       latest.current += 1
       stopWatching()
@@ -81,10 +79,11 @@ function SiteGroup({
   readAgain(): void
 }) {
   const labels = settingsLabels.site
-  if (site.kind === 'cant-run') {
+  if (site.kind === 'unseen' || site.kind === 'cant-run') {
+    const { status, detail } = labels[site.kind]
     return (
       <DropdownMenuGroup data-site={site.kind}>
-        <SiteLabel host={labels.thisPage} status={labels.cantRun} detail={labels.cantRunDetail} />
+        <SiteLabel host={labels.thisPage} status={status} detail={detail} />
       </DropdownMenuGroup>
     )
   }

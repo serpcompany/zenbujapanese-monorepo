@@ -1,9 +1,10 @@
 import { captureException, close, flush } from '@sentry/browser'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { settingDefaults } from '../shared/settings'
 import { recordingSettings } from '../test/recording-settings'
 import { settingStorage } from '../test/setting-storage'
 import { receiveErrorReport, reportFailure, startSendingErrorReports } from './error-reports'
-import { sendSettingKey } from './report-setting'
+import { sendSetting, sendSettingKey } from './report-setting'
 
 function start(items: Record<string, unknown> = {}, options: { held?: boolean } = {}) {
   const { settings, sent } = recordingSettings()
@@ -59,6 +60,20 @@ describe("the service worker's Send Crash Reports setting", () => {
     captureException(new Error('Unread setting'))
     await flush(1_000)
     expect(sent).toEqual([])
+  })
+})
+
+describe('Send Crash Reports, read', () => {
+  it("takes its default and its kind from the settings' defaults", async () => {
+    const shipped = settingDefaults[sendSettingKey]
+    expect(await sendSetting(settingStorage().storage)()).toBe(shipped)
+    expect(await sendSetting(settingStorage({ [sendSettingKey]: 'off' }).storage)()).toBe(shipped)
+    settingDefaults[sendSettingKey] = !shipped
+    try {
+      expect(await sendSetting(settingStorage().storage)()).toBe(!shipped)
+    } finally {
+      settingDefaults[sendSettingKey] = shipped
+    }
   })
 })
 

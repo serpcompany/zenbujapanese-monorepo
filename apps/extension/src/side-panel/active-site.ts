@@ -1,6 +1,5 @@
-import { askPageHost } from '../shared/page-site'
-
 export type Site =
+  | { kind: 'unseen' }
   | { kind: 'cant-run' }
   | { kind: 'no-access'; host: string; origins: string[] }
   | { kind: 'open'; host: string }
@@ -8,6 +7,8 @@ export type Site =
 type Page = { host: string; origins: string[] }
 
 const cantRun: Site = { kind: 'cant-run' }
+
+export const unseen: Site = { kind: 'unseen' }
 
 const webProtocols = ['http:', 'https:']
 
@@ -35,21 +36,22 @@ async function siteAt(address: string): Promise<Site> {
 
 export async function readActiveSite(): Promise<Site> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-  if (tab?.url) return siteAt(tab.url)
-  if (tab?.id === undefined) return cantRun
-  const host = await askPageHost(tab.id)
-  return host ? { kind: 'open', host } : cantRun
+  return tab?.url ? siteAt(tab.url) : unseen
 }
 
-export function watchActiveTab(changed: () => void): () => void {
+export function watchActiveSite(changed: () => void): () => void {
   const loaded = (_tabId: number, change: { status?: string }) => {
     if (change.status === 'complete') changed()
   }
   chrome.tabs.onActivated.addListener(changed)
   chrome.tabs.onUpdated.addListener(loaded)
+  chrome.permissions.onAdded.addListener(changed)
+  chrome.permissions.onRemoved.addListener(changed)
   return () => {
     chrome.tabs.onActivated.removeListener(changed)
     chrome.tabs.onUpdated.removeListener(loaded)
+    chrome.permissions.onAdded.removeListener(changed)
+    chrome.permissions.onRemoved.removeListener(changed)
   }
 }
 
