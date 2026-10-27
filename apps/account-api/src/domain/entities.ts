@@ -3,6 +3,7 @@ import { hasInvisibleCharacters } from '@zenbu/account-rules/text'
 import type { Scope } from './clients'
 import { type Profile, type Rejection, rejection } from './profile'
 import type { EntityReader, EntityType, LockedAccount } from './store'
+import type { WordState } from './word-states'
 
 export interface ClientMutation {
   id: string
@@ -17,6 +18,7 @@ interface KnownWordData {
   itemId: string
   headword: string
   reading: string
+  state: WordState
   known: boolean
 }
 

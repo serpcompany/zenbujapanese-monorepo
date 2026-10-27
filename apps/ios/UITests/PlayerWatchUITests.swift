@@ -1,7 +1,8 @@
 import XCTest
 
 final class PlayerWatchUITests: ZenbuUITestCase {
-  static let link = "https://youtu.be/AQdI1o2D32I"
+  static let videoID = "AQdI1o2D32I"
+  static let link = "https://youtu.be/\(videoID)"
   static let drawCounts = [
     "the screen": "watch.draws", "the speed menu": "watch.speed.draws",
     "the captions": "watch.captions.draws",
@@ -18,6 +19,13 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     let known = waitFor(find("watch.comprehension", in: app))
     waitUntil(known, mentions: "0 of 12 words known")
     waitFor(labeled("There's a bookstore near the station.", in: app))
+  }
+
+  func testTheMenuHidesAndShowsACaptionsTranslation() {
+    let app = openVideo()
+    assertTheMenuHidesAndShowsTranslations(
+      labeled("There's a bookstore near the station.", in: app), from: find("watch.more", in: app),
+      in: app)
   }
 
   func testThePlayersOwnControlsPlayStepAndRepeat() throws {

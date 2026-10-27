@@ -4,16 +4,16 @@
 Postgres database, beside the dictionary service on the API servers
 ([ADR 0013](../adr/0013-run-accounts-and-sync-in-their-own-service-on-the-api-servers.md)). It signs
 learners in with Apple, Google, or a code sent by email, through Better Auth, and issues the tokens
-the apps and other services use. Signed-in apps read and change the learner's profile at
-`/v1/me`, and keep their copies in step with `/v1/sync`
-([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)), which a subscription
-can unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so
-nothing in an app waits on this service.
+the apps and other services use. Signed-in apps read and change the learner's profile at `/v1/me`,
+and keep their copies in step with `/v1/sync`
+([#567](https://github.com/serpcompany/zenbujapanese-monorepo/issues/567)), which a subscription can
+unlock ([`account-billing.md`](account-billing.md)). Every Zenbu app stays local-first, so nothing
+in an app waits on this service. The browser extension is the exception: it saves only with the
+subscription ([ADR 0022](../adr/0022-save-in-the-browser-extension-only-with-the-subscription.md)).
 
 Clients reach it at the API host, `api.zenbujapanese.com`, which it shares with the dictionary
 service: nginx sends it `/v1/auth`, `/v1/me`, `/v1/sync`, `/v1/photos`, `/v1/health`, and
-`/v1/webhooks`
-([`api-servers.md`](api-servers.md), The API host).
+`/v1/webhooks` ([`api-servers.md`](api-servers.md), The API host).
 
 Run every command below from `apps/account-api`, after `pnpm install` at the repository root.
 
@@ -435,7 +435,7 @@ way and call the routes with their access tokens. They show:
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.
 
-`src/http/shared-state.test.ts` holds known words and lists to their rules, and
+`src/http/shared-state.test.ts` and `learning-words.test.ts` test known words and lists, and
 `src/http/watch-history.test.ts` watched videos: fields a watch leaves out kept, the later watch
 setting the place and an older one only filling in, a time from the future taken as now, a removal
 winning over a watch that hadn't seen it, the 51st video pruning the oldest as a delete, a removal

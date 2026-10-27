@@ -41,7 +41,7 @@ choice, an unreadable dictionary, a disabled one, and none enabled, on the bundl
 ## Filtering results
 
 The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
-**Sort By**. It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows
+**Sort By**. It opens **All**, **Unknown**, and **Known**, one checked at a time: **Known** shows
 only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
 it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
 **Account → Frequency Dictionaries**, not here.
@@ -60,3 +60,17 @@ stored filter); package `ResultsScreenTests` (known words only, and the count a 
 `SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
+
+## The Kanji row
+
+A one-kanji query leads the results with a Kanji row: the kanji, the label **KANJI**, and the
+kanji's own meanings in their source order, joined with commas, as 日 reads "day, sun, Japan,
+counter for days". A long list wraps onto more lines. A kanji with no meanings in the kanji data
+shows the meaning of the entry written as that kanji, or "Kanji detail" when there is none.
+VoiceOver reads the kanji, the label, and the same meanings. Known Words draws its kanji with the
+same row and the same text.
+
+Check: core `results/results.test.ts` (the meanings, the entry's meaning, and "Kanji detail") and
+`embedded/presentation.test.ts` (the meanings the app's kanji files hold); the recorded
+`search-results.json` suite; UI `SearchResultsUITests.testAOneKanjiSearchLeadsWithTheKanjisOwnMeanings`
+and `SavedWordsUITests.testKnownWordsShowsAWordWithItsMeaningAndAKanjiAsLookUpDoes`.

@@ -208,7 +208,14 @@ export class Dictionary {
     const { usesPrimaryEntryExamples, examples } = await this.examplesFor(query, results)
     const count = resultsExampleCount(usesPrimaryEntryExamples, examples)
     const response: SearchResponse = {
-      screen: searchResultsScreen(query, results, frequency, count, pickedKanji)
+      screen: searchResultsScreen(
+        query,
+        results,
+        frequency,
+        count,
+        pickedKanji,
+        character => this.kanjiData.row(character)?.meanings
+      )
     }
     this.searches.set(key, response)
     return response

@@ -68,8 +68,15 @@
     {
       "idx": 9,
       "version": "7",
-      "when": 1793085298361,
-      "tag": "0009_kind_reads_index",
+      "when": 1793099670737,
+      "tag": "0009_known_words_learning",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793132973293,
+      "tag": "0010_kind_reads_index",
       "breakpoints": true
     }
   ]

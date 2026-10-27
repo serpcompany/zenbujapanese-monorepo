@@ -91,6 +91,7 @@ def create_schema(database: sqlite3.Connection) -> None:
         );
 
         CREATE INDEX forms_form_index ON forms(form, entry_id);
+        CREATE INDEX forms_entry_id_index ON forms(entry_id);
         CREATE INDEX shown_romaji_forms_form_index ON shown_romaji_forms(form, entry_id);
         CREATE UNIQUE INDEX entries_source_provenance_index ON entries(source_identity, source_record_id);
         CREATE INDEX entries_common_index ON entries(is_common DESC, id);

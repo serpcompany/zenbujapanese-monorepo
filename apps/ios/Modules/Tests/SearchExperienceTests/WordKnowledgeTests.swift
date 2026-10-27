@@ -168,22 +168,50 @@ final class WordKnowledgeTests {
     #expect(reloaded.isKnown(taberu))
   }
 
+  private var newerVersionJSON: String {
+    """
+    {"version":3,"records":[
+    {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0,"gloss":"eat"}]}
+    """
+  }
+
+  private func newerVersionKnowledge() async throws -> WordKnowledge {
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    try Data(newerVersionJSON.utf8).write(to: fileURL)
+    return await loadedKnowledge()
+  }
+
   @Test("a file from a newer version is never saved over")
   func newerVersionIsReadOnly() async throws {
-    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-    let json = """
-      {"version":3,"records":[
-      {"entryID":"\(taberu.rawValue)","headword":"食べる","reading":"たべる","status":"known","updatedAt":0,"gloss":"eat"}]}
-      """
-    try Data(json.utf8).write(to: fileURL)
-
-    let knowledge = await loadedKnowledge()
+    let json = newerVersionJSON
+    let knowledge = try await newerVersionKnowledge()
     #expect(knowledge.isKnown(taberu))
     #expect(knowledge.readOnlyReason == .newerVersion)
     knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
     #expect(!knowledge.isKnown(miru))
     await knowledge.flush()
     #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
+  }
+
+  @Test("a known word's row offers Mark as Unknown, or a disabled choice while known words can't change")
+  func knownWordChoice() async throws {
+    let unknown = KnownWordChoice(
+      title: "Mark as Unknown", systemImage: "xmark.circle", action: "mark-unknown",
+      isEnabled: true)
+    let writable = await loadedKnowledge()
+    writable.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
+    #expect(writable.choice(for: try #require(writable.knownRecords.first).item) == unknown)
+    await writable.flush()
+
+    let knowledge = try await newerVersionKnowledge()
+    let item = try #require(knowledge.knownRecords.first).item
+    #expect(
+      knowledge.choice(for: item)
+        == KnownWordChoice(
+          title: "Known Words Can’t Be Changed", systemImage: "xmark.circle",
+          action: "mark-unknown", isEnabled: false))
+    knowledge.toggleKnown(item)
+    #expect(knowledge.isKnown(item))
   }
 
   @Test("a newer file with a different layout is left unchanged")

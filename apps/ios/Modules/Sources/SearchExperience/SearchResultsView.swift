@@ -86,7 +86,7 @@ struct SearchResultsView: View {
         Section {
           if let kanji = list.kanji, let character = KanjiCharacter(kanji.character) {
             KanjiPrimaryRow(
-              kanji: kanji, character: character, entry: kanji.entry.flatMap { entries[$0] })
+              kanji: kanji, opening: .link(.kanji(character, kanji.entry.flatMap { entries[$0] })))
           }
           resultRows(list.rows, entries: entries)
           if let hidden = list.hiddenByFilter {
@@ -166,33 +166,5 @@ struct SearchResultsView: View {
     animatesNextList = true
     filter = choice.value
     AccessibilityNotification.Announcement(choice.announcement).post()
-  }
-}
-
-private struct KanjiPrimaryRow: View {
-  let kanji: ResultsList.Kanji
-  let character: KanjiCharacter
-  let entry: DictionaryEntry?
-
-  var body: some View {
-    NavigationLink(value: SearchExperienceRoute.kanji(character, entry)) {
-      HStack(spacing: 10) {
-        Text(kanji.character)
-          .font(.title.weight(.light))
-        VStack(alignment: .leading, spacing: 3) {
-          Text(kanji.label)
-            .font(.caption2.weight(.bold))
-            .foregroundStyle(.primary)
-          Text(kanji.summary)
-            .foregroundStyle(.primary)
-            .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-      }
-      .contentShape(Rectangle())
-    }
-    .accessibilityLabel("\(kanji.character), \(kanji.label), \(kanji.summary)")
-    .accessibilityValue(kanji.spoken)
-    .accessibilityIdentifier("result.kanji-primary.\(kanji.character)")
   }
 }

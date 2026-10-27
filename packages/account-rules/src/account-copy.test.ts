@@ -12,6 +12,7 @@ import {
 import {
   chosenPacks,
   chosenValue,
+  isMarkedKnown,
   isNoteWithoutAWord,
   listMoves,
   listsInOrder,
@@ -420,6 +421,15 @@ describe("the account's data, shown as the apps show it", () => {
       { entityId: 'b' },
       { entityId: 'a' }
     ])
+  })
+
+  test('shows a word Known only when the account says known, so a Learning word is not known, as in the app', () => {
+    const word = { itemId: 'a'.repeat(32), headword: '見る', reading: 'みる' }
+    expect(isMarkedKnown({ ...word, state: 'known', known: true })).toBe(true)
+    expect(isMarkedKnown({ ...word, state: 'learning', known: false })).toBe(false)
+    expect(isMarkedKnown({ ...word, state: 'unknown', known: false })).toBe(false)
+    expect(isMarkedKnown({ ...word, known: true })).toBe(true)
+    expect(isMarkedKnown(null)).toBe(false)
   })
 
   test('names notes without a word, and reads and writes the chosen frequency dictionaries', () => {

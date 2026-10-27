@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest'
+import type { LearnerResultsScreen } from '../results/learner'
 import { ask } from './fake-host'
 import type { EmbeddedEntry, EmbeddedKanjiPage, EmbeddedWordPage } from './presentation'
 import { eat, host, kanjiFiles } from './presentation-fixture'
@@ -340,6 +341,30 @@ describe('the embedded presentation engine', () => {
     expect(
       await ask(host, 'candidateMeanings', JSON.stringify(['学', '学校', 'が', '㐂', '食']))
     ).toEqual(['学 meaning', null, null, null, '食 meaning'])
+  })
+
+  test('sums up a one-kanji query’s kanji row with the meanings the host’s kanji files hold', async () => {
+    const kanjiRow = async (query: string) => {
+      const built = (await ask(
+        host,
+        'resultsScreen',
+        JSON.stringify({
+          query,
+          results: {
+            items: [],
+            presentation: 'ranked',
+            readingRefinement: null,
+            usesPrimaryEntryExamples: false,
+            leadingLexicalEntryCount: 0
+          },
+          exampleCount: 0,
+          learner: { sort: 'default', filter: 'all', known: [], pickedKanji: false }
+        })
+      )) as LearnerResultsScreen
+      return built.state === 'results' ? built.kanji?.summary : null
+    }
+    expect(await kanjiRow('学')).toBe('学 meaning, second, third')
+    expect(await kanjiRow('㐂')).toBe('Kanji detail')
   })
 
   test('builds an element page from the element, the kanji in its family, and those containing it', async () => {

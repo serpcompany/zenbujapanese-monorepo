@@ -26,6 +26,14 @@ dictionary sheet Image Search uses.
   out like YouTube's results: its bars hidden with no gap left for them, the last result clear of
   the tab bar, and a result opening in Player). YouTube's live results page is by hand
   ([Player manual checks](../../../../docs/agents/ios.md#player-manual-checks)).
+- A link in Zenbu's own scheme, `com.zenbujapanese.dictionary://watch?v=` and a video's ID, opens
+  that video from any tab, as pasting its link does, with Player's home under it; Back returns to
+  the home. An open word sheet closes, and a running Translate conversation keeps going. A link
+  without a video ID, or with text that isn't one, opens Player's home
+  ([Links in Zenbu's own scheme](shortcuts.md#links-in-zenbus-own-scheme)).
+  Check: package `AppLinkTests.watchLinks`; UI
+  `AppLinkUITests.testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp`, with YouTube stood
+  in.
 - Below the bar, the tab lists recently watched videos, newest first, each as its own
   full-width card: the thumbnail with a comprehension pill (red under 25%, orange to 50%, yellow
   to 75%, green from 75%), its length, and a red bar for how far the learner watched, then the
@@ -48,14 +56,16 @@ dictionary sheet Image Search uses.
 ## Watching
 
 The video plays in YouTube's embedded player at the top of the screen, and the tab bar stays
-visible. The navigation bar reads **Player**, with a **•••** menu of quick switches for Furigana,
-Furigana on Known Words, Word Meanings, and Translations, and **Share Video**. Between the
+visible. The navigation bar reads **Player**, with a **•••** menu of the
+[**Show**](reading-aids.md#the-show-menus) switches, Furigana, Furigana on Known Words, Word
+Meanings, and Translations, then **Share Video**. Between the
 controls and the caption cards, a fixed line with a divider below it reports how many of the
 captions' words the learner knows: the percentage, colored like the Recent pill, then the counts,
 such as **73%** 38 of 52 words known. If the video's owner doesn't allow other apps to play it,
 the player shows **Video Unavailable**.
 
-Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` and
+Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown`,
+`testTheMenuHidesAndShowsACaptionsTranslation`, and
 `testAVideoItsOwnerWontShareSaysItsUnavailable`; package `PlayerReadingAidTests` (comprehension and
 the reading aids' switches) and `YouTubeCaptionsTests` (an unplayable video). YouTube's real
 player is by hand; the UI tests stand in for it with a local player that answers the same calls.
@@ -75,9 +85,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   first line is.
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` and
   `LinkedRowsUITests.testACaptionArrivesLinkedAndIsStillLinkedWhenItScrollsBack` (linking held,
-  a card is never listed unlinked, and comes back linked at its height); package
-  `YouTubeCaptionsTests` (cues from timed text, without overlaps) and `LinkedRowsTests` (the cards
-  that fit first, then 25 at a time, each linked once).
+  a card is never listed unlinked, and comes back linked at its height); core
+  `packages/dictionary-core/src/captions/youtube.test.ts` (cues from timed text, without
+  overlaps); package `LinkedRowsTests` (the cards that fit first, then 25 at a time, each linked
+  once).
 - **Tapping a card jumps to it.** Tapping a card anywhere outside its words plays the video from
   the start of that line. Each card shows its time range, small, in its top corner.
 - **Words link to the dictionary.** Each card shows the line as linked Japanese text that
@@ -107,10 +118,15 @@ player is by hand; the UI tests stand in for it with a local player that answers
   caption lines. When those are at most two lines and 40 characters, they merge into one card;
   otherwise every line keeps its own card and the sentence appears on its last line, where
   YouTube shows it, so no card grows taller than the screen. Apple Translation runs only once its Japanese language is downloaded, and Player
-  never interrupts playback to ask.
+  never interrupts playback to ask. When YouTube refuses its translation or sends one Zenbu can't
+  read, the cards show the Japanese alone, which Apple Translation then fills, and a
+  [crash report](crash-reports.md) says which step failed and, for a refusal, YouTube's HTTP
+  status, never the video, its captions, or the address.
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (each
-  card's translation); package `YouTubeCaptionsTests`, `SentenceTranslationPairingTests`,
-  `TranslationSentenceTests`, and `CaptionCardSizeTests`.
+  card's translation); core `packages/dictionary-core/src/captions/lines.test.ts` (a
+  translation's sentences) and `pairing.test.ts` (cards and their size); package
+  `YouTubeTranslationFailureTests` (a refused or unreadable translation is reported with its step
+  and status, and the Japanese cues still load).
 - **Comprehension.** Every caption line is counted when the video opens, and the line reads
   **Counting known words…** until the count is ready. The known share counts each occurrence of
   a dictionary word, leaving out particles, auxiliaries, punctuation, and text the dictionary
@@ -143,14 +159,16 @@ player is by hand; the UI tests stand in for it with a local player that answers
   previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
   stand-in player; the screen, the speed menu, and the caption list each count their own draws, and
   none of the counts moves while the playback position shows three seconds of a repeating line);
-  package `YouTubeCaptionsTests` (each line's times, which the controls move between).
+  core `packages/dictionary-core/src/captions/lines.test.ts` (each line's times, which the
+  controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
 removed, and lines with nothing else are dropped, so songs show only their lyrics. A video without
 Japanese captions shows **No Japanese Captions**. Captions and translations come from YouTube each
 time a video opens and are not stored or synced.
 
-Check: UI `PlayerWatchUITests.testAVideoWithoutJapaneseCaptionsSaysSo`; package
-`YouTubeCaptionsTests` (creator-made before automatic captions), `YouTubeStandInTests` (the
-stand-in's captions go through the same parsing), and `PlayerReadingAidTests` (sound tags
-dropped).
+Check: UI `PlayerWatchUITests.testAVideoWithoutJapaneseCaptionsSaysSo`; core
+`packages/dictionary-core/src/captions/youtube.test.ts` (creator-made before automatic captions,
+and sound tags dropped); package `YouTubeCaptionsTests` (the core's answers become the Player's
+captions and errors) and `YouTubeStandInTests` (the stand-in's captions go through the same
+parsing).

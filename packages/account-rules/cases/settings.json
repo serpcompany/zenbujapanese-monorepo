@@ -76,8 +76,8 @@
     {
       "name": "search.filter",
       "kind": "choice",
-      "choices": ["all", "known", "unknown"],
-      "accepted": ["all", "known", "unknown"],
+      "choices": ["all", "known", "unknown", "learning"],
+      "accepted": ["all", "known", "unknown", "learning"],
       "refused": ["not-a-choice", true]
     },
     {

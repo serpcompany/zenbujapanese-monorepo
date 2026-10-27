@@ -1,9 +1,10 @@
 # Crash reports
 
-When Zenbu Japanese crashes or freezes, or an account sync, a download, the dictionary, or
-Translate's start fails, it sends a report to its developers through Sentry, so the problem can be
-found and fixed. A report says where in the app's code it happened and on what, never what the
-learner searches, reads, types, says, or photographs. How it's built is in
+When Zenbu Japanese crashes or freezes, or an account sync, a download, the dictionary,
+Translate's start, or a YouTube video's English translation fails, it sends a report to its
+developers through Sentry, so the problem can be found and fixed. A report says where in the app's
+code it happened and on what, never what the learner searches, reads, types, says, or photographs.
+How it's built is in
 [`ios-crash-reports.md`](../../../../docs/agents/ios-crash-reports.md).
 
 - Source: #859, part of #858. Reports are on by default, with a switch in Settings that takes
@@ -58,6 +59,7 @@ couldn't reach the account service tells the learner the same and tries again th
 | Language-analysis packs | A pack fails its check, or its install or an older pack's removal fails |
 | The dictionary | The app's dictionary files are missing or the core doesn't load |
 | Translate | The microphone is denied, or speech recognition or Apple Translation isn't available |
+| Player's YouTube translations | YouTube refuses a video's English translation, with its HTTP status, or sends one Zenbu can't read |
 
 Every report carries a random ID made once for this install, and nothing else about the learner:
 no name, email, account, IP address, location, device name, locale, or time zone. Before a report
@@ -70,8 +72,10 @@ paths, which say nothing about the learner.
 Check: package `CrashReporterOptionsTests` (every Sentry option, the install ID as the only user,
 and every report through the scrubber), `CrashReportScrubberTests` (paths, web and email addresses,
 Japanese and quoted text, and a fully populated report), `HandledProblemTests` (each failure's
-code, once a launch, never its message or payload), and `AccountSyncRecoveryTests` (which of a
-sync's transport errors are a lost connection, and the same message and retry for both kinds).
+code, once a launch, never its message or payload), `AccountSyncRecoveryTests` (which of a
+sync's transport errors are a lost connection, and the same message and retry for both kinds), and
+`YouTubeTranslationFailureTests` (a translation's failed step and status, and never the video, its
+captions, or the address).
 
 ## Which builds send
 

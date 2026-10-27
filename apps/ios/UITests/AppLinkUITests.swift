@@ -13,7 +13,7 @@ final class AppLinkUITests: ZenbuUITestCase {
 
   private func launch(opening link: URL, _ environment: [String: String] = [:]) -> XCUIApplication {
     let app = launch(TestDevice.linkEnvironment(link).merging(environment) { $1 })
-    TestDevice.open(link, in: app)
+    TestDevice.open(link)
     return app
   }
 
@@ -26,7 +26,7 @@ final class AppLinkUITests: ZenbuUITestCase {
     let lookUp = try link("look-up", ["text": "見る"])
     let app = launch(TestDevice.linkEnvironment(lookUp))
     open(.translate, in: app)
-    TestDevice.open(lookUp, in: app)
+    TestDevice.open(lookUp)
     assertWordPage(of: miru, in: app)
   }
 
@@ -41,6 +41,27 @@ final class AppLinkUITests: ZenbuUITestCase {
     let app = launch(opening: try link("translate", ["text": text]), TranslateUITests.script)
     waitUntil(waitFor(find("translate.typed.input", in: app)), "value == %@", text)
     waitUntil(waitFor(find("translate.typed.direction", in: app)), mentions: "English → Japanese")
+  }
+
+  func testWatchOpensItsVideoFromAConversationAWordSheetAndLookUp() throws {
+    let watch = try link("watch", ["v": PlayerWatchUITests.videoID])
+    let youTube = PlayerWatchUITests.standIn().merging(Self.countingDraws) { $1 }
+    let app = startConversation(
+      environment: TestDevice.linkEnvironment(watch).merging(youTube) { $1 })
+    assertWatching(watch, leaving: find("translate.conversation.back", in: app), in: app)
+    waitUntilTheSessionSays("Conversation still listening · Return", in: app)
+    tap(firstElement(identifiedBy: "watch.cue.0.", in: app))
+    let wordSheet = waitForSheet("recognized-word-sheet", in: app)
+    assertWatching(watch, leaving: wordSheet, in: app)
+    open(.search, in: app)
+    assertWatching(watch, leaving: find(AppTab.search.rootIdentifier, in: app), in: app)
+  }
+
+  private func assertWatching(_ watch: URL, leaving screen: XCUIElement, in app: XCUIApplication) {
+    TestDevice.open(watch)
+    waitUntilGone(screen)
+    waitUntil(find("watch.video", in: app), mentions: PlayerWatchUITests.videoID)
+    assertOnScreen(find("watch.cue.0", in: app), in: app)
   }
 
   func testAWebsiteLinkOpensItsWordInTheApp() throws {

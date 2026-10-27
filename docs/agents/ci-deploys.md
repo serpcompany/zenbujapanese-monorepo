@@ -143,7 +143,8 @@ in [`account-api.md`](account-api.md), How a deploy works.
 ## Language data release
 
 `.github/workflows/language-data-release.yml` publishes the release `language-data/release.json`
-names to the `zenbujapanese-language-data` R2 bucket (issue 828, step 3). It runs on a push to
+names to the `zenbujapanese-language-data` R2 bucket (issue 828, step 3), and gzipped copies of
+every listed release that lacks them (issue 955). It runs on a push to
 `main` that changes any input of a release (the same inputs as the build, which the same tests
 check), so changed content can't sit unpublished: it publishes, or fails until `release.json` is
 bumped. It also runs by hand. One publish runs at a time, and none is cancelled halfway.
@@ -157,8 +158,16 @@ each release by hand). It:
 2. rebuilds the release from this commit with the shared action, which fails unless it is the
    pinned release;
 3. publishes (`language-data/pipeline/publish.py`), which refuses a staged release that isn't its
-   pin, then verifies: reads `releases.json` and the manifest back, checks the manifest against
-   the pin, and downloads and hashes every file. Both write to the job summary.
+   pin, then writes the gzipped copies, and their `compressed.json`, of every listed release that
+   lacks them, downloading an older release's files from the bucket. Then it verifies: reads
+   `releases.json` and the manifest back, checks the manifest against the pin, downloads and hashes
+   every file, and fails without the release's `compressed.json`, downloading and unpacking every
+   part. Both write to the job summary.
+
+The copies add about 3 to 5 minutes for a release of 521 MB: packing its 492 MiB SQLite file into
+16 parts (209 MiB) took 42 seconds on a Mac, then uploading the parts and verify's download and
+unpacking of them. An older release without copies adds its download too, so the job's 60-minute
+timeout is at risk only if about ten listed releases lacked them at once.
 
 `AWS_REQUEST_CHECKSUM_CALCULATION` and `AWS_RESPONSE_CHECKSUM_VALIDATION` are `WHEN_REQUIRED` so
 the AWS CLI sends only the checksum the publisher gives (SHA-256, in `object_store.py`), not its

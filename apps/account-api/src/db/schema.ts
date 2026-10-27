@@ -164,6 +164,7 @@ export const knownWords = pgTable(
     headword: text('headword').notNull(),
     reading: text('reading').notNull(),
     known: boolean('known').notNull(),
+    learning: boolean('learning').notNull().default(false),
     version: bigint('version', { mode: 'number' }).notNull(),
     updatedAt: updated()
   },

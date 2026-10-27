@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DictionaryBrowse } from '@zenbu/dictionary-core/artifact/browse'
-import type { ArtifactDatabase } from '@zenbu/dictionary-core/artifact/database'
+import type { ArtifactDatabase, SqlValue } from '@zenbu/dictionary-core/artifact/database'
 import { Dictionary } from '@zenbu/dictionary-core/artifact/dictionary'
 import {
   type RetiredEntries,
@@ -114,11 +114,26 @@ export function sudachiAnalyzer(): MorphologyAnalyzer | undefined {
   return sudachi
 }
 
-export async function dictionary(options: { morphology: boolean }): Promise<Dictionary> {
+type Watch = (sql: string, params: readonly SqlValue[]) => void
+
+function watched(db: ArtifactDatabase, watch?: Watch): ArtifactDatabase {
+  if (!watch) return db
+  return {
+    all(sql, params) {
+      watch(sql, params ?? [])
+      return db.all(sql, params)
+    }
+  }
+}
+
+export async function dictionary(options: {
+  morphology: boolean
+  watch?: Watch
+}): Promise<Dictionary> {
   const { artifact, tokenize, retired } = await open()
   const morphology = options.morphology ? sudachiAnalyzer() : undefined
   return new Dictionary({
-    db: artifact.db,
+    db: watched(artifact.db, options.watch),
     kanji: artifact.kanji,
     retired,
     capabilities: { tokenize, ...(morphology ? { morphology } : {}) }
@@ -141,17 +156,9 @@ export async function artifactTokenizerFile() {
   return (await open()).tokenizerFile
 }
 
-export async function browse(watch?: (sql: string) => void): Promise<DictionaryBrowse> {
+export async function browse(watch?: Watch): Promise<DictionaryBrowse> {
   const { artifact } = await open()
-  const db: ArtifactDatabase = watch
-    ? {
-        all(sql, params) {
-          watch(sql)
-          return artifact.db.all(sql, params)
-        }
-      }
-    : artifact.db
-  return new DictionaryBrowse(db, artifact.kanji)
+  return new DictionaryBrowse(watched(artifact.db, watch), artifact.kanji)
 }
 
 export const serviceToken = 'service-token-0123456789'

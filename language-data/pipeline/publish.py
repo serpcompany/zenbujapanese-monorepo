@@ -74,6 +74,7 @@ def main(argv: list[str] | None = None, env=os.environ, store: Store | None = No
                 f"{result['manifest_sha256']}, after {result['previous_release'] or 'nothing'}): "
                 f"{len(result['uploaded'])} objects uploaded"
                 + ("" if result["listed"] else ", already listed in releases.json")
+                + "".join(f"; gzipped copies of {release}" for release in result["compressed"])
             )
         else:
             release = (

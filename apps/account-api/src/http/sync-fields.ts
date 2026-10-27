@@ -4,6 +4,7 @@ import { itemTextLength } from '../domain/entities'
 import { profileLimits } from '../domain/profile'
 import { watchLimits } from '../domain/watch-history'
 import { listLimits } from '../domain/word-lists'
+import { wordStates } from '../domain/word-states'
 
 export const count = (value: number) => value.toLocaleString('en-US')
 
@@ -18,6 +19,18 @@ export const ItemFields = z.object({
     .max(itemTextLength)
     .optional()
     .openapi({ description: 'Its reading, held as `headword` is. Empty when left out.' })
+})
+
+const WordStateFields = z.object({
+  state: z.enum(wordStates).openapi({ description: 'The state the word moves to.' }),
+  headword: ItemFields.shape.headword.optional().openapi({
+    description:
+      'The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.'
+  }),
+  reading: ItemFields.shape.reading.openapi({
+    description:
+      'Its reading, held as `headword` is. For `learning` and `known`, empty when left out; for `unknown` it is not read, and the word keeps the reading it has.'
+  })
 })
 
 const ProfileFields = z.strictObject({
@@ -92,6 +105,7 @@ const BookmarkFields = z.strictObject({
 export const studyFieldSchemas: readonly (readonly [string, z.ZodType])[] = [
   ['ProfileUpdateFields', ProfileFields],
   ['WordFields', ItemFields],
+  ['WordStateFields', WordStateFields],
   ['ListCreateFields', ListFields],
   ['ListUpdateFields', ListUpdateFields],
   ['WatchFields', WatchFields],

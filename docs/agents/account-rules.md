@@ -39,11 +39,12 @@ with `textOf` for a case written as a repeated run (`{ "text": "x", "times": 501
 Beside the rules, the package holds what a client that keeps no copy of the account does with
 them: `src/account-copy.ts` reads a kind, sends a change at the version it read, reads the kind
 again, keeps a note's text through a conflict as the app does, and sends a search again over a
-removal it never read, which came before it; `src/account-views.ts` orders
-what it read as the apps show it (lists, a list's words, recent videos and searches). The website
-runs both ([`account-client-rules.md`](account-client-rules.md#keeping-no-copy)); a transport the
-caller hands in does the requests, so nothing here fetches. `src/account-copy.test.ts` covers them
-on their own, and the service's `website-copy.test.ts` against the service.
+removal it never read, which came before it; `src/account-views.ts` orders what it read as the
+apps show it (lists, a list's words, recent videos and searches, and a word Known only when the
+account says so, as the app reads it, so a Learning word isn't). The website runs both
+([`account-client-rules.md`](account-client-rules.md#keeping-no-copy)); a transport the caller
+hands in does the requests, so nothing here fetches. `src/account-copy.test.ts` covers them on
+their own, and the service's `website-copy.test.ts` against the service.
 
 ## Who replays what
 

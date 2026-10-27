@@ -155,9 +155,11 @@ export function sortedResults<Result extends { id: string }>(
   })
 }
 
-export const resultFilters = ['all', 'known', 'unknown'] as const
+export const resultFilters = ['all', 'unknown', 'learning', 'known'] as const
 
 export type ResultFilter = (typeof resultFilters)[number]
+
+export type WordStatus = Exclude<ResultFilter, 'all'>
 
 export function resultFilter(stored: string): ResultFilter {
   return resultFilters.find(filter => filter === stored) ?? 'all'
@@ -165,17 +167,18 @@ export function resultFilter(stored: string): ResultFilter {
 
 export const filterTitles: Record<ResultFilter, string> = {
   all: 'All',
-  known: 'Known',
-  unknown: 'Unknown'
+  unknown: 'Unknown',
+  learning: 'Learning',
+  known: 'Known'
 }
 
 export function filteredResults<Result extends { id: string }>(
   results: readonly Result[],
   filter: ResultFilter,
-  isKnown: (id: string) => boolean
+  status: (id: string) => WordStatus
 ): Result[] {
   if (filter === 'all') return [...results]
-  return results.filter(({ id }) => isKnown(id) === (filter === 'known'))
+  return results.filter(({ id }) => status(id) === filter)
 }
 
 export function hiddenCountTitle(count: number): string {

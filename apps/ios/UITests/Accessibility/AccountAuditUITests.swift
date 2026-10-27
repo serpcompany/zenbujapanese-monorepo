@@ -95,7 +95,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     markJapanKnownFromItsResult(in: app)
     open(.account, in: app)
-    openAccountRow("account.known-words", showing: firstElement(identifiedBy: "known-words.item.", in: app), in: app)
+    openAccountRow("account.known-words", showing: find("result.japan", in: app), in: app)
     audit("Known Words", in: app)
     goBack(in: app)
     let list = firstElement(identifiedBy: "word-lists.list.", in: app)

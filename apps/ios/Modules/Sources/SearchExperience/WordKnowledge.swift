@@ -34,6 +34,12 @@ struct WordKnowledgeRecord: Codable, Hashable, Identifiable, Sendable {
 
   var id: String { entryID }
   var kanji: KanjiCharacter? { SavedItem.kanji(storedID: entryID) }
+
+  var item: SavedItem {
+    kanji.map { .kanji($0, reading: reading) }
+      ?? SavedItem(
+        kind: .word(LanguageReferenceID(rawValue: entryID)), headword: headword, reading: reading)
+  }
 }
 
 @MainActor

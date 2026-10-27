@@ -11,8 +11,19 @@ in the API reference's [Sync entities](../api/account-api.md#sync-entities).
   the version your app had, conflicts if the profile changed since. Only an app with `profile`
   reads or changes it.
 - **Known words**, by item: a Language Reference ID, or `kanji:` and the kanji.
-  - `mark` and `clear` take the version your app had. If the word changed since, it's a conflict.
-  - Marking a known word, or clearing one not known, is applied and changes nothing.
+  - A word is Unknown, Learning, or Known (`state`). An app that shows Learning reads `state` and
+    sends `set` with the state the learner chose, and its first upload sends each word that isn't
+    Unknown as a `set`. One that doesn't reads `known`, which is false for a Learning word, and
+    sends `mark` and `clear`: its clear leaves a Learning word Learning. A word with no `state`
+    comes from a service from before Learning, during a deploy or after a rollback: read `known`.
+  - A `set` rejected with `unknown_operation` reached a service from before Learning, after a
+    rollback: keep the word's state on the device. Send a Known or Unknown word as a new `mark` or
+    `clear`, with a new `id`, and send a Learning word's `set` again later, with a new `id`, as a
+    first upload does.
+  - `set`, `mark`, and `clear` take the version your app had. If the word changed since, it's a
+    conflict.
+  - Setting the state a word has, marking a known word, or clearing one not known is applied and
+    changes nothing.
   - **Tomodachi:** mark a word the first time it reaches "knows it". If the mark conflicts because
     the learner un-marked the word in Zenbu, don't send it again: mark it again only once the word
     climbs back to "knows it" (#563, decision 4).
@@ -213,3 +224,7 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   that a `POST /v1/sync` with no mutations answers (Recent searches). It conflicts only with a
   removal the website never read, which came before it, so it's sent again at the removal's
   version; the account then keeps it as the app's search, with the later time and the 50 latest.
+- **Known words** are shown as the iOS app shows them, which doesn't show Learning: a word is Known
+  only when the read says `known` (`isMarkedKnown`), so a Learning word is not, and the website
+  sends `mark` and `clear`. Only the learner's Mark as Known ends Learning; a clear of a word that
+  became Learning since the read applies and changes nothing (Known words, above).

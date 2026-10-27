@@ -14,8 +14,7 @@ Run commands from `packages/dictionary-core`, after `pnpm install` at the reposi
 
 ## What it holds
 
-The app's Swift, in `apps/ios/Modules/Sources/SearchExperience/`, asks `embedded/` for each of
-these and decodes the answer; [The app's side](#the-apps-side) says which type asks for what.
+The app asks `embedded/` for each of these; [The app's side](#the-apps-side) says which type asks.
 
 | Folder | What it does | Who asks in the app |
 | --- | --- | --- |
@@ -28,6 +27,7 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
 | `cards/` | Word cards (`zenbu.word-cards.v1`, [`language-data/word-cards.md`](../../language-data/word-cards.md)): a word as Word Detail shows it, with the JLPT chip and a chip for each of the eight ranked lists, for apps that don't bundle the language data; the word lists that name them; the suite fields a card is checked against; and a segmented text's tokens (`zenbu.segmentation.v1`), with `segmentationFurigana`. `artifact/word-cards.ts` resolves the words and reads the cards, and `segmentText` in `artifact/word-examples.ts` splits and links a text as the example sentences are. | None: the app bundles the data. A card's chip names are `frequencyShortName`'s, as the app's chips are. |
 | `browse/` | What the website's browse pages list: the kana charts, the categories and the labels each matches, the ranked and JLPT lists, the kanji lists, and the service paths the website asks for them; the school lists Grade filters (`school-kanji.ts`). | `SchoolKanjiClient` |
 | `sources/` | The source credits every client shows (`docs/data-sources.md`). | `CreditsView` |
+| `captions/` | Caption rules on timed lines from any source (sound tags, line ends, a translation's sentences, pairing); YouTube's answers, read without a DOM. | `YouTubeCaptionClient` |
 | `fixtures/` | The app's rows for twelve words and their forms (50 examples each), the kanji 要, kanji sharing a radical with 要, and searches' leading words, for development and tests only. | — |
 
 ## Rules
@@ -46,9 +46,8 @@ these and decodes the answer; [The app's side](#the-apps-side) says which type a
   from a few labels a client still writes, such as the app's kanji element Source rows. Add a
   field to the answer, and have the client show it. What the app keeps native, and why, is in
   [`ios.md`](ios.md), The dictionary core in the app.
-- **Rebuild the app's bundle with the core.** The app runs a bundle of the core that is checked in
-  ([Embedded](#embedded)). After changing anything the bundle holds, run
-  `pnpm bundle:javascriptcore` and commit the file; `embedded/bundle.test.ts` fails until then.
+- **Rebuild the app's bundle with the core** ([Embedded](#embedded)). After changing what it holds,
+  run `pnpm bundle:javascriptcore` and commit it; `embedded/bundle.test.ts` fails until then.
 - **The app records the answers.** When the app's behavior changes, re-record the suites on a Mac
   ([`ios.md`](ios.md)); the service must then pass them. The app's answers are the core's own,
   read through JavaScriptCore, so the suites pin them against a later change, and the service
@@ -139,7 +138,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `resultsExamples`, `entryExamples`, `formExamples`, `meaningExamples` | A query with the results' primary entry, an entry's ID, or a conjugated form, each with `from` and an optional `limit` | Examples from `from` to the end of its page of 25, or a `limit` of 1 or more if fewer (the answer then says `cutShort`): each sentence with its words as `linkedTexts` answers them, the screen's words accented, and the list's size (`listed`). Example Sentences adds its count line, a word its `count` and `truncated`; for a word's meanings, each one's first checked example |
   | `linkedTexts` | Texts, and an entry to accent or null | Each text's words in order: place, entry or candidates as a row shows them (ID, headword, reading, summary, `shortGloss` of the first meaning), furigana, `accent` (`entry` on that entry's word; examples say `query` on the query's), and punctuation's neighbour (`attaches`): all a row, or the website's Reading Aids, needs |
   | `countedWords` | A list of lines | The ID of each word that counts toward comprehension, in order, once each time it occurs: one linked to a single entry that is not a function word |
-  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known words, and `pickedKanji` for a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A picked one-character query lists only its leading words. |
+  | `resultsScreen` | A search's answer, the Example Sentences count, and the learner's state (Sort By, Filter, known and Learning words, `pickedKanji` for a Radicals or Grade pick) | `LearnerResultsScreen`: sections, rows with chips, the menu with each choice's title and announcement, notices, VoiceOver's text; or No Dictionary Matches. A picked one-character query lists only its leading words. |
   | `wordRows` | Entries, and which the learner knows | A sheet's candidate rows, with their chips |
   | `notesInSearch` | A query and the learner's notes (key, word, text) | **In your notes**: the notes the query is part of, folded as a query, each with its word and the part that matched; or null |
   | `ruby` | A surface and its reading | Furigana segments, kanji by kanji where one split fits |
@@ -151,6 +150,7 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   | `radicalPanel`, `schoolKanjiPanel` | The radicals picked, in order; a filter and the known kanji | `RadicalPanel`: the kanji holding all of them, fewest other radicals first, and the radicals still worth offering, grouped under their stroke counts with each group's heading; `SchoolKanjiPanel`: each school list as the website's, narrowed, with meanings, known kanji, and header labels |
   | `phraseNote` | A phrase with its entry's meanings and parts of speech | A set phrase's first three meanings, or null |
   | `sourceCredits` | `app` or `website` | That client's source credits and conversion notice |
+  | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | A player response; timed text; captions, translated timed text | Its track and playability; captions; them paired; or null |
 
 - **The host reads the entries it shows.** Answers name entries by Language Reference ID, and the
   host reads each from the artifact itself. A page's method takes the entry the host read. A linked
@@ -174,10 +174,9 @@ modules, files, or event loop of its own, which is how the app runs it in JavaSc
   the endpoint as the global `zenbuDictionary`. `pnpm bundle:javascriptcore` bundles it into
   `apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js`, checked
   in so the app builds without Node; `embedded/bundle.test.ts` fails when it differs.
-- The service replays every app-recorded suite through the endpoint too, on `node:sqlite` with the
-  real tokenizer and kanji files (the `embedded*.conformance.test.ts` files in
-  `apps/dictionary-api/src/conformance/`), so a change that breaks the app's path fails on a pull
-  request before any Swift runs.
+- The service replays the app-recorded suites through the endpoint, on `node:sqlite` with the real
+  tokenizer and kanji files (`apps/dictionary-api/src/conformance/embedded*.conformance.test.ts`),
+  so a change that breaks the app's path fails on a pull request before any Swift runs.
 
 ## The tokenizer
 
@@ -186,8 +185,7 @@ from MeCab's IPADIC: the double-array word index (`base`, `check`), each word's 
 feature line (`tid`, `tid_map`, `tid_pos`), the cost of one word following another (`cc`), and
 the classes and words for text the dictionary doesn't have (`unk`, `unk_map`, `unk_pos`,
 `unk_char`, `unk_invoke`). `ipadicTokenizer(read)` asks `read` for each file, unpacked, the first
-time it tokenizes. It is the only tokenizer: the app runs it in JavaScriptCore, and the
-website's dictionary service runs it in Node (`apps/dictionary-api/src/tokenizer.ts`).
+time it tokenizes. Both clients run it (`apps/dictionary-api/src/tokenizer.ts` for the service).
 
 - **It is a port of kuromoji.js 0.1.2** (Apache-2.0, Takuya Asano; the license ships beside the
   dictionary files, `Resources/Kuromoji/LICENSE-2.0.txt`), which both clients ran until 2026-10-11,
@@ -269,20 +267,19 @@ Paths are relative to `apps/ios/Modules/Sources/SearchExperience/`.
 | `KanjiLookupClient.swift` (`KanjiDetailView`, `KanjiDetailSections`, `KanjiElementDetailView`, `SearchInputPanel`) | `kanjiPage`, `candidateMeanings`, `kanjiElementPage`, `isKanji` | The kanji page, handwriting candidates' meanings, the element page, and whether a string is one kanji |
 | `ImageTextExplanationClient.swift` | `phraseNote` | An Image Search note |
 | `SourceCredits.swift` (`CreditsView`) | `sourceCredits` | Credits & Attributions and Licenses |
+| `YouTubeCaptions.swift` (`YouTubeCaptionClient`) | `youTubeVideo`, `youTubeCaptions`, `youTubeTranslatedCaptions` | The Player's track, captions, and translations |
 
-The core began as a port of the Swift these files replaced: `LookupClient`'s search and ranking,
-`SearchResultsView`, `SearchResultFrequencyOrdering`, `WordDetailView`, `JapaneseConjugationClient`,
-`KanjiReadingSplitter`, `JapaneseTextAnalysisClient`, and the rest. That Swift is gone (issue 481).
-The modules keep its names and its ways of comparing ([Matching the Swift](#matching-the-swift)),
-their tests still name the Swift each case came from, and the app-recorded suites
-(`language-data/conformance/`) pin what it showed. Before each part's Swift was removed,
-the core's answer was compared with it across the whole of the data: every kanji's page and every
-element's page (13,139 characters), every entry's first meaning as a gloss (194,430), and every
-headword, reading, and summary as a query. The later moves were compared the same way: romaji for
-1,028,786 strings (every headword, form, reading, conjugated form, and example-sentence word) and
-for every one of the 232,774 example sentences, every stroke diagram (6,430), 5,954 picks of
-radicals, the kanji check for every scalar, the handwriting filter over 205,758 strings, and 637
-website links, 250 related words, and 360 saved words over real entries.
+The core began as a port of the Swift these files replaced, which is gone (issue 481). The modules
+keep its names and its ways of comparing ([Matching the Swift](#matching-the-swift)), their tests
+still name the Swift each case came from, and the app-recorded suites (`language-data/conformance/`)
+pin what it showed. Before each part's Swift was removed, the core's answer was compared with it
+across the whole of the data: every kanji's page and every element's page (13,139 characters), every
+entry's first meaning as a gloss (194,430), and every headword, reading, and summary as a query. The
+later moves were compared the same way: romaji for 1,028,786 strings (every headword, form, reading,
+conjugated form, and example-sentence word) and for every one of the 232,774 example sentences,
+every stroke diagram (6,430), 5,954 picks of radicals, the kanji check for every scalar, the
+handwriting filter over 205,758 strings, and 637 website links, 250 related words, and 360 saved
+words over real entries. The Player's captions (issue 950) were checked on the app's cases.
 
 ## Matching the Swift
 
