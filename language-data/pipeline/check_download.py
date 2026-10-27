@@ -36,10 +36,11 @@ def main(argv: list[str] | None = None, urlopen: Callable = urllib.request.urlop
         print(f"Refused: {refusal}", file=sys.stderr)
         return 1
     failures = result["failures"]
+    downloads = len(result["downloaded"]) * result["files"]
     if failures:
         print(
-            f"Refused: {len(failures)} of {len(result['downloaded']) * result['files']} downloads of release {release}'s "
-            "first set don't match its manifest:\n" + "\n".join(f"  {f}" for f in failures),
+            f"Refused: {len(failures)} of {downloads} downloads of release {release}'s first set "
+            "don't match its manifest:\n" + "\n".join(f"  {f}" for f in failures),
             file=sys.stderr,
         )
         return 1
