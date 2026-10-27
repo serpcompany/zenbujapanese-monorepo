@@ -1,0 +1,124 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.2/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!node_modules"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "style": {
+        "noNonNullAssertion": "error"
+      }
+    },
+    "domains": {
+      "react": "recommended"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["src/components/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "useSemanticElements": "off",
+            "useKeyWithClickEvents": "off",
+            "useFocusableInteractive": "off",
+            "noLabelWithoutControl": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "next",
+                      "next/**",
+                      "@opennextjs/**",
+                      "server-only",
+                      "next-themes",
+                      "sonner",
+                      "@/**"
+                    ],
+                    "message": "@zenbu/ui runs in the website and in the browser extension, so it imports no Next.js, theme switcher, toast, or client code (docs/agents/ui.md, What the package may import). Take a link as a render prop, an action as a callback, and text as a prop, and let each client pass its own."
+                  },
+                  {
+                    "group": [
+                      "@zenbu/dictionary-core/artifact/**",
+                      "@zenbu/dictionary-core/search/**",
+                      "@zenbu/dictionary-core/examples/**",
+                      "@zenbu/dictionary-core/embedded/**"
+                    ],
+                    "message": "@zenbu/ui draws the core's answers and never runs a lookup, so it imports only the core's detail/* modules (docs/agents/ui.md, What the package may import). Take what a lookup returns as a prop."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "fetch": "@zenbu/ui reads no data itself: take an action such as loadMore(from) or loadFormExamples(surface), and let the client fetch (docs/agents/ui.md, What the package may import).",
+                  "XMLHttpRequest": "@zenbu/ui reads no data itself: take an action such as loadMore(from) or loadFormExamples(surface), and let the client fetch (docs/agents/ui.md, What the package may import).",
+                  "localStorage": "@zenbu/ui keeps nothing: take the value as a prop and a change as a callback, and let the client store it (docs/agents/ui.md, What the package may import).",
+                  "chrome": "@zenbu/ui calls no extension API: take an action as a callback, and let the extension call Chrome (docs/agents/ui.md, What the package may import).",
+                  "console": "@zenbu/ui logs nothing: take a callback such as onUnsupported, and let the client report it (docs/agents/ui.md, What the package may import)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none",
+      "arrowParentheses": "asNeeded"
+    }
+  }
+}

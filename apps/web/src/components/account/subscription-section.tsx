@@ -1,7 +1,7 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { HeldSubscription, Plan, Plans, Subscription } from '@/lib/account/answers'

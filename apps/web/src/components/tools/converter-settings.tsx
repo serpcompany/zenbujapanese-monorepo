@@ -1,10 +1,10 @@
 'use client'
 
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
+import { Checkbox } from '@zenbu/ui/components/checkbox'
+import { Label } from '@zenbu/ui/components/label'
+import { ToggleGroup, ToggleGroupItem } from '@zenbu/ui/components/toggle-group'
 import { useId } from 'react'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import type { ConverterOptions } from '@/lib/tools/convert'
 import type { WidthOptions } from '@/lib/tools/width'

@@ -1,10 +1,10 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
+import { Label } from '@zenbu/ui/components/label'
+import { Textarea } from '@zenbu/ui/components/textarea'
 import { CopyIcon } from 'lucide-react'
 import { type ReactNode, type Ref, useId } from 'react'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { type CopyText, useCopy } from '@/hooks/use-copy'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'

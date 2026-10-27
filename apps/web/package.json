@@ -24,6 +24,7 @@
     "@opennextjs/cloudflare": "^1.20.6",
     "@zenbu/account-rules": "workspace:*",
     "@zenbu/dictionary-core": "workspace:*",
+    "@zenbu/ui": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "embla-carousel-react": "^8.6.0",

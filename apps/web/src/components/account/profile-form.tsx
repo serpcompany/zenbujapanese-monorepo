@@ -7,9 +7,9 @@ import {
   removesTheUsername,
   usernameRule
 } from '@zenbu/account-rules/profile'
+import { Button } from '@zenbu/ui/components/button'
+import { Input } from '@zenbu/ui/components/input'
 import { type FormEvent, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { Profile } from '@/lib/account/answers'
 import type { AccountApi, ProfileChange } from '@/lib/account/client'

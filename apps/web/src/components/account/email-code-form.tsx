@@ -1,10 +1,10 @@
 'use client'
 
 import { signInCode, signInCodeOf } from '@zenbu/account-rules/sign-in-code'
+import { Button } from '@zenbu/ui/components/button'
+import { Input } from '@zenbu/ui/components/input'
+import { Fill } from '@zenbu/ui/lib/fill'
 import { type FormEvent, useId, useState } from 'react'
-import { Fill } from '@/components/fill'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { AccountApi, Failure } from '@/lib/account/client'
 import { type AccountText, failureMessage, type ProvidersHere } from '@/lib/account/messages'
 import type { Locale } from '@/lib/i18n/config'

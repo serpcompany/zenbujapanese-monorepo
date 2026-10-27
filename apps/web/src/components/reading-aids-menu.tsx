@@ -1,7 +1,6 @@
 'use client'
 
-import { BookAIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@zenbu/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -9,7 +8,8 @@ import {
   DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+} from '@zenbu/ui/components/dropdown-menu'
+import { BookAIcon } from 'lucide-react'
 import { useReadingAid } from '@/hooks/use-reading-aid'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { type ReadingAid, readingAids } from '@/lib/reading-aids'

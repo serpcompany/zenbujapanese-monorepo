@@ -1,12 +1,6 @@
 'use client'
 
-import { ArrowRightIcon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { type ReactNode, useId } from 'react'
-import { menuItemClassName, menuSymbols, SiteMenuItem } from '@/components/site-menu-item'
-import { buttonVariants } from '@/components/ui/button'
+import { buttonVariants } from '@zenbu/ui/components/button'
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -14,7 +8,13 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger
-} from '@/components/ui/navigation-menu'
+} from '@zenbu/ui/components/navigation-menu'
+import { ArrowRightIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { type ReactNode, useId } from 'react'
+import { menuItemClassName, menuSymbols, SiteMenuItem } from '@/components/site-menu-item'
 import type { LinkTo } from '@/lib/site'
 import { isCurrentPage, isCurrentSection } from '@/lib/site-menu-links'
 import type { LinkMenu, MegaMenu, MenuLink, SiteMenu } from '@/lib/site-menus'

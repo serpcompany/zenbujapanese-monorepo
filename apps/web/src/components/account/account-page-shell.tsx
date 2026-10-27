@@ -1,6 +1,6 @@
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Fill } from '@/components/fill'
 import { type AccountPage, accountPages } from '@/lib/account/pages'
 import type { AccountSettings } from '@/lib/account/settings'
 import type { Locale } from '@/lib/i18n/config'

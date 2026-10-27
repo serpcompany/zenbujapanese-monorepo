@@ -1,10 +1,10 @@
 'use client'
 
+import { DropdownMenuItem } from '@zenbu/ui/components/dropdown-menu'
 import { CheckIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Flag } from '@/components/flag'
 import { MenuButton, MenuLink, type MenuSide } from '@/components/menu-button'
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import type { Switcher } from '@/lib/i18n/switcher'
 
 const xDefault = 'x-default'

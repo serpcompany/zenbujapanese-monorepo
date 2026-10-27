@@ -1,14 +1,14 @@
 'use client'
 
-import { AppScreenshot } from '@/components/app-screenshot'
-import { sectionTitleClassName } from '@/components/products/section-title'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from '@/components/ui/carousel'
+} from '@zenbu/ui/components/carousel'
+import { AppScreenshot } from '@/components/app-screenshot'
+import { sectionTitleClassName } from '@/components/products/section-title'
 import type { AppScreenshot as Screenshot } from '@/lib/app-screenshots'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'

@@ -46,19 +46,6 @@
   },
   "overrides": [
     {
-      "includes": ["src/components/ui/**"],
-      "linter": {
-        "rules": {
-          "a11y": {
-            "useSemanticElements": "off",
-            "useKeyWithClickEvents": "off",
-            "useFocusableInteractive": "off",
-            "noLabelWithoutControl": "off"
-          }
-        }
-      }
-    },
-    {
       "includes": ["src/components/json-ld.tsx", "src/components/reading-aids-script.tsx"],
       "linter": {
         "rules": {

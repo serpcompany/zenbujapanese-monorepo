@@ -8,6 +8,7 @@ import {
 } from '@zenbu/dictionary-core/browse/kana'
 import { pageCount } from '@zenbu/dictionary-core/browse/lists'
 import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -22,7 +23,6 @@ import { KanaChart } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
 import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
-import { Fill } from '@/components/fill'
 import { browseText, counted, inKanaOrder } from '@/lib/dictionary/browse/copy'
 import type { BrowseWordsPage, KanaInitialPage } from '@/lib/dictionary/browse/data'
 import { browsePath, kanaChartsPath, kanaPath, scriptPath } from '@/lib/dictionary/browse/paths'
