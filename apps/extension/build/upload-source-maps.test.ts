@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   type Environ,
   installCommand,
-  keychainItem,
   type Ran,
   sentryCli,
   tokenVariable,
@@ -43,8 +42,6 @@ function runner(answer: (call: Call) => Partial<Ran> = () => ({})) {
     return { status: 0, stdout: '', stderr: '', ...answer(call) }
   }
 }
-
-const isKeychainLookup = (call: Call) => call.command[0] === 'security'
 
 function filesLeft() {
   return readdirSync(folder, { recursive: true, encoding: 'utf8' }).sort()
@@ -102,28 +99,17 @@ describe('uploadSourceMaps', () => {
     expect(said.join('\n')).not.toContain(token)
   })
 
-  it("reads the token from the login keychain's item when the environment has none", () => {
+  it.each([
+    ['unset', {}],
+    ['empty, as an Actions secret that is missing', { [tokenVariable]: '' }]
+  ])('adds debug IDs with %s SENTRY_AUTH_TOKEN, then warns and asks nothing more, so no upload is tried', (_, environ: Environ) => {
     build()
-    const keychain = runner(call => (isKeychainLookup(call) ? { stdout: `${token}\n` } : {}))
-    expect(uploadSourceMaps(folder, {}, keychain, say)).toBe(true)
-    expect(calls.find(isKeychainLookup)?.command.slice(0, 4)).toEqual([
-      'security',
-      'find-generic-password',
-      '-s',
-      keychainItem
+    expect(uploadSourceMaps(folder, environ, runner(), say)).toBe(false)
+    expect(calls.map(call => call.command.slice(4, 6).join(' '))).toEqual([
+      '--version',
+      'sourcemaps inject'
     ])
-    expect(calls.at(-1)?.env[tokenVariable]).toBe(token)
-  })
-
-  it('adds debug IDs without a token, so the package can be matched later, but uploads nothing', () => {
-    build()
-    const noKeychain = runner(call => (isKeychainLookup(call) ? { status: 44 } : {}))
-    expect(uploadSourceMaps(folder, {}, noKeychain, say)).toBe(false)
-    const steps = calls.map(call =>
-      isKeychainLookup(call) ? 'keychain' : call.command.slice(4, 6).join(' ')
-    )
-    expect(steps).toEqual(['--version', 'sourcemaps inject', 'keychain'])
-    expect(said.join('\n')).toMatch(/warning: no Sentry token/)
+    expect(said.join('\n')).toMatch(/warning: no Sentry token in SENTRY_AUTH_TOKEN/)
     expect(filesLeft().filter(file => file.endsWith('.map'))).toEqual([])
   })
 

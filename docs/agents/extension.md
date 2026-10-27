@@ -22,7 +22,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
 | `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
-| `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
+| `pnpm language-data` | The local language-data server, on a free port (or `PORT`); it prints its address. |
 | `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([Error reports](#error-reports)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
@@ -49,9 +49,10 @@ outside the first version.
   `api-staging.zenbujapanese.com`). The code reads them from `src/shared/hosts.ts`, which the build
   fills in, and the manifest's `homepage_url` is the website. Nothing in `apps/extension` writes
   the website or API host. The core can: `detail/links.ts` writes the website's, and #956's
-  language data host is `https://data.zenbujapanese.com`; a bundle that takes the website's from
-  the core fails the staging package's check (#958). No API host is in `host_permissions` until
-  the extension calls one (#961).
+  language data host is `https://data.zenbujapanese.com`, or the test build's
+  `http://language-data.localhost`, which fails a package's check, as does a bundle that takes
+  the website's host from the core in staging (#958). No API host is in `host_permissions`
+  until the extension calls one (#961).
 - **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
   `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
   package, from the production build, for the owner to upload (#972). Agents never upload to the
@@ -81,10 +82,10 @@ outside the first version.
 | `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([Error reports](#error-reports)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `src/test/` | Test-only helpers: fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
+| `src/test/` | Test-only helpers: a release in the bucket's layout (`publish-release.ts`), fakes of the language-data bucket, file storage, and database pool (`fake-language-data.ts`), and error reports' recording transport. Layers treat it as tests. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
-| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local language-data server (`local-server.ts`, `language-data.ts`). |
+| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local data server and its release (`local-server.ts`, `fixture-release.ts`). |
 | `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
 ### Messages
@@ -202,16 +203,14 @@ with one difference below. There are no usage analytics.
   and never puts a learner's text in one.
 - **Source maps.** Both builds write hidden source maps (no `sourceMappingURL`) beside their
   scripts. `pnpm upload-source-maps [folder]` (`build/upload-source-maps.ts`, `dist` by default)
-  installs a pinned `@sentry/cli` and adds debug IDs to the scripts and maps
-  (`sourcemaps inject`), both without the token, then looks for the token and uploads the maps
-  under the manifest's release with it, and then always deletes every `.map` from the folder, so
-  the store zip, made from the folder afterwards, holds none. The token is `SENTRY_AUTH_TOKEN` or
-  the login keychain's `zenbu-sentry-auth-token`, the app's
-  ([`ios-crash-reports.md`](ios-crash-reports.md), Debug symbols); the script never prints it.
-  No maps, no token, or a step that fails or stalls is a warning and exits 0. Without a token the
-  scripts still get their debug IDs, so the package can ship; build the same commit again and
-  upload its maps later (the debug IDs come from the files' contents, so they match). #986's
-  workflow runs it on each package.
+  installs a pinned `@sentry/cli`, adds debug IDs to the scripts and maps (`sourcemaps inject`)
+  without the token, uploads the maps under the manifest's release with `SENTRY_AUTH_TOKEN`
+  (never printed, never the keychain's, which got a 400), and always deletes every `.map`, so
+  the store zip, made from the folder afterwards, holds none. No maps, no token (then no upload
+  is tried), or a step that fails or stalls is a warning and exits 0. Without a token the scripts
+  still get their debug IDs, so the package can ship; build the same commit again and upload its
+  maps later (the debug IDs come from the files' contents, so they match). #986's workflow runs
+  it on each package.
 - **Checking one arrives.** In the agent Chrome harness, load a build with the DSN, then throw
   from each context: `setTimeout(() => { throw new Error('Zenbu test error: <part>') })` evaluated
   in a page, the service worker, the offscreen document, and the dictionary worker, and Test

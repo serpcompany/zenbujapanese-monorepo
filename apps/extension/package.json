@@ -16,8 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:browser": "pnpm build:test && playwright test",
-    "language-data": "node --experimental-strip-types --no-warnings e2e/serve.ts",
-    "agent-chrome": "node --experimental-strip-types --no-warnings agent-chrome/ctl.mjs",
+    "language-data": "node --experimental-strip-types --no-warnings --import ./e2e/typescript-imports.mjs e2e/serve.ts",
+    "agent-chrome": "node --experimental-strip-types --no-warnings --import ./e2e/typescript-imports.mjs agent-chrome/ctl.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm build:test"
   },
   "dependencies": {

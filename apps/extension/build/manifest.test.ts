@@ -40,6 +40,10 @@ describe('manifest', () => {
   it('downloads the language data only from its one host, and runs SQLite as WebAssembly', () => {
     const release = manifest('release')
     expect(release.host_permissions).toEqual(['https://data.zenbujapanese.com/*'])
+    expect(manifest('release', 'staging').host_permissions).toEqual([
+      'https://data.zenbujapanese.com/*'
+    ])
+    expect(manifest('test').host_permissions).toEqual(['http://language-data.localhost/*'])
     expect(release.content_security_policy.extension_pages).toBe(
       "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     )

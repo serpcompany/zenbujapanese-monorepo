@@ -6,9 +6,11 @@ a learner sees is in its [product docs](../../apps/extension/docs/product/index.
 
 ## Where it comes from
 
-The host is one constant, `languageDataHost` in `apps/extension/src/shared/language-data.ts`
-(`https://data.zenbujapanese.com`, #941's Open question 18), and the manifest's
-`host_permissions` name only it, since a learner can narrow a content script's site access. The
+The host is `languageDataOrigin` in `apps/extension/src/shared/hosts.ts`, which the build fills
+in from `build/hosts.ts`: `https://data.zenbujapanese.com` for production and staging (#941's
+Open question 18), and `http://language-data.localhost` for the test build, which the browser
+tests map to their local server. The manifest's `host_permissions` name only it, since a learner
+can narrow a content script's site access. The
 bucket's layout is [`language-data/README.md`](../../language-data/README.md)'s.
 
 The worker reads, in order (`src/worker/release.ts`, `download.ts`):

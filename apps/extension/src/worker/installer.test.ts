@@ -8,7 +8,7 @@ import {
   releaseFiles
 } from '../test/fake-language-data'
 import { databaseName, type Installed, installedPath, installer, keptPath } from './installer'
-import { artifactFile, sha256Hex } from './release'
+import { artifactFile, sha256Hex } from './release-files'
 
 const laterFiles = ['KanjiStrokeData.sqlite3', 'RankedLists.sqlite3']
 const firstFiles = releaseFiles.filter(name => !laterFiles.includes(name))
@@ -259,6 +259,26 @@ describe('installing the language data', () => {
     await again.languageData.start()
     expect(again.languageData.state()).toEqual(ready('2026.10.1'))
     expect(server.asked.length).toBe(asked)
+  })
+
+  it('keeps the installed databases, and names it does not know, however the pool reports names', async () => {
+    const server = await published({ release: '2026.10.1' })
+    const first = extension(server)
+    await first.languageData.start()
+    const pool = first.pool
+    const installed = [...pool.databases.keys()]
+    const unknown = ['notes.sqlite3', '/journal']
+    const unlinked: string[] = []
+    pool.getFileNames = () => [...installed.map(name => name.slice(1)), ...unknown]
+    pool.unlink = name => {
+      unlinked.push(name)
+      return pool.databases.delete(name.startsWith('/') ? name : `/${name}`)
+    }
+    const again = extension(server, first.storage, pool)
+    await again.languageData.start()
+    expect(again.languageData.state()).toEqual(ready('2026.10.1'))
+    expect(unlinked).toEqual([])
+    expect([...pool.databases.keys()]).toEqual(installed)
   })
 
   it('fails with its reason when installed.json is unreadable, then installs again on update', async () => {

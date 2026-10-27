@@ -1,9 +1,6 @@
 import packageJson from '../package.json' with { type: 'json' }
-import { languageDataHost } from '../src/shared/language-data.ts'
-import { defaultEnvironment, type Environment, hosts } from './hosts.ts'
+import { defaultEnvironment, type Environment, hosts, hostsOf, type Variant } from './hosts.ts'
 import { storeKey } from './key.ts'
-
-export type Variant = 'release' | 'test'
 
 export type ContentScript = { name: string; entry: string; matches: string[] }
 
@@ -51,7 +48,7 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },
     permissions: ['offscreen', 'sidePanel', 'storage', 'unlimitedStorage', 'alarms'],
-    host_permissions: [`${languageDataHost}/*`],
+    host_permissions: [`${hostsOf(variant, environment).languageData}/*`],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     },

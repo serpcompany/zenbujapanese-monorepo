@@ -27,7 +27,7 @@ import {
   kanjiFiles,
   kuromojiFile,
   laterAttachments
-} from './release'
+} from './release-files'
 import { attachedPath, type Pool, poolArtifact } from './sqlite'
 import type { Storage } from './storage'
 

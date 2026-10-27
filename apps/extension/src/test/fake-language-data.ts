@@ -1,40 +1,18 @@
-import { attachments } from '@zenbu/dictionary-core/artifact/database'
-import { ipadicFiles } from '@zenbu/dictionary-core/examples/ipadic'
 import type { WorkerData } from '../worker/answer'
 import type { DatabasePool } from '../worker/installer'
-import {
-  artifactFile,
-  type Fetch,
-  fileKey,
-  kuromojiFile,
-  languageDataUrl,
-  sha256Hex
-} from '../worker/release'
+import { type Fetch, languageDataUrl } from '../worker/release'
+import { artifactFile, firstSet, type Listed, laterSet } from '../worker/release-files'
 import type { FileAccess, Storage } from '../worker/storage'
+import { publishRelease, releasesIndex } from './publish-release'
 
-const schemas: Record<string, string> = {
-  [artifactFile]: 'zenbu.language-reference.v2',
-  ...Object.fromEntries(Object.values(attachments).map(({ file, schema }) => [file, schema])),
-  'KanjiReferenceData.json': 'zenbu.kanji-reference.v2',
-  'KanjiElementReferenceData.json': 'zenbu.kanji-elements.v1',
-  'RetiredEntries.json': 'zenbu.retired-entries.v1'
-}
+const schemas: ReadonlyMap<string, string | null> = new Map([...firstSet, ...laterSet])
 
-const kuromoji = ipadicFiles.map(kuromojiFile)
-
-export const releaseFiles = [...Object.keys(schemas), ...kuromoji]
+export const releaseFiles = [...schemas.keys()]
 
 const encoded = (text: string) => new TextEncoder().encode(text)
 
 export const contentOf = (name: string, release: string) =>
   encoded(`${name} of ${release} `.repeat(name === artifactFile ? 6 : 2))
-
-async function gzip(bytes: Uint8Array): Promise<Uint8Array> {
-  const stream = new Blob([bytes as Uint8Array<ArrayBuffer>])
-    .stream()
-    .pipeThrough(new CompressionStream('gzip'))
-  return new Uint8Array(await new Response(stream).arrayBuffer())
-}
 
 export interface Published {
   release: string
@@ -47,7 +25,7 @@ export interface Published {
 export class LanguageDataServer {
   readonly objects = new Map<string, Uint8Array>()
   readonly asked: string[] = []
-  private readonly listed: { release: string; manifest_sha256: string; published_at: string }[] = []
+  private readonly listed: Listed[] = []
   failAfter: number | null = null
   failOn: ((key: string) => boolean) | null = null
 
@@ -55,39 +33,25 @@ export class LanguageDataServer {
 
   async publish({ release, changed, schema, manifestSha256, partSha256 }: Published) {
     const previous = this.listed.at(-1)?.release
-    const files = []
-    const compressed = []
-    for (const name of releaseFiles) {
+    const files = releaseFiles.map(name => {
       const from = previous && changed && !changed.includes(name) ? previous : release
-      const bytes = contentOf(name, from)
-      const sha256 = await sha256Hex(bytes)
-      this.objects.set(fileKey({ name, sha256 }), bytes)
-      const artifactSchema = schema?.[name] ?? schemas[name]
-      files.push({ name, sha256, bytes: bytes.byteLength, artifact_schema: artifactSchema })
-      if (!/\.(sqlite3|json)$/.test(name)) continue
-      const parts = []
-      for (let at = 0, number = 1; at < bytes.byteLength; at += this.partBytes, number++) {
-        const packed = await gzip(bytes.subarray(at, at + this.partBytes))
-        const digest = await sha256Hex(packed)
-        const key = `files/${digest}/${name}.part${number}.gz`
-        this.objects.set(key, packed)
-        parts.push({ key, bytes: packed.byteLength, sha256: partSha256 ?? digest })
+      return {
+        name,
+        bytes: contentOf(name, from),
+        schema: schema?.[name] ?? schemas.get(name) ?? null
       }
-      compressed.push({ name, sha256, bytes: bytes.byteLength, parts })
-    }
-    const manifest = encoded(JSON.stringify({ release, files }))
-    const pinned = manifestSha256 ?? (await sha256Hex(manifest))
-    this.objects.set(`releases/${release}/manifest.json`, manifest)
-    this.objects.set(
-      `releases/${release}/compressed.json`,
-      encoded(JSON.stringify({ manifest_sha256: pinned, files: compressed }))
-    )
-    this.listed.push({
-      release,
-      manifest_sha256: pinned,
-      published_at: `2026-10-${String(this.listed.length + 10)}T00:00:00Z`
     })
-    this.objects.set('releases.json', encoded(JSON.stringify({ releases: this.listed })))
+    const published = await publishRelease({
+      release,
+      files,
+      partBytes: this.partBytes,
+      publishedAt: `2026-10-${String(this.listed.length + 10)}T00:00:00Z`,
+      manifestSha256,
+      partSha256
+    })
+    for (const [key, bytes] of published.objects) this.objects.set(key, bytes)
+    this.listed.push(published.listed)
+    this.objects.set('releases.json', releasesIndex(this.listed))
   }
 
   readonly fetch: Fetch = async url => {

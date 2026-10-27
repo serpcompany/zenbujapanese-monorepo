@@ -37,7 +37,7 @@ runs `node --experimental-strip-types agent-chrome/ctl.mjs`:
 pnpm --silent agent-chrome status
 pnpm --silent agent-chrome selftest [--headful] [--name <proof folder>]
 pnpm --silent agent-chrome verify [--name <proof folder>] [--skip-build]
-pnpm --silent agent-chrome start --ext <unpacked dir> [--headless] [--online] [--map-host <host>] [--persistent] [--net <regex>] [--pages runtime|console|off] [--unmute]
+pnpm --silent agent-chrome start --ext <unpacked dir> [--headless] [--online] [--map-host <host>] [--host-rule <rule>] [--persistent] [--net <regex>] [--pages runtime|console|off] [--unmute]
 pnpm --silent agent-chrome load <dir> | unload <id> | open <url> | goto <url> [--new] [--page <url part>]
 pnpm --silent agent-chrome click '<selector>' | eval [--raw] '<js>' | key <key> | type <text> | shot [file] [--full]
 pnpm --silent agent-chrome pages | targets | tail [n] [net] [--grep <regex>]
@@ -91,6 +91,8 @@ the video listener with `Page.addScriptToEvaluateOnNewDocument`.
   `--host-resolver-rules`, and trusts only its self-signed certificate, made with `openssl` for the
   run, by its SPKI hash (`--ignore-certificate-errors-spki-list`). No request reaches the real
   host.
+- **`--host-rule <rule>`** adds a `--host-resolver-rules` rule ahead of the others. `verify` maps
+  the test build's language data host, `language-data.localhost`, to the local server's port.
 
 **Tests.** `pnpm test` runs `agent-chrome/*.test.mjs` with no Chrome: the lock, the start's
 cleanup, the daemon's taken control port, and the budget. They run `test-daemon.mjs`, a stand-in

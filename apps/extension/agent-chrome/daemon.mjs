@@ -120,7 +120,7 @@ browser = await puppeteer
       '--autoplay-policy=no-user-gesture-required',
       '--window-size=1280,900',
       '--lang=en-US',
-      ...hostRules({ mapHosts, port: site?.port, offline }),
+      ...hostRules({ mapHosts, port: site?.port, offline, extraRules: values['host-rule'] }),
       ...siteArgs,
       ...(values.unmute ? [] : ['--mute-audio'])
     ]

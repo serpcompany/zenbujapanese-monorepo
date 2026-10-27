@@ -1,6 +1,7 @@
 import type { DataState, InstalledRelease } from '../shared/data-state'
 import { donePath, download, downloadBytes } from './download'
-import { type Fetch, fileKey, newestRelease, type Release, type ReleaseFile } from './release'
+import { type Fetch, newestRelease, type Release, type ReleaseFile } from './release'
+import { fileKey } from './release-files'
 import type { Storage } from './storage'
 
 export interface Installed extends InstalledRelease {
@@ -31,6 +32,8 @@ const importChunkBytes = 8 << 20
 const isDatabase = (name: string) => name.endsWith('.sqlite3')
 
 export const databaseName = (sha256: string) => `/${sha256}.sqlite3`
+
+const poolDatabase = /^\/?([0-9a-f]{64})\.sqlite3$/
 
 export const keptPath = (name: string, sha256: string) => fileKey({ name, sha256 })
 
@@ -91,7 +94,8 @@ export function installer(options: InstallerOptions) {
   async function sweep(kept: ReadonlySet<string>) {
     const pool = await options.pool()
     for (const name of pool.getFileNames()) {
-      if (!kept.has(name.slice(1, -'.sqlite3'.length))) pool.unlink(name)
+      const sha256 = poolDatabase.exec(name)?.[1]
+      if (sha256 && !kept.has(sha256)) pool.unlink(name)
     }
     for (const sha256 of await storage.list('files')) {
       if (!kept.has(sha256)) await storage.remove(`files/${sha256}`)

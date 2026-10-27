@@ -59,8 +59,8 @@ async function checkContentScript(page, server, folder) {
 async function checkLanguageData(page, id, server) {
   await page.goto(`chrome-extension://${id}/pages/settings.html`)
   return page.evaluate(downloadReleaseFile, {
-    base: server.url,
-    release: server.release.release,
+    base: server.languageDataUrl,
+    release: server.release,
     name: checkedReleaseFile
   })
 }
@@ -104,7 +104,7 @@ export async function verifyExtension({ name, skipBuild = false } = {}) {
   const server = await startLocalServer()
   try {
     const { failures, result, lines } = await runWithProof(
-      { headless: true, ext: [build] },
+      { headless: true, ext: [build], hostRule: [server.hostRule] },
       (context, result, failures) => drive(context, result, failures, server, folder)
     )
     const languageData = result.results?.languageData
