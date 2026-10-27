@@ -1,5 +1,6 @@
 import { failure } from '../shared/messages'
 import { nextRateLimit } from './backoff'
+import { captionLabels } from './labels'
 import type {
   CaptionsAnswer,
   CaptionsChange,
@@ -46,6 +47,12 @@ const rateLimited = (videoId: string, retryAt: number): CaptionsState => ({
   retryAt
 })
 
+const failed = (videoId: string, reason: string): CaptionsState => ({
+  state: 'failed',
+  videoId,
+  reason
+})
+
 const sameState = (before: CaptionsState | null, after: CaptionsState) =>
   before?.state === after.state &&
   (before.state !== 'rate-limited' ||
@@ -83,7 +90,7 @@ export function captionsService(dependencies: CaptionsDependencies) {
       }
       if (fetched.state === 'lines' && limit) await store.setRateLimit(undefined)
       return { ...fetched, videoId }
-    }).catch((error: unknown) => ({ state: 'failed', videoId, reason: failure(error).reason }))
+    }).catch((error: unknown) => failed(videoId, failure(error).reason))
   }
 
   const settle = (tabId: number, videoId: string, captions: CaptionsState) =>
@@ -97,7 +104,12 @@ export function captionsService(dependencies: CaptionsDependencies) {
 
   function start(tabId: number, videoId: string, mode: Mode) {
     fetching.set(tabId, videoId)
-    requestCaptions(videoId, mode).then(captions => settle(tabId, videoId, captions))
+    requestCaptions(videoId, mode)
+      .then(captions => settle(tabId, videoId, captions))
+      .catch(() => {
+        const unsaved = failed(videoId, captionLabels.failed.unsaved)
+        return settle(tabId, videoId, unsaved).catch(() => announce(tabId, unsaved))
+      })
   }
 
   function needsRequest(tabId: number, captions: CaptionsState, mode: Mode): boolean {

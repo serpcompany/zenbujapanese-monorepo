@@ -299,4 +299,24 @@ describe('captions service', () => {
     expect(lines(await page.settled(1))).toEqual(japaneseLines)
     expect(page.youTube.timedTextRequests()).toBe(2)
   })
+
+  it("fails with the reason, and says so, when the session store refuses a video's lines", async () => {
+    const storage = memoryStorage()
+    const keep = storage.set
+    const refuse = (refused: (values: Record<string, unknown>) => boolean) => {
+      storage.set = values => (refused(values) ? Promise.reject(new Error('quota')) : keep(values))
+    }
+    const holdsLines = (values: Record<string, unknown>) =>
+      JSON.stringify(values).includes('"state":"lines"')
+    const page = harness({ storage })
+    refuse(holdsLines)
+    await page.open(1, japaneseVideo)
+    const failed = { state: 'failed', videoId: japaneseVideo, reason: captionLabels.failed.unsaved }
+    expect(await page.settled(1)).toEqual(failed)
+    expect(await page.open(1, japaneseVideo)).toEqual(failed)
+
+    refuse(values => !JSON.stringify(values).includes('"state":"loading"'))
+    expect(await page.tryAgain(1)).toEqual({ state: 'loading', videoId: japaneseVideo })
+    expect(await page.settled(1)).toEqual(failed)
+  })
 })

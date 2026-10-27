@@ -15,6 +15,7 @@ export const captionLabels = {
     unreachable: "Zenbu couldn't reach YouTube.",
     unprepared: "Zenbu couldn't get ready to ask YouTube.",
     refused: "YouTube didn't send this video's captions.",
-    unreadable: "This video's captions couldn't be read."
+    unreadable: "This video's captions couldn't be read.",
+    unsaved: "Zenbu couldn't keep this video's captions."
   }
 }
