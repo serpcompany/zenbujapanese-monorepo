@@ -142,6 +142,45 @@ describe('Postgres, through the driver the service runs', () => {
     }
   )
 
+  test("reads what an account keeps about one kanji, one past the Basic Multilingual Plane's too", async () => {
+    const { database, id, done } = await anAccount('kind-item')
+    const accounts = createAccounts(
+      accountStore(database.db),
+      cursors(cursorKey('test')),
+      searchKeys('test')
+    )
+    const list = '2177c773-9e88-410f-9348-6cefaebe0a93'
+    const note = '6f1c0e7a-3b5d-4c2e-9a8f-1d2e3f4a5b6c'
+    const mutation = (
+      n: number,
+      entity: string,
+      operation: string,
+      entityId: string,
+      fields: Record<string, unknown>
+    ) => ({ id: `kind-item-${n}`, entity, operation, entityId, baseVersion: 0, fields })
+    await accounts.sync(
+      id,
+      {
+        mutations: [
+          mutation(1, 'list', 'create', list, { name: 'Kanji', position: 0 }),
+          mutation(2, 'listWord', 'add', `${list}/kanji:\u{20B9F}`, { headword: '\u{20B9F}' }),
+          mutation(3, 'listWord', 'add', `${list}/kanji:叱`, { headword: '叱' }),
+          mutation(4, 'wordNote', 'write', note, { item: 'kanji:\u{20B9F}', text: 'Scold.' }),
+          mutation(5, 'knownWord', 'mark', 'kanji:\u{20B9F}', { headword: '\u{20B9F}' })
+        ]
+      },
+      everyScope
+    )
+    const about = async (entity: 'listWord' | 'wordNote' | 'knownWord') => {
+      const read = await accounts.readKind(id, entity, { item: 'kanji:\u{20B9F}' }, everyScope)
+      return read.status === 'read' ? read.changes.map(change => change.entityId) : read.status
+    }
+    expect(await about('listWord')).toEqual([`${list}/kanji:\u{20B9F}`])
+    expect(await about('wordNote')).toEqual([note])
+    expect(await about('knownWord')).toEqual(['kanji:\u{20B9F}'])
+    await done()
+  })
+
   test('prunes videos watched at the same time in the shared order, whatever the collation', async () => {
     const { database, raw, id, done } = await anAccount('watch-ties')
     const { videos } = recentOrderCases

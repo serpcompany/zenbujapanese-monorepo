@@ -10,7 +10,7 @@ async function signer() {
   return { verify: accessTokenVerifier(async () => keys, issuer), sign }
 }
 
-const claims = { sub: 'u1', azp: 'zenbu-web', scope: 'profile notes:write', auth_time: issuedAt }
+const claims = { sub: 'u1', azp: 'zenbu-web', scope: 'profile photos:write', auth_time: issuedAt }
 
 describe('an access token', () => {
   test("names the learner, the app, and the app's own scopes, and when the learner signed in", async () => {

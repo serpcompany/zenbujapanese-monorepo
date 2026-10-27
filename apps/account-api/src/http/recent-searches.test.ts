@@ -167,7 +167,9 @@ test("the answer gives an app with searches:read its account's key, and another 
   expect(searchesOf(learner).id('猫')).not.toBe(searchesOf(other).id('猫'))
   expect(searchesOf(learner).id('猫')).toMatch(/^[0-9a-f]{64}$/)
   const web = await accounts.learner('search-key@example.com', 'zenbu-web')
-  expect(await accounts.mutate(web.token)).not.toHaveProperty('searchKey')
+  expect(await accounts.mutate(web.token)).toMatchObject({ searchKey: answer.searchKey })
+  const tomodachi = await accounts.learner('search-key@example.com', 'tomodachi')
+  expect(await accounts.mutate(tomodachi.token)).not.toHaveProperty('searchKey')
 })
 
 test('two devices converge on recent searches through searches and removals', async () => {
