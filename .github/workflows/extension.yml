@@ -25,7 +25,7 @@ jobs:
         with:
           paths: >-
             apps/extension packages/ui packages/dictionary-core package.json pnpm-lock.yaml
-            pnpm-workspace.yaml .node-version .github/workflows/extension.yml
+            pnpm-workspace.yaml .node-version .github/workflows/extension.yml assets/brand
             .github/actions/changed-paths
 
   check:

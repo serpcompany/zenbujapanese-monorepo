@@ -5,8 +5,8 @@ import { chromePanelHost } from '../side-panel/panel-host'
 import { mountPage } from './mount-page'
 
 function SidePanelPage() {
-  const [data] = useDataState()
-  return <SidePanel host={chromePanelHost} data={data} />
+  const [data, again] = useDataState()
+  return <SidePanel host={chromePanelHost} data={data} again={again} />
 }
 
 mountPage(labels.name, <SidePanelPage />)

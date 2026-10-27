@@ -6,8 +6,8 @@ tests named here are in `src/side-panel/` unless a path says otherwise.
 
 ## What a learner sees
 
-- **A header:** the Zenbu mark, "Zenbu Japanese", and a gear that opens Settings in a tab
-  (`panel.interaction.test.tsx`).
+- **A header:** the Zenbu mark and "Zenbu Japanese". Its trailing side is for this site's switch
+  and a menu with the reading aids and Settings (#959); there is no gear.
 - **A tab bar at the bottom,** always in view: Video, Translate, Images, Words, and Recent, in
   that order, each an icon over its name. A click chooses a tab. The arrow keys move along the
   bar and choose the tab they land on, wrapping at the ends (`panel.interaction.test.tsx`).
@@ -30,6 +30,8 @@ doesn't sign in yet (#961).
 - **A page opens over the tab it was opened from,** with a row above it that goes Back, named for
   the tab ("Video"). Back goes back one page at a time, to the tab's empty state at the end. The
   tab bar stays in view (`panel.interaction.test.tsx`).
+- **Focus goes to what is shown:** to a new page's Back row, and after Back to the Back row of the
+  page revealed, or to the tab (`panel.interaction.test.tsx`).
 - **Each tab keeps its own pages:** choosing another tab and coming back finds the page where it
   was (`panel.interaction.test.tsx`).
 - **The pages for a word, a kanji, and a form** are Word Detail's
@@ -39,7 +41,9 @@ doesn't sign in yet (#961).
 
 ## Opening it
 
-- **A click on a page, or in the popup, opens the panel on a tab and a page.** A closed panel
+- **A click on the Zenbu icon in the toolbar opens the panel.** There is no toolbar popup
+  (`build/manifest.test.ts`, `open-panel.interaction.test.tsx`).
+- **A click on a page opens the panel on a tab and a page.** A closed panel
   opens on them, and an open one moves to them; the tab it was on keeps its pages. The route is
   used once: the next time the panel opens by itself, it opens on its last tab with no page
   (`open-panel.interaction.test.tsx`, `src/service-worker/side-panel.test.ts`; in Chrome by an
@@ -52,9 +56,11 @@ doesn't sign in yet (#961).
 
 ## Before the dictionary is ready
 
-While the dictionary is being checked or downloaded, or has failed, the panel shows the
-dictionary's progress under the header instead of the tabs (`panel.interaction.test.tsx`). Until
-#956 draws that progress, the panel shows its tabs.
+While the dictionary is being checked or downloaded, or has failed, every tab but Translate shows
+the dictionary's progress instead of its content, and the tab bar stays. Translate doesn't need
+the dictionary. When it has failed, Try Again starts it again, and the tab comes back once the
+dictionary is ready (`panel.interaction.test.tsx`). Until #956 draws that progress, the panel
+shows its tabs.
 
 ## Width
 

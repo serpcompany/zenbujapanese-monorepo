@@ -11,8 +11,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | The header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). | The tests and Chrome checks there |
-| Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | In Chrome, by hand |
+| Side panel | Opened from the toolbar icon, which has no popup: the header, the tab bar with Video, Translate, Images, Words, and Recent, each tab's empty state, pages over a tab, and opening it from a click: [`side-panel.md`](side-panel.md). | The tests and Chrome checks there |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | In Chrome, by hand |
 | Word Detail | A dictionary word's page in the side panel, as the app's, with a kanji's page and a conjugated form's examples: [`word-detail.md`](word-detail.md). It opens over a side panel tab from a route; nothing opens one yet (#957). | `src/word-detail/*.interaction.test.tsx` |
 

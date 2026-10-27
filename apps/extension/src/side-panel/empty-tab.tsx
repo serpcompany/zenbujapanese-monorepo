@@ -1,5 +1,12 @@
 import { Button } from '@zenbu/ui/components/button'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@zenbu/ui/components/empty'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle
+} from '@zenbu/ui/components/empty'
 import type { LucideIcon } from 'lucide-react'
 import type { ComponentType } from 'react'
 import { websiteOrigin } from '../shared/hosts'
@@ -36,9 +43,13 @@ export function emptyTab(
             <Icon />
           </EmptyMedia>
           <EmptyTitle>{text.title}</EmptyTitle>
-          {text.description && <p className="text-sm text-muted-foreground">{text.description}</p>}
+          {text.description && <EmptyDescription>{text.description}</EmptyDescription>}
         </EmptyHeader>
-        {Action && <Action />}
+        {Action && (
+          <EmptyContent>
+            <Action />
+          </EmptyContent>
+        )}
       </Empty>
     )
   }

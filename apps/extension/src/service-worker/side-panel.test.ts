@@ -53,7 +53,7 @@ describe('openPanelListener', () => {
     expect(windows.tellPanel).toHaveBeenCalledWith({ target: 'side-panel', windowId: 7, route })
   })
 
-  it('opens the current window from the popup, which has no tab, and hands over to the focused window', async () => {
+  it('opens the current window for an extension page that has no tab, and hands over to the focused window', async () => {
     const { windows, saved } = fakeWindows()
     const { answer } = send(windows, { target: 'service-worker', openPanel: route }, {})
     expect(windows.open).toHaveBeenCalledWith(null)
