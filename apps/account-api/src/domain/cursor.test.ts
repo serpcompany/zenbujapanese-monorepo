@@ -59,3 +59,20 @@ describe('a sync cursor', () => {
     }
   })
 })
+
+describe("a cursor for one kind's read", () => {
+  test('comes back as its position and floor, for the same account and kind', () => {
+    const cursor = ours.encode('user-a', at(42, 9), 'list')
+    expect(cursor).toMatch(/^[A-Za-z0-9_-]{1,200}$/)
+    expect(ours.decode('user-a', cursor, 'list')).toEqual(at(42, 9))
+  })
+
+  test("is refused for another kind or account, and by sync, which a kind's read refuses in turn", () => {
+    const cursor = ours.encode('user-a', at(42, 9), 'list')
+    expect(ours.decode('user-a', cursor, 'listWord')).toBeNull()
+    expect(ours.decode('user-b', cursor, 'list')).toBeNull()
+    expect(ours.decode('user-a', cursor)).toBeNull()
+    expect(ours.decode('user-a', ours.encode('user-a', at(42, 9)), 'list')).toBeNull()
+    expect(ours.decode('user-a', beforeFloors, 'list')).toBeNull()
+  })
+})

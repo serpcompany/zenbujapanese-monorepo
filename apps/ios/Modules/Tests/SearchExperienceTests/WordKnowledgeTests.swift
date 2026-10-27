@@ -26,7 +26,7 @@ final class WordKnowledgeTests {
   func defaultsToUnknown() async {
     let knowledge = await loadedKnowledge()
     #expect(knowledge.status(taberu) == .unknown)
-    #expect(knowledge.knownCount == 0)
+    #expect(knowledge.marked(.known).count == 0)
   }
 
   @Test("known words survive a reload")
@@ -51,7 +51,7 @@ final class WordKnowledgeTests {
     let reloaded = await loadedKnowledge()
     #expect(reloaded.status(taberu) == .unknown)
     #expect(reloaded.records[taberu.rawValue]?.status == .unknown)
-    #expect(reloaded.knownCount == 0)
+    #expect(reloaded.marked(.known).count == 0)
     #expect(reloaded.knownRecords.isEmpty)
   }
 
@@ -60,11 +60,11 @@ final class WordKnowledgeTests {
     let knowledge = await loadedKnowledge()
     knowledge.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
     knowledge.setStatus(.known, id: miru, headword: "見る", reading: "みる")
-    #expect(knowledge.knownCount == 2)
+    #expect(knowledge.marked(.known).count == 2)
     #expect(knowledge.knownRecords.map(\.headword) == ["見る", "食べる"])
 
     knowledge.setStatus(.unknown, id: miru, headword: "見る", reading: "みる")
-    #expect(knowledge.knownCount == 1)
+    #expect(knowledge.marked(.known).count == 1)
     #expect(knowledge.knownRecords.map(\.headword) == ["食べる"])
   }
 
@@ -114,7 +114,7 @@ final class WordKnowledgeTests {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     let json = """
       {"version":1,"records":[
-      {"entryID":"\(miru.rawValue)","headword":"見る","reading":"みる","status":"learning","updatedAt":0}]}
+      {"entryID":"\(miru.rawValue)","headword":"見る","reading":"みる","status":"mastered","updatedAt":0}]}
       """
     try Data(json.utf8).write(to: fileURL)
 
@@ -124,7 +124,7 @@ final class WordKnowledgeTests {
     await knowledge.flush()
 
     let reloaded = await loadedKnowledge()
-    #expect(reloaded.records[miru.rawValue]?.status == .unrecognized("learning"))
+    #expect(reloaded.records[miru.rawValue]?.status == .unrecognized("mastered"))
     #expect(reloaded.isKnown(taberu))
     #expect(try backups().isEmpty)
   }
@@ -193,25 +193,23 @@ final class WordKnowledgeTests {
     #expect(try Data(contentsOf: fileURL) == Data(json.utf8))
   }
 
-  @Test("a known word's row offers Mark as Unknown, or a disabled choice while known words can't change")
+  @Test("a known word offers Unknown and Learning, or one disabled choice while it can't change")
   func knownWordChoice() async throws {
-    let unknown = KnownWordChoice(
-      title: "Mark as Unknown", systemImage: "xmark.circle", action: "mark-unknown",
-      isEnabled: true)
     let writable = await loadedKnowledge()
     writable.setStatus(.known, id: taberu, headword: "食べる", reading: "たべる")
-    #expect(writable.choice(for: try #require(writable.knownRecords.first).item) == unknown)
+    let item = try #require(writable.knownRecords.first).item
+    #expect(
+      writable.choices(for: item)
+        == [KnownWordChoice(.unknown, isEnabled: true), KnownWordChoice(.learning, isEnabled: true)])
+    #expect(writable.choices(for: item).map(\.action) == ["mark-unknown", "mark-learning"])
     await writable.flush()
 
     let knowledge = try await newerVersionKnowledge()
-    let item = try #require(knowledge.knownRecords.first).item
-    #expect(
-      knowledge.choice(for: item)
-        == KnownWordChoice(
-          title: "Known Words Can’t Be Changed", systemImage: "xmark.circle",
-          action: "mark-unknown", isEnabled: false))
-    knowledge.toggleKnown(item)
-    #expect(knowledge.isKnown(item))
+    let readOnly = try #require(knowledge.knownRecords.first).item
+    #expect(knowledge.choices(for: readOnly) == [.cantChange])
+    #expect(!KnownWordChoice.cantChange.isEnabled)
+    knowledge.setStatus(.unknown, for: readOnly)
+    #expect(knowledge.isKnown(readOnly))
   }
 
   @Test("a newer file with a different layout is left unchanged")

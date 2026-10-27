@@ -85,7 +85,7 @@ final class SearchUITests: ZenbuUITestCase {
     let row = markJapanKnownFromItsResult(in: app)
     if device == .mac {
       row.rightClick()
-      waitFor(find("result.japan.mark-unknown", in: app))
+      waitFor(menuChoice("Status", in: app))
     } else {
       waitUntil(row, "value CONTAINS 'Known'")
     }

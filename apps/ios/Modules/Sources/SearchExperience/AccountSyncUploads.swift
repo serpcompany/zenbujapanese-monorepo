@@ -4,11 +4,9 @@ extension AccountSync {
   static let filesPerRequest = 4
 
   func uploads() async -> [SavedItemChange] {
-    let marks = wordKnowledge.knownRecords.reversed().map {
-      SavedItemChange.known(
-        KnownWordChange(
-          storedID: $0.entryID, headword: $0.headword, reading: $0.reading, known: true))
-    }
+    let marks = WordKnowledgeStatus.listed.flatMap(wordKnowledge.marked)
+      .sorted { $0.updatedAt < $1.updatedAt }
+      .map { SavedItemChange.known(KnownWordChange($0), previous: .unknown) }
     let lists = wordLists.lists.map(SavedItemChange.listCreated)
     let words = wordLists.lists.flatMap { wordLists.words(in: $0.id).reversed() }
       .map(SavedItemChange.wordAdded)
@@ -27,7 +25,7 @@ extension AccountSync {
     caughtUpThisLaunch = true
     state.waitingFiles += state.missingFiles
     state.missingFiles = []
-    for change in state.retryNextLaunch { requeue(change) }
+    for change in state.retryNextLaunch where isStillWanted(change) { requeue(change) }
     state.retryNextLaunch = []
     if state.photoRoomFreed { await requeueRefusedPhotos() }
     await kept.frequency.resume()
