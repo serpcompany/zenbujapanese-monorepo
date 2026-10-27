@@ -1,5 +1,54 @@
 "use strict";
 (() => {
+  // src/captions/lines.ts
+  var lineBreaks = /[\n\v\f\r\u0085\u2028\u2029]/u;
+  var edgeSpaces = /^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu;
+  var soundTags = /\p{White_Space}*[[［][^\]］]*[\]］]\p{White_Space}*/gu;
+  function spoken(text2, joiner) {
+    return text2.split(lineBreaks).map((part) => part.replace(edgeSpaces, "")).filter((part) => part !== "").join(joiner).replace(soundTags, " ").replace(edgeSpaces, "");
+  }
+  function continuesSentence(text2) {
+    return text2.startsWith("n't") || text2.startsWith("'");
+  }
+  function japaneseCaptions(lines) {
+    const captions = [];
+    lines.forEach((line, index) => {
+      const text2 = spoken(line.text, "");
+      if (text2 === "") return;
+      const end = Math.min(line.end, lines[index + 1]?.start ?? Number.POSITIVE_INFINITY);
+      captions.push({
+        id: captions.length,
+        start: line.start,
+        end: Math.max(end, line.start),
+        text: text2,
+        translation: null
+      });
+    });
+    return captions;
+  }
+  function translationSentences(lines) {
+    const sentences = [];
+    let sentenceStart;
+    for (const line of lines) {
+      const text2 = spoken(line.text, " ");
+      if (text2 === "") {
+        sentenceStart ??= line.start;
+        continue;
+      }
+      const start = sentenceStart ?? line.start;
+      sentenceStart = void 0;
+      const previous = continuesSentence(text2) ? sentences.pop() : void 0;
+      sentences.push({
+        id: previous?.id ?? sentences.length,
+        start,
+        end: line.end,
+        text: (previous?.text ?? "") + text2,
+        translation: null
+      });
+    }
+    return sentences;
+  }
+
   // src/detail/text.ts
   var segmenter = new Intl.Segmenter("ja", { granularity: "grapheme" });
   function graphemes(value) {
@@ -52,6 +101,271 @@
     if (!gloss) return null;
     const shown2 = graphemes(gloss);
     return shown2.length > glossLength ? `${shown2.slice(0, glossLength - 1).join("")}…` : gloss;
+  }
+
+  // src/captions/pairing.ts
+  var maximumLinesPerCard = 2;
+  var maximumCharactersPerCard = 40;
+  function overlaps(line, translation) {
+    const overlap = Math.min(line.end, translation.end) - Math.max(line.start, translation.start);
+    return overlap > 0 && (overlap >= 0.5 || overlap >= (line.end - line.start) / 2);
+  }
+  function joinedTranslation(joined2, next) {
+    if (joined2 === "") return next;
+    const attaches2 = continuesSentence(next) || /^\p{P}/u.test(next);
+    return joined2 + (attaches2 ? "" : " ") + next;
+  }
+  function inOrder(captions) {
+    for (let index = 1; index < captions.length; index++) {
+      const previous = captions[index - 1];
+      const line = captions[index];
+      if (!previous || !line || line.start < previous.start || line.end < previous.end) return false;
+    }
+    return true;
+  }
+  function firstEndingAfter(captions, time) {
+    let low = 0;
+    let high = captions.length;
+    while (low < high) {
+      const middle = low + high >> 1;
+      if ((captions[middle]?.end ?? time) > time) high = middle;
+      else low = middle + 1;
+    }
+    return low;
+  }
+  function spans(captions, translations) {
+    const ordered = inOrder(captions);
+    const found = [];
+    for (const translation of translations) {
+      let first = -1;
+      let last = -1;
+      let index = ordered ? firstEndingAfter(captions, translation.start) : 0;
+      for (; index < captions.length; index++) {
+        const line = captions[index];
+        if (!line || ordered && line.start >= translation.end) break;
+        if (!overlaps(line, translation)) continue;
+        if (first < 0) first = index;
+        last = index;
+      }
+      if (first >= 0) found.push({ first, last, translation: translation.text });
+    }
+    return found;
+  }
+  function cards(captions, spans2) {
+    const characters = captions.map((line) => graphemeCount(line.text));
+    const fits = ({ first, last }) => {
+      if (last - first + 1 > maximumLinesPerCard) return false;
+      let count = 0;
+      for (let index = first; index <= last; index++) count += characters[index] ?? 0;
+      return count <= maximumCharactersPerCard;
+    };
+    const groups = [];
+    for (const span of [...spans2].sort((left, right) => left.first - right.first)) {
+      if (!fits(span)) continue;
+      const previous = groups[groups.length - 1];
+      if (!previous || span.first > previous.last) {
+        groups.push({ first: span.first, last: span.last });
+        continue;
+      }
+      const merged = { first: previous.first, last: Math.max(previous.last, span.last) };
+      const rest = { first: previous.last + 1, last: span.last };
+      if (fits(merged)) groups[groups.length - 1] = merged;
+      else if (span.last > previous.last && fits(rest)) groups.push(rest);
+    }
+    return groups;
+  }
+  function pairedCaptions(captions, translations) {
+    if (captions.length === 0 || translations.length === 0) return [...captions];
+    const translated = spans(captions, translations);
+    const groups = cards(captions, translated);
+    const cardOf = [];
+    const texts = [];
+    const bounds = [];
+    let group = 0;
+    for (let index = 0; index < captions.length; ) {
+      while ((groups[group]?.last ?? captions.length) < index) group++;
+      const current = groups[group];
+      const last = current && current.first <= index ? current.last : index;
+      let text2 = "";
+      for (let line = index; line <= last; line++) {
+        cardOf[line] = bounds.length;
+        text2 += captions[line]?.text ?? "";
+      }
+      texts.push(text2);
+      bounds.push({ first: index, last });
+      index = last + 1;
+    }
+    const joined2 = bounds.map(() => "");
+    for (const span of translated) {
+      const card = cardOf[span.last] ?? 0;
+      joined2[card] = joinedTranslation(joined2[card] ?? "", span.translation);
+    }
+    return bounds.map(({ first, last }, id) => ({
+      id,
+      start: captions[first]?.start ?? 0,
+      end: captions[last]?.end ?? 0,
+      text: texts[id] ?? "",
+      translation: joined2[id] || null
+    }));
+  }
+
+  // src/captions/xml.ts
+  var tokens = /(<!--[\s\S]*?-->)|<!\[CDATA\[([\s\S]*?)\]\]>|<\?([\s\S]*?)\?>|(<!DOCTYPE(?:[^<>[\]]|\[[\s\S]*?\])*>)|(<[^<>"']*(?:(?:"[^"]*"|'[^']*')[^<>"']*)*>)|[^<]+/y;
+  var name = "[A-Za-z_:\\u00c0-\\uffff][\\w.:\\u00b7\\u00c0-\\uffff-]*";
+  var tag = new RegExp(`^<(/?)(${name})([^]*?)[ \\t\\r\\n]*(/?)>$`);
+  var attribute = new RegExp(
+    `[ \\t\\r\\n]+(${name})[ \\t\\r\\n]*=[ \\t\\r\\n]*(?:"([^"<]*)"|'([^'<]*)')`,
+    "y"
+  );
+  var references = /&(?:#x([0-9A-Fa-f]+)|#([0-9]+)|(amp|lt|gt|quot|apos));/g;
+  var predefined = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+  var blank = /^[ \t\r\n]*$/;
+  var declaration = /^xml(?:[ \t\r\n]|$)/i;
+  function isCharacter(code) {
+    return code === 9 || code === 10 || code === 13 || code >= 32 && code <= 55295 || code >= 57344 && code <= 65533 || code >= 65536 && code <= 1114111;
+  }
+  function resolved(raw) {
+    if (!raw.includes("&")) return raw;
+    if (raw.replace(references, "").includes("&")) return void 0;
+    let valid = true;
+    const value = raw.replace(references, (_, hex, decimal2, entity) => {
+      if (entity) return predefined[entity] ?? "";
+      const code = hex === void 0 ? Number(decimal2) : Number.parseInt(hex, 16);
+      valid &&= isCharacter(code);
+      return valid ? String.fromCodePoint(code) : "";
+    });
+    return valid ? value : void 0;
+  }
+  function attributes(raw) {
+    const read = /* @__PURE__ */ new Map();
+    attribute.lastIndex = 0;
+    while (attribute.lastIndex < raw.length) {
+      const found = attribute.exec(raw);
+      const key = found?.[1];
+      const value = found && resolved((found[2] ?? found[3] ?? "").replace(/[\t\r\n]/g, " "));
+      if (!key || typeof value !== "string" || read.has(key)) return void 0;
+      read.set(key, value);
+    }
+    return read;
+  }
+  function element(token, reading, open) {
+    const [, closing, tagName, raw = "", selfClosing] = tag.exec(token) ?? [];
+    if (!tagName) return false;
+    if (closing) {
+      if (raw !== "" || selfClosing || open.pop() !== tagName) return false;
+      reading.closed(tagName);
+      return true;
+    }
+    const read = attributes(raw);
+    if (!read) return false;
+    reading.opened(tagName, read);
+    if (selfClosing) reading.closed(tagName);
+    else open.push(tagName);
+    return true;
+  }
+  function text(token, cdata, reading, inside) {
+    if (!inside) return cdata === void 0 && blank.test(token);
+    const value = cdata ?? resolved(token);
+    if (value === void 0 || cdata === void 0 && token.includes("]]>")) return false;
+    reading.text(value);
+    return true;
+  }
+  function readXML(document, reading) {
+    const source = document.startsWith("\uFEFF") ? document.slice(1) : document;
+    const open = [];
+    let roots = 0;
+    tokens.lastIndex = 0;
+    while (tokens.lastIndex < source.length) {
+      const at = tokens.lastIndex;
+      const found = tokens.exec(source);
+      if (!found) return false;
+      const [token, comment, cdata, instruction, doctype, markup] = found;
+      if (comment) continue;
+      if (instruction !== void 0 && declaration.test(instruction) && at !== 0) return false;
+      if (doctype && roots > 0) return false;
+      if (instruction !== void 0 || doctype) continue;
+      if (!markup) {
+        if (!text(token, cdata, reading, open.length > 0)) return false;
+        continue;
+      }
+      if (open.length === 0 && !token.startsWith("</") && roots++ > 0) return false;
+      if (!element(token, reading, open)) return false;
+    }
+    return roots === 1 && open.length === 0;
+  }
+
+  // src/captions/youtube.ts
+  var fields = (value) => typeof value === "object" && value !== null && !Array.isArray(value) ? value : void 0;
+  var written = (value) => typeof value === "string" ? value : null;
+  var isJapanese = (language) => language === "ja" || typeof language === "string" && language.startsWith("ja-");
+  function parsed(json) {
+    try {
+      return JSON.parse(json);
+    } catch {
+      return void 0;
+    }
+  }
+  function youTubeVideo(playerResponse) {
+    const response = fields(parsed(playerResponse));
+    if (!response) return null;
+    const details = fields(response.videoDetails);
+    const listed3 = fields(fields(response.captions)?.playerCaptionsTracklistRenderer)?.captionTracks;
+    const japanese = (Array.isArray(listed3) ? listed3 : []).flatMap((listing) => {
+      const track = fields(listing);
+      const url = written(track?.baseUrl);
+      return track && url && isJapanese(track.languageCode) ? [{ url, isAutomatic: track.kind === "asr", isTranslatable: track.isTranslatable === true }] : [];
+    });
+    return {
+      playable: fields(response.playabilityStatus)?.status === "OK",
+      title: written(details?.title),
+      author: written(details?.author),
+      track: japanese.find((track) => !track.isAutomatic) ?? japanese[0] ?? null
+    };
+  }
+  var decimal = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+  var seconds = (value) => value !== void 0 && decimal.test(value) ? Number(value) : 0;
+  var htmlEntities = {
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&apos;": "'"
+  };
+  function decodedHTML(text2) {
+    if (!text2.includes("&")) return text2;
+    return text2.replace(/&(?:lt|gt|quot|apos);/g, (entity) => htmlEntities[entity] ?? entity).replace(/&#(x?)([0-9A-Fa-f]+);/g, (reference, hex, digits) => {
+      if (!hex && /[^0-9]/.test(digits)) return reference;
+      const code = Number.parseInt(digits, hex ? 16 : 10);
+      const scalar = code <= 1114111 && (code < 55296 || code > 57343);
+      return scalar ? String.fromCodePoint(code) : reference;
+    }).replaceAll("&amp;", "&");
+  }
+  function timedLines(timedText) {
+    const lines = [];
+    let current;
+    const readable = readXML(timedText, {
+      opened(name3, attributes2) {
+        if (name3 !== "text") return;
+        const start = seconds(attributes2.get("start"));
+        current = { start, end: start + seconds(attributes2.get("dur")), text: "" };
+      },
+      text(value) {
+        if (current) current.text += value;
+      },
+      closed(name3) {
+        if (name3 !== "text" || !current) return;
+        lines.push({ ...current, text: decodedHTML(current.text) });
+        current = void 0;
+      }
+    });
+    return readable ? lines : null;
+  }
+  function youTubeCaptions(timedText) {
+    const lines = timedLines(timedText);
+    return lines && japaneseCaptions(lines);
+  }
+  function youTubeTranslatedCaptions(captions, translatedTimedText) {
+    const lines = timedLines(translatedTimedText);
+    return lines && pairedCaptions(captions, translationSentences(lines));
   }
 
   // src/detail/phrase-note.ts
@@ -119,35 +433,35 @@
   );
 
   // src/detail/romaji.ts
-  var within = (accepts, step) => (text, start, limit) => {
+  var within = (accepts, step) => (text2, start, limit) => {
     let position = start;
     let end = limit;
     for (; ; ) {
-      while (position < end && !accepts.test(text[position])) position++;
+      while (position < end && !accepts.test(text2[position])) position++;
       let runEnd = position;
-      while (runEnd < end && accepts.test(text[runEnd])) runEnd++;
+      while (runEnd < end && accepts.test(text2[runEnd])) runEnd++;
       if (position === runEnd) return end;
-      const changedEnd = step(text, position, runEnd);
+      const changedEnd = step(text2, position, runEnd);
       end += changedEnd - runEnd;
       position = changedEnd;
     }
   };
-  var inOrder = (...steps) => (text, start, limit) => steps.reduce((end, step) => step(text, start, end), limit);
-  var rewritten = (rewrite) => (text, start, limit) => {
-    const written3 = text.slice(start, limit).join("");
-    const changed = rewrite(written3);
-    if (changed === written3) return limit;
+  var inOrder2 = (...steps) => (text2, start, limit) => steps.reduce((end, step) => step(text2, start, end), limit);
+  var rewritten = (rewrite) => (text2, start, limit) => {
+    const written4 = text2.slice(start, limit).join("");
+    const changed = rewrite(written4);
+    if (changed === written4) return limit;
     const replacement2 = Array.from(changed);
-    text.splice(start, limit - start, ...replacement2);
+    text2.splice(start, limit - start, ...replacement2);
     return start + replacement2.length;
   };
-  var normalized = (form) => rewritten((written3) => written3.normalize(form));
+  var normalized = (form) => rewritten((written4) => written4.normalize(form));
   var voicedMark = "゙";
   var voicingMarks = "゙゛";
   var semiVoicingMarks = "゚゜";
-  var widened = (text, start, limit) => {
+  var widened = (text2, start, limit) => {
     for (let position = start; position < limit; position++) {
-      if (/^[\uff66-\uff9f]$/u.test(text[position])) text[position] = text[position].normalize("NFKC");
+      if (/^[\uff66-\uff9f]$/u.test(text2[position])) text2[position] = text2[position].normalize("NFKC");
     }
     return limit;
   };
@@ -196,48 +510,48 @@
     ["dz", "dz"]
   ];
   var isIn = (characters, character) => character !== void 0 && characters.includes(character);
-  function doubledConsonant(text, position) {
-    const following = text[position + 1];
-    const mark = text[position + 2];
+  function doubledConsonant(text2, position) {
+    const following = text2[position + 1];
+    const mark = text2[position + 2];
     const found = doubling.find(
       ([characters, marks]) => isIn(characters, following) && (marks === null || isIn(marks, mark))
     );
     return found ? found[2] : null;
   }
-  function repeatedSyllable(text, position, limit) {
-    const voiced = position + 1 < limit && isIn(voicingMarks, text[position + 1]);
+  function repeatedSyllable(text2, position, limit) {
+    const voiced = position + 1 < limit && isIn(voicingMarks, text2[position + 1]);
     const length2 = voiced ? 2 : 1;
-    if (isIn("aeiou", text[position - 1])) {
+    if (isIn("aeiou", text2[position - 1])) {
       let start = position - 1;
-      while (text[start - 1] === "y") start--;
-      const glide = text.slice(start, position).join("");
-      const before = text.slice(Math.max(0, start - 2), start).join("");
+      while (text2[start - 1] === "y") start--;
+      const glide = text2.slice(start, position).join("");
+      const before = text2.slice(Math.max(0, start - 2), start).join("");
       const voicing = voiced && repeatedVoicings.find(([unvoiced]) => before.endsWith(unvoiced));
       if (voicing) return { length: length2, written: voicing[1] + glide };
-      if (/^[b-df-hj-np-tv-z]$/.test(text[start - 1] ?? "")) {
-        return { length: length2, written: text[start - 1] + glide };
+      if (/^[b-df-hj-np-tv-z]$/.test(text2[start - 1] ?? "")) {
+        return { length: length2, written: text2[start - 1] + glide };
       }
     }
-    const previous = text[position - 1];
+    const previous = text2[position - 1];
     return {
       length: length2,
       written: previous === void 0 || /[\r\n\u2028\u2029]/.test(previous) ? "" : previous
     };
   }
-  function replacement(text, position, limit) {
-    const character = text[position];
-    if (character === "ヽ") return repeatedSyllable(text, position, limit);
+  function replacement(text2, position, limit) {
+    const character = text2[position];
+    if (character === "ヽ") return repeatedSyllable(text2, position, limit);
     if (character === "ッ") {
-      const consonant = doubledConsonant(text, position);
+      const consonant = doubledConsonant(text2, position);
       if (consonant !== null) return { length: 1, written: consonant };
     }
-    if (character === "ン" && isIn(nasalBreaks, text[position + 1])) {
+    if (character === "ン" && isIn(nasalBreaks, text2[position + 1])) {
       return { length: 1, written: "n'" };
     }
     for (let length2 = Math.min(longestSyllable, limit - position); length2 > 0; length2--) {
-      const kana2 = text.slice(position, position + length2).join("");
+      const kana2 = text2.slice(position, position + length2).join("");
       const glide = glides.get(kana2);
-      if (glide !== void 0 && isIn(glidingVowels, text[position + length2])) {
+      if (glide !== void 0 && isIn(glidingVowels, text2[position + length2])) {
         return { length: length2, written: `${glide}~`, advance: 1 };
       }
       const latin2 = syllables.get(kana2);
@@ -245,25 +559,25 @@
     }
     return null;
   }
-  var toLatin = (text, start, limit) => {
+  var toLatin = (text2, start, limit) => {
     let position = start;
     let end = limit;
     while (position < end) {
-      const found = replacement(text, position, end);
+      const found = replacement(text2, position, end);
       if (found === null) {
         position++;
         continue;
       }
-      const written3 = Array.from(found.written);
-      text.splice(position, found.length, ...written3);
-      end += written3.length - found.length;
-      position += found.advance ?? written3.length;
+      const written4 = Array.from(found.written);
+      text2.splice(position, found.length, ...written4);
+      end += written4.length - found.length;
+      position += found.advance ?? written4.length;
     }
     return end;
   };
   var katakanaLatin = within(
     /^[\u0304\u3099-\u309c -~\u00a2\u00a3\u00a5\u00a6\u00ac\u20a9\uff61-\uffbe\uffc2-\uffc7\uffca-\uffcf\uffd2-\uffd7\uffda-\uffdc\uffe8-\uffee、。がぎぐげござじずぜぞだぢづでどばぱびぴぶぷべぺぼぽゔゞ\u30a0-ヺー-ヾ]$/u,
-    inOrder(
+    inOrder2(
       within(/^[\p{sc=Katakana}\u309b\u309c\u30a0ー\uff70\uff9e\uff9f]$/u, widened),
       normalized("NFD"),
       toLatin,
@@ -272,7 +586,7 @@
   );
   var hiraganaLatin = within(
     /^[\u3099ぁ-ゔゝゞガギグゲゴザジズゼゾダヂヅデドバビブベボヴヷ-ヺーヾ]$/u,
-    inOrder(normalized("NFD"), rewritten(toKatakana), katakanaLatin, normalized("NFC"))
+    inOrder2(normalized("NFD"), rewritten(toKatakana), katakanaLatin, normalized("NFC"))
   );
   var scripts = [
     [/^[\p{sc=Common}\p{sc=Inherited}]$/u, null],
@@ -286,14 +600,14 @@
   };
   var shared = 0;
   function latin(value) {
-    const text = Array.from(value);
+    const text2 = Array.from(value);
     let limit = 0;
-    while (limit < text.length) {
+    while (limit < text2.length) {
       let start = limit;
-      while (start > 0 && scriptOf(text[start - 1]) === shared) start--;
+      while (start > 0 && scriptOf(text2[start - 1]) === shared) start--;
       let script = shared;
-      while (limit < text.length) {
-        const next = scriptOf(text[limit]);
+      while (limit < text2.length) {
+        const next = scriptOf(text2[limit]);
         if (next !== shared) {
           if (script === shared) script = next;
           else if (next !== script) break;
@@ -301,9 +615,9 @@
         limit++;
       }
       const step = scripts[script]?.[1];
-      if (step) limit = step(text, start, limit);
+      if (step) limit = step(text2, start, limit);
     }
-    return text.join("");
+    return text2.join("");
   }
   var firstKana = 12353;
   var hiraganaLetter = 1;
@@ -323,16 +637,16 @@
   var knownPieces = /* @__PURE__ */ new Map();
   function pieceLatin(piece) {
     if (piece.length > longestPiece) return void 0;
-    let written3 = knownPieces.get(piece);
-    if (written3 === void 0) {
-      written3 = latin(piece);
-      if (knownPieces.size < rememberedPieces) knownPieces.set(piece, written3);
+    let written4 = knownPieces.get(piece);
+    if (written4 === void 0) {
+      written4 = latin(piece);
+      if (knownPieces.size < rememberedPieces) knownPieces.set(piece, written4);
     }
-    return written3;
+    return written4;
   }
   function plainKanaLatin(reading) {
     let scripts2 = hiraganaLetter | katakanaLetter;
-    let written3 = "";
+    let written4 = "";
     let start = 0;
     let open = true;
     for (let index = 0; index < reading.length; index++) {
@@ -343,7 +657,7 @@
         if (!open) {
           const piece = pieceLatin(reading.slice(start, index));
           if (piece === void 0) return void 0;
-          written3 += piece;
+          written4 += piece;
           start = index;
         }
       } else if (index === 0) {
@@ -352,7 +666,7 @@
       open = (kind & needsTheNext) !== 0;
     }
     const last = pieceLatin(reading.slice(start));
-    return last === void 0 ? void 0 : written3 + last;
+    return last === void 0 ? void 0 : written4 + last;
   }
   var kanji = /[\u3005\u3400-\u9fff\uf900-\ufaff\u{20000}-\u{2fa1f}]/u;
   function romaji(reading) {
@@ -384,8 +698,8 @@
         previous = null;
         continue;
       }
-      const spoken = reading !== null && reading !== "" && reading !== "*" ? reading : surface;
-      const piece = romaji(spoken);
+      const spoken2 = reading !== null && reading !== "" && reading !== "*" ? reading : surface;
+      const piece = romaji(spoken2);
       if (piece === null) return null;
       const attaches2 = attachment(surface);
       const joined2 = sentence === "" || attaches2 === "previous" || previous === "next" || endsWithSpace(sentence);
@@ -457,13 +771,13 @@
     `[${japaneseTextRuns.map(([first, last]) => `${escaped(first)}-${escaped(last)}`).join("")}]`,
     "u"
   );
-  function containsJapaneseText(text) {
-    return japaneseText.test(text);
+  function containsJapaneseText(text2) {
+    return japaneseText.test(text2);
   }
   var latinLetter = /[A-Za-z]/;
-  function writtenLanguage(text) {
-    if (containsJapaneseText(text)) return "ja";
-    return latinLetter.test(text) ? "en" : null;
+  function writtenLanguage(text2) {
+    if (containsJapaneseText(text2)) return "ja";
+    return latinLetter.test(text2) ? "en" : null;
   }
   function japaneseSegments(value) {
     const segments = [];
@@ -544,24 +858,24 @@
   var separatorRun = /[\p{White_Space}\u{FEFF}]+/gu;
   var separatorOnly = /^[\p{White_Space}\u{FEFF}]+$/u;
   function foldedPieces(pieces, until = Number.POSITIVE_INFINITY) {
-    let text = "";
+    let text2 = "";
     const piece = [];
     let separator = -1;
-    for (let index = 0; index < pieces.length && text.length < until; index++) {
+    for (let index = 0; index < pieces.length && text2.length < until; index++) {
       const folded = normalizeQuery(pieces[index]);
       if (folded === "") {
-        if (text !== "" && separator < 0) separator = index;
+        if (text2 !== "" && separator < 0) separator = index;
         continue;
       }
       if (separator >= 0) {
-        text += " ";
+        text2 += " ";
         piece.push(separator);
         separator = -1;
       }
-      text += folded;
+      text2 += folded;
       for (let unit = 0; unit < folded.length; unit++) piece.push(index);
     }
-    return { text, piece };
+    return { text: text2, piece };
   }
   var nothingMatched = { first: 0, end: 0 };
   function piecesAt(byPiece, at, length2) {
@@ -598,7 +912,7 @@
     const matched = piecesAt(byWord, at, query.length);
     return { first: starts[matched.first], end: starts[matched.end] };
   }
-  var spaced = (text) => text.replace(separatorRun, " ");
+  var spaced = (text2) => text2.replace(separatorRun, " ");
   function startOfAWord(pieces, from, to) {
     for (let index = from; index < to; index++) {
       if (separatorOnly.test(pieces[index])) return index + 1;
@@ -846,9 +1160,9 @@
     { length: rankBands },
     (_, index) => rankBand(index + 1)
   );
-  var jitenPack = (name2) => ({
+  var jitenPack = (name3) => ({
     kind: "pack",
-    packId: `zenbu.jiten.${name2}.ja.ordered-v2`
+    packId: `zenbu.jiten.${name3}.ja.ordered-v2`
   });
   var rankedLists = [
     { slug: "youtube", name: "YouTube", chip: "YouTube", source: { kind: "tubelex" } },
@@ -902,9 +1216,9 @@
     strokes
   });
   var schoolLists = [...gradeLists, secondarySchool, jinmeiyo];
-  var jlptKanjiLists = jlptLists.map(({ slug, name: name2, level }) => ({
+  var jlptKanjiLists = jlptLists.map(({ slug, name: name3, level }) => ({
     slug,
-    name: name2,
+    name: name3,
     jlptLevel: level
   }));
   function kanjiList(slug) {
@@ -995,9 +1309,9 @@
     }
     if (!main.has("sense_examples")) refuse("it has no examples linked to meanings (sense_examples)");
   }
-  function checkAttached(db, name2) {
-    const expected = attachments[name2];
-    const recorded = metadata(db, name2);
+  function checkAttached(db, name3) {
+    const expected = attachments[name3];
+    const recorded = metadata(db, name3);
     const schema = recorded.get("artifact_schema");
     if (schema !== expected.schema) {
       refuse(`${expected.file} is ${schema}; the core reads ${expected.schema}`);
@@ -1329,12 +1643,12 @@
     }
     return segments;
   }
-  var written = ({ x, y }) => `${x} ${y}`;
+  var written2 = ({ x, y }) => `${x} ${y}`;
   function decodeStroke(encoded) {
     const segments = strokeSegments(encoded);
     return {
       path: segments.map(
-        ({ end, controls }) => controls ? `C${[...controls, end].map(written).join(" ")}` : `M${written(end)}`
+        ({ end, controls }) => controls ? `C${[...controls, end].map(written2).join(" ")}` : `M${written2(end)}`
       ).join(""),
       start: segments[0].end
     };
@@ -1420,15 +1734,15 @@
   function kanjiElements(structure, elements) {
     if (!structure) return [];
     return structure.elementGlyphs.flatMap((glyph) => {
-      const element = elements.find((candidate2) => candidate2.glyph === glyph);
-      if (!element || !isKanjiCharacter(glyph)) return [];
-      const role = structure.explicitPhoneticElement === glyph ? "sound" : element.commonLinkedOnReadings.some((reading) => structure.onReadings.includes(reading)) ? "soundPattern" : "meaningStructure";
-      const meanings = element.meanings.slice(0, meaningsPerElement);
-      const linkedOnReadings = meanings.length > 0 ? [] : element.commonLinkedOnReadings;
+      const element2 = elements.find((candidate2) => candidate2.glyph === glyph);
+      if (!element2 || !isKanjiCharacter(glyph)) return [];
+      const role = structure.explicitPhoneticElement === glyph ? "sound" : element2.commonLinkedOnReadings.some((reading) => structure.onReadings.includes(reading)) ? "soundPattern" : "meaningStructure";
+      const meanings = element2.meanings.slice(0, meaningsPerElement);
+      const linkedOnReadings = meanings.length > 0 ? [] : element2.commonLinkedOnReadings;
       const description = meanings.length > 0 ? meanings.join(", ") : linkedOnReadings.length > 0 ? `Linked on-readings: ${linkedOnReadings.join(", ")}` : "";
       const roleLabel = roleLabels[role];
-      const spoken = `Element ${glyph}, ${roleLabel.toLowerCase()}, ${meanings.join(", ")}`;
-      return [{ character: glyph, role, roleLabel, meanings, linkedOnReadings, description, spoken }];
+      const spoken2 = `Element ${glyph}, ${roleLabel.toLowerCase()}, ${meanings.join(", ")}`;
+      return [{ character: glyph, role, roleLabel, meanings, linkedOnReadings, description, spoken: spoken2 }];
     });
   }
   var readingLabels = { on: "On", kun: "Kun", name: "Name" };
@@ -1657,12 +1971,12 @@
     return `Top ${(rank / coveredSourceRows * 100).toFixed(2)}%`;
   }
   var packDetails = ({
-    name: name2,
+    name: name3,
     domain,
     description,
     version,
     source
-  }) => ({ name: name2, domain, description, version, source });
+  }) => ({ name: name3, domain, description, version, source });
   function listedRow(dictionary, value) {
     const source = frequencyShortName(dictionary);
     const pack = packDetails(dictionary);
@@ -1740,8 +2054,8 @@
     if (lookups === null) return { chips: [], spoken: "Frequency rank loading" };
     if (lookups.length === 0) return { chips: [], spoken: "No frequency dictionary enabled" };
     const leads = (lookup) => leadingFamily !== null && lookup.dictionary !== null && frequencyFamily(lookup.dictionary.id) === leadingFamily;
-    const inOrder2 = [...lookups.filter(leads), ...lookups.filter((lookup) => !leads(lookup))];
-    const shown2 = inOrder2.filter((lookup, offset) => {
+    const inOrder3 = [...lookups.filter(leads), ...lookups.filter((lookup) => !leads(lookup))];
+    const shown2 = inOrder3.filter((lookup, offset) => {
       if (listed(lookup)) return true;
       if (!("unavailable" in lookup) && lookup.dictionary.kind === "level") return false;
       return offset === 0;
@@ -1911,24 +2225,24 @@
     if (word) words.push(word);
     return words.join(" ");
   }
-  function graphemePosition(term, text) {
-    const index = text.indexOf(term);
+  function graphemePosition(term, text2) {
+    const index = text2.indexOf(term);
     if (index < 0) return null;
-    return graphemeCount(text.slice(0, index));
+    return graphemeCount(text2.slice(0, index));
   }
-  function spellingsOf(form, written3) {
+  function spellingsOf(form, written4) {
     const spellings = [form];
-    for (const spelling of written3) {
+    for (const spelling of written4) {
       if (!spellings.includes(spelling) && normalizedEntryEvidence(spelling) === form) {
         spellings.push(spelling);
       }
     }
     return spellings;
   }
-  function earliestPosition(spellings, text) {
+  function earliestPosition(spellings, text2) {
     let earliest = null;
     for (const spelling of spellings) {
-      const position = graphemePosition(spelling, text);
+      const position = graphemePosition(spelling, text2);
       if (position !== null && (earliest === null || position < earliest)) earliest = position;
     }
     return earliest;
@@ -2738,11 +3052,11 @@
     ];
   }
   var rules = [...verbPatterns().flatMap(verbRules), ...adjectiveRules()];
-  function deinflect(text) {
-    if (!text) return [];
+  function deinflect(text2) {
+    if (!text2) return [];
     const results = [];
-    const seen = /* @__PURE__ */ new Set([`${text}|`]);
-    let frontier = [{ term: text, classes: [] }];
+    const seen = /* @__PURE__ */ new Set([`${text2}|`]);
+    let frontier = [{ term: text2, classes: [] }];
     for (let depth = 1; depth <= maximumDepth; depth++) {
       const next = [];
       for (const { term, classes } of frontier) {
@@ -2754,7 +3068,7 @@
           }
           const base = term.slice(0, -rule.inflected.length) + rule.base;
           const key = `${base}|${[...rule.output].sort().join(",")}`;
-          if (base === text || seen.has(key)) continue;
+          if (base === text2 || seen.has(key)) continue;
           seen.add(key);
           results.push({ term: base, wordClasses: [...rule.output], depth });
           next.push({ term: base, classes: rule.output });
@@ -2787,10 +3101,10 @@
 
   // src/search/latin-text.ts
   var latinLetter3 = /\p{Script=Latin}/u;
-  function latinSpellings(text) {
-    if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
-    const unaccented = withoutMarks(text);
-    return unaccented === text ? [text] : [text, unaccented];
+  function latinSpellings(text2) {
+    if (!latinLetter3.test(text2) || containsJapaneseText(text2) || romajiQuery(text2) !== null) return [];
+    const unaccented = withoutMarks(text2);
+    return unaccented === text2 ? [text2] : [text2, unaccented];
   }
 
   // src/search/search.ts
@@ -3092,8 +3406,8 @@
       if (entry) return { kind: "word", id: entry.id };
       return page.slug === "" ? { kind: "home" } : { kind: "search", query: page.slug };
     }
-    async lookUp(text, morphology) {
-      const query = normalizeQuery(text);
+    async lookUp(text2, morphology) {
+      const query = normalizeQuery(text2);
       if (query === "") return { kind: "home" };
       const results = await new DictionarySearch(this.searchDb, { morphology }).search(query);
       const id = onlyEntry(results, query);
@@ -3101,15 +3415,15 @@
     }
     async found(query, word, morphology) {
       const { items } = await new DictionarySearch(this.searchDb, { morphology }).search(query);
-      const written3 = items.find(
+      const written4 = items.find(
         ({ entry }) => sameText(entry.headword, word.headword) && sameText(entry.reading, word.reading)
       );
-      return { written: written3?.entry.id ?? null, first: items[0]?.entry.id ?? null };
+      return { written: written4?.entry.id ?? null, first: items[0]?.entry.id ?? null };
     }
     async relatedWord(related, morphology) {
       if (related.targetID !== null) return related.targetID;
-      const { written: written3, first } = await this.found(related.query, related, morphology);
-      return written3 ?? first;
+      const { written: written4, first } = await this.found(related.query, related, morphology);
+      return written4 ?? first;
     }
     async savedWord(saved, morphology) {
       const [stored] = this.db.all(
@@ -3117,8 +3431,8 @@
         [saved.id]
       );
       if (stored) return { kind: "word", id: saved.id };
-      const { written: written3 } = await this.found(saved.headword, saved, morphology);
-      return written3 ? { kind: "word", id: written3 } : { kind: "search", query: saved.headword };
+      const { written: written4 } = await this.found(saved.headword, saved, morphology);
+      return written4 ? { kind: "word", id: written4 } : { kind: "search", query: saved.headword };
     }
   };
 
@@ -3280,8 +3594,8 @@
       };
     }
     elementPageRows(glyph, sources) {
-      const element = this.lookup.element(glyph);
-      if (!element) return null;
+      const element2 = this.lookup.element(glyph);
+      if (!element2) return null;
       const kanji2 = (characters) => characters.flatMap((character) => {
         const entry = this.lookup.structure(character);
         return entry ? [
@@ -3295,23 +3609,23 @@
       });
       return {
         glyph,
-        meanings: element.meanings,
-        commonLinkedOnReadings: element.commonLinkedOnReadings,
-        alternatives: element.alternatives,
-        family: kanji2([glyph, ...element.alternatives]),
-        containing: kanji2(element.containingCharacters),
+        meanings: element2.meanings,
+        commonLinkedOnReadings: element2.commonLinkedOnReadings,
+        alternatives: element2.alternatives,
+        family: kanji2([glyph, ...element2.alternatives]),
+        containing: kanji2(element2.containingCharacters),
         structureSource: `${sources.structureSourceIdentity} ${sources.snapshot}`,
         metadataSource: `${sources.metadataSourceIdentity} ${sources.metadataSourceSnapshot}`
       };
     }
     elementRows(glyphs) {
       return glyphs.flatMap((glyph) => {
-        const element = this.lookup.element(glyph);
-        return element ? [
+        const element2 = this.lookup.element(glyph);
+        return element2 ? [
           {
             glyph,
-            meanings: element.meanings,
-            commonLinkedOnReadings: element.commonLinkedOnReadings
+            meanings: element2.meanings,
+            commonLinkedOnReadings: element2.commonLinkedOnReadings
           }
         ] : [];
       });
@@ -3372,12 +3686,12 @@
         const knownCount = kanji2.filter((tile) => tile.known).length;
         const total = counted.format(list.kanji.length);
         const count = matches ? `${counted.format(shown2.length)} of ${total}` : total;
-        const spoken = [
+        const spoken2 = [
           list.title,
           `${count} kanji`,
           ...knownCount > 0 ? [`${counted.format(knownCount)} known`] : []
         ].join(", ");
-        return [{ id: list.id, title: list.title, count, known: knownCount, spoken, kanji: kanji2 }];
+        return [{ id: list.id, title: list.title, count, known: knownCount, spoken: spoken2, kanji: kanji2 }];
       });
       return { filtered: matches !== null, sections: sections2 };
     }
@@ -3692,14 +4006,14 @@
     sentence,
     example: example2
   }) {
-    const tokens = example2.tokens ?? sentence.tokens;
+    const tokens2 = example2.tokens ?? sentence.tokens;
     const links = new Map(example2.links.map((link) => [link.token, link]));
     const highlights = new Set(example2.highlights);
     return {
       position: example2.position,
       pairId: sentence.pairId,
       text: sentence.japanese,
-      tokens: tokens.map((token, index) => {
+      tokens: tokens2.map((token, index) => {
         const link = links.get(index);
         const entry = link?.entSeqs.length === 1 ? link.entSeqs[0] : null;
         const reading = link?.reading ?? token.reading;
@@ -4001,23 +4315,23 @@ ${sense.noteText}` : sense.meaning
     };
   }
   function spokenGloss(gloss) {
-    let text = collapsed(gloss);
-    for (let opening = endingGroupStart(text); opening > 0; opening = endingGroupStart(text)) {
-      text = text.slice(0, opening).trimEnd();
+    let text2 = collapsed(gloss);
+    for (let opening = endingGroupStart(text2); opening > 0; opening = endingGroupStart(text2)) {
+      text2 = text2.slice(0, opening).trimEnd();
     }
-    return collapsed(text.replace(/[()]/gu, ""));
+    return collapsed(text2.replace(/[()]/gu, ""));
   }
-  function endingGroupStart(text) {
-    if (!text.endsWith(")")) return -1;
+  function endingGroupStart(text2) {
+    if (!text2.endsWith(")")) return -1;
     let depth = 0;
-    for (let index = text.length - 1; index >= 0; index--) {
-      if (text[index] === ")") depth++;
-      else if (text[index] === "(" && --depth === 0) return index;
+    for (let index = text2.length - 1; index >= 0; index--) {
+      if (text2[index] === ")") depth++;
+      else if (text2[index] === "(" && --depth === 0) return index;
     }
     return -1;
   }
-  function collapsed(text) {
-    return text.replace(/\s+/gu, " ").trim();
+  function collapsed(text2) {
+    return text2.replace(/\s+/gu, " ").trim();
   }
 
   // src/detail/pitch.ts
@@ -4111,14 +4425,14 @@ ${sense.noteText}` : sense.meaning
     suffix: "Suffix",
     particle: "Particle"
   };
-  var name = (names, part) => Object.hasOwn(names, part) ? names[part] : void 0;
+  var name2 = (names, part) => Object.hasOwn(names, part) ? names[part] : void 0;
   function partOfSpeechPhrase(parts) {
     const transitive = parts.includes("transitive");
     const intransitive = parts.includes("intransitive");
-    const hasVerbClass = parts.some((part) => name(verbClassNames, part) !== void 0);
+    const hasVerbClass = parts.some((part) => name2(verbClassNames, part) !== void 0);
     let phrases = [];
     for (const part of parts) {
-      const verb = name(verbClassNames, part);
+      const verb = name2(verbClassNames, part);
       if (verb) phrases.push(verb);
       else if (part === "verb") {
         if (!hasVerbClass) phrases.push("Verb");
@@ -4127,7 +4441,7 @@ ${sense.noteText}` : sense.meaning
       } else if (part === "adverb") {
         if (!parts.includes("adverbTo")) phrases.push("Adverb");
       } else {
-        const other = name(otherNames, part);
+        const other = name2(otherNames, part);
         if (other) phrases.push(other);
       }
     }
@@ -4797,15 +5111,15 @@ ${sense.noteText}` : sense.meaning
     if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm, checked);
     if (!evidence.writtenForms.has(storedForm(selectedForm))) return "missingEntryEvidence";
     if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([], checked);
-    const written3 = [entry.headword, ...entry.writtenForms];
+    const written4 = [entry.headword, ...entry.writtenForms];
     const alternateForms = entry.writtenForms.map(normalizedEntryEvidence).filter((form) => form !== selectedForm && evidence.writtenForms.has(storedForm(form)));
     const evidenceTerms = [
       {
-        spellings: spellingsOf(selectedForm, written3),
+        spellings: spellingsOf(selectedForm, written4),
         relation: LexicalRelation.selectedWrittenForm
       },
       ...[...new Set(alternateForms)].sort().map((form) => ({
-        spellings: spellingsOf(form, written3),
+        spellings: spellingsOf(form, written4),
         relation: LexicalRelation.alternateWrittenForm
       })),
       { spellings: spellingsOf(reading, [entry.reading]), relation: LexicalRelation.reading }
@@ -4905,11 +5219,11 @@ ${sense.noteText}` : sense.meaning
       truncated: sorted.length > exampleLimit
     };
   }
-  function utf8Boundaries(text) {
+  function utf8Boundaries(text2) {
     const boundaries = /* @__PURE__ */ new Map();
     let bytes2 = 0;
     let index = 0;
-    for (const character of text) {
+    for (const character of text2) {
       boundaries.set(bytes2, index);
       const code = character.codePointAt(0) ?? 0;
       bytes2 += code < 128 ? 1 : code < 2048 ? 2 : code < 65536 ? 3 : 4;
@@ -4918,23 +5232,23 @@ ${sense.noteText}` : sense.meaning
     boundaries.set(bytes2, index);
     return boundaries;
   }
-  function graphemeStarts(text) {
+  function graphemeStarts(text2) {
     const starts = /* @__PURE__ */ new Map();
     let index = 0;
-    for (const [position, cluster] of graphemes(text).entries()) {
+    for (const [position, cluster] of graphemes(text2).entries()) {
       starts.set(index, position);
       index += cluster.length;
     }
     starts.set(index, starts.size);
     return starts;
   }
-  function textOffsets(text) {
-    if (/^[\x20-\x7e]*$/.test(text)) {
-      const within2 = (offset) => Number.isInteger(offset) && offset >= 0 && offset <= text.length ? offset : void 0;
+  function textOffsets(text2) {
+    if (/^[\x20-\x7e]*$/.test(text2)) {
+      const within2 = (offset) => Number.isInteger(offset) && offset >= 0 && offset <= text2.length ? offset : void 0;
       return { utf16: within2, grapheme: within2 };
     }
-    const boundaries = utf8Boundaries(text);
-    const starts = graphemeStarts(text);
+    const boundaries = utf8Boundaries(text2);
+    const starts = graphemeStarts(text2);
     return { utf16: (offset) => boundaries.get(offset), grapheme: (index) => starts.get(index) };
   }
   var numbersPerOffset = 4;
@@ -4951,17 +5265,17 @@ ${sense.noteText}` : sense.meaning
     }
     return offsets;
   }
-  function phraseRange(text, offsets, accepts) {
+  function phraseRange(text2, offsets, accepts) {
     if (offsets.length === 0) return null;
     const termCount = Math.max(...offsets.map((offset) => offset.term)) + 1;
     const ordered = [...offsets].sort(
       (left, right) => left.byteOffset === right.byteOffset ? left.term - right.term : left.byteOffset - right.byteOffset
     );
-    const offsetsOf = textOffsets(text);
+    const offsetsOf = textOffsets(text2);
     const slice = (from, to) => {
       const start = offsetsOf.utf16(from);
       const end = offsetsOf.utf16(to);
-      return start === void 0 || end === void 0 || start > end ? null : text.slice(start, end);
+      return start === void 0 || end === void 0 || start > end ? null : text2.slice(start, end);
     };
     for (let start = 0; start < ordered.length; start++) {
       if (ordered[start].term !== 0 || start + termCount > ordered.length) continue;
@@ -5145,13 +5459,13 @@ ${sense.noteText}` : sense.meaning
   }
 
   // src/examples/morphology.ts
-  function kuromojiCandidates(text, tokens) {
+  function kuromojiCandidates(text2, tokens2) {
     let previousEnd = 0;
     const candidates = [];
-    for (const token of tokens) {
+    for (const token of tokens2) {
       const start = token.word_position - 1;
       const end = start + token.surface_form.length;
-      if (start !== previousEnd || text.slice(start, end) !== token.surface_form) return null;
+      if (start !== previousEnd || text2.slice(start, end) !== token.surface_form) return null;
       previousEnd = end;
       const dictionaryForm = token.basic_form === "*" ? token.surface_form : token.basic_form;
       candidates.push({
@@ -5167,7 +5481,7 @@ ${sense.noteText}` : sense.meaning
         joinsInflection: false
       });
     }
-    return previousEnd === text.length ? candidates : null;
+    return previousEnd === text2.length ? candidates : null;
   }
   var functionWordClasses = /* @__PURE__ */ new Set(["助詞", "助動詞", "記号", "補助記号"]);
   function isFunctionWord(candidate2) {
@@ -5397,15 +5711,15 @@ ${sense.noteText}` : sense.meaning
     const counted2 = words.flatMap((_, index) => numberWithCounterAt(words, index)?.word ?? []);
     return [...words, ...counted2].filter((candidate2) => !isWrittenAs(candidate2, forms2) && isLookedUp(candidate2)).map(lookupForms);
   }
-  function linkedTokens(text, candidates, highlighted, lookup) {
+  function linkedTokens(text2, candidates, highlighted, lookup) {
     if (candidates === null) {
-      return text === "" ? [] : [
+      return text2 === "" ? [] : [
         {
-          surface: text,
+          surface: text2,
           entry: null,
           candidates: [],
-          reading: text,
-          dictionaryForm: text,
+          reading: text2,
+          dictionaryForm: text2,
           partOfSpeech: [],
           lookupForm: null
         }
@@ -5445,12 +5759,12 @@ ${sense.noteText}` : sense.meaning
       return { ...token(word, resolution), reading: toKatakana(resolution.entry.reading) };
     };
     const words = grouped(candidates);
-    const tokens = [];
+    const tokens2 = [];
     for (let index = 0; index < words.length; index++) {
       const counted2 = numberWithCounterAt(words, index);
       const whole = counted2 ? asOneWord(counted2) : null;
       if (counted2 && whole) {
-        tokens.push(whole);
+        tokens2.push(whole);
         index += counted2.pieces - 1;
         continue;
       }
@@ -5459,13 +5773,13 @@ ${sense.noteText}` : sense.meaning
       if (resolution.candidates.length === 0 && candidate2.children.length > 1) {
         const children = candidate2.children.map((child) => token(child, resolve(child)));
         if (children.some((child) => child.candidates.length > 0)) {
-          tokens.push(...children);
+          tokens2.push(...children);
           continue;
         }
       }
-      tokens.push(token(candidate2, resolution));
+      tokens2.push(token(candidate2, resolution));
     }
-    return tokens;
+    return tokens2;
   }
   function displayReading(token, entry) {
     const forms2 = [entry.headword, ...entry.writtenForms, ...entry.readingForms];
@@ -5515,18 +5829,18 @@ ${sense.noteText}` : sense.meaning
     wordExamples: "entry",
     formExamples: "query"
   };
-  function tokenSpans(tokens) {
+  function tokenSpans(tokens2) {
     let start = 0;
-    return tokens.map((token) => {
+    return tokens2.map((token) => {
       const end = start + scalarCount(token.surface);
       const span = { start, end };
       start = end;
       return span;
     });
   }
-  function occurrences(text, query) {
+  function occurrences(text2, query) {
     if (query === "") return [];
-    const scalars = Array.from(text);
+    const scalars = Array.from(text2);
     const needle = Array.from(query);
     if (needle.length === 0 || needle.length > scalars.length) return [];
     const found = [];
@@ -5537,13 +5851,13 @@ ${sense.noteText}` : sense.meaning
     }
     return found;
   }
-  function accentedPositions(text, tokens, highlight) {
+  function accentedPositions(text2, tokens2, highlight) {
     if (highlight.accent === "entry") {
       const id = highlight.entry?.id;
-      return tokens.flatMap((token, position) => id && token.entry?.id === id ? [position] : []);
+      return tokens2.flatMap((token, position) => id && token.entry?.id === id ? [position] : []);
     }
-    const found = occurrences(text, highlight.query);
-    return tokenSpans(tokens).flatMap(
+    const found = occurrences(text2, highlight.query);
+    return tokenSpans(tokens2).flatMap(
       (span, position) => found.some((match) => match.start < span.end && span.start < match.end) ? [position] : []
     );
   }
@@ -5555,8 +5869,8 @@ ${sense.noteText}` : sense.meaning
   var rememberedFeatures = 5e4;
   var classesACharacterCanName = 256;
   var punctuation = /、|。/;
-  function written2(bytes2) {
-    let text = "";
+  function written3(bytes2) {
+    let text2 = "";
     let at = 0;
     while (at < bytes2.length) {
       const first = bytes2[at++];
@@ -5574,17 +5888,17 @@ ${sense.noteText}` : sense.meaning
         code = (first & 7) << 18 | (second & 63) << 12 | (third & 63) << 6 | bytes2[at++] & 63;
       }
       if (code < 65536) {
-        text += String.fromCharCode(code);
+        text2 += String.fromCharCode(code);
       } else {
         code -= 65536;
-        text += String.fromCharCode(55296 | code >> 10, 56320 | code & 1023);
+        text2 += String.fromCharCode(55296 | code >> 10, 56320 | code & 1023);
       }
     }
-    return text;
+    return text2;
   }
   function writtenFrom(bytes2, start) {
     const end = bytes2.indexOf(0, start);
-    return written2(bytes2.subarray(start, end < 0 ? bytes2.length : end));
+    return written3(bytes2.subarray(start, end < 0 ? bytes2.length : end));
   }
   var Words = class {
     shorts;
@@ -5593,10 +5907,10 @@ ${sense.noteText}` : sense.meaning
     text;
     listOf;
     features = /* @__PURE__ */ new Map();
-    constructor(records, text, lists) {
+    constructor(records, text2, lists) {
       this.shorts = new Int16Array(records, 0, records.byteLength >> 1);
       this.records = new DataView(records);
-      this.text = new Uint8Array(text);
+      this.text = new Uint8Array(text2);
       this.lists = new Int32Array(lists, 0, lists.byteLength >> 2);
       const listed3 = this.lists[0] ?? 0;
       let listOf = new Int32Array(Math.max(listed3, 1));
@@ -5636,7 +5950,7 @@ ${sense.noteText}` : sense.meaning
       invoked.push(bytes2[at]);
       grouped2.push(bytes2[at + 1]);
       const end = bytes2.indexOf(0, at + 6);
-      names.push(written2(bytes2.subarray(at + 6, end < 0 ? bytes2.length : end)));
+      names.push(written3(bytes2.subarray(at + 6, end < 0 ? bytes2.length : end)));
       at = (end < 0 ? bytes2.length : end) + 1;
     }
     const fallback = names.indexOf("DEFAULT");
@@ -5649,7 +5963,7 @@ ${sense.noteText}` : sense.meaning
       count: names.length,
       alwaysInvoked: Uint8Array.from(invoked),
       grouped: Uint8Array.from(grouped2),
-      named: Int32Array.from(names, (name2) => names.indexOf(name2)),
+      named: Int32Array.from(names, (name3) => names.indexOf(name3)),
       fallback
     };
   }
@@ -5747,31 +6061,31 @@ ${sense.noteText}` : sense.meaning
       this.connections = new Int16Array(connections, 0, connections.byteLength >> 1);
       this.classes = characterClasses(read("unk_char"), read("unk_invoke"));
     }
-    tokenize(text) {
-      const tokens = [];
-      let rest = text;
+    tokenize(text2) {
+      const tokens2 = [];
+      let rest = text2;
       while (rest !== "") {
         const stop = rest.search(punctuation);
-        this.sentence(stop < 0 ? rest : rest.substring(0, stop + 1), tokens);
+        this.sentence(stop < 0 ? rest : rest.substring(0, stop + 1), tokens2);
         if (stop < 0) break;
         rest = rest.substring(stop + 1);
       }
-      return tokens;
+      return tokens2;
     }
-    sentence(text, tokens) {
-      const characters = this.read(text);
+    sentence(text2, tokens2) {
+      const characters = this.read(text2);
       const lattice = this.lattice;
-      lattice.begin(characters + text.length + 3);
+      lattice.begin(characters + text2.length + 3);
       for (let character = 0; character < characters; character++) {
         this.unknownWords(character, this.knownWords(character));
       }
       const end = Math.max(1, lattice.furthest) + 1;
       const last = lattice.add(lattice.furthest + 1, end, none, 0, 0, 0, none);
       this.search(end);
-      this.shape(text, last, tokens);
+      this.shape(text2, last, tokens2);
     }
-    read(text) {
-      const length2 = text.length;
+    read(text2) {
+      const length2 = text2.length;
       if (this.units.length <= length2) {
         this.units = new Int32Array(length2 * 2 + 1);
         this.offsets = new Int32Array(length2 * 2 + 1);
@@ -5787,12 +6101,12 @@ ${sense.noteText}` : sense.meaning
       let characters = 0;
       let bytes2 = 0;
       for (let unit = 0; unit < length2; characters++) {
-        const code = text.charCodeAt(unit);
+        const code = text2.charCodeAt(unit);
         units[characters] = unit;
         offsets[characters] = bytes2;
         unitAt[bytes2] = unit;
         if (code >= 55296 && code <= 56319) {
-          const low = text.charCodeAt(unit + 1);
+          const low = text2.charCodeAt(unit + 1);
           if (!(low >= 56320 && low <= 57343)) {
             throw new TypeError("A high surrogate stands without its low surrogate");
           }
@@ -5917,23 +6231,23 @@ ${sense.noteText}` : sense.meaning
         }
       }
     }
-    shape(text, last, tokens) {
-      const { starts, words, spans, best } = this.lattice;
+    shape(text2, last, tokens2) {
+      const { starts, words, spans: spans2, best } = this.lattice;
       const path = [];
       for (let node = best[last]; node !== beginning; node = best[node]) {
         if (node === none) return;
         path.push(node);
       }
-      const before = tokens.length > 0 ? tokens[tokens.length - 1].word_position : 0;
+      const before = tokens2.length > 0 ? tokens2[tokens2.length - 1].word_position : 0;
       for (let step = path.length - 1; step >= 0; step--) {
         const node = path[step];
         const character = starts[node] - 1;
-        const isKnown = spans[node] === none;
+        const isKnown = spans2[node] === none;
         const features = (isKnown ? this.known : this.unknown).featuresOf(words[node]);
-        tokens.push({
+        tokens2.push({
           word_type: isKnown ? "KNOWN" : "UNKNOWN",
           word_position: before + starts[node],
-          surface_form: isKnown ? features[0] : text.slice(this.units[character], this.units[spans[node]]),
+          surface_form: isKnown ? features[0] : text2.slice(this.units[character], this.units[spans2[node]]),
           pos: features[1],
           pos_detail_1: features[2],
           pos_detail_2: features[3],
@@ -5946,9 +6260,9 @@ ${sense.noteText}` : sense.meaning
   };
   function ipadicTokenizer(read) {
     let dictionary;
-    return (text) => {
+    return (text2) => {
       dictionary ??= new Ipadic(read);
-      return dictionary.tokenize(text);
+      return dictionary.tokenize(text2);
     };
   }
 
@@ -5956,10 +6270,10 @@ ${sense.noteText}` : sense.meaning
   function shown({ id, headword, reading, summary, meaning }) {
     return { id, headword, reading, summary, gloss: meaning === null ? null : shortGloss(meaning) };
   }
-  function linkedWords(text, tokens, analyzed, entries, highlight) {
-    const accents = new Set(accentedPositions(text, tokens, highlight));
-    return tokenSpans(tokens).map(({ start, end }, index) => {
-      const token = tokens[index];
+  function linkedWords(text2, tokens2, analyzed, entries, highlight) {
+    const accents = new Set(accentedPositions(text2, tokens2, highlight));
+    return tokenSpans(tokens2).map(({ start, end }, index) => {
+      const token = tokens2[index];
       const target = token.entry ? entries.get(token.entry.id) : void 0;
       const furigana = target ? displayReading(token, target) : null;
       return {
@@ -6017,7 +6331,7 @@ ${sense.noteText}` : sense.meaning
       this.searchDb = searchDatabase(this.db);
       this.lookup = formLookup(this.db, this.forms);
       this.readsItsFiles = !host.tokenize && host.tokenizerFile !== void 0;
-      this.tokenize = host.tokenize ? (text) => host.tokenize?.(text) ?? [] : host.tokenizerFile && ipadicTokenizer((file) => {
+      this.tokenize = host.tokenize ? (text2) => host.tokenize?.(text2) ?? [] : host.tokenizerFile && ipadicTokenizer((file) => {
         const bytes2 = host.tokenizerFile?.(file);
         if (!bytes2) throw new Error(`The host has no ${file} for the tokenizer`);
         return bytes2;
@@ -6153,10 +6467,10 @@ ${sense.noteText}` : sense.meaning
       );
       return senses.map((sense, index) => ({ number: sense + 1, example: examples[index] }));
     }
-    async candidates(text, analyze) {
+    async candidates(text2, analyze) {
       try {
-        if (this.tokenize) return kuromojiCandidates(text, this.tokenize(text));
-        return analyzedWords(await analyze(text)).map(hostCandidate);
+        if (this.tokenize) return kuromojiCandidates(text2, this.tokenize(text2));
+        return analyzedWords(await analyze(text2)).map(hostCandidate);
       } catch {
         return null;
       }
@@ -6204,13 +6518,13 @@ ${sense.noteText}` : sense.meaning
     }
     async link(texts, accented, analyze) {
       const query = normalizeQuery(accented.query);
-      const key = (text) => JSON.stringify([text, query, accented.entry, accented.accent]);
+      const key = (text2) => JSON.stringify([text2, query, accented.entry, accented.accent]);
       const answers = /* @__PURE__ */ new Map();
       const unlinked = /* @__PURE__ */ new Map();
-      for (const text of texts) {
-        const known = this.linked.get(key(text));
-        if (known) answers.set(text, known);
-        else if (!unlinked.has(text)) unlinked.set(text, await this.candidates(text, analyze));
+      for (const text2 of texts) {
+        const known = this.linked.get(key(text2));
+        if (known) answers.set(text2, known);
+        else if (!unlinked.has(text2)) unlinked.set(text2, await this.candidates(text2, analyze));
       }
       if (unlinked.size > 0) {
         const entry = accented.entry ? this.found([accented.entry]).get(accented.entry) ?? null : null;
@@ -6221,60 +6535,60 @@ ${sense.noteText}` : sense.meaning
             for (const forms2 of formsLookedUp(candidates, highlighted)) looked.push(forms2);
         }
         await this.prefetch(looked);
-        const tokens = /* @__PURE__ */ new Map();
+        const tokens2 = /* @__PURE__ */ new Map();
         const named = [];
-        for (const [text, candidates] of unlinked) {
-          const linked = linkedTokens(text, candidates, highlighted, this.lookup);
-          tokens.set(text, linked);
+        for (const [text2, candidates] of unlinked) {
+          const linked = linkedTokens(text2, candidates, highlighted, this.lookup);
+          tokens2.set(text2, linked);
           for (const token of linked) {
             for (const shown2 of token.entry ? [token.entry] : token.candidates) named.push(shown2.id);
           }
         }
         const entries = this.found(named);
         const highlight = { entry, query, accent: accented.accent };
-        for (const [text, candidates] of unlinked) {
+        for (const [text2, candidates] of unlinked) {
           const answer = linkedWords(
-            text,
-            tokens.get(text) ?? [],
+            text2,
+            tokens2.get(text2) ?? [],
             candidates !== null,
             entries,
             highlight
           );
-          if (candidates) this.linked.set(key(text), answer);
-          answers.set(text, answer);
+          if (candidates) this.linked.set(key(text2), answer);
+          answers.set(text2, answer);
         }
       }
-      return texts.map((text) => answers.get(text) ?? []);
+      return texts.map((text2) => answers.get(text2) ?? []);
     }
     async countedWords(lines, analyze) {
       const words = /* @__PURE__ */ new Map();
       const analyses = /* @__PURE__ */ new Map();
       const looked = [];
-      for (const text of lines) {
+      for (const text2 of lines) {
         stopIfInterrupted(this.db, 0);
-        if (words.has(text) || analyses.has(text)) continue;
-        const remembered3 = this.counted.get(text);
+        if (words.has(text2) || analyses.has(text2)) continue;
+        const remembered3 = this.counted.get(text2);
         if (remembered3 !== void 0) {
-          words.set(text, remembered3);
+          words.set(text2, remembered3);
           continue;
         }
-        const candidates = await this.candidates(text, analyze);
-        analyses.set(text, candidates);
+        const candidates = await this.candidates(text2, analyze);
+        analyses.set(text2, candidates);
         if (candidates) for (const forms2 of formsLookedUp(candidates, null)) looked.push(forms2);
       }
       await this.prefetch(looked);
-      for (const [text, candidates] of analyses) {
+      for (const [text2, candidates] of analyses) {
         stopIfInterrupted(this.db, 0);
         const ids = [];
-        for (const token of linkedTokens(text, candidates, null, this.lookup)) {
+        for (const token of linkedTokens(text2, candidates, null, this.lookup)) {
           if (countsTowardComprehension(token)) ids.push(token.entry.id);
         }
-        if (candidates) this.counted.set(text, ids);
-        words.set(text, ids);
+        if (candidates) this.counted.set(text2, ids);
+        words.set(text2, ids);
       }
       const counted2 = [];
-      for (const text of lines) {
-        for (const id of words.get(text) ?? []) counted2.push(id);
+      for (const text2 of lines) {
+        for (const id of words.get(text2) ?? []) counted2.push(id);
       }
       return counted2;
     }
@@ -6291,14 +6605,14 @@ ${sense.noteText}` : sense.meaning
   }
   function embeddedEndpoint(host) {
     const lookup = once(() => new EmbeddedLookup(host));
-    const text = once(() => new EmbeddedText(host));
+    const text2 = once(() => new EmbeddedText(host));
     const presentation = once(() => new EmbeddedPresentation(host));
     const methods = {
       search: (query, analyze) => lookup().search(query, { analyze }),
       entriesMatchingFirstForms: (alternatives) => lookup().entriesMatchingFirstForms(JSON.parse(alternatives)),
       entriesContainingKanji: (character) => lookup().entriesContainingKanji(character),
       websiteRoute: (link) => lookup().websiteRoute(JSON.parse(link)),
-      lookUp: (text2, analyze) => lookup().lookUp(text2, { analyze }),
+      lookUp: (text3, analyze) => lookup().lookUp(text3, { analyze }),
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
@@ -6310,16 +6624,16 @@ ${sense.noteText}` : sense.meaning
       isKanji: isKanjiCharacter,
       romaji,
       sentenceRomaji: (words) => sentenceRomaji(JSON.parse(words)),
-      checkExamples: () => text().checkExamples(),
-      tokenizerReady: () => text().tokenizerReady(),
-      exampleCount: (query) => text().exampleCount(query),
-      resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
-      resultsExamples: (request, analyze) => text().resultsExamples(JSON.parse(request), analyze),
-      entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
-      meaningExamples: (request, analyze) => text().meaningExamples(JSON.parse(request), analyze),
-      formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
-      linkedTexts: (request, analyze) => text().linkedTexts(JSON.parse(request), analyze),
-      countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
+      checkExamples: () => text2().checkExamples(),
+      tokenizerReady: () => text2().tokenizerReady(),
+      exampleCount: (query) => text2().exampleCount(query),
+      resultsExampleCount: (request) => text2().resultsExampleCount(JSON.parse(request)),
+      resultsExamples: (request, analyze) => text2().resultsExamples(JSON.parse(request), analyze),
+      entryExamples: (request, analyze) => text2().entryExamples(JSON.parse(request), analyze),
+      meaningExamples: (request, analyze) => text2().meaningExamples(JSON.parse(request), analyze),
+      formExamples: (request, analyze) => text2().formExamples(JSON.parse(request), analyze),
+      linkedTexts: (request, analyze) => text2().linkedTexts(JSON.parse(request), analyze),
+      countedWords: (lines, analyze) => text2().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
       notesInSearch: (request) => notesInSearch(JSON.parse(request)),
@@ -6337,7 +6651,13 @@ ${sense.noteText}` : sense.meaning
         const { phrase, ...entry } = JSON.parse(request);
         return phraseNote(phrase, entry);
       },
-      sourceCredits: creditsShownBy
+      sourceCredits: creditsShownBy,
+      youTubeVideo,
+      youTubeCaptions,
+      youTubeTranslatedCaptions: (request) => {
+        const { captions, timedText } = JSON.parse(request);
+        return youTubeTranslatedCaptions(captions, timedText);
+      }
     };
     const unanalyzed = () => {
       throw new Error("An answer asked for at once cannot wait for an analysis");
