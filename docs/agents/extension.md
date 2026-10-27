@@ -4,8 +4,9 @@
 repository to read the shared language data (ADR 0006) and replaces the 1.1.0 prototype, whose
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
-draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in
-`src/shared/labels.ts`. What it does for a learner, and the check for each behavior, is in its
+draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in each surface's
+`labels.ts`: `src/shared/labels.ts` for what several share, `src/popup/labels.ts`, and
+`src/settings/labels.ts`. What it does for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
 behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup).
 
@@ -27,19 +28,27 @@ API that the extension's translations are to use (#967); on-device speech recogn
 outside the first version. The Store listing, its ID, and the version and builds that ship are
 #986's.
 
+Besides `offscreen` and `sidePanel`, the manifest asks for `storage`, for the settings, and
+`activeTab`, so the toolbar popup can read the tab's address and icon. It asks for no site at
+install: `http://*/*` and `https://*/*` are `optional_host_permissions`, and the popup's Allow on
+This Site asks Chrome for one site with `chrome.permissions.request`.
+
 ## Code layout
 
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and answers and passes on the settings (`settings.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
-| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
+| `src/popup/` | The toolbar popup: the site's row and which sites Zenbu can't run on (`site.ts`), the dictionary's download, and the switches. |
+| `src/settings/` | Settings: the sidebar and its five pages, the switch row both surfaces use (`setting-switch.tsx`), and the frequency dictionaries' order (`frequency-order.ts`). |
+| `src/shared/` | The messages and their types, the settings (`settings.ts`) and the hook pages read them with (`use-settings.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
-| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
+| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and follows the settings (`settings-follower.tsx`). |
+| `src/test/` | What the DOM tests share: a fake `chrome` (`fake-chrome.ts`), rendering and clicking (`render.tsx`), the extension's pages and a content script on one fake Chrome (`extension.tsx`), and a stand-in for the dictionary's state (`dictionary.tsx`). It imports nothing from Vitest, so the layer rules hold it like runtime code. |
 
 ### Messages
 
@@ -56,6 +65,18 @@ a send that throws, an unknown request, a document that doesn't start within 10 
 that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
 one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
+
+### Settings
+
+Each setting is a key of its own in `chrome.storage.local`, with its default in
+`settingDefaults` (`src/shared/settings.ts`); a stored value of the wrong kind reads as the
+default. The popup and Settings read and write the storage directly, with `useSettings`, and
+redraw on `chrome.storage.onChanged`. A content script never reads the storage: it asks the
+service worker with `askSettings()` (`{ target: 'service-worker', settings: 'read' }`), and the
+service worker, which watches the storage, sends `{ target: 'settings', settings }` to every open
+tab when one changes, which `onSettingsChanged` hears. A tab that can't take the message (a closed
+tab, a page with no content script) stops none of the others. Whether Zenbu runs on a site is
+`isZenbuOn(host, settings)`, from `sites.off`.
 
 ### Drawing on a page
 
@@ -87,7 +108,9 @@ Comic Sans, letter spacing, uppercase, dashed borders on every element, `button 
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, and
-a Dialog. The release build has no content script; `build/manifest.test.ts` checks that.
+a Dialog, and under it each reading aid and whether it's on. It follows the settings: it draws
+nothing on a site Zenbu is off on, and draws again when a setting changes, without a reload. The
+release build has no content script; `build/manifest.test.ts` checks that.
 
 ## Layers
 
@@ -116,7 +139,11 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again.
+  again; the settings' defaults, storage, and channel (`src/shared/settings.test.ts`); and, in
+  happy-dom on one fake Chrome, the toolbar popup and Settings with the test content script beside
+  them, each behavior their [product docs](../../apps/extension/docs/product/index.md) list.
+  The popup and Settings in a real Chrome, at 420 pixels wide with no sideways scroll, wait for
+  #952's Playwright specs.
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check

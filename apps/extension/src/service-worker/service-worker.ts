@@ -1,5 +1,6 @@
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
+import { startSettingsChannel } from './settings'
 
 const offscreenDocument = offscreenDocumentKeeper({
   getURL: path => chrome.runtime.getURL(path),
@@ -14,3 +15,5 @@ chrome.runtime.onMessage.addListener(
     sendMessage: message => chrome.runtime.sendMessage(message)
   })
 )
+
+startSettingsChannel()
