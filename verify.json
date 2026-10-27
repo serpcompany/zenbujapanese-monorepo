@@ -558,6 +558,7 @@
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
+          "^src/shared/hosts\\.ts$",
           "^test-pages/test-content-script\\.tsx$",
           "^e2e/[\\w-]+\\.spec\\.ts$",
           "^e2e/serve\\.ts$",
