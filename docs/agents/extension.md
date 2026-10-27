@@ -4,10 +4,12 @@
 repository to read the shared language data (ADR 0006) and replaces the 1.1.0 prototype, whose
 feature contract it follows but none of whose code it copies. Its first version runs in Chrome
 only, offline, with no account: nothing signs in. It looks like zenbujapanese.com because it
-draws with `@zenbu/ui` ([`ui.md`](ui.md)), and it keeps its interface text in
-`src/shared/labels.ts`. What it does for a learner, and the check for each behavior, is in its
+draws with `@zenbu/ui` ([`ui.md`](ui.md)). It keeps its interface text in `src/shared/labels.ts`,
+and a surface's own in its folder's `labels.ts`, such as `src/translate/labels.ts`. What it does
+for a learner, and the check for each behavior, is in its
 [product docs](../../apps/extension/docs/product/index.md): update them in the same PR as a
-behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word popup).
+behavior change. The terms are in [`CONTEXT.md`](../../CONTEXT.md) (Browser extension, Word
+popup, Translation module).
 
 Run every command below from `apps/extension`, after `pnpm install` at the repository root.
 
@@ -22,15 +24,16 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
 | `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
 | `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
-| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([Error reports](#error-reports)). |
+| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
 asks for Chrome 138 (`minimumChromeVersion` in `build/manifest.ts`), the first with the Translator
-API that the extension's translations are to use (#967); on-device speech recognition (#968) is
-outside the first version.
+API that the extension's translations use (#967); on-device speech recognition (#968) is
+outside the first version. It asks for `scripting` so the Translate tab's Use Selection can read
+the selected text on the active tab; reaching that tab also needs `activeTab` (#959).
 
 ## Builds and packages
 
@@ -72,11 +75,13 @@ outside the first version.
 | Folder | What it holds |
 | --- | --- |
 | `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
-| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`). |
-| `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
+| `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`) and passes a page's request on to it (`router.ts`), and a translation the same way (`translation.ts`). |
+| `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`), and answers translations with Chrome's Translator (`translation.ts`). |
+| `src/translation/` | The translation module, which any surface uses: its messages and `translate` (`messages.ts`), a text's direction (`direction.ts`), and the adapter on Chrome's Translator (`translator.ts`), with `downloadTranslator` for a page's click. |
+| `src/translate/` | The Translate tab: the box and its buttons, the result card, Use Selection (`selection.ts`), Speak's voice, one on this computer (`speech.ts`), and its labels. |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
-| `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([Error reports](#error-reports)). |
+| `src/error-reports/` | Sentry for every part, the forwarding of every part's reports to the service worker, the Send Crash Reports setting, and the `beforeSend` that scrubs each event ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
@@ -99,6 +104,32 @@ a send that throws, an unknown request, a document that doesn't start within 10 
 that fails or doesn't start within 10 seconds (the offscreen document ends it and starts a new
 one for the next request), and a worker that doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
 document it's waiting on, since Chrome stops it when it's idle.
+
+### Translation
+
+Any surface translates with `translate(request)` (`src/translation/messages.ts`): it asks how
+available the translator is for a direction (`ja` to `en`, or `en` to `ja`), or translates lines
+of text. It sends `{ target: 'service-worker', translation }`, and the service worker opens the
+offscreen document as for the dictionary and passes it on as
+`{ target: 'offscreen', translation }`. The key is `translation`, not `request`, so the
+dictionary's listeners never answer it, nor the translation listeners a dictionary request. The offscreen document makes one Translator for
+each direction once Chrome says it is `available`, keeps it, and translates each line, leaving a
+blank one as it is. It answers `translated`, or `not-available` with Chrome's state, and makes
+nothing then; a translation that fails, or doesn't answer within 30 seconds, comes back as
+`{ type: 'failed', reason }`, and the offscreen document drops that Translator, destroying it, so
+the next one makes a new one. A page's text never goes in an error's message.
+
+Chrome downloads a model only from a click, and the click's activation lasts a few seconds, so a
+page asks `translatorAvailability(direction)` itself in that click and, while the model is
+`downloadable` or `downloading`, calls `downloadTranslator(direction, onProgress)` at once, before
+any message. It reports the download's progress from 0 to 1 and answers the state; a download with
+no progress for 60 seconds is stopped and answers Chrome's state then. The page then translates
+through the offscreen document, which makes its own Translator once the model is `available`. The
+offscreen document
+translates with no click once the model is `available`: checked on 2026-10-27 in Chrome 156, in
+the headful agent Chrome, by sending a translation from the test content script's world, with no
+user gesture, in a Chrome just started. Each direction has its own model. The model is Chrome's,
+on this computer, and nothing is sent anywhere to translate.
 
 ### Drawing on a page
 
@@ -132,96 +163,14 @@ Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open ei
 test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
 Dialog, and Test error, which throws while drawing so the content script reports it. The release build has no content script; `build/manifest.test.ts` checks that.
 
-## Error reports
-
-Every part reports its errors to Sentry's `zenbujapanese-extension` in `serpcompany`, the
-extension's own project, set up as the app's is ([`ios-crash-reports.md`](ios-crash-reports.md)),
-with one difference below. There are no usage analytics.
-
-- **Owner steps for the project.** Create it, set its DSN as `sentryDsn`, and in **Project
-  Settings › Inbound Filters** turn off **Filter out errors known to be caused by browser
-  extensions**, leaving the other filters on. A new project has that filter on, and it drops
-  every event whose top frame is a `chrome-extension://` URL, which is every event this
-  extension sends, so none would arrive and nothing would say why. Then note the project's
-  retention, which is set in Sentry, in this section.
-- **Which builds send.** The DSN is `sentryDsn` in `build/error-reports.ts`; it only lets a client
-  send events, so it isn't a secret. The build puts it, the environment, and the release
-  (`zenbujapanese-extension@<manifest version>`) into the code as `import.meta.env.ZENBU_SENTRY_*`.
-  The environment follows the app's: `qa`, unless `ZENBU_SENTRY_ENVIRONMENT=production` is set for
-  the build, which #986's production package does; its staging package stays `qa`. Tests define
-  none of them, so nothing in Vitest reaches Sentry. Until the project exists, `sentryDsn` is
-  empty and no build sends anything.
-- **Only the service worker talks to Sentry.** It calls `Sentry.init` with global handlers
-  (`startSendingErrorReports`), and also sends what the other parts hand it
-  (`receiveErrorReport`). The pages (in `mountPage`), the offscreen document, and the dictionary
-  worker call `Sentry.init` with global handlers too (`startErrorReports(part, forward)`), but
-  their transport sends each envelope to the service worker as an `{ target: 'service-worker',
-  errorReport }` message; the worker, which has no `chrome.runtime`, posts it to the offscreen
-  document, which passes it on. Each event is tagged `part`: `page`, `service-worker`,
-  `offscreen`, or `worker`.
-- **Content scripts** (`contentScriptErrorReports(forward)`) run beside the page's own code, so
-  they never call `Sentry.init` and add no global handler, as Sentry's
-  [guide for browser extensions](https://docs.sentry.io/platforms/javascript/best-practices/browser-extensions/)
-  says: a `BrowserClient` with its own `Scope` builds an event only from what the content script
-  hands it, such as an error React throws while drawing (`mountInShadowRoot`'s `report`, which
-  also logs it to the console and never passes it to the page). Its envelope goes to the service
-  worker as a message, so the content script makes no request: none shows in the page's Network
-  panel, none meets the page's CSP, and Sentry never sees the page's site as an `Origin`.
-- **Send Crash Reports.** As in the app ([`crash-reports.md`](../../apps/ios/docs/product/crash-reports.md)),
-  reports are on until the learner turns them off. The setting is `crashReports.send` in
-  `chrome.storage.local`, a boolean; missing means on (`src/error-reports/report-setting.ts`).
-  Since every report goes through the service worker, it is read there, before anything is sent:
-  a report made before the read waits for it, and goes only if the setting is on. The service
-  worker follows `chrome.storage.onChanged`, so turning it off stops the next report at once and
-  turning it on starts them again, with no reload; a setting it can't read counts as off. #959
-  draws the switch on the Settings page; until then, set the key from the service worker's
-  console. Sentry keeps an event for the project's retention, which is set in Sentry (see the
-  owner steps).
-- **Handled failures.** When the router answers a dictionary request with a failure, it reports
-  it once with `reportFailure(code)`, a message holding only the code and grouped by it:
-  `offscreen-document` (the document couldn't be opened), `offscreen-message` (it couldn't be
-  reached), or `dictionary-answer` (it answered with a failure, such as a worker that failed or
-  didn't answer). Never the failure's text or the request. A code that fails again and again is
-  reported once per service-worker life: `dedupeIntegration` drops an event that repeats the one
-  before it.
-- **What an event holds.** Only the integrations that find a fault run: event filters, function
-  names, linked errors, dedupe, the `User-Agent` header, and, outside content scripts, the global
-  handlers. Breadcrumbs, sessions, client reports, cookies, query strings, frame variables, and
-  context lines are off, and Sentry is asked not to infer an IP address (`userInfo: false`).
-  `scrubEvent` (`src/error-reports/scrub.ts`), the `beforeSend`, then drops breadcrumbs, extras,
-  the user, the server name, the transaction, and the request's URL, keeps only the `part` tag and
-  the `browser`, `os`, `runtime`, `device`, and `trace` contexts, and turns any frame or debug
-  image that isn't the extension's own (`chrome-extension://`) into `<page>`. In every message
-  and exception value it removes quoted text (`"…"`, `“…”`, `「…」`, `『…』`), URLs, and kana
-  and kanji, including kanji outside the BMP such as 𩸽. It can't tell unquoted romaji or English
-  from the code's own words, so it leaves them; that's why the code builds a message from codes
-  and never puts a learner's text in one.
-- **Source maps.** Both builds write hidden source maps (no `sourceMappingURL`) beside their
-  scripts. `pnpm upload-source-maps [folder]` (`build/upload-source-maps.ts`, `dist` by default)
-  installs a pinned `@sentry/cli` and adds debug IDs to the scripts and maps
-  (`sourcemaps inject`), both without the token, then looks for the token and uploads the maps
-  under the manifest's release with it, and then always deletes every `.map` from the folder, so
-  the store zip, made from the folder afterwards, holds none. The token is `SENTRY_AUTH_TOKEN` or
-  the login keychain's `zenbu-sentry-auth-token`, the app's
-  ([`ios-crash-reports.md`](ios-crash-reports.md), Debug symbols); the script never prints it.
-  No maps, no token, or a step that fails or stalls is a warning and exits 0. Without a token the
-  scripts still get their debug IDs, so the package can ship; build the same commit again and
-  upload its maps later (the debug IDs come from the files' contents, so they match). #986's
-  workflow runs it on each package.
-- **Checking one arrives.** In the agent Chrome harness, load a build with the DSN, then throw
-  from each context: `setTimeout(() => { throw new Error('Zenbu test error: <part>') })` evaluated
-  in a page, the service worker, the offscreen document, and the dictionary worker, and Test
-  error on the test surface for the content script. Find each in `zenbujapanese-extension`,
-  environment `qa`. Throwing the same way in a test page's own context, with the content script
-  running, must send nothing (`--net sentry`), and so must every part once `crashReports.send` is
-  `false`.
-
 ## Layers
 
 - **Only the dictionary worker opens the dictionary.** Nothing outside `src/worker/` may load the
   core's `artifact/`, `search/`, `embedded/`, or `examples/` modules or SQLite, however indirectly
   (`only-the-worker-opens-the-dictionary`), or import `src/worker/` at all
-  (`nothing-imports-the-worker`): the offscreen document starts the worker by its URL.
+  (`nothing-imports-the-worker`): the offscreen document starts the worker by its URL. The one
+  exception is `search/query`, the core's text checks, which loads none of them: the translation
+  module takes a text's direction from its `writtenLanguage`, as the app does.
 - **Pages and content scripts draw with `@zenbu/ui`,** never the Base UI or Radix primitives under
   it (`extension-draws-with-zenbu-ui`). Add what's missing to `@zenbu/ui`.
 - **The service worker, the offscreen document, and the worker draw nothing:** nothing they
@@ -246,10 +195,19 @@ with one difference below. There are no usage analytics.
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, an error in its content handed to its reporter, and unmounting, and
-  `DictionaryStatus` checking, ready, failed, and Check again. Error reports: `scrub.test.ts`
-  (page text, a page URL, and a selected word gone from every part of an event), the content
-  script's client sending its own error but never the page's, with no global handler, the pages'
-  and a worker's uncaught errors sent with their part, all through a recording transport
+  `DictionaryStatus` checking, ready, failed, and Check again. Translation, with a stand-in
+  Translator on `globalThis.Translator`: a text's direction, with the app's `WrittenLanguageTests`
+  cases; a line from a content script through the service worker and the offscreen document and
+  back, each way, its availability, one Translator for each direction, `not-available` with nothing
+  made, each failure, and the listeners kept apart from the dictionary's, a Translator dropped after
+  a failure or a timeout; `downloadTranslator`'s progress and its limit on a stalled download; Use
+  Selection's reading; Speak's voice, only one on this computer; and, in happy-dom, the Translate
+  tab: its fit to the panel's tab props, Use Selection, both directions, Copy, Speak and Speak with
+  no local voice, the download started before any message and its progress then the result, the
+  notices, Clear, an emptied box, and a late answer dropped. Error reports: `scrub.test.ts` (page
+  text, a page URL, and a selected word gone from every part of an event), the content script's
+  client sending its own error but never the page's, with no global handler, the pages' and a
+  worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
   taken out (`build/upload-source-maps.test.ts`).
 - **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
@@ -258,4 +216,6 @@ with one difference below. There are no usage analytics.
   return, the test content script, and the language-data download, with screenshots in light and
   dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
   test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
-  a click outside are still checked by hand.
+  a click outside are still checked by hand, and so is Translate: in the side panel, translate a
+  Japanese line and an English one. The Translator needs a branded Chrome, headful, since a
+  headless one reports the model `downloadable`.

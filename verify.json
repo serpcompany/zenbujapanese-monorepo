@@ -597,7 +597,7 @@
           {
             "name": "only-the-worker-opens-the-dictionary",
             "severity": "error",
-            "comment": "Only the dictionary worker loads the core's lookup code and SQLite; pages, content scripts, the offscreen document, and the service worker ask it with a message (docs/agents/extension.md, Layers).",
+            "comment": "Only the dictionary worker loads the core's lookup code and SQLite; pages, content scripts, the offscreen document, and the service worker ask it with a message. The one exception is search/query.ts, the core's text checks, which loads none of it (docs/agents/extension.md, Layers).",
             "from": {
               "path": "^(src|test-pages)/",
               "pathNot": [
@@ -610,6 +610,7 @@
                 "^\\.\\./\\.\\./packages/dictionary-core/src/(artifact|search|embedded|examples)/",
                 "(^|/)node_modules/(@sqlite\\.org|sql\\.js|wa-sqlite)/"
               ],
+              "pathNot": "^\\.\\./\\.\\./packages/dictionary-core/src/search/query\\.ts$",
               "reachable": true
             }
           },

@@ -150,6 +150,9 @@ importers:
       '@sentry/browser':
         specifier: 11.7.0
         version: 11.7.0
+      '@zenbu/dictionary-core':
+        specifier: workspace:*
+        version: link:../../packages/dictionary-core
       '@zenbu/ui':
         specifier: workspace:*
         version: link:../../packages/ui

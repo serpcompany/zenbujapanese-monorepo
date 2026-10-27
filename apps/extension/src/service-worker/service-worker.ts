@@ -5,6 +5,7 @@ import {
 } from '../error-reports/error-reports'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
+import { routeTranslation } from './translation'
 
 startSendingErrorReports(chrome.storage.local)
 
@@ -23,4 +24,8 @@ chrome.runtime.onMessage.addListener(
     sendMessage: message => chrome.runtime.sendMessage(message),
     reportFailure
   })
+)
+
+chrome.runtime.onMessage.addListener(
+  routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
 )

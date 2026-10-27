@@ -61,6 +61,12 @@ _Avoid_: extension (alone, where the Share extension could be meant), plugin, ad
 What the browser extension shows over a page for the word a learner points at.
 _Avoid_: word card (a Word card is the short entry an app without the data shows), tooltip
 
+**Translation module**:
+The browser extension's one way to translate (`apps/extension/src/translation/`), on Chrome's
+on-device Translator, which its Translate tab uses and its other surfaces will. The app's
+Translate uses Apple Translation instead.
+_Avoid_: translator (Chrome's Translator is the API under it), Translate (the tab)
+
 **Linked app**:
 An app outside the Zenbu apps, such as Tomodachi, in which a learner links their Zenbu
 account.
