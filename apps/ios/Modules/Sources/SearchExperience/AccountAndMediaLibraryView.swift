@@ -23,8 +23,8 @@ struct AccountTabRoot: View {
           MediaLibraryView(store: store)
         case .notesWithoutAWord:
           NotesWithoutAWordView()
-        case .knownWords:
-          KnownWordsView(lookupClient: lookupClient) {
+        case .marked(let status):
+          MarkedWordsView(words: .of(status), lookupClient: lookupClient) {
             openItem($0.entryID, $0.headword, $0.reading)
           }
         case .wordLists:
@@ -69,12 +69,14 @@ struct AccountRootView: View {
           }
           .accessibilityIdentifier("account.media-library")
 
-          NavigationLink(value: AccountRoute.knownWords) {
-            AccountCountRowLabel(
-              "Known Words", systemImage: "checkmark.circle.fill", tint: .teal,
-              count: wordKnowledge.isLoaded ? wordKnowledge.knownCount : nil)
+          ForEach(MarkedWords.all, id: \.identifier) { words in
+            NavigationLink(value: AccountRoute.marked(words.status)) {
+              AccountCountRowLabel(
+                LocalizedStringKey(words.title), systemImage: words.rowSymbol, tint: words.tint,
+                count: wordKnowledge.isLoaded ? wordKnowledge.marked(words.status).count : nil)
+            }
+            .accessibilityIdentifier("account.\(words.identifier)")
           }
-          .accessibilityIdentifier("account.known-words")
 
           NavigationLink(value: AccountRoute.wordLists) {
             AccountCountRowLabel(
@@ -250,7 +252,7 @@ enum AccountRoute: Hashable {
   case readingAids
   case mediaLibrary
   case notesWithoutAWord
-  case knownWords
+  case marked(WordKnowledgeStatus)
   case wordLists
   case wordList(UUID)
   case frequencyDictionaries

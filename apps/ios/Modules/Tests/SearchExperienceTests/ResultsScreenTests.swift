@@ -51,12 +51,44 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(menu.status == "Sorted by Default")
   }
 
-  @Test("Filter offers All, Unknown, and Known, leaving out the core's Learning for now")
+  @Test("Filter offers All, Unknown, Learning, and Known")
   func filterChoices() async throws {
     let menu = try #require(try await SearchedScreen.search("iru").list.menu)
     #expect(menu.filter.options.map(\.value) == ["all", "unknown", "learning", "known"])
-    #expect(menu.filter.offeredOptions.map(\.value) == ["all", "unknown", "known"])
-    #expect(menu.filter.offeredOptions.map(\.title) == ["All", "Unknown", "Known"])
+    #expect(menu.filter.options.map(\.title) == ["All", "Unknown", "Learning", "Known"])
+  }
+
+  @Test("Learning shows only the words being learned, and Known Words still puts known words first")
+  func learningWords() async throws {
+    let ids = try await SearchedScreen.search("iru").list.rows.map(\.id)
+    let learning = [ids[1]].map(LanguageReferenceID.init(rawValue:))
+    let known = [ids[3]].map(LanguageReferenceID.init(rawValue:))
+
+    let filtered = try await SearchedScreen.search(
+      "iru", filter: "learning", known: known, learning: learning)
+    #expect(try filtered.list.rows.map(\.id) == [ids[1]])
+    #expect(try filtered.list.menu?.filter.title == "Learning")
+    #expect(try filtered.list.menu?.status == "Sorted by Default · 1 filter")
+
+    let unknown = try await SearchedScreen.search(
+      "iru", filter: "unknown", known: known, learning: learning)
+    #expect(try unknown.list.rows.map(\.id) == ids.filter { $0 != ids[1] && $0 != ids[3] })
+
+    let sorted = try await SearchedScreen.search(
+      "iru", sort: "known-words", known: known, learning: learning)
+    #expect(try sorted.list.rows.map(\.id) == [ids[3]] + ids.filter { $0 != ids[3] })
+  }
+
+  @Test("a filter this build can't show, such as one synced from a newer app, shows All")
+  func unrecognizedFilterShowsAll() async throws {
+    let ids = try await SearchedScreen.search("iru").list.rows.map(\.id)
+    let searched = try await SearchedScreen.search(
+      "iru", filter: "mastered", known: [LanguageReferenceID(rawValue: ids[0])])
+    let list = try searched.list
+    #expect(list.rows.map(\.id) == ids)
+    #expect(list.menu?.filter.chosen == "all")
+    #expect(list.menu?.filter.title == "All")
+    #expect(list.menu?.status == "Sorted by Default")
   }
 
   @Test("sorting by a dictionary orders every word by it and leads each row with its chip")
@@ -98,8 +130,11 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(try filtered.list.menu?.status == "Sorted by Default · 1 filter")
     #expect(try filtered.list.menu?.filter.title == "Known")
     #expect(
-      try filtered.list.menu?.filter.offeredOptions.map(\.announcement)
-        == ["\(ids.count) words shown", "\(ids.count - 2) words shown", "2 words shown"])
+      try filtered.list.menu?.filter.options.map(\.announcement)
+        == [
+          "\(ids.count) words shown", "\(ids.count - 2) words shown", "0 words shown",
+          "2 words shown",
+        ])
     #expect(try filtered.list.hiddenByFilter == nil)
   }
 

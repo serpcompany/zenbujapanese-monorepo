@@ -30,7 +30,7 @@ enum SharedChange: Codable, Equatable, Sendable {
     case .listCreated(let list): self = .listCreated(list)
     case .wordAdded(let membership): self = .wordAdded(membership)
     case .wordRemoved(let membership): self = .wordRemoved(membership)
-    case .known(let word): self = .known(word)
+    case .known(let word, _): self = .known(word)
     default: return nil
     }
   }
@@ -56,7 +56,7 @@ enum SharedChange: Codable, Equatable, Sendable {
       lists.remove(storedID: word.entryID, from: word.listID)
     case .known(let word):
       knowledge.setStatus(
-        word.known ? .known : .unknown, id: LanguageReferenceID(rawValue: word.storedID),
+        word.status, id: LanguageReferenceID(rawValue: word.storedID),
         headword: word.headword, reading: word.reading)
     }
   }

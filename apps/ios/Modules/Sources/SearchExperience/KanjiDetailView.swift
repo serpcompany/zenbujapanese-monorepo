@@ -69,9 +69,8 @@ struct KanjiDetailView: View {
                 presentedMedia = $0
               }
             }
-            if wordKnowledge.isKnown(item) {
-              KnownWordBadge(announces: true)
-            }
+            WordStatusTag(wordKnowledge.status(item), announces: true)?
+              .accessibilityIdentifier("kanji-detail.status")
           }
         }
 

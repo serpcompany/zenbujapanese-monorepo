@@ -15,8 +15,8 @@ Novels, Video Games), and **Known Words**, one checked at a time. There is no di
 - **Default** is Look Up's own order ([Dictionary](dictionary.md#look-up)).
 - **A dictionary** orders every matching word by that dictionary alone, most common first,
   however it matched. JLPT orders by level, N5 first.
-- **Known Words** puts the learner's known words first. Marking a word known or unknown moves it
-  at once.
+- **Known Words** puts the learner's known words first; a word being learned isn't known here.
+  Changing a word's state moves it at once.
 
 A word the chosen dictionary doesn't rank goes after the ranked words. Ties, and the words without
 a rank, keep their Default order. A choice an earlier build saved with a direction reads as Default.
@@ -41,9 +41,10 @@ choice, an unreadable dictionary, a disabled one, and none enabled, on the bundl
 ## Filtering results
 
 The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
-**Sort By**. It opens **All**, **Unknown**, and **Known**, one checked at a time: **Known** shows
-only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
-it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
+**Sort By**. It opens **All**, **Unknown**, **Learning**, and **Known**, one checked at a time:
+each shows only the words in that state, so **Unknown** leaves out the words being learned. Changing
+a word's state moves it out of or into the list at once. A filter another device synced that this
+build doesn't offer shows **All**. Enabling and disabling frequency dictionaries happens under
 **Account → Frequency Dictionaries**, not here.
 
 While a filter is on, the **Sorted by** row adds it after the order, as in **Sorted by Default · 1
@@ -56,7 +57,9 @@ devices, and applies to Japanese, English, and romaji queries. The Kanji row, Ex
 and Discovered Words are never filtered.
 
 Check: core `results/ordering.test.ts` (known or unknown words, the order kept, the count, and the
-stored filter); package `ResultsScreenTests` (known words only, and the count a filter hides); UI
+stored filter); package `ResultsScreenTests` (known words only, Learning, a filter this build
+doesn't offer, and the count a filter hides); UI
+`LearningUITests.testASwipeMarksAResultLearningAndOnlyTheLearningFilterShowsIt`,
 `SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
