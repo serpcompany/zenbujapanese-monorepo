@@ -21,6 +21,9 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
+| `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
+| `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([`extension-error-reports.md`](extension-error-reports.md)). |
 | `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
 | `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
@@ -83,6 +86,8 @@ the selected text on the active tab; reaching that tab also needs `activeTab` (#
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`), Sentry's settings (`error-reports.ts`), and the source-map upload (`upload-source-maps.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
+| `e2e/` | The Playwright browser tests, their fixtures, what they expect of the build (`expected.ts`), and the local language-data server (`local-server.ts`, `language-data.ts`). |
+| `agent-chrome/` | The agent Chrome harness: its daemon and commands, its self-test extension, and the stand-in site it serves under a mapped host. |
 
 ### Messages
 
@@ -205,14 +210,12 @@ Dialog, and Test error, which throws while drawing so the content script reports
   worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
   taken out (`build/upload-source-maps.test.ts`).
-- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the side panel and the test
-  surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
-  again, and on both test pages open the menu and the dialog, Tab through it, and close it with
-  Esc and with a click outside. In the side panel, translate a Japanese line and an English
-  one; the Translator needs a branded Chrome, headful, since a headless one reports the model
-  `downloadable`. Until #952 moves it into the repository, agents use the agent
-  Chrome harness in the main checkout's `tmp/agent/agent-chrome`, whose daemon must resume the
-  targets it attaches to, or the dictionary worker stays paused and every request fails after
-  10 seconds (#1057). Proof goes under
-  `tmp/agent/verify/`.
+- **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
+  ([`extension-browser-tests.md`](extension-browser-tests.md)).
+- **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's
+  return, the test content script, and the language-data download, with screenshots in light and
+  dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
+  test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
+  a click outside are still checked by hand, and so is Translate: in the side panel, translate a
+  Japanese line and an English one. The Translator needs a branded Chrome, headful, since a
+  headless one reports the model `downloadable`.
