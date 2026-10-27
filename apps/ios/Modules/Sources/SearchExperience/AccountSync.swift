@@ -357,6 +357,7 @@ final class AccountSync: LocalFileStore {
       case .conflict(let current):
         if !keptConflict(change, current: current) { apply(current) }
       case .rejected(let code):
+        let keepsTheDevice = Self.keepsTheDevicesState(change, code: code)
         keptRejected(change, code: code)
         if code == Self.unknownEntity {
           state.syncedEntities.removeAll { $0 == change.key.entity }
@@ -371,10 +372,12 @@ final class AccountSync: LocalFileStore {
             userProfile.applySynced(restored)
             userProfile.refusal = ProfileRefusal(code: code)
           }
-        } else if settled, let undo = change.undo {
+        } else if settled, let undo = change.undo, !keepsTheDevice {
           self.undo(undo)
         }
-        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored) {
+        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
+          !keepsTheDevice || copy.version > change.baseVersion
+        {
           apply(copy)
         }
       case nil:
@@ -436,7 +439,7 @@ final class AccountSync: LocalFileStore {
       wordKnowledge.applySynced(
         KnownWordChange(
           storedID: key.entityID, headword: record?.headword ?? "", reading: record?.reading ?? "",
-          known: false))
+          status: .unknown))
     case SyncEntity.list:
       guard let listID = UUID(uuidString: key.entityID) else { return }
       if key == AccountSyncState.favoritesKey, state.accountHadFavorites {
@@ -464,31 +467,6 @@ final class AccountSync: LocalFileStore {
     guard let moved = wordLists.moveList(listID, to: UUID()) else { return }
     state.queue.append(SavedItemChange.listCreated(moved.list).upload)
     state.queue += moved.words.reversed().map { SavedItemChange.wordAdded($0).upload }
-  }
-
-  private func undo(_ undo: SyncUndo) {
-    switch undo {
-    case .setKnown(let word):
-      wordKnowledge.applySynced(word)
-    case .removeList(let listID):
-      wordLists.applySyncedRemoval(ofList: listID)
-    case .restoreList(let list):
-      wordLists.applySynced(list)
-    case .removeWord(let listID, let storedID):
-      wordLists.applySyncedRemoval(of: storedID, from: listID)
-    case .restoreWord(let membership):
-      wordLists.applySynced(membership)
-    case .removeVideo(let videoID):
-      watchHistory.applySyncedRemoval(of: videoID)
-    case .restoreVideo(let video):
-      watchHistory.applySynced(video)
-    case .removeBookmark(let id):
-      translations.applySyncedRemoval(ofBookmark: id)
-    case .restoreBookmark(let bookmark):
-      translations.applySynced(bookmark)
-    case .restoreProfile(let fields):
-      userProfile.applySynced(fields)
-    }
   }
 
   nonisolated static let defaultFileURL = FileManager.default.urls(

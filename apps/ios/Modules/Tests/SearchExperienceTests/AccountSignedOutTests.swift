@@ -60,7 +60,7 @@ struct AccountSignedOutTests {
     phone.wordLists.deleteList(drama.id)
     phone.wordLists.removeWord(LanguageReferenceID(rawValue: Fixture.miru), from: favorites)
     phone.wordLists.renameList(favorites, to: "Mine")
-    #expect(phone.sync.state.queue.map(\.operation) == ["clear", "delete", "remove", "update"])
+    #expect(phone.sync.state.queue.map(\.operation) == ["set", "delete", "remove", "update"])
     #expect(phone.sync.state.queue.allSatisfy { $0.baseVersion == 1 })
     #expect(phone.server.requests(to: "POST /v1/sync").count == 1)
 
@@ -255,7 +255,7 @@ struct AccountSignedOutTests {
     #expect(
       phone.queuedOperations == [
         "list update \(favorites.uuidString.lowercased())",
-        "knownWord clear \(Fixture.taberu)",
+        "knownWord set \(Fixture.taberu)",
         "listWord remove \(favorites.uuidString.lowercased())/\(Fixture.miru)",
         "list create \(drama.id.uuidString.lowercased())",
         "listWord add \(drama.id.uuidString.lowercased())/\(Fixture.miru)",

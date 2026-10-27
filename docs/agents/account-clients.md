@@ -38,7 +38,7 @@ setting ([`account-api.md`](account-api.md), Settings).
 | App | ID | Scopes |
 | --- | --- | --- |
 | Zenbu Japanese for iOS | `zenbu-ios` | `account`, `account:delete`, `profile`, `lists:read`, `lists:write`, `known:read`, `known:write`, `watch:read`, `watch:write`, `translations:read`, `translations:write`, `notes:read`, `notes:write`, `photos:read`, `photos:write`, `settings:read`, `settings:write`, `searches:read`, `searches:write`, `subscription` |
-| zenbujapanese.com | `zenbu-web` | the same, without `watch:*`, `translations:*`, `notes:*`, `photos:*`, `settings:*`, and `searches:*` |
+| zenbujapanese.com | `zenbu-web` | the same, without `watch:write`, `translations:write`, and `photos:write` |
 | Tomodachi | `tomodachi` | `account:delete`, `lists:read`, `known:read`, `known:mark`, `dictionary:read` |
 
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
@@ -49,9 +49,9 @@ setting ([`account-api.md`](account-api.md), Settings).
   `translations:*` the sentences they bookmarked in its Translate tab, `notes:*` their word and
   kanji notes, `photos:*` their Media Library photos and the files under them, `settings:*` their
   settings, and `searches:*` their recent searches, each by its rule
-  ([`account-client-rules.md`](account-client-rules.md)). Only the iOS app has them: no other app
-  shows them, so none gets them, least privilege. `profile` also reads and changes the profile
-  photo, and downloads its file.
+  ([`account-client-rules.md`](account-client-rules.md)). The website shows them all and changes
+  notes, settings, and searches (#934); Tomodachi shows none, so gets none, least privilege.
+  `profile` also reads and changes the profile photo, and downloads its file.
 - `subscription` reads the account's subscription, and buys or manages one
   ([`account-billing.md`](account-billing.md)).
 - `dictionary:read` is for the dictionary service's routes for apps (#571).
@@ -195,7 +195,7 @@ zenbujapanese.com (`zenbu-web`) signs in from the learner's browser, on an origi
   session's bare `token`, which signs nothing in; the page sends it only to
   `POST /v1/auth/revoke-session`, to sign this browser's earlier session out after a fresh sign-in.
   `GET /v1/auth/token` with the cookie answers the access token, which the page keeps in memory
-  and sends, without cookies, to `/v1/me`.
+  and sends, without cookies, to `/v1/me` and `/v1/sync` (Keeping no copy, in the client rules).
 - **Apple** runs in Sign in with Apple JS's popup, as the Services ID, with the nonce's SHA-256
   and a return URL on the page's own origin, `<site>/account/`, since Apple answers a popup only
   there. The page signs in with the ID token and the nonce, as an app does, and on a first sign-in

@@ -216,7 +216,7 @@ struct SavedItemMenu: View {
   var body: some View {
     Menu {
       Section {
-        KnownWordMenuButton(item: item, identifierPrefix: identifierPrefix)
+        WordStatusPicker(item: item, identifierPrefix: identifierPrefix)
         Button("Add to List…", systemImage: "text.badge.plus", action: addToList)
       }
       Section {
