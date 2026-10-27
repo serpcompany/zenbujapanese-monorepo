@@ -110,11 +110,12 @@ jobs:
             5. Run `pnpm -s verify docs`; it must pass.
             6. If you changed nothing, stop and say "No doc drift found". Otherwise create the
                branch docs/gardening-<YYYY-MM-DD>, commit with the message "Bring the docs back in
-               line with the code", push it, and open a pull request into main titled "Weekly doc
-               gardening (<YYYY-MM-DD>)". Write its body to tmp/pr-body.md first and pass it with
-               `--body-file tmp/pr-body.md`: each doc you changed, what was wrong, and the code
-               you checked it against; each row you re-graded, with its old and new grade and
-               why; then the docs you checked without changes.
+               line with the code", push it, and open a pull request into main titled "docs:
+               weekly doc gardening (<YYYY-MM-DD>)". Write its body to tmp/pr-body.md first and
+               pass it with `--body-file tmp/pr-body.md`. Its first line is "No issue: the weekly
+               doc gardening from the maintenance report (#557)." Then: each doc you changed, what
+               was wrong, and the code you checked it against; each row you re-graded, with its
+               old and new grade and why; then the docs you checked without changes.
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 80
@@ -309,9 +310,11 @@ jobs:
             5. Create the branch chore/code-gardening-<YYYY-MM-DD> from the current HEAD. Commit
                with a message whose first line says what changed in a plain sentence and cites
                the row's issue, such as "Split the website guide by task (#516)". Push the
-               branch and open a pull request into main with that line as its title. Write its
-               body to tmp/pr-body.md first and pass it with `--body-file tmp/pr-body.md`: the
-               item and why you picked it, what you changed, and the last lines of `pnpm check`.
+               branch and open a pull request into main titled "chore: " and that line. Write its
+               body to tmp/pr-body.md first and pass it with `--body-file tmp/pr-body.md`. Its first
+               line is "Closes #<issue>" when the fix finishes the row's issue, or otherwise "No
+               issue: " and the debt row it pays off. Then: the item and why you picked it, what
+               you changed, and the last lines of `pnpm check`.
           claude_args: |
             --model claude-sonnet-5-5
             --max-turns 80

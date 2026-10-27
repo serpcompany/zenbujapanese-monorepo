@@ -139,7 +139,9 @@ A scheduled run's actor is whoever last changed `main`, which the merge queue al
 app gives its token only to an actor with write access, so both gardening steps pass the job's own
 `github.token` instead, and name `github-merge-queue[bot]` in `allowed_bots`. Without both the
 action refuses the run before Claude starts, as it did every week through 2026-10-26. A pull request
-that token opens starts no checks until someone pushes to it.
+that token opens starts no checks until someone pushes to it. Each is titled and opened as the
+`Pull request` checks ask: `docs: weekly doc gardening (<date>)` or `chore: …`, with a first line
+of `No issue: …` or `Closes #<n>`.
 
 Both gardening jobs pin the model (`--model`), keep subagents in the foreground, give each Bash
 command 15 minutes (`BASH_DEFAULT_TIMEOUT_MS`), leave the MCP servers out, and keep their
