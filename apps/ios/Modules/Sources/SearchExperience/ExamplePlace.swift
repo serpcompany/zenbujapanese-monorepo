@@ -7,6 +7,7 @@ struct ExamplePlace: Equatable {
 
   func isLost(_ frame: CGRect, in list: CGRect) -> Bool {
     abs(frame.minY - list.minY - top) > list.height / 3
+      || !list.contains(CGPoint(x: frame.midX, y: frame.midY))
   }
 
   func isCovered(by frame: CGRect, in list: CGRect) -> Bool {

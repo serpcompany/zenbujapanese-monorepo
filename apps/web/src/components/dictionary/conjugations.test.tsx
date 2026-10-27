@@ -290,11 +290,25 @@ interface SuiteCase {
 
 const suiteCases = recordedCases<SuiteCase>('word-detail.json')
 
+const recordedRegisters = (
+  suite: NonNullable<SuiteCase['conjugations']>
+): [ConjugationMode, SuiteForm[]][] => [
+  ['Plain', suite.plain],
+  ...(suite.polite ? [['Polite', suite.polite] as [ConjugationMode, SuiteForm[]]] : [])
+]
+
+const formCases = suiteCases.flatMap(expected =>
+  expected.conjugations
+    ? recordedRegisters(expected.conjugations).flatMap(([mode, forms]) =>
+        forms.map(form => ({ form, name: `${expected.covers}: ${mode} ${form.title}` }))
+      )
+    : []
+)
+
 describe.runIf(gateEnabled)('the rendered Conjugations section matches the app', () => {
   test.each(suiteCases)('$covers', async expected => {
-    const service = gateService()
     const entSeq = Number(expected.entSeq[0])
-    const page = await service.word(entSeq)
+    const page = await gateService().word(entSeq)
     if (!page) throw new Error(`No word ${entSeq}`)
     const detail = wordDetail(page.data.rows)
     const header = renderToStaticMarkup(
@@ -319,10 +333,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
       rule: suite.rule,
       modes: suite.modes
     })
-    const registers: [ConjugationMode, SuiteForm[]][] = [
-      ['Plain', suite.plain],
-      ...(suite.polite ? [['Polite', suite.polite] as [ConjugationMode, SuiteForm[]]] : [])
-    ]
+    const registers = recordedRegisters(suite)
     expect(Object.keys(drawn.registers)).toEqual(registers.map(([mode]) => mode))
     for (const [mode, forms] of registers) {
       const register = drawn.registers[mode]
@@ -346,38 +357,40 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
           ending: recorded.ending
         }))
       )
-      for (const [index, row] of data.rows[mode].entries()) {
-        const recorded = forms[index]
-        const { data: found } = await service.formExamples(row.surface, 0, exampleLimit)
-        expect(found.listed).toBe(recorded.examples.ids.length)
-        const links = serviceLinks(found.slugs, [])
-        const html = renderToStaticMarkup(
-          <FormExampleList
-            examples={found.rows.map(rows => pageExample(formExample(rows), links))}
-            labels={shown(data).examples}
-            locale="en"
-            text={english}
-          />
-        )
-        const examples = readExamples(html)
-        expect(examples.map(example => `esp1_${example.pairId}`)).toEqual(
-          recorded.examples.ids.slice(0, exampleLimit)
-        )
-        if (recorded.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
-        for (const [position, shown] of recorded.examples.shown.entries()) {
-          expect(examples[position].tokens).toEqual(
-            shown.tokens.map(token => ({
-              surface: token.surface,
-              href: token.entry
-                ? expect.stringMatching(/^\/dictionary\/[^/]+-\d+\/$/)
-                : token.candidates
-                  ? expect.stringMatching(/^\/dictionary\/search\/[^/]+\/$/)
-                  : null,
-              highlighted: token.highlighted === true
-            }))
-          )
-        }
-      }
     }
   }, 30_000)
+})
+
+describe.runIf(gateEnabled)('each conjugated form’s examples match the app', () => {
+  test.each(formCases)('$name', async ({ form }) => {
+    const { data: found } = await gateService().formExamples(form.surface, 0, exampleLimit)
+    expect(found.listed).toBe(form.examples.ids.length)
+    const links = serviceLinks(found.slugs, [])
+    const html = renderToStaticMarkup(
+      <FormExampleList
+        examples={found.rows.map(rows => pageExample(formExample(rows), links))}
+        labels={shown(miru).examples}
+        locale="en"
+        text={english}
+      />
+    )
+    const examples = readExamples(html)
+    expect(examples.map(example => `esp1_${example.pairId}`)).toEqual(
+      form.examples.ids.slice(0, exampleLimit)
+    )
+    if (form.examples.ids.length === 0) expect(html).toContain(noFormExamplesMessage)
+    for (const [position, shown] of form.examples.shown.entries()) {
+      expect(examples[position].tokens).toEqual(
+        shown.tokens.map(token => ({
+          surface: token.surface,
+          href: token.entry
+            ? expect.stringMatching(/^\/dictionary\/[^/]+-\d+\/$/)
+            : token.candidates
+              ? expect.stringMatching(/^\/dictionary\/search\/[^/]+\/$/)
+              : null,
+          highlighted: token.highlighted === true
+        }))
+      )
+    }
+  })
 })

@@ -17,6 +17,8 @@ import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
 import {
   fixtureFormExamples,
   fixtureKanjiRows,
+  fixtureLeadingEntries,
+  fixtureRadicals,
   fixtureSearchOrder,
   fixtureWordRows
 } from '@zenbu/dictionary-core/fixtures'
@@ -24,6 +26,7 @@ import {
   type SearchResultsScreen,
   searchResultsScreen
 } from '@zenbu/dictionary-core/results/results'
+import type { RadicalFile } from '@zenbu/dictionary-core/search/radicals'
 import type { SearchResults } from '@zenbu/dictionary-core/search/search'
 import { cache } from 'react'
 import { errorFields, log } from '@/lib/log'
@@ -36,16 +39,23 @@ import {
   type Links,
   type PageExample,
   pageExample,
+  sentencesScreen,
   serviceLinks,
   storedWordPath
 } from './page-example'
 import { linkSearchScreen, type SearchData } from './results/links'
 import { kanjiSearchPath, searchPath, wordPath, wordSlug } from './urls'
 
+type Sense = WordDetail['senses'][number]
+
 export interface WordPageData
-  extends Omit<WordDetail, 'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples'> {
+  extends Omit<
+    WordDetail,
+    'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples' | 'senses'
+  > {
   slug: string
   path: string
+  senses: (Omit<Sense, 'example'> & { example: PageExample | null })[]
   alternatives: Linked<AlternativeForm>[]
   kanji: Linked<WordKanji>[]
   alternativeKanji: Linked<WordKanji>[]
@@ -106,12 +116,16 @@ const moreSearchExamplesPath = (query: string, build: string) =>
   `${searchPath(query)}examples.json?build=${encodeURIComponent(build)}`
 
 function wordPage(rows: WordRows, slug: string, links: Links, build: string): WordPageData {
-  const detail = wordDetail(rows)
+  const detail = wordDetail({ ...rows, senseExamples: rows.senseExamples ?? [] })
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
   return {
     ...detail,
     slug,
     path: storedWordPath(slug, detail.entSeq),
+    senses: detail.senses.map(sense => ({
+      ...sense,
+      example: sense.example ? pageExample(sense.example, links) : null
+    })),
     alternatives: detail.alternatives.map(form => ({ ...form, path: links.kanji(form.kanji) })),
     kanji: detail.kanji.map(linkKanji),
     alternativeKanji: detail.alternativeKanji.map(linkKanji),
@@ -197,7 +211,7 @@ export async function getWordExamples(
   }
   if (build !== fixtureBuild) return null
   const rows = wordRowsBySeq.get(entSeq)
-  if (!rows) return null
+  if (!rows || from >= rows.examples.length) return null
   return rows.examples
     .slice(from, from + examplesPerPage)
     .map(row => pageExample(wordExample(row), fixtureLinks))
@@ -244,10 +258,10 @@ export const getKanjiDetails = cache(
   }
 )
 
-function searchResults(items: SearchResults['items']): SearchResults {
+function searchResults(items: SearchResults['items'], leading: number): SearchResults {
   return {
     items,
-    leadingLexicalEntryCount: items.length,
+    leadingLexicalEntryCount: leading,
     presentation: 'ranked',
     resolution: 'direct',
     readingRefinement: null,
@@ -256,7 +270,7 @@ function searchResults(items: SearchResults['items']): SearchResults {
   }
 }
 
-function fixtureScreen(query: string): SearchResultsScreen {
+function fixtureScreen(query: string, pickedKanji: boolean): SearchResultsScreen {
   const ordered = Object.hasOwn(fixtureSearchOrder, query) ? fixtureSearchOrder[query] : undefined
   const matches: WordRows[] = ordered
     ? ordered.flatMap(entSeq => wordRowsBySeq.get(entSeq) ?? [])
@@ -280,30 +294,41 @@ function fixtureScreen(query: string): SearchResultsScreen {
       },
       fallbackOrder: position,
       matchedSummary: null
-    }))
+    })),
+    Object.hasOwn(fixtureLeadingEntries, query) ? fixtureLeadingEntries[query] : matches.length
   )
   const frequency = new Map<string, FrequencyRow[]>(
     matches.map(rows => [rows.entry.id, rows.frequency])
   )
-  return searchResultsScreen(query, results, frequency)
+  return searchResultsScreen(query, results, frequency, 0, pickedKanji)
 }
 
-export const searchDictionary = cache(async (query: string): Promise<SearchData> => {
+export const searchDictionary = cache(
+  async (query: string, pickedKanji = false): Promise<SearchData> => {
+    const api = await dictionaryService()
+    if (!isReadableLength(query)) return { state: 'noResults', query }
+    const screen = api
+      ? (await api.search(query, pickedKanji)).data.screen
+      : fixtureScreen(query, pickedKanji)
+    const kanji =
+      screen.state === 'results' && screen.kanji
+        ? await detailsIfAvailable(screen.kanji.character)
+        : null
+    return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
+  }
+)
+
+export async function getRadicals(): Promise<RadicalFile | null> {
   const api = await dictionaryService()
-  if (!isReadableLength(query)) return { state: 'noResults', query }
-  const screen = api ? (await api.search(query)).data.screen : fixtureScreen(query)
-  const kanji =
-    screen.state === 'results' && screen.kanji
-      ? await detailsIfAvailable(screen.kanji.character)
-      : null
-  return linkSearchScreen(screen, { dictionaryLoaded: api !== null, kanji })
-})
+  if (!api) return fixtureRadicals
+  return (await api.radicals())?.data ?? null
+}
 
 export function searchExamplesData(found: Answer<SearchExamplesResponse>): SearchExamplesData {
   const links = serviceLinks(found.data.slugs, [])
   return {
     query: found.data.query,
-    examples: found.data.rows.map(row => pageExample(wordExample(row), links)),
+    examples: found.data.rows.map(row => pageExample(wordExample(row), links, sentencesScreen)),
     listed: found.data.listed,
     truncated: found.data.truncated,
     examplesPath: moreSearchExamplesPath(found.data.query, found.build)

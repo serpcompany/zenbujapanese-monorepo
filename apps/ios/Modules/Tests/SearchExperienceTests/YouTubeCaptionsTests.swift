@@ -154,30 +154,10 @@ struct YouTubeCaptionsTests {
 
 @Suite("Word meanings")
 struct WordMeaningTests {
-  @Test("a word's meaning is the first gloss of its first sense, without 'to' or notes")
-  func shortMeaning() {
-    #expect(DictionaryEntry.shortMeaning(from: ["husband"]) == "husband")
-    #expect(DictionaryEntry.shortMeaning(from: ["to wipe, to dry"]) == "wipe")
-    #expect(
-      DictionaryEntry.shortMeaning(from: ["brothers and sisters, siblings", "mate, friend"])
-        == "brothers and sist…")
-    #expect(DictionaryEntry.shortMeaning(from: ["to fold (clothes, etc.), to shut"]) == "fold")
-    #expect(DictionaryEntry.shortMeaning(from: ["(the) above, over, up"]) == "above")
-    #expect(DictionaryEntry.shortMeaning(from: []) == nil)
-    #expect(DictionaryEntry.shortMeaning(from: ["(only a note)"]) == nil)
-  }
-
-  @Test("long meanings are shortened with an ellipsis")
-  func longMeaning() {
-    let meaning = DictionaryEntry.shortMeaning(from: ["from the standpoint of, on"])
-    #expect(meaning == "from the standpoi…")
-  }
-
   @Test("the Word Meanings preference persists and defaults to off")
   @MainActor
   func preference() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == false)
     ReadingAidPreferences(defaults: defaults).showsWordMeanings = true
     #expect(ReadingAidPreferences(defaults: defaults).showsWordMeanings == true)
@@ -214,8 +194,7 @@ struct PlayerReadingAidTests {
   @Test("new reading aid preferences persist with their defaults")
   @MainActor
   func preferences() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     let fresh = ReadingAidPreferences(defaults: defaults)
     #expect(fresh.showsTranslations)
     #expect(fresh.translationLanguage == .english)
@@ -233,8 +212,7 @@ struct PlayerReadingAidTests {
   @Test("Translate's furigana starts off and is stored apart from the app's reading aids")
   @MainActor
   func translateFurigana() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     let translate = ReadingAidPreferences(
       defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     #expect(!translate.showsFurigana)

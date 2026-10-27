@@ -24,7 +24,11 @@ function category({ primaryMask, secondaryMask }: PriorityProfile): number {
   return 9
 }
 
-const bitCount = (value: number) => value.toString(2).replaceAll('0', '').length
+function bitCount(mask: number): number {
+  let count = 0
+  for (let rest = mask >>> 0; rest !== 0; rest >>>= 1) count += rest & 1
+  return count
+}
 
 export function compareProfiles(lhs: PriorityProfile, rhs: PriorityProfile): number {
   const categories = category(lhs) - category(rhs)
@@ -48,7 +52,17 @@ export const GlossRelation = {
   qualifiedInfinitive: 3,
   glossToken: 4
 } as const
-export const RomajiRelation = { exact: 0, prefix: 1, contains: 2 } as const
+export const RomajiRelation = {
+  exact: 0,
+  prefix: 1,
+  contains: 2,
+  shownExact: 3,
+  shownPrefix: 4,
+  shownContains: 5,
+  unmarkedExact: 6,
+  unmarkedPrefix: 7,
+  unmarkedContains: 8
+} as const
 export const FormRelation = {
   writtenExact: 0,
   readingExact: 1,
@@ -82,50 +96,43 @@ export interface JapaneseRank {
 
 export type Rank = EnglishRank | JapaneseRank
 
-function firstDifference(...differences: (() => number)[]): number {
-  for (const difference of differences) {
-    const value = difference()
-    if (value !== 0) return value
-  }
-  return 0
-}
-
 const isLaterSense = (rank: EnglishRank) =>
   rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0
 
-const englishPlacement = (lhs: EnglishRank, rhs: EnglishRank) => [
-  () => lhs.lane - rhs.lane,
-  () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-  () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
-]
+function compareHeadwordLengthThenFingerprint(lhs: Rank, rhs: Rank): number {
+  const difference = lhs.headwordLength - rhs.headwordLength
+  if (difference !== 0) return difference
+  return compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
+}
+
+function compareEnglishPlacements(lhs: EnglishRank, rhs: EnglishRank): number {
+  let difference = lhs.lane - rhs.lane
+  if (difference === 0) difference = lhs.romajiSpecificityRank - rhs.romajiSpecificityRank
+  if (difference === 0) difference = Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
+  return difference
+}
 
 export function compareEnglishRanks(lhs: EnglishRank, rhs: EnglishRank): number {
-  return firstDifference(
-    ...englishPlacement(lhs, rhs),
-    () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
-    () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-    () => lhs.senseOrder - rhs.senseOrder,
-    () => lhs.glossOrder - rhs.glossOrder,
-    () => lhs.corroborationRank - rhs.corroborationRank,
-    () => lhs.headwordLength - rhs.headwordLength,
-    () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-  )
+  let difference = compareEnglishPlacements(lhs, rhs)
+  if (difference === 0) difference = lhs.priorityPresenceRank - rhs.priorityPresenceRank
+  if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile)
+  if (difference === 0) difference = lhs.senseOrder - rhs.senseOrder
+  if (difference === 0) difference = lhs.glossOrder - rhs.glossOrder
+  if (difference === 0) difference = lhs.corroborationRank - rhs.corroborationRank
+  if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs)
+  return difference
 }
 
 export function compareJapaneseRanks(lhs: JapaneseRank, rhs: JapaneseRank): number {
-  return firstDifference(
-    () => lhs.relation - rhs.relation,
-    () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-    () => lhs.senseBreadthRank - rhs.senseBreadthRank,
-    () => lhs.headwordLength - rhs.headwordLength,
-    () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-  )
+  let difference = lhs.relation - rhs.relation
+  if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile)
+  if (difference === 0) difference = lhs.senseBreadthRank - rhs.senseBreadthRank
+  if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs)
+  return difference
 }
 
 export function comparePresentationRanks(lhs: Rank, rhs: Rank): number {
-  if (lhs.kind === 'english' && rhs.kind === 'english') {
-    return firstDifference(...englishPlacement(lhs, rhs))
-  }
+  if (lhs.kind === 'english' && rhs.kind === 'english') return compareEnglishPlacements(lhs, rhs)
   if (lhs.kind === 'japanese' && rhs.kind === 'japanese') return lhs.relation - rhs.relation
   return lhs.kind === 'english' ? -1 : 1
 }
@@ -147,7 +154,7 @@ export function matchLabel(sourceOrder: number, rank: Rank): string {
 export function sameLexicalGroup(lhs: Rank, rhs: Rank): boolean {
   if (lhs.kind === 'english' && rhs.kind === 'english') {
     return (
-      firstDifference(...englishPlacement(lhs, rhs)) === 0 &&
+      compareEnglishPlacements(lhs, rhs) === 0 &&
       lhs.priorityPresenceRank === rhs.priorityPresenceRank &&
       profilesEqual(lhs.priorityProfile, rhs.priorityProfile) &&
       lhs.senseOrder === rhs.senseOrder &&

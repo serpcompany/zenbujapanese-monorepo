@@ -24,13 +24,14 @@ struct KanjiFilesTests {
   }
 
   @Test("each record is the file's own, found under its character and never under a twin's")
-  func everyRecordIsItsOwn() throws {
+  func everyRecordIsItsOwn() async throws {
     let files = try #require(KanjiFiles.bundled)
     let reference = try parsed("KanjiReferenceData")
     let elements = try parsed("KanjiElementReferenceData")
     var twins = 0
     var compared = 0
     for entry in try records(reference, "entries") {
+      await Task.yield()
       let character = try #require(entry["character"] as? String)
       #expect(try object(files.entry(character)) == entry as NSDictionary)
       compared += 1
@@ -41,11 +42,13 @@ struct KanjiFilesTests {
       }
     }
     for kanji in try records(elements, "kanji") {
+      await Task.yield()
       let character = try #require(kanji["character"] as? String)
       #expect(try object(files.structure(character)) == kanji as NSDictionary)
       compared += 1
     }
     for element in try records(elements, "elements") {
+      await Task.yield()
       let glyph = try #require(element["glyph"] as? String)
       #expect(try object(files.element(glyph)) == element as NSDictionary)
       compared += 1

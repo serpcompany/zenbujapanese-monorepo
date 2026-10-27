@@ -49,8 +49,12 @@ Its readings come from the dictionary service, not the browser:
   `furiganaPlainText`); it imports no dictionary, so the converter's client bundle carries none.
 - **The converter.** `src/components/tools/furigana-converter.tsx` keeps the typed text; the hook
   `src/hooks/use-furigana.ts` asks `/tools/furigana.json?text=` 300 ms after typing stops, drops
-  an earlier request it no longer needs, and keeps each text's answer while the page is open. The
-  boxes share `ConverterBox` and the card's header, Try, and Clear
+  an earlier request it no longer needs, and keeps each text's answer while the page is open. It
+  asks only for a text the service segments, 1 to 200 characters and not only white space: the
+  core's `segmentationProblem` (`packages/dictionary-core/src/cards/segmentable.ts`) answers for
+  the hook, the route, and both of the service's segmentation routes, so the page says why it asks
+  nothing (`empty` or `tooLong`) by the service's own rule. The boxes share `ConverterBox` and the
+  card's header, Try, and Clear
   (`src/components/tools/converter-parts.tsx`) with the other converters, and Copy's status the
   hook `src/hooks/use-copy.ts`.
 - **The route.** `src/app/[locale]/tools/furigana.json/route.ts` answers in English only, through

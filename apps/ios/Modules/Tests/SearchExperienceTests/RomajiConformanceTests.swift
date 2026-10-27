@@ -37,9 +37,10 @@ struct RomajiConformanceTests {
   }
 
   @Test("a reading is written in romaji as the suite recorded")
-  func readings() throws {
+  func readings() async throws {
     for group in try suite().cases {
       for expected in group.readings {
+        await Task.yield()
         #expect(
           PresentationCore.shared.romaji(expected.reading) == expected.romaji,
           "\(expected.reading) (\(group.covers))")
@@ -48,8 +49,9 @@ struct RomajiConformanceTests {
   }
 
   @Test("a sentence's words are spaced and joined as the suite recorded")
-  func sentences() throws {
+  func sentences() async throws {
     for expected in try suite().sentences {
+      await Task.yield()
       let words = expected.words.map { (surface: $0.surface, reading: $0.reading) }
       #expect(PresentationCore.shared.romaji(of: words) == expected.romaji, "\(expected.covers)")
     }
@@ -57,8 +59,7 @@ struct RomajiConformanceTests {
 
   @Test("a linked sentence carries where its punctuation attaches, and its function words")
   func linkedWords() async throws {
-    let tokens = await JapaneseTextAnalysisClient.live().linkedTokens(
-      "「ペンを持っていますか」", SearchQuery(""), nil)
+    let tokens = await JapaneseTextAnalysisClient.live().linkedTokens("「ペンを持っていますか」")
     #expect(tokens.first?.surface == "「")
     #expect(tokens.first?.lineBreak == .attachesToNext)
     #expect(tokens.last?.surface == "」")

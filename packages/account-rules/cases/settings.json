@@ -1,0 +1,99 @@
+{
+  "settings": [
+    {
+      "name": "readingAids.furigana",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "readingAids.romaji",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "readingAids.wordMeanings",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "readingAids.kanjiMeanings",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "readingAids.translations",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "readingAids.translationLanguage",
+      "kind": "text",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$",
+      "most": 35,
+      "accepted": ["en", "pt-BR", "zh-Hant"],
+      "refused": ["EN", "e", "english", 1]
+    },
+    {
+      "name": "readingAids.translationSource",
+      "kind": "choice",
+      "choices": ["youTube", "apple"],
+      "accepted": ["youTube", "apple"],
+      "refused": ["not-a-choice", true]
+    },
+    {
+      "name": "readingAids.furiganaHiddenOnKnownWords",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "translate.furigana",
+      "kind": "boolean",
+      "accepted": [true, false],
+      "refused": ["true", 1, null]
+    },
+    {
+      "name": "translate.speechSpeed",
+      "kind": "number",
+      "least": 0.5,
+      "most": 2,
+      "accepted": [0.5, 1, 2],
+      "refused": [0.4, 2.1, "2"]
+    },
+    {
+      "name": "search.sort",
+      "kind": "text",
+      "pattern": "^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$",
+      "most": 120,
+      "accepted": ["default", "known-words", "frequency|zenbu.jiten.anime"],
+      "refused": ["relevance", "frequency|", "Frequency|zenbu.jlpt", true]
+    },
+    {
+      "name": "search.filter",
+      "kind": "choice",
+      "choices": ["all", "known", "unknown"],
+      "accepted": ["all", "known", "unknown"],
+      "refused": ["not-a-choice", true]
+    },
+    {
+      "name": "imageSearch.textView",
+      "kind": "choice",
+      "choices": ["photo", "both", "text", "translate"],
+      "accepted": ["photo", "both", "text", "translate"],
+      "refused": ["not-a-choice", true]
+    },
+    {
+      "name": "frequencyDictionaries.chosen",
+      "kind": "text",
+      "pattern": "^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$",
+      "most": 5000,
+      "accepted": ["", "zenbu.jiten.anime.ja.ordered-v2,zenbu.wikipedia.written.ja.unidic-3.1"],
+      "refused": [",", "Zenbu.jlpt", "zenbu.jlpt,", 3]
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import type { SegmentedToken } from '../cards/segmentation'
+import { sentenceRomaji } from '../detail/romaji'
 import type {
   ExampleCountRow,
   ExampleLinkRow,
@@ -16,9 +17,10 @@ import {
   linkedTokens
 } from '../examples/linking'
 import { kuromojiCandidates, type Tokenize } from '../examples/morphology'
+import { wordMeaning } from '../examples/word-meaning'
 import { normalizeQuery } from '../search/query'
 import { type ArtifactDatabase, listedIds } from './database'
-import type { EntryExamples, ExampleSentence } from './example-retrieval'
+import { type EntryExamples, type ExampleSentence, shownSenseExamples } from './example-retrieval'
 import type { FormLookup } from './lookup'
 
 export type ExamplesEntry = HighlightedEntry
@@ -52,7 +54,12 @@ function provenance(db: ArtifactDatabase, pairIds: readonly string[]): Map<strin
   return new Map(rows.map(row => [row.pair_id, row]))
 }
 
-interface LinkedEntry extends ExamplesEntry {
+export interface LinkedWordEntry extends ExamplesEntry {
+  summary: string
+  meaning: string | null
+}
+
+interface LinkedEntry extends LinkedWordEntry {
   entSeq: number
 }
 
@@ -63,11 +70,14 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
     ent_seq: number
     headword: string
     reading: string
+    summary: string
+    meaning: string | null
     parts_of_speech_json: string
     written_forms_json: string
     reading_forms_json: string
   }>(
-    `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading,
+    `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading, summary,
+       json_extract(meanings_json, '$[0]') AS meaning,
        parts_of_speech_json, written_forms_json, reading_forms_json
      FROM entries WHERE id IN (${listedIds})`,
     [JSON.stringify(ids)]
@@ -81,6 +91,8 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
         entSeq: row.ent_seq,
         headword: row.headword,
         reading: row.reading,
+        summary: row.summary,
+        meaning: row.meaning,
         partsOfSpeech: JSON.parse(row.parts_of_speech_json),
         writtenForms: values(row.written_forms_json),
         readingForms: values(row.reading_forms_json)
@@ -89,10 +101,25 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
   )
 }
 
+function firstMeanings(db: ArtifactDatabase, ids: readonly string[]): Map<string, string | null> {
+  if (ids.length === 0) return new Map()
+  const rows = db.all<{ id: string; meaning: string | null }>(
+    `SELECT lower(hex(id)) AS id, json_extract(meanings_json, '$[0]') AS meaning
+     FROM entries WHERE id IN (${listedIds})`,
+    [JSON.stringify(ids)]
+  )
+  return new Map(rows.map(row => [row.id, row.meaning]))
+}
+
 export const examplesEntries: (
   db: ArtifactDatabase,
   ids: readonly string[]
 ) => Map<string, ExamplesEntry> = linkedEntries
+
+export const linkedWordEntries: (
+  db: ArtifactDatabase,
+  ids: readonly string[]
+) => Map<string, LinkedWordEntry> = linkedEntries
 
 function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {
@@ -226,6 +253,9 @@ export function exampleRows(
     }
   }
   const entries = linkedEntries(db, [...ids])
+  const meanings = firstMeanings(db, [
+    ...new Set(linked.flatMap(({ page }) => page.flatMap(token => token.entry?.id ?? [])))
+  ])
   const entSeqOf = (id: string) => {
     const found = entries.get(id)
     if (!found) throw new Error(`An example links to ${id}, which the artifact doesn't hold`)
@@ -247,6 +277,8 @@ export function exampleRows(
           const reading = displayReading(token, target)
           if (reading !== rows[position].reading) link.reading = reading
         }
+        const meaning = wordMeaning(token, meanings.get(token.entry.id) ?? null)
+        if (meaning !== null) link.meaning = meaning
         links.push(link)
       } else if (token.candidates.length > 0) {
         links.push({
@@ -263,6 +295,7 @@ export function exampleRows(
         sentenceId: sentence.rowid,
         highlights: accentedPositions(sentence.japanese, page, highlight),
         links,
+        romaji: sentenceRomaji(page),
         tokens: sameWordsAsElsewhere ? null : rows
       }
     }
@@ -286,6 +319,27 @@ export function wordExampleRows(
     capabilities,
     entSeq
   )
+}
+
+export function senseExampleRows(
+  db: ArtifactDatabase,
+  entSeq: number,
+  entry: ExamplesEntry,
+  senseCount: number,
+  capabilities: { tokenize: Tokenize; lookup: FormLookup }
+): (WordExampleRows | null)[] {
+  const shown = shownSenseExamples(db, entry.id)
+  const senses = [...shown.keys()].filter(sense => sense < senseCount).sort((a, b) => a - b)
+  const rows = exampleRows(
+    db,
+    senses.flatMap(sense => shown.get(sense) ?? []),
+    0,
+    { entry, query: normalizeQuery(entry.headword), accent: screenAccent.wordExamples },
+    capabilities,
+    entSeq
+  )
+  const bySense = new Map(senses.map((sense, index) => [sense, rows[index]]))
+  return Array.from({ length: senseCount }, (_, sense) => bySense.get(sense) ?? null)
 }
 
 export function conjugatedFormExamples(

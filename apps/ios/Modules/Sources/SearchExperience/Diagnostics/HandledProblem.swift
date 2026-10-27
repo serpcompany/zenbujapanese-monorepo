@@ -93,17 +93,10 @@ struct HandledProblem: Equatable, Sendable {
     isStable(code) ? code : unknownCode
   }
 
-  static let expectedURLErrors: Set<Int> = Set(
-    [
-      URLError.Code.cancelled, .notConnectedToInternet, .networkConnectionLost, .timedOut,
-      .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed, .dataNotAllowed,
-      .internationalRoamingOff, .callIsActive,
-    ].map(\.rawValue))
-
   private static func isExpected(_ error: Error) -> Bool {
     if error is CancellationError { return true }
-    let bridged = error as NSError
-    return bridged.domain == NSURLErrorDomain && expectedURLErrors.contains(bridged.code)
+    guard let error = error as? URLError else { return false }
+    return error.code == .cancelled || error.isLostConnection
   }
 
   private static func accountService(
@@ -112,6 +105,10 @@ struct HandledProblem: Equatable, Sendable {
     switch error {
     case .unreachable, .sessionEnded:
       return nil
+    case .transportFailed(let urlError):
+      return HandledProblem(
+        area: area, code: "account_service_error.transport_failed",
+        details: ["url_error": String(urlError.rawValue)])
     case .refused where error.needsSubscription:
       return nil
     case .refused(let status, let serviceCode, _, _):

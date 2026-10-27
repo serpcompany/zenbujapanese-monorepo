@@ -70,7 +70,7 @@ struct AccountSignInTests {
     try await fixture.signIn()
 
     let syncs = fixture.server.requests(to: "POST /v1/sync")
-    #expect(syncs.count == 2)
+    try #require(syncs.count == 2)
     #expect(syncs[0].sync.mutations == syncs[1].sync.mutations)
     #expect(fixture.server.requests(to: "GET /v1/auth/token").count == 2)
     #expect(fixture.sync.state.queue.isEmpty)
@@ -131,8 +131,8 @@ struct AccountSignInTests {
   }
 
   @Test("the service URL comes from a launch argument, the environment, or the build")
-  func serviceURL() throws {
-    let defaults = try #require(UserDefaults(suiteName: "account-tests-\(UUID().uuidString)"))
+  func serviceURL() {
+    let defaults = MemoryDefaults()
     #expect(
       AccountServiceConfiguration.resolve(
         bundle: .main, defaults: defaults,
@@ -170,9 +170,8 @@ struct AccountSignInTests {
       try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
         .write(to: bundleURL.appending(path: "Info.plist"))
       let bundle = try #require(Bundle(url: bundleURL))
-      let defaults = try #require(UserDefaults(suiteName: "account-tests-\(UUID().uuidString)"))
       return AccountServiceConfiguration.resolve(
-        bundle: bundle, defaults: defaults, environment: [:])
+        bundle: bundle, defaults: MemoryDefaults(), environment: [:])
     }
 
     #expect(try configuration(suffix: "")?.offersApple == true)

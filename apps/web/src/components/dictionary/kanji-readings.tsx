@@ -1,3 +1,4 @@
+import { romaji } from '@zenbu/dictionary-core/detail/romaji'
 import { glossSeparator } from '@zenbu/dictionary-core/detail/sections'
 import { ChevronRightIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -6,6 +7,7 @@ import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { localizedPath } from '@/lib/i18n/paths'
+import { RomajiLine } from './reading-aid-lines'
 import { SourceText } from './source-text'
 
 type Reading = KanjiDetailsData['readings'][number]
@@ -24,6 +26,7 @@ function ReadingContent({
       <span className="font-medium">{coreText(reading.label, locale)}</span>
       <span lang="ja" className="text-right text-lg">
         {reading.value}
+        <RomajiLine romaji={romaji(reading.value)} className="text-sm" />
       </span>
       <span className="flex w-4 justify-end">
         {opens ? <ChevronRightIcon className="size-4 text-muted-foreground" /> : null}

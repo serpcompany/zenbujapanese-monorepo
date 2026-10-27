@@ -2,7 +2,7 @@ import { dictionaryContract } from '@zenbu/dictionary-core/artifact/contract'
 import { servedByAccountService } from '@zenbu/node-service/api-host'
 import { describe, expect, test, vi } from 'vitest'
 import { createApp } from './app'
-import { fakeService, info } from './conformance/fake-service'
+import { fakeService, info, radicals } from './conformance/fake-service'
 
 const token = 'test-token-0123456789'
 function app(service = fakeService(), ready = true) {
@@ -55,7 +55,23 @@ describe('routes', () => {
   test('passes the decoded query to search', async () => {
     const search = vi.fn(fakeService().search)
     await app(fakeService({ search })).request(get(`/v1/search/${encodeURIComponent('食べる')}`))
-    expect(search).toHaveBeenCalledWith('食べる')
+    expect(search).toHaveBeenCalledWith('食べる', false)
+  })
+
+  test('searches a kanji picked from radicals as picked', async () => {
+    const search = vi.fn(fakeService().search)
+    const response = await app(fakeService({ search })).request(
+      get(`/v1/search/${encodeURIComponent('要')}?picked=1`)
+    )
+    expect(response.status).toBe(200)
+    expect(search).toHaveBeenCalledWith('要', true)
+  })
+
+  test('answers the radical file the panel reads, under the contract', async () => {
+    const response = await app().request(get('/v1/radicals'))
+    expect(response.status).toBe(200)
+    expect(response.headers.get('x-dictionary-contract')).toBe(String(dictionaryContract))
+    expect(await response.json()).toEqual(radicals)
   })
 
   test('404s a word or kanji the artifact lacks, and answers one it holds', async () => {
@@ -67,9 +83,11 @@ describe('routes', () => {
 
   test.each([
     ['a word number that is not a number', '/v1/words/abc'],
-    ['an examples offset past the 100 listed', '/v1/words/1358280/examples?from=100'],
+    ['an examples offset that is no whole number', '/v1/words/1358280/examples?from=1.5'],
     ['a query over 200 characters', `/v1/search/${'a'.repeat(201)}`],
-    ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`]
+    ['a pick that is not 1', `/v1/search/${encodeURIComponent('要')}?picked=yes`],
+    ['a text to segment over 200 characters', `/v1/segmentation/${'あ'.repeat(201)}`],
+    ['a text to segment that is only white space', '/v1/segmentation/%20%E3%80%80%0A']
   ])('400s %s', async (_, path) => {
     expect((await app().request(get(path))).status).toBe(400)
   })
@@ -84,6 +102,15 @@ describe('routes', () => {
     const response = await app(fakeService({ word })).request(get(path))
     expect(response.status).toBe(404)
     expect(word).not.toHaveBeenCalled()
+  })
+
+  test('404s an examples offset past what the word lists, which the dictionary answers as none', async () => {
+    const wordExamples = vi.fn(async () => null)
+    const response = await app(fakeService({ wordExamples })).request(
+      get('/v1/words/1358280/examples?from=150')
+    )
+    expect(response.status).toBe(404)
+    expect(wordExamples).toHaveBeenCalledWith(1358280, 150)
   })
 
   test('segments the decoded text, slashes and line breaks included, and answers its tokens', async () => {

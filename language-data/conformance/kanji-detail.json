@@ -2,11 +2,11 @@
   "artifacts" : [
     {
       "name" : "LanguageReferenceData.sqlite3",
-      "sha256" : "02185294cb22c112c208a95e712ae38b0b2deee86c71d10748cdedec9baec080"
+      "sha256" : "0500f75d056870f6f30a9a8a07898e376f9472679b16101f8a6b78e563046a32"
     },
     {
       "name" : "KanjiReferenceData.json",
-      "sha256" : "9ed5bc957c46c9c19838be6e6a44ef39a207b13e5ca55395eb45ffb19bf55dad"
+      "sha256" : "c42701153068b7f0a9252dd3311c8810a36325749f3bdbe391c0a752eb6e866b"
     },
     {
       "name" : "KanjiElementReferenceData.json",
@@ -70,10 +70,10 @@
               "summary" : "important points, main points, gist, list of requirements"
             },
             {
-              "headword" : "要求",
-              "id" : "01e90251c9810f2ef4c98b5e9d34de17",
-              "reading" : "ようきゅう",
-              "summary" : "demand, firm request, requisition, requirement, desire"
+              "headword" : "要素",
+              "id" : "82a43702e0bddda80f088051a37c5ac8",
+              "reading" : "ようそ",
+              "summary" : "element, component, factor, item (e.g. in list)"
             }
           ]
         },
@@ -139,6 +139,12 @@
           "summary" : "important points, main points, gist, list of requirements"
         },
         {
+          "headword" : "要素",
+          "id" : "82a43702e0bddda80f088051a37c5ac8",
+          "reading" : "ようそ",
+          "summary" : "element, component, factor, item (e.g. in list)"
+        },
+        {
           "headword" : "要求",
           "id" : "01e90251c9810f2ef4c98b5e9d34de17",
           "reading" : "ようきゅう",
@@ -167,12 +173,6 @@
           "id" : "c731cff88e1a64bd7d846341ca406458",
           "reading" : "ようぼう",
           "summary" : "demand for, request"
-        },
-        {
-          "headword" : "要素",
-          "id" : "82a43702e0bddda80f088051a37c5ac8",
-          "reading" : "ようそ",
-          "summary" : "component, factor, item (e.g. in list)"
         },
         {
           "headword" : "要点",
@@ -326,16 +326,16 @@
               "summary" : "day, days"
             },
             {
+              "headword" : "日頃",
+              "id" : "a49038d18c5030c9891cc3e748dc486a",
+              "reading" : "ひごろ",
+              "summary" : "usual, normal, everyday, habitual, ordinary, daily"
+            },
+            {
               "headword" : "日々",
               "id" : "0862b77e126458ff8676ec1ee18ac97d",
               "reading" : "ひび",
               "summary" : "daily, everyday"
-            },
-            {
-              "headword" : "日付",
-              "id" : "2e9bbc3120aa051d87d2a984519193c5",
-              "reading" : "ひづけ",
-              "summary" : "date, dating"
             }
           ]
         },
@@ -508,6 +508,12 @@
           "summary" : "nth day (of the month)"
         },
         {
+          "headword" : "日頃",
+          "id" : "a49038d18c5030c9891cc3e748dc486a",
+          "reading" : "ひごろ",
+          "summary" : "usual, normal, everyday, habitual, ordinary, daily"
+        },
+        {
           "headword" : "日本",
           "id" : "6342bfc30de4f6cc49b6c2db81692c98",
           "reading" : "にほん",
@@ -620,12 +626,6 @@
           "id" : "13d1abf879376992a0cc3c85f8017776",
           "reading" : "にっかん",
           "summary" : "Japan and South Korea, Japanese-Korean"
-        },
-        {
-          "headword" : "日課",
-          "id" : "6db6d345ee85c59f110dc116d2040002",
-          "reading" : "にっか",
-          "summary" : "daily routine, daily work, daily lesson"
         }
       ]
     },
@@ -893,16 +893,16 @@
               "summary" : "-ian (e.g. Italian), -ite (e.g. Tokyoite)"
             },
             {
+              "headword" : "人種",
+              "id" : "8e13ac9fd929e735b073abc782150eed",
+              "reading" : "じんしゅ",
+              "summary" : "race (of people)"
+            },
+            {
               "headword" : "人類",
               "id" : "2f9796a4a94ebeee16e9f4169189b25f",
               "reading" : "じんるい",
               "summary" : "mankind, humanity"
-            },
-            {
-              "headword" : "人体",
-              "id" : "eedf3c25f327ce2fdf533473c48171af",
-              "reading" : "じんたい",
-              "summary" : "human body"
             }
           ]
         },
@@ -988,16 +988,16 @@
               "summary" : "-ian (e.g. Italian), -ite (e.g. Tokyoite)"
             },
             {
+              "headword" : "人種",
+              "id" : "8e13ac9fd929e735b073abc782150eed",
+              "reading" : "じんしゅ",
+              "summary" : "race (of people)"
+            },
+            {
               "headword" : "人類",
               "id" : "2f9796a4a94ebeee16e9f4169189b25f",
               "reading" : "じんるい",
               "summary" : "mankind, humanity"
-            },
-            {
-              "headword" : "人体",
-              "id" : "eedf3c25f327ce2fdf533473c48171af",
-              "reading" : "じんたい",
-              "summary" : "human body"
             }
           ]
         },
@@ -1080,6 +1080,12 @@
           "id" : "29abfc1527bc1337725c6ab702f7b81a",
           "reading" : "ひとじち",
           "summary" : "hostage"
+        },
+        {
+          "headword" : "人種",
+          "id" : "8e13ac9fd929e735b073abc782150eed",
+          "reading" : "じんしゅ",
+          "summary" : "race (of people)"
         },
         {
           "headword" : "人相",
@@ -1176,12 +1182,6 @@
           "id" : "1b003b48d13fa64e6e3842722d110afa",
           "reading" : "じんかく",
           "summary" : "personality, character, individuality, personhood"
-        },
-        {
-          "headword" : "人名",
-          "id" : "6af36280b881540b42433638157ffbc4",
-          "reading" : "じんめい",
-          "summary" : "person's name"
         }
       ]
     },
@@ -2620,16 +2620,16 @@
               "summary" : "life, living"
             },
             {
+              "headword" : "生理",
+              "id" : "5433b745cb59a43eae668e0dc75481ce",
+              "reading" : "せいり",
+              "summary" : "physiology"
+            },
+            {
               "headword" : "生死",
               "id" : "bf04cbcda6cc1b34db0f53f5848642e2",
               "reading" : "せいし",
               "summary" : "life and death, life or death"
-            },
-            {
-              "headword" : "生計",
-              "id" : "2ffa4df3e34cfb5942612a401d58abf9",
-              "reading" : "せいけい",
-              "summary" : "livelihood, living"
             }
           ]
         },
@@ -3048,6 +3048,12 @@
           "summary" : "ginger (Zingiber officinale)"
         },
         {
+          "headword" : "生理",
+          "id" : "5433b745cb59a43eae668e0dc75481ce",
+          "reading" : "せいり",
+          "summary" : "physiology"
+        },
+        {
           "headword" : "生地",
           "id" : "efa3958eead338bbe70fbcd669875de9",
           "reading" : "きじ",
@@ -3076,12 +3082,6 @@
           "id" : "bfbbdea05c88008311e744ac9aaaff51",
           "reading" : "あいにく",
           "summary" : "unfortunately, sorry, but ..."
-        },
-        {
-          "headword" : "生理",
-          "id" : "5433b745cb59a43eae668e0dc75481ce",
-          "reading" : "せいり",
-          "summary" : "physiology"
         },
         {
           "headword" : "生長",
@@ -3919,6 +3919,12 @@
           "summary" : "very, extremely, exceedingly, greatly, terribly"
         },
         {
+          "headword" : "大気",
+          "id" : "0f633031153cacd5dc9980a4abb85b6f",
+          "reading" : "たいき",
+          "summary" : "atmosphere, air"
+        },
+        {
           "headword" : "大工",
           "id" : "717dc11de48aad12bb2bffbe0153acc7",
           "reading" : "だいく",
@@ -3935,12 +3941,6 @@
           "id" : "35a2f4c77a891d446fc5db28ad09fa34",
           "reading" : "たいしょう",
           "summary" : "Taishō era (1912.7.30-1926.12.25), Taisho era"
-        },
-        {
-          "headword" : "大地",
-          "id" : "57c862b0b38d79c3a60e13258c45c888",
-          "reading" : "だいち",
-          "summary" : "earth, ground, the solid earth, the (vast) land"
         }
       ]
     },
@@ -7459,6 +7459,12 @@
           "summary" : "rose oil, rose otto"
         },
         {
+          "headword" : "黄薔薇",
+          "id" : "93f4d2c9c061b1aa9567ba9dd8df2f09",
+          "reading" : "きばら",
+          "summary" : "yellow rose"
+        },
+        {
           "headword" : "バラバラ",
           "id" : "975a1c0edb7d644bfee37f42e110b5ff",
           "reading" : "バラバラ",
@@ -7481,12 +7487,6 @@
           "id" : "e8e2c2e3873579d4c0faa4e0079bca6b",
           "reading" : "つるばら",
           "summary" : "climbing rose, rambling rose"
-        },
-        {
-          "headword" : "大薔薇苺",
-          "id" : "348faa0d2ee3697f6876e289205e4949",
-          "reading" : "おおばらいちご",
-          "summary" : "Rubus croceacanthus (species of raspberry)"
         }
       ]
     },
@@ -7678,16 +7678,16 @@
           "summary" : "opening hours of a gallery"
         },
         {
+          "headword" : "緑の回廊",
+          "id" : "0547865da401a8fc26684158573c98ac",
+          "reading" : "みどりのかいろう",
+          "summary" : "green corridor, wildlife corridor"
+        },
+        {
           "headword" : "日本画廊協会",
           "id" : "125a7cbe8bc95d8d1d0e3e7c57788926",
           "reading" : "にっぽんがろうきょうかい",
           "summary" : "Japan Gallery Association, JGA"
-        },
-        {
-          "headword" : "ポーランド回廊",
-          "id" : "0617b629bb80248751510023858d5644",
-          "reading" : "ポーランドかいろう",
-          "summary" : "Polish Corridor"
         }
       ]
     },

@@ -1,10 +1,10 @@
+import { cutText } from '@zenbu/account-rules/text'
 import {
   applied,
   badSavedItem,
   type Change,
   type ClientMutation,
   conflict,
-  cutText,
   type Entity,
   gone,
   itemText,

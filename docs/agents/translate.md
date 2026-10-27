@@ -189,7 +189,7 @@ share (`ConversationWordsTests`), and the spoken translation's time limit
 (`SystemSpeechPlayerTests`). Run them from `apps/ios/Modules`:
 
 ```sh
-xcodebuild -scheme ZenbuJapaneseModules-Package \
+TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package \
   -destination 'platform=iOS Simulator,id=<simulator-udid>' \
   ONLY_ACTIVE_ARCH=YES -only-testing:TranslatorCoreTests -only-testing:SearchExperienceTests test
 ```

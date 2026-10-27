@@ -1,5 +1,6 @@
 'use client'
 
+import { maximumSegmentedLength } from '@zenbu/dictionary-core/cards/segmentable'
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
 import { useId, useRef, useState } from 'react'
 import { RubyText } from '@/components/dictionary/ruby-text'
@@ -39,14 +40,12 @@ async function writeFurigana(furigana: readonly RubySegment[]) {
 export function FuriganaConverter({
   sample,
   tries,
-  limit,
   text,
   words,
   locale
 }: {
   sample: FuriganaSample
   tries: readonly string[]
-  limit: number
   text: FuriganaText
   words: Dictionary['tools']['converter']
   locale: Locale
@@ -54,7 +53,7 @@ export function FuriganaConverter({
   const [typed, setTyped] = useState(sample.text)
   const field = useRef<HTMLTextAreaElement>(null)
   const resultId = useId()
-  const { shown, status, retry } = useFurigana(typed, limit, sample)
+  const { shown, status, retry } = useFurigana(typed, sample)
   const copied = useCopy(words)
   const characters = Array.from(composedText(typed)).length
   const said: Record<FuriganaStatus, string> = {
@@ -62,7 +61,7 @@ export function FuriganaConverter({
     empty: '',
     reading: text.reading,
     failed: text.unavailable,
-    tooLong: fill(text.tooLong, { limit })
+    tooLong: fill(text.tooLong, { limit: maximumSegmentedLength })
   }
 
   return (
@@ -78,7 +77,10 @@ export function FuriganaConverter({
           words={words}
           locale={locale}
           fieldRef={field}
-          count={fill(pluralOf(text.count, characters, locale), { count: characters, limit })}
+          count={fill(pluralOf(text.count, characters, locale), {
+            count: characters,
+            limit: maximumSegmentedLength
+          })}
           invalid={status === 'tooLong'}
           copies={false}
           actions={<ClearButton label={words.clear} field={field} onClear={() => setTyped('')} />}

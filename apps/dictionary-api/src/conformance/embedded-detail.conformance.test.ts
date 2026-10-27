@@ -21,7 +21,8 @@ import type {
 import type {
   EmbeddedEntryExamples,
   EmbeddedExample,
-  EmbeddedExamplePage
+  EmbeddedExamplePage,
+  EmbeddedMeaningExample
 } from '@zenbu/dictionary-core/embedded/text'
 import { beforeAll, describe, expect, test } from 'vitest'
 import {
@@ -126,6 +127,11 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
     const entry = entryAsTheAppReadsIt(db, id)
     if (!entry) throw new Error(`The artifact has no entry ${id}`)
     const page = await app.presentation<EmbeddedWordPage>('wordPage', entry)
+    const meaningExamples = new Map(
+      (await app.text<EmbeddedMeaningExample[]>('meaningExamples', { id })).map(
+        ({ number, example }) => [number, shownAsTheAppLinks([example], 'pageWord')[0]]
+      )
+    )
     const kanji = async (characters: string[]) => {
       const listed = []
       for (const character of characters) {
@@ -153,11 +159,16 @@ describe.runIf(artifactAvailable)('the app’s word and kanji pages on the artif
             )
           }
         : {}),
-      senses: page.senses.map((sense, index) => ({
-        meaning: sense.meaning,
-        notes: sense.notes,
-        partsOfSpeech: entry.senses[index].partsOfSpeech
-      })),
+      senses: page.senses.map((sense, index) => {
+        const example = meaningExamples.get(sense.number)
+        return {
+          meaning: sense.meaning,
+          glosses: entry.senses[index].glosses,
+          notes: sense.notes,
+          partsOfSpeech: entry.senses[index].partsOfSpeech,
+          ...(example ? { example } : {})
+        }
+      }),
       ...(page.pitch
         ? {
             pitch: {

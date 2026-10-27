@@ -11,42 +11,35 @@ from pathlib import Path
 FORM_KIND_WRITTEN = 0
 FORM_KIND_READING = 1
 FORM_KIND_ROMAJI = 2
+FORM_KIND_SHOWN_ROMAJI = 3
+FORM_KIND_UNMARKED_ROMAJI = 4
 PRIORITY_PRIMARY_BITS = {"spec1": 1, "ichi1": 2, "news1": 4, "gai1": 8}
 PRIORITY_SECONDARY_BITS = {"spec2": 1, "ichi2": 2, "news2": 4, "gai2": 8}
-
-KANA_ROMAJI = {
-    "あ": "a", "い": "i", "う": "u", "え": "e", "お": "o",
-    "か": "ka", "き": "ki", "く": "ku", "け": "ke", "こ": "ko",
-    "が": "ga", "ぎ": "gi", "ぐ": "gu", "げ": "ge", "ご": "go",
-    "さ": "sa", "し": "shi", "す": "su", "せ": "se", "そ": "so",
-    "ざ": "za", "じ": "ji", "ず": "zu", "ぜ": "ze", "ぞ": "zo",
-    "た": "ta", "ち": "chi", "つ": "tsu", "て": "te", "と": "to",
-    "だ": "da", "ぢ": "ji", "づ": "zu", "で": "de", "ど": "do",
-    "な": "na", "に": "ni", "ぬ": "nu", "ね": "ne", "の": "no",
-    "は": "ha", "ひ": "hi", "ふ": "fu", "へ": "he", "ほ": "ho",
-    "ば": "ba", "び": "bi", "ぶ": "bu", "べ": "be", "ぼ": "bo",
-    "ぱ": "pa", "ぴ": "pi", "ぷ": "pu", "ぺ": "pe", "ぽ": "po",
-    "ま": "ma", "み": "mi", "む": "mu", "め": "me", "も": "mo",
-    "や": "ya", "ゆ": "yu", "よ": "yo",
-    "ら": "ra", "り": "ri", "る": "ru", "れ": "re", "ろ": "ro",
-    "わ": "wa", "ゐ": "wi", "ゑ": "we", "を": "o", "ん": "n",
-    "ゔ": "vu",
-    "きゃ": "kya", "きゅ": "kyu", "きょ": "kyo",
-    "ぎゃ": "gya", "ぎゅ": "gyu", "ぎょ": "gyo",
-    "しゃ": "sha", "しゅ": "shu", "しょ": "sho",
-    "じゃ": "ja", "じゅ": "ju", "じょ": "jo",
-    "ちゃ": "cha", "ちゅ": "chu", "ちょ": "cho",
-    "にゃ": "nya", "にゅ": "nyu", "にょ": "nyo",
-    "ひゃ": "hya", "ひゅ": "hyu", "ひょ": "hyo",
-    "びゃ": "bya", "びゅ": "byu", "びょ": "byo",
-    "ぴゃ": "pya", "ぴゅ": "pyu", "ぴょ": "pyo",
-    "みゃ": "mya", "みゅ": "myu", "みょ": "myo",
-    "りゃ": "rya", "りゅ": "ryu", "りょ": "ryo",
+XML_LANGUAGE = "{http://www.w3.org/XML/1998/namespace}lang"
+USAGE_NOTES = {
+    "uk": "Usually written in kana",
+    "arch": "Archaic",
+    "obs": "Obsolete",
+    "hon": "Honorific",
+    "hum": "Humble",
+    "col": "Colloquial",
 }
 
 
-def normalized_text(value: str) -> str:
+def casefolded_text(value: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", value).casefold().split())
+
+
+def english_glosses(sense: ET.Element) -> list[str]:
+    return [
+        text
+        for gloss in sense.findall("gloss")
+        if (text := (gloss.text or "").strip()) and gloss.attrib.get(XML_LANGUAGE, "eng") == "eng"
+    ]
+
+
+def gloss_search_text(glosses: list[str]) -> str:
+    return " | ".join(glosses)
 
 
 ARCHAIC_VERB_CODES = (
@@ -180,20 +173,12 @@ def normalize_form_labels(provider_labels: list[str]) -> list[str]:
     return labels
 
 
-def normalize_usage_notes(provider_labels: list[str]) -> list[str]:
+def normalize_usage_notes(provider_labels: list[str], entity_codes: dict[str, str]) -> list[str]:
     notes: list[str] = []
-    rules = {
-        "word usually written using kana alone": "Usually written in kana",
-        "archaic": "Archaic",
-        "obsolete term": "Obsolete",
-        "honorific or respectful (sonkeigo) language": "Honorific",
-        "humble (kenjougo) language": "Humble",
-        "colloquialism": "Colloquial",
-    }
     for provider_label in provider_labels:
-        if normalized := rules.get(provider_label.casefold()):
-            if normalized not in notes:
-                notes.append(normalized)
+        if note := USAGE_NOTES.get(entity_codes.get(provider_label, "")):
+            if note not in notes:
+                notes.append(note)
     return notes
 
 
@@ -216,8 +201,8 @@ def language_reference_id(source_identity: str, source_record_id: str) -> bytes:
 
 def word_note_identity(record: dict[str, object]) -> str:
     signature = {
-        "headword": normalized_text(str(record["headword"])),
-        "reading": normalized_text(str(record["reading"])),
+        "headword": casefolded_text(str(record["headword"])),
+        "reading": casefolded_text(str(record["reading"])),
         "writtenForms": record["written_forms"],
         "readingForms": record["reading_forms"],
         "senses": record["note_senses"],
@@ -225,44 +210,6 @@ def word_note_identity(record: dict[str, object]) -> str:
     }
     payload = json.dumps(signature, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return f"wn1:{hashlib.sha256(payload.encode()).hexdigest()}"
-
-
-def romanize_kana(value: str) -> str:
-    hiragana = "".join(
-        chr(ord(character) - 0x60) if "ァ" <= character <= "ヶ" else character
-        for character in unicodedata.normalize("NFKC", value)
-    )
-    output: list[str] = []
-    index = 0
-    geminate = False
-    while index < len(hiragana):
-        character = hiragana[index]
-        if character == "っ":
-            geminate = True
-            index += 1
-            continue
-        if character == "ー":
-            if output:
-                vowel = next((letter for letter in reversed(output[-1]) if letter in "aeiou"), "")
-                output.append(vowel)
-            index += 1
-            continue
-        pair = hiragana[index:index + 2]
-        syllable = KANA_ROMAJI.get(pair)
-        if syllable:
-            index += 2
-        else:
-            syllable = KANA_ROMAJI.get(character)
-            index += 1
-        if not syllable:
-            if character in "・ -'":
-                output.append("-")
-            continue
-        if geminate and syllable[0] not in "aeioun":
-            output.append(syllable[0])
-        output.append(syllable)
-        geminate = False
-    return "".join(output).strip("-")
 
 
 def text_values(parent: ET.Element, path: str) -> list[str]:

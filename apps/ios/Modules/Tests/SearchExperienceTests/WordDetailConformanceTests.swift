@@ -16,7 +16,7 @@ struct WordDetailConformanceTests {
   func wordDetailMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("word-detail.json")
     var suite = try JSONDecoder().decode(WordDetailSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = try await WordDetailObserver()
 
     if DetailConformance.isRecording {
@@ -52,7 +52,9 @@ private struct WordDetailObserver {
 
   init() async throws {
     core = PresentationCore(
-      listing: try FrequencyPackManager.freshInstall(storagePrefix: "WordDetailConformance").lists)
+      listing: try await FrequencyPackManager.started {
+        try .freshInstall(storagePrefix: "WordDetailConformance")
+      }.lists)
     let availability = await textAnalysisClient.availability()
     guard availability == .full else { throw WordDetailObserverError.textAnalysisUnavailable }
   }
@@ -129,10 +131,12 @@ private struct WordDetailObserver {
         graph: WordDetailCase.PitchGraph(pitch)
       )
     }
+    let meaningExamples = await exampleSentenceClient.meaningExamples(entry).bySense
     observed.senses = zip(page.senses, entry.senses).map { shown, sense in
       WordDetailCase.Sense(
-        meaning: shown.meaning, notes: shown.notes,
-        partsOfSpeech: sense.partsOfSpeech.map(\.rawValue))
+        meaning: shown.meaning, glosses: sense.glosses, notes: shown.notes,
+        partsOfSpeech: sense.partsOfSpeech.map(\.rawValue),
+        example: meaningExamples[shown.number].map(Self.recorded))
     }
     observed.frequency = page.frequency.map(WordDetailCase.Frequency.init)
     observed.alternativeForms = page.alternatives.map {
@@ -202,21 +206,7 @@ private struct WordDetailObserver {
       return WordDetailCase.Examples(
         listed: 0, reportedCount: nil, truncated: false, error: "\(error)", shown: [])
     }
-    let shown = listed.examples.prefix(limit).map { example in
-      WordDetailCase.Example(
-        id: example.id.rawValue,
-        japanese: example.sentence.japanese,
-        english: example.sentence.english,
-        tokens: example.words.map { token in
-          WordDetailCase.Token(
-            surface: token.surface,
-            entry: token.recordedEntryID,
-            candidates: token.recordedCandidateIDs,
-            pageWord: token.accent == .entry ? true : nil
-          )
-        }
-      )
-    }
+    let shown = listed.examples.prefix(limit).map(Self.recorded)
     let reportedCount = retrieval.count > 50 ? "more than 50" : "\(retrieval.count)"
     return WordDetailCase.Examples(
       listed: retrieval.page.listed,
@@ -224,6 +214,24 @@ private struct WordDetailObserver {
       truncated: retrieval.truncated,
       error: nil,
       shown: shown
+    )
+  }
+}
+
+extension WordDetailObserver {
+  fileprivate static func recorded(_ example: LinkedExample) -> WordDetailCase.Example {
+    WordDetailCase.Example(
+      id: example.id.rawValue,
+      japanese: example.sentence.japanese,
+      english: example.sentence.english,
+      tokens: example.words.map { token in
+        WordDetailCase.Token(
+          surface: token.surface,
+          entry: token.recordedEntryID,
+          candidates: token.recordedCandidateIDs,
+          pageWord: token.accent == .entry ? true : nil
+        )
+      }
     )
   }
 }
@@ -353,8 +361,10 @@ private struct WordDetailCase: Codable {
 
   struct Sense: Codable {
     let meaning: String
+    let glosses: [String]
     let notes: [String]
     let partsOfSpeech: [String]
+    let example: Example?
   }
 
   struct Frequency: Codable {

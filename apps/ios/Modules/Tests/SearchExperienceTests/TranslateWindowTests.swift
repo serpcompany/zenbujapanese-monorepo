@@ -9,10 +9,9 @@ import TranslatorCore
 struct TranslateWindowTests {
   @Test("closing the last window while Translate is starting leaves it stopped")
   func lastWindowDuringStart() async throws {
-    let suite = "translate-windows-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
-    let folder = FileManager.default.temporaryDirectory.appending(path: suite)
+    let defaults = MemoryDefaults()
+    let folder = FileManager.default.temporaryDirectory
+      .appending(path: "translate-windows-\(UUID().uuidString)")
     defer { try? FileManager.default.removeItem(at: folder) }
     let microphone = AsyncStream<Bool>.makeStream()
     var services = TranslateServices.scripted(.station)

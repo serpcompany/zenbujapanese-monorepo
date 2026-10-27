@@ -22,13 +22,13 @@ from analyze_ordered_json_frequency_lists import (
 
 TOOLS = Path(__file__).resolve().parent
 
-LANGUAGE_DATA_FOLDER = TOOLS.parent
-RESOURCES = LANGUAGE_DATA_FOLDER.parent / "apps/ios/Modules/Sources/SearchExperience/Resources"
+REPOSITORY = TOOLS.parents[1]
+RESOURCES = REPOSITORY / "apps/ios/Modules/Sources/SearchExperience/Resources"
 MAPPING_V2 = RESOURCES / "FrequencyPackMappingV2.sql"
 CATALOG = RESOURCES / "FrequencyPackCatalog.json"
 LANGUAGE_DATA = RESOURCES / "LanguageReferenceData.sqlite3"
-SOURCE_RECORD = LANGUAGE_DATA_FOLDER / "sources/Jiten-2026-09-27.source.json"
-ANALYSIS = LANGUAGE_DATA_FOLDER / "generated/Jiten-2026-09-27.analysis.json"
+SOURCE_RECORD = REPOSITORY / "language-data/sources/Jiten-2026-09-27.source.json"
+ANALYSIS = REPOSITORY / "language-data/generated/Jiten-2026-09-27.analysis.json"
 CDN_ORIGIN = "https://cdn.zenbujapanese.com/frequency-packs"
 ZIP_TIMESTAMP = (2026, 9, 27, 0, 0, 0)
 

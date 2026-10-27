@@ -29,8 +29,18 @@ function Token({
       ? 'mr-0.5 border-b-2 border-foreground font-medium'
       : token.link && 'mr-0.5 border-b border-border'
   )
-  const shown = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
-  if (!token.path || !token.link) return shown
+  const ruby = <RubyText segments={token.ruby} className={className} pageWord={token.isPageWord} />
+  const shown = token.meaning ? (
+    <>
+      <span>{ruby}</span>
+      <span data-aid="meaning" lang={sourceLang(locale)}>
+        {token.meaning}
+      </span>
+    </>
+  ) : (
+    ruby
+  )
+  if (!token.path || !token.link) return token.meaning ? <span>{shown}</span> : ruby
   const title =
     'entSeqs' in token.link
       ? fill(text.examples.possibleEntries, {
@@ -44,22 +54,59 @@ function Token({
   )
 }
 
-function ExampleItem({
-  example,
-  locale,
-  text
-}: {
+interface ExampleProps {
   example: PageExample
   locale: Locale
   text: ExampleListText
-}) {
-  let offset = 0
+}
+
+function ExampleItem({ example, locale, text }: ExampleProps) {
   return (
     <li
       className="flex items-start gap-3 py-3 first:pt-0 last:pb-0"
       data-example={example.position}
       data-example-pair={example.pairId}
     >
+      <ExampleContent example={example} locale={locale} text={text} />
+    </li>
+  )
+}
+
+export function MeaningExample({ meaning, ...props }: ExampleProps & { meaning: number }) {
+  return (
+    <div
+      className="flex items-start gap-3 pt-2"
+      data-meaning-example={meaning}
+      data-example-pair={props.example.pairId}
+    >
+      <ExampleContent {...props} />
+    </div>
+  )
+}
+
+function ExampleRomaji({
+  romaji,
+  unavailable
+}: {
+  romaji: string | null | undefined
+  unavailable: string
+}) {
+  if (romaji === undefined) return null
+  return romaji === null ? (
+    <p data-aid="romaji" className="text-sm">
+      {unavailable}
+    </p>
+  ) : (
+    <p data-aid="romaji" lang="ja-Latn">
+      {romaji}
+    </p>
+  )
+}
+
+function ExampleContent({ example, locale, text }: ExampleProps) {
+  let offset = 0
+  return (
+    <>
       <div className="flex flex-1 flex-col gap-1">
         <p lang="ja" className="text-xl leading-[2.2]">
           {example.tokens.map(token => {
@@ -72,7 +119,8 @@ function ExampleItem({
             )
           })}
         </p>
-        <p className="text-muted-foreground" lang={sourceLang(locale)}>
+        <ExampleRomaji romaji={example.romaji} unavailable={text.examples.romajiUnavailable} />
+        <p className="text-muted-foreground" lang={sourceLang(locale)} data-aid="translation">
           {example.translation}
         </p>
       </div>
@@ -81,7 +129,7 @@ function ExampleItem({
         label={text.examples.pronounce}
         unsupported={text.pronounce.unsupported}
       />
-    </li>
+    </>
   )
 }
 

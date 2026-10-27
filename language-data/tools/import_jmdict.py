@@ -19,16 +19,22 @@ from tatoeba_adapter import (
 from example_sentence_retrieval_index import build_indexes
 from unidic_adapter import apply_unidic_pitch
 from jmdict_entries import import_entries
-from jmdict_normalization import normalized_text
+from jmdict_examples import check_without_examples, link_sense_examples, sense_examples
+from jmdict_normalization import casefolded_text
+from jmdict_previous import PreviousDatabase
 from jmdict_relationships import assign_note_identities, link_relationships
+from jmdict_romaji import CORE_ROMAJI_FILES, REPOSITORY
 
 
 IMPORT_TOOL_FILES = (
     "import_jmdict.py",
     "jmdict_entries.py",
+    "jmdict_examples.py",
     "jmdict_labels.py",
     "jmdict_normalization.py",
+    "jmdict_previous.py",
     "jmdict_relationships.py",
+    "jmdict_romaji.py",
 )
 
 
@@ -36,6 +42,8 @@ def import_tool_files_sha256() -> str:
     digest = hashlib.sha256()
     for name in IMPORT_TOOL_FILES:
         digest.update(f"{name}\n{file_sha256(Path(__file__).with_name(name))}\n".encode())
+    for name in CORE_ROMAJI_FILES:
+        digest.update(f"{name}\n{file_sha256(REPOSITORY / name)}\n".encode())
     return digest.hexdigest()
 
 
@@ -75,8 +83,16 @@ def create_schema(database: sqlite3.Connection) -> None:
           FOREIGN KEY(entry_id) REFERENCES entries(id)
         );
 
+        CREATE TABLE shown_romaji_forms (
+          entry_id BLOB NOT NULL,
+          form TEXT NOT NULL,
+          kind INTEGER NOT NULL,
+          FOREIGN KEY(entry_id) REFERENCES entries(id)
+        );
+
         CREATE INDEX forms_form_index ON forms(form, entry_id);
         CREATE INDEX forms_entry_id_index ON forms(entry_id);
+        CREATE INDEX shown_romaji_forms_form_index ON shown_romaji_forms(form, entry_id);
         CREATE UNIQUE INDEX entries_source_provenance_index ON entries(source_identity, source_record_id);
         CREATE INDEX entries_common_index ON entries(is_common DESC, id);
         CREATE INDEX entries_semantic_fingerprint_index ON entries(semantic_fingerprint, id);
@@ -172,6 +188,7 @@ def import_snapshot(
     tatoeba_metadata: dict[str, object],
     relationship_source: Path,
     relationship_metadata: dict[str, object],
+    previous: PreviousDatabase,
 ) -> dict[str, object]:
     if output.exists():
         output.unlink()
@@ -182,11 +199,11 @@ def import_snapshot(
     try:
         entries = import_entries(database, source)
         note_identity_duplicate_groups, note_identity_disambiguated_entries = assign_note_identities(
-            database, entries.records
+            database, entries.records, previous.note_identities
         )
 
         pitch_entry_count = apply_unidic_pitch(
-            database, entries.records, unidic_source, unidic_metadata, normalized_text
+            database, entries.records, unidic_source, unidic_metadata, casefolded_text
         )
         example_sentence_summary = import_tatoeba_examples(
             database,
@@ -204,9 +221,10 @@ def import_snapshot(
         )
         example_sentence_count = example_sentence_summary["retained_pairs"]
         retrieval_metadata = build_indexes(database)
+        sense_example_summary = link_sense_examples(database, sense_examples(source))
 
         relationship_count = link_relationships(
-            database, entries.records, entries.form_to_entry_ids, relationship_metadata
+            database, entries.records, entries.form_to_entry_ids, relationship_metadata, entries.forms.fold
         )
 
         dictionary_ranking_mapping = dictionary_ranking_mapping_sha256(database)
@@ -222,19 +240,14 @@ def import_snapshot(
         for value in (import_tool_sha256, tatoeba_adapter_sha256):
             example_transform_digest.update(f"{value}\n".encode())
         transform = {
-            "transform": "jmdict-to-zenbu-language-reference-data-v2",
+            "transform": "jmdict-to-zenbu-language-reference-data-v3",
             "source_resource_id": source_metadata["resource_id"],
             "source_sha256": source_metadata["sha256"],
             "source_entries_retained": entries.retained,
             "source_entries_rejected": entries.rejected,
             "source_entries_merged": 0,
-            "prior_snapshot_database_sha256": None,
-            "row_delta": {
-                "added": entries.retained,
-                "changed": 0,
-                "deleted": 0,
-                "added_source_record_ids_sha256": entries.retained_source_ids_sha256,
-            },
+            "prior_snapshot_database_sha256": previous.sha256,
+            "row_delta": previous.row_delta(database, entries.retained_source_ids_sha256),
             "normalized_forms": entries.form_count,
             "dictionary_ranking_policy": "dictionary-best-match-v1",
             "dictionary_ranking_schema_version": "zenbu.dictionary-ranking.v1",
@@ -254,6 +267,7 @@ def import_snapshot(
             "example_sentence_provenance": example_sentence_summary,
             "example_sentence_pair_id_scheme": EXAMPLE_PAIR_ID_SCHEME,
             "example_sentence_retrieval": retrieval_metadata,
+            "sense_examples": sense_example_summary,
             "rejection_reasons": {"missing_ent_seq_reading_or_english_gloss": entries.rejected},
             "retained_fields": [
                 "ent_seq",
@@ -273,10 +287,12 @@ def import_snapshot(
                 "sense/s_inf",
                 "sense/xref",
                 "sense/gloss[@xml:lang='eng']",
+                "sense/example/ex_srce[@exsrc_type='tat']",
+                "sense/example/ex_sent",
             ],
             "documented_transforms": [
-                "Unicode NFKC and case-fold searchable forms",
-                "deterministic app-owned Hepburn-style romaji reading index",
+                "searchable forms and glosses folded by the shared core as a query is (NFKC, lowercase, white space collapsed)",
+                "romaji search forms from the shared core: each reading in ASCII as typed (long vowels doubled), in forms as before; its romaji as the apps show it, and that romaji without macrons, in shown_romaji_forms, which the frequency packs' mapping never reads",
                 "stable first-priority written form and reading display selection",
                 "English-only gloss retention",
                 "same-sense English gloss grouping with source sense order retained",
@@ -302,6 +318,9 @@ def import_snapshot(
                 "deterministic app-owned rank score derived from documented JMdict priority tags",
                 "UniDic aType normalized to deterministic downstep and pronunciation-mora-count facts by exact base-form and pronunciation-or-lexical-reading match",
                 "one deterministic lowest-ID English translation retained per linked Japanese Tatoeba sentence",
+                "each sense's examples linked by exact join of their Tatoeba Japanese sentence ID to the bundled pair whose NFC Japanese and English both match; any other example is counted, not linked",
+                "sense examples shared by every entry with the same semantic fingerprint, in source order",
+                "an entry the previous database held keeps its note_identity; a new entry takes its computed one, or the next free suffix",
             ],
             "pitch_source_resource_id": unidic_metadata["resource_id"],
             "pitch_source_sha256": unidic_metadata["sha256"],
@@ -356,12 +375,17 @@ def main() -> None:
     parser.add_argument("--tatoeba-metadata", type=Path, required=True)
     parser.add_argument("--relationship-source", type=Path, required=True)
     parser.add_argument("--ranking-contract", type=Path)
+    parser.add_argument("--previous-database", type=Path)
     arguments = parser.parse_args()
 
     source_metadata = json.loads(arguments.source_metadata.read_text())
     actual_sha = file_sha256(arguments.source)
     if actual_sha != source_metadata["sha256"]:
         raise SystemExit(f"source checksum mismatch: expected {source_metadata['sha256']}, got {actual_sha}")
+    try:
+        check_without_examples(arguments.source, source_metadata["without_examples"])
+    except ValueError as mismatch:
+        raise SystemExit(str(mismatch)) from mismatch
     unidic_metadata = json.loads(arguments.unidic_metadata.read_text())
     actual_unidic_sha = file_sha256(arguments.unidic_source)
     if actual_unidic_sha != unidic_metadata["sha256"]:
@@ -403,6 +427,7 @@ def main() -> None:
         tatoeba_metadata,
         arguments.relationship_source,
         relationship_metadata,
+        PreviousDatabase.read(arguments.previous_database),
     )
     arguments.manifest.write_text(
         json.dumps({"source": source_metadata, "transform": transform}, ensure_ascii=False, indent=2) + "\n"

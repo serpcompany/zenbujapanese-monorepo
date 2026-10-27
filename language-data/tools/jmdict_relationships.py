@@ -2,24 +2,45 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from typing import Callable
 
-from jmdict_normalization import normalized_text, word_note_identity
+from jmdict_normalization import word_note_identity
+
+
+def _free_identity(base_identity: str, computed: str, taken: set[str]) -> str:
+    if computed not in taken:
+        return computed
+    suffix = 1
+    while f"{base_identity}:{suffix}" in taken:
+        suffix += 1
+    return f"{base_identity}:{suffix}"
 
 
 def assign_note_identities(
-    database: sqlite3.Connection, entry_records: list[dict[str, object]]
+    database: sqlite3.Connection,
+    entry_records: list[dict[str, object]],
+    previous: dict[bytes, str],
 ) -> tuple[int, int]:
     note_identity_groups: dict[str, list[dict[str, object]]] = {}
     for record in entry_records:
         note_identity_groups.setdefault(word_note_identity(record), []).append(record)
+    taken = set(previous.values())
+    computed: list[tuple[int, bytes, str, str]] = []
     for base_identity, records in note_identity_groups.items():
         ordered = sorted(records, key=lambda candidate: int(str(candidate["source_record_id"])))
         for index, record in enumerate(ordered, start=1):
             note_identity = base_identity if len(ordered) == 1 else f"{base_identity}:{index}"
-            database.execute(
-                "UPDATE entries SET note_identity = ? WHERE id = ?",
-                (note_identity, record["id"]),
-            )
+            entry_id = bytes(record["id"])
+            computed.append((int(str(record["source_record_id"])), entry_id, base_identity, note_identity))
+    for _, entry_id, base_identity, note_identity in sorted(computed):
+        if entry_id in previous:
+            note_identity = previous[entry_id]
+        else:
+            note_identity = _free_identity(base_identity, note_identity, taken)
+            taken.add(note_identity)
+        database.execute(
+            "UPDATE entries SET note_identity = ? WHERE id = ?", (note_identity, entry_id)
+        )
     database.execute("CREATE UNIQUE INDEX entries_note_identity_index ON entries(note_identity)")
     note_identity_duplicate_groups = sum(
         1 for records in note_identity_groups.values() if len(records) > 1
@@ -35,6 +56,7 @@ def link_relationships(
     entry_records: list[dict[str, object]],
     form_to_entry_ids: dict[str, list[bytes]],
     relationship_metadata: dict[str, object],
+    fold: Callable[[str], str],
 ) -> int:
     relationship_count = 0
     records_by_id = {record["id"]: record for record in entry_records}
@@ -48,7 +70,7 @@ def link_relationships(
         seen_ids: set[bytes] = set()
 
         for reference in record["cross_references"]:
-            target_ids = form_to_entry_ids.get(normalized_text(str(reference["form"])), [])
+            target_ids = form_to_entry_ids.get(fold(str(reference["form"])), [])
             supplied_reading = reference["reading"]
             target = next(
                 (
@@ -57,9 +79,9 @@ def link_relationships(
                     if target_id != record["id"]
                     and (
                         supplied_reading is None
-                        or normalized_text(str(supplied_reading))
+                        or fold(str(supplied_reading))
                         in {
-                            normalized_text(str(reading))
+                            fold(str(reading))
                             for reading in records_by_id[target_id]["reading_values"]
                         }
                     )

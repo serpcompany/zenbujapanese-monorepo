@@ -6,8 +6,14 @@ import type {
   SearchResponse,
   WordResponse
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
 import type { FormExampleRows } from '@zenbu/dictionary-core/detail/rows'
-import { fixtureKanjiRows, fixtureWordRows } from '@zenbu/dictionary-core/fixtures'
+import {
+  fixtureKanjiRows,
+  fixtureRadicals,
+  fixtureSearchOrder,
+  fixtureWordRows
+} from '@zenbu/dictionary-core/fixtures'
 import { searchResultsScreen } from '@zenbu/dictionary-core/results/results'
 import type {
   SearchEntry,
@@ -19,6 +25,7 @@ import { watchedRender } from '../render-health'
 import {
   getConjugationExamples,
   getKanjiDetails,
+  getRadicals,
   getSearchExamples,
   getWordExamples,
   getWordPage,
@@ -205,6 +212,26 @@ describe('searchDictionary', () => {
     expect(kaname.state === 'results' && kaname.kanji?.details?.character).toBe('要')
   })
 
+  test('asks the service, or the fixtures, for a kanji picked from the radicals as picked', async () => {
+    const requests = serve({ '/v1/search/要?picked=1': searchAnswer('要', [iru]) })
+    expect(rowsOf(await searchDictionary('要', true)).map(word => word.entSeq)).toEqual([1546640])
+    expect(requests).toEqual(['/v1/search/要?picked=1', '/v1/kanji/要'])
+    delete env.DICTIONARY_API_URL
+    expect(rowsOf(await searchDictionary('要', true)).map(word => word.entSeq)).toEqual([
+      kanameNoun
+    ])
+    expect(rowsOf(await searchDictionary('要'))).toHaveLength(fixtureSearchOrder.要.length)
+  })
+
+  test('reads the radical panel’s file from the service, or the fixtures without one', async () => {
+    serve({ '/v1/radicals': fixtureRadicals })
+    expect(await getRadicals()).toEqual(fixtureRadicals)
+    serve({})
+    expect(await getRadicals()).toBeNull()
+    delete env.DICTIONARY_API_URL
+    expect(await getRadicals()).toBe(fixtureRadicals)
+  })
+
   test('fails when the service fails, rather than showing no results', async () => {
     serve({ '/v1/search/eat': 503 })
     await expect(searchDictionary('eat')).rejects.toThrow('answered 503')
@@ -301,6 +328,16 @@ describe('word pages and kanji details', () => {
       Array.from({ length: more?.length ?? 0 }, (_, index) => 25 + index)
     )
     expect(await getWordExamples(taberuWithoutFixture, 25, 'fixtures')).toBeNull()
+  })
+
+  test("a word's last page holds the rest of its examples, and a page past them is none", async () => {
+    const listed = iruRows.examples.length
+    const lastPage = Math.floor((listed - 1) / examplesPerPage) * examplesPerPage
+    const last = await getWordExamples(1546640, lastPage, 'fixtures')
+    expect(last?.map(example => example.position)).toEqual(
+      Array.from({ length: listed - lastPage }, (_, index) => lastPage + index)
+    )
+    expect(await getWordExamples(1546640, lastPage + examplesPerPage, 'fixtures')).toBeNull()
   })
 
   test('more examples come from the service, linked by its slugs', async () => {

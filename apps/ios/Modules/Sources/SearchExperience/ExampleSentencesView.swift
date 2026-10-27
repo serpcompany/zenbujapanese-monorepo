@@ -203,6 +203,7 @@ struct JapaneseExampleRowContent: View {
   enum Presentation {
     case dedicated(index: Int)
     case wordDetail(index: Int)
+    case meaning(number: Int)
     case conjugatedForm(String, index: Int)
 
     struct WordSelectorConfiguration {
@@ -251,6 +252,18 @@ struct JapaneseExampleRowContent: View {
           rowIdentifier: "word-detail.example.\(index)",
           combinesRowAccessibility: true
         )
+      case .meaning(let number):
+        Configuration(
+          tokenPresentation: .standard,
+          tokenIdentifierPrefix: "word-detail.meaning-example-token.\(number)",
+          japaneseIdentifier: nil,
+          wordSelector: nil,
+          speakerLabel: "Speak the example of meaning \(number)",
+          speakerIdentifier: "word-detail.meaning-example-speaker.\(number)",
+          englishIdentifier: "word-detail.meaning-example-english.\(number)",
+          rowIdentifier: "word-detail.meaning-example.\(number)",
+          combinesRowAccessibility: true
+        )
       case .conjugatedForm(let kind, let index):
         Configuration(
           tokenPresentation: .standard,
@@ -268,6 +281,7 @@ struct JapaneseExampleRowContent: View {
   }
 
   @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+  @Environment(\.linkedEntryReader) private var linkedEntries
   @ScaledMetric(relativeTo: .body) private var contentSpacing: CGFloat = 8
 
   let example: LinkedExample
@@ -342,7 +356,6 @@ struct JapaneseExampleRowContent: View {
     LinkedJapaneseWords(
       text: example.sentence.japanese,
       tokens: example.words,
-      isAnalyzed: true,
       identifierPrefix: configuration.tokenIdentifierPrefix,
       presentation: configuration.tokenPresentation,
       japaneseIdentifier: configuration.japaneseIdentifier,
@@ -412,11 +425,11 @@ struct JapaneseExampleRowContent: View {
 
   private func wordSelectionAction(
     token: JapaneseTextToken,
-    entry: DictionaryEntry,
+    entry: LinkedWordEntry,
     identifierPrefix: String
   ) -> some View {
     Button {
-      openWord(entry)
+      linkedEntries.open([entry]) { openWord($0[0]) }
     } label: {
       Text("\(token.surface) (\(entry.reading)) — \(entry.summary)")
     }

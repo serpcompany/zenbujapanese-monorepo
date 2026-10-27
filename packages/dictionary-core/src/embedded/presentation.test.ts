@@ -373,9 +373,4 @@ describe('the embedded presentation engine', () => {
     expect(await ask(host, 'kanjiElementPage', 'あ')).toBeNull()
     expect(await ask(host, 'kanjiElementPage', '交父')).toBeNull()
   })
-
-  test('shortens a meaning to the gloss shown under a linked word', async () => {
-    expect(await ask(host, 'gloss', 'to fold (clothes, etc.), to shut')).toBe('fold')
-    expect(await ask(host, 'gloss', '(note only)')).toBeNull()
-  })
 })

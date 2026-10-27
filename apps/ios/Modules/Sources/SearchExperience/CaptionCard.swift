@@ -4,29 +4,26 @@ struct CaptionCard: View {
   @Environment(ReadingAidPreferences.self) private var readingAidPreferences
 
   let text: String
+  let words: [JapaneseTextToken]
   let translation: String?
-  let highlightedEntry: DictionaryEntry?
   let label: String?
-  let japaneseTextAnalysisClient: JapaneseTextAnalysisClient
   let identifierPrefix: String
   let openCandidates: (_ surface: String, _ candidates: [DictionaryEntry]) -> Void
   let openWord: (DictionaryEntry) -> Void
 
   init(
     text: String,
+    words: [JapaneseTextToken],
     translation: String?,
-    highlightedEntry: DictionaryEntry? = nil,
     label: String? = nil,
-    japaneseTextAnalysisClient: JapaneseTextAnalysisClient,
     identifierPrefix: String,
     openCandidates: @escaping (_ surface: String, _ candidates: [DictionaryEntry]) -> Void,
     openWord: @escaping (DictionaryEntry) -> Void
   ) {
     self.text = text
+    self.words = words
     self.translation = translation
-    self.highlightedEntry = highlightedEntry
     self.label = label
-    self.japaneseTextAnalysisClient = japaneseTextAnalysisClient
     self.identifierPrefix = identifierPrefix
     self.openCandidates = openCandidates
     self.openWord = openWord
@@ -34,11 +31,12 @@ struct CaptionCard: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
-      LinkedJapaneseText(
+      LinkedJapaneseWords(
         text: text,
-        highlightedEntry: highlightedEntry,
-        japaneseTextAnalysisClient: japaneseTextAnalysisClient,
+        tokens: words,
         identifierPrefix: identifierPrefix,
+        presentation: .standard,
+        japaneseIdentifier: nil,
         openCandidates: openCandidates,
         openWord: openWord
       )

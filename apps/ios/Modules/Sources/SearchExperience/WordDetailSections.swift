@@ -1,5 +1,23 @@
 import SwiftUI
 
+struct SectionRow<Value>: Identifiable {
+  struct ID: Hashable {
+    let section: WordPage.Section.Kind
+    let position: Int
+  }
+
+  let id: ID
+  let value: Value
+}
+
+extension Array {
+  func rows(in section: WordPage.Section.Kind) -> [SectionRow<Element>] {
+    enumerated().map { position, value in
+      SectionRow(id: .init(section: section, position: position), value: value)
+    }
+  }
+}
+
 struct LinkRow<Content: View>: View {
   let action: () -> Void
   @ViewBuilder let label: () -> Content
@@ -55,6 +73,10 @@ struct MeaningActions {
     speechSynthesisClient.speak(sense.spoken, .english)
   }
 
+  func speakJapanese(_ sentence: String) {
+    speechSynthesisClient.speak(sentence, .japanese)
+  }
+
   func copy(_ sense: WordPage.Sense) {
     writeToPasteboard(sense.copyText)
   }
@@ -63,9 +85,12 @@ struct MeaningActions {
 struct MeaningSection: View {
   let senses: [WordPage.Sense]
   var actions: MeaningActions?
+  var examples = MeaningExamples()
+  var openWord: (DictionaryEntry) -> Void = { _ in }
 
   var body: some View {
-    ForEach(senses, id: \.number) { sense in
+    ForEach(senses.rows(in: .meaning)) { row in
+      let sense = row.value
       if let actions {
         Menu {
           MeaningMenu(sense: sense, actions: actions)
@@ -73,12 +98,23 @@ struct MeaningSection: View {
           MeaningLabel(sense: sense)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
         }
         .buttonStyle(.plain)
         .accessibilityHint("Opens actions for this meaning")
         .accessibilityIdentifier("word-detail.meaning.\(sense.number)")
       } else {
         MeaningLabel(sense: sense)
+      }
+      if let example = examples.bySense[sense.number],
+        LaunchHarness.shows("meaning-example", on: "word-detail")
+      {
+        JapaneseExampleRowContent(
+          example: example,
+          presentation: .meaning(number: sense.number),
+          speak: { actions?.speakJapanese(example.sentence.japanese) },
+          openWord: openWord
+        )
       }
     }
   }
@@ -192,8 +228,8 @@ struct RelationshipsSection: View {
   let openRelated: (DictionaryRelationship) -> Void
 
   var body: some View {
-    ForEach(Array(zip(related, relationships).enumerated()), id: \.offset) { _, pair in
-      let (word, relationship) = pair
+    ForEach(Array(zip(related, relationships)).rows(in: .related)) { row in
+      let (word, relationship) = row.value
       Button {
         openRelated(relationship)
       } label: {

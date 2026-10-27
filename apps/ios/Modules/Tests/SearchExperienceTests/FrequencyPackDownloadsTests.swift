@@ -103,11 +103,11 @@ struct FrequencyPackDownloadsTests {
   func failureAfterDownload(error: any Error, failure: String?) async throws {
     let catalog = try FrequencyPackCatalog.bundled()
     let optional = try #require(catalog.packs.first { !$0.bundled })
-    let manager = try FrequencyPackManager.bundled(
-      catalog,
-      storageDirectory: FileManager.default.temporaryDirectory
-        .appending(path: "frequency-pack-failure-\(UUID().uuidString)"),
-      download: { _, _ in throw error })
+    let storage = FileManager.default.temporaryDirectory
+      .appending(path: "frequency-pack-failure-\(UUID().uuidString)")
+    let manager = try await FrequencyPackManager.started {
+      try .bundled(catalog, storageDirectory: storage, download: { _, _ in throw error })
+    }
     await #expect(throws: (any Error).self) { try await manager.download(optional.packID) }
     let pack = try await manager.snapshot().packs.first { $0.id == optional.packID }
     #expect(pack?.failureMessage == failure)

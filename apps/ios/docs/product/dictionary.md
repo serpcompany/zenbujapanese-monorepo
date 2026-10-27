@@ -81,16 +81,14 @@ candidate tiles in the same fill as the radical squares, and glass buttons (whit
 - **Radicals.** A white strip at the top lists the kanji that contain every selected radical, or
   says **Select one or more radicals**. Below it, the radicals scroll under pinned stroke-count
   headers, in the same tiles five to a row, and radicals that can't combine with the selection are
-  hidden. A header opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, the same
-  button as Handwriting's at the bottom right, removes the last radical selected and is dimmed until
-  one is.
+  hidden. A header opens and closes its section, as Grade's do ([Grade](#grade)). **Undo**, at the
+  bottom right as in Handwriting, removes the last radical selected and is dimmed until one is.
 
 A candidate from any panel is added to the end of the query, so picking one character after another,
 in any mix of handwriting, radicals, and grades, builds a word. The panel closes and the results
-show, with the query in the field. In dark mode the strip and pad are black.
-
-A Mac can't drag a sheet away, so there the panel is a sheet of a fixed size with a **Done**
-button, which Escape presses too ([iPad and Mac](index.md#ipad-and-mac)).
+show, with the query in the field. In dark mode the strip and pad are black. A Mac can't drag a
+sheet away, so there the panel is a sheet with a **Done** button, which Escape presses too, sized
+to stay inside the window ([iPad and Mac](index.md#ipad-and-mac)).
 
 Check: UI `SearchInputUITests`: `testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (the
 sheet, its three buttons, Grade without **Undo** on iPhone only, and closing it, dragged away on
@@ -146,24 +144,24 @@ not match or lifts an incidental match above a direct one. English rows show the
 matched. Matching notes follow ([Notes in Look Up](saved-data.md#notes-in-look-up)).
 
 Check: the recorded `SearchConformanceTests` and `SearchResultsConformanceTests`; package
-`SearchResultOrderingTests`.
+`SearchResultOrderingTests`; core `search/latin-text.test.ts`.
 
-An English query groups its matches, strongest first:
+An English query (`café` too, as typed, then unaccented) groups its matches, strongest first:
 
 1. words whose first meaning is the query, with or without notes in parentheses that end the
    meaning ("dog", "dog (Canis familiaris)", and "soft (and fluffy) (e.g. bed)" count; "to (take
    out and) show" isn't "to"), or, for a verb, "to" and the query;
 2. words where a later meaning is the query;
 3. words whose meanings mention it ("hot dog");
-4. words that match only by romaji: an exact romaji match, then one that starts with the query,
-   then one that contains it, each its own group.
+4. words that match only by romaji: exact, then starting with the query, then containing it, each
+   its own group; then by Romaji's spelling (`rāmen`), then by it without macrons (`ramen`).
 
 Within each group the more common word comes first, so `dog` leads with 犬 and `water` with 水.
 Words the frequency dictionaries don't rank follow, JMdict's common words first, then the earlier
 meaning; romaji that resembles the query (ドッグ for `dog`) only breaks a tie.
 
-Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; the recorded
-`SearchResultsConformanceTests`.
+Check: package `SearchResultOrderingTests` and `EnglishSearchCommonWordTests`; core
+`search/romaji-search.test.ts`; the recorded `SearchResultsConformanceTests` (`rāmen` to `biru`).
 
 Each row shows compact chips such as `JLPT N3` or `YouTube 812`: one for the first enabled
 dictionary, which orders the results (a dash when it doesn't rank the word), then one for each other
@@ -202,12 +200,13 @@ says which dictionary is unavailable. Results can also offer a Japanese-reading 
 Example Sentences, discovered words, and a dedicated Kanji result for a single-kanji query. An
 English query's Example Sentences have its words in any form: `startled you` finds "startle you".
 
-Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a
-dictionary that can't be read named, the others still ordering); core `detail/frequency.test.ts`
-(the notice's words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts`
-(which sentences an English query finds); the recorded `SearchResultsConformanceTests` (the
-refinement, Example Sentences, and Kanji rows) and `ExampleSearchConformanceTests` (`startled you`
-and `generously`); UI `SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
+Check: package `ResultsScreenTests` and `FrequencyListsTests` (a finished first screen; a dictionary
+that can't be read named, the others still ordering); core `detail/frequency.test.ts` (the notice's
+words), `artifact/example-search.test.ts`, and `examples/english-inflection.test.ts` (which
+sentences an English query finds); the recorded `SearchResultsConformanceTests` (the refinement,
+Example Sentences, and Kanji rows), `SentenceResultsConformanceTests` (discovered words), and
+`ExampleSearchConformanceTests` (`startled you` and `generously`); UI
+`SearchResultsUITests.testARomajiQueryOffersItsJapaneseReading`,
 `testAWordOffersItsExampleSentences`, and `SearchUITests.testAQueryWithNoMatchesSaysSo`.
 
 The Example Sentences row opens the query's sentences on a screen titled with the query. Under the
@@ -228,19 +227,20 @@ Mac), and `SearchResultsUITests.testClearingRecentSearchesEmptiesTheList`.
 
 ## Dictionary and kanji details
 
-A word detail can present its written form and reading, ordered meanings, alternative forms, kanji,
-related words, conjugations, source-matched Example Sentences, pronunciation, and frequency
-information when the corresponding data is available. A kana word's examples, such as それで or でも,
-are the sentences Tatoeba's word index links to it, so でも in いつでも does not count. Other words
-match their written forms and reading, in either width NFKC reads as one (Ｔシャツ and Tシャツ).
+A kana word's examples are the sentences Tatoeba's word index links to it (でも not in いつでも); others
+match their written forms and reading, in either width NFKC reads as one (Ｔシャツ, Tシャツ). JMdict's
+checked examples of its meanings lead, even one the spelling misses (食べた for 食べる), and none drops,
+so a list can pass 100. Each meaning shows its first with the page, which skips them if unreadable.
 
-Check: the recorded `WordDetailConformanceTests` and `ExampleSearchConformanceTests`; package
-`KanaHeadwordExampleTests`; core `artifact/example-retrieval.test.ts`.
+Check: the recorded `WordDetailConformanceTests` (each sense's `example`) and
+`ExampleSearchConformanceTests`; package `KanaHeadwordExampleTests`, `MeaningExamplesTests`; core
+`artifact/example-retrieval.test.ts`; UI `WordDetailUITests` (a meaning's example, or none).
 Below the top card, sections appear in this order: Meaning, Frequency, Alternatives (other
 written forms), Kanji, Alternative Kanji, Related Words, Lists, Notes, and Examples.
 
 Check: the recorded `WordDetailConformanceTests`; core `detail/word.test.ts` and
-`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page).
+`embedded/presentation.test.ts`; UI `WordDetailUITests` (Kanji, Lists, and Notes on the page, and
+each row once in its section) and `TranslateUITests.testAWordSheetListsEachRowOnceInItsOwnSection`.
 
 Each meaning opens a menu. **Speak** reads its glosses, each whole as JMdict gives it, in an English
 voice, leaving out a parenthesis that ends one and reading a leading one as words ("dog (Canis
@@ -263,15 +263,15 @@ when even that doesn't fit, the pitch accent moves to its own line under a full-
 the right of the headword are the pitch accent (the reading in katakana with an overline across the
 high morae and a hook at the downstep) in a capsule with a speaker, which pronounces the word when
 tapped, and the latest encounter photo. A word without pitch shows a standalone pronounce button.
-Pitch comes from UniDic; for a two-part compound UniDic doesn't list whole, such as 記者会見, it is
-estimated from the parts' accent-combination types, and a word with neither shows no pitch. A
-part-of-speech row follows and opens the conjugation table when one exists. It names one word class
-and then its modifiers in sentence case without repeating "verb", for example "Godan verb
-(intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
+Pitch is the word's own UniDic accent, never a homophone's (橋 2, 箸 1, 端 0); a compound UniDic lacks
+(記者会見) is estimated from its parts, but not an idiom, a 〜的 word, or an expression, and a word with
+neither has none. A part-of-speech row follows and opens the conjugation table when one exists. It
+names one word class and then its modifiers in sentence case without repeating "verb", for example
+"Godan verb (intransitive)", "Noun · する verb (transitive)", "Adverb (と)", or "Pre-noun adjective".
 
-Check: the recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
-core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package `CompoundPitchTests`; UI
-`WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
+Check: recorded `WordDetailConformanceTests` (furigana, pitch, and the part of speech);
+`UniDicPitchTests`; core `detail/pitch.test.ts` and `detail/part-of-speech.test.ts`; package
+`CompoundPitchTests`; UI `WordDetailUITests.testTappingAKanjiInTheHeadwordHighlightsItsReading` and
 `AccountUITests.testTurningFuriganaOffShowsTheReadingUnderTheHeadword`.
 
 The conjugation table starts with the word, its reading and meaning, its word class, and a one-line
@@ -297,7 +297,7 @@ meaning under it, and **Show Sentence Translations** controls whether sentences 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` and
 `linking.test.ts` (which pieces join into one word), `artifact/word-examples.test.ts` (which words
 are accented), and `detail/text.test.ts` (the short meaning); package `LinkedWordResolutionTests`
-and `WordMeaningTests`; UI `ImageSearchUITests` (a linked word opens its entry).
+and `WordMeaningTests`; UI `ImageSearchUITests`, `WordDetailUITests` (a linked word opens).
 
 On Example Sentences, a word's Examples, and a form's examples, a sentence appears with its words
 linked, furigana, and romaji when Romaji is on: never as plain text first, and at the height it

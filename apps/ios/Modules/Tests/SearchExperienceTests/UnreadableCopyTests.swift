@@ -13,25 +13,11 @@ extension UserDefaults {
   }
 }
 
-final class TemporaryDefaults {
-  let suite = "tests-\(UUID().uuidString)"
-  let defaults: UserDefaults
-
-  init() throws {
-    defaults = try #require(UserDefaults(suiteName: suite))
-  }
-
-  deinit {
-    UserDefaults().removePersistentDomain(forName: suite)
-  }
-}
-
 @Suite("Unreadable copies")
 struct UnreadableCopyTests {
   @Test("a value is moved aside under its own key, and at most three copies are kept")
-  func keepsDefaultsValues() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+  func keepsDefaultsValues() {
+    let defaults = MemoryDefaults()
     for number in 1...4 {
       defaults.set(Data("damaged \(number)".utf8), forKey: "store")
       UnreadableCopy.keep("store", in: defaults)
@@ -44,8 +30,7 @@ struct UnreadableCopyTests {
 
   @Test("the copy just made stays, beside the two newest earlier ones, whatever the clock says")
   func keepsTheNewestCopy() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     let later = "9999999999999"
     for suffix in ["a", "b", "c"] {
       defaults.set(Data("earlier \(suffix)".utf8), forKey: "store.unreadable-\(later)-\(suffix)")
@@ -70,8 +55,7 @@ struct UnreadableCopyTests {
 
   @Test("the same bytes again make no second copy, whether a value or a file")
   func keepsEachDamageOnce() throws {
-    let temporary = try TemporaryDefaults()
-    let defaults = temporary.defaults
+    let defaults = MemoryDefaults()
     for _ in 1...2 {
       defaults.set(Data("damaged".utf8), forKey: "store")
       UnreadableCopy.keep("store", in: defaults)
@@ -96,26 +80,22 @@ struct UnreadableCopyTests {
   }
 
   @Test("a saved value that isn't data is kept aside by Recent, word notes, and the profile")
-  func keepsValuesThatArentData() async throws {
-    let temporary = try TemporaryDefaults()
-    let suite = temporary.suite
+  @MainActor
+  func keepsValuesThatArentData() async {
+    let defaults = MemoryDefaults()
     let keys = ["watch.recent-videos.v1", WordNoteStorage.storageKey, "user-profile.v1"]
-    for key in keys { temporary.defaults.set("not data", forKey: key) }
+    for key in keys { defaults.set("not data", forKey: key) }
 
-    let notes = WordNoteStorage(
-      defaults: try #require(UserDefaults(suiteName: suite)), placing: SavedWords.lookup)
+    let notes = WordNoteStorage(defaults: defaults.opened(), placing: SavedWords.lookup)
     #expect(await notes.load(SavedWords.taberu).isEmpty)
-    try await MainActor.run {
-      let defaults = try #require(UserDefaults(suiteName: suite))
-      #expect(WatchHistory(defaults: defaults).videos.isEmpty)
-      let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
-      #expect(UserProfile(defaults: defaults, photoURL: photoURL).isEmpty)
-    }
+    #expect(WatchHistory(defaults: defaults).videos.isEmpty)
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
+    #expect(UserProfile(defaults: defaults, photoURL: photoURL).isEmpty)
 
     for key in keys {
-      let kept = temporary.defaults.keptValues(of: key).compactMap { $0 as? String }
+      let kept = defaults.keptValues(of: key).compactMap { $0 as? String }
       #expect(kept == ["not data"], "\(key)")
-      #expect(temporary.defaults.object(forKey: key) == nil, "\(key)")
+      #expect(defaults.object(forKey: key) == nil, "\(key)")
     }
   }
 

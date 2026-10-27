@@ -11,7 +11,10 @@ import { localizedPath } from '@/lib/i18n/paths'
 
 export function BrowsePage({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-7 px-4 pt-4 pb-16 md:px-5">
+    <main
+      className="mx-auto flex w-full max-w-5xl flex-col gap-7 px-4 pt-4 pb-16 md:px-5"
+      data-reading-aids
+    >
       {children}
     </main>
   )

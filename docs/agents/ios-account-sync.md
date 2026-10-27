@@ -6,6 +6,10 @@ upload, each entity's own handling, when it syncs, deleting the account, and the
 service a build signs in to, Apple, Google, and the tokens are in [`ios.md`](ios.md), Account and
 sync; what the learner sees is in the product docs'
 [Zenbu account and sync](../../apps/ios/docs/product/account-sync.md).
+What the app takes as a profile name, a username, a sign-in code, a list's name, a note, or a
+watch's fields (a whole first upload's watches in one call) it asks the account rules' own JavaScriptCore engine (`AccountRules.swift`, from
+`Resources/AccountRules/account-rules.js`; [`account-rules.md`](account-rules.md)), so it holds
+input to the rules the account service and the website do.
 
 - **The queue.** `account-sync.json`, beside the stores, holds the account's ID and email, the
   queue, the cursor, the last sync, each entity's server version, and list words waiting for their
@@ -83,7 +87,7 @@ sync; what the learner sees is in the product docs'
     when the store's note changed underneath it, compared as the service keeps text (NFC, one kind
     of line break, other control characters as spaces), the edit is saved as a new note, unless
     it's the newer text already, and a deletion leaves the newer text. The page loads the word's
-    notes again after each save, so after a split it edits the new note. A note refused `invalid_fields` or `too_many_notes` is kept from the
+    notes again after each save, so after a split it edits the new note. Zenbu Account counts the notes refused for their length (`longNotes`). A note refused `invalid_fields` or `too_many_notes` is kept from the
     account's copies, and its version from moving, until the learner changes it (`refusedNotes`).
   - **Photos.** A photo's `add`, or the profile photo's `set`, uploads its file first
     (`PUT /v1/photos/{id}`, the bytes as the Media Library or the profile keeps them). A request
@@ -154,7 +158,8 @@ sync; what the learner sees is in the product docs'
     `FrequencyPackDownloads`, so Frequency Dictionaries shows their progress and a tap never starts
     a second one, with a request that refuses cellular and Low Data Mode (`quietDownload`), and
     without marking a pack failed; each launch's first sync resumes them.
-  - **Recent searches.** A search's ID is the HMAC-SHA256 of its query in NFC under the account's
+  - **Recent searches.** Two searches from one moment sort by their IDs, as the account prunes them.
+    A search's ID is the HMAC-SHA256 of its query in NFC under the account's
     `searchKey`, which each sync answer carries and the file keeps. The store reports searches by
     their query, and `AccountSync` names them under the key; until the first answer brings it,
     nothing about searches is queued, and a removal is held by its query
@@ -197,8 +202,10 @@ sync; what the learner sees is in the product docs'
   files have loaded) when changes are queued or the last sync is over 15 minutes old, in a
   `BGAppRefreshTask` (`com.zenbujapanese.dictionary.account-sync`, scheduled 15 minutes out on going
   to the background, and stopped when iOS ends it), and on **Sync Now**. Never on a timer. A network
-  failure, `5xx`, or a `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at random, and
-  retries by itself at most 10 times, only in the foreground; a local change or becoming active
+  failure (a lost connection, `unreachable`, or any other transport error, `transportFailed`, which
+  is [reported](ios-crash-reports.md#handled-failures) where a lost connection isn't), `5xx`, or a
+  `410` during a full read waits 2 seconds, doubling up to 5 minutes, at half to all of that at
+  random, and retries by itself at most 10 times, only in the foreground; a local change or becoming active
   waits it out too, and **Sync Now** doesn't. `429` waits what `Retry-After` says, whatever starts
   the sync. `402` (not subscribed), from the sync or a photo's upload or download, keeps every change queued
   and waits for the next change, launch, or **Sync Now**: it's never tried again by itself.
@@ -213,11 +220,14 @@ sync; what the learner sees is in the product docs'
 against a stub server (`StubAccountServer`, a `URLProtocol`, which answers on the one thread
 every stubbed request in the test process shares, so it never waits there: a reply a test holds
 is a `LaterReply`, sent when the test says, and `asked()` awaits its request;
-`StubAccountServerTests`):
+`StubAccountServerTests`; each phone's defaults are in memory, `MemoryDefaults`, and each search it
+records comes a millisecond or more after the last, `LaterEachTime`, as a learner's do, since the
+account keeps a search's time to the millisecond and searches within one come back in no order):
 sign-in, tokens and their refresh, the queue and cursor across a relaunch, retries under the same
 mutation IDs, each entity's conflicts and rejections, order and paging, list words held across a
 failed page, the request size, `410` and full reads dropping only what the account forgets, even
-when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, and signing out and deleting, which keep
+when cut off, and waiting rather than looping on a `410` within one, `429` and backoff, a transport
+error told from a lost connection, and signing out and deleting, which keep
 the phone's data. `AccountSignedOutTests` runs against `FakeAccountService`, a small copy of the
 service's sync rules (`FakeAccountService+Kept.swift` holds the six newer entities', with emptied
 photos and their `emptied` mark, the search key, the two kinds of `404`, pages, and `410` once it

@@ -107,7 +107,7 @@ struct SearchLatencyTests {
         let elapsed = Self.value(
           await clock.measure {
             for sentence in sentences {
-              _ = await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil)
+              _ = await analysis.linkedTokens(sentence.japanese)
             }
           })
         if pass { first.append(elapsed) } else { again.append(elapsed) }
@@ -167,7 +167,7 @@ struct SearchLatencyTests {
       "SEARCH-LATENCY the kanji files read in \(Self.milliseconds(files)); an engine starts "
         + "and draws its first furigana in " + Self.summary(starts))
 
-    let listed = try PresentationCore.freshInstall()
+    let listed = try await PresentationCore.freshInstall()
     var byDefault: [Double] = []
     var sorted: [Double] = []
     var entries: [DictionaryEntry] = []
@@ -209,10 +209,6 @@ struct SearchLatencyTests {
         })
     }
     print("SEARCH-LATENCY a word's furigana, uncached: " + Self.summary(furigana))
-    let glosses = words.compactMap(\.meanings.first).map { meaning in
-      Self.value(clock.measure { _ = unused.gloss(meaning) })
-    }
-    print("SEARCH-LATENCY a short meaning, uncached: " + Self.summary(glosses))
     let queries = (0..<200).map { index in
       Self.value(clock.measure { _ = SearchQuery("ＮＩＨＯＮ　go \(index)") })
     }
@@ -310,7 +306,7 @@ struct SearchLatencyTests {
     let analysis = JapaneseTextAnalysisClient.live()
     var words = 0
     for example in await Self.listed("食べる").prefix(40) {
-      words += await analysis.linkedTokens(example.sentence.japanese, SearchQuery(""), nil).count
+      words += await analysis.linkedTokens(example.sentence.japanese).count
     }
     report("the tokenizer's start and \(words) linked words")
     let kanji = KanjiLookupClient.live(lookupClient: .live)
@@ -398,6 +394,57 @@ struct SearchLatencyTests {
     print(
       "SEARCH-LATENCY \(scalars.count) kanji checks: \(Self.milliseconds(checked)) first, "
         + "\(Self.milliseconds(checkedAgain)) again")
+  }
+
+  static let romajiQueries: KeyValuePairs<String, [String]> = [
+    "stored": [
+      "raamen", "kinen", "tsuzuku", "fuiru", "o", "koohii", "biiru", "konnichiha", "gakkou",
+      "toukyou", "taberu", "sensei", "nihongo", "maccha", "shashin",
+    ],
+    "shown": [
+      "rāmen", "kin'en", "tsudzuku", "fairu", "wo", "kōhī", "bīru", "kon'nichiha", "matcha",
+      "chekku", "āgairu chekku", "tī", "hanadji", "sētā", "dēta",
+    ],
+    "unmarked": ["ramen", "kohi", "biru", "seta", "deta", "konpyuta", "supa", "kare", "pati"],
+    "typing": ["k", "ka", "kin", "kin'", "kin'e", "ts", "tsu", "tsud", "r", "ra", "f", "fa", "w"],
+    "english": ["dog", "water", "the", "a", "to eat", "file", "beer", "coffee"],
+  ]
+
+  @Test("prints how long each romaji query takes uncached, and each spelling's queries together")
+  func measureRomaji() async throws {
+    let data = LanguageReferenceData(validatesBundledArtifact: false)
+    let clock = ContinuousClock()
+    _ = try await data.search(SearchQuery("zenbu"))
+    var all: [Double] = []
+    for (kind, queries) in Self.romajiQueries {
+      var timings: [Double] = []
+      var byQuery: [String: [Double]] = [:]
+      for _ in 0..<Self.passes {
+        for query in queries {
+          let elapsed = try await clock.measure {
+            _ = try await data.results(answered: try await data.answeredSearch(SearchQuery(query).value))
+          }
+          timings.append(Self.value(elapsed))
+          byQuery[query, default: []].append(Self.value(elapsed))
+        }
+      }
+      all += timings
+      for query in queries {
+        let sorted = (byQuery[query] ?? []).sorted()
+        print(
+          "SEARCH-LATENCY romaji query, \(kind)\t\(query)\tmedian "
+            + String(format: "%.2f", sorted[sorted.count / 2]) + " ms")
+      }
+      print("SEARCH-LATENCY romaji, \(kind): " + Self.percentiles(timings))
+    }
+    print("SEARCH-LATENCY romaji, all: " + Self.percentiles(all))
+  }
+
+  static func percentiles(_ timings: [Double]) -> String {
+    let sorted = timings.sorted()
+    let at = { (share: Double) in sorted[min(sorted.count - 1, Int(Double(sorted.count) * share))] }
+    return String(
+      format: "median %.2f ms, p95 %.2f ms, total %.0f ms", at(0.5), at(0.95), timings.reduce(0, +))
   }
 
   static func listed(_ word: String) async -> [LinkedExample] {

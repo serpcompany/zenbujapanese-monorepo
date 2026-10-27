@@ -14,6 +14,8 @@ from jmdict_normalization import (
     FORM_KIND_ROMAJI,
     FORM_KIND_WRITTEN,
     choose_primary,
+    english_glosses,
+    gloss_search_text,
     jmdict_entity_codes,
     language_reference_id,
     legacy_note_parts_of_speech,
@@ -22,18 +24,19 @@ from jmdict_normalization import (
     normalize_usage_notes,
     normalized_cross_reference,
     normalized_priority_profile,
-    normalized_text,
     priority_score,
-    romanize_kana,
     semantic_fingerprint,
     text_values,
 )
+from jmdict_romaji import SearchForms, search_forms
 
-EXPECTED_PRIORITY_PROFILE_COUNT = 56_127
-EXPECTED_GLOSS_ATOM_COUNT = 441_826
-EXPECTED_SENSE_COUNT = 253_020
-EXPECTED_SENSE_RESTRICTION_COUNT = 1_929
-EXPECTED_READING_RESTRICTION_COUNT = 6_201
+EXPECTED_EVIDENCE_COUNTS = {
+    "form_priority_profiles": 56_153,
+    "canonical_senses": 253_844,
+    "gloss_atoms": 443_818,
+    "sense_form_restrictions": 1_922,
+    "reading_form_restrictions": 6_184,
+}
 
 
 @dataclass
@@ -46,9 +49,14 @@ class ImportedEntries:
     retained_source_ids_sha256: str
     evidence_counts: dict[str, int]
     search_index: dict[str, object]
+    forms: SearchForms
 
 
-def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntries:
+def import_entries(
+    database: sqlite3.Connection,
+    source: Path,
+    expected_counts: dict[str, int] = EXPECTED_EVIDENCE_COUNTS,
+) -> ImportedEntries:
     retained = 0
     rejected = 0
     form_count = 0
@@ -62,6 +70,8 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
     entry_records: list[dict[str, object]] = []
     form_to_entry_ids: dict[str, list[bytes]] = {}
     lexical_payload_by_fingerprint: dict[bytes, str] = {}
+    forms = search_forms(source)
+    fold = forms.fold
     with gzip.open(source, "rb") as xml_source:
         for _, entry in ET.iterparse(xml_source, events=("end",)):
             if entry.tag != "entry":
@@ -71,15 +81,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
             readings = entry.findall("r_ele")
             written_forms = entry.findall("k_ele")
             senses = entry.findall("sense")
-            sense_glosses = [
-                [
-                    (gloss.text or "").strip()
-                    for gloss in sense.findall("gloss")
-                    if (gloss.text or "").strip()
-                    and gloss.attrib.get("{http://www.w3.org/XML/1998/namespace}lang", "eng") == "eng"
-                ]
-                for sense in senses
-            ]
+            sense_glosses = [english_glosses(sense) for sense in senses]
             meaning_groups = [", ".join(group) for group in sense_glosses if group]
             glosses = [gloss for group in sense_glosses for gloss in group]
 
@@ -150,19 +152,11 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
             for sense_order, (sense, meaning_group) in enumerate(zip(senses, sense_glosses)):
                 sense_pos_labels = text_values(sense, "pos")
                 sense_parts_of_speech = normalize_parts_of_speech(sense_pos_labels, entity_codes)
-                restricted_written_forms = [
-                    normalized_text(value) for value in text_values(sense, "stagk")
-                ]
-                restricted_reading_forms = [
-                    normalized_text(value) for value in text_values(sense, "stagr")
-                ]
-                if not set(restricted_written_forms) <= {
-                    normalized_text(value) for value in written_values
-                }:
+                restricted_written_forms = [fold(value) for value in text_values(sense, "stagk")]
+                restricted_reading_forms = [fold(value) for value in text_values(sense, "stagr")]
+                if not set(restricted_written_forms) <= {fold(value) for value in written_values}:
                     raise ValueError("sense written-form restriction is not an entry form")
-                if not set(restricted_reading_forms) <= {
-                    normalized_text(value) for value in reading_values
-                }:
+                if not set(restricted_reading_forms) <= {fold(value) for value in reading_values}:
                     raise ValueError("sense reading-form restriction is not an entry form")
                 canonical_senses.append(
                     {
@@ -178,7 +172,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                     )
                 if not meaning_group:
                     continue
-                notes = normalize_usage_notes(text_values(sense, "misc"))
+                notes = normalize_usage_notes(text_values(sense, "misc"), entity_codes)
                 notes.extend(note for note in text_values(sense, "s_inf") if note not in notes)
                 normalized_senses.append(
                     {
@@ -199,23 +193,23 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                     parsed_reference = normalized_cross_reference(reference)
                     if parsed_reference and parsed_reference not in cross_references:
                         cross_references.append(parsed_reference)
+            romaji = forms.romaji[tuple(reading_values)]
             form_records = list(
                 dict.fromkeys(
-                    [(normalized_text(value), FORM_KIND_WRITTEN) for value in written_values]
-                    + [(normalized_text(value), FORM_KIND_READING) for value in reading_values]
-                    + [
-                        (romanize_kana(value), FORM_KIND_ROMAJI)
-                        for value in reading_values if romanize_kana(value)
-                    ]
+                    [(fold(value), FORM_KIND_WRITTEN) for value in written_values]
+                    + [(fold(value), FORM_KIND_READING) for value in reading_values]
+                    + [(form, kind) for form, kind in romaji if kind == FORM_KIND_ROMAJI]
                 )
             )
+            shown_romaji_records = [(form, kind) for form, kind in romaji if kind != FORM_KIND_ROMAJI]
 
             priority_records = []
             for element, form_tag, priority_tag, kind in (
                 *((element, "keb", "ke_pri", FORM_KIND_WRITTEN) for element in written_forms),
                 *((element, "reb", "re_pri", FORM_KIND_READING) for element in readings),
             ):
-                form = normalized_text((element.findtext(form_tag) or "").strip())
+                value = (element.findtext(form_tag) or "").strip()
+                form = fold(value) if value else ""
                 tags = text_values(element, priority_tag)
                 if not form or not tags:
                     continue
@@ -223,7 +217,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                 priority_records.append((entry_id, form, kind, primary_mask, secondary_mask, band))
 
             reading_restrictions = [
-                (entry_id, normalized_text((element.findtext("reb") or "").strip()), normalized_text(value))
+                (entry_id, fold((element.findtext("reb") or "").strip()), fold(value))
                 for element in readings
                 for value in text_values(element, "re_restr")
             ]
@@ -266,7 +260,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                     json.dumps(cross_references, ensure_ascii=False, separators=(",", ":")),
                     "[]",
                     None,
-                    normalized_text(" | ".join(glosses)),
+                    fold(gloss_search_text(glosses)),
                     int(display_common),
                     priority_score(written_forms + readings),
                     fingerprint,
@@ -278,6 +272,10 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                     (entry_id, form, kind)
                     for form, kind in form_records
                 ],
+            )
+            database.executemany(
+                "INSERT INTO shown_romaji_forms(entry_id, form, kind) VALUES (?, ?, ?)",
+                [(entry_id, form, kind) for form, kind in shown_romaji_records],
             )
             database.executemany(
                 "INSERT INTO form_priority_profiles VALUES (?, ?, ?, ?, ?, ?)",
@@ -314,7 +312,7 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
                         atom["senseOrder"],
                         atom["glossOrder"],
                         atom["text"],
-                        normalized_text(str(atom["text"])),
+                        fold(str(atom["text"])),
                     )
                     for atom in gloss_atoms
                 ],
@@ -366,13 +364,6 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
         "sense_form_restrictions": sense_restriction_count,
         "reading_form_restrictions": reading_restriction_count,
     }
-    expected_counts = {
-        "form_priority_profiles": EXPECTED_PRIORITY_PROFILE_COUNT,
-        "canonical_senses": EXPECTED_SENSE_COUNT,
-        "gloss_atoms": EXPECTED_GLOSS_ATOM_COUNT,
-        "sense_form_restrictions": EXPECTED_SENSE_RESTRICTION_COUNT,
-        "reading_form_restrictions": EXPECTED_READING_RESTRICTION_COUNT,
-    }
     if actual_counts != expected_counts:
         raise ValueError(f"dictionary ranking evidence count mismatch: {actual_counts}")
 
@@ -393,6 +384,14 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
             );
             INSERT INTO dictionary_form_fts(docid, form)
             SELECT rowid, form FROM forms ORDER BY rowid;
+
+            CREATE VIRTUAL TABLE shown_romaji_fts USING fts4(
+              form,
+              content='shown_romaji_forms',
+              tokenize=simple
+            );
+            INSERT INTO shown_romaji_fts(docid, form)
+            SELECT rowid, form FROM shown_romaji_forms ORDER BY rowid;
             """
     )
     dictionary_search_index = {
@@ -410,4 +409,5 @@ def import_entries(database: sqlite3.Connection, source: Path) -> ImportedEntrie
         retained_source_ids_sha256=retained_source_ids.hexdigest(),
         evidence_counts=actual_counts,
         search_index=dictionary_search_index,
+        forms=forms,
     )

@@ -14,7 +14,7 @@ struct KanjiDetailConformanceTests {
   func kanjiDetailMatchesSuite() async throws {
     let url = DetailConformance.suiteURL("kanji-detail.json")
     var suite = try JSONDecoder().decode(KanjiDetailSuite.self, from: Data(contentsOf: url))
-    let artifacts = try DetailConformance.artifacts(Self.artifactNames)
+    let artifacts = try await DetailConformance.artifacts(Self.artifactNames)
     let observer = KanjiDetailObserver()
     #expect(KanjiPage.sectionsWithoutContent.map { $0.title.uppercased() } == ["LISTS", "NOTES"])
 

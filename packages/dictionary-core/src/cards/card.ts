@@ -53,7 +53,7 @@ export type CardRows = Pick<WordRows, 'entry' | 'frequency' | 'kanji'>
 
 export function wordCard(rows: CardRows, ranks: ListRanks): WordCard {
   const { entry } = rows
-  const detail = wordDetail({ ...rows, examples: [], exampleCount: null })
+  const detail = wordDetail({ ...rows, examples: [], exampleCount: null, senseExamples: [] })
   const pitchRow = shownPitch(entry)
   const jlpt = rows.frequency.find(row => row.pack === 'jlpt')
   const youtube = rows.frequency.find(row => row.pack === 'tubelex')

@@ -4,10 +4,12 @@
     "generated": {
       "apps/web/cloudflare-env.d.ts": "wrangler types (pnpm cf-typegen in apps/web)",
       "pnpm-lock.yaml": "pnpm install",
+      "patches/*.patch": "pnpm patch-commit (pnpm patch <package> in the repository root, then pnpm patch-commit on its folder)",
       "apps/account-api/migrations/**": "drizzle-kit (pnpm db:generate in apps/account-api)",
       "apps/account-api/openapi.json": "the account service's tests (pnpm test -u in apps/account-api)",
       "apps/dictionary-api/openapi.json": "the dictionary service's tests (pnpm test -u in apps/dictionary-api)",
       "apps/ios/Modules/Sources/SearchExperience/Resources/DictionaryCore/dictionary-core.js": "esbuild (pnpm bundle:javascriptcore in packages/dictionary-core)",
+      "apps/ios/Modules/Sources/SearchExperience/Resources/AccountRules/account-rules.js": "esbuild (pnpm bundle:javascriptcore in packages/account-rules)",
       "**/*.{pbxproj,xcscheme,xcworkspacedata}": "Xcode",
       "**/Package.resolved": "Swift Package Manager"
     },
@@ -15,7 +17,8 @@
       "apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**": "Kuromoji",
       "apps/ios/Modules/Sources/SearchExperience/Resources/SudachiRuntime/**": "Sudachi",
       "language-data/notices/**": "the language data sources",
-      "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them"
+      "language-data/sources/Kanji-JLPT-Waller-*/*.html": "Jonathan Waller's tanos.co.uk pages, as the Wayback Machine captured them",
+      "language-data/tools/tests/fixtures/jmdict-*.xml": "excerpts of EDRDG's JMdict_e and JMdict_e_examp exports of 2026-10-23, as published"
     },
     "pinned": {
       "apps/ios/Modules/Sources/SearchExperience/Resources/FrequencyPackMappingV{1,2}.sql": "every published frequency pack's mappingPolicySHA256"
@@ -534,6 +537,50 @@
         ]
       },
       {
+        "folder": "packages/account-rules",
+        "sources": [
+          "src"
+        ],
+        "testCode": "(\\.test\\.ts$|^src/test/)",
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.ts$|^src/test/)"
+        },
+        "rules": [
+          {
+            "name": "account-rules-need-no-runtime",
+            "severity": "error",
+            "comment": "The account rules run in the account service and in the learner's browser, so they import no runtime, framework, or package (docs/agents/account-rules.md). Take what a rule needs as a parameter, or import only types.",
+            "from": {
+              "path": "^src/",
+              "pathNot": "(\\.test\\.ts$|^src/test/)"
+            },
+            "to": {
+              "dependencyTypes": [
+                "core",
+                "npm",
+                "npm-dev",
+                "npm-optional",
+                "npm-peer",
+                "npm-no-pkg"
+              ],
+              "dependencyTypesNot": [
+                "type-only"
+              ]
+            }
+          },
+          {
+            "name": "account-rules-import-no-client",
+            "severity": "error",
+            "comment": "The account rules are shared by the account service and the website, so they import neither, nor any repository tool (ARCHITECTURE.md, Layers). Pass in what a rule needs.",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          }
+        ]
+      },
+      {
         "folder": "packages/node-service",
         "sources": [
           "src"
@@ -672,11 +719,11 @@
         "reason": "over its budget when the check arrived"
       },
       "apps/web/docs/product/dictionary.md": {
-        "lines": 1286,
+        "lines": 1076,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/account-api.md": {
-        "lines": 860,
+        "lines": 851,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/account-clients.md": {
@@ -688,7 +735,7 @@
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/dictionary-api.md": {
-        "lines": 543,
+        "lines": 517,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/dictionary-core.md": {
@@ -696,7 +743,7 @@
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/ios.md": {
-        "lines": 1177,
+        "lines": 1175,
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/translate.md": {
@@ -704,7 +751,7 @@
         "reason": "over its budget when the check arrived"
       },
       "docs/agents/web.md": {
-        "lines": 808,
+        "lines": 807,
         "reason": "over its budget when the check arrived"
       }
     },
@@ -714,8 +761,8 @@
         "proves": "nothing: they are comesTrue's wait between two looks, waitUntilStill's second between two looks at a frame, and the 0.3 s between the warm-up touch and the gesture it wakes the Simulator's touch system for"
       },
       "apps/ios/UITests/ExampleRowsUITests.swift": {
-        "pauses": 2,
-        "proves": "no row changes its height, and the opened sentence keeps its place, once held answers are let go"
+        "pauses": 1,
+        "proves": "no row changes its height, and the opened sentence keeps its place, once held answers are let go, in ExampleRowsUITests and LinkedRowsUITests"
       },
       "apps/ios/UITests/LayoutUITests.swift": {
         "pauses": 1,

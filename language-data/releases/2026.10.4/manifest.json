@@ -85,8 +85,8 @@
       "name": "LanguageReferenceData.sqlite3",
       "artifact_schema": "zenbu.language-reference.v2",
       "schema_source": "plan",
-      "sha256": "02185294cb22c112c208a95e712ae38b0b2deee86c71d10748cdedec9baec080",
-      "bytes": 502886400,
+      "sha256": "3db756eb0ab283b4528adf0193f2e52edd8c479bdbe292d36f8caf7e01995fed",
+      "bytes": 483622912,
       "depends_on": [],
       "row_counts": {
         "canonical_senses": 253020,
@@ -111,13 +111,13 @@
       "name": "CompoundPitch.sqlite3",
       "artifact_schema": "zenbu.compound-pitch.v1",
       "schema_source": "file",
-      "sha256": "2fc9ea76d9a996573cac27b39ae935b04136aedeaa9059825353821e369255ce",
+      "sha256": "95ac9930870679e632bfb1904ccb305c8ef28bc49d61ecdd3dbb285beffcf915",
       "bytes": 1810432,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
       ],
       "row_counts": {
-        "entry_pitch": 16193,
+        "entry_pitch": 16195,
         "metadata": 4
       }
     },
@@ -125,7 +125,7 @@
       "name": "ExampleWordIndex.sqlite3",
       "artifact_schema": "zenbu.example-word-index.v1",
       "schema_source": "file",
-      "sha256": "738de985a600be79a4c002421db5f7baf0b54950c6bea2fa5bdef40704e884b0",
+      "sha256": "1eb5f1b8545c23522b0e1b6f45d9ef51f632d6451ae64af96f9ed4f0956efb47",
       "bytes": 2904064,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
@@ -139,7 +139,7 @@
       "name": "JLPTLevelPack.sqlite3",
       "artifact_schema": "zenbu.level-pack.v1",
       "schema_source": "file",
-      "sha256": "72e1f5438251396544722d974df81f8afef2bc3394dea7b84d4885fde2c5e760",
+      "sha256": "e1ab385a81e7bf24793bbc5e2036918e750c12b9eadc0f11ecfa1600ac32c579",
       "bytes": 188416,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
@@ -153,7 +153,7 @@
       "name": "TUBELEXFrequencyPack.sqlite3",
       "artifact_schema": "zenbu.frequency-pack.v1",
       "schema_source": "file",
-      "sha256": "4ed98fb01cceac21a85b676b570300fc866502a24eed7c6ec7ac356768317da5",
+      "sha256": "a2887c91ebef445b2e90df87deb2e2a8f729d3f5844f8fe49fd425cbf80b79cb",
       "bytes": 8314880,
       "depends_on": [
         "LanguageReferenceData.sqlite3",
@@ -168,7 +168,7 @@
       "name": "RankedLists.sqlite3",
       "artifact_schema": "zenbu.ranked-lists.v1",
       "schema_source": "file",
-      "sha256": "9f247f6966caf9089b81d7037c7daadc690146a1587100485664fdc0ca4c28ee",
+      "sha256": "f27003e80a413e0b6513de60c3be106ff1bbc5734ed502802ad8a21818f38292",
       "bytes": 19587072,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
@@ -315,7 +315,7 @@
       "name": "DictionaryRankingArtifactContract.json",
       "artifact_schema": "zenbu.dictionary-ranking-contract.v1",
       "schema_source": "plan",
-      "sha256": "14212aa3837adc5bfb1ad5f452b90c87cb09fb44756ea3f1196c9b712fa2f571",
+      "sha256": "fe35dd91d2a99bf7e4908cfba2b3f039487deab32db2a426df602159b8fca171",
       "bytes": 1419,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
@@ -325,7 +325,7 @@
       "name": "FrequencyPackCatalog.json",
       "artifact_schema": null,
       "schema_source": "undeclared",
-      "sha256": "c9d4a99056b2784cc7698b56e09152394eb17d22b45af6c4f4d4d259129e85c8",
+      "sha256": "16bcc1ab1586105d7e5f28b2ddf9f1ce3191b44371e4321e6894e625bdd9f5ed",
       "bytes": 100387,
       "depends_on": [
         "LanguageReferenceData.sqlite3",
@@ -443,7 +443,7 @@
       "name": "RetiredEntries.json",
       "artifact_schema": "zenbu.retired-entries.v1",
       "schema_source": "file",
-      "sha256": "c636bcf799d090aa5157cc4fda6c8cc160e665abc0845b9268fd22a45decd278",
+      "sha256": "4d25c5f3fb5f22d05cb799ea877829467d99ada9ec5bd8f71f658902fa4abf01",
       "bytes": 154,
       "depends_on": [
         "LanguageReferenceData.sqlite3"
@@ -460,31 +460,31 @@
     {
       "name": "search-retrieval.json",
       "suite": "zenbu.search-retrieval-conformance",
-      "sha256": "db7229676a86e52820424cceb3af630d834664069e1bc697bc61ef60b1e89fab",
+      "sha256": "913e317271504d2f7ac90e9cbd6cf176c8a252415484f02f6e998f5a78a2edc7",
       "bytes": 44905
     },
     {
       "name": "search-results.json",
       "suite": "search-results",
-      "sha256": "00b825fd56b27194e6a2047454a5156c2c1f7a6a3303ea75d032467ad962f285",
+      "sha256": "0372686860ca6dbccbe4cbc2950b21b8a90019fc2ae7212353264dab738c46a5",
       "bytes": 1451455
     },
     {
       "name": "example-search.json",
       "suite": "example-search",
-      "sha256": "eb179f5f9518ef9d526bedafc0e901f8cc1f8f4880fc65820dca1751bce5764c",
+      "sha256": "431bbc33674cf67a0577751be1036306857a9837f4e571f08ee6623fe5954f4c",
       "bytes": 542489
     },
     {
       "name": "word-detail.json",
       "suite": "word-detail",
-      "sha256": "de7249fc924ddaf5c05546c28c41ce99d84e17b5e35f03fb9f569353077729c0",
-      "bytes": 4289120
+      "sha256": "36093ceed28a091bf01f088552443ca629a9bc2ac7a4560e85e511d70ce39d55",
+      "bytes": 4315426
     },
     {
       "name": "kanji-detail.json",
       "suite": "kanji-detail",
-      "sha256": "60ac73dc7df139bf7814ab88048ec62d853c0fb06dceb4366e17b9c085fc4706",
+      "sha256": "ec22dec54f7291ebe26a3844c0b8059a046e6f3fc710276a0402b2124acb42d6",
       "bytes": 233964
     },
     {

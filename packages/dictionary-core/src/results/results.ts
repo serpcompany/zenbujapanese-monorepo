@@ -183,9 +183,10 @@ export function searchResultsScreen(
   rawQuery: string,
   results: SearchResults,
   frequency: FrequencyByEntry,
-  exampleCount = 0
+  exampleCount = 0,
+  pickedKanji = false
 ): SearchResultsScreen {
-  const layout = resultsLayout(rawQuery, listedResults(results), exampleCount)
+  const layout = resultsLayout(rawQuery, listedResults(results), exampleCount, pickedKanji)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query }
   const shown = layout.isDiscovered
     ? layout.presented

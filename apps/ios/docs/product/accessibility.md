@@ -16,3 +16,10 @@ show a sheet, and the iPhone leaves the Dynamic Type audit out of Apple's Image 
 Search's Text view, whose text is one size larger than the device's and whose rows the audit loses
 as they are laid out again; there, Dynamic Type is checked by the text-clipped audit and the
 largest-size pass. VoiceOver is by hand, on a device.
+
+A linked word on a word's page, in a form's examples, and in a caption is at least 44 points tall,
+and a tap or click anywhere in that height opens it, above kana without furigana too, on the Mac as
+on the iPhone and iPad.
+
+Check: UI `WordDetailUITests.testAMeaningShowsItsCheckedExample` (the middle of 吠える) and
+`ExampleRowsUITests.testAConjugatedFormsExamplesArriveLinkedAndAWordOpens`.

@@ -17,12 +17,6 @@ struct DictionaryEntry: Hashable, Identifiable, Sendable {
   let compoundPitch: PitchAccent?
   let isCommon: Bool
 
-  var shortMeaning: String? { Self.shortMeaning(from: meanings) }
-
-  static func shortMeaning(from meanings: [String]) -> String? {
-    meanings.first.flatMap(PresentationCore.shared.gloss)
-  }
-
   func withSourceProvenances(_ provenances: [LanguageReferenceProvenance]) -> DictionaryEntry {
     DictionaryEntry(
       id: id,

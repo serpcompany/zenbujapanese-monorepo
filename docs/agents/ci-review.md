@@ -205,8 +205,8 @@ happened or its result was lost:
 - **It reviews the pushes `@claude` and agents make.** `allowed_bots` names `claude[bot]`,
   `serp-agent[bot]`, and `Copilot`, so the review runs on a push an `@claude` request made to the
   pull request, or one an agent or Copilot's coding agent made, whose actor is then a bot. A pull
-  request `claude[bot]`, `dependabot[bot]`, or `renovate[bot]` opened, such as a gardening one,
-  isn't reviewed.
+  request `claude[bot]`, `dependabot[bot]`, or `renovate[bot]` opened isn't reviewed. The gardening
+  jobs' pull requests are `github-actions[bot]`'s ([`ci-agents.md`](ci-agents.md)).
 - **Subagents stay in the foreground** (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`). Claude Code runs
   them in the background by default, and the action stops at Claude's first result, so a review
   would end green having posted nothing (anthropics/claude-code-action#1646).
@@ -246,7 +246,7 @@ last step would post is written to a file instead.
    version the runner does, put `npx -y @anthropic-ai/claude-code@<version>` where the command
    says `claude`. The version is `claudeCodeVersion` in the pinned action's
    `src/entrypoints/run.ts`, and `claude_code_version` in the first message of any kept
-   transcript: 2.1.295 at the pin of 2026-10-13.
+   transcript: 2.1.308 at the pin of 2026-10-22.
 3. `node tools/checks/review-dry-run.mjs verdict <folder> <transcript>` runs the workflow's own
    `first` step on the transcript. When it asks for a second attempt, the correction is already
    at the end of the context: run the command again, then `verdict` with `last` after the

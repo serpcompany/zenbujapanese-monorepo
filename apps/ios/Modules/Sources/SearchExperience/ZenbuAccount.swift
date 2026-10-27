@@ -22,6 +22,7 @@ final class ZenbuAccount {
       store: LaunchHarness.appStorePurchases ?? StoreKitPurchases(),
       providers: LaunchHarness.signInProviders ?? .system)
     account.startSubscription()
+    AccountRules.shared.prepareSoon()
     return account
   }
 
@@ -149,7 +150,7 @@ final class ZenbuAccount {
         try await api.deleteAccount(
           accessToken: token, appleAuthorizationCode: appleAuthorizationCode)
       }.appStoreSubscriptionContinues
-    } catch AccountServiceError.unreachable {
+    } catch AccountServiceError.unreachable, AccountServiceError.transportFailed {
       guard try await accountIsGone() else { throw AccountServiceError.unreachable }
     } catch AccountServiceError.sessionEnded {
       sync.endSession(onItsOwn: true)
@@ -226,8 +227,7 @@ final class ZenbuAccount {
   }
 
   private func emailSignIn(email: String, code: String) async throws -> AccountSignIn {
-    try await api.signIn(
-      email: Self.normalized(email), code: code.trimmingCharacters(in: .whitespacesAndNewlines))
+    try await api.signIn(email: Self.normalized(email), code: code)
   }
 
   private func appleSignIn() async throws -> (signIn: AccountSignIn, authorizationCode: String) {

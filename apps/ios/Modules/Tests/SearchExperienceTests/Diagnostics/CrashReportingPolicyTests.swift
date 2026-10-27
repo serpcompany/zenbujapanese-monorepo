@@ -88,9 +88,7 @@ struct CrashReportingPolicyTests {
 
   @Test("the offline switch gives Sentry a connection that never reaches the network")
   func offlineSwitchCutsTheConnection() async throws {
-    let suite = "crash-reporting-offline-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     #expect(CrashReportTest.offlineSession(defaults: defaults) == nil)
     defaults.set(true, forKey: CrashReportTest.offlineKey)
     let session = try #require(CrashReportTest.offlineSession(defaults: defaults))
@@ -105,9 +103,7 @@ struct CrashReportingPolicyTests {
 
   @Test("crash reports are on until the switch turns them off")
   func onUntilTurnedOff() throws {
-    let suite = "crash-reporting-tests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     #expect(CrashReportingPolicy.sendsCrashReports(in: defaults))
     defaults.set(false, forKey: CrashReportingPolicy.preferenceKey)
     #expect(!CrashReportingPolicy.sendsCrashReports(in: defaults))
@@ -117,9 +113,7 @@ struct CrashReportingPolicyTests {
 
   @Test("the install ID is a random UUID made once and kept")
   func installIDIsMadeOnceAndKept() throws {
-    let suite = "crash-reporting-install-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     let id = CrashReportingPolicy.installID(defaults: defaults)
     #expect(UUID(uuidString: id) != nil)
     #expect(CrashReportingPolicy.installID(defaults: defaults) == id)
@@ -146,9 +140,7 @@ struct CrashReportingPolicyTests {
   @Test("a build with no destination never starts Sentry, the switch can't start it, and it can't send a report")
   @MainActor
   func noDestinationNeverStarts() throws {
-    let suite = "crash-reporting-start-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     defaults.set(true, forKey: CrashReportTest.crashKey)
     CrashReporter.startAtLaunch(
       defaults: defaults, bundle: .main, environment: ProcessInfo.processInfo.environment)

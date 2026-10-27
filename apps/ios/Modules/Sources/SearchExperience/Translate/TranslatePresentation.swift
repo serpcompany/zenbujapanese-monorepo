@@ -133,24 +133,40 @@ extension Conversation {
 
 struct TranslateWordLinks {
   let analysisClient: JapaneseTextAnalysisClient
+  let texts: LinkedTexts
   let open: (RecognizedWordSheetRequest) -> Void
+
+  @MainActor
+  func shown(_ text: String, in language: SpokenLanguage) -> ShownText? {
+    texts.shown(text, in: language)
+  }
+
+  @MainActor
+  func request(_ sentences: [(sentence: TranslatedSentence, language: SpokenLanguage)]) {
+    texts.request(sentences, using: analysisClient)
+  }
+
+  func opening(with open: @escaping (RecognizedWordSheetRequest) -> Void) -> TranslateWordLinks {
+    TranslateWordLinks(analysisClient: analysisClient, texts: texts, open: open)
+  }
 }
 
 struct TranslateLinkedText: View {
   let text: String
-  let language: SpokenLanguage
+  let shown: ShownText
   let identifier: String
   let words: TranslateWordLinks
   @Environment(ReadingAidPreferences.self) private var readingAids
 
   var body: some View {
-    if language == .japanese {
-      LinkedJapaneseText(
+    switch shown {
+    case .linked(let tokens):
+      LinkedJapaneseWords(
         text: text,
-        highlightedEntry: nil,
-        japaneseTextAnalysisClient: words.analysisClient,
+        tokens: tokens,
         identifierPrefix: identifier,
         presentation: readingAids.showsFurigana ? .standard : .compactLinks,
+        japaneseIdentifier: nil,
         openCandidates: { surface, candidates in
           words.open(
             RecognizedWordSheetRequest(
@@ -164,7 +180,7 @@ struct TranslateLinkedText: View {
               candidateEntries: [], encounterMedia: nil))
         }
       )
-    } else {
+    case .plain:
       Text(text)
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityIdentifier(identifier)

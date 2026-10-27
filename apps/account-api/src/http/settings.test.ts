@@ -1,5 +1,5 @@
+import { type SettingKind, settingRules } from '@zenbu/account-rules/settings'
 import { describe, expect, test } from 'vitest'
-import { type SettingKind, settingRules } from '../domain/settings'
 import { appliedAt, type Learner, outcomesOf, useAccountService } from '../test/accounts'
 import { SyncClient } from '../test/sync-client'
 

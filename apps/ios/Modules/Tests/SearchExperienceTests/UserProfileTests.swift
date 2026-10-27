@@ -4,56 +4,9 @@ import Testing
 
 @Suite("Profile field rules")
 struct UserProfileTests {
-  private struct SharedUsernames: Decodable {
-    struct Accepted: Decodable {
-      let covers: String
-      let typed: String
-      let username: String
-    }
-
-    struct Refused: Decodable {
-      let covers: String
-      let typed: String
-    }
-
-    let rule: String
-    let accepted: [Accepted]
-    let refused: [Refused]
-  }
-
-  private static let sharedUsernameCases = URL(filePath: #filePath)
-    .deletingLastPathComponent()
-    .appending(path: "../../../../account-api/src/domain/username-cases.json")
-    .standardizedFileURL
-
-  private func sharedUsernames() throws -> SharedUsernames {
-    try JSONDecoder().decode(
-      SharedUsernames.self, from: Data(contentsOf: Self.sharedUsernameCases))
-  }
-
-  @Test("a username is accepted as the cases shared with the account service say")
-  func acceptedUsernames() throws {
-    let accepted = try sharedUsernames().accepted
-    #expect(!accepted.isEmpty)
-    for expected in accepted {
-      #expect(
-        UserProfile.acceptedUsername(expected.typed) == expected.username, "\(expected.covers)")
-    }
-  }
-
-  @Test("a username is refused as the cases shared with the account service say")
-  func refusedUsernames() throws {
-    let refused = try sharedUsernames().refused
-    #expect(!refused.isEmpty)
-    for expected in refused {
-      #expect(UserProfile.acceptedUsername(expected.typed) == nil, "\(expected.covers)")
-    }
-  }
-
   @Test("a refused username is answered with the account service's own sentence")
   func usernameRule() throws {
-    let shared = try sharedUsernames()
-    #expect(UserProfile.usernameRule == shared.rule)
+    #expect(UserProfile.usernameRule == (try SharedAccountCases.rule("username")).rule)
   }
 
   @Test("leaving the field saves what the rule accepts, clears on nothing, and refuses the rest")
@@ -67,20 +20,20 @@ struct UserProfileTests {
 
   @Test("a stored username the rule refuses is kept, not refused, when it is typed back as it was")
   func keepsARetypedUsername() {
-    #expect(UserProfile.acceptedUsername("kana.fan") == nil)
+    #expect(AccountRules.shared.username("kana.fan") == nil)
     #expect(UserProfile.usernameEdit("kana.fan", over: "kana.fan") == .keep)
   }
 
   @MainActor
   @Test("a username an earlier version saved stays as it was until it is edited")
   func keepsAnEarlierUsername() throws {
-    let temporary = try TemporaryDefaults()
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
-    let earlier = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
+    let earlier = UserProfile(defaults: defaults, photoURL: photoURL)
     earlier.edit(ProfileFields(username: "kana.fan"))
-    #expect(UserProfile.acceptedUsername(earlier.username) == nil)
+    #expect(AccountRules.shared.username(earlier.username) == nil)
 
-    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(reloaded.username == "kana.fan")
     var field = ProfileFieldEdit()
     field.show(reloaded.username)
@@ -92,9 +45,9 @@ struct UserProfileTests {
   @MainActor
   @Test("an edit tells sync what changed and what it was, and a synced value doesn't")
   func editsReachSync() throws {
-    let temporary = try TemporaryDefaults()
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
-    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
+    let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     var edits: [ProfileFields] = []
     var previous: [ProfileFields] = []
     profile.changeObserver = { change in
@@ -113,20 +66,7 @@ struct UserProfileTests {
     #expect(previous == [ProfileFields(username: "kana_fan")])
     #expect(profile.fields == ProfileFields(name: "", username: "kana.fan"))
     #expect(profile.refusal == nil)
-    #expect(UserProfile(defaults: temporary.defaults, photoURL: photoURL).username == "kana.fan")
-  }
-
-  @Test("signed in, a name is 1 to 100 characters, as the account requires")
-  func accountNames() {
-    #expect(!UserProfile.isAccountName(""))
-    #expect(UserProfile.isAccountName("A"))
-    #expect(UserProfile.isAccountName(String(repeating: "あ", count: 100)))
-    #expect(!UserProfile.isAccountName(String(repeating: "a", count: 101)))
-    #expect(UserProfile.isAccountName(String(repeating: "e\u{301}", count: 100)))
-    #expect(UserProfile.isAccountName("Kana " + String(repeating: " ", count: 100) + "Fan"))
-    #expect(!UserProfile.isAccountName("👩\u{200D}💻 Kana"))
-    #expect(!UserProfile.isAccountName("Ka\u{AD}na"))
-    #expect(!UserProfile.isAccountName("Kana\u{85}Fan"))
+    #expect(UserProfile(defaults: defaults, photoURL: photoURL).username == "kana.fan")
   }
 
   @Test("the first sync keeps the account's non-empty fields and fills its empty ones")
@@ -179,11 +119,9 @@ struct UserProfileTests {
 
   @MainActor
   @Test("profile fields survive a reload")
-  func persistence() throws {
-    let suite = "user-profile-tests-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(suite).jpg")
+  func persistence() {
+    let defaults = MemoryDefaults()
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
 
     let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     profile.edit(ProfileFields(name: "Devin Schumacher", username: "devin"))
@@ -199,16 +137,16 @@ struct UserProfileTests {
   @MainActor
   @Test("a profile that can't be read is kept aside, and new fields save")
   func keepsUnreadableProfileAside() throws {
-    let temporary = try TemporaryDefaults()
+    let defaults = MemoryDefaults()
     let unreadable = Data(#"{"name":"Devin"}"#.utf8)
-    temporary.defaults.set(unreadable, forKey: "user-profile.v1")
-    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(temporary.suite).jpg")
+    defaults.set(unreadable, forKey: "user-profile.v1")
+    let photoURL = FileManager.default.temporaryDirectory.appending(path: "\(UUID().uuidString).jpg")
 
-    let profile = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let profile = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(profile.isEmpty)
-    #expect(temporary.defaults.keptCopies(of: "user-profile.v1") == [unreadable])
+    #expect(defaults.keptCopies(of: "user-profile.v1") == [unreadable])
     profile.edit(ProfileFields(name: "Devin Schumacher"))
-    let reloaded = UserProfile(defaults: temporary.defaults, photoURL: photoURL)
+    let reloaded = UserProfile(defaults: defaults, photoURL: photoURL)
     #expect(reloaded.name == "Devin Schumacher")
   }
 

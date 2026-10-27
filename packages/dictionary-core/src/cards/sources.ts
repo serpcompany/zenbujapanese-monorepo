@@ -27,7 +27,8 @@ export const wordCardSources: readonly WordCardSource[] = [
   },
   {
     name: unidic.name,
-    supplies: 'pitch accent, and the accent types two-part compounds are estimated from',
+    supplies:
+      'pitch accent, and the accent types compounds of two to four parts are estimated from',
     license: unidic.license.name,
     url: unidic.url,
     notice: 'UNIDIC-NEW-BSD.txt'

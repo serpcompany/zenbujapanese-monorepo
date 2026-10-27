@@ -202,7 +202,8 @@ struct ResultsScreenTests: SearchResultFixture {
   @Test("a word page holds its frequency rows: each dictionary, its value, and its details")
   func frequencyRows() async throws {
     let eat = try #require(try await LookupClient.live.entriesMatchingForm("食べる").first)
-    let rows = try #require(WordPage(eat, using: try .freshInstall())?.frequency)
+    let core = try await PresentationCore.freshInstall()
+    let rows = try #require(WordPage(eat, using: core)?.frequency)
     #expect(rows.map(\.source) == ["JLPT", "YouTube"])
     #expect(rows.map(\.pack) == ["zenbu.jlpt.waller.levels", "zenbu.tubelex.youtube.ja.unidic-3.1"])
     #expect(rows[0].value == "N5")

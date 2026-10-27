@@ -275,7 +275,7 @@ class ZenbuUITestCase: XCTestCase {
   }
 
   private func wakeTheTouchSystem(before target: XCUIElement?) {
-    guard device != .mac, let app = launched, app.state == .runningForeground,
+    guard device == .phone, let app = launched, app.state == .runningForeground,
       !app.otherElements["PopoverDismissRegion"].exists
     else { return }
     let targetWasThere = target?.exists ?? false
@@ -395,7 +395,10 @@ class ZenbuUITestCase: XCTestCase {
     _ text: String, into element: XCUIElement, file: StaticString = #filePath, line: UInt = #line
   ) {
     focus(element, file: file, line: line)
-    element.typeText(text)
+    guard device == .mac, !text.allSatisfy(\.isASCII) else { return element.typeText(text) }
+    let submits = text.hasSuffix("\n")
+    TestDevice.paste(submits ? String(text.dropLast()) : text, into: element)
+    if submits { element.typeText("\n") }
   }
 
   func focus(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {

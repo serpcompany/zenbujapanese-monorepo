@@ -1,13 +1,19 @@
 import type { KuromojiToken } from '../examples/morphology'
 import { ask, type FakeEntry, fakeHost } from './fake-host'
-import type { EmbeddedToken } from './text'
+import type { EmbeddedToken } from './linked-words'
 
 export const entries: FakeEntry[] = [
-  { id: 'a1', headword: '日本語', reading: 'にほんご' },
+  { id: 'a1', headword: '日本語', reading: 'にほんご', meanings: ['Japanese (language)'] },
   { id: 'p1', headword: 'を', reading: 'を', partsOfSpeech: ['particle'] },
   { id: 'p2', headword: 'を', reading: 'を', partsOfSpeech: ['particle'] },
   { id: 'n1', headword: 'を', reading: 'を', partsOfSpeech: ['noun'] },
-  { id: 'v1', headword: '見る', reading: 'みる', partsOfSpeech: ['ichidanVerb'] },
+  {
+    id: 'v1',
+    headword: '見る',
+    reading: 'みる',
+    partsOfSpeech: ['ichidanVerb'],
+    meanings: ['to see, to look', 'to examine']
+  },
   { id: 'x1', headword: '見た', reading: 'みた', partsOfSpeech: ['noun'] },
   { id: 'k1', headword: '今日', reading: 'きょう', readingForms: ['こんにち'] },
   { id: 'w1', headword: 'は', reading: 'は', partsOfSpeech: ['particle'] }
@@ -65,5 +71,17 @@ export const host = () =>
     }
   })
 
-export const linked = (target: ReturnType<typeof host>, request: object) =>
-  ask(target, 'linkedTokens', JSON.stringify(request)) as Promise<EmbeddedToken[]>
+export const linkedTexts = (
+  target: ReturnType<typeof host>,
+  texts: readonly string[],
+  highlightedEntry: string | null = null
+) =>
+  ask(target, 'linkedTexts', JSON.stringify({ texts, highlightedEntry })) as Promise<
+    EmbeddedToken[][]
+  >
+
+export const linked = async (
+  target: ReturnType<typeof host>,
+  text: string,
+  highlightedEntry: string | null = null
+) => (await linkedTexts(target, [text], highlightedEntry))[0]

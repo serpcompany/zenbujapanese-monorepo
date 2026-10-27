@@ -11,9 +11,7 @@ struct CrashReporterSwitchTests {
     dsn: "https://key@o1.ingest.us.sentry.io/2", environment: "qa")
 
   static func withDefaults(_ body: @MainActor (UserDefaults) async throws -> Void) async throws {
-    let suite = "crash-reporting-switch-\(UUID().uuidString)"
-    let defaults = try #require(UserDefaults(suiteName: suite))
-    defer { defaults.removePersistentDomain(forName: suite) }
+    let defaults = MemoryDefaults()
     try await body(defaults)
   }
 

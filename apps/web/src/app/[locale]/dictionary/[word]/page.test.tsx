@@ -16,7 +16,8 @@ import { localizedPath } from '@/lib/i18n/paths'
 import { listedInJapanese, listedWithLicence, pageSourcesList } from '@/test/credits'
 import { pageProps } from '@/test/page-props'
 import { Redirect } from '@/test/redirect'
-import { htmlText, visibleText } from '@/test/rendered'
+import { htmlText, visibleText, withDefaultReadingAids } from '@/test/rendered'
+import { readMeaningExamples } from '@/test/rendered-word'
 import WordPage, { generateMetadata } from './page'
 
 const serviceEnv: { DICTIONARY_API_URL?: string; DICTIONARY_API_TOKEN?: string } = {}
@@ -270,7 +271,9 @@ describe('the word page, read from the fixtures', () => {
       ...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)
     ].map(([, pairId, example]) => ({
       sentence: sentences.get(pairId),
-      paragraphs: [...example.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(([, p]) => p)
+      paragraphs: [...withDefaultReadingAids(example).matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map(
+        ([, p]) => p
+      )
     }))
     expect(examples).toHaveLength(25)
     for (const { sentence, paragraphs } of examples) {
@@ -284,6 +287,57 @@ describe('the word page, read from the fixtures', () => {
       expect(furigana.filter(reading => !/^\p{scx=Hiragana}+$/u.test(reading))).toEqual([])
     }
     expect(examples.filter(({ paragraphs }) => paragraphs[0].includes('<rt'))).not.toHaveLength(0)
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('draws every Reading Aid, and the page lets the settings show or hide each (%s)', async locale => {
+    const html = await renderWord('要る-1546640', locale)
+    expect(html).toMatch(/<main[^>]*\sdata-reading-aids="true"/)
+    const aid = (part: string, name: string) =>
+      [...part.matchAll(new RegExp(`data-aid="${name}"[^>]*>([^<]*)<`, 'g'))].map(([, text]) =>
+        htmlText(text)
+      )
+    const header = html.match(/<\/h1>([\s\S]*?)<\/div>/)?.[1] ?? ''
+    expect([aid(header, 'romaji'), aid(header, 'reading')]).toEqual([['iru'], ['いる']])
+    const rows = fixtureWordRows.find(rows => rows.entry.entSeq === 1546640)?.examples ?? []
+    const shown = [...html.matchAll(/<li[^>]*data-example-pair="[^"]+"[^>]*>([\s\S]*?)<\/li>/g)]
+    expect(shown).toHaveLength(25)
+    for (const [index, [, example]] of shown.entries()) {
+      const { sentence, example: row } = rows[index]
+      expect(aid(example, 'romaji')).toEqual([row.romaji])
+      expect(aid(example, 'translation')).toEqual([sentence.english])
+      expect(aid(example, 'meaning')).toEqual(
+        row.links.flatMap(link => (link.meaning && link.entSeqs.length === 1 ? [link.meaning] : []))
+      )
+    }
+    expect(aid(shown[0][1], 'meaning')).toEqual(['now', 'money', 'be needed'])
+  })
+
+  test.each([
+    'en',
+    'ja'
+  ] as const)('a meaning shows its checked example under it (%s)', async locale => {
+    const html = await renderWord('要領-1546850', locale)
+    const [checked, unchecked] =
+      fixtureWordRows.find(rows => rows.entry.entSeq === 1546850)?.senseExamples ?? []
+    expect(unchecked).toBeNull()
+    const shown = readMeaningExamples(sectionHTML(html, coreText('Meaning', locale)))
+    expect(shown.map(({ meaning, pairId }) => [meaning, pairId])).toEqual([
+      [1, checked?.sentence.pairId]
+    ])
+    expect(shown[0].tokens.map(token => token.surface).join('')).toBe(checked?.sentence.japanese)
+    expect(shown[0].tokens.filter(token => token.highlighted)).toEqual([
+      { surface: '要領', href: expect.stringContaining('1546850'), highlighted: true }
+    ])
+    expect(visibleText(sectionHTML(html, coreText('Meaning', locale)))).toContain(
+      checked?.sentence.english
+    )
+    const examples = sectionHTML(html, coreText('Examples', locale))
+    expect(examples.match(/<li[^>]*data-example-pair="([^"]+)"/)?.[1]).toBe(
+      checked?.sentence.pairId
+    )
   })
 
   test('the Examples section sits at #examples, where search results send their sentences', async () => {

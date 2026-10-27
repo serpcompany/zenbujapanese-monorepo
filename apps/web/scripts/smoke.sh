@@ -430,7 +430,7 @@ except Exception:
     print("unreadable")
 ')"
   eat_examples_seen="$shown in the page; next positions ${next:-none} from ${examples_path:-no examples route}"
-  [ "$shown" = 25 ] && grep -qF "<p class=\"text-muted-foreground\">$eat_first_english</p>" <<<"$html" &&
+  [ "$shown" = 25 ] && grep -qF "data-aid=\"translation\">$eat_first_english</p>" <<<"$html" &&
     [ "$next" = "$(echo {25..49})" ]
 }
 show_eat_examples() { echo "$eat_examples_seen (want 25, the suite's first sentence, then 25 to 49)"; }

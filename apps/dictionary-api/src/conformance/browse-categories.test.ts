@@ -61,7 +61,7 @@ function findWord(
   }
 }
 
-const and = 1008490
+const necessary = 1487660
 const iku = 1578850
 const na = 2029110
 
@@ -116,15 +116,35 @@ describe.runIf(artifactAvailable)('browsing a category on the app’s data', () 
   test('a word labelled only in a later meaning follows, showing that meaning', () => {
     const [noun] = service.categoryWords('nouns', 'used', 1)?.words ?? []
     expect(noun.headword).toBe('事')
-    const promotedPawn = findWord(service, 'nouns', and)
-    expect(promotedPawn?.word.summary).toBe('promoted pawn')
-    expect(promotedPawn?.page).toBeGreaterThan(1)
+    const need = findWord(service, 'nouns', necessary)
+    expect(need?.word.summary).toBe('necessity, need, requirement')
+    expect(need?.page).toBeGreaterThan(1)
     const slang = findWord(service, 'slang', iku)
     expect(slang?.word.summary).toMatch(/^to trip, to get high/)
     expect(slang?.page === 1 && slang.position === 0).toBe(false)
     const kansai = service.categoryWords('kansai-dialect', 'used', 1)?.words ?? []
     expect(kansai[0].entSeq).not.toBe(na)
     expect(kansai.find(word => word.entSeq === na)?.summary).toMatch(/^right\?/)
+  })
+
+  test('a usage category’s word label is the note on every meaning it labels', () => {
+    const labelled = browseCategories.filter(
+      category => category.kind === 'usage' && category.wordLabel
+    )
+    expect(labelled.length).toBeGreaterThan(0)
+    for (const category of labelled) {
+      const [{ senses, unlabelled }] = db.all<{ senses: number; unlabelled: number }>(
+        `SELECT count(*) AS senses,
+           count(*) FILTER (WHERE NOT EXISTS (
+             SELECT 1 FROM json_each(s.value, '$.notes') n WHERE n.value = ?)) AS unlabelled
+         FROM entries e, json_each(e.senses_json) s
+         WHERE EXISTS (SELECT 1 FROM json_each(s.value, '$.usage') u
+           WHERE u.value IN (SELECT value FROM json_each(?)))`,
+        [category.wordLabel ?? '', JSON.stringify(category.labels)]
+      )
+      expect(senses, category.slug).toBeGreaterThan(0)
+      expect(unlabelled, `${category.slug}'s meanings without “${category.wordLabel}”`).toBe(0)
+    }
   })
 
   test('kana order lists the same words by reading', () => {

@@ -10,6 +10,8 @@ import { artifactAvailable, artifactDatabase, dictionary, requirePinnedArtifacts
 
 const rowCountForMoreThanFifty = 51
 
+const everyRow = Number.MAX_SAFE_INTEGER
+
 describe.runIf(artifactAvailable)('example search conformance', () => {
   let service: Dictionary
   let db: ArtifactDatabase
@@ -24,7 +26,7 @@ describe.runIf(artifactAvailable)('example search conformance', () => {
     const results = await service.searchResults(expected.query)
     const { screen } = await service.search(expected.query)
     const row = screen.state === 'results' ? screen.examples : null
-    const found = await service.searchExamples(expected.query, 0, 100)
+    const found = await service.searchExamples(expected.query, 0, everyRow)
     const shown = found?.rows.slice(0, suite.tokenLimit) ?? []
     const highlightedEntry = primaryItem(results, normalizeQuery(expected.query))?.entry.id
     const countText = exampleCountText(found)

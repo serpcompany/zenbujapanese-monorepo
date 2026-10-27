@@ -86,7 +86,7 @@ final class WordLists: LocalFileStore {
 
   @discardableResult
   func createList(named name: String, id: UUID = UUID()) -> WordList? {
-    guard canChange, !hasList(id), let name = Self.validName(name) else { return nil }
+    guard canChange, !hasList(id), let name = AccountRules.shared.listName(name) else { return nil }
     let now = Date()
     let list = WordList(
       id: id, name: name, position: (lists.map(\.position).max() ?? -1) + 1,
@@ -98,7 +98,7 @@ final class WordLists: LocalFileStore {
   }
 
   func renameList(_ listID: UUID, to name: String) {
-    guard canChange, let name = Self.validName(name),
+    guard canChange, let name = AccountRules.shared.listName(name),
       let index = lists.firstIndex(where: { $0.id == listID }), lists[index].name != name
     else { return }
     let previous = lists[index]
@@ -288,16 +288,6 @@ final class WordLists: LocalFileStore {
     return grouped
   }
 
-  static let longestName = 500
-
-  private static func validName(_ name: String) -> String? {
-    let printable = name.precomposedStringWithCanonicalMapping.unicodeScalars.map {
-      $0.properties.generalCategory == .control ? " " as Unicode.Scalar : $0
-    }
-    let capped = String(String.UnicodeScalarView(printable.prefix(longestName)))
-      .trimmingCharacters(in: .whitespacesAndNewlines)
-    return capped.isEmpty ? nil : capped
-  }
 
   nonisolated static let defaultFileURL = FileManager.default.urls(
     for: .applicationSupportDirectory,

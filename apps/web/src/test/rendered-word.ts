@@ -3,7 +3,7 @@ import type {
   SuiteFurigana,
   SuitePitchGraph
 } from '@zenbu/dictionary-core/detail/suite'
-import { htmlText, withoutScreenReaderText } from './rendered'
+import { htmlText, withDefaultReadingAids, withoutScreenReaderText } from './rendered'
 
 function textWithFurigana(html: string): string {
   return htmlText(html, { furigana: true }).trim()
@@ -14,9 +14,9 @@ function attribute(tag: string, name: string): string | null {
 }
 
 export function readFurigana(html: string, size = 'text-5xl'): SuiteFurigana[] {
-  const headword = html.match(
+  const headword = withDefaultReadingAids(html).match(
     new RegExp(
-      `<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span>(?:</h1>)?<(?:button|div)`
+      `<span lang="ja" class="[^"]*${size}[^"]*">([\\s\\S]*?)</span>(?:</h1>)?(?:</div>)?<(?:button|div)`
     )
   )
   if (!headword) throw new Error('No headword in the rendered header')
@@ -185,7 +185,9 @@ export function readConjugationTable(html: string): RenderedConjugationTable {
 
 export function readConjugatedForm(html: string): RenderedConjugatedForm {
   const shared = html.match(/data-shared-spelling="true">(?:<svg[\s\S]*?<\/svg>)?([\s\S]*?)<\/p>/)
-  const headline = html.match(/<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span><button/)
+  const headline = withDefaultReadingAids(html).match(
+    /<span lang="ja" class="[^"]*text-4xl[^"]*">[\s\S]*?<\/span>(?:<\/div>)?<button/
+  )
   return {
     explanation: textWithFurigana(
       html.match(/data-conjugation-explanation="true">([\s\S]*?)<\/p>/)?.[1] ?? ''
@@ -202,22 +204,35 @@ export interface RenderedExample {
 }
 
 const exampleToken =
-  /(<a([^>]*)>)?<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/a>)?/g
+  /(<a([^>]*)>)?(?:<span>){0,2}<span lang="ja"([^>]*)>((?:<span>[^<]*<\/span>|<ruby>[^<]*<rt[^>]*>[^<]*<\/rt><\/ruby>)*)<\/span>(?:<\/span>){0,2}(?:<\/a>)?/g
+
+function renderedExample(pairId: string, item: string): RenderedExample {
+  const sentence =
+    withDefaultReadingAids(item).match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
+  const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
+    surface: htmlText(inner),
+    href: link ? attribute(linkTag, 'href') : null,
+    highlighted: attribute(span, 'data-page-word') === 'true'
+  }))
+  if (tokens.map(token => token.surface).join('') !== htmlText(sentence)) {
+    throw new Error(`Could not read the words of ${htmlText(sentence)}`)
+  }
+  return { pairId, tokens }
+}
 
 export function readExamples(html: string): RenderedExample[] {
   const items = [...html.matchAll(/<li[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?)<\/li>/g)]
-  return items.map(([, pairId, item]) => {
-    const sentence = item.match(/<p lang="ja"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? ''
-    const tokens = [...sentence.matchAll(exampleToken)].map(([, link, linkTag, span, inner]) => ({
-      surface: htmlText(inner),
-      href: link ? attribute(linkTag, 'href') : null,
-      highlighted: attribute(span, 'data-page-word') === 'true'
-    }))
-    if (tokens.map(token => token.surface).join('') !== htmlText(sentence)) {
-      throw new Error(`Could not read the words of ${htmlText(sentence)}`)
-    }
-    return { pairId, tokens }
-  })
+  return items.map(([, pairId, item]) => renderedExample(pairId, item))
+}
+
+export function readMeaningExamples(html: string): (RenderedExample & { meaning: number })[] {
+  const items = html.matchAll(
+    /<div[^>]*data-meaning-example="(\d+)"[^>]*data-example-pair="([^"]+)"[^>]*>([\s\S]*?<p lang="ja"[^>]*>[\s\S]*?<\/p>)/g
+  )
+  return [...items].map(([, meaning, pairId, item]) => ({
+    meaning: Number(meaning),
+    ...renderedExample(pairId, item)
+  }))
 }
 
 export function readFrequencyRows(html: string): { name: string; text: string }[] {

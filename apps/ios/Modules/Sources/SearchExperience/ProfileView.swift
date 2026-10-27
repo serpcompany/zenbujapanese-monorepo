@@ -53,52 +53,13 @@ struct ProfileCardRow: View {
   }
 }
 
-struct ProfileFieldEdit: Equatable {
-  var text = ""
-  private var saved = ""
-  private var textWhenFocused: String?
-  private var keepsRejectedText = false
-
-  mutating func focus() {
-    textWhenFocused = text
-    keepsRejectedText = false
-  }
-
-  mutating func show(_ saved: String) {
-    self.saved = saved
-    guard textWhenFocused == nil, !keepsRejectedText else { return }
-    text = saved
-  }
-
-  mutating func unfocus() -> String? {
-    guard let textWhenFocused else { return text == saved ? nil : text }
-    self.textWhenFocused = nil
-    guard text == textWhenFocused else { return text }
-    text = saved
-    return nil
-  }
-
-  mutating func reject() {
-    keepsRejectedText = true
-  }
-}
-
 struct ProfileView: View {
-  private enum Field: Hashable {
-    case name
-    case username
-    case email
-  }
+  private typealias Field = ProfileEditing.Field
 
   @Environment(UserProfile.self) private var profile
   @Environment(ZenbuAccount.self) private var zenbuAccount: ZenbuAccount?
   @State private var photoSelection: PhotosPickerItem?
-  @State private var name = ProfileFieldEdit()
-  @State private var username = ProfileFieldEdit()
-  @State private var email = ProfileFieldEdit()
-  @State private var showsNameError = false
-  @State private var showsUsernameError = false
-  @State private var showsEmailError = false
+  @State private var editing = ProfileEditing()
   @FocusState private var focusedField: Field?
 
   var body: some View {
@@ -114,7 +75,7 @@ struct ProfileView: View {
 
       Section {
         LabeledContent("Name") {
-          TextField("Name", text: $name.text, prompt: Text("Your Name"))
+          TextField("Name", text: $editing.name.text, prompt: Text("Your Name"))
             .textContentType(.name)
             .textEntry(.capitalizedWords)
             .focused($focusedField, equals: .name)
@@ -123,12 +84,12 @@ struct ProfileView: View {
             .accessibilityIdentifier("profile.name")
         }
         LabeledContent("Username") {
-          TextField("Username", text: $username.text, prompt: Text("username"))
+          TextField("Username", text: $editing.username.text, prompt: Text("username"))
             .textContentType(.username)
             .textEntry(.uncapitalized)
             .autocorrectionDisabled()
             .focused($focusedField, equals: .username)
-            .onChange(of: username.text) { showsUsernameError = false }
+            .onChange(of: editing.username.text) { editing.showsUsernameError = false }
             .multilineTextAlignment(.trailing)
             .labelsHidden()
             .accessibilityIdentifier("profile.username")
@@ -142,12 +103,13 @@ struct ProfileView: View {
               .textSelection(.enabled)
               .accessibilityIdentifier("profile.account-email")
           } else {
-            TextField("Email", text: $email.text, prompt: Text(verbatim: "name@example.com"))
+            TextField(
+              "Email", text: $editing.email.text, prompt: Text(verbatim: "name@example.com"))
               .textContentType(.emailAddress)
               .textEntry(.email)
               .autocorrectionDisabled()
               .focused($focusedField, equals: .email)
-              .onChange(of: email.text) { showsEmailError = false }
+              .onChange(of: editing.email.text) { editing.showsEmailError = false }
               .multilineTextAlignment(.trailing)
               .labelsHidden()
               .accessibilityIdentifier("profile.email")
@@ -171,22 +133,17 @@ struct ProfileView: View {
     .accessibilityIdentifier("profile.form")
     .navigationTitle("Profile")
     .inlineNavigationTitle()
-    .onAppear(perform: showSaved)
-    .onChange(of: [profile.name, profile.username, profile.email], showSaved)
+    .onAppear {
+      editing.profile = profile
+      editing.accountEmail = accountEmail
+      editing.showSaved()
+    }
+    .onChange(of: accountEmail) { editing.accountEmail = accountEmail }
+    .onChange(of: [profile.name, profile.username, profile.email]) { editing.showSaved() }
     .onChange(of: focusedField) { previous, current in
-      if let previous { commit(previous) }
-      switch current {
-      case .name:
-        name.focus()
-        showsNameError = false
-      case .username: username.focus()
-      case .email: email.focus()
-      case nil: break
-      }
+      editing.focusMoved(from: previous, to: current)
     }
-    .onDisappear {
-      if let focusedField { commit(focusedField) }
-    }
+    .onDisappear { editing.leave() }
     .onChange(of: photoSelection) { _, item in
       guard let item else { return }
       Task {
@@ -226,9 +183,9 @@ struct ProfileView: View {
 
   private var footerErrors: [String] {
     let errors = [
-      showsNameError ? UserProfile.accountNameRule : nil,
-      showsUsernameError ? UserProfile.usernameRule : nil,
-      showsEmailError ? "Enter a valid email address, like name@example.com." : nil,
+      editing.showsNameError ? UserProfile.accountNameRule : nil,
+      editing.showsUsernameError ? UserProfile.usernameRule : nil,
+      editing.showsEmailError ? "Enter a valid email address, like name@example.com." : nil,
       profile.refusal.map(Self.message),
     ]
     return errors.compactMap { $0 }.reduce(into: []) { shown, error in
@@ -240,52 +197,6 @@ struct ProfileView: View {
     switch refusal {
     case .usernameTaken: "That username is taken. Choose another."
     case .other: "Your Zenbu account didn't take that change, so it went back."
-    }
-  }
-
-  private func showSaved() {
-    name.show(profile.name)
-    username.show(profile.username)
-    email.show(profile.email)
-  }
-
-  private func commit(_ field: Field) {
-    switch field {
-    case .name:
-      if let edited = name.unfocus() {
-        let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
-        if accountEmail == nil || UserProfile.isAccountName(trimmed) {
-          profile.edit(ProfileFields(name: trimmed))
-        } else {
-          showsNameError = true
-        }
-      }
-      name.show(profile.name)
-    case .username:
-      if let edited = username.unfocus() {
-        switch UserProfile.usernameEdit(edited, over: profile.username) {
-        case .keep:
-          break
-        case .save(let accepted):
-          profile.edit(ProfileFields(username: accepted))
-        case .refuse:
-          username.reject()
-          showsUsernameError = true
-          return
-        }
-      }
-      username.show(profile.username)
-    case .email:
-      if let edited = email.unfocus() {
-        let trimmed = edited.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.isEmpty || UserProfile.isValidEmail(trimmed) else {
-          email.reject()
-          showsEmailError = true
-          return
-        }
-        profile.email = trimmed
-      }
-      email.show(profile.email)
     }
   }
 }

@@ -27,7 +27,7 @@ type Props = PageProps<'/[locale]/products/zenbu-japanese-app'>
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const locale = await localeOf(params)
   const t = getDictionary(locale)
-  const title = fill(t.productPage.title, { name: t.menus.iphoneApp })
+  const title = fill(t.productPage.title, { name: t.products.featuredApp.title })
   const page = pageMetadata(iphoneAppPath, locale)
   return {
     ...page,

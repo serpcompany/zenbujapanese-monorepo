@@ -121,7 +121,7 @@ with its offline, no-account, and open-data promises and its credits, is gone.
   place at both widths, no Sources disclosure, and Get the app's page).
 
 **Placeholders.** All free tools and Get the app link to their pages through `linkTargets`, like
-the header's ([Dictionary](dictionary.md#header-footer-and-site-wide), Placeholder links), so no
+the header's ([Site-wide](site-wide.md), Placeholder links), so no
 link on the homepage is a placeholder of its own.
 
 - Source: the owner's decision on #650 (show planned items as placeholders); #652 (the products

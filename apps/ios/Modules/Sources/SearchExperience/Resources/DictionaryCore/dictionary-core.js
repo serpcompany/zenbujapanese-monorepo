@@ -50,8 +50,8 @@
     const trimmed = first.replace(/^[\p{Zs}\t]+|[\p{Zs}\t]+$/gu, "");
     const gloss = trimmed.startsWith("to ") ? trimmed.slice(3) : trimmed;
     if (!gloss) return null;
-    const shown = graphemes(gloss);
-    return shown.length > glossLength ? `${shown.slice(0, glossLength - 1).join("")}…` : gloss;
+    const shown2 = graphemes(gloss);
+    return shown2.length > glossLength ? `${shown2.slice(0, glossLength - 1).join("")}…` : gloss;
   }
 
   // src/detail/phrase-note.ts
@@ -373,11 +373,11 @@
     const ending = sentence.slice(-2);
     return startsWithSpace(everyUnitIsAGrapheme(ending) ? ending.at(-1) : graphemes(sentence).at(-1));
   }
-  function sentenceRomaji(words2) {
-    if (words2.length === 0) return null;
+  function sentenceRomaji(words) {
+    if (words.length === 0) return null;
     let sentence = "";
     let previous = null;
-    for (const { surface, reading } of words2) {
+    for (const { surface, reading } of words) {
       const isAWord = startsWithALetter(surface);
       if (!isAWord && graphemes(surface).every(startsWithSpace)) {
         sentence += surface;
@@ -401,13 +401,14 @@
     return everyUnitIsAGrapheme(value) ? value.split("") : Array.from(graphemeSegmenter.segment(value), (segment) => segment.segment);
   }
   function compareScalars(lhs, rhs) {
-    const left = Array.from(lhs);
-    const right = Array.from(rhs);
-    for (let index = 0; index < Math.min(left.length, right.length); index++) {
-      const difference = (left[index].codePointAt(0) ?? 0) - (right[index].codePointAt(0) ?? 0);
-      if (difference !== 0) return difference;
+    let index = 0;
+    while (index < lhs.length && index < rhs.length) {
+      const left = lhs.codePointAt(index) ?? 0;
+      const right = rhs.codePointAt(index) ?? 0;
+      if (left !== right) return left - right;
+      index += left > 65535 ? 2 : 1;
     }
-    return left.length - right.length;
+    return lhs.length - rhs.length;
   }
   var isSurrogate = (unit) => unit >= 55296 && unit <= 57343;
   function compareStrings(lhs, rhs) {
@@ -484,8 +485,8 @@
   }
   function japaneseCandidates(candidates) {
     const kept = /* @__PURE__ */ new Set();
-    for (const candidate of candidates) {
-      const query = normalizeQuery(candidate);
+    for (const candidate2 of candidates) {
+      const query = normalizeQuery(candidate2);
       if (isJapaneseOnly(query)) kept.add(query);
     }
     return [...kept];
@@ -504,8 +505,8 @@
   function romajiDeinflectedCandidates(value) {
     if (!isASCII(value)) return [];
     const candidates = [];
-    const append = (candidate) => {
-      const query = normalizeQuery(candidate);
+    const append = (candidate2) => {
+      const query = normalizeQuery(candidate2);
       if (query !== value && !candidates.includes(query)) candidates.push(query);
     };
     const replaceSuffix = (suffix, endings) => {
@@ -578,20 +579,20 @@
     return matchedWords(pieces, query);
   }
   function matchedWords(pieces, query) {
-    const words2 = [];
+    const words = [];
     const starts = [];
     let separates;
     for (let index = 0; index < pieces.length; index++) {
       const separator = separatorOnly.test(pieces[index]);
       if (separator !== separates) {
-        words2.push("");
+        words.push("");
         starts.push(index);
         separates = separator;
       }
-      words2[words2.length - 1] += pieces[index];
+      words[words.length - 1] += pieces[index];
     }
     starts.push(pieces.length);
-    const byWord = foldedPieces(words2);
+    const byWord = foldedPieces(words);
     const at = byWord.text.indexOf(query);
     if (at < 0) return nothingMatched;
     const matched = piecesAt(byWord, at, query.length);
@@ -655,6 +656,38 @@
     if (found.length === 0) return null;
     found.sort(compareFound);
     return { title: notesInSearchTitle, rows: found.map((each) => each.row) };
+  }
+
+  // src/search/morphology.ts
+  function analyzedWords({ words, pieces = [] }) {
+    const analyzed = [];
+    for (const word of words) {
+      const inside = [];
+      for (const piece of pieces) {
+        if (piece.begin >= word.begin && piece.end <= word.end) inside.push(piece);
+      }
+      analyzed.push({ ...word, pieces: inside });
+    }
+    return analyzed;
+  }
+  var linkablePartsOfSpeech = /* @__PURE__ */ new Set([
+    "名詞",
+    "動詞",
+    "形容詞",
+    "形状詞",
+    "代名詞",
+    "接頭辞",
+    "接尾辞",
+    "感動詞"
+  ]);
+  function lookupSegments(words) {
+    return words.flatMap((word) => {
+      if (!isJapaneseOnly(normalizeQuery(word.surface)) || !linkablePartsOfSpeech.has(word.partOfSpeech[0] ?? "") || word.isOutOfVocabulary) {
+        return [];
+      }
+      const form = word.dictionaryForm === "*" || word.dictionaryForm === "" ? word.surface : word.dictionaryForm;
+      return [normalizeQuery(form)];
+    });
   }
 
   // src/sources/credits.ts
@@ -960,6 +993,7 @@
     if (!(sentences > 0) || !(Number(main.get("retrieval_provenance_row_count")) >= sentences) || indexed.some((count) => Number(count) !== sentences)) {
       refuse("its example index counts don't match its example sentences");
     }
+    if (!main.has("sense_examples")) refuse("it has no examples linked to meanings (sense_examples)");
   }
   function checkAttached(db, name2) {
     const expected = attachments[name2];
@@ -991,7 +1025,13 @@
       interrupted: () => db.interrupted?.() ?? false
     };
   }
-  var FormKind = { written: 0, reading: 1, romaji: 2 };
+  var FormKind = {
+    written: 0,
+    reading: 1,
+    romaji: 2,
+    shownRomaji: 3,
+    unmarkedRomaji: 4
+  };
   var entryColumns = `lower(hex(e.id)) AS id, e.source_record_id, e.headword, e.reading,
   e.summary, e.parts_of_speech_json, lower(hex(e.semantic_fingerprint)) AS semantic_fingerprint`;
   function decodeEntry(row) {
@@ -1027,7 +1067,11 @@
     if (secondaryMask & loanword) return 5;
     return 9;
   }
-  var bitCount = (value) => value.toString(2).replaceAll("0", "").length;
+  function bitCount(mask) {
+    let count = 0;
+    for (let rest = mask >>> 0; rest !== 0; rest >>>= 1) count += rest & 1;
+    return count;
+  }
   function compareProfiles(lhs, rhs) {
     const categories = category(lhs) - category(rhs);
     if (categories !== 0) return categories;
@@ -1045,7 +1089,17 @@
     qualifiedInfinitive: 3,
     glossToken: 4
   };
-  var RomajiRelation = { exact: 0, prefix: 1, contains: 2 };
+  var RomajiRelation = {
+    exact: 0,
+    prefix: 1,
+    contains: 2,
+    shownExact: 3,
+    shownPrefix: 4,
+    shownContains: 5,
+    unmarkedExact: 6,
+    unmarkedPrefix: 7,
+    unmarkedContains: 8
+  };
   var FormRelation = {
     writtenExact: 0,
     readingExact: 1,
@@ -1054,44 +1108,37 @@
     writtenContains: 4,
     readingContains: 5
   };
-  function firstDifference(...differences) {
-    for (const difference of differences) {
-      const value = difference();
-      if (value !== 0) return value;
-    }
-    return 0;
-  }
   var isLaterSense = (rank) => rank.lane === EvidenceLane.strongGloss && rank.senseOrder > 0;
-  var englishPlacement = (lhs, rhs) => [
-    () => lhs.lane - rhs.lane,
-    () => lhs.romajiSpecificityRank - rhs.romajiSpecificityRank,
-    () => Number(isLaterSense(lhs)) - Number(isLaterSense(rhs))
-  ];
+  function compareHeadwordLengthThenFingerprint(lhs, rhs) {
+    const difference = lhs.headwordLength - rhs.headwordLength;
+    if (difference !== 0) return difference;
+    return compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint);
+  }
+  function compareEnglishPlacements(lhs, rhs) {
+    let difference = lhs.lane - rhs.lane;
+    if (difference === 0) difference = lhs.romajiSpecificityRank - rhs.romajiSpecificityRank;
+    if (difference === 0) difference = Number(isLaterSense(lhs)) - Number(isLaterSense(rhs));
+    return difference;
+  }
   function compareEnglishRanks(lhs, rhs) {
-    return firstDifference(
-      ...englishPlacement(lhs, rhs),
-      () => lhs.priorityPresenceRank - rhs.priorityPresenceRank,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseOrder - rhs.senseOrder,
-      () => lhs.glossOrder - rhs.glossOrder,
-      () => lhs.corroborationRank - rhs.corroborationRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
+    let difference = compareEnglishPlacements(lhs, rhs);
+    if (difference === 0) difference = lhs.priorityPresenceRank - rhs.priorityPresenceRank;
+    if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile);
+    if (difference === 0) difference = lhs.senseOrder - rhs.senseOrder;
+    if (difference === 0) difference = lhs.glossOrder - rhs.glossOrder;
+    if (difference === 0) difference = lhs.corroborationRank - rhs.corroborationRank;
+    if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs);
+    return difference;
   }
   function compareJapaneseRanks(lhs, rhs) {
-    return firstDifference(
-      () => lhs.relation - rhs.relation,
-      () => compareProfiles(lhs.priorityProfile, rhs.priorityProfile),
-      () => lhs.senseBreadthRank - rhs.senseBreadthRank,
-      () => lhs.headwordLength - rhs.headwordLength,
-      () => compareStrings(lhs.semanticFingerprint, rhs.semanticFingerprint)
-    );
+    let difference = lhs.relation - rhs.relation;
+    if (difference === 0) difference = compareProfiles(lhs.priorityProfile, rhs.priorityProfile);
+    if (difference === 0) difference = lhs.senseBreadthRank - rhs.senseBreadthRank;
+    if (difference === 0) difference = compareHeadwordLengthThenFingerprint(lhs, rhs);
+    return difference;
   }
   function comparePresentationRanks(lhs, rhs) {
-    if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs));
-    }
+    if (lhs.kind === "english" && rhs.kind === "english") return compareEnglishPlacements(lhs, rhs);
     if (lhs.kind === "japanese" && rhs.kind === "japanese") return lhs.relation - rhs.relation;
     return lhs.kind === "english" ? -1 : 1;
   }
@@ -1102,7 +1149,7 @@
   }
   function sameLexicalGroup(lhs, rhs) {
     if (lhs.kind === "english" && rhs.kind === "english") {
-      return firstDifference(...englishPlacement(lhs, rhs)) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
+      return compareEnglishPlacements(lhs, rhs) === 0 && lhs.priorityPresenceRank === rhs.priorityPresenceRank && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseOrder === rhs.senseOrder && lhs.glossOrder === rhs.glossOrder && lhs.corroborationRank === rhs.corroborationRank;
     }
     if (lhs.kind === "japanese" && rhs.kind === "japanese") {
       return lhs.relation === rhs.relation && profilesEqual(lhs.priorityProfile, rhs.priorityProfile) && lhs.senseBreadthRank === rhs.senseBreadthRank;
@@ -1118,8 +1165,10 @@
     }
     return best;
   }
+  var compareIds = (lhs, rhs) => compareStrings(lhs.id, rhs.id);
+  var comparePresentation = (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank);
   function canonicalEntry(equivalents) {
-    return minimum(equivalents, (lhs, rhs) => compareStrings(lhs.id, rhs.id));
+    return minimum(equivalents, compareIds);
   }
   function deduplicated(ranked, client = {}) {
     const groups = /* @__PURE__ */ new Map();
@@ -1132,10 +1181,7 @@
     }
     return [...groups.values()].map((group) => {
       const leading = group[0];
-      const strongest = minimum(
-        group,
-        (lhs, rhs) => comparePresentationRanks(lhs.presentationRank, rhs.presentationRank)
-      );
+      const strongest = minimum(group, comparePresentation);
       const canonical = canonicalEntry(group.map((ranked2) => ranked2.entry)) ?? leading.entry;
       return {
         entry: {
@@ -1228,8 +1274,8 @@
 
   // src/detail/sections.ts
   var glossSeparator = " · ";
-  function sections(titles, shown) {
-    return Object.keys(titles).filter((kind) => shown[kind] ?? true).map((kind) => ({ kind, title: titles[kind] }));
+  function sections(titles, shown2) {
+    return Object.keys(titles).filter((kind) => shown2[kind] ?? true).map((kind) => ({ kind, title: titles[kind] }));
   }
   var pronounceLabel = (reading) => `Pronounce ${reading}`;
 
@@ -1361,10 +1407,10 @@
     );
     return ranked.slice(0, limit).flatMap(({ entries }) => canonicalEntry(entries) ?? []);
   }
-  function wordsForReading(reading, words2) {
+  function wordsForReading(reading, words) {
     const stem = hiragana(reading.value.replaceAll(".", "").replaceAll("-", ""));
     if (!stem) return [];
-    return words2.filter((word) => hiragana(word.reading).startsWith(stem)).slice(0, wordsPerReading);
+    return words.filter((word) => hiragana(word.reading).startsWith(stem)).slice(0, wordsPerReading);
   }
   var roleLabels = {
     meaningStructure: "Meaning / structure",
@@ -1374,7 +1420,7 @@
   function kanjiElements(structure, elements) {
     if (!structure) return [];
     return structure.elementGlyphs.flatMap((glyph) => {
-      const element = elements.find((candidate) => candidate.glyph === glyph);
+      const element = elements.find((candidate2) => candidate2.glyph === glyph);
       if (!element || !isKanjiCharacter(glyph)) return [];
       const role = structure.explicitPhoneticElement === glyph ? "sound" : element.commonLinkedOnReadings.some((reading) => structure.onReadings.includes(reading)) ? "soundPattern" : "meaningStructure";
       const meanings = element.meanings.slice(0, meaningsPerElement);
@@ -1427,22 +1473,22 @@
     }
   }
   var wordsTextSeparator = "   ";
-  function kanjiReadingText(label, value, words2) {
-    const [first] = words2;
+  function kanjiReadingText(label, value, words) {
+    const [first] = words;
     return {
-      wordsText: words2.map((word) => `${word.headword}${glossSeparator}${word.summary}`).join(wordsTextSeparator),
+      wordsText: words.map((word) => `${word.headword}${glossSeparator}${word.summary}`).join(wordsTextSeparator),
       spoken: first ? `${label} reading ${value}, ${first.headword}, ${first.summary}` : null
     };
   }
-  function kanjiReading(reading, words2) {
+  function kanjiReading(reading, words) {
     const label = readingLabels[reading.kind];
-    const shown = wordsForReading(reading, words2);
+    const shown2 = wordsForReading(reading, words);
     return {
       kind: reading.kind,
       label,
       value: reading.value,
-      words: shown,
-      ...kanjiReadingText(label, reading.value, shown)
+      words: shown2,
+      ...kanjiReadingText(label, reading.value, shown2)
     };
   }
   function savedKanjiReading(detail) {
@@ -1450,7 +1496,7 @@
   }
   function kanjiDetail(rows) {
     const { kanji: kanji2 } = rows;
-    const words2 = rows.words.map((row) => ({
+    const words = rows.words.map((row) => ({
       id: row.id,
       entSeq: row.entSeq,
       headword: row.headword,
@@ -1459,17 +1505,17 @@
       summary: row.summary
     }));
     const elements = kanjiElements(rows.structure, rows.elements);
-    const readings = kanji2.readings.map((reading) => kanjiReading(reading, words2));
+    const readings = kanji2.readings.map((reading) => kanjiReading(reading, words));
     const components = elements.length === 0 ? kanji2.components : [];
     return {
-      sections: kanjiSections({ readings, components, elements, words: words2 }),
+      sections: kanjiSections({ readings, components, elements, words }),
       character: kanji2.character,
       stats: kanjiStats(kanji2),
       meanings: kanji2.meanings,
       readings,
       components,
       elements,
-      words: words2,
+      words,
       strokeOrder: rows.strokes ? drawableStrokeOrder(rows.strokes) : null,
       shareText: kanjiShareText(kanji2)
     };
@@ -1556,7 +1602,7 @@
     }
   ];
   function defaultValue(pack, rows) {
-    const row = rows.find((candidate) => candidate.pack === pack);
+    const row = rows.find((candidate2) => candidate2.pack === pack);
     return !row ? null : row.pack === "jlpt" ? row.level : row.rank;
   }
   function defaultFrequencyLookups(rows) {
@@ -1695,13 +1741,13 @@
     if (lookups.length === 0) return { chips: [], spoken: "No frequency dictionary enabled" };
     const leads = (lookup) => leadingFamily !== null && lookup.dictionary !== null && frequencyFamily(lookup.dictionary.id) === leadingFamily;
     const inOrder2 = [...lookups.filter(leads), ...lookups.filter((lookup) => !leads(lookup))];
-    const shown = inOrder2.filter((lookup, offset) => {
+    const shown2 = inOrder2.filter((lookup, offset) => {
       if (listed(lookup)) return true;
       if (!("unavailable" in lookup) && lookup.dictionary.kind === "level") return false;
       return offset === 0;
     });
-    if (shown.length === 0) return { chips: [], spoken: "No frequency rank" };
-    const rows = shown.map(frequencyLookupRow);
+    if (shown2.length === 0) return { chips: [], spoken: "No frequency rank" };
+    const rows = shown2.map(frequencyLookupRow);
     return {
       chips: rows.map(({ pack, source, value, tier, spokenTier }) => ({
         pack,
@@ -1852,18 +1898,18 @@
     reading: 6
   };
   function normalizedEntryEvidence(value) {
-    const words2 = [];
+    const words = [];
     let word = "";
     for (const character of graphemes(value.normalize("NFKC"))) {
       if (/^\p{White_Space}/u.test(character)) {
-        if (word) words2.push(word);
+        if (word) words.push(word);
         word = "";
       } else {
         word += character;
       }
     }
-    if (word) words2.push(word);
-    return words2.join(" ");
+    if (word) words.push(word);
+    return words.join(" ");
   }
   function graphemePosition(term, text) {
     const index = text.indexOf(term);
@@ -2177,9 +2223,9 @@
     if (endsInNote(value, `to ${query}`)) return GlossRelation.qualifiedInfinitive;
     return token.test(value) ? GlossRelation.glossToken : null;
   }
+  var glossLane = (evidence) => evidence.relation === GlossRelation.glossToken ? 1 : 0;
   function glossEvidencePrecedes(lhs, rhs) {
-    const lane = (evidence) => evidence.relation === GlossRelation.glossToken ? 1 : 0;
-    return lane(lhs) - lane(rhs) || lhs.senseOrder - rhs.senseOrder || lhs.relation - rhs.relation || lhs.glossOrder - rhs.glossOrder;
+    return glossLane(lhs) - glossLane(rhs) || lhs.senseOrder - rhs.senseOrder || lhs.relation - rhs.relation || lhs.glossOrder - rhs.glossOrder;
   }
   async function rankedEnglish(db, query, exactFormOnly = false) {
     const evidence = exactFormOnly ? await exactRomajiEvidence(db, query) : await englishEvidence(db, query);
@@ -2201,13 +2247,13 @@
         semanticFingerprint: row.semantic_fingerprint
       };
       if (!selectedGloss) {
-        const romajiRelation = romaji2.length > 0 ? Math.min(...romaji2) : void 0;
-        if (romajiRelation === void 0) continue;
+        const romajiRelation2 = romaji2.length > 0 ? Math.min(...romaji2) : void 0;
+        if (romajiRelation2 === void 0) continue;
         const rank2 = {
           kind: "english",
           lane: EvidenceLane.romajiOnly,
           corroborationRank: 0,
-          romajiSpecificityRank: romajiRelation,
+          romajiSpecificityRank: romajiRelation2,
           senseOrder: 0,
           glossOrder: 0,
           ...shared2
@@ -2216,16 +2262,14 @@
           entry,
           rank: rank2,
           presentationRank: rank2,
-          hasExactOrPrefixMatch: romajiRelation !== RomajiRelation.contains,
+          hasExactOrPrefixMatch: romajiRelation2 <= RomajiRelation.prefix,
           semanticFingerprint: row.semantic_fingerprint,
           matchedSummary: null
         });
         continue;
       }
       const lane = selectedGloss.relation === GlossRelation.glossToken ? EvidenceLane.tokenGloss : EvidenceLane.strongGloss;
-      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some(
-        (relation) => relation === RomajiRelation.exact || relation === RomajiRelation.prefix
-      );
+      const corroborated = lane === EvidenceLane.strongGloss && romaji2.some((relation) => relation <= RomajiRelation.prefix);
       const rank = {
         kind: "english",
         lane,
@@ -2252,15 +2296,21 @@
   }
   async function exactRomajiEvidence(db, query) {
     const rows = await db.all(
-      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band, f.kind
        FROM forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
-       WHERE f.kind = ${FormKind.romaji} AND f.form = ?`,
-      [query]
+       WHERE f.kind = ${FormKind.romaji} AND f.form = ?
+     UNION ALL
+     SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band, f.kind
+       FROM shown_romaji_forms f JOIN entries e ON e.id = f.entry_id ${displayedFormProfileJoin}
+       WHERE f.kind = ${FormKind.shownRomaji} AND f.form = ?`,
+      [query, query]
     );
     return {
       rows,
       glossMatches: /* @__PURE__ */ new Map(),
-      romajiMatches: new Map(rows.map((row) => [row.id, [RomajiRelation.exact]]))
+      romajiMatches: new Map(
+        rows.map((row) => [row.id, [romajiRelation(query, row.kind, query)]])
+      )
     };
   }
   async function englishEvidence(db, query) {
@@ -2281,9 +2331,56 @@
         [glossMatch, romajiMatch]
       ),
       glossEvidence(db, query, glossMatch),
-      romajiEvidence(db, query, romajiMatch)
+      storedRomajiEvidence(db, query, romajiMatch)
     ]);
+    if (!listsEveryWordItCan(rows, glossMatches, romajiMatches)) {
+      await addShownRomajiEvidence(db, query, romajiMatch, { rows, glossMatches, romajiMatches });
+    }
     return { rows, glossMatches, romajiMatches };
+  }
+  function listsEveryWordItCan(rows, glossMatches, romajiMatches) {
+    const words = /* @__PURE__ */ new Set();
+    for (const row of rows) {
+      if (!glossMatches.has(row.id) && !romajiMatches.has(row.id)) continue;
+      words.add(row.semantic_fingerprint);
+      if (words.size >= searchResultLimit) return true;
+    }
+    return false;
+  }
+  async function addShownRomajiEvidence(db, query, match, evidence) {
+    const shown2 = await db.all(
+      `SELECT lower(hex(f.entry_id)) AS entry_id, f.form, f.kind
+       FROM shown_romaji_fts x JOIN shown_romaji_forms f ON f.rowid = x.docid
+       WHERE shown_romaji_fts MATCH ?`,
+      [match]
+    );
+    const { rows, glossMatches, romajiMatches } = evidence;
+    const listed3 = /* @__PURE__ */ new Set();
+    for (const row of rows) listed3.add(row.id);
+    const ranked = /* @__PURE__ */ new Set();
+    for (const id of glossMatches.keys()) ranked.add(id);
+    for (const id of romajiMatches.keys()) ranked.add(id);
+    const unlisted = [];
+    let step = 0;
+    for (const row of shown2) {
+      stopIfInterrupted(db, step++);
+      if (ranked.has(row.entry_id)) continue;
+      const relation = romajiRelation(row.form, row.kind, query);
+      const relations = romajiMatches.get(row.entry_id);
+      if (relations) {
+        if (!relations.includes(relation)) relations.push(relation);
+        continue;
+      }
+      romajiMatches.set(row.entry_id, [relation]);
+      if (!listed3.has(row.entry_id)) unlisted.push(row.entry_id);
+    }
+    if (unlisted.length === 0) return;
+    const added = await db.all(
+      `SELECT ${entryColumns}, p.primary_mask, p.secondary_mask, p.news_frequency_band
+       FROM json_each(?) j JOIN entries e ON e.id = unhex(j.value) ${displayedFormProfileJoin}`,
+      [JSON.stringify(unlisted)]
+    );
+    for (const row of added) rows.push(row);
   }
   async function glossEvidence(db, query, match) {
     const rows = await db.all(
@@ -2324,7 +2421,16 @@
     }
     return result3;
   }
-  async function romajiEvidence(db, query, match) {
+  var firstRelationOfKind = {
+    [FormKind.romaji]: RomajiRelation.exact,
+    [FormKind.shownRomaji]: RomajiRelation.shownExact,
+    [FormKind.unmarkedRomaji]: RomajiRelation.unmarkedExact
+  };
+  function romajiRelation(form, kind, query) {
+    const offset = form === query ? RomajiRelation.exact : form.startsWith(query) ? RomajiRelation.prefix : RomajiRelation.contains;
+    return firstRelationOfKind[kind] + offset;
+  }
+  async function storedRomajiEvidence(db, query, match) {
     const rows = await db.all(
       `SELECT lower(hex(f.entry_id)) AS entry_id, f.form
        FROM dictionary_form_fts x JOIN forms f ON f.rowid = x.docid
@@ -2358,6 +2464,11 @@
   function containsFilter(query) {
     return { sql: "instr(f.form, ?) > 0", params: [query] };
   }
+  function compareFormEvidence(lhs, rhs) {
+    if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation;
+    const profiles = compareProfiles(lhs.profile, rhs.profile);
+    return profiles || compareStrings(lhs.form, rhs.form);
+  }
   function rankJapanese(query, rows, client = {}) {
     const byEntry = /* @__PURE__ */ new Map();
     let step = 0;
@@ -2378,11 +2489,7 @@
     const ranked = [];
     for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
       stopIfInterrupted(client, step++);
-      const selected = minimum(evidence, (lhs, rhs) => {
-        if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation;
-        const profiles = compareProfiles(lhs.profile, rhs.profile);
-        return profiles || compareStrings(lhs.form, rhs.form);
-      });
+      const selected = minimum(evidence, compareFormEvidence);
       if (!selected) continue;
       const rank = {
         kind: "japanese",
@@ -2407,17 +2514,20 @@
     });
     return deduplicated(ranked, client);
   }
+  var exactFilter = (query) => ({ sql: "f.form = ?", params: [query] });
   async function hasFormContaining(db, query) {
-    const filter = containsFilter(query);
-    const rows = await db.all(
-      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${filter.sql}
-         AND ${readingRestrictionFilter}
-       LIMIT 1`,
-      filter.params
-    );
-    return rows.length > 0;
+    for (const filter of [exactFilter(query), containsFilter(query)]) {
+      const rows = await db.all(
+        `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
+         WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+           AND ${filter.sql}
+           AND ${readingRestrictionFilter}
+         LIMIT 1`,
+        filter.params
+      );
+      if (rows.length > 0) return true;
+    }
+    return false;
   }
   async function rankedJapanese(db, query) {
     const filter = containsFilter(query);
@@ -2658,25 +2768,28 @@
     return results;
   }
 
-  // src/search/morphology.ts
-  var linkablePartsOfSpeech = /* @__PURE__ */ new Set([
-    "名詞",
-    "動詞",
-    "形容詞",
-    "形状詞",
-    "代名詞",
-    "接頭辞",
-    "接尾辞",
-    "感動詞"
-  ]);
-  function lookupSegments(words2) {
-    return words2.flatMap((word) => {
-      if (!isJapaneseOnly(normalizeQuery(word.surface)) || !linkablePartsOfSpeech.has(word.partOfSpeech[0] ?? "") || word.isOutOfVocabulary) {
-        return [];
-      }
-      const form = word.dictionaryForm === "*" || word.dictionaryForm === "" ? word.surface : word.dictionaryForm;
-      return [normalizeQuery(form)];
-    });
+  // src/search/romaji-forms.ts
+  var asciiSyllables = new Map(
+    "あ:a い:i う:u え:e お:o か:ka き:ki く:ku け:ke こ:ko が:ga ぎ:gi ぐ:gu げ:ge ご:go さ:sa し:shi す:su せ:se そ:so ざ:za じ:ji ず:zu ぜ:ze ぞ:zo た:ta ち:chi つ:tsu て:te と:to だ:da ぢ:ji づ:zu で:de ど:do な:na に:ni ぬ:nu ね:ne の:no は:ha ひ:hi ふ:fu へ:he ほ:ho ば:ba び:bi ぶ:bu べ:be ぼ:bo ぱ:pa ぴ:pi ぷ:pu ぺ:pe ぽ:po ま:ma み:mi む:mu め:me も:mo や:ya ゆ:yu よ:yo ら:ra り:ri る:ru れ:re ろ:ro わ:wa ゐ:wi ゑ:we を:o ん:n ゔ:vu きゃ:kya きゅ:kyu きょ:kyo ぎゃ:gya ぎゅ:gyu ぎょ:gyo しゃ:sha しゅ:shu しょ:sho じゃ:ja じゅ:ju じょ:jo ちゃ:cha ちゅ:chu ちょ:cho にゃ:nya にゅ:nyu にょ:nyo ひゃ:hya ひゅ:hyu ひょ:hyo びゃ:bya びゅ:byu びょ:byo ぴゃ:pya ぴゅ:pyu ぴょ:pyo みゃ:mya みゅ:myu みょ:myo りゃ:rya りゅ:ryu りょ:ryo".split(" ").map((rule) => rule.split(":"))
+  );
+  var romajiSeparators = /[・、。〜]/gu;
+  var macronVowels = "āēīōū";
+  var romajiLetters = new RegExp(`^[\\0-\\x7f${macronVowels}\\u{304}]*$`, "u");
+  var latinLetter2 = new RegExp(`[a-z${macronVowels}]`, "u");
+  function romajiQuery(query) {
+    if (isASCII(query)) return query;
+    const separated = query.replace(romajiSeparators, " ").split(" ").filter(Boolean).join(" ");
+    return romajiLetters.test(separated) && latinLetter2.test(separated) ? separated : null;
+  }
+  var combiningMarks = /\p{Mn}/gu;
+  var withoutMarks = (form) => form.normalize("NFD").replace(combiningMarks, "").normalize("NFC");
+
+  // src/search/latin-text.ts
+  var latinLetter3 = /\p{Script=Latin}/u;
+  function latinSpellings(text) {
+    if (!latinLetter3.test(text) || containsJapaneseText(text) || romajiQuery(text) !== null) return [];
+    const unaccented = withoutMarks(text);
+    return unaccented === text ? [text] : [text, unaccented];
   }
 
   // src/search/search.ts
@@ -2694,7 +2807,10 @@
     db;
     async search(rawQuery) {
       const query = normalizeQuery(rawQuery);
-      const exactFormEntry = isASCII(query) && query !== "" ? (await rankedEnglish(this.db, query, true))[0]?.entry : void 0;
+      const romaji2 = romajiQuery(query);
+      const romajiCandidates = romajiDeinflectedCandidates(query);
+      const [exactForm] = romaji2 !== null && romaji2 !== "" ? await rankedEnglish(this.db, romaji2, true) : [];
+      const exactFormEntry = exactForm && (exactForm.hasExactOrPrefixMatch || romajiCandidates.length === 0) ? exactForm.entry : void 0;
       if (exactFormEntry) {
         const refinement = normalizeQuery(exactFormEntry.reading);
         const [hasRefinedResults, literalResults] = await Promise.all([
@@ -2707,10 +2823,9 @@
         }
       }
       const directResults = await this.searchOnce(query);
-      const romajiCandidates = romajiDeinflectedCandidates(query);
       if (!directResults.hasExactOrPrefixMatch && romajiCandidates.length > 0) {
         const deinflectedResults = await Promise.all(
-          romajiCandidates.map((candidate) => this.searchOnce(candidate))
+          romajiCandidates.map((candidate2) => this.searchOnce(candidate2))
         );
         const primaryIndex = deinflectedResults.findIndex((results) => results.items.length > 0);
         if (primaryIndex >= 0) {
@@ -2787,7 +2902,8 @@
     }
     async searchOnce(query) {
       if (query === "") return noResults();
-      const ranked = isASCII(query) ? await rankedEnglish(this.db, query) : await rankedJapanese(this.db, query);
+      const romaji2 = romajiQuery(query);
+      const ranked = romaji2 !== null ? await rankedEnglish(this.db, romaji2) : await this.rankedJapaneseOrLatin(query);
       if (ranked.length === 0) return noResults();
       let leadingLexicalEntryCount = 0;
       while (leadingLexicalEntryCount < ranked.length && sameLexicalGroup(ranked[leadingLexicalEntryCount].rank, ranked[0].rank)) {
@@ -2800,50 +2916,59 @@
         hasExactOrPrefixMatch: ranked.some((entry) => entry.hasExactOrPrefixMatch)
       };
     }
+    async rankedJapaneseOrLatin(query) {
+      const spellings = latinSpellings(query);
+      if (spellings.length === 0) return rankedJapanese(this.db, query);
+      for (const spelling of spellings) {
+        const english = await rankedEnglish(this.db, spelling);
+        if (english.length > 0) return english;
+      }
+      return [];
+    }
     async hasResults(query) {
       if (query === "") return false;
-      if (isASCII(query)) return (await this.searchOnce(query)).items.length > 0;
+      if (romajiQuery(query) !== null) return (await this.searchOnce(query)).items.length > 0;
       return hasFormContaining(this.db, query);
     }
     async analyzedItems(query) {
       const morphology = this.capabilities.morphology;
       if (!morphology || query === "") return [];
-      let words2;
+      let words;
       try {
-        words2 = await morphology.analyze(query);
+        words = (await morphology.analyze(query)).words;
       } catch {
         return [];
       }
-      const segments = lookupSegments(words2);
+      const segments = lookupSegments(words);
       const results = await Promise.all(segments.map((segment) => this.searchOnce(segment)));
       return results.flatMap(({ items }, index) => {
-        const item = items.find((candidate) => candidate.entry.headword === segments[index]) ?? items[0];
+        const item = items.find((candidate2) => candidate2.entry.headword === segments[index]) ?? items[0];
         return item ? [item] : [];
       });
     }
     async japaneseDeinflectedSources(query) {
-      const candidates = deinflect(query).map((candidate) => ({
-        ...candidate,
-        term: normalizeQuery(candidate.term)
+      const candidates = deinflect(query).map((candidate2) => ({
+        ...candidate2,
+        term: normalizeQuery(candidate2.term)
       }));
       const matchesByTerm = await rankedJapaneseForms(
         this.db,
-        candidates.map((candidate) => candidate.term)
+        candidates.map((candidate2) => candidate2.term)
       );
       const sourcesByDepth = /* @__PURE__ */ new Map();
       const seen = /* @__PURE__ */ new Set();
-      for (const candidate of candidates) {
-        const matches = (matchesByTerm.get(candidate.term) ?? []).filter(
-          (ranked) => candidate.wordClasses.some(
+      for (const candidate2 of candidates) {
+        const matches = (matchesByTerm.get(candidate2.term) ?? []).filter(
+          (ranked) => candidate2.wordClasses.some(
             (wordClass) => acceptsPartsOfSpeech(wordClass, ranked.entry.partsOfSpeech)
           )
         );
         for (const match of matches) {
           if (seen.has(match.entry.id)) continue;
           seen.add(match.entry.id);
-          const source = sourcesByDepth.get(candidate.depth) ?? [];
+          const source = sourcesByDepth.get(candidate2.depth) ?? [];
           source.push(match);
-          sourcesByDepth.set(candidate.depth, source);
+          sourcesByDepth.set(candidate2.depth, source);
         }
       }
       return [...sourcesByDepth.keys()].sort((lhs, rhs) => lhs - rhs).map((depth) => resultItems(sourcesByDepth.get(depth) ?? []));
@@ -3002,9 +3127,9 @@
     return { entries: () => file.entries, row: (character) => byCharacter.get(character) ?? null };
   }
   var codePoint = (character) => character.codePointAt(0) ?? 0;
+  var frequencyRank = (entry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY;
   function byFrequency(left, right) {
-    const rank = (entry) => entry.frequencyRank ?? Number.POSITIVE_INFINITY;
-    return rank(left) - rank(right) || codePoint(left.character) - codePoint(right.character);
+    return frequencyRank(left) - frequencyRank(right) || codePoint(left.character) - codePoint(right.character);
   }
   var listed2 = (entry, list) => (list.grades === void 0 || entry.grade !== null && list.grades.includes(entry.grade)) && (list.strokes === void 0 || entry.strokeCount === list.strokes) && (list.jlptLevel === void 0 || entry.wallerJlptLevel === list.jlptLevel);
   var kanjiIn = (kanji2, list) => kanji2.entries().filter((entry) => listed2(entry, list)).sort(byFrequency);
@@ -3236,16 +3361,16 @@
       const matches = matcher(filter);
       const knownKanji = new Set(known.map((character) => character.normalize("NFKC")));
       const sections2 = this.lists.flatMap((list) => {
-        const shown = matches ? list.kanji.filter(matches) : list.kanji;
-        if (shown.length === 0) return [];
-        const kanji2 = shown.map(({ character, base, meaning }) => ({
+        const shown2 = matches ? list.kanji.filter(matches) : list.kanji;
+        if (shown2.length === 0) return [];
+        const kanji2 = shown2.map(({ character, base, meaning }) => ({
           character,
           meaning,
           known: knownKanji.has(base)
         }));
         const knownCount = kanji2.filter((tile) => tile.known).length;
         const total = counted.format(list.kanji.length);
-        const count = matches ? `${counted.format(shown.length)} of ${total}` : total;
+        const count = matches ? `${counted.format(shown2.length)} of ${total}` : total;
         const spoken = [
           list.title,
           `${count} kanji`,
@@ -3581,9 +3706,11 @@
           text: token.text,
           ruby: entry !== null && reading ? rubySegments(token.text, reading) : [{ text: token.text }],
           link: link ? entry !== null ? { entSeq: entry } : { entSeqs: link.entSeqs, query: token.dictionaryForm ?? token.text } : null,
+          ...link?.meaning ? { meaning: link.meaning } : {},
           isPageWord: highlights.has(index)
         };
       }),
+      ...example2.romaji === void 0 ? {} : { romaji: example2.romaji },
       translation: sentence.english,
       japanese: {
         id: sentence.japaneseTatoebaId,
@@ -3668,9 +3795,9 @@
     }
     return [...forms2.values()].sort((left, right) => right.length - left.length);
   }
-  function startsWith(target, position, candidate) {
-    for (let index = 0; index < candidate.length; index++) {
-      if (target[position + index] !== candidate[index]) return false;
+  function startsWith(target, position, candidate2) {
+    for (let index = 0; index < candidate2.length; index++) {
+      if (target[position + index] !== candidate2[index]) return false;
     }
     return true;
   }
@@ -3688,10 +3815,10 @@
       const character = characters[index];
       const source = character === "々" ? previous : character;
       if (source === null) return;
-      for (const candidate of variants(readings.get(source) ?? unread)) {
-        if (!startsWith(target, position, candidate)) continue;
-        current.push(candidate.length);
-        search(index + 1, position + candidate.length, source);
+      for (const candidate2 of variants(readings.get(source) ?? unread)) {
+        if (!startsWith(target, position, candidate2)) continue;
+        current.push(candidate2.length);
+        search(index + 1, position + candidate2.length, source);
         current.pop();
       }
     }
@@ -4026,9 +4153,9 @@ ${sense.noteText}` : sense.meaning
     notes: "Notes",
     examples: examplesTitle
   };
-  function wordSections(content, shown) {
+  function wordSections(content, shown2) {
     return sections(wordSectionTitles, {
-      ...shown,
+      ...shown2,
       alternatives: content.alternatives.length > 0,
       kanji: content.kanji.length > 0,
       alternativeKanji: content.alternativeKanji.length > 0,
@@ -4136,12 +4263,16 @@ ${sense.noteText}` : sense.meaning
       pronounce: pronounceLabel(entry.reading),
       conjugations: table,
       pitch: pitch ? pitchAccent(entry.reading, pitch) : null,
-      senses: entry.senses.map((sense, index) => ({
-        number: index + 1,
-        meaning: sense.meaning,
-        notes: sense.notes,
-        noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null
-      })),
+      senses: entry.senses.map((sense, index) => {
+        const example2 = rows.senseExamples[index];
+        return {
+          number: index + 1,
+          meaning: sense.meaning,
+          notes: sense.notes,
+          noteText: sense.notes.length > 0 ? sense.notes.join(glossSeparator) : null,
+          example: example2 ? wordExample(example2) : null
+        };
+      }),
       frequencyRows,
       alternatives,
       kanji: kanji2,
@@ -4234,16 +4365,16 @@ ${sense.noteText}` : sense.meaning
       lookups,
       isKnown
     );
-    const shown = filteredResults(ordered, filter, isKnown);
+    const shown2 = filteredResults(ordered, filter, isKnown);
     const isRanked = layout.sections.includes("results");
-    const count = shown.length + (layout.kanji ? 1 : 0);
+    const count = shown2.length + (layout.kanji ? 1 : 0);
     const rows = layout.isDiscovered ? wordRows(
       layout.presented,
       lookups,
       isKnown,
       (index) => `Discovered word ${index + 1} of ${layout.presented.length}`
     ) : isRanked ? wordRows(
-      shown,
+      shown2,
       lookups,
       isKnown,
       (index) => `Result ${index + (layout.kanji ? 2 : 1)} of ${count}`,
@@ -4273,7 +4404,7 @@ ${sense.noteText}` : sense.meaning
         spoken: `Result 1 of ${count}, Kanji primary`
       },
       rows,
-      hiddenByFilter: isRanked && shown.length === 0 && ordered.length > 0 ? hiddenCountTitle(ordered.length - shown.length) : null,
+      hiddenByFilter: isRanked && shown2.length === 0 && ordered.length > 0 ? hiddenCountTitle(ordered.length - shown2.length) : null,
       frequencyNotice: isRanked ? frequencyUnavailableNotice(
         frequencyEntries.flatMap((id) => {
           const found = lookups(id);
@@ -4413,7 +4544,7 @@ ${sense.noteText}` : sense.meaning
     }
     wordPage(entry) {
       const pitches = { pitch: entry.pitch ?? null, compoundPitch: entry.compoundPitch ?? null };
-      const shown = shownPitch(pitches);
+      const shown2 = shownPitch(pitches);
       const detail = wordDetail({
         entry: {
           ...entry,
@@ -4428,7 +4559,8 @@ ${sense.noteText}` : sense.meaning
         frequency: [],
         kanji: this.kanji.glossRows([entry.headword, ...entry.writtenForms.map((form) => form.value)]),
         examples: [],
-        exampleCount: null
+        exampleCount: null,
+        senseExamples: []
       });
       const frequency = (evidenceLookups(this.frequency([entry.id]))(entry.id) ?? []).map(
         frequencyLookupRow
@@ -4450,8 +4582,8 @@ ${sense.noteText}` : sense.meaning
             Polite: noted(detail.conjugations.rows.Polite)
           }
         },
-        pitch: detail.pitch && shown && { ...detail.pitch, source: shown.sourceIdentity },
-        senses: detail.senses.map((sense, index) => ({
+        pitch: detail.pitch && shown2 && { ...detail.pitch, source: shown2.sourceIdentity },
+        senses: detail.senses.map(({ example: _, ...sense }, index) => ({
           ...sense,
           ...meaningActions({ ...sense, glosses: entry.senses[index].glosses })
         })),
@@ -4477,7 +4609,7 @@ ${sense.noteText}` : sense.meaning
     }
     kanjiPage(request) {
       const { character } = request;
-      const words2 = request.words.map((word) => ({ ...word, entSeq: 0 }));
+      const words = request.words.map((word) => ({ ...word, entSeq: 0 }));
       const kanji2 = this.kanji.row(character);
       const structure = this.kanji.structure(character);
       const elements = structure ? this.kanji.elementRows(structure.elementGlyphs) : [];
@@ -4493,7 +4625,7 @@ ${sense.noteText}` : sense.meaning
         },
         structure,
         elements,
-        words: words2,
+        words,
         strokes: null
       });
       const leading = detail.words.filter((word) => word.id === request.leadingWord);
@@ -4509,7 +4641,7 @@ ${sense.noteText}` : sense.meaning
     }
     candidateMeanings(candidates) {
       return candidates.map(
-        (candidate) => isKanjiCharacter(candidate) ? this.kanji.row(candidate)?.meanings[0] ?? null : null
+        (candidate2) => isKanjiCharacter(candidate2) ? this.kanji.row(candidate2)?.meanings[0] ?? null : null
       );
     }
     kanjiElementPage(glyph) {
@@ -4542,11 +4674,52 @@ ${sense.noteText}` : sense.meaning
   // src/artifact/example-retrieval.ts
   var sentenceColumns = "e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanese, e.english";
   var storedForm = normalizeQuery;
-  function result(matches) {
+  function senseExamples(db, id) {
+    const rows = db.all(
+      `SELECT s.sense_order AS senseOrder, ${sentenceColumns}
+     FROM sense_examples s
+     JOIN example_sentences e ON e.id = s.pair_id
+     WHERE s.entry_id = unhex(?)
+     ORDER BY s.sense_order, s.example_order`,
+      [id]
+    );
+    const bySense = /* @__PURE__ */ new Map();
+    for (const { senseOrder, ...sentence } of rows) {
+      const listed3 = bySense.get(senseOrder);
+      if (listed3) listed3.push(sentence);
+      else bySense.set(senseOrder, [sentence]);
+    }
+    return bySense;
+  }
+  function shownSenseExamples(db, id) {
+    const shown2 = /* @__PURE__ */ new Map();
+    for (const [senseOrder, [first]] of senseExamples(db, id)) shown2.set(senseOrder, first);
+    return shown2;
+  }
+  function checkedSentences(db, id) {
+    const seen = /* @__PURE__ */ new Set();
+    const checked = [];
+    for (const sentences of senseExamples(db, id).values()) {
+      for (const sentence of sentences) {
+        if (seen.has(sentence.pairId)) continue;
+        seen.add(sentence.pairId);
+        checked.push(sentence);
+      }
+    }
+    return checked;
+  }
+  function result(matches, checked) {
+    const leading = new Set(checked.map((sentence) => sentence.pairId));
+    const listedToday = matches.slice(0, exampleLimit);
+    const sentences = [
+      ...checked,
+      ...listedToday.filter((match) => !leading.has(match.pairId)).map((match) => match.sentence)
+    ];
+    const matched = (/* @__PURE__ */ new Set([...leading, ...matches.map((match) => match.pairId)])).size;
     return {
-      sentences: matches.slice(0, exampleLimit).map((match) => match.sentence),
-      count: reportedExampleCount(matches.length),
-      truncated: matches.length > exampleLimit
+      sentences,
+      count: reportedExampleCount(matched),
+      truncated: matched > sentences.length
     };
   }
   function entryEvidence(db, id) {
@@ -4577,7 +4750,7 @@ ${sense.noteText}` : sense.meaning
     );
     return rows.filter((row) => writtenAsSelected(row.writtenForms)).length;
   }
-  function retrieveIndexedEntry(db, id, selectedForm) {
+  function retrieveIndexedEntry(db, id, selectedForm, checked) {
     const rows = db.all(
       `SELECT ${sentenceColumns}, w.surface
      FROM word_index.entry_sentences w
@@ -4598,7 +4771,7 @@ ${sense.noteText}` : sense.meaning
         pairId: sentence.pairId
       });
     }
-    return result(matches.sort(compareRanks));
+    return result(matches.sort(compareRanks), checked);
   }
   function bestEvidence(terms, japanese) {
     let best = null;
@@ -4616,10 +4789,11 @@ ${sense.noteText}` : sense.meaning
     if (entry.id === "" || selectedForm === "" || reading === "") return "missingEntryEvidence";
     const evidence = entryEvidence(db, entry.id);
     if (!evidence || evidence.reading !== reading) return "missingEntryEvidence";
+    const checked = checkedSentences(db, entry.id);
     const isKanaHeadword = selectedForm === reading;
-    if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm);
+    if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm, checked);
     if (!evidence.writtenForms.has(storedForm(selectedForm))) return "missingEntryEvidence";
-    if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([]);
+    if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([], checked);
     const written3 = [entry.headword, ...entry.writtenForms];
     const alternateForms = entry.writtenForms.map(normalizedEntryEvidence).filter((form) => form !== selectedForm && evidence.writtenForms.has(storedForm(form)));
     const evidenceTerms = [
@@ -4652,7 +4826,7 @@ ${sense.noteText}` : sense.meaning
       const existing = byPair.get(sentence.pairId);
       if (!existing || compareRanks(match, existing) < 0) byPair.set(sentence.pairId, match);
     }
-    return result([...byPair.values()].sort(compareRanks));
+    return result([...byPair.values()].sort(compareRanks), checked);
   }
 
   // src/examples/english-inflection.ts
@@ -4701,8 +4875,8 @@ ${sense.noteText}` : sense.meaning
     const lowered = word.toLowerCase();
     const bases = possibleBaseForms(lowered);
     return (other) => {
-      const candidate = other.toLowerCase();
-      return candidate === lowered || possibleBaseForms(candidate).some((base) => bases.includes(base));
+      const candidate2 = other.toLowerCase();
+      return candidate2 === lowered || possibleBaseForms(candidate2).some((base) => bases.includes(base));
     };
   }
 
@@ -4802,8 +4976,8 @@ ${sense.noteText}` : sense.meaning
         }
       }
       if (crossesSentence) continue;
-      const words2 = () => phrase.map((word) => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? "");
-      if (accepts && !accepts(words2())) continue;
+      const words = () => phrase.map((word) => slice(word.byteOffset, word.byteOffset + word.byteLength) ?? "");
+      if (accepts && !accepts(words())) continue;
       const last = phrase[phrase.length - 1];
       const from = offsetsOf.utf16(phrase[0].byteOffset);
       const to = offsetsOf.utf16(last.byteOffset + last.byteLength);
@@ -4847,7 +5021,7 @@ ${sense.noteText}` : sense.meaning
   }
   function theQuerysWordsInAnyForm(query) {
     const sameWords = (query.match(/[0-9a-z_]+/g) ?? []).map(sameWordInAnyForm);
-    return (words2) => words2.length === sameWords.length && words2.every((word, index) => sameWords[index](word));
+    return (words) => words.length === sameWords.length && words.every((word, index) => sameWords[index](word));
   }
   function retrieveEnglish(db, query) {
     if (query.includes('"')) return "embeddedQuote";
@@ -4885,7 +5059,7 @@ ${sense.noteText}` : sense.meaning
     const candidates = [...matches.values()];
     if (!someSentenceHasTheExactWords) return result2(candidates);
     const oneOfThoseIsListed = candidates.some(
-      (candidate) => candidate.relation === Relation.exactSurfacePhrase
+      (candidate2) => candidate2.relation === Relation.exactSurfacePhrase
     );
     return result2(oneOfThoseIsListed ? candidates : []);
   }
@@ -4917,7 +5091,14 @@ ${sense.noteText}` : sense.meaning
   function searchExamples(db, rawQuery) {
     const query = normalizeQuery(rawQuery);
     if (query === "") return "empty";
-    return isASCII(query) ? retrieveEnglish(db, query) : retrieveJapanese(db, query);
+    if (isASCII(query)) return retrieveEnglish(db, query);
+    const japanese = retrieveJapanese(db, query);
+    if (japanese.sentences.length > 0) return japanese;
+    for (const spelling of latinSpellings(query)) {
+      const english = retrieveEnglish(db, spelling);
+      if (typeof english !== "string" && english.sentences.length > 0) return english;
+    }
+    return japanese;
   }
 
   // src/artifact/lookup.ts
@@ -4986,21 +5167,21 @@ ${sense.noteText}` : sense.meaning
     return previousEnd === text.length ? candidates : null;
   }
   var functionWordClasses = /* @__PURE__ */ new Set(["助詞", "助動詞", "記号", "補助記号"]);
-  function isFunctionWord(candidate) {
-    return functionWordClasses.has(candidate.partOfSpeech[0] ?? "");
+  function isFunctionWord(candidate2) {
+    return functionWordClasses.has(candidate2.partOfSpeech[0] ?? "");
   }
-  var isInflectingHead = (candidate) => candidate.partOfSpeech[0] === "動詞" || candidate.partOfSpeech[0] === "形容詞";
-  function isNaAdjectiveStem(candidate) {
-    const pos = candidate.partOfSpeech;
+  var isInflectingHead = (candidate2) => candidate2.partOfSpeech[0] === "動詞" || candidate2.partOfSpeech[0] === "形容詞";
+  function isNaAdjectiveStem(candidate2) {
+    const pos = candidate2.partOfSpeech;
     return pos[0] === "形状詞" || pos[0] === "名詞" && pos.includes("形容動詞語幹");
   }
-  function attaches(candidate, previous) {
-    const pos = candidate.partOfSpeech;
+  function attaches(candidate2, previous) {
+    const pos = candidate2.partOfSpeech;
     switch (pos[0]) {
       case "助動詞":
         return true;
       case "助詞":
-        return pos.includes("接続助詞") && ["て", "で", "ば"].includes(candidate.surface);
+        return pos.includes("接続助詞") && ["て", "で", "ば"].includes(candidate2.surface);
       case "動詞": {
         const isSuffixVerb = pos.includes("接尾");
         if (isSuffixVerb) return true;
@@ -5044,14 +5225,14 @@ ${sense.noteText}` : sense.meaning
     }
     return grouped2;
   }
-  var isNumeral = (candidate) => candidate.partOfSpeech[0] === "名詞" && (candidate.partOfSpeech[1] === "数" || candidate.partOfSpeech[1] === "数詞");
-  var isCounter = (candidate) => candidate.partOfSpeech.includes("助数詞");
-  function numberWithCounterAt(words2, start) {
-    if (!isNumeral(words2[start]) || start > 0 && isNumeral(words2[start - 1])) return null;
+  var isNumeral = (candidate2) => candidate2.partOfSpeech[0] === "名詞" && (candidate2.partOfSpeech[1] === "数" || candidate2.partOfSpeech[1] === "数詞");
+  var isCounter = (candidate2) => candidate2.partOfSpeech.includes("助数詞");
+  function numberWithCounterAt(words, start) {
+    if (!isNumeral(words[start]) || start > 0 && isNumeral(words[start - 1])) return null;
     let end = start;
-    while (end < words2.length && isNumeral(words2[end])) end += 1;
-    if (end === words2.length || !isCounter(words2[end])) return null;
-    const pieces = words2.slice(start, end + 1);
+    while (end < words.length && isNumeral(words[end])) end += 1;
+    if (end === words.length || !isCounter(words[end])) return null;
+    const pieces = words.slice(start, end + 1);
     const surface = pieces.map((piece) => piece.surface).join("");
     return {
       word: {
@@ -5069,11 +5250,11 @@ ${sense.noteText}` : sense.meaning
   }
 
   // src/examples/forms.ts
-  function analyzedWords(candidates) {
+  function analyzedWords2(candidates) {
     return candidates === null ? [] : groupInflections(candidates).map((word) => word.surface);
   }
   function usesForm(japanese, candidates, surface) {
-    return japanese.includes(surface) && analyzedWords(candidates).includes(surface);
+    return japanese.includes(surface) && analyzedWords2(candidates).includes(surface);
   }
 
   // src/examples/linking.ts
@@ -5147,9 +5328,9 @@ ${sense.noteText}` : sense.meaning
     }
     return forms2;
   }
-  function isWrittenAs(candidate, forms2) {
+  function isWrittenAs(candidate2, forms2) {
     if (!forms2) return false;
-    return [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm].some(
+    return [candidate2.surface, candidate2.dictionaryForm, candidate2.normalizedForm].some(
       (form) => forms2.has(form) || forms2.has(form.normalize("NFKC"))
     );
   }
@@ -5166,15 +5347,15 @@ ${sense.noteText}` : sense.meaning
   }
   var grouped = remembered2(groupInflections);
   var isLookedUp = remembered2(
-    (candidate) => isJapaneseOnly(normalizeQuery(candidate.surface))
+    (candidate2) => isJapaneseOnly(normalizeQuery(candidate2.surface))
   );
   var lookupForms = remembered2(formsToLookUp);
-  function formsToLookUp(candidate) {
+  function formsToLookUp(candidate2) {
     const forms2 = [];
     const append = (value) => {
       if (value !== "" && value !== "*" && !forms2.includes(value)) forms2.push(value);
     };
-    const evidence = candidate.joinsInflection ? [candidate.dictionaryForm, candidate.normalizedForm] : [candidate.surface, candidate.dictionaryForm, candidate.normalizedForm];
+    const evidence = candidate2.joinsInflection ? [candidate2.dictionaryForm, candidate2.normalizedForm] : [candidate2.surface, candidate2.dictionaryForm, candidate2.normalizedForm];
     for (const form of evidence) {
       append(form);
       append(toHiragana(form));
@@ -5188,9 +5369,9 @@ ${sense.noteText}` : sense.meaning
     }
     return false;
   }
-  function preferredEntries(entries, candidate, matchesSurfaceReading) {
+  function preferredEntries(entries, candidate2, matchesSurfaceReading) {
     let filtered = entries;
-    const providerPOS = candidate.partOfSpeech[0];
+    const providerPOS = candidate2.partOfSpeech[0];
     if (providerPOS !== void 0) {
       const compatible = [];
       for (const entry of filtered) {
@@ -5198,10 +5379,10 @@ ${sense.noteText}` : sense.meaning
       }
       if (compatible.length > 0) filtered = compatible;
     }
-    if (matchesSurfaceReading && candidate.reading !== "" && candidate.reading !== "*") {
+    if (matchesSurfaceReading && candidate2.reading !== "" && candidate2.reading !== "*") {
       const readingMatches = [];
       for (const entry of filtered) {
-        if (toKatakana(entry.reading) === candidate.reading) readingMatches.push(entry);
+        if (toKatakana(entry.reading) === candidate2.reading) readingMatches.push(entry);
       }
       if (readingMatches.length > 0) filtered = readingMatches;
     }
@@ -5209,9 +5390,9 @@ ${sense.noteText}` : sense.meaning
   }
   function formsLookedUp(candidates, highlighted) {
     const forms2 = highlighted ? highlightedForms(highlighted) : null;
-    const words2 = grouped(candidates);
-    const counted2 = words2.flatMap((_, index) => numberWithCounterAt(words2, index)?.word ?? []);
-    return [...words2, ...counted2].filter((candidate) => !isWrittenAs(candidate, forms2) && isLookedUp(candidate)).map(lookupForms);
+    const words = grouped(candidates);
+    const counted2 = words.flatMap((_, index) => numberWithCounterAt(words, index)?.word ?? []);
+    return [...words, ...counted2].filter((candidate2) => !isWrittenAs(candidate2, forms2) && isLookedUp(candidate2)).map(lookupForms);
   }
   function linkedTokens(text, candidates, highlighted, lookup) {
     if (candidates === null) {
@@ -5228,29 +5409,29 @@ ${sense.noteText}` : sense.meaning
       ];
     }
     const forms2 = highlighted ? highlightedForms(highlighted) : null;
-    const resolve = (candidate) => {
-      if (highlighted && isWrittenAs(candidate, forms2)) {
+    const resolve = (candidate2) => {
+      if (highlighted && isWrittenAs(candidate2, forms2)) {
         return { entry: highlighted.entry, candidates: [highlighted.entry], lookupForm: null };
       }
-      if (!isLookedUp(candidate)) {
+      if (!isLookedUp(candidate2)) {
         return { entry: null, candidates: [], lookupForm: null };
       }
-      for (const form of lookupForms(candidate)) {
+      for (const form of lookupForms(candidate2)) {
         const family = lookup(form);
         if (family.length === 0) continue;
-        const preferred = preferredEntries(family, candidate, form === candidate.surface);
+        const preferred = preferredEntries(family, candidate2, form === candidate2.surface);
         const found = preferred.length > 0 ? preferred : family;
         return { entry: found.length === 1 ? found[0] : null, candidates: found, lookupForm: form };
       }
       return { entry: null, candidates: [], lookupForm: null };
     };
-    const token = (candidate, resolution) => ({
-      surface: candidate.surface,
+    const token = (candidate2, resolution) => ({
+      surface: candidate2.surface,
       entry: resolution.entry,
       candidates: resolution.candidates,
-      reading: candidate.reading,
-      dictionaryForm: candidate.dictionaryForm,
-      partOfSpeech: candidate.partOfSpeech,
+      reading: candidate2.reading,
+      dictionaryForm: candidate2.dictionaryForm,
+      partOfSpeech: candidate2.partOfSpeech,
       lookupForm: resolution.lookupForm
     });
     const asOneWord = ({ word }) => {
@@ -5260,26 +5441,26 @@ ${sense.noteText}` : sense.meaning
       if (!resolution.entry) return null;
       return { ...token(word, resolution), reading: toKatakana(resolution.entry.reading) };
     };
-    const words2 = grouped(candidates);
+    const words = grouped(candidates);
     const tokens = [];
-    for (let index = 0; index < words2.length; index++) {
-      const counted2 = numberWithCounterAt(words2, index);
+    for (let index = 0; index < words.length; index++) {
+      const counted2 = numberWithCounterAt(words, index);
       const whole = counted2 ? asOneWord(counted2) : null;
       if (counted2 && whole) {
         tokens.push(whole);
         index += counted2.pieces - 1;
         continue;
       }
-      const candidate = words2[index];
-      const resolution = resolve(candidate);
-      if (resolution.candidates.length === 0 && candidate.children.length > 1) {
-        const children = candidate.children.map((child) => token(child, resolve(child)));
+      const candidate2 = words[index];
+      const resolution = resolve(candidate2);
+      if (resolution.candidates.length === 0 && candidate2.children.length > 1) {
+        const children = candidate2.children.map((child) => token(child, resolve(child)));
         if (children.some((child) => child.candidates.length > 0)) {
           tokens.push(...children);
           continue;
         }
       }
-      tokens.push(token(candidate, resolution));
+      tokens.push(token(candidate2, resolution));
     }
     return tokens;
   }
@@ -5293,7 +5474,8 @@ ${sense.noteText}` : sense.meaning
   function linkedEntries(db, ids) {
     if (ids.length === 0) return /* @__PURE__ */ new Map();
     const rows = db.all(
-      `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading,
+      `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading, summary,
+       json_extract(meanings_json, '$[0]') AS meaning,
        parts_of_speech_json, written_forms_json, reading_forms_json
      FROM entries WHERE id IN (${listedIds})`,
       [JSON.stringify(ids)]
@@ -5307,6 +5489,8 @@ ${sense.noteText}` : sense.meaning
           entSeq: row.ent_seq,
           headword: row.headword,
           reading: row.reading,
+          summary: row.summary,
+          meaning: row.meaning,
           partsOfSpeech: JSON.parse(row.parts_of_speech_json),
           writtenForms: values(row.written_forms_json),
           readingForms: values(row.reading_forms_json)
@@ -5314,7 +5498,7 @@ ${sense.noteText}` : sense.meaning
       ])
     );
   }
-  var examplesEntries = linkedEntries;
+  var linkedWordEntries = linkedEntries;
   function exampleCount(retrieved) {
     if (retrieved.sentences.length === 0) return null;
     return {
@@ -5731,7 +5915,7 @@ ${sense.noteText}` : sense.meaning
       }
     }
     shape(text, last, tokens) {
-      const { starts, words: words2, spans, best } = this.lattice;
+      const { starts, words, spans, best } = this.lattice;
       const path = [];
       for (let node = best[last]; node !== beginning; node = best[node]) {
         if (node === none) return;
@@ -5742,7 +5926,7 @@ ${sense.noteText}` : sense.meaning
         const node = path[step];
         const character = starts[node] - 1;
         const isKnown = spans[node] === none;
-        const features = (isKnown ? this.known : this.unknown).featuresOf(words2[node]);
+        const features = (isKnown ? this.known : this.unknown).featuresOf(words[node]);
         tokens.push({
           word_type: isKnown ? "KNOWN" : "UNKNOWN",
           word_position: before + starts[node],
@@ -5765,19 +5949,52 @@ ${sense.noteText}` : sense.meaning
     };
   }
 
+  // src/embedded/linked-words.ts
+  function shown({ id, headword, reading, summary, meaning }) {
+    return { id, headword, reading, summary, gloss: meaning === null ? null : shortGloss(meaning) };
+  }
+  function linkedWords(text, tokens, analyzed, entries, highlight) {
+    const accents = new Set(accentedPositions(text, tokens, highlight));
+    return tokenSpans(tokens).map(({ start, end }, index) => {
+      const token = tokens[index];
+      const target = token.entry ? entries.get(token.entry.id) : void 0;
+      const furigana = target ? displayReading(token, target) : null;
+      return {
+        surface: token.surface,
+        start,
+        end,
+        reading: analyzed ? token.reading : null,
+        isFunctionWord: isFunctionWord(token),
+        entry: target ? shown(target) : null,
+        candidates: token.entry ? [] : token.candidates.flatMap((candidate2) => {
+          const read = entries.get(candidate2.id);
+          return read ? [shown(read)] : [];
+        }),
+        furigana,
+        ruby: furigana === null ? null : rubySegments(token.surface, furigana),
+        accent: accents.has(index) ? highlight.accent : null,
+        attaches: attachment(token.surface)
+      };
+    });
+  }
+
   // src/embedded/text.ts
-  function hostCandidate(word) {
+  function candidate(morpheme, children) {
     return {
-      surface: word.surface,
-      dictionaryForm: word.dictionaryForm,
-      normalizedForm: word.normalizedForm ?? word.dictionaryForm,
-      reading: word.reading ?? word.surface,
-      partOfSpeech: [...word.partOfSpeech],
-      isOutOfVocabulary: word.isOutOfVocabulary,
-      children: (word.children ?? []).map(hostCandidate),
+      surface: morpheme.surface,
+      dictionaryForm: morpheme.dictionaryForm,
+      normalizedForm: morpheme.normalizedForm,
+      reading: morpheme.reading,
+      partOfSpeech: [...morpheme.partOfSpeech],
+      isOutOfVocabulary: morpheme.isOutOfVocabulary,
+      children,
       joinsInflection: false
     };
   }
+  var hostCandidate = (word) => candidate(
+    word,
+    word.pieces.map((piece) => candidate(piece, []))
+  );
   var countsTowardComprehension = (token) => token.entry !== null && !isFunctionWord(token);
   var EmbeddedText = class {
     db;
@@ -5811,7 +6028,7 @@ ${sense.noteText}` : sense.meaning
         if (cached) found.set(id, cached);
         else unread2.push(id);
       }
-      for (const [id, entry] of examplesEntries(this.db, unread2)) {
+      for (const [id, entry] of linkedWordEntries(this.db, unread2)) {
         this.entries.set(id, entry);
         found.set(id, entry);
       }
@@ -5865,22 +6082,24 @@ ${sense.noteText}` : sense.meaning
       const nextPage = (Math.floor(from / examplesPerPage) + 1) * examplesPerPage;
       const pageEnd = Math.min(sentences.length, nextPage);
       const end = limit && limit > 0 ? Math.min(pageEnd, from + limit) : pageEnd;
-      const shown = sentences.slice(from, end);
-      const linked = await this.link(
-        shown.map((sentence) => sentence.japanese),
-        accented,
-        analyze
-      );
       return {
-        examples: shown.map(({ pairId, japanese, english }, index) => ({
-          id: `esp1_${pairId}`,
-          japanese,
-          english,
-          words: linked[index]
-        })),
+        examples: await this.examples(sentences.slice(from, end), accented, analyze),
         listed: sentences.length,
         cutShort: end < pageEnd
       };
+    }
+    async examples(shown2, accented, analyze) {
+      const linked = await this.link(
+        shown2.map((sentence) => sentence.japanese),
+        accented,
+        analyze
+      );
+      return shown2.map(({ pairId, japanese, english }, index) => ({
+        id: `esp1_${pairId}`,
+        japanese,
+        english,
+        words: linked[index]
+      }));
     }
     async resultsExamples(request, analyze) {
       const found = this.listed(request);
@@ -5913,10 +6132,28 @@ ${sense.noteText}` : sense.meaning
         truncated: examples.truncated
       };
     }
+    async meaningExamples(request, analyze) {
+      const { id } = request;
+      const entry = this.found([id]).get(id);
+      if (!entry) throw new Error("missingEntryEvidence");
+      const shown2 = shownSenseExamples(this.db, id);
+      const senses = [...shown2.keys()].sort((a, b) => a - b);
+      const accented = {
+        query: entry.headword,
+        entry: id,
+        accent: screenAccent.wordExamples
+      };
+      const examples = await this.examples(
+        senses.flatMap((sense) => shown2.get(sense) ?? []),
+        accented,
+        analyze
+      );
+      return senses.map((sense, index) => ({ number: sense + 1, example: examples[index] }));
+    }
     async candidates(text, analyze) {
       try {
         if (this.tokenize) return kuromojiCandidates(text, this.tokenize(text));
-        return (await analyze(text)).map(hostCandidate);
+        return analyzedWords(await analyze(text)).map(hostCandidate);
       } catch {
         return null;
       }
@@ -5955,14 +6192,12 @@ ${sense.noteText}` : sense.meaning
       );
       await entriesMatchingFirstForms(this.searchDb, alternatives, this.forms);
     }
-    async linkedTokens(request, analyze) {
-      const accented = {
-        query: request.query,
-        entry: request.highlightedEntry,
-        accent: "entry"
-      };
-      const [linked] = await this.link([request.text], accented, analyze);
-      return linked;
+    linkedTexts(request, analyze) {
+      return this.link(
+        request.texts,
+        { query: "", entry: request.highlightedEntry, accent: "entry" },
+        analyze
+      );
     }
     async link(texts, accented, analyze) {
       const query = normalizeQuery(accented.query);
@@ -5988,12 +6223,20 @@ ${sense.noteText}` : sense.meaning
         for (const [text, candidates] of unlinked) {
           const linked = linkedTokens(text, candidates, highlighted, this.lookup);
           tokens.set(text, linked);
-          for (const token of linked) if (token.entry) named.push(token.entry.id);
+          for (const token of linked) {
+            for (const shown2 of token.entry ? [token.entry] : token.candidates) named.push(shown2.id);
+          }
         }
         const entries = this.found(named);
         const highlight = { entry, query, accent: accented.accent };
         for (const [text, candidates] of unlinked) {
-          const answer = words(text, tokens.get(text) ?? [], candidates !== null, entries, highlight);
+          const answer = linkedWords(
+            text,
+            tokens.get(text) ?? [],
+            candidates !== null,
+            entries,
+            highlight
+          );
           if (candidates) this.linked.set(key(text), answer);
           answers.set(text, answer);
         }
@@ -6001,15 +6244,15 @@ ${sense.noteText}` : sense.meaning
       return texts.map((text) => answers.get(text) ?? []);
     }
     async countedWords(lines, analyze) {
-      const words2 = /* @__PURE__ */ new Map();
+      const words = /* @__PURE__ */ new Map();
       const analyses = /* @__PURE__ */ new Map();
       const looked = [];
       for (const text of lines) {
         stopIfInterrupted(this.db, 0);
-        if (words2.has(text) || analyses.has(text)) continue;
+        if (words.has(text) || analyses.has(text)) continue;
         const remembered3 = this.counted.get(text);
         if (remembered3 !== void 0) {
-          words2.set(text, remembered3);
+          words.set(text, remembered3);
           continue;
         }
         const candidates = await this.candidates(text, analyze);
@@ -6024,36 +6267,15 @@ ${sense.noteText}` : sense.meaning
           if (countsTowardComprehension(token)) ids.push(token.entry.id);
         }
         if (candidates) this.counted.set(text, ids);
-        words2.set(text, ids);
+        words.set(text, ids);
       }
       const counted2 = [];
       for (const text of lines) {
-        for (const id of words2.get(text) ?? []) counted2.push(id);
+        for (const id of words.get(text) ?? []) counted2.push(id);
       }
       return counted2;
     }
   };
-  function words(text, tokens, analyzed, entries, highlight) {
-    const accents = new Set(accentedPositions(text, tokens, highlight));
-    return tokenSpans(tokens).map(({ start, end }, index) => {
-      const token = tokens[index];
-      const target = token.entry ? entries.get(token.entry.id) : void 0;
-      const furigana = target ? displayReading(token, target) : null;
-      return {
-        surface: token.surface,
-        start,
-        end,
-        reading: analyzed ? token.reading : null,
-        isFunctionWord: isFunctionWord(token),
-        entry: token.entry?.id ?? null,
-        candidates: token.entry ? [] : token.candidates.map((candidate) => candidate.id),
-        furigana,
-        ruby: furigana === null ? null : rubySegments(token.surface, furigana),
-        accent: accents.has(index) ? highlight.accent : null,
-        attaches: attachment(token.surface)
-      };
-    });
-  }
 
   // src/embedded/dictionary.ts
   var message = (error) => error instanceof Error ? error.message : String(error);
@@ -6077,21 +6299,23 @@ ${sense.noteText}` : sense.meaning
       relatedWord: (related, analyze) => lookup().relatedWord(JSON.parse(related), { analyze }),
       savedWord: (saved, analyze) => lookup().savedWord(JSON.parse(saved), { analyze }),
       canonicalEntries: (groups) => canonicalEntries(JSON.parse(groups)),
+      searchedWords: (analysis) => lookupSegments(JSON.parse(analysis).words),
       normalizeQuery,
       japaneseCandidates: (candidates) => japaneseCandidates(JSON.parse(candidates)),
       japaneseTextRuns: () => japaneseTextRuns,
       writtenLanguage,
       isKanji: isKanjiCharacter,
       romaji,
-      sentenceRomaji: (words2) => sentenceRomaji(JSON.parse(words2)),
+      sentenceRomaji: (words) => sentenceRomaji(JSON.parse(words)),
       checkExamples: () => text().checkExamples(),
       tokenizerReady: () => text().tokenizerReady(),
       exampleCount: (query) => text().exampleCount(query),
       resultsExampleCount: (request) => text().resultsExampleCount(JSON.parse(request)),
       resultsExamples: (request, analyze) => text().resultsExamples(JSON.parse(request), analyze),
       entryExamples: (request, analyze) => text().entryExamples(JSON.parse(request), analyze),
+      meaningExamples: (request, analyze) => text().meaningExamples(JSON.parse(request), analyze),
       formExamples: (request, analyze) => text().formExamples(JSON.parse(request), analyze),
-      linkedTokens: (request, analyze) => text().linkedTokens(JSON.parse(request), analyze),
+      linkedTexts: (request, analyze) => text().linkedTexts(JSON.parse(request), analyze),
       countedWords: (lines, analyze) => text().countedWords(JSON.parse(lines), analyze),
       resultsScreen: (request) => presentation().resultsScreen(JSON.parse(request)),
       wordRows: (request) => presentation().wordRows(JSON.parse(request)),
@@ -6106,7 +6330,6 @@ ${sense.noteText}` : sense.meaning
       kanjiStrokes: (row) => presentation().kanjiStrokes(JSON.parse(row)),
       radicalPanel: (selected) => presentation().radicalPanel(JSON.parse(selected)),
       schoolKanjiPanel: (request) => presentation().schoolKanjiPanel(JSON.parse(request)),
-      gloss: shortGloss,
       phraseNote: (request) => {
         const { phrase, ...entry } = JSON.parse(request);
         return phraseNote(phrase, entry);
@@ -6133,8 +6356,10 @@ ${sense.noteText}` : sense.meaning
         const analyze = (sentence) => new Promise((resolve, reject) => {
           outcome = { analyze: sentence };
           answer2 = (answerJSON) => {
-            const { words: words2, error } = JSON.parse(answerJSON);
-            if (words2) resolve(words2);
+            const { words, pieces, error } = JSON.parse(
+              answerJSON
+            );
+            if (words) resolve(pieces ? { words, pieces } : { words });
             else reject(new Error(error ?? "The host returned no words"));
           };
         });

@@ -14,6 +14,8 @@ import {
 import { ipadicTokenizer, type ReadIpadicFile } from '@zenbu/dictionary-core/examples/ipadic'
 import type { Tokenize } from '@zenbu/dictionary-core/examples/morphology'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/search'
+import type { Hono } from 'hono'
+import { createApp } from '../app'
 import {
   artifactFile,
   fileSha256,
@@ -21,8 +23,10 @@ import {
   openArtifact,
   rejectGitLfsPointer
 } from '../artifact'
+import { inProcessService } from '../service'
 import { loadSudachi, prepareSudachi, sudachiContract } from '../sudachi'
 import { tokenizerFiles } from '../tokenizer'
+import { info } from './fake-service'
 
 const repository = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 export const resources = join(repository, 'apps/ios/Modules/Sources/SearchExperience/Resources')
@@ -75,6 +79,9 @@ export function requirePinnedArtifacts(artifacts: { name: string; sha256: string
     throw new Error(`The suite was recorded from other files: ${mismatched.join('; ')}`)
   }
 }
+
+export const recordedSudachi = (artifacts: { name: string; sha256: string }[]) =>
+  artifacts.find(artifact => artifact.name === 'system_core.dic')?.sha256
 
 let opened: Promise<{
   artifact: OpenedArtifact
@@ -141,6 +148,10 @@ export async function artifactKanji() {
   return (await open()).artifact.kanji
 }
 
+export async function artifactRadicals() {
+  return (await open()).artifact.radicals
+}
+
 export async function artifactTokenizerFile() {
   return (await open()).tokenizerFile
 }
@@ -148,4 +159,14 @@ export async function artifactTokenizerFile() {
 export async function browse(watch?: Watch): Promise<DictionaryBrowse> {
   const { artifact } = await open()
   return new DictionaryBrowse(watched(artifact.db, watch), artifact.kanji)
+}
+
+export const serviceToken = 'service-token-0123456789'
+
+export async function serviceOnTheData(service: Dictionary): Promise<Hono> {
+  return createApp({
+    service: inProcessService(service, await browse(), info, await artifactRadicals()),
+    token: serviceToken,
+    ready: () => true
+  })
 }

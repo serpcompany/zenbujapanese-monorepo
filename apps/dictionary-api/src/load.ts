@@ -9,6 +9,7 @@ import {
   retiredEntriesFile
 } from '@zenbu/dictionary-core/artifact/retired'
 import { wordCardInputs } from '@zenbu/dictionary-core/artifact/word-cards'
+import { radicalReferenceFile } from '@zenbu/dictionary-core/search/radicals'
 import { artifactFile, fileSha256, openArtifact } from './artifact'
 import { inProcessService, type ServiceInfo } from './service'
 import { loadSudachi, prepareSudachi, sudachiContract } from './sudachi'
@@ -71,18 +72,20 @@ export async function verifyFiles(options: {
     await readFile(options.languageDataRelease, 'utf8')
   ) as { release: string }
   const retired = join(options.languageDataDerived, retiredEntriesFile)
-  const [inputs, retiredSha256, sudachiSha256] = await Promise.all([
+  const [inputs, retiredSha256, radicalsSha256, sudachiSha256] = await Promise.all([
     Promise.all(
       wordCardInputs.map(
         async name => [name, await fileSha256(join(options.resources, name))] as const
       )
     ),
     fileSha256(retired),
+    fileSha256(join(options.resources, radicalReferenceFile)),
     options.sudachiDictionary ? fileSha256(options.sudachiDictionary) : Promise.resolve(null)
   ])
   const languageDataFiles: Record<string, string> = Object.fromEntries(inputs)
   await requirePinnedRelease(options.languageDataReleases, languageDataRelease, {
     ...languageDataFiles,
+    [radicalReferenceFile]: radicalsSha256,
     [retiredEntriesFile]: retiredSha256
   })
   const artifactSha256 = languageDataFiles[artifactFile]
@@ -124,5 +127,9 @@ export function loadService(files: VerifiedFiles) {
   }
   const browse = new DictionaryBrowse(artifact.db, artifact.kanji)
   browse.warm()
-  return { service: inProcessService(dictionary, browse, info), close: artifact.close }
+  return {
+    service: inProcessService(dictionary, browse, info, artifact.radicals),
+    info,
+    close: artifact.close
+  }
 }

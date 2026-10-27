@@ -33,14 +33,12 @@ const versionFiles = [
   ['python-version-file', '.python-version']
 ]
 const byCommit = /^[\w.-]+\/[\w.-]+@[0-9a-f]{40}$/
-const pinsTable = readRepositoryFile('docs/agents/ci-deploys.md').split('\n')
-const readsASecret = workflows.filter(path => readRepositoryFile(path).includes('secrets.'))
+const pinsTable = readRepositoryFile('docs/agents/ci-pinned-actions.md').split('\n')
 
 describe('every workflow', () => {
   test('is found, with the actions this repository defines', () => {
     expect(workflows.length).toBeGreaterThan(10)
     expect(actions).toContain(`${actionsFolder}/latest-run/action.yml`)
-    expect(readsASecret).toContain('.github/workflows/web-deploy.yml')
     expect(shipsOnPush).toEqual([
       '.github/workflows/account-api-deploy.yml',
       '.github/workflows/dictionary-api-deploy.yml',
@@ -140,14 +138,18 @@ describe('every workflow', () => {
     expect(new Set(images).size).toBe(1)
   })
 
-  test.each(
-    readsASecret
-  )('%s reads a secret, so every action it runs is at a pinned commit', path => {
-    const reached = used(path).flatMap(action =>
-      isLocal(action) ? used(fileOf(action)) : [action]
-    )
-    expect(reached.length, path).toBeGreaterThan(0)
-    for (const action of reached) expect(action, path).toMatch(byCommit)
+  test.each([
+    ...workflows,
+    ...actions
+  ])('%s runs every action it names at a pinned commit', path => {
+    const named = used(path).filter(action => !isLocal(action))
+    for (const action of named) expect(action, path).toMatch(byCommit)
+  })
+
+  test('every workflow runs some action, and the shared actions are held to their own files', () => {
+    for (const path of workflows) expect(used(path).length, path).toBeGreaterThan(0)
+    const shared = workflows.flatMap(path => used(path).filter(isLocal).map(fileOf))
+    for (const path of shared) expect(actions, path).toContain(path)
   })
 
   test('each pinned commit is in the table of pinned actions, beside the file that uses it', () => {
@@ -180,6 +182,7 @@ describe('the version each toolchain is pinned to', () => {
     'apps/web/package.json',
     'apps/dictionary-api/package.json',
     'apps/account-api/package.json',
+    'packages/account-rules/package.json',
     'packages/dictionary-core/package.json',
     'packages/node-service/package.json',
     'tools/checks/package.json'

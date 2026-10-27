@@ -1,3 +1,4 @@
+import type { SettingValue } from '@zenbu/account-rules/settings'
 import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
@@ -13,7 +14,6 @@ import {
   timestamp,
   uniqueIndex
 } from 'drizzle-orm/pg-core'
-import type { SettingValue } from '../domain/kept-store'
 
 const moment = (name: string) => timestamp(name, { withTimezone: true })
 const created = () => moment('created_at').notNull().defaultNow()

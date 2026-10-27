@@ -43,6 +43,18 @@ function containsFilter(query: string): { sql: string; params: string[] } {
   return { sql: 'instr(f.form, ?) > 0', params: [query] }
 }
 
+interface FormEvidence {
+  relation: number
+  form: string
+  profile: PriorityProfile
+}
+
+function compareFormEvidence(lhs: FormEvidence, rhs: FormEvidence): number {
+  if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
+  const profiles = compareProfiles(lhs.profile, rhs.profile)
+  return profiles || compareStrings(lhs.form, rhs.form)
+}
+
 export function rankJapanese(
   query: string,
   rows: JapaneseRow[],
@@ -50,12 +62,7 @@ export function rankJapanese(
 ): RankedEntry[] {
   const byEntry = new Map<
     string,
-    {
-      entry: SearchEntry
-      fingerprint: string
-      senseCount: number
-      evidence: { relation: number; form: string; profile: PriorityProfile }[]
-    }
+    { entry: SearchEntry; fingerprint: string; senseCount: number; evidence: FormEvidence[] }
   >()
   let step = 0
   for (const row of rows) {
@@ -76,11 +83,7 @@ export function rankJapanese(
   const ranked: RankedEntry[] = []
   for (const { entry, fingerprint, senseCount, evidence } of byEntry.values()) {
     stopIfInterrupted(client, step++)
-    const selected = minimum(evidence, (lhs, rhs) => {
-      if (lhs.relation !== rhs.relation) return lhs.relation - rhs.relation
-      const profiles = compareProfiles(lhs.profile, rhs.profile)
-      return profiles || compareStrings(lhs.form, rhs.form)
-    })
+    const selected = minimum(evidence, compareFormEvidence)
     if (!selected) continue
     const rank: JapaneseRank = {
       kind: 'japanese',
@@ -106,17 +109,21 @@ export function rankJapanese(
   return deduplicated(ranked, client)
 }
 
+const exactFilter = (query: string) => ({ sql: 'f.form = ?', params: [query] })
+
 export async function hasFormContaining(db: SearchDatabase, query: string): Promise<boolean> {
-  const filter = containsFilter(query)
-  const rows = await db.all(
-    `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
-       WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
-         AND ${filter.sql}
-         AND ${readingRestrictionFilter}
-       LIMIT 1`,
-    filter.params
-  )
-  return rows.length > 0
+  for (const filter of [exactFilter(query), containsFilter(query)]) {
+    const rows = await db.all(
+      `SELECT 1 FROM forms f JOIN entries e ON e.id = f.entry_id
+         WHERE f.kind IN (${FormKind.written}, ${FormKind.reading})
+           AND ${filter.sql}
+           AND ${readingRestrictionFilter}
+         LIMIT 1`,
+      filter.params
+    )
+    if (rows.length > 0) return true
+  }
+  return false
 }
 
 export async function rankedJapanese(db: SearchDatabase, query: string): Promise<RankedEntry[]> {

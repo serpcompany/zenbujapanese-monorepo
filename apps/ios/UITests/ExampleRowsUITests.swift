@@ -1,5 +1,4 @@
 import XCTest
-import notify
 
 final class ExampleRowsUITests: ZenbuUITestCase {
   private struct Rows {
@@ -17,19 +16,11 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   private static let pastTheFirstScreen = 22
   private static let onTheNextPage = 25
   private static let checkedRows = [0, pastTheFirstScreen, onTheNextPage]
-  private static let settling: TimeInterval = 1
-  private static let holdLinking = "ZENBU_HOLD_LINKING"
   private static let failLinking = "ZENBU_FAIL_LINKING"
-  private static let letGoNotice = "com.zenbujapanese.dictionary.uitests.let-linking-go"
   private var lastLaidOut: Int?
-  private static let letGoRegistration: Int32 = {
-    var registration: Int32 = 0
-    notify_register_check(letGoNotice, &registration)
-    return registration
-  }()
 
   func testExampleSentencesArriveLinkedAndKeepTheirPlaceWhileAWordIsOpen() {
-    let app = launch([Self.holdLinking: "1"])
+    let app = launch(Self.holdLinking)
     let rows = openMiruExamples(in: app)
     assertKeepTheirHeight(
       assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
@@ -48,8 +39,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitUntilStill(find("example-list.screen", in: app))
-    letLinkingGo(heldBefore: .now)
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    letLinkingGoAndSettle()
     let list = rows.list.frame
     let back = laidOutFrame(of: opened, within: device == .mac ? rows.list : nil, in: app)
     XCTAssertEqual(
@@ -60,7 +50,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   func testAWordsExamplesArriveLinked() {
-    let app = launch([Self.holdLinking: "1"])
+    let app = launch(Self.holdLinking)
     openTaberu(in: app)
     let rows = wordExamples(in: app)
     assertKeepTheirHeight(
@@ -68,29 +58,21 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   func testAConjugatedFormsExamplesArriveLinkedAndAWordOpens() {
-    let app = launch([Self.holdLinking: "1"])
+    let app = launch(Self.holdLinking)
     let rows = formExamples(of: openAFormOfTaberu(in: app), in: app)
     assertKeepTheirHeight(
       assertArriveLinked(Self.checkedRows, of: rows, in: app), of: rows, in: app)
     guard let word = reachableWord(of: rows, near: 0, in: app) else {
       return XCTFail("no linked word of the form's examples is in the window to be clicked")
     }
-    let page = find("word-detail.screen", in: app)
-    if device == .mac {
-      for _ in 0..<3 {
-        word.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75)).tap()
-        if appears(page, within: Self.patience / 3) { break }
-      }
-    } else {
-      tap(word)
-    }
-    waitFor(page)
+    tap(word)
+    waitFor(find("word-detail.screen", in: app))
     goBack(in: app)
     waitFor(rows.list)
   }
 
   func testExampleSentencesAreReadAgainOnComingBackAfterTheirFirstReadFailed() {
-    let app = launch([Self.holdLinking: "1", Self.failLinking: "2"])
+    let app = launch(Self.holdLinking.merging([Self.failLinking: "2"]) { $1 })
     let rows = openMiruExamples(in: app)
     let unread = find("examples.failed", in: app)
     letLinkingGo(until: unread, in: app)
@@ -105,7 +87,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
   }
 
   func testFailedExamplesOfAWordAndAFormAreReadAgainOnComingBackAndOnRetry() {
-    let app = launch([Self.holdLinking: "1", Self.failLinking: "3"])
+    let app = launch(Self.holdLinking.merging([Self.failLinking: "3"]) { $1 })
     openTaberu(in: app)
     let rows = wordExamples(in: app)
     let page = device == .mac ? rows.list : app.windows.firstMatch
@@ -155,19 +137,6 @@ final class ExampleRowsUITests: ZenbuUITestCase {
       scroll(page, back: back)
       swipes += 1
     }
-  }
-
-  private func letLinkingGo(until element: XCUIElement, in app: XCUIApplication) {
-    waitUntil("\(element) to exist as held answers are let go") {
-      if element.exists { return true }
-      letLinkingGo(heldBefore: .now)
-      return false
-    }
-  }
-
-  private func letLinkingGo(heldBefore cut: Date) {
-    notify_set_state(Self.letGoRegistration, UInt64(cut.timeIntervalSince1970 * 1_000_000))
-    notify_post(Self.letGoNotice)
   }
 
   private func openMiruExamples(in app: XCUIApplication) -> Rows {
@@ -301,8 +270,12 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     let frame = row.exists ? row.frame : .null
     guard !frame.isNull, frame.width > 0, frame.height > 0 else {
       guard device == .mac else { return scroll(toward: number, of: rows, in: app) }
-      let seen = laidOutNumber(of: rows) ?? lastLaidOut
-      return flick(rows, back: seen.map { number < $0 } ?? false, in: app)
+      guard let seen = laidOutRow(of: rows) else {
+        return flick(rows, back: lastLaidOut.map { number < $0 } ?? false, in: app)
+      }
+      let rowsAway = CGFloat(number - seen.number) * seen.frame.height
+      return rows.list.scroll(
+        byDeltaX: 0, deltaY: rows.list.frame.midY - seen.frame.midY - rowsAway)
     }
     guard device == .mac else {
       return scroll(app.windows.firstMatch, back: frame.midY < app.windows.firstMatch.frame.midY)
@@ -310,7 +283,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     rows.list.scroll(byDeltaX: 0, deltaY: rows.list.frame.midY - frame.midY)
   }
 
-  private func laidOutNumber(of rows: Rows) -> Int? {
+  private func laidOutRow(of rows: Rows) -> (number: Int, frame: CGRect)? {
     guard let list = try? rows.list.snapshot() else { return nil }
     var unread: [any XCUIElementSnapshot] = [list]
     while let element = unread.popLast() {
@@ -319,7 +292,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
         frame.height > 0, list.frame.contains(CGPoint(x: frame.midX, y: frame.midY)),
         let number = Int(element.identifier.dropFirst(rows.prefix.count))
       {
-        return number
+        return (number, frame)
       }
       unread.append(contentsOf: element.children)
     }
@@ -364,8 +337,7 @@ final class ExampleRowsUITests: ZenbuUITestCase {
     _ measured: [Measured], of rows: Rows, in app: XCUIApplication,
     file: StaticString = #filePath, line: UInt = #line
   ) {
-    letLinkingGo(heldBefore: .now)
-    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
+    letLinkingGoAndSettle()
     for shown in measured.reversed() {
       guard let frame = laidOut(shown.number, of: rows, in: app) else {
         XCTFail("row \(shown.number) wasn't laid out again", file: file, line: line)
@@ -375,5 +347,14 @@ final class ExampleRowsUITests: ZenbuUITestCase {
         frame.height, shown.height, accuracy: 0.5,
         "row \(shown.number) changed height after it appeared", file: file, line: line)
     }
+  }
+}
+
+extension ZenbuUITestCase {
+  static let settling: TimeInterval = 1
+
+  func letLinkingGoAndSettle() {
+    letLinkingGo(heldBefore: .now)
+    RunLoop.current.run(until: Date.now.addingTimeInterval(Self.settling))
   }
 }

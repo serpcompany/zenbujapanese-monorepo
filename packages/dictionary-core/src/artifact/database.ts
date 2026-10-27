@@ -63,7 +63,7 @@ const exampleIndexMetadata: Readonly<Record<string, string>> = {
   retrieval_pair_id_scheme: 'esp1-sha256-128-nfc-length-prefixed'
 }
 
-const supportedTransforms: readonly string[] = ['"jmdict-to-zenbu-language-reference-data-v2"']
+const supportedTransforms: readonly string[] = ['"jmdict-to-zenbu-language-reference-data-v3"']
 
 function metadata(db: ArtifactDatabase, schema: string): Map<string, string> {
   const rows = db.all<{ key: string; value: string }>(`SELECT key, value FROM ${schema}.metadata`)
@@ -99,6 +99,7 @@ function checkExampleIndex(db: ArtifactDatabase): void {
   ) {
     refuse("its example index counts don't match its example sentences")
   }
+  if (!main.has('sense_examples')) refuse('it has no examples linked to meanings (sense_examples)')
 }
 
 function checkAttached(db: ArtifactDatabase, name: keyof typeof attachments): Map<string, string> {

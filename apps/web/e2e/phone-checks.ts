@@ -70,7 +70,20 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
     style.textOverflow === 'ellipsis' ||
     style.webkitLineClamp !== 'none' ||
     box.querySelector('[data-slot="carousel-item"]') !== null
+  const scrolls = ['auto', 'scroll']
+  const scrolledInto = (text: DOMRect, edges: DOMRect, style: CSSStyleDeclaration) => {
+    const across = scrolls.includes(style.overflowX)
+    const down = scrolls.includes(style.overflowY)
+    const left = across ? Math.max(text.left, edges.left) : text.left
+    const right = across ? Math.min(text.right, edges.right) : text.right
+    const top = down ? Math.max(text.top, edges.top) : text.top
+    const bottom = down ? Math.min(text.bottom, edges.bottom) : text.bottom
+    return right <= left || bottom <= top
+      ? []
+      : [new DOMRect(left, top, right - left, bottom - top)]
+  }
   const cutBy = (element: Element, boxes: DOMRect[]) => {
+    let shown = boxes
     for (const box of [element, ...ancestors(element)]) {
       const style = getComputedStyle(box)
       if (meantToCut(box, style)) return null
@@ -80,7 +93,8 @@ function findPhoneLayoutProblems(limits: typeof phoneLimits): PhoneLayoutProblem
       const outside = (text: DOMRect) =>
         (across && (text.left < edges.left - 1 || text.right > edges.right + 1)) ||
         (down && (text.top < edges.top - 1 || text.bottom > edges.bottom + 1))
-      if (boxes.some(outside)) return box
+      if (shown.some(outside)) return box
+      shown = shown.flatMap(text => scrolledInto(text, edges, style))
     }
     return null
   }

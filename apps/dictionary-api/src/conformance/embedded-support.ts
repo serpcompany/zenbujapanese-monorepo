@@ -10,12 +10,13 @@ import type {
 import type { FrequencyDictionary } from '@zenbu/dictionary-core/detail/frequency'
 import { type EmbeddedEndpoint, embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
 import type { EmbeddedHost, HostRows } from '@zenbu/dictionary-core/embedded/host'
+import type { EmbeddedToken } from '@zenbu/dictionary-core/embedded/linked-words'
+import type { EmbeddedSearchResults } from '@zenbu/dictionary-core/embedded/lookup'
 import type { EmbeddedEntry } from '@zenbu/dictionary-core/embedded/presentation'
-import type {
-  EmbeddedExample,
-  EmbeddedExamplePage,
-  EmbeddedToken
-} from '@zenbu/dictionary-core/embedded/text'
+import type { EmbeddedExample, EmbeddedExamplePage } from '@zenbu/dictionary-core/embedded/text'
+import type { LearnerResultsScreen, LearnerState } from '@zenbu/dictionary-core/results/learner'
+import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
+import { radicalReferenceFile } from '@zenbu/dictionary-core/search/radicals'
 import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
 const hex = (bytes: Uint8Array) => Buffer.from(bytes).toString('hex')
@@ -47,7 +48,16 @@ export interface Embedded {
   presentation<Answer>(method: string, argument: unknown): Promise<Answer>
 }
 
-export function asking(endpoint: EmbeddedEndpoint) {
+async function analysisOf(text: string, analyzer?: MorphologyAnalyzer): Promise<string> {
+  if (!analyzer) return JSON.stringify({ error: 'This host has no analyzer' })
+  try {
+    return JSON.stringify(await analyzer.analyze(text))
+  } catch (error) {
+    return JSON.stringify({ error: error instanceof Error ? error.message : String(error) })
+  }
+}
+
+export function asking(endpoint: EmbeddedEndpoint, analyzer?: MorphologyAnalyzer) {
   return async <Answer>(method: string, argument: unknown): Promise<Answer> => {
     const call = endpoint.begin(
       method,
@@ -58,8 +68,8 @@ export function asking(endpoint: EmbeddedEndpoint) {
       return JSON.parse(call.outcome()) as { value?: Answer; error?: string; analyze?: string }
     }
     let outcome = await settled()
-    if (outcome.analyze !== undefined) {
-      call.analyzed(JSON.stringify({ error: 'This host has no analyzer' }))
+    while (outcome.analyze !== undefined) {
+      call.analyzed(await analysisOf(outcome.analyze, analyzer))
       outcome = await settled()
     }
     if (outcome.error !== undefined) throw new Error(outcome.error)
@@ -139,17 +149,45 @@ function freshInstallLists(): EmbeddedHost {
   }
 }
 
-export async function embedded(): Promise<Embedded> {
+export async function embedded(analyzer?: MorphologyAnalyzer): Promise<Embedded> {
   const all = answering(await artifactDatabase())
   const hosts: Record<keyof Embedded, EmbeddedHost> = {
     lookup: { all },
     text: { all, tokenizerFile: await artifactTokenizerFile() },
-    presentation: { ...kanjiHost(), ...freshInstallLists() }
+    presentation: {
+      ...kanjiHost(),
+      ...freshInstallLists(),
+      radicals: () => json(radicalReferenceFile)
+    }
   }
   return {
-    lookup: asking(embeddedEndpoint(hosts.lookup)),
+    lookup: asking(embeddedEndpoint(hosts.lookup), analyzer),
     text: asking(embeddedEndpoint(hosts.text)),
     presentation: asking(embeddedEndpoint(hosts.presentation))
+  }
+}
+
+export async function appResultsScreen(
+  app: Embedded,
+  query: string,
+  learner: Partial<LearnerState> = {}
+): Promise<{ results: EmbeddedSearchResults; screen: LearnerResultsScreen }> {
+  const results = await app.lookup<EmbeddedSearchResults>('search', query)
+  await app.text<number>('exampleCount', query)
+  const exampleCount = await app.text<number>('resultsExampleCount', {
+    query,
+    primaryEntry: results.primaryEntry,
+    usesPrimaryEntryExamples: results.usesPrimaryEntryExamples
+  })
+  const state = { sort: 'default', filter: 'all', known: [], pickedKanji: false }
+  return {
+    results,
+    screen: await app.presentation<LearnerResultsScreen>('resultsScreen', {
+      query,
+      results,
+      exampleCount,
+      learner: { ...state, ...learner }
+    })
   }
 }
 
@@ -232,8 +270,10 @@ export function shownAsTheAppLinks(examples: readonly EmbeddedExample[], mark: M
     ...sentence,
     tokens: words.map(word => ({
       surface: word.surface,
-      ...(word.entry ? { entry: word.entry } : {}),
-      ...(word.candidates.length > 0 ? { candidates: word.candidates } : {}),
+      ...(word.entry ? { entry: word.entry.id } : {}),
+      ...(word.candidates.length > 0
+        ? { candidates: word.candidates.map(candidate => candidate.id) }
+        : {}),
       ...(word.accent === accentRecordedAs[mark] ? { [mark]: true } : {})
     }))
   }))

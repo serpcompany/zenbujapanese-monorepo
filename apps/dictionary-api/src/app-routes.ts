@@ -1,4 +1,5 @@
 import { wordCardFormat } from '@zenbu/dictionary-core/cards/card'
+import { isSegmentableText, maximumSegmentedLength } from '@zenbu/dictionary-core/cards/segmentable'
 import { segmentationFormat } from '@zenbu/dictionary-core/cards/segmentation'
 import { wordCardLicense, wordCardSources } from '@zenbu/dictionary-core/cards/sources'
 import { isLanguageReferenceId } from '@zenbu/dictionary-core/cards/word-list'
@@ -16,8 +17,6 @@ const appPaths = '/v1/apps'
 export const isAppPath = (path: string) => path.startsWith(`${appPaths}/`)
 
 export const maximumCardsPerRequest = 100
-
-export const maximumSegmentedLength = 200
 
 const dictionaryScope = 'dictionary:read'
 
@@ -126,7 +125,7 @@ export function appRoutes(
 
   app.get(`${appPaths}/segmentation`, async context => {
     const text = context.req.query('text') ?? ''
-    if (text.trim() === '' || Array.from(text).length > maximumSegmentedLength) {
+    if (!isSegmentableText(text)) {
       throw new AppError(
         400,
         'bad_request',

@@ -1,12 +1,14 @@
-import hashlib
-import sqlite3
+import sys
 import unittest
 
-from contract_checks import RESOURCES
+from contract_checks import RESOURCES, ROOT
 
-RELEASED_ENTRIES = 218_382
+sys.path.insert(0, str(ROOT / "language-data/tools"))
+from refresh_jmdict_release import note_identities
+
+RELEASED_ENTRIES = 218_948
 RELEASED_NOTE_IDENTITIES = (
-    "71b6d604f365abff0c813ba05c6ed10f2ee8b7ac1185f75471d5697b076b3bb5"
+    "eccaf3e7e4dff071c9fb2bd48079ec07433597dc8615fe0519e34f8b3b91c9e4"
 )
 KEEP_THEM = (
     "Every entry keeps the note_identity that 1.0.0 to 2.0.0 saved notes and photos under: the app "
@@ -21,22 +23,8 @@ class NoteIdentityContractTests(unittest.TestCase):
     def test_every_entry_keeps_the_note_identity_released_versions_saved_notes_under(
         self,
     ) -> None:
-        database = sqlite3.connect(
-            f"file:{RESOURCES / 'LanguageReferenceData.sqlite3'}?mode=ro", uri=True
-        )
-        digest = hashlib.sha256()
-        entries = 0
-        try:
-            rows = database.execute(
-                "SELECT lower(hex(id)), note_identity FROM entries ORDER BY id"
-            )
-            for entry_id, identity in rows:
-                digest.update(f"{entry_id} {identity}\n".encode())
-                entries += 1
-        finally:
-            database.close()
         self.assertEqual(
-            (entries, digest.hexdigest()),
+            note_identities(RESOURCES / "LanguageReferenceData.sqlite3"),
             (RELEASED_ENTRIES, RELEASED_NOTE_IDENTITIES),
             KEEP_THEM,
         )

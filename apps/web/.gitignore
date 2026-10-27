@@ -32,6 +32,7 @@ next-env.d.ts
 /.open-next/
 /e2e/results/
 /e2e/report/
+/e2e/server.log
 /.wrangler/
 .dev.vars*
 

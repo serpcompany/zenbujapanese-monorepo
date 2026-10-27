@@ -2,6 +2,7 @@ import hashlib
 import json
 import sqlite3
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -9,6 +10,7 @@ RESOURCES = ROOT / "apps/ios/Modules/Sources/SearchExperience/Resources"
 CATALOG = RESOURCES / "FrequencyPackCatalog.json"
 GENERATED = ROOT / "language-data/generated"
 SOURCES = ROOT / "language-data/sources"
+FIXTURES = Path(__file__).with_name("fixtures")
 
 
 def sha256(path: Path) -> str:
@@ -38,3 +40,10 @@ def assert_built_from_its_source(
     test.assertEqual(record["sha256"], metadata["source_sha256"])
     test.assertEqual(record, report["source"])
     test.assertEqual(sha256(artifact), report["transform"]["artifact_sha256"])
+
+
+def unidic_archive(lexicon_rows: Path, folder: Path) -> Path:
+    archive = folder / "unidic-cwj-3.1.0.zip"
+    with zipfile.ZipFile(archive, "w") as lexicon:
+        lexicon.write(lexicon_rows, "unidic-cwj-3.1.0/lex_3_1.csv")
+    return archive

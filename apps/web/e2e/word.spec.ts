@@ -6,7 +6,7 @@ import { expect, needed, sourcesToggle, test } from './test'
 
 const examples = (page: Page, locale: Locale = 'en') =>
   page
-    .getByRole('main')
+    .locator('#examples')
     .getByRole('listitem')
     .filter({
       has: page.getByRole('button', { name: getDictionary(locale).examples.pronounce })
@@ -85,6 +85,25 @@ test.describe('word page', () => {
     expect(more.x + more.width).toBeCloseTo(card.x + card.width, 0)
   })
 
+  test('a meaning shows its checked example under it', async ({ page }) => {
+    const example = page.locator('[data-meaning-example="1"]')
+    const meaning = page.getByRole('listitem').filter({ has: example }).locator('p').first()
+    await expect(meaning).toHaveText(/^to be needed, to be necessary/)
+    await expect(example.locator('p[lang="ja"]')).toHaveText('今いまのところお金かねはいらない。', {
+      useInnerText: true
+    })
+    await expect(example).toContainText("I don't need money at present.")
+    await expect(example.locator('[data-page-word]')).toHaveText('いらない')
+    await expect(example.getByRole('link').first()).toHaveAttribute('href', /\/dictionary\//)
+    await expect(
+      example.getByRole('button', { name: getDictionary('en').examples.pronounce })
+    ).toBeVisible()
+    const meaningBox = await meaning.boundingBox()
+    const exampleBox = await example.boundingBox()
+    if (!meaningBox || !exampleBox) throw new Error('the meaning or its example is not drawn')
+    expect(exampleBox.y).toBeGreaterThan(meaningBox.y + meaningBox.height - 1)
+  })
+
   test('loads more examples when the list reaches its end, then has no more', async ({ page }) => {
     await expect(examples(page)).toHaveCount(25)
     await page.getByRole('button', { name: 'Load more examples' }).scrollIntoViewIfNeeded()
@@ -101,6 +120,11 @@ test.describe('word page', () => {
     const words = await linesOfText(examples(page).locator('p[lang="ja"] [lang="ja"]'))
     expect(words.length).toBeGreaterThan(100)
     expect(words.filter(({ oneLine }) => !oneLine)).toEqual([])
+    const meaning = await linesOfText(
+      page.locator('[data-meaning-example] p[lang="ja"] [lang="ja"]')
+    )
+    expect(meaning.length).toBeGreaterThan(3)
+    expect(meaning.filter(({ oneLine }) => !oneLine)).toEqual([])
   })
 
   test('credits no single example, and keeps its Sources closed until opened', async ({ page }) => {

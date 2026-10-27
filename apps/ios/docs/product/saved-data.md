@@ -21,12 +21,20 @@ devices, by the rules in [Zenbu account and sync](account-sync.md).
 
 Tapping a note, or **Add Note** under a word's or kanji's notes, opens its field with the keyboard
 ready to type, on the Mac too, where a click on a note used to leave the keyboard with the page.
+A note is saved when the learner taps **Done**, opens another, or leaves the page, and also, as far
+as it's typed, whenever Zenbu leaves the screen (the Home Screen or the app switcher on iPhone and
+iPad) or the Mac app quits, with its field still open to go on. Text cleared from a note is kept
+until editing ends, so leaving mid-change never deletes a note. So a note survives Zenbu being
+swiped away or quit mid-sentence, and syncs once each time it's saved, not as it's typed.
 
 Check: UI `NotesInSearchUITests.testANoteFindsItsWordUnderInYourNotesAndEachChangeShowsAtOnce`
 (the note written from **Add Note**, then opened, changed, and cleared);
-`WordDetailUITests.testANoteIsKeptOnTheWord` and
+`WordDetailUITests.testANoteIsKeptOnTheWord`, `WordDetailUITests.testANoteBeingTypedIsKeptWhenZenbuIsClosed`
+(typed, Zenbu sent to the Home Screen and ended, or quit with ⌘Q on the Mac, then reopened), and
 `SavedWordsUITests.testAnImagesWordKeepsTheImageInTheMediaLibraryUntilItsDeleted`; package
-`WordNoteStorageTests`, `EncounterMediaStorageTests`, and `EarlierWordKeysTests` (a word's key is
+`WordNoteStorageTests`, `TypedDraftsTests` (a note being typed saved, once, as Zenbu goes inactive,
+still open, and an emptied one left until Done), `EncounterMediaStorageTests`, and
+`EarlierWordKeysTests` (a word's key is
 its Language Reference ID, which an edit to its meanings doesn't change, and a note under the
 other entry of 閻魔 moves to the one its page shows).
 

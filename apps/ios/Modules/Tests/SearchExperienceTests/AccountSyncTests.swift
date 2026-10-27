@@ -29,6 +29,7 @@ struct AccountSyncTests {
         "listWord add \(animeID)/\(Fixture.miru)",
       ])
     #expect(sent.mutations.allSatisfy { $0.baseVersion == 0 })
+    try #require(sent.mutations.count == 4)
     #expect(sent.mutations[2].fields == ["name": .string("Anime"), "position": .number(1)])
     #expect(sent.mutations[3].fields == ["headword": .string("見る"), "reading": .string("みる")])
     #expect(fixture.sync.state.queue.isEmpty)
@@ -76,7 +77,7 @@ struct AccountSyncTests {
     try await fixture.syncNow()
 
     let syncs = fixture.server.requests(to: "POST /v1/sync").map(\.sync)
-    #expect(syncs.count == 2)
+    try #require(syncs.count == 2)
     #expect(syncs[0].mutations == syncs[1].mutations)
     #expect(fixture.sync.state.queue.isEmpty)
   }
@@ -203,6 +204,7 @@ struct AccountSyncTests {
     try await fixture.syncNow()
 
     let syncs = fixture.server.requests(to: "POST /v1/sync").suffix(2).map(\.sync)
+    try #require(syncs.count == 2)
     #expect(syncs.map(\.cursor) == ["cursor-1", nil])
     #expect(syncs.map { $0.mutations.map(\.entityId) } == [[Fixture.taberu], [Fixture.taberu]])
     #expect(syncs[0].mutations == syncs[1].mutations)

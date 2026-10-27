@@ -221,7 +221,7 @@ common words (`/dictionary/browse/common-words/`); names and vulgar, derogatory,
 words have none.
 
 - Each row shows the first meaning that has the category's label, so 行く under Slang reads "to
-  trip, to get high", and と under Nouns "promoted pawn".
+  trip, to get high", and 必要 under Nouns "necessity, need, requirement".
 - Most used first lists the words whose first meaning has the label, then the words that have it
   only on a later meaning, each most used on YouTube first, then the words YouTube doesn't rank.
   YouTube's rank counts every use of a word, so a word whose label is on a later meaning would
@@ -262,7 +262,7 @@ fit, rather than overlapping; a shorter one stays on one line and truncates its 
 
 **Footer.** The footer's Tools column links Kana charts, Kanji lists, and Frequency lists, and the
 header's Dictionary and Tools menus lead to the kana, kanji, frequency, and category pages
-([Dictionary](dictionary.md#header-footer-and-site-wide), Menus and Footer).
+([Site-wide](site-wide.md), Menus and Footer).
 
 - Source: #614 mockup "Footer + /sitemap/ (changed)"; #844 decision and mockups (the footer's
   columns).
@@ -289,9 +289,9 @@ dictionary and browse pages: kana pages, kanji lists, frequency dictionaries, an
 number: `…/2/` is its second, `…/1/` redirects (308) to the list's URL, and a page past the last, or
 a list, band, kana, or category the dictionary doesn't have, is 404. A list or band (every page of
 it) of fewer than 10 words or kanji isn't indexed (`noindex, follow`), nor a category in kana order;
-the rest are. The thin lists today are 11 categories (audiovisual and paleontology with 1 word,
+the rest are. The thin lists today are 11 categories (paleontology with 1 word, audiovisual,
 manga, Nagano dialect, and pathology with 2, and Tsugaru dialect, mechanical engineering, Tosa
-dialect, motorsport, gardening, and mining with 5 to 9), 3,924 of the 6,516 two-kana groups (such as
+dialect, motorsport, gardening, and mining with 5 to 9), 3,930 of the 6,525 two-kana groups (such as
 かカ), 14 kana with fewer than 10 words (such as ﾀ, 〜, and ヲ), and five stroke counts (1, 21, 22, 23,
 and 29 strokes). They stay linked from their kana, category list, or kanji lists, so every word
 stays a few links from the dictionary home.

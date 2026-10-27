@@ -63,6 +63,7 @@ export interface ExampleLinkRow {
   token: number
   entSeqs: number[]
   reading?: string
+  meaning?: string
 }
 
 export interface ExampleSentenceRow {
@@ -85,6 +86,7 @@ export interface WordExampleRow {
   sentenceId: number
   highlights: number[]
   links: ExampleLinkRow[]
+  romaji?: string | null
   tokens: ExampleSentenceTokenRow[] | null
 }
 
@@ -99,6 +101,7 @@ export interface FormExampleRow {
   sentenceId: number
   highlights: number[]
   links: ExampleLinkRow[]
+  romaji?: string | null
 }
 
 export interface FormExampleRows {
@@ -118,6 +121,7 @@ export interface WordRows {
   kanji: KanjiGlossRow[]
   examples: WordExampleRows[]
   exampleCount: ExampleCountRow | null
+  senseExamples: (WordExampleRows | null)[]
 }
 
 export interface KanjiReadingRow {

@@ -92,10 +92,11 @@ struct CrashReportingMachineTests {
   }
 
   @Test("every order of sends, flushes, and switch changes ends in the switch's mode, safely")
-  func everyOrderIsSafe() {
+  func everyOrderIsSafe() async {
     var checked = 0
     for launch in Launch.allCases {
       for order in Self.orders(upTo: 6) {
+        await Task.yield()
         var world = World()
         world.launch(launch)
         guard order.allSatisfy({ world.take($0) }) else { continue }

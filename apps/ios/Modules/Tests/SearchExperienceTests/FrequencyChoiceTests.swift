@@ -24,13 +24,16 @@ struct FrequencyChoiceTests {
     let pack = try #require(catalog.packs.first { !$0.bundled }).packID
     let calls = QuietCalls()
     let (held, letGo) = AsyncStream.makeStream(of: Void.self)
-    let manager = try FrequencyPackManager.bundled(
-      catalog, storageDirectory: storage, download: { _, _ in throw FrequencyPackError.invalidSource },
-      quietDownload: { _, _ in
-        calls.add()
-        for await _ in held {}
-        throw URLError(.notConnectedToInternet)
-      })
+    let manager = try await FrequencyPackManager.started {
+      try .bundled(
+        catalog, storageDirectory: storage,
+        download: { _, _ in throw FrequencyPackError.invalidSource },
+        quietDownload: { _, _ in
+          calls.add()
+          for await _ in held {}
+          throw URLError(.notConnectedToInternet)
+        })
+    }
 
     FrequencyChoice.downloadQuietly([pack], with: manager)
     FrequencyChoice.downloadQuietly([pack], with: manager)

@@ -2,6 +2,7 @@ import Foundation
 
 enum AccountServiceError: Error, Equatable, Sendable {
   case unreachable
+  case transportFailed(URLError.Code)
   case refused(status: Int, code: String, message: String, retryAfter: TimeInterval?)
   case unreadableAnswer(status: Int)
   case missingSessionToken
@@ -240,6 +241,8 @@ struct AccountAPI: Sendable {
       throw CancellationError()
     } catch let error as URLError where error.code == .cancelled {
       throw CancellationError()
+    } catch let error as URLError where !error.isLostConnection {
+      throw AccountServiceError.transportFailed(error.code)
     } catch {
       throw AccountServiceError.unreachable
     }

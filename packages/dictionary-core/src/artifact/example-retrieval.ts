@@ -48,11 +48,55 @@ const sentenceColumns = 'e.rowid AS rowid, lower(hex(e.id)) AS pairId, e.japanes
 
 const storedForm = normalizeQuery
 
-function result(matches: Match[]): EntryExamples {
+function senseExamples(db: ArtifactDatabase, id: string): Map<number, ExampleSentence[]> {
+  const rows = db.all<ExampleSentence & { senseOrder: number }>(
+    `SELECT s.sense_order AS senseOrder, ${sentenceColumns}
+     FROM sense_examples s
+     JOIN example_sentences e ON e.id = s.pair_id
+     WHERE s.entry_id = unhex(?)
+     ORDER BY s.sense_order, s.example_order`,
+    [id]
+  )
+  const bySense = new Map<number, ExampleSentence[]>()
+  for (const { senseOrder, ...sentence } of rows) {
+    const listed = bySense.get(senseOrder)
+    if (listed) listed.push(sentence)
+    else bySense.set(senseOrder, [sentence])
+  }
+  return bySense
+}
+
+export function shownSenseExamples(db: ArtifactDatabase, id: string): Map<number, ExampleSentence> {
+  const shown = new Map<number, ExampleSentence>()
+  for (const [senseOrder, [first]] of senseExamples(db, id)) shown.set(senseOrder, first)
+  return shown
+}
+
+function checkedSentences(db: ArtifactDatabase, id: string): ExampleSentence[] {
+  const seen = new Set<string>()
+  const checked: ExampleSentence[] = []
+  for (const sentences of senseExamples(db, id).values()) {
+    for (const sentence of sentences) {
+      if (seen.has(sentence.pairId)) continue
+      seen.add(sentence.pairId)
+      checked.push(sentence)
+    }
+  }
+  return checked
+}
+
+function result(matches: Match[], checked: readonly ExampleSentence[]): EntryExamples {
+  const leading = new Set(checked.map(sentence => sentence.pairId))
+  const listedToday = matches.slice(0, exampleLimit)
+  const sentences = [
+    ...checked,
+    ...listedToday.filter(match => !leading.has(match.pairId)).map(match => match.sentence)
+  ]
+  const matched = new Set([...leading, ...matches.map(match => match.pairId)]).size
   return {
-    sentences: matches.slice(0, exampleLimit).map(match => match.sentence),
-    count: reportedExampleCount(matches.length),
-    truncated: matches.length > exampleLimit
+    sentences,
+    count: reportedExampleCount(matched),
+    truncated: matched > sentences.length
   }
 }
 
@@ -97,7 +141,8 @@ function unambiguousEntryCount(
 function retrieveIndexedEntry(
   db: ArtifactDatabase,
   id: string,
-  selectedForm: string
+  selectedForm: string,
+  checked: readonly ExampleSentence[]
 ): EntryExamples {
   const rows = db.all<ExampleSentence & { surface: string }>(
     `SELECT ${sentenceColumns}, w.surface
@@ -120,7 +165,7 @@ function retrieveIndexedEntry(
       pairId: sentence.pairId
     })
   }
-  return result(matches.sort(compareRanks))
+  return result(matches.sort(compareRanks), checked)
 }
 
 function bestEvidence(terms: readonly EvidenceTerm[], japanese: string): Evidence | null {
@@ -144,10 +189,11 @@ export function retrieveEntryExamples(
   if (entry.id === '' || selectedForm === '' || reading === '') return 'missingEntryEvidence'
   const evidence = entryEvidence(db, entry.id)
   if (!evidence || evidence.reading !== reading) return 'missingEntryEvidence'
+  const checked = checkedSentences(db, entry.id)
   const isKanaHeadword = selectedForm === reading
-  if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm)
+  if (isKanaHeadword) return retrieveIndexedEntry(db, entry.id, selectedForm, checked)
   if (!evidence.writtenForms.has(storedForm(selectedForm))) return 'missingEntryEvidence'
-  if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([])
+  if (unambiguousEntryCount(db, selectedForm, reading) !== 1) return result([], checked)
 
   const written = [entry.headword, ...entry.writtenForms]
   const alternateForms = entry.writtenForms
@@ -184,5 +230,5 @@ export function retrieveEntryExamples(
     const existing = byPair.get(sentence.pairId)
     if (!existing || compareRanks(match, existing) < 0) byPair.set(sentence.pairId, match)
   }
-  return result([...byPair.values()].sort(compareRanks))
+  return result([...byPair.values()].sort(compareRanks), checked)
 }

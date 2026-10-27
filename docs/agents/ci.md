@@ -2,14 +2,16 @@
 
 The workflows are in `.github/workflows/`, and the actions they share are in `.github/actions/`.
 Workflow files hold no comments ([`code.md`](code.md), No comments), so what starts each one, what
-it runs, and why it's built that way are in three docs. Change a workflow's section in the same
+it runs, and why it's built that way are in these docs. Change a workflow's section in the same
 pull request as the workflow.
 
 - **This doc:** every workflow and what starts it, the checks a merge can wait for, and each
   workflow that checks a pull request.
 - [`ci-agents.md`](ci-agents.md): the workflows Claude runs in, and the app and token they use.
   [`ci-review.md`](ci-review.md) has the `Code review` workflow's design.
-- [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish, and the pinned actions.
+- [`ci-deploys.md`](ci-deploys.md): the workflows that deploy or publish.
+- [`ci-ios.md`](ci-ios.md): the `iOS` workflow. [`ci-pinned-actions.md`](ci-pinned-actions.md)
+  has the commit every workflow runs each action at, and why.
 
 Every job runs on `ubuntu-latest` and reads the repository's contents only, unless its section
 says otherwise. The pnpm jobs set up pnpm from the root `package.json` and the Node that
@@ -20,7 +22,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 
 | Workflow | File | Starts on | Section in |
 | --- | --- | --- | --- |
-| `Repository` | `.github/workflows/repository.yml` | Every pull request; the merge queue | This doc |
+| `Repository` | `.github/workflows/repository.yml` | Every pull request; merge queue | This doc |
 | `Pull request` | `.github/workflows/pull-request.yml` | Every pull request, again when its title or body is edited; the merge queue | This doc |
 | `Code review` | `.github/workflows/code-review.yml` | Every pull request that isn't a draft | [`ci-agents.md`](ci-agents.md), [`ci-review.md`](ci-review.md) |
 | `Claude` | `.github/workflows/claude.yml` | `@claude` in an issue, a pull request comment, a review, or a review comment | [`ci-agents.md`](ci-agents.md) |
@@ -32,9 +34,10 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
 | `Account API deploy` | `.github/workflows/account-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
-| `iOS` | `.github/workflows/ios.yml` | Every pull request and the merge queue, working when `apps/ios` changed; by hand | This doc |
+| `iOS` | `.github/workflows/ios.yml` | Every pull request and the merge queue, working when `apps/ios` changed; by hand | [`ci-ios.md`](ci-ios.md) |
 | `Language data build` | `.github/workflows/language-data-build.yml` | Every pull request and the merge queue, working when a release's inputs changed; pushes to `main` that change them | This doc |
 | `Language data release` | `.github/workflows/language-data-release.yml` | Pushes to `main` that change a release's inputs; by hand | [`ci-deploys.md`](ci-deploys.md) |
+| `JMdict monthly update` | `.github/workflows/jmdict-update.yml` | The 1st of each month at 06:00 UTC; by hand | [`ci-deploys.md`](ci-deploys.md) |
 
 "The core" is `packages/dictionary-core`, and a change to the root `package.json`, `pnpm-lock.yaml`,
 `pnpm-workspace.yaml`, or `.node-version` counts as changing it. A change to a workflow's own file
@@ -73,9 +76,9 @@ a red check stops no merge. The workflows are built so the owners can require th
   by the fast job's time: about 1.5 minutes in the first two, under 40 seconds in the others.
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
-The jobs to require are `verify` (`Repository`), `title`, `issue-link`, and `fix-test`
+The jobs to require are `verify` (`Repository`), `title`, `branch`, `issue-link`, and `fix-test`
 (`Pull request`), and the six above. `ios` passes without testing the app until the owners turn
-`IOS_SWIFT_TESTS` on (iOS, below). An owner adds them under the ruleset's required status
+`IOS_SWIFT_TESTS` on ([`ci-ios.md`](ci-ios.md)). An owner adds them under the ruleset's required status
 checks; nothing in the repository can. The merge queue waits 90 minutes for a required check
 (`check_response_timeout_minutes`), and the `swift` job may run for four hours: raise that wait
 before turning `IOS_SWIFT_TESTS` on with `ios` required, or the queue drops every app change.
@@ -86,8 +89,11 @@ scratch repositories.
 ## Repository
 
 `.github/workflows/repository.yml` runs on every pull request; a new push cancels the pull request's
-last run. It installs the whole workspace, since the dead-code and import checks read every package,
-then runs this repository's own checks (`pnpm check` in `tools/checks`), then `pnpm verify`: every
+last run. First, before it installs anything, `tools/checks/migrations.mjs` refuses an account
+migration that drops or renames a table or column the commit it merges into (`HEAD^1`) still reads
+([`account-migrations.md`](account-migrations.md)). It installs the whole workspace, since the
+dead-code and import checks read every package, then runs this repository's own checks
+(`pnpm check` in `tools/checks`), then `pnpm verify`: every
 shared check, at the `@serpcompany/verify` the lockfile pins ([`checks.md`](checks.md) has the
 grant its install needs, and why it isn't SERP's reusable workflow). It starts on `merge_group`
 too, so once `main`'s ruleset requires its `verify` job, the merge queue runs it on the tree that
@@ -101,10 +107,16 @@ without a bash new enough.
 
 ## Pull request
 
-`.github/workflows/pull-request.yml` holds the three rules about a pull request itself
-([`code.md`](code.md), Pull requests), each as its own job so each can be a required check:
+`.github/workflows/pull-request.yml` holds the four rules about a pull request that its branch,
+title, body, and files show ([`code.md`](code.md), Pull requests), each as its own job so each can
+be a required check:
 
 - **`title`**: the title is a Conventional Commit.
+- **`branch`**: the branch is `<type>/<issue>-<slug>` or `<type>/<slug>`, in lowercase letters,
+  digits, dots, and hyphens, and its type is the title's. The last 50 merged pull requests'
+  branches all pass, 23 of them with no issue number. The number isn't held to the issues a pull
+  request closes: of those 50, 6 name an issue they serve without closing it, and 6 close issues
+  their name doesn't carry, grouped work among them.
 - **`issue-link`**: GitHub has linked the pull request to an issue it closes, or its body says
   `No issue: <reason>`. GitHub links a closing keyword a moment after the event, so the job looks
   three times, five seconds apart. The job name is the one SERP's standard requires.
@@ -112,40 +124,40 @@ without a bash new enough.
   It reads the changed files from GitHub, leaving out deleted ones.
 
 It runs again when the title or body is edited, which `Repository` doesn't, so a retitled pull
-request is checked at once. Each job runs `tools/checks/pull-request.mjs`, which uses nothing but
-Node, so the job checks out that one file and installs nothing (why it isn't the package's action:
-[`checks.md`](checks.md)). The title and body reach it through the environment, never the command
-line. Pull requests from `claude[bot]`, `dependabot[bot]`, and `renovate[bot]` skip all three;
+request is checked at once, and so is the branch's type against a new title. Each job runs
+`tools/checks/pull-request.mjs`, which uses nothing but Node, so the job checks out that one file
+and installs nothing (why it isn't the package's action: [`checks.md`](checks.md)). The title and body reach it through the environment, never the command
+line. Pull requests from `claude[bot]`, `dependabot[bot]`, and `renovate[bot]` skip all four;
 `serp-agent[bot]`'s don't. On `merge_group` the jobs pass without doing anything: a required check
 that never reports in the merge queue would block every merge, and the pull request was checked.
 
 ## Web
 
-`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, or
-`tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
+`.github/workflows/web.yml` checks pull requests that change `apps/web/**`, the core, the account
+rules, or `tools/checks/ports.mjs`, which hands the browser tests their port. In `apps/web`, it runs
 ShellCheck 0.11 on the scripts in `apps/web/scripts/`, at warning level, in Docker, since the
 runner's own ShellCheck is older; checks that `cloudflare-env.d.ts` is what `pnpm cf-typegen` writes
 from `wrangler.jsonc`, and that it writes no other file, so a binding changed without regenerating
-the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify); then it builds twice
-more, with `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without
+the types fails here; then `pnpm check` ([`web.md`](web.md), Run and verify), and that the
+JavaScript it built holds no dictionary ([`web-languages.md`](web-languages.md)); then it builds
+twice more, with `SITE_ENV=staging` and with `SITE_ENV=production`. `pnpm check` builds without
 `SITE_ENV`, but static pages and prerendering differ by environment, so a route that reads a binding
 at build time fails only in that environment's build. Neither build reaches the dictionary service:
 deployed pages read it only at request time. After each, it checks the prerendered `/about/` has the
 footer's Sign in linking `/login/`, since staging's and production's account pages are open
 ([`web.md`](web.md), Account pages); the header's Log in is in the account menu, which the browser
 draws, so `src/lib/site.test.ts` checks its address with the account pages open and closed. Each
-step names `apps/web` as its working directory, rather than the jobs setting it as a default,
-because the dead-code check reads a step's working directory to find the scripts and binaries a
-step runs, and not a job's.
+step, not the job, names `apps/web` as its working directory, because the dead-code check reads a
+step's working directory, not a job's, to find the scripts and binaries a step runs.
 
-Its `e2e` job starts once those checks pass (about 15 minutes of browser tests, behind about 1.5
-of checks). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
+Its `e2e` job starts once those checks pass (about 23 minutes of browser tests, behind about 1.5
+of checks, under a 35-minute limit). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
 deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
 dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
 fails isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once
 and passes the next time is a failing test ([`verification.md`](verification.md), Three levels),
-and a retry would hide it. On a failure it uploads the report, traces, videos, and screenshots as
-the `playwright-report` artifact, kept for a week.
+and a retry would hide it. On a failure it uploads the report, traces, videos, screenshots, and the
+server's output (`server.log`) as the `playwright-report` artifact, kept for a week.
 
 ## Dictionary core
 
@@ -195,73 +207,30 @@ it. See [`dictionary-api.md`](dictionary-api.md), Check it.
 
 ## Account API
 
-`.github/workflows/account-api.yml` checks the account service on pull requests that change it, what
-the services share (`packages/node-service/`), its API reference (`docs/api/account-api.md`, which
-its tests write), or what the website's account pages are built from (`apps/web/src/`, the browser
-test against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what
-gives it its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's
-`next.config.ts`, `package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull
-request's last run. The deployer and the backups script (`deploy/deployer.sh`,
-`apps/account-api/deploy/backups.sh`) are ShellChecked by `Repository`'s `pnpm verify`.
+`.github/workflows/account-api.yml` checks the account service on pull requests that change it,
+`node-service`, `account-rules`, its API reference (`docs/api/account-api.md`, which its tests
+write), or what the website's account pages are built from (`apps/web/src/`, the browser test
+against the service with `apps/web/e2e/test.ts`, `apps/web/playwright.config.ts`, and what gives it
+its port, `apps/web/e2e/server.ts` and `tools/checks/ports.mjs`, and the site's `next.config.ts`,
+`package.json`, and `wrangler.jsonc`), and by hand. A new push cancels the pull request's last run.
+The deployer and the backups script (`deploy/deployer.sh`, `apps/account-api/deploy/backups.sh`) are
+ShellChecked by `Repository`'s `pnpm verify`.
 
-- **`check`** runs `pnpm check` for `packages/node-service`, then for `apps/account-api`, with a
+- **`check`** runs `pnpm check` for those two packages, then for `apps/account-api`, with a
   Postgres 18 service container. `ACCOUNT_API_TEST_DATABASE_URL` points the service's database
   tests at it, so the migrations and the `pg` driver run against the Postgres the server runs,
   including two migrations started at once. The container trusts any connection and lives only as
   long as the job, so it has no password. See [`account-api.md`](account-api.md), Check it.
-- **`website`**, once `check` passes, starts the service from its source on a Postgres 18
-  container, with the dev mailbox and the website's local origin, then runs the website's
-  browser test against it (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the
-  desktop width): a learner registers with an emailed code, edits the profile, signs out, signs
-  in again, and deletes the account after a fresh sign-in ([`web.md`](web.md), Account pages).
-  The `Web` workflow can't run it, with no service, so it runs here, as `Dictionary API` runs
-  the website's rendered-page gate against the service it builds. A failed run is not tried
-  again, as in the `Web` workflow, and here it couldn't be: the service sends five codes from one
-  address in 10 minutes, and a run sends three. `ACCOUNT_API_SECRET` is a CI-only value. On a
-  failure it prints the service's log and keeps the test's trace, video, and screenshot as
-  `account-pages-report` for a week.
-
-## iOS
-
-`.github/workflows/ios.yml` checks the iOS app on pull requests that change `apps/ios`, the
-language data it's built from and tested against (`sources/`, `generated/`, `conformance/`, and
-`tools/` in `language-data/`), or the username cases its tests share with the account service
-(`apps/account-api/src/domain/username-cases.json`), in two jobs:
-
-- `contracts` runs the data tools' contract tests (`language-data/tools/tests/`) on Linux, with
-  every Git LFS file under `apps/ios` and `language-data/sources/` but the archived source snapshots
-  (`LFS_SNAPSHOTS`), which only a rebuild reads, and the recorded-audio check's recordings
-  (`LFS_RECORDINGS`): they check the bundled packs and indexes against their pinned sources, import
-  reports, and the bundled dictionary, and that each import report records the current hash of the
-  tool that wrote it ([`ios.md`](ios.md)). Then the app's own Python tests (`apps/ios/Tools/tests/`)
-  check that Release builds sign in to production's account service, that every build signs as the
-  App Store record ([`ios.md`](ios.md), Sign-in in the App Store build), and the app's iPhone, iPad,
-  and Mac settings (`test_app_platforms.py`: platforms, orientations, the Mac's sandbox and icon,
-  privacy strings, and entitlements), that every Swift package the app links has a license text with
-  its copyright line on Licenses (`test_package_licenses.py`), and test the Simulator script
-  (`test_simulator.py`). Its LFS cache is keyed on the pointers of the LFS patterns it fetches.
-- `swift`, once `contracts` passes, runs the app's tests on all three platforms, one after another:
-  `SearchExperienceTests` and `TranslatorCoreTests` with `xcodebuild` on an iPhone Pro Max Simulator
-  and an iPad Pro 13-inch Simulator it makes with `apps/ios/Tools/simulator.py`, the script agents
-  use ([`verification.md`](verification.md)), and on the Mac; then, after filling the Sudachi build
-  cache (cached by the catalog's hash), the app's UI tests (`ZenbuJapaneseUITests`) and StoreKit
-  tests (`ZenbuJapaneseStoreKitTests`, run inside the app;
-  [`ios-subscription.md`](ios-subscription.md)), which build the app as
-  `com.zenbujapanese.dictionary.uitests` and drive it on the same iPhone and iPad Simulators and on
-  the Mac, each signed to run locally (no team needed), after turning on Automation Mode for the
-  Mac, which its UI tests need (`automationmodetool`). So a change that breaks the app on one of
-  them fails ([`ios.md`](ios.md), Tests on every platform). Last come the recorded-audio check's
-  scoring tests with `swift test` (the replay itself needs the Mac's speech models, which the runner
-  doesn't have, so it stays a local check, [`translate.md`](translate.md)), on `macos-26` with the
-  Xcode `.xcode-version` pins, which it selects first (arm64, which the `sudachi-swift` binary
-  needs), with up to 4 hours for all of it. It runs only when the repository variable
-  `IOS_SWIFT_TESTS` is `on`, or when the workflow is run by hand. Turning it on is the owners'
-  decision. It was first kept off for the runner's cost: on a private repository a macOS minute
-  counts ten times a Linux one. This repository is public, where GitHub's standard runners,
-  `macos-26` among them, are free, so what turning it on costs is the time a run takes. Asked on
-  2026-10-11, Francis chose to keep it off for now. Until it is on, nothing tests the app on iPad or
-  the Mac before merge. `tools/checks/src/ios-workflow.test.ts` pins both jobs: `contracts` on every
-  pull request, `swift` only when it's turned on, and that it runs every suite on every platform.
+- **`website`**, once `check` passes, starts the service from its source on a Postgres 18 container,
+  with the dev mailbox and the website's local origin, then runs the website's browser test against
+  it (`apps/web/e2e/account-service.spec.ts`, on `next dev`, at the desktop width): a learner
+  registers with an emailed code, edits the profile, signs out, signs in again, and deletes the
+  account after a fresh sign-in ([`web.md`](web.md), Account pages). The `Web` workflow can't run
+  it, with no service, so it runs here, as `Dictionary API` runs the website's rendered-page gate
+  against the service it builds. A failed run is not tried again, as in the `Web` workflow, and here
+  it couldn't be: the service sends five codes from one address in 10 minutes, and a run sends
+  three. `ACCOUNT_API_SECRET` is a CI-only value. On a failure it prints the service's log and keeps
+  the test's trace, video, and screenshot as `account-pages-report` for a week.
 
 ## Language data build
 

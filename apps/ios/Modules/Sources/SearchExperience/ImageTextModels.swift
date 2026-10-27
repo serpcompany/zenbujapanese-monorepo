@@ -92,18 +92,18 @@ struct ImageTextRegion: Identifiable {
   let id: String
   let surface: String
   let boundingBox: CGRect
-  let entry: DictionaryEntry?
-  let candidateEntries: [DictionaryEntry]
+  let entry: LinkedWordEntry?
+  let candidateEntries: [LinkedWordEntry]
   let lineID: Int
   let isVertical: Bool
   let indexInLine: Int
 
-  func sheetRequest(asset: ImageTextAsset) -> RecognizedWordSheetRequest {
+  func sheetRequest(asset: ImageTextAsset, read: [DictionaryEntry]) -> RecognizedWordSheetRequest {
     RecognizedWordSheetRequest(
       id: "\(asset.id).\(id)",
       surface: surface,
-      entry: entry,
-      candidateEntries: candidateEntries,
+      entry: entry.flatMap { linked in read.first { $0.id == linked.id } },
+      candidateEntries: read,
       encounterMedia: EncounterMediaAttachment(name: asset.name, data: asset.data)
     )
   }

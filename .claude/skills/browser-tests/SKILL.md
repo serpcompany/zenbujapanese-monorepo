@@ -53,12 +53,16 @@ option after it as a file filter.
    It's often enough by itself.
 2. The screenshot, video, and trace beside it. `pnpm exec playwright show-trace <path>/trace.zip`
    opens the trace for a person.
-3. The server's side. Playwright prints what the server writes to stderr, which holds the site's
+3. The server's side. A console error names where it happened, and a resource that failed to
+   load names its URL. Playwright prints what the server writes to stderr, which holds the site's
    `log('error', …)` lines (`apps/web/src/lib/log.ts`); run with `DEBUG=pw:webserver` to see all
-   of its output, the `info` and `warn` lines too. A server Playwright reused, or the one
-   `E2E_BASE_URL` names, prints in its own terminal instead. On the production build, wrangler
-   also writes each run's log to a file, under `~/Library/Preferences/.wrangler/logs/` on macOS
-   and `~/.config/.wrangler/logs/` on Linux. The suite reads the fixtures, so it never calls the
+   of its output, the `info` and `warn` lines too, or set `E2E_SERVER_LOG` to a file to keep all
+   of it there instead, as CI does: on the production build that holds each request's status and
+   time, and workerd's own errors, such as a V8 heap that ran out of memory before workerd
+   restarted. A server Playwright reused, or the one `E2E_BASE_URL` names, prints in its own
+   terminal instead. On the production build, wrangler also writes a debug log of each run, under
+   `~/Library/Preferences/.wrangler/logs/` on macOS and `~/.config/.wrangler/logs/` on Linux,
+   without the requests or workerd's errors. The suite reads the fixtures, so it never calls the
    dictionary service; on the whole dictionary (`verify-web`), the service prints one JSON line
    per request, with its route, status, and time, in the terminal it runs in
    (`docs/agents/dictionary-api.md`). Compare their times with the trace's.
@@ -67,10 +71,10 @@ option after it as a file filter.
    the result the learner sees, not a fixed time.
 5. To watch it happen, go through the same steps with the `verify-web` skill.
 
-In CI, a failure uploads the HTML report and those folders as the `playwright-report` artifact:
+In CI, a failure uploads the HTML report, those folders, and the server's whole log
+(`server.log`) as the `playwright-report` artifact:
 `gh run download <run-id> -n playwright-report` fetches it, and
-`gh run view <run-id> --log-failed` prints the failing step's log, with the server's lines
-Playwright printed. Run each as `serp-agent[bot]`
+`gh run view <run-id> --log-failed` prints the failing step's log. Run each as `serp-agent[bot]`
 ([Outside CI](../../../docs/agents/ci-agents.md#outside-ci)).
 
 ## 3. Write specs the repository's way

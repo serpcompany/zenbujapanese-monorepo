@@ -43,8 +43,8 @@ test.describe('category lists', () => {
     await expect(page).toHaveURL(browse('audiovisual/'))
     await expect(robots(page)).toHaveAttribute('content', 'noindex, follow')
     const rows = page.locator('[data-section="words"] [data-result-row]')
-    await expect(rows).toHaveCount(1)
-    await expect(rows).toContainText('total harmonic distortion')
+    await expect(rows).toHaveCount(2)
+    await expect(rows).toContainText(['audio, sound', 'total harmonic distortion'])
   })
 })
 

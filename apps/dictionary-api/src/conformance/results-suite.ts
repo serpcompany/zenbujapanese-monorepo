@@ -35,14 +35,16 @@ export interface SuiteCase {
   frequencyNotice?: string
 }
 
-interface Suite {
+export interface ResultsSuite {
   artifacts: { name: string; sha256: string }[]
   frequencyPacks: string[]
-  textAnalysis: string
+  textAnalysis: 'reduced' | 'full'
   cases: SuiteCase[]
 }
 
-export const resultsSuite = readSuite<Suite>('search-results')
+export const resultsSuite = readSuite<ResultsSuite>('search-results')
+
+export const sentenceResultsSuite = readSuite<ResultsSuite>('sentence-results')
 
 export function suiteChip(
   chip: { source: string; value: string; tier: FrequencyTier | null },
@@ -77,6 +79,7 @@ export interface ShownScreen {
   sections: string[]
   examples: { title: string; count: number; primaryEntry: string | null } | null
   readingRefinement: { title: string; query: string } | null
+  heading: string | null
   kanji: { character: string; label: string; summary: string; entry: string | null } | null
   rows: SuiteRow[]
   resultCount: number
@@ -87,7 +90,7 @@ export function caseAsShown(
   screen: ShownScreen | null
 ): SuiteCase {
   if (!screen) return { ...found, state: 'noResults' }
-  const { examples, readingRefinement, kanji } = screen
+  const { examples, readingRefinement, heading, kanji } = screen
   return {
     ...found,
     state: 'results',
@@ -104,6 +107,7 @@ export function caseAsShown(
     ...(readingRefinement
       ? { readingRefinement: { title: readingRefinement.title, query: readingRefinement.query } }
       : {}),
+    ...(heading ? { heading } : {}),
     ...(kanji
       ? {
           kanji: {

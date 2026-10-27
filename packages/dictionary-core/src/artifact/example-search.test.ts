@@ -135,3 +135,12 @@ describe('an English query’s example sentences', () => {
     expect(listed([startle], 'startled him')).toEqual([])
   })
 })
+
+describe('a query in other Latin letters than romaji’s', () => {
+  const sentences = ['We met at a café.', 'She trained the elite.', 'Thank you.']
+
+  test('finds the English sentences with it when no Japanese one has it, as typed, then without its accents', () => {
+    expect(listed(sentences, 'café')).toEqual(['We met at a café.'])
+    expect(listed(sentences, 'élite')).toEqual(['She trained the elite.'])
+  })
+})
