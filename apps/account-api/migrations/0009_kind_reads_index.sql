@@ -1,0 +1,1 @@
+CREATE INDEX "sync_changes_user_kind_sequence" ON "sync_changes" USING btree ("user_id","entity_type","sequence");
