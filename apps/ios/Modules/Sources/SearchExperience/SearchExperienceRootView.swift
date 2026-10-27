@@ -318,6 +318,7 @@ struct SearchExperienceRootView: View {
         store: encounterMediaStore,
         translate: translateExperience,
         words: translateWords(opening: wordSheets.account),
+        lookupClient: lookupClient,
         openItem: openSavedItem
       )
       .navigationDestination(for: SearchExperienceRoute.self) {
