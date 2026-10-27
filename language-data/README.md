@@ -33,8 +33,9 @@ here from `apps/ios`). The built files stay in the app's bundle,
 | [`schemas/`](schemas/) | The JSON Schemas of the manifest (`zenbu.language-data-manifest.v1`), and of the bucket's `releases.json` (`zenbu.language-data-releases.v1`) and each release's `compressed.json` (`zenbu.language-data-compressed.v1`). |
 | [`pipeline/package.py`](pipeline/package.py) | The packager's command line: `build`, `lfs-paths`, `validate`, `retire`, `pin`, and `check-pin`. |
 | [`pipeline/publish.py`](pipeline/publish.py) | The publisher's command line: `publish`, and `verify`, the check that reads a published release back. |
+| [`pipeline/check_download.py`](pipeline/check_download.py) | The download check's command line ([Checking the download](publishing.md#checking-the-download)). |
 | [`pipeline/`](pipeline/) | The modules the two command lines run, one for each job (see [The pipeline](#the-pipeline)). |
-| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the schemas, the bucket's CORS rule, and the committed inputs. |
+| [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the download check, the schemas, the bucket's CORS rule, and the committed inputs. |
 
 ## A release
 
@@ -167,8 +168,8 @@ artifact, for 7 days. Both workflows package through the
 
 ## The pipeline
 
-`package.py` and `publish.py` only read their arguments and call the modules beside them, which
-import one another by name:
+The three command lines only read their arguments and call the modules beside them, which import
+one another by name:
 
 | Module | What it does |
 | --- | --- |
@@ -192,6 +193,7 @@ import one another by name:
 | [`json_schemas.py`](pipeline/json_schemas.py) | Checks a document against its JSON Schema. |
 | [`publish_release.py`](pipeline/publish_release.py) | Publishes a staged release ([`publishing.md`](publishing.md)). |
 | [`verify_release.py`](pipeline/verify_release.py) | Reads a published release back and checks it. |
+| [`public_address.py`](pipeline/public_address.py), [`release_download.py`](pipeline/release_download.py) | Reads the bucket at its public address; the download check. |
 | [`refusal.py`](pipeline/refusal.py), [`locations.py`](pipeline/locations.py) | `Refusal`, the error a failed check raises, and where this folder and the repository are. |
 
 Each test file in [`pipeline/tests/`](pipeline/tests/) is named for what it checks. Two modules
