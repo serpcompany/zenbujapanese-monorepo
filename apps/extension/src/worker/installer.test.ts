@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import type { DataState } from '../shared/data-state'
 import {
   contentOf,
@@ -35,12 +35,27 @@ function extension(
     pool: async () => pool,
     open: async installed => {
       opened.push(installed)
-    }
+    },
+    now: () => clock
   })
   return { languageData, storage, pool, opened, states, writes }
 }
 
 const sha256Of = (name: string, release: string) => sha256Hex(contentOf(name, release))
+
+const checkedAt = 1_761_600_000_000
+let clock = checkedAt
+
+afterEach(() => {
+  clock = checkedAt
+})
+
+const ready = (release: string): DataState => ({
+  state: 'ready',
+  release,
+  bytes: releaseFiles.reduce((sum, name) => sum + contentOf(name, release).byteLength, 0),
+  checkedAt
+})
 
 async function published(...releases: Parameters<LanguageDataServer['publish']>[0][]) {
   const server = new LanguageDataServer()
@@ -54,10 +69,11 @@ describe('installing the language data', () => {
     const { languageData, opened, writes, pool, storage } = extension(server)
     await languageData.start()
 
-    expect(languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+    expect(languageData.state()).toEqual(ready('2026.10.1'))
     expect(Object.keys(opened[0].files).sort()).toEqual([...firstFiles].sort())
     expect(Object.keys(opened[1].files).sort()).toEqual([...releaseFiles].sort())
     expect(writes.filter(path => !path.startsWith('staging/'))).toEqual([
+      installedPath,
       installedPath,
       installedPath
     ])
@@ -105,7 +121,7 @@ describe('installing the language data', () => {
     const asked = parts.length
     const resumed = extension(server, storage)
     await resumed.languageData.start()
-    expect(resumed.languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+    expect(resumed.languageData.state()).toEqual(ready('2026.10.1'))
     expect(parts.slice(asked)).not.toContain(fetchedParts[0])
     const artifact = await sha256Of(artifactFile, '2026.10.1')
     expect(resumed.pool.databases.get(databaseName(artifact))).toEqual(
@@ -144,7 +160,7 @@ describe('installing the language data', () => {
     )
     const { languageData } = extension(server)
     await languageData.start()
-    expect(languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+    expect(languageData.state()).toEqual(ready('2026.10.1'))
   })
 
   it('opens what is installed when it starts again, without downloading', async () => {
@@ -154,7 +170,7 @@ describe('installing the language data', () => {
     const asked = server.asked.length
     const again = extension(server, first.storage)
     await again.languageData.start()
-    expect(again.languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+    expect(again.languageData.state()).toEqual(ready('2026.10.1'))
     expect(server.asked.length).toBe(asked)
     expect(again.opened).toHaveLength(1)
   })
@@ -167,7 +183,7 @@ describe('installing the language data', () => {
     await languageData.start()
     expect(languageData.state()).toMatchObject({ state: 'failed' })
     await languageData.update()
-    expect(languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+    expect(languageData.state()).toEqual(ready('2026.10.1'))
   })
 })
 
@@ -195,11 +211,27 @@ describe('updating the language data', () => {
       release: '2026.10.1'
     })
     expect(again.opened.map(installed => installed.release)).toEqual(['2026.10.1', '2026.10.2'])
-    expect(again.languageData.state()).toEqual({ state: 'ready', release: '2026.10.2' })
+    expect(again.languageData.state()).toEqual(ready('2026.10.2'))
     const old = await sha256Of('JLPTLevelPack.sqlite3', '2026.10.1')
     const updated = await sha256Of('JLPTLevelPack.sqlite3', '2026.10.2')
     expect(again.pool.databases.has(databaseName(old))).toBe(false)
     expect(again.pool.databases.has(databaseName(updated))).toBe(true)
+  })
+
+  it('shows a check for updates at once, and records when it checked', async () => {
+    const server = await published({ release: '2026.10.1' })
+    const { languageData } = extension(server)
+    await languageData.start()
+    clock = checkedAt + 86_400_000
+    const checking = languageData.update()
+    expect(languageData.state()).toEqual({
+      ...ready('2026.10.1'),
+      state: 'updating',
+      done: 0,
+      total: 0
+    })
+    await checking
+    expect(languageData.state()).toEqual({ ...ready('2026.10.1'), checkedAt: clock })
   })
 
   it('keeps answering from the installed set when an update fails, and says why', async () => {
@@ -208,10 +240,6 @@ describe('updating the language data', () => {
     await languageData.start()
     server.failAfter = server.asked.length
     await languageData.update()
-    expect(languageData.state()).toEqual({
-      state: 'ready',
-      release: '2026.10.1',
-      updateFailed: 'Failed to fetch'
-    })
+    expect(languageData.state()).toEqual({ ...ready('2026.10.1'), updateFailed: 'Failed to fetch' })
   })
 })

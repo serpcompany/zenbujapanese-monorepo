@@ -1,7 +1,14 @@
-import type { PopupCard } from '@zenbu/dictionary-core/cards/popup-card'
-import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
-import type { KanjiRows, WordRows } from '@zenbu/dictionary-core/detail/rows'
-import type { DataState } from './data-state'
+import type {
+  FormExamplesAnswer,
+  KanjiAnswer,
+  NotReady,
+  PopupAnswer,
+  ResolveAnswer,
+  SegmentAnswer,
+  StateAnswer,
+  WordAnswer,
+  WordExamplesAnswer
+} from './answers'
 
 export type DictionaryRequest =
   | { type: 'ping' }
@@ -11,15 +18,21 @@ export type DictionaryRequest =
   | { type: 'popup'; languageReferenceID: string; frequency: readonly string[] }
   | { type: 'word'; entSeq: number }
   | { type: 'kanji'; character: string }
+  | { type: 'word-examples'; entSeq: number; from: number }
+  | { type: 'form-examples'; form: string; from: number }
+  | { type: 'resolve'; headword: string; reading: string }
 
 export type DictionaryAnswer =
   | { type: 'pong'; from: 'dictionary-worker' }
-  | { type: 'state'; data: DataState }
-  | { type: 'not-ready'; data: DataState }
-  | { type: 'segment'; tokens: SegmentedToken[]; romaji: string | null }
-  | { type: 'popup'; card: PopupCard | null }
-  | { type: 'word'; rows: WordRows | null }
-  | { type: 'kanji'; rows: KanjiRows | null }
+  | StateAnswer
+  | NotReady
+  | SegmentAnswer
+  | PopupAnswer
+  | WordAnswer
+  | KanjiAnswer
+  | WordExamplesAnswer
+  | FormExamplesAnswer
+  | ResolveAnswer
 
 export type Failure = { type: 'failed'; reason: string }
 

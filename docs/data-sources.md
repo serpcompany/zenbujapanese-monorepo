@@ -14,8 +14,7 @@ asks for one (Jiten's says its rankings are adapted and shared alike), and the c
 with no versions or dates. The list also holds the sentence that says Zenbu converts every source
 and shares converted Creative Commons data alike. The website imports the list for its Sources
 page and each page's Sources list; the app's **Credits & Attributions** asks the core it runs for
-it; the browser extension's Settings shows `creditsShownBy('extension')`
-(`apps/extension/src/shared/credits.tsx`); and word cards read their sources' names, licenses,
+it; the browser extension's Settings is to show `creditsShownBy('extension')` (#959); and word cards read their sources' names, licenses,
 and links from it. No client words a credit itself.
 
 When adding, removing, or relicensing a source, change that list and this table in the same PR. The

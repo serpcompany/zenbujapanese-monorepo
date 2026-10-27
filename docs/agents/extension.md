@@ -38,7 +38,7 @@ outside the first version. The Store listing, its ID, and the version and builds
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker: it downloads the language data, opens it in sqlite-wasm, and answers from the core (`answer.ts`; [`extension-language-data.md`](extension-language-data.md)). |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
-| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, the data's status, and the credits. |
+| `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, the language data's host and state, and what pages show of them: the dictionary status, the welcome tab, and the dictionary's progress (`dictionary-progress.tsx`), which every page that shows the download draws. Pages and content scripts look words up through `dictionary.ts`'s helpers, never with raw requests. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `src/test/` | Helpers only tests import: a fake of the language-data bucket, file storage, and the database pool (`fake-language-data.ts`). The layer rules treat it as test code. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
@@ -119,7 +119,7 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again; the welcome tab's progress, ready, failed, and Try Again, and the credits; and the
+  again; the welcome tab's progress, ready, updating, failed, and Try Again; the lookup helpers; and the
   language data's download, resume, checks, and updates
   ([`extension-language-data.md`](extension-language-data.md), Checks).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and

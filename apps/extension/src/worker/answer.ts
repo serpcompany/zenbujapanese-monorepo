@@ -20,9 +20,15 @@ const unknownRequest: Failure = {
   reason: 'The dictionary worker does not know this request.'
 }
 
-const lookups: ReadonlySet<string> = new Set<Lookup['type']>(['segment', 'popup', 'word', 'kanji'])
-
-const strokesMissing = 'The kanji stroke data is still downloading. Try again in a minute.'
+const lookups: ReadonlySet<string> = new Set<Lookup['type']>([
+  'segment',
+  'popup',
+  'word',
+  'kanji',
+  'word-examples',
+  'form-examples',
+  'resolve'
+])
 
 function lookUp(
   request: Lookup,
@@ -39,8 +45,22 @@ function lookUp(
     case 'word':
       return { type: 'word', rows: dictionary.word(request.entSeq)?.rows ?? null }
     case 'kanji':
-      if (!attached.includes('strokes')) return { type: 'failed', reason: strokesMissing }
-      return { type: 'kanji', rows: dictionary.kanji(request.character)?.rows ?? null }
+      return {
+        type: 'kanji',
+        rows: dictionary.kanji(request.character)?.rows ?? null,
+        strokes: attached.includes('strokes') ? 'ready' : 'downloading'
+      }
+    case 'word-examples':
+      return {
+        type: 'word-examples',
+        rows: dictionary.wordExamples(request.entSeq, request.from)?.rows ?? []
+      }
+    case 'form-examples': {
+      const { rows, listed } = dictionary.formExamples(request.form, request.from)
+      return { type: 'form-examples', rows, listed }
+    }
+    case 'resolve':
+      return { type: 'resolve', entSeq: dictionary.resolve(request.headword, request.reading) }
   }
 }
 

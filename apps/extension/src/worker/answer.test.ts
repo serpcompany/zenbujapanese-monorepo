@@ -6,31 +6,39 @@ import { answer, type WorkerData } from './answer'
 import type { OpenDictionary } from './open-dictionary'
 
 const downloading: DataState = { state: 'downloading', done: 40, total: 100 }
-const ready: DataState = { state: 'ready', release: '2026.10.1' }
+const ready: DataState = { state: 'ready', release: '2026.10.1', bytes: 100, checkedAt: 1 }
 
 function worker(open: OpenDictionary | null, state: DataState = downloading): WorkerData {
   return { state: () => state, open: () => open, update: vi.fn() }
 }
 
+const kanjiRows = { kanji: { character: '要' }, strokes: null }
+
 const dictionary = {
   segmentation: () => ({ tokens: [], romaji: 'tabemasu' }),
-  kanji: () => {
-    throw new Error('no such table: kanji_strokes')
-  }
+  kanji: () => ({ rows: kanjiRows }),
+  wordExamples: (entSeq: number) => (entSeq === 1546640 ? { rows: ['example'] } : null),
+  formExamples: (form: string, from: number) => ({ rows: [`${form} from ${from}`], listed: 51 }),
+  resolve: (headword: string) => (headword === '有る' ? 1296400 : null)
 } as unknown as Dictionary
 
-const opened = (attached: OpenDictionary['attached']): OpenDictionary => ({
-  dictionary,
-  attached,
-  close: () => undefined
-})
+const opened = (
+  attached: OpenDictionary['attached'],
+  using: Dictionary = dictionary
+): OpenDictionary => ({ dictionary: using, attached, close: () => undefined })
+
+const ask = (request: DictionaryRequest, attached: OpenDictionary['attached'] = ['jlpt']) =>
+  answer(request, worker(opened(attached), ready))
 
 describe('answering a dictionary request', () => {
   it.each<DictionaryRequest>([
     { type: 'segment', text: '食べます' },
     { type: 'popup', languageReferenceID: 'jmdict:1358280', frequency: ['youtube'] },
     { type: 'word', entSeq: 1358280 },
-    { type: 'kanji', character: '食' }
+    { type: 'kanji', character: '食' },
+    { type: 'word-examples', entSeq: 1546640, from: 10 },
+    { type: 'form-examples', form: 'いる', from: 0 },
+    { type: 'resolve', headword: '有る', reading: 'ある' }
   ])('answers $type before the language data is ready with where the download is', request => {
     expect(answer(request, worker(null))).toEqual({ type: 'not-ready', data: downloading })
   })
@@ -43,25 +51,62 @@ describe('answering a dictionary request', () => {
   })
 
   it('looks up from the open dictionary once it is ready', () => {
-    expect(answer({ type: 'segment', text: '食べます' }, worker(opened(['jlpt']), ready))).toEqual({
+    expect(ask({ type: 'segment', text: '食べます' })).toEqual({
       type: 'segment',
       tokens: [],
       romaji: 'tabemasu'
     })
   })
 
-  it('says the kanji stroke data is still downloading before it is attached', () => {
-    expect(answer({ type: 'kanji', character: '食' }, worker(opened(['jlpt']), ready))).toEqual({
-      type: 'failed',
-      reason: 'The kanji stroke data is still downloading. Try again in a minute.'
+  it('answers a kanji’s rows while its stroke data is still downloading, and says so', () => {
+    expect(ask({ type: 'kanji', character: '要' })).toEqual({
+      type: 'kanji',
+      rows: kanjiRows,
+      strokes: 'downloading'
+    })
+    expect(ask({ type: 'kanji', character: '要' }, ['jlpt', 'strokes'])).toMatchObject({
+      strokes: 'ready'
+    })
+  })
+
+  it('answers a page of a word’s examples, and none for an unknown word', () => {
+    expect(ask({ type: 'word-examples', entSeq: 1546640, from: 10 })).toEqual({
+      type: 'word-examples',
+      rows: ['example']
+    })
+    expect(ask({ type: 'word-examples', entSeq: 1, from: 0 })).toEqual({
+      type: 'word-examples',
+      rows: []
+    })
+  })
+
+  it('answers a page of a form’s examples with how many there are', () => {
+    expect(ask({ type: 'form-examples', form: 'いる', from: 10 })).toEqual({
+      type: 'form-examples',
+      rows: ['いる from 10'],
+      listed: 51
+    })
+  })
+
+  it('resolves a related word to its entry, or to null', () => {
+    expect(ask({ type: 'resolve', headword: '有る', reading: 'ある' })).toEqual({
+      type: 'resolve',
+      entSeq: 1296400
+    })
+    expect(ask({ type: 'resolve', headword: '食べる', reading: 'たべる' })).toEqual({
+      type: 'resolve',
+      entSeq: null
     })
   })
 
   it('answers a failed lookup with its reason', () => {
-    const open = worker(opened(['jlpt', 'strokes']), ready)
-    expect(answer({ type: 'kanji', character: '食' }, open)).toEqual({
-      type: 'failed',
-      reason: 'no such table: kanji_strokes'
-    })
+    const failing = {
+      kanji: () => {
+        throw new Error('no such table: kanji_strokes')
+      }
+    } as unknown as Dictionary
+    expect(
+      answer({ type: 'kanji', character: '食' }, worker(opened(['strokes'], failing), ready))
+    ).toEqual({ type: 'failed', reason: 'no such table: kanji_strokes' })
   })
 })

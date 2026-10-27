@@ -34,7 +34,8 @@ A wrong SHA-256 discards what it covers and fails with its reason, such as
   `RetiredEntries.json`, and the 11 Kuromoji files. A lookup before it is in answers `not-ready`
   with the data's state, never an empty result.
 - **The later set,** `KanjiStrokeData` (`strokes`) and `RankedLists` (`ranked`), follows in the
-  background. A kanji request answers that the stroke data is still downloading until it is in.
+  background. Until it is in, a kanji request answers its rows with no strokes and
+  `strokes: 'downloading'`.
 
 ## Where it is kept
 
@@ -54,7 +55,7 @@ next update does, since the service worker recreates the offscreen document.
 ## Updates
 
 On install (which also opens the welcome tab), on browser start, once a day (the
-`language-data-update` alarm), and from Settings' Check for Updates, the service worker sends
+`language-data-update` alarm), and when a page asks (`checkForUpdates`), the service worker sends
 `update` (`src/service-worker/language-data-updates.ts`). Files are content-addressed, so only
 files whose SHA-256 changed download. The old set answers until the new one opens and checks;
 then `installed.json` swaps and the old files are deleted. An update that fails keeps the
@@ -70,12 +71,20 @@ load the core's lookup code or SQLite ([`extension.md`](extension.md), Layers).
 
 ## What the worker answers
 
+Pages and content scripts ask through the helpers in `src/shared/dictionary.ts` (`readDataState`,
+`checkForUpdates`, `segmentText`, `lookUpPopupCard`, `lookUpWord`, `lookUpKanji`,
+`lookUpWordExamples`, `lookUpFormExamples`, `resolveWord`), each of which answers its own answer,
+`not-ready`, or a failure, never a throw. Every lookup answers `not-ready` with the data's state
+until the first set is in, never an empty result.
+
 | Request | Answer |
 | --- | --- |
-| `state`, `update` | `state`, with the data's state: `checking`, `downloading` (bytes done of the total), `updating`, `ready`, or `failed` with why (`src/shared/data-state.ts`) |
+| `state`, `update` | `state`, with the data's state (`src/shared/data-state.ts`): `checking`, `downloading` (bytes done of the total, from the manifest's sizes), `ready` or `updating` with the installed release, its size, and when it last checked for an update, or `failed` with why. An asked-for update shows `updating` at once, with a total of 0 until it knows what changed. |
 | `segment` | The words in a text, with each token's reading, and the text's romaji |
 | `popup` | The word popup's Word card for a Language Reference ID, with `frequency` from the learner's frequency dictionaries in their order, through `readFrequency`, and the reading's romaji (core `artifact/popup-card.ts`) |
-| `word`, `kanji` | Word Detail's rows from `word()`, and the kanji details' from `kanji()` |
+| `word`, `kanji` | Word Detail's rows from `word()`, and the kanji details' from `kanji()`, with `strokes` saying whether the stroke data is in. An unknown entry or character answers `rows: null`. |
+| `word-examples`, `form-examples` | A page of a word's examples from `from`, and of a form's, with how many the form has (`listed`). A form's examples are found by scanning the sentences, not by full-text search. |
+| `resolve` | The entry written and read as a related word with no target is, through the `forms` index (core `resolveEntSeq`), or `null` |
 
 ## Checks
 
@@ -86,7 +95,9 @@ load the core's lookup code or SQLite ([`extension.md`](extension.md), Layers).
   on the next update, and an
   update that downloads only the changed file, answers from the old set until the swap, and
   then deletes the old one.
-- `src/worker/answer.test.ts`: `not-ready` before the first set, the state, lookups, and the
-  stroke data's wait. `src/service-worker/language-data-updates.test.ts`: when updates run.
+- `src/worker/answer.test.ts`: `not-ready` before the first set, the state, each lookup, and
+  kanji rows while the stroke data downloads. `src/shared/dictionary.test.ts`: each helper's
+  request, and a failure for a wrong answer or a throw. The core's `kanji.test.ts` and
+  `word-cards.test.ts`: a kanji read without the stroke data, and resolving a related word. `src/service-worker/language-data-updates.test.ts`: when updates run.
 - Not yet: the browser tests on #952's local server, the conformance suites on WebAssembly, and
   the word popup's timings and query plans (#956's Done when).

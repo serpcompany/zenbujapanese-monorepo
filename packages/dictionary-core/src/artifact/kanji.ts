@@ -66,7 +66,8 @@ function kanjiStrokes(db: ArtifactDatabase, character: string): KanjiStrokesRow 
 export function readKanji(
   db: ArtifactDatabase,
   data: KanjiData,
-  character: string
+  character: string,
+  withStrokes = true
 ): KanjiRows | null {
   const kanji = data.row(character)
   if (!kanji) return null
@@ -78,6 +79,6 @@ export function readKanji(
     words: kanjiWords(character, kanjiCandidateRows(db, character)).map(
       ({ id, entSeq, headword, reading, summary }) => ({ id, entSeq, headword, reading, summary })
     ),
-    strokes: kanjiStrokes(db, character)
+    strokes: withStrokes ? kanjiStrokes(db, character) : null
   }
 }

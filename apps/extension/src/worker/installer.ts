@@ -1,10 +1,9 @@
-import type { DataState } from '../shared/data-state'
+import type { DataState, InstalledRelease } from '../shared/data-state'
 import { download } from './download'
 import { type Fetch, fileKey, newestRelease, type Release, type ReleaseFile } from './release'
 import type { Storage } from './storage'
 
-export interface Installed {
-  release: string
+export interface Installed extends InstalledRelease {
   manifestSha256: string
   files: Record<string, string>
 }
@@ -19,6 +18,7 @@ export interface InstallerOptions {
   storage: Storage
   pool: () => Promise<DatabasePool>
   open(installed: Installed): Promise<void>
+  now?: () => number
 }
 
 export const installedPath = 'installed.json'
@@ -33,8 +33,17 @@ export const keptPath = (name: string, sha256: string) => fileKey({ name, sha256
 
 const reason = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
+const bytesOf = (files: readonly ReleaseFile[]) => files.reduce((sum, file) => sum + file.bytes, 0)
+
+const shown = ({ release, bytes, checkedAt }: Installed): InstalledRelease => ({
+  release,
+  bytes,
+  checkedAt
+})
+
 export function installer(options: InstallerOptions) {
   const { fetch, storage } = options
+  const now = options.now ?? Date.now
   let state: DataState = { state: 'checking' }
   let installed: Installed | null = null
 
@@ -72,11 +81,15 @@ export function installer(options: InstallerOptions) {
     else await storage.remove(`files/${sha256}`)
   }
 
+  async function record(next: Installed) {
+    await storage.write(installedPath, new TextEncoder().encode(JSON.stringify(next)))
+    installed = next
+  }
+
   async function swap(next: Installed) {
     await options.open(next)
-    await storage.write(installedPath, new TextEncoder().encode(JSON.stringify(next)))
     const previous = installed
-    installed = next
+    await record(next)
     const kept = new Set(Object.values(next.files))
     for (const [name, sha256] of Object.entries(previous?.files ?? {})) {
       if (!kept.has(sha256)) await remove(name, sha256)
@@ -89,7 +102,7 @@ export function installer(options: InstallerOptions) {
     const from = installed
     return (done: number) => {
       state = from
-        ? { state: 'updating', release: from.release, done, total }
+        ? { state: 'updating', ...shown(from), done, total }
         : { state: 'downloading', done, total }
     }
   }
@@ -97,19 +110,17 @@ export function installer(options: InstallerOptions) {
   async function installFirst(release: Release) {
     const changed = release.first.filter(file => !isInstalled(file))
     if (changed.length === 0 && installed?.manifestSha256 === release.manifestSha256) return
-    const report = progress(changed.reduce((sum, file) => sum + file.bytes, 0))
+    const report = progress(bytesOf(changed))
     report(0)
     await fetchFiles(changed, report)
     if (!installed) state = { state: 'checking' }
+    const files = [...release.first, ...release.later.filter(isInstalled)]
     await swap({
       release: release.release,
+      bytes: bytesOf(files),
+      checkedAt: installed?.checkedAt ?? null,
       manifestSha256: release.manifestSha256,
-      files: Object.fromEntries(
-        [...release.first, ...release.later.filter(isInstalled)].map(file => [
-          file.name,
-          file.sha256
-        ])
-      )
+      files: Object.fromEntries(files.map(file => [file.name, file.sha256]))
     })
   }
 
@@ -119,20 +130,30 @@ export function installer(options: InstallerOptions) {
     await fetchFiles(changed, () => undefined)
     const files = { ...installed.files }
     for (const file of changed) files[file.name] = file.sha256
-    await swap({ ...installed, files })
+    await swap({ ...installed, bytes: bytesOf([...release.first, ...release.later]), files })
+  }
+
+  function checking() {
+    state = installed
+      ? { state: 'updating', ...shown(installed), done: 0, total: 0 }
+      : { state: 'checking' }
   }
 
   async function update() {
     try {
-      if (!installed) state = { state: 'checking' }
+      checking()
       const release = await newestRelease(fetch)
       await installFirst(release)
-      state = { state: 'ready', release: release.release }
+      if (installed) state = { state: 'ready', ...shown(installed) }
       await installLater(release)
       await storage.remove('staging')
+      if (installed) {
+        await record({ ...installed, checkedAt: now() })
+        state = { state: 'ready', ...shown(installed) }
+      }
     } catch (error) {
       state = installed
-        ? { state: 'ready', release: installed.release, updateFailed: reason(error) }
+        ? { state: 'ready', ...shown(installed), updateFailed: reason(error) }
         : { state: 'failed', reason: reason(error) }
     }
   }
@@ -143,7 +164,7 @@ export function installer(options: InstallerOptions) {
     installed = JSON.parse(new TextDecoder().decode(saved)) as Installed
     try {
       await options.open(installed)
-      state = { state: 'ready', release: installed.release }
+      state = { state: 'ready', ...shown(installed) }
     } catch (error) {
       installed = null
       state = { state: 'failed', reason: reason(error) }
@@ -163,6 +184,7 @@ export function installer(options: InstallerOptions) {
       return started
     },
     update(): Promise<void> {
+      if (!updating) checking()
       updating ??= started.then(update).finally(() => {
         updating = null
       })

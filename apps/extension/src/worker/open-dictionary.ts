@@ -96,7 +96,7 @@ export async function openDictionary(
       return buffer
     })
     return {
-      dictionary: new Dictionary({ db, kanji, retired, capabilities: { tokenize } }),
+      dictionary: new Dictionary({ db, kanji, retired, attached, capabilities: { tokenize } }),
       attached,
       close: () => db.close()
     }

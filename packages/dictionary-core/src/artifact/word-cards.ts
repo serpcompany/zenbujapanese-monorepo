@@ -85,6 +85,15 @@ function pick(candidates: EntryIdentity[], headword: string, reading: string): E
   return exact.length > 0 ? exact : candidates
 }
 
+export function resolveEntSeq(
+  db: ArtifactDatabase,
+  headword: string,
+  reading: string
+): number | null {
+  const [found] = pick(canonical(candidatesFor(db, headword, reading)), headword, reading)
+  return found?.entSeq ?? null
+}
+
 export function resolveWords(db: ArtifactDatabase, queries: readonly WordQuery[]): ResolvedWords {
   const named = queries.flatMap(query =>
     'languageReferenceID' in query ? [query.languageReferenceID.toLowerCase()] : []
