@@ -1,7 +1,7 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
 import { useEffect, useRef } from 'react'
-import { Button } from '@/components/ui/button'
 import type { AccessTokens } from '@/lib/account/access-tokens'
 import type { AccountSession } from '@/lib/account/answers'
 import { type AppleCode, appleUserOf } from '@/lib/account/apple'

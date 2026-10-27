@@ -6,6 +6,8 @@ import {
   rankedList
 } from '@zenbu/dictionary-core/browse/lists'
 import { tierForRank } from '@zenbu/dictionary-core/detail/frequency'
+import { FrequencyDot } from '@zenbu/ui/dictionary/frequency-dot'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
 import { cn } from 'cn'
 import Link from 'next/link'
 import {
@@ -17,8 +19,6 @@ import {
   PanelHeading
 } from '@/components/dictionary/browse/browse-ui'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { FrequencyDot } from '@/components/dictionary/frequency-dot'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
 import {
   browseText,
@@ -42,6 +42,7 @@ import {
   rankedListPath
 } from '@/lib/dictionary/browse/paths'
 import type { Linked } from '@/lib/dictionary/page-example'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
@@ -208,7 +209,7 @@ export function FrequencyHubPage({ ranked, locale }: { ranked: RankedListsData; 
           <RankedPanel key={list.slug} list={list} locale={locale} />
         ))}
       </section>
-      <SourceCredits sources={pageSources.frequency} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(pageSources.frequency, locale)} />
     </BrowsePage>
   )
 }
@@ -260,7 +261,7 @@ export function RankBandPage({
         pathFor={number => rankBandPath(list.slug, band, number)}
         locale={locale}
       />
-      <SourceCredits sources={copy.sources} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(copy.sources, locale)} />
     </BrowsePage>
   )
 }
@@ -300,7 +301,7 @@ export function JlptListPage({
         pathFor={number => jlptVocabularyPath(level.level, number)}
         locale={locale}
       />
-      <SourceCredits sources={copy.sources} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(copy.sources, locale)} />
     </BrowsePage>
   )
 }

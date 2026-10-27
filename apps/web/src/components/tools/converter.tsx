@@ -1,10 +1,10 @@
 'use client'
 
+import { Card, CardContent } from '@zenbu/ui/components/card'
 import { useRef, useState } from 'react'
 import { ConverterBox } from '@/components/tools/converter-box'
 import { ClearButton, ConverterHeader, TryExamples } from '@/components/tools/converter-parts'
 import { ScriptSetting, WidthSettings } from '@/components/tools/converter-settings'
-import { Card, CardContent } from '@/components/ui/card'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { bothSides, defaultConverterOptions, type Edit } from '@/lib/tools/convert'

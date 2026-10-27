@@ -1,7 +1,7 @@
 'use client'
 
+import { Button } from '@zenbu/ui/components/button'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { useAppleSignIn } from '@/hooks/use-apple-sign-in'
 import { useBusy } from '@/hooks/use-busy'
 import type { AccessTokens } from '@/lib/account/access-tokens'

@@ -1,13 +1,13 @@
 'use client'
 
-import { ChevronDownIcon } from 'lucide-react'
-import type { ComponentProps, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@zenbu/ui/components/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+} from '@zenbu/ui/components/dropdown-menu'
+import { ChevronDownIcon } from 'lucide-react'
+import type { ComponentProps, ReactNode } from 'react'
 
 export type MenuSide = 'bottom' | 'top'
 

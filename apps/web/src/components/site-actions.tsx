@@ -1,7 +1,7 @@
+import { Button } from '@zenbu/ui/components/button'
 import { SmartphoneIcon } from 'lucide-react'
 import Link from 'next/link'
 import type { ComponentProps, ReactNode } from 'react'
-import { Button } from '@/components/ui/button'
 import type { Locale } from '@/lib/i18n/config'
 import { localizedPath } from '@/lib/i18n/paths'
 import { type LinkTargetId, linkTo } from '@/lib/site'

@@ -1,5 +1,5 @@
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
-import { Fill } from '@/components/fill'
 import { PageShell } from '@/components/page-shell'
 import { company } from '@/lib/company'
 import { getDictionary } from '@/lib/i18n/dictionary'

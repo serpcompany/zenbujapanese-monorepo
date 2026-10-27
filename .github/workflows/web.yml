@@ -24,7 +24,8 @@ jobs:
         uses: ./.github/actions/changed-paths
         with:
           paths: >-
-            apps/web packages/dictionary-core packages/account-rules package.json pnpm-lock.yaml
+            apps/web packages/ui packages/dictionary-core packages/account-rules package.json
+            pnpm-lock.yaml
             pnpm-workspace.yaml
             .node-version tools/checks/ports.mjs .github/workflows/web.yml
             .github/actions/changed-paths
@@ -65,6 +66,9 @@ jobs:
             echo "::error::pnpm cf-typegen changed or added: ${changed//$'\n'/, }. Run it in apps/web and commit cloudflare-env.d.ts, the only file it should write."
             exit 1
           fi
+      - name: Check the word components' package
+        working-directory: packages/ui
+        run: pnpm check
       - working-directory: apps/web
         run: pnpm check
       - name: No page's JavaScript holds the dictionaries

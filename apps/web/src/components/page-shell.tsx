@@ -1,6 +1,6 @@
+import { Fill } from '@zenbu/ui/lib/fill'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { Fill } from '@/components/fill'
 import { defaultLocale, type Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatDate } from '@/lib/i18n/format'

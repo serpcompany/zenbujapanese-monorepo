@@ -4,22 +4,23 @@ import {
   noMatches,
   readingRefinementSpoken
 } from '@zenbu/dictionary-core/results/results'
+import { Card } from '@zenbu/ui/components/card'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@zenbu/ui/components/empty'
+import { ItemContent, ItemGroup, ItemSeparator } from '@zenbu/ui/components/item'
+import { Disclosure } from '@zenbu/ui/dictionary/disclosure'
+import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
+import { Fill } from '@zenbu/ui/lib/fill'
 import { SearchIcon } from 'lucide-react'
 import { Fragment } from 'react'
-import { Disclosure } from '@/components/dictionary/disclosure'
-import { ExampleList } from '@/components/dictionary/example-list'
-import { KanjiDetails } from '@/components/dictionary/kanji-details'
 import { Row, WordRow } from '@/components/dictionary/word-row'
-import { Fill } from '@/components/fill'
-import { Card } from '@/components/ui/card'
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { ItemContent, ItemGroup, ItemSeparator } from '@/components/ui/item'
 import type { SearchData, SearchExamplesData } from '@/lib/dictionary/data'
 import { exampleListText } from '@/lib/dictionary/screen-text'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill, formatNumber, pluralOf } from '@/lib/i18n/format'
+import { kanjiDetailsProps } from './kanji-props'
+import { SiteExampleList } from './site-examples'
 
 const searchExamplesAnchor = 'examples'
 
@@ -67,7 +68,7 @@ function KanjiRow({
       summary={summary}
     >
       <div className="px-4 pt-2 pb-4">
-        <KanjiDetails kanji={kanji.details} locale={locale} />
+        <KanjiDetails {...kanjiDetailsProps(kanji.details, locale)} />
       </div>
     </Disclosure>
   ) : (
@@ -92,7 +93,7 @@ export function SearchExamplesSection({
           {count === null ? null : coreText(count, locale)}
         </p>
       </div>
-      <ExampleList
+      <SiteExampleList
         initial={data.examples}
         listed={data.listed}
         path={data.examplesPath}

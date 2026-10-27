@@ -1,15 +1,15 @@
 'use client'
 
 import { type RadicalFile, RadicalLookup } from '@zenbu/dictionary-core/search/radicals'
-import Link from 'next/link'
-import { type MouseEvent, useMemo, useState } from 'react'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger
-} from '@/components/ui/accordion'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+} from '@zenbu/ui/components/accordion'
+import { ToggleGroup, ToggleGroupItem } from '@zenbu/ui/components/toggle-group'
+import Link from 'next/link'
+import { type MouseEvent, useMemo, useState } from 'react'
 import {
   closedRadicalSections,
   keepClosedRadicalSections,

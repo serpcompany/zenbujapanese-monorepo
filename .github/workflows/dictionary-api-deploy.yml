@@ -8,6 +8,7 @@ on:
       - packages/dictionary-core/**
       - packages/node-service/**
       - apps/web/package.json
+      - packages/ui/package.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
@@ -29,6 +30,7 @@ on:
       - packages/dictionary-core/**
       - packages/node-service/**
       - apps/web/package.json
+      - packages/ui/package.json
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml

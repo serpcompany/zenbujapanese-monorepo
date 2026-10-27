@@ -1,12 +1,12 @@
-import type { ReactNode, RefObject } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@zenbu/ui/components/button'
 import {
   CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle
-} from '@/components/ui/card'
+} from '@zenbu/ui/components/card'
+import type { ReactNode, RefObject } from 'react'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 
 export function ConverterHeader({

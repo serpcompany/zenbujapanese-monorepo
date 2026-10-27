@@ -1,4 +1,4 @@
-import { Fill } from '@/components/fill'
+import { Fill } from '@zenbu/ui/lib/fill'
 
 export const sectionTitleClassName =
   'text-2xl font-semibold tracking-tight text-balance md:text-3xl'

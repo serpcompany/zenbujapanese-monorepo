@@ -75,7 +75,7 @@ lists the three with the current one ticked and closes on a choice. A script in 
 applies the saved choice before anything is drawn, so a page never shows the other theme first
 (next-themes, which the site's toasts already read). Every page uses the stock shadcn tokens in both
 themes; text on the muted grey (the footer, the product page's demo, the homepage's previews) uses
-`muted-surface` (`src/app/globals.css`), a slightly darker grey in light mode, so it keeps 4.5:1.
+`muted-surface` (`@zenbu/ui`'s theme), a slightly darker grey in light mode, so it keeps 4.5:1.
 
 - Source: #664 and its mockups (v50, Theme switch).
 - Check: `apps/web/e2e/theme.spec.ts`, "System is the default, and follows the operating system as

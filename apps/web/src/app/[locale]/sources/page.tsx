@@ -1,6 +1,7 @@
 import { creditsShownBy } from '@zenbu/dictionary-core/sources/credits'
-import { SourceCreditItem } from '@/components/dictionary/source-credits'
+import { SourceCreditItem } from '@zenbu/ui/dictionary/source-credits'
 import { PageShell } from '@/components/page-shell'
+import { sourceCreditIn } from '@/lib/dictionary/screen-text'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
@@ -22,7 +23,7 @@ export default async function SourcesPage({ params }: PageProps<'/[locale]/sourc
       <p>{coreText(conversionNotice, locale)}</p>
       <ul className="flex flex-col gap-2">
         {credits.map(source => (
-          <SourceCreditItem key={source.id} source={source} locale={locale} />
+          <SourceCreditItem key={source.id} {...sourceCreditIn(source, locale)} />
         ))}
       </ul>
     </PageShell>

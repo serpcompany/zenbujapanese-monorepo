@@ -10,10 +10,15 @@ import {
   suiteFrequencyDetails
 } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { FrequencyDetailsContent, FrequencySection } from '@zenbu/ui/dictionary/frequency-section'
+import { WordHeader } from '@zenbu/ui/dictionary/word-header'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { SiteExampleList, SiteMeaningExample } from '@/components/dictionary/site-examples'
+import { type WordHeaderData, wordHeaderIn } from '@/components/dictionary/word-page-props'
 import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
 import { exampleListText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
+import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { gateEnabled, gateService, recordedCases } from '@/test/gate'
 import { htmlText } from '@/test/rendered'
@@ -25,28 +30,20 @@ import {
   readMeaningExamples,
   readPitchGraph
 } from '@/test/rendered-word'
-import { ExampleList, MeaningExample } from './example-list'
-import { FrequencyDetailsContent, FrequencySection } from './frequency-section'
-import { WordHeader } from './word-header'
 
 const unidic = 'UniDic for Contemporary Written Japanese 3.1.0'
 
-type HeaderProps = Parameters<typeof WordHeader>[0]
+type HeaderInput = Omit<WordHeaderData, 'conjugations' | 'headword' | 'pronounce'> &
+  Partial<WordHeaderData> & { locale?: Locale }
 
-function header(
-  props: Omit<HeaderProps, 'conjugations' | 'headword' | 'pronounce' | 'locale'> &
-    Partial<HeaderProps>
-) {
-  const headword = props.ruby.map(segment => segment.text).join('')
-  return renderToStaticMarkup(
-    <WordHeader
-      headword={headword}
-      conjugations={null}
-      pronounce={pronounceLabel(props.reading)}
-      locale="en"
-      {...props}
-    />
-  )
+function header({ locale = 'en', ...props }: HeaderInput) {
+  const word = {
+    headword: props.ruby.map(segment => segment.text).join(''),
+    conjugations: null,
+    pronounce: pronounceLabel(props.reading),
+    ...props
+  }
+  return renderToStaticMarkup(<WordHeader {...wordHeaderIn(word, locale)} />)
 }
 
 describe('the word header', () => {
@@ -269,7 +266,7 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
     const examples = word.data.rows.examples.map(rows => pageExample(wordExample(rows), links))
     const drawn = readExamples(
       renderToStaticMarkup(
-        <ExampleList
+        <SiteExampleList
           initial={examples}
           listed={examples.length}
           path={null}
@@ -286,7 +283,7 @@ describe.runIf(gateEnabled)('the rendered word page matches the app', () => {
       renderToStaticMarkup(
         detail.senses.map(sense =>
           sense.example ? (
-            <MeaningExample
+            <SiteMeaningExample
               key={sense.number}
               example={pageExample(sense.example, links)}
               meaning={sense.number}

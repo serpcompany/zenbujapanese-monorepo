@@ -1,5 +1,5 @@
 import type { RubySegment } from '@zenbu/dictionary-core/detail/ruby'
-import { RubyText } from '@/components/dictionary/ruby-text'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import { previewLabel, previewPanel } from '@/components/home/home-styles'
 import { cn } from '@/lib/utils'
 

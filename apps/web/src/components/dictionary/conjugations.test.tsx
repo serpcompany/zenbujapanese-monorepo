@@ -14,19 +14,21 @@ import type {
 } from '@zenbu/dictionary-core/detail/suite'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
 import { exampleLimit } from '@zenbu/dictionary-core/examples/retrieval'
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test } from 'vitest'
-import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
-import { conjugationsIn, conjugationsText } from '@/lib/dictionary/screen-text'
-import { gateEnabled, gateService, recordedCases } from '@/test/gate'
-import { readConjugatedForm, readConjugationTable, readExamples } from '@/test/rendered-word'
 import {
   ConjugatedFormContent,
   ConjugationsSection,
   ConjugationTableContent,
   FormExampleList
-} from './conjugations'
-import { WordHeader } from './word-header'
+} from '@zenbu/ui/dictionary/conjugations'
+import { WordHeader } from '@zenbu/ui/dictionary/word-header'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { describe, expect, test } from 'vitest'
+import { wordHeaderIn } from '@/components/dictionary/word-page-props'
+import { pageExample, serviceLinks } from '@/lib/dictionary/page-example'
+import { conjugationsIn, conjugationsText } from '@/lib/dictionary/screen-text'
+import { conjugationActions, exampleActions } from '@/test/example-actions'
+import { gateEnabled, gateService, recordedCases } from '@/test/gate'
+import { readConjugatedForm, readConjugationTable, readExamples } from '@/test/rendered-word'
 
 const noReadings = new Map()
 
@@ -36,7 +38,7 @@ const shown = (data: Conjugations) => conjugationsIn(data, 'en')
 
 const tableHtml = (data: Conjugations) =>
   renderToStaticMarkup(
-    <ConjugationTableContent conjugations={shown(data)} locale="en" text={english} />
+    <ConjugationTableContent conjugations={shown(data)} {...conjugationActions()} text={english} />
   )
 
 const table = (data: Conjugations) => readConjugationTable(tableHtml(data))
@@ -121,6 +123,7 @@ describe('the conjugation table', () => {
         <ConjugatedFormContent
           row={shown(miru).rows.Plain[index]}
           unsupported={english.pronounce.unsupported}
+          onUnsupported={() => {}}
         />
       )
     )
@@ -163,11 +166,12 @@ describe('the conjugation table', () => {
       ]
     }
     const links = serviceLinks({ 1259290: '見る' }, [])
+    const examples = [pageExample(formExample({ sentence, example }), links)]
     const html = renderToStaticMarkup(
       <FormExampleList
-        examples={[pageExample(formExample({ sentence, example }), links)]}
+        examples={examples}
         labels={shown(miru).examples}
-        locale="en"
+        {...exampleActions(examples)}
         text={english}
       />
     )
@@ -183,7 +187,12 @@ describe('the conjugation table', () => {
     ])
     expect(html).not.toContain('Load more examples')
     const none = renderToStaticMarkup(
-      <FormExampleList examples={[]} labels={shown(miru).examples} locale="en" text={english} />
+      <FormExampleList
+        examples={[]}
+        labels={shown(miru).examples}
+        {...exampleActions([])}
+        text={english}
+      />
     )
     expect(none).toContain(noFormExamplesMessage)
     expect(noFormExamplesMessage).toBe('No example sentences use this form yet.')
@@ -205,7 +214,7 @@ describe('the conjugation table', () => {
 describe('the Conjugations section', () => {
   test('starts closed, at #conjugations, with the table inside', () => {
     const html = renderToStaticMarkup(
-      <ConjugationsSection conjugations={shown(miru)} locale="en" text={english} />
+      <ConjugationsSection conjugations={shown(miru)} {...conjugationActions()} text={english} />
     )
     expect(html).toMatch(/^<div[^>]* id="conjugations"/)
     expect(html).toMatch(/<h2[^>]*><button type="button" aria-expanded="false"[^>]*>Conjugations/)
@@ -218,14 +227,18 @@ describe('the Conjugations section', () => {
     const header = (data: Conjugations | null) =>
       renderToStaticMarkup(
         <WordHeader
-          headword="見る"
-          ruby={rubySegments('見る', 'みる')}
-          reading="みる"
-          pronounce="Pronounce みる"
-          pitch={null}
-          partOfSpeechRow="Ichidan verb (transitive)"
-          conjugations={data}
-          locale="en"
+          {...wordHeaderIn(
+            {
+              headword: '見る',
+              ruby: rubySegments('見る', 'みる'),
+              reading: 'みる',
+              pronounce: 'Pronounce みる',
+              pitch: null,
+              partOfSpeechRow: 'Ichidan verb (transitive)',
+              conjugations: data
+            },
+            'en'
+          )}
         />
       )
     expect(header(miru)).toMatch(/<a href="#conjugations" data-opens-conjugations="true"/)
@@ -238,7 +251,11 @@ describe('the Conjugations section', () => {
 describe('the Conjugations section on a Japanese page', () => {
   const japanese = conjugationsIn(miru, 'ja')
   const html = renderToStaticMarkup(
-    <ConjugationsSection conjugations={japanese} locale="ja" text={conjugationsText('ja')} />
+    <ConjugationsSection
+      conjugations={japanese}
+      {...conjugationActions('ja')}
+      text={conjugationsText('ja')}
+    />
   )
 
   test('names the section, the rule, and the registers in Japanese, keeping their ids', () => {
@@ -260,14 +277,18 @@ describe('the Conjugations section on a Japanese page', () => {
   test('the part-of-speech row says in Japanese that it opens the table', () => {
     const header = renderToStaticMarkup(
       <WordHeader
-        headword="見る"
-        ruby={rubySegments('見る', 'みる')}
-        reading="みる"
-        pronounce="Pronounce みる"
-        pitch={null}
-        partOfSpeechRow="Ichidan verb (transitive)"
-        conjugations={miru}
-        locale="ja"
+        {...wordHeaderIn(
+          {
+            headword: '見る',
+            ruby: rubySegments('見る', 'みる'),
+            reading: 'みる',
+            pronounce: 'Pronounce みる',
+            pitch: null,
+            partOfSpeechRow: 'Ichidan verb (transitive)',
+            conjugations: miru
+          },
+          'ja'
+        )}
       />
     )
     expect(header).toContain(
@@ -311,18 +332,7 @@ describe.runIf(gateEnabled)('the rendered Conjugations section matches the app',
     const page = await gateService().word(entSeq)
     if (!page) throw new Error(`No word ${entSeq}`)
     const detail = wordDetail(page.data.rows)
-    const header = renderToStaticMarkup(
-      <WordHeader
-        headword={detail.headword}
-        ruby={detail.ruby}
-        reading={detail.reading}
-        pronounce={detail.pronounce}
-        pitch={detail.pitch}
-        partOfSpeechRow={detail.partOfSpeechRow}
-        conjugations={detail.conjugations}
-        locale="en"
-      />
-    )
+    const header = renderToStaticMarkup(<WordHeader {...wordHeaderIn(detail, 'en')} />)
     expect(header.includes('data-opens-conjugations')).toBe(expected.opensConjugations)
     const suite = expected.conjugations
     expect(detail.conjugations !== null).toBe(suite !== undefined)
@@ -366,11 +376,12 @@ describe.runIf(gateEnabled)('each conjugated form’s examples match the app', (
     const { data: found } = await gateService().formExamples(form.surface, 0, exampleLimit)
     expect(found.listed).toBe(form.examples.ids.length)
     const links = serviceLinks(found.slugs, [])
+    const shownExamples = found.rows.map(rows => pageExample(formExample(rows), links))
     const html = renderToStaticMarkup(
       <FormExampleList
-        examples={found.rows.map(rows => pageExample(formExample(rows), links))}
+        examples={shownExamples}
         labels={shown(miru).examples}
-        locale="en"
+        {...exampleActions(shownExamples)}
         text={english}
       />
     )

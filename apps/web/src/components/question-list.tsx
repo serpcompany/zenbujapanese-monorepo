@@ -1,10 +1,10 @@
-import Link from 'next/link'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger
-} from '@/components/ui/accordion'
+} from '@zenbu/ui/components/accordion'
+import Link from 'next/link'
 import type { Question } from '@/lib/questions'
 
 export function QuestionList({

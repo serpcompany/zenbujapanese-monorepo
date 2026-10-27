@@ -1,6 +1,3 @@
-import { Fragment } from 'react'
-import { Japanese, Latin, Typed } from '@/components/tools/rich-text'
-import { ToolSection } from '@/components/tools/tool-section'
 import {
   Table,
   TableBody,
@@ -8,7 +5,10 @@ import {
   TableHead,
   TableHeader,
   TableRow
-} from '@/components/ui/table'
+} from '@zenbu/ui/components/table'
+import { Fragment } from 'react'
+import { Japanese, Latin, Typed } from '@/components/tools/rich-text'
+import { ToolSection } from '@/components/tools/tool-section'
 import type { Locale } from '@/lib/i18n/config'
 import { type Dictionary, getDictionary } from '@/lib/i18n/dictionary'
 import type { Converter } from '@/lib/tools/converters'

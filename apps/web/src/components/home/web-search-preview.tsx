@@ -1,8 +1,9 @@
+import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import { ChevronRightIcon } from 'lucide-react'
-import { FrequencyBadges } from '@/components/dictionary/frequency'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { previewLabel, previewPanel } from '@/components/home/home-styles'
 import { WordPreview } from '@/components/home/word-preview'
+import { frequencyBadgesIn } from '@/lib/dictionary/screen-text'
 import { searchAddressIn, searchPreview } from '@/lib/home-previews'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
@@ -82,7 +83,7 @@ function SearchPage({ locale }: { locale: Locale }) {
           <span lang={sourceLang(locale)} className="text-[0.8125rem]">
             {result.meaning}
           </span>
-          <FrequencyBadges frequency={result.chips} locale={locale} />
+          <FrequencyBadges frequency={frequencyBadgesIn(result.chips, locale)} />
         </div>
       ))}
     </div>

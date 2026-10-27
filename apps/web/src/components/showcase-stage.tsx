@@ -1,6 +1,5 @@
 'use client'
 
-import { type ComponentProps, type ReactNode, useEffect, useState } from 'react'
 import {
   Carousel,
   type CarouselApi,
@@ -8,7 +7,8 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious
-} from '@/components/ui/carousel'
+} from '@zenbu/ui/components/carousel'
+import { type ComponentProps, type ReactNode, useEffect, useState } from 'react'
 import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
 import { cn } from '@/lib/utils'

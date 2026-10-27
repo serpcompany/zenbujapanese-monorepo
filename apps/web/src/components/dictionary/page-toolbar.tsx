@@ -1,7 +1,7 @@
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'
 import { type Crumb, DictionaryBreadcrumbs } from './dictionary-breadcrumbs'
-import { SavedItemActions } from './saved-item-actions'
+import { SiteItemActions } from './site-item-actions'
 
 export function PageToolbar({
   page,
@@ -17,7 +17,7 @@ export function PageToolbar({
       <div className="min-w-0">
         <DictionaryBreadcrumbs locale={locale} page={page} />
       </div>
-      <SavedItemActions
+      <SiteItemActions
         title={page.label}
         shareText={shareText}
         locale={locale}

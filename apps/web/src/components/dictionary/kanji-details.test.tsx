@@ -1,12 +1,13 @@
+import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import { fixtureKanji, unlinkedKanjiDetails } from '@/test/kanji-details'
 import { visibleText } from '@/test/rendered'
-import { KanjiDetails } from './kanji-details'
+import { kanjiDetailsProps } from './kanji-props'
 
 const kaname = unlinkedKanjiDetails(fixtureKanji('要'))
 
-const html = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="en" />)
+const html = renderToStaticMarkup(<KanjiDetails {...kanjiDetailsProps(kaname, 'en')} />)
 
 describe("a kanji's details offer what the app's Kanji Detail has beside them", () => {
   test('Share and More actions, named for the kanji', () => {
@@ -28,7 +29,7 @@ describe("a kanji's details offer what the app's Kanji Detail has beside them", 
 })
 
 describe("a kanji's details on a Japanese page", () => {
-  const japanese = renderToStaticMarkup(<KanjiDetails kanji={kaname} locale="ja" />)
+  const japanese = renderToStaticMarkup(<KanjiDetails {...kanjiDetailsProps(kaname, 'ja')} />)
 
   test('name their parts, stats, and actions in Japanese', () => {
     const parts = [...japanese.matchAll(/<h3[^>]*>([^<]+)<\/h3>/g)].map(([, title]) => title)
