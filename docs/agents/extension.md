@@ -19,7 +19,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
-| `pnpm test:browser` | The test build, then the Playwright browser tests (below) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
+| `pnpm test:browser` | The test build, then the Playwright browser tests ([`extension-browser-tests.md`](extension-browser-tests.md)) in Playwright's Chromium. Run `pnpm exec playwright install chromium` once. |
 | `pnpm language-data` | The local language-data server on its own, on a free port (or `PORT`); it prints its address. |
 | `pnpm --silent agent-chrome <command>` | The agent Chrome harness, in branded Chrome: `verify`, `selftest`, `status`, and the rest ([`README.md`](../../apps/extension/agent-chrome/README.md)). The `verify-extension` skill runs it. |
 | `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([Error reports](#error-reports)). |
@@ -252,37 +252,10 @@ with one difference below. There are no usage analytics.
   and a worker's uncaught errors sent with their part, all through a recording transport
   (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
   taken out (`build/upload-source-maps.test.ts`).
-- **Browser tests,** with `pnpm test:browser` (below), in Playwright's Chromium, in CI.
+- **Browser tests,** with `pnpm test:browser`, in Playwright's Chromium, in CI
+  ([`extension-browser-tests.md`](extension-browser-tests.md)).
 - **In branded Chrome,** the `verify-extension` skill: the same pages, the offscreen document's
   return, the test content script, and the language-data download, with screenshots in light and
   dark and the log, and the harness's self-test. Proof goes under `tmp/agent/verify/`. On both
   test pages, opening the menu and the dialog, Tabbing through it, and closing it with Esc and with
   a click outside are still checked by hand.
-
-## Browser tests
-
-`playwright.config.ts` runs `e2e/*.spec.ts` against `dist-test/` (`pnpm test:browser` builds it
-first). One persistent Chromium context per run loads the build with `--load-extension`, since
-Playwright can't open the browser-level CDP session `Extensions.loadUnpacked` needs, and
-Playwright's Chromium, unlike branded Chrome 137 and later, still honors the switch.
-
-- **Pages:** each page the manifest names (`side_panel.default_path`, `action.default_popup`,
-  `options_ui.page`) is in the build, opens, and shows its title and text, so a build missing a
-  page fails. The side panel answers again after `chrome.offscreen.closeDocument()`.
-- **Content script:** on `hostile.html`, the test content script's surface shows `食べる` and
-  "The dictionary is ready."
-- **Language data:** an extension page downloads `releases.json`, the pinned release's manifest,
-  and `JLPTLevelPack.sqlite3` from the local server, and each SHA-256 matches.
-- **Nothing else is asked.** `--host-resolver-rules` resolves no host but `127.0.0.1`, and the
-  `outsideRequests` fixture fails any test whose context asks anything but the local server and
-  this extension. `outside-requests.spec.ts` asks `example.com` from the service worker, waits
-  for the guard to record it, then clears it, so it passes only while the guard catches it. A
-  page that logs an error, or throws, fails its test too.
-
-The local server (`e2e/local-server.ts`) serves the test pages and the language-data bucket's
-layout from the checkout: `releases.json`, written from `language-data/releases/` up to the
-release `language-data/release.json` pins, with each manifest's SHA-256 and its commit from Git;
-`releases/<release>/manifest.json`; and `files/<sha256>/<name>`, read through
-`language-data/release-inputs.json`'s roots. A file still a Git LFS pointer answers 503 with the
-`git lfs pull --include` that fetches it. A failed run keeps its trace and screenshot in
-`e2e`'s `results` folder, which Git ignores.
