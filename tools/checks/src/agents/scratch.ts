@@ -17,8 +17,17 @@ export function scratchFolder(name: string): string {
   return folder
 }
 
+const callersGit = [
+  'GIT_AUTHOR_NAME',
+  'GIT_AUTHOR_EMAIL',
+  'GIT_COMMITTER_NAME',
+  'GIT_COMMITTER_EMAIL',
+  'GIT_CONFIG_COUNT'
+]
+
 export const outsideGit = (changes: Record<string, string | undefined> = {}) => ({
   ...withoutGitLocation(process.env),
+  ...Object.fromEntries(callersGit.map(name => [name, undefined])),
   ...changes
 })
 
