@@ -137,6 +137,15 @@ describe('the Weekly maintenance workflow', () => {
     }
   })
 
+  test("titles and opens the gardeners' pull requests the way the pull request checks ask", () => {
+    const docPrompt = String(garden.with?.prompt).replace(/\s+/g, ' ')
+    const codePrompt = String(codeGarden.with?.prompt).replace(/\s+/g, ' ')
+    expect(docPrompt).toContain('titled "docs: weekly doc gardening (<YYYY-MM-DD>)"')
+    expect(docPrompt).toContain('Its first line is "No issue: the weekly doc gardening')
+    expect(codePrompt).toContain('titled "chore: " and that line')
+    expect(codePrompt).toContain('Its first line is "Closes #<issue>"')
+  })
+
   test('checks each gardening job afterwards, from when it started', () => {
     for (const [jobSteps, gardenAt, guardAt, guardStep] of [
       [steps, gardenIndex, guardIndex, guard],
