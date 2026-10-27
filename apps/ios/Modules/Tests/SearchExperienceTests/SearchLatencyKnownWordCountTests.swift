@@ -38,7 +38,7 @@ extension SearchLatencyTests {
       let calls = OSAllocatedUnfairLock(initialState: [Double]())
       self.calls = calls
       analysis = JapaneseTextAnalysisClient(
-        availability: live.availability, linkedTokens: live.linkedTokens,
+        availability: live.availability, linkedTexts: live.linkedTexts,
         countedWords: { lines in
           let clock = ContinuousClock()
           let began = clock.now
@@ -51,7 +51,7 @@ extension SearchLatencyTests {
     func linkingTime(of lines: some Sequence<String>) async -> Double {
       SearchLatencyTests.value(
         await ContinuousClock().measure {
-          for line in lines { _ = await analysis.linkedTokens(line, SearchQuery(""), nil) }
+          for line in lines { _ = await analysis.linkedTokens(line) }
         })
     }
   }

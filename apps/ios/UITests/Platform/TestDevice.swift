@@ -77,6 +77,14 @@ enum TestDevice {
     #endif
   }
 
+  @MainActor static func quit(_ app: XCUIApplication) {
+    #if os(macOS)
+      app.typeKey("q", modifierFlags: .command)
+    #else
+      XCUIDevice.shared.press(.home)
+    #endif
+  }
+
   @MainActor static func comeBack(to app: XCUIApplication) {
     app.activate()
     #if os(macOS)

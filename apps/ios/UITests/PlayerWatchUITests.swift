@@ -154,9 +154,16 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     return app
   }
 
+  static let stationLines = [
+    ("駅の近くに本屋があります", "There's a bookstore near the station."),
+    ("毎朝コーヒーを飲みます", "I drink coffee every morning."),
+    ("東京駅は三つ目の駅です", "Tokyo Station is the third stop."),
+  ]
+
   static func standIn(
     captionTracks: String = #"[{"baseUrl":"https://stand-in.test/ja","languageCode":"ja","isTranslatable":true}]"#,
-    playerError: Int? = nil
+    playerError: Int? = nil,
+    lines: [(japanese: String, english: String)] = stationLines
   ) -> [String: String] {
     let response = """
       {"playabilityStatus":{"status":"OK"},"videoDetails":{"title":"Around the station","author":"Zenbu"},\
@@ -164,12 +171,9 @@ final class PlayerWatchUITests: ZenbuUITestCase {
       """
     var fixture: [String: Any] = [
       "playerResponse": response,
-      "japanese": transcript(["駅の近くに本屋があります", "毎朝コーヒーを飲みます", "東京駅は三つ目の駅です"]),
-      "english": transcript([
-        "There's a bookstore near the station.", "I drink coffee every morning.",
-        "Tokyo Station is the third stop.",
-      ]),
-      "duration": 12,
+      "japanese": transcript(lines.map(\.japanese)),
+      "english": transcript(lines.map(\.english)),
+      "duration": lines.count * 4,
     ]
     if let playerError { fixture["playerError"] = playerError }
     let data = (try? JSONSerialization.data(withJSONObject: fixture)) ?? Data()

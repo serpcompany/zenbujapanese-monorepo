@@ -38,8 +38,9 @@ what it waited for and for how long.
   `apps/ios/UITests/`.
 - **Never pause to let something happen;** wait for the thing itself. The fixed pauses left are
   proofs that something does not happen (the input panel stays open, the iPhone doesn't turn, the
-  word sheet stays up, and in `ExampleRowsUITests` a second after the held answers are let go, in
-  which no row may change its height and the opened sentence may not leave its place), the long
+  word sheet stays up, and in `ExampleRowsUITests` and `LinkedRowsUITests` a second after the held
+  answers are let go, in which no row may change its height and the opened sentence may not leave
+  its place), the long
   press and the drag's hold, which are what a finger does, `waitUntilStill`'s second between two
   looks at a frame, `comesTrue`'s wait between two looks, the 0.3 s between the warm-up touch and
   the gesture after it (below), and three on the iPad and the Mac with

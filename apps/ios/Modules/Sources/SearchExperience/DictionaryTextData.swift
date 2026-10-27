@@ -78,21 +78,18 @@ struct LinkedEntryExamples: Decodable, Sendable {
   }
 }
 
-struct LinkedText: Encodable, Sendable {
-  let text: String
-  let query: String
+struct TextsToLink: Encodable, Sendable {
+  let texts: [String]
   let highlightedEntry: String?
 
   private enum CodingKeys: String, CodingKey {
-    case text
-    case query
+    case texts
     case highlightedEntry
   }
 
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(text, forKey: .text)
-    try container.encode(query, forKey: .query)
+    try container.encode(texts, forKey: .texts)
     try container.encode(highlightedEntry, forKey: .highlightedEntry)
   }
 }
@@ -103,8 +100,8 @@ struct LinkedWord: Decodable, Sendable {
   let end: Int
   let reading: String?
   let isFunctionWord: Bool
-  let entry: String?
-  let candidates: [String]
+  let entry: LinkedWordEntry?
+  let candidates: [LinkedWordEntry]
   let furigana: String?
   let ruby: [JapaneseRubySegment]?
   let accent: JapaneseTextToken.Accent?
@@ -166,8 +163,8 @@ actor DictionaryTextData {
       "formExamples", FormExamplesRequest(form: form, from: batch.from, limit: batch.limit))
   }
 
-  func linkedWords(_ text: LinkedText) async throws -> [LinkedWord] {
-    try await linked("linkedTokens", text)
+  func linkedTexts(_ request: TextsToLink) async throws -> [[LinkedWord]] {
+    try await linked("linkedTexts", request)
   }
 
   private func linked<Answer: Decodable>(

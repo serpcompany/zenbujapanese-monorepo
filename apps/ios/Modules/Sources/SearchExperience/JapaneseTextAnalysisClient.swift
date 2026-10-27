@@ -1,5 +1,28 @@
 import Foundation
 
+struct LinkedWordEntry: Hashable, Identifiable, Sendable {
+  let id: LanguageReferenceID
+  let headword: String
+  let reading: String
+  let summary: String
+  let gloss: String?
+}
+
+extension LinkedWordEntry: Decodable {
+  private enum CodingKeys: String, CodingKey {
+    case id, headword, reading, summary, gloss
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    id = LanguageReferenceID(rawValue: try container.decode(String.self, forKey: .id))
+    headword = try container.decode(String.self, forKey: .headword)
+    reading = try container.decode(String.self, forKey: .reading)
+    summary = try container.decode(String.self, forKey: .summary)
+    gloss = try container.decodeIfPresent(String.self, forKey: .gloss)
+  }
+}
+
 struct JapaneseTextToken: Identifiable, Sendable {
   enum Accent: String, Decodable, Sendable {
     case entry
@@ -8,8 +31,8 @@ struct JapaneseTextToken: Identifiable, Sendable {
 
   let id: Int
   let surface: String
-  let entry: DictionaryEntry?
-  let candidateEntries: [DictionaryEntry]
+  let entry: LinkedWordEntry?
+  let candidateEntries: [LinkedWordEntry]
   let scalarRange: Range<Int>
   let reading: String?
   let ruby: JapaneseRuby?
@@ -20,8 +43,8 @@ struct JapaneseTextToken: Identifiable, Sendable {
   init(
     id: Int,
     surface: String,
-    entry: DictionaryEntry?,
-    candidateEntries: [DictionaryEntry] = [],
+    entry: LinkedWordEntry?,
+    candidateEntries: [LinkedWordEntry] = [],
     scalarRange: Range<Int> = 0..<0,
     reading: String? = nil,
     ruby: JapaneseRuby? = nil,
@@ -40,87 +63,13 @@ struct JapaneseTextToken: Identifiable, Sendable {
     self.accent = accent
     self.lineBreak = lineBreak
   }
-}
 
-struct JapaneseTextAnalysisClient: Sendable {
-  var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
-  var linkedTokens:
-    @Sendable (
-      _ text: String,
-      _ highlightedQuery: SearchQuery,
-      _ highlightedEntry: DictionaryEntry?
-    ) async -> [JapaneseTextToken]
-  var countedWords: @Sendable (_ lines: [String]) async -> [LanguageReferenceID]
-
-  static func live(
-    text: DictionaryTextData = .shared, linked: LinkedEntries = LinkedEntries(lookupClient: .live)
-  ) -> JapaneseTextAnalysisClient {
-    JapaneseTextAnalysisClient(
-      availability: { await text.availability() },
-      linkedTokens: { japanese, highlightedQuery, highlightedEntry in
-        guard
-          let words = try? await text.linkedWords(
-            LinkedText(
-              text: japanese, query: highlightedQuery.value,
-              highlightedEntry: highlightedEntry?.id.rawValue))
-        else { return [] }
-        return await linked.tokens([words], highlightedEntry: highlightedEntry)[0]
-      },
-      countedWords: { lines in
-        ((try? await text.countedWords(lines)) ?? []).map(LanguageReferenceID.init(rawValue:))
-      }
-    )
-  }
-}
-
-actor LinkedEntries {
-  private let lookupClient: LookupClient
-  private var entries: [String: DictionaryEntry] = [:]
-
-  init(lookupClient: LookupClient) {
-    self.lookupClient = lookupClient
-  }
-
-  func tokens(
-    _ texts: [[LinkedWord]], highlightedEntry: DictionaryEntry?
-  ) async -> [[JapaneseTextToken]] {
-    if let highlightedEntry { entries[highlightedEntry.id.rawValue] = highlightedEntry }
-    var named: [String: DictionaryEntry] = [:]
-    var unread: [LanguageReferenceID] = []
-    for id in Set(texts.joined().flatMap { $0.candidates + [$0.entry].compactMap { $0 } }) {
-      if let entry = entries[id] {
-        named[id] = entry
-      } else {
-        unread.append(LanguageReferenceID(rawValue: id))
-      }
-    }
-    if !unread.isEmpty, let read = try? await lookupClient.entries(unread) {
-      for (id, entry) in read { named[id.rawValue] = entry }
-    }
-    keep(named)
-    return texts.map { words in
-      words.enumerated().map { Self.token($0.offset, $0.element, named: named) }
-    }
-  }
-
-  private func keep(_ named: [String: DictionaryEntry]) {
-    let added = named.keys.count { entries[$0] == nil }
-    if entries.count + added > Self.capacity {
-      entries = named
-    } else {
-      entries.merge(named) { _, new in new }
-    }
-  }
-
-  private static func token(
-    _ index: Int, _ word: LinkedWord, named entries: [String: DictionaryEntry]
-  ) -> JapaneseTextToken {
-    let entry = word.entry.flatMap { entries[$0] }
-    return JapaneseTextToken(
+  init(_ index: Int, _ word: LinkedWord) {
+    self.init(
       id: index,
       surface: word.surface,
-      entry: entry,
-      candidateEntries: entry.map { [$0] } ?? word.candidates.compactMap { entries[$0] },
+      entry: word.entry,
+      candidateEntries: word.entry.map { [$0] } ?? word.candidates,
       scalarRange: word.start..<word.end,
       reading: word.reading,
       ruby: word.ruby.map {
@@ -132,5 +81,50 @@ actor LinkedEntries {
     )
   }
 
-  static let capacity = 4_000
+  static func words(_ linked: [LinkedWord]) -> [JapaneseTextToken] {
+    linked.enumerated().map { JapaneseTextToken($0.offset, $0.element) }
+  }
+
+  static func unlinked(_ text: String) -> [JapaneseTextToken] {
+    guard !text.isEmpty else { return [] }
+    return [
+      JapaneseTextToken(
+        id: 0, surface: text, entry: nil, scalarRange: 0..<text.unicodeScalars.count)
+    ]
+  }
+}
+
+struct JapaneseTextAnalysisClient: Sendable {
+  var availability: @Sendable () async -> JapaneseTextAnalysisAvailability
+  var linkedTexts:
+    @Sendable (_ texts: [String], _ highlightedEntry: LanguageReferenceID?) async
+      -> [[JapaneseTextToken]]?
+  var countedWords: @Sendable (_ lines: [String]) async -> [LanguageReferenceID]
+
+  static func live(text: DictionaryTextData = .shared) -> JapaneseTextAnalysisClient {
+    JapaneseTextAnalysisClient(
+      availability: { await text.availability() },
+      linkedTexts: { texts, highlightedEntry in
+        guard !texts.isEmpty else { return [] }
+        let request = TextsToLink(texts: texts, highlightedEntry: highlightedEntry?.rawValue)
+        guard let linked = try? await text.linkedTexts(request), linked.count == texts.count
+        else { return nil }
+        return linked.map(JapaneseTextToken.words)
+      },
+      countedWords: { lines in
+        ((try? await text.countedWords(lines)) ?? []).map(LanguageReferenceID.init(rawValue:))
+      }
+    )
+  }
+
+  func linkedTokens(_ text: String) async -> [JapaneseTextToken] {
+    await linked([text])[0]
+  }
+
+  func linked(_ texts: [String]) async -> [[JapaneseTextToken]] {
+    guard let linked = await linkedTexts(texts, nil), linked.count == texts.count else {
+      return texts.map(JapaneseTextToken.unlinked)
+    }
+    return linked
+  }
 }

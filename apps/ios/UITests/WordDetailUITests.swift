@@ -116,6 +116,21 @@ final class WordDetailUITests: ZenbuUITestCase {
     reveal(labeled("left by going back", in: app), in: app)
   }
 
+  func testANoteBeingTypedIsKeptWhenZenbuIsClosed() {
+    let app = openJapan()
+    tap(find("word-detail.more-menu", in: app))
+    tap(menuChoice("Add Note", in: app))
+    type("typed, then Zenbu closed", into: waitFor(find("word-note.editor", in: app)))
+    TestDevice.quit(app)
+    waitUntil("Zenbu to leave the screen") { app.state != .runningForeground }
+    app.terminate()
+    app.launchEnvironment["ZENBU_UI_TEST_FRESH"] = "0"
+    app.launch()
+    search("japan", in: app)
+    tap(find("result.japan", in: app))
+    reveal(labeled("typed, then Zenbu closed", in: app), in: app)
+  }
+
   func testANoteAnEarlierVersionSavedIsOnItsWord() throws {
     let app = openJapan(try earlierNotes([Self.japanNoteIdentity: ["earlier": "saved by 2.0.0"]]))
     reveal(labeled("saved by 2.0.0", in: app), in: app)

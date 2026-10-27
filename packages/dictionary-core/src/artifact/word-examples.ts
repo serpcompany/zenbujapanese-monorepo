@@ -54,7 +54,12 @@ function provenance(db: ArtifactDatabase, pairIds: readonly string[]): Map<strin
   return new Map(rows.map(row => [row.pair_id, row]))
 }
 
-interface LinkedEntry extends ExamplesEntry {
+export interface LinkedWordEntry extends ExamplesEntry {
+  summary: string
+  meaning: string | null
+}
+
+interface LinkedEntry extends LinkedWordEntry {
   entSeq: number
 }
 
@@ -65,11 +70,14 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
     ent_seq: number
     headword: string
     reading: string
+    summary: string
+    meaning: string | null
     parts_of_speech_json: string
     written_forms_json: string
     reading_forms_json: string
   }>(
-    `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading,
+    `SELECT lower(hex(id)) AS id, source_record_id AS ent_seq, headword, reading, summary,
+       json_extract(meanings_json, '$[0]') AS meaning,
        parts_of_speech_json, written_forms_json, reading_forms_json
      FROM entries WHERE id IN (${listedIds})`,
     [JSON.stringify(ids)]
@@ -83,6 +91,8 @@ function linkedEntries(db: ArtifactDatabase, ids: readonly string[]): Map<string
         entSeq: row.ent_seq,
         headword: row.headword,
         reading: row.reading,
+        summary: row.summary,
+        meaning: row.meaning,
         partsOfSpeech: JSON.parse(row.parts_of_speech_json),
         writtenForms: values(row.written_forms_json),
         readingForms: values(row.reading_forms_json)
@@ -105,6 +115,11 @@ export const examplesEntries: (
   db: ArtifactDatabase,
   ids: readonly string[]
 ) => Map<string, ExamplesEntry> = linkedEntries
+
+export const linkedWordEntries: (
+  db: ArtifactDatabase,
+  ids: readonly string[]
+) => Map<string, LinkedWordEntry> = linkedEntries
 
 function tokenRows(tokens: readonly LinkedToken[]): ExampleSentenceTokenRow[] {
   return tokens.map(token => {

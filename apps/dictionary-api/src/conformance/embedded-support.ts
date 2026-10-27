@@ -10,12 +10,9 @@ import type {
 import type { FrequencyDictionary } from '@zenbu/dictionary-core/detail/frequency'
 import { type EmbeddedEndpoint, embeddedEndpoint } from '@zenbu/dictionary-core/embedded/dictionary'
 import type { EmbeddedHost, HostRows } from '@zenbu/dictionary-core/embedded/host'
+import type { EmbeddedToken } from '@zenbu/dictionary-core/embedded/linked-words'
 import type { EmbeddedEntry } from '@zenbu/dictionary-core/embedded/presentation'
-import type {
-  EmbeddedExample,
-  EmbeddedExamplePage,
-  EmbeddedToken
-} from '@zenbu/dictionary-core/embedded/text'
+import type { EmbeddedExample, EmbeddedExamplePage } from '@zenbu/dictionary-core/embedded/text'
 import type { MorphologyAnalyzer } from '@zenbu/dictionary-core/search/morphology'
 import { artifactDatabase, artifactTokenizerFile, resources } from './support'
 
@@ -242,8 +239,10 @@ export function shownAsTheAppLinks(examples: readonly EmbeddedExample[], mark: M
     ...sentence,
     tokens: words.map(word => ({
       surface: word.surface,
-      ...(word.entry ? { entry: word.entry } : {}),
-      ...(word.candidates.length > 0 ? { candidates: word.candidates } : {}),
+      ...(word.entry ? { entry: word.entry.id } : {}),
+      ...(word.candidates.length > 0
+        ? { candidates: word.candidates.map(candidate => candidate.id) }
+        : {}),
       ...(word.accent === accentRecordedAs[mark] ? { [mark]: true } : {})
     }))
   }))

@@ -149,8 +149,10 @@ during the run, "No doc drift found", or an open one left alone. Code gardening'
 pull request opened, or "Nothing to garden"; a second pull request fails it. Both fail when Claude
 left no log, ended in an error or with subagents running, or reached no outcome, and a denied tool
 only warns when Claude got there anyway, since it often retries a refused command another way
-(`tools/checks/src/agents/maintenance-workflow.test.ts`). `claude[bot]` opens their pull
-requests, so `Code review` and the `Pull request` checks skip them: skim each and merge it.
+(`tools/checks/src/agents/maintenance-workflow.test.ts`). `github-actions[bot]` opens their
+pull requests with the job's token, so GitHub starts no checks on them until a person pushes to
+the branch. That push starts `Code review` and the `Pull request` checks, which skip only
+`claude[bot]`, `dependabot[bot]`, and `renovate[bot]`. Skim each, push, and merge it once green.
 
 Work the issue in small pull requests, one item each:
 
@@ -168,11 +170,12 @@ no token.
 
 ## Claude's app and token (admin only)
 
-The review, `@claude`, and gardening jobs authenticate as the Claude GitHub App and run on a
-Claude subscription. An admin sets them up once:
+The review and `@claude` jobs authenticate as the Claude GitHub App, and every Claude job runs on a
+Claude subscription. The gardening jobs push and open pull requests with the job's own token
+(Weekly maintenance, above). An admin sets them up once:
 
-1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository. The action
-   posts comments and pushes as the app (`claude[bot]`).
+1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository. In the
+   review and `@claude` jobs, the action posts comments and pushes as the app (`claude[bot]`).
 2. On a machine with Claude Code signed in to a Pro, Max, Team, or Enterprise plan, run
    `claude setup-token`, and save the token it prints as the repository secret
    `CLAUDE_CODE_OAUTH_TOKEN`.
