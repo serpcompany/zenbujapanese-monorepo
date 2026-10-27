@@ -110,7 +110,7 @@ test.describe("an account's synced data", () => {
     await page.goto('/ja/account/notes/')
     await expect(main(page).getByRole('link', { name: '要る（いる）' })).toHaveAttribute(
       'href',
-      `/ja/dictionary/${encodeURI('要る')}-1546640/`
+      '/ja/dictionary/要る-1546640/'
     )
     const without = main(page).getByRole('region', { name: '単語のないメモ' })
     await expect(without.getByText('An old name.')).toBeVisible()
