@@ -30,7 +30,7 @@ they take, and a stream cut partway is logged (`a photo download was cut`). The 
 both routes from its own origins (CORS).
 
 **Who may.** Uploading needs `photos:write` or `profile`; downloading `photos:read`, or `profile`
-for the profile photo's file alone. An app with only `profile`, such as the website, holds at
+for the profile photo's file alone. An app with `profile` and no `photos:read` holds at
 most two files it uploaded itself (`photo_files.profile_upload_at`), the profile photo and the one
 replacing it, whatever other apps upload; a Media Library photo's file counts once it uploads the
 same image. It's answered as though the library held nothing, `201` below two and `409` at two,

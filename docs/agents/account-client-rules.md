@@ -139,7 +139,7 @@ The profile's photo, as `profilePhoto`, by the account's ID or none. It needs `p
 
 - **Upload, then set.** Upload the file with `PUT /v1/photos/{photoId}`, then send `set` with its
   `photoId` at the version your app had (0 for none). Removing it sends `remove`.
-- **Without `photos:read`**, as on the website, upload the image before every `set`, even one the
+- **Without `photos:read`**, upload the image before every `set`, even one the
   Media Library may hold: your app may set only a file it uploaded itself. It holds two at once,
   the profile photo and the one replacing it, so a `409 too_many_photos` means an upload it never
   set is still held: set it, or upload again a day later.
