@@ -65,8 +65,8 @@ too long) and changes nothing.
 - Source: the client rules ([`account-client-rules.md`](../../../../docs/agents/account-client-rules.md)).
 - Check: Data page tests, "renames a list, refuses a name the rule refuses, and shows another
   device's rename when it came first", "keeps the learner’s text as a new note when the note
-  changed elsewhere first", and "opens one list: its words most recently added first, Known marked,
-  one removed, and a refusal said"; Service tests.
+  changed elsewhere first", and "opens one list: its words most recently added first, Known marked
+  and Learning not, one removed, and a refusal said"; Service tests.
 
 ## Each kind
 
@@ -87,9 +87,21 @@ headword, and a kanji to its search.
 **Known Words.** Every word and kanji marked known, most recently marked first, with how many, a
 box that narrows them by headword or reading, and Mark as Unknown on each.
 
-- Source: the app's Known Words (`apps/ios/docs/product/index.md`).
-- Check: Data page tests, "lists every word and kanji marked known, most recently marked first, and
-  marks one unknown"; Synced spec, "a new list is made, and Known Words marks a word unknown".
+A word or kanji another app set Learning is shown as the iOS app shows it, which doesn't show
+Learning: as not known. It isn't on Known Words or badged Known on a list, and a word page's Known
+dialog says it isn't marked Known and offers Mark as Known, which makes it Known. Nothing else the
+website does ends Learning: Mark as Unknown on a word set Learning since the page read it leaves it
+Learning ([client rules](../../../../docs/agents/account-client-rules.md#keeping-no-copy)). A
+synced search results filter of Learning shows as "Learning words" under Settings.
+
+- Source: the app's Known Words (`apps/ios/docs/product/index.md`); #1035, #1043, and #1045.
+- Check: Data page tests, "lists every word and kanji marked known, most recently marked first,
+  not one set Learning, and marks one unknown"; the dialog's tests, "a word another app set Learning
+  is not Known, as in the app, and Mark as Known makes it Known" and "Mark as Unknown never ends
+  Learning: a word set Learning elsewhere since the dialog read it stays Learning"; the service's
+  `website-copy.test.ts`, "a word an app set Learning stays Learning through the website, which
+  shows it not known, until the learner marks it Known there"; Synced spec, "a new list is made,
+  and Known Words marks a word unknown".
 
 **Lists.** Every list in the learner's order, each with how many words it holds and linking to the
 list; New List, which takes a name by the account's rule (1 to 500 characters once trimmed) and
@@ -101,8 +113,8 @@ no longer has says so.
 - Source: the app's Lists (`apps/ios/docs/product/index.md`); the account rules' list name.
 - Check: Data page tests, "shows every list in its order with its word count, makes one after the
   last, and moves one", "deletes an empty list at once, and asks before deleting one that has
-  words", "opens one list: its words most recently added first, Known marked, one removed, and a
-  refusal said", and "says a list the account no longer has is gone"; Synced spec, "a list opens to
+  words", "opens one list: its words most recently added first, Known marked and Learning not, one
+  removed, and a refusal said", and "says a list the account no longer has is gone"; Synced spec, "a list opens to
   its words, newest first, with Known marked, and a word comes off it".
 
 **Notes.** Every note on a word or kanji, newest change first, each with Edit, which saves a text

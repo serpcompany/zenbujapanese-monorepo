@@ -1,5 +1,5 @@
 import type { ChangeOutcome, Held } from '@zenbu/account-rules/account-copy'
-import { listsInOrder, nextListPosition } from '@zenbu/account-rules/account-views'
+import { isMarkedKnown, listsInOrder, nextListPosition } from '@zenbu/account-rules/account-views'
 import { listName } from '@zenbu/account-rules/lists'
 import { noteText } from '@zenbu/account-rules/notes'
 import { accountPagesOpen, builtAccountService } from './availability'
@@ -45,7 +45,7 @@ export function readsFor(action: SyncedAction, item: SavedItem): KindRead[] {
 const labelsOf = (item: SavedItem) => ({ headword: item.headword, reading: item.reading })
 
 export const isKnown = (copy: SyncedCopy, item: SavedItem) =>
-  copy.heldOne('knownWord', item.id)?.data?.known === true
+  isMarkedKnown(copy.heldOne('knownWord', item.id)?.data)
 
 export const markKnown = (copy: SyncedCopy, item: SavedItem, known: boolean) =>
   known

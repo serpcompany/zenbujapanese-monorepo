@@ -452,6 +452,7 @@
             "all": "All words",
             "known": "Known words",
             "unknown": "Unknown words",
+            "learning": "Learning words",
             "photo": "The photo",
             "both": "The photo and its text",
             "text": "The text",

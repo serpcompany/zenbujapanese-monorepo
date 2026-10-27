@@ -46,6 +46,7 @@ describe('signed in with a subscription, Known', () => {
       itemId: word.id,
       headword: word.headword,
       reading: word.reading,
+      state: 'known',
       known: true
     })
     await press('button', 'Mark as Unknown')
@@ -67,8 +68,44 @@ describe('signed in with a subscription, Known', () => {
       itemId: 'kanji:要',
       headword: '要',
       reading: 'ヨウ',
+      state: 'known',
       known: true
     })
+  })
+
+  test('a word another app set Learning is not Known, as in the app, and Mark as Known makes it Known', async () => {
+    const standIn = standingIn()
+    standIn.holds('knownWord', word.id, {
+      itemId: word.id,
+      ...labels,
+      state: 'learning',
+      known: false
+    })
+    renderActions()
+    await openFromTheMenu('Mark as Known')
+    await loaded(notKnown)
+    await press('button', 'Mark as Known')
+    await loaded(isKnown)
+    expect(standIn.dataOf('knownWord', word.id)).toMatchObject({ state: 'known', known: true })
+    expect(standIn.sent.map(each => [each.operation, each.baseVersion])).toEqual([['mark', 1]])
+  })
+
+  test('Mark as Unknown never ends Learning: a word set Learning elsewhere since the dialog read it stays Learning', async () => {
+    const standIn = standingIn()
+    standIn.holds('knownWord', word.id, { itemId: word.id, ...labels, state: 'known', known: true })
+    renderActions()
+    await openFromTheMenu('Mark as Known')
+    await loaded(isKnown)
+    standIn.holds(
+      'knownWord',
+      word.id,
+      { itemId: word.id, ...labels, state: 'learning', known: false },
+      2
+    )
+    await press('button', 'Mark as Unknown')
+    await loaded(notKnown)
+    expect(standIn.dataOf('knownWord', word.id)).toMatchObject({ state: 'learning' })
+    expect(standIn.sent.map(each => each.operation)).toEqual(['clear'])
   })
 
   test("a change made elsewhere first shows the account's copy", async () => {

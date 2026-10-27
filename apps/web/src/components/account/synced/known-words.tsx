@@ -1,6 +1,6 @@
 'use client'
 
-import { newestChangedFirst } from '@zenbu/account-rules/account-views'
+import { isMarkedKnown, newestChangedFirst } from '@zenbu/account-rules/account-views'
 import { useState } from 'react'
 import { matchesTyped } from '@/lib/account/synced-views'
 import { countOf } from '@/lib/i18n/format'
@@ -10,7 +10,7 @@ export function KnownWords({ copy, locale, text, pages, change }: AreaProps) {
   const words = text.synced.knownWords
   const [typed, setTyped] = useState('')
   const { busy, problem, run } = useChanging()
-  const known = newestChangedFirst(copy.held('knownWord')).filter(word => word.data.known === true)
+  const known = newestChangedFirst(copy.held('knownWord')).filter(word => isMarkedKnown(word.data))
   const shown = known.filter(word => matchesTyped(word.data, typed))
   const empty = known.length === 0 ? words.none : shown.length === 0 ? words.noMatch : null
   return (

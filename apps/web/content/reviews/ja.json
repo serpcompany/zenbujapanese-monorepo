@@ -326,6 +326,7 @@
     "account.synced.settings.values.choices.all": "12b8b96db657",
     "account.synced.settings.values.choices.known": "44465088318f",
     "account.synced.settings.values.choices.unknown": "03779259bbdb",
+    "account.synced.settings.values.choices.learning": "c5be927c52b6",
     "account.synced.settings.values.choices.photo": "47f3665f5aca",
     "account.synced.settings.values.choices.both": "a07df9599c86",
     "account.synced.settings.values.choices.text": "27364d4ead5b",

@@ -1,6 +1,6 @@
 'use client'
 
-import { wordsOfList } from '@zenbu/account-rules/account-views'
+import { isMarkedKnown, wordsOfList } from '@zenbu/account-rules/account-views'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
@@ -33,7 +33,7 @@ export function ListWords(props: AreaProps & { listId: string }) {
   const name = textIn(list.data, 'name')
   const inList = wordsOfList(copy.held('listWord'), listId)
   const shown = inList.filter(word => matchesTyped(word.data, typed))
-  const isKnown = (itemId: string) => copy.heldOne('knownWord', itemId)?.data?.known === true
+  const isKnown = (itemId: string) => isMarkedKnown(copy.heldOne('knownWord', itemId)?.data)
   const empty = inList.length === 0 ? words.empty : shown.length === 0 ? words.noMatch : null
   return (
     <section className="flex flex-col gap-4" aria-labelledby="list-name">

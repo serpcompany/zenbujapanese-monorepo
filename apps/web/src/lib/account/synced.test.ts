@@ -103,6 +103,7 @@ describe('what the pages show of the account', () => {
     expect(settingValue('readingAids.romaji', false, 'en', settings)).toBe('Off')
     expect(settingValue('translate.speechSpeed', 1.5, 'en', settings)).toBe('1.5×')
     expect(settingValue('search.filter', 'unknown', 'en', settings)).toBe('Unknown words')
+    expect(settingValue('search.filter', 'learning', 'en', settings)).toBe('Learning words')
     expect(settingValue('search.sort', 'frequency|zenbu.jiten.anime', 'en', settings)).toBe(
       'Frequency: Anime'
     )

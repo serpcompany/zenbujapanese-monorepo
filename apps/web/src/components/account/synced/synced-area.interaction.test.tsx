@@ -72,10 +72,11 @@ const knowsMiru = () =>
   new SyncedStandIn().holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
 
 describe('Known Words', () => {
-  test('lists every word and kanji marked known, most recently marked first, and marks one unknown', async () => {
+  test('lists every word and kanji marked known, most recently marked first, not one set Learning, and marks one unknown', async () => {
     const standIn = new SyncedStandIn()
       .holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
       .holds('knownWord', word(3), { itemId: word(3), ...taberu, known: false }, 2)
+      .holds('knownWord', word(4), { itemId: word(4), ...taberu, state: 'learning', known: false })
       .holds('knownWord', 'kanji:日', { itemId: 'kanji:日', headword: '日', known: true })
       .hasPage(word(1), '/dictionary/見る-1259290/')
       .hasPage('kanji:日', '/dictionary/search/%E6%97%A5/')
@@ -203,8 +204,9 @@ describe('Lists', () => {
     await shows(page, 'You have no lists yet.')
   })
 
-  test('opens one list: its words most recently added first, Known marked, one removed, and a refusal said', async () => {
+  test('opens one list: its words most recently added first, Known marked and Learning not, one removed, and a refusal said', async () => {
     const standIn = twoLists()
+      .holds('knownWord', word(1), { itemId: word(1), ...miru, state: 'learning', known: false })
       .holds(
         'listWord',
         `${verbs}/${word(3)}`,
@@ -221,8 +223,10 @@ describe('Lists', () => {
       [...page.querySelectorAll('[data-slot="item-title"] a')].map(a => a.getAttribute('href'))
     ).toEqual(['/dictionary/search/%E9%A3%9F%E3%81%B9%E3%82%8B/', '/dictionary/見る-1259290/'])
     expect(standIn.pagesAsked.sort()).toEqual([word(1), word(2)])
-    const known = page.querySelector('[data-slot="badge"]')?.closest('[data-slot="item"]')
-    expect(known?.textContent).toContain('食べる')
+    const badged = [...page.querySelectorAll('[data-slot="badge"]')]
+    expect(badged.map(badge => badge.closest('[data-slot="item"]')?.textContent)).toEqual([
+      expect.stringContaining('食べる')
+    ])
     await click(page, 'Remove 見る（みる） from this list')
     await shows(page, '1 word')
     standIn.refuseNext('unknown_list')

@@ -30,6 +30,13 @@ const wordsOf: Record<string, string> = { list: 'listWord', photo: 'photoWord' }
 const removals = new Set(['clear', 'delete', 'remove'])
 const pageSize = 100
 
+function stateAfter(operation: string, data: Data | null, fields: Data) {
+  const was = data?.state ?? (data?.known === true ? 'known' : 'unknown')
+  if (operation === 'set') return fields.state
+  if (operation === 'mark') return 'known'
+  return was === 'known' ? 'unknown' : was
+}
+
 const refused = (status: number, code: string): Answered => ({
   status,
   body: { error: { code, message: code } }
@@ -153,7 +160,8 @@ export class SyncedStandIn {
   private dataAfter(mutation: Mutation, held: Entity | undefined): Data | null {
     const { entity, operation, entityId, fields = {} } = mutation
     if (entity === 'knownWord') {
-      return { itemId: entityId, ...(held?.data ?? fields), known: operation === 'mark' }
+      const state = stateAfter(operation, held?.data ?? null, fields)
+      return { itemId: entityId, ...(held?.data ?? fields), state, known: state === 'known' }
     }
     if (removals.has(operation)) return null
     if (entity === 'list') return { id: entityId, createdAt: this.added, ...held?.data, ...fields }
