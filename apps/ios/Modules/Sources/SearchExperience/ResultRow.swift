@@ -15,15 +15,13 @@ struct ResultRow<Link: Hashable>: View {
   }
 
   var body: some View {
-    let isKnown = wordKnowledge.isKnown(entry.id)
+    let status = wordKnowledge.status(entry.id)
     RowOpener(opening: opening) {
       VStack(alignment: .leading, spacing: 6) {
         HStack(alignment: .lastTextBaseline, spacing: 8) {
           titleBlock
           Spacer(minLength: 0)
-          if isKnown {
-            KnownWordBadge()
-          }
+          WordStatusTag(status)
         }
         Text(row.summary)
           .font(.body)
@@ -37,9 +35,9 @@ struct ResultRow<Link: Hashable>: View {
       .contentShape(Rectangle())
       .alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
     }
-    .knownWordActions(.word(entry), identifierPrefix: resultIdentifier)
+    .wordStatusActions(.word(entry), identifierPrefix: resultIdentifier)
     .accessibilityLabel("\(entry.headword), \(entry.reading), \(row.summary)")
-    .accessibilityValue(row.spoken)
+    .accessibilityValue(status == .learning ? "Learning, \(row.spoken)" : row.spoken)
     .accessibilityIdentifier(resultIdentifier)
   }
 

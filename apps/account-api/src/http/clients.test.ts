@@ -87,7 +87,7 @@ describe("each app's access to an account", () => {
     expect((await accounts.me(zenbu.token)).body).toMatchObject({ name: '' })
   })
 
-  test('only the iOS app reads and changes watch history and Translate bookmarks: the website and Tomodachi never see them', async () => {
+  test('only the iOS app changes watch history and Translate bookmarks: the website reads them, and Tomodachi never sees them', async () => {
     const email = 'app-only-scopes@example.com'
     const zenbu = await accounts.learner(email)
     const bookmark = randomUUID()
@@ -121,7 +121,9 @@ describe("each app's access to an account", () => {
     for (const client of ['tomodachi', 'zenbu-web']) {
       const other = await accounts.learner(email, client)
       expect(other.userId).toBe(zenbu.userId)
-      expect(String(decodeJwt(other.token).scope)).not.toMatch(/watch:|translations:/)
+      const scope = String(decodeJwt(other.token).scope)
+      expect(scope, client).not.toMatch(/watch:write|translations:write/)
+      expect(/watch:read translations:read/.test(scope), client).toBe(client === 'zenbu-web')
       const answer = await send(
         other.token,
         ...appOnly,
@@ -133,12 +135,13 @@ describe("each app's access to an account", () => {
         client
       ).toEqual(['not_allowed', 'not_allowed', 'not_allowed', 'not_allowed'])
       const entities = answer.changes.map(change => change.entity)
-      expect(entities, client).not.toContain('watchedVideo')
-      expect(entities, client).not.toContain('bookmarkedSentence')
+      for (const entity of ['watchedVideo', 'bookmarkedSentence']) {
+        expect(entities.includes(entity), `${client} ${entity}`).toBe(client === 'zenbu-web')
+      }
     }
   })
 
-  test('only the iOS app reads and changes notes, photos, settings, and recent searches; Tomodachi gets no profile photo', async () => {
+  test('the website reads notes, photos, settings, and recent searches, and changes all but photos; Tomodachi gets none of them, nor the profile photo', async () => {
     const email = 'kept-scopes@example.com'
     const zenbu = await accounts.learner(email)
     const { photoId, appOnly: kept, profilePhoto } = await oneOfEachKept(accounts, zenbu)
@@ -149,26 +152,58 @@ describe("each app's access to an account", () => {
       'notes:read notes:write photos:read photos:write settings:read settings:write searches:read searches:write'
     )
     const keptEntities = ['wordNote', 'photo', 'photoWord', 'setting', 'recentSearch']
-    for (const client of ['tomodachi', 'zenbu-web']) {
-      const other = await accounts.learner(email, client)
-      expect(String(decodeJwt(other.token).scope)).not.toMatch(/notes:|photos:|settings:|searches:/)
-      const answer = await send(other.token, ...kept)
-      expect(
-        answer.results.map(result => result.error?.code),
-        client
-      ).toEqual(kept.map(() => 'not_allowed'))
-      const entities = answer.changes.map(change => change.entity)
-      for (const entity of keptEntities) expect(entities, client).not.toContain(entity)
-      expect(entities.includes('profilePhoto'), client).toBe(client === 'zenbu-web')
-      const upload = await accounts.running.service.sendPhoto(other.token, photoId, aJpeg())
-      expect(upload.status, client).toBe(client === 'zenbu-web' ? 400 : 403)
+    const [note, photo, photoWord, setting, search] = kept
+    const photoChanges = [
+      { ...photo, operation: 'add' },
+      { ...photoWord, operation: 'remove', baseVersion: 1, fields: undefined }
+    ]
+    const tomodachi = await accounts.learner(email, 'tomodachi')
+    expect(String(decodeJwt(tomodachi.token).scope)).not.toMatch(
+      /notes:|photos:|settings:|searches:/
+    )
+    const refused = await send(tomodachi.token, ...kept)
+    expect(refused.results.map(result => result.error?.code)).toEqual(kept.map(() => 'not_allowed'))
+    const unseen = refused.changes.map(change => change.entity)
+    for (const entity of [...keptEntities, 'profilePhoto']) expect(unseen).not.toContain(entity)
+
+    const web = await accounts.learner(email, 'zenbu-web')
+    expect(decodeJwt(web.token).scope).toContain(
+      'notes:read notes:write photos:read settings:read settings:write searches:read searches:write'
+    )
+    expect(String(decodeJwt(web.token).scope)).not.toContain('photos:write')
+    const answer = await send(
+      web.token,
+      {
+        ...note,
+        fields: { item: '0'.repeat(32), text: 'Changed on the website.' },
+        baseVersion: 1
+      },
+      { ...setting, fields: { value: false }, baseVersion: 1 },
+      { ...search, operation: 'remove', fields: undefined },
+      ...photoChanges
+    )
+    expect(answer.results.map(result => result.error?.code ?? result.status)).toEqual([
+      'applied',
+      'applied',
+      'applied',
+      'not_allowed',
+      'not_allowed'
+    ])
+    const seen = answer.changes.map(change => change.entity)
+    for (const entity of [...keptEntities, 'profilePhoto']) expect(seen).toContain(entity)
+    for (const [client, token, uploads, downloads] of [
+      ['tomodachi', tomodachi.token, 403, 403],
+      ['zenbu-web', web.token, 400, 200]
+    ] as const) {
+      const upload = await accounts.running.service.sendPhoto(token, photoId, aJpeg())
+      expect(upload.status, client).toBe(uploads)
       const download = await accounts.running.service.sendPhoto(
-        other.token,
+        token,
         photoId,
         new Uint8Array(),
         'GET'
       )
-      expect(download.status, client).toBe(client === 'zenbu-web' ? 404 : 403)
+      expect(download.status, client).toBe(downloads)
     }
   })
 

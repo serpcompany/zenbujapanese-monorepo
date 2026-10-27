@@ -138,8 +138,8 @@ struct SearchResultsView: View {
     var request = shown.request
     request.learner = ResultsLearner(
       sort: sort, filter: filter,
-      known: results.entries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue),
-      pickedKanji: pickedKanji)
+      known: wordKnowledge.ids(.known, among: results.entries),
+      learning: wordKnowledge.ids(.learning, among: results.entries), pickedKanji: pickedKanji)
     request.lists = FrequencyLists.live.version
     return request
   }

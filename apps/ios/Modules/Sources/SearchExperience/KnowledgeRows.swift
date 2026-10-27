@@ -75,7 +75,7 @@ private struct KnowledgeKanjiRow: View {
   var body: some View {
     if let kanji {
       KanjiPrimaryRow(kanji: kanji, opening: .action(open))
-        .knownWordActions(
+        .wordStatusActions(
           record.item, identifierPrefix: KanjiPrimaryRow.identifier(kanji.character))
     } else {
       SavedRecordRow(record: record, open: open)
@@ -95,11 +95,11 @@ private struct SavedRecordRow: View {
     RowOpener(opening: RowOpening<Never>.action(open)) {
       SavedWordRow(
         headword: record.headword, reading: record.reading,
-        isKnown: wordKnowledge.isKnown(storedID: record.entryID))
+        status: wordKnowledge.status(storedID: record.entryID))
     }
     .accessibilityIdentifier(identifier)
-    .knownWordActions(record.item, identifierPrefix: identifier)
+    .wordStatusActions(record.item, identifierPrefix: identifier)
   }
 
-  private var identifier: String { "known-words.item.\(record.entryID)" }
+  private var identifier: String { "knowledge.item.\(record.entryID)" }
 }

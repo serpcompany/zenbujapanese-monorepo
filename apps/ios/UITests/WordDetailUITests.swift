@@ -9,13 +9,12 @@ final class WordDetailUITests: ZenbuUITestCase {
     waitFor(menuChoice("Add Note", in: app))
     waitFor(menuChoice("Choose Photo", in: app))
     XCTAssertEqual(menuChoice("Take Photo", in: app).exists, device != .mac, "Take Photo")
-    tap(menuChoice("Mark as Known", in: app))
+    chooseStatus("Known", in: app)
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitFor(find("result.japan", in: app))
     tap(tabItem(.search, in: app))
-    tap(find("word-detail.more-menu", in: app))
-    waitFor(menuChoice("Mark as Unknown", in: app))
+    waitForTag("Known", on: "word-detail.status", in: app)
   }
 
   func testTheMenuTurnsReadingAidsOffForTheExamplesAndAccount() {

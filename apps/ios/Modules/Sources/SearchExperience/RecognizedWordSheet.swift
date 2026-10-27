@@ -96,7 +96,7 @@ struct RecognizedWordSheet<EntryContent: View>: View {
       entries: request.candidateEntries.map {
         WordRowsRequest.Entry(id: $0.id.rawValue, summary: $0.summary)
       },
-      known: request.candidateEntries.map(\.id).filter(wordKnowledge.isKnown).map(\.rawValue)
+      known: wordKnowledge.ids(.known, among: request.candidateEntries)
     ).rowsByEntry()
     return List(request.candidateEntries, id: \.id) { candidate in
       if let row = rows[candidate.id.rawValue] {

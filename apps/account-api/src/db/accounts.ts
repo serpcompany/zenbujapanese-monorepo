@@ -1,6 +1,6 @@
-import { and, asc, eq, gt, lt, lte, max, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, isNull, lt, lte, max, or, type SQL, sql } from 'drizzle-orm'
 import { accountFolder } from '../domain/photo-files'
-import type { AccountStore, LockedAccount } from '../domain/store'
+import type { AboutItem, AccountStore, LockedAccount } from '../domain/store'
 import { deletedAccounts } from './billing-schema'
 import type { Drizzle } from './database'
 import { profileColumns, readerOn, writerOn } from './entity-rows'
@@ -12,7 +12,8 @@ import {
   syncMutations,
   userIdentities,
   users,
-  verifications
+  verifications,
+  wordNotes
 } from './schema'
 
 const journalColumns = {
@@ -21,6 +22,25 @@ const journalColumns = {
   entityId: syncChanges.entityId,
   entityVersion: syncChanges.entityVersion,
   operation: syncChanges.operation
+}
+
+function aboutTheItem(db: Drizzle, userId: string, about: AboutItem): SQL {
+  if (about.by === 'id') return eq(syncChanges.entityId, about.entityId)
+  if (about.by === 'idEnd') {
+    return sql`right(${syncChanges.entityId}, ${[...about.suffix].length}) = ${about.suffix}`
+  }
+  return inArray(
+    syncChanges.entityId,
+    db
+      .select({ id: wordNotes.id })
+      .from(wordNotes)
+      .where(
+        and(
+          eq(wordNotes.userId, userId),
+          or(eq(wordNotes.itemId, about.itemId), isNull(wordNotes.itemId))
+        )
+      )
+  )
 }
 
 function takesTheUsername(error: unknown): boolean {
@@ -150,6 +170,22 @@ export function accountStore(db: Drizzle): AccountStore {
         .select(journalColumns)
         .from(syncChanges)
         .where(and(eq(syncChanges.userId, userId), gt(syncChanges.sequence, sequence)))
+        .orderBy(asc(syncChanges.sequence))
+        .limit(limit)
+    },
+
+    kindChangesAfter(userId, { entityType, after, limit, about }) {
+      return db
+        .select(journalColumns)
+        .from(syncChanges)
+        .where(
+          and(
+            eq(syncChanges.userId, userId),
+            eq(syncChanges.entityType, entityType),
+            gt(syncChanges.sequence, after),
+            about ? aboutTheItem(db, userId, about) : undefined
+          )
+        )
         .orderBy(asc(syncChanges.sequence))
         .limit(limit)
     },

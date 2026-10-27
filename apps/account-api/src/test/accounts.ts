@@ -34,6 +34,12 @@ export interface SyncedAnswer {
   searchKey?: string
 }
 
+export interface KindAnswer {
+  changes: SyncedChange[]
+  cursor: string
+  hasMore: boolean
+}
+
 export function useAccountService(options: { appleKey?: boolean; billing?: BillingStandIns } = {}) {
   const running = useSignInService({ providers: true, ...options })
   const call = (path: string, options: Parameters<typeof running.service.call>[1]) =>
@@ -51,9 +57,30 @@ export function useAccountService(options: { appleKey?: boolean; billing?: Billi
     return answer.body as unknown as SyncedAnswer
   }
 
+  const readKind = (token: string, entity: string, query: Record<string, string> = {}) =>
+    call(`/v1/sync/${entity}?${new URLSearchParams(query)}`, { token })
+  const everyOfKind = async (
+    token: string,
+    entity: string,
+    query: Record<string, string> = {}
+  ): Promise<SyncedChange[]> => {
+    const read: SyncedChange[] = []
+    let cursor: string | undefined
+    for (;;) {
+      const answer = await readKind(token, entity, { ...query, ...(cursor ? { cursor } : {}) })
+      expect(answer.status, JSON.stringify(answer.body)).toBe(200)
+      const page = answer.body as unknown as KindAnswer
+      read.push(...page.changes)
+      cursor = page.cursor
+      if (!page.hasMore) return read
+    }
+  }
+
   return {
     running,
     cursors: cursors(cursorKey(testSecret)),
+    readKind,
+    everyOfKind,
     async learner(email: string, client = 'zenbu-ios', language?: string): Promise<Learner> {
       const signedIn = await running.as.withCode(email, { client, language })
       const session = sessionToken(signedIn)
