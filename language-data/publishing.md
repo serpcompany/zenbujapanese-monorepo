@@ -180,6 +180,7 @@ python3 language-data/pipeline/check_download.py --release 2026.10.12
 ```
 
 `--release` defaults to the release in `release.json`, and `--address` to the public address. Run it
-by hand, after a release is published: it isn't in CI, for Bot Fight Mode and its download size. It
+by hand, after a release is published: it isn't in CI, for Bot Fight Mode and its download size,
+801 MB for release 2026.10.12 (245 MB of it gzipped), which took 3 minutes on the owner's Mac. It
 sends its own `User-Agent`, `zenbu-language-data-check`, since Cloudflare refuses Python's with error
 1010. Its tests, in `test_release_download.py`, run against a fake address, with no network.
