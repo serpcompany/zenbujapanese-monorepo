@@ -11,8 +11,8 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
-| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; screenshots by the `verify-extension` skill (#952) |
+| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
+| Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
 | Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | In Chrome, by hand |
 | Settings | "Settings", in a tab of its own, and "Nothing to set yet." | In Chrome, by hand |
 
@@ -23,8 +23,8 @@ opens it again on the next request, and that first request is answered
 ## First run
 
 Installing the extension opens the welcome tab once and starts downloading the dictionary, about
-237 MB. Closing the tab doesn't stop it. A download cut by a closed browser or a lost connection
-goes on from where it was, and a damaged file fails with why, with Try Again. Once the dictionary
+237 MB, which its progress bar counts. Closing the tab doesn't stop it. A download cut by a closed
+browser or a lost connection goes on from where it was, keeping the files it finished, and a damaged file fails with why, with Try Again. Once the dictionary
 is in, the extension works offline (`src/worker/installer.test.ts`).
 
 ## Updates

@@ -1,35 +1,19 @@
 import { Button } from '@zenbu/ui/components/button'
-import { useCallback, useEffect, useState } from 'react'
+import type { DataState } from './data-state'
+import { DictionaryProgress, type ReadData, useDataState } from './dictionary-progress'
 import { labels } from './labels'
-import { askDictionary, type DictionaryAnswer, type Failure } from './messages'
 
-type Status = 'checking' | 'ready' | 'failed'
-
-export type Ask = () => Promise<DictionaryAnswer | Failure>
-
-const pingDictionary: Ask = () => askDictionary({ type: 'ping' })
-
-export function DictionaryStatus({ ask = pingDictionary }: { ask?: Ask }) {
-  const [status, setStatus] = useState<Status>('checking')
-
-  const check = useCallback(() => {
-    setStatus('checking')
-    Promise.resolve()
-      .then(ask)
-      .then(
-        answer => setStatus(answer.type === 'pong' ? 'ready' : 'failed'),
-        () => setStatus('failed')
-      )
-  }, [ask])
-
-  useEffect(check, [check])
-
+export function DictionaryStatus({ read, check }: { read?: ReadData; check?: ReadData }) {
+  const [data, again] = useDataState(read, check)
+  const shown: DataState = data ?? { state: 'checking' }
   return (
-    <div className="flex items-center justify-between gap-3">
-      <p data-dictionary-status={status} className="text-sm text-muted-foreground">
-        {labels.dictionary[status]}
-      </p>
-      <Button variant="outline" onClick={check} disabled={status === 'checking'}>
+    <div data-dictionary-status={shown.state} className="flex flex-col items-start gap-3">
+      <DictionaryProgress data={shown} />
+      <Button
+        variant="outline"
+        onClick={again}
+        disabled={shown.state !== 'ready' && shown.state !== 'failed'}
+      >
         {labels.dictionary.checkAgain}
       </Button>
     </div>

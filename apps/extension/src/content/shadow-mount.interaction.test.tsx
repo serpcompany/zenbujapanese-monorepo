@@ -49,7 +49,7 @@ afterEach(() => {
 
 function mount(query = darkQuery(false)) {
   act(() => {
-    mounted = mountInShadowRoot(<TestSurface ask={() => new Promise(() => {})} />, {
+    mounted = mountInShadowRoot(<TestSurface read={() => new Promise(() => {})} />, {
       darkQuery: query,
       fonts: { add: font => fonts.push(font as unknown as FakeFontFace) }
     })

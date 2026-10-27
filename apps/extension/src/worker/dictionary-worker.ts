@@ -2,15 +2,12 @@ import type { DictionaryRequest } from '../shared/messages'
 import { answer, type WorkerData } from './answer'
 import { installer } from './installer'
 import { type OpenDictionary, openDictionary } from './open-dictionary'
-import { openPool, type Pool } from './sqlite'
+import { openedOnce } from './opened-once'
+import { openPool } from './sqlite'
 import { originPrivateStorage } from './storage'
 
 const storage = originPrivateStorage()
-let pool: Promise<Pool> | null = null
-const languageDataPool = () => {
-  pool ??= openPool()
-  return pool
-}
+const languageDataPool = openedOnce(openPool)
 let current: OpenDictionary | null = null
 
 const languageData = installer({

@@ -21,6 +21,7 @@ keepLanguageDataCurrent({
   onStartup: chrome.runtime.onStartup,
   onAlarm: chrome.alarms.onAlarm,
   createAlarm: (name, info) => chrome.alarms.create(name, info),
+  hasAlarm: async name => (await chrome.alarms.get(name)) !== undefined,
   openTab: path => chrome.tabs.create({ url: chrome.runtime.getURL(path) }),
   ask: async request => {
     await offscreenDocument.ensureOpen()

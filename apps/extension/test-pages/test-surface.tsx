@@ -22,9 +22,10 @@ import {
   DropdownMenuTrigger
 } from '@zenbu/ui/components/dropdown-menu'
 import { useState } from 'react'
-import { type Ask, DictionaryStatus } from '../src/shared/dictionary-status'
+import type { ReadData } from '../src/shared/dictionary-progress'
+import { DictionaryStatus } from '../src/shared/dictionary-status'
 
-export function TestSurface({ ask }: { ask?: Ask }) {
+export function TestSurface({ read }: { read?: ReadData }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   return (
     <Card data-test="card" className="m-4 w-96">
@@ -33,7 +34,7 @@ export function TestSurface({ ask }: { ask?: Ask }) {
         <CardDescription>to eat</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <DictionaryStatus ask={ask} />
+        <DictionaryStatus read={read} />
         <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button data-test="menu-trigger" variant="outline" />}>

@@ -56,6 +56,7 @@ the weekly code gardener takes unless it must pass it over ([`ci-agents.md`](age
 | Debt | Why it matters | Issue | Size |
 | --- | --- | --- | --- |
 | What the extension draws on a page is sized in pixels: the build turns the shadow root stylesheet's rem lengths into pixels at 16px each (`apps/extension/build/shadow-safe-css.ts`), since a rem there would follow the page's own root font size. | A learner who set a larger default font size in Chrome gets the standard size on pages; the extension's own pages keep rem and follow it. | No issue yet | medium |
+| The extension answers a form's examples and a kanji's words by scanning with `instr` (`retrieveJapanese` in `packages/dictionary-core/src/artifact/example-search.ts`, `kanjiCandidateRows` in `artifact/kanji.ts`), since the official sqlite-wasm build has no FTS4. Nobody has timed them on WebAssembly, and #956's popup timings, query plans, and conformance suites on WebAssembly wait for #952's local server. | A scan of every example sentence on each form's page could be slow on an older computer. Measure on #952's server, then index or cache what is slow. | #952 | medium |
 | The test pages' server takes the website's `site` port (`pnpm test-pages` in `apps/extension`, through `tools/checks/ports.mjs`). | One checkout can't run the website and the test pages at once. | No issue yet | small |
 
 ## Language data

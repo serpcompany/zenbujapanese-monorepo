@@ -118,8 +118,8 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   the first ask after the document closed, and each failure; the relay waiting for the worker to
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
-  the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again; the welcome tab's progress, ready, updating, failed, and Try Again; the lookup helpers; and the
+  the shadow root, and unmounting, and `DictionaryStatus` drawing the data's state, never ready while it
+  downloads or failed, and Check again; the welcome tab's progress, ready, updating, failed, and Try Again; the lookup helpers; and the
   language data's download, resume, checks, and updates
   ([`extension-language-data.md`](extension-language-data.md), Checks).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and

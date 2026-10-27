@@ -1094,7 +1094,7 @@
       url: "https://github.com/adno/wikipedia-word-frequency-clean",
       credit: "Wikipedia frequency data by Adam Nohejl and contributors.",
       license: bsd3,
-      clients: appAndWebsite
+      clients: everyClient
     },
     jiten: {
       id: "jiten",
@@ -1103,7 +1103,7 @@
       credit: "TV and movie, anime, manga, novel, visual novel, and video game frequency data by Jiten (jiten.moe), modified.",
       license: ccBySa4,
       notice: "The rankings from Jiten are adapted from its data, and are shared under the same licence, CC BY-SA 4.0.",
-      clients: appAndWebsite
+      clients: everyClient
     },
     sudachi: {
       id: "sudachi",

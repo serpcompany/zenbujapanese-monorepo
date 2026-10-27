@@ -57,6 +57,27 @@ const ready = (release: string): DataState => ({
   checkedAt
 })
 
+function downloadBytes(server: LanguageDataServer, release: string, names: readonly string[]) {
+  const json = (key: string) => JSON.parse(new TextDecoder().decode(server.objects.get(key)))
+  const listed: { name: string; bytes: number }[] = json(`releases/${release}/manifest.json`).files
+  const packed = new Map<string, number>(
+    json(`releases/${release}/compressed.json`).files.map(
+      (file: { name: string; parts: { bytes: number }[] }) => [
+        file.name,
+        file.parts.reduce((sum, part) => sum + part.bytes, 0)
+      ]
+    )
+  )
+  return listed
+    .filter(file => names.includes(file.name))
+    .reduce((sum, file) => sum + (packed.get(file.name) ?? file.bytes), 0)
+}
+
+const fileKeys = (asked: readonly string[]) => asked.filter(key => key.startsWith('files/'))
+
+const partOf = (name: string, part: number) => (key: string) =>
+  key.endsWith(`/${name}.part${part}.gz`)
+
 async function published(...releases: Parameters<LanguageDataServer['publish']>[0][]) {
   const server = new LanguageDataServer()
   for (const release of releases) await server.publish(release)
@@ -73,10 +94,12 @@ describe('installing the language data', () => {
     expect(Object.keys(opened[0].files).sort()).toEqual([...firstFiles].sort())
     expect(Object.keys(opened[1].files).sort()).toEqual([...releaseFiles].sort())
     expect(writes.filter(path => !path.startsWith('staging/'))).toEqual([
-      installedPath,
-      installedPath,
-      installedPath
+      'installed.next.json',
+      'installed.next.json',
+      'installed.next.json'
     ])
+    expect(storage.files.has(installedPath)).toBe(true)
+    expect(storage.files.has('installed.next.json')).toBe(false)
     const artifact = await sha256Of(artifactFile, '2026.10.1')
     expect(pool.databases.get(databaseName(artifact))).toEqual(contentOf(artifactFile, '2026.10.1'))
     const kanji = await sha256Of('KanjiReferenceData.json', '2026.10.1')
@@ -86,11 +109,16 @@ describe('installing the language data', () => {
     expect([...storage.files.keys()].filter(path => path.startsWith('staging/'))).toEqual([])
   })
 
-  it('reports bytes done of the first set’s total while downloading', async () => {
+  it('reports the gzipped bytes done of the first set’s download while downloading', async () => {
     const server = await published({ release: '2026.10.1' })
     const { languageData, states } = extension(server)
     await languageData.start()
-    const total = firstFiles.reduce((sum, name) => sum + contentOf(name, '2026.10.1').byteLength, 0)
+    const total = downloadBytes(server, '2026.10.1', firstFiles)
+    const unpacked = firstFiles.reduce(
+      (sum, name) => sum + contentOf(name, '2026.10.1').byteLength,
+      0
+    )
+    expect(total).not.toBe(unpacked)
     const downloading = states.filter(state => state.state === 'downloading')
     expect(downloading[0]).toEqual({ state: 'downloading', done: 0, total })
     const done = downloading.map(state => (state.state === 'downloading' ? state.done : -1))
@@ -127,6 +155,52 @@ describe('installing the language data', () => {
     expect(resumed.pool.databases.get(databaseName(artifact))).toEqual(
       contentOf(artifactFile, '2026.10.1')
     )
+  })
+
+  it('keeps the files it finished when a first install is cut inside a later file', async () => {
+    const server = await published({ release: '2026.10.1' })
+    server.failOn = partOf('KanjiElementReferenceData.json', 2)
+    const storage = new MemoryStorage()
+    const cut = extension(server, storage)
+    await cut.languageData.start()
+    expect(cut.languageData.state()).toEqual({ state: 'failed', reason: 'Failed to fetch' })
+    const fetched = fileKeys(server.asked)
+    expect(fetched.some(key => key.includes(artifactFile))).toBe(true)
+
+    server.failOn = null
+    const asked = server.asked.length
+    const resumed = extension(server, storage, cut.pool)
+    await resumed.languageData.start()
+    expect(resumed.languageData.state()).toEqual(ready('2026.10.1'))
+    const again = fileKeys(server.asked.slice(asked))
+    expect(again.filter(key => fetched.includes(key))).toEqual([])
+    expect(again.some(partOf('KanjiElementReferenceData.json', 2))).toBe(true)
+    const artifact = await sha256Of(artifactFile, '2026.10.1')
+    expect(resumed.pool.databases.get(databaseName(artifact))).toEqual(
+      contentOf(artifactFile, '2026.10.1')
+    )
+  })
+
+  it('takes the newest release with gzipped copies, and never downloads a whole file that has them', async () => {
+    const server = await published({ release: '2026.10.1' }, { release: '2026.10.2' })
+    server.objects.delete('releases/2026.10.2/compressed.json')
+    const { languageData } = extension(server)
+    await languageData.start()
+    expect(languageData.state()).toEqual(ready('2026.10.1'))
+    const whole = fileKeys(server.asked).filter(key => /\.(sqlite3|json)$/.test(key))
+    expect(whole).toEqual([])
+  })
+
+  it('fails, to try again later, when no listed release has gzipped copies yet', async () => {
+    const server = await published({ release: '2026.10.1' })
+    server.objects.delete('releases/2026.10.1/compressed.json')
+    const { languageData } = extension(server)
+    await languageData.start()
+    expect(languageData.state()).toEqual({
+      state: 'failed',
+      reason: 'No published release has its gzipped copies yet. Zenbu tries again later.'
+    })
+    expect(fileKeys(server.asked)).toEqual([])
   })
 
   it('fails with its reason when a part is not the SHA-256 compressed.json pins', async () => {
@@ -175,6 +249,18 @@ describe('installing the language data', () => {
     expect(again.opened).toHaveLength(1)
   })
 
+  it('opens the set a swap recorded when it stopped before installed.json was moved back', async () => {
+    const server = await published({ release: '2026.10.1' })
+    const first = extension(server)
+    await first.languageData.start()
+    await first.storage.move(installedPath, 'installed.next.json')
+    const asked = server.asked.length
+    const again = extension(server, first.storage, first.pool)
+    await again.languageData.start()
+    expect(again.languageData.state()).toEqual(ready('2026.10.1'))
+    expect(server.asked.length).toBe(asked)
+  })
+
   it('fails with its reason when installed.json is unreadable, then installs again on update', async () => {
     const server = await published({ release: '2026.10.1' })
     const storage = new MemoryStorage()
@@ -216,6 +302,33 @@ describe('updating the language data', () => {
     const updated = await sha256Of('JLPTLevelPack.sqlite3', '2026.10.2')
     expect(again.pool.databases.has(databaseName(old))).toBe(false)
     expect(again.pool.databases.has(databaseName(updated))).toBe(true)
+  })
+
+  it('deletes a cut update’s files before the next, so the pool never runs out of room', async () => {
+    const server = await published({ release: '2026.10.1' })
+    const first = extension(server, new MemoryStorage(), new MemoryPool(16))
+    await first.languageData.start()
+    await server.publish({ release: '2026.10.2' })
+    server.failOn = partOf('KanjiElementReferenceData.json', 2)
+    await first.languageData.update()
+    expect(first.languageData.state()).toMatchObject({ release: '2026.10.1', state: 'ready' })
+    const databases = releaseFiles.filter(name => name.endsWith('.sqlite3'))
+    const firstDatabases = databases.filter(name => firstFiles.includes(name))
+    expect(first.pool.databases.size).toBe(databases.length + firstDatabases.length)
+
+    server.failOn = null
+    await server.publish({ release: '2026.10.3' })
+    const again = extension(server, first.storage, first.pool)
+    await again.languageData.start()
+    await again.languageData.update()
+    expect(again.languageData.state()).toEqual(ready('2026.10.3'))
+    const current = await Promise.all(releaseFiles.map(name => sha256Of(name, '2026.10.3')))
+    const installed = current.map(databaseName).filter(name => again.pool.databases.has(name))
+    expect(installed).toHaveLength(databases.length)
+    expect(again.pool.databases.size).toBe(databases.length)
+    expect(again.pool.most).toBeLessThanOrEqual(16)
+    const kept = [...again.storage.files.keys()].filter(path => !path.startsWith('installed'))
+    expect(kept.every(path => current.some(sha256 => path.includes(sha256)))).toBe(true)
   })
 
   it('shows a check for updates at once, and records when it checked', async () => {

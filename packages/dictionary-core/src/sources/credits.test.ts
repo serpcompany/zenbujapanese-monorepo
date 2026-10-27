@@ -115,7 +115,7 @@ describe('the source credits', () => {
     expect(() => creditsShownBy('watch')).toThrow('No client is named watch')
   })
 
-  test('are shown by the extension for what it looks up offline, without search or optional lists', () => {
+  test('are shown by the extension for what it looks up offline, without search', () => {
     expect(names(creditsShownBy('extension').credits)).toEqual([
       'JMdict',
       'KANJIDIC2',
@@ -126,6 +126,8 @@ describe('the source credits', () => {
       'JLPT vocabulary lists',
       'JLPT kanji lists',
       'TUBELEX',
+      'Wikipedia Word Frequency Clean',
+      'Jiten',
       'Kuromoji',
       'Tatoeba'
     ])

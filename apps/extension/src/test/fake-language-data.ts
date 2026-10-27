@@ -49,6 +49,7 @@ export class LanguageDataServer {
   readonly asked: string[] = []
   private readonly listed: { release: string; manifest_sha256: string; published_at: string }[] = []
   failAfter: number | null = null
+  failOn: ((key: string) => boolean) | null = null
 
   constructor(readonly partBytes = 64) {}
 
@@ -91,7 +92,7 @@ export class LanguageDataServer {
 
   readonly fetch: Fetch = async url => {
     const key = url.slice(languageDataUrl('').length)
-    if (this.failAfter !== null && this.asked.length >= this.failAfter) {
+    if ((this.failAfter !== null && this.asked.length >= this.failAfter) || this.failOn?.(key)) {
       throw new TypeError('Failed to fetch')
     }
     this.asked.push(key)
@@ -151,20 +152,36 @@ export class MemoryStorage implements Storage {
       if (name === path || name.startsWith(`${path}/`)) this.files.delete(name)
     }
   }
+
+  async list(folder: string) {
+    const inside = [...this.files.keys()].filter(name => name.startsWith(`${folder}/`))
+    return [...new Set(inside.map(name => name.slice(folder.length + 1).split('/')[0]))]
+  }
 }
 
 export class MemoryPool implements DatabasePool {
   readonly databases = new Map<string, Uint8Array>()
+  most = 0
+
+  constructor(readonly capacity = 16) {}
 
   async importDb(name: string, chunk: () => Uint8Array | undefined) {
+    if (!this.databases.has(name) && this.databases.size >= this.capacity) {
+      throw new Error('No available handles to import to.')
+    }
     const chunks: number[] = []
     for (let next = chunk(); next; next = chunk()) chunks.push(...next)
     this.databases.set(name, Uint8Array.from(chunks))
+    this.most = Math.max(this.most, this.databases.size)
     return chunks.length
   }
 
   unlink(name: string) {
     return this.databases.delete(name)
+  }
+
+  getFileNames() {
+    return [...this.databases.keys()]
   }
 }
 

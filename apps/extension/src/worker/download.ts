@@ -14,6 +14,11 @@ const stagingPath = (file: Pick<ReleaseFile, 'sha256'>) => `staging/${file.sha25
 
 const savedPath = (file: Pick<ReleaseFile, 'sha256'>) => `staging/${file.sha256}.json`
 
+export const donePath = (file: Pick<ReleaseFile, 'sha256'>) => `staging/${file.sha256}.done`
+
+export const downloadBytes = (file: ReleaseFile) =>
+  file.parts ? file.parts.reduce((sum, part) => sum + part.bytes, 0) : file.bytes
+
 async function fetchedBody(fetch: Fetch, key: string, name: string) {
   const response = await fetch(languageDataUrl(key))
   if (!response.ok || !response.body) throw new Error(`${name}: ${key} answered ${response.status}`)
@@ -37,6 +42,15 @@ async function resume(
   return saved
 }
 
+async function eachChunk(body: ReadableStream<Uint8Array>, take: (chunk: Uint8Array) => void) {
+  const reader = body.getReader()
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) return
+    take(value)
+  }
+}
+
 async function write(
   body: ReadableStream<Uint8Array>,
   access: FileAccess,
@@ -45,16 +59,25 @@ async function write(
   progress: Progress
 ): Promise<number> {
   let offset = from
-  const reader = body.getReader()
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) return offset
-    hasher.update(value)
-    access.write(value, offset)
-    offset += value.byteLength
-    progress(value.byteLength)
-  }
+  await eachChunk(body, chunk => {
+    hasher.update(chunk)
+    access.write(chunk, offset)
+    offset += chunk.byteLength
+    progress(chunk.byteLength)
+  })
+  return offset
 }
+
+async function counted(body: ReadableStream<Uint8Array>, progress: Progress) {
+  const chunks: Uint8Array<ArrayBuffer>[] = []
+  await eachChunk(body, chunk => {
+    chunks.push(chunk as Uint8Array<ArrayBuffer>)
+    progress(chunk.byteLength)
+  })
+  return new Uint8Array(await new Blob(chunks).arrayBuffer())
+}
+
+const unreported: Progress = () => undefined
 
 const unpacked = (packed: Uint8Array) =>
   new Blob([packed as Uint8Array<ArrayBuffer>])
@@ -70,19 +93,19 @@ async function writeParts(
   progress: Progress
 ): Promise<number> {
   const saved = await resume(storage, file, access, hasher)
-  progress(saved.offset)
+  progress(downloadBytes({ ...file, parts: file.parts.slice(0, saved.parts) }))
   let offset = saved.offset
   for (let index = saved.parts; index < file.parts.length; index++) {
     const part = file.parts[index]
     const response = await fetchedBody(fetch, part.key, file.name)
-    const packed = new Uint8Array(await response.arrayBuffer())
+    const packed = await counted(response.body as ReadableStream<Uint8Array>, progress)
     const actual = await sha256Hex(packed)
     if (actual !== part.sha256) {
       throw new Error(
         `${file.name} part ${index + 1} is ${actual}, but compressed.json pins ${part.sha256}`
       )
     }
-    offset = await write(unpacked(packed), access, hasher, offset, progress)
+    offset = await write(unpacked(packed), access, hasher, offset, unreported)
     access.flush()
     const next: Saved = { parts: index + 1, offset, hash: [...hasher.save()] }
     await storage.write(savedPath(file), new TextEncoder().encode(JSON.stringify(next)))

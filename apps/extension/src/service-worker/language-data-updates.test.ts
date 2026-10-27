@@ -22,6 +22,7 @@ function fakeChrome() {
     onStartup: listener<[]>(),
     onAlarm: listener<[{ name: string }]>(),
     createAlarm: vi.fn<UpdatesChrome['createAlarm']>(),
+    hasAlarm: vi.fn<UpdatesChrome['hasAlarm']>(async () => true),
     openTab: vi.fn<UpdatesChrome['openTab']>(),
     ask: vi.fn<UpdatesChrome['ask']>(async request => {
       asked.push(request)
@@ -64,11 +65,24 @@ describe('keeping the language data current', () => {
     expect(asked).toHaveLength(2)
   })
 
-  it('checks when the browser starts', async () => {
+  it('checks when the browser starts, keeping the daily alarm it has', async () => {
     const { api, asked } = fakeChrome()
     api.onStartup.fire()
     await settled()
     expect(asked).toEqual([{ type: 'update' }])
+    expect(api.hasAlarm).toHaveBeenCalledWith(updateAlarm)
+    expect(api.createAlarm).not.toHaveBeenCalled()
+  })
+
+  it('creates the daily alarm again when the browser starts without it', async () => {
+    const { api } = fakeChrome()
+    api.hasAlarm.mockResolvedValueOnce(false)
+    api.onStartup.fire()
+    await settled()
+    expect(api.createAlarm).toHaveBeenCalledExactlyOnceWith(updateAlarm, {
+      periodInMinutes: 1440,
+      delayInMinutes: 1440
+    })
   })
 
   it('keeps going when asking throws', async () => {

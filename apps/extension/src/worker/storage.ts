@@ -13,6 +13,7 @@ export interface Storage {
   write(path: string, bytes: Uint8Array): Promise<void>
   move(from: string, to: string): Promise<void>
   remove(path: string): Promise<void>
+  list(folder: string): Promise<string[]>
 }
 
 type SyncAccessHandle = {
@@ -23,6 +24,8 @@ type SyncAccessHandle = {
   flush(): void
   close(): void
 }
+
+type ListedFolder = FileSystemDirectoryHandle & { keys(): AsyncIterable<string> }
 
 type MovableFile = FileSystemFileHandle & {
   createSyncAccessHandle(): Promise<SyncAccessHandle>
@@ -97,6 +100,12 @@ export function originPrivateStorage(
       } catch (error) {
         if (!isMissing(error)) throw error
       }
+    },
+    async list(path) {
+      const listed = (await folder(path.split('/').filter(part => part !== ''))) as ListedFolder
+      const names: string[] = []
+      for await (const name of listed.keys()) names.push(name)
+      return names
     }
   }
 }

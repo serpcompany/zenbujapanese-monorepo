@@ -24,10 +24,5 @@ export const labels = {
       'Pin Zenbu to the toolbar to open it on any tab.'
     ]
   },
-  dictionary: {
-    checking: 'Checking the dictionary…',
-    ready: 'The dictionary is ready.',
-    failed: "The dictionary isn't answering.",
-    checkAgain: 'Check again'
-  }
+  dictionary: { checkAgain: 'Check again' }
 }
