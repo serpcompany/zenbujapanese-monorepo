@@ -81,6 +81,62 @@ struct AccountSyncLearningTests {
     #expect(phone.sync.state.retryNextLaunch.isEmpty)
   }
 
+  @Test("an account that can't take set gets set, set, then a bare clear for Known then Unknown")
+  func olderResendSkippedBehindANewerChange() async throws {
+    let (service, phone, _) = await Fixture.twoPhones()
+    service.refuseSet(true)
+    try await phone.signIn()
+    phone.mark(.known, Fixture.taberu)
+    phone.mark(.unknown, Fixture.taberu)
+    try await phone.syncNow()
+
+    let sent = phone.server.requests(to: "POST /v1/sync").flatMap(\.sync.mutations)
+      .filter { $0.entityId == Fixture.taberu }
+    #expect(sent.map(\.operation) == ["set", "set", "clear"])
+    #expect(sent.last?.fields == nil)
+    #expect(known(Fixture.taberu, in: service) == nil)
+    #expect(phone.wordKnowledge.status(storedID: Fixture.taberu) == .unknown)
+    #expect(phone.sync.state.queue.isEmpty)
+  }
+
+  @Test("a refused set to Learning isn't undone by the held copy of the device's own resent mark")
+  func refusedLearningOutlastsItsOwnEcho() async throws {
+    let fixture = try await Fixture.afterSignIn()
+    let marks = CallCount()
+    let sets = CallCount()
+    fixture.serve { request in
+      guard let mutation = request.mutations.first else { return StubSync.answer(cursor: "c") }
+      switch mutation.operation {
+      case "set" where sets.next() < 3:
+        return StubSync.answer(
+          results: [StubSync.rejected(mutation.id, "unknown_operation")], cursor: "c")
+      case "mark" where marks.next() == 1:
+        return .offline
+      case "mark":
+        return StubSync.answer(
+          results: StubSync.applied(request),
+          changes: [StubSync.knownWord(Fixture.taberu, known: true, version: 1)], cursor: "c")
+      default:
+        return StubSync.answer(results: StubSync.applied(request, version: 2), cursor: "c")
+      }
+    }
+    fixture.mark(.known, Fixture.taberu)
+    await #expect(throws: AccountServiceError.unreachable) { try await fixture.syncNow() }
+    fixture.mark(.learning, Fixture.taberu)
+    try await fixture.syncNow()
+
+    #expect(fixture.wordKnowledge.status(storedID: Fixture.taberu) == .learning)
+    #expect(fixture.sync.state.retryNextLaunch.map(\.key.entityID) == [Fixture.taberu])
+
+    await fixture.launch()
+    try await fixture.syncNow()
+    let learning = fixture.server.requests(to: "POST /v1/sync").flatMap(\.sync.mutations)
+      .filter { $0.operation == "set" && $0.fields?["state"] == .string("learning") }
+    #expect(learning.count == 2)
+    #expect(fixture.wordKnowledge.status(storedID: Fixture.taberu) == .learning)
+    #expect(fixture.sync.state.retryNextLaunch.isEmpty)
+  }
+
   @Test("a Learning change waiting for the next launch isn't sent once the word has moved on")
   func retrySkippedOnceTheWordChanged() async throws {
     let (service, phone, _) = await Fixture.twoPhones()

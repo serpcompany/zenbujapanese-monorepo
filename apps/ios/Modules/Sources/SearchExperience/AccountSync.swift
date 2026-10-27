@@ -357,6 +357,7 @@ final class AccountSync: LocalFileStore {
       case .conflict(let current):
         if !keptConflict(change, current: current) { apply(current) }
       case .rejected(let code):
+        let keepsTheDevice = Self.keepsTheDevicesState(change, code: code)
         keptRejected(change, code: code)
         if code == Self.unknownEntity {
           state.syncedEntities.removeAll { $0 == change.key.entity }
@@ -371,12 +372,12 @@ final class AccountSync: LocalFileStore {
             userProfile.applySynced(restored)
             userProfile.refusal = ProfileRefusal(code: code)
           }
-        } else if settled, let undo = change.undo,
-          !Self.keepsTheDevicesState(change, code: code)
-        {
+        } else if settled, let undo = change.undo, !keepsTheDevice {
           self.undo(undo)
         }
-        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored) {
+        if settled, let copy = state.deferred.removeValue(forKey: change.key.stored),
+          !keepsTheDevice || copy.version > change.baseVersion
+        {
           apply(copy)
         }
       case nil:
