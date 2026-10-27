@@ -297,8 +297,7 @@ Jiten's carries its share-alike notice there too, under a sentence on how Zenbu 
   list: `packages/dictionary-core/src/sources/credits.test.ts`.
 
 **Left out on purpose.** The website has no Recent list, camera button, or Image Search. It also
-has no ✓ Known capsule and no swipe or long-press to mark a word known, which a word's page does
-(Word page, Toolbar).
+has no ✓ Known capsule or swipe or long-press to mark a word known; a word page's menu does.
 
 - Source: #462 (Recent list and camera button left out; learner actions open a get-the-app prompt).
 - Check: not applicable.
@@ -633,8 +632,7 @@ disables the controls while it runs; a refusal says why; one made elsewhere firs
 account's copy, and a note keeps the learner's text as a new note. Without a subscription it links
 `/account/#subscription`; signed out, it offers Sign in and forgets this browser was signed in.
 
-- Source: #462; #934 and the owner's decision on 2026-10-26 (editable where the site has the
-  feature, subscribers only, the app's designs, no layout shift); App docs, Dictionary.
+- Source: #462; #934 and the owner's decision on 2026-10-26; App docs, Dictionary.
 - Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "Lists and Notes each offer the action
   the app has"; `src/components/dictionary/learner-dialog.interaction.test.tsx` (Known, each state,
   Try again) and beside it the `synced-lists` and `synced-notes` interaction tests; at both widths,

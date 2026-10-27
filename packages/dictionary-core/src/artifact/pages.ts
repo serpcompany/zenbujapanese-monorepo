@@ -5,7 +5,7 @@ import { jmdictSource } from './words'
 
 export const maximumPagesAsked = 100
 
-export interface WordPage {
+interface WordPage {
   languageReferenceID: string
   entSeq: number
   slug: string

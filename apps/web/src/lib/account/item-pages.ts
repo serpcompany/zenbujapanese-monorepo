@@ -2,7 +2,7 @@ import { maximumPagesAsked } from '@zenbu/dictionary-core/artifact/pages'
 import { isLanguageReferenceId } from '@zenbu/dictionary-core/cards/word-list'
 import type { PagePaths } from '../dictionary/pages-answer'
 
-export const pagesPath = '/dictionary/pages.json'
+const pagesPath = '/dictionary/pages.json'
 
 const kanjiItem = 'kanji:'
 

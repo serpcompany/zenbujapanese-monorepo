@@ -68,6 +68,9 @@ describe("an account's data pages, reading the account from the browser", () => 
   })
 })
 
+const knowsMiru = () =>
+  new SyncedStandIn().holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
+
 describe('Known Words', () => {
   test('lists every word and kanji marked known, most recently marked first, and marks one unknown', async () => {
     const standIn = new SyncedStandIn()
@@ -93,9 +96,7 @@ describe('Known Words', () => {
 
   test("draws no word until the dictionary has said where each word's page is", async () => {
     const { promise: answered, resolve: answer } = Promise.withResolvers<void>()
-    const standIn = new SyncedStandIn()
-      .holds('knownWord', word(1), { itemId: word(1), ...miru, known: true })
-      .hasPage(word(1), '/dictionary/見る-1259290/')
+    const standIn = knowsMiru().hasPage(word(1), '/dictionary/見る-1259290/')
     const { page } = openArea('knownWords', standIn)
     const reachesTheService = globalThis.fetch
     let asked = false
@@ -115,11 +116,7 @@ describe('Known Words', () => {
   })
 
   test("links a word to its search while the dictionary can't say where its page is", async () => {
-    const standIn = new SyncedStandIn().holds('knownWord', word(1), {
-      itemId: word(1),
-      ...miru,
-      known: true
-    })
+    const standIn = knowsMiru()
     const { page } = openArea('knownWords', standIn)
     await shows(page, '見る（みる）')
     expect(page.querySelector('section a')?.getAttribute('href')).toBe(
@@ -128,11 +125,7 @@ describe('Known Words', () => {
   })
 
   test('says a change went through but the page could not read the account again, and never sends it twice', async () => {
-    const standIn = new SyncedStandIn().holds('knownWord', word(1), {
-      itemId: word(1),
-      ...miru,
-      known: true
-    })
+    const standIn = knowsMiru()
     const { page } = openArea('knownWords', standIn)
     await shows(page, '1 word or kanji')
     standIn.failNextRead(429)
