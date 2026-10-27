@@ -23,6 +23,46 @@
         "title": "Your account",
         "description": "Your Zenbu account: your profile, how you sign in, and deleting the account.",
         "intro": "See your profile and how you sign in, change your profile, or delete your account."
+      },
+      "knownWords": {
+        "title": "Known Words",
+        "description": "The words and kanji you marked known in your Zenbu account.",
+        "intro": "Every word and kanji you marked known, in the Zenbu app or here, most recent first."
+      },
+      "lists": {
+        "title": "Lists",
+        "description": "Your Zenbu lists and the words in them.",
+        "intro": "Your lists and their words, in your order. Make, rename, move, and delete lists here, and add words to them from a word’s page."
+      },
+      "notes": {
+        "title": "Notes",
+        "description": "Your notes on words and kanji.",
+        "intro": "Your notes on words and kanji. Change or delete them here, or write one from a word’s page."
+      },
+      "mediaLibrary": {
+        "title": "Media Library",
+        "description": "The photos you saved on words in the Zenbu app.",
+        "intro": "The photos you saved on words in the Zenbu app, with the words each is on. Add and remove them in the app."
+      },
+      "recentVideos": {
+        "title": "Recent videos",
+        "description": "The videos you watched in the Zenbu app’s Player.",
+        "intro": "The 50 videos you watched most recently in the Zenbu app’s Player. Remove them in the app."
+      },
+      "bookmarks": {
+        "title": "Bookmarked sentences",
+        "description": "The sentences you bookmarked in the Zenbu app’s Translate.",
+        "intro": "The sentences you bookmarked in Translate in the Zenbu app. Bookmark and un-bookmark them there."
+      },
+      "recentSearches": {
+        "title": "Recent searches",
+        "description": "Your recent searches in the Zenbu app.",
+        "intro": "Your 50 most recent searches in the Zenbu app, most recent first. Remove one, or clear them all."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Your Zenbu app’s settings and frequency dictionaries.",
+        "intro": "The frequency dictionaries the Zenbu app ranks words by, which you can choose here, and the settings you changed in the app."
       }
     },
     "unavailable": "Signing in to a Zenbu account isn’t available on this site yet.",
@@ -240,6 +280,187 @@
         "blocked": "Your browser blocked Apple’s window. Allow pop-ups for this site, then try again.",
         "failed": "Signing in with Apple didn’t work. Try again.",
         "unloaded": "We couldn’t load Sign in with Apple. Check your connection, or use another way."
+      }
+    },
+    "synced": {
+      "heading": "Your synced data",
+      "hubIntro": "What your Zenbu account syncs across the Zenbu apps. See all of it here, and change your known words, lists, notes, recent searches, and frequency dictionaries.",
+      "needsSubscription": "Seeing what your account syncs on this website, and changing it, needs a subscription, as syncing does.",
+      "seeSubscription": "See the subscription",
+      "backToAccount": "Your account",
+      "loading": "Loading…",
+      "changedElsewhere": "That changed elsewhere first, so this shows it as it is now.",
+      "refusals": {
+        "unknownList": "That list isn’t in your account anymore.",
+        "listFull": "That list is full: a list holds at most 5,000 words.",
+        "tooManyLists": "Your account has 500 lists, the most it holds.",
+        "tooManyNotes": "Your account has 10,000 notes, the most it holds.",
+        "alreadyExists": "Your account already has that list.",
+        "invalidFields": "Your account can’t keep that as written.",
+        "other": "Your account didn’t take that change: {message}"
+      },
+      "knownWords": {
+        "count": {
+          "one": "{count} word or kanji",
+          "other": "{count} words and kanji"
+        },
+        "search": "Search your known words",
+        "markUnknown": "Mark as Unknown",
+        "markUnknownNamed": "Mark {name} as Unknown",
+        "none": "You haven’t marked a word or kanji known yet.",
+        "noMatch": "No known word or kanji matches that."
+      },
+      "lists": {
+        "newList": "New List",
+        "name": "Name",
+        "create": "Create List",
+        "count": {
+          "one": "{count} word",
+          "other": "{count} words"
+        },
+        "rename": "Rename",
+        "renameNamed": "Rename {name}",
+        "save": "Save",
+        "cancel": "Cancel",
+        "moveUp": "Move {name} up",
+        "moveDown": "Move {name} down",
+        "delete": "Delete",
+        "deleteNamed": "Delete {name}",
+        "confirmDelete": {
+          "one": "Delete “{name}” and its {count} word?",
+          "other": "Delete “{name}” and its {count} words?"
+        },
+        "deleteList": "Delete List",
+        "keepList": "Keep It",
+        "none": "You have no lists yet.",
+        "allLists": "All lists",
+        "empty": "This list has no words yet. Add them from a word’s page.",
+        "search": "Search this list",
+        "noMatch": "No word in this list matches that.",
+        "remove": "Remove",
+        "removeNamed": "Remove {name} from this list",
+        "known": "Known",
+        "gone": "That list isn’t in your account.",
+        "nameRule": "A list’s name is 1 to 500 characters."
+      },
+      "notes": {
+        "withoutAWord": "Notes Without a Word",
+        "withoutAWordWhy": "These notes were saved on a word the dictionary has no page for, so no word’s page shows them.",
+        "savedOn": "Saved on {name}",
+        "edit": "Edit",
+        "editNamed": "Edit your note on {name}",
+        "note": "Note",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "deleteNamed": "Delete your note on {name}",
+        "confirmDelete": "Delete this note? It can’t be brought back.",
+        "deleteNote": "Delete Note",
+        "keepNote": "Keep It",
+        "copy": "Copy",
+        "copyNamed": "Copy your note on {name}",
+        "copied": "Note copied",
+        "copyFailed": "Couldn’t copy the note.",
+        "none": "You have no notes yet.",
+        "keptAsNew": "This note changed elsewhere first, so yours is kept as a new note beside it.",
+        "textRule": "A note is 1 to 10,000 characters."
+      },
+      "mediaLibrary": {
+        "saved": "Saved {date}",
+        "on": "On",
+        "none": "No photos yet.",
+        "missing": "This photo’s file isn’t in your account."
+      },
+      "recentVideos": {
+        "watched": "Watched {date}",
+        "progress": "{position} of {duration}",
+        "untitled": "A video",
+        "none": "No videos yet."
+      },
+      "bookmarks": {
+        "bookmarked": "Bookmarked {date}",
+        "language": {
+          "ja": "Japanese",
+          "en": "English"
+        },
+        "none": "No bookmarked sentences yet."
+      },
+      "recentSearches": {
+        "searched": "Searched {date}",
+        "remove": "Remove",
+        "removeNamed": "Remove {query}",
+        "clearAll": "Clear All",
+        "confirmClear": {
+          "one": "Clear your {count} recent search?",
+          "other": "Clear all {count} recent searches?"
+        },
+        "clear": "Clear",
+        "keep": "Keep Them",
+        "none": "No recent searches yet."
+      },
+      "settings": {
+        "frequency": {
+          "heading": "Frequency dictionaries",
+          "explained": "The Zenbu app ranks words by the first of these, then each next one. Each device downloads its own copy of one you choose.",
+          "appsChoice": "You haven’t changed these, so the app uses its own: JLPT Levels, then YouTube.",
+          "chosen": "Chosen",
+          "others": "Not chosen",
+          "moveUp": "Move {name} up",
+          "moveDown": "Move {name} down",
+          "remove": "Remove",
+          "removeNamed": "Stop using {name}",
+          "add": "Add",
+          "addNamed": "Use {name}",
+          "noneChosen": "No frequency dictionary is chosen.",
+          "unknownPack": "A dictionary this site doesn’t know ({id})"
+        },
+        "app": {
+          "heading": "In the app",
+          "explained": "What you changed in the Zenbu app’s settings. Change these in the app.",
+          "none": "You haven’t changed a setting in the app yet."
+        },
+        "names": {
+          "readingAids": {
+            "furigana": "Furigana",
+            "romaji": "Romaji",
+            "wordMeanings": "Word Meanings",
+            "kanjiMeanings": "Kanji Meanings",
+            "translations": "Sentence Translations",
+            "translationLanguage": "Translation language",
+            "translationSource": "Who translates Player captions",
+            "furiganaHiddenOnKnownWords": "Hide Furigana on Known Words"
+          },
+          "translate": {
+            "furigana": "Translate’s furigana",
+            "speechSpeed": "Translate’s speech speed"
+          },
+          "search": {
+            "sort": "Sorted by",
+            "filter": "Look Up’s filter"
+          },
+          "imageSearch": {
+            "textView": "Image Search’s view"
+          }
+        },
+        "values": {
+          "on": "On",
+          "off": "Off",
+          "speed": "{speed}×",
+          "choices": {
+            "youTube": "YouTube’s captions",
+            "apple": "Apple Translation",
+            "all": "All words",
+            "known": "Known words",
+            "unknown": "Unknown words",
+            "photo": "The photo",
+            "both": "The photo and its text",
+            "text": "The text",
+            "translate": "Its translation",
+            "default": "Relevance",
+            "known-words": "Known words first"
+          },
+          "byFrequency": "Frequency: {name}"
+        }
       }
     }
   },

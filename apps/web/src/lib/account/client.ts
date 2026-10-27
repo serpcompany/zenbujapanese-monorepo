@@ -1,3 +1,9 @@
+import type {
+  KindPage,
+  KindQuery,
+  Mutation,
+  MutationResult
+} from '@zenbu/account-rules/account-copy'
 import type { Locale } from '../i18n/config'
 import {
   type AccountSession,
@@ -16,6 +22,7 @@ import {
   textAnswer,
   trueAnswer
 } from './answers'
+import { kindPageOf, mutationResultsOf } from './synced-answers'
 
 export type Failure =
   | { kind: 'offline' }
@@ -242,6 +249,20 @@ export function accountApi(
         '/v1/me/subscription/checkout',
         { method: 'POST', accessToken, body: pages },
         providerPage
+      ),
+    readKind: (accessToken: string, entity: string, query: KindQuery) =>
+      call(
+        `/v1/sync/${encodeURIComponent(entity)}?${new URLSearchParams(
+          Object.entries(query).map(([key, value]) => [key, String(value)])
+        )}`,
+        { accessToken },
+        (value, status) => checked<KindPage>(kindPageOf(value), status)
+      ),
+    sync: (accessToken: string, mutations: Mutation[]) =>
+      call(
+        '/v1/sync',
+        { method: 'POST', accessToken, body: { mutations, limit: 1 } },
+        (value, status) => checked<MutationResult[]>(mutationResultsOf(value), status)
       ),
     portal: (accessToken: string, returnUrl: string) =>
       call(
