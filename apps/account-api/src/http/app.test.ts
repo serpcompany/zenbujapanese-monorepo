@@ -83,8 +83,7 @@ describe('the account service', () => {
         signedInAt: new Date()
       }),
       accounts: {
-        profile: async () => null,
-        updateProfile: async () => null,
+        ...standIns.accounts,
         sync: () =>
           Promise.reject(new Error('duplicate key value violates "users_pkey" (id)=(user-1)'))
       }

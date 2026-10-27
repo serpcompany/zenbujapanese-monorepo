@@ -11,8 +11,8 @@ those ship ([iPad and Mac](#ipad-and-mac)). [Shortcuts and Siri](shortcuts.md) o
 apps, and its [Share sheet](share-sheet.md) card looks up what another app shares. It has four tabs:
 
 - **Look Up** opens the [Dictionary](dictionary.md) Product Experience. Its results can be
-  re-sorted by a frequency dictionary or by known words, and filtered to known or unknown words,
-  from the **Sorted by** row at their top ([Sorting and filtering results](results.md)).
+  re-sorted by a frequency dictionary or by known words, and filtered to Unknown, Learning, or
+  Known words, from the **Sorted by** row ([Sorting and filtering results](results.md)).
 - **Translate** opens [Translate](translate.md), a Japanese and English conversation translator
   that runs on the device, and Image Search, which reads Japanese in a photo
   ([Image Search](translate.md#image-search)).
@@ -144,8 +144,8 @@ and messages that name the device say iPad or Mac, such as "Everything stays on 
   `SearchInputUITests.testThePencilAndGridOpenOnePanelThatSwitchesBetweenThem` (**Done**) and
   `testThePanelFitsTheSmallestWindowAndTakesAStroke`; package `AppCommandTests` (its size).
 - **Right-click on the Mac.** A row whose actions are behind a swipe on the iPhone also shows
-  them on right-click: renaming or deleting a list, removing a word from a list, marking a word
-  unknown, removing a video from Recent, updating or removing a frequency dictionary or showing
+  them on right-click: renaming or deleting a list, removing a word from a list, changing a word's
+  status, removing a video from Recent, updating or removing a frequency dictionary or showing
   its details, and deleting a Media Library image. Look Up's results, recent lookups, and
   Translations already open a menu on long-press, which is right-click on the Mac.
   Check: UI `ListsUITests` (renaming and deleting a list), `SavedWordsUITests` (marking a word
@@ -209,7 +209,7 @@ It provides:
   with the account's email ([Zenbu account and sync](account-sync.md)), against production's
   account service in TestFlight and App Store builds and staging's in Debug builds;
 - the [Media Library](saved-data.md#media-library);
-- Known Words;
+- Known Words and Learning, each with its count;
 - Lists;
 - **Translations**, with how many conversations Translate has saved, which opens the same
   **Translations** screen as the Translate tab;
@@ -301,24 +301,11 @@ not counted as a failure), and `SearchResultOrderingTests` (a word the first pac
 right-click, and its switch). A real download needs the network: by hand
 ([Look Up manual checks](../../../../docs/agents/ios.md#look-up-manual-checks)).
 
-### Known Words
+### Known Words and Learning
 
-Known Words shows its count on the Account row and lists every word and kanji marked known, most
-recent first, with no dates: Look Up's result rows, with meanings and the Known badge, and its Kanji
-rows. A word the dictionary dropped keeps its headword, reading, and badge. A learner can search it
-by headword or reading, mark a row unknown by a right swipe or its context menu, or open its page in
-Look Up. A word whose entry ID changed opens the entry written and read the same, else searches its
-headword. Known words stay on the device and sync through the Zenbu account while signed in ([Zenbu
-account and sync](account-sync.md)). If they came from a newer Zenbu, or a damaged file couldn't be
-kept aside, they are shown but can't be changed: Known Words says so, and each swipe and menu, a
-page's too, offer only a disabled Known Words Can't Be Changed. If the file can't be read at launch,
-as before the first unlock, nothing is shown or saved over it, and Known Words asks to reopen Zenbu.
-
-Check: package `WordKnowledgeTests` (and the disabled choice), `SavedKanjiTests`,
-`KnowledgeRowsTests`, and `WordResolutionTests` (the entry a saved word opens); UI
-`SavedWordsUITests` (Look Up's rows and chips, opened and marked unknown there),
-`WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
-`AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).
+A word or kanji is Unknown, Learning, or Known. **Status** in its **•••** menu, or a row's swipe,
+marks it, and Account's Known Words and **Learning** list the Known and the Learning ones
+([Known Words and Learning](known-words.md)).
 
 ### Lists
 
@@ -334,11 +321,11 @@ order on every device. A learner can create a list, swipe a list to rename or de
 has words asks first), and open a list. In Edit, the learner drags lists to reorder them and taps a
 list to rename it; the Mac has no Edit, and its lists are dragged into order directly. Names are
 trimmed, can't be empty, hold at most 500 characters, cut to fit (control characters become spaces),
-and may repeat. A list shows its words most recently added first, with the **✓ Known** capsule on
-known words; the learner can search it by headword or reading, swipe a word to remove it from that
-list, or open its word page, found the same way as in Known Words. Its **•••** menu renames the
-list, deletes it (asking first when it has words), or selects words: while selecting, the top bar
-offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
+and may repeat. A list shows its words most recently added first, with each word's Known or Learning
+tag; the learner can search it by headword or reading, swipe a word to remove it from that list, or
+open its word page, found the same way as in [Known Words](known-words.md). Its **•••** menu renames
+the list, deletes it (asking first when it has words), or selects words: while selecting, the top
+bar offers Select All, Remove, and Done. Deleting a list removes its words from that list only.
 
 Check: package `WordListsTests`, `SharedAccountRulesTests.listNames()`, and `SavedKanjiTests`; UI
 `ListsUITests` (making, renaming, deleting, and dragging a list into order) and
