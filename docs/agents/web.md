@@ -305,7 +305,7 @@ The page's component, `components/dictionary/search-results.tsx`, only renders i
 once (at most the app's 60). `results/links.ts` adds links (`linkSearchScreen`, shared by
 `data.ts` and the rendered-page test) and decides indexing: a page is indexed only when it lists
 a word or its kanji row has details to show. The KANJI row opens in place to the kanji's details
-(`components/dictionary/kanji-details.tsx`, from `getKanjiDetails`), as the word page's kanji do.
+(`packages/ui/src/dictionary/kanji-details.tsx`, from `getKanjiDetails`), like the word page's.
 A query full-text search can't read is answered as finding nothing by the service.
 
 The box's Radicals (`components/dictionary/radical-input.tsx`, [product
@@ -336,11 +336,11 @@ kanji details render. The app builds its word and kanji pages from the same func
 shows (see the [product docs](../../apps/web/docs/product/dictionary.md)).
 
 The word page holds everything the app drills into from a word (ADR 0010), in sections that open
-and close and stay in the HTML while closed (`components/dictionary/disclosure.tsx`):
+and close and stay in the HTML while closed (`packages/ui/src/dictionary/disclosure.tsx`):
 
 - **Conjugations:** the header's part of speech opens it (`#conjugations`). Each form opens to
   its examples, which load from `/dictionary/conjugations/<form>.json` the first time it opens
-  (`components/dictionary/conjugations.tsx`).
+  (`packages/ui/src/dictionary/conjugations.tsx`).
 - **Kanji:** each kanji opens to its details.
 - **Examples:** the section the search page's Example Sentences row links to (`#examples`).
 

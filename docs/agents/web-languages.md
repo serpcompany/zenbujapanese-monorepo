@@ -66,7 +66,8 @@ command from `apps/web`.
 - **Checks:** `src/lib/i18n/dictionaries.test.ts` (parity: the same keys, no empty value, no
   English value but the names it lists), `src/lib/i18n/hardcoded-strings.test.ts` (no literal
   English in JSX text, `alt`, `aria-label`, `title`, `placeholder`, `label`, or route metadata,
-  outside the stock components in `src/components/ui/`), and each area's rendered tests.
+  in the routes, the components, and `@zenbu/ui`, outside the stock shadcn components), and each
+  area's rendered tests.
 
 ## Review
 

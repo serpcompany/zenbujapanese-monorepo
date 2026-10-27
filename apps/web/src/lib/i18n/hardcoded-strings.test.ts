@@ -1,12 +1,17 @@
 import { readdirSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 import { expect, test } from 'vitest'
 
 const source = fileURLToPath(new URL('../../', import.meta.url))
 const routes = join(source, 'app')
-const stockComponents = join(source, 'components', 'ui')
+const packageSource = join(
+  dirname(createRequire(import.meta.url).resolve('@zenbu/ui/styles/theme.css')),
+  '..'
+)
+const stockComponents = [join(source, 'components', 'ui'), join(packageSource, 'components')]
 
 const visibleAttributes = new Set(['alt', 'aria-label', 'title', 'placeholder', 'label'])
 const metadataFields = new Set(['title', 'description', 'absolute', 'default', 'template'])
@@ -51,7 +56,7 @@ function isEnglishText(text: string): boolean {
 function sourceFiles(folder: string): string[] {
   return readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
     const path = join(folder, entry.name)
-    if (entry.isDirectory()) return path === stockComponents ? [] : sourceFiles(path)
+    if (entry.isDirectory()) return stockComponents.includes(path) ? [] : sourceFiles(path)
     return /\.tsx$/.test(entry.name) && !/\.test\.tsx$/.test(entry.name) ? [path] : []
   })
 }
@@ -97,8 +102,10 @@ function englishIn(path: string, content = readFileSync(path, 'utf8')): string[]
   return found
 }
 
-test('no page or component writes English text outside the dictionaries', () => {
-  const files = ['app', 'components'].flatMap(folder => sourceFiles(join(source, folder)))
+test('no page, component, or word component writes English text outside the dictionaries', () => {
+  const files = [join(source, 'app'), join(source, 'components'), packageSource].flatMap(
+    sourceFiles
+  )
   expect(files.length).toBeGreaterThan(50)
   expect(
     files.flatMap(path => englishIn(path)).join('\n'),

@@ -860,7 +860,7 @@ opens a dialog, or a drawer on phones, that draws the strokes on a dashed grid a
 or steps through them, starting from the first stroke each time it opens, as the app's sheet does.
 A kanji without a diagram has no button.
 
-- Source: `KanjiStrokeOrderView.swift`; `components/dictionary/stroke-order.tsx`.
+- Source: `KanjiStrokeOrderView.swift`; `packages/ui/src/dictionary/stroke-order.tsx`.
 - Check: KD `hasStrokeOrder`, `strokeOrderStrokes`;
   `packages/dictionary-core/src/detail/strokes.test.ts`; `apps/web/e2e/kanji.spec.ts`, "shows the
   kanji's stroke order" (the dialog opens). Playing, pausing, and stepping, and starting again
