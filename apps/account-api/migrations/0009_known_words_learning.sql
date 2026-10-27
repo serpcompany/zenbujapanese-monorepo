@@ -1,0 +1,1 @@
+ALTER TABLE "known_words" ADD COLUMN "learning" boolean DEFAULT false NOT NULL;

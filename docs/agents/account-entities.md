@@ -11,11 +11,26 @@ API reference's [Sync entities](../api/account-api.md#sync-entities).
 ## Known words and lists
 
 - **Known word** (`knownWord`, by item: a Language Reference ID, or `kanji:` and the kanji in
-  Unicode NFC, as the iOS app keys `word-knowledge.json`): `mark` and `clear` apply only at the word's current
-  version (0 for one never seen), and marking a known word or clearing one not known changes
-  nothing. So a mark made before the learner cleared the word loses to the clear, and a mark made
-  after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear that never saw a
-  later mark conflicts, and the learner sees the word Known again.
+  Unicode NFC, as the iOS app keys `word-knowledge.json`): the item's state, one of Unknown,
+  Learning, and Known (#1035). `set` moves it to any of the three; `mark` (to Known) and `clear`
+  (from Known to Unknown) are what an app that sees only whether a word is known sends. Each
+  applies only at the word's current version (0 for one never seen), and a change to the state the
+  word has changes nothing. So a mark made before the learner cleared the word loses to the clear,
+  and a mark made after seeing the clear wins, as #563's decision 4 says for Tomodachi. A clear
+  that never saw a later mark conflicts, and the learner sees the word Known again.
+- **Learning, to an app that doesn't show it,** is not known (`known: false` beside `state`). Its
+  mark makes a Learning word Known, and its clear of one changes nothing, as clearing any word not
+  known does: it can't end a state it can't see, and an app that shows Learning ends it with
+  `set`. The table keeps Known in `known`, which a service from before Learning still reads and
+  writes during a deploy or after a rollback, and Learning in `learning` beside it, and Known wins
+  when both are set, as after that service's mark of a Learning word. This service writes both
+  from the state, so its next change to the word settles them.
+- **While an older service runs,** its mark and then its clear of a Learning word write only
+  `known`, so `learning` stays true and the word comes back Learning once this service returns,
+  though the learner's last act was a clear. An app that shows Learning and pulled that clear then
+  got `known: false` with no `state`, read it as Unknown, and keeps Unknown, as no later change
+  touches the word, until the word changes again or the app's next full read. This is left as is:
+  it needs a rollback with both acts inside it, and the word stays one the learner can set.
 - **List** (`list`, by its UUID, in either case, as Swift writes it uppercase; answers name it in
   lowercase): `create` with a name and a position, then `update` at the current version, so two
   renames conflict and the second gets the name as it is now. An update that already matches the

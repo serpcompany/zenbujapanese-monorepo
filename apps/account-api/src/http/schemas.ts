@@ -3,6 +3,7 @@ import { bookmarkLimits } from '../domain/bookmarks'
 import { profileLimits } from '../domain/profile'
 import { syncLimits } from '../domain/sync'
 import { watchLimits } from '../domain/watch-history'
+import { wordStates } from '../domain/word-states'
 import { languageHeader } from '../language'
 import { errorObject } from './refusals'
 import {
@@ -184,7 +185,19 @@ export const SyncRequestSchema = z
   .openapi('SyncRequest')
 
 const KnownWordSchema = z
-  .object({ itemId: z.string(), headword: z.string(), reading: z.string(), known: z.boolean() })
+  .object({
+    itemId: z.string(),
+    headword: z.string(),
+    reading: z.string(),
+    state: z.enum(wordStates).optional().openapi({
+      description:
+        "The learner's state for the word. Always sent by this service; a service from before Learning, during a deploy or after a rollback, sends none, so read `known` instead."
+    }),
+    known: z.boolean().openapi({
+      description:
+        'Whether `state` is `known`, for an app that reads only this: a Learning word is not known.'
+    })
+  })
   .openapi('KnownWord')
 
 const WordListSchema = z
@@ -297,7 +310,7 @@ const ChangeSchema = z
   ])
   .openapi('Change', {
     description:
-      "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`."
+      'An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn\'t hold, or one never there. A `knownWord` at Unknown is still a `put`, with `state: "unknown"`.'
   })
 
 const resultBase = { id: z.string() }

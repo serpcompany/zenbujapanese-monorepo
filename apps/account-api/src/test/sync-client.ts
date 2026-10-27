@@ -27,6 +27,23 @@ const listOf = (key: string) => key.slice('listWord:'.length).split('/')[0]
 const wordsOf: Record<string, string> = { list: 'listWord', photo: 'photoWord' }
 const forgettableKinds = new Set(['wordNote', 'photo', 'photoWord'])
 
+function wordAfter(
+  operation: string,
+  data: Record<string, unknown> | null,
+  fields?: Record<string, unknown>
+) {
+  const from = data?.state ?? 'unknown'
+  const state =
+    operation === 'set'
+      ? fields?.state
+      : operation === 'mark'
+        ? 'known'
+        : from === 'known'
+          ? 'unknown'
+          : from
+  return { ...(data ?? fields), state, known: state === 'known' }
+}
+
 export class SyncClient {
   readonly local = new Map<string, Entity>()
   private queue: Queued[] = []
@@ -50,7 +67,7 @@ export class SyncClient {
     const removed = ['clear', 'delete', 'remove'].includes(operation)
     const data =
       entity === 'knownWord'
-        ? { ...(this.dataOf(entity, entityId) ?? fields), known: operation === 'mark' }
+        ? wordAfter(operation, this.dataOf(entity, entityId), fields)
         : removed
           ? null
           : { ...this.dataOf(entity, entityId), ...fields }
