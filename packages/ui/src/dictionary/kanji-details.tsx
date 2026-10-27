@@ -8,7 +8,7 @@ import { RubyText } from './ruby-text'
 import { StrokeOrder } from './stroke-order'
 import type { RenderWordLink } from './word-link'
 
-export interface ShownKanjiDetails extends Omit<KanjiDetail, 'components' | 'shareText'> {
+export interface ShownKanjiDetails extends Omit<KanjiDetail, 'components'> {
   components: { character: string }[]
   strokeLabels: StrokeOrderLabels | null
 }

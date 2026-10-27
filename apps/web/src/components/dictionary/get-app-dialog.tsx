@@ -16,11 +16,11 @@ import {
   DrawerHeader,
   DrawerTitle
 } from '@zenbu/ui/components/drawer'
+import { DialogCloseButton } from '@zenbu/ui/dictionary/dialog-close-button'
 import { useMediaQuery } from '@zenbu/ui/hooks/use-media-query'
 import { GetAppButton } from '@/components/site-actions'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
-import { DialogCloseButton } from './dialog-close-button'
 
 export type AppAction = keyof Dictionary['learner']['inApp']
 

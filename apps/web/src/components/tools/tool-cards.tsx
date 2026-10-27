@@ -5,9 +5,9 @@ import {
   CardHeader,
   CardTitle
 } from '@zenbu/ui/components/card'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { ProductMarkTile } from '@/components/products/product-card'
 import type { Locale } from '@/lib/i18n/config'
 import { getDictionary } from '@/lib/i18n/dictionary'

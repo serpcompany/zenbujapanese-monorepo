@@ -5,6 +5,7 @@ import {
   categoryOrders
 } from '@zenbu/dictionary-core/browse/categories'
 import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -13,7 +14,6 @@ import {
   Pagination
 } from '@/components/dictionary/browse/browse-ui'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { WordList } from '@/components/dictionary/word-row'
 import { categoryName } from '@/lib/dictionary/browse/category-names'
 import {
@@ -31,6 +31,7 @@ import {
   categoryIndexOf,
   categoryPath
 } from '@/lib/dictionary/browse/paths'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
@@ -116,7 +117,7 @@ export function CategoryWords({
         locale={locale}
       />
       <MoreWaysToBrowse current={category.slug} locale={locale} />
-      <SourceCredits sources={pageSources.browse} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(pageSources.browse, locale)} />
     </BrowsePage>
   )
 }
@@ -160,7 +161,7 @@ export function CategoryIndexPage({
           </ul>
         </section>
       ))}
-      <SourceCredits sources={[sourceCredits.jmdict]} locale={locale} />
+      <SourceCredits {...sourceCreditsIn([sourceCredits.jmdict], locale)} />
     </BrowsePage>
   )
 }

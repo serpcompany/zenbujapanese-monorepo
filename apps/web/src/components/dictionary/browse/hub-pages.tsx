@@ -14,6 +14,7 @@ import {
   secondarySchool
 } from '@zenbu/dictionary-core/browse/lists'
 import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -27,7 +28,6 @@ import {
 import { CategoryChipCards } from '@/components/dictionary/browse/category-links'
 import { KanaChart, type KanaTile } from '@/components/dictionary/browse/kana-chart'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { browseText, counted, kanjiListName, rankRange } from '@/lib/dictionary/browse/copy'
 import {
   browsePath,
@@ -42,6 +42,7 @@ import {
   scriptPath,
   strokeCountsPath
 } from '@/lib/dictionary/browse/paths'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import type { Locale } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
@@ -224,7 +225,9 @@ export function BrowseHub({ summary, initials, locale }: HubProps) {
           {t.hub.browseCommon}
         </Link>
       </Panel>
-      <SourceCredits sources={[sourceCredits.jmdict, sourceCredits.kanjidic2]} locale={locale} />
+      <SourceCredits
+        {...sourceCreditsIn([sourceCredits.jmdict, sourceCredits.kanjidic2], locale)}
+      />
     </BrowsePage>
   )
 }
@@ -260,7 +263,7 @@ export function KanaChartsPage({ summary, initials, locale }: HubProps) {
           <KanaCharts script={script} initials={initials[script]} withRomaji locale={locale} />
         </Panel>
       ))}
-      <SourceCredits sources={[sourceCredits.jmdict]} locale={locale} />
+      <SourceCredits {...sourceCreditsIn([sourceCredits.jmdict], locale)} />
     </BrowsePage>
   )
 }

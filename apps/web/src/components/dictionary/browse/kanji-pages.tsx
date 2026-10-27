@@ -8,6 +8,7 @@ import {
   secondarySchool,
   strokeList
 } from '@zenbu/dictionary-core/browse/lists'
+import { SourceCredits } from '@zenbu/ui/dictionary/source-credits'
 import Link from 'next/link'
 import {
   BrowseHeading,
@@ -18,7 +19,6 @@ import {
 } from '@/components/dictionary/browse/browse-ui'
 import { KanjiMeaningTiles, KanjiTiles } from '@/components/dictionary/browse/kanji-tiles'
 import { DictionaryBreadcrumbs } from '@/components/dictionary/dictionary-breadcrumbs'
-import { SourceCredits } from '@/components/dictionary/source-credits'
 import { browseText, counted, kanjiListHeading, kanjiListName } from '@/lib/dictionary/browse/copy'
 import {
   browsePath,
@@ -26,6 +26,7 @@ import {
   kanjiListsPath,
   strokeCountsAnchor
 } from '@/lib/dictionary/browse/paths'
+import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
 import { pageSources } from '@/lib/dictionary/sources'
 import type { Locale } from '@/lib/i18n/config'
 import { fill, formatNumber } from '@/lib/i18n/format'
@@ -227,7 +228,7 @@ export function KanjiHubPage({
         </ul>
         <p className="text-sm text-muted-foreground">{t.kanji.strokesNote}</p>
       </section>
-      <SourceCredits sources={pageSources.kanjiLevels} locale={locale} />
+      <SourceCredits {...sourceCreditsIn(pageSources.kanjiLevels, locale)} />
     </BrowsePage>
   )
 }
@@ -266,8 +267,10 @@ export function KanjiListPage({
       />
       <KanjiMeaningTiles kanji={kanji.kanji} label={heading} locale={locale} />
       <SourceCredits
-        sources={list.jlptLevel === undefined ? pageSources.kanji : pageSources.kanjiLevels}
-        locale={locale}
+        {...sourceCreditsIn(
+          list.jlptLevel === undefined ? pageSources.kanji : pageSources.kanjiLevels,
+          locale
+        )}
       />
     </BrowsePage>
   )

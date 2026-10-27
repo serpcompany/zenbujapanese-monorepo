@@ -4,17 +4,19 @@ import { frequencyRowDetails } from '@zenbu/dictionary-core/detail/frequency'
 import { pitchAccent } from '@zenbu/dictionary-core/detail/pitch'
 import { rubySegments } from '@zenbu/dictionary-core/detail/ruby'
 import { pronounceLabel } from '@zenbu/dictionary-core/detail/sections'
+import { ConjugationsLink } from '@zenbu/ui/dictionary/conjugations'
+import { FrequencySection } from '@zenbu/ui/dictionary/frequency-section'
+import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
+import { WordHeader } from '@zenbu/ui/dictionary/word-header'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { SiteConjugationsSection } from '@/components/dictionary/site-examples'
+import { wordHeaderIn } from '@/components/dictionary/word-page-props'
 import { pageExample } from '@/lib/dictionary/page-example'
 import { conjugationsIn, conjugationsText, frequencyRowsIn } from '@/lib/dictionary/screen-text'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { ConjugationsLink, ConjugationsSection } from './conjugations'
-import { FrequencySection } from './frequency-section'
-import { HeadwordRuby } from './headword-ruby'
-import { WordHeader } from './word-header'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -147,14 +149,18 @@ describe('pronouncing the word', () => {
     act(() =>
       root.render(
         <WordHeader
-          headword="今日"
-          ruby={rubySegments('今日', 'きょう')}
-          reading="きょう"
-          pronounce={pronounceLabel('きょう')}
-          pitch={pitch}
-          partOfSpeechRow="Noun"
-          conjugations={null}
-          locale={locale}
+          {...wordHeaderIn(
+            {
+              headword: '今日',
+              ruby: rubySegments('今日', 'きょう'),
+              reading: 'きょう',
+              pronounce: pronounceLabel('きょう'),
+              pitch,
+              partOfSpeechRow: 'Noun',
+              conjugations: null
+            },
+            locale
+          )}
         />
       )
     )
@@ -185,7 +191,7 @@ describe('the Conjugations section', () => {
             label="Ichidan verb (transitive)"
             opens={getDictionary('en').conjugations.showsConjugations}
           />
-          <ConjugationsSection
+          <SiteConjugationsSection
             conjugations={conjugationsIn(miru, 'en')}
             locale="en"
             text={conjugationsText('en')}

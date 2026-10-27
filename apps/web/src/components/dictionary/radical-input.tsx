@@ -2,11 +2,11 @@
 
 import { normalizeQuery } from '@zenbu/dictionary-core/search/query'
 import { Button } from '@zenbu/ui/components/button'
+import { Sheet } from '@zenbu/ui/dictionary/sheet'
 import { Grid3x3Icon, Undo2Icon } from 'lucide-react'
 import { type ReactNode, useRef, useState } from 'react'
 import type { Locale } from '@/lib/i18n/config'
 import type { Dictionary } from '@/lib/i18n/dictionary'
-import { Sheet } from './sheet'
 
 type PanelModule = typeof import('./radical-panel')
 

@@ -1,9 +1,10 @@
 import { Badge } from '@zenbu/ui/components/badge'
+import { FrequencyBadges } from '@zenbu/ui/dictionary/frequency'
+import { HeadwordRuby } from '@zenbu/ui/dictionary/headword-ruby'
+import { RubyText } from '@zenbu/ui/dictionary/ruby-text'
 import { CheckIcon, GripVerticalIcon, PointerIcon } from 'lucide-react'
-import { FrequencyBadges } from '@/components/dictionary/frequency'
-import { HeadwordRuby } from '@/components/dictionary/headword-ruby'
-import { RubyText } from '@/components/dictionary/ruby-text'
 import { previewLabel, previewPanel, raisedPreview } from '@/components/home/home-styles'
+import { frequencyBadgesIn } from '@/lib/dictionary/screen-text'
 import { appScreenText, frequencyPreview, furiganaPreview, listPreview } from '@/lib/home-previews'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { fill } from '@/lib/i18n/format'
@@ -73,7 +74,7 @@ export function FrequencyPreview({ locale }: { locale: Locale }) {
         <RubyText segments={word.ruby} className="text-[1.0625rem]" />
         <span className="text-[0.8125rem] text-muted-foreground">{word.meaning}</span>
         <div className="basis-full">
-          <FrequencyBadges frequency={word.chips} locale="en" />
+          <FrequencyBadges frequency={frequencyBadgesIn(word.chips, 'en')} />
         </div>
       </div>
     </div>
