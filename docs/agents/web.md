@@ -39,10 +39,10 @@ Next.js version differs from older releases (see `apps/web/AGENTS.md`).
   phone width, on the dictionary fixtures. Locally it starts `next dev` on this checkout's `e2e`
   port with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even when
   `.dev.vars` names a service (it's ignored on staging and production); in CI it runs on the
-  production build in workerd (`E2E_SERVER=preview`). Every test fails when a page logs a console
-  error or throws, so a hydration error anywhere a test goes fails the run. How to run one test,
-  read a failure, and add a regression test is in the `browser-tests` skill
-  (`.claude/skills/browser-tests/SKILL.md`).
+  production build in workerd (`E2E_SERVER=preview`), split over six jobs, each on one worker
+  ([`ci.md`](ci.md), Web). Every test fails when a page logs a console error or throws, so a
+  hydration error anywhere a test goes fails the run. How to run one test, read a failure, and add a
+  regression test is in the `browser-tests` skill (`.claude/skills/browser-tests/SKILL.md`).
 - `scripts/smoke.sh <base-url> <staging|production>` checks a running site's key pages, the
   `/privacy` redirect, that environment's search-engine rules, and dictionary pages against the
   app-recorded suites. Each check retries for about 15 seconds, since for a few seconds after a

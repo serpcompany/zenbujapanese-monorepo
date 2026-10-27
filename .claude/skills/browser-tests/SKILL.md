@@ -29,11 +29,13 @@ option after it as a file filter.
   main checkout) with `ZENBU_DICTIONARY_FIXTURES=1`, which makes the site read the fixtures even
   when `.dev.vars` names a dictionary service, and reuses a server already on that port, which only
   this checkout's runs start. `E2E_BASE_URL=<url>` runs against a server you started instead.
-- **In CI** (`Web`, the `e2e` job) it runs on the production build in workerd, where the Worker's
+- **In CI** (`Web`, the `e2e` jobs) it runs on the production build in workerd, where the Worker's
   redirects and headers behave as deployed: `pnpm exec opennextjs-cloudflare build`, then
-  `E2E_SERVER=preview pnpm test:e2e`. OpenNext can't build on Windows; there, run that in a
-  Linux container, such as `mcr.microsoft.com/playwright`, at the version in
-  `apps/web/package.json`.
+  `E2E_SERVER=preview pnpm test:e2e --shard <n>/6`, in six jobs, `e2e (1/6)` to `e2e (6/6)`,
+  each on its own build. A test that fails only in CI may fail only beside its shard's other
+  tests: run that shard locally, on the production build, with the same `--shard`. OpenNext can't
+  build on Windows; there, run that in a Linux container, such as `mcr.microsoft.com/playwright`,
+  at the version in `apps/web/package.json`.
 - **On the production build locally**, build first, without `SITE_ENV`, as CI does:
   `pnpm exec opennextjs-cloudflare build && E2E_SERVER=preview pnpm test:e2e`. The tests load the
   build in `.open-next/`, not the source, so refuse to run them on a build older than your last
@@ -71,9 +73,9 @@ option after it as a file filter.
    the result the learner sees, not a fixed time.
 5. To watch it happen, go through the same steps with the `verify-web` skill.
 
-In CI, a failure uploads the HTML report, those folders, and the server's whole log
-(`server.log`) as the `playwright-report` artifact:
-`gh run download <run-id> -n playwright-report` fetches it, and
+In CI, each shard that fails uploads its HTML report, those folders, and its server's whole log
+(`server.log`) as the `playwright-report-<n>` artifact, `<n>` the shard's number:
+`gh run download <run-id> -n playwright-report-<n>` fetches it, and
 `gh run view <run-id> --log-failed` prints the failing step's log. Run each as `serp-agent[bot]`
 ([Outside CI](../../../docs/agents/ci-agents.md#outside-ci)).
 

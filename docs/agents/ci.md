@@ -150,14 +150,25 @@ draws, so `src/lib/site.test.ts` checks its address with the account pages open 
 step, not the job, names `apps/web` as its working directory, because the dead-code check reads a
 step's working directory, not a job's, to find the scripts and binaries a step runs.
 
-Its `e2e` job starts once those checks pass (about 23 minutes of browser tests, behind about 1.5
-of checks, under a 35-minute limit). It runs the browser tests ([`web.md`](web.md), Run and verify) on the site as it
-deploys: it installs Chromium, builds with OpenNext without `SITE_ENV`, so the build reads the
-dictionary fixtures, and serves it in workerd with `opennextjs-cloudflare preview`. A test that
-fails isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once
-and passes the next time is a failing test ([`verification.md`](verification.md), Three levels),
-and a retry would hide it. On a failure it uploads the report, traces, videos, screenshots, and the
-server's output (`server.log`) as the `playwright-report` artifact, kept for a week.
+Its `e2e` job starts once those checks pass, about 2 minutes in. It runs the browser tests
+([`web.md`](web.md), Run and verify) on the site as it deploys, split six ways: a matrix of six
+jobs, `e2e (1/6)` to `e2e (6/6)`, each under a 20-minute limit, runs Playwright with
+`--shard 1/6` to `--shard 6/6`. Each installs Chromium, builds with OpenNext without `SITE_ENV`, so
+the build reads the dictionary fixtures, serves it in workerd with `opennextjs-cloudflare
+preview`, and runs its share of the tests on one worker, against its own workerd, as one job ran
+them all before. That one job took 26 minutes, 24 of them tests, on every pull request and again
+in the merge queue; split, the slowest shard's tests take about 6, and the job about 9.
+Playwright shards tests in order, by count, not time, so the slow contrast and phone-layout tests
+make some shards longer than others, and past six each more shard saves the slowest well under a
+minute. Each shard builds the site itself: the build takes under a minute, while one build shared
+as an artifact would hold every shard back by another job's start, install, and upload. A shard
+that fails doesn't stop the others (`fail-fast: false`), so a run still reports every failing
+test, and `web` reads the matrix as one job that failed if any shard failed. A test that fails
+isn't tried again (`retries` is 0 in `apps/web/playwright.config.ts`): one that fails once and
+passes the next time is a failing test ([`verification.md`](verification.md), Three levels), and
+a retry would hide it. On a failure each failing shard uploads its report, traces, videos,
+screenshots, and the server's output (`server.log`) as the `playwright-report-<shard>` artifact,
+kept for a week.
 
 ## Dictionary core
 
