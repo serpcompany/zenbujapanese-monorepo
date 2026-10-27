@@ -1,19 +1,9 @@
 import { normalizeQuery } from '../search/query'
-import { wordSlug } from './slug'
 import { isKanjiCharacter } from './text'
+import { type LinkedWord, wordPath } from './word-path'
 
 const websiteHost = 'zenbujapanese.com'
 const websiteOrigin = `https://${websiteHost}`
-
-interface LinkedWord {
-  headword: string
-  reading: string
-  entSeq: number
-}
-
-export function wordPath(entry: LinkedWord): string {
-  return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`
-}
 
 export function searchPath(query: string): string {
   return `/dictionary/search/${encodeURIComponent(query).replaceAll('.', '%2E')}/`

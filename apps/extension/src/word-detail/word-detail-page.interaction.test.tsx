@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs'
 import { examplesPerPage } from '@zenbu/dictionary-core/detail/examples'
-import { wordPath } from '@zenbu/dictionary-core/detail/links'
 import { meaningActions } from '@zenbu/dictionary-core/detail/meaning-actions'
 import type { WordRows } from '@zenbu/dictionary-core/detail/rows'
 import { wordDetail } from '@zenbu/dictionary-core/detail/word'
+import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
 import {
   fixtureFormExamples,
   fixtureKanjiRows,

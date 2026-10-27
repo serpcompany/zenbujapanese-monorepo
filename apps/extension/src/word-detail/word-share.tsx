@@ -1,6 +1,6 @@
-import { wordPath } from '@zenbu/dictionary-core/detail/links'
 import { fill } from '@zenbu/dictionary-core/detail/template'
 import type { WordDetail } from '@zenbu/dictionary-core/detail/word'
+import { wordPath } from '@zenbu/dictionary-core/detail/word-path'
 import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
 import { LinkIcon } from 'lucide-react'
 import { websiteOrigin } from '../shared/hosts'
