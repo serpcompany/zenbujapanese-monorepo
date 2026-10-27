@@ -31,6 +31,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
 | `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
+| `Extension packages` | `.github/workflows/extension-packages.yml` | Pushes to `main` and pull requests that change the browser extension, `packages/ui`, the core, or `assets/brand`; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
@@ -68,8 +69,8 @@ a red check stops no merge. The workflows are built so the owners can require th
   `dictionary-api`, `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
-- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
-  needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
+- **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `browser`
+  needs `check` (`Extension`), `website` needs `check` (`Account API`), `check` needs `scripts` (`Dictionary API`), `swift` needs
   `contracts` (`iOS`), and `build` needs `pins` (`Language data build`), on a pull request and in
   the queue alike. A failed fast check then spends no runner time on the browser tests, the suites
   or the release on the real files, or a Mac: the heavy job is skipped, and the last job fails for
@@ -174,8 +175,18 @@ the app-recorded suites run through the core in
 
 `.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
 rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
-extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
-browser yet. See [`extension.md`](extension.md).
+extension, `packages/ui`, which draws it, or the core ([`extension.md`](extension.md)). On the same
+pull requests, `Extension packages` builds and checks the staging and Chrome Web Store packages
+([`ci-deploys.md`](ci-deploys.md)). It filters by `paths`, so it isn't a check to require.
+
+Its `browser` job starts once `check` passes, under a 20-minute limit. It loads the test build in
+Playwright's Chromium and runs the browser tests (`pnpm test:browser`,
+[`extension.md`](extension.md), Browser tests), all offline, against a local language-data server.
+That server serves one real release file, `JLPTLevelPack.sqlite3`, so the job restores
+`Dictionary API`'s Git LFS cache (`actions/cache/restore`, the same key, never saving: a cache with
+one file under that key would leave `Dictionary API` without the rest) and pulls that file, which a
+cache miss fetches from Git LFS. A failed test isn't retried; its report, traces, and screenshots
+go up as the `extension-playwright-report` artifact for a week.
 
 ## Dictionary API
 

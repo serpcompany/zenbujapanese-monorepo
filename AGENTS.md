@@ -18,7 +18,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - **Inner loop, a pnpm package:** `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>`.
 - **Inner loop, the app:** the tests the change touches, with `-only-testing`, on this checkout's own Simulator, whose UDID `python3 apps/ios/Tools/simulator.py` prints. Never `booted` or a default device.
 - **Before a push:** `pnpm check` in each package the change touched.
-- **In the running product:** the skills `verify-web` (the website), `verify-app` (the app), and `verify-service` (the two services), in `.claude/skills/`. Proof goes under `tmp/agent/verify/`.
+- **In the running product:** the skills `verify-web`, `verify-app`, `verify-extension`, and `verify-service` (the two services), in `.claude/skills/`. Proof goes under `tmp/agent/verify/`.
 
 ## Codebase
 
