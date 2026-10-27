@@ -51,6 +51,13 @@ the weekly code gardener takes unless it must pass it over ([`ci-agents.md`](age
 | The account service's Japanese emails (`apps/account-api/src/email/sign-in-code.ts` and `account-notices.ts`) are an agent's draft that no native speaker has reviewed ([`account-email.md`](agents/account-email.md), The reader's language). | SERP's localization standard publishes a translation only once someone has reviewed it. Until then, a learner on a Japanese page may get Japanese that reads wrong. It needs a fluent reviewer, not code. | #847 | medium |
 | A developer's Release build of the Mac app reports crashes as `production`: the iPhone's check, an embedded provisioning profile, can't tell it from a Mac TestFlight build, which carries one too (`CrashReportingPlatform.source(of:)`; [`ios-crash-reports.md`](agents/ios-crash-reports.md), Which builds send). | A developer's Mac crashes land with the shipped app's in Sentry until the Mac has a signal of its own, which needs a Mac TestFlight build to try. | #732 | medium |
 
+## Browser extension
+
+| Debt | Why it matters | Issue | Size |
+| --- | --- | --- | --- |
+| What the extension draws on a page is sized in pixels: the build turns the shadow root stylesheet's rem lengths into pixels at 16px each (`apps/extension/build/shadow-safe-css.ts`), since a rem there would follow the page's own root font size. | A learner who set a larger default font size in Chrome gets the standard size on pages; the extension's own pages keep rem and follow it. | No issue yet | medium |
+| The test pages' server takes the website's `site` port (`pnpm test-pages` in `apps/extension`, through `tools/checks/ports.mjs`). | One checkout can't run the website and the test pages at once. | No issue yet | small |
+
 ## Language data
 
 | Debt | Why it matters | Issue | Size |

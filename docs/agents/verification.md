@@ -18,7 +18,7 @@ The inner loop, by part:
 
 | Part | Run |
 | --- | --- |
-| A pnpm package | `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>` with paths from the package's folder. The packages are `zenbujapanese-web`, `zenbujapanese-dictionary-api`, `zenbujapanese-account-api`, `@zenbu/dictionary-core`, `@zenbu/node-service`, and `zenbujapanese-checks`. |
+| A pnpm package | `pnpm --filter <package> typecheck`, and `pnpm --filter <package> exec vitest related --run <files>` with paths from the package's folder. The packages are `zenbujapanese-web`, `zenbujapanese-dictionary-api`, `zenbujapanese-account-api`, `zenbujapanese-extension`, `@zenbu/dictionary-core`, `@zenbu/node-service`, and `zenbujapanese-checks`. |
 | The checks | `pnpm verify <checks> <paths>` runs some checks on some paths, such as `pnpm verify sizes,comments apps/web/src`. |
 | The app's package | From `apps/ios/Modules`, one suite on this checkout's Simulator: `TEST_RUNNER_OS_ACTIVITY_DT_MODE=NO xcodebuild -scheme ZenbuJapaneseModules-Package -destination "platform=iOS Simulator,id=$(python3 ../Tools/simulator.py)" ONLY_ACTIVE_ARCH=YES -only-testing:SearchExperienceTests/<Suite> test` |
 | The app's screens | The UI tests that cover the change: the `verify-app` skill. |
@@ -77,7 +77,7 @@ from any folder:
 
 | Role | Main checkout | A worktree | Used by |
 | --- | --- | --- | --- |
-| `site` | 3000 | the first port of its block, such as 21010 | `pnpm dev` in `apps/web` |
+| `site` | 3000 | the first port of its block, such as 21010 | `pnpm dev` in `apps/web`, and `pnpm test-pages` in `apps/extension` |
 | `e2e` | 3100 | the next, 21011 | The server the browser tests start (`apps/web/playwright.config.ts`) |
 | `preview` | 8787 | 21012 | `pnpm preview`, and the browser tests on the production build |
 | `dictionary` | 8788 | 21013 | `pnpm dev` in `apps/dictionary-api`, the `verify-service` skill, and the rendered-page gate (`apps/web/vitest.config.ts`) |

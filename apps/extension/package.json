@@ -1,0 +1,41 @@
+{
+  "name": "zenbujapanese-extension",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Zenbu Japanese browser extension for Chrome: its pages, its service worker, the offscreen document that hosts the dictionary's worker, and the helper that draws on a page in a shadow root.",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "build:test": "vite build --mode test",
+    "test-pages": "node ../../tools/checks/ports.mjs run site -- vite --config test-pages/vite.config.ts --port @port --strictPort",
+    "format": "biome format --write",
+    "lint": "biome check",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm build:test"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@zenbu/ui": "workspace:*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.2",
+    "@tailwindcss/postcss": "^4",
+    "@types/chrome": "^0.3.6",
+    "@types/node": "^22.20.4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "happy-dom": "^20.14.5",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  },
+  "packageManager": "pnpm@10.17.0",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

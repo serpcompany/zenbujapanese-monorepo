@@ -541,6 +541,115 @@
         ]
       },
       {
+        "folder": "apps/extension",
+        "sources": [
+          "src",
+          "build",
+          "test-pages",
+          "vite.config.ts",
+          "vitest.config.ts"
+        ],
+        "testCode": "(\\.test\\.tsx?$)",
+        "entries": [
+          "^src/pages/(side-panel|popup|settings)\\.tsx$",
+          "^src/service-worker/service-worker\\.ts$",
+          "^src/offscreen/offscreen\\.ts$",
+          "^src/worker/dictionary-worker\\.ts$",
+          "^test-pages/test-content-script\\.tsx$",
+          "^(test-pages/)?vite\\.config\\.ts$",
+          "^vitest\\.config\\.ts$"
+        ],
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "(\\.test\\.tsx?$)"
+        },
+        "rules": [
+          {
+            "name": "core-by-package-name",
+            "severity": "error",
+            "comment": "Apps reach a shared package through its name, such as @zenbu/dictionary-core or @zenbu/node-service, never a relative path into packages/ (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./packages/",
+              "dependencyTypes": [
+                "local"
+              ]
+            }
+          },
+          {
+            "name": "extension-never-imports-another-app",
+            "severity": "error",
+            "comment": "The browser extension shares code with the website only through @zenbu/ui and the core, and reaches no service by import (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./(web|dictionary-api|account-api|ios)/"
+            }
+          },
+          {
+            "name": "only-the-worker-opens-the-dictionary",
+            "severity": "error",
+            "comment": "Only the dictionary worker loads the core's lookup code and SQLite; pages, content scripts, the offscreen document, and the service worker ask it with a message (docs/agents/extension.md, Layers).",
+            "from": {
+              "path": "^(src|test-pages)/",
+              "pathNot": [
+                "^src/worker/",
+                "(\\.test\\.tsx?$)"
+              ]
+            },
+            "to": {
+              "path": [
+                "^\\.\\./\\.\\./packages/dictionary-core/src/(artifact|search|embedded|examples)/",
+                "(^|/)node_modules/(@sqlite\\.org|sql\\.js|wa-sqlite)/"
+              ],
+              "reachable": true
+            }
+          },
+          {
+            "name": "nothing-imports-the-worker",
+            "severity": "error",
+            "comment": "The offscreen document starts the dictionary worker by its URL and talks to it by message; nothing imports its modules (docs/agents/extension.md, Layers).",
+            "from": {
+              "path": "^(src|test-pages)/",
+              "pathNot": [
+                "^src/worker/",
+                "(\\.test\\.tsx?$)"
+              ]
+            },
+            "to": {
+              "path": "^src/worker/"
+            }
+          },
+          {
+            "name": "extension-draws-with-zenbu-ui",
+            "severity": "error",
+            "comment": "The extension draws with @zenbu/ui, so it looks like zenbujapanese.com; it never imports the primitives under it (docs/agents/extension.md, Layers). Add what is missing to @zenbu/ui.",
+            "from": {
+              "path": "^(src|test-pages)/"
+            },
+            "to": {
+              "path": "(^|/)node_modules/(@base-ui|@base-ui-components|@radix-ui)/"
+            }
+          },
+          {
+            "name": "extension-background-draws-nothing",
+            "severity": "error",
+            "comment": "The service worker, the offscreen document, and the dictionary worker draw nothing, so nothing they import, however indirectly, loads React or @zenbu/ui (docs/agents/extension.md, Layers).",
+            "from": {
+              "path": "^src/(service-worker|offscreen|worker)/",
+              "pathNot": "(\\.test\\.tsx?$)"
+            },
+            "to": {
+              "path": [
+                "(^|/)node_modules/(react|react-dom)/",
+                "^\\.\\./\\.\\./packages/ui/",
+                "^@zenbu/ui(/|$)"
+              ],
+              "reachable": true
+            }
+          }
+        ]
+      },
+      {
         "folder": "packages/dictionary-core",
         "sources": [
           "src"
@@ -750,6 +859,7 @@
         "quality-ios.md",
         "quality-ios-account.md",
         "quality-web.md",
+        "quality-extension.md",
         "tech-debt-web.md",
         "tech-debt.md",
         "technologies.md"

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>A page with its own Tailwind</title>
+    <link rel="stylesheet" href="./tailwind.css" />
+  </head>
+  <body class="bg-slate-100 p-8 font-serif text-lg leading-loose tracking-widest text-slate-900">
+    <h1 class="mb-4 text-3xl font-bold">A page with its own Tailwind v4 build</h1>
+    <p class="mb-4">
+      Its stylesheet registers the <code>--tw-*</code> properties with <code>@property</code>, as
+      every Tailwind v4 site does. The test content script mounts a card below.
+    </p>
+    <button
+      type="button"
+      class="rounded-full bg-indigo-600 px-6 py-3 text-white shadow-2xl ring-8 ring-pink-400"
+    >
+      A page button
+    </button>
+  </body>
+</html>

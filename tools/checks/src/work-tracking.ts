@@ -65,7 +65,8 @@ export const qualityFiles = [
   'docs/quality.md',
   'docs/quality-ios.md',
   'docs/quality-ios-account.md',
-  'docs/quality-web.md'
+  'docs/quality-web.md',
+  'docs/quality-extension.md'
 ]
 
 export function scoresToRegrade(text: string, times: ReadonlyMap<string, number>): QualityRows {

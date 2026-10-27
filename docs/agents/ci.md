@@ -30,6 +30,7 @@ workflows that read it (`tools/checks/src/workflow-rules.test.ts`).
 | `Web` | `.github/workflows/web.yml` | Every pull request and the merge queue, working when the site, its word components, or the core changed | This doc |
 | `Web deploy` | `.github/workflows/web-deploy.yml` | Pushes to `main` that change the site, the core, or the dictionary service's image; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Dictionary core` | `.github/workflows/dictionary-core.yml` | Every pull request and the merge queue, working when the core changed | This doc |
+| `Extension` | `.github/workflows/extension.yml` | Every pull request and the merge queue, working when the browser extension, its components in `packages/ui`, or the core changed | This doc |
 | `Dictionary API` | `.github/workflows/dictionary-api.yml` | Every pull request and the merge queue, working when the service or what it reads changed, the word components in `packages/ui` among them; pushes to `main` that change its cached files; by hand | This doc |
 | `Dictionary API deploy` | `.github/workflows/dictionary-api-deploy.yml` | Pushes to `main` and pull requests that change what the image holds; by hand | [`ci-deploys.md`](ci-deploys.md) |
 | `Account API` | `.github/workflows/account-api.yml` | Every pull request and the merge queue, working when the account service or what the services share changed; by hand | This doc |
@@ -58,13 +59,13 @@ a red check stops no merge. The workflows are built so the owners can require th
   every time: a workflow that its `paths` filter skipped would leave its check pending and block
   the merge, and one that never ran in the merge queue would block the queue.
 - **Each decides inside whether the change concerns it.** `Web`, `Dictionary core`,
-  `Dictionary API`, `Account API`, `iOS`, and `Language data build` begin with a `changes` job.
+  `Extension`, `Dictionary API`, `Account API`, `iOS`, and `Language data build` begin with a `changes` job.
   It asks the `changed-paths` action (`.github/actions/changed-paths/`) whether the pull request,
   or the merge group, changed any of the workflow's paths, comparing the checked-out commit with
   its base, which it fetches. The other jobs need it and run only on `true`. On a push or a run
   by hand there is no base, and it answers `true`.
-- **Each ends in one job named for the workflow** (`web`, `dictionary-core`, `dictionary-api`,
-  `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
+- **Each ends in one job named for the workflow** (`web`, `dictionary-core`, `extension`,
+  `dictionary-api`, `account-api`, `ios`, `language-data-build`). It always runs, and fails when a job it needs
   failed or was cancelled. It is the job to require: a job skipped because the one it needs
   failed would itself count as passing.
 - **A heavy job waits for its workflow's fast checks.** `e2e` needs `check` (`Web`), `website`
@@ -77,7 +78,7 @@ a red check stops no merge. The workflows are built so the owners can require th
 - **A queue run is never cancelled.** A new push cancels a pull request's last run only.
 
 The jobs to require are `verify` (`Repository`), `title`, `branch`, `issue-link`, and `fix-test`
-(`Pull request`), and the six above. `ios` passes without testing the app until the owners turn
+(`Pull request`), and the seven above. `ios` passes without testing the app until the owners turn
 `IOS_SWIFT_TESTS` on ([`ci-ios.md`](ci-ios.md)). An owner adds them under the ruleset's required status
 checks; nothing in the repository can. The merge queue waits 90 minutes for a required check
 (`check_response_timeout_minutes`), and the `swift` job may run for four hours: raise that wait
@@ -168,6 +169,13 @@ its rule that keeps runtimes and frameworks out, typecheck, and Vitest) on pull 
 the core, or `docs/data-sources.md`, which its source credits are held to. Those tests need no data:
 the app-recorded suites run through the core in
 `Dictionary API`, and `Web` builds the site with it. See [`dictionary-core.md`](dictionary-core.md).
+
+## Extension
+
+`.github/workflows/extension.yml` runs `pnpm check` in `apps/extension` (Biome with its layer
+rules, typecheck, Vitest, the release build, and the test build) on pull requests that change the
+extension, `packages/ui`, which draws it, or the core. Nothing loads the built extension in a
+browser yet. See [`extension.md`](extension.md).
 
 ## Dictionary API
 

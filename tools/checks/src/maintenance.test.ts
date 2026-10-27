@@ -139,7 +139,7 @@ describe('renderReport', () => {
   test('lists each quality row to re-grade, with the code that changed and when', () => {
     const report = renderReport(facts)
     expect(report).toContain(
-      '## Scores to re-grade\n\nRows of `docs/quality.md`, `docs/quality-ios.md`, `docs/quality-ios-account.md`, `docs/quality-web.md` whose code changed after the day they were graded.'
+      '## Scores to re-grade\n\nRows of `docs/quality.md`, `docs/quality-ios.md`, `docs/quality-ios-account.md`, `docs/quality-web.md`, `docs/quality-extension.md` whose code changed after the day they were graded.'
     )
     expect(report).toContain(
       '- Dictionary pages (graded 2026-09-30): `apps/web/src/lib/dictionary/` changed 2026-10-03'
