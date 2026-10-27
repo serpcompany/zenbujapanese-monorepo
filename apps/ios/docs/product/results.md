@@ -41,7 +41,7 @@ choice, an unreadable dictionary, a disabled one, and none enabled, on the bundl
 ## Filtering results
 
 The **Sorted by** row's menu has a **Filter** row, naming its current choice underneath, under
-**Sort By**. It opens **All**, **Known**, and **Unknown**, one checked at a time: **Known** shows
+**Sort By**. It opens **All**, **Unknown**, and **Known**, one checked at a time: **Known** shows
 only known words and **Unknown** only the words not yet known. Marking a word known or unknown moves
 it out of or into the list at once. Enabling and disabling frequency dictionaries happens under
 **Account → Frequency Dictionaries**, not here.

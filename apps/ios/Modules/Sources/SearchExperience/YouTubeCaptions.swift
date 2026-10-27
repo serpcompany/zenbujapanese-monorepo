@@ -107,6 +107,7 @@ enum YouTubeCaptionError: Error, Equatable {
   case videoUnavailable
   case noJapaneseCaptions
   case unreadableCaptions
+  case refused(status: Int)
 }
 
 enum YouTubeCaptionParsing {
@@ -355,7 +356,10 @@ struct YouTubeCaptionClient: Sendable {
     self.captions = captions
   }
 
-  init(fetching fetch: YouTubeFetch) {
+  init(
+    fetching fetch: YouTubeFetch,
+    recording record: @escaping @Sendable (HandledProblem) -> Void = { CrashReporter.record($0) }
+  ) {
     captions = { videoID in
       let (title, author, tracks) = try YouTubeCaptionParsing.tracks(
         fromPlayerResponse: try await fetch.playerResponse(videoID))
@@ -367,8 +371,8 @@ struct YouTubeCaptionClient: Sendable {
       guard !cues.isEmpty else { throw YouTubeCaptionError.noJapaneseCaptions }
       var paired = cues
       if track.isTranslatable,
-        let data = try? await fetch.timedText(track.baseURL, "en"),
-        let translations = try? YouTubeCaptionParsing.translationSentences(fromTimedText: data)
+        let translations = await YouTubeTranslation.sentences(
+          of: track, fetching: fetch, recording: record)
       {
         paired = YouTubeCaptionParsing.pairing(cues, with: translations)
       }
@@ -412,9 +416,14 @@ struct YouTubeFetch: Sendable {
     components.queryItems = items
     guard let url = components.url else { throw YouTubeCaptionError.unreadableCaptions }
     let (data, response) = try await URLSession.shared.data(from: url)
-    guard (response as? HTTPURLResponse)?.statusCode == 200, !data.isEmpty else {
+    return try timedTextAnswer(data, response)
+  }
+
+  static func timedTextAnswer(_ data: Data, _ response: URLResponse) throws -> Data {
+    guard let status = (response as? HTTPURLResponse)?.statusCode else {
       throw YouTubeCaptionError.unreadableCaptions
     }
+    guard status == 200 else { throw YouTubeCaptionError.refused(status: status) }
     return data
   }
 }

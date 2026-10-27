@@ -16,6 +16,7 @@ import {
   hiddenCountTitle,
   type LookupsByEntry,
   orderedByFrequency,
+  type ResultFilter,
   type ResultSort,
   relevanceSort,
   resultFilter,
@@ -25,7 +26,8 @@ import {
   sortAnnouncement,
   sortedResults,
   sortSummary,
-  storedSort
+  storedSort,
+  type WordStatus
 } from './ordering'
 import {
   discoveredWordsHeading,
@@ -72,6 +74,7 @@ export interface LearnerState {
   sort: string
   filter: string
   known: readonly string[]
+  learning: readonly string[]
   pickedKanji: boolean
 }
 
@@ -142,10 +145,10 @@ export function wordRows(
 
 function menu(
   sort: ResultSort,
-  filter: ReturnType<typeof resultFilter>,
+  filter: ResultFilter,
   dictionaries: readonly FrequencyDictionary[],
   ordered: readonly ListedItem[],
-  isKnown: (id: string) => boolean
+  status: (id: string) => WordStatus
 ): ResultsMenu {
   const sorts: ResultSort[] = [
     relevanceSort,
@@ -173,7 +176,7 @@ function menu(
       options: resultFilters.map(option => ({
         value: option,
         title: filterTitles[option],
-        announcement: shownCountAnnouncement(filteredResults(ordered, option, isKnown).length)
+        announcement: shownCountAnnouncement(filteredResults(ordered, option, status).length)
       }))
     }
   }
@@ -189,7 +192,10 @@ export function learnerResultsScreen(
   const layout = resultsLayout(rawQuery, results, exampleCount, learner.pickedKanji)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query, ...noMatches }
   const known = new Set(learner.known)
+  const learning = new Set(learner.learning)
   const isKnown = (id: string) => known.has(id)
+  const status = (id: string): WordStatus =>
+    isKnown(id) ? 'known' : learning.has(id) ? 'learning' : 'unknown'
   const frequencyEntries = [...new Set(layout.presented.map(item => item.id))]
   const lookups = evidenceLookups(frequency(frequencyEntries))
   const dictionaries = enabledDictionaries(frequencyEntries, lookups)
@@ -202,7 +208,7 @@ export function learnerResultsScreen(
     lookups,
     isKnown
   )
-  const shown = filteredResults(ordered, filter, isKnown)
+  const shown = filteredResults(ordered, filter, status)
   const isRanked = layout.sections.includes('results')
   const count = shown.length + (layout.kanji ? 1 : 0)
   const rows = layout.isDiscovered
@@ -227,7 +233,7 @@ export function learnerResultsScreen(
     sections: layout.sections,
     menu:
       !layout.isDiscovered && layout.presented.length > 0
-        ? menu(sort, filter, dictionaries ?? [], ordered, isKnown)
+        ? menu(sort, filter, dictionaries ?? [], ordered, status)
         : null,
     forgetsSort: forgetsSort(chosen, dictionaries),
     examples: layout.examples && {

@@ -204,6 +204,7 @@ const results: Record<string, string> = {
   'Kanji detail': '漢字の詳細',
   Known: '覚えた',
   Unknown: 'まだ覚えていない',
+  Learning: '学習中',
   All: 'すべて',
   'Known Words': '覚えた単語',
   Default: '標準',

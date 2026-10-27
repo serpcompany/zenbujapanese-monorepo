@@ -49,8 +49,14 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(menu.sort.options.map(\.title) == ["Default", "JLPT", "YouTube", "Known Words"])
     #expect(menu.sort.chosen == "default")
     #expect(menu.status == "Sorted by Default")
-    #expect(menu.filter.options.map(\.value) == ["all", "known", "unknown"])
-    #expect(menu.filter.options.map(\.title) == ["All", "Known", "Unknown"])
+  }
+
+  @Test("Filter offers All, Unknown, and Known, leaving out the core's Learning for now")
+  func filterChoices() async throws {
+    let menu = try #require(try await SearchedScreen.search("iru").list.menu)
+    #expect(menu.filter.options.map(\.value) == ["all", "unknown", "learning", "known"])
+    #expect(menu.filter.offeredOptions.map(\.value) == ["all", "unknown", "known"])
+    #expect(menu.filter.offeredOptions.map(\.title) == ["All", "Unknown", "Known"])
   }
 
   @Test("sorting by a dictionary orders every word by it and leads each row with its chip")
@@ -92,8 +98,8 @@ struct ResultsScreenTests: SearchResultFixture {
     #expect(try filtered.list.menu?.status == "Sorted by Default · 1 filter")
     #expect(try filtered.list.menu?.filter.title == "Known")
     #expect(
-      try filtered.list.menu?.filter.options.map(\.announcement)
-        == ["\(ids.count) words shown", "2 words shown", "\(ids.count - 2) words shown"])
+      try filtered.list.menu?.filter.offeredOptions.map(\.announcement)
+        == ["\(ids.count) words shown", "\(ids.count - 2) words shown", "2 words shown"])
     #expect(try filtered.list.hiddenByFilter == nil)
   }
 
