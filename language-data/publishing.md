@@ -104,12 +104,12 @@ file's copy comes in parts a stopped download can restart from.
   `sha256`, `bytes`, and `parts`, each with its `key`, `bytes`, and `sha256`. Its schema is
   [`language-data-compressed.v1.schema.json`](schemas/language-data-compressed.v1.schema.json),
   and the publisher holds what it writes to it.
-- **Written for any release without them.** After `releases.json`, the publisher writes the
-  gzipped copies of every listed release with no `compressed.json`, so a release published before
-  them gets them on the workflow's next run. A file comes from the staged release, or else from the
-  bucket. Every file is packed, and checked against the manifest's SHA-256 both as read and as its
-  parts unpack, before any part is uploaded, so a part that doesn't unpack to its file fails the
-  publish with nothing uploaded. Parts are uploaded as files are, and `compressed.json` last: a
+- **Written for any release without them.** After `releases.json`, the publisher writes the gzipped
+  copies of every listed release with no `compressed.json`, so a release published before them gets
+  them on the workflow's next run. A file comes from the staged release, or else from the bucket.
+  Every file is packed, and checked against the manifest's SHA-256 both as read and as its parts
+  unpack, before any part is uploaded, so a part that doesn't unpack to its file fails the publish
+  with nothing uploaded. Parts are uploaded once every file is packed, and `compressed.json` last: a
   client that finds it finds every part it names. A release with a `compressed.json` is skipped, so
   it's never rewritten, and a rerun publishes nothing new.
 - **A listed release can have no `compressed.json` yet.** On every run, the newest release is in
