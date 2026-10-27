@@ -44,11 +44,11 @@ feature code calls: `DecodedImage` and `Image(imageData:)`, `Color.adaptive` and
 `PagedView`, `CameraCapture` and `ImageCameraPicker`, `ImagePhotoLibraryPicker`,
 `importsImagesFromDevices`, `BackgroundRefresh`, `ApplicationDelegateAdaptor`, `keyWindowAnchor`,
 `AppleSignInButton`, `ListEditButton` and `ListEditMode`, `ThisDevice`, and the modifiers in
-`PlatformModifiers.swift`
-(`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`, `.barLeading` and `.barTrailing`,
-`.bottomAccessory`, `.rowActions`, `.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`,
-`.sheetClose`, `SheetCloseAndAction`, `.barTrailingItems`, `.tileIconLabel()`,
-`.backButtonHidden()`, `.listedInItsMenu()`, `.tabShell()`, and the rest), and
+`PlatformModifiers.swift` (`.inlineNavigationTitle()`, `.groupedList()`, `.textEntry(_:)`,
+`.barLeading` and `.barTrailing`, `.bottomAccessory`, `.rowActions`,
+`.dragToCloseSheet(sizeOnMac:)`, `.sheetSize(onMac:)`, `.sheetClose`, `SheetCloseAndAction`,
+`.barTrailingItems`, `.tileIconLabel()`, `.backButtonHidden()`, `.listedInItsMenu()`,
+`.keepsItsMenuOpen()` (not on the Mac), `.tabShell()`, and the rest), and
 `.focusedOnceTheClickIsHandled(_:)` in `ListFieldFocus.swift`. The tab shell (`.tabShell()`) is the
 sidebar-adaptable style on iPhone and iPad and the tab-bar-only style on the Mac. On macOS 26 the
 sidebar-adaptable style puts every tab's `NavigationStack` in one split-view column that keeps the

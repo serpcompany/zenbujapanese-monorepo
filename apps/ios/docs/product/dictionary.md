@@ -291,8 +291,8 @@ as Image Search does and underlines each, so word boundaries are visible. An inf
 adjective is one word with its endings, such as 見なかった, 見ている, or 静かな, and opens its dictionary entry.
 The words that make up the current entry or the looked-up form are accented. Words the learner
 marked known have no underline, and no furigana when **Hide Furigana on Known Words** is on, but can
-still be selected. With **Show Word Meanings** on, each unknown word shows a short accent-colored
-meaning under it, and **Show Sentence Translations** controls whether sentences show their English.
+still be selected. Switches in [Reading Aids](reading-aids.md) and in Example Sentences' **•••**
+menu add a short accent-colored meaning under each unknown word and each sentence's English.
 
 Check: the recorded `ExampleSearchConformanceTests`; core `examples/morphology.test.ts` and
 `linking.test.ts` (which pieces join into one word), `artifact/word-examples.test.ts` (which words
@@ -321,12 +321,12 @@ Check: the recorded `WordDetailConformanceTests` (each pack's row and its detail
 The top-right of a word detail holds **Share**, which shares the headword, reading, and numbered
 meanings as text, with the link to the word's page on zenbujapanese.com, the canonical URL the
 website gives it (`https://zenbujapanese.com/dictionary/%E8%A6%8B%E3%82%8B-1259290/` for 見る). The
-link goes as a web link beside the text, on every device. With Zenbu it
-opens the word in Zenbu ([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), else the
-website. Beside Share is a **•••** menu. The menu starts with **Mark as Known** (or **Mark as
-Unknown**) and **Add to List…**, followed by Add Note, Take Photo, and Choose Photo. A known word
-shows the same **✓ Known** capsule under its headword. A word counts as unknown until the learner
-marks it, and known words persist on the device, keyed by the dictionary entry's stable identifier.
+link goes as a web link beside the text, on every device. With Zenbu it opens the word in Zenbu
+([Links from zenbujapanese.com](#links-from-zenbujapanesecom)), else the website. Beside Share is a
+**•••** menu. The menu starts with **Mark as Known** (or **Mark as Unknown**) and **Add to List…**,
+followed by Add Note, Take Photo, Choose Photo, and the **Show** switches. A known word shows the
+same **✓ Known** capsule under its headword. A word counts as unknown until the learner marks it,
+and known words persist on the device, keyed by the dictionary entry's stable identifier.
 
 Check: UI `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown` (the menu,
 without **Take Photo** on the Mac); package `WordKnowledgeTests`; `WordDetailShareTests` (what

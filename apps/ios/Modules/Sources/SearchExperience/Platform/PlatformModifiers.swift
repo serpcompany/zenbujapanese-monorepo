@@ -88,6 +88,14 @@ extension View {
     #endif
   }
 
+  func keepsItsMenuOpen() -> some View {
+    #if os(macOS)
+      self
+    #else
+      menuActionDismissBehavior(.disabled)
+    #endif
+  }
+
   func tileIconLabel() -> some View {
     #if os(macOS)
       labelStyle(TileIconLabelStyle())
