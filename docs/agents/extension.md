@@ -50,7 +50,7 @@ reads the browsing history.
 | `src/shared/` | The messages and their types, the settings (`settings.ts`) and the hook pages read them with (`use-settings.ts`), the site a content script tells the header it is on (`page-site.ts`), the shared labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
-| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it and follows the settings (`settings-follower.tsx`). |
+| `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it, follows the settings (`settings-follower.tsx`), and tells the header its site. |
 | `src/test/` | What the DOM tests share: a fake `chrome` (`fake-chrome.ts`), rendering and clicking (`render.tsx`), the extension's pages and a content script on one fake Chrome (`extension.tsx`), and a stand-in for the dictionary's state (`dictionary.tsx`). It imports nothing from Vitest, so the layer rules hold it like runtime code. |
 
 ### Messages
