@@ -4,6 +4,8 @@ export type ContentScript = { name: string; entry: string; matches: string[] }
 
 export const minimumChromeVersion = '138'
 
+export const extensionVersion = '0.1.0'
+
 const testPagesContentScript: ContentScript = {
   name: 'test-content-script',
   entry: 'test-pages/test-content-script.tsx',
@@ -33,7 +35,7 @@ export function manifest(variant: Variant) {
     manifest_version: 3,
     name: 'Zenbu Japanese',
     description: 'Look up Japanese words on any page.',
-    version: '0.1.0',
+    version: extensionVersion,
     minimum_chrome_version: minimumChromeVersion,
     action: { default_title: 'Zenbu Japanese', default_popup: 'pages/popup.html' },
     side_panel: { default_path: 'pages/side-panel.html' },

@@ -1,7 +1,14 @@
 import { fileURLToPath } from 'node:url'
 import tailwindcss from '@tailwindcss/postcss'
 import { build, type InlineConfig, type Plugin, type UserConfig } from 'vite'
-import { type ContentScript, contentScripts, manifest, type Variant } from './manifest.ts'
+import { errorReportDefines } from './error-reports.ts'
+import {
+  type ContentScript,
+  contentScripts,
+  extensionVersion,
+  manifest,
+  type Variant
+} from './manifest.ts'
 import { shadowSafeCss } from './shadow-safe-css.ts'
 
 const packageFolder = fileURLToPath(new URL('..', import.meta.url))
@@ -32,6 +39,7 @@ function shared(variant: Variant): UserConfig {
     base: './',
     publicDir: false,
     logLevel: 'warn',
+    define: errorReportDefines(extensionVersion, process.env),
     css: {
       postcss: {
         plugins: [tailwindcss({ base: packageFolder }), shadowSafeCss(isShadowRootStylesheet)]
@@ -41,7 +49,8 @@ function shared(variant: Variant): UserConfig {
     build: {
       outDir: fromPackage(outputFolders[variant]),
       assetsInlineLimit: 0,
-      chunkSizeWarningLimit: 2048
+      chunkSizeWarningLimit: 2048,
+      sourcemap: 'hidden'
     }
   }
 }

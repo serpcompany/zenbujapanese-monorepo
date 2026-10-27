@@ -24,8 +24,15 @@ import {
 import { useState } from 'react'
 import { type Ask, DictionaryStatus } from '../src/shared/dictionary-status'
 
+export const testErrorMessage = 'Zenbu test error from the content script'
+
+function ThrowTestError(): never {
+  throw new Error(testErrorMessage)
+}
+
 export function TestSurface({ ask }: { ask?: Ask }) {
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [throwing, setThrowing] = useState(false)
   return (
     <Card data-test="card" className="m-4 w-96">
       <CardHeader>
@@ -47,6 +54,10 @@ export function TestSurface({ ask }: { ask?: Ask }) {
           <Button data-test="dialog-trigger" onClick={() => setDialogOpen(true)}>
             Dialog
           </Button>
+          <Button data-test="test-error" variant="outline" onClick={() => setThrowing(true)}>
+            Test error
+          </Button>
+          {throwing && <ThrowTestError />}
         </div>
       </CardContent>
       <CardFooter className="text-sm text-muted-foreground">

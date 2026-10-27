@@ -19,6 +19,7 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm upload-source-maps [folder]` | Uploads a build's source maps to Sentry and takes them out of the folder ([Error reports](#error-reports)). |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
@@ -36,9 +37,10 @@ outside the first version. The Store listing, its ID, and the version and builds
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
+| `src/error-reports/` | Sentry for every part, and the `beforeSend` that scrubs each event ([Error reports](#error-reports)). |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
+| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, Sentry's settings, and the source-map upload. |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
 
 ### Messages
@@ -86,8 +88,59 @@ root, and draws inside it:
 Comic Sans, letter spacing, uppercase, dashed borders on every element, `button { all: unset }`,
 and the theme's own token names set to other values), and `tailwind.html`, built with its own
 Tailwind v4, which registers the `--tw-*` properties. Load `dist-test/`, open either page, and the
-test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, and
-a Dialog. The release build has no content script; `build/manifest.test.ts` checks that.
+test content script mounts `TestSurface`: a Card with the dictionary status, a DropdownMenu, a
+Dialog, and Test error, which throws while drawing so the content script reports it. The release build has no content script; `build/manifest.test.ts` checks that.
+
+## Error reports
+
+Every part reports its errors to Sentry's `zenbujapanese-extension` in `serpcompany`, the
+extension's own project, set up as the app's is ([`ios-crash-reports.md`](ios-crash-reports.md)).
+There are no usage analytics.
+
+- **Which builds send.** The DSN is `sentryDsn` in `build/error-reports.ts`; it only lets a client
+  send events, so it isn't a secret. The build puts it, the environment, and the release
+  (`zenbujapanese-extension@<manifest version>`) into the code as `import.meta.env.ZENBU_SENTRY_*`.
+  The environment follows the app's: `qa`, unless `ZENBU_SENTRY_ENVIRONMENT=production` is set for
+  the build, which #986's production package does; its staging package stays `qa`. Tests define
+  none of them, so nothing in Vitest reaches Sentry. Until the project exists, `sentryDsn` is
+  empty and no build sends anything.
+- **The extension's own contexts** (`startErrorReports(part)`): the pages (in `mountPage`), the
+  service worker, the offscreen document, and the dictionary worker call `Sentry.init` with
+  global handlers, so an uncaught error or rejection goes. Each event is tagged `part`: `page`,
+  `service-worker`, `offscreen`, or `worker`.
+- **Content scripts** (`contentScriptErrorReports()`) run beside the page's own code, so they
+  never call `Sentry.init` and add no global handler, as Sentry's
+  [guide for browser extensions](https://docs.sentry.io/platforms/javascript/best-practices/browser-extensions/)
+  says: a `BrowserClient` with its own `Scope` sends only what the content script hands it, such as
+  an error React throws while drawing (`mountInShadowRoot`'s `report`). An error in the page's own
+  script reaches nothing of Zenbu's. Its requests go with `referrerPolicy: 'no-referrer'`.
+- **What an event holds.** Only the integrations that find a fault run: event filters, function
+  names, linked errors, dedupe, the `User-Agent` header, and, outside content scripts, the global
+  handlers. Breadcrumbs, sessions, client reports, cookies, query strings, frame variables, and
+  context lines are off, and Sentry is asked not to infer an IP address (`userInfo: false`).
+  `scrubEvent` (`src/error-reports/scrub.ts`), the `beforeSend`, then drops breadcrumbs, extras,
+  the user, the server name, the transaction, and the request's URL, keeps only the `part` tag and
+  the `browser`, `os`, `runtime`, `device`, and `trace` contexts, turns any frame or debug image
+  that isn't the extension's own (`chrome-extension://`) into `<page>`, and in every message and
+  exception value replaces quoted text (`"…"`, `“…”`, `「…」`, `『…』`), URLs, and Japanese text
+  with a placeholder. So no page text, page URL, selected word, or caption goes, and the code
+  never puts one in an error's message unquoted.
+- **Source maps.** Both builds write hidden source maps (no `sourceMappingURL`) beside their
+  scripts. `pnpm upload-source-maps [folder]` (`build/upload-source-maps.ts`, `dist` by default)
+  installs a pinned `@sentry/cli` without the token, adds debug IDs to the scripts and maps
+  (`sourcemaps inject`), uploads the maps under the manifest's release with the token, and then
+  always deletes every `.map` from the folder, so the store zip, made from the folder afterwards,
+  holds none. The token is `SENTRY_AUTH_TOKEN` or the login keychain's `zenbu-sentry-auth-token`,
+  the app's ([`ios-crash-reports.md`](ios-crash-reports.md), Debug symbols); the script never
+  prints it. No maps, no token, or a step that fails or stalls is a warning and exits 0; since
+  the maps are gone, build the same commit again to upload later (the debug IDs come from the
+  files' contents). #986's workflow runs it on each package.
+- **Checking one arrives.** In the agent Chrome harness, load a build with the DSN, then throw
+  from each context: `setTimeout(() => { throw new Error('Zenbu test error: <part>') })` evaluated
+  in a page, the service worker, the offscreen document, and the dictionary worker, and Test
+  error on the test surface for the content script. Find each in `zenbujapanese-extension`,
+  environment `qa`. Throwing the same way in a test page's own context, with the content script
+  running, must send nothing (`--net sentry`).
 
 ## Layers
 
@@ -115,8 +168,13 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   the first ask after the document closed, and each failure; the relay waiting for the worker to
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
-  the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again.
+  the shadow root, an error in its content handed to its reporter, and unmounting, and
+  `DictionaryStatus` checking, ready, failed, and Check again. Error reports: `scrub.test.ts`
+  (page text, a page URL, and a selected word gone from every part of an event), the content
+  script's client sending its own error but never the page's, with no global handler, the pages'
+  and a worker's uncaught errors sent with their part, all through a recording transport
+  (`src/test/recording-settings.ts`), and the upload script's steps, token, warnings, and the maps
+  taken out (`build/upload-source-maps.test.ts`).
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check

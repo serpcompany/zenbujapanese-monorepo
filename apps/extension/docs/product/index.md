@@ -19,6 +19,13 @@ The dictionary answers even after Chrome has closed the document that holds it: 
 opens it again on the next request, and that first request is answered
 (`src/service-worker/offscreen-document.test.ts`, `src/service-worker/round-trip.test.ts`).
 
+## Error reports
+
+The extension sends its own errors to Zenbu's Sentry project, so they can be fixed: never the text
+of the page a learner reads, its address, or a word they select, and never an error from the
+page's own code (`src/error-reports/scrub.test.ts`, `src/error-reports/error-reports.interaction.test.tsx`;
+that one arrives, in Chrome by hand). There are no usage analytics.
+
 ## Not built yet
 
 Looking words up, the word popup on a page, saving, and translating aren't built. The release

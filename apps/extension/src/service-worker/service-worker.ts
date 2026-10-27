@@ -1,5 +1,8 @@
+import { startErrorReports } from '../error-reports/error-reports'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
+
+startErrorReports('service-worker')
 
 const offscreenDocument = offscreenDocumentKeeper({
   getURL: path => chrome.runtime.getURL(path),
