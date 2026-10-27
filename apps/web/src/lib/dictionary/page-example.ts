@@ -4,7 +4,7 @@ import { hasSearchPath, kanjiSearchPath, searchPath } from './urls'
 
 export type Linked<T> = T & { path: string | null }
 
-export type PageExampleToken = Linked<ExampleToken>
+type PageExampleToken = Linked<ExampleToken>
 
 export interface PageExample extends Omit<Example, 'tokens' | 'japanese' | 'english'> {
   tokens: PageExampleToken[]

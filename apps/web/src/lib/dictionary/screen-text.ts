@@ -100,11 +100,7 @@ export function frequencyRowsIn(
   }))
 }
 
-export function strokeLabelsIn(
-  character: string,
-  strokeCount: number,
-  locale: Locale
-): StrokeOrderLabels {
+function strokeLabelsIn(character: string, strokeCount: number, locale: Locale): StrokeOrderLabels {
   const text = (value: string) => coreText(value, locale)
   const labels = strokeOrderLabels(character, strokeCount)
   return {

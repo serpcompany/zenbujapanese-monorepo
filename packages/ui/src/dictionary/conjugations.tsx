@@ -35,9 +35,9 @@ export interface ShownConjugations extends Omit<Conjugations, 'modes' | 'rows'> 
   rows: Record<ConjugationMode, ShownConjugationRow[]>
 }
 
-export type LoadFormExamples = (surface: string) => Promise<ShownExample[]>
+type LoadFormExamples = (surface: string) => Promise<ShownExample[]>
 
-export interface ConjugationActions extends ExampleActions {
+interface ConjugationActions extends ExampleActions {
   loadFormExamples: LoadFormExamples
 }
 

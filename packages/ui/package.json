@@ -9,7 +9,8 @@
     "./dictionary/*": "./src/dictionary/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
     "./lib/*": "./src/lib/*.tsx",
-    "./styles/*": "./src/styles/*"
+    "./styles/*": "./src/styles/*",
+    "./vitest-projects": "./vitest.projects.ts"
   },
   "scripts": {
     "format": "biome format --write",

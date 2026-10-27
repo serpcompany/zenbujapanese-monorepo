@@ -299,6 +299,21 @@
             "to": {
               "path": "^src/app/"
             }
+          },
+          {
+            "name": "lib-takes-only-types-from-ui",
+            "severity": "error",
+            "comment": "src/lib builds the data the word components draw, so it may name @zenbu/ui's types but never renders a component (docs/agents/ui.md, How the website uses it). Render it from src/components or a route.",
+            "from": {
+              "path": "^src/lib/",
+              "pathNot": "(\\.test\\.tsx?$|^e2e/|^src/test/)"
+            },
+            "to": {
+              "path": "^\\.\\./\\.\\./packages/ui/",
+              "dependencyTypesNot": [
+                "type-only"
+              ]
+            }
           }
         ]
       },
@@ -347,6 +362,18 @@
             "from": {},
             "to": {
               "path": "^\\.\\./account-api/"
+            }
+          },
+          {
+            "name": "service-draws-no-ui",
+            "severity": "error",
+            "comment": "@zenbu/ui is the website's and the browser extension's look; a service sends data and draws nothing, so it never imports the package (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": [
+                "^\\.\\./\\.\\./packages/ui/",
+                "^@zenbu/ui(/|$)"
+              ]
             }
           }
         ]
@@ -498,6 +525,18 @@
                 "(^|/)node_modules/(pg|drizzle-orm|better-auth|hono|@hono|aws4fetch)/"
               ]
             }
+          },
+          {
+            "name": "account-service-draws-no-ui",
+            "severity": "error",
+            "comment": "@zenbu/ui is the website's and the browser extension's look; a service sends data and draws nothing, so it never imports the package (ARCHITECTURE.md, Layers).",
+            "from": {},
+            "to": {
+              "path": [
+                "^\\.\\./\\.\\./packages/ui/",
+                "^@zenbu/ui(/|$)"
+              ]
+            }
           }
         ]
       },
@@ -537,6 +576,60 @@
             "from": {},
             "to": {
               "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          }
+        ]
+      },
+      {
+        "folder": "packages/ui",
+        "sources": [
+          "src"
+        ],
+        "testCode": "\\.test\\.tsx?$",
+        "runtime": {
+          "path": "^src/",
+          "pathNot": "\\.test\\.tsx?$"
+        },
+        "rules": [
+          {
+            "name": "ui-imports-no-client",
+            "severity": "error",
+            "comment": "@zenbu/ui is shared by the website and the browser extension, so it imports neither, nor any repository tool (docs/agents/ui.md, What the package may import). Take a link, an action, or text as a prop.",
+            "from": {},
+            "to": {
+              "path": "^\\.\\./\\.\\./(apps|tools)/"
+            }
+          },
+          {
+            "name": "ui-needs-no-next",
+            "severity": "error",
+            "comment": "@zenbu/ui runs in the browser extension too, so nothing it imports, however indirectly, may load Next.js, the theme switcher, or the toasts (docs/agents/ui.md, What the package may import). Take a link as renderWordLink and an action as a callback.",
+            "from": {
+              "path": "^src/",
+              "pathNot": "\\.test\\.tsx?$"
+            },
+            "to": {
+              "path": [
+                "(^|/)node_modules/(next|next-themes|sonner|@opennextjs|server-only)/",
+                "^(next|next-themes|sonner|@opennextjs/[^/]+|server-only)(/|$)"
+              ],
+              "reachable": true
+            }
+          },
+          {
+            "name": "ui-takes-only-detail-from-core",
+            "severity": "error",
+            "comment": "@zenbu/ui draws the core's answers and never runs a lookup, so it imports only the core's detail and sources modules (docs/agents/ui.md, What the package may import). Take what a lookup returns as a prop.",
+            "from": {
+              "path": "^src/",
+              "pathNot": "\\.test\\.tsx?$"
+            },
+            "to": {
+              "path": "^\\.\\./dictionary-core/src/",
+              "pathNot": "^\\.\\./dictionary-core/src/(detail|sources)/",
+              "dependencyTypesNot": [
+                "type-only"
+              ]
             }
           }
         ]

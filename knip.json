@@ -23,6 +23,9 @@
       "entry": ["scripts/*.mjs", "src/embedded/javascriptcore.ts"],
       "includeEntryExports": true
     },
+    "packages/ui": {
+      "includeEntryExports": true
+    },
     "packages/node-service": {
       "includeEntryExports": true,
       "ignoreDependencies": ["tsx"]

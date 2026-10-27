@@ -28,6 +28,10 @@ pre-commit:
       root: packages/dictionary-core/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
       run: pnpm --silent --filter @zenbu/dictionary-core lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+    ui:
+      root: packages/ui/
+      glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css}"
+      run: pnpm --silent --filter @zenbu/ui lint --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
     checks:
       root: tools/checks/
       glob: "*.{ts,js,mjs,cjs,json,jsonc}"
@@ -37,7 +41,7 @@ pre-push:
   commands:
     web:
       skip:
-        - run: git diff --quiet origin/main...HEAD -- apps/web packages/dictionary-core packages/account-rules tools/checks/ports.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml
+        - run: git diff --quiet origin/main...HEAD -- apps/web packages/ui packages/dictionary-core packages/account-rules tools/checks/ports.mjs package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: >-
         pnpm --silent --filter zenbujapanese-web lint &&
         pnpm --silent --filter zenbujapanese-web typecheck &&
@@ -69,6 +73,10 @@ pre-push:
       skip:
         - run: git diff --quiet origin/main...HEAD -- packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
       run: pnpm --silent --filter @zenbu/dictionary-core check
+    ui:
+      skip:
+        - run: git diff --quiet origin/main...HEAD -- packages/ui packages/dictionary-core package.json pnpm-lock.yaml pnpm-workspace.yaml
+      run: pnpm --silent --filter @zenbu/ui check
     checks:
       skip:
         - run: git diff --quiet origin/main...HEAD -- tools/checks .github .claude deploy lefthook.yml verify.json package.json pnpm-lock.yaml pnpm-workspace.yaml

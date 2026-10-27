@@ -1,8 +1,8 @@
 import { fileURLToPath } from 'node:url'
-import { configDefaults, defineConfig } from 'vitest/config'
+import { nodeAndDomProjects } from '@zenbu/ui/vitest-projects'
+import { defineConfig } from 'vitest/config'
 import { checkoutPorts } from './e2e/server'
 
-const interactionTests = 'src/**/*.interaction.test.tsx'
 const linksWithNextConfigTrailingSlash = { __NEXT_TRAILING_SLASH: 'true' }
 const againstTheDictionaryService = process.env.ZENBU_DICTIONARY_API === '1'
 const thisCheckoutsDictionaryService = () => ({
@@ -18,19 +18,6 @@ export default defineConfig({
       ...linksWithNextConfigTrailingSlash,
       ...(againstTheDictionaryService ? thisCheckoutsDictionaryService() : {})
     },
-    projects: [
-      {
-        extends: true,
-        test: {
-          name: 'node',
-          include: ['src/**/*.test.{ts,tsx}'],
-          exclude: [...configDefaults.exclude, interactionTests]
-        }
-      },
-      {
-        extends: true,
-        test: { name: 'happy-dom', include: [interactionTests], environment: 'happy-dom' }
-      }
-    ]
+    projects: nodeAndDomProjects
   }
 })

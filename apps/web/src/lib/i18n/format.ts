@@ -1,7 +1,7 @@
 import { fill } from '@zenbu/dictionary-core/detail/text'
 import type { Locale } from './config'
 
-export { fill, templateParts } from '@zenbu/dictionary-core/detail/text'
+export { fill } from '@zenbu/dictionary-core/detail/text'
 
 export type Plural = { one?: string; few?: string; many?: string; other: string }
 

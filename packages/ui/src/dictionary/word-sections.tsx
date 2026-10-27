@@ -16,19 +16,19 @@ import { Section } from './section'
 import { SourceText } from './source-text'
 import type { RenderWordLink } from './word-link'
 
-export interface ShownNote {
+interface ShownNote {
   text: string
   source: boolean
 }
 
-export interface ShownSense<E> {
+interface ShownSense<E> {
   number: number
   meaning: string
   notes: ShownNote[]
   example: E | null
 }
 
-export interface ShownAlternativeForm extends Omit<AlternativeForm, 'labels' | 'labelText'> {
+interface ShownAlternativeForm extends Omit<AlternativeForm, 'labels' | 'labelText'> {
   labels: string | null
 }
 
@@ -49,7 +49,7 @@ export interface ShownWordSections<E> {
   examples: { count: string | null } | { empty: string }
 }
 
-export interface WordSectionsText {
+interface WordSectionsText {
   lang: string
   word: { kanjiRowLabel: string; formSeparator: string }
   frequency: FrequencyText

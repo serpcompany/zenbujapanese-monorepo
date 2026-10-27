@@ -61,7 +61,7 @@ seen the work. Give it the changed pages' paths, `docs/agents/web.md` (UI compon
 `verify-web` skill, and ask it to run the site and screenshot each changed page at desktop and
 phone widths, in light and dark, next to `/products/` and a browse page, and to find:
 
-- a hand-rolled element where a stock shadcn component exists (`apps/web/src/components/ui/`, or
+- a hand-rolled element where a stock shadcn component exists (`packages/ui/src/components/`, or
   one the shadcn CLI adds);
 - a `className` on a stock component that changes its size, padding, radius, border, colour, type
   size, or density, and any colour literal or arbitrary Tailwind value;

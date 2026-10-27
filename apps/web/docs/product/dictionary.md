@@ -388,9 +388,9 @@ once. When the dictionary has been updated since the page loaded, it says so and
 - Check: `search-examples.test.tsx`, the ES cases (the first 25 rendered, then every later page the
   service answers, against ES `ids`); `data.test.ts`, "a search’s examples from another build load
   no more"; `src/app/[locale]/dictionary/search/[query]/examples.json/route.test.ts`;
-  `src/components/dictionary/load-more.interaction.test.tsx` and `load-more.test.ts` (one request
-  per page when a click and scrolling coincide); smoke "eat lists its example sentences on its page
-  as the app does, 25 at a time", which reads the first sentence from ES.
+  `packages/ui/src/dictionary/load-more.interaction.test.tsx` and `load-more.test.ts` (one
+  request per page when a click and scrolling coincide); smoke "eat lists its example sentences
+  on its page as the app does, 25 at a time", which reads the first sentence from ES.
 
 **Title and count.** The section is titled Example Sentences. Under the title, a line says how
 many sentences it lists ("60 examples"; "The first 100 of more than 100 examples" when more match
@@ -443,7 +443,7 @@ the page URL and shows "Link copied". There is no back button; the breadcrumbs r
   actions at the end of the breadcrumb row"; the menu and the prompt, at a desktop and a phone
   width: `apps/web/e2e/word.spec.ts`, "opens the More actions menu with the app's actions" and
   "copies the link from the More actions menu"; Share:
-  `src/components/dictionary/saved-item-actions.interaction.test.tsx`, "sends the page it is on".
+  `src/components/dictionary/item-actions.interaction.test.tsx`, "sends the page it is on".
 
 **Header card.** The card shows the headword with furigana, the page's one `h1`. The heading's text
 is the headword alone: each furigana reading is a `data-reading` attribute drawn with CSS
@@ -684,8 +684,8 @@ updated since the page loaded." and offers a reload.
 - Check: `src/lib/dictionary/data.test.ts`, "a page from another build doesn't load this build's
   examples"; `src/app/[locale]/dictionary/examples/[file]/route.test.ts`, "is not found for an
   unknown word or another build". The message and its reload:
-  `src/components/dictionary/load-more.interaction.test.tsx`, "a page from another dictionary build
-  says its examples were updated, and reloads".
+  `packages/ui/src/dictionary/load-more.interaction.test.tsx`, "a stale page says the examples were
+  updated, and its button reloads"; the stale answer: `src/lib/dictionary/page-fetch.test.ts`.
 
 **Credits.** A word page ends with a Sources list: JMdict, UniDic, KANJIDIC2, JLPT vocabulary lists,
 TUBELEX, and Tatoeba. When it can show a kanji's details, it adds RADKFILE, KanjiVG when any of them
@@ -847,7 +847,7 @@ actions and Open in App open the get-the-app prompt. Each button is named for it
   (`SharedPage(kanji:page:)`); `SavedItemActions.swift` (`SharedPage`, `ShareButton`); #462 (the
   menu items and the get-the-app prompt).
 - Check: the share text: `packages/dictionary-core/src/detail/kanji.test.ts`, "要"; Share:
-  `src/components/dictionary/saved-item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
+  `src/components/dictionary/item-actions.interaction.test.tsx` ("a kanji's Share"), "sends
   the kanji, its share text, and its search page, not the page it is on" and "copies the kanji's
   search page where the browser has no share sheet"; the buttons' names:
   `src/components/dictionary/kanji-details.test.tsx`, "Share and More actions, named for the
@@ -877,7 +877,7 @@ as in the app.
   row layout).
 - Check: KD `readings`; `packages/dictionary-core/src/detail/kanji.test.ts`, "lists up to three
   words whose reading starts with the reading’s stem"; the rows:
-  `src/components/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
+  `packages/ui/src/dictionary/kanji-readings.test.tsx` ("the rendered kanji Readings rows match the
   app"), which draws every KD case's readings through the component and reads back each row's
   link, spoken label, and text. It reads the suite from the repository, so `pnpm test` runs it;
   `apps/web/e2e/kanji.spec.ts`, "a reading row opens its first word, named as the app's row

@@ -88,7 +88,7 @@ it (#682):
   It runs on `next dev` on the fixtures as the other tests do, or on any running site with
   `E2E_BASE_URL`, such as the production build.
 
-Furigana takes the `furigana` utility in `apps/web/src/app/globals.css`: 0.45 of its word's size,
+Furigana takes the `furigana` utility in `@zenbu/ui`'s theme: 0.45 of its word's size,
 but never under 12 pixels. A drawing's frame carries `data-drawing`, which drops that floor, so a
 drawing's furigana keeps its drawn size.
 
@@ -149,7 +149,7 @@ drawing's furigana keeps its drawn size.
   doesn't have, and it fails with `ReferenceError: __name is not defined` (OpenNext's [keep
   names](https://opennext.js.org/cloudflare/howtos/keep_names) how-to). The browser tests run on the
   Worker build in CI, so the theme tests catch it. The site's toasts read the same theme. Colours
-  come only from the shadcn tokens in `src/app/globals.css`, with `.dark` redefining them; text on
+  come only from the shadcn tokens in `@zenbu/ui`'s theme, with `.dark` redefining them; text on
   the muted grey takes the `muted-surface` utility, which swaps in `--muted-surface-foreground`, a
   darker grey in light mode, since stock `muted-foreground` on `muted` is 4.35:1. The account menu
   (`src/components/account-menu.tsx`) and the phone menu's theme button (`ModeToggle` in
@@ -215,18 +215,18 @@ agent reads there has the same shape.
 
 ### UI components
 
-The site is stock shadcn/ui (style `base-nova`, base colour neutral, `apps/web/components.json`),
+The site is stock shadcn/ui (style `base-nova`, base colour neutral), from [`@zenbu/ui`](ui.md),
 so every page looks like one design system:
 
 - **Use the stock component.** A table is `Table`, a filter or a set of views is `Tabs` or
   `ToggleGroup`, a check box is `Checkbox` with `Label`, a text box is `Input` or `Textarea`, a
   question list is `Accordion`, and an action is `Button`. Add one that's missing with the shadcn
-  CLI (`pnpm dlx shadcn@latest add <name>` in `apps/web`), and keep it as the CLI wrote it,
+  CLI (`pnpm dlx shadcn@latest add <name>` in `packages/ui`), and keep it as the CLI wrote it,
   removing only exports nothing uses, which the dead-code check requires. Never hand-roll a pill,
   chip, segmented control, table, or check box that a stock component covers.
 - **Don't restyle it.** A `className` on a stock component may lay it out (width, grid placement,
   margin), but not change its size, padding, radius, border, colour, type size, or density. Use its
-  variants and sizes instead. Colours come only from the shadcn tokens in `src/app/globals.css`,
+  variants and sizes instead. Colours come only from the shadcn tokens in `@zenbu/ui`'s theme,
   through their Tailwind classes (`bg-background`, `text-muted-foreground`, `border-border`, and
   the rest), never a literal or an arbitrary Tailwind value.
 - **Match the pages that exist.** Page width, headings, lead text, section spacing, cards, and the
@@ -253,7 +253,7 @@ API) for 10 minutes, keyed without the token, since that cache is the Worker's o
 HTTP cache; `pnpm dev` has no such cache. The service names the build that answered
 (`X-Dictionary-Build`: the artifact's SHA-256 prefix and the service's release), and URLs that load
 more of a page's list carry it, so a page open across a new build never mixes two builds' lists.
-Such a list (`apps/web/src/components/dictionary/load-more.tsx`) asks for the items from the number
+Such a list (`packages/ui/src/dictionary/load-more.tsx`) asks for the items from the number
 it shows, so none repeats or is skipped; a route that no longer knows the page's build answers 404,
 and the list offers a reload. Since those URLs name their build, browsers and the edge keep their
 answers for a day. `worker.ts` keeps each rendered page at the edge too (`src/lib/page-cache.ts`),

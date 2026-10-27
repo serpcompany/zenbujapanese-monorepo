@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from 'react'
 
 export type WordLinkTarget = NonNullable<ExampleToken['link']> | { kanji: string }
 
-export interface WordLinkProps {
+interface WordLinkProps {
   target: WordLinkTarget
   className?: string
   title?: string
