@@ -1,5 +1,6 @@
 import { Button } from '@zenbu/ui/components/button'
 import { Empty, EmptyHeader, EmptyTitle } from '@zenbu/ui/components/empty'
+import type { ComponentType } from 'react'
 import { DictionaryProgress } from '../shared/dictionary-progress'
 import { wordDetailLabels } from './labels'
 import type { Unanswered } from './lookups'
@@ -28,4 +29,14 @@ export function UnansweredLookup({ result, retry }: { result: Unanswered; retry:
       </Button>
     </Empty>
   )
+}
+
+export function framed<Props extends object>(Page: ComponentType<Props>): ComponentType<Props> {
+  return function FramedPage(props: Props) {
+    return (
+      <div className="p-4">
+        <Page {...props} />
+      </div>
+    )
+  }
 }

@@ -15,7 +15,7 @@ import { PagedExamples } from './examples'
 import { wordDetailLabels } from './labels'
 import { answered, dictionaryLookups, useLookup, type WordLookups } from './lookups'
 import { Notice, useNotice } from './notice'
-import { UnansweredLookup } from './page-states'
+import { framed, UnansweredLookup } from './page-states'
 import { ReadingAids } from './reading-aids'
 import { useWordLinks } from './word-links'
 
@@ -75,7 +75,7 @@ function FormExamplesView({
   )
 }
 
-export function FormExamplesPage({
+function FormExamplesContent({
   page,
   open,
   lookups = dictionaryLookups
@@ -99,3 +99,5 @@ export function FormExamplesPage({
     />
   )
 }
+
+export const FormExamplesPage = framed(FormExamplesContent)

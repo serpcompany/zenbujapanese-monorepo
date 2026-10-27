@@ -8,7 +8,7 @@ import { useSettings } from '../shared/use-settings'
 import type { PanelPage, PanelPageProps } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { NotFound, UnansweredLookup } from './page-states'
+import { framed, NotFound, UnansweredLookup } from './page-states'
 import { ReadingAids } from './reading-aids'
 import { WordDetailView } from './word-detail-view'
 
@@ -77,7 +77,7 @@ function WordEntries({ entSeqs, first, settings, open, lookups }: EntriesProps) 
   )
 }
 
-export function WordDetailPage({
+function WordDetailContent({
   page,
   open,
   lookups = dictionaryLookups
@@ -98,3 +98,5 @@ export function WordDetailPage({
     />
   )
 }
+
+export const WordDetailPage = framed(WordDetailContent)

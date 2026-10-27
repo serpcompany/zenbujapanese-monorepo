@@ -8,7 +8,7 @@ import type { PanelPage, PanelPageProps } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
 import { Notice, useNotice } from './notice'
-import { NotFound, UnansweredLookup } from './page-states'
+import { framed, NotFound, UnansweredLookup } from './page-states'
 import { ReadingAids } from './reading-aids'
 import { shownKanjiDetails } from './shown'
 import { useWordLinks } from './word-links'
@@ -56,7 +56,7 @@ function KanjiView({
   )
 }
 
-export function KanjiDetailPage({
+function KanjiDetailContent({
   page,
   open,
   lookups = dictionaryLookups
@@ -79,3 +79,5 @@ export function KanjiDetailPage({
     />
   )
 }
+
+export const KanjiDetailPage = framed(KanjiDetailContent)
