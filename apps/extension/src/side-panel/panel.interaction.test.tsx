@@ -36,8 +36,7 @@ function fakeHost(lastTab: PanelTab = 'video', pending: PanelRoute | null = null
     watchRoutes: (_windowId, listener) => {
       watchers.push(listener)
       return () => watchers.splice(watchers.indexOf(listener), 1)
-    },
-    openSettings: vi.fn()
+    }
   }
   const move = (route: PanelRoute) =>
     act(async () => {
@@ -46,11 +45,12 @@ function fakeHost(lastTab: PanelTab = 'video', pending: PanelRoute | null = null
   return { ...host, kept, move }
 }
 
-async function draw(host: PanelHost, data: DataState | null = null) {
+async function draw(host: PanelHost, data: DataState | null = null, again = vi.fn()) {
   await act(async () => {
-    root = createRoot(document.body.appendChild(document.createElement('div')))
-    root.render(<SidePanel host={host} data={data} />)
+    root ??= createRoot(document.body.appendChild(document.createElement('div')))
+    root.render(<SidePanel host={host} data={data} again={again} />)
   })
+  return again
 }
 
 const tabs = () => [...document.querySelectorAll<HTMLElement>('[role="tab"]')]
@@ -143,6 +143,7 @@ describe('SidePanel', () => {
     await draw(host)
     await click(tab('Recent'))
     act(() => root?.unmount())
+    root = undefined
     document.body.replaceChildren()
     await draw(host)
     expect(selectedTab()?.textContent).toBe('Recent')
@@ -169,16 +170,44 @@ describe('SidePanel', () => {
     expect(shownPanel()?.querySelectorAll('a, button')).toHaveLength(0)
   })
 
-  it('opens the settings from the gear', async () => {
+  it('moves focus to the Back row of a page it opens, and to what Back reveals', async () => {
     const host = fakeHost()
     await draw(host)
-    await click(document.querySelector(`button[aria-label="${labels.settings}"]`) as HTMLElement)
-    expect(host.openSettings).toHaveBeenCalledOnce()
+    await host.move({ page: { page: 'test', text: '猫' } })
+    expect(document.activeElement).toBe(backButton())
+    await click(
+      shown('button').find(each => each.textContent === labels.testPage.openAnother) as HTMLElement
+    )
+    const second = backButton()
+    expect(document.activeElement).toBe(second)
+    await click(second as HTMLElement)
+    expect(testPageText()).toEqual(['猫'])
+    expect(document.activeElement).toBe(backButton())
+    await click(backButton() as HTMLElement)
+    expect(document.activeElement).toBe(shownPanel())
   })
 
-  it('shows the dictionary progress, and no tabs, while the dictionary is not ready', async () => {
+  it('shows the dictionary progress on every tab but Translate while the dictionary is not ready', async () => {
     await draw(fakeHost(), { state: 'downloading', done: 10, total: 100 })
-    expect(document.querySelector('[data-dictionary-progress]')).not.toBeNull()
-    expect(tabs()).toHaveLength(0)
+    expect(tabs()).toHaveLength(5)
+    expect(shown('[data-dictionary-progress]')).toHaveLength(1)
+    expect(emptyTitles()).toEqual([])
+    expect(shown('button').filter(each => each.textContent === labels.tryAgain)).toHaveLength(0)
+    await click(tab('Translate'))
+    expect(shown('[data-dictionary-progress]')).toHaveLength(0)
+    expect(emptyTitles()).toEqual([labels.empty.translate.title])
+  })
+
+  it('offers Try Again when the dictionary failed, and shows the tab once it is ready', async () => {
+    const host = fakeHost()
+    const again = await draw(host, { state: 'failed', reason: 'offline' })
+    const tryAgain = () => shown('button').find(each => each.textContent === labels.tryAgain)
+    await click(tryAgain() as HTMLElement)
+    expect(again).toHaveBeenCalledOnce()
+    await draw(host, { state: 'checking' }, again)
+    expect(tryAgain()).toBeUndefined()
+    await draw(host, { state: 'ready', release: '2026.10.1', bytes: 1, checkedAt: null }, again)
+    expect(shown('[data-dictionary-progress]')).toHaveLength(0)
+    expect(emptyTitles()).toEqual([labels.empty.video.title])
   })
 })

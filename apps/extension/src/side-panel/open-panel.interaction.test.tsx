@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { listenForOpenPanel } from '../service-worker/side-panel'
+import { startSidePanel } from '../service-worker/side-panel'
 import { SidePanel } from './panel'
 import { chromePanelHost } from './panel-host'
 import { type OpenPanel, openPanel, type PanelRoute } from './route'
@@ -57,8 +57,7 @@ function fakeBrowser(windowId = 7) {
         addListener: (listener: Listener) => listeners.add(listener),
         removeListener: (listener: Listener) => listeners.delete(listener)
       },
-      sendMessage: (message: unknown) => deliver(message, {}),
-      openOptionsPage: async () => undefined
+      sendMessage: (message: unknown) => deliver(message, {})
     },
     windows: {
       WINDOW_ID_CURRENT: -2,
@@ -67,13 +66,14 @@ function fakeBrowser(windowId = 7) {
       getLastFocused: async () => ({ id: windowId })
     },
     sidePanel: {
+      setPanelBehavior: vi.fn(async () => undefined),
       open: async () => {
         if (!state.gesture) throw new Error(noGesture)
         state.panelOpen = true
       }
     }
   })
-  listenForOpenPanel()
+  startSidePanel()
   const inTab = (tabWindowId: number) => ({
     sendMessage: (message: OpenPanel) => deliver(message, { tab: { windowId: tabWindowId } })
   })
@@ -90,7 +90,7 @@ function fakeBrowser(windowId = 7) {
 async function drawPanel() {
   await act(async () => {
     panel = createRoot(document.body.appendChild(document.createElement('div')))
-    panel.render(<SidePanel host={chromePanelHost} data={null} />)
+    panel.render(<SidePanel host={chromePanelHost} data={null} again={() => undefined} />)
   })
 }
 
@@ -106,6 +106,13 @@ const testPageText = () =>
     .map(page => page.textContent)
 
 describe('openPanel, through the service worker, to the side panel', () => {
+  it('has Chrome open the panel when the toolbar icon is clicked', () => {
+    fakeBrowser()
+    expect(chrome.sidePanel.setPanelBehavior).toHaveBeenCalledExactlyOnceWith({
+      openPanelOnActionClick: true
+    })
+  })
+
   it('opens the closed panel on the test page from a click on a page, and the route is used once', async () => {
     const browser = fakeBrowser()
     await browser.click(() => openPanel(onTestPage, browser.inTab(7)))
@@ -128,7 +135,7 @@ describe('openPanel, through the service worker, to the side panel', () => {
     expect(browser.session.size).toBe(0)
   })
 
-  it('opens the panel from the popup, which has no tab, in the focused window', async () => {
+  it('opens the panel from an extension page that has no tab, in the focused window', async () => {
     const browser = fakeBrowser()
     await browser.click(() => openPanel({ tab: 'translate' }))
     expect(browser.state.panelOpen).toBe(true)

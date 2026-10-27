@@ -1,6 +1,6 @@
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
-import { listenForOpenPanel } from './side-panel'
+import { startSidePanel } from './side-panel'
 
 const offscreenDocument = offscreenDocumentKeeper({
   getURL: path => chrome.runtime.getURL(path),
@@ -16,4 +16,4 @@ chrome.runtime.onMessage.addListener(
   })
 )
 
-listenForOpenPanel()
+startSidePanel()

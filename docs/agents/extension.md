@@ -33,9 +33,9 @@ outside the first version. The Store listing, its ID, and the version and builds
 
 | Folder | What it holds |
 | --- | --- |
-| `src/pages/` | The side panel, the toolbar popup, and the Settings page (the manifest's `options_ui`, opened in a tab). Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
+| `src/pages/` | The side panel and the Settings page (the manifest's `options_ui`, opened in a tab); there is no toolbar popup. Each is a React page that `mountPage` (`mount-page.tsx`) starts with Geist, the theme, and `.dark` following the system setting. |
 | `src/service-worker/` | The service worker. It keeps the offscreen document open (`offscreen-document.ts`), passes a page's request on to it (`router.ts`), and opens the side panel on a route (`side-panel.ts`). |
-| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
+| `src/side-panel/` | The side panel: the header, the tab bar, and each tab's stack of pages (`panel.tsx`), the tabs (`tabs.tsx`) and pages (`pages.tsx`) it draws, the header's controls (`header-controls.tsx`, #959's), routes and `openPanel` (`route.ts`), and its text (`labels.ts`). |
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
@@ -90,14 +90,17 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 `Content`, which gets `open(page)`. A page is a kind in `PanelPage` (`route.ts`) and a line in
 `pages` (`pages.tsx`). Each tab keeps its own stack of pages (`navigation.ts`), and Back pops one.
 
-- **`openPanel(route)` opens it, from a click.** An extension page, the popup, or a content
+- **The toolbar icon opens it.** The manifest's `action` has no popup, and the service worker
+  calls `chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` when it starts
+  (owner, 2026-10-28). The header's trailing side is `HeaderControls`, which #959 fills.
+- **`openPanel(route)` opens it, from a click.** An extension page or a content
   script calls it in the click handler itself, before any `await`. Chrome opens a side panel only
   in response to a user gesture, and the gesture lasts through one message only if the service
   worker calls `chrome.sidePanel.open` before it awaits anything: checked in Chrome 156 on
-  2026-10-28 from a content script, an extension page in a tab, and the popup, and refused after
+  2026-10-28 from a content script, an extension page in a tab, and a toolbar popup, and refused after
   awaiting `chrome.storage`, `chrome.windows.getLastFocused`, or a timer. So the service worker
   (`src/service-worker/side-panel.ts`) calls `open` first, on the sender tab's window or, from
-  the popup, the current one. Then it saves the route in `chrome.storage.session` under
+  a page with no tab, the current one. Then it saves the route in `chrome.storage.session` under
   `sidePanel.route.<windowId>` and sends `{ target: 'side-panel', windowId, route }`.
 - **The panel takes a route once.** An open panel takes the message; one still loading reads the
   key. It listens before it reads, and removes the key when it takes a route. Opening an open
@@ -108,8 +111,17 @@ its content. A tab is a line in `tabs` (`src/side-panel/tabs.tsx`): its id, labe
 - **The test page** (`{ page: 'test' }`) is the test build's: `isPanelRoute` refuses it unless
   `import.meta.env.MODE` is `test`, as it is in Vitest and `pnpm build:test`.
 - **Before the dictionary is ready,** while `useDataState()` says it is checking, downloading, or
-  failed, the panel draws `DictionaryProgress` (`src/shared/dictionary-progress.tsx`) instead of
-  the tabs.
+  failed, every tab but Translate, which doesn't need it, draws `DictionaryProgress`
+  (`src/shared/dictionary-progress.tsx`) instead of its content, and the tab bar stays. A failure
+  adds Try Again, which calls `useDataState()`'s second item to start again.
+- **Focus follows the page shown.** Opening a page focuses its Back row; Back focuses the Back row
+  of the page it reveals, or the tab's panel.
+- **The tab bar is compact, an exception to stock sizes.** Its triggers set `px-0.5 py-1 text-xs`
+  and stack the icon over the label, and its list drops the stock `h-8`. Measured in Chrome 156
+  at 320 px (`tmp/agent/verify/978/tab-bar-sizes.json`): each trigger is 60 px wide; at the stock
+  `text-sm` and padding, Translate's label needs 61 px and gets 46, and Images' needs 48 and gets
+  46, so both are cut (Translate still at 380 px), and with the icon beside the label every label
+  gets 24 px. The compact bar shows all five whole at 320 px.
 
 ## Test pages
 
@@ -147,13 +159,14 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
   load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
   the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
-  again. For the side panel: routes and tab stacks; the service worker calling `open` before it
-  awaits anything, handing the route over, and leaving none when Chrome refuses; and, in
-  happy-dom, the five tabs and their empty states, the arrow keys, pages over a tab and Back, the
-  last tab, the sign-up links, the dictionary progress, and `openPanel` through a fake Chrome to
-  the panel, closed and open.
-- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
-  Settings in light and dark, see "The dictionary is ready." from the test surface, close the
+  again. For the side panel: the manifest with no popup; routes and tab stacks; the service
+  worker opening the panel from the toolbar icon, calling `open` before it awaits anything,
+  handing the route over, and leaving none when Chrome refuses; and, in happy-dom, the five tabs
+  and their empty states, the arrow keys, pages over a tab and Back, focus after each, the last
+  tab, the sign-up links, the dictionary progress on every tab but Translate, Try Again, and
+  `openPanel` through a fake Chrome to the panel, closed and open.
+- **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel from the toolbar icon,
+  and Settings, in light and dark, see "The dictionary is ready." from the test surface, close the
   offscreen document from `chrome://extensions` (Inspect views) and check again, and on both
   test pages open the menu and the dialog, Tab through it, and close it with Esc and with a click
   outside. Open the side panel with `openPanel` from a click, closed and open, and check that

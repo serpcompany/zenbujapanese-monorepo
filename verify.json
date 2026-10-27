@@ -551,7 +551,7 @@
         ],
         "testCode": "(\\.test\\.tsx?$)",
         "entries": [
-          "^src/pages/(side-panel|popup|settings)\\.tsx$",
+          "^src/pages/(side-panel|settings)\\.tsx$",
           "^src/service-worker/service-worker\\.ts$",
           "^src/offscreen/offscreen\\.ts$",
           "^src/worker/dictionary-worker\\.ts$",
