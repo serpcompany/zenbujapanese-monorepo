@@ -53,6 +53,7 @@ export interface WordPageData
     WordDetail,
     'alternatives' | 'kanji' | 'alternativeKanji' | 'related' | 'examples' | 'senses'
   > {
+  languageReferenceId: string
   slug: string
   path: string
   senses: (Omit<Sense, 'example'> & { example: PageExample | null })[]
@@ -120,6 +121,7 @@ function wordPage(rows: WordRows, slug: string, links: Links, build: string): Wo
   const linkKanji = (kanji: WordKanji) => ({ ...kanji, path: links.kanji(kanji.character) })
   return {
     ...detail,
+    languageReferenceId: rows.entry.id,
     slug,
     path: storedWordPath(slug, detail.entSeq),
     senses: detail.senses.map(sense => ({

@@ -203,6 +203,31 @@ describe('the website, editing what an app syncs', () => {
     expect(websiteState(website)).toEqual(phoneState(phone))
   })
 
+  test('a search the website sends without a copy, after the app removed it, is the newest search again on both', async () => {
+    const { app, phone, website, readAll } = await onBoth('website-search-again@example.com')
+    const cat = searchIdFor(app, '猫')
+    phone.change('recentSearch', 'search', cat, {
+      query: '猫',
+      searchedAt: '2026-10-01T00:00:00.000Z'
+    })
+    await phone.sync()
+    phone.change('recentSearch', 'remove', cat)
+    await phone.sync()
+    const searchedAt = '2026-10-27T00:00:00.000Z'
+    const searched = await website.change(
+      'recentSearch',
+      'search',
+      cat,
+      { query: '猫', searchedAt },
+      null
+    )
+    expect(searched).toEqual({ status: 'applied' })
+    await phone.sync()
+    await readAll()
+    expect(phoneState(phone).get(`recentSearch:${cat}`)).toMatchObject({ query: '猫', searchedAt })
+    expect(websiteState(website)).toEqual(phoneState(phone))
+  })
+
   test('a word an app set Learning stays Learning through the website, which shows it not known, until the learner marks it Known there', async () => {
     const { phone, website, readAll } = await onBoth('website-learning@example.com')
     phone.change('knownWord', 'set', word(1), { state: 'learning', ...text })
@@ -219,6 +244,30 @@ describe('the website, editing what an app syncs', () => {
     await phone.sync()
     expect(phoneState(phone).get(`knownWord:${word(1)}`)).toMatchObject({ state: 'known' })
     expect(phoneState(phone).get(`knownWord:${word(2)}`)).toMatchObject({ state: 'learning' })
+    expect(websiteState(website)).toEqual(phoneState(phone))
+  })
+
+  test('with an app that sends every state as set, a stale website change never ends Learning or makes it Known', async () => {
+    const { phone, website, readAll } = await onBoth('website-app-sets@example.com')
+    phone.change('knownWord', 'set', word(3), { state: 'known', ...text })
+    await phone.sync()
+    await readAll()
+    expect(isMarkedKnown(website.heldOne('knownWord', word(3))?.data)).toBe(true)
+    phone.change('knownWord', 'set', word(3), { state: 'unknown' })
+    await phone.sync()
+    expect(await website.change('knownWord', 'clear', word(3))).toEqual({ status: 'applied' })
+    expect(website.heldOne('knownWord', word(3))?.data).toMatchObject({ state: 'unknown' })
+    phone.change('knownWord', 'set', word(3), { state: 'learning', ...text })
+    await phone.sync()
+    expect(await website.change('knownWord', 'mark', word(3), text)).toEqual({
+      status: 'conflict'
+    })
+    expect(website.heldOne('knownWord', word(3))?.data).toMatchObject({
+      state: 'learning',
+      known: false
+    })
+    await phone.sync()
+    expect(phoneState(phone).get(`knownWord:${word(3)}`)).toMatchObject({ state: 'learning' })
     expect(websiteState(website)).toEqual(phoneState(phone))
   })
 })

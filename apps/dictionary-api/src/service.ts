@@ -21,6 +21,7 @@ import type {
   WordResponse,
   WordSitemap
 } from '@zenbu/dictionary-core/artifact/dictionary'
+import type { PagesAsked, PagesResponse } from '@zenbu/dictionary-core/artifact/pages'
 import type { LanguageDataVersion } from '@zenbu/dictionary-core/artifact/word-cards'
 import type { CategoryOrder } from '@zenbu/dictionary-core/browse/categories'
 import type { KanaScript } from '@zenbu/dictionary-core/browse/kana'
@@ -55,6 +56,7 @@ export interface DictionaryService {
   wordSitemaps(): Promise<WordSitemap[]>
   sitemapWords(number: number, after: number, limit: number): Promise<SitemapWord[] | null>
   retired(): Promise<Record<number, number | null>>
+  pages(asked: PagesAsked): Promise<PagesResponse>
   browseSummary(): Promise<BrowseSummaryResponse>
   kanaIndex(script: KanaScript): Promise<KanaIndexResponse>
   kanaInitial(script: KanaScript, initial: string): Promise<KanaInitialResponse | null>
@@ -97,6 +99,7 @@ export function inProcessService(
       return sitemap ? dictionary.sitemapWords(sitemap, after, limit) : null
     },
     retired: async () => dictionary.retired(),
+    pages: async asked => dictionary.pages(asked),
     browseSummary: async () => browse.summary(),
     kanaIndex: async script => browse.kanaIndex(script),
     kanaInitial: async (script, initial) => browse.kanaInitial(script, initial),

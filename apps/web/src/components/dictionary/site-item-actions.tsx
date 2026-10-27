@@ -9,12 +9,13 @@ import {
   PencilIcon,
   SmartphoneIcon
 } from 'lucide-react'
-import { useState } from 'react'
 import { toast } from 'sonner'
+import type { SavedItem } from '@/lib/account/saved-item'
 import type { Locale } from '@/lib/i18n/config'
-import type { Dictionary } from '@/lib/i18n/dictionary'
 import { fill } from '@/lib/i18n/format'
-import { type AppAction, GetAppDialog } from './get-app-dialog'
+import type { AppAction } from './get-app-dialog'
+import { LearnerDialog, useLearnerDialog } from './learner-dialog'
+import type { LearnerText } from './synced-props'
 
 const learnerActions = [
   { action: 'markKnown', icon: CheckCircle2Icon },
@@ -30,17 +31,19 @@ export function SiteItemActions({
   shareText,
   path,
   name,
+  item,
   locale,
-  text
-}: {
+  text,
+  account
+}: LearnerText & {
   title: string
   shareText: string
   path?: string
   name?: string
+  item: SavedItem
   locale: Locale
-  text: Dictionary['learner']
 }) {
-  const [action, setAction] = useState<AppAction | null>(null)
+  const dialog = useLearnerDialog()
   const link = () => (path ? new URL(path, window.location.href).href : window.location.href)
 
   async function copyLink() {
@@ -70,25 +73,20 @@ export function SiteItemActions({
             id: shown,
             icon,
             label: text[shown],
-            onSelect: () => setAction(shown)
+            onSelect: () => dialog.open(shown)
           })),
           [
             {
               id: 'openInApp',
               icon: SmartphoneIcon,
               label: text.openInApp,
-              onSelect: () => setAction('openInApp')
+              onSelect: () => dialog.open('openInApp')
             },
             { id: 'copyLink', icon: LinkIcon, label: text.copyLink, onSelect: copyLink }
           ]
         ]}
       />
-      <GetAppDialog
-        action={action}
-        locale={locale}
-        text={text}
-        onOpenChange={open => !open && setAction(null)}
-      />
+      <LearnerDialog state={dialog} item={item} locale={locale} text={text} account={account} />
     </>
   )
 }

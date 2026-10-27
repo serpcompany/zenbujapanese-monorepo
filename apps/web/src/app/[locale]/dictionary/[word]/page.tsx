@@ -5,6 +5,7 @@ import type { Metadata } from 'next'
 import { notFound, permanentRedirect } from 'next/navigation'
 import { PageToolbar } from '@/components/dictionary/page-toolbar'
 import { wordHeaderIn, wordSectionsProps } from '@/components/dictionary/word-page-props'
+import { wordItem } from '@/lib/account/saved-item'
 import { getWordPage } from '@/lib/dictionary/data'
 import { dictionaryMetadata } from '@/lib/dictionary/metadata'
 import { sourceCreditsIn } from '@/lib/dictionary/screen-text'
@@ -46,6 +47,7 @@ export default async function WordPage({ params }: Props) {
       <PageToolbar
         page={{ label: word.headword, path: word.path, lang: 'ja' }}
         shareText={word.shareText}
+        item={wordItem(word)}
         locale={locale}
       />
 

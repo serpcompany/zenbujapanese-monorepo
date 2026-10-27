@@ -90,6 +90,15 @@ function outcomeOf<F>(result: MutationResult): ChangeOutcome<F> {
   return result.status === 'applied' ? { status: 'applied' } : { status: 'conflict' }
 }
 
+const searchedAfterARemoval = (
+  change: Change,
+  result: MutationResult
+): result is Extract<MutationResult, { status: 'conflict' }> =>
+  change.entity === 'recentSearch' &&
+  change.operation === 'search' &&
+  result.status === 'conflict' &&
+  result.current.data === null
+
 const queryOf = (kind: Kind): KindQuery => ({
   limit: pageSize,
   ...(kind.cursor ? { cursor: kind.cursor } : {}),
@@ -145,6 +154,11 @@ export class AccountCopy<F> {
         result.status === 'conflict'
       ) {
         return this.keepTheNote(entityId, fields, from?.data ?? null, result.current)
+      }
+      if (searchedAfterARemoval(change, result)) {
+        const again = await this.send(change, result.version)
+        if (!again.ok) return failed(again.failure)
+        return this.afterReading(entity, outcomeOf<F>(again.value))
       }
       return this.afterReading(entity, outcomeOf<F>(result))
     })

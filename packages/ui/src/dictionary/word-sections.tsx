@@ -63,6 +63,7 @@ export interface WordSectionsProps<E> extends Pick<KanjiDetailsProps, 'learnerPr
   renderWordLink: RenderWordLink
   renderMeaningExample: (example: E, meaning: number) => ReactNode
   kanjiActions: (kanji: ShownKanjiDetails) => ReactNode
+  kanjiLearnerPrompt: (kanji: ShownKanjiDetails) => KanjiDetailsProps['learnerPrompt']
   conjugations: ReactNode
   examples: ReactNode
   examplesAnchor: string
@@ -112,7 +113,7 @@ function KanjiItems<E>({ kanji, ...props }: Shared<E> & { kanji: ShownWordKanji[
                     text={props.text.chrome}
                     renderWordLink={props.renderWordLink}
                     actions={props.kanjiActions(item.details)}
-                    learnerPrompt={props.learnerPrompt}
+                    learnerPrompt={props.kanjiLearnerPrompt(item.details)}
                   />
                 </div>
               </Disclosure>

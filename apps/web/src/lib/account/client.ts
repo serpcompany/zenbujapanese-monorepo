@@ -1,3 +1,9 @@
+import type {
+  KindPage,
+  KindQuery,
+  Mutation,
+  MutationResult
+} from '@zenbu/account-rules/account-copy'
 import type { Locale } from '../i18n/config'
 import {
   type AccountSession,
@@ -16,6 +22,7 @@ import {
   textAnswer,
   trueAnswer
 } from './answers'
+import { kindPageOf, mutationResultsOf, searchKeyOf } from './synced-answers'
 
 export type Failure =
   | { kind: 'offline' }
@@ -90,6 +97,21 @@ const unexpected = (status: number): Result<never> => ({
 const checked = <T>(value: T | null, status: number): Result<T> =>
   value === null ? unexpected(status) : accepted(value)
 
+const offline: Result<never> = { ok: false, failure: { kind: 'offline' } }
+
+async function refused(response: Response): Promise<Result<never>> {
+  const { value } = await jsonOf(response)
+  return {
+    ok: false,
+    failure: {
+      kind: 'refused',
+      status: response.status,
+      retryAfter: retryAfterOf(response.headers),
+      ...refusalOf(value, response.status)
+    }
+  }
+}
+
 export function accountApi(
   apiUrl: string,
   language: Locale,
@@ -113,18 +135,22 @@ export function accountApi(
         body: body === undefined ? undefined : JSON.stringify(body)
       })
     } catch {
-      return { ok: false, failure: { kind: 'offline' } }
+      return offline
     }
+    if (!response.ok) return refused(response)
     const { parsed, value } = await jsonOf(response)
-    if (response.ok) return parsed ? read(value, response.status) : unexpected(response.status)
-    return {
-      ok: false,
-      failure: {
-        kind: 'refused',
-        status: response.status,
-        retryAfter: retryAfterOf(response.headers),
-        ...refusalOf(value, response.status)
-      }
+    return parsed ? read(value, response.status) : unexpected(response.status)
+  }
+
+  async function file(path: string, accessToken: string): Promise<Result<Blob>> {
+    try {
+      const response = await send(`${apiUrl}${path}`, {
+        headers: { 'content-language': language, authorization: `Bearer ${accessToken}` },
+        credentials: 'omit'
+      })
+      return response.ok ? accepted(await response.blob()) : refused(response)
+    } catch {
+      return offline
     }
   }
 
@@ -242,6 +268,26 @@ export function accountApi(
         '/v1/me/subscription/checkout',
         { method: 'POST', accessToken, body: pages },
         providerPage
+      ),
+    readKind: (accessToken: string, entity: string, query: KindQuery) =>
+      call(
+        `/v1/sync/${encodeURIComponent(entity)}?${new URLSearchParams(
+          Object.entries(query).map(([key, value]) => [key, String(value)])
+        )}`,
+        { accessToken },
+        (value, status) => checked<KindPage>(kindPageOf(value), status)
+      ),
+    photoFile: (accessToken: string, photoId: string) =>
+      file(`/v1/photos/${encodeURIComponent(photoId)}`, accessToken),
+    sync: (accessToken: string, mutations: Mutation[]) =>
+      call(
+        '/v1/sync',
+        { method: 'POST', accessToken, body: { mutations, limit: 1 } },
+        (value, status) => checked<MutationResult[]>(mutationResultsOf(value), status)
+      ),
+    searchKey: (accessToken: string) =>
+      call('/v1/sync', { method: 'POST', accessToken, body: { limit: 1 } }, (value, status) =>
+        checked<string>(searchKeyOf(value), status)
       ),
     portal: (accessToken: string, returnUrl: string) =>
       call(

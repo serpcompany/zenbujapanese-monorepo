@@ -321,6 +321,53 @@ describe("a note written over another device's change", () => {
   })
 })
 
+describe('a search sent without a copy of the searches', () => {
+  const search = { query: '猫', searchedAt: '2026-10-27T00:00:00.000Z' }
+  const searchId = 'c'.repeat(64)
+
+  test('is sent again at the version of a removal it never saw, since the learner searched after it', async () => {
+    const { copy, sent, answer, reads } = scripted()
+    answer(({ id }) => ({
+      id,
+      status: 'conflict',
+      version: 3,
+      current: gone('recentSearch', searchId, 3)
+    }))
+    answer(({ id }) => ({ id, status: 'applied', version: 4 }))
+    expect(await copy.change('recentSearch', 'search', searchId, search, null)).toEqual({
+      status: 'applied'
+    })
+    expect(sent.map(({ baseVersion, fields }) => ({ baseVersion, fields }))).toEqual([
+      { baseVersion: 0, fields: search },
+      { baseVersion: 3, fields: search }
+    ])
+    expect(reads).toEqual([])
+  })
+
+  test('applies at once where the account has the search, or never had it', async () => {
+    const { copy, sent, answer } = scripted()
+    answer(({ id }) => ({ id, status: 'applied', version: 2 }))
+    expect(await copy.change('recentSearch', 'search', searchId, search, null)).toEqual({
+      status: 'applied'
+    })
+    expect(sent).toHaveLength(1)
+  })
+
+  test('passes on a failure to send it again', async () => {
+    const { copy, answer } = scripted()
+    answer(({ id }) => ({
+      id,
+      status: 'conflict',
+      version: 3,
+      current: gone('recentSearch', searchId, 3)
+    }))
+    expect(await copy.change('recentSearch', 'search', searchId, search, null)).toEqual({
+      status: 'failed',
+      failure: 'offline'
+    })
+  })
+})
+
 describe("the account's data, shown as the apps show it", () => {
   const held = (entityId: string, data: object | null, version = 1) => ({
     entityId,
@@ -376,7 +423,7 @@ describe("the account's data, shown as the apps show it", () => {
     ])
   })
 
-  test('shows a word Known only when the account says known, so a Learning word is not known, as in the app', () => {
+  test('shows a word Known only when the account says known, so a Learning word is not known to a client that shows only Known', () => {
     const word = { itemId: 'a'.repeat(32), headword: '見る', reading: 'みる' }
     expect(isMarkedKnown({ ...word, state: 'known', known: true })).toBe(true)
     expect(isMarkedKnown({ ...word, state: 'learning', known: false })).toBe(false)

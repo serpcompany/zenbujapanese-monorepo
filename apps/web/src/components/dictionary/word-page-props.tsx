@@ -2,6 +2,7 @@ import type { WordDetail } from '@zenbu/dictionary-core/detail/word'
 import type { WordHeader } from '@zenbu/ui/dictionary/word-header'
 import type { WordSectionsProps } from '@zenbu/ui/dictionary/word-sections'
 import type { ComponentProps } from 'react'
+import { wordItem } from '@/lib/account/saved-item'
 import type { PageExample, WordPageWithKanji } from '@/lib/dictionary/data'
 import { wordExamplesAnchor } from '@/lib/dictionary/results/links'
 import { conjugationsIn, conjugationsText, exampleListText } from '@/lib/dictionary/screen-text'
@@ -9,7 +10,7 @@ import { wordSectionsIn } from '@/lib/dictionary/word-screen'
 import { type Locale, sourceLang } from '@/lib/i18n/config'
 import { coreText } from '@/lib/i18n/core-text'
 import { getDictionary } from '@/lib/i18n/dictionary'
-import { kanjiActionsIn, learnerPromptIn } from './kanji-props'
+import { kanjiActionsIn, kanjiLearnerPromptIn, learnerPromptIn } from './kanji-props'
 import { showUnsupported } from './site-actions'
 import { SiteConjugationsSection, SiteExampleList, SiteMeaningExample } from './site-examples'
 import { addWordPaths, kanjiTargets, type LinkedTarget, wordLinks } from './word-links'
@@ -71,7 +72,8 @@ export function wordSectionsProps(
       />
     ),
     kanjiActions: kanjiActionsIn(locale),
-    learnerPrompt: learnerPromptIn(locale),
+    kanjiLearnerPrompt: kanjiLearnerPromptIn(locale),
+    learnerPrompt: learnerPromptIn(locale, wordItem(word)),
     conjugations: word.conjugations ? (
       <SiteConjugationsSection
         conjugations={conjugationsIn(word.conjugations, locale)}

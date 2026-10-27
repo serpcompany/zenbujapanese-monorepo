@@ -53,12 +53,14 @@ data unavailable" with Try again.
 
 **Picking a kanji.** A kanji joins the end of the query in the box, as the app adds a candidate,
 and opens that search; the panel closes, and opens again with nothing picked. On a Japanese page the
-search is the Japanese one.
+search is the Japanese one. That search, the box's text with the kanji, goes into a subscriber's
+Recent searches, as the app records a picked kanji ([What an account syncs](synced-data.md)).
 
 - Source: App docs, Search ("A candidate from any panel is added to the end of the query");
   `SearchInputCandidate.accept` in `SearchInputPanel.swift`.
 - Check: `src/components/dictionary/radical-input.interaction.test.tsx`, "a kanji is added to the
-  end of the query, searched as picked, and the panel closes"; `apps/web/e2e/radical-input.spec.ts`,
+  end of the query, searched as picked, and the panel closes" and "a pick is a search the learner
+  asked for, kept for a signed-in learner's Recent searches"; `apps/web/e2e/radical-input.spec.ts`,
   that test and "a kanji picked on a Japanese page joins the query and opens its Japanese search".
 
 **Radical searches keep the strongest matches.** A one-kanji search picked from the panel lists

@@ -67,3 +67,29 @@ test.each([
     vi.unstubAllGlobals()
   }
 })
+
+test.each([
+  ['a signed-in learner', true, '要る'],
+  ['a signed-out visitor', false, null]
+])('submitting marks the search as asked for %s, normalized, for Recent searches', (_, signedIn, asked) => {
+  vi.stubEnv('ZENBU_ACCOUNT_PAGES', 'open')
+  vi.stubEnv('ZENBU_ACCOUNT_SERVICE', 'https://api.example.com')
+  if (signedIn) window.localStorage.setItem('zenbu-signed-in', 'yes')
+  const form = createRoot(document.body.appendChild(document.createElement('div')))
+  const stay = (event: Event) => event.preventDefault()
+  document.addEventListener('submit', stay)
+  try {
+    act(() => form.render(<SearchForm locale="en" text={getDictionary('en').searchForm} />))
+    const box = document.querySelector<HTMLInputElement>('input[name="q"]')
+    if (!box) throw new Error('The form has no search box')
+    box.value = '  要る '
+    act(() => box.form?.requestSubmit())
+    expect(window.sessionStorage.getItem('search.asked')).toBe(asked)
+  } finally {
+    document.removeEventListener('submit', stay)
+    act(() => form.unmount())
+    vi.unstubAllEnvs()
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  }
+})

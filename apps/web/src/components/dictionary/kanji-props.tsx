@@ -3,6 +3,8 @@ import type {
   LearnerPromptKind,
   ShownKanjiDetails
 } from '@zenbu/ui/dictionary/kanji-details'
+import { syncedTextIn } from '@/lib/account/learner-text'
+import { kanjiItem, type SavedItem } from '@/lib/account/saved-item'
 import type { KanjiDetailsData } from '@/lib/dictionary/kanji-details'
 import { kanjiDetailsIn } from '@/lib/dictionary/screen-text'
 import { kanjiSearchPath } from '@/lib/dictionary/urls'
@@ -20,17 +22,28 @@ export function kanjiActionsIn(locale: Locale) {
       shareText={kanji.shareText}
       path={localizedPath(kanjiSearchPath(kanji.character), locale)}
       name={kanji.character}
+      item={kanjiItem(kanji)}
       locale={locale}
       text={getDictionary(locale).learner}
+      account={syncedTextIn(locale)}
     />
   )
 }
 
-export function learnerPromptIn(locale: Locale) {
+export function learnerPromptIn(locale: Locale, item: SavedItem) {
   return (kind: LearnerPromptKind) => (
-    <LearnerPrompt kind={kind} locale={locale} text={getDictionary(locale).learner} />
+    <LearnerPrompt
+      kind={kind}
+      item={item}
+      locale={locale}
+      text={getDictionary(locale).learner}
+      account={syncedTextIn(locale)}
+    />
   )
 }
+
+export const kanjiLearnerPromptIn = (locale: Locale) => (kanji: ShownKanjiDetails) =>
+  learnerPromptIn(locale, kanjiItem(kanji))
 
 export function kanjiDetailsProps(kanji: KanjiDetailsData, locale: Locale): KanjiDetailsProps {
   const shown = kanjiDetailsIn(kanji, locale)
@@ -40,6 +53,6 @@ export function kanjiDetailsProps(kanji: KanjiDetailsData, locale: Locale): Kanj
     text: getDictionary(locale).chrome,
     renderWordLink: wordLinks(addWordPaths(new Map(), kanjiTargets(kanji)), locale),
     actions: kanjiActionsIn(locale)(shown),
-    learnerPrompt: learnerPromptIn(locale)
+    learnerPrompt: kanjiLearnerPromptIn(locale)(shown)
   }
 }
