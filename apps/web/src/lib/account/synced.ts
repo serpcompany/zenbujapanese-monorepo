@@ -41,7 +41,7 @@ export function syncedAreaAt(segment: string): SyncedArea | null {
 export const needsASubscription = (failure: Failure) =>
   failure.kind === 'refused' && failure.status === 402
 
-export function syncedCopy(
+function syncedCopy(
   api: AccountApi,
   tokens: AccessTokens,
   newId: () => string = () => crypto.randomUUID()
@@ -56,7 +56,7 @@ export function syncedCopy(
   )
 }
 
-export function notShown(failure: Failure): LoadedSynced {
+function notShown(failure: Failure): LoadedSynced {
   if (isSignedOut(failure)) return { kind: 'signed-out' }
   if (needsASubscription(failure)) return { kind: 'subscription-required' }
   return { kind: 'failed', failure }

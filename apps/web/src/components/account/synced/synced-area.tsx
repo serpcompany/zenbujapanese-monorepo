@@ -31,7 +31,7 @@ type View =
   | { kind: 'unreachable'; failure: Failure }
   | { kind: 'shown'; copy: SyncedCopy }
 
-export function NeedsASubscription({ locale, text }: { locale: Locale; text: AccountText }) {
+function NeedsASubscription({ locale, text }: { locale: Locale; text: AccountText }) {
   return (
     <div className="flex flex-col gap-3">
       <p>{text.synced.needsSubscription}</p>
@@ -73,6 +73,7 @@ export function SyncedAreaView({
     const loaded = await loadSynced(api, tokens, syncedAreas[area])
     if (loaded.kind === 'signed-out') return signedOut()
     if (loaded.kind === 'failed') return setView({ kind: 'unreachable', failure: loaded.failure })
+    if (loaded.kind === 'shown' && !seemsSignedIn()) rememberSignedIn(true)
     setView(loaded.kind === 'shown' ? { kind: 'shown', copy: loaded.copy } : loaded)
   }, [api, tokens, area, signedOut])
 

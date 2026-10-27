@@ -4,14 +4,12 @@ import { wordsOfList } from '@zenbu/account-rules/account-views'
 import Link from 'next/link'
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item'
 import { accountPages } from '@/lib/account/pages'
-import { itemName, matchesTyped, textIn } from '@/lib/account/synced-views'
-import { countOf, fill } from '@/lib/i18n/format'
+import { matchesTyped, textIn } from '@/lib/account/synced-views'
+import { countOf } from '@/lib/i18n/format'
 import { localizedPath } from '@/lib/i18n/paths'
 import { ListActions } from './lists'
-import { type AreaProps, Filter, ItemLink, Rows, useChanging } from './parts'
+import { type AreaProps, useChanging, WordRows } from './parts'
 
 export function ListWords(props: AreaProps & { listId: string }) {
   const { copy, locale, text, change, listId } = props
@@ -32,7 +30,6 @@ export function ListWords(props: AreaProps & { listId: string }) {
       </section>
     )
   }
-  const shownList = { ...list, data: list.data }
   const name = textIn(list.data, 'name')
   const inList = wordsOfList(copy.held('listWord'), listId)
   const shown = inList.filter(word => matchesTyped(word.data, typed))
@@ -48,37 +45,30 @@ export function ListWords(props: AreaProps & { listId: string }) {
         <p className="text-sm text-muted-foreground">
           {countOf(words.count, inList.length, locale)}
         </p>
-        <ListActions list={shownList} wordCount={inList.length} props={props} />
+        <ListActions list={{ ...list, data: list.data }} wordCount={inList.length} props={props} />
       </div>
-      {inList.length > 0 ? (
-        <Filter id="list-filter" label={words.search} value={typed} onChange={setTyped} />
-      ) : null}
-      <Rows empty={empty} problem={problem}>
-        {shown.map(word => (
-          <Item key={word.entityId} variant="outline">
-            <ItemContent>
-              <ItemTitle>
-                <ItemLink data={word.data} locale={locale} />
-                {isKnown(textIn(word.data, 'itemId')) ? (
-                  <Badge variant="secondary">{words.known}</Badge>
-                ) : null}
-              </ItemTitle>
-            </ItemContent>
-            <ItemActions>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={busy}
-                aria-label={fill(words.removeNamed, { name: itemName(word.data) })}
-                onClick={() => void run(() => change('listWord', 'remove', word.entityId))}
-              >
-                {words.remove}
-              </Button>
-            </ItemActions>
-          </Item>
-        ))}
-      </Rows>
+      <WordRows
+        filter={
+          inList.length > 0
+            ? { id: 'list-filter', label: words.search, typed, onTyped: setTyped }
+            : null
+        }
+        shown={shown}
+        empty={empty}
+        problem={problem}
+        locale={locale}
+        busy={busy}
+        badge={word =>
+          isKnown(textIn(word.data, 'itemId')) ? (
+            <Badge variant="secondary">{words.known}</Badge>
+          ) : null
+        }
+        action={{
+          label: words.remove,
+          named: words.removeNamed,
+          on: word => void run(() => change('listWord', 'remove', word.entityId))
+        }}
+      />
     </section>
   )
 }

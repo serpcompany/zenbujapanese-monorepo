@@ -1,6 +1,6 @@
 import type { Result } from './client'
 
-export const photosAtOnce = 4
+const photosAtOnce = 4
 
 export function photoQueue(
   download: (photoId: string) => Promise<Result<Blob>>,

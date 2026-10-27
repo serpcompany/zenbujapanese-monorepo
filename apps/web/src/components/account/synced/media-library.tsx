@@ -56,7 +56,7 @@ function PhotoFile({
   return (
     <div
       ref={frame}
-      className="relative flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted"
+      className="muted-surface relative flex aspect-square w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-muted"
     >
       {picture.kind === 'shown' ? (
         <Image

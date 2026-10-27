@@ -1,11 +1,13 @@
 'use client'
 
 import type { Change } from '@zenbu/account-rules/account-copy'
+import type { Shown } from '@zenbu/account-rules/account-views'
 import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { type ReactNode, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Item, ItemActions, ItemContent, ItemTitle } from '@/components/ui/item'
 import { Label } from '@/components/ui/label'
 import type { Result } from '@/lib/account/client'
 import type { AccountText } from '@/lib/account/messages'
@@ -82,7 +84,7 @@ export function AskFirst({
   )
 }
 
-export function Filter({
+function Filter({
   id,
   label,
   value,
@@ -154,6 +156,63 @@ export function MoveButtons({
       >
         <ArrowDownIcon />
       </Button>
+    </>
+  )
+}
+
+export function WordRows({
+  filter,
+  shown,
+  empty,
+  problem,
+  locale,
+  busy,
+  badge,
+  action
+}: {
+  filter: { id: string; label: string; typed: string; onTyped: (typed: string) => void } | null
+  shown: readonly Shown[]
+  empty: string | null
+  problem: string | null
+  locale: Locale
+  busy: boolean
+  badge?: (word: Shown) => ReactNode
+  action: { label: string; named: string; on: (word: Shown) => void }
+}) {
+  return (
+    <>
+      {filter ? (
+        <Filter
+          id={filter.id}
+          label={filter.label}
+          value={filter.typed}
+          onChange={filter.onTyped}
+        />
+      ) : null}
+      <Rows empty={empty} problem={problem}>
+        {shown.map(word => (
+          <Item key={word.entityId} variant="outline">
+            <ItemContent>
+              <ItemTitle>
+                <ItemLink data={word.data} locale={locale} />
+                {badge?.(word)}
+              </ItemTitle>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busy}
+                aria-label={fill(action.named, { name: itemName(word.data) })}
+                onClick={() => action.on(word)}
+              >
+                {action.label}
+              </Button>
+            </ItemActions>
+          </Item>
+        ))}
+      </Rows>
     </>
   )
 }
