@@ -89,7 +89,9 @@ clipped, in each of five runs, calm Mac or busy, once with no element for Transl
 page's top it reported none of them, and with the rows alone at the top, only the two clipped
 titles, in each of four. Both titles and counts grow at every size, from 20 points tall at the
 default size to 63 at the largest, and show whole at each, the titles wrapping under their icons as
-the page's other rows do; so the clipped titles are allowed as text that scales.
+the page's other rows do; so the clipped titles are allowed as text that scales. Known Words and
+Learning are two rows written out, not a `ForEach`: built by a `ForEach`, iOS 27's audit reported
+their clipped titles with no element, in every pass, and a finding with no element can't be allowed.
 
 The subscription's screens, Zenbu Account in each state the stand-ins show
 ([`ios-subscription.md`](ios-subscription.md), Test it), the paywall, and Delete Account with an App

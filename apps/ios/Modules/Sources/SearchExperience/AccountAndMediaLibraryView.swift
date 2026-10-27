@@ -69,14 +69,8 @@ struct AccountRootView: View {
           }
           .accessibilityIdentifier("account.media-library")
 
-          ForEach(MarkedWords.all, id: \.identifier) { words in
-            NavigationLink(value: AccountRoute.marked(words.status)) {
-              AccountCountRowLabel(
-                LocalizedStringKey(words.title), systemImage: words.rowSymbol, tint: words.tint,
-                count: wordKnowledge.isLoaded ? wordKnowledge.marked(words.status).count : nil)
-            }
-            .accessibilityIdentifier("account.\(words.identifier)")
-          }
+          markedWordsRow(.known)
+          markedWordsRow(.learning)
 
           NavigationLink(value: AccountRoute.wordLists) {
             AccountCountRowLabel(
@@ -152,6 +146,15 @@ struct AccountRootView: View {
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
     .inlineNavigationTitle()
+  }
+
+  private func markedWordsRow(_ words: MarkedWords) -> some View {
+    NavigationLink(value: AccountRoute.marked(words.status)) {
+      AccountCountRowLabel(
+        LocalizedStringKey(words.title), systemImage: words.rowSymbol, tint: words.tint,
+        count: wordKnowledge.isLoaded ? wordKnowledge.marked(words.status).count : nil)
+    }
+    .accessibilityIdentifier("account.\(words.identifier)")
   }
 }
 

@@ -116,7 +116,7 @@ struct WordStatusTag: View {
   init?(_ status: WordKnowledgeStatus, announces: Bool = false) {
     switch status {
     case .known: (systemImage, color, shadeInLight) = ("checkmark", .green, 0)
-    case .learning: (systemImage, color, shadeInLight) = (Self.learningSymbol, .yellow, 0.5)
+    case .learning: (systemImage, color, shadeInLight) = (Self.learningSymbol, .yellow, 0.75)
     default: return nil
     }
     title = status.title
