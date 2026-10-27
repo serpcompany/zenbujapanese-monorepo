@@ -17,18 +17,54 @@ Run every command below from `apps/extension`, after `pnpm install` at the repos
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, and Geist. No content script yet. |
+| `pnpm build` | The release build, in `dist/`: the manifest, the pages, the service worker, the offscreen document, the dictionary worker, and Geist. No content script yet. Production's hosts, or staging's with `ZENBU_ENVIRONMENT=staging` (below). |
 | `pnpm build:test` | The test build, in `dist-test/`: the release build plus the test content script, which runs only on `http://localhost/*` and `http://127.0.0.1/*`. |
 | `pnpm test-pages` | Serves the test pages (below) on this checkout's `site` port (`node ../../tools/checks/ports.mjs`), the website's, so the two can't run at once. |
 | `pnpm check` | Biome, typecheck, Vitest, and both builds. CI runs it (`Extension`, [`ci.md`](ci.md)). |
+| `pnpm package <store\|unpacked> <folder> <zip>` | Zips a build: `store` leaves the manifest's `key` out, `unpacked` keeps it. |
+| `pnpm check-package <store\|unpacked> <production\|staging> <zip>` | Fails a zip that isn't that package (below), saying each thing wrong. |
 
 To load a build, open `chrome://extensions`, turn on Developer mode, choose Load unpacked, and pick
 `dist/` or `dist-test/`. After a rebuild, press the extension's reload button there. The manifest
 asks for Chrome 138 (`minimumChromeVersion` in `build/manifest.ts`), the first with the Translator
 API that the extension's translations use (#967); on-device speech recognition (#968) is
 outside the first version. It asks for `scripting` so the Translate tab's Use Selection can read
-the selected text on the active tab; reaching that tab also needs `activeTab` (#959). The Store
-listing, its ID, and the version and builds that ship are #986's.
+the selected text on the active tab; reaching that tab also needs `activeTab` (#959).
+
+## Builds and packages
+
+- **The ID.** The manifest's `key` is the Chrome Web Store item's public key, taken from the
+  item's published package (`build/key.ts`), so every unpacked build, the test build among them,
+  has the store item's ID, `kaalpflpefadijdemimciikalgpgjmok`, on any computer. The store
+  refuses a `key` in an upload, so the store package leaves it out.
+- **The version** is `apps/extension/package.json`'s, from 2.0.0. The store has 1.1.0, the
+  prototype, and refuses an update that isn't above it. Before each upload, raise it; after
+  one, set `publishedVersion` in `build/packages.ts` to the uploaded version, in the change that
+  records the release, so `pnpm check-package` keeps refusing a version the store would.
+- **The hosts.** One build setting, `ZENBU_ENVIRONMENT`, names the website and API hosts
+  (`build/hosts.ts`): `production` by default, or `staging` (`staging.zenbujapanese.com` and
+  `api-staging.zenbujapanese.com`). The code reads them from `src/shared/hosts.ts`, which the build
+  fills in, and the manifest's `homepage_url` is the website. Nothing in `apps/extension` writes
+  the website or API host. The core can: `detail/links.ts` writes the website's, and #956's
+  language data host is `https://data.zenbujapanese.com`; a bundle that takes the website's from
+  the core fails the staging package's check (#958). No API host is in `host_permissions` until
+  the extension calls one (#961).
+- **The packages.** `Extension packages` ([`ci-deploys.md`](ci-deploys.md)) builds both from
+  `main`: the staging package, unpacked with the `key`, for loading by hand, and the store
+  package, from the production build, for the owner to upload (#972). Agents never upload to the
+  Chrome Web Store. To make either here:
+
+  ```sh
+  ZENBU_ENVIRONMENT=staging pnpm build && find dist -name '*.map' -delete
+  pnpm package unpacked dist ../../tmp/extension-staging.zip
+  pnpm check-package unpacked staging ../../tmp/extension-staging.zip
+  ```
+
+  `pnpm check-package` fails a zip whose version isn't `package.json`'s or isn't above 1.1.0, a
+  store zip with a `key` or an unpacked one whose `key` gives another ID, a zip missing a page or
+  a file the manifest names, one holding the test content script or a source map, and one whose
+  `homepage_url` isn't its environment's website or whose files name the other environment's
+  hosts, or any `.js` that still holds a `__ZENBU_` setting the build didn't fill in.
 
 ## Code layout
 
@@ -43,7 +79,7 @@ listing, its ID, and the version and builds that ship are #986's.
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
-| `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |
+| `build/` | The Vite configuration, the manifest, the PostCSS step that makes the shadow root's stylesheet safe on any page, the build setting (`hosts.ts`), the store key (`key.ts`), and the package scripts (`packages.ts`, `zip.ts`, and the two commands, `package.ts` and `check-package.ts`). |
 | `test-pages/` | Two pages to mount on, the test surface, and the test content script that mounts it. |
 
 ### Messages
@@ -140,7 +176,10 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
 
 ## Checks
 
-- **Unit and DOM tests,** with `pnpm test`: the manifest of each build; the rem conversion and
+- **Unit and DOM tests,** with `pnpm test`: the manifest of each build, with the store item's ID
+  from its `key`, `package.json`'s version, and its environment's website; each environment's
+  hosts in a bundle built with them, and not the other's; each package and each way
+  `pnpm check-package` fails one; the zips, which the system's `unzip` opens; the rem conversion and
   the `@supports` unwrapping; the shadow root's stylesheet as the build makes it, with no rem and
   the `--tw-*` fallback outside any `@supports`, and the pages' with rem kept; the offscreen
   document opened once and again after Chrome closes it, once it says it has started; a ping from
