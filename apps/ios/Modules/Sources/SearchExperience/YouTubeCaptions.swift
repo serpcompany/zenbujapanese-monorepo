@@ -64,7 +64,7 @@ extension YouTubeVideoID {
   }
 }
 
-struct SubtitleCue: Identifiable, Hashable, Sendable {
+struct SubtitleCue: Identifiable, Hashable, Sendable, Codable {
   let id: Int
   let start: TimeInterval
   let end: TimeInterval
@@ -74,11 +74,17 @@ struct SubtitleCue: Identifiable, Hashable, Sendable {
   func contains(_ time: TimeInterval) -> Bool { time >= start && time < end }
 }
 
-struct YouTubeCaptionTrack: Hashable, Sendable {
-  let baseURL: URL
-  let languageCode: String
+struct YouTubeCaptionTrack: Decodable, Hashable, Sendable {
+  let url: String
   let isAutomatic: Bool
   let isTranslatable: Bool
+}
+
+struct YouTubeVideoAnswer: Decodable, Sendable {
+  let playable: Bool
+  let title: String?
+  let author: String?
+  let track: YouTubeCaptionTrack?
 }
 
 struct YouTubeVideoCaptions: Sendable {
@@ -110,240 +116,38 @@ enum YouTubeCaptionError: Error, Equatable {
   case refused(status: Int)
 }
 
-enum YouTubeCaptionParsing {
-  static func japaneseTrack(in tracks: [YouTubeCaptionTrack]) -> YouTubeCaptionTrack? {
-    let japanese = tracks.filter {
-      $0.languageCode == "ja" || $0.languageCode.hasPrefix("ja-")
-    }
-    return japanese.first { !$0.isAutomatic } ?? japanese.first
+enum YouTubeCaptionReading {
+  static func video(_ playerResponse: Data) throws -> YouTubeVideoAnswer {
+    try answer("youTubeVideo", playerResponse)
   }
 
-  static func tracks(fromPlayerResponse data: Data) throws -> (
-    title: String?, author: String?, tracks: [YouTubeCaptionTrack]
-  ) {
-    let response = try JSONDecoder().decode(PlayerResponse.self, from: data)
-    guard response.playabilityStatus?.status == "OK" else {
-      throw YouTubeCaptionError.videoUnavailable
-    }
-    let tracks = (response.captions?.playerCaptionsTracklistRenderer.captionTracks ?? [])
-      .compactMap { track -> YouTubeCaptionTrack? in
-        guard let url = URL(string: track.baseUrl) else { return nil }
-        return YouTubeCaptionTrack(
-          baseURL: url,
-          languageCode: track.languageCode,
-          isAutomatic: track.kind == "asr",
-          isTranslatable: track.isTranslatable ?? false
-        )
-      }
-    return (response.videoDetails?.title, response.videoDetails?.author, tracks)
+  static func captions(_ timedText: Data) throws -> [SubtitleCue] {
+    try answer("youTubeCaptions", timedText)
   }
 
-  static func cues(fromTimedText data: Data, joiner: String) throws -> [SubtitleCue] {
-    let delegate = TimedTextParserDelegate()
-    let parser = XMLParser(data: data)
-    parser.delegate = delegate
-    guard parser.parse() else { throw YouTubeCaptionError.unreadableCaptions }
-    var cues: [SubtitleCue] = []
-    for (index, line) in delegate.lines.enumerated() {
-      let text = line.text
-        .components(separatedBy: .newlines)
-        .map { $0.trimmingCharacters(in: .whitespaces) }
-        .filter { !$0.isEmpty }
-        .joined(separator: joiner)
-        .removingSoundTags
-      guard !text.isEmpty else { continue }
-      let next = delegate.lines.dropFirst(index + 1).first?.start
-      let end = min(line.start + line.duration, next ?? .infinity)
-      cues.append(
-        SubtitleCue(id: cues.count, start: line.start, end: max(end, line.start), text: text))
+  static func paired(_ cues: [SubtitleCue], with timedText: Data) throws -> [SubtitleCue] {
+    struct Request: Encodable {
+      let captions: [SubtitleCue]
+      let timedText: String
     }
-    return cues
-  }
-
-  static func translationSentences(fromTimedText data: Data) throws -> [SubtitleCue] {
-    let delegate = TimedTextParserDelegate()
-    let parser = XMLParser(data: data)
-    parser.delegate = delegate
-    guard parser.parse() else { throw YouTubeCaptionError.unreadableCaptions }
-    var sentences: [SubtitleCue] = []
-    var sentenceStart: TimeInterval?
-    for line in delegate.lines {
-      let text = line.text
-        .components(separatedBy: .newlines)
-        .map { $0.trimmingCharacters(in: .whitespaces) }
-        .filter { !$0.isEmpty }
-        .joined(separator: " ")
-        .removingSoundTags
-      guard !text.isEmpty else {
-        sentenceStart = sentenceStart ?? line.start
-        continue
-      }
-      var sentence = SubtitleCue(
-        id: sentences.count,
-        start: sentenceStart ?? line.start,
-        end: line.start + line.duration,
-        text: text
-      )
-      sentenceStart = nil
-      if text.hasPrefix("n't") || text.hasPrefix("'"), let previous = sentences.popLast() {
-        sentence = SubtitleCue(
-          id: previous.id, start: sentence.start, end: sentence.end, text: previous.text + text)
-      }
-      sentences.append(sentence)
-    }
-    return sentences
-  }
-
-  static let maximumLinesPerCard = 2
-  static let maximumCharactersPerCard = 40
-
-  static func pairing(_ cues: [SubtitleCue], with translations: [SubtitleCue]) -> [SubtitleCue] {
-    guard !cues.isEmpty, !translations.isEmpty else { return cues }
-    let spans: [(translation: SubtitleCue, lines: ClosedRange<Int>)] = translations.compactMap {
-      translation in
-      let lines = cues.indices.filter { overlaps(cues[$0], translation) }
-      guard let first = lines.first, let last = lines.last else { return nil }
-      return (translation, first...last)
-    }
-    func fits(_ lines: ClosedRange<Int>) -> Bool {
-      lines.count <= maximumLinesPerCard
-        && cues[lines].map(\.text.count).reduce(0, +) <= maximumCharactersPerCard
-    }
-    var groups: [ClosedRange<Int>] = []
-    for span in spans.map(\.lines).sorted(by: { $0.lowerBound < $1.lowerBound }) {
-      guard fits(span) else { continue }
-      if let last = groups.last, span.lowerBound <= last.upperBound {
-        let merged = last.lowerBound...max(last.upperBound, span.upperBound)
-        if fits(merged) {
-          groups[groups.count - 1] = merged
-        } else if span.upperBound > last.upperBound, fits(last.upperBound + 1...span.upperBound) {
-          groups.append(last.upperBound + 1...span.upperBound)
-        }
-      } else {
-        groups.append(span)
-      }
-    }
-    var paired: [SubtitleCue] = []
-    var index = 0
-    while index < cues.count {
-      let group = groups.first { $0.contains(index) } ?? index...index
-      let lines = cues[group]
-      let text = spans
-        .filter { group.contains($0.lines.upperBound) }
-        .map(\.translation.text)
-        .reduce("") { joined, next in joinTranslation(joined, next) }
-      paired.append(
-        SubtitleCue(
-          id: paired.count,
-          start: lines.first!.start,
-          end: lines.last!.end,
-          text: lines.map(\.text).joined(),
-          translation: text.isEmpty ? nil : text
-        ))
-      index = group.upperBound + 1
-    }
+    let request = Request(captions: cues, timedText: try text(timedText))
+    let paired: [SubtitleCue]? = try PresentationCore.shared.answer(
+      "youTubeTranslatedCaptions", request)
+    guard let paired else { throw YouTubeCaptionError.unreadableCaptions }
     return paired
   }
 
-  private static func overlaps(_ line: SubtitleCue, _ translation: SubtitleCue) -> Bool {
-    let overlap = min(line.end, translation.end) - max(line.start, translation.start)
-    let lineLength = line.end - line.start
-    return overlap > 0 && (overlap >= 0.5 || overlap >= lineLength / 2)
+  private static func answer<Answer: Decodable>(_ method: String, _ data: Data) throws -> Answer {
+    let answer: Answer? = try PresentationCore.shared.answer(method, try text(data))
+    guard let answer else { throw YouTubeCaptionError.unreadableCaptions }
+    return answer
   }
 
-  private static func joinTranslation(_ joined: String, _ next: String) -> String {
-    guard !joined.isEmpty else { return next }
-    let attaches = next.hasPrefix("n't") || next.hasPrefix("'") || next.first?.isPunctuation == true
-    return joined + (attaches ? "" : " ") + next
-  }
-
-  private struct PlayerResponse: Decodable {
-    struct Status: Decodable { let status: String? }
-    struct Details: Decodable {
-      let title: String?
-      let author: String?
+  private static func text(_ data: Data) throws -> String {
+    guard let text = String(data: data, encoding: .utf8) else {
+      throw YouTubeCaptionError.unreadableCaptions
     }
-    struct Captions: Decodable {
-      struct Renderer: Decodable {
-        struct Track: Decodable {
-          let baseUrl: String
-          let languageCode: String
-          let kind: String?
-          let isTranslatable: Bool?
-        }
-        let captionTracks: [Track]?
-      }
-      let playerCaptionsTracklistRenderer: Renderer
-    }
-    let playabilityStatus: Status?
-    let videoDetails: Details?
-    let captions: Captions?
-  }
-}
-
-private final class TimedTextParserDelegate: NSObject, XMLParserDelegate {
-  struct Line {
-    let start: TimeInterval
-    let duration: TimeInterval
-    var text: String
-  }
-
-  var lines: [Line] = []
-  private var current: Line?
-
-  func parser(
-    _ parser: XMLParser,
-    didStartElement elementName: String,
-    namespaceURI: String?,
-    qualifiedName: String?,
-    attributes: [String: String] = [:]
-  ) {
-    guard elementName == "text" else { return }
-    current = Line(
-      start: TimeInterval(attributes["start"] ?? "") ?? 0,
-      duration: TimeInterval(attributes["dur"] ?? "") ?? 0,
-      text: ""
-    )
-  }
-
-  func parser(_ parser: XMLParser, foundCharacters string: String) {
-    current?.text += string
-  }
-
-  func parser(
-    _ parser: XMLParser,
-    didEndElement elementName: String,
-    namespaceURI: String?,
-    qualifiedName: String?
-  ) {
-    guard elementName == "text", var line = current else { return }
-    line.text = line.text.decodingHTMLEntities
-    lines.append(line)
-    current = nil
-  }
-}
-
-extension String {
-  fileprivate var removingSoundTags: String {
-    replacing(/\s*[\[［][^\]］]*[\]］]\s*/, with: " ")
-      .trimmingCharacters(in: .whitespaces)
-  }
-
-  fileprivate var decodingHTMLEntities: String {
-    guard contains("&") else { return self }
-    let named = ["&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": "\"", "&apos;": "'"]
-    var result = self
-    for (entity, value) in named where entity != "&amp;" {
-      result = result.replacingOccurrences(of: entity, with: value)
-    }
-    let pattern = /&#(x?)([0-9A-Fa-f]+);/
-    result = result.replacing(pattern) { match in
-      let radix = match.1.isEmpty ? 10 : 16
-      guard let value = UInt32(match.2, radix: radix), let scalar = Unicode.Scalar(value)
-      else { return String(match.0) }
-      return String(Character(scalar))
-    }
-    return result.replacingOccurrences(of: "&amp;", with: "&")
+    return text
   }
 }
 
@@ -361,23 +165,22 @@ struct YouTubeCaptionClient: Sendable {
     recording record: @escaping @Sendable (HandledProblem) -> Void = { CrashReporter.record($0) }
   ) {
     captions = { videoID in
-      let (title, author, tracks) = try YouTubeCaptionParsing.tracks(
-        fromPlayerResponse: try await fetch.playerResponse(videoID))
-      guard let track = YouTubeCaptionParsing.japaneseTrack(in: tracks) else {
+      let video = try YouTubeCaptionReading.video(try await fetch.playerResponse(videoID))
+      guard video.playable else { throw YouTubeCaptionError.videoUnavailable }
+      guard let track = video.track, let url = URL(string: track.url) else {
         throw YouTubeCaptionError.noJapaneseCaptions
       }
-      let cues = try YouTubeCaptionParsing.cues(
-        fromTimedText: try await fetch.timedText(track.baseURL, nil), joiner: "")
+      let cues = try YouTubeCaptionReading.captions(try await fetch.timedText(url, nil))
       guard !cues.isEmpty else { throw YouTubeCaptionError.noJapaneseCaptions }
       var paired = cues
       if track.isTranslatable,
-        let translations = await YouTubeTranslation.sentences(
-          of: track, fetching: fetch, recording: record)
+        let translated = await YouTubeTranslation.paired(
+          cues, from: url, fetching: fetch, recording: record)
       {
-        paired = YouTubeCaptionParsing.pairing(cues, with: translations)
+        paired = translated
       }
       return YouTubeVideoCaptions(
-        title: title, cues: paired, isAutomatic: track.isAutomatic, author: author)
+        title: video.title, cues: paired, isAutomatic: track.isAutomatic, author: video.author)
     }
   }
 }

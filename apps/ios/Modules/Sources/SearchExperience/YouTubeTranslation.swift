@@ -8,20 +8,21 @@ enum YouTubeTranslation {
 
   static let language = "en"
 
-  static func sentences(
-    of track: YouTubeCaptionTrack,
+  static func paired(
+    _ cues: [SubtitleCue],
+    from url: URL,
     fetching fetch: YouTubeFetch,
     recording record: @Sendable (HandledProblem) -> Void
   ) async -> [SubtitleCue]? {
     let data: Data
     do {
-      data = try await fetch.timedText(track.baseURL, language)
+      data = try await fetch.timedText(url, language)
     } catch {
       if let problem = problem(error, at: .request) { record(problem) }
       return nil
     }
     do {
-      return try YouTubeCaptionParsing.translationSentences(fromTimedText: data)
+      return try YouTubeCaptionReading.paired(cues, with: data)
     } catch {
       if let problem = problem(error, at: .parse) { record(problem) }
       return nil

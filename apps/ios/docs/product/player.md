@@ -85,9 +85,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   first line is.
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` and
   `LinkedRowsUITests.testACaptionArrivesLinkedAndIsStillLinkedWhenItScrollsBack` (linking held,
-  a card is never listed unlinked, and comes back linked at its height); package
-  `YouTubeCaptionsTests` (cues from timed text, without overlaps) and `LinkedRowsTests` (the cards
-  that fit first, then 25 at a time, each linked once).
+  a card is never listed unlinked, and comes back linked at its height); core
+  `packages/dictionary-core/src/captions/youtube.test.ts` (cues from timed text, without
+  overlaps); package `LinkedRowsTests` (the cards that fit first, then 25 at a time, each linked
+  once).
 - **Tapping a card jumps to it.** Tapping a card anywhere outside its words plays the video from
   the start of that line. Each card shows its time range, small, in its top corner.
 - **Words link to the dictionary.** Each card shows the line as linked Japanese text that
@@ -122,10 +123,10 @@ player is by hand; the UI tests stand in for it with a local player that answers
   [crash report](crash-reports.md) says which step failed and, for a refusal, YouTube's HTTP
   status, never the video, its captions, or the address.
   Check: UI `PlayerWatchUITests.testAVideoListsItsCaptionCardsWithTheShareOfWordsKnown` (each
-  card's translation); package `YouTubeCaptionsTests`, `SentenceTranslationPairingTests`,
-  `TranslationSentenceTests`, `CaptionCardSizeTests`, and `YouTubeTranslationFailureTests` (a
-  refused or unreadable translation is reported with its step and status, and the Japanese cues
-  still load).
+  card's translation); core `packages/dictionary-core/src/captions/lines.test.ts` (a
+  translation's sentences) and `pairing.test.ts` (cards and their size); package
+  `YouTubeTranslationFailureTests` (a refused or unreadable translation is reported with its step
+  and status, and the Japanese cues still load).
 - **Comprehension.** Every caption line is counted when the video opens, and the line reads
   **Counting known words…** until the count is ready. The known share counts each occurrence of
   a dictionary word, leaving out particles, auxiliaries, punctuation, and text the dictionary
@@ -158,14 +159,16 @@ player is by hand; the UI tests stand in for it with a local player that answers
   previous lines, repeat, a speed chosen while a line repeats, and the scrubber, against the
   stand-in player; the screen, the speed menu, and the caption list each count their own draws, and
   none of the counts moves while the playback position shows three seconds of a repeating line);
-  package `YouTubeCaptionsTests` (each line's times, which the controls move between).
+  core `packages/dictionary-core/src/captions/lines.test.ts` (each line's times, which the
+  controls move between).
 
 Creator-made Japanese captions are used before automatic ones. Sound descriptions such as [音楽] are
 removed, and lines with nothing else are dropped, so songs show only their lyrics. A video without
 Japanese captions shows **No Japanese Captions**. Captions and translations come from YouTube each
 time a video opens and are not stored or synced.
 
-Check: UI `PlayerWatchUITests.testAVideoWithoutJapaneseCaptionsSaysSo`; package
-`YouTubeCaptionsTests` (creator-made before automatic captions), `YouTubeStandInTests` (the
-stand-in's captions go through the same parsing), and `PlayerReadingAidTests` (sound tags
-dropped).
+Check: UI `PlayerWatchUITests.testAVideoWithoutJapaneseCaptionsSaysSo`; core
+`packages/dictionary-core/src/captions/youtube.test.ts` (creator-made before automatic captions,
+and sound tags dropped); package `YouTubeCaptionsTests` (the core's answers become the Player's
+captions and errors) and `YouTubeStandInTests` (the stand-in's captions go through the same
+parsing).

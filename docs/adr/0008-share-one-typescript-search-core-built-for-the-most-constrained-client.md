@@ -176,10 +176,28 @@ Swift transliterated every word again on each redraw; the radical panel opens in
 answers a pick in 1.7 ms (the Swift took 14 ms and 4.5 ms); a stroke diagram takes 0.2 ms; and
 a kanji check 0.007 ms before it is remembered.
 
+The Player's caption rules followed on 2026-10-28 (issue 950), so the browser extension's
+YouTube captions (issue 984) and later Netflix's (issue 966) show what the app shows: which
+Japanese track a video plays (one its creator made before an automatic one), reading YouTube's
+player response (whether the video plays, its title and author, its tracks) and its timed text
+(each `<text start dur>`, entities decoded), dropping sound tags and empty lines, ending a line
+when the next begins, joining a translation's lines into sentences, and pairing those sentences
+with the Japanese as cards of at most two lines and 40 characters. The rules take timed lines,
+not YouTube's format, so another source of captions feeds them as it is. The core reads timed
+text with its own small XML reader, since neither JavaScriptCore nor an extension's service
+worker has a DOM parser. It was checked against the Swift's own test cases, not across
+YouTube's answers, which no test asks for. Where an answer is malformed it differs from the
+Swift a little: a track missing its link or with a field of the wrong type is skipped, where
+the Swift refused the whole player response; CDATA in timed text is read as text, where
+`XMLParser` dropped it; and a control character no longer makes timed text unreadable. In
+JavaScriptCore without its JIT, 400 lines of timed text (37 KB) take 5 ms, pairing them with
+380 translated lines 6 ms, and a player response under a millisecond, once per video and off
+the main thread.
+
 What stays in Swift is what needs the platform or belongs to the learner: reading files,
-parsing a URL, drawing, the learner's stored data and its sync, the Player's handling of
-YouTube's links and captions, and Apple's speech, recognition, translation, and Apple
-Intelligence ([`ios.md`](../agents/ios.md), What stays native, and why).
+parsing a URL, drawing, the learner's stored data and its sync, YouTube's links and fetching the
+captions, and Apple's speech, recognition, translation, and Apple Intelligence
+([`ios.md`](../agents/ios.md), What stays native, and why).
 
 ### Speed in an engine without a JIT
 
