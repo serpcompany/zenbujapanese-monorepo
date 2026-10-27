@@ -68,13 +68,12 @@ record: JMdict's as `JMdict_e_examp-<date>.gz`, and the others in a folder named
 such as `Tatoeba-2026-10-03/` beside `Tatoeba-2026-10-03.source.json`. To move to a newer one:
 
 1. Download it into a new `<Name>-<date>/` folder (JMdict: `JMdict_e_examp-<date>.gz`) and write
-   `<Name>-<date>.source.json` from the previous record, with the new date, HTTP `Last-Modified`
-   and `ETag`, byte count, and SHA-256.
-   Tatoeba's `aggregate_sha256` is the SHA-256 of its seven files' SHA-256s, each followed by LF.
-   JMdict's record also has its `export_date` (the file's `JMdict created` line) and, in
-   `without_examples`, the same day's `JMdict_e.gz`: its HTTP fields, and its XML's bytes and
-   SHA-256. `import_jmdict.py` refuses an export whose XML, with each `<example>` block that
-   starts a line removed, isn't that file, so the examples never change an entry.
+   `<Name>-<date>.source.json` from the previous record, with the new date, HTTP `Last-Modified` and
+   `ETag`, byte count, and SHA-256. Tatoeba's `aggregate_sha256` is the SHA-256 of its seven files'
+   SHA-256s, each followed by LF. JMdict's record also has its `export_date` (the file's `JMdict
+   created` line) and, in `without_examples`, the same day's `JMdict_e.gz`: its HTTP fields, and its
+   XML's bytes and SHA-256. `import_jmdict.py` refuses an export whose XML, with each `<example>`
+   block that starts a line removed, isn't that file, so the examples never change an entry.
 2. Delete the previous record and folder. The rebuild refuses a kind with two records, and
    replaces the previous snapshot's import report.
 3. Name the new records in `language-data/sources/README.md` and, for EDRDG's files,
@@ -135,11 +134,10 @@ Data, with UniDic pitch, Tatoeba examples, and app-owned word relationships. Its
   Entries with the same semantic fingerprint share them, in source order.
 - `jmdict_normalization.py`: every JMdict part-of-speech entity code maps to stable app-owned
   category identifiers; the wording belongs to the app's part-of-speech formatter, so stored
-  identifiers never carry display text. The retired description-substring labels are reproduced
-  only for the note identity, which keyed notes and photos before Language Reference IDs did; the
-  app reads it to move those to their word (`docs/agents/ios-local-stores.md`), and nothing
-  displays them.
-  Cross-references keep JMdict's form, optional reading, and optional target sense. A Language
+  identifiers never carry display text. The retired description-substring labels are reproduced only
+  for the note identity, which keyed notes and photos before Language Reference IDs did; the app
+  reads it to move those to their word (`docs/agents/ios-local-stores.md`), and nothing displays
+  them. Cross-references keep JMdict's form, optional reading, and optional target sense. A Language
   Reference ID is the SHA-256 of the source identity and record ID, so a provider's key is never
   exposed, and a note identity hashes an app-owned semantic signature, never provider coordinates.
 - `jmdict_entries.py`: entries, forms, priority profiles, sense and reading restrictions, gloss
@@ -205,12 +203,11 @@ past 50 as "50+".
 記者会見 and クレジットカード, from their parts, with the rule in `compound_accent.py` (#825).
 `tests/test_compound_pitch_rule.py` runs it on UniDic's real rows for each case below.
 
-- **Parts.** Every UniDic row of a noun, na-adjective, prefix, or suffix is a possible part,
-  matched by its spelling and its kana form (`kanaBase`), so suffix rows with no accent of their own
-  (〜者, 〜官) and rendaku forms (運動ぶそく) count. A kana part needs two characters and a
-  katakana one three; the only kana affixes are お, ご, 御, さん, さま, ちゃん, くん, and たち. A
-  word is split when it has kanji and three characters or more, or is katakana of four or more, so
-  a hiragana word such as には never is.
+- **Parts.** Every UniDic row of a noun, na-adjective, prefix, or suffix is a possible part, matched
+  by its spelling and its kana form (`kanaBase`), so suffix rows with no accent of their own (〜者,
+  〜官) and rendaku forms (運動ぶそく) count. A kana part needs two characters and a katakana one three;
+  the only kana affixes are お, ご, 御, さん, さま, ちゃん, くん, and たち. A word is split when it has kanji and
+  three characters or more, or is katakana of four or more, so a hiragana word such as には never is.
 - **Splits.** A word splits into two to four parts. The splits with the fewest parts that give a
   value must all agree; a split that gives no value is left out. クレジットカード gets 6, though
   one of its splits, through a カード row with no combination type, gives none; 個人的 gets none,
@@ -250,6 +247,9 @@ readings; for a lemma UniDic files under several readings, such as 家, a review
 ([`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md), #826). JMdict writes katakana
 words' readings in katakana, the rest in hiragana. No entry V1 ranks loses its rank or gets a worse
 one. The content digest is in [`frequency.md`](../../docs/agents/frequency.md), Trust.
+
+**`review_tubelex_readings.py`** rebuilds the YouTube reviewed readings' evidence and rule verdicts
+from the pinned sources, to check or write them ([decisions](../FREQUENCY_SOURCE_DECISIONS.md)).
 
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at

@@ -99,6 +99,19 @@ gives the row. A row takes a reading only when (its `rule` says it in full):
 Three rows that pass are left out by hand: 開く (あく is everyday too), 空 (から, as in 空になる),
 and 刃 (やいば, as in 鬼滅の刃, which YouTube names far more than anime subtitles do).
 
+`language-data/tools/review_tubelex_readings.py` computes each row's `jiten` and `verdict`, through
+`language-data/tools/tubelex_reading_evidence.py`, from the pinned TUBELEX source, Jiten's snapshot
+(each list held to its recorded SHA-256), UniDic's lexicon, and the language data, placing a reading
+with the importer's own mapping. `check` compares them with the list, and `write` writes them,
+keeping each row's reading, entry, and reason, which are the reviewer's; `--scope`, with all of
+UniDic, also holds the rows to the top 5,000's unplaced ones. A row keeps a reading only when its
+verdict ranks that reading on that entry, and a reviewer may leave out a row the verdict ranks, as
+for the three above. `excerpt` writes the UniDic rows the review reads, cut to the 15 columns it
+reads, to `language-data/tools/tests/fixtures/unidic-cwj-3.1.0-reviewed-readings.csv`.
+`test_reviewed_readings_evidence.py` runs the tool on that excerpt with the other contract tests,
+in CI too, so a changed snapshot or rule fails rather than drifts; with all of UniDic, as the
+rebuild has it, it also checks the excerpt and the rows.
+
 | TUBELEX top 5,000 | UniDic readings | And reviewed readings |
 | --- | ---: | ---: |
 | Rows ranked | 3,582 | 3,667 |
