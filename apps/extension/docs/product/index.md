@@ -11,7 +11,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
+| Side panel | "Zenbu Japanese", and whether the dictionary answers: "Checking the dictionary…", then "The dictionary is ready." or "The dictionary isn't answering.", with Check again. Under it, [Translate](translate.md). | `src/shared/dictionary-status.interaction.test.tsx`, with the ping's round trip in `src/service-worker/round-trip.test.ts`; in Chrome, by hand |
 | Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | In Chrome, by hand |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | In Chrome, by hand |
 
@@ -21,5 +21,5 @@ opens it again on the next request, and that first request is answered
 
 ## Not built yet
 
-Looking words up, the word popup on a page, saving, and translating aren't built. The release
+Looking words up, the word popup on a page, and saving aren't built. The release
 build adds nothing to the pages a learner reads.

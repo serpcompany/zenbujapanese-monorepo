@@ -1,0 +1,27 @@
+import type { Direction, Language } from '../translation/messages'
+
+const languageNames: Record<Language, string> = { ja: 'Japanese', en: 'English' }
+
+export const translateLabels = {
+  box: 'Text to translate',
+  placeholder: 'Type or paste Japanese or English',
+  useSelection: 'Use Selection',
+  clear: 'Clear',
+  translate: 'Translate',
+  translating: 'Translating…',
+  onThisDevice: 'Translated on this device',
+  copy: 'Copy',
+  copied: 'Copied',
+  speak: 'Speak',
+  direction: ({ from, to }: Direction) => `${languageNames[from]} → ${languageNames[to]}`,
+  downloading: (fraction: number) =>
+    `Downloading Japanese for Translate… ${Math.round(fraction * 100)}%`,
+  notices: {
+    unavailable: "Translate isn't available on this computer.",
+    downloadFailed: "The download didn't finish. Try again.",
+    failed: "Translate didn't answer. Try again.",
+    noLanguage: 'Type Japanese or English to translate.',
+    nothingSelected: 'Nothing is selected.',
+    selectionUnreadable: "Can't read the selection on this page. Copy and paste it instead."
+  }
+}
