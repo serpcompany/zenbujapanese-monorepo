@@ -43,6 +43,12 @@ function text(value: string, name: string): string {
   return value
 }
 
+function pickedKanji(value: string | undefined): boolean {
+  if (value === undefined) return false
+  if (value !== '1') throw new BadRequest('picked must be 1, for a kanji picked from radicals')
+  return true
+}
+
 function segmentable(value: string): string {
   if (!isSegmentableText(value)) {
     throw new BadRequest(`text must be 1 to ${maximumSegmentedLength} characters, not all blank`)
@@ -88,7 +94,12 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   app.get('/v1/info', async context => context.json(await service.info()))
 
   app.get('/v1/search/:query', async context =>
-    context.json(await service.search(text(context.req.param('query'), 'query')))
+    context.json(
+      await service.search(
+        text(context.req.param('query'), 'query'),
+        pickedKanji(context.req.query('picked'))
+      )
+    )
   )
 
   app.get('/v1/search/:query/examples', async context => {
@@ -155,6 +166,8 @@ export function createApp({ service, token, ready, access = null }: AppOptions) 
   })
 
   app.get('/v1/retired', async context => context.json(await service.retired()))
+
+  app.get('/v1/radicals', async context => context.json(await service.radicals()))
 
   app.get('/v1/segmentation/:text', async context => {
     const segmented: SegmentationResponse = {

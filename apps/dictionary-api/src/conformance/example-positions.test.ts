@@ -7,7 +7,13 @@ import { inProcessService } from '../service'
 import { wordSuite } from './detail-suite'
 import { exampleSearchSuite } from './example-search-suite'
 import { info } from './fake-service'
-import { artifactAvailable, browse, dictionary, requirePinnedArtifacts } from './support'
+import {
+  artifactAvailable,
+  artifactRadicals,
+  browse,
+  dictionary,
+  requirePinnedArtifacts
+} from './support'
 
 const token = 'service-token-0123456789'
 
@@ -36,7 +42,7 @@ describe.runIf(artifactAvailable)('a position past the examples listed, on the a
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     service = await dictionary({ morphology: false })
     app = createApp({
-      service: inProcessService(service, await browse(), info),
+      service: inProcessService(service, await browse(), info, await artifactRadicals()),
       token,
       ready: () => true
     })

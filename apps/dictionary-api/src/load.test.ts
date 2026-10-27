@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { retiredEntriesFile } from '@zenbu/dictionary-core/artifact/retired'
 import { wordCardInputs } from '@zenbu/dictionary-core/artifact/word-cards'
+import { radicalReferenceFile } from '@zenbu/dictionary-core/search/radicals'
 import { afterEach, describe, expect, test } from 'vitest'
 import { verifyFiles } from './load'
 
@@ -12,6 +13,8 @@ const folders: string[] = []
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex')
 
+const resourceFiles = [...wordCardInputs, radicalReferenceFile]
+
 function languageData(pinned: (name: string) => string = sha256) {
   const root = mkdtempSync(join(tmpdir(), 'pinned-release-'))
   folders.push(root)
@@ -19,12 +22,12 @@ function languageData(pinned: (name: string) => string = sha256) {
   const derived = join(root, 'derived')
   mkdirSync(resources)
   mkdirSync(derived)
-  for (const name of wordCardInputs) writeFileSync(join(resources, name), name)
+  for (const name of resourceFiles) writeFileSync(join(resources, name), name)
   writeFileSync(join(derived, retiredEntriesFile), retiredEntriesFile)
   writeFileSync(join(root, 'release.json'), JSON.stringify({ release }))
   const releases = join(root, 'releases')
   mkdirSync(join(releases, release), { recursive: true })
-  const files = [...wordCardInputs, retiredEntriesFile].map(name => ({
+  const files = [...resourceFiles, retiredEntriesFile].map(name => ({
     name,
     sha256: pinned(name)
   }))
@@ -56,6 +59,7 @@ describe('the files the service starts on', () => {
 
   test.each([
     'KanjiReferenceData.json',
+    radicalReferenceFile,
     retiredEntriesFile
   ])("refuse to start when %s isn't the release's, naming it", async file => {
     const other = sha256('another build')

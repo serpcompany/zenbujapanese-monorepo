@@ -129,6 +129,10 @@ export async function artifactKanji() {
   return (await open()).artifact.kanji
 }
 
+export async function artifactRadicals() {
+  return (await open()).artifact.radicals
+}
+
 export async function artifactTokenizerFile() {
   return (await open()).tokenizerFile
 }
