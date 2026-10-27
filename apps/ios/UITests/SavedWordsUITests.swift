@@ -58,10 +58,7 @@ final class SavedWordsUITests: ZenbuUITestCase {
     type("japan\n", into: searchField(in: app))
     let word = markJapanKnown(in: app).label
     XCTAssert(word.contains("Japan"), word)
-    tap(find("result.japan", in: app))
-    tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
-    tap(find("kanji-detail.more-menu", in: app))
-    tap(menuChoice("Mark as Known", in: app))
+    markNichiKnownFromJapan(in: app)
     open(.account, in: app)
     tap(find("account.known-words", in: app))
     waitUntil(find("result.kanji-primary.日", in: app), "label == %@", kanji)
@@ -78,11 +75,15 @@ final class SavedWordsUITests: ZenbuUITestCase {
   func testAKanjiIsMarkedKnownFromItsMenu() {
     let app = launch()
     search("japan", in: app)
+    markNichiKnownFromJapan(in: app)
+    tap(find("kanji-detail.more-menu", in: app))
+    waitFor(menuChoice("Mark as Unknown", in: app))
+  }
+
+  private func markNichiKnownFromJapan(in app: XCUIApplication) {
     tap(find("result.japan", in: app))
     tap(find("word-detail.kanji.日", in: app), toShow: find("kanji-detail.more-menu", in: app))
     tap(find("kanji-detail.more-menu", in: app))
     tap(menuChoice("Mark as Known", in: app))
-    tap(find("kanji-detail.more-menu", in: app))
-    waitFor(menuChoice("Mark as Unknown", in: app))
   }
 }
