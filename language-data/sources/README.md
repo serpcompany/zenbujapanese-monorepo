@@ -33,13 +33,15 @@ large to commit (UniDic, KanjiVG, and Kanjium) are downloaded by the rebuild and
 | Handwriting recognition | `DaKanji-v1.2.source.json` | Bundled Core ML model |
 | JLPT levels | `JLPT-Waller-2025-08-26.source.json` | `import_jlpt_level_pack.py` |
 | JLPT kanji levels | `Kanji-JLPT-Waller-2020-08-06.source.json` | `import_jlpt_kanji_levels.py`, through `import_kanjidic.py` |
-| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, `Wikipedia-ja-20221020-310-nfkc.source.json`, `Jiten-2026-09-27.source.json` (snapshots in `Jiten-2026-09-27/`); `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` is historical (removed in #376) | `import_frequency_pack.py`, `build_jiten_frequency_packs.py`, on-device `FrequencyPackInstaller`; `build_ranked_lists.py` for the website's dictionary service |
+| Frequency data | `TUBELEX-ja-310-lemma-pos.source.json`, with `TUBELEX-ja-310-lemma-pos.reviewed-readings.json`, the readings a person chose for spellings UniDic reads several ways, Jiten's ranks the evidence (#826); `Wikipedia-ja-20221020-310-nfkc.source.json`, `Jiten-2026-09-27.source.json` (snapshots in `Jiten-2026-09-27/`); `Public-Japanese-Frequency-Catalog-2026-09-25.source.json` is historical (removed in #376) | `import_frequency_pack.py`, `build_jiten_frequency_packs.py`, on-device `FrequencyPackInstaller`; `build_ranked_lists.py` for the website's dictionary service |
 | Interactive Japanese parsing | `Kuromoji-0.1.2.source.json` | The compressed IPADIC dictionary files the shared core's tokenizer reads, and the tokenizer it is ported from |
 | App-owned word relationships | `Zenbu-Word-Relationships-v1.json` | `import_jmdict.py` |
 
 Required notices for bundled dependencies remain beside their source records
 ([EDRDG](EDRDG-ATTRIBUTION.md), [MeCab IPADIC](MECAB-IPADIC-NOTICE.md)) and in the app
-resources. Frequency-pack manifests contain the runtime source URL,
+resources. The reviewed readings hold an extract of Jiten's ranks, so the file credits Jiten and is
+shared under CC BY-SA 4.0, as its `evidence` says; the YouTube pack holds none of them.
+Frequency-pack manifests contain the runtime source URL,
 attribution, checksums, mapping contract, and delivery behavior. Import reports
 under `language-data/generated/` connect pinned inputs to generated
 artifact checksums and remain versioned with those artifacts.
