@@ -23,8 +23,8 @@ struct AccountTabRoot: View {
           MediaLibraryView(store: store)
         case .notesWithoutAWord:
           NotesWithoutAWordView()
-        case .knownWords:
-          KnownWordsView(lookupClient: lookupClient) {
+        case .marked(let status):
+          MarkedWordsView(words: .of(status), lookupClient: lookupClient) {
             openItem($0.entryID, $0.headword, $0.reading)
           }
         case .wordLists:
@@ -62,55 +62,19 @@ struct AccountRootView: View {
         }
       }
 
-      if LaunchHarness.shows("library", on: "account") {
+      if ["library", "collections", "settings"].allSatisfy({ LaunchHarness.shows($0, on: "account") }) {
         Section {
-          NavigationLink(value: AccountRoute.mediaLibrary) {
-            SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
-          }
-          .accessibilityIdentifier("account.media-library")
-
-          NavigationLink(value: AccountRoute.knownWords) {
-            AccountCountRowLabel(
-              "Known Words", systemImage: "checkmark.circle.fill", tint: .teal,
-              count: wordKnowledge.isLoaded ? wordKnowledge.knownCount : nil)
-          }
-          .accessibilityIdentifier("account.known-words")
-
-          NavigationLink(value: AccountRoute.wordLists) {
-            AccountCountRowLabel(
-              "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
-              count: wordLists.isLoaded ? wordLists.lists.count : nil)
-          }
-          .accessibilityIdentifier("account.lists")
-
-          NavigationLink(value: TranslateRoute.history) {
-            AccountCountRowLabel(
-              "Translations", systemImage: "translate", tint: .purple,
-              count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
-          }
-          .accessibilityIdentifier("account.translations")
-
-          if !notesWithoutAWord.notes.isEmpty {
-            NavigationLink(value: AccountRoute.notesWithoutAWord) {
-              AccountCountRowLabel(
-                "Notes Without a Word", systemImage: "note.text", tint: .yellow,
-                count: notesWithoutAWord.notes.count)
-            }
-            .accessibilityIdentifier("account.notes-without-a-word")
-          }
+          libraryRows
+          collectionRows
         }
 
-        Section {
-          NavigationLink(value: AccountRoute.readingAids) {
-            SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
-          }
-          .accessibilityIdentifier("account.reading-aids")
-
-          NavigationLink(value: AccountRoute.frequencyDictionaries) {
-            SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
-          }
-          .accessibilityIdentifier("account.frequency-dictionaries")
-        }
+        Section { settingsRows }
+      } else if LaunchHarness.shows("library", on: "account") {
+        Section { libraryRows }
+      } else if LaunchHarness.shows("collections", on: "account") {
+        Section { collectionRows }
+      } else if LaunchHarness.shows("settings", on: "account") {
+        Section { settingsRows }
       }
 
       if LaunchHarness.shows("about", on: "account") {
@@ -150,6 +114,62 @@ struct AccountRootView: View {
     .accessibilityIdentifier("account.list")
     .navigationTitle("Account")
     .inlineNavigationTitle()
+  }
+
+  @ViewBuilder private var libraryRows: some View {
+    NavigationLink(value: AccountRoute.mediaLibrary) {
+      SettingsRowLabel("Media Library", systemImage: "photo.on.rectangle.angled", tint: .orange)
+    }
+    .accessibilityIdentifier("account.media-library")
+
+    markedWordsRow(.known)
+    markedWordsRow(.learning)
+  }
+
+  @ViewBuilder private var settingsRows: some View {
+    NavigationLink(value: AccountRoute.readingAids) {
+      SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+    }
+    .accessibilityIdentifier("account.reading-aids")
+
+    NavigationLink(value: AccountRoute.frequencyDictionaries) {
+      SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+    }
+    .accessibilityIdentifier("account.frequency-dictionaries")
+  }
+
+  @ViewBuilder private var collectionRows: some View {
+    NavigationLink(value: AccountRoute.wordLists) {
+      AccountCountRowLabel(
+        "Lists", systemImage: "list.bullet.rectangle.fill", tint: .indigo,
+        count: wordLists.isLoaded ? wordLists.lists.count : nil)
+    }
+    .accessibilityIdentifier("account.lists")
+
+    NavigationLink(value: TranslateRoute.history) {
+      AccountCountRowLabel(
+        "Translations", systemImage: "translate", tint: .purple,
+        count: translationHistory.isLoaded ? translationHistory.saved.count : nil)
+    }
+    .accessibilityIdentifier("account.translations")
+
+    if !notesWithoutAWord.notes.isEmpty {
+      NavigationLink(value: AccountRoute.notesWithoutAWord) {
+        AccountCountRowLabel(
+          "Notes Without a Word", systemImage: "note.text", tint: .yellow,
+          count: notesWithoutAWord.notes.count)
+      }
+      .accessibilityIdentifier("account.notes-without-a-word")
+    }
+  }
+
+  private func markedWordsRow(_ words: MarkedWords) -> some View {
+    NavigationLink(value: AccountRoute.marked(words.status)) {
+      AccountCountRowLabel(
+        LocalizedStringKey(words.title), systemImage: words.rowSymbol, tint: words.tint,
+        count: wordKnowledge.isLoaded ? wordKnowledge.marked(words.status).count : nil)
+    }
+    .accessibilityIdentifier("account.\(words.identifier)")
   }
 }
 
@@ -250,7 +270,7 @@ enum AccountRoute: Hashable {
   case readingAids
   case mediaLibrary
   case notesWithoutAWord
-  case knownWords
+  case marked(WordKnowledgeStatus)
   case wordLists
   case wordList(UUID)
   case frequencyDictionaries

@@ -147,7 +147,7 @@ struct AccountSyncConflictTests {
 
     #expect(!fixture.wordKnowledge.isKnown(storedID: Fixture.taberu))
     #expect(fixture.wordKnowledge.isKnown(storedID: Fixture.miru))
-    #expect(fixture.queuedOperations == ["knownWord clear \(Fixture.taberu)"])
+    #expect(fixture.queuedOperations == ["knownWord set \(Fixture.taberu)"])
     #expect(fixture.sync.state.queue.first?.baseVersion == 5)
   }
 

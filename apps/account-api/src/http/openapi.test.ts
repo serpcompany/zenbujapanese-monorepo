@@ -101,6 +101,7 @@ describe('the OpenAPI contract', () => {
       '/v1/me/subscription/portal',
       '/v1/photos/{photoId}',
       '/v1/sync',
+      '/v1/sync/{entity}',
       '/v1/webhooks/apple',
       '/v1/webhooks/stripe'
     ])

@@ -160,6 +160,8 @@ extension AccountSync {
       {
         state.longNotes.append(change.key.entityID)
       }
+    case (SyncEntity.knownWord, Self.unknownOperation) where change.operation == "set":
+      resendWithoutLearning(change)
     case (SyncEntity.setting, let code) where Self.keptOnTheDevice.contains(code):
       state.retryNextLaunch.removeAll { $0.key == change.key }
       state.retryNextLaunch.append(change)

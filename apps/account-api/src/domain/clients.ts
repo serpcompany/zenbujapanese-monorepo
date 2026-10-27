@@ -59,6 +59,18 @@ const appOnly: readonly Scope[] = [
   'searches:write'
 ]
 
+const shownOnTheWebsite: readonly Scope[] = [
+  'watch:read',
+  'translations:read',
+  'notes:read',
+  'notes:write',
+  'photos:read',
+  'settings:read',
+  'settings:write',
+  'searches:read',
+  'searches:write'
+]
+
 export const clients: readonly Client[] = [
   {
     id: 'zenbu-ios',
@@ -71,7 +83,7 @@ export const clients: readonly Client[] = [
   {
     id: 'zenbu-web',
     name: 'zenbujapanese.com',
-    scopes: [...studyData, 'subscription'],
+    scopes: [...studyData, ...shownOnTheWebsite, 'subscription'],
     appleBundleIds: [],
     signsInOnTheWeb: true,
     requestsPerMinute: 30_000

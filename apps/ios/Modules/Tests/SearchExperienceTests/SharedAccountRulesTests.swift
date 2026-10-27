@@ -146,8 +146,8 @@ struct SharedAccountRulesTests {
           watchedAt: Date()),
         previous: nil)
     }
-    let known = KnownWordChange(storedID: "kanji:語", headword: "語", reading: "ご", known: true)
-    let together = SavedItemChange.forTheAccount([.known(known)] + changes)
+    let known = KnownWordChange(storedID: "kanji:語", headword: "語", reading: "ご", status: .known)
+    let together = SavedItemChange.forTheAccount([.known(known, previous: .unknown)] + changes)
     let alone = changes.map { SavedItemChange.forTheAccount([$0])[0] }
     let fields = { (change: SavedItemChange) in change.queued(in: AccountSyncState()).fields }
     #expect(together.count == changes.count + 1)

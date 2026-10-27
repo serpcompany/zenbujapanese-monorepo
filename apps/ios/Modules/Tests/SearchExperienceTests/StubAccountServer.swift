@@ -260,12 +260,14 @@ enum StubSync {
     ["id": id, "status": "conflict", "version": current["version"] ?? 0, "current": current]
   }
 
-  static func knownWord(_ itemID: String, known: Bool, version: Int, headword: String = "食べる")
-    -> [String: Any]
-  {
-    put(
-      "knownWord", itemID, version,
-      ["itemId": itemID, "headword": headword, "reading": "たべる", "known": known])
+  static func knownWord(
+    _ itemID: String, known: Bool, version: Int, headword: String = "食べる", state: String? = nil
+  ) -> [String: Any] {
+    var word: [String: Any] = [
+      "itemId": itemID, "headword": headword, "reading": "たべる", "known": known,
+    ]
+    word["state"] = state
+    return put("knownWord", itemID, version, word)
   }
 
   static func list(_ id: UUID, name: String, position: Int = 0, version: Int) -> [String: Any] {

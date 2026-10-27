@@ -263,8 +263,8 @@ struct SearchView: View {
               ?? ResultsLearner.defaultSort,
             filter: UserDefaults.standard.string(forKey: ResultsLearner.filterKey)
               ?? ResultsLearner.noFilter,
-            known: foundResults.entries.map(\.id).filter(wordKnowledge.isKnown)
-              .map(\.rawValue),
+            known: wordKnowledge.ids(.known, among: foundResults.entries),
+            learning: wordKnowledge.ids(.learning, among: foundResults.entries),
             pickedKanji: pickedKanjiQuery == taskQuery),
           lists: FrequencyLists.live.version)
         try Task.checkCancellation()

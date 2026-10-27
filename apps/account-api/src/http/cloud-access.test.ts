@@ -96,6 +96,25 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
     ).toBe(200)
   })
 
+  test("refuses the website an account's lists, notes, or any other kind with no subscription, and reads them once it subscribes", async () => {
+    const email = 'cloud-website-reader@example.com'
+    const app = await billing.accounts.learner(email)
+    const website = await billing.accounts.learner(email, 'zenbu-web')
+    for (const kind of ['list', 'listWord', 'knownWord', 'wordNote', 'setting']) {
+      expect(await billing.accounts.readKind(website.token, kind), kind).toMatchObject({
+        status: 402,
+        body: { error: { code: 'subscription_required' } }
+      })
+    }
+    expect((await billing.subscription(website)).cloudAccess).toBe('subscription_required')
+    await subscribe(app)
+    expect((await billing.subscription(website)).cloudAccess).toBe('subscribed')
+    expect((await billing.accounts.readKind(website.token, 'list')).status).toBe(200)
+    expect((await billing.accounts.sync(website.token, { mutations: [newList()] })).status).toBe(
+      200
+    )
+  })
+
   test('syncs once the account subscribes, and refuses again when the subscription lapses', async () => {
     const learner = await billing.accounts.learner('cloud-subscriber@example.com')
     const bought = await subscribe(learner)
@@ -163,7 +182,11 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
       info: { title: 'gate', version: '1' }
     })
     const gated = Object.entries(contract.paths ?? {}).filter(([path]) => gatedBy(path))
-    expect(gated.map(([path]) => path).sort()).toEqual(['/v1/photos/{photoId}', '/v1/sync'])
+    expect(gated.map(([path]) => path).sort()).toEqual([
+      '/v1/photos/{photoId}',
+      '/v1/sync',
+      '/v1/sync/{entity}'
+    ])
     for (const [path, operations] of gated) {
       for (const [method, operation] of Object.entries(operations ?? {})) {
         expect('402' in (operation as { responses: object }).responses, `${method} ${path}`).toBe(
@@ -203,7 +226,13 @@ describe('cloud data, with ACCOUNT_API_CLOUD_ACCESS=subscription', () => {
       path => path.startsWith('/v1/') && !path.startsWith('/v1/auth/')
     )
     expect(paths).toEqual(
-      expect.arrayContaining(['/v1/sync', '/v1/photos/{photoId}', '/v1/photos/:photoId'])
+      expect.arrayContaining([
+        '/v1/sync',
+        '/v1/sync/{entity}',
+        '/v1/sync/:entity',
+        '/v1/photos/{photoId}',
+        '/v1/photos/:photoId'
+      ])
     )
     expect(paths.filter(path => !gatedBy(path) && !freeOfTheGate.includes(path))).toEqual([])
     expect(freeOfTheGate.filter(gatedBy)).toEqual([])

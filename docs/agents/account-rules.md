@@ -34,6 +34,17 @@ made U+FFFD, control characters made spaces, NFC, trimmed), cutting by code poin
 check for invisible characters. `src/test/cases.ts` loads the case files for any package's tests,
 with `textOf` for a case written as a repeated run (`{ "text": "x", "times": 501 }`).
 
+## A client's copy
+
+Beside the rules, the package holds what a client that keeps no copy of the account does with
+them: `src/account-copy.ts` reads a kind, sends a change at the version it read, reads the kind
+again, and keeps a note's text through a conflict as the app does; `src/account-views.ts` orders
+what it read as the apps show it (lists, a list's words, recent videos and searches, and a word
+Known only when the account says so, as the app reads it, so a Learning word isn't). The website
+runs both ([`account-client-rules.md`](account-client-rules.md#keeping-no-copy)); a transport the
+caller hands in does the requests, so nothing here fetches. `src/account-copy.test.ts` covers them
+on their own, and the service's `website-copy.test.ts` against the service.
+
 ## Who replays what
 
 - **The service** takes its profile, list, note, watch, and setting rules from the package
