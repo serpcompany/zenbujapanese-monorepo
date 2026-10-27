@@ -136,40 +136,39 @@ test.describe("an account's synced data", () => {
       allowedConsoleErrors: [/Failed to load resource: net::ERR_FAILED/]
     })
 
-    test('each page of synced data fits a 360px phone, signed in, with its tap targets and contrast', async ({
-      page
-    }) => {
-      const standIn = anAccount()
-        .holds('photo', 'f'.repeat(64), { name: 'Menu.jpg', savedAt: '2026-10-01T12:00:00Z' })
-        .holds('watchedVideo', 'aaaaaaaaaaa', {
-          title: 'A video',
-          watchedAt: '2026-10-01T12:00:00Z'
-        })
-        .holds('bookmarkedSentence', 'b1', {
-          text: 'はい。',
-          language: 'ja',
-          bookmarkedAt: '2026-10-01T12:00:00Z'
-        })
-        .holds('setting', 'readingAids.romaji', { name: 'readingAids.romaji', value: true })
-      await signedInWith(page, standIn)
-      for (const colorScheme of ['light', 'dark'] as const) {
-        await page.emulateMedia({ colorScheme })
-        for (const path of [...syncedPaths, `/account/lists/?list=${food}`]) {
-          const view = `${path} (${colorScheme})`
+    for (const colorScheme of ['light', 'dark'] as const) {
+      for (const path of [...syncedPaths, `/account/lists/?list=${food}`]) {
+        test(`${path} fits a 360px phone, signed in, with its tap targets and contrast, in ${colorScheme}`, async ({
+          page
+        }) => {
+          const standIn = anAccount()
+            .holds('photo', 'f'.repeat(64), { name: 'Menu.jpg', savedAt: '2026-10-01T12:00:00Z' })
+            .holds('watchedVideo', 'aaaaaaaaaaa', {
+              title: 'A video',
+              watchedAt: '2026-10-01T12:00:00Z'
+            })
+            .holds('bookmarkedSentence', 'b1', {
+              text: 'はい。',
+              language: 'ja',
+              bookmarkedAt: '2026-10-01T12:00:00Z'
+            })
+            .holds('setting', 'readingAids.romaji', { name: 'readingAids.romaji', value: true })
+          await signedInWith(page, standIn)
+          await page.emulateMedia({ colorScheme })
           await page.goto(path)
           await expect(main(page).getByText('Loading…')).toHaveCount(0)
           await expect(main(page).getByRole('link', { name: 'Your account' })).toBeVisible()
-          expect.soft(await phoneLayoutProblems(page), view).toEqual({
+          expect.soft(await phoneLayoutProblems(page)).toEqual({
             smallText: [],
             outsideTheViewport: [],
             clippedText: [],
             narrowGridCells: []
           })
-          expect.soft(await axeFailures(page, 'target-size', { orUnclear: true }), view).toEqual([])
-          expect.soft(await axeFailures(page, 'color-contrast'), view).toEqual([])
-        }
+          expect.soft(await axeFailures(page, 'target-size', { orUnclear: true })).toEqual([])
+          expect.soft(await axeFailures(page, 'color-contrast')).toEqual([])
+        })
       }
-    })
+    }
   })
 
   test.describe('without a subscription', () => {
