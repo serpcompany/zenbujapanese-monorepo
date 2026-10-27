@@ -14,7 +14,8 @@ in the API reference's [Sync entities](../api/account-api.md#sync-entities).
   - A word is Unknown, Learning, or Known (`state`). An app that shows Learning reads `state` and
     sends `set` with the state the learner chose, and its first upload sends each word that isn't
     Unknown as a `set`. One that doesn't reads `known`, which is false for a Learning word, and
-    sends `mark` and `clear`: its clear leaves a Learning word Learning.
+    sends `mark` and `clear`: its clear leaves a Learning word Learning. A word with no `state`
+    comes from a service from before Learning, during a deploy or after a rollback: read `known`.
   - `set`, `mark`, and `clear` take the version your app had. If the word changed since, it's a
     conflict.
   - Setting the state a word has, marking a known word, or clearing one not known is applied and
