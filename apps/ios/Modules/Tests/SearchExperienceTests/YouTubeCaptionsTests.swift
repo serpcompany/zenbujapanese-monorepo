@@ -66,81 +66,38 @@ struct YouTubeCaptionsTests {
         == "https://www.google.com/search?q=ci%20japanese&tbm=vid")
   }
 
-  @Test("creator-made Japanese captions are preferred over automatic ones")
-  func trackChoice() throws {
-    let response = """
-      {"playabilityStatus":{"status":"OK"},"videoDetails":{"title":"猫の写真","author":"NIJ"},
-       "captions":{"playerCaptionsTracklistRenderer":{"captionTracks":[
-        {"baseUrl":"https://www.youtube.com/api/timedtext?v=a&lang=en","languageCode":"en"},
-        {"baseUrl":"https://www.youtube.com/api/timedtext?v=a&lang=ja&kind=asr","languageCode":"ja","kind":"asr","isTranslatable":true},
-        {"baseUrl":"https://www.youtube.com/api/timedtext?v=a&lang=ja","languageCode":"ja","isTranslatable":true}
-       ]}}}
+  @Test("the core's reading of YouTube's answers becomes the Player's captions and errors")
+  func reading() async throws {
+    let id = try #require(YouTubeVideoID(rawValue: "AQdI1o2D32I"))
+    let tracks = """
+      {"playabilityStatus":{"status":"OK"},"videoDetails":{"title":"駅"},"captions":{\
+      "playerCaptionsTracklistRenderer":{"captionTracks":[\
+      {"baseUrl":"https://x.test/t","languageCode":"ja","kind":"asr"}]}}}
       """
-    let (title, author, tracks) = try YouTubeCaptionParsing.tracks(
-      fromPlayerResponse: Data(response.utf8))
-    #expect(title == "猫の写真")
-    #expect(author == "NIJ")
-    let track = try #require(YouTubeCaptionParsing.japaneseTrack(in: tracks))
-    #expect(!track.isAutomatic)
-    #expect(track.isTranslatable)
-    #expect(YouTubeCaptionParsing.japaneseTrack(in: tracks.filter { $0.languageCode == "en" }) == nil)
-  }
-
-  @Test("automatic Japanese captions are used when they are the only Japanese track")
-  func automaticTrack() throws {
-    let response = """
-      {"playabilityStatus":{"status":"OK"},"captions":{"playerCaptionsTracklistRenderer":{
-       "captionTracks":[{"baseUrl":"https://x.test/t","languageCode":"ja","kind":"asr"}]}}}
-      """
-    let (_, _, tracks) = try YouTubeCaptionParsing.tracks(fromPlayerResponse: Data(response.utf8))
-    #expect(YouTubeCaptionParsing.japaneseTrack(in: tracks)?.isAutomatic == true)
-  }
-
-  @Test("an unplayable video reports itself as unavailable")
-  func unavailableVideo() {
-    let response = #"{"playabilityStatus":{"status":"ERROR","reason":"This video is unavailable"}}"#
-    #expect(throws: YouTubeCaptionError.videoUnavailable) {
-      try YouTubeCaptionParsing.tracks(fromPlayerResponse: Data(response.utf8))
+    func captions(_ playerResponse: String, japanese: String = "<transcript/>") async throws
+      -> YouTubeVideoCaptions
+    {
+      let fetch = YouTubeFetch(
+        playerResponse: { _ in Data(playerResponse.utf8) },
+        timedText: { _, language in
+          #expect(language == nil)
+          return Data(japanese.utf8)
+        })
+      return try await YouTubeCaptionClient(fetching: fetch, recording: { _ in }).captions(id)
     }
-  }
-
-  @Test("timed text becomes cues with decoded text, joined lines, and no overlaps")
-  func timedText() throws {
-    let xml = """
-      <?xml version="1.0" encoding="utf-8" ?><transcript>
-      <text start="0.5" dur="4.0">これは猫の写真です。\n写真です。</text>
-      <text start="3.0" dur="2.5">色々な猫の写真があります。</text>
-      <text start="6" dur="1"> </text>
-      <text start="7.25" dur="2">It&amp;#39;s &amp;quot;fine&amp;quot; &amp;amp; ok</text>
-      </transcript>
-      """
-    let cues = try YouTubeCaptionParsing.cues(fromTimedText: Data(xml.utf8), joiner: "")
-    #expect(cues.map(\.text) == [
-      "これは猫の写真です。写真です。", "色々な猫の写真があります。", #"It's "fine" & ok"#,
-    ])
-    #expect(cues.map(\.id) == [0, 1, 2])
-    #expect(cues[0].start == 0.5)
-    #expect(cues[0].end == 3.0)
-    #expect(cues[1].end == 5.5)
-    #expect(cues[2].end == 9.25)
-  }
-
-  @Test("translations attach to the Japanese line they start within")
-  func pairing() {
-    let japanese = [
-      SubtitleCue(id: 0, start: 0, end: 4, text: "これは猫の写真です。"),
-      SubtitleCue(id: 1, start: 4, end: 8, text: "色々な猫の写真があります。"),
-      SubtitleCue(id: 2, start: 8, end: 9, text: "はい。"),
-    ]
-    let english = [
-      SubtitleCue(id: 0, start: 0, end: 2, text: "This is a picture"),
-      SubtitleCue(id: 1, start: 2, end: 4, text: "of a cat."),
-      SubtitleCue(id: 2, start: 4.1, end: 8, text: "There are various pictures of cats."),
-    ]
-    let paired = YouTubeCaptionParsing.pairing(japanese, with: english)
-    #expect(paired.map(\.translation) == [
-      "This is a picture of a cat.", "There are various pictures of cats.", nil,
-    ])
+    await #expect(throws: YouTubeCaptionError.videoUnavailable) {
+      try await captions(#"{"playabilityStatus":{"status":"ERROR"}}"#)
+    }
+    await #expect(throws: YouTubeCaptionError.unreadableCaptions) { try await captions("<html>") }
+    await #expect(throws: YouTubeCaptionError.unreadableCaptions) {
+      try await captions(tracks, japanese: "<html><body>")
+    }
+    await #expect(throws: YouTubeCaptionError.noJapaneseCaptions) { try await captions(tracks) }
+    let automatic = try await captions(
+      tracks, japanese: #"<transcript><text start="1" dur="2">[音楽] 三番線です</text></transcript>"#)
+    #expect(automatic.title == "駅")
+    #expect(automatic.isAutomatic)
+    #expect(automatic.cues == [SubtitleCue(id: 0, start: 1, end: 3, text: "三番線です")])
   }
 
   @Test("timestamps show hours only when needed")
@@ -166,20 +123,6 @@ struct WordMeaningTests {
 
 @Suite("Player reading aids")
 struct PlayerReadingAidTests {
-  @Test("sound tags in automatic captions are dropped, and tag-only lines disappear")
-  func soundTags() throws {
-    let xml = """
-      <transcript>
-      <text start="11" dur="4">[音楽]</text>
-      <text start="17" dur="3">[音楽] 私のことを</text>
-      <text start="20" dur="3">［拍手］</text>
-      <text start="23" dur="2">[Music] Do</text>
-      </transcript>
-      """
-    let cues = try YouTubeCaptionParsing.cues(fromTimedText: Data(xml.utf8), joiner: "")
-    #expect(cues.map(\.text) == ["私のことを", "Do"])
-  }
-
   @Test("comprehension counts known words among countable occurrences")
   func comprehension() {
     let a = LanguageReferenceID(rawValue: "a")
@@ -235,118 +178,5 @@ struct PlayerReadingAidTests {
       defaults: defaults, storageKey: "translate.reading-aids.v1", furiganaByDefault: false)
     #expect(reloaded.showsFurigana)
     #expect(ReadingAidPreferences(defaults: defaults).showsFurigana)
-  }
-}
-
-@Suite("Sentence-length translations")
-struct SentenceTranslationPairingTests {
-  @Test("a translation spanning too many lines leaves them as separate cards")
-  func mergesLines() {
-    let japanese = [
-      SubtitleCue(id: 0, start: 40, end: 44, text: "突然のキス"),
-      SubtitleCue(id: 1, start: 44, end: 49, text: "や熱いまなざしで"),
-      SubtitleCue(id: 2, start: 49, end: 53, text: "恋のプログラムを"),
-      SubtitleCue(id: 3, start: 53, end: 60, text: "狂わせないでね"),
-      SubtitleCue(id: 4, start: 60, end: 64, text: "出会いと別れ"),
-    ]
-    let english = [
-      SubtitleCue(id: 0, start: 40, end: 42, text: "Do"),
-      SubtitleCue(id: 1, start: 42, end: 60, text: "n't mess with the program of love."),
-      SubtitleCue(id: 2, start: 60, end: 64, text: "Meetings and partings"),
-    ]
-    let paired = YouTubeCaptionParsing.pairing(japanese, with: english)
-    #expect(paired.count == 5)
-    #expect(paired[0].translation == "Do")
-    #expect(paired[3].translation == "n't mess with the program of love.")
-    #expect(paired[4].translation == "Meetings and partings")
-    #expect(paired.map(\.id) == [0, 1, 2, 3, 4])
-  }
-
-  @Test("a small timing overlap at the edge doesn't join neighboring lines")
-  func edgeOverlap() {
-    let japanese = [
-      SubtitleCue(id: 0, start: 0, end: 4, text: "一"),
-      SubtitleCue(id: 1, start: 4, end: 8, text: "二"),
-    ]
-    let english = [
-      SubtitleCue(id: 0, start: 0, end: 4.2, text: "One"),
-      SubtitleCue(id: 1, start: 4.2, end: 8, text: "Two"),
-    ]
-    let paired = YouTubeCaptionParsing.pairing(japanese, with: english)
-    #expect(paired.map(\.translation) == ["One", "Two"])
-  }
-}
-
-@Suite("YouTube translation sentences")
-struct TranslationSentenceTests {
-  @Test("empty translated slots extend the sentence that follows them back to their start")
-  func sentencesSpanEmptySlots() throws {
-    let xml = """
-      <transcript>
-      <text start="17.21" dur="20.68">[Music] Do</text>
-      <text start="40.76" dur="8.279"></text>
-      <text start="44.399" dur="9.041"></text>
-      <text start="53.44" dur="8.759">n&amp;#39;t mess with the program of love</text>
-      <text start="60.57" dur="4.19">[Music]</text>
-      <text start="64.76" dur="5.2">Put it on top</text>
-      </transcript>
-      """
-    let sentences = try YouTubeCaptionParsing.translationSentences(fromTimedText: Data(xml.utf8))
-    #expect(sentences.map(\.text) == ["Don't mess with the program of love", "Put it on top"])
-    #expect(sentences[0].start == 40.76)
-    #expect(abs(sentences[0].end - 62.199) < 0.001)
-    #expect(sentences[1].start == 60.57)
-
-    let japanese = [
-      SubtitleCue(id: 0, start: 40.76, end: 44.399, text: "突然のキス"),
-      SubtitleCue(id: 1, start: 44.399, end: 49.039, text: "や熱いまなざしで"),
-      SubtitleCue(id: 2, start: 49.039, end: 53.44, text: "恋のプログラムを"),
-      SubtitleCue(id: 3, start: 53.44, end: 60.57, text: "狂わせないでね"),
-      SubtitleCue(id: 4, start: 64.76, end: 69.96, text: "上に置いて"),
-    ]
-    let paired = YouTubeCaptionParsing.pairing(japanese, with: sentences)
-    #expect(paired.map(\.text) == japanese.map(\.text))
-    #expect(paired.map(\.translation) == [
-      nil, nil, nil, "Don't mess with the program of love", "Put it on top",
-    ])
-  }
-}
-
-@Suite("Caption card size")
-struct CaptionCardSizeTests {
-  @Test("a translation spanning two short lines merges them into one card")
-  func mergesShortLines() {
-    let japanese = [
-      SubtitleCue(id: 0, start: 0, end: 2, text: "布巾で"),
-      SubtitleCue(id: 1, start: 2, end: 4, text: "拭きます。"),
-      SubtitleCue(id: 2, start: 4, end: 6, text: "はい。"),
-    ]
-    let english = [
-      SubtitleCue(id: 0, start: 0, end: 4, text: "I'll wipe it with a cloth."),
-      SubtitleCue(id: 1, start: 4, end: 6, text: "Yes."),
-    ]
-    let paired = YouTubeCaptionParsing.pairing(japanese, with: english)
-    #expect(paired.map(\.text) == ["布巾で拭きます。", "はい。"])
-    #expect(paired.map(\.translation) == ["I'll wipe it with a cloth.", "Yes."])
-  }
-
-  @Test("no card ever exceeds the line and character limits, whatever the translations span")
-  func cardsStayBounded() {
-    let japanese = (0..<12).map {
-      SubtitleCue(id: $0, start: Double($0) * 4, end: Double($0 + 1) * 4, text: "愛さないで恋いなんてまた\($0)")
-    }
-    let spans: [(Int, Int)] = [(0, 12), (0, 3), (1, 2), (2, 9), (5, 6), (7, 8), (8, 12), (11, 12)]
-    for (from, to) in spans {
-      let english = [SubtitleCue(id: 0, start: Double(from) * 4, end: Double(to) * 4, text: "x")]
-      let paired = YouTubeCaptionParsing.pairing(japanese, with: english)
-      #expect(paired.map(\.text).joined() == japanese.map(\.text).joined(), "span \(from)–\(to)")
-      for card in paired {
-        let lines = japanese.filter { $0.start >= card.start && $0.end <= card.end }
-        #expect(lines.count <= YouTubeCaptionParsing.maximumLinesPerCard, "span \(from)–\(to)")
-        #expect(
-          lines.count == 1 || card.text.count <= YouTubeCaptionParsing.maximumCharactersPerCard,
-          "span \(from)–\(to)")
-      }
-    }
   }
 }

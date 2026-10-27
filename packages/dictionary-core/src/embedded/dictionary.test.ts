@@ -290,6 +290,43 @@ describe('the embedded dictionary', () => {
     expect(() => endpoint.answer('sourceCredits', 'watch')).toThrow('No client is named watch')
   })
 
+  test('answers YouTube’s answers at once as the Player’s lines, or nothing when unreadable', () => {
+    const endpoint = embeddedEndpoint(host())
+    const listed = { baseUrl: 'https://x.test/ja', languageCode: 'ja', isTranslatable: true }
+    expect(
+      endpoint.answer(
+        'youTubeVideo',
+        JSON.stringify({
+          playabilityStatus: { status: 'OK' },
+          captions: { playerCaptionsTracklistRenderer: { captionTracks: [listed] } }
+        })
+      )
+    ).toEqual({
+      playable: true,
+      title: null,
+      author: null,
+      track: { url: 'https://x.test/ja', isAutomatic: false, isTranslatable: true }
+    })
+    expect(endpoint.answerJSON('youTubeVideo', '')).toBe('null')
+    const captions = endpoint.answerJSON(
+      'youTubeCaptions',
+      '<transcript><text start="0" dur="3.5">三番線です</text></transcript>'
+    )
+    expect(JSON.parse(captions)).toEqual([
+      { id: 0, start: 0, end: 3.5, text: '三番線です', translation: null }
+    ])
+    expect(endpoint.answerJSON('youTubeCaptions', '<html>')).toBe('null')
+    const translated = (timedText: string) =>
+      endpoint.answer(
+        'youTubeTranslatedCaptions',
+        JSON.stringify({ captions: JSON.parse(captions), timedText })
+      )
+    expect(
+      translated('<transcript><text start="0" dur="3.5">This is track 3.</text></transcript>')
+    ).toEqual([{ id: 0, start: 0, end: 3.5, text: '三番線です', translation: 'This is track 3.' }])
+    expect(translated('')).toBeNull()
+  })
+
   test('refuses to answer at once what has to wait, or what it does not have', () => {
     const endpoint = embeddedEndpoint(host())
     expect(() => endpoint.answer('search', '日本')).toThrow('search does not answer at once')
