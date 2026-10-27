@@ -171,6 +171,7 @@ event, and `AccountSyncRecoveryTests` which transport errors a sync calls a lost
 | `language_pack` | `LanguageTechnologyPack` | `bundled_pack_unverified`, `installed_pack_unverified`, or the install's or older pack's removal's error, with the pack |
 | `dictionary_core` | `DictionaryCore` | `bundle_unavailable`, `core_did_not_load` |
 | `translate_start` | `TranslateExperience` | `microphone_denied`, `speech_unavailable`, `translation_unavailable` |
+| `youtube_translation` | `YouTubeTranslation`, from `YouTubeCaptionClient` | The English translation's request or parse error, such as `you_tube_caption_error.refused`, with its `step` (`request` or `parse`) and a refusal's HTTP `status` |
 
 To report a new failure, pass the error and an area (add one to `ProblemArea` if none fits), with
 details only from values the app chose, never text a learner or a service wrote.
@@ -271,8 +272,9 @@ python3 apps/ios/Tools/upload_dsyms.py ~/Library/Developer/Xcode/Archives/<date>
 
 - **Package** (`apps/ios/Modules`, `-only-testing:SearchExperienceTests/<suite>`):
   `CrashReporterOptionsTests`, `CrashReporterSwitchTests`, `CrashReportingMachineTests`,
-  `CrashReportingPolicyTests`, `CrashReportScrubberTests`, and `HandledProblemTests`, and the
-  problem reports' suites. They don't run in CI ([`ci.md`](ci.md)), so a change cites a local run.
+  `CrashReportingPolicyTests`, `CrashReportScrubberTests`, `HandledProblemTests`, and
+  `YouTubeTranslationFailureTests`, and the problem reports' suites. They don't run in CI
+  ([`ci.md`](ci.md)), so a change cites a local run.
 - **UI:** `AccountUITests.testCrashReportsAreOnUntilTheSwitchTurnsThemOff` and
   `testAccountListsEveryArea`.
 - **Contract:** `test_crash_report_settings.py` and `test_upload_dsyms.py` in

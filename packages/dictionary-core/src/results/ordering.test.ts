@@ -9,6 +9,7 @@ import {
   type LookupsByEntry,
   orderedByFrequency,
   type RankedResult,
+  type ResultFilter,
   type ResultSort,
   resultFilter,
   resultFilters,
@@ -17,7 +18,8 @@ import {
   sortAnnouncement,
   sortedResults,
   sortSummary,
-  storedSort
+  storedSort,
+  type WordStatus
 } from './ordering'
 
 function dictionary(
@@ -274,24 +276,42 @@ describe('the Sort By choice', () => {
 })
 
 describe('the Filter choice (SearchResultFilter)', () => {
-  const entries = ['一', '二', '三', '四'].map(id => ({ id }))
-  const isKnown = (id: string) => id === '一' || id === '三'
-  const shown = (filter: Parameters<typeof filteredResults>[1], from = entries) =>
-    filteredResults(from, filter, isKnown).map(result => result.id)
+  const entries = ids.map(id => ({ id }))
+  const statuses: Record<string, WordStatus> = {
+    一: 'known',
+    二: 'unknown',
+    三: 'known',
+    四: 'learning',
+    五: 'unknown'
+  }
+  const shown = (filter: ResultFilter, from = entries) =>
+    filteredResults(from, filter, id => statuses[id]).map(result => result.id)
 
-  test('picks known words, unknown words, or all of them, in the order it is given', () => {
+  test('picks unknown, Learning, or known words, or all of them, in the order it is given', () => {
+    expect(shown('unknown')).toEqual(['二', '五'])
+    expect(shown('learning')).toEqual(['四'])
     expect(shown('known')).toEqual(['一', '三'])
-    expect(shown('unknown')).toEqual(['二', '四'])
-    expect(shown('all')).toEqual(['一', '二', '三', '四'])
-    expect(shown('unknown', [...entries].reverse())).toEqual(['四', '二'])
+    expect(shown('all')).toEqual(ids)
+    expect(shown('unknown', [...entries].reverse())).toEqual(['五', '二'])
+  })
+
+  test('puts each word under exactly one of Unknown, Learning, and Known', () => {
+    const under = (['unknown', 'learning', 'known'] as const).flatMap(filter => shown(filter))
+    expect([...under].sort()).toEqual([...ids].sort())
   })
 
   test('can hide every word', () => {
     expect(shown('unknown', [{ id: '一' }, { id: '三' }])).toEqual([])
+    expect(shown('learning', [{ id: '一' }, { id: '二' }])).toEqual([])
   })
 
   test('names each filter, and counts what it hides and shows', () => {
-    expect(resultFilters.map(filter => filterTitles[filter])).toEqual(['All', 'Known', 'Unknown'])
+    expect(resultFilters.map(filter => filterTitles[filter])).toEqual([
+      'All',
+      'Unknown',
+      'Learning',
+      'Known'
+    ])
     expect(hiddenCountTitle(1)).toBe('1 word hidden by filter')
     expect(hiddenCountTitle(3)).toBe('3 words hidden by filter')
     expect(shownCountAnnouncement(1)).toBe('1 word shown')
@@ -299,9 +319,11 @@ describe('the Filter choice (SearchResultFilter)', () => {
   })
 
   test('is stored as its name, and stored text that isn’t a filter reads as All', () => {
-    expect(resultFilters.map(resultFilter)).toEqual(['all', 'known', 'unknown'])
+    expect(resultFilters.map(resultFilter)).toEqual(['all', 'unknown', 'learning', 'known'])
     expect(
-      ['maybe', '', 'unknown|in:zenbu.jlpt.waller', 'in:zenbu.jlpt.waller'].map(resultFilter)
-    ).toEqual(['all', 'all', 'all', 'all'])
+      ['maybe', '', 'Learning', 'unknown|in:zenbu.jlpt.waller', 'in:zenbu.jlpt.waller'].map(
+        resultFilter
+      )
+    ).toEqual(['all', 'all', 'all', 'all', 'all'])
   })
 })

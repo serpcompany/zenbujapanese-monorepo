@@ -63,7 +63,7 @@ struct SearchExperienceRootView: View {
             selectedTab = .search
             dismissRecognizedWordSheet(if: true)
           },
-          translate: openTranslation))
+          translate: openTranslation, watch: openVideo))
       .modifier(AppCommandHandling(perform: perform))
       .environment(screenReturns)
   }
@@ -101,6 +101,11 @@ struct SearchExperienceRootView: View {
   private func openTranslation(_ text: String) {
     showTranslate()
     translatePath.append(TranslateRoute.text(text))
+  }
+
+  private func openVideo(_ videoID: YouTubeVideoID?) {
+    perform(.select(.watchAndListen))
+    watchPath = NavigationPath(videoID.map { [PlayerRoute.video($0)] } ?? [])
   }
 
   private func openImageText(_ assets: [ImageTextAsset]) {

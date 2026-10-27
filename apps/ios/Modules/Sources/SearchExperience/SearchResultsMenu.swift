@@ -32,7 +32,7 @@ struct SearchResultsMenu: View {
       .accessibilityIdentifier("search.sort-by")
       picker(
         "Filter", summary: menu.filter.title, chosen: menu.filter.chosen,
-        options: menu.filter.options, choose: chooseFilter
+        options: menu.filter.offeredOptions, choose: chooseFilter
       )
       .accessibilityIdentifier("search.filter.words")
     } label: {
