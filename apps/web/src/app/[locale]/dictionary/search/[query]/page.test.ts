@@ -1,3 +1,4 @@
+import { fixtureLeadingEntries, fixtureSearchOrder } from '@zenbu/dictionary-core/fixtures'
 import { sourceCredits } from '@zenbu/dictionary-core/sources/credits'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
@@ -116,6 +117,30 @@ describe('the results page’s heading', () => {
     const html = renderToStaticMarkup(await SearchResultsPage(decodedSegment(query, locale)))
     expect(html).toMatch(new RegExp(`<h1 [^>]*>${heading}</h1>`))
     expect((await generateMetadata(decodedSegment(query, locale))).title).toBe(heading)
+  })
+})
+
+describe('a search started from the radicals', () => {
+  const fromRadicals = (query: string) => ({
+    params: Promise.resolve({ locale: 'en', query }),
+    searchParams: Promise.resolve({ input: 'radicals' })
+  })
+  const rows = (html: string) =>
+    [...html.matchAll(/data-result-row="(\d+)"/g)].map(([, entSeq]) => Number(entSeq))
+
+  test('lists a picked kanji’s leading words, with its kanji row, as the app does', async () => {
+    const picked = renderToStaticMarkup(await SearchResultsPage(fromRadicals('要')))
+    const typed = renderToStaticMarkup(await SearchResultsPage(decodedSegment('要')))
+    const leading = fixtureSearchOrder.要.slice(0, fixtureLeadingEntries.要)
+    expect(rows(picked)).toEqual(leading)
+    expect(rows(typed)).toEqual(fixtureSearchOrder.要)
+    expect(picked).toContain('data-kanji-row="要"')
+  })
+
+  test('has the typed search’s title, description, canonical, and indexing', async () => {
+    expect(await generateMetadata(fromRadicals('要'))).toEqual(
+      await generateMetadata(decodedSegment('要'))
+    )
   })
 })
 

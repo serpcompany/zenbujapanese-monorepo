@@ -1716,7 +1716,19 @@
   },
   "searchForm": {
     "placeholder": "Search Japanese or English",
-    "submit": "Search"
+    "submit": "Search",
+    "radicals": {
+      "open": "Radicals",
+      "title": "Radicals",
+      "prompt": "Select one or more radicals",
+      "candidates": "Kanji with every selected radical",
+      "radical": "Radical {glyph}",
+      "undo": "Undo last radical",
+      "done": "Done",
+      "loading": "Loading radicals…",
+      "unavailable": "Radical data unavailable",
+      "retry": "Try again"
+    }
   },
   "site": {
     "description": "An offline-first Japanese dictionary, image-text reader, and translator for iPhone.",
