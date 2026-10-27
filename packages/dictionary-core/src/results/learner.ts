@@ -31,6 +31,7 @@ import {
 } from './ordering'
 import {
   discoveredWordsHeading,
+  type KanjiMeanings,
   type ListedItem,
   type ListedResults,
   noMatches,
@@ -187,9 +188,10 @@ export function learnerResultsScreen(
   results: ListedResults,
   exampleCount: number,
   learner: LearnerState,
-  frequency: ReadFrequency
+  frequency: ReadFrequency,
+  kanjiMeanings?: KanjiMeanings
 ): LearnerResultsScreen {
-  const layout = resultsLayout(rawQuery, results, exampleCount, learner.pickedKanji)
+  const layout = resultsLayout(rawQuery, results, exampleCount, learner.pickedKanji, kanjiMeanings)
   if (layout.isEmpty) return { state: 'noResults', query: layout.query, ...noMatches }
   const known = new Set(learner.known)
   const learning = new Set(learner.learning)

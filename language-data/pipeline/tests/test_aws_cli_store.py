@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import gzip
 import hashlib
 import json
 import subprocess
@@ -47,6 +48,16 @@ class AwsCliStoreTests(unittest.TestCase):
         )
         self.assertEqual(options["--endpoint-url"], "https://account.r2.cloudflarestorage.com")
         self.assertNotIn("--if-match", options)
+
+    def test_a_gzipped_part_is_put_as_gzip_data_with_no_content_encoding(self):
+        self.replies.append((0, "{}", ""))
+        part = gzip.compress(b"part", mtime=0)
+        key = f"files/{sha256(part)}/Data.json.part1.gz"
+        headers = {"content_type": bucket_objects.content_type(key), "cache_control": "c"}
+        self.store.put(key, part, sha256=sha256(part), **headers)
+        options = dict(zip(self.calls[0][3::2], self.calls[0][4::2]))
+        self.assertEqual(options["--content-type"], "application/gzip")
+        self.assertNotIn("--content-encoding", options)
 
     def test_errors_are_classified(self):
         self.replies.append(

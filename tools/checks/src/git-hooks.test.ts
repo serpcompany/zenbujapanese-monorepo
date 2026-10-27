@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { parse } from 'yaml'
-import { outsideGit, git as runGit, scratchFolder } from './agents/scratch'
+import { outsideGit, scratchFolder } from './agents/scratch'
 import { readRepositoryFile } from './agents/workflow'
 import { root } from './files'
 
@@ -88,8 +88,29 @@ function written(script: string, scripts: Record<string, string>): string {
   )
 }
 
+let ownGitConfig: string
+
+beforeEach(() => {
+  ownGitConfig = join(scratchFolder('git-config'), 'gitconfig')
+  writeFileSync(ownGitConfig, '[user]\n\tname = Test\n\temail = test@example.com\n')
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+const ownGit = (changes: Record<string, string | undefined> = {}) =>
+  outsideGit({ GIT_CONFIG_GLOBAL: ownGitConfig, GIT_CONFIG_NOSYSTEM: '1', ...changes })
+
+function machineConfigIgnoring(pattern: string): string {
+  const folder = scratchFolder('machine-git-config')
+  writeFileSync(join(folder, 'excludes'), `${pattern}\n`)
+  writeFileSync(join(folder, 'gitconfig'), `[core]\n\texcludesFile = ${join(folder, 'excludes')}\n`)
+  return join(folder, 'gitconfig')
+}
+
 function git(folder: string, ...command: string[]): void {
-  const result = runGit(folder, ...command)
+  const result = spawnSync('git', command, { cwd: folder, encoding: 'utf8', env: ownGit() })
   expect(result.status, `git ${command.join(' ')}: ${result.stderr}`).toBe(0)
 }
 
@@ -123,7 +144,7 @@ function push(checkout: string, failing = ''): { status: number | null; calls: s
   const result = spawnSync(process.execPath, [lefthook, 'run', 'pre-push'], {
     cwd: checkout,
     encoding: 'utf8',
-    env: outsideGit({
+    env: ownGit({
       PATH: `${tools}:${process.env.PATH ?? ''}`,
       PNPM_CALLS: calls,
       PNPM_FAILS: failing,
@@ -185,6 +206,16 @@ describe('the pre-push hook', () => {
   test('runs only the static checks when the branch changes only docs', () => {
     const { checkout } = branch()
     commit(checkout, 'docs/agents/ci.md', 'apps/ios/App/ZenbuJapaneseApp.swift')
+    expect(push(checkout)).toEqual({ status: 0, calls: [staticChecks] })
+  })
+
+  test.each([
+    'GIT_CONFIG_GLOBAL',
+    'GIT_CONFIG_SYSTEM'
+  ])("ignores the machine's git config at %s, such as an excludes file that ignores node_modules/", config => {
+    vi.stubEnv(config, machineConfigIgnoring('node_modules/'))
+    const { checkout } = branch()
+    commit(checkout, 'docs/agents/ci.md')
     expect(push(checkout)).toEqual({ status: 0, calls: [staticChecks] })
   })
 

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:zenbu:schema:language-data-compressed:v1",
+  "title": "zenbu.language-data-compressed.v1",
+  "description": "A release's releases/<release>/compressed.json: the gzipped copies of its SQLite and JSON files (issue 955). Written by language-data/pipeline/publish.py once, after every part it lists, and never overwritten. Each file is cut into parts of part_bytes of the original, the last part shorter, and each part is a gzip stream of its own, served as gzip data with no Content-Encoding. Unpacking a file's parts in order gives the file the manifest names, by its SHA-256.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["compressed_schema", "release", "manifest_sha256", "part_bytes", "files"],
+  "properties": {
+    "compressed_schema": { "const": "zenbu.language-data-compressed.v1" },
+    "release": {
+      "description": "The release ID, YYYY.MM.N, whose manifest is releases/<release>/manifest.json.",
+      "type": "string",
+      "pattern": "^[0-9]{4}\\.(0[1-9]|1[0-2])\\.[1-9][0-9]*$"
+    },
+    "manifest_sha256": {
+      "description": "The SHA-256 of that manifest's bytes, as releases.json lists it.",
+      "$ref": "#/$defs/sha256"
+    },
+    "part_bytes": {
+      "description": "How many bytes of the original each part holds, but the last.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "files": {
+      "description": "The manifest's SQLite and JSON files, in its order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "sha256", "bytes", "parts"],
+        "properties": {
+          "name": {
+            "description": "The file's name in the manifest.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?$"
+          },
+          "sha256": {
+            "description": "The file's SHA-256 in the manifest: what its parts unpack to.",
+            "$ref": "#/$defs/sha256"
+          },
+          "bytes": {
+            "description": "The file's size in the manifest, unpacked.",
+            "type": "integer",
+            "minimum": 0
+          },
+          "parts": {
+            "description": "The file's parts, in order.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "bytes", "sha256"],
+              "properties": {
+                "key": {
+                  "description": "The part's object key, content-addressed: files/<sha256>/<name>.part<N>.gz, N counting from 1.",
+                  "type": "string",
+                  "pattern": "^files/[0-9a-f]{64}/[A-Za-z0-9][A-Za-z0-9._-]*(/[A-Za-z0-9][A-Za-z0-9._-]*)?\\.part[1-9][0-9]*\\.gz$"
+                },
+                "bytes": {
+                  "description": "The part's size as stored and served: gzip data.",
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sha256": {
+                  "description": "The SHA-256 of the part's bytes as stored and served.",
+                  "$ref": "#/$defs/sha256"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

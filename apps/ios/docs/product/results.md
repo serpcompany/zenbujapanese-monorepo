@@ -63,3 +63,17 @@ doesn't offer, and the count a filter hides); UI
 `SearchResultsUITests.testFilteringToKnownWordsHidesEveryWordUntilTheFilterIsCleared` (the row's **1
 filter**, **No Words Match Your Filter**, and **Clear Filter**) and
 `testAWordLeavesTheUnknownFilterOnceItsMarkedKnown`.
+
+## The Kanji row
+
+A one-kanji query leads the results with a Kanji row: the kanji, the label **KANJI**, and the
+kanji's own meanings in their source order, joined with commas, as 日 reads "day, sun, Japan,
+counter for days". A long list wraps onto more lines. A kanji with no meanings in the kanji data
+shows the meaning of the entry written as that kanji, or "Kanji detail" when there is none.
+VoiceOver reads the kanji, the label, and the same meanings. Known Words draws its kanji with the
+same row and the same text.
+
+Check: core `results/results.test.ts` (the meanings, the entry's meaning, and "Kanji detail") and
+`embedded/presentation.test.ts` (the meanings the app's kanji files hold); the recorded
+`search-results.json` suite; UI `SearchResultsUITests.testAOneKanjiSearchLeadsWithTheKanjisOwnMeanings`
+and `SavedWordsUITests.testKnownWordsShowsAWordWithItsMeaningAndAKanjiAsLookUpDoes`.

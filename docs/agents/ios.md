@@ -583,7 +583,7 @@ answers; [`dictionary-core.md`](dictionary-core.md), The app's side, lists which
   | --- | --- | --- |
   | `LanguageReferenceData`, the actor behind `LookupClient.live` | `LanguageReferenceData.sqlite3` | Search, an exact form's entries, a kanji's words, what a website link, a related word, or a saved word opens, and which entry stands for its equivalents |
   | `DictionaryTextData`, the actor behind `ExampleSentenceClient` and `JapaneseTextAnalysisClient` | Its own connection to the same file, with `ExampleWordIndex.sqlite3` attached, and the tokenizer's dictionary files | Example sentences and linked words |
-  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Look Up's notes, credits |
+  | `PresentationCore`, a lock around one engine | The kanji files, through `KanjiFiles`, the radical file, and the learner's frequency lists, through `FrequencyLists` | The results screen, rows, chips, furigana, word, kanji, element pages, query, gloss, romaji, kanji and Japanese-text checks, stroke points, radical panel, Grade's school kanji lists, handwriting candidates and their meanings, Image Search notes, Look Up's notes, credits, the Player's captions |
 
   They are apart because of how long each takes. Linking a page of sentences or ranking a broad
   search takes tens of milliseconds and awaits, so each has an actor; a row's furigana or a
@@ -695,10 +695,10 @@ What stays native, and why:
 - **The learner's data.** Favorites and lists, Known Words, notes, encounter media, recent
   lookups, watch history, and account sync are stored and merged by the app, with the account
   service as what every signed-in client agrees with ([`account-api.md`](account-api.md)).
-- **The Player's YouTube plumbing.** Reading a video's ID out of a link, choosing the Japanese
-  caption track, turning YouTube's caption XML into cards, and pairing them with YouTube's
-  translations (`YouTubeCaptions.swift`) are about YouTube's formats, and only the app has a
-  Player. Which of a caption's words count toward comprehension is the core's.
+- **The Player's YouTube plumbing.** Reading a video's ID out of a link and fetching its player
+  response and timed text, with a translation's `tlang` (`YouTubeCaptions.swift`), need the
+  network and a Player. The track, the cards, their translations, and which of a caption's words
+  count toward comprehension are the core's (`captions/`).
 - **Speech, handwriting and text recognition, translation, and Apple Intelligence** are Apple's
   ([`translate.md`](translate.md)).
 
@@ -900,7 +900,7 @@ disallows embedding. While one line plays, time reports from before its seek lan
 drops any `fmt` from the track URL; the text escapes HTML entities twice (`&amp;#39;`). Automatic
 captions overlap, so each line ends when the next begins. YouTube's translated track keeps the
 Japanese track's time slots, leaves them empty while a sentence continues, and puts the whole
-sentence in its last slot; `YouTubeCaptionParsing` rebuilds sentences from that, rejoining words
+sentence in its last slot; the core (`captions/`) rebuilds sentences from that, rejoining words
 split across slots ("Do" and "n't"), before pairing them with lines.
 
 `VideoSearchView` watches the web view's URL as well as its loads, because YouTube's mobile site
@@ -1126,8 +1126,8 @@ against a real service:
 
 ## Player manual checks
 
-`YouTubeCaptionsTests` cover link parsing, search-result links, caption-track choice,
-timed-text parsing, translation pairing, card size, and word meanings. The live caption fetch
+`YouTubeCaptionsTests` cover link parsing, search-result links, and word meanings, and the core's
+`captions/` tests track choice, timed text, pairing, and card size. The live caption fetch
 and the embedded player need the network, so when changing Player, also check these videos in
 the Simulator. Type a link into the Player search bar; typing Japanese there triggers a paste
 prompt, so search in English.
