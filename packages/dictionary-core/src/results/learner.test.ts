@@ -68,6 +68,7 @@ const learner = (state: Partial<LearnerState> = {}): LearnerState => ({
   sort: 'default',
   filter: 'all',
   known: [],
+  learning: [],
   pickedKanji: false,
   ...state
 })
@@ -177,8 +178,9 @@ describe('learnerResultsScreen', () => {
         title: 'All',
         options: [
           { value: 'all', title: 'All', announcement: '3 words shown' },
-          { value: 'known', title: 'Known', announcement: '0 words shown' },
-          { value: 'unknown', title: 'Unknown', announcement: '3 words shown' }
+          { value: 'unknown', title: 'Unknown', announcement: '3 words shown' },
+          { value: 'learning', title: 'Learning', announcement: '0 words shown' },
+          { value: 'known', title: 'Known', announcement: '0 words shown' }
         ]
       }
     })
@@ -200,7 +202,7 @@ describe('learnerResultsScreen', () => {
     expect(shown.rows.map(row => row.id)).toEqual(['乙', '甲', '丙'])
   })
 
-  test('filters to known or unknown words, counts the filter, and says when it hides every word', () => {
+  test('with no Learning words, filters to known or unknown words as before Learning, and says when it hides every word', () => {
     const unknown = screen('kou', three, { filter: 'unknown', known: ['乙'], sort: 'known-words' })
     expect(unknown.rows.map(row => row.id)).toEqual(['甲', '丙'])
     expect(unknown.rows.map(row => row.spoken.split(',')[0])).toEqual([
@@ -211,15 +213,66 @@ describe('learnerResultsScreen', () => {
     expect(unknown.menu?.filter).toMatchObject({ chosen: 'unknown', title: 'Unknown' })
     expect(unknown.menu?.filter.options.map(option => option.announcement)).toEqual([
       '3 words shown',
-      '1 word shown',
-      '2 words shown'
+      '2 words shown',
+      '0 words shown',
+      '1 word shown'
     ])
     expect(unknown.hiddenByFilter).toBeNull()
+    expect(
+      screen('kou', three, { filter: 'known', known: ['乙'] }).rows.map(row => row.id)
+    ).toEqual(['乙'])
 
     const known = screen('kou', three, { filter: 'known' })
     expect(known.rows).toEqual([])
     expect(known.hiddenByFilter).toBe('3 words hidden by filter')
     expect(known.menu).not.toBeNull()
+  })
+
+  test('filters to Learning words, leaves them out of Unknown, and says when Learning hides every word', () => {
+    const state = { known: ['乙'], learning: ['丙'] }
+    const learning = screen('kou', three, { ...state, filter: 'learning' })
+    expect(learning.rows.map(row => [row.id, row.spoken.split(',')[0]])).toEqual([
+      ['丙', 'Result 1 of 1']
+    ])
+    expect(learning.menu?.status).toBe('Sorted by Default · 1 filter')
+    expect(learning.menu?.filter).toMatchObject({ chosen: 'learning', title: 'Learning' })
+    expect(learning.menu?.filter.options.map(option => option.announcement)).toEqual([
+      '3 words shown',
+      '1 word shown',
+      '1 word shown',
+      '1 word shown'
+    ])
+    expect(learning.hiddenByFilter).toBeNull()
+    expect(screen('kou', three, { ...state, filter: 'unknown' }).rows.map(row => row.id)).toEqual([
+      '甲'
+    ])
+
+    const none = screen('kou', three, { known: ['乙'], filter: 'learning' })
+    expect(none.rows).toEqual([])
+    expect(none.hiddenByFilter).toBe('3 words hidden by filter')
+  })
+
+  test('counts a word the learner both knows and is learning as Known alone', () => {
+    const both = { known: ['甲'], learning: ['甲', '乙'] }
+    const shownBy = (filter: string) =>
+      screen('kou', three, { ...both, filter }).rows.map(row => row.id)
+    expect(shownBy('known')).toEqual(['甲'])
+    expect(shownBy('learning')).toEqual(['乙'])
+    expect(shownBy('unknown')).toEqual(['丙'])
+  })
+
+  test('Sorted by Known Words counts Learning words as not known', () => {
+    const sorted = screen('kou', three, {
+      sort: 'known-words',
+      known: ['丙'],
+      learning: ['乙']
+    })
+    expect(sorted.rows.map(row => row.id)).toEqual(['丙', '甲', '乙'])
+    expect(sorted.rows.map(row => row.spoken.split(',')[0])).toEqual([
+      'Known',
+      'Result 2 of 3',
+      'Result 3 of 3'
+    ])
   })
 
   test('leads a one-kanji query with the kanji row, which counts as the first result', () => {

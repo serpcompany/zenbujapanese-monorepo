@@ -6,6 +6,7 @@ struct AppLinkOpening: ViewModifier {
   @Binding var query: String
   let showSearch: () -> Void
   let translate: (String) -> Void
+  let watch: (YouTubeVideoID?) -> Void
   @State private var task: Task<Void, Never>?
   @Environment(\.appearsActive) private var appearsActive
   private let inbox = AppLinkInbox.shared
@@ -33,6 +34,8 @@ struct AppLinkOpening: ViewModifier {
       }
     case .translate(let text):
       translate(text)
+    case .watch(let video):
+      watch(video)
     }
   }
 }
@@ -45,6 +48,7 @@ private struct PendingLink: Equatable {
 enum AppLink: Equatable {
   case dictionary(DictionaryLink)
   case translate(String)
+  case watch(YouTubeVideoID?)
 
   static let scheme = AppAction.scheme(ofApp: Bundle.main.bundleIdentifier ?? "")
 
@@ -54,6 +58,8 @@ enum AppLink: Equatable {
       self = .dictionary(.lookUp(text))
     case .translate(let text):
       self = .translate(text)
+    case .watch(let video):
+      self = .watch(video)
     case nil:
       self = .dictionary(.website(url))
     }
