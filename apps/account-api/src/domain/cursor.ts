@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, createHmac, randomBytes } from 'node:
 
 const positionOnly = 1
 const withFloor = 2
+const ofOneKind = 3
 const nonceBytes = 12
 const numberBytes = 8
 const tagBytes = 16
@@ -13,8 +14,8 @@ export interface Position {
 }
 
 export interface Cursors {
-  encode(userId: string, position: Position): string
-  decode(userId: string, cursor: string): Position | null
+  encode(userId: string, position: Position, kind?: string): string
+  decode(userId: string, cursor: string, kind?: string): Position | null
 }
 
 export function cursorKey(secret: string): Buffer {
@@ -26,13 +27,22 @@ export function searchKeys(secret: string): (userId: string) => string {
   return userId => createHmac('sha256', key).update(userId).digest('hex')
 }
 
-const boundTo = (format: number, userId: string) =>
-  Buffer.concat([Buffer.of(format), Buffer.from(userId)])
+const boundTo = (format: number, userId: string, kind: string | undefined) =>
+  kind === undefined
+    ? Buffer.concat([Buffer.of(format), Buffer.from(userId)])
+    : Buffer.concat([Buffer.of(format), Buffer.from(kind), Buffer.of(0), Buffer.from(userId)])
 
-const numbersIn = { [positionOnly]: 1, [withFloor]: 2 } as const
+const numbersIn = { [positionOnly]: 1, [withFloor]: 2, [ofOneKind]: 2 } as const
 
-const lengthOf = (format: keyof typeof numbersIn) =>
-  1 + nonceBytes + numbersIn[format] * numberBytes + tagBytes
+type Format = keyof typeof numbersIn
+
+const formatsFor = (kind: string | undefined): readonly number[] =>
+  kind === undefined ? [positionOnly, withFloor] : [ofOneKind]
+
+const isFormatFor = (kind: string | undefined, format: number | undefined): format is Format =>
+  format !== undefined && formatsFor(kind).includes(format)
+
+const lengthOf = (format: Format) => 1 + nonceBytes + numbersIn[format] * numberBytes + tagBytes
 
 function readNumber(bytes: Buffer, at: number): number | null {
   const value = bytes.readBigUInt64BE(at)
@@ -41,33 +51,34 @@ function readNumber(bytes: Buffer, at: number): number | null {
 
 export function cursors(key: Buffer): Cursors {
   return {
-    encode(userId, { sequence, floor }) {
+    encode(userId, { sequence, floor }, kind) {
+      const format = kind === undefined ? withFloor : ofOneKind
       const nonce = randomBytes(nonceBytes)
       const sealing = createCipheriv(cipher, key, nonce, { authTagLength: tagBytes })
-      sealing.setAAD(boundTo(withFloor, userId))
+      sealing.setAAD(boundTo(format, userId, kind))
       const numbers = Buffer.alloc(2 * numberBytes)
       numbers.writeBigUInt64BE(BigInt(sequence))
       numbers.writeBigUInt64BE(BigInt(floor), numberBytes)
       const sealed = Buffer.concat([sealing.update(numbers), sealing.final()])
-      return Buffer.concat([Buffer.of(withFloor), nonce, sealed, sealing.getAuthTag()]).toString(
+      return Buffer.concat([Buffer.of(format), nonce, sealed, sealing.getAuthTag()]).toString(
         'base64url'
       )
     },
-    decode(userId, cursor) {
+    decode(userId, cursor, kind) {
       if (!/^[A-Za-z0-9_-]+$/.test(cursor)) return null
       const bytes = Buffer.from(cursor, 'base64url')
       const format = bytes[0]
-      if (format !== positionOnly && format !== withFloor) return null
+      if (!isFormatFor(kind, format)) return null
       if (bytes.length !== lengthOf(format)) return null
       const nonce = bytes.subarray(1, 1 + nonceBytes)
       const sealed = bytes.subarray(1 + nonceBytes, bytes.length - tagBytes)
       const opening = createDecipheriv(cipher, key, nonce, { authTagLength: tagBytes })
-      opening.setAAD(boundTo(format, userId))
+      opening.setAAD(boundTo(format, userId, kind))
       opening.setAuthTag(bytes.subarray(bytes.length - tagBytes))
       try {
         const numbers = Buffer.concat([opening.update(sealed), opening.final()])
         const sequence = readNumber(numbers, 0)
-        const floor = format === withFloor ? readNumber(numbers, numberBytes) : sequence
+        const floor = format === positionOnly ? sequence : readNumber(numbers, numberBytes)
         return sequence === null || floor === null ? null : { sequence, floor }
       } catch {
         return null

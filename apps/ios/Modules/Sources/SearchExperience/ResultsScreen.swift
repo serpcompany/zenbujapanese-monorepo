@@ -41,13 +41,9 @@ struct ResultsMenuContent: Decodable, Hashable, Sendable {
   }
 
   struct Filter: Decodable, Hashable, Sendable {
-    static let learning = "learning"
-
     let chosen: String
     let title: String
     let options: [ResultsChoice]
-
-    var offeredOptions: [ResultsChoice] { options.filter { $0.value != Self.learning } }
   }
 
   let status: String

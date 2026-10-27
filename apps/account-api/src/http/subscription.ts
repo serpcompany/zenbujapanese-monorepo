@@ -30,7 +30,7 @@ import {
   SubscriptionSchema
 } from './subscription-schemas'
 
-export const cloudDataPaths = ['/v1/sync', '/v1/photos/*'] as const
+export const cloudDataPaths = ['/v1/sync/*', '/v1/photos/*'] as const
 
 export const subscriptionPath = '/v1/me/subscription'
 
