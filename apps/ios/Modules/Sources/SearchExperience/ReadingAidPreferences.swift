@@ -45,6 +45,10 @@ final class ReadingAidPreferences {
   var hidesFuriganaOnKnownWords = false {
     didSet { persist() }
   }
+  var showsFuriganaOnKnownWords: Bool {
+    get { !hidesFuriganaOnKnownWords }
+    set { hidesFuriganaOnKnownWords = !newValue }
+  }
 
   init(
     defaults: UserDefaults = .standard, storageKey: String = ReadingAidPreferences.storageKey,

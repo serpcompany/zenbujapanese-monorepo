@@ -21,6 +21,13 @@ final class PlayerWatchUITests: ZenbuUITestCase {
     waitFor(labeled("There's a bookstore near the station.", in: app))
   }
 
+  func testTheMenuHidesAndShowsACaptionsTranslation() {
+    let app = openVideo()
+    assertTheMenuHidesAndShowsTranslations(
+      labeled("There's a bookstore near the station.", in: app), from: find("watch.more", in: app),
+      in: app)
+  }
+
   func testThePlayersOwnControlsPlayStepAndRepeat() throws {
     let app = openVideo(Self.standIn().merging(Self.countingDraws) { $1 })
     waitUntil(find("watch.comprehension", in: app), mentions: "words known")
