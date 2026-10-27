@@ -705,12 +705,12 @@ in romaji is under the headword, after each reading among the other forms, and u
 word. The examples, and each meaning's example, follow the Example Sentences section's aids, and
 with Show Word Meanings on, a short meaning in the accent colour is under each word linked to one
 entry, at most 6rem wide and cut with an ellipsis: the entry's first meaning shortened by the
-core's `shortGloss`, as the app's `shortMeaning`, and none under a particle, an auxiliary, or a
+core's `shortGloss`, as in the app, and none under a particle, an auxiliary, or a
 symbol (`wordMeaning`, `examples/word-meaning.ts`). Every word counts as unknown: the website has no
 known words yet.
 
 - Source: `WordHeadline.swift`, `WordDetailSections.swift` (other forms, related words),
-  `LinkedJapaneseText.swift` (`meaning(for:)`), `DictionaryEntry.swift` (`shortMeaning`).
+  `LinkedJapaneseText.swift` (`meaning(for:)`), and the core's `shortGloss` (`detail/text.ts`).
 - Check: `src/app/[locale]/dictionary/[word]/page.test.tsx`, "draws every Reading Aid, and the page
   lets the settings show or hide each" (the reading and romaji under the headword, and each
   example's romaji, translation, and short meanings, as the service sends them);

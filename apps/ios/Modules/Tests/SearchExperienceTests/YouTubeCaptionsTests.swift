@@ -154,25 +154,6 @@ struct YouTubeCaptionsTests {
 
 @Suite("Word meanings")
 struct WordMeaningTests {
-  @Test("a word's meaning is the first gloss of its first sense, without 'to' or notes")
-  func shortMeaning() {
-    #expect(DictionaryEntry.shortMeaning(from: ["husband"]) == "husband")
-    #expect(DictionaryEntry.shortMeaning(from: ["to wipe, to dry"]) == "wipe")
-    #expect(
-      DictionaryEntry.shortMeaning(from: ["brothers and sisters, siblings", "mate, friend"])
-        == "brothers and sist…")
-    #expect(DictionaryEntry.shortMeaning(from: ["to fold (clothes, etc.), to shut"]) == "fold")
-    #expect(DictionaryEntry.shortMeaning(from: ["(the) above, over, up"]) == "above")
-    #expect(DictionaryEntry.shortMeaning(from: []) == nil)
-    #expect(DictionaryEntry.shortMeaning(from: ["(only a note)"]) == nil)
-  }
-
-  @Test("long meanings are shortened with an ellipsis")
-  func longMeaning() {
-    let meaning = DictionaryEntry.shortMeaning(from: ["from the standpoint of, on"])
-    #expect(meaning == "from the standpoi…")
-  }
-
   @Test("the Word Meanings preference persists and defaults to off")
   @MainActor
   func preference() throws {

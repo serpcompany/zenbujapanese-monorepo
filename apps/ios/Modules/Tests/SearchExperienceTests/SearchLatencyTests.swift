@@ -107,7 +107,7 @@ struct SearchLatencyTests {
         let elapsed = Self.value(
           await clock.measure {
             for sentence in sentences {
-              _ = await analysis.linkedTokens(sentence.japanese, SearchQuery(""), nil)
+              _ = await analysis.linkedTokens(sentence.japanese)
             }
           })
         if pass { first.append(elapsed) } else { again.append(elapsed) }
@@ -209,10 +209,6 @@ struct SearchLatencyTests {
         })
     }
     print("SEARCH-LATENCY a word's furigana, uncached: " + Self.summary(furigana))
-    let glosses = words.compactMap(\.meanings.first).map { meaning in
-      Self.value(clock.measure { _ = unused.gloss(meaning) })
-    }
-    print("SEARCH-LATENCY a short meaning, uncached: " + Self.summary(glosses))
     let queries = (0..<200).map { index in
       Self.value(clock.measure { _ = SearchQuery("ＮＩＨＯＮ　go \(index)") })
     }
@@ -310,7 +306,7 @@ struct SearchLatencyTests {
     let analysis = JapaneseTextAnalysisClient.live()
     var words = 0
     for example in await Self.listed("食べる").prefix(40) {
-      words += await analysis.linkedTokens(example.sentence.japanese, SearchQuery(""), nil).count
+      words += await analysis.linkedTokens(example.sentence.japanese).count
     }
     report("the tokenizer's start and \(words) linked words")
     let kanji = KanjiLookupClient.live(lookupClient: .live)

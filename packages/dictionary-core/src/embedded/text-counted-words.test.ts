@@ -25,10 +25,10 @@ describe('the embedded text engine’s count of the words a learner can know', (
   test('counts the words a text’s linked tokens show as one entry and no function word', async () => {
     const target = host()
     for (const text of Object.keys(sentences)) {
-      const tokens = await linked(target, { text, query: '', highlightedEntry: null })
+      const tokens = await linked(target, text)
       expect(await counted(target, [text]), text).toEqual(
         tokens.flatMap(found =>
-          found.entry !== null && !found.isFunctionWord ? [found.entry] : []
+          found.entry !== null && !found.isFunctionWord ? [found.entry.id] : []
         )
       )
     }

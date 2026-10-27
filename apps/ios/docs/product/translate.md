@@ -241,12 +241,12 @@ Check: package `AccountSyncBookmarkTests` and `ConversationHistoryTests`.
 
 ## Looking up words
 
-Every Japanese word in the cards, saved Translations, and typed results is underlined and opens Word
-Detail at half height, as in the Player; particles and punctuation aren't linked. **Open Full
-Entry** opens the word inside the tab it was tapped in: Translate, or Account from Account →
-**Translations**. Looking a word up doesn't pause listening.
+Every Japanese word in the cards, saved Translations, typed results, and Image Search is
+underlined as it appears, at the height it keeps, and opens Word Detail at half height, as in the
+Player; particles and punctuation aren't linked. **Open Full Entry** opens the word in the tab it
+was tapped in. Looking a word up doesn't pause listening.
 
-Check: UI `TranslateUITests.testTypedTextIsTranslatedWithItsDirection`,
+Check: UI `LinkedRowsUITests`, `TranslateUITests.testTypedTextIsTranslatedWithItsDirection`,
 `ConversationUITests.testAWordsFullEntryShowsTheSessionBarThatReturns`, and
 `ConversationUITests.testAWordSheetsConjugationsAndKanjiOpenTheirPagesInTranslate` (the sheet's
 part-of-speech and kanji rows open their pages in Translate); package `WordSheetPresentationTests`.

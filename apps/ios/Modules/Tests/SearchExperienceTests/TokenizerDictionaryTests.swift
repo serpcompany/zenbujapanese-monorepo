@@ -62,7 +62,7 @@ struct TokenizerDictionaryTests {
     let text = DictionaryTextData()
     #expect(await text.availability() == .full)
     func words(_ japanese: String) async throws -> [[String]] {
-      try await text.linkedWords(LinkedText(text: japanese, query: "", highlightedEntry: nil))
+      try await text.linkedTexts(TextsToLink(texts: [japanese], highlightedEntry: nil))[0]
         .map { [$0.surface, $0.reading ?? ""] }
     }
     #expect(

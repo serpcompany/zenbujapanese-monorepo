@@ -3,14 +3,14 @@ import { fixtureDictionary, fixtureFiles } from '../examples/ipadic.fixture'
 import { morphemes } from '../search/morphology.fixture'
 import { embeddedEndpoint } from './dictionary'
 import { ask, begin, fakeHost, settled } from './fake-host'
+import type { EmbeddedToken } from './linked-words'
 import type {
   EmbeddedEntryExamples,
   EmbeddedExamplePage,
   EmbeddedMeaningExample,
-  EmbeddedResultsExamples,
-  EmbeddedToken
+  EmbeddedResultsExamples
 } from './text'
-import { entries, host, linked, sentences } from './text-fixture'
+import { entries, host, linked, linkedTexts, sentences } from './text-fixture'
 
 const pairId = (row: number) => row.toString(16).padStart(32, '0')
 
@@ -45,21 +45,30 @@ function listing(japanese: string | readonly string[], matching: number) {
 }
 
 const accents = (words: readonly EmbeddedToken[]) =>
-  words.map(word => [word.surface, word.entry, word.accent])
+  words.map(word => [word.surface, word.entry?.id ?? null, word.accent])
+
+const shown = (id: string, gloss: string | null = null) => {
+  const entry = entries.find(candidate => candidate.id === id)
+  return {
+    id,
+    headword: entry?.headword,
+    reading: entry?.reading,
+    summary: `${entry?.headword} summary`,
+    gloss
+  }
+}
 
 describe('the embedded text engine', () => {
-  test('links each word of a text to its entry, or lists the entries it could be', async () => {
+  test('links each word of a text to its entry, or lists the entries it could be, each as a row shows it', async () => {
     const target = host()
-    expect(
-      await linked(target, { text: '日本語を見た', query: '見た', highlightedEntry: null })
-    ).toEqual([
+    expect(await linked(target, '日本語を見た')).toEqual([
       {
         surface: '日本語',
         start: 0,
         end: 3,
         reading: 'ニホンゴ',
         isFunctionWord: false,
-        entry: 'a1',
+        entry: shown('a1', 'Japanese'),
         candidates: [],
         furigana: 'にほんご',
         ruby: [{ text: '日本語', reading: 'にほんご' }],
@@ -73,7 +82,7 @@ describe('the embedded text engine', () => {
         reading: 'ヲ',
         isFunctionWord: true,
         entry: null,
-        candidates: ['p1', 'p2'],
+        candidates: [shown('p1'), shown('p2')],
         furigana: null,
         ruby: null,
         accent: null,
@@ -85,7 +94,7 @@ describe('the embedded text engine', () => {
         end: 6,
         reading: 'ミタ',
         isFunctionWord: false,
-        entry: 'v1',
+        entry: shown('v1', 'see'),
         candidates: [],
         furigana: 'みた',
         ruby: [{ text: '見', reading: 'み' }, { text: 'た' }],
@@ -95,37 +104,49 @@ describe('the embedded text engine', () => {
     ])
   })
 
-  test('asks the dictionary once for a text’s words and once for the entries it links', async () => {
+  test('asks the dictionary once for its texts’ words and once for the entries they show', async () => {
     const target = host()
     const endpoint = embeddedEndpoint(target)
-    const request = JSON.stringify({ text: '日本語を見た', query: '', highlightedEntry: null })
-    await settled(endpoint.begin('linkedTokens', request))
-    expect(target.asked).toEqual([['日本語', 'を', '見る'], ['["a1","v1"]']])
-    expect(await settled(endpoint.begin('linkedTokens', request))).toMatchObject({
-      value: [{ entry: 'a1' }, { candidates: ['p1', 'p2'] }, { entry: 'v1' }]
+    const request = JSON.stringify({ texts: ['日本語を見た', '今日'], highlightedEntry: null })
+    await settled(endpoint.begin('linkedTexts', request))
+    expect(target.asked).toEqual([['日本語', 'を', '見る', '今日'], ['["a1","p1","p2","v1","k1"]']])
+    expect(await settled(endpoint.begin('linkedTexts', request))).toMatchObject({
+      value: [
+        [
+          { entry: { id: 'a1' } },
+          { candidates: [{ id: 'p1' }, { id: 'p2' }] },
+          { entry: { id: 'v1' } }
+        ],
+        [{ entry: { id: 'k1' } }]
+      ]
     })
     expect(target.asked).toHaveLength(2)
   })
 
+  test('answers each text in the order asked, the same text the same way twice', async () => {
+    const found = await linkedTexts(host(), ['今日', '日本語は', '今日'])
+    expect(found.map(words => words.map(word => word.entry?.id ?? null))).toEqual([
+      ['k1'],
+      ['a1', 'w1'],
+      ['k1']
+    ])
+  })
+
   test('reads a word the page’s entry is written as as that entry, without looking it up', async () => {
     const target = host()
-    const tokens = await linked(target, {
-      text: '日本語を見た',
-      query: ' 見る ',
-      highlightedEntry: 'v1'
-    })
+    const tokens = await linked(target, '日本語を見た', 'v1')
     expect(accents(tokens)).toEqual([
       ['日本語', 'a1', null],
       ['を', null, null],
       ['見た', 'v1', 'entry']
     ])
-    expect(target.asked).toEqual([['["v1"]'], ['日本語', 'を'], ['["a1"]']])
+    expect(target.asked).toEqual([['["v1"]'], ['日本語', 'を'], ['["a1","p1","p2"]']])
   })
 
   test('shows the entry’s own reading over a word written as one of its forms', async () => {
-    const [today] = await linked(host(), { text: '今日', query: '', highlightedEntry: null })
+    const [today] = await linked(host(), '今日')
     expect(today).toMatchObject({
-      entry: 'k1',
+      entry: { id: 'k1', reading: 'きょう' },
       reading: 'コンニチ',
       furigana: 'きょう',
       ruby: [{ text: '今日', reading: 'きょう' }]
@@ -148,20 +169,16 @@ describe('the embedded text engine', () => {
         attaches: null
       }
     ]
-    expect(await linked(host(), { text: '猫𠀋', query: '', highlightedEntry: null })).toEqual(
-      whole('猫𠀋')
-    )
-    expect(await linked(host(), { text: '欠けた分析', query: '', highlightedEntry: null })).toEqual(
-      whole('欠けた分析')
-    )
-    expect(await linked(host(), { text: '', query: '', highlightedEntry: null })).toEqual([])
+    expect(await linked(host(), '猫𠀋')).toEqual(whole('猫𠀋'))
+    expect(await linked(host(), '欠けた分析')).toEqual(whole('欠けた分析'))
+    expect(await linked(host(), '')).toEqual([])
   })
 
   test('asks the host for a text’s words when it has no tokenizer of its own', async () => {
     const call = begin(
       fakeHost(entries),
-      'linkedTokens',
-      JSON.stringify({ text: '見た日本語', query: '', highlightedEntry: null })
+      'linkedTexts',
+      JSON.stringify({ texts: ['見た日本語'], highlightedEntry: null })
     )
     expect(await settled(call)).toEqual({ analyze: '見た日本語' })
     call.analyzed(
@@ -178,7 +195,7 @@ describe('the embedded text engine', () => {
     )
     const { value } = await settled(call)
     expect(
-      (value as EmbeddedToken[]).map(found => [found.surface, found.entry, found.reading])
+      (value as EmbeddedToken[][])[0].map(found => [found.surface, found.entry?.id, found.reading])
     ).toEqual([
       ['見た', 'x1', '見た'],
       ['日本語', 'a1', '日本語']
@@ -205,11 +222,13 @@ describe('the embedded text engine', () => {
     expect(endpoint.answer('tokenizerReady', '')).toBe(true)
     expect(read.length).toBe(Object.keys(files).length)
     const call = endpoint.begin(
-      'linkedTokens',
-      JSON.stringify({ text: '東京に行く', query: '', highlightedEntry: null })
+      'linkedTexts',
+      JSON.stringify({ texts: ['東京に行く'], highlightedEntry: null })
     )
     const { value } = await settled(call)
-    expect((value as EmbeddedToken[]).map(found => [found.surface, found.entry])).toEqual([
+    expect(
+      (value as EmbeddedToken[][])[0].map(found => [found.surface, found.entry?.id ?? null])
+    ).toEqual([
       ['東京', 't1'],
       ['に', null],
       ['行く', 'i1']
@@ -225,11 +244,7 @@ describe('the embedded text engine', () => {
   })
 
   test('marks punctuation that stays with a neighbouring word', async () => {
-    const found = await linked(host(), {
-      text: '「日本語を」',
-      query: '',
-      highlightedEntry: null
-    })
+    const found = await linked(host(), '「日本語を」')
     expect(found.map(word => [word.surface, word.attaches])).toEqual([
       ['「', 'next'],
       ['日本語', null],
@@ -323,11 +338,13 @@ describe('the embedded text engine', () => {
         from: 0
       })
     )) as EmbeddedResultsExamples
-    expect(page.examples.map(example => example.words.map(word => word.entry))).toEqual([
-      ['k1', 'v1'],
-      ['a1', null, 'v1']
-    ])
-    expect(target.asked).toEqual([['今日', '見る', '日本語', 'を'], ['["k1","v1","a1"]']])
+    expect(page.examples.map(example => example.words.map(word => word.entry?.id ?? null))).toEqual(
+      [
+        ['k1', 'v1'],
+        ['a1', null, 'v1']
+      ]
+    )
+    expect(target.asked).toEqual([['今日', '見る', '日本語', 'を'], ['["k1","v1","a1","p1","p2"]']])
   })
 
   test('answers a romaji or deinflected query with its primary entry’s examples, query words accented', async () => {
@@ -448,11 +465,11 @@ describe('the embedded text engine', () => {
   test('shows the text unlinked when the host cannot analyze it either', async () => {
     const call = begin(
       fakeHost(entries),
-      'linkedTokens',
-      JSON.stringify({ text: '日本語', query: '', highlightedEntry: null })
+      'linkedTexts',
+      JSON.stringify({ texts: ['日本語'], highlightedEntry: null })
     )
     await settled(call)
     call.analyzed('{"error":"This host has no analyzer"}')
-    expect(await settled(call)).toMatchObject({ value: [{ surface: '日本語', entry: null }] })
+    expect(await settled(call)).toMatchObject({ value: [[{ surface: '日本語', entry: null }]] })
   })
 })

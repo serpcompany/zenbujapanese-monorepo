@@ -47,12 +47,20 @@ struct TranscriptSentence: View {
   }
 }
 
+extension TranscriptActions {
+  @MainActor
+  func isReady(_ sentence: TranslatedSentence, spokenIn language: SpokenLanguage) -> Bool {
+    words.texts.isReady(sentence, spokenIn: language)
+  }
+}
+
 struct TranslateConversationDetailView: View {
   let conversationID: UUID
   let history: ConversationHistory
   let actions: TranscriptActions
   @Environment(\.dismiss) private var dismiss
   @Environment(WordKnowledge.self) private var wordKnowledge
+  @Environment(\.exampleRowsOnScreen) private var rowsOnScreen
   @State private var isConfirmingDelete = false
 
   var body: some View {
@@ -74,17 +82,23 @@ struct TranslateConversationDetailView: View {
 
   private func transcript(_ conversation: Conversation) -> some View {
     List {
-      ForEach(Array(conversation.turns.enumerated()), id: \.element.id) { index, turn in
+      ForEach(Array(shownTurns(of: conversation).enumerated()), id: \.element.turn.id) {
+        index, shown in
         Section {
-          ForEach(turn.sentences) { sentence in
+          ForEach(shown.sentences) { sentence in
             TranscriptSentence(
-              sentence: sentence, language: turn.language, conversationID: conversation.id,
+              sentence: sentence, language: shown.turn.language, conversationID: conversation.id,
               history: history, actions: actions)
           }
         } header: {
           if index == 0 { header(conversation) }
         }
       }
+    }
+    .onChange(of: conversation.spokenSentences.map(\.sentence), initial: true) {
+      let sentences = conversation.spokenSentences
+      actions.words.request(Array(sentences.prefix(rowsOnScreen ?? LinkedLines.laterPage)))
+      actions.words.request(sentences)
     }
     .groupedList()
     .compactSectionSpacing()
@@ -119,5 +133,17 @@ struct TranslateConversationDetailView: View {
       }
     }
     .accessibilityIdentifier("translate.detail")
+  }
+
+  private func shownTurns(of conversation: Conversation)
+    -> [(turn: ConversationTurn, sentences: [TranslatedSentence])]
+  {
+    var shown: [(turn: ConversationTurn, sentences: [TranslatedSentence])] = []
+    for turn in conversation.turns {
+      let ready = Array(turn.sentences.prefix { actions.isReady($0, spokenIn: turn.language) })
+      if !ready.isEmpty || shown.isEmpty { shown.append((turn, ready)) }
+      guard ready.count == turn.sentences.count else { break }
+    }
+    return shown
   }
 }

@@ -59,8 +59,7 @@ struct RomajiConformanceTests {
 
   @Test("a linked sentence carries where its punctuation attaches, and its function words")
   func linkedWords() async throws {
-    let tokens = await JapaneseTextAnalysisClient.live().linkedTokens(
-      "「ペンを持っていますか」", SearchQuery(""), nil)
+    let tokens = await JapaneseTextAnalysisClient.live().linkedTokens("「ペンを持っていますか」")
     #expect(tokens.first?.surface == "「")
     #expect(tokens.first?.lineBreak == .attachesToNext)
     #expect(tokens.last?.surface == "」")

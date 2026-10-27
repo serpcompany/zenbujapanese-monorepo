@@ -18,8 +18,7 @@ struct MeaningExamplesTests {
     let entry = try await dog()
     let unreadable = ExampleSentenceClient(
       text: DictionaryTextData(
-        databaseURL: URL(fileURLWithPath: "/nonexistent/LanguageReferenceData.sqlite3")),
-      linked: LinkedEntries(lookupClient: lookup))
+        databaseURL: URL(fileURLWithPath: "/nonexistent/LanguageReferenceData.sqlite3")))
     let loaded = LoadedMeaningExamples()
     #expect(loaded.examples(of: entry.id) == nil)
     await loaded.load(entry, read: unreadable.meaningExamples)
@@ -30,8 +29,7 @@ struct MeaningExamplesTests {
   func eachMeaningHasItsFirstCheckedExample() async throws {
     let entry = try await dog()
     let loaded = LoadedMeaningExamples()
-    let examples = ExampleSentenceClient(
-      text: DictionaryTextData(), linked: LinkedEntries(lookupClient: lookup))
+    let examples = ExampleSentenceClient(text: DictionaryTextData())
     await loaded.load(entry, read: examples.meaningExamples)
     let shown = try #require(loaded.examples(of: entry.id))
     #expect(shown.bySense.keys.sorted() == [1, 2])

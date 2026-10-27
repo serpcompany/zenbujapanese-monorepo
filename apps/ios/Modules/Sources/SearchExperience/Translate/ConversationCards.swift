@@ -1,7 +1,7 @@
 import SwiftUI
 import TranslatorCore
 
-enum ConversationRow: Identifiable {
+enum ConversationRow: Identifiable, Equatable {
   case sentence(TranslatedSentence, language: SpokenLanguage, startsTurn: Bool)
   case live(LiveSentence, startsTurn: Bool)
 
@@ -95,28 +95,39 @@ struct SentenceCard: View {
     .foregroundStyle(.secondary)
   }
 
+  @ViewBuilder
   private var source: some View {
-    TranslateLinkedText(
-      text: sentence.text, language: language,
-      identifier: "translate.sentence.\(sentence.id).source", words: words)
+    if let shown = words.shown(sentence.text, in: language) {
+      TranslateLinkedText(
+        text: sentence.text, shown: shown,
+        identifier: "translate.sentence.\(sentence.id).source", words: words)
+    }
   }
 
   @ViewBuilder
   private var translation: some View {
-    if let translated = sentence.translation {
+    if let translated = sentence.translation,
+      let shown = words.shown(translated, in: language.counterpart)
+    {
       TranslateLinkedText(
-        text: translated, language: language.counterpart,
+        text: translated, shown: shown,
         identifier: "translate.sentence.\(sentence.id).translation", words: words)
+    } else if sentence.translation != nil {
+      translating
     } else if isUntranslated {
       Text("Couldn't translate this sentence.")
         .font(.callout)
         .foregroundStyle(.tertiary)
     } else if isTranslating {
-      Text("Translating…")
-        .font(.callout)
-        .italic()
-        .foregroundStyle(.tertiary)
+      translating
     }
+  }
+
+  private var translating: some View {
+    Text("Translating…")
+      .font(.callout)
+      .italic()
+      .foregroundStyle(.tertiary)
   }
 }
 
