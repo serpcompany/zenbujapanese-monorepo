@@ -11,20 +11,18 @@ import { speak } from '@zenbu/ui/dictionary/pronounce-button'
 import { CopyIcon, MoreHorizontalIcon, Volume2Icon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { wordDetailLabels } from './labels'
-import { copyText, type Notify } from './notice'
+import { copyText, notify } from './notice'
 
 const englishVoice = 'en-US'
 
 export function MeaningWithMenu({
   number,
   actions,
-  meaning,
-  notify
+  meaning
 }: {
   number: number
   actions: MeaningActions
   meaning: ReactNode
-  notify: Notify
 }) {
   const labels = wordDetailLabels.meaning
   return (
@@ -50,7 +48,7 @@ export function MeaningWithMenu({
             <Volume2Icon />
             {labels.speak}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void copyText(actions.copyText, labels.copied, notify)}>
+          <DropdownMenuItem onClick={() => void copyText(actions.copyText, labels.copied)}>
             <CopyIcon />
             {labels.copy}
           </DropdownMenuItem>

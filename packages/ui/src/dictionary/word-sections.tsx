@@ -63,6 +63,7 @@ export interface WordSectionsProps<E> extends Pick<KanjiDetailsProps, 'learnerPr
   renderWordLink: RenderWordLink
   renderMeaningExample: (example: E, meaning: number) => ReactNode
   renderMeaning?: (sense: ShownSense<E>, meaning: ReactNode) => ReactNode
+  linksKanjiWithoutDetails?: boolean
   kanjiActions: (kanji: ShownKanjiDetails) => ReactNode
   conjugations: ReactNode
   examples: ReactNode
@@ -100,14 +101,15 @@ function KanjiItems<E>({ kanji, ...props }: Shared<E> & { kanji: ShownWordKanji[
           character: item.character,
           meaning: String(item.meaning)
         })
-        const link = item.details
-          ? null
-          : props.renderWordLink({
-              target: { kanji: item.character },
-              className: `${kanjiRowClass} flex-1 rounded-md hover:bg-muted`,
-              'aria-label': label,
-              children: summary
-            })
+        const link =
+          item.details || !props.linksKanjiWithoutDetails
+            ? null
+            : props.renderWordLink({
+                target: { kanji: item.character },
+                className: `${kanjiRowClass} flex-1 rounded-md hover:bg-muted`,
+                'aria-label': label,
+                children: summary
+              })
         return (
           <li key={item.character}>
             {item.details ? (

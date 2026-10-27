@@ -8,7 +8,7 @@ Back over it and opens a page from a route ([`side-panel.md`](side-panel.md)). N
 extension opens one yet: the word popup's Open Full Entry comes with #957.
 
 Every check below is in `src/word-detail/`, in happy-dom, on the dictionary core's fixtures
-answered through a fixture source in the test: `word-detail-page.interaction.test.tsx` (word) and
+answered through a fixture source in the test, with Back drawn by the side panel itself: `word-detail-page.interaction.test.tsx` (word) and
 `kanji-and-form-pages.interaction.test.tsx` (kanji and form).
 
 ## The word
@@ -21,18 +21,20 @@ answered through a fixture source in the test: `word-detail-page.interaction.tes
 | A word with several entries, such as 要, shows each entry's reading as a tab, starting on the one that was chosen. | word: 要's two entries |
 | The part of speech opens the conjugation table in a sheet. A form in it opens that form's examples. | word: the conjugation table |
 | Each meaning has a menu: Speak reads it in an English voice, and Copy puts it on the clipboard and says "Meaning copied". | word: a meaning's Speak; a meaning's Copy |
+| A page's notices, such as "Meaning copied", "Link copied", a browser that can't speak, or a related word not found, show as a toast over the side panel, where they're seen however far the page is scrolled. The toast is a live region. One Toaster, `@zenbu/ui`'s shadcn Sonner, sits in the side panel. | word: a meaning's Copy; a related word with no target |
 | Share sends the word's zenbujapanese.com page to the system's share sheet; Copy Link, under •••, copies it. Without a share sheet, Share copies the link. | word: Share and Copy Link |
 | Examples show 25 sentences; Load more examples fetches the next 25. | word: Load More |
-| A linked word in a sentence, a kanji, an alternative kanji, or a related word opens its own page. | word: an example's word; Back through the pages |
-| A related word the dictionary doesn't have opens a page that says "This word isn't in the dictionary." | word: いる's related word 有る |
-| A related word given only by its spelling is looked up by it first, and says "有る isn’t in the dictionary." when nothing matches. | word: a related word with no target |
+| A linked word in a sentence, a kanji, an alternative kanji, or a related word opens its own page. A Kanji or Alternative Kanji row opens the kanji's page (on the website, a row with no details stays plain text). | word: an example's word; Back through the pages |
+| Back, in the side panel, returns to each page as it was left: the side panel keeps it drawn, so it isn't asked again. | word: Back through the pages |
+| A related word the dictionary doesn't have opens a page that says "This word isn’t in the dictionary." | word: いる's related word 有る |
+| A related word given only by its spelling is looked up by it first: it opens the word that matches, says "有る isn’t in the dictionary." when nothing does, and "The dictionary couldn’t answer. Try again." when the lookup fails. | word: a related word with no target; its spelling resolves; can't resolve |
 
 ## The kanji and the form
 
 | Behavior | Check |
 | --- | --- |
 | A kanji's page shows its readings, meanings, sections, and stroke order, and its words open their own pages. | kanji: 要's details |
-| While the stroke order is still downloading, the page says so and shows the rest. | kanji: downloading |
+| While the stroke order is still downloading, the page says so and shows the rest. It asks again each time the dictionary's data changes, and shows the stroke order once it has downloaded. | kanji: downloading; asks again when the data changes |
 | The side panel draws its word, kanji, and form pages with these three. | kanji: the side panel's pages |
 | A form's page shows the form with a Pronounce button and the sentences that use it, 25 at a time, or "No example sentences use this form yet." | form: いる; a form none uses |
 
@@ -40,11 +42,16 @@ answered through a fixture source in the test: `word-detail-page.interaction.tes
 
 | Behavior | Check |
 | --- | --- |
-| Before the dictionary's data is ready, a page shows its progress instead. | kanji: not ready |
-| When the dictionary fails, a page says "The dictionary couldn't answer. Try again." with Try again. | kanji: Try again |
+| Before the dictionary's data is ready, a page shows its progress instead. Each word, kanji, and form page asks again each time the data changes, so the progress moves, and shows its answer once the data is ready. | kanji: not ready; moves its progress; form: asks again; word: waiting for the dictionary |
+| When the dictionary fails, a page says "The dictionary couldn’t answer. Try again." with Try again. | kanji: Try again |
 | A word or kanji the dictionary doesn't have says it isn't in the dictionary. | kanji: outside the dictionary |
 
 ## Not built yet
 
 Open Full Entry (#957), and checks in Chrome on the whole dictionary (食べる, 食, and で), come
 with the side panel's registrations and #956's data.
+
+A form's page shows the form alone, with no explanation and no furigana, because its route
+carries only the form. The app's and the website's form headline follows Reading Aids
+([`dictionary.md`](../../../web/docs/product/dictionary.md), a form's headline); this one waits
+for a route that carries the form's word and kind.

@@ -9,21 +9,22 @@ import {
   fixtureKanjiRows,
   fixtureWordRows
 } from '@zenbu/dictionary-core/fixtures'
+import { Toaster } from '@zenbu/ui/components/sonner'
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { DataState } from '../shared/data-state'
 import { websiteOrigin } from '../shared/hosts'
+import { SidePanel } from '../side-panel/panel'
+import type { PanelHost } from '../side-panel/panel-host'
 import type { PanelPage } from '../side-panel/route'
+import '../test/act-environment'
+import { setDataState } from '../test/data-state'
 import { FormExamplesPage } from './form-examples-page'
 import { KanjiDetailPage } from './kanji-detail-page'
 import { wordDetailLabels } from './labels'
 import type { WordLookups } from './lookups'
 import { WordDetailPage } from './word-detail-page'
-
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean
-}
-globalThis.IS_REACT_ACT_ENVIRONMENT = true
 
 const aids = vi.hoisted(() => ({ furigana: true, chosen: null as string[] | null }))
 
@@ -37,6 +38,19 @@ vi.mock('../shared/use-settings', async () => {
     })
   }
 })
+
+vi.mock('../shared/dictionary-progress', async () => {
+  const { fakeDictionaryProgress } = await import('../test/data-state')
+  return fakeDictionaryProgress
+})
+
+vi.mock('../shared/dictionary', () => ({
+  lookUpWord: (entSeq: number) => lookups.lookUpWord(entSeq),
+  lookUpWordExamples: (entSeq: number, from: number) => lookups.lookUpWordExamples(entSeq, from),
+  lookUpKanji: (character: string) => lookups.lookUpKanji(character),
+  lookUpFormExamples: (form: string, from: number) => lookups.lookUpFormExamples(form, from),
+  resolveWord: (headword: string, reading: string) => lookups.resolveWord(headword, reading)
+}))
 
 const entry = (entSeq: number) => fixtureWordRows.find(rows => rows.entry.entSeq === entSeq) ?? null
 const firstPage = (rows: WordRows): WordRows => ({
@@ -97,6 +111,7 @@ function Pages({ first }: { first: PanelPage }) {
         Back
       </button>
       <Page key={stack.length} page={stack.at(-1) as PanelPage} open={open} />
+      <Toaster />
     </>
   )
 }
@@ -130,6 +145,7 @@ beforeEach(() => {
 
 afterEach(() => {
   act(() => root.unmount())
+  act(() => setDataState(null))
   vi.unstubAllGlobals()
   document.body.replaceChildren()
 })
@@ -160,7 +176,10 @@ const named = (selector: string, text: string, within: ParentNode = container) =
   all(selector, within).find(element => element.textContent?.includes(text))
 const shown = (element: Element | null) =>
   element !== null && getComputedStyle(element).display !== 'none'
-const notice = () => container.querySelector('[data-notice]')?.textContent
+const newestToast = '[aria-live="polite"] [data-sonner-toast][data-index="0"]'
+const toasted = (text: string) =>
+  vi.waitFor(() => expect(container.querySelector(newestToast)?.textContent).toBe(text))
+const ready: DataState = { state: 'ready', release: '2026.10', bytes: 1, checkedAt: null }
 const iru = 1546640
 
 describe('Word Detail', () => {
@@ -257,7 +276,7 @@ describe('Word Detail', () => {
       meaningActions({ meaning: sense?.meaning ?? '', glosses: [], noteText: sense?.noteText })
         .copyText
     )
-    expect(notice()).toBe(wordDetailLabels.meaning.copied)
+    await toasted(wordDetailLabels.meaning.copied)
   })
 
   test('Share and Copy Link give the word’s page on the website’s origin', async () => {
@@ -295,7 +314,7 @@ describe('Word Detail', () => {
     )
   })
 
-  test('a related word with no target is resolved by its spelling first', async () => {
+  async function showWithoutTargets() {
     const rows = entry(1577980) as WordRows
     const relationships = rows.entry.relationships.map(row => ({ ...row, targetEntSeq: null }))
     lookups.lookUpWord.mockResolvedValueOnce({
@@ -303,25 +322,70 @@ describe('Word Detail', () => {
       rows: { ...rows, entry: { ...rows.entry, relationships } }
     })
     await show({ page: 'word', entSeq: 1577980 })
-    await click(container.querySelector('button[data-opens="spelling:有る|ある"]'))
+    return container.querySelector('button[data-opens="spelling:有る|ある"]')
+  }
+
+  test('a related word with no target is resolved by its spelling first', async () => {
+    await click(await showWithoutTargets())
     expect(lookups.resolveWord).toHaveBeenCalledExactlyOnceWith('有る', 'ある')
     expect(opened).toEqual([])
-    expect(notice()).toBe('有る isn’t in the dictionary.')
+    await toasted('有る isn’t in the dictionary.')
   })
 
-  test('Back returns through the pages each link opened', async () => {
-    await show({ page: 'word', entSeq: iru })
-    await click(container.querySelector('button[data-opens="kanji:要"]'))
-    expect(container.querySelector('[data-strokes]')).toBeNull()
-    await click(container.querySelector('button[data-opens="word:1546680"]'))
-    expect(container.querySelector('h1')?.getAttribute('aria-label')).toBe('要求')
-    expect(opened).toEqual([
-      { page: 'kanji', character: '要' },
-      { page: 'word', entSeq: 1546680 }
-    ])
-    await click(container.querySelector('button[data-back]'))
-    expect(lookups.lookUpKanji).toHaveBeenCalledTimes(2)
-    await click(container.querySelector('button[data-back]'))
+  test('a related word its spelling resolves opens that word', async () => {
+    lookups.resolveWord.mockResolvedValueOnce({ type: 'resolve', entSeq: iru })
+    await click(await showWithoutTargets())
+    expect(opened).toEqual([{ page: 'word', entSeq: iru }])
     expect(container.querySelector('h1')?.getAttribute('aria-label')).toBe('要る')
+  })
+
+  test('a related word the dictionary can’t resolve says so', async () => {
+    lookups.resolveWord.mockResolvedValueOnce({ type: 'failed', reason: 'The worker stopped.' })
+    await click(await showWithoutTargets())
+    expect(opened).toEqual([])
+    await toasted(wordDetailLabels.lookup.failed)
+  })
+
+  test('a word page waiting for the dictionary asks again once its data is ready', async () => {
+    lookups.lookUpWord.mockResolvedValueOnce({
+      type: 'not-ready',
+      data: { state: 'downloading', done: 1, total: 4 }
+    })
+    await show({ page: 'word', entSeq: iru })
+    expect(container.querySelector('[data-progress="downloading"]')).not.toBeNull()
+    await act(async () => setDataState(ready))
+    expect(lookups.lookUpWord).toHaveBeenCalledTimes(2)
+    expect(container.querySelector('h1')?.getAttribute('aria-label')).toBe('要る')
+  })
+})
+
+describe('Word Detail in the side panel', () => {
+  const host = (page: PanelPage): PanelHost => ({
+    windowId: async () => 1,
+    readLastTab: async () => 'words',
+    saveLastTab: () => undefined,
+    readRoute: async () => ({ tab: 'words', page }),
+    clearRoute: () => undefined,
+    watchRoutes: () => () => undefined
+  })
+  const visible = (selector: string) =>
+    all(selector).filter(element => !element.closest('[hidden]'))
+  const headword = () => visible('h1[aria-label]').map(title => title.getAttribute('aria-label'))
+  const back = () => click(visible('button[aria-label^="Back to"]')[0])
+
+  test('Back returns through the pages each link opened, each as it was left', async () => {
+    const panelHost = host({ page: 'word', entSeq: iru })
+    await act(async () => root.render(<SidePanel host={panelHost} data={null} again={vi.fn()} />))
+    expect(headword()).toEqual(['要る'])
+    await click(visible('button[data-opens="kanji:要"]')[0])
+    expect(visible('[data-kanji-details="要"]')).toHaveLength(1)
+    await click(visible('button[data-opens="word:1546680"]')[0])
+    expect(headword()).toEqual(['要求'])
+    await back()
+    expect(visible('[data-kanji-details="要"]')).toHaveLength(1)
+    expect(lookups.lookUpKanji).toHaveBeenCalledOnce()
+    await back()
+    expect(headword()).toEqual(['要る'])
+    expect(lookups.lookUpWord.mock.calls).toEqual([[iru], [1546680]])
   })
 })

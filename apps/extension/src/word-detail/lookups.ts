@@ -9,6 +9,7 @@ import {
   type NotReady,
   resolveWord
 } from '../shared/dictionary'
+import { useDataState } from '../shared/dictionary-progress'
 import type { Failure } from '../shared/messages'
 
 export const dictionaryLookups = {
@@ -54,28 +55,46 @@ export async function answered<T extends Answer>(lookup: Lookup<T>): Promise<T |
   }
 }
 
-export function useLookup<T extends Answer>(lookup: () => Lookup<T>): [Looked<T>, () => void] {
+function waitsForData<T>(result: Looked<T>, answerWaits?: (answer: T) => boolean) {
+  if (result.state === 'answered') return answerWaits?.(result.answer) ?? false
+  return result.state !== 'failed'
+}
+
+export function useLookup<T extends Answer>(
+  lookup: () => Lookup<T>,
+  answerWaits?: (answer: T) => boolean
+): [Looked<T>, () => void] {
   const [result, setResult] = useState<Looked<T>>({ state: 'looking' })
+  const [data] = useDataState()
   const latest = useRef(0)
-  const run = useCallback(() => {
-    latest.current += 1
-    const ticket = latest.current
-    const settle = (next: Looked<T>) => {
-      if (latest.current === ticket) setResult(next)
-    }
-    setResult({ state: 'looking' })
-    Promise.resolve()
-      .then(lookup)
-      .then(
-        answer => settle(looked(answer)),
-        () => settle({ state: 'failed' })
-      )
-  }, [lookup])
+  const seen = useRef(data)
+  const run = useCallback(
+    (quietly = false) => {
+      latest.current += 1
+      const ticket = latest.current
+      const settle = (next: Looked<T>) => {
+        if (latest.current === ticket) setResult(next)
+      }
+      if (!quietly) setResult({ state: 'looking' })
+      Promise.resolve()
+        .then(lookup)
+        .then(
+          answer => settle(looked(answer)),
+          () => settle({ state: 'failed' })
+        )
+    },
+    [lookup]
+  )
   useEffect(() => {
     run()
     return () => {
       latest.current += 1
     }
   }, [run])
-  return [result, run]
+  useEffect(() => {
+    if (seen.current === data) return
+    seen.current = data
+    if (waitsForData(result, answerWaits)) run(true)
+  }, [data, result, run, answerWaits])
+  return [result, useCallback(() => run(), [run])]
 }

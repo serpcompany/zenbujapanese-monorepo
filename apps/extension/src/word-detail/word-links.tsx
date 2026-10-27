@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import type { PanelPage } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
 import { answered, type WordLookups } from './lookups'
-import type { Notify } from './notice'
+import { notify } from './notice'
 
 type Open = (page: PanelPage) => void
 type Spelling = Extract<WordLinkTarget, { headword: string }>
@@ -24,8 +24,7 @@ function pageFor(target: Exclude<WordLinkTarget, Spelling>): PanelPage {
 async function openSpelling(
   { headword, reading }: Spelling,
   resolveWord: WordLookups['resolveWord'],
-  open: Open,
-  notify: Notify
+  open: Open
 ) {
   const answer = await answered(resolveWord(headword, reading))
   if (answer === null) notify(wordDetailLabels.lookup.failed)
@@ -34,14 +33,10 @@ async function openSpelling(
   } else open({ page: 'word', entSeq: answer.entSeq })
 }
 
-export function useWordLinks(
-  open: Open,
-  resolveWord: WordLookups['resolveWord'],
-  notify: Notify
-): RenderWordLink {
+export function useWordLinks(open: Open, resolveWord: WordLookups['resolveWord']): RenderWordLink {
   return useMemo(() => {
     const follow = (target: WordLinkTarget) => {
-      if ('headword' in target) void openSpelling(target, resolveWord, open, notify)
+      if ('headword' in target) void openSpelling(target, resolveWord, open)
       else open(pageFor(target))
     }
     return ({ target, className, children, ...attributes }) => (
@@ -55,5 +50,5 @@ export function useWordLinks(
         {children}
       </button>
     )
-  }, [open, resolveWord, notify])
+  }, [open, resolveWord])
 }

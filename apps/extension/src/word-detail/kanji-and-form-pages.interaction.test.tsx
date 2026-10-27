@@ -2,28 +2,28 @@ import { noFormExamplesMessage } from '@zenbu/dictionary-core/detail/examples'
 import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { fixtureFormExamples, fixtureKanjiRows } from '@zenbu/dictionary-core/fixtures'
-import { act } from 'react'
+import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from '../shared/data-state'
 import type { FormExamplesAnswer, KanjiAnswer, Lookup } from '../shared/dictionary'
 import { pages } from '../side-panel/pages'
+import '../test/act-environment'
+import { setDataState } from '../test/data-state'
 import { FormExamplesPage } from './form-examples-page'
 import { KanjiDetailPage } from './kanji-detail-page'
 import { wordDetailLabels } from './labels'
 import type { WordLookups } from './lookups'
 import { WordDetailPage } from './word-detail-page'
 
-declare global {
-  var IS_REACT_ACT_ENVIRONMENT: boolean
-}
-globalThis.IS_REACT_ACT_ENVIRONMENT = true
-
-vi.mock('../shared/dictionary-progress', () => ({
-  DictionaryProgress: ({ data }: { data: DataState }) => <p data-progress={data.state} />
-}))
+vi.mock('../shared/dictionary-progress', async () => {
+  const { fakeDictionaryProgress } = await import('../test/data-state')
+  return fakeDictionaryProgress
+})
 
 const kaname = fixtureKanjiRows.find(rows => rows.kanji.character === '要') as KanjiRows
+const ready: DataState = { state: 'ready', release: '2026.10', bytes: 1, checkedAt: null }
+const downloading: DataState = { state: 'downloading', done: 1, total: 4 }
 const notAsked = vi.fn(async () => ({ type: 'failed', reason: 'Not asked.' }) as const)
 
 const sentencesUsing = (form: string): FormExamplesAnswer => {
@@ -43,20 +43,22 @@ const mounted: (() => void)[] = []
 
 afterEach(() => {
   for (const unmount of mounted.splice(0)) act(unmount)
+  act(() => setDataState(null))
   document.body.replaceChildren()
 })
 
-async function kanjiPage(lookups: WordLookups) {
+async function draw(page: ReactNode) {
   const element = document.body.appendChild(document.createElement('main'))
   const root = createRoot(element)
   mounted.push(() => root.unmount())
-  await act(async () =>
-    root.render(
-      <KanjiDetailPage page={{ page: 'kanji', character: '要' }} open={vi.fn()} lookups={lookups} />
-    )
-  )
+  await act(async () => root.render(page))
   return element
 }
+
+const kanjiPage = (lookups: WordLookups) =>
+  draw(
+    <KanjiDetailPage page={{ page: 'kanji', character: '要' }} open={vi.fn()} lookups={lookups} />
+  )
 
 describe('Kanji detail', () => {
   it('shows 要’s readings, meanings and stroke order', async () => {
@@ -86,6 +88,31 @@ describe('Kanji detail', () => {
     expect(page.querySelector('[data-kanji-details="要"]')).not.toBeNull()
   })
 
+  it('asks again when the data changes, and shows stroke order once it has downloaded', async () => {
+    const lookups = answering(async () => ({
+      type: 'kanji',
+      rows: { ...kaname, strokes: null },
+      strokes: 'downloading'
+    }))
+    const page = await kanjiPage(lookups)
+    vi.mocked(lookups.lookUpKanji).mockResolvedValueOnce({
+      type: 'kanji',
+      rows: kaname,
+      strokes: 'ready'
+    })
+    await act(async () => setDataState(ready))
+    expect(lookups.lookUpKanji).toHaveBeenCalledTimes(2)
+    expect(page.querySelector('[data-strokes]')).toBeNull()
+    expect(page.querySelector('button[aria-label="Show stroke order for 要"]')).not.toBeNull()
+  })
+
+  it('asks no more once its answer is whole', async () => {
+    const lookups = answering(async () => ({ type: 'kanji', rows: kaname, strokes: 'ready' }))
+    await kanjiPage(lookups)
+    await act(async () => setDataState(ready))
+    expect(lookups.lookUpKanji).toHaveBeenCalledTimes(1)
+  })
+
   it('shows the dictionary’s progress while its data isn’t ready', async () => {
     const page = await kanjiPage(
       answering(async () => ({
@@ -95,6 +122,26 @@ describe('Kanji detail', () => {
     )
     expect(page.querySelector('[data-progress="downloading"]')).not.toBeNull()
     expect(page.querySelector('[data-kanji-details]')).toBeNull()
+  })
+
+  it('moves its progress with the data, and shows the kanji once the data is ready', async () => {
+    const lookups = answering(async () => ({ type: 'not-ready', data: downloading }))
+    const page = await kanjiPage(lookups)
+    vi.mocked(lookups.lookUpKanji).mockResolvedValueOnce({
+      type: 'not-ready',
+      data: { state: 'downloading', done: 3, total: 4 }
+    })
+    await act(async () => setDataState({ state: 'downloading', done: 3, total: 4 }))
+    expect(lookups.lookUpKanji).toHaveBeenCalledTimes(2)
+    expect(page.querySelector('[data-progress="downloading"]')).not.toBeNull()
+    vi.mocked(lookups.lookUpKanji).mockResolvedValueOnce({
+      type: 'kanji',
+      rows: kaname,
+      strokes: 'ready'
+    })
+    await act(async () => setDataState(ready))
+    expect(lookups.lookUpKanji).toHaveBeenCalledTimes(3)
+    expect(page.querySelector('[data-kanji-details="要"]')).not.toBeNull()
   })
 
   it('offers Try again after a failure, and asks again', async () => {
@@ -122,15 +169,9 @@ describe('Kanji detail', () => {
 })
 
 describe('Form examples', () => {
-  async function formPage(form: string) {
-    const element = document.body.appendChild(document.createElement('main'))
-    const root = createRoot(element)
-    mounted.push(() => root.unmount())
-    const lookups = answering(notAsked)
-    await act(async () =>
-      root.render(
-        <FormExamplesPage page={{ page: 'form', form }} open={vi.fn()} lookups={lookups} />
-      )
+  async function formPage(form: string, lookups = answering(notAsked)) {
+    const element = await draw(
+      <FormExamplesPage page={{ page: 'form', form }} open={vi.fn()} lookups={lookups} />
     )
     return { element, lookups }
   }
@@ -148,6 +189,21 @@ describe('Form examples', () => {
   it('says no sentence uses a form none does', async () => {
     const { element } = await formPage('要りませんでした')
     expect(element.querySelector('[data-examples="none"]')?.textContent).toBe(noFormExamplesMessage)
+  })
+
+  it('asks again once the data is ready', async () => {
+    const lookups = answering(notAsked)
+    vi.mocked(lookups.lookUpFormExamples).mockResolvedValueOnce({
+      type: 'not-ready',
+      data: downloading
+    })
+    const { element } = await formPage('いる', lookups)
+    expect(element.querySelector('[data-progress="downloading"]')).not.toBeNull()
+    await act(async () => setDataState(ready))
+    expect(lookups.lookUpFormExamples).toHaveBeenCalledTimes(2)
+    expect(element.querySelectorAll('li[data-example]')).toHaveLength(
+      fixtureFormExamples.get('いる')?.length ?? -1
+    )
   })
 })
 

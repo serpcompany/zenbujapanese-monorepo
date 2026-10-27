@@ -14,7 +14,7 @@ import { PagedExamples } from './examples'
 import { wordDetailLabels } from './labels'
 import { answered, type WordLookups } from './lookups'
 import { MeaningWithMenu } from './meaning-menu'
-import { Notice, useNotice } from './notice'
+import { notify } from './notice'
 import { ReadingAids } from './reading-aids'
 import { shownConjugations, shownWordSections } from './shown'
 import { useWordLinks } from './word-links'
@@ -39,9 +39,8 @@ export function WordDetailView({
     () => (detail.conjugations ? shownConjugations(detail.conjugations) : null),
     [detail]
   )
-  const [notice, notify] = useNotice()
   const [conjugationsOpen, setConjugationsOpen] = useState(false)
-  const renderWordLink = useWordLinks(open, lookups.resolveWord, notify)
+  const renderWordLink = useWordLinks(open, lookups.resolveWord)
   const actions = useMemo(
     () =>
       new Map(
@@ -62,7 +61,7 @@ export function WordDetailView({
   return (
     <>
       <div className="flex justify-end">
-        <WordShare word={detail} notify={notify} />
+        <WordShare word={detail} />
       </div>
       <WordHeader
         headword={detail.headword}
@@ -76,21 +75,16 @@ export function WordDetailView({
         onUnsupported={notify}
         onOpenConjugations={() => setConjugationsOpen(true)}
       />
-      <Notice notice={notice} />
       <WordSections
         word={shownWordSections(detail, settings['frequencyDictionaries.chosen'])}
         lang={wordDetailLabels.lang}
         text={wordDetailLabels}
         renderWordLink={renderWordLink}
+        linksKanjiWithoutDetails
         renderMeaning={(sense, meaning) => {
           const senseActions = actions.get(sense.number)
           return senseActions ? (
-            <MeaningWithMenu
-              number={sense.number}
-              actions={senseActions}
-              meaning={meaning}
-              notify={notify}
-            />
+            <MeaningWithMenu number={sense.number} actions={senseActions} meaning={meaning} />
           ) : (
             meaning
           )

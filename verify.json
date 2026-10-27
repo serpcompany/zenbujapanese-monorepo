@@ -712,16 +712,29 @@
           {
             "name": "ui-needs-no-next",
             "severity": "error",
-            "comment": "@zenbu/ui runs in the browser extension too, so nothing it imports, however indirectly, may load Next.js, the theme switcher, or the toasts (docs/agents/ui.md, What the package may import). Take a link as renderWordLink and an action as a callback.",
+            "comment": "@zenbu/ui runs in the browser extension too, so nothing it imports, however indirectly, may load Next.js or the theme switcher (docs/agents/ui.md, What the package may import). Take a link as renderWordLink and an action as a callback.",
             "from": {
               "path": "^src/",
               "pathNot": "\\.test\\.tsx?$"
             },
             "to": {
               "path": [
-                "(^|/)node_modules/(next|next-themes|sonner|@opennextjs|server-only)/",
-                "^(next|next-themes|sonner|@opennextjs/[^/]+|server-only)(/|$)"
+                "(^|/)node_modules/(next|next-themes|@opennextjs|server-only)/",
+                "^(next|next-themes|@opennextjs/[^/]+|server-only)(/|$)"
               ],
+              "reachable": true
+            }
+          },
+          {
+            "name": "ui-toasts-only-in-toaster",
+            "severity": "error",
+            "comment": "Only @zenbu/ui's Toaster (src/components/sonner.tsx) loads Sonner, and only a client mounts it, since Sonner adds its styles to the page's head, which an extension's shadow root never sees (docs/agents/ui.md, What the package may import). Take a notice as a callback, such as onUnsupported, and let the client show the toast.",
+            "from": {
+              "path": "^src/",
+              "pathNot": ["\\.test\\.tsx?$", "^src/components/sonner\\.tsx$"]
+            },
+            "to": {
+              "path": ["(^|/)node_modules/sonner/", "^sonner(/|$)"],
               "reachable": true
             }
           },

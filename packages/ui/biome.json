@@ -48,7 +48,7 @@
       }
     },
     {
-      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx"],
+      "includes": ["src/**", "!**/*.test.ts", "!**/*.test.tsx", "!src/components/sonner.tsx"],
       "linter": {
         "rules": {
           "style": {

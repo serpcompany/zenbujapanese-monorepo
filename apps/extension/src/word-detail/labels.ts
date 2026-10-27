@@ -1,5 +1,5 @@
 const pronounce = {
-  unsupported: "This browser can't pronounce Japanese.",
+  unsupported: 'This browser can’t pronounce Japanese.',
   withPitch: '{pronounce}. {pitch}'
 }
 
@@ -41,13 +41,13 @@ export const wordDetailLabels = {
     rowLabel: '{title}, {surface}, {reading}'
   },
   entries: 'Entries',
-  copyFailed: "Couldn't copy. Try again.",
+  copyFailed: 'Couldn’t copy. Try again.',
   meaning: {
     actions: 'Actions for meaning {number}',
     speak: 'Speak',
     copy: 'Copy',
     copied: 'Meaning copied',
-    unsupported: "This browser can't speak English."
+    unsupported: 'This browser can’t speak English.'
   },
   share: {
     share: 'Share {name}',
@@ -59,10 +59,10 @@ export const wordDetailLabels = {
     downloading: 'Stroke order is downloading. It shows here once it has.'
   },
   lookup: {
-    failed: "The dictionary couldn't answer. Try again.",
+    failed: 'The dictionary couldn’t answer. Try again.',
     tryAgain: 'Try again',
-    wordNotFound: "This word isn't in the dictionary.",
-    kanjiNotFound: "This kanji isn't in the dictionary.",
+    wordNotFound: 'This word isn’t in the dictionary.',
+    kanjiNotFound: 'This kanji isn’t in the dictionary.',
     spellingNotFound: '{headword} isn’t in the dictionary.'
   }
 }

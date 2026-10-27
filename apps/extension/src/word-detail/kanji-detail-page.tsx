@@ -2,43 +2,37 @@ import { kanjiDetail } from '@zenbu/dictionary-core/detail/kanji'
 import type { KanjiRows } from '@zenbu/dictionary-core/detail/rows'
 import { KanjiDetails } from '@zenbu/ui/dictionary/kanji-details'
 import { useCallback, useMemo } from 'react'
-import type { Settings } from '../shared/settings'
-import { useSettings } from '../shared/use-settings'
-import type { PanelPage, PanelPageProps } from '../side-panel/route'
+import type { KanjiAnswer } from '../shared/dictionary'
+import type { PanelPage } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { Notice, useNotice } from './notice'
-import { framed, NotFound, UnansweredLookup } from './page-states'
-import { ReadingAids } from './reading-aids'
+import { type FramedProps, framed, NotFound, UnansweredLookup } from './page-states'
 import { shownKanjiDetails } from './shown'
 import { useWordLinks } from './word-links'
 
 type KanjiPage = Extract<PanelPage, { page: 'kanji' }>
 
 const noLearnerPrompt = () => null
+const strokesDownloading = (answer: KanjiAnswer) => answer.strokes === 'downloading'
 
 function KanjiView({
   rows,
   downloading,
-  settings,
   open,
   lookups
 }: {
   rows: KanjiRows
   downloading: boolean
-  settings: Settings
   open: (page: PanelPage) => void
   lookups: WordLookups
 }) {
-  const [notice, notify] = useNotice()
-  const renderWordLink = useWordLinks(open, lookups.resolveWord, notify)
+  const renderWordLink = useWordLinks(open, lookups.resolveWord)
   const kanji = useMemo(
     () => shownKanjiDetails(kanjiDetail(rows), !downloading),
     [rows, downloading]
   )
   return (
-    <ReadingAids settings={settings} className="flex flex-col gap-4">
-      <Notice notice={notice} />
+    <>
       {downloading ? (
         <p className="text-sm text-muted-foreground" data-strokes="downloading">
           {wordDetailLabels.strokes.downloading}
@@ -52,31 +46,19 @@ function KanjiView({
         actions={null}
         learnerPrompt={noLearnerPrompt}
       />
-    </ReadingAids>
+    </>
   )
 }
 
-function KanjiDetailContent({
-  page,
-  open,
-  lookups = dictionaryLookups
-}: PanelPageProps<KanjiPage> & { lookups?: WordLookups }) {
-  const settings = useSettings()
+function KanjiDetailContent({ page, open, lookups = dictionaryLookups }: FramedProps<KanjiPage>) {
   const { lookUpKanji } = lookups
   const lookup = useCallback(() => lookUpKanji(page.character), [lookUpKanji, page.character])
-  const [result, retry] = useLookup(lookup)
-  if (!settings) return null
+  const [result, retry] = useLookup(lookup, strokesDownloading)
   if (result.state !== 'answered') return <UnansweredLookup result={result} retry={retry} />
   const { rows, strokes } = result.answer
   if (!rows) return <NotFound message={wordDetailLabels.lookup.kanjiNotFound} />
   return (
-    <KanjiView
-      rows={rows}
-      downloading={strokes === 'downloading'}
-      settings={settings}
-      open={open}
-      lookups={lookups}
-    />
+    <KanjiView rows={rows} downloading={strokes === 'downloading'} open={open} lookups={lookups} />
   )
 }
 

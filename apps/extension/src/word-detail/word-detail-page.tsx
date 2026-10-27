@@ -4,12 +4,10 @@ import { useCallback, useMemo, useState } from 'react'
 import type { Lookup, NotReady, WordAnswer } from '../shared/dictionary'
 import type { Failure } from '../shared/messages'
 import type { Settings } from '../shared/settings'
-import { useSettings } from '../shared/use-settings'
-import type { PanelPage, PanelPageProps } from '../side-panel/route'
+import type { PanelPage } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
 import { dictionaryLookups, useLookup, type WordLookups } from './lookups'
-import { framed, NotFound, UnansweredLookup } from './page-states'
-import { ReadingAids } from './reading-aids'
+import { type FramedProps, framed, NotFound, UnansweredLookup } from './page-states'
 import { WordDetailView } from './word-detail-view'
 
 type WordPage = Extract<PanelPage, { page: 'word' }>
@@ -49,7 +47,7 @@ function WordEntries({ entSeqs, first, settings, open, lookups }: EntriesProps) 
   const shown = rows.find(entry => entry.entry.entSeq === chosen) ?? rows[0]
   if (!shown) return <NotFound message={wordDetailLabels.lookup.wordNotFound} />
   return (
-    <ReadingAids settings={settings} className="flex flex-col gap-4">
+    <>
       {rows.length > 1 ? (
         <Tabs value={shown.entry.entSeq} onValueChange={value => setChosen(Number(value))}>
           <TabsList aria-label={wordDetailLabels.entries}>
@@ -73,20 +71,19 @@ function WordEntries({ entSeqs, first, settings, open, lookups }: EntriesProps) 
         open={open}
         lookups={lookups}
       />
-    </ReadingAids>
+    </>
   )
 }
 
 function WordDetailContent({
   page,
   open,
+  settings,
   lookups = dictionaryLookups
-}: PanelPageProps<WordPage> & { lookups?: WordLookups }) {
-  const settings = useSettings()
+}: FramedProps<WordPage>) {
   const entries = page.entries ?? []
   const key = entries.length > 1 ? entries.join() : String(page.entSeq)
   const entSeqs = useMemo(() => key.split(',').map(Number), [key])
-  if (!settings) return null
   return (
     <WordEntries
       key={key}

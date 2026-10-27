@@ -2,8 +2,12 @@ import { Button } from '@zenbu/ui/components/button'
 import { Empty, EmptyHeader, EmptyTitle } from '@zenbu/ui/components/empty'
 import type { ComponentType } from 'react'
 import { DictionaryProgress } from '../shared/dictionary-progress'
+import type { Settings } from '../shared/settings'
+import { useSettings } from '../shared/use-settings'
+import type { PanelPage, PanelPageProps } from '../side-panel/route'
 import { wordDetailLabels } from './labels'
-import type { Unanswered } from './lookups'
+import type { Unanswered, WordLookups } from './lookups'
+import { ReadingAids } from './reading-aids'
 
 export function NotFound({ message }: { message: string }) {
   return (
@@ -31,12 +35,20 @@ export function UnansweredLookup({ result, retry }: { result: Unanswered; retry:
   )
 }
 
-export function framed<Props extends object>(Page: ComponentType<Props>): ComponentType<Props> {
-  return function FramedPage(props: Props) {
+type PageProps<P extends PanelPage> = PanelPageProps<P> & { lookups?: WordLookups }
+
+export type FramedProps<P extends PanelPage> = PageProps<P> & { settings: Settings }
+
+export function framed<P extends PanelPage>(
+  Page: ComponentType<FramedProps<P>>
+): ComponentType<PageProps<P>> {
+  return function FramedPage(props: PageProps<P>) {
+    const settings = useSettings()
+    if (!settings) return null
     return (
-      <div className="p-4">
-        <Page {...props} />
-      </div>
+      <ReadingAids settings={settings} className="flex flex-col gap-4 p-4">
+        <Page {...props} settings={settings} />
+      </ReadingAids>
     )
   }
 }
