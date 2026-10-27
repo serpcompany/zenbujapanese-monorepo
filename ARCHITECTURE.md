@@ -109,7 +109,10 @@ saying where the code belongs:
   ([`docs/agents/ui.md`](docs/agents/ui.md), What the package may import).
 - **The browser extension**: only its dictionary worker (`src/worker/`) loads the core's lookup
   code and SQLite, and nothing imports the worker: the offscreen document starts it by its URL,
-  and pages, content scripts, and the service worker ask it with a message. Pages and content
+  and pages, content scripts, and the service worker ask it with a message. The one exception is
+  the core's `search/query`, its text checks, which loads no lookup code or SQLite: the
+  translation module takes a text's direction from its `writtenLanguage`, as the app does, rather
+  than ask the worker or move the function in the core. Pages and content
   scripts draw with `@zenbu/ui`, never the primitives under it, and the service worker, the
   offscreen document, and the worker draw nothing (`apps/extension` in `verify.json`'s
   dependency parts, [`docs/agents/extension.md`](docs/agents/extension.md), Layers).

@@ -57,6 +57,8 @@ the weekly code gardener takes unless it must pass it over ([`ci-agents.md`](age
 | --- | --- | --- | --- |
 | What the extension draws on a page is sized in pixels: the build turns the shadow root stylesheet's rem lengths into pixels at 16px each (`apps/extension/build/shadow-safe-css.ts`), since a rem there would follow the page's own root font size. | A learner who set a larger default font size in Chrome gets the standard size on pages; the extension's own pages keep rem and follow it. | No issue yet | medium |
 | The test pages' server takes the website's `site` port (`pnpm test-pages` in `apps/extension`, through `tools/checks/ports.mjs`). | One checkout can't run the website and the test pages at once. | No issue yet | small |
+| No browser test opens the test surface's menu and dialog (`apps/extension/test-pages/test-surface.tsx`): `e2e/content-script.spec.ts` checks only that the surface draws, and `src/content/shadow-mount.interaction.test.tsx` runs in happy-dom. They are driven by hand, by keyboard and pointer, on both test pages. | A change that breaks focus or pointer events inside the shadow root on a real page is caught only when someone checks by hand. | #1062 | small |
+| Branded Google Chrome runs only on an agent's Mac, through the agent Chrome harness and the `verify-extension` skill; CI runs the browser tests in Playwright's Chromium (`apps/extension/e2e/`). | What only branded Chrome does (`Extensions.loadUnpacked`, the Translator, Widevine) is caught only when an agent runs the skill. Running it in CI needs a decision on the runner. | #1063 | medium |
 
 ## Language data
 

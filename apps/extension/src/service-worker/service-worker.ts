@@ -6,6 +6,7 @@ import {
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
 import { startSidePanel } from './side-panel'
+import { routeTranslation } from './translation'
 
 startSendingErrorReports(chrome.storage.local)
 
@@ -24,6 +25,10 @@ chrome.runtime.onMessage.addListener(
     sendMessage: message => chrome.runtime.sendMessage(message),
     reportFailure
   })
+)
+
+chrome.runtime.onMessage.addListener(
+  routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
 )
 
 startSidePanel()

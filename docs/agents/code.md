@@ -15,9 +15,11 @@ and one to its sources, reports, or tools the data
 tools' contract tests ([`language-data/README.md`](../../language-data/README.md)). A change is done when these pass and
 the docs say what changed: the product docs for a behavior (in the same pull request), the area's
 doc for how it works. A website change also passes `pnpm test:e2e` in `apps/web`, with a browser test for any
-behavior it adds and a regression test for any bug it fixes (the `browser-tests` skill). Check a
+behavior it adds and a regression test for any bug it fixes (the `browser-tests` skill), and an
+extension change `pnpm test:browser` in `apps/extension`. Check a
 website change in a real browser with the `verify-web` skill, an app change in the running app
-with the `verify-app` skill, and a service change by running the service with the
+with the `verify-app` skill, an extension change in branded Chrome with the `verify-extension`
+skill, and a service change by running the service with the
 `verify-service` skill, and put what they showed in the pull request. The `finish-change`
 skill walks an agent through all of this, with a fresh agent reviewing the diff, before it drafts
 the pull request. What to run while editing and before a push, how to wait, and the evidence each
@@ -232,6 +234,7 @@ guides.
 | [`browser-tests`](../../.claude/skills/browser-tests/SKILL.md) | Run, debug, and add the website's Playwright tests, and read a failure from its trace and the server's log lines |
 | [`verify-web`](../../.claude/skills/verify-web/SKILL.md) | Check a website change in a real browser, on `next dev`, the production build, or staging, and measure speed on the preview |
 | [`verify-app`](../../.claude/skills/verify-app/SKILL.md) | Check an app change in the running app: the UI tests that cover it, on this checkout's own Simulator, with the result kept as proof, and a recording and screenshots with `--record` |
+| [`verify-extension`](../../.claude/skills/verify-extension/SKILL.md) | Check an extension change in branded Chrome: the test build in a fresh, offline agent Chrome, each page in light and dark, the test content script, a release download, and the harness's self-test, with the log and screenshots kept as proof |
 | [`verify-service`](../../.claude/skills/verify-service/SKILL.md) | Check a change to the dictionary or account service by running it: the service started from this checkout on its own port, the routes the change touches called, and each answer kept as proof |
 | [`finish-change`](../../.claude/skills/finish-change/SKILL.md) | Take a change to ready for a pull request: every check, a fresh review of the diff and of a website change's pages, the records, and the description |
 | [`pr-review`](../../.claude/skills/pr-review/SKILL.md) | Review a pull request; the `Code review` workflow runs it on every push, then posts its summary to one comment it edits by id |
