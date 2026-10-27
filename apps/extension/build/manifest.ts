@@ -1,14 +1,22 @@
+import packageJson from '../package.json' with { type: 'json' }
+import { defaultEnvironment, type Environment, hosts } from './hosts.ts'
+import { storeKey } from './key.ts'
+
 export type Variant = 'release' | 'test'
 
 export type ContentScript = { name: string; entry: string; matches: string[] }
 
 export const minimumChromeVersion = '138'
 
+export const extensionVersion: string = packageJson.version
+
 const testPagesContentScript: ContentScript = {
   name: 'test-content-script',
   entry: 'test-pages/test-content-script.tsx',
   matches: ['http://localhost/*', 'http://127.0.0.1/*']
 }
+
+export const contentScriptFile = (script: ContentScript) => `${script.name}.js`
 
 export function contentScripts(variant: Variant): ContentScript[] {
   return variant === 'test' ? [testPagesContentScript] : []
@@ -19,7 +27,7 @@ function onPages(scripts: ContentScript[]) {
   return {
     content_scripts: scripts.map(script => ({
       matches: script.matches,
-      js: [`${script.name}.js`],
+      js: [contentScriptFile(script)],
       run_at: 'document_idle'
     })),
     web_accessible_resources: [
@@ -28,12 +36,14 @@ function onPages(scripts: ContentScript[]) {
   }
 }
 
-export function manifest(variant: Variant) {
+export function manifest(variant: Variant, environment: Environment = defaultEnvironment) {
   return {
     manifest_version: 3,
     name: 'Zenbu Japanese',
     description: 'Look up Japanese words on any page.',
-    version: '0.1.0',
+    version: extensionVersion,
+    key: storeKey,
+    homepage_url: hosts[environment].website,
     minimum_chrome_version: minimumChromeVersion,
     action: { default_title: 'Zenbu Japanese' },
     side_panel: { default_path: 'pages/side-panel.html' },

@@ -1,7 +1,8 @@
 # Deploy and release workflows
 
-The workflows that deploy the site, ship the services' images, and publish language data, the
-monthly JMdict update that starts a release, and the action the language-data workflows share. The
+The workflows that deploy the site, ship the services' images, build the browser extension's
+packages, and publish language data, the monthly JMdict update that starts a release, and the
+action the language-data workflows share. The
 commit each action is pinned to is in [`ci-pinned-actions.md`](ci-pinned-actions.md). Every
 workflow and what starts it is in [`ci.md`](ci.md). Change a workflow's section in the same pull
 request as the workflow.
@@ -140,6 +141,34 @@ account service's images. The first push creates the image's package in the orga
 private ([`api-servers.md`](api-servers.md), Set up the server). Until the server is set up for
 the account service, the deployer skips it, so the tags move and nothing runs. The whole deploy is
 in [`account-api.md`](account-api.md), How a deploy works.
+
+## Extension packages
+
+`.github/workflows/extension-packages.yml` builds the browser extension's two packages
+([`extension.md`](extension.md), Builds and packages) on a push to `main` that changes the
+extension, `packages/ui`, the core, or `assets/brand`, on a pull request that changes them, and
+by hand. One job,
+in `apps/extension`:
+
+1. **The staging package:** `pnpm build` with `ZENBU_ENVIRONMENT=staging` and Sentry's `qa`
+   environment, every `.map` deleted, zipped with the manifest's `key`
+   (`pnpm package unpacked`), and checked (`pnpm check-package unpacked staging`).
+2. **The Chrome Web Store package:** `pnpm build` with production's hosts and
+   `ZENBU_SENTRY_ENVIRONMENT=production`, then `pnpm run --if-present upload-source-maps dist`,
+   which uploads the source maps to Sentry (`build/upload-source-maps.ts`,
+   [`extension.md`](extension.md)), then every `.map` deleted, zipped without the `key`
+   (`pnpm package store`), and checked
+   (`pnpm check-package store production`). The upload runs only on `main`, so a pull request's
+   maps never land under the release's version. It reads the `SENTRY_AUTH_TOKEN` secret; with
+   none, the script warns and passes (#987 adds it).
+3. **On `main`, by a push or by hand,** it keeps both zips as artifacts named
+   `zenbujapanese-extension-staging-<commit>` and `zenbujapanese-extension-store-<commit>`, for
+   30 days. A pull request's run, or one by hand on another branch, keeps nothing. Run it by
+   hand on `main` to make them again.
+
+It uploads nothing to the Chrome Web Store: the owner uploads the store package (#972). A check
+that fails names each problem in the job's log. It starts on paths, so it isn't a check a merge
+can wait for ([`ci.md`](ci.md)).
 
 ## Language data release
 
