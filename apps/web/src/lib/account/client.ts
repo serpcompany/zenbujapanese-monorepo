@@ -97,6 +97,21 @@ const unexpected = (status: number): Result<never> => ({
 const checked = <T>(value: T | null, status: number): Result<T> =>
   value === null ? unexpected(status) : accepted(value)
 
+const offline: Result<never> = { ok: false, failure: { kind: 'offline' } }
+
+async function refused(response: Response): Promise<Result<never>> {
+  const { value } = await jsonOf(response)
+  return {
+    ok: false,
+    failure: {
+      kind: 'refused',
+      status: response.status,
+      retryAfter: retryAfterOf(response.headers),
+      ...refusalOf(value, response.status)
+    }
+  }
+}
+
 export function accountApi(
   apiUrl: string,
   language: Locale,
@@ -120,18 +135,22 @@ export function accountApi(
         body: body === undefined ? undefined : JSON.stringify(body)
       })
     } catch {
-      return { ok: false, failure: { kind: 'offline' } }
+      return offline
     }
+    if (!response.ok) return refused(response)
     const { parsed, value } = await jsonOf(response)
-    if (response.ok) return parsed ? read(value, response.status) : unexpected(response.status)
-    return {
-      ok: false,
-      failure: {
-        kind: 'refused',
-        status: response.status,
-        retryAfter: retryAfterOf(response.headers),
-        ...refusalOf(value, response.status)
-      }
+    return parsed ? read(value, response.status) : unexpected(response.status)
+  }
+
+  async function file(path: string, accessToken: string): Promise<Result<Blob>> {
+    try {
+      const response = await send(`${apiUrl}${path}`, {
+        headers: { 'content-language': language, authorization: `Bearer ${accessToken}` },
+        credentials: 'omit'
+      })
+      return response.ok ? accepted(await response.blob()) : refused(response)
+    } catch {
+      return offline
     }
   }
 
@@ -258,6 +277,8 @@ export function accountApi(
         { accessToken },
         (value, status) => checked<KindPage>(kindPageOf(value), status)
       ),
+    photoFile: (accessToken: string, photoId: string) =>
+      file(`/v1/photos/${encodeURIComponent(photoId)}`, accessToken),
     sync: (accessToken: string, mutations: Mutation[]) =>
       call(
         '/v1/sync',

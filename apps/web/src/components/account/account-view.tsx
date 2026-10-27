@@ -28,6 +28,7 @@ import { FormMessage, Notice } from './form-message'
 import { ProfileForm } from './profile-form'
 import { SignInWaysSection } from './sign-in-ways'
 import { SubscriptionSection } from './subscription-section'
+import { SyncedDataSection } from './synced/synced-data-section'
 
 interface Landed {
   madeANewAccount: boolean
@@ -46,7 +47,7 @@ interface Words {
   text: AccountText
 }
 
-function SignedOut({ notice, locale, text }: Words & { notice: string | null }) {
+export function SignedOut({ notice, locale, text }: Words & { notice: string | null }) {
   return (
     <div className="flex flex-col gap-4">
       <Notice>{notice}</Notice>
@@ -266,6 +267,7 @@ export function AccountView({
           onSignedOut={shared.onSignedOut}
         />
       ) : null}
+      <SyncedDataSection subscription={account.subscription ?? null} locale={locale} text={text} />
       <SignInWaysSection
         key={`ways-${account.session.userId}`}
         {...shared}
