@@ -14,7 +14,12 @@ export function DictionaryStatus({ ask = pingDictionary }: { ask?: Ask }) {
 
   const check = useCallback(() => {
     setStatus('checking')
-    ask().then(answer => setStatus(answer.type === 'pong' ? 'ready' : 'failed'))
+    Promise.resolve()
+      .then(ask)
+      .then(
+        answer => setStatus(answer.type === 'pong' ? 'ready' : 'failed'),
+        () => setStatus('failed')
+      )
   }, [ask])
 
   useEffect(check, [check])

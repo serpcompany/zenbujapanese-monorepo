@@ -3,11 +3,13 @@ import {
   type Envelope,
   type Failure,
   failure,
-  isEnvelopeFor
+  isEnvelopeFor,
+  isOffscreenStarted
 } from '../shared/messages'
 
 type Relay = {
   ensureOffscreenDocument(): Promise<void>
+  offscreenDocumentStarted(): void
   sendMessage(message: Envelope): Promise<DictionaryAnswer | Failure>
 }
 
@@ -17,6 +19,7 @@ export function routeToOffscreen(relay: Relay) {
     _sender: unknown,
     sendResponse: (answer: DictionaryAnswer | Failure) => void
   ): boolean => {
+    if (isOffscreenStarted(message)) relay.offscreenDocumentStarted()
     if (!isEnvelopeFor('service-worker', message)) return false
     relay
       .ensureOffscreenDocument()

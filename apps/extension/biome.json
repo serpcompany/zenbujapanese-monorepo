@@ -48,6 +48,7 @@
                       "@zenbu/dictionary-core/artifact/**",
                       "@zenbu/dictionary-core/search/**",
                       "@zenbu/dictionary-core/embedded/**",
+                      "@zenbu/dictionary-core/examples/**",
                       "**/worker/**"
                     ],
                     "message": "Only the dictionary worker opens the dictionary. Pages, content scripts, the offscreen document, and the service worker ask it with a message (docs/agents/extension.md, Layers)."

@@ -46,11 +46,16 @@ outside the first version. The Store listing, its ID, and the version and builds
 A page or content script calls `askDictionary(request)`, which sends `{ target: 'service-worker',
 request }` with `chrome.runtime.sendMessage`. The service worker opens the offscreen document if
 Chrome has closed it (it checks `chrome.runtime.getContexts`, and several requests at once share
-one `createDocument`), then sends `{ target: 'offscreen', request }`. The offscreen document posts
-the request to the worker with a port, and the worker answers on it. Each listener answers only
-its own `target`, and every failure on the way comes back as `{ type: 'failed', reason }`, never
-as a thrown error. The service worker keeps nothing between messages, since Chrome stops it when
-it's idle.
+one `createDocument`), waits until the new document says it has started (`offscreenStarted`,
+which it sends once its listener is in place), then sends `{ target: 'offscreen', request }`.
+The offscreen document starts the worker on its first request,
+waits for the worker's first message, which says it has loaded, and then posts each request to it
+with a port; the worker answers on it. Each listener answers only its own `target`, and every
+failure on the way comes back as `{ type: 'failed', reason }`, never as a thrown error or a hang:
+a send that throws, an unknown request, a document that doesn't start within 10 seconds, a worker
+that fails (the offscreen document starts a new one for the next request), and a worker that
+doesn't answer within 10 seconds. The service worker keeps nothing between messages but a
+document it's waiting on, since Chrome stops it when it's idle.
 
 ### Drawing on a page
 
@@ -105,10 +110,13 @@ a Dialog. The release build has no content script; `build/manifest.test.ts` chec
 - **Unit and DOM tests,** with `pnpm test`: the manifest of each build; the rem conversion and
   the `@supports` unwrapping; the shadow root's stylesheet as the build makes it, with no rem and
   the `--tw-*` fallback outside any `@supports`, and the pages' with rem kept; the offscreen
-  document opened once and again after Chrome closes it; a ping from a page through the service
-  worker and the offscreen document to the worker and back, and each failure; and, in happy-dom,
+  document opened once and again after Chrome closes it, once it says it has started; a ping from
+  a page through the service worker and the offscreen document to the worker and back, also on
+  the first ask after the document closed, and each failure; the relay waiting for the worker to
+  load, starting a new one after a failure, and its time limit; and, in happy-dom,
   `mountInShadowRoot` drawing the test surface, Geist's family, `.dark`, a dialog portalled into
-  the shadow root, and unmounting.
+  the shadow root, and unmounting, and `DictionaryStatus` checking, ready, failed, and Check
+  again.
 - **In Chrome,** by hand or by an agent: load `dist-test/`, open the side panel, the popup, and
   Settings in light and dark, see "The dictionary is ready." from the side panel and the test
   surface, close the offscreen document from `chrome://extensions` (Inspect views) and check
