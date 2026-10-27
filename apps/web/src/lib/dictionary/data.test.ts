@@ -210,6 +210,9 @@ describe('searchDictionary', () => {
     ])
     const kaname = await searchDictionary('要')
     expect(kaname.state === 'results' && kaname.kanji?.details?.character).toBe('要')
+    expect(kaname.state === 'results' && kaname.kanji?.summary).toBe(
+      'need, main point, essence, pivot, key to'
+    )
   })
 
   test('asks the service, or the fixtures, for a kanji picked from the radicals as picked', async () => {
