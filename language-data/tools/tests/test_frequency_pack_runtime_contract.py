@@ -8,6 +8,7 @@ ANALYSIS = GENERATED / "Migaku-public-catalog-ja-ordered-json-v1.analysis.json"
 JITEN_ANALYSIS = GENERATED / "Jiten-2026-09-27.analysis.json"
 TUBELEX = RESOURCES / "TUBELEXFrequencyPack.sqlite3"
 TUBELEX_REPORT = GENERATED / "TUBELEX-ja-310-lemma-pos.import.json"
+TUBELEX_REVIEW = SOURCES / "TUBELEX-ja-310-lemma-pos.reviewed-readings.json"
 LANGUAGE_DATA = RESOURCES / "LanguageReferenceData.sqlite3"
 JLPT = RESOURCES / "JLPTLevelPack.sqlite3"
 JLPT_RECORD = SOURCES / "JLPT-Waller-2025-08-26.source.json"
@@ -100,7 +101,8 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
         with sqlite3.connect(TUBELEX) as database:
             database.execute("ATTACH DATABASE ? AS language", (str(LANGUAGE_DATA),))
             for headword, reading, rank in (
-                ("事", "こと", 23), ("時", "とき", 57), ("上", "うえ", 127), ("先生", "せんせい", 359),
+                ("事", "こと", 23), ("時", "とき", 57), ("上", "うえ", 127), ("家", "いえ", 181),
+                ("先生", "せんせい", 359),
             ):
                 with self.subTest(headword=headword):
                     row = database.execute(
@@ -110,6 +112,25 @@ class FrequencyPackRuntimeContractTests(unittest.TestCase):
                         (headword, reading),
                     ).fetchone()
                     self.assertEqual((rank,), row)
+
+    def test_tubelex_pack_ranks_each_reviewed_reading_and_no_row_left_out(self) -> None:
+        report = json.loads(TUBELEX_REPORT.read_text(encoding="utf-8"))
+        review = json.loads(TUBELEX_REVIEW.read_text(encoding="utf-8"))
+        kept = {row["rank"]: row["entry"] for row in review["rows"] if row["reading"]}
+        left_out = {row["rank"] for row in review["rows"] if not row["reading"]}
+
+        self.assertEqual(sha256(TUBELEX_REVIEW), report["reviewedReadingsSHA256"])
+        self.assertEqual(len(kept), report["reviewedReadingRows"])
+        with sqlite3.connect(TUBELEX) as database:
+            database.execute("ATTACH DATABASE ? AS language", (str(LANGUAGE_DATA),))
+            ranked = dict(
+                database.execute(
+                    "SELECT e.rank, l.source_record_id FROM frequency_evidence e "
+                    "JOIN language.entries l ON l.id = e.language_reference_id"
+                )
+            )
+        self.assertEqual(kept, {rank: ranked.get(rank) for rank in kept})
+        self.assertEqual(set(), left_out & ranked.keys())
 
     def test_jlpt_level_pack_matches_its_pinned_source_and_import_report(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))

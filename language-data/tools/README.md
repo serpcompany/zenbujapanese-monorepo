@@ -246,10 +246,10 @@ and with English Wiktionary on 91.9% of 528, and 59 from the fallback, agreeing 
 
 **`import_frequency_pack.py`** builds a rank pack from a curated list. TUBELEX counts UniDic lemmas,
 so a lemma's reading names the word it counted even where JMdict files the spelling under several
-readings; lemmas UniDic files under several readings, such as 家, get none. JMdict writes katakana
-words' readings in katakana and the rest in hiragana. A row gets a reading only where mapping V1
-can't place it, so no entry V1 ranks loses its rank or gets a worse one. The content digest is
-described in [`frequency.md`](../../docs/agents/frequency.md), Trust.
+readings; for a lemma UniDic files under several readings, such as 家, a reviewed list may name one
+([`FREQUENCY_SOURCE_DECISIONS.md`](../FREQUENCY_SOURCE_DECISIONS.md), #826). JMdict writes katakana
+words' readings in katakana, the rest in hiragana. No entry V1 ranks loses its rank or gets a worse
+one. The content digest is in [`frequency.md`](../../docs/agents/frequency.md), Trust.
 
 **`import_jlpt_level_pack.py`** builds the JLPT level pack from Waller's lists with stephenmk's
 JMdict sequence numbers, by exact join. Rows without one are unmapped, and an entry listed at
