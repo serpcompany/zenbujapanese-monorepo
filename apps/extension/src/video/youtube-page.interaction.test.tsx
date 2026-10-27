@@ -41,13 +41,17 @@ function youTubeTab({ captionsOn = true } = {}) {
   const contentScript = new Set<ContentListener>()
   const settings = { captionsOn }
   const followers: ReturnType<typeof youTubeFollower>[] = []
+  const opened: string[] = []
+  const announced: string[] = []
   const serviceWorker = answerCaptions(
     captionsService({
       storage: memoryStorage(),
       fetch: youTube.fetch,
+      prepareRequests: async () => undefined,
       tabVideo: async () => watchedVideoId(location.href),
       captionsOn: async () => settings.captionsOn,
       announce: change => {
+        announced.push(change.captions.state)
         for (const listener of contentScript) listener(change)
       },
       now: () => Date.now(),
@@ -60,7 +64,10 @@ function youTubeTab({ captionsOn = true } = {}) {
       new Promise(resolve => serviceWorker(message, sender, resolve))
   const stop = followYouTubePage(document, {
     runtime: {
-      sendMessage: sendFrom({ tab: { id: tabId } }),
+      sendMessage: message => {
+        if (message.captions.type === 'video-opened') opened.push(message.captions.videoId)
+        return sendFrom({ tab: { id: tabId } })(message)
+      },
       onMessage: {
         addListener: listener => contentScript.add(listener),
         removeListener: listener => contentScript.delete(listener)
@@ -77,10 +84,15 @@ function youTubeTab({ captionsOn = true } = {}) {
     youTube,
     settings,
     followers,
+    opened,
+    announced,
     stop,
     videoTab: (request: CaptionsRequest) => askCaptions(request, sidePanel),
     control(control: unknown) {
       for (const listener of contentScript) listener({ target: 'video', control })
+    },
+    announce(captions: unknown) {
+      for (const listener of contentScript) listener({ target: 'captions', tabId, captions })
     },
     async shown(state: string) {
       await vi.waitFor(async () => {
@@ -171,6 +183,26 @@ describe('the YouTube watch page', () => {
     navigate('/feed/subscriptions')
     await vi.advanceTimersByTimeAsync(3 * 60 * minute)
     expect(tab.youTube.timedTextRequests()).toBe(3)
+  })
+
+  it('with Zenbu Captions turned off during a wait, stops asking the service worker once it is over', async () => {
+    tab = youTubeTab()
+    tab.youTube.answerTimedText(429)
+    await vi.waitFor(() => expect(tab?.announced.at(-1)).toBe('rate-limited'))
+    tab.settings.captionsOn = false
+    const opened = tab.opened.length
+    await vi.advanceTimersByTimeAsync(3 * 60 * minute)
+    expect(tab.opened.length - opened).toBe(1)
+    expect(tab.youTube.timedTextRequests()).toBe(1)
+  })
+
+  it('arms no timer for a wait that is already over', async () => {
+    tab = await withCaptionsOff()
+    const opened = tab.opened.length
+    tab.announce({ state: 'rate-limited', videoId: japaneseVideo, retryAt: Date.now() - minute })
+    tab.announce({ state: 'rate-limited', videoId: japaneseVideo, retryAt: Date.now() })
+    await vi.advanceTimersByTimeAsync(3 * 60 * minute)
+    expect(tab.opened.length).toBe(opened)
   })
 
   it('with Zenbu Captions off, asks nothing until the Video tab asks, then once per video', async () => {

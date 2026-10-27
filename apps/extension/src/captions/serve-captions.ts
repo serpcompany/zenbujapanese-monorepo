@@ -2,6 +2,7 @@ import { failure } from '../shared/messages'
 import { readSettings, watchSettings } from '../shared/settings'
 import { watchedVideoId } from '../video/watch-page'
 import { type CaptionsService, captionsService } from './captions-service'
+import { captionLabels } from './labels'
 import { type CaptionsAnswer, isCaptionsEnvelope } from './messages'
 import { youTubeiURL } from './youtube-requests'
 
@@ -27,7 +28,7 @@ export function answerCaptions(service: Pick<CaptionsService, 'answer'>) {
   }
 }
 
-export function originRule(extensionId: string): Rule {
+export function originRule(extensionId: string, noTab: number): Rule {
   return {
     id: originRuleId,
     priority: 1,
@@ -40,21 +41,34 @@ export function originRule(extensionId: string): Rule {
     condition: {
       urlFilter: `|${youTubeiURL}`,
       initiatorDomains: [extensionId],
+      tabIds: [noTab],
+      requestMethods: ['post' as chrome.declarativeNetRequest.RequestMethod],
       resourceTypes: ['xmlhttprequest' as chrome.declarativeNetRequest.ResourceType]
     }
   }
 }
 
+function originRemover(): () => Promise<void> {
+  let removed: Promise<void> | undefined
+  return () => {
+    removed ??= chrome.declarativeNetRequest
+      .updateSessionRules({
+        removeRuleIds: [originRuleId],
+        addRules: [originRule(chrome.runtime.id, chrome.tabs.TAB_ID_NONE)]
+      })
+      .catch(() => {
+        removed = undefined
+        throw new Error(captionLabels.failed.unprepared)
+      })
+    return removed
+  }
+}
+
 export function serveCaptions(): void {
-  const originRemoved = chrome.declarativeNetRequest
-    .updateSessionRules({
-      removeRuleIds: [originRuleId],
-      addRules: [originRule(chrome.runtime.id)]
-    })
-    .catch(ignore)
   const service = captionsService({
     storage: chrome.storage.session,
-    fetch: (url, init) => originRemoved.then(() => fetch(url, init)),
+    fetch: (url, init) => fetch(url, init),
+    prepareRequests: originRemover(),
     tabVideo: tabId =>
       chrome.tabs.get(tabId).then(
         tab => watchedVideoId(tab.url),

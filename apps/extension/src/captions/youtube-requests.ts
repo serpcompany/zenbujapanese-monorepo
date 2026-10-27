@@ -20,6 +20,8 @@ const androidClient = { clientName: 'ANDROID', clientVersion: '20.10.38', hl: 'e
 
 const tooManyRequests = 429
 
+export const requestTimeout = 15_000
+
 const failed = (reason: string): Fetched => ({ state: 'failed', reason })
 
 function timedTextURL(trackURL: string): string | null {
@@ -35,6 +37,7 @@ async function playerResponse(videoId: string, fetch: Fetch): Promise<Response> 
   return fetch(playerURL, {
     method: 'POST',
     credentials: 'omit',
+    signal: AbortSignal.timeout(requestTimeout),
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ context: { client: androidClient }, videoId })
   })
@@ -48,7 +51,10 @@ async function captionsOf(videoId: string, fetch: Fetch): Promise<Fetched> {
   if (!video.track) return { state: 'no-japanese-captions' }
   const url = timedTextURL(video.track.url)
   if (!url) return failed(captionLabels.failed.unreadable)
-  const timedText = await fetch(url, { credentials: 'omit' })
+  const timedText = await fetch(url, {
+    credentials: 'omit',
+    signal: AbortSignal.timeout(requestTimeout)
+  })
   if (timedText.status === tooManyRequests) return { state: 'rate-limited' }
   if (!timedText.ok) return failed(captionLabels.failed.refused)
   const lines = youTubeCaptions(await timedText.text())

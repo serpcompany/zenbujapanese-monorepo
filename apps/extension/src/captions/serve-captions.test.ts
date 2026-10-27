@@ -87,7 +87,7 @@ describe('isCaptionsChange', () => {
 
 describe('originRule', () => {
   it("removes Origin only from the extension's own requests to YouTube's player API", () => {
-    expect(originRule('zenbuextensionid')).toEqual({
+    expect(originRule('zenbuextensionid', -1)).toEqual({
       id: 1,
       priority: 1,
       action: {
@@ -97,6 +97,8 @@ describe('originRule', () => {
       condition: {
         urlFilter: '|https://www.youtube.com/youtubei/',
         initiatorDomains: ['zenbuextensionid'],
+        tabIds: [-1],
+        requestMethods: ['post'],
         resourceTypes: ['xmlhttprequest']
       }
     })

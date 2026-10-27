@@ -15,6 +15,7 @@ type Mode = 'when-due' | 'now'
 export type CaptionsDependencies = {
   storage: SessionStorage
   fetch: Fetch
+  prepareRequests(): Promise<void>
   tabVideo(tabId: number): Promise<string | null>
   captionsOn(): Promise<boolean>
   announce(change: CaptionsChange): void
@@ -73,6 +74,7 @@ export function captionsService(dependencies: CaptionsDependencies) {
       const limit = await store.rateLimit()
       if (mode === 'when-due' && limit && dependencies.now() < limit.retryAt)
         return rateLimited(videoId, limit.retryAt)
+      await dependencies.prepareRequests()
       const fetched = await fetchYouTubeCaptions(videoId, dependencies.fetch)
       if (fetched.state === 'rate-limited') {
         const next = nextRateLimit(limit, dependencies.now(), dependencies.random)
@@ -119,8 +121,9 @@ export function captionsService(dependencies: CaptionsDependencies) {
           ? { ...stored, asked: stored.asked || asked }
           : { videoId, asked: (stored?.asked ?? false) || asked, captions: null }
       if (!tab.asked && !(await dependencies.captionsOn())) {
-        await store.setTab(tabId, tab)
-        return tab.captions ?? loading(videoId)
+        const kept = tab.captions?.state === 'rate-limited' ? null : tab.captions
+        await store.setTab(tabId, { ...tab, captions: kept })
+        return kept ?? loading(videoId)
       }
       const captions = await nextState(tabId, tab, mode)
       await store.setTab(tabId, { ...tab, captions })

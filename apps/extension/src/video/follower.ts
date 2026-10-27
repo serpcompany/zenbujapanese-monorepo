@@ -32,3 +32,7 @@ export function currentLine(lines: readonly Caption[], time: number): number | n
   }
   return null
 }
+
+export function playingLine(lines: readonly Caption[], playback: Playback | null): number | null {
+  return playback && !playback.ad ? currentLine(lines, playback.time) : null
+}

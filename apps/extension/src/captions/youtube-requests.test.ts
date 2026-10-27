@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { controlledTimeouts } from './fixtures/timeouts'
 import {
   englishVideo,
   japaneseLines,
@@ -9,7 +10,7 @@ import {
   youTubeStandIn
 } from './fixtures/youtube-stand-in'
 import { captionLabels } from './labels'
-import { fetchYouTubeCaptions } from './youtube-requests'
+import { fetchYouTubeCaptions, requestTimeout } from './youtube-requests'
 
 describe('fetchYouTubeCaptions', () => {
   it("asks for the player as YouTube's Android app, then the Japanese track without a translation", async () => {
@@ -92,6 +93,23 @@ describe('fetchYouTubeCaptions', () => {
       state: 'failed',
       reason: captionLabels.failed.unreadable
     })
+  })
+
+  it('gives up on each request YouTube leaves unanswered for 15 seconds', async () => {
+    const timeouts = controlledTimeouts()
+    try {
+      const youTube = youTubeStandIn()
+      youTube.hangTimedText()
+      const fetched = fetchYouTubeCaptions(japaneseVideo, youTube.fetch)
+      await vi.waitFor(() => expect(youTube.sent).toHaveLength(2))
+      expect(youTube.sent.map(request => request.init?.signal)).toEqual(timeouts.signals())
+      expect(timeouts.lengths()).toEqual([requestTimeout, requestTimeout])
+      expect(requestTimeout).toBe(15_000)
+      timeouts.expire()
+      expect(await fetched).toEqual({ state: 'failed', reason: captionLabels.failed.unreachable })
+    } finally {
+      timeouts.restore()
+    }
   })
 
   it('never follows a track to a host other than YouTube', async () => {

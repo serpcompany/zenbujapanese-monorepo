@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { rateLimitJitter, rateLimitWaits } from './backoff'
 import { captionsService } from './captions-service'
 import { memoryStorage } from './fixtures/memory-storage'
+import { controlledTimeouts } from './fixtures/timeouts'
 import {
   englishVideo,
   japaneseLines,
@@ -11,6 +12,7 @@ import {
   timedTextURL,
   youTubeStandIn
 } from './fixtures/youtube-stand-in'
+import { captionLabels } from './labels'
 import type { CaptionsAnswer, CaptionsChange, CaptionsState } from './messages'
 
 const startedAt = Date.UTC(2026, 9, 28, 9)
@@ -19,10 +21,13 @@ function harness({ captionsOn = true, storage = memoryStorage() } = {}) {
   const youTube = youTubeStandIn()
   const changes: CaptionsChange[] = []
   const urls = new Map<number, string>()
-  const clock = { now: startedAt, random: 0.5, captionsOn }
+  const clock = { now: startedAt, random: 0.5, captionsOn, unprepared: null as Error | null }
   const service = captionsService({
     storage,
     fetch: youTube.fetch,
+    prepareRequests: async () => {
+      if (clock.unprepared) throw clock.unprepared
+    },
     tabVideo: async tabId => urls.get(tabId) ?? null,
     captionsOn: async () => clock.captionsOn,
     announce: change => changes.push(change),
@@ -167,6 +172,43 @@ describe('captions service', () => {
     }
   })
 
+  it('keeps the wait for the session, so a restarted service worker asks nothing until it is over', async () => {
+    const before = harness()
+    before.youTube.answerTimedText(429)
+    await before.open(1, japaneseVideo)
+    const limited = await before.settled(1)
+    if (limited?.state !== 'rate-limited') throw new Error('expected a rate limit')
+    const after = harness({ storage: before.storage })
+    after.clock.now = limited.retryAt - 1
+    expect(await after.open(1, japaneseVideo)).toEqual(limited)
+    expect(await after.open(2, secondJapaneseVideo)).toEqual({
+      ...limited,
+      videoId: secondJapaneseVideo
+    })
+    expect(await after.captions(1)).toEqual(limited)
+    expect(after.youTube.sent).toEqual([])
+  })
+
+  it('with Zenbu Captions off, hands the watch page no wait, also one that is over', async () => {
+    const page = harness()
+    page.youTube.answerTimedText(429)
+    await page.open(1, japaneseVideo)
+    const limited = await page.settled(1)
+    if (limited?.state !== 'rate-limited') throw new Error('expected a rate limit')
+    page.clock.captionsOn = false
+    const requests = page.youTube.sent.length
+    for (const now of [limited.retryAt - 1, limited.retryAt + 20 * 60_000]) {
+      page.clock.now = now
+      for (let opened = 0; opened < 3; opened++)
+        expect(await page.open(1, japaneseVideo)).toEqual({
+          state: 'loading',
+          videoId: japaneseVideo
+        })
+    }
+    expect(page.storage.items.get('captions.tab.1')).toMatchObject({ captions: null })
+    expect(page.youTube.sent.length).toBe(requests)
+  })
+
   it('makes one request for Try again while waiting, and starts over at 15 minutes once lines come', async () => {
     const page = harness()
     page.youTube.answerTimedText(429)
@@ -210,6 +252,39 @@ describe('captions service', () => {
     expect(page.youTube.timedTextRequests()).toBe(2)
     expect(first?.state).toBe('rate-limited')
     expect(second).toEqual(first && { ...first, videoId: secondJapaneseVideo })
+  })
+
+  it('frees the other tabs once a request YouTube leaves unanswered times out', async () => {
+    const timeouts = controlledTimeouts()
+    try {
+      const page = harness()
+      page.youTube.hangTimedText()
+      await page.open(1, japaneseVideo)
+      await page.open(2, secondJapaneseVideo)
+      await vi.waitFor(() => expect(page.youTube.sent).toHaveLength(2))
+      page.youTube.answerTimedText(200)
+      timeouts.expire()
+      expect(await page.settled(1)).toMatchObject({ state: 'failed' })
+      expect(await page.settled(2)).toMatchObject({ state: 'lines', videoId: secondJapaneseVideo })
+      expect(page.youTube.timedTextRequests()).toBe(2)
+    } finally {
+      timeouts.restore()
+    }
+  })
+
+  it('asks YouTube nothing, and fails with the reason, when its requests could not be prepared', async () => {
+    const page = harness()
+    page.clock.unprepared = new Error(captionLabels.failed.unprepared)
+    await page.open(1, japaneseVideo)
+    expect(await page.settled(1)).toEqual({
+      state: 'failed',
+      videoId: japaneseVideo,
+      reason: captionLabels.failed.unprepared
+    })
+    expect(page.youTube.sent).toEqual([])
+    page.clock.unprepared = null
+    await page.tryAgain(1)
+    expect(lines(await page.settled(1))).toEqual(japaneseLines)
   })
 
   it('tries a failed video again only when asked to', async () => {

@@ -25,13 +25,20 @@ function playerFor(init: RequestInit | undefined): string {
   return japanesePlayer.replaceAll(japaneseVideo, videoId)
 }
 
+const untilAborted = (signal: AbortSignal | null | undefined) =>
+  new Promise<Response>((_, reject) => {
+    signal?.addEventListener('abort', () => reject(signal.reason))
+  })
+
 export function youTubeStandIn() {
   const sent: Sent[] = []
   let timedTextStatus = 200
   let timedTextBody = japaneseTimedText
+  let timedTextHangs = false
   const fetch: Fetch = async (url, init) => {
     sent.push({ url, init })
     if (url === playerURL) return new Response(playerFor(init))
+    if (timedTextHangs) return untilAborted(init?.signal)
     return new Response(timedTextBody, { status: timedTextStatus })
   }
   return {
@@ -39,8 +46,12 @@ export function youTubeStandIn() {
     sent,
     timedTextRequests: () => sent.filter(request => request.url !== playerURL).length,
     answerTimedText(status: number, body = japaneseTimedText) {
+      timedTextHangs = false
       timedTextStatus = status
       timedTextBody = body
+    },
+    hangTimedText() {
+      timedTextHangs = true
     }
   }
 }

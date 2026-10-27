@@ -1,6 +1,6 @@
 import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { describe, expect, it } from 'vitest'
-import { currentLine } from './follower'
+import { currentLine, type Playback, playingLine } from './follower'
 import { watchedVideoId } from './watch-page'
 
 const line = (id: number, start: number, end: number): Caption => ({
@@ -31,6 +31,23 @@ describe('currentLine', () => {
       null
     ])
     expect(currentLine([], 1)).toBeNull()
+  })
+})
+
+describe('playingLine', () => {
+  const playback: Playback = {
+    videoId: 'zenbuJa0001',
+    time: 5.4,
+    playing: true,
+    rate: 1,
+    ad: false
+  }
+
+  it('gives the line playing in a playback, and none while an ad shows or nothing is followed', () => {
+    expect(playingLine(lines, playback)).toBe(1)
+    expect(playingLine(lines, { ...playback, playing: false })).toBe(1)
+    expect(playingLine(lines, { ...playback, ad: true })).toBeNull()
+    expect(playingLine(lines, null)).toBeNull()
   })
 })
 

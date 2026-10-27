@@ -38,8 +38,8 @@ export function followYouTubePage(page: Document, options: Options = {}): () => 
   const settle = (answer: CaptionsAnswer) => {
     if (!('videoId' in answer) || answer.videoId !== videoId) return
     clearRetry()
-    if (answer.state !== 'rate-limited') return
-    retry = setTimeout(open, Math.max(0, answer.retryAt - Date.now()) + retryMargin)
+    if (answer.state !== 'rate-limited' || answer.retryAt <= Date.now()) return
+    retry = setTimeout(open, answer.retryAt - Date.now() + retryMargin)
   }
 
   function open() {

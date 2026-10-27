@@ -1,8 +1,14 @@
+import type { Caption } from '@zenbu/dictionary-core/captions/lines'
 import { afterEach, describe, expect, it } from 'vitest'
-import type { Playback, VideoFollower } from './follower'
+import { type Playback, playingLine, type VideoFollower } from './follower'
 import { siteCaptionsAttribute, youTubeFollower } from './youtube-follower'
 
 const videoId = 'zenbuJa0001'
+
+const lines: Caption[] = [
+  { id: 0, start: 2, end: 4, text: 'おはようございます', translation: null },
+  { id: 1, start: 40, end: 45, text: '散歩に行きましょう', translation: null }
+]
 
 const watchPageHTML =
   '<div id="movie_player" class="html5-video-player"><video></video><div class="ytp-caption-window-container">YouTube caption</div></div>'
@@ -87,6 +93,7 @@ describe('youTubeFollower', () => {
     player.classList.add('ad-showing')
     await mutationsSeen()
     expect(seen.at(-1)).toEqual({ videoId, time: 42, playing: false, rate: 0.75, ad: true })
+    expect(playingLine(lines, follower.playback)).toBeNull()
     setRate(video, 1)
     video.currentTime = 3
     video.dispatchEvent(new Event('timeupdate'))
@@ -99,6 +106,7 @@ describe('youTubeFollower', () => {
     await mutationsSeen()
     expect(video.playbackRate).toBe(0.75)
     expect(follower.playback?.ad).toBe(false)
+    expect(playingLine(lines, follower.playback)).toBe(0)
   })
 
   it("keeps the learner's speed when YouTube loads the video again after an ad", () => {
