@@ -71,6 +71,7 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     if pass.size == .largest {
       auditAlone("Account's library rows, alone", "library", showing: "account.learning", pass)
       auditAlone("Account's collection rows, alone", "collections", showing: "account.translations", pass)
+      auditAlone("Account's settings rows, alone", "settings", showing: "account.frequency-dictionaries", pass)
     }
     auditAlone("Account, its about rows", "about", showing: "account.about", pass)
   }

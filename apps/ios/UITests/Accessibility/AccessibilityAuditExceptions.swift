@@ -226,6 +226,9 @@ private let textThatScales = [
     .textClipped, .labels(["Lists", "Translations"]), on: ["Account's collection rows, alone"], [.phone], [.largest],
     because: Why.scales),
   allow(
+    .textClipped, .labels(["Reading Aids", "Frequency Dictionaries"]), on: ["Account's settings rows, alone"], [.phone],
+    [.largest], because: Why.scales),
+  allow(
     .dynamicType,
     .label(
       "Signing out keeps your profile, known words, lists, watch history, translations, notes, and media on this iPhone."

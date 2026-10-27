@@ -62,27 +62,19 @@ struct AccountRootView: View {
         }
       }
 
-      if LaunchHarness.shows("library", on: "account") && LaunchHarness.shows("collections", on: "account") {
+      if ["library", "collections", "settings"].allSatisfy({ LaunchHarness.shows($0, on: "account") }) {
         Section {
           libraryRows
           collectionRows
         }
 
-        Section {
-          NavigationLink(value: AccountRoute.readingAids) {
-            SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
-          }
-          .accessibilityIdentifier("account.reading-aids")
-
-          NavigationLink(value: AccountRoute.frequencyDictionaries) {
-            SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
-          }
-          .accessibilityIdentifier("account.frequency-dictionaries")
-        }
+        Section { settingsRows }
       } else if LaunchHarness.shows("library", on: "account") {
         Section { libraryRows }
       } else if LaunchHarness.shows("collections", on: "account") {
         Section { collectionRows }
+      } else if LaunchHarness.shows("settings", on: "account") {
+        Section { settingsRows }
       }
 
       if LaunchHarness.shows("about", on: "account") {
@@ -132,6 +124,18 @@ struct AccountRootView: View {
 
     markedWordsRow(.known)
     markedWordsRow(.learning)
+  }
+
+  @ViewBuilder private var settingsRows: some View {
+    NavigationLink(value: AccountRoute.readingAids) {
+      SettingsRowLabel("Reading Aids", systemImage: "character.book.closed.fill", tint: .blue)
+    }
+    .accessibilityIdentifier("account.reading-aids")
+
+    NavigationLink(value: AccountRoute.frequencyDictionaries) {
+      SettingsRowLabel("Frequency Dictionaries", systemImage: "chart.bar.fill", tint: .green)
+    }
+    .accessibilityIdentifier("account.frequency-dictionaries")
   }
 
   @ViewBuilder private var collectionRows: some View {
