@@ -2152,12 +2152,14 @@
   // src/artifact/words.ts
   var jmdictSource = "edrdg.jmdict";
 
-  // src/detail/links.ts
-  var websiteHost = "zenbujapanese.com";
-  var websiteOrigin = `https://${websiteHost}`;
+  // src/detail/word-path.ts
   function wordPath(entry) {
     return `/dictionary/${wordSlug(entry.headword, entry.reading)}-${entry.entSeq}/`;
   }
+
+  // src/detail/links.ts
+  var websiteHost = "zenbujapanese.com";
+  var websiteOrigin = `https://${websiteHost}`;
   function searchPath(query) {
     return `/dictionary/search/${encodeURIComponent(query).replaceAll(".", "%2E")}/`;
   }
