@@ -51,6 +51,13 @@ describe("each app's access to an account", () => {
       { entity: 'knownWord', operation: 'mark', entityId: word(3), baseVersion: 0, fields: text },
       { entity: 'knownWord', operation: 'clear', entityId: word(2), baseVersion: 1 },
       {
+        entity: 'knownWord',
+        operation: 'set',
+        entityId: word(2),
+        baseVersion: 1,
+        fields: { state: 'learning', ...text }
+      },
+      {
         entity: 'list',
         operation: 'create',
         entityId: randomUUID(),
@@ -61,6 +68,7 @@ describe("each app's access to an account", () => {
     )
     expect(answer.results.map(result => result.error?.code ?? result.status)).toEqual([
       'applied',
+      'not_allowed',
       'not_allowed',
       'not_allowed',
       'not_allowed',

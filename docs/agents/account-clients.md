@@ -44,7 +44,7 @@ setting ([`account-api.md`](account-api.md), Settings).
 - `account` manages how the account signs in and where: linking and unlinking a way in, listing
   the ways in, and listing or signing out sessions. `profile` reads and changes the profile, and
   `GET /v1/auth/get-session`, which shows the email and name.
-- `known:mark` marks a word Known and never clears one: only the learner un-marks a word.
+- `known:mark` marks a word Known, never Unknown or Learning: only the learner sets those.
 - `watch:*` reads and changes the videos the learner watched in the iOS app's Player,
   `translations:*` the sentences they bookmarked in its Translate tab, `notes:*` their word and
   kanji notes, `photos:*` their Media Library photos and the files under them, `settings:*` their
@@ -407,7 +407,7 @@ Content-Type: application/json
         "itemId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
         "headword": "見る",
         "reading": "みる",
-        "known": true
+        "state": "known", "known": true
       }
     }
   ],

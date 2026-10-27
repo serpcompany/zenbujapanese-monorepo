@@ -744,13 +744,36 @@ Fields ([`ProfileUpdateFields`](#profileupdatefields)), and no others:
 
 ### Entity `knownWord`
 
-Whether the learner knows a word or a kanji. A cleared word stays, as a `put` with `known: false`.
+The learner's state for a word or a kanji: `unknown`, `learning`, or `known`, one at a time. An app that shows Learning changes it with `set`; `mark` and `clear` are for an app that sees only whether a word is known, and read a Learning word as not known. A word that goes back to Unknown stays, as a `put` with `state: "unknown"` and `known: false`.
 
 - **ID** (`entityId`): The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.
 - **Read with:** `known:read`
 - **As it is now** (a `put`'s `data`): [`KnownWord`](#knownword)
 
-**`mark`**, with `known:write` or `known:mark`; `baseVersion` required. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.
+**`set`**, with `known:write`; `baseVersion` required. Moves the word to `state`, from any state to any other. It applies only if the word is still at `baseVersion` (0 for one the account never had), as `mark` and `clear` do, or conflicts with the word as it is now. Setting the state the word has is applied and changes nothing.
+
+Fields ([`WordStateFields`](#wordstatefields)):
+
+- `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
+- `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+
+```json
+{
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
+  "entity": "knownWord",
+  "operation": "set",
+  "entityId": "2b4d6f8a0c1e3f5a7b9d1f3a5c7e9b0d",
+  "baseVersion": 0,
+  "fields": {
+    "state": "learning",
+    "headword": "食べる",
+    "reading": "たべる"
+  }
+}
+```
+
+**`mark`**, with `known:write` or `known:mark`; `baseVersion` required. Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.
 
 Fields ([`WordFields`](#wordfields)):
 
@@ -759,7 +782,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
   "entity": "knownWord",
   "operation": "mark",
   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -771,11 +794,11 @@ Fields ([`WordFields`](#wordfields)):
 }
 ```
 
-**`clear`**, with `known:write`; `baseVersion` required. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known is applied and changes nothing.
+**`clear`**, with `known:write`; `baseVersion` required. Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: "unknown"` ends Learning.
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
   "entity": "knownWord",
   "operation": "clear",
   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -800,7 +823,7 @@ Fields ([`ListCreateFields`](#listcreatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
   "entity": "list",
   "operation": "create",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -820,7 +843,7 @@ Fields ([`ListUpdateFields`](#listupdatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
   "entity": "list",
   "operation": "update",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -835,7 +858,7 @@ Fields ([`ListUpdateFields`](#listupdatefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
   "entity": "list",
   "operation": "delete",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c"
@@ -859,7 +882,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
   "entity": "listWord",
   "operation": "add",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -874,7 +897,7 @@ Fields ([`WordFields`](#wordfields)):
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
   "entity": "listWord",
   "operation": "remove",
   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -903,7 +926,7 @@ Fields ([`WatchFields`](#watchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
   "entity": "watchedVideo",
   "operation": "watch",
   "entityId": "a1B2c3D4e5F",
@@ -923,7 +946,7 @@ Fields ([`WatchFields`](#watchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
   "entity": "watchedVideo",
   "operation": "remove",
   "entityId": "a1B2c3D4e5F"
@@ -949,7 +972,7 @@ Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
   "entity": "bookmarkedSentence",
   "operation": "add",
   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
@@ -966,7 +989,7 @@ Fields ([`BookmarkFields`](#bookmarkfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
   "entity": "bookmarkedSentence",
   "operation": "remove",
   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
@@ -993,7 +1016,7 @@ Fields ([`NoteFields`](#notefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
   "entity": "wordNote",
   "operation": "write",
   "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
@@ -1011,7 +1034,7 @@ Fields ([`NoteFields`](#notefields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
   "entity": "wordNote",
   "operation": "delete",
   "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
@@ -1036,7 +1059,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
   "entity": "photo",
   "operation": "add",
   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab",
@@ -1051,7 +1074,7 @@ Fields ([`PhotoFields`](#photofields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
   "entity": "photo",
   "operation": "delete",
   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab"
@@ -1076,7 +1099,7 @@ Fields ([`PhotoWordFields`](#photowordfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
   "entity": "photoWord",
   "operation": "add",
   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1092,7 +1115,7 @@ Fields ([`PhotoWordFields`](#photowordfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
   "entity": "photoWord",
   "operation": "remove",
   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1116,7 +1139,7 @@ Fields ([`ProfilePhotoFields`](#profilephotofields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
   "entity": "profilePhoto",
   "operation": "set",
   "baseVersion": 0,
@@ -1130,7 +1153,7 @@ Fields ([`ProfilePhotoFields`](#profilephotofields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
   "entity": "profilePhoto",
   "operation": "remove",
   "baseVersion": 1
@@ -1152,7 +1175,7 @@ One of the learner's settings, which follow the account rather than the device. 
 - `translate.furigana` (`true` or `false`): Translate's own furigana switch.
 - `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.
 - `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.
-- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.
+- `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.
 - `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.
 - `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.
 
@@ -1168,7 +1191,7 @@ Fields ([`SettingFields`](#settingfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
   "entity": "setting",
   "operation": "set",
   "entityId": "readingAids.furigana",
@@ -1196,7 +1219,7 @@ Fields ([`SearchFields`](#searchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
   "entity": "recentSearch",
   "operation": "search",
   "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
@@ -1212,7 +1235,7 @@ Fields ([`SearchFields`](#searchfields)), and no others:
 
 ```json
 {
-  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
+  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000018",
   "entity": "recentSearch",
   "operation": "remove",
   "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"
@@ -1321,6 +1344,12 @@ Every error. `code` is stable and machine-readable; `message` is for people and 
 ### WordFields
 
 - `headword` (string, required, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters.
+- `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
+
+### WordStateFields
+
+- `state` (`"unknown"`, `"learning"`, or `"known"`, required): The state the word moves to.
+- `headword` (string, optional, 1 to 200 characters): The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has.
 - `reading` (string, optional, at most 200 characters): Its reading, held as `headword` is. Empty when left out.
 
 ### ListCreateFields
@@ -1443,7 +1472,7 @@ One of:
 
 ### Change
 
-An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`.
+An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A `knownWord` at Unknown is still a `put`, with `state: "unknown"`.
 
 One of:
 
@@ -1538,7 +1567,8 @@ One of:
 - `itemId` (string, required)
 - `headword` (string, required)
 - `reading` (string, required)
-- `known` (boolean, required)
+- `state` (`"unknown"`, `"learning"`, or `"known"`, required): The learner's state for the word.
+- `known` (boolean, required): Whether `state` is `known`, for an app that reads only this: a Learning word is not known.
 
 ### WordList
 

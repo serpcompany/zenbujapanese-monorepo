@@ -11,8 +11,14 @@ in the API reference's [Sync entities](../api/account-api.md#sync-entities).
   the version your app had, conflicts if the profile changed since. Only an app with `profile`
   reads or changes it.
 - **Known words**, by item: a Language Reference ID, or `kanji:` and the kanji.
-  - `mark` and `clear` take the version your app had. If the word changed since, it's a conflict.
-  - Marking a known word, or clearing one not known, is applied and changes nothing.
+  - A word is Unknown, Learning, or Known (`state`). An app that shows Learning reads `state` and
+    sends `set` with the state the learner chose, and its first upload sends each word that isn't
+    Unknown as a `set`. One that doesn't reads `known`, which is false for a Learning word, and
+    sends `mark` and `clear`: its clear leaves a Learning word Learning.
+  - `set`, `mark`, and `clear` take the version your app had. If the word changed since, it's a
+    conflict.
+  - Setting the state a word has, marking a known word, or clearing one not known is applied and
+    changes nothing.
   - **Tomodachi:** mark a word the first time it reaches "knows it". If the mark conflicts because
     the learner un-marked the word in Zenbu, don't send it again: mark it again only once the word
     climbs back to "knows it" (#563, decision 4).

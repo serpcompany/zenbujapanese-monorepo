@@ -21,6 +21,7 @@ const listId = '3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c'
 const videoId = 'a1B2c3D4e5F'
 const sentenceId = '5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a'
 export const itemId = '9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90'
+const learningItemId = '2b4d6f8a0c1e3f5a7b9d1f3a5c7e9b0d'
 export const word = { headword: '見る', reading: 'みる' }
 
 export const studyRules = {
@@ -38,20 +39,30 @@ export const studyRules = {
     }
   },
   knownWord: {
-    rule: 'Whether the learner knows a word or a kanji. A cleared word stays, as a `put` with `known: false`.',
+    rule: 'The learner\'s state for a word or a kanji: `unknown`, `learning`, or `known`, one at a time. An app that shows Learning changes it with `set`; `mark` and `clear` are for an app that sees only whether a word is known, and read a Learning word as not known. A word that goes back to Unknown stays, as a `put` with `state: "unknown"` and `known: false`.',
     entityId:
       'The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.',
     data: 'KnownWord',
     operations: {
+      set: {
+        baseVersion: true,
+        rule: 'Moves the word to `state`, from any state to any other. It applies only if the word is still at `baseVersion` (0 for one the account never had), as `mark` and `clear` do, or conflicts with the word as it is now. Setting the state the word has is applied and changes nothing.',
+        fields: 'WordStateFields',
+        example: {
+          entityId: learningItemId,
+          baseVersion: 0,
+          fields: { state: 'learning', headword: '食べる', reading: 'たべる' }
+        }
+      },
       mark: {
         baseVersion: true,
-        rule: 'It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.',
+        rule: 'Makes the word Known, from Unknown or Learning: the same change as `set` with `state: "known"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.',
         fields: 'WordFields',
         example: { entityId: itemId, baseVersion: 0, fields: word }
       },
       clear: {
         baseVersion: true,
-        rule: "It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known is applied and changes nothing.",
+        rule: 'Makes a known word Unknown. It applies only at the word\'s current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can\'t see Learning; `set` with `state: "unknown"` ends Learning.',
         example: { entityId: itemId, baseVersion: 1 }
       }
     }

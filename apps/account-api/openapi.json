@@ -91,6 +91,34 @@
           "headword"
         ]
       },
+      "WordStateFields": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "learning",
+              "known"
+            ],
+            "description": "The state the word moves to."
+          },
+          "headword": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "The word as the app shows it, kept in Unicode NFC and trimmed, with no control characters. Needed for `learning` and `known`; for `unknown` it is not read, and the word keeps the text it has."
+          },
+          "reading": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "Its reading, held as `headword` is. Empty when left out."
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
       "ListCreateFields": {
         "type": "object",
         "properties": {
@@ -1091,7 +1119,7 @@
             ]
           }
         ],
-        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A cleared known word is a `put` with `known: false`."
+        "description": "An entity as it is now (`put`, with `data`), or gone (`delete`): a deleted list, note, or photo, a word removed from a list or a photo, a video or search removed or past the newest the account keeps, a bookmark or the profile photo removed, a setting the account doesn't hold, or one never there. A `knownWord` at Unknown is still a `put`, with `state: \"unknown\"`."
       },
       "KnownWord": {
         "type": "object",
@@ -1105,14 +1133,25 @@
           "reading": {
             "type": "string"
           },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "learning",
+              "known"
+            ],
+            "description": "The learner's state for the word."
+          },
           "known": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether `state` is `known`, for an app that reads only this: a Learning word is not known."
           }
         },
         "required": [
           "itemId",
           "headword",
           "reading",
+          "state",
           "known"
         ]
       },
@@ -1519,25 +1558,47 @@
             }
           },
           "knownWord": {
-            "description": "Whether the learner knows a word or a kanji. A cleared word stays, as a `put` with `known: false`.",
+            "description": "The learner's state for a word or a kanji: `unknown`, `learning`, or `known`, one at a time. An app that shows Learning changes it with `set`; `mark` and `clear` are for an app that sees only whether a word is known, and read a Learning word as not known. A word that goes back to Unknown stays, as a `put` with `state: \"unknown\"` and `known: false`.",
             "entityId": "The item: a Language Reference ID (32 lowercase hex digits), or `kanji:` and one kanji, kept in Unicode NFC.",
             "read": "known:read",
             "data": {
               "$ref": "#/components/schemas/KnownWord"
             },
             "operations": {
+              "set": {
+                "scopes": [
+                  "known:write"
+                ],
+                "baseVersion": true,
+                "description": "Moves the word to `state`, from any state to any other. It applies only if the word is still at `baseVersion` (0 for one the account never had), as `mark` and `clear` do, or conflicts with the word as it is now. Setting the state the word has is applied and changes nothing.",
+                "fields": {
+                  "$ref": "#/components/schemas/WordStateFields"
+                },
+                "example": {
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
+                  "entity": "knownWord",
+                  "operation": "set",
+                  "entityId": "2b4d6f8a0c1e3f5a7b9d1f3a5c7e9b0d",
+                  "baseVersion": 0,
+                  "fields": {
+                    "state": "learning",
+                    "headword": "食べる",
+                    "reading": "たべる"
+                  }
+                }
+              },
               "mark": {
                 "scopes": [
                   "known:write",
                   "known:mark"
                 ],
                 "baseVersion": true,
-                "description": "It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.",
+                "description": "Makes the word Known, from Unknown or Learning: the same change as `set` with `state: \"known\"`. It applies only if the word is still at `baseVersion` (0 for one the account never had), so a mark made before the learner cleared the word loses to the clear, and one made after seeing it wins. Marking a known word is applied and changes nothing.",
                 "fields": {
                   "$ref": "#/components/schemas/WordFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000002",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
                   "entity": "knownWord",
                   "operation": "mark",
                   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1553,9 +1614,9 @@
                   "known:write"
                 ],
                 "baseVersion": true,
-                "description": "It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known is applied and changes nothing.",
+                "description": "Makes a known word Unknown. It applies only at the word's current version: a clear that never saw a later mark conflicts, and the word stays known. Clearing a word not known, a Learning one too, is applied and changes nothing, since the app that sends it can't see Learning; `set` with `state: \"unknown\"` ends Learning.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000003",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
                   "entity": "knownWord",
                   "operation": "clear",
                   "entityId": "9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1582,7 +1643,7 @@
                   "$ref": "#/components/schemas/ListCreateFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000004",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
                   "entity": "list",
                   "operation": "create",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -1602,7 +1663,7 @@
                   "$ref": "#/components/schemas/ListUpdateFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000005",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
                   "entity": "list",
                   "operation": "update",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c",
@@ -1619,7 +1680,7 @@
                 "baseVersion": false,
                 "description": "It always applies, wins over everything done to the list since, renames and words added elsewhere too, and takes the list's words with it: drop them on the device.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000006",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
                   "entity": "list",
                   "operation": "delete",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c"
@@ -1645,7 +1706,7 @@
                   "$ref": "#/components/schemas/WordFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000007",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
                   "entity": "listWord",
                   "operation": "add",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1662,7 +1723,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the word's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing a word the list hasn't is applied.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000008",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
                   "entity": "listWord",
                   "operation": "remove",
                   "entityId": "3b7f2c9e-5d1a-4e8b-9c6f-0a2d4e6f8b1c/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1689,7 +1750,7 @@
                   "$ref": "#/components/schemas/WatchFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000009",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
                   "entity": "watchedVideo",
                   "operation": "watch",
                   "entityId": "a1B2c3D4e5F",
@@ -1711,7 +1772,7 @@
                 "baseVersion": false,
                 "description": "The learner removed the video. It always applies; removing one the account has not is applied and changes nothing.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000a",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
                   "entity": "watchedVideo",
                   "operation": "remove",
                   "entityId": "a1B2c3D4e5F"
@@ -1737,7 +1798,7 @@
                   "$ref": "#/components/schemas/BookmarkFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000b",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
                   "entity": "bookmarkedSentence",
                   "operation": "add",
                   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
@@ -1756,7 +1817,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the bookmark's current version, so it removes only an add it saw: an add the remover never saw wins, and the remove conflicts. Removing one the account hasn't is applied.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000c",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
                   "entity": "bookmarkedSentence",
                   "operation": "remove",
                   "entityId": "5e8d1c2b-7a6f-4d3e-8b9c-0f1e2d3c4b5a",
@@ -1783,7 +1844,7 @@
                   "$ref": "#/components/schemas/NoteFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000d",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
                   "entity": "wordNote",
                   "operation": "write",
                   "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
@@ -1803,7 +1864,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the note's current version, so it deletes only what the learner saw: a note written elsewhere since stays, and the delete conflicts. Deleting a note the account hasn't is applied.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000e",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
                   "entity": "wordNote",
                   "operation": "delete",
                   "entityId": "8a3e5c7b-1d2f-4a6b-9c8d-7e6f5a4b3c2d",
@@ -1830,7 +1891,7 @@
                   "$ref": "#/components/schemas/PhotoFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-00000000000f",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
                   "entity": "photo",
                   "operation": "add",
                   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab",
@@ -1847,7 +1908,7 @@
                 "baseVersion": false,
                 "description": "The learner deleted the photo. It always applies, wins over everything done to the photo since, words added elsewhere too, marks each of its words removed, and takes its file, unless the profile photo is the same file: drop them on the device. A word added later is rejected `unknown_photo`.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000010",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
                   "entity": "photo",
                   "operation": "delete",
                   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab"
@@ -1873,7 +1934,7 @@
                   "$ref": "#/components/schemas/PhotoWordFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000011",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
                   "entity": "photoWord",
                   "operation": "add",
                   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1891,7 +1952,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the word's current version, so an add the remover never saw wins, and the remove conflicts. Removing the photo's last word empties the photo, which syncs as its `delete`.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000012",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
                   "entity": "photoWord",
                   "operation": "remove",
                   "entityId": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab/9d2e4f6a8b0c1d3e5f7a9b1c3d5e7f90",
@@ -1918,7 +1979,7 @@
                   "$ref": "#/components/schemas/ProfilePhotoFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000013",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
                   "entity": "profilePhoto",
                   "operation": "set",
                   "baseVersion": 0,
@@ -1934,7 +1995,7 @@
                 "baseVersion": true,
                 "description": "It applies only at the current version, so a photo set elsewhere since stays, and the remove conflicts. It syncs as a `delete`.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000014",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
                   "entity": "profilePhoto",
                   "operation": "remove",
                   "baseVersion": 1
@@ -1943,7 +2004,7 @@
             }
           },
           "setting": {
-            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.",
+            "description": "One of the learner's settings, which follow the account rather than the device. A setting the account doesn't hold comes as a `delete`. The settings:\n\n- `readingAids.furigana` (`true` or `false`): Reading Aids: furigana over kanji.\n- `readingAids.romaji` (`true` or `false`): Reading Aids: romaji under Japanese.\n- `readingAids.wordMeanings` (`true` or `false`): Reading Aids: each word's meaning.\n- `readingAids.kanjiMeanings` (`true` or `false`): Reading Aids: each kanji's meaning.\n- `readingAids.translations` (`true` or `false`): Reading Aids: translations.\n- `readingAids.translationLanguage` (text of at most 35 characters matching `^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$`): Reading Aids: the language translations are in, as a language tag, such as `en`.\n- `readingAids.translationSource` (one of `youTube`, `apple`): Reading Aids: where translations come from: YouTube's captions, or Apple's on the device.\n- `readingAids.furiganaHiddenOnKnownWords` (`true` or `false`): Reading Aids: no furigana over the words the learner knows.\n- `translate.furigana` (`true` or `false`): Translate's own furigana switch.\n- `translate.speechSpeed` (a number from 0.5 to 2): How fast Translate speaks: 1 is normal speed.\n- `search.sort` (text of at most 120 characters matching `^(default|known-words|frequency\\|[a-z0-9][a-z0-9.-]{0,99})$`): Search results' Sorted by: `default`, `known-words`, or `frequency|` and a frequency dictionary's family.\n- `search.filter` (one of `all`, `known`, `unknown`, `learning`): Search results' filter.\n- `imageSearch.textView` (one of `photo`, `both`, `text`, `translate`): Image Search's view: the photo, the photo and its text, the text, or its translation.\n- `frequencyDictionaries.chosen` (text of at most 5,000 characters matching `^([a-z0-9][a-z0-9.-]{0,99}(,[a-z0-9][a-z0-9.-]{0,99}){0,49})?$`): The frequency dictionaries the learner chose, by pack ID, in their order, separated by commas: at most 50, and empty for none. Each device downloads its own copy.",
             "entityId": "The setting's name, from the list above.",
             "read": "settings:read",
             "data": {
@@ -1960,7 +2021,7 @@
                   "$ref": "#/components/schemas/SettingFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000015",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
                   "entity": "setting",
                   "operation": "set",
                   "entityId": "readingAids.furigana",
@@ -1990,7 +2051,7 @@
                   "$ref": "#/components/schemas/SearchFields"
                 },
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000016",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
                   "entity": "recentSearch",
                   "operation": "search",
                   "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc",
@@ -2008,7 +2069,7 @@
                 "baseVersion": false,
                 "description": "The learner removed the search, or cleared them all, one `remove` each. It always applies; removing one the account has not is applied and changes nothing.",
                 "example": {
-                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000017",
+                  "id": "6f1c0e7a-3b5d-4c2e-9a8f-000000000018",
                   "entity": "recentSearch",
                   "operation": "remove",
                   "entityId": "d08c89a51f2143101860e9ddce809ddb3c6d58c0e04ed0d10a32cc108dac35bc"

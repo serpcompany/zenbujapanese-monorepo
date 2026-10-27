@@ -432,7 +432,7 @@ way and call the routes with their access tokens. They show:
   a repeat sign-in leaving the profile; a deleted account refused at both routes; a batch that
   fails partway, sent again; and each account's rate limits.
 
-`src/http/shared-state.test.ts` holds known words and lists to their rules, and
+`src/http/shared-state.test.ts` and `learning-words.test.ts` test known words and lists, and
 `src/http/watch-history.test.ts` watched videos: fields a watch leaves out kept, the later watch
 setting the place and an older one only filling in, a time from the future taken as now, a removal
 winning over a watch that hadn't seen it, the 51st video pruning the oldest as a delete, a removal

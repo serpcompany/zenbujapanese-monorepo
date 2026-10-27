@@ -88,6 +88,14 @@ describe('settings', () => {
     ])
   })
 
+  test('takes `learning` as the search filter, for the words the learner is learning', async () => {
+    const learner = await accounts.learner('setting-learning-filter@example.com')
+    expect(await results(learner, set('search.filter', 0, 'learning'))).toMatchObject(appliedAt(1))
+    expect(await changesOf(learner)).toMatchObject([
+      { entityId: 'search.filter', version: 1, data: { name: 'search.filter', value: 'learning' } }
+    ])
+  })
+
   test('refuses a setting it does not know, a value out of its kind, and any other field', async () => {
     const learner = await accounts.learner('setting-refused@example.com')
     const answer = await results(
