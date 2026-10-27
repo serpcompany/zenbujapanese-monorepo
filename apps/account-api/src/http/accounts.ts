@@ -51,7 +51,7 @@ const datesIn = (data: object | null) =>
     ])
   )
 
-const changeJson = (change: Change) =>
+export const changeJson = (change: Change) =>
   ({ ...change, data: datesIn(change.data) }) as ChangeJson<Change>
 
 const resultJson = (result: MutationResult) =>

@@ -59,7 +59,11 @@ extension ZenbuUITestCase {
     let row = find(identifier, in: app)
     waitFor(row)
     gestureThatOpensActions(on: row) { if device == .mac { row.rightClick() } else { row.swipeRight() } }
-    tap(find("\(identifier).\(action)", in: app))
+    if device == .mac {
+      chooseFromSubmenu("Status", Self.statusChosenBy[action] ?? action, in: app)
+    } else {
+      tap(find("\(identifier).\(action)", in: app))
+    }
     return row
   }
 

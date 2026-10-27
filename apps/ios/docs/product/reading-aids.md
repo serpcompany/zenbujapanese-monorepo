@@ -2,9 +2,9 @@
 
 Reading Aids are the app's switches for how Japanese reads, in Account → Reading Aids:
 
-- Furigana, Romaji, and Hide Furigana on Known Words;
-- Word Meanings (a short meaning under each linked word the learner hasn't marked known) and Kanji
-  Meanings (under each kanji in Look Up's Grade panel); and
+- Furigana, Romaji, and Hide Furigana on Known Words (a word being learned keeps its furigana);
+- Word Meanings (a short meaning under each linked word the learner hasn't marked Known, so under
+  a word being learned too) and Kanji Meanings (under each kanji in Look Up's Grade panel); and
 - Sentence Translations, with a translation language (English so far) and who translates Player
   captions — YouTube, or Apple Translation on the device, which Reading Aids offers to download.
 
@@ -13,8 +13,9 @@ They sync with the other settings ([Zenbu account and sync](account-sync.md)).
 Check: UI `AccountUITests.testReadingAidsAndFrequencyDictionariesOpen` and
 `testTurningRomajiOnWritesExampleSentencesAndAKanjisReadingsInRomaji` (Romaji on, an example
 sentence and a kanji's reading written in it); package `PlayerReadingAidTests` and
-`WordMeaningTests` (the preferences), and the recorded `RomajiConformanceTests` with core
-`detail/romaji.test.ts` (how a reading and a sentence are written in romaji).
+`WordMeaningTests` (the preferences), `WordStatusTests` (a word being learned isn't known), and
+the recorded `RomajiConformanceTests` with core `detail/romaji.test.ts` (how a reading and a
+sentence are written in romaji).
 
 ## The Show menus
 
