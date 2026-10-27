@@ -170,11 +170,12 @@ no token.
 
 ## Claude's app and token (admin only)
 
-The review, `@claude`, and gardening jobs authenticate as the Claude GitHub App and run on a
-Claude subscription. An admin sets them up once:
+The review and `@claude` jobs authenticate as the Claude GitHub App, and every Claude job runs on a
+Claude subscription. The gardening jobs push and open pull requests with the job's own token
+(Weekly maintenance, above). An admin sets them up once:
 
-1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository. The action
-   posts comments and pushes as the app (`claude[bot]`).
+1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository. In the
+   review and `@claude` jobs, the action posts comments and pushes as the app (`claude[bot]`).
 2. On a machine with Claude Code signed in to a Pro, Max, Team, or Enterprise plan, run
    `claude setup-token`, and save the token it prints as the repository secret
    `CLAUDE_CODE_OAUTH_TOKEN`.
