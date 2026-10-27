@@ -221,9 +221,8 @@
   var predefined = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
   var blank = /^[ \t\r\n]*$/;
   var declaration = /^xml(?:[ \t\r\n]|$)/i;
-  function isCharacter(code) {
-    return code === 9 || code === 10 || code === 13 || code >= 32 && code <= 55295 || code >= 57344 && code <= 65533 || code >= 65536 && code <= 1114111;
-  }
+  var outsideCharacters = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u;
+  var isCharacter = (code) => code <= 1114111 && !outsideCharacters.test(String.fromCodePoint(code));
   function resolved(raw) {
     if (!raw.includes("&")) return raw;
     if (raw.replace(references, "").includes("&")) return void 0;
@@ -272,6 +271,7 @@
   }
   function readXML(document, reading) {
     const source = document.startsWith("\uFEFF") ? document.slice(1) : document;
+    if (outsideCharacters.test(source)) return false;
     const open = [];
     let roots = 0;
     tokens.lastIndex = 0;

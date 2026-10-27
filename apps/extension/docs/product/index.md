@@ -11,7 +11,7 @@ nothing signs in. It looks like zenbujapanese.com, in Geist, light or dark as th
 
 | Surface | What a learner sees | Check |
 | --- | --- | --- |
-| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
+| Side panel | "Zenbu Japanese", and the dictionary's state, drawn as the welcome tab draws it: "Checking the dictionary…", the download's progress, "The dictionary is ready.", or "The dictionary didn't download." with why; with Check again once it is ready or has failed. Under it, [Translate](translate.md). | `src/shared/dictionary-status.interaction.test.tsx`, with the worker's round trip in `src/service-worker/round-trip.test.ts`; `e2e/pages.spec.ts` |
 | Welcome tab | Under Zenbu's logo, in a centred 600-pixel column: "Welcome to Zenbu" and the dictionary's state. While it downloads, a line saying Zenbu looks words up on this computer, so it is downloading its dictionary and the learner can keep browsing, and a progress bar with its percent and its megabytes done of the total. Then "The dictionary is ready.", or "The dictionary didn't download." with why and Try Again. Below, three first steps: open a Japanese page or a YouTube video with Japanese captions, click an underlined word, and pin Zenbu to the toolbar. No subscription step. | `src/shared/welcome.interaction.test.tsx`; in Chrome, by hand |
 | Toolbar popup | "Zenbu Japanese" and "Open the side panel to look up Japanese words." | `e2e/pages.spec.ts` |
 | Settings | "Settings" and "Nothing to set yet.", in a tab of its own. | `e2e/pages.spec.ts` |
@@ -53,8 +53,14 @@ reports at once, with no reload, and drops any not yet sent; turning it on start
 (`src/error-reports/report-setting.test.ts`). Sentry keeps a report for the project's retention,
 set in Sentry.
 
+## On pages
+
+- [YouTube captions and playback](youtube-captions.md): on a YouTube watch page, the video's
+  Japanese captions, what happens when YouTube refuses them, and following the video. Nothing
+  shows them yet.
+
 ## Not built yet
 
 The dictionary answers lookups, but no surface asks it yet: the word popup on a page, underlining,
-Word Detail, saving, and translating aren't built. The release build adds nothing to the pages a
-learner reads.
+Word Detail, and saving aren't built, nor the Video tab and the caption on the player that show a
+YouTube video's lines. The release build draws nothing on the pages a learner reads.

@@ -1,3 +1,4 @@
+import { serveCaptions } from '../captions/serve-captions'
 import {
   receiveErrorReport,
   reportFailure,
@@ -6,6 +7,7 @@ import {
 import { keepLanguageDataCurrent } from './language-data-updates'
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
+import { routeTranslation } from './translation'
 
 startSendingErrorReports(chrome.storage.local)
 
@@ -38,3 +40,9 @@ keepLanguageDataCurrent({
     return chrome.runtime.sendMessage({ target: 'offscreen', request })
   }
 })
+
+serveCaptions()
+
+chrome.runtime.onMessage.addListener(
+  routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
+)

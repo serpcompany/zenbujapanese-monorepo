@@ -17,16 +17,10 @@ const predefined: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '
 const blank = /^[ \t\r\n]*$/
 const declaration = /^xml(?:[ \t\r\n]|$)/i
 
-function isCharacter(code: number): boolean {
-  return (
-    code === 0x9 ||
-    code === 0xa ||
-    code === 0xd ||
-    (code >= 0x20 && code <= 0xd7ff) ||
-    (code >= 0xe000 && code <= 0xfffd) ||
-    (code >= 0x10000 && code <= 0x10ffff)
-  )
-}
+const outsideCharacters = /[^\t\n\r\u{20}-\u{D7FF}\u{E000}-\u{FFFD}\u{10000}-\u{10FFFF}]/u
+
+const isCharacter = (code: number) =>
+  code <= 0x10ffff && !outsideCharacters.test(String.fromCodePoint(code))
 
 function resolved(raw: string): string | undefined {
   if (!raw.includes('&')) return raw
@@ -80,6 +74,7 @@ function text(token: string, cdata: string | undefined, reading: XMLReading, ins
 
 export function readXML(document: string, reading: XMLReading): boolean {
   const source = document.startsWith('﻿') ? document.slice(1) : document
+  if (outsideCharacters.test(source)) return false
   const open: string[] = []
   let roots = 0
   tokens.lastIndex = 0

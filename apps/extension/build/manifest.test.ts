@@ -5,15 +5,21 @@ import { extensionIdOf } from './key.ts'
 import { manifest, minimumChromeVersion } from './manifest.ts'
 
 describe('manifest', () => {
-  it('ships no content script in the release build', () => {
+  const youTubeScript = {
+    matches: ['https://www.youtube.com/*'],
+    js: ['youtube.js'],
+    run_at: 'document_idle'
+  }
+
+  it('ships only the YouTube content script in the release build', () => {
     const release = manifest('release')
-    expect(release).not.toHaveProperty('content_scripts')
-    expect(release).not.toHaveProperty('web_accessible_resources')
+    expect(release.content_scripts).toEqual([youTubeScript])
   })
 
   it('runs the test content script only on local test pages in the test build', () => {
     const test = manifest('test')
     expect(test.content_scripts).toEqual([
+      youTubeScript,
       {
         matches: ['http://localhost/*', 'http://127.0.0.1/*'],
         js: ['test-content-script.js'],
@@ -23,7 +29,7 @@ describe('manifest', () => {
     expect(test.web_accessible_resources?.[0]?.resources).toEqual(['assets/*.woff2'])
   })
 
-  it('needs a Chrome with the Translator API, and asks only for what the offline dictionary needs', () => {
+  it('needs a Chrome with the Translator API, and asks only for what the offline dictionary, scripting and YouTube need', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
@@ -32,18 +38,27 @@ describe('manifest', () => {
       'sidePanel',
       'storage',
       'unlimitedStorage',
-      'alarms'
+      'alarms',
+      'scripting',
+      'declarativeNetRequestWithHostAccess'
     ])
     expect(release.background).toEqual({ service_worker: 'service-worker.js', type: 'module' })
   })
 
   it('downloads the language data only from its one host, and runs SQLite as WebAssembly', () => {
     const release = manifest('release')
-    expect(release.host_permissions).toEqual(['https://data.zenbujapanese.com/*'])
-    expect(manifest('release', 'staging').host_permissions).toEqual([
-      'https://data.zenbujapanese.com/*'
+    expect(release.host_permissions).toEqual([
+      'https://data.zenbujapanese.com/*',
+      'https://www.youtube.com/*'
     ])
-    expect(manifest('test').host_permissions).toEqual(['http://language-data.localhost/*'])
+    expect(manifest('release', 'staging').host_permissions).toEqual([
+      'https://data.zenbujapanese.com/*',
+      'https://www.youtube.com/*'
+    ])
+    expect(manifest('test').host_permissions).toEqual([
+      'http://language-data.localhost/*',
+      'https://www.youtube.com/*'
+    ])
     expect(release.content_security_policy.extension_pages).toBe(
       "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     )
