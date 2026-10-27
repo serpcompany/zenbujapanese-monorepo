@@ -311,26 +311,20 @@ right-click, and its switch). A real download needs the network: by hand
 ### Known Words
 
 Known Words shows its count on the Account row and lists every word and kanji the learner marked
-known, most recent first, in a plain list of Look Up's own rows. A word's row is Look Up's result
-row: its headword with furigana, its meaning, its frequency ranks, and the Known badge. A kanji's
-row is Look Up's Kanji row: the character, its label, and its meanings. A word the dictionary no
-longer has keeps a row with its headword, reading, and the Known badge. No row shows a date. A
-learner can search the list by headword or reading, swipe a row right or open its context menu to
-mark it unknown, or tap it to open its word or kanji page in Look Up. A word whose entry ID changed
-opens the entry with the same headword and reading, and looks the headword up only when there is
-none.
-Known words are stored on the device, and sync through the Zenbu account while the learner is
-signed in ([Zenbu account and sync](account-sync.md)). If the saved known words
-came from a newer version of Zenbu, or a damaged file couldn't be kept aside, they are shown but
-can't be changed, and Known Words and the Mark as Known button say so. If the file exists but
-can't be read at launch, such as before the device's first unlock, nothing is shown or saved over
-it, and Known Words asks the learner to reopen Zenbu.
+known, most recent first, as Look Up's result rows, with meanings and the Known badge, and Kanji
+rows, with no dates. A word the dictionary dropped keeps its headword, reading, and badge. A learner
+can search the list by headword or reading, swipe a row right or use its context menu to mark it
+unknown, or open its page in Look Up. A word whose entry ID changed opens the entry with the same
+headword and reading, and looks the headword up only when there is none. Known words are stored on
+the device, and sync through the Zenbu account while the learner is signed in ([Zenbu account and
+sync](account-sync.md)). If the saved known words came from a newer version of Zenbu, or a damaged
+file couldn't be kept aside, they are shown but can't be changed, and Known Words and the Mark as
+Known button say so. If the file exists but can't be read at launch, such as before the device's
+first unlock, nothing is shown or saved over it, and Known Words asks the learner to reopen Zenbu.
 
-Check: package `WordKnowledgeTests`, `SavedKanjiTests`, `KnowledgeRowsTests` (a word's and a
-kanji's row, and none for a word that's gone), and `WordResolutionTests` (the entry a saved word
-opens); UI `SavedWordsUITests.testAKnownWordIsListedAndCanBeMarkedUnknownThere`,
-`SavedWordsUITests.testKnownWordsShowsAWordWithItsMeaningAndAKanjiAsLookUpDoes`,
-`WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
+Check: package `WordKnowledgeTests`, `SavedKanjiTests`, `KnowledgeRowsTests`, and
+`WordResolutionTests` (the entry a saved word opens); UI `SavedWordsUITests` (Look Up's rows, marked
+unknown there), `WordDetailUITests.testTheMenuOffersThisDevicesActionsAndMarksTheWordKnown`, and
 `AccountUITests.testKnownWordsAndTheMediaLibraryStartEmptyAndListsStartWithFavorites` (empty).
 
 ### Lists
