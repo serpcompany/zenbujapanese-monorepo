@@ -7,10 +7,12 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from '../shared/data-state'
 import type { FormExamplesAnswer, KanjiAnswer, Lookup } from '../shared/dictionary'
+import { pages } from '../side-panel/pages'
 import { FormExamplesPage } from './form-examples-page'
 import { KanjiDetailPage } from './kanji-detail-page'
 import { wordDetailLabels } from './labels'
 import type { WordLookups } from './lookups'
+import { WordDetailPage } from './word-detail-page'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -146,5 +148,15 @@ describe('Form examples', () => {
   it('says no sentence uses a form none does', async () => {
     const { element } = await formPage('要りませんでした')
     expect(element.querySelector('[data-examples="none"]')?.textContent).toBe(noFormExamplesMessage)
+  })
+})
+
+describe('The side panel’s pages', () => {
+  it('draws a word, a kanji, and a form with Word Detail’s pages', () => {
+    expect(pages).toMatchObject({
+      word: WordDetailPage,
+      kanji: KanjiDetailPage,
+      form: FormExamplesPage
+    })
   })
 })

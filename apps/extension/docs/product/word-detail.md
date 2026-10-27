@@ -4,8 +4,8 @@ Word Detail is the side panel's page for one dictionary word, as the app's Word 
 ([`dictionary.md`](../../../ios/docs/product/dictionary.md)) without its saving: there are no
 Lists, Notes, Mark as Known, Add Photo, or Look Up. Two more pages open from it: a kanji's detail
 and the examples for one conjugated form. Each page draws only its content; the side panel draws
-Back over it. The pages are built, and the side panel opens them once its page list registers
-them (#978).
+Back over it and opens a page from a route ([`side-panel.md`](side-panel.md)). Nothing in the
+extension opens one yet: the word popup's Open Full Entry comes with #957.
 
 Every check below is in `src/word-detail/`, in happy-dom, on the dictionary core's fixtures
 answered through a fixture source in the test: `word-detail-page.interaction.test.tsx` (word) and
@@ -33,6 +33,7 @@ answered through a fixture source in the test: `word-detail-page.interaction.tes
 | --- | --- |
 | A kanji's page shows its readings, meanings, sections, and stroke order, and its words open their own pages. | kanji: 要's details |
 | While the stroke order is still downloading, the page says so and shows the rest. | kanji: downloading |
+| The side panel draws its word, kanji, and form pages with these three. | kanji: the side panel's pages |
 | A form's page shows the form with a Pronounce button and the sentences that use it, 25 at a time, or "No example sentences use this form yet." | form: いる; a form none uses |
 
 ## While the dictionary can't answer
