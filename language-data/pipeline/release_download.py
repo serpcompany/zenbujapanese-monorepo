@@ -14,17 +14,17 @@ KUROMOJI_FILES = (
     "base", "cc", "check", "tid", "tid_map", "tid_pos", "unk", "unk_char", "unk_invoke",
     "unk_map", "unk_pos",
 )
-FIRST_SET = (
-    "LanguageReferenceData.sqlite3",
-    "CompoundPitch.sqlite3",
-    "JLPTLevelPack.sqlite3",
-    "TUBELEXFrequencyPack.sqlite3",
-    "ExampleWordIndex.sqlite3",
-    "KanjiReferenceData.json",
-    "KanjiElementReferenceData.json",
-    "RetiredEntries.json",
-    *(f"Kuromoji/{name}.dat.gz" for name in KUROMOJI_FILES),
-)
+FIRST_SET = {
+    "LanguageReferenceData.sqlite3": "zenbu.language-reference.v2",
+    "CompoundPitch.sqlite3": "zenbu.compound-pitch.v1",
+    "JLPTLevelPack.sqlite3": "zenbu.level-pack.v1",
+    "TUBELEXFrequencyPack.sqlite3": "zenbu.frequency-pack.v1",
+    "ExampleWordIndex.sqlite3": "zenbu.example-word-index.v1",
+    "KanjiReferenceData.json": "zenbu.kanji-reference.v2",
+    "KanjiElementReferenceData.json": "zenbu.kanji-elements.v1",
+    "RetiredEntries.json": "zenbu.retired-entries.v1",
+    **{f"Kuromoji/{name}.dat.gz": None for name in KUROMOJI_FILES},
+}
 GZIP_STREAM = 16 + zlib.MAX_WBITS
 GZIPPED, PUBLISHED = "gzipped parts", "as published"
 
@@ -96,12 +96,20 @@ def download_gzipped(address: PublicAddress, record: dict, listing: dict | None)
     )
 
 
+def check_listed(records: dict, name: str) -> None:
+    if name not in records:
+        raise Mismatch("the manifest doesn't list it")
+    wanted, listed = FIRST_SET[name], records[name]["artifact_schema"]
+    if wanted is not None and listed != wanted:
+        listed = listed or "no schema"
+        raise Mismatch(f"the manifest lists {listed}, not {wanted}, which the extension reads")
+
+
 def check_way(way: str, download: Callable, records: dict, log) -> tuple[int, list[str]]:
     downloaded, failures = 0, []
     for name in FIRST_SET:
         try:
-            if name not in records:
-                raise Mismatch("the manifest doesn't list it")
+            check_listed(records, name)
             got, matched = download(records[name])
         except (Mismatch, DownloadError, FileNotFoundError) as failure:
             failures.append(f"{way}: {name}: {failure}")
@@ -116,11 +124,22 @@ def check_way(way: str, download: Callable, records: dict, log) -> tuple[int, li
     return downloaded, failures
 
 
-def check_download(address: PublicAddress, release: str, *, log=print) -> dict:
-    index, _ = read_index(address)
+def listed_release(index: dict, release: str | None) -> dict:
+    if release is None:
+        newest = max(index["releases"], key=lambda e: e["published_at"], default=None)
+        if newest is None:
+            raise Refusal("releases.json lists no release")
+        return newest
     entry = next((e for e in index["releases"] if e["release"] == release), None)
     if entry is None:
         raise Refusal(f"releases.json doesn't list {release}")
+    return entry
+
+
+def check_download(address: PublicAddress, release: str | None = None, *, log=print) -> dict:
+    index, _ = read_index(address)
+    entry = listed_release(index, release)
+    release = entry["release"]
     _, manifest = read_listed_manifest(address, entry)
     compressed = read_compressed_copies(address, manifest, entry["manifest_sha256"])
     log(

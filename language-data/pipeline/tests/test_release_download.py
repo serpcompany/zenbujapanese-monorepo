@@ -36,6 +36,7 @@ FILES = {
     "NOTICE.txt": b"notice\n",
 }
 DOCUMENT_REQUESTS = 3
+EARLIER, LATER = "2026-10-01T00:00:00Z", "2026-10-02T00:00:00Z"
 
 
 class Response(io.BytesIO):
@@ -82,16 +83,17 @@ class ReleaseDownloadTestCase(PublishTestCase):
         self.address = FakeAddress(self.store)
         self.lines: list[str] = []
 
-    def publish_release(self, release: str, files: dict[str, bytes], **options):
+    def publish_release(self, release: str, files: dict[str, bytes], when=EARLIER, **options):
+        options.setdefault("schemas", FIRST_SET)
         with mock.patch.object(compressed_copies, "PART_BYTES", SMALL_PARTS):
-            self.publish(self.staged(release, files, **options))
+            self.publish(self.staged(release, files, **options), when)
 
     def reset(self):
         self.store.objects = copy.deepcopy(self.published)
         self.address.requests.clear()
         self.lines.clear()
 
-    def check(self, release=RELEASE) -> dict:
+    def check(self, release: str | None = RELEASE) -> dict:
         address = PublicAddress(f"{ADDRESS}/", self.address.urlopen)
         return check(address, release, log=self.lines.append)
 
@@ -204,6 +206,36 @@ class CheckDownloadTests(ReleaseDownloadTestCase):
             ],
         )
 
+    def test_a_first_set_file_of_another_schema_fails_both_ways(self):
+        cases = {"another version": "zenbu.compound-pitch.v2", "no schema": None}
+        for number, (label, schema) in enumerate(cases.items(), start=2):
+            with self.subTest(label):
+                release = f"2026.10.{number}"
+                schemas = {**FIRST_SET, "CompoundPitch.sqlite3": schema}
+                self.publish_release(release, FILES, commit=COMMIT_B, schemas=schemas)
+                reason = (
+                    f"the manifest lists {schema or 'no schema'}, not zenbu.compound-pitch.v1, "
+                    "which the extension reads"
+                )
+                self.assertEqual(
+                    self.check(release)["failures"],
+                    [f"{way}: CompoundPitch.sqlite3: {reason}" for way in (GZIPPED, PUBLISHED)],
+                )
+
+    def test_without_a_release_it_checks_the_newest_by_publication(self):
+        self.publish_release("2026.10.2", FILES, LATER, commit=COMMIT_B)
+        self.assertEqual(self.check(None)["release"], "2026.10.2")
+        index = json.loads(self.store.objects["releases.json"]["body"])
+        index["releases"][0]["published_at"] = "2026-10-03T00:00:00Z"
+        self.replace("releases.json", json.dumps(index).encode())
+        result = self.check(None)
+        self.assertEqual((result["release"], result["failures"]), (RELEASE, []))
+
+    def test_without_a_release_an_empty_index_is_refused(self):
+        del self.store.objects["releases.json"]
+        with self.assertRaisesRegex(Refusal, "releases.json lists no release"):
+            self.check(None)
+
     def test_a_release_that_is_not_published_whole_is_refused(self):
         manifest = f"releases/{RELEASE}/manifest.json"
         compressed = compressed_copies.compressed_key(RELEASE)
@@ -252,6 +284,13 @@ class CommandLineTests(ReleaseDownloadTestCase):
             stdout,
         )
 
+    def test_without_a_release_it_checks_the_newest(self):
+        self.publish_release("2026.10.2", FILES, LATER, commit=COMMIT_B)
+        status, stdout, stderr = self.run_command()
+        self.assertEqual((status, stderr), (0, ""))
+        self.assertIn("Release 2026.10.2: its manifest has the sha256", stdout)
+        self.assertTrue(stdout.endswith("every SHA-256 matches the manifest.\n"), stdout)
+
     def test_a_mismatch_fails_and_lists_each_failure(self):
         self.replace(published_key(KUROMOJI), b"changed")
         status, _, stderr = self.run_command("--release", RELEASE)
@@ -266,11 +305,12 @@ class CommandLineTests(ReleaseDownloadTestCase):
 
 
 class FirstSetTests(unittest.TestCase):
-    def test_the_first_set_is_19_files_of_the_release_the_repository_pins(self):
+    def test_the_first_set_is_19_files_of_the_pinned_release_with_its_schemas(self):
         release = load_release(LANGUAGE_DATA / "release.json")["release"]
-        pinned = {f["name"] for f in load_pinned(LANGUAGE_DATA / "releases", release)["files"]}
-        self.assertEqual(len(set(FIRST_SET)), 19)
-        self.assertLessEqual(set(FIRST_SET), pinned)
+        files = load_pinned(LANGUAGE_DATA / "releases", release)["files"]
+        pinned = {f["name"]: f["artifact_schema"] for f in files}
+        self.assertEqual(len(FIRST_SET), 19)
+        self.assertEqual({name: pinned.get(name, "unlisted") for name in FIRST_SET}, FIRST_SET)
 
 
 if __name__ == "__main__":

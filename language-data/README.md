@@ -34,7 +34,7 @@ here from `apps/ios`). The built files stay in the app's bundle,
 | [`pipeline/package.py`](pipeline/package.py) | The packager's command line: `build`, `lfs-paths`, `validate`, `retire`, `pin`, and `check-pin`. |
 | [`pipeline/publish.py`](pipeline/publish.py) | The publisher's command line: `publish`, and `verify`, the check that reads a published release back. |
 | [`pipeline/check_download.py`](pipeline/check_download.py) | The download check's command line ([Checking the download](publishing.md#checking-the-download)). |
-| [`pipeline/`](pipeline/) | The modules the two command lines run, one for each job (see [The pipeline](#the-pipeline)). |
+| [`pipeline/`](pipeline/) | The modules the three command lines run, one for each job (see [The pipeline](#the-pipeline)). |
 | [`pipeline/tests/`](pipeline/tests/) | Tests for the packager (on a scratch Git repository with its LFS files committed as pointers, as after `git lfs pull`), the publisher (against a fake bucket), the download check, the schemas, the bucket's CORS rule, and the committed inputs. |
 
 ## A release

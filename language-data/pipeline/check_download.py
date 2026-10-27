@@ -8,11 +8,9 @@ import urllib.request
 from functools import partial
 from typing import Callable
 
-from locations import LANGUAGE_DATA
 from public_address import PUBLIC_ADDRESS, DownloadError, PublicAddress
 from refusal import Refusal
 from release_download import check_download
-from release_inputs import load_release
 
 DESCRIPTION = (
     "Download a published release's first set from the bucket's public address, from its gzipped "
@@ -22,20 +20,21 @@ DESCRIPTION = (
 
 def main(argv: list[str] | None = None, urlopen: Callable = urllib.request.urlopen) -> int:
     parser = argparse.ArgumentParser(description=DESCRIPTION)
-    parser.add_argument("--release", help="default: the release in language-data/release.json")
+    parser.add_argument(
+        "--release", help="default: the newest in releases.json, the release the extension installs"
+    )
     parser.add_argument("--address", default=PUBLIC_ADDRESS, help=f"default: {PUBLIC_ADDRESS}")
     args = parser.parse_args(argv)
 
     try:
-        release = args.release or load_release(LANGUAGE_DATA / "release.json")["release"]
-        print(f"Checking release {release}'s first set at {args.address}", flush=True)
+        print(f"Checking a release's first set at {args.address}", flush=True)
         result = check_download(
-            PublicAddress(args.address, urlopen), release, log=partial(print, flush=True)
+            PublicAddress(args.address, urlopen), args.release, log=partial(print, flush=True)
         )
     except (Refusal, DownloadError, OSError, json.JSONDecodeError) as refusal:
         print(f"Refused: {refusal}", file=sys.stderr)
         return 1
-    failures = result["failures"]
+    release, failures = result["release"], result["failures"]
     downloads = len(result["downloaded"]) * result["files"]
     if failures:
         print(

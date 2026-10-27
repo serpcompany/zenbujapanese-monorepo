@@ -79,17 +79,20 @@ class FakeStore:
         return json.loads(self.objects["releases.json"]["body"])
 
 
-def stage(directory: Path, release: str, files: dict[str, bytes], commit=COMMIT_A) -> Path:
+def stage(
+    directory: Path, release: str, files: dict[str, bytes], commit=COMMIT_A, schemas=None
+) -> Path:
     records = []
     for name, data in files.items():
+        schema = (schemas or {}).get(name)
         path = directory / "files" / sha256(data) / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         records.append(
             {
                 "name": name,
-                "artifact_schema": None,
-                "schema_source": "undeclared",
+                "artifact_schema": schema,
+                "schema_source": "file" if schema else "undeclared",
                 "sha256": sha256(data),
                 "bytes": len(data),
                 "depends_on": [],
@@ -145,9 +148,9 @@ class PublishTestCase(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def staged(self, release="2026.10.1", files=FILES_1, commit=COMMIT_A) -> Path:
+    def staged(self, release="2026.10.1", files=FILES_1, commit=COMMIT_A, schemas=None) -> Path:
         self.count += 1
-        return stage(self.tmp / f"out{self.count}", release, files, commit)
+        return stage(self.tmp / f"out{self.count}", release, files, commit, schemas)
 
     def publish(self, staged, when="2026-10-01T00:00:00Z"):
         return publish(self.store, staged, now=lambda: when)

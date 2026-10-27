@@ -129,8 +129,10 @@ file's copy comes in parts a stopped download can restart from.
 Clients read the bucket at **`https://data.zenbujapanese.com`**, an R2 custom domain on the
 `zenbujapanese.com` zone, with each key under it: `https://data.zenbujapanese.com/releases.json`.
 The name is #941's recommendation, which Francis accepted on 2026-10-27 (its Open question 18). It
-lives in this section and in `public_address.py`, the download check's default
-([Checking the download](#checking-the-download)), so a new name is an edit to both, and an
+lives in this section; in `public_address.py`, the download check's default
+([Checking the download](#checking-the-download)); and in the extension, under `apps/extension/`,
+as `languageDataHost` in `src/shared/language-data.ts` and in its manifest's `host_permissions`,
+which `build/manifest.ts` builds from it. So a new name is an edit to all of them, and an
 amendment to ADR 0006, which records it. Publishing doesn't use it; the workflow writes through the
 S3 endpoint.
 
@@ -159,16 +161,23 @@ check of the address from CI may get a challenge, not the object (#985).
 the public address, as a client does, and checks it (#985). The first set is the 19 files lookups
 start from (#943), which [`release_download.py`](pipeline/release_download.py) lists:
 `LanguageReferenceData`, `CompoundPitch`, `JLPTLevelPack`, `TUBELEXFrequencyPack`, and
-`ExampleWordIndex`, the two kanji JSON files, `RetiredEntries.json`, and the 11 Kuromoji files. It:
+`ExampleWordIndex`, the two kanji JSON files, `RetiredEntries.json`, and the 11 Kuromoji files, each
+with the `artifact_schema` the extension reads. Its `FIRST_SET` mirrors `firstSet` in the
+extension's `src/worker/release.ts`, and nothing checks one against the other, so change both
+together. It:
 
-1. reads `releases.json`; the release's manifest, which must have the SHA-256 `releases.json`
-   lists; and its `compressed.json`, which must be that manifest's and list its SQLite and JSON
-   files;
-2. downloads each file from its gzipped parts, unpacking each as it arrives. A part must have the
+1. reads `releases.json` and picks the release the extension installs, the newest by
+   `published_at`, unless `--release` names one; then the release's manifest, which must have the
+   SHA-256 `releases.json` lists; and its `compressed.json`, which must be that manifest's and list
+   its SQLite and JSON files;
+2. checks that the manifest lists each first-set file with the `artifact_schema` the extension
+   reads, as the extension's `readable` does. A file it doesn't list, or lists with another schema,
+   fails both ways and isn't downloaded;
+3. downloads each file from its gzipped parts, unpacking each as it arrives. A part must have the
    size and SHA-256 `compressed.json` lists, and be one whole gzip stream. A Kuromoji file has no
    gzipped copy, so this way downloads it as published;
-3. downloads each file as published, from `files/<sha256>/<name>`;
-4. checks each file's size and SHA-256, both ways, against the manifest.
+4. downloads each file as published, from `files/<sha256>/<name>`;
+5. checks each file's size and SHA-256, both ways, against the manifest.
 
 It streams, hashing as it reads: it writes nothing to disk and never holds a whole file in memory.
 It prints a line for each file each way, and the bytes each way downloaded. A missing file or a
@@ -176,11 +185,13 @@ mismatch fails it, after the rest are checked. Run it from the repository root, 
 pipeline's requirements installed ([Running it](README.md#running-it)):
 
 ```sh
-python3 language-data/pipeline/check_download.py --release 2026.10.12
+python3 language-data/pipeline/check_download.py
 ```
 
-`--release` defaults to the release in `release.json`, and `--address` to the public address. Run it
-by hand, after a release is published: it isn't in CI, for Bot Fight Mode and its download size,
-801 MB for release 2026.10.12 (245 MB of it gzipped), which took 3 minutes on the owner's Mac. It
-sends its own `User-Agent`, `zenbu-language-data-check`, since Cloudflare refuses Python's with error
-1010. Its tests, in `test_release_download.py`, run against a fake address, with no network.
+`--release 2026.10.12` checks a named release, and `--address` defaults to the public address. The
+extension goes on to an older release when the newest has a schema it doesn't read; this check fails
+instead, since a release it can't read is a release to fix. Run it by hand, after a release is
+published: it isn't in CI, for Bot Fight Mode and its download size, 801 MB for release 2026.10.12
+(245 MB of it gzipped), which took 3 minutes on the owner's Mac. It sends its own `User-Agent`,
+`zenbu-language-data-check`, since Cloudflare refuses Python's with error 1010. Its tests, in
+`test_release_download.py`, run against a fake address, with no network.
