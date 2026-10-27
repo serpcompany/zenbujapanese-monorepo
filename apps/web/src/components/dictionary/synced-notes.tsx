@@ -1,5 +1,6 @@
 'use client'
 
+import type { Held } from '@zenbu/account-rules/account-copy'
 import { type FormEvent, useId, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -22,6 +23,7 @@ const showsTheAccount = new Set<Attempt['status'] | null>(['applied', 'kept-as-n
 function SavedNote({
   note,
   number,
+  began,
   draft,
   onDraft,
   change,
@@ -32,6 +34,7 @@ function SavedNote({
 }: Omit<SyncedPartProps, 'copy' | 'locale'> & {
   note: NoteRow
   number: number
+  began: Held | null | undefined
   draft: string | undefined
   onDraft: (text: string | undefined) => void
   change: Change
@@ -42,13 +45,13 @@ function SavedNote({
   const [confirming, setConfirming] = useState(false)
 
   async function save() {
-    if (await change(copy => writeNote(copy, item, note.id, draft ?? note.text))) {
+    if (await change(copy => writeNote(copy, item, note.id, draft ?? note.text, began))) {
       onDraft(undefined)
     }
   }
 
   async function remove() {
-    const removed = await change(copy => deleteNote(copy, item, note.id))
+    const removed = await change(copy => deleteNote(copy, note.id, began))
     setConfirming(false)
     if (removed) onDraft(undefined)
   }
@@ -107,6 +110,7 @@ export function SyncedNotes({ copy, item, synced, text, account }: SyncedPartPro
   const field = useId()
   const [order, setOrder] = useState<string[]>([])
   const [drafts, setDrafts] = useState<ReadonlyMap<string, string>>(new Map())
+  const [began, setBegan] = useState<ReadonlyMap<string, Held | null>>(new Map())
   const [fresh, setFresh] = useState('')
   const [freshId, setFreshId] = useState(() => crypto.randomUUID())
   const notes = noteRows(copy, order)
@@ -116,13 +120,21 @@ export function SyncedNotes({ copy, item, synced, text, account }: SyncedPartPro
     return showsTheAccount.has(await synced.run(attempt, account.synced.notes.textRule))
   }
 
-  const draftOf = (noteId: string) => (typed: string | undefined) =>
-    setDrafts(current => {
+  const draftOf = (noteId: string) => (typed: string | undefined) => {
+    setBegan(current => {
+      if (typed !== undefined && current.has(noteId)) return current
+      const next = new Map(current)
+      if (typed === undefined) next.delete(noteId)
+      else next.set(noteId, copy.heldOne('wordNote', noteId))
+      return next
+    })
+    return setDrafts(current => {
       const next = new Map(current)
       if (typed === undefined) next.delete(noteId)
       else next.set(noteId, typed)
       return next
     })
+  }
 
   async function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -140,6 +152,7 @@ export function SyncedNotes({ copy, item, synced, text, account }: SyncedPartPro
               key={note.id}
               note={note}
               number={index + 1}
+              began={began.get(note.id)}
               draft={drafts.get(note.id)}
               onDraft={draftOf(note.id)}
               change={change}

@@ -1,6 +1,6 @@
 'use client'
 
-import { recentFirst, type Shown, wordsOfList } from '@zenbu/account-rules/account-views'
+import { recentFirst, type Shown, wordsOfPhoto } from '@zenbu/account-rules/account-views'
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Item, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
@@ -92,7 +92,7 @@ export function MediaLibrary({ copy, locale, text, photoFile }: AreaProps) {
               </ItemDescription>
               <p className="text-sm">{words.on}</p>
               <ul className="flex flex-wrap gap-x-3 gap-y-1">
-                {wordsOfList(photoWords, photo.entityId).map(word => (
+                {wordsOfPhoto(photoWords, photo.entityId).map(word => (
                   <li key={word.entityId}>
                     <ItemLink data={word.data} locale={locale} />
                   </li>

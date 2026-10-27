@@ -1,6 +1,6 @@
 'use client'
 
-import type { Change } from '@zenbu/account-rules/account-copy'
+import type { Change, Held } from '@zenbu/account-rules/account-copy'
 import type { Shown } from '@zenbu/account-rules/account-views'
 import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -29,7 +29,13 @@ export interface AreaProps {
   locale: Locale
   text: AccountText
   listId: string | null
-  change: (entity: string, operation: string, entityId: string, fields?: Fields) => Promise<Said>
+  change: (
+    entity: string,
+    operation: string,
+    entityId: string,
+    fields?: Fields,
+    base?: Held | null
+  ) => Promise<Said>
   changeAll: (changes: Change[]) => Promise<Said>
   photoFile: (photoId: string) => Promise<Result<Blob>>
 }

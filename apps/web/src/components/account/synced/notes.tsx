@@ -21,6 +21,7 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
   const words = props.text.synced.notes
   const [step, setStep] = useState<'shown' | 'editing' | 'asking'>('shown')
   const [typed, setTyped] = useState(textIn(note.data, 'text'))
+  const [began, setBegan] = useState<Shown | null>(null)
   const [refused, setRefused] = useState<string | null>(null)
   const { busy, problem, run } = useChanging()
   const itemId = textIn(note.data, 'itemId')
@@ -36,7 +37,8 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
       headword: note.data.headword ?? null,
       reading: note.data.reading ?? null
     }
-    if (await run(() => props.change('wordNote', 'write', note.entityId, fields))) setStep('shown')
+    const written = props.change('wordNote', 'write', note.entityId, fields, began)
+    if (await run(() => written)) setStep('shown')
   }
   async function copy() {
     try {
@@ -112,6 +114,7 @@ function NoteRow({ note, props }: { note: Shown; props: AreaProps }) {
               aria-label={fill(words.editNamed, { name })}
               onClick={() => {
                 setTyped(textIn(note.data, 'text'))
+                setBegan(note)
                 setStep('editing')
               }}
             >

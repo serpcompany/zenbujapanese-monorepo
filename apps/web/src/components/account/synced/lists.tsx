@@ -9,7 +9,7 @@ import {
 } from '@zenbu/account-rules/account-views'
 import { listName } from '@zenbu/account-rules/lists'
 import Link from 'next/link'
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from '@/components/ui/item'
@@ -74,14 +74,16 @@ export function ListActions({
   list: Shown
   wordCount: number
   props: AreaProps
-  moves?: { up: (() => void) | null; down: (() => void) | null }
+  moves?: { up: (() => void) | null; down: (() => void) | null; busy: boolean }
 }) {
   const words = props.text.synced.lists
   const name = textIn(list.data, 'name')
   const [step, setStep] = useState<'shown' | 'renaming' | 'asking'>('shown')
+  const [began, setBegan] = useState<Shown | null>(null)
   const { busy, problem, run } = useChanging()
   const rename = async (named: string) => {
-    const done = await run(() => props.change('list', 'update', list.entityId, { name: named }))
+    const renamed = props.change('list', 'update', list.entityId, { name: named }, began)
+    const done = await run(() => renamed)
     if (done) setStep('shown')
     return done
   }
@@ -107,7 +109,13 @@ export function ListActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
         {moves ? (
-          <MoveButtons name={name} up={moves.up} down={moves.down} busy={busy} words={words} />
+          <MoveButtons
+            name={name}
+            up={moves.up}
+            down={moves.down}
+            busy={busy || moves.busy}
+            words={words}
+          />
         ) : null}
         <Button
           type="button"
@@ -115,7 +123,10 @@ export function ListActions({
           size="sm"
           disabled={busy}
           aria-label={fill(words.renameNamed, { name })}
-          onClick={() => setStep('renaming')}
+          onClick={() => {
+            setBegan(list)
+            setStep('renaming')
+          }}
         >
           {words.rename}
         </Button>
@@ -148,8 +159,20 @@ export function ListActions({
 export function Lists(props: AreaProps) {
   const { copy, locale, text, change, changeAll } = props
   const words = text.synced.lists
-  const { busy, problem, run } = useChanging()
+  const { busy, problem, setProblem, run } = useChanging()
+  const creating = useRef<string | null>(null)
   const lists = listsInOrder(copy.held('list'))
+  const create = async (name: string) => {
+    const id = creating.current ?? crypto.randomUUID()
+    creating.current = id
+    const position = nextListPosition(copy.held('list'))
+    const made = await run(() => change('list', 'create', id, { name, position }))
+    const held = Boolean(copy.heldOne('list', id)?.data)
+    if (!made && !held) return false
+    creating.current = null
+    if (!made) setProblem(null)
+    return true
+  }
   const listWords = copy.held('listWord')
   const move = (from: number, to: number) => () =>
     void run(() =>
@@ -171,14 +194,7 @@ export function Lists(props: AreaProps) {
         initial=""
         busy={busy}
         words={words}
-        onName={name =>
-          run(() =>
-            change('list', 'create', crypto.randomUUID(), {
-              name,
-              position: nextListPosition(copy.held('list'))
-            })
-          )
-        }
+        onName={create}
       />
       <Rows empty={lists.length === 0 ? words.none : null} problem={problem}>
         {lists.map((list, index) => {
@@ -198,7 +214,8 @@ export function Lists(props: AreaProps) {
                   props={props}
                   moves={{
                     up: index > 0 ? move(index, index - 1) : null,
-                    down: index < lists.length - 1 ? move(index, index + 1) : null
+                    down: index < lists.length - 1 ? move(index, index + 1) : null,
+                    busy
                   }}
                 />
               </ItemActions>

@@ -1,4 +1,4 @@
-import type { ChangeOutcome } from '@zenbu/account-rules/account-copy'
+import type { ChangeOutcome, Held } from '@zenbu/account-rules/account-copy'
 import { listsInOrder, nextListPosition } from '@zenbu/account-rules/account-views'
 import { listName } from '@zenbu/account-rules/lists'
 import { noteText } from '@zenbu/account-rules/notes'
@@ -83,7 +83,8 @@ export async function newListHolding(
   if (name === null) return notSent
   const position = nextListPosition(copy.held('list'))
   const created = await copy.change('list', 'create', id, { name, position })
-  if (created.status !== 'applied') return created
+  const madeBefore = created.status === 'rejected' && created.code === 'already_exists'
+  if (created.status !== 'applied' && !madeBefore) return created
   return putInList(copy, id, item, true)
 }
 
@@ -106,20 +107,14 @@ export async function writeNote(
   copy: SyncedCopy,
   item: SavedItem,
   noteId: string,
-  typed: string
+  typed: string,
+  began?: Held | null
 ): Promise<Attempt> {
   const text = noteText(typed)
   if (text === null) return notSent
-  return copy.change('wordNote', 'write', noteId, { item: item.id, text, ...labelsOf(item) })
+  const fields = { item: item.id, text, ...labelsOf(item) }
+  return copy.change('wordNote', 'write', noteId, fields, began)
 }
 
-export async function deleteNote(
-  copy: SyncedCopy,
-  item: SavedItem,
-  noteId: string
-): Promise<Attempt> {
-  const deleted = await copy.change('wordNote', 'delete', noteId)
-  if (deleted.status !== 'applied') return deleted
-  const read = await copy.read('wordNote', item.id)
-  return read.ok ? deleted : { status: 'failed', failure: read.failure }
-}
+export const deleteNote = (copy: SyncedCopy, noteId: string, began?: Held | null) =>
+  copy.change('wordNote', 'delete', noteId, undefined, began)

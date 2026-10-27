@@ -28,6 +28,16 @@ export function changeMessage(
   text: SyncedText,
   locale: Locale
 ): string | null {
+  const said = outcomeMessage(outcome, text, locale)
+  if (said !== null || outcome.status === 'failed' || outcome.unread === undefined) return said
+  return failedMessage(outcome.unread, text, locale)
+}
+
+function outcomeMessage(
+  outcome: ChangeOutcome<Failure>,
+  text: SyncedText,
+  locale: Locale
+): string | null {
   const words = text.synced
   if (outcome.status === 'applied') return null
   if (outcome.status === 'kept-as-new') return words.notes.keptAsNew
@@ -38,4 +48,6 @@ export function changeMessage(
 }
 
 export const signedOutBy = (outcome: ChangeOutcome<Failure>) =>
-  outcome.status === 'failed' && isSignedOut(outcome.failure)
+  outcome.status === 'failed'
+    ? isSignedOut(outcome.failure)
+    : outcome.unread !== undefined && isSignedOut(outcome.unread)

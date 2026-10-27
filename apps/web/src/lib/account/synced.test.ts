@@ -1,5 +1,6 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { getDictionary } from '@/lib/i18n/dictionary'
+import { refusedResult } from '@/test/account-answers'
 import type { Result } from './client'
 import { photoQueue } from './photo-queue'
 import { syncedAreaAt, syncedAreaNames } from './synced'
@@ -114,6 +115,24 @@ describe('what the pages show of the account', () => {
 })
 
 describe('the photos a page downloads', () => {
+  test('wait as long as the account says when it has had too many, then ask once more', async () => {
+    vi.useFakeTimers()
+    const tooMany = refusedResult(429, 'too_many_requests')
+    if (!tooMany.ok && tooMany.failure.kind === 'refused') tooMany.failure.retryAfter = 2
+    const answers: Result<Blob>[] = [tooMany, { ok: true, value: new Blob(['jpeg']) }, tooMany]
+    const download = vi.fn(async () => answers.shift() ?? tooMany)
+    const loading = photoQueue(download)('p1')
+    await vi.advanceTimersByTimeAsync(1999)
+    expect(download).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(1)
+    expect((await loading).ok).toBe(true)
+    const again = photoQueue(download)('p2')
+    await vi.advanceTimersByTimeAsync(2000)
+    expect((await again).ok).toBe(false)
+    expect(download).toHaveBeenCalledTimes(4)
+    vi.useRealTimers()
+  })
+
   test('go a few at a time, and each waiting one starts as one ends', async () => {
     let running = 0
     let most = 0

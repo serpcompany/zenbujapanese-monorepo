@@ -24,6 +24,7 @@ function NewList({ copy, synced, item, account }: SyncedPartProps) {
   const input = useRef<HTMLInputElement>(null)
   const [naming, setNaming] = useState(false)
   const [name, setName] = useState('')
+  const creating = useRef<string | null>(null)
 
   useEffect(() => {
     if (naming) input.current?.focus()
@@ -31,9 +32,11 @@ function NewList({ copy, synced, item, account }: SyncedPartProps) {
 
   async function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const id = crypto.randomUUID()
+    const id = creating.current ?? crypto.randomUUID()
+    creating.current = id
     await synced.run(held => newListHolding(held, { id, typed: name }, item), words.nameRule)
     if (!holdsList(copy, id)) return
+    creating.current = null
     setNaming(false)
     setName('')
   }

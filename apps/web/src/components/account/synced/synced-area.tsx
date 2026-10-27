@@ -112,12 +112,9 @@ export function SyncedAreaView({
     locale,
     text,
     listId,
-    change: async (entity, operation, entityId, fields) =>
-      settled([await copy.change(entity, operation, entityId, fields)]),
-    changeAll: async (changes: Change[]) => {
-      const done = await copy.changeAll(changes)
-      return done.ok ? settled(done.value) : settled([{ status: 'failed', failure: done.failure }])
-    },
+    change: async (entity, operation, entityId, fields, base) =>
+      settled([await copy.change(entity, operation, entityId, fields, base)]),
+    changeAll: async (changes: Change[]) => settled(await copy.changeAll(changes)),
     photoFile
   }
   const AreaView = areaViews[area]

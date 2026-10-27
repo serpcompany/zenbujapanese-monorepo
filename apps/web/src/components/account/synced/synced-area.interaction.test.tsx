@@ -91,6 +91,21 @@ describe('Known Words', () => {
     ])
     expect(standIn.dataOf('knownWord', word(1))).toMatchObject({ known: false })
   })
+
+  test('says a change went through but the page could not read the account again, and never sends it twice', async () => {
+    const standIn = new SyncedStandIn().holds('knownWord', word(1), {
+      itemId: word(1),
+      ...miru,
+      known: true
+    })
+    const { page } = openArea('knownWords', standIn)
+    await shows(page, '1 word or kanji')
+    standIn.failNextRead(429)
+    await click(page, 'Mark 見る（みる） as Unknown')
+    await shows(page, 'Too many tries')
+    expect(standIn.sent).toHaveLength(1)
+    expect(standIn.dataOf('knownWord', word(1))).toMatchObject({ known: false })
+  })
 })
 
 describe('Lists', () => {

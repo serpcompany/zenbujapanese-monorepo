@@ -39,6 +39,7 @@ export class SyncedStandIn {
   private readonly kinds = new Map<string, Map<string, Entity>>()
   private sequence = 0
   private refusals: string[] = []
+  private failedReads: number[] = []
   readonly sent: Mutation[] = []
   readonly reads: string[] = []
   subscribed = true
@@ -64,6 +65,11 @@ export class SyncedStandIn {
     return this
   }
 
+  failNextRead(status: number): this {
+    this.failedReads.push(status)
+    return this
+  }
+
   private changeOf(entity: string, entityId: string, held: Entity | undefined) {
     const data = held?.data ?? null
     return {
@@ -78,13 +84,15 @@ export class SyncedStandIn {
   private matches(entity: string, entityId: string, held: Entity, item: string | null) {
     if (item === null) return true
     if (entity === 'knownWord') return entityId === item
-    if (entity === 'wordNote') return held.data?.itemId === item
+    if (entity === 'wordNote') return held.data === null || held.data.itemId === item
     return entityId.endsWith(`/${item}`)
   }
 
   readKind(entity: string, query: URLSearchParams): Answered {
     this.reads.push(`${entity}?${query}`)
     if (!this.subscribed) return refused(402, 'subscription_required')
+    const failure = this.failedReads.shift()
+    if (failure) return refused(failure, 'too_many_requests')
     const after = Number(query.get('cursor') ?? '0')
     const limit = Number(query.get('limit') ?? pageSize)
     const item = query.get('item')

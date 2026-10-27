@@ -79,6 +79,28 @@ describe('Notes', () => {
     expect(page.textContent).toContain('Changed here.')
   })
 
+  test('keeps both texts when another device changed a note after its edit began, though the page read the change before Save', async () => {
+    const standIn = notes()
+    const { page } = openArea('notes', standIn)
+    await shows(page, 'Seen on a menu.')
+    await click(page, 'Edit your note on 見る（みる）')
+    await fill(page, 'Note', 'Changed here.')
+    standIn.holds(
+      'wordNote',
+      note,
+      { id: note, itemId: word(1), text: 'Changed in the app.', ...miru },
+      2
+    )
+    await click(page, 'Delete your note on 閻魔')
+    await click(page, 'Delete Note')
+    await vi.waitFor(() => expect(page.textContent).not.toContain('Notes Without a Word'))
+    await click(page, 'Save')
+    await shows(page, 'yours is kept as a new note beside it')
+    expect(standIn.sent.at(-2)).toMatchObject({ entityId: note, baseVersion: 1 })
+    expect(page.textContent).toContain('Changed in the app.')
+    expect(page.textContent).toContain('Changed here.')
+  })
+
   test('lists a note whose word has no page under Notes Without a Word, with the word it was saved on, to copy or delete', async () => {
     const copied = vi.fn(async () => undefined)
     vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText: copied } })
