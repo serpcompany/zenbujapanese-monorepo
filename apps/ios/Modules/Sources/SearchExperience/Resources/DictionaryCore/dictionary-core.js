@@ -2030,18 +2030,19 @@
       return value === null ? [1] : [0, value];
     });
   }
-  var resultFilters = ["all", "known", "unknown"];
+  var resultFilters = ["all", "unknown", "learning", "known"];
   function resultFilter(stored) {
     return resultFilters.find((filter) => filter === stored) ?? "all";
   }
   var filterTitles = {
     all: "All",
-    known: "Known",
-    unknown: "Unknown"
+    unknown: "Unknown",
+    learning: "Learning",
+    known: "Known"
   };
-  function filteredResults(results, filter, isKnown) {
+  function filteredResults(results, filter, status) {
     if (filter === "all") return [...results];
-    return results.filter(({ id }) => isKnown(id) === (filter === "known"));
+    return results.filter(({ id }) => status(id) === filter);
   }
   function hiddenCountTitle(count) {
     return count === 1 ? "1 word hidden by filter" : `${count} words hidden by filter`;
@@ -4319,7 +4320,7 @@ ${sense.noteText}` : sense.meaning
       };
     });
   }
-  function menu(sort, filter, dictionaries, ordered, isKnown) {
+  function menu(sort, filter, dictionaries, ordered, status) {
     const sorts = [
       relevanceSort,
       ...dictionaries.map(({ id }) => ({ by: "frequency", family: frequencyFamily(id) })),
@@ -4343,7 +4344,7 @@ ${sense.noteText}` : sense.meaning
         options: resultFilters.map((option) => ({
           value: option,
           title: filterTitles[option],
-          announcement: shownCountAnnouncement(filteredResults(ordered, option, isKnown).length)
+          announcement: shownCountAnnouncement(filteredResults(ordered, option, status).length)
         }))
       }
     };
@@ -4352,7 +4353,9 @@ ${sense.noteText}` : sense.meaning
     const layout = resultsLayout(rawQuery, results, exampleCount2, learner2.pickedKanji);
     if (layout.isEmpty) return { state: "noResults", query: layout.query, ...noMatches };
     const known = new Set(learner2.known);
+    const learning = new Set(learner2.learning);
     const isKnown = (id) => known.has(id);
+    const status = (id) => isKnown(id) ? "known" : learning.has(id) ? "learning" : "unknown";
     const frequencyEntries = [...new Set(layout.presented.map((item) => item.id))];
     const lookups = evidenceLookups(frequency(frequencyEntries));
     const dictionaries = enabledDictionaries(frequencyEntries, lookups);
@@ -4365,7 +4368,7 @@ ${sense.noteText}` : sense.meaning
       lookups,
       isKnown
     );
-    const shown2 = filteredResults(ordered, filter, isKnown);
+    const shown2 = filteredResults(ordered, filter, status);
     const isRanked = layout.sections.includes("results");
     const count = shown2.length + (layout.kanji ? 1 : 0);
     const rows = layout.isDiscovered ? wordRows(
@@ -4384,7 +4387,7 @@ ${sense.noteText}` : sense.meaning
       state: "results",
       query: layout.query,
       sections: layout.sections,
-      menu: !layout.isDiscovered && layout.presented.length > 0 ? menu(sort, filter, dictionaries ?? [], ordered, isKnown) : null,
+      menu: !layout.isDiscovered && layout.presented.length > 0 ? menu(sort, filter, dictionaries ?? [], ordered, status) : null,
       forgetsSort: forgetsSort(chosen, dictionaries),
       examples: layout.examples && {
         ...layout.examples,

@@ -17,6 +17,8 @@ struct AppLinkTests {
       .lookUp("見る"),
       .lookUp(" to eat & drink + 100% = ?#/"),
       .translate("Where can I buy a Suica card?\nThank you."),
+      .watch(try #require(YouTubeVideoID(rawValue: "AQdI1o2D32I"))),
+      .watch(nil),
     ]
     for action in actions {
       #expect(AppAction(try link(action), scheme: scheme) == action)
@@ -56,6 +58,28 @@ struct AppLinkTests {
     ] {
       let url = try #require(URL(string: website))
       #expect(open(url) == .dictionary(.website(url)), "\(website)")
+    }
+  }
+
+  @Test("a watch link opens Player on its video, and on Player's home when it names no video")
+  func watchLinks() throws {
+    let open = { (link: String) in AppLink(try #require(URL(string: link)), scheme: scheme) }
+    let video = try #require(YouTubeVideoID(rawValue: "AQdI1o2D32I"))
+    #expect(try open("\(scheme)://watch?v=AQdI1o2D32I") == .watch(video))
+    for noVideo in [
+      "\(scheme)://watch", "\(scheme)://watch?v=", "\(scheme)://watch?list=PLq2VAzMUDhfHyvK6AoYEw",
+      "\(scheme)://watch?v=AQdI1o2D32", "\(scheme)://watch?v=AQdI1o2D32I0",
+      "\(scheme)://watch?v=AQdI1o2D3.I", "\(scheme)://watch?v=https://youtu.be/AQdI1o2D32I",
+    ] {
+      #expect(try open(noVideo) == .watch(nil), "\(noVideo)")
+    }
+  }
+
+  @Test("a watch link in another build's scheme isn't this build's")
+  func watchLinkOfAnotherBuild() throws {
+    for other in ["com.zenbujapanese.dictionary", "com.zenbujapanese.dictionary.dev"] {
+      let link = try #require(URL(string: "\(other)://watch?v=AQdI1o2D32I"))
+      #expect(AppAction(link, scheme: scheme) == nil, "\(other)")
     }
   }
 
