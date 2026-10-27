@@ -3,7 +3,8 @@
   "ignore": ["apps/ios/**"],
   "workspaces": {
     ".": {
-      "entry": [".github/actions/*/*.cjs"]
+      "entry": [".github/actions/*/*.cjs"],
+      "ignoreDependencies": ["lefthook"]
     },
     "apps/web": {
       "entry": ["open-next.config.ts", "e2e/**/*.ts", "scripts/*.ts"]
