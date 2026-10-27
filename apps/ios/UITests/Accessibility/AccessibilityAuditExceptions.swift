@@ -220,7 +220,10 @@ private let textThatScales = [
     on: ["Account"], because: Why.scales),
   allow(.textClipped, .labels(["Learning", "Lists"]), on: ["Account"], touch, [.standard], because: Why.scales),
   allow(
-    .textClipped, .labels(["Learning", "Lists", "Translations"]), on: ["Account's rows, alone"], [.phone], [.largest],
+    .textClipped, .labels(["Media Library", "Known Words", "Learning"]), on: ["Account's library rows, alone"], [.phone],
+    [.largest], because: Why.scales),
+  allow(
+    .textClipped, .labels(["Lists", "Translations"]), on: ["Account's collection rows, alone"], [.phone], [.largest],
     because: Why.scales),
   allow(
     .dynamicType,

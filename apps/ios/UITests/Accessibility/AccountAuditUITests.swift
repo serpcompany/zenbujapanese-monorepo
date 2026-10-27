@@ -68,7 +68,10 @@ final class AccountAuditUITests: AccessibilityAuditCase {
     goBack(in: app)
     reveal(find("account.credits", in: app), in: app)
     audit("Account, at its end", in: app, .allButTextSizes)
-    if pass.size == .largest { auditAlone("Account's rows, alone", "library", showing: "account.translations", pass) }
+    if pass.size == .largest {
+      auditAlone("Account's library rows, alone", "library", showing: "account.learning", pass)
+      auditAlone("Account's collection rows, alone", "collections", showing: "account.translations", pass)
+    }
     auditAlone("Account, its about rows", "about", showing: "account.about", pass)
   }
 
