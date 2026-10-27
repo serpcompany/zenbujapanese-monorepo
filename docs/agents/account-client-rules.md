@@ -197,8 +197,9 @@ does this for it, with the order each kind is shown in from `account-views.ts`, 
   `item`, only those about one word or kanji: its Known mark (`knownWord`), its place in each list
   (`listWord`), its photos (`photoWord`), or its notes (`wordNote`). The answer's cursor is this
   kind's alone: sync refuses it, as this read refuses sync's or another kind's (`410`).
-- **Change** through `POST /v1/sync`, one mutation at a time, at the version the read gave (0 for
-  none), then read the kind again from its cursor, with its list or photo, or its words, when the
+- **Change** through `POST /v1/sync`, one mutation at a time, or up to 50 at once to clear every
+  search or move lists (`changeAll`), at the version the read gave (0 for none), then read the kind
+  again from its cursor, with its list or photo, or its words, when the
   page holds them, so the page shows the account as it is, a change from elsewhere included. A
   deleted list or photo drops its words. A `410` reads the kind again from no cursor.
 - **Results** follow the rules above: a conflict shows the account's copy, and a note's conflict

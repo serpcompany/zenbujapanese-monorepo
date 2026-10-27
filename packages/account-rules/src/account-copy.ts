@@ -49,6 +49,13 @@ export interface Held {
   data: EntityData | null
 }
 
+export interface Change {
+  entity: string
+  operation: string
+  entityId: string
+  fields?: EntityData
+}
+
 export type ChangeOutcome<F> =
   | { status: 'applied' }
   | { status: 'kept-as-new'; entityId: string }
@@ -63,11 +70,23 @@ interface Kind {
 }
 
 const pageSize = 500
+const mutationsAtOnce = 50
 
 const wordsOf: Readonly<Record<string, string>> = { list: 'listWord', photo: 'photoWord' }
 const ownerOf: Readonly<Record<string, string>> = { listWord: 'list', photoWord: 'photo' }
 
 const ok = <F>(): Answered<void, F> => ({ ok: true, value: undefined })
+
+function resultFor(mutation: Mutation, results: readonly MutationResult[]): MutationResult {
+  const result = results.find(each => each.id === mutation.id)
+  if (!result) throw new Error('the account answered no result for a change it was sent')
+  return result
+}
+
+function outcomeOf<F>(result: MutationResult): ChangeOutcome<F> {
+  if (result.status === 'rejected') return { status: 'rejected', ...result.error }
+  return result.status === 'applied' ? { status: 'applied' } : { status: 'conflict' }
+}
 
 export class AccountCopy<F> {
   private readonly kinds = new Map<string, Kind>()
@@ -125,6 +144,35 @@ export class AccountCopy<F> {
     return { status: 'conflict' }
   }
 
+  async changeAll(changes: readonly Change[]): Promise<Answered<ChangeOutcome<F>[], F>> {
+    const outcomes: ChangeOutcome<F>[] = []
+    for (let at = 0; at < changes.length; at += mutationsAtOnce) {
+      const mutations = changes
+        .slice(at, at + mutationsAtOnce)
+        .map(change => this.mutationOf(change, this.version(change.entity, change.entityId)))
+      const answer = await this.transport.sync(mutations)
+      if (!answer.ok) return answer
+      outcomes.push(...mutations.map(mutation => outcomeOf<F>(resultFor(mutation, answer.value))))
+    }
+    for (const entity of new Set(changes.map(change => change.entity))) {
+      const caughtUp = await this.catchUp(entity)
+      if (!caughtUp.ok) return caughtUp
+    }
+    return { ok: true, value: outcomes }
+  }
+
+  private mutationOf(change: Change, baseVersion: number): Mutation {
+    const { entity, operation, entityId, fields } = change
+    return {
+      id: this.newId(),
+      entity,
+      operation,
+      entityId,
+      baseVersion,
+      ...(fields ? { fields } : {})
+    }
+  }
+
   private async keepTheNote(
     entityId: string,
     fields: EntityData,
@@ -158,19 +206,10 @@ export class AccountCopy<F> {
     baseVersion: number,
     fields: EntityData | undefined
   ): Promise<Answered<MutationResult, F>> {
-    const mutation: Mutation = {
-      id: this.newId(),
-      entity,
-      operation,
-      entityId,
-      baseVersion,
-      ...(fields ? { fields } : {})
-    }
+    const mutation = this.mutationOf({ entity, operation, entityId, fields }, baseVersion)
     const answer = await this.transport.sync([mutation])
     if (!answer.ok) return answer
-    const result = answer.value.find(each => each.id === mutation.id)
-    if (!result) throw new Error('the account answered no result for the change it was sent')
-    return { ok: true, value: result }
+    return { ok: true, value: resultFor(mutation, answer.value) }
   }
 
   private async catchUp(entity: string): Promise<Answered<void, F>> {

@@ -126,6 +126,46 @@ describe("a client's copy of the account", () => {
     })
   })
 
+  test('sends many changes 50 at a time, then reads each kind they touched once', async () => {
+    const { copy, sent, reads, answer, page } = scripted()
+    page(
+      'searches',
+      false,
+      ...Array.from({ length: 51 }, (_, n) => put('recentSearch', `s${n}`, 1, {}))
+    )
+    await copy.read('recentSearch')
+    answer(mutation => ({ id: mutation.id, status: 'applied', version: 2 }))
+    answer(mutation =>
+      mutation.entityId === 's50'
+        ? {
+            id: mutation.id,
+            status: 'conflict',
+            version: 3,
+            current: put('recentSearch', 's50', 3, {})
+          }
+        : { id: mutation.id, status: 'applied', version: 2 }
+    )
+    const removed = await copy.changeAll(
+      Array.from({ length: 51 }, (_, n) => ({
+        entity: 'recentSearch',
+        operation: 'remove',
+        entityId: `s${n}`
+      }))
+    )
+    expect(removed.ok && removed.value.map(outcome => outcome.status)).toEqual([
+      ...Array(50).fill('applied'),
+      'conflict'
+    ])
+    expect(sent.map(mutation => mutation.baseVersion)).toEqual(Array(51).fill(1))
+    expect(reads.map(read => read.query.cursor)).toEqual([undefined, 'searches'])
+    expect(
+      await copy.changeAll([{ entity: 'recentSearch', operation: 'remove', entityId: 's0' }])
+    ).toEqual({
+      ok: false,
+      failure: 'offline'
+    })
+  })
+
   test('says why a change was refused, and passes on a failure to send it', async () => {
     const { copy, answer } = scripted()
     await copy.read('listWord')
