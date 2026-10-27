@@ -1,20 +1,36 @@
 import SwiftUI
 
+struct KnownWordChoice: Equatable {
+  let title: LocalizedStringKey
+  let systemImage: String
+  let action: String
+  let isEnabled: Bool
+}
+
+extension WordKnowledge {
+  func choice(for item: SavedItem) -> KnownWordChoice {
+    let known = isKnown(item)
+    return KnownWordChoice(
+      title: isReadOnly
+        ? "Known Words Can’t Be Changed" : known ? "Mark as Unknown" : "Mark as Known",
+      systemImage: known ? "xmark.circle" : "checkmark.circle",
+      action: known ? "mark-unknown" : "mark-known",
+      isEnabled: canChange)
+  }
+}
+
 struct KnownWordMenuButton: View {
   @Environment(WordKnowledge.self) private var wordKnowledge
   let item: SavedItem
   var identifierPrefix = "word-detail"
 
   var body: some View {
-    let isKnown = wordKnowledge.isKnown(item)
-    let title: LocalizedStringKey =
-      wordKnowledge.isReadOnly
-      ? "Known Words Can’t Be Changed" : isKnown ? "Mark as Unknown" : "Mark as Known"
-    Button(title, systemImage: isKnown ? "xmark.circle" : "checkmark.circle") {
+    let choice = wordKnowledge.choice(for: item)
+    Button(choice.title, systemImage: choice.systemImage) {
       wordKnowledge.toggleKnown(item)
     }
-    .disabled(!wordKnowledge.isLoaded || wordKnowledge.isReadOnly)
-    .accessibilityIdentifier("\(identifierPrefix).\(isKnown ? "mark-unknown" : "mark-known")")
+    .disabled(!choice.isEnabled)
+    .accessibilityIdentifier("\(identifierPrefix).\(choice.action)")
   }
 }
 
@@ -112,10 +128,13 @@ struct KnownWordsView: View {
     .task(id: rowsRequest) {
       guard wordKnowledge.isLoaded else { return }
       let records = wordKnowledge.knownRecords
-      rows = await KnowledgeRows.resolving(
-        records,
-        known: Set(records.map(\.entryID).filter(wordKnowledge.isKnown(storedID:))),
-        using: lookupClient)
+      guard
+        let resolved = await KnowledgeRows.resolving(
+          records,
+          known: Set(records.map(\.entryID).filter(wordKnowledge.isKnown(storedID:))),
+          using: lookupClient)
+      else { return }
+      rows = resolved
     }
     .navigationTitle("Known Words")
   }

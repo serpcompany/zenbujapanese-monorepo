@@ -17,7 +17,7 @@ struct KnowledgeRows: Equatable, Sendable {
   static func resolving(
     _ records: [WordKnowledgeRecord], known: Set<String>, using lookupClient: LookupClient,
     core: PresentationCore = .shared
-  ) async -> KnowledgeRows {
+  ) async -> KnowledgeRows? {
     let ids = records.filter { $0.kanji == nil }.map { LanguageReferenceID(rawValue: $0.entryID) }
     let found = (try? await lookupClient.entries(ids)) ?? [:]
     let entries = ids.compactMap { id in found[id].flatMap { $0.id == id ? $0 : nil } }
@@ -29,6 +29,7 @@ struct KnowledgeRows: Equatable, Sendable {
     let words = entries.compactMap { entry in
       rows[entry.id.rawValue].map { (entry.id.rawValue, Word(entry: entry, row: $0)) }
     }
+    guard !Task.isCancelled else { return nil }
     return KnowledgeRows(words: Dictionary(words, uniquingKeysWith: { first, _ in first }))
   }
 

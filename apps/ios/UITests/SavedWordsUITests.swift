@@ -61,12 +61,23 @@ final class SavedWordsUITests: ZenbuUITestCase {
     markNichiKnownFromJapan(in: app)
     open(.account, in: app)
     tap(find("account.known-words", in: app))
-    waitUntil(find("result.kanji-primary.日", in: app), "label == %@", kanji)
-    waitUntil(find("result.japan", in: app), "label == %@", word)
+    let nichi = find("result.kanji-primary.日", in: app)
+    waitUntil(nichi, "label == %@", kanji)
+    let japan = find("result.japan", in: app)
+    waitUntil(japan, "label == %@", word)
+    if device != .mac {
+      waitUntil(japan, "value CONTAINS 'JLPT level N' AND value CONTAINS 'YouTube frequency rank'")
+    }
     let screen = XCTAttachment(screenshot: app.screenshot())
     screen.name = "Known Words"
     screen.lifetime = .keepAlways
     add(screen)
+    tap(japan)
+    waitFor(find("word-detail.kanji.日", in: app))
+    waitUntilGone(find("kanji-detail.more-menu", in: app))
+    tap(tabItem(.account, in: app), toShow: nichi)
+    tap(nichi, toShow: find("kanji-detail.more-menu", in: app))
+    tap(tabItem(.account, in: app), toShow: nichi)
     chooseLeadingAction("mark-unknown", onRow: "result.kanji-primary.日", in: app)
     waitUntilGone(find("result.kanji-primary.日", in: app))
     waitFor(find("result.japan", in: app))
