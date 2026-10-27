@@ -239,7 +239,7 @@ describe('searchResultsScreen (SearchResultsView)', () => {
     })
   })
 
-  test('sums up the kanji row with the kanji’s own meanings in order, else the entry’s gloss or Kanji detail', () => {
+  test('sums up the kanji row with the kanji’s own meanings', () => {
     const sunday = item('日', { id: 'a'.repeat(32) })
     const meanings = new Map([
       ['日', ['day', 'sun', 'Japan', 'counter for days']],

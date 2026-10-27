@@ -197,14 +197,12 @@ results, and it opens that search.
   Example Sentences row, the reading refinement, then the rows in order with their chips" (title and
   link) and the SRR cases (title); smoke (the row and its link).
 
-**Kanji row.** A one-kanji query leads the list with a KANJI row: the kanji, the label "KANJI",
-and the kanji's own meanings in their source order, joined with commas (日: "day, sun, Japan,
-counter for days"), wrapping onto as many lines as they need. A kanji with no meanings in the kanji
-data shows the summary of the entry written as that kanji (the first result if none is), chosen
-before the re-sort, or "Kanji detail" without results. The row opens in place to the kanji's
-[details](#kanji-details), the screen the app's row opens, and closes again; the details are in
-the page's HTML while closed. A kanji the dictionary has no details for, or whose details the
-dictionary service couldn't answer, is a row that doesn't open.
+**Kanji row.** A one-kanji query leads the list with a KANJI row: the kanji, the label "KANJI", and
+the kanji's own meanings in source order, wrapping, else the summary of the entry written as that
+kanji (the first result if none is), chosen before the re-sort, or "Kanji detail" without results.
+The row opens in place to the kanji's [details](#kanji-details), the screen the app's row opens, and
+closes again; the details are in the page's HTML while closed. A kanji the dictionary has no details
+for, or whose details the dictionary service couldn't answer, is a row that doesn't open.
 
 - Source: App docs, Search ("a dedicated Kanji result for a single-kanji query"); `KanjiPrimaryRow`
   and `primaryEntry(for:)` in `SearchResultsView.swift` and `DictionaryEntry.swift`; ADR 0010 (a
@@ -212,15 +210,12 @@ dictionary service couldn't answer, is a row that doesn't open.
 - Check: SRR `kanji` (character, label, summary, and entry) for 8 kanji, and whether each SRR case
   draws its kanji's details; `search-results.test.tsx`, "leads a one-kanji query with the KANJI
   row and its primary entry’s meaning", "the KANJI row opens to the kanji’s details when the
-  dictionary has them", and the 日 case; `results.test.ts`, "leads a one-kanji query with the kanji
-  row, from the entry written as the kanji" and "sums up the kanji row with the kanji’s own
-  meanings in order, else the entry’s gloss or Kanji detail"; `src/lib/dictionary/results/links.test.ts`, "gives the
-  kanji row the kanji’s details, when the dictionary has them"; `data.test.ts`, "gives the kanji
-  row the kanji’s details when the service has them" and "searches the fixtures without a service,
-  in the app’s order" (the fixtures' meanings); `apps/web/e2e/kanji.spec.ts`, "the search for 要
-  leads with a kanji row that reads all of the kanji’s meanings" and "the search
-  page for 要 opens 要 to its stroke order, metrics, meanings, readings, and words"; smoke "要's
-  search holds its kanji row and the kanji's details".
+  dictionary has them", and the 日 case; `results.test.ts`, "sums up the kanji row with the
+  kanji’s own meanings"; `src/lib/dictionary/results/links.test.ts`, "gives the kanji row the
+  kanji’s details, when the dictionary has them"; `data.test.ts`, "gives the kanji row the kanji’s
+  details when the service has them"; `apps/web/e2e/kanji.spec.ts`, "要’s kanji row reads all of
+  its meanings" and "the search page for 要 opens 要 to its stroke order, metrics, meanings,
+  readings, and words"; smoke "要's search holds its kanji row and the kanji's details".
 
 **Result rows.** Each row shows the headword with furigana, its meaning clamped to two lines, and
 its frequency chips, and opens the word page. The meaning is the one that matched for an English

@@ -82,9 +82,7 @@ async function stepThroughStrokes(page: Page, locale: Locale, row: string) {
 }
 
 test.describe('kanji details', () => {
-  test('the search for 要 leads with a kanji row that reads all of the kanji’s meanings', async ({
-    page
-  }) => {
+  test('要’s kanji row reads all of its meanings', async ({ page }) => {
     await page.goto(kanjiSearch)
     await expect(page.locator('[data-kanji-row="要"]')).toHaveText(`KANJI${meanings}`)
     await expect(page.getByRole('button', { name: rows[0].row, exact: true })).toBeVisible()
