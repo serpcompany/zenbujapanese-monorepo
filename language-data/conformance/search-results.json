@@ -14,11 +14,11 @@
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "7b62147b6c3ea51d1ddcc3ce9cf2df2f74a8bf99e7f8213888e1f5769fc5ae58"
+      "sha256" : "83a194a0cbdbf2b3f49deaaf4c19275bf0e9a1f03e6a8f188e0a6561854bcbce"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "77e222bd5364a29a76cd8814369245a3d7307de03fda1bd87422c7c6670d10e5"
+      "sha256" : "1b366dd10305e0af380b69025a628cb79281eb49bf11934dc8ed5243c224c44e"
     },
     {
       "name" : "FrequencyPackMappingV1.sql",
@@ -3711,6 +3711,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -4862,6 +4868,12 @@
               "name" : "JLPT",
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "270",
               "tier" : "very common"
             }
           ],
@@ -6060,6 +6072,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "113",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1392580"
+          ],
+          "headword" : "前",
+          "languageReferenceID" : "e407cd7d59cb9766a7640cd0a5a29bfe",
+          "match" : "source=0 japanese writtenExact",
+          "reading" : "まえ",
+          "retrievalOrder" : 0,
+          "summary" : "in front (of), before (e.g. a building)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "262",
               "tier" : "very common"
             }
@@ -6073,31 +6110,6 @@
           "reading" : "さき",
           "retrievalOrder" : 2,
           "summary" : "point, tip, end, nozzle"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N5",
-              "tier" : "very common"
-            },
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "61,540",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1392580"
-          ],
-          "headword" : "前",
-          "languageReferenceID" : "e407cd7d59cb9766a7640cd0a5a29bfe",
-          "match" : "source=0 japanese writtenExact",
-          "reading" : "まえ",
-          "retrievalOrder" : 0,
-          "summary" : "in front (of), before (e.g. a building)"
         },
         {
           "chips" : [
@@ -15982,6 +15994,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "181",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -17230,6 +17248,12 @@
               "pack" : "zenbu.jlpt.waller.levels",
               "text" : "N5",
               "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "270",
+              "tier" : "very common"
             }
           ],
           "entSeq" : [
@@ -17622,6 +17646,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "1,719",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1404320"
+          ],
+          "headword" : "息",
+          "languageReferenceID" : "f3da72a3de21ea5fdb0f9d17b0b3013c",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "いき",
+          "retrievalOrder" : 15,
+          "summary" : "(water) vapor"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N3",
+              "tier" : "common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "1,781",
               "tier" : "common"
             }
@@ -17660,25 +17709,6 @@
           "reading" : "すいじゅん",
           "retrievalOrder" : 12,
           "summary" : "water level"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N3",
-              "tier" : "common"
-            }
-          ],
-          "entSeq" : [
-            "1404320"
-          ],
-          "headword" : "息",
-          "languageReferenceID" : "f3da72a3de21ea5fdb0f9d17b0b3013c",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "いき",
-          "retrievalOrder" : 15,
-          "summary" : "(water) vapor"
         },
         {
           "chips" : [
@@ -29778,6 +29808,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,569",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1426480"
+          ],
+          "headword" : "柱",
+          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
+          "match" : "source=0 japanese readingPrefix",
+          "reading" : "はしら",
+          "retrievalOrder" : 23,
+          "summary" : "pillar, post"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "22,641",
               "tier" : "uncommon"
             }
@@ -29791,25 +29846,6 @@
           "reading" : "はしわたし",
           "retrievalOrder" : 31,
           "summary" : "mediation, good offices, go-between, intermediary, mediator, bridge (between)"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "1426480"
-          ],
-          "headword" : "柱",
-          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
-          "match" : "source=0 japanese readingPrefix",
-          "reading" : "はしら",
-          "retrievalOrder" : 23,
-          "summary" : "pillar, post"
         },
         {
           "chips" : [
@@ -34315,6 +34351,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "178",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1259140"
+          ],
+          "headword" : "見える",
+          "languageReferenceID" : "d1dda94ed540e50532c9d61d1e420375",
+          "match" : "source=0 japanese writtenPrefix",
+          "reading" : "みえる",
+          "retrievalOrder" : 23,
+          "summary" : "to be seen, to be visible, to be in sight"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N4",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "581",
               "tier" : "very common"
             }
@@ -34378,25 +34439,6 @@
           "reading" : "けんぶつ",
           "retrievalOrder" : 21,
           "summary" : "sightseeing, watching, viewing"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N4",
-              "tier" : "very common"
-            }
-          ],
-          "entSeq" : [
-            "1259140"
-          ],
-          "headword" : "見える",
-          "languageReferenceID" : "d1dda94ed540e50532c9d61d1e420375",
-          "match" : "source=0 japanese writtenPrefix",
-          "reading" : "みえる",
-          "retrievalOrder" : 23,
-          "summary" : "to be seen, to be visible, to be in sight"
         },
         {
           "chips" : [
@@ -39649,6 +39691,25 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "3,568",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1365330"
+          ],
+          "headword" : "親父",
+          "languageReferenceID" : "240e69eeed8bd3928fd7e72ec6d5d83b",
+          "match" : "source=0 english tokenGloss romaji=0",
+          "reading" : "おやじ",
+          "retrievalOrder" : 12,
+          "summary" : "proprietor (of a restaurant, store, etc.)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "4,051",
               "tier" : "common"
             }
@@ -40285,20 +40346,6 @@
           "reading" : "こくむだいじん",
           "retrievalOrder" : 10,
           "summary" : "minister of state"
-        },
-        {
-          "chips" : [
-
-          ],
-          "entSeq" : [
-            "1365330"
-          ],
-          "headword" : "親父",
-          "languageReferenceID" : "240e69eeed8bd3928fd7e72ec6d5d83b",
-          "match" : "source=0 english tokenGloss romaji=0",
-          "reading" : "おやじ",
-          "retrievalOrder" : 12,
-          "summary" : "proprietor (of a restaurant, store, etc.)"
         },
         {
           "chips" : [
@@ -43749,6 +43796,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "195",
+              "tier" : "very common"
+            }
+          ],
+          "entSeq" : [
+            "1236070"
+          ],
+          "headword" : "強い",
+          "languageReferenceID" : "8ad5873587e02706554d675649759099",
+          "match" : "source=0 english strongGloss romaji=0 sense=later",
+          "reading" : "つよい",
+          "retrievalOrder" : 39,
+          "summary" : "good (at)"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N5",
+              "tier" : "very common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "310",
               "tier" : "very common"
             }
@@ -43787,31 +43859,6 @@
           "reading" : "ええ",
           "retrievalOrder" : 43,
           "summary" : "good"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N5",
-              "tier" : "very common"
-            },
-            {
-              "name" : "YouTube",
-              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-              "text" : "336,638",
-              "tier" : "rare"
-            }
-          ],
-          "entSeq" : [
-            "1236070"
-          ],
-          "headword" : "強い",
-          "languageReferenceID" : "8ad5873587e02706554d675649759099",
-          "match" : "source=0 english strongGloss romaji=0 sense=later",
-          "reading" : "つよい",
-          "retrievalOrder" : 39,
-          "summary" : "good (at)"
         },
         {
           "chips" : [
@@ -44778,6 +44825,31 @@
             {
               "name" : "YouTube",
               "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
+              "text" : "2,569",
+              "tier" : "common"
+            }
+          ],
+          "entSeq" : [
+            "1426480"
+          ],
+          "headword" : "柱",
+          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
+          "match" : "source=0 english romajiOnly romaji=1",
+          "reading" : "はしら",
+          "retrievalOrder" : 8,
+          "summary" : "pillar, post"
+        },
+        {
+          "chips" : [
+            {
+              "name" : "JLPT",
+              "pack" : "zenbu.jlpt.waller.levels",
+              "text" : "N1",
+              "tier" : "moderately common"
+            },
+            {
+              "name" : "YouTube",
+              "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
               "text" : "22,641",
               "tier" : "uncommon"
             }
@@ -44791,25 +44863,6 @@
           "reading" : "はしわたし",
           "retrievalOrder" : 13,
           "summary" : "mediation, good offices, go-between, intermediary, mediator, bridge (between)"
-        },
-        {
-          "chips" : [
-            {
-              "name" : "JLPT",
-              "pack" : "zenbu.jlpt.waller.levels",
-              "text" : "N1",
-              "tier" : "moderately common"
-            }
-          ],
-          "entSeq" : [
-            "1426480"
-          ],
-          "headword" : "柱",
-          "languageReferenceID" : "b8344d350f538b0d7bc740e9c30e59a0",
-          "match" : "source=0 english romajiOnly romaji=1",
-          "reading" : "はしら",
-          "retrievalOrder" : 8,
-          "summary" : "pillar, post"
         },
         {
           "chips" : [

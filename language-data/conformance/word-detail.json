@@ -18,11 +18,11 @@
     },
     {
       "name" : "TUBELEXFrequencyPack.sqlite3",
-      "sha256" : "7b62147b6c3ea51d1ddcc3ce9cf2df2f74a8bf99e7f8213888e1f5769fc5ae58"
+      "sha256" : "83a194a0cbdbf2b3f49deaaf4c19275bf0e9a1f03e6a8f188e0a6561854bcbce"
     },
     {
       "name" : "FrequencyPackCatalog.json",
-      "sha256" : "77e222bd5364a29a76cd8814369245a3d7307de03fda1bd87422c7c6670d10e5"
+      "sha256" : "1b366dd10305e0af380b69025a628cb79281eb49bf11934dc8ed5243c224c44e"
     },
     {
       "name" : "KanjiReferenceData.json",
@@ -56022,7 +56022,6 @@
         },
         {
           "details" : {
-            "explanation" : "YouTube has no mapped frequency rank for this entry.",
             "pack" : {
               "description" : "Japanese used in YouTube subtitles across everyday media categories; this is media frequency, not universal Japanese frequency.",
               "domain" : "Everyday YouTube Japanese · TUBELEX",
@@ -56031,13 +56030,21 @@
               "version" : "2025.1"
             },
             "rows" : [
-
+              {
+                "label" : "Rank",
+                "value" : "#270"
+              },
+              {
+                "label" : "Percentile",
+                "value" : "Top 0.08%"
+              }
             ],
             "section" : "Frequency"
           },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-          "text" : "No rank"
+          "text" : "270",
+          "tier" : "very common"
         }
       ],
       "furigana" : [
@@ -61793,19 +61800,19 @@
             "rows" : [
               {
                 "label" : "Rank",
-                "value" : "#117,001"
+                "value" : "#1,152"
               },
               {
                 "label" : "Percentile",
-                "value" : "Top 33.29%"
+                "value" : "Top 0.33%"
               }
             ],
             "section" : "Frequency"
           },
           "name" : "YouTube",
           "pack" : "zenbu.tubelex.youtube.ja.unidic-3.1",
-          "text" : "117,001",
-          "tier" : "rare"
+          "text" : "1,152",
+          "tier" : "very common"
         }
       ],
       "furigana" : [

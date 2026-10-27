@@ -18,7 +18,9 @@ from pathlib import Path
 
 
 ARTIFACT_SCHEMA = "zenbu.frequency-pack.v1"
-RESOURCES = Path(__file__).resolve().parents[2] / "apps/ios/Modules/Sources/SearchExperience/Resources"
+REVIEWED_READINGS_SCHEMA = "zenbu.frequency-pack-reviewed-readings.v1"
+REPOSITORY = Path(__file__).resolve().parents[2]
+RESOURCES = REPOSITORY / "apps/ios/Modules/Sources/SearchExperience/Resources"
 UNIDIC_LEXICON = "unidic-cwj-3.1.0/lex_3_1.csv"
 KATAKANA_WORD = re.compile(r"^[ァ-ヺー・]+$")
 csv.field_size_limit(16 * 1024 * 1024)
@@ -219,6 +221,77 @@ def mapped_database(
     return database
 
 
+def mapping_facts(
+    rows: list[tuple[int, str, int, str, str]],
+    readings: list[str],
+    mapping_sql_file: Path,
+    language_data: Path,
+) -> tuple[set[int], dict[bytes, int], dict[int, int]]:
+    database = mapped_database(rows, readings, mapping_sql_file, language_data)
+    try:
+        unplaced = {
+            rank
+            for (rank,) in database.execute(
+                "SELECT rank FROM resolutions WHERE rank NOT IN (SELECT rank FROM eligible)"
+            )
+        }
+        ranks = dict(database.execute("SELECT language_reference_id, rank FROM frequency_evidence"))
+        entry_numbers = dict(
+            database.execute(
+                "SELECT e.rank, l.source_record_id FROM frequency_evidence e "
+                "JOIN language.entries l ON l.id = e.language_reference_id"
+            )
+        )
+    finally:
+        database.close()
+    return unplaced, ranks, entry_numbers
+
+
+def reviewed_readings_path(manifest: dict[str, object]) -> Path | None:
+    reading_source = manifest.get("readingSource")
+    if not isinstance(reading_source, dict) or not reading_source.get("reviewedReadings"):
+        return None
+    return REPOSITORY / str(reading_source["reviewedReadings"])
+
+
+def reviewed_rows(path: Path) -> list[dict[str, object]]:
+    review = json.loads(path.read_text(encoding="utf-8"))
+    if review.get("schema") != REVIEWED_READINGS_SCHEMA:
+        raise ValueError(f"{path.name} isn't a {REVIEWED_READINGS_SCHEMA} list")
+    return review["rows"]
+
+
+def with_reviewed_readings(
+    rows: list[tuple[int, str, int, str, str]],
+    readings: list[str],
+    manifest: dict[str, object],
+    language_data: Path,
+    unplaced: set[int],
+    ranks_before: dict[bytes, int],
+) -> list[str]:
+    path = reviewed_readings_path(manifest)
+    if path is None:
+        return readings
+    source_ranks = {(form, pos): rank for rank, form, _, pos, _ in rows}
+    reviewed = reviewed_rows(path)
+    for row in reviewed:
+        if source_ranks.get((row["form"], row["pos"])) != row["rank"]:
+            raise ValueError(f"reviewed row {row['form']} ({row['pos']}) isn't source row {row['rank']}")
+    kept = [row for row in reviewed if row["reading"]]
+    for row in kept:
+        if row["rank"] not in unplaced:
+            raise ValueError(f"source row {row['rank']} ({row['form']}) is placed without its review")
+        readings[row["rank"] - 1] = str(row["reading"])
+    _, ranks, entry_numbers = mapping_facts(rows, readings, mapping_sql_path(manifest), language_data)
+    for row in kept:
+        if entry_numbers.get(row["rank"]) != row["entry"]:
+            raise ValueError(f"{row['form']} read {row['reading']} doesn't rank JMdict entry {row['entry']}")
+    worse = sorted(rank for entry, rank in ranks_before.items() if ranks.get(entry, rank + 1) > rank)
+    if worse:
+        raise ValueError(f"the reviewed readings would cost the entries ranked {worse[:5]} their rank")
+    return readings
+
+
 def source_readings(
     rows: list[tuple[int, str, int, str, str]],
     manifest: dict[str, object],
@@ -230,18 +303,9 @@ def source_readings(
     if unidic is None:
         raise ValueError("source manifest names a UniDic reading source; pass --unidic")
     lemma_readings = unidic_lemma_readings(unidic, manifest)
-    empty = [""] * len(rows)
-    v1 = mapped_database(rows, empty, RESOURCES / "FrequencyPackMappingV1.sql", language_data)
-    try:
-        unresolved = {
-            rank
-            for (rank,) in v1.execute(
-                "SELECT rank FROM resolutions WHERE rank NOT IN (SELECT rank FROM eligible)"
-            )
-        }
-        v1_ranks = dict(v1.execute("SELECT language_reference_id, rank FROM frequency_evidence"))
-    finally:
-        v1.close()
+    unresolved, v1_ranks, _ = mapping_facts(
+        rows, [""] * len(rows), RESOURCES / "FrequencyPackMappingV1.sql", language_data
+    )
     readings = [
         source_reading(form, lemma_readings[(form, pos)])
         if rank in unresolved and (form, pos) in lemma_readings
@@ -249,19 +313,14 @@ def source_readings(
         for rank, form, _, pos, _ in rows
     ]
     while True:
-        v2 = mapped_database(rows, readings, mapping_sql_path(manifest), language_data)
-        try:
-            worse = [
-                rank
-                for identifier, rank in v2.execute(
-                    "SELECT language_reference_id, rank FROM frequency_evidence"
-                )
-                if readings[rank - 1] and v1_ranks.get(identifier, rank) < rank
-            ]
-        finally:
-            v2.close()
+        unplaced, ranks, _ = mapping_facts(rows, readings, mapping_sql_path(manifest), language_data)
+        worse = [
+            rank
+            for identifier, rank in ranks.items()
+            if readings[rank - 1] and v1_ranks.get(identifier, rank) < rank
+        ]
         if not worse:
-            return readings
+            return with_reviewed_readings(rows, readings, manifest, language_data, unplaced, ranks)
         for rank in worse:
             readings[rank - 1] = ""
 
@@ -360,6 +419,15 @@ def import_pack(arguments: argparse.Namespace) -> None:
     unidic = arguments.unidic.resolve() if arguments.unidic else None
     readings = source_readings(rows, manifest, language_data, unidic)
     mapping = create_artifact(output, manifest, rows, readings, total_tokens, language_data)
+    reviewed = reviewed_readings_path(manifest)
+    review_record = (
+        {
+            "reviewedReadingsSHA256": sha256(reviewed),
+            "reviewedReadingRows": sum(1 for row in reviewed_rows(reviewed) if row["reading"]),
+        }
+        if reviewed
+        else {}
+    )
     import_record = {
         "schema": "zenbu.frequency-pack-import.v1",
         "sourceManifest": manifest,
@@ -369,6 +437,7 @@ def import_pack(arguments: argparse.Namespace) -> None:
         "importerSHA256": sha256(Path(__file__)),
         "mappingPolicySHA256": sha256(mapping_sql_path(manifest)),
         "readingRows": sum(1 for reading in readings if reading),
+        **review_record,
         "artifactBytes": output.stat().st_size,
         "artifactSHA256": sha256(output),
         **mapping,
