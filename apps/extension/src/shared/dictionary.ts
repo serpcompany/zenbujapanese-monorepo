@@ -1,4 +1,3 @@
-import type { SegmentedToken } from '@zenbu/dictionary-core/cards/segmentation'
 import type {
   FormExampleRows,
   KanjiRows,
@@ -10,8 +9,6 @@ import type { Failure } from './messages'
 
 export type NotReady = { type: 'not-ready'; data: DataState }
 export type Lookup<T> = Promise<T | NotReady | Failure>
-export type StateAnswer = { type: 'state'; data: DataState }
-export type SegmentAnswer = { type: 'segment'; tokens: SegmentedToken[]; romaji: string | null }
 export type WordAnswer = { type: 'word'; rows: WordRows | null }
 export type KanjiAnswer = {
   type: 'kanji'
@@ -25,10 +22,6 @@ export type ResolveAnswer = { type: 'resolve'; entSeq: number | null }
 const notBuilt: Failure = { type: 'failed', reason: 'The dictionary lookups come with #956.' }
 const stub = () => Promise.resolve(notBuilt)
 
-export const readDataState: () => Promise<StateAnswer | Failure> = stub
-export const checkForUpdates: () => Promise<StateAnswer | Failure> = stub
-export const openWelcomeTab = (): Promise<void> => Promise.resolve()
-export const segmentText: (text: string) => Lookup<SegmentAnswer> = stub
 export const lookUpWord: (entSeq: number) => Lookup<WordAnswer> = stub
 export const lookUpKanji: (character: string) => Lookup<KanjiAnswer> = stub
 export const lookUpWordExamples: (entSeq: number, from: number) => Lookup<WordExamplesAnswer> = stub
