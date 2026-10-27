@@ -16,3 +16,13 @@ export const settingDefaults = {
 }
 
 export type Settings = typeof settingDefaults
+export type SettingKey = keyof Settings
+
+export const readSettings = (): Promise<Settings> => Promise.resolve(settingDefaults)
+export const writeSettings = (_changes: Partial<Settings>): Promise<void> => Promise.resolve()
+export const watchSettings =
+  (_listener: (settings: Settings) => void): (() => void) =>
+  () =>
+    undefined
+export const isZenbuOn = (host: string, settings: Settings): boolean =>
+  !settings['sites.off'].includes(host)

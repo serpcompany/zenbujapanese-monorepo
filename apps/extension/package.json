@@ -15,6 +15,9 @@
     "lint": "biome check",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:browser": "pnpm build:test && playwright test",
+    "language-data": "node --experimental-strip-types --no-warnings e2e/serve.ts",
+    "agent-chrome": "node --experimental-strip-types --no-warnings agent-chrome/ctl.mjs",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm build:test"
   },
   "dependencies": {
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/chrome": "^0.3.6",
     "@types/node": "^22.20.4",
@@ -36,6 +40,7 @@
     "@types/react-dom": "^19",
     "happy-dom": "^20.14.5",
     "postcss": "^8.5.28",
+    "puppeteer-core": "24.43.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^8.3.1",

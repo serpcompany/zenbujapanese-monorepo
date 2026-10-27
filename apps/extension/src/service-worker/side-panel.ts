@@ -6,6 +6,7 @@ import {
   type MovePanel,
   type PanelRoute
 } from '../side-panel/route'
+import type { FailureCode } from './router'
 
 type PanelOpened = { type: 'opened' }
 
@@ -55,8 +56,19 @@ export function openPanelListener(windows: PanelWindows) {
   }
 }
 
-export function startSidePanel(): void {
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true })
+type ReportFailure = (code: FailureCode) => void
+
+export function openOnToolbarClick(
+  setPanelBehavior: (behavior: { openPanelOnActionClick: boolean }) => Promise<void>,
+  reportFailure: ReportFailure
+): Promise<void> {
+  return setPanelBehavior({ openPanelOnActionClick: true }).catch(() =>
+    reportFailure('side-panel-behavior')
+  )
+}
+
+export function startSidePanel(reportFailure: ReportFailure): void {
+  openOnToolbarClick(behavior => chrome.sidePanel.setPanelBehavior(behavior), reportFailure)
   chrome.runtime.onMessage.addListener(
     openPanelListener({
       open: windowId =>

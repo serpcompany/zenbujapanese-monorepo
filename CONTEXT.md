@@ -66,6 +66,23 @@ _Avoid_: sidebar, drawer, popup (the Word popup is another thing, and there is n
 What the browser extension shows over a page for the word a learner points at.
 _Avoid_: word card (a Word card is the short entry an app without the data shows), tooltip
 
+**Zenbu Captions**:
+The Japanese lines the browser extension gets for a YouTube video and shows itself, in the side
+panel's Video tab and as a caption on the player; also the switch that fetches them as soon as a
+video opens. YouTube's own captions are the site's, which the extension can hide.
+_Avoid_: subtitles, YouTube captions (for the extension's), Live Captions (heard speech, not built)
+
+**Video follower**:
+The browser extension's view of the video on a page: its time, whether it plays, its speed, and
+whether an ad shows, with seek, play, pause, and speed. YouTube has one; Netflix's is to come.
+_Avoid_: player (the site's own, or the app's Player tab)
+
+**Translation module**:
+The browser extension's one way to translate (`apps/extension/src/translation/`), on Chrome's
+on-device Translator, which its Translate tab uses and its other surfaces will. The app's
+Translate uses Apple Translation instead.
+_Avoid_: translator (Chrome's Translator is the API under it), Translate (the tab)
+
 **Linked app**:
 An app outside the Zenbu apps, such as Tomodachi, in which a learner links their Zenbu
 account.

@@ -26,7 +26,9 @@ jobs:
           paths: >-
             apps/extension packages/ui packages/dictionary-core package.json pnpm-lock.yaml
             pnpm-workspace.yaml .node-version .github/workflows/extension.yml assets/brand
-            .github/actions/changed-paths
+            .github/actions/changed-paths language-data/release.json language-data/releases
+            language-data/release-inputs.json
+            apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
 
   check:
     needs: changes
@@ -53,9 +55,54 @@ jobs:
           NODE_AUTH_TOKEN: ${{ github.token }}
       - run: pnpm check
 
+  browser:
+    needs: [changes, check]
+    if: needs.changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      RELEASE_FILE: apps/ios/Modules/Sources/SearchExperience/Resources/JLPTLevelPack.sqlite3
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Restore the Dictionary API's Git LFS files
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25
+        with:
+          path: .git/lfs/objects
+          key: lfs-resources-${{ hashFiles('apps/ios/Modules/Sources/SearchExperience/Resources/*.sqlite3', 'apps/ios/Modules/Sources/SearchExperience/Resources/Kuromoji/**') }}
+      - name: Fetch the one release file the browser tests download
+        run: git lfs pull --include="$RELEASE_FILE"
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86
+        with:
+          package_json_file: package.json
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          registry-url: https://npm.pkg.github.com
+          scope: "@serpcompany"
+      - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+      - name: Install Chromium
+        working-directory: apps/extension
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Build the test build and run the browser tests
+        working-directory: apps/extension
+        run: pnpm test:browser
+      - name: Keep the report
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: extension-playwright-report
+          path: |
+            apps/extension/e2e/report
+            apps/extension/e2e/results
+          retention-days: 7
+
   extension:
     if: always()
-    needs: [changes, check]
+    needs: [changes, check, browser]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

@@ -2,6 +2,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { DataState } from '../shared/data-state'
+import { translateLabels } from '../translate/labels'
 import { labels } from './labels'
 import { SidePanel } from './panel'
 import type { PanelHost } from './panel-host'
@@ -64,6 +65,7 @@ const shown = (selector: string) =>
   [...document.querySelectorAll(selector)].filter(element => isShown(element))
 const backButton = () => shown('button[aria-label^="Back to"]')[0] as HTMLButtonElement | undefined
 const emptyTitles = () => shown('[data-slot="empty-title"]').map(title => title.textContent)
+const translateBox = () => shown('textarea')[0] as HTMLTextAreaElement | undefined
 const testPageText = () => shown('[data-test-page]').map(page => page.textContent)
 const click = (element: HTMLElement) => act(async () => element.click())
 const press = (element: HTMLElement, key: string) =>
@@ -72,7 +74,7 @@ const press = (element: HTMLElement, key: string) =>
   })
 
 describe('SidePanel', () => {
-  it('shows five tabs, in order, each starting on its empty state', async () => {
+  it('shows five tabs, in order, Translate on its box and each other tab on its empty state', async () => {
     await draw(fakeHost())
     expect(tabs().map(each => each.textContent)).toEqual([
       'Video',
@@ -84,11 +86,20 @@ describe('SidePanel', () => {
     expect(document.querySelector('[role="tablist"]')?.getAttribute('aria-label')).toBe(
       labels.tabBar
     )
-    for (const id of panelTabs) {
+    for (const id of panelTabs.filter(each => each !== 'translate')) {
       await click(tab(labels.tabs[id]))
       expect(selectedTab()?.textContent).toBe(labels.tabs[id])
       expect(emptyTitles()).toEqual([labels.empty[id].title])
     }
+  })
+
+  it('opens Translate from its tab', async () => {
+    await draw(fakeHost())
+    await click(tab('Translate'))
+    expect(selectedTab()?.textContent).toBe('Translate')
+    expect(emptyTitles()).toEqual([])
+    expect(translateBox()?.placeholder).toBe(translateLabels.placeholder)
+    expect(shown('button').map(each => each.textContent)).toContain(translateLabels.translate)
   })
 
   it('moves along the tab bar with the arrow keys, wrapping at the ends', async () => {
@@ -195,7 +206,26 @@ describe('SidePanel', () => {
     expect(shown('button').filter(each => each.textContent === labels.tryAgain)).toHaveLength(0)
     await click(tab('Translate'))
     expect(shown('[data-dictionary-progress]')).toHaveLength(0)
-    expect(emptyTitles()).toEqual([labels.empty.translate.title])
+    expect(translateBox()).toBeDefined()
+  })
+
+  it('has a page opened from Translate wait for the dictionary, under its Back row, and keeps the box', async () => {
+    const host = fakeHost('translate')
+    await draw(host, { state: 'checking' })
+    act(() => {
+      const box = translateBox() as HTMLTextAreaElement
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(box, '猫')
+      box.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await host.move({ tab: 'translate', page: { page: 'word', entSeq: 1467640 } })
+    expect(shown('[data-dictionary-progress]')).toHaveLength(1)
+    expect(backButton()?.getAttribute('aria-label')).toBe(labels.backTo('Translate'))
+    expect(shownPanel()?.textContent).not.toContain('1467640')
+    await draw(host, { state: 'ready', release: '2026.10.1', bytes: 1, checkedAt: null })
+    expect(shown('[data-dictionary-progress]')).toHaveLength(0)
+    expect(shownPanel()?.textContent).toContain('1467640')
+    await click(backButton() as HTMLElement)
+    expect(translateBox()?.value).toBe('猫')
   })
 
   it('offers Try again when the dictionary failed, and shows the tab once it is ready', async () => {

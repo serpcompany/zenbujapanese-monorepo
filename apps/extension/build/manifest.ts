@@ -16,10 +16,18 @@ const testPagesContentScript: ContentScript = {
   matches: ['http://localhost/*', 'http://127.0.0.1/*']
 }
 
+const youTubeContentScript: ContentScript = {
+  name: 'youtube',
+  entry: 'src/content/youtube.ts',
+  matches: ['https://www.youtube.com/*']
+}
+
 export const contentScriptFile = (script: ContentScript) => `${script.name}.js`
 
 export function contentScripts(variant: Variant): ContentScript[] {
-  return variant === 'test' ? [testPagesContentScript] : []
+  return variant === 'test'
+    ? [youTubeContentScript, testPagesContentScript]
+    : [youTubeContentScript]
 }
 
 function onPages(scripts: ContentScript[]) {
@@ -49,7 +57,14 @@ export function manifest(variant: Variant, environment: Environment = defaultEnv
     side_panel: { default_path: 'pages/side-panel.html' },
     options_ui: { page: 'pages/settings.html', open_in_tab: true },
     background: { service_worker: 'service-worker.js', type: 'module' },
-    permissions: ['offscreen', 'sidePanel', 'storage'],
+    permissions: [
+      'offscreen',
+      'sidePanel',
+      'storage',
+      'scripting',
+      'declarativeNetRequestWithHostAccess'
+    ],
+    host_permissions: ['https://www.youtube.com/*'],
     ...onPages(contentScripts(variant))
   }
 }

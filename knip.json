@@ -1,6 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": ["apps/ios/**"],
+  "ignoreBinaries": ["openssl"],
+  "ignoreIssues": { "apps/extension/src/shared/settings.ts": ["exports", "types"] },
   "workspaces": {
     ".": {
       "entry": [".github/actions/*/*.cjs"],
@@ -21,9 +23,18 @@
         "src/service-worker/service-worker.ts",
         "src/offscreen/offscreen.ts",
         "src/worker/dictionary-worker.ts",
+        "src/content/youtube.ts",
         "test-pages/test-content-script.tsx",
         "test-pages/*.css",
-        "test-pages/vite.config.ts"
+        "test-pages/vite.config.ts",
+        "e2e/*.spec.ts",
+        "e2e/serve.ts",
+        "playwright.config.ts",
+        "agent-chrome/ctl.mjs",
+        "agent-chrome/daemon.mjs",
+        "agent-chrome/test-daemon.mjs",
+        "agent-chrome/selftest-extension/*.js",
+        "agent-chrome/site/*.js"
       ]
     },
     "packages/dictionary-core": {

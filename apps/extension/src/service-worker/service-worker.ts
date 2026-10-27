@@ -1,3 +1,4 @@
+import { serveCaptions } from '../captions/serve-captions'
 import {
   receiveErrorReport,
   reportFailure,
@@ -6,6 +7,7 @@ import {
 import { offscreenDocumentKeeper } from './offscreen-document'
 import { routeToOffscreen } from './router'
 import { startSidePanel } from './side-panel'
+import { routeTranslation } from './translation'
 
 startSendingErrorReports(chrome.storage.local)
 
@@ -26,4 +28,10 @@ chrome.runtime.onMessage.addListener(
   })
 )
 
-startSidePanel()
+serveCaptions()
+
+chrome.runtime.onMessage.addListener(
+  routeTranslation(offscreenDocument, chrome.runtime, reportFailure)
+)
+
+startSidePanel(reportFailure)

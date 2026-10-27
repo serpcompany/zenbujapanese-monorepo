@@ -55,6 +55,29 @@ describe('readXML (what XMLParser read for YouTubeCaptionParsing)', () => {
     for (const document of malformed) expect(events(document), document).toBeNull()
   })
 
+  test('refuses a control character as XMLParser does, written raw or as a reference', () => {
+    const controlled = [
+      '<a>\u0001</a>',
+      '<a>&#1;</a>',
+      '<a>&#x1;</a>',
+      '<a b="\u0001"></a>',
+      '<a b="&#x1;"></a>',
+      '<a><!-- \u0001 --></a>',
+      '<a><![CDATA[\u0001]]></a>',
+      '<a>\u001f</a>',
+      '<a>&#31;</a>',
+      '<a>\ud800</a>',
+      '<a>\uffff</a>',
+      '<a>&#xFFFE;</a>',
+      '<a>&#x110000;</a>'
+    ]
+    for (const document of controlled) expect(events(document), document).toBeNull()
+  })
+
+  test('reads the control characters XML allows: a tab and a line break, raw or as references', () => {
+    expect(events('<a>1\t2&#9;3\n4&#xA;5&#13;</a>')).toEqual(['<a[]', '1\t2\t3\n4\n5\r', '</a'])
+  })
+
   test('ends a comment at --!> as at -->', () => {
     expect(events('<a><!-- x --!>y<!-- z --></a>')).toEqual(['<a[]', 'y', '</a'])
   })
