@@ -158,6 +158,17 @@ describe('installing the language data', () => {
     expect(server.asked.length).toBe(asked)
     expect(again.opened).toHaveLength(1)
   })
+
+  it('fails with its reason when installed.json is unreadable, then installs again on update', async () => {
+    const server = await published({ release: '2026.10.1' })
+    const storage = new MemoryStorage()
+    await storage.write(installedPath, new TextEncoder().encode('{'))
+    const { languageData } = extension(server, storage)
+    await languageData.start()
+    expect(languageData.state()).toMatchObject({ state: 'failed' })
+    await languageData.update()
+    expect(languageData.state()).toEqual({ state: 'ready', release: '2026.10.1' })
+  })
 })
 
 describe('updating the language data', () => {

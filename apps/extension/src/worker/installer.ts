@@ -156,7 +156,10 @@ export function installer(options: InstallerOptions) {
   return {
     state: () => state,
     start(): Promise<void> {
-      started = start()
+      started = start().catch(error => {
+        installed = null
+        state = { state: 'failed', reason: reason(error) }
+      })
       return started
     },
     update(): Promise<void> {

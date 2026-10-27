@@ -82,7 +82,8 @@ load the core's lookup code or SQLite ([`extension.md`](extension.md), Layers).
 - `src/worker/installer.test.ts`, against `src/test/fake-language-data.ts`'s server shaped like the bucket,
   with gzipped parts made in the test: a first install, progress, Kuromoji files as published,
   resuming from the last whole part, a wrong part SHA-256 and a wrong manifest SHA-256 with their
-  reasons, skipping a release whose schemas it can't read, opening what is installed, and an
+  reasons, skipping a release whose schemas it can't read, opening what is installed, an unreadable `installed.json` failing with why and installing again
+  on the next update, and an
   update that downloads only the changed file, answers from the old set until the swap, and
   then deletes the old one.
 - `src/worker/answer.test.ts`: `not-ready` before the first set, the state, lookups, and the
