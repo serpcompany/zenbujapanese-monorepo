@@ -80,7 +80,10 @@ def problems(listing: Listed, found: dict[int, dict[str, object]]) -> list[str]:
         if source_ranks.get((row["form"], row["pos"])) != row["rank"]:
             result.append(f"{name} isn't that TUBELEX row")
             continue
-        computed_row = found[row["rank"]]
+        computed_row = found.get(row["rank"])
+        if computed_row is None:
+            result.append(f"{name} is no longer an unplaced row")
+            continue
         if row.get("jiten") != computed_row["jiten"] or row.get("verdict") != computed_row["verdict"]:
             result.append(f"{name}: its evidence or verdict isn't what the tool computes")
         verdict = computed_row["verdict"]

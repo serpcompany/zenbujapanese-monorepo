@@ -37,6 +37,10 @@ class ReviewedReadingsEvidenceTests(unittest.TestCase):
         found = problems(Listed(self.listing.manifest, self.listing.rows, self.listing.path, review), self.found)
         self.assertEqual(["後 (名詞-普通名詞-副詞可能, row 69) keeps あと (JMdict 1269320), which the rule doesn't rank"], found)
 
+    def test_a_listed_row_that_is_no_longer_unplaced_is_a_problem(self) -> None:
+        found = {rank: row for rank, row in self.found.items() if rank != 69}
+        self.assertEqual(["後 (名詞-普通名詞-副詞可能, row 69) is no longer an unplaced row"], problems(self.listing, found))
+
     @unittest.skipUnless(UNIDIC.is_file(), "needs all of UniDic, which the rebuild downloads")
     def test_all_of_unidic_gives_the_same_evidence_the_unplaced_rows_and_the_excerpt(self) -> None:
         review = evidence_review(self.listing, UNIDIC)
