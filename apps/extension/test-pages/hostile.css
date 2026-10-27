@@ -1,0 +1,51 @@
+:root {
+  --background: red;
+  --foreground: lime;
+  --card: magenta;
+  --radius: 0;
+  --spacing: 1em;
+  --font-sans: "Comic Sans MS", cursive;
+  --tw-shadow: 0 0 40px red;
+  --tw-ring-shadow: 0 0 0 6px orange;
+}
+
+html {
+  font-size: 10px;
+}
+
+body {
+  font:
+    italic 13px / 3 "Comic Sans MS",
+    cursive;
+  letter-spacing: 0.3em;
+  word-spacing: 8px;
+  text-transform: uppercase;
+  text-align: center;
+  color: #c00;
+  background: #fffbe6;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: content-box;
+  transition: none;
+}
+
+div,
+p,
+button,
+span,
+h1,
+h2 {
+  margin: 7px;
+  padding: 3px;
+  border: 2px dashed #f0f;
+  line-height: 3;
+}
+
+button {
+  all: unset;
+  background: yellow;
+  font-size: 22px;
+}

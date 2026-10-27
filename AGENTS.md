@@ -28,6 +28,7 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 - [`docs/agents/ios.md`](docs/agents/ios.md) — Xcode build and launch on iPhone, iPad, and the Mac, the platform adapters, installing on an iPhone, Simulator checks, and the iOS test and CI boundary.
 - [`docs/agents/translate.md`](docs/agents/translate.md) — the iOS Translate tab: its engine target, the on-device speech and translation adapters, its tests, the Simulator harness, and device checks.
 - [`docs/agents/web.md`](docs/agents/web.md) — zenbujapanese.com: run, verify, the dictionary service it reads, the account pages, environments, deploys, and sitemaps.
+- [`docs/agents/extension.md`](docs/agents/extension.md) — the Chrome extension: build, load, check.
 - [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) — the website's dictionary service: run, check, routes, the Docker image, and deploying it.
 - [`docs/agents/account-api.md`](docs/agents/account-api.md) — the account service: run, check, routes, its Postgres and migrations, the Docker image, deploying it, and backups.
 - [`docs/agents/account-clients.md`](docs/agents/account-clients.md) — building an app on the Zenbu account: its scopes, signing in, tokens, the profile, when and how to sync, errors, and deleting the account.
@@ -44,13 +45,13 @@ Agents never merge: there is no `Agents may merge` line. Only an owner adds or c
 ## Work tracking
 
 - [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) — proposed user stories, feature changes, discovery evidence, acceptance criteria, and other issue or PRD work.
-- [`docs/quality.md`](docs/quality.md) — a grade for each product area and layer, the app's and the website's in the two files it links, with the code it covers (Code) and the day it was graded (Graded). Re-grade a row, and set its Graded date, when its tests, CI, or docs change; the weekly report lists the rows whose code changed since.
+- [`docs/quality.md`](docs/quality.md) — a grade for each product area and layer, the app's, the website's, and the extension's in the files it links, with the code it covers (Code) and the day it was graded (Graded). Re-grade a row, and set its Graded date, when its tests, CI, or docs change; the weekly report lists the rows whose code changed since.
 - [`docs/tech-debt.md`](docs/tech-debt.md), [`docs/tech-debt-web.md`](docs/tech-debt-web.md) for the website, and [`docs/harness-debt.md`](docs/harness-debt.md) for checks, delivery, and the harness — known debt, each with its issue and a Size. Add what you knowingly leave; remove what you pay off.
 
 ## Decisions
 
 - [`docs/adr/`](docs/adr/) — architecture changes. Read only the relevant records.
-- [`docs/agents/domain.md`](docs/agents/domain.md) — project terminology and deciding whether an ADR is warranted.
+- [`docs/agents/domain.md`](docs/agents/domain.md) — project terms, and whether an ADR is warranted.
 - [`CONTEXT.md`](CONTEXT.md) — terms that are easy to confuse, such as Language Reference ID and JMdict entry number.
 
 ## Where this differs from SERP's standards

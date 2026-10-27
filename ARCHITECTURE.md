@@ -10,6 +10,7 @@ layers apart. Each part's own doc has the detail; each rule here is enforced by 
 | `apps/ios` | The Zenbu Japanese app, in SwiftUI, built from one target for iPhone, iPad, and the Mac (ADR 0015), with a share-sheet extension on iPhone and iPad (ADR 0017). It reads the language data bundled with it, which the importers in `language-data/tools` build, answers every dictionary screen with the shared core, which it runs in JavaScriptCore, and signs in to the account service to sync known words, lists, notes, photos and the profile photo, settings, recent lookups, watch history, bookmarked translations, and the profile's name and username, with the subscription that unlocks syncing sold through StoreKit 2 (ADR 0019). Its Shortcuts actions open it with links in its own scheme. `apps/ios/Tools/TranslateReplay` replays recorded Translate audio on a Mac. | [`docs/agents/ios.md`](docs/agents/ios.md) |
 | `apps/web` | zenbujapanese.com: Next.js on Cloudflare Workers through OpenNext. Its dictionary pages read the dictionary service; its account pages call the account service from the learner's browser. | [`docs/agents/web.md`](docs/agents/web.md) |
 | `apps/dictionary-api` | The dictionary service: Node, in a Docker image on serpcompany's server, answering the website's dictionary requests by running the shared core on the app's language data. | [`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md) |
+| `apps/extension` | The Zenbu Japanese browser extension for Chrome, in Manifest V3, rebuilt here to read the shared language data (ADR 0006); offline and with no account in its first version: a side panel, a toolbar popup, and a Settings page in React on `@zenbu/ui`, a service worker, and an offscreen document whose dedicated worker is to hold the dictionary. Pages and content scripts reach that worker only by messages, and a content script draws on a page inside a shadow root. | [`docs/agents/extension.md`](docs/agents/extension.md) |
 | `apps/account-api` | The account service: Node and Postgres on the same server, for Zenbu accounts, sign-in, and sync (ADR 0013). It signs learners in with Apple, Google, or an emailed code, through Better Auth, and issues the access tokens other services check. It keeps the subscription a learner buys in the App Store or through Stripe, which can unlock sync (ADR 0019). | [`docs/agents/account-api.md`](docs/agents/account-api.md) |
 | `packages/dictionary-core` | The shared TypeScript core: search, results, word and kanji detail, examples, and caption rules. The service and the app both run all of it; the browser extension is to run it too (ADR 0008). | [`docs/agents/dictionary-core.md`](docs/agents/dictionary-core.md) |
 | `packages/ui` | The website's look as a package, `@zenbu/ui`: the shadcn primitives, the theme, and the word components (the word header, the word page's sections, kanji details, example lists, conjugations, frequency, and source credits). It draws what the core answers, with the text, links, and actions each client passes it, so the browser extension can show what the website shows (#954). | [`docs/agents/ui.md`](docs/agents/ui.md) |
@@ -35,6 +36,8 @@ flowchart LR
     Server -->|"word cards and segmentation, for an account's access token"| Apps["Signed-in apps, such as Tomodachi"]
     Core --> UI["packages/ui: the word components"]
     UI --> Site
+    UI --> Extension["Browser extension: pages and content scripts"]
+    Extension -->|"messages, through the service worker and the offscreen document"| ExtensionWorker["Extension's dictionary worker"]
     Core --> Site
     Core -->|"word-cards command"| Cards[("Baked word cards")]
     Cards --> Apps
@@ -104,6 +107,12 @@ saying where the code belongs:
   nothing: a client passes text, links, and actions as props. The website's `src/lib` takes
   only their types, and neither service imports them
   ([`docs/agents/ui.md`](docs/agents/ui.md), What the package may import).
+- **The browser extension**: only its dictionary worker (`src/worker/`) loads the core's lookup
+  code and SQLite, and nothing imports the worker: the offscreen document starts it by its URL,
+  and pages, content scripts, and the service worker ask it with a message. Pages and content
+  scripts draw with `@zenbu/ui`, never the primitives under it, and the service worker, the
+  offscreen document, and the worker draw nothing (`apps/extension` in `verify.json`'s
+  dependency parts, [`docs/agents/extension.md`](docs/agents/extension.md), Layers).
 - **The service**: readers and shared modules, then the worker layer, then HTTP, which reaches the
   dictionary only through the `DictionaryService` interface
   ([`docs/agents/dictionary-api.md`](docs/agents/dictionary-api.md), Code layout).

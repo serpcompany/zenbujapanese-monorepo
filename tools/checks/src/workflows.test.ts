@@ -10,6 +10,7 @@ import { readRepositoryFile, readWorkflow, type Workflow } from './agents/workfl
 const gated: [name: string, jobs: string[], waits: Record<string, string>][] = [
   ['web', ['check', 'e2e'], { e2e: 'check' }],
   ['dictionary-core', ['check'], {}],
+  ['extension', ['check'], {}],
   ['dictionary-api', ['scripts', 'check'], { check: 'scripts' }],
   ['account-api', ['check', 'website'], { website: 'check' }],
   ['ios', ['contracts', 'swift'], { swift: 'contracts' }],

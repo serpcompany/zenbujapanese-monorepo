@@ -51,6 +51,16 @@ The short form of a dictionary entry, keyed by Language Reference ID, that an ap
 language data shows.
 _Avoid_: flashcard, entry, word page
 
+**Browser extension**:
+The Zenbu Japanese extension for Chrome, built from `apps/extension`: its side panel, toolbar
+popup, Settings page, and what it draws on the pages a learner reads. The app's share-sheet
+extension, `ZenbuShare`, is another thing.
+_Avoid_: extension (alone, where the Share extension could be meant), plugin, add-on
+
+**Word popup**:
+What the browser extension shows over a page for the word a learner points at.
+_Avoid_: word card (a Word card is the short entry an app without the data shows), tooltip
+
 **Linked app**:
 An app outside the Zenbu apps, such as Tomodachi, in which a learner links their Zenbu
 account.
