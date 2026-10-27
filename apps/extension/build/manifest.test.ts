@@ -20,7 +20,7 @@ describe('manifest', () => {
     expect(test.web_accessible_resources?.[0]?.resources).toEqual(['assets/*.woff2'])
   })
 
-  it('needs a Chrome with the Translator API and asks only for the offscreen document and side panel', () => {
+  it('needs a Chrome with the Translator API and asks only for the offscreen document, the side panel, and storage', () => {
     const release = manifest('release')
     expect(Number(minimumChromeVersion)).toBeGreaterThanOrEqual(138)
     expect(release.minimum_chrome_version).toBe(minimumChromeVersion)
