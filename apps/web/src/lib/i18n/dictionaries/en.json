@@ -56,8 +56,8 @@
       },
       "recentSearches": {
         "title": "Recent searches",
-        "description": "Your recent searches in the Zenbu app.",
-        "intro": "Your 50 most recent searches in the Zenbu app, most recent first. Remove one, or clear them all."
+        "description": "Your recent searches in the Zenbu app or on this website.",
+        "intro": "Your 50 most recent searches in the Zenbu app or on this website, most recent first. Remove one, or clear them all."
       },
       "settings": {
         "title": "Settings",
