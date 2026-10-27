@@ -1,0 +1,27 @@
+import { wordPath } from '@zenbu/dictionary-core/detail/links'
+import { fill } from '@zenbu/dictionary-core/detail/template'
+import type { WordDetail } from '@zenbu/dictionary-core/detail/word'
+import { SavedItemActions } from '@zenbu/ui/dictionary/saved-item-actions'
+import { LinkIcon } from 'lucide-react'
+import { websiteOrigin } from '../shared/hosts'
+import { wordDetailLabels } from './labels'
+import { copyText, type Notify } from './notice'
+
+const closedShareSheet = () => undefined
+
+export function WordShare({ word, notify }: { word: WordDetail; notify: Notify }) {
+  const labels = wordDetailLabels.share
+  const url = `${websiteOrigin}${encodeURI(wordPath(word))}`
+  const copyLink = () => void copyText(url, labels.linkCopied, notify)
+  const share = () => {
+    if (!navigator.share) return copyLink()
+    navigator.share({ title: word.headword, text: word.shareText, url }).catch(closedShareSheet)
+  }
+  return (
+    <SavedItemActions
+      share={{ label: fill(labels.share, { name: word.headword }), onSelect: share }}
+      moreActions={fill(labels.moreActions, { name: word.headword })}
+      groups={[[{ id: 'copyLink', icon: LinkIcon, label: labels.copyLink, onSelect: copyLink }]]}
+    />
+  )
+}

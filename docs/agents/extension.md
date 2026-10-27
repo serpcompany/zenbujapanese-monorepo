@@ -36,6 +36,7 @@ outside the first version. The Store listing, its ID, and the version and builds
 | `src/offscreen/` | The offscreen document, opened with the reason `WORKERS`. It starts the dictionary worker and relays each request to it over a `MessageChannel` of its own (`relay.ts`). |
 | `src/worker/` | The dictionary worker, a dedicated module worker. For now it answers a ping (`answer.ts`); #956 gives it the dictionary. |
 | `src/content/` | `mountInShadowRoot`, which draws React on a page inside a shadow root. |
+| `src/word-detail/` | Word Detail and the kanji and form pages it opens, drawn with `@zenbu/ui`'s dictionary parts from the core's `detail/` modules. They ask the dictionary through `src/shared/dictionary.ts`; their tests answer from the core's fixtures. |
 | `src/shared/` | The messages and their types, the labels, Geist, the colour scheme, and the dictionary status that pages show. |
 | `src/styles/` | The pages' stylesheet and the shadow root's, both Tailwind on `@zenbu/ui`'s theme, with `--font-sans` set to Geist. |
 | `build/` | The Vite configuration, the manifest, and the PostCSS step that makes the shadow root's stylesheet safe on any page. |

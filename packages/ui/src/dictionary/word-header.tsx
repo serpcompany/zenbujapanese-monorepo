@@ -18,7 +18,8 @@ export function WordHeader({
   partOfSpeech,
   conjugations,
   text,
-  onUnsupported
+  onUnsupported,
+  onOpenConjugations
 }: {
   headword: string
   ruby: RubySegment[]
@@ -29,6 +30,7 @@ export function WordHeader({
   conjugations: boolean
   text: { pronounce: PronounceText; conjugations: { showsConjugations: string } }
   onUnsupported: OnUnsupported
+  onOpenConjugations?: () => void
 }) {
   return (
     <Card>
@@ -66,7 +68,11 @@ export function WordHeader({
         {conjugations ? (
           <>
             <Separator />
-            <ConjugationsLink label={partOfSpeech} opens={text.conjugations.showsConjugations} />
+            <ConjugationsLink
+              label={partOfSpeech}
+              opens={text.conjugations.showsConjugations}
+              onOpen={onOpenConjugations}
+            />
           </>
         ) : partOfSpeech ? (
           <>
