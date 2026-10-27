@@ -9,9 +9,14 @@ import { expect, needed, sourcesToggle, test, word } from './test'
 
 const kanjiSearch = encodeURI('/dictionary/search/要/')
 const kanaOnly = word(1577980)
+const meanings = 'need, main point, essence, pivot, key to'
 
 const rows = [
-  { on: 'the search page for 要', path: kanjiSearch, row: '要, kanji, pivot, shows kanji details' },
+  {
+    on: 'the search page for 要',
+    path: kanjiSearch,
+    row: `要, kanji, ${meanings}, shows kanji details`
+  },
   { on: 'the word page', path: needed.path, row: '要, need, main point, shows kanji details' }
 ]
 
@@ -23,7 +28,7 @@ async function expectKanjiDetails(page: Page) {
   await expect(
     main.getByRole('link', { name: 'JLPT kanji lists', includeHidden: true })
   ).toBeAttached()
-  await expect(main.getByText('need, main point, essence, pivot, key to')).toBeVisible()
+  await expect(main.getByRole('paragraph').filter({ hasText: meanings })).toBeVisible()
   for (const part of ['Readings', 'Elements', 'Lists', 'Notes', 'Words']) {
     await expect(main.getByRole('heading', { level: 3, name: part })).toBeVisible()
   }
@@ -77,6 +82,14 @@ async function stepThroughStrokes(page: Page, locale: Locale, row: string) {
 }
 
 test.describe('kanji details', () => {
+  test('the search for 要 leads with a kanji row that reads all of the kanji’s meanings', async ({
+    page
+  }) => {
+    await page.goto(kanjiSearch)
+    await expect(page.locator('[data-kanji-row="要"]')).toHaveText(`KANJI${meanings}`)
+    await expect(page.getByRole('button', { name: rows[0].row, exact: true })).toBeVisible()
+  })
+
   for (const { on, path, row } of rows) {
     test(`${on} opens 要 to its stroke order, metrics, meanings, readings, and words`, async ({
       page
@@ -119,7 +132,7 @@ test.describe('kanji details', () => {
   test('on a Japanese page, steps, plays, and pauses the strokes in Japanese', async ({ page }) => {
     const row = fill(getDictionary('ja').search.kanjiRowLabel, {
       character: '要',
-      summary: 'pivot'
+      summary: meanings
     })
     await stepThroughStrokes(page, 'ja', row)
   })

@@ -18,7 +18,7 @@ const text = (locale: Locale = 'en') => getDictionary(locale).chrome.readingAids
 const aid = (scope: Page | Locator, name: string) => scope.locator(`[data-aid="${name}"]`)
 const headline = (page: Page) => page.getByRole('heading', { level: 1 }).locator('..')
 const kanjiSearch = encodeURI('/dictionary/search/要/')
-const kanjiRow = '要, kanji, pivot, shows kanji details'
+const kanjiRow = '要, kanji, need, main point, essence, pivot, key to, shows kanji details'
 const firstExample = "I don't need money at present."
 
 async function readingAidsMenu(page: Page, locale: Locale = 'en') {

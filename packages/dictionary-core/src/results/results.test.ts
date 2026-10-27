@@ -239,6 +239,27 @@ describe('searchResultsScreen (SearchResultsView)', () => {
     })
   })
 
+  test('sums up the kanji row with the kanji’s own meanings in order, else the entry’s gloss or Kanji detail', () => {
+    const sunday = item('日', { id: 'a'.repeat(32) })
+    const meanings = new Map([
+      ['日', ['day', 'sun', 'Japan', 'counter for days']],
+      ['要', []]
+    ])
+    const kanjiMeanings = (character: string) => meanings.get(character)
+    const kanjiRow = (query: string, found: SearchResultItem[]) => {
+      const screen = searchResultsScreen(query, results(found), new Map(), 0, false, kanjiMeanings)
+      return screen.state === 'results' ? screen.kanji : null
+    }
+    expect(kanjiRow('日', [sunday])).toEqual({
+      character: '日',
+      label: 'KANJI',
+      summary: 'day, sun, Japan, counter for days',
+      entryId: sunday.entry.id
+    })
+    expect(kanjiRow('要', [item('要')])?.summary).toBe('要 summary')
+    expect(kanjiRow('㐂', [])?.summary).toBe('Kanji detail')
+  })
+
   test('lists only the leading entries of a kanji picked from the radicals, re-sorted, with its kanji row', () => {
     const kanji = item('要', { id: 'e'.repeat(32) })
     const reading = item('要', { id: 'f'.repeat(32) })

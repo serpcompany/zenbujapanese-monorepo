@@ -300,7 +300,14 @@ function fixtureScreen(query: string, pickedKanji: boolean): SearchResultsScreen
   const frequency = new Map<string, FrequencyRow[]>(
     matches.map(rows => [rows.entry.id, rows.frequency])
   )
-  return searchResultsScreen(query, results, frequency, 0, pickedKanji)
+  return searchResultsScreen(
+    query,
+    results,
+    frequency,
+    0,
+    pickedKanji,
+    character => kanjiRowsByCharacter.get(character)?.kanji.meanings
+  )
 }
 
 export const searchDictionary = cache(

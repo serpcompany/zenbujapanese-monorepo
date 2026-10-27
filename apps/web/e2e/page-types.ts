@@ -141,7 +141,7 @@ export const pageTypes: PageType[] = [
   {
     name: 'Kanji details',
     path: japanese('/dictionary/search/要/'),
-    open: ['要, kanji, pivot, shows kanji details']
+    open: ['要, kanji, need, main point, essence, pivot, key to, shows kanji details']
   },
   {
     name: 'Word',

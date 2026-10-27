@@ -116,6 +116,14 @@ export type SearchResultsScreen =
 const primary = <Item>(items: readonly Item[], headword: (item: Item) => string, query: string) =>
   items.find(item => headword(item) === query) ?? items[0]
 
+export type KanjiMeanings = (character: string) => readonly string[] | undefined
+
+const noKanjiMeanings: KanjiMeanings = () => undefined
+
+function kanjiSummary(meanings: readonly string[] | undefined, found: ListedItem | undefined) {
+  return meanings?.length ? meanings.join(', ') : (found?.entrySummary ?? 'Kanji detail')
+}
+
 export function primaryItem(results: SearchResults, query: string): SearchResultItem | undefined {
   return primary(results.items, item => item.entry.headword, normalizeQuery(query))
 }
@@ -136,7 +144,8 @@ export function resultsLayout(
   rawQuery: string,
   results: ListedResults,
   exampleCount: number,
-  pickedKanji = false
+  pickedKanji = false,
+  kanjiMeanings = noKanjiMeanings
 ): ResultsLayout {
   const query = normalizeQuery(rawQuery)
   const leadingOnly = pickedKanji && graphemeCount(query) === 1
@@ -169,7 +178,7 @@ export function resultsLayout(
         ? {
             character: query,
             label: 'KANJI',
-            summary: found?.entrySummary ?? 'Kanji detail',
+            summary: kanjiSummary(kanjiMeanings(query), found),
             entryId: found?.id ?? null
           }
         : null,
@@ -184,9 +193,16 @@ export function searchResultsScreen(
   results: SearchResults,
   frequency: FrequencyByEntry,
   exampleCount = 0,
-  pickedKanji = false
+  pickedKanji = false,
+  kanjiMeanings = noKanjiMeanings
 ): SearchResultsScreen {
-  const layout = resultsLayout(rawQuery, listedResults(results), exampleCount, pickedKanji)
+  const layout = resultsLayout(
+    rawQuery,
+    listedResults(results),
+    exampleCount,
+    pickedKanji,
+    kanjiMeanings
+  )
   if (layout.isEmpty) return { state: 'noResults', query: layout.query }
   const shown = layout.isDiscovered
     ? layout.presented
